@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { deepHeadings, findForbidden, headings, ROOT, read } from "./lib/doc-helpers.ts";
@@ -68,12 +68,12 @@ describe("README.md", () => {
   });
 
   it("links only to files that exist", () => {
-    const links = [...readme.matchAll(/\]\((?!https?:|mailto:|#)([^)\s]+)\)/g)].map((m) => m[1]);
-    const present = new Set(
-      readdirSync(ROOT).concat(readdirSync(join(ROOT, "docs")).map((f) => `docs/${f}`)),
+    const links = [...readme.matchAll(/\]\((?!https?:|mailto:|#)([^)\s]+)\)/g)].map(
+      (m) => m[1] as string,
     );
+    expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
-      expect(present, `README links to missing file "${link}"`).toContain(link);
+      expect(existsSync(join(ROOT, link)), `README links to missing file "${link}"`).toBe(true);
     }
   });
 
