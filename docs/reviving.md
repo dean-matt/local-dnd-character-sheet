@@ -21,8 +21,9 @@ The lockfile is committed, so this reproduces the exact dependency tree that las
 worked. If `pnpm install` fails on a native module, `pnpm rebuild better-sqlite3` after
 a Node major upgrade is usually enough.
 
-`typos` is a separate binary, not an npm package: `brew install typos-cli`. Only
-`pnpm check` needs it.
+`typos` is a separate binary, not an npm package — `brew install typos-cli` on macOS,
+`scoop install typos` on Windows. Only `pnpm check` needs it, and `pnpm spell` prints the
+right command for your platform if it is missing.
 
 ## Rebuild the catalog
 

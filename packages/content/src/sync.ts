@@ -16,7 +16,7 @@ import { createHash } from "node:crypto";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative, resolve } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const MANIFEST = join(ROOT, "content.manifest.json");
@@ -29,12 +29,17 @@ function git(args: string[], cwd?: string): string {
   return execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 }
 
+/** Lock keys are always forward-slashed so a lockfile is portable across platforms. */
+function posix(path: string): string {
+  return sep === "/" ? path : path.split(sep).join("/");
+}
+
 async function hashTree(dir: string): Promise<Record<string, string>> {
   const files: Record<string, string> = {};
   for (const entry of await readdir(dir, { recursive: true, withFileTypes: true })) {
     if (!entry.isFile()) continue;
     const abs = join(entry.parentPath, entry.name);
-    files[relative(dir, abs)] = createHash("sha256").update(readFileSync(abs)).digest("hex");
+    files[posix(relative(dir, abs))] = createHash("sha256").update(readFileSync(abs)).digest("hex");
   }
   return Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b)));
 }

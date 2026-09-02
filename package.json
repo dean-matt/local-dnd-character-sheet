@@ -19,7 +19,7 @@
     "typecheck": "tsc --build",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "spell": "command -v typos >/dev/null 2>&1 || { echo 'typos not installed. Run: brew install typos-cli'; exit 1; }; typos",
+    "spell": "node scripts/spell.mjs",
     "deadcode": "knip",
     "test": "vitest run",
     "test:watch": "vitest",

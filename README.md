@@ -11,11 +11,16 @@ app binds to `127.0.0.1` only.
 
 - [Node.js](https://nodejs.org) 24 or newer — the version in `.node-version`
 - [pnpm](https://pnpm.io) 11 or newer, most easily via `corepack enable`
-- [typos](https://github.com/crate-ci/typos) for spellchecking
+- [typos](https://github.com/crate-ci/typos) for spellchecking — a standalone binary,
+  not an npm package
   - macOS: `brew install typos-cli`
-  - Windows: `winget install crate-ci.typos`
+  - Windows: `scoop install typos`, or `cargo install typos-cli`
+  - Linux: `cargo install typos-cli`, or your distribution's package
 - `git`, which `pnpm content:sync` shells out to
 - About 200 MB of disk for the fetched data and the generated catalog
+
+Windows, macOS and Linux are all supported. `better-sqlite3` ships prebuilt binaries, so
+no compiler toolchain is needed on any of them.
 
 ## Getting started
 
@@ -90,7 +95,7 @@ data/              the three SQLite databases, gitignored
 | `vendor/ does not match content.lock.json` | An interrupted fetch, or files edited by hand. | `pnpm content:sync` |
 | `pnpm check` fails with `typos not installed` | The spellchecker is a separate binary. | `brew install typos-cli` |
 | `Error: Could not locate the bindings file` | `better-sqlite3` was built for a different Node major. | `pnpm rebuild better-sqlite3` |
-| Port 5173 or 8787 already in use | An earlier dev server is still running. | `lsof -ti tcp:8787 \| xargs kill` |
+| Port 5173 or 8787 already in use | An earlier dev server is still running. | macOS/Linux `lsof -ti tcp:8787 \| xargs kill`; Windows `npx kill-port 8787` |
 | Empty search results after a rebuild | The catalog was rebuilt but never populated. | Check `SELECT * FROM meta` in `data/content.db` |
 
 ## Further reading
