@@ -16,6 +16,12 @@ data/characters.db-*
 data/homebrew.db
 data/homebrew.db-*
 
+# Editors — share the project-level config, ignore anything personal
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
 .env
 .env.*
 !.env.example
