@@ -1,0 +1,51 @@
+name: Task
+description: A unit of work — a feature, a change, or a chore
+labels: ["type:feat"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: One or two sentences. What should be true when this is done?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable, checkable outcomes.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - shared
+        - content
+        - api
+        - web
+        - repo
+        - docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Relevant docs and files
+      description: Point at the docs or code that carry the context, so it is not re-derived.
+      placeholder: docs/5etools-data.md — tag markup; packages/shared/src/tags/
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What should NOT be touched. The single most useful field here.
+    validations:
+      required: true

@@ -1,0 +1,6 @@
+{
+  "repo": "https://github.com/5etools-mirror-3/5etools-src.git",
+  "tag": "v2.34.1",
+  "include": ["data"],
+  "dest": "vendor/5etools"
+}

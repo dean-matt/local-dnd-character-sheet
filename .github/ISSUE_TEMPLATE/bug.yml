@@ -1,0 +1,32 @@
+name: Bug
+description: Something behaves incorrectly
+labels: ["type:fix"]
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: The shortest path to seeing it.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options: [shared, content, api, web, repo, docs]
+    validations:
+      required: true
+
+  - type: input
+    id: content-tag
+    attributes:
+      label: Upstream tag
+      description: From content.lock.json, if the bug involves rules data.

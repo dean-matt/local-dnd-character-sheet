@@ -1,0 +1,20 @@
+{
+  "name": "@dnd/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "sync": "node --experimental-strip-types src/sync.ts",
+    "build:db": "node --experimental-strip-types src/build-db.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13"
+  }
+}
