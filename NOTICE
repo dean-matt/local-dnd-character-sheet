@@ -1,0 +1,19 @@
+# NOTICE
+
+## This repository
+
+The source code in this repository is licensed under the MIT License. See LICENSE.
+
+## Game content
+
+This project reads Dungeons & Dragons rules data from the 5etools project
+(https://github.com/5etools-mirror-3/5etools-src) at runtime. That data is
+fetched to `vendor/5etools/`, which is gitignored and never committed or
+redistributed here.
+
+Dungeons & Dragons rules content is the copyright of Wizards of the Coast LLC.
+This project is unaffiliated with and unendorsed by Wizards of the Coast. It is
+a personal tool for local use only, and is not intended for public hosting or
+redistribution of game content.
+
+To use this project you must fetch the data yourself with `pnpm content:sync`.

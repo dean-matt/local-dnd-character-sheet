@@ -1,0 +1,11 @@
+[files]
+extend-exclude = [
+  "vendor/",
+  "pnpm-lock.yaml",
+  "*.db",
+  "data/",
+]
+
+[default.extend-words]
+# 5e and D&D terms typos would otherwise flag.
+ba = "ba"

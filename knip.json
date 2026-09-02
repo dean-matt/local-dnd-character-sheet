@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": { "entry": ["tests/**/*.test.ts"] },
+    "packages/shared": { "entry": ["src/**/*.test.ts"] },
+    "packages/content": {},
+    "packages/api": { "entry": ["src/db/homebrew.ts", "drizzle.homebrew.config.ts"] },
+    "packages/web": {}
+  },
+  "ignoreBinaries": ["typos"]
+}
