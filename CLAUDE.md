@@ -97,4 +97,4 @@ issue numbers, no restating what the code does, no commented-out code. Module-le
 are fine when they clarify inputs, outputs, or side effects that the signature does not.
 Asserted by `tests/comment-policy.test.ts`.
 
-@PONYTAIL.md
+@.claude/PONYTAIL.md

@@ -89,7 +89,7 @@ When it overflows, extract to a skill — do not raise the cap. A skill loads on
 detail that only some tasks need costs nothing on the tasks that do not need it.
 
 The corollary matters just as much: anything that must apply on *every* task cannot be a
-skill. That is why the coding disposition in [`PONYTAIL.md`](PONYTAIL.md) is imported into
+skill. That is why the coding disposition in [`.claude/PONYTAIL.md`](.claude/PONYTAIL.md) is imported into
 `CLAUDE.md` rather than living in `.claude/skills/`.
 
 Skills are indexed in `CLAUDE.md`, which is the only limit on how many exist. Capping the
@@ -128,4 +128,4 @@ mid-task. `noUnusedLocals` and Biome's complexity rules catch the rest. The fenc
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
 and a line budget on code punishes a long correct function the same as a short pointless
-abstraction. Those stay with `PONYTAIL.md` and review on the pull request.
+abstraction. Those stay with `.claude/PONYTAIL.md` and review on the pull request.

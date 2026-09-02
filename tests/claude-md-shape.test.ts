@@ -25,7 +25,7 @@ describe("CLAUDE.md", () => {
   });
 
   it("imports the coding disposition rather than restating it", () => {
-    expect(claudeMd).toContain("@PONYTAIL.md");
+    expect(claudeMd).toContain("@.claude/PONYTAIL.md");
   });
 
   it("indexes every skill, so skills compete for the same budget", () => {
