@@ -20,3 +20,9 @@ data/homebrew.db-*
 .env.*
 !.env.example
 .DS_Store
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/

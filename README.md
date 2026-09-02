@@ -69,7 +69,9 @@ pnpm lint            # biome check
 pnpm lint:fix        # biome check --write
 pnpm spell           # typos
 pnpm deadcode        # knip — unused files, exports, dependencies
-pnpm test            # vitest
+pnpm test            # vitest — unit and repo fences
+pnpm test:e2e        # playwright — boots the dev server itself
+pnpm test:e2e:ui     # playwright in watch mode
 ```
 
 ## Project structure
