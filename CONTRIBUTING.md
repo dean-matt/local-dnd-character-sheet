@@ -13,6 +13,12 @@ not explain:
 is gitignored. That data is copyrighted by Wizards of the Coast and is never committed or
 redistributed here — see [`NOTICE`](NOTICE). Every contributor fetches it themselves.
 
+`.vscode/settings.json` and `.vscode/extensions.json` are committed; everything else under
+`.vscode/` is ignored. The one setting that matters is `editor.defaultFormatter` pointing at
+Biome — without it, a Prettier install reformats on save, `pnpm lint` disagrees, and the
+pre-commit hook rejects the result with no obvious cause. Keep personal preferences such as
+theme and font in your user settings rather than here.
+
 `content.lock.json` pins the upstream tag and a SHA-256 for every fetched file. Files are
 copied byte-for-byte, so a lock hash equals the upstream file's hash and a mismatch means
 a real upstream change or a corrupt fetch. Run `pnpm content:sync --verify` to check.
