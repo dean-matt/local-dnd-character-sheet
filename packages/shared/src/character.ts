@@ -17,36 +17,43 @@ export const editionSchema = z.enum(["classic", "one"]);
 export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 export const abilitySchema = z.enum(ABILITIES);
 
-export const contentRefSchema = z.object({
+/** Strict: a union of open objects would silently strip the keys of the other branch. */
+export const contentRefSchema = z.strictObject({
   name: z.string().min(1),
   source: z.string().min(1),
 });
 
-export const homebrewRefSchema = z.object({ homebrewId: z.string().min(1) });
+export const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
 
 /** Anything a character can point at: a catalog row, or a row in `homebrew.db`. */
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
 /**
- * A computed field a user may have typed over. `manual` survives while
- * `overridden` is false, so clearing an override and setting it again does not
- * lose the number, and a level-up recomputes `computed` either way.
+ * A computed field a user may have typed over. A null `manual` is the absent
+ * `field_overrides` row: use the computed value. There is no third state,
+ * because the table has nowhere to hold a manual value that is switched off.
+ *
+ * Writing `manual` never touches `computed`, so a level-up recomputes without
+ * stomping the edit.
  */
 export function derivedSchema<T extends z.ZodType>(value: T) {
   return z.object({
     computed: value,
-    manual: value.optional(),
-    overridden: z.boolean().default(false),
+    manual: value.nullable().default(null),
   });
 }
 
-export type Derived<T> = { computed: T; manual?: T; overridden: boolean };
+export type Derived<T> = { computed: T; manual: T | null };
 
 export function derivedValue<T>(field: Derived<T>): T {
-  return field.overridden && field.manual !== undefined ? field.manual : field.computed;
+  return field.manual ?? field.computed;
 }
 
 // Definition -----------------------------------------------------------------
+
+/** Rejects a list naming the same thing twice, where a duplicate would double-count. */
+const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
+  new Set(items.map(key)).size === items.length;
 
 export const classEntrySchema = z.object({
   class: contentRefSchema,
@@ -83,7 +90,15 @@ export const spellEntrySchema = z.object({
 export const characterDefinitionSchema = z.object({
   name: z.string().min(1),
   edition: editionSchema,
-  classes: z.array(classEntrySchema).min(1),
+  classes: z
+    .array(classEntrySchema)
+    .min(1)
+    .refine((classes) => isUnique(classes, (c) => `${c.class.name}|${c.class.source}`), {
+      error: "the same class is listed twice",
+    })
+    .refine((classes) => classes.reduce((sum, c) => sum + c.level, 0) <= 20, {
+      error: "total character level exceeds 20",
+    }),
   race: contentRefSchema,
   background: contentRefSchema,
   abilityScores: abilityScoresSchema,
@@ -138,8 +153,16 @@ export const deathSavesSchema = z.object({
 
 export const characterStateSchema = z.object({
   hitPoints: hitPointsSchema,
-  hitDice: z.array(hitDicePoolSchema),
-  spellSlots: z.array(spellSlotSchema),
+  hitDice: z
+    .array(hitDicePoolSchema)
+    .refine((pools) => isUnique(pools, (pool) => String(pool.die)), {
+      error: "the same die size is listed twice",
+    }),
+  spellSlots: z
+    .array(spellSlotSchema)
+    .refine((slots) => isUnique(slots, (slot) => String(slot.level)), {
+      error: "the same slot level is listed twice",
+    }),
   /** Warlock slots recharge on a short rest, so they are counted apart from the rest. */
   pactSlots: spellSlotSchema.nullable().default(null),
   conditions: z.array(contentRefSchema),
