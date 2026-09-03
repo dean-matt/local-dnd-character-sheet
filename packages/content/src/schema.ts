@@ -141,8 +141,28 @@ CREATE VIRTUAL TABLE entities_fts USING fts5 (
   name,
   rendered_text,
   content = 'entities',
+  content_rowid = 'rowid',
   tokenize = 'porter unicode61'
 );
+
+-- An external-content FTS5 table is not populated by writes to its source table.
+-- Without these, every search returns nothing and no error is raised.
+CREATE TRIGGER entities_fts_insert AFTER INSERT ON entities BEGIN
+  INSERT INTO entities_fts (rowid, name, rendered_text)
+  VALUES (new.rowid, new.name, new.rendered_text);
+END;
+
+CREATE TRIGGER entities_fts_delete AFTER DELETE ON entities BEGIN
+  INSERT INTO entities_fts (entities_fts, rowid, name, rendered_text)
+  VALUES ('delete', old.rowid, old.name, old.rendered_text);
+END;
+
+CREATE TRIGGER entities_fts_update AFTER UPDATE ON entities BEGIN
+  INSERT INTO entities_fts (entities_fts, rowid, name, rendered_text)
+  VALUES ('delete', old.rowid, old.name, old.rendered_text);
+  INSERT INTO entities_fts (rowid, name, rendered_text)
+  VALUES (new.rowid, new.name, new.rendered_text);
+END;
 
 -- Upstream's own map of renamed and redirected tags, so links survive renames.
 CREATE TABLE tag_redirects (

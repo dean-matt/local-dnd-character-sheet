@@ -13,7 +13,8 @@ const INSTALL = {
 
 const result = spawnSync("typos", process.argv.slice(2), { stdio: "inherit", shell: true });
 
-if (result.error?.code === "ENOENT" || result.status === 127) {
+// `shell: true` swallows ENOENT: POSIX shells exit 127, cmd.exe exits 9009.
+if (result.error?.code === "ENOENT" || result.status === 127 || result.status === 9009) {
   const hint = INSTALL[process.platform] ?? "See https://github.com/crate-ci/typos";
   console.error(`typos is not installed.\n  ${hint}`);
   process.exit(1);

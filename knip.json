@@ -9,7 +9,7 @@
     },
     "packages/content": {},
     "packages/api": {
-      "entry": ["src/db/homebrew.ts", "drizzle.homebrew.config.ts"]
+      "entry": ["src/db/client.ts", "src/db/homebrew.ts", "drizzle.homebrew.config.ts"]
     },
     "packages/web": {}
   },

@@ -8,13 +8,17 @@
     "types": ["node"],
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
-    "module": "preserve"
+    "module": "preserve",
+    "allowJs": true
   },
   "include": [
     "**/*.ts",
     "../e2e/**/*.ts",
     "../playwright.config.ts",
     "../vitest.config.ts",
-    "../packages/{shared,content,api}/src/**/*.test.ts"
+    "../scripts/*.mjs",
+    "../packages/shared/src/**/*.test.ts",
+    "../packages/content/src/**/*.test.ts",
+    "../packages/api/src/**/*.test.ts"
   ]
 }
