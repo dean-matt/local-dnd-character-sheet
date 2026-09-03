@@ -10,6 +10,7 @@ describe("checkBranchName", () => {
     "feat/1-zod-character-schemas",
     "fix/23-multiclass-slot-lookup",
     "chore/11-ci-fixtures",
+    "style/4-biome-config",
   ])("accepts %s", (branch) => {
     expect(checkBranchName(branch)).toBeNull();
   });
