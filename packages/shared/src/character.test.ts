@@ -54,7 +54,7 @@ const state: CharacterState = {
   hitPoints: { current: 21, temporary: 5 },
   hitDice: [
     { die: 8, total: 3, remaining: 1 },
-    { die: 8, total: 2, remaining: 2 },
+    { die: 6, total: 2, remaining: 2 },
   ],
   spellSlots: [],
   pactSlots: { level: 2, total: 2, expended: 1 },
@@ -92,19 +92,19 @@ describe("references", () => {
 describe("derived fields", () => {
   const schema = derivedSchema(z.int());
 
-  it("defaults to not overridden", () => {
-    expect(schema.parse({ computed: 38 })).toEqual({ computed: 38, overridden: false });
+  it("defaults to no override, matching an absent field_overrides row", () => {
+    expect(schema.parse({ computed: 38 })).toEqual({ computed: 38, manual: null });
+    expect(derivedValue({ computed: 38, manual: null })).toBe(38);
   });
 
-  it("keeps a manual value while the computed side recomputes", () => {
-    const field = schema.parse({ computed: 38, manual: 40, overridden: true });
-    expect(derivedValue(field)).toBe(40);
-    expect(derivedValue({ ...field, computed: 45 })).toBe(40);
-    expect(derivedValue({ ...field, overridden: false })).toBe(38);
+  it("prefers the manual value without disturbing the computed one", () => {
+    const field = schema.parse({ computed: 38, manual: 45 });
+    expect(derivedValue(field)).toBe(45);
+    expect(derivedValue({ ...field, computed: 52 })).toBe(45);
   });
 
-  it("falls back to computed when overridden with nothing typed", () => {
-    expect(derivedValue({ computed: 38, overridden: true })).toBe(38);
+  it("restores the computed value when the override is cleared", () => {
+    expect(derivedValue({ computed: 38, manual: null })).toBe(38);
   });
 });
 
@@ -148,5 +148,56 @@ describe("ability scores", () => {
     expect(abilityScoresSchema.safeParse({ ...definition.abilityScores, str: 31 }).success).toBe(
       false,
     );
+  });
+});
+
+describe("invariants a duplicate row would break", () => {
+  it("rejects a total level above 20", () => {
+    const overLevelled = {
+      ...definition,
+      classes: [
+        { class: { name: "Warlock", source: "XPHB" }, level: 20 },
+        { class: { name: "Rogue", source: "XPHB" }, level: 20 },
+      ],
+    };
+    expect(characterDefinitionSchema.safeParse(overLevelled).success).toBe(false);
+  });
+
+  it("rejects the same class listed twice", () => {
+    const doubled = {
+      ...definition,
+      classes: [
+        { class: { name: "Rogue", source: "XPHB" }, level: 3 },
+        { class: { name: "Rogue", source: "XPHB" }, level: 2 },
+      ],
+    };
+    expect(characterDefinitionSchema.safeParse(doubled).success).toBe(false);
+  });
+
+  it("rejects two pools of the same hit die size", () => {
+    const split = {
+      ...state,
+      hitDice: [
+        { die: 8, total: 3, remaining: 3 },
+        { die: 8, total: 3, remaining: 3 },
+      ],
+    };
+    expect(characterStateSchema.safeParse(split).success).toBe(false);
+  });
+
+  it("rejects two rows for the same slot level", () => {
+    const split = {
+      ...state,
+      spellSlots: [
+        { level: 1, total: 2, expended: 0 },
+        { level: 1, total: 2, expended: 1 },
+      ],
+    };
+    expect(characterStateSchema.safeParse(split).success).toBe(false);
+  });
+
+  it("refuses a reference carrying both key styles rather than dropping one", () => {
+    const ambiguous = { name: "Dagger", source: "XPHB", homebrewId: "hb_01" };
+    expect(entryRefSchema.safeParse(ambiguous).success).toBe(false);
   });
 });
