@@ -9,8 +9,22 @@
  * checks the current branch and exits non-zero when it fails.
  */
 import { execFileSync } from "node:child_process";
+import { realpathSync } from "node:fs";
 
-const TYPES = ["feat", "fix", "chore", "docs", "refactor", "test", "perf", "build", "ci", "revert"];
+/** The commit types `@commitlint/config-conventional` accepts, so the two lists cannot drift. */
+const TYPES = [
+  "feat",
+  "fix",
+  "chore",
+  "docs",
+  "refactor",
+  "test",
+  "perf",
+  "build",
+  "ci",
+  "revert",
+  "style",
+];
 
 const PATTERN = new RegExp(`^(${TYPES.join("|")})/[0-9]+-[a-z0-9-]+$`);
 
@@ -30,7 +44,8 @@ function currentBranch() {
   return branch === "" ? null : branch;
 }
 
-if (import.meta.filename === process.argv[1]) {
+// ESM resolves symlinks and argv[1] does not, so comparing them raw fails open.
+if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
   const error = checkBranchName(currentBranch());
   if (error !== null) {
     console.error(
