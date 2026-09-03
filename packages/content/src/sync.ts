@@ -13,7 +13,15 @@
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
@@ -30,7 +38,7 @@ function git(args: string[], cwd?: string): string {
 }
 
 /** Lock keys are always forward-slashed so a lockfile is portable across platforms. */
-function posix(path: string): string {
+export function posix(path: string): string {
   return sep === "/" ? path : path.split(sep).join("/");
 }
 
@@ -50,6 +58,11 @@ async function verify(dest: string): Promise<void> {
     lock = JSON.parse(readFileSync(LOCKFILE, "utf8"));
   } catch {
     throw new Error("No content.lock.json. Run `pnpm content:sync` first.");
+  }
+  if (!existsSync(dest)) {
+    throw new Error(
+      `${relative(ROOT, dest)} does not exist. Run \`pnpm content:sync\` to fetch it.`,
+    );
   }
   const actual = await hashTree(dest);
   const drifted = Object.keys(lock.files).filter((f) => actual[f] !== lock.files[f]);
@@ -72,10 +85,13 @@ async function sync(manifest: Manifest, tag: string, dest: string): Promise<void
     console.log(`Cloning ${manifest.repo} at ${tag}...`);
     git(["clone", "--depth", "1", "--branch", tag, "--filter=blob:none", manifest.repo, temp]);
 
-    rmSync(dest, { recursive: true, force: true });
+    const staging = `${dest}.incoming`;
+    rmSync(staging, { recursive: true, force: true });
     for (const dir of manifest.include) {
-      cpSync(join(temp, dir), join(dest, dir), { recursive: true });
+      cpSync(join(temp, dir), join(staging, dir), { recursive: true });
     }
+    rmSync(dest, { recursive: true, force: true });
+    renameSync(staging, dest);
 
     const files = await hashTree(dest);
     const lock: Lock = { tag, fetchedAt: new Date().toISOString(), files };
@@ -87,20 +103,29 @@ async function sync(manifest: Manifest, tag: string, dest: string): Promise<void
   }
 }
 
-const manifest: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
-const dest = join(ROOT, manifest.dest);
-const args = process.argv.slice(2);
-const tagFlag = args.indexOf("--tag");
-const tag = tagFlag === -1 ? manifest.tag : args[tagFlag + 1];
+async function main(): Promise<void> {
+  const manifest: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
+  const dest = join(ROOT, manifest.dest);
+  const args = process.argv.slice(2);
+  const tagFlag = args.indexOf("--tag");
+  const tag = tagFlag === -1 ? manifest.tag : args[tagFlag + 1];
 
-if (!tag) throw new Error("--tag requires a value");
+  if (!tag) throw new Error("--tag requires a value");
 
-if (args.includes("--verify")) {
-  await verify(dest);
-} else {
+  if (args.includes("--verify")) {
+    await verify(dest);
+    return;
+  }
+
   await sync(manifest, tag, dest);
   if (tag !== manifest.tag) {
     writeFileSync(MANIFEST, `${JSON.stringify({ ...manifest, tag }, null, 2)}\n`);
     console.log(`Updated content.manifest.json to ${tag}`);
   }
+}
+
+// Only run when invoked as a script. Without this guard, importing anything from
+// this module — a test, for one — performs a full 109 MB fetch.
+if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
+  await main();
 }

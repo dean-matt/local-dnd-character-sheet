@@ -6,11 +6,16 @@
  *   definition vs state   `characters` holds who the character is; `character_state`
  *                         holds what is true right now. A long rest touches state
  *                         only, so it can never corrupt the sheet.
- *   computed vs manual    derived numbers carry both values plus an override flag,
- *                         so a level-up recomputes without stomping your edits.
+ *   computed vs manual    derived numbers are computed on read; `field_overrides`
+ *                         holds only the values a user has edited. An absent row
+ *                         means "use the computed value", so a level-up recomputes
+ *                         without stomping an edit.
+ *
+ * Cascading deletes need `PRAGMA foreign_keys = ON`, which SQLite leaves off by
+ * default. Open these databases through `./client.ts`, never directly.
  */
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const characters = sqliteTable("characters", {
   id: text("id").primaryKey(),
@@ -40,7 +45,7 @@ export const fieldOverrides = sqliteTable(
     field: text("field").notNull(),
     value: text("value").notNull(),
   },
-  (t) => [index("field_overrides_by_character").on(t.characterId)],
+  (t) => [primaryKey({ columns: [t.characterId, t.field] })],
 );
 
 /** Bounded: the newest 200 rows per character are kept, older ones pruned on insert. */
