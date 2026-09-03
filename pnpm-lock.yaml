@@ -86,7 +86,11 @@ importers:
         specifier: ^7.6.13
         version: 7.6.13
 
-  packages/shared: {}
+  packages/shared:
+    dependencies:
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
 
   packages/web:
     dependencies:
