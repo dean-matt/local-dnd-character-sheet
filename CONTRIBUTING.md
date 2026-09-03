@@ -25,11 +25,17 @@ a real upstream change or a corrupt fetch. Run `pnpm content:sync --verify` to c
 
 ## Branching and commits
 
-Branches are cut from an issue, so the work and the reason for it stay linked:
+Branches are cut from an issue, so the work and the reason for it stay linked, and are
+named `<type>/<issue>-<slug>` — the same type vocabulary the commits use:
 
 ```bash
-gh issue develop 12 --checkout
+gh issue develop 12 --name feat/12-spell-slot-lookup --checkout
 ```
+
+`scripts/branch-name.mjs` rejects anything else on pre-commit, because a branch name is
+free to change right up until the first commit and awkward afterwards. It also rejects
+committing on `main`, and stays quiet on a detached HEAD so a rebase or a bisect still
+works.
 
 Direct pushes to `main` are rejected by a repository ruleset. Everything lands through a
 pull request, including your own. Approvals are set to zero — GitHub does not let you
@@ -37,7 +43,10 @@ approve your own pull request, so requiring one would deadlock a solo repository
 it to one the day a second person joins.
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), enforced by
-`commitlint`. Scopes are `shared`, `content`, `api`, `web`, `docs`, `repo`, or `deps`.
+`commitlint` on `commit-msg`. Types are `feat`, `fix`, `chore`, `docs`, `refactor`,
+`test`, `perf`, `build`, `ci`, and `revert`; scopes are `shared`, `content`, `api`,
+`web`, `docs`, `repo`, or `deps`. The branch takes the type of the change it carries, so
+a branch of fixes is `fix/...` even where one commit inside it is a `test`.
 
 ```
 feat(content): resolve _copy chains when importing classes

@@ -8,6 +8,9 @@ pre-commit:
     - name: typecheck
       run: pnpm typecheck
 
+    - name: branch-name
+      run: node scripts/branch-name.mjs
+
 commit-msg:
   jobs:
     - name: commitlint
