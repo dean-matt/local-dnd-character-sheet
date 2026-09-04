@@ -21,9 +21,8 @@ export type Loader = {
    * database themselves.
    *
    * No `_copy` survives this far. `_versions` is a separate inheritance
-   * mechanism carrying its own `_mod`, is not resolved, and reaches loaders
-   * intact in `races.json` and `feats.json`; a loader over either must decide
-   * what to do with it.
+   * mechanism with its own `_mod`, is not resolved, and reaches `races.json` and
+   * `feats.json` loaders intact.
    */
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };

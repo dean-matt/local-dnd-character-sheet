@@ -4,16 +4,12 @@
  * An entry carrying a `_copy` block is a diff against another entry in the same
  * file. The block names the parent by the identity fields it lists, `_mod`
  * describes edits to apply after the clone, and `_preserve` names the parent
- * metadata that survives the copy. `_meta.internalCopies` names the properties
- * that need any of this, which is why no entity type is hardcoded here.
+ * metadata that survives it. `_meta.internalCopies` names the properties that
+ * need any of this, which is why no entity type is hardcoded here.
  *
- * `resolveCopies` is pure: it returns a new source with the copies resolved and
- * the `_copy` blocks stripped, and throws on a cycle or a missing parent rather
- * than leaving a half-inherited record for a loader to import.
- *
- * A parent is only ever looked up in the same file, and matched on the fields it
- * declares rather than ones it would inherit. Bestiary entries copy across files
- * and so fail here.
+ * Anything unresolvable throws, rather than reaching a loader half-inherited.
+ * That includes a parent in another file: bestiary entries copy that way,
+ * character-relevant ones never do.
  */
 
 type Entry = Record<string, unknown>;
@@ -34,13 +30,12 @@ const NOT_INHERITED = [
 ];
 
 /**
- * Keys whose values `replaceTxt` descends into — every string-valued key that
- * holds prose anywhere in the vendored entry trees.
+ * Keys whose values `replaceTxt` descends into: every prose-bearing key in the
+ * vendored entry trees.
  *
- * An allowlist rather than a blocklist, because the strings it leaves alone are
- * not only structural (`type`, `style`, `colStyles`) but referential:
- * `subclassFeature`, `reprintedAs` and `data.overwrite` hold `Name|Source|...`
- * pointers at other entries, and rewriting the prose must not rewrite a link.
+ * Not a blocklist, because some strings it must skip are references rather than
+ * structure — `subclassFeature`, `reprintedAs` and `data.overwrite` hold
+ * `Name|Source|...` pointers, and rewriting prose must not rewrite a link.
  */
 const TEXT_KEYS = new Set([
   "entry",
@@ -78,8 +73,6 @@ function describe(entry: Entry, keys: string[]): string {
   return `"${String(entry.name)}" (${String(entry.source)})${extra ? ` [${extra}]` : ""}`;
 }
 
-// ponytail: O(copies x entries) per file. Upgrade path is one index per
-// identity-key shape, built once.
 function findParent(entries: Entry[], copy: Entry, keys: string[]): Entry | undefined {
   return entries.find((candidate) => keys.every((key) => candidate[key] === copy[key]));
 }
@@ -98,9 +91,8 @@ function replaceText(node: unknown, pattern: RegExp, replacement: string): unkno
 
 /**
  * splice clamps, so an unchecked index past the end appends instead of landing
- * where the mod said, and for `replaceArr` leaves the element it meant to
- * replace in place. `insertArr` alone accepts `length`: inserting there is an
- * append, but nothing sits at `length` to replace.
+ * where the mod said, and `replaceArr` also leaves its target in place.
+ * `insertArr` alone accepts `length`, since inserting there is an append.
  */
 function checkIndex(index: number, list: unknown[], mode: string, context: string): number {
   const last = mode === "insertArr" ? list.length : list.length - 1;
@@ -122,21 +114,19 @@ function replaceIndex(list: unknown[], replace: unknown, context: string): numbe
   return index;
 }
 
-/** The `_mod` modes that splice into an array, all of which require `items`. */
 const ARRAY_MODES = new Set(["appendArr", "prependArr", "insertArr", "replaceArr"]);
 
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {
   const target = entry[property];
   const splices = ARRAY_MODES.has(String(op.mode));
-  // Appending to a property the parent lacks is normal, so absent falls back to
-  // `[]`. Present and not a list means the mod and the data disagree, where that
-  // fallback would silently drop the value. `replaceTxt` needs no list at all.
+  // Appending to a property the parent lacks is normal. Present and not a list
+  // means the mod and the data disagree, where `[]` would drop the value.
   if (splices && target !== undefined && !Array.isArray(target)) {
     throw new Error(`${context}: _mod.${property} expects a list, found ${typeof target}`);
   }
   const list = Array.isArray(target) ? [...target] : [];
   // Splicing a missing `items` inserts a literal `undefined`, stored as NULL.
-  // Scoped to the known modes so an unrecognized one reports as unrecognized.
+  // Only for known modes, so an unrecognized one reports as unrecognized.
   if (splices && op.items === undefined) {
     throw new Error(`${context}: ${String(op.mode)} needs items`);
   }
@@ -207,10 +197,9 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
 /**
  * The entry's `_copy` block, validated, or undefined when it has none.
  *
- * Gating on `isRecord` would read a malformed `_copy` as "no copy", and so would
- * `assertResolved` — the net under this — letting the entry reach a loader with
- * none of the parent's fields. A misshapen `_mod` or `_preserve` would likewise
- * be skipped rather than applied.
+ * Gating on `isRecord` would read a malformed block as "no copy" — as would
+ * `assertResolved`, the net under this — so the entry would reach a loader with
+ * none of the parent's fields.
  */
 function copyBlock(entry: Entry, context: string): Entry | undefined {
   if (!("_copy" in entry)) return undefined;
@@ -275,13 +264,11 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
 
 /**
  * Throws if a top-level entry still carries a `_copy`, meaning the file needed
- * resolving and `_meta.internalCopies` did not say so. Many bestiary files are
- * like that, and without this the gate below hands a loader the diff instead of
- * the record, in silence.
+ * resolving and `_meta.internalCopies` did not say so — true of many bestiary
+ * files, which would otherwise reach a loader as diffs, in silence.
  *
- * Direct elements only. A `_copy` deeper in a `data[].entries[]` tree, as
- * `renderdemo.json` has, is missed. Catching it costs a full tree walk of
- * `adventure/` and `book/` on every loader read, for a shape no
+ * Direct elements only. Catching a `_copy` deeper in a `data[].entries[]` tree
+ * costs a full walk of `adventure/` and `book/` on every read, for a shape no
  * character-relevant file uses.
  */
 function assertResolved(source: Entry, label: string): void {
