@@ -17,6 +17,23 @@ grammar, the `_copy` counts per file, and the 21 class-resource labels.
    conditions, and actions have none. Classes, items, backgrounds, and races do.
 3. **Check for a `classTableGroups`-style structure** before writing a parser for prose.
 
+## The loader contract
+
+A loader is pure: it declares the files it needs and maps them to rows. Reading the
+filesystem, opening the database, and inserting are the framework's job.
+
+```ts
+export const spells: Loader = {
+  name: "spells",
+  files: ["data/spells/spells-*.json"],   // vendor-relative paths or globs
+  rows: (sources) => ({ spells: [...] }), // keyed by table, inserted in key order
+};
+```
+
+`build-db.ts` runs `LOADERS` in array order — that is the dependency order — inside one
+transaction against `content.db.incoming`, renamed into place only once every loader has
+succeeded. A throw anywhere aborts the build and leaves the previous catalog in place.
+
 ## The order
 
 ```

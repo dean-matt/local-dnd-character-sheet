@@ -52,19 +52,22 @@ async function hashTree(dir: string): Promise<Record<string, string>> {
   return Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b)));
 }
 
-async function verify(dest: string): Promise<void> {
+/** Throws unless `vendor/` matches the lockfile. Returns the directory it verified. */
+export async function verifyVendor(): Promise<string> {
+  const { dest }: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
+  const dir = join(ROOT, dest);
   let lock: Lock;
   try {
     lock = JSON.parse(readFileSync(LOCKFILE, "utf8"));
   } catch {
     throw new Error("No content.lock.json. Run `pnpm content:sync` first.");
   }
-  if (!existsSync(dest)) {
+  if (!existsSync(dir)) {
     throw new Error(
-      `${relative(ROOT, dest)} does not exist. Run \`pnpm content:sync\` to fetch it.`,
+      `${relative(ROOT, dir)} does not exist. Run \`pnpm content:sync\` to fetch it.`,
     );
   }
-  const actual = await hashTree(dest);
+  const actual = await hashTree(dir);
   const drifted = Object.keys(lock.files).filter((f) => actual[f] !== lock.files[f]);
   const extra = Object.keys(actual).filter((f) => !(f in lock.files));
   if (drifted.length || extra.length) {
@@ -77,6 +80,7 @@ async function verify(dest: string): Promise<void> {
   console.log(
     `vendor/ matches content.lock.json — ${Object.keys(actual).length} files, tag ${lock.tag}`,
   );
+  return dir;
 }
 
 async function sync(manifest: Manifest, tag: string, dest: string): Promise<void> {
@@ -104,20 +108,19 @@ async function sync(manifest: Manifest, tag: string, dest: string): Promise<void
 }
 
 async function main(): Promise<void> {
-  const manifest: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
-  const dest = join(ROOT, manifest.dest);
   const args = process.argv.slice(2);
+  if (args.includes("--verify")) {
+    await verifyVendor();
+    return;
+  }
+
+  const manifest: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
   const tagFlag = args.indexOf("--tag");
   const tag = tagFlag === -1 ? manifest.tag : args[tagFlag + 1];
 
   if (!tag) throw new Error("--tag requires a value");
 
-  if (args.includes("--verify")) {
-    await verify(dest);
-    return;
-  }
-
-  await sync(manifest, tag, dest);
+  await sync(manifest, tag, join(ROOT, manifest.dest));
   if (tag !== manifest.tag) {
     writeFileSync(MANIFEST, `${JSON.stringify({ ...manifest, tag }, null, 2)}\n`);
     console.log(`Updated content.manifest.json to ${tag}`);
