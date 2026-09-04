@@ -217,4 +217,68 @@ describe("buildContent", () => {
       /Loader "spells" failed/,
     );
   });
+
+  describe("_copy resolution", () => {
+    const copies = (...background: Record<string, unknown>[]) =>
+      writeFileSync(
+        join(vendorDir, "data", "copies.json"),
+        JSON.stringify({ _meta: { internalCopies: ["background"] }, background }),
+      );
+
+    const backgrounds: Loader = {
+      name: "backgrounds",
+      files: ["data/copies.json"],
+      rows: (sources) => ({
+        lookups: (
+          sources.get("data/copies.json") as { background: Record<string, unknown>[] }
+        ).background.map((entry) => ({
+          kind: "background",
+          name: String(entry.name),
+          source: String(entry.source),
+          edition: "classic",
+          json: JSON.stringify(entry),
+        })),
+      }),
+    };
+
+    it("hands loaders complete records, so no _copy reaches a row", () => {
+      copies(
+        { name: "Acolyte", source: "PHB", entries: ["Shelter of the Faithful"] },
+        {
+          name: "Baldur's Gate Acolyte",
+          source: "BGDIA",
+          _copy: { name: "Acolyte", source: "PHB" },
+        },
+      );
+
+      buildContent({ vendorDir, dbPath, loaders: [backgrounds], meta: {} });
+
+      const db = new Database(dbPath, { readonly: true });
+      const rows = db.prepare("SELECT json FROM lookups ORDER BY rowid").pluck().all() as string[];
+      db.close();
+      const entries = rows.map((row) => JSON.parse(row));
+      expect(entries.map((entry) => entry.entries)).toEqual([
+        ["Shelter of the Faithful"],
+        ["Shelter of the Faithful"],
+      ]);
+      expect(entries.some((entry) => "_copy" in entry)).toBe(false);
+    });
+
+    it("names the loader and the file when a _copy cannot be resolved", () => {
+      copies({ name: "Augen Trust", source: "EGW", _copy: { name: "Spy", source: "PHB" } });
+
+      let thrown: Error | undefined;
+      try {
+        buildContent({ vendorDir, dbPath, loaders: [backgrounds], meta: {} });
+      } catch (error) {
+        thrown = error as Error;
+      }
+
+      expect(thrown?.message).toMatch(/Loader "backgrounds" failed/);
+      expect((thrown?.cause as Error)?.message).toMatch(
+        /data\/copies\.json background: "Augen Trust" \(EGW\) copies "Spy" \(PHB\)/,
+      );
+      expect(existsSync(dbPath)).toBe(false);
+    });
+  });
 });

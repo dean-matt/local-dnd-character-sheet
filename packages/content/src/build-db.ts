@@ -19,6 +19,7 @@ import {
 } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
+import { resolveCopies } from "./load/copy.ts";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
 import { posix, verifyVendor } from "./sync.ts";
@@ -61,11 +62,13 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
       throw new Error(`no file under ${vendorDir} matches ${pattern}`);
     }
     for (const match of matches) {
+      let parsed: unknown;
       try {
-        sources.set(match, JSON.parse(readFileSync(join(vendorDir, match), "utf8")));
+        parsed = JSON.parse(readFileSync(join(vendorDir, match), "utf8"));
       } catch (cause) {
         throw new Error(`${match} could not be read`, { cause });
       }
+      sources.set(match, resolveCopies(parsed, match));
     }
   }
   return sources;

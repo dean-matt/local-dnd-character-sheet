@@ -51,7 +51,11 @@ actions.json      0
 
 Spells being clean is why they are the right first target for the ETL.
 
-`_meta.internalCopies` in each file names which keys need resolving.
+`_meta.internalCopies` in each file names which keys need resolving, and
+`packages/content/src/load/copy.ts` does it as part of reading a source, so loaders only
+ever see complete records. Five `_mod` modes appear in character data — `appendArr`,
+`prependArr`, `insertArr`, `replaceArr` and `replaceTxt`. The bestiary's `setProp` and
+`addSkills` are unsupported on purpose, as are its cross-file parents.
 
 ## Tag markup
 

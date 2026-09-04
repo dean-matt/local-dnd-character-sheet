@@ -4,7 +4,8 @@
  * `build-db.ts` runs the registry in array order, and that order is the insert
  * order: a loader whose rows must land after another's — an `entities` row whose
  * FTS rank depends on an earlier one, say — goes later in the array. A loader
- * cannot read what an earlier one wrote; it only ever sees its own files.
+ * cannot read what an earlier one wrote; it only ever sees its own files, with
+ * `_copy` inheritance already resolved by `copy.ts`.
  */
 
 /** A column a row omits, or carries as `undefined`, is written as NULL. */
@@ -16,7 +17,8 @@ export type Loader = {
   files: string[];
   /**
    * Maps the parsed sources, keyed by vendor-relative path, to the rows to
-   * insert, keyed by table. Pure — loaders never touch the filesystem or the
+   * insert, keyed by table. Every entry is a complete record — no `_copy` or
+   * `_mod` survives this far. Pure — loaders never touch the filesystem or the
    * database themselves.
    */
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
