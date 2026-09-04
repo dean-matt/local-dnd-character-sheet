@@ -13,12 +13,17 @@
 
 import { proficiencyBonus } from "./core.ts";
 
-export function spellSaveDc(spellcastingModifier: number, level: number): number {
-  return 8 + proficiencyBonus(level) + spellcastingModifier;
+/**
+ * Both take the total character level, never a caster level — proficiency comes
+ * from the character, so passing `multiclassCasterLevel` here reads as if it
+ * would work and is wrong by the difference between the two.
+ */
+export function spellSaveDc(spellcastingModifier: number, characterLevel: number): number {
+  return 8 + proficiencyBonus(characterLevel) + spellcastingModifier;
 }
 
-export function spellAttackBonus(spellcastingModifier: number, level: number): number {
-  return proficiencyBonus(level) + spellcastingModifier;
+export function spellAttackBonus(spellcastingModifier: number, characterLevel: number): number {
+  return proficiencyBonus(characterLevel) + spellcastingModifier;
 }
 
 /**
@@ -66,7 +71,11 @@ export function multiclassCasterLevel(classes: readonly CasterClassLevel[]): num
   }, 0);
 }
 
-/** Row n is caster level n + 1; the nine columns are slot levels 1-9. PHB p.165. */
+/**
+ * Row n is caster level n + 1; the nine columns are slot levels 1-9. PHB p.165,
+ * which is digit for digit any full caster's upstream `rowsSpellProgression` —
+ * that is how a transposed digit here can be checked against the vendor data.
+ */
 const MULTICLASS_SLOTS: readonly (readonly number[])[] = [
   [2, 0, 0, 0, 0, 0, 0, 0, 0],
   [3, 0, 0, 0, 0, 0, 0, 0, 0],

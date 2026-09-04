@@ -1,8 +1,4 @@
 /**
- * What a resource recovers on, and how an item's upstream `recharge` maps onto it.
- */
-
-/**
  * What a resource recovers on. The vocabulary is a rule rather than a storage
  * detail, so it lives here and the character schema validates against it.
  */

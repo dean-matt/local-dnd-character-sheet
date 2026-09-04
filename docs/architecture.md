@@ -14,25 +14,26 @@ browser :5173  ──/api/*──>  Vite dev proxy  ──>  Hono :8787
                               (raw SQL)         (Drizzle)        (Drizzle)
 ```
 
-Four packages are imported by both `api` and `web`, because schemas, rules arithmetic,
-tag rendering and dice all need to run on both sides of the wire. They are the main
-reason the backend is TypeScript.
+Schemas, rules arithmetic and dice all need to run on both sides of the wire, so `api`
+and `web` import all three. They are the main reason the backend is TypeScript.
 
 ```
-rules      character   dice   tags
+rules      character   dice
   ▲            │
   └────────────┘
 ```
 
 Each is named for its domain rather than for the fact that two things import it, which
-is why there is no `shared`. `rules`, `dice` and `tags` depend on nothing at all;
-`character` depends on `rules` because the rest-trigger vocabulary a resource is stored
-with is a rule, not a storage detail. `rules` never takes a `CharacterDefinition` — a
-function that wants the whole character is a projection and belongs with the schemas,
-and the missing dependency edge is what enforces that.
+is why there is no `shared`. `rules` and `dice` depend on nothing at all; `character`
+depends on `rules` because the rest-trigger vocabulary a resource is stored with is a
+rule, not a storage detail. `rules` never takes a `CharacterDefinition` — a function
+that wants the whole character is a projection and belongs with the schemas, and the
+missing dependency edge is what enforces that.
 
-`packages/tags` does not exist until the tag parser is written; the parser goes there
-rather than into `character`.
+The tag parser joins them as `packages/tags` when it is written, and a catalog row's
+schema gets a leaf package of its own at the first endpoint that returns one. Neither
+belongs in `character`, and neither belongs in `content`, whose `better-sqlite3`
+dependency has to stay out of the web bundle.
 
 ## Three databases
 

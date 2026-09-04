@@ -57,8 +57,8 @@ Warlock **pact magic** is not part of this. Pact slots are tracked separately, a
 the same level, and recover on a short rest. A warlock/wizard has two independent slot
 pools.
 
-The combined table is in `content.db` under `spell_slots` for single-class casters; the
-multiclass table is a constant in `spellcasting.ts` because upstream does not ship it.
+Single-class slots come from `content.db` under `spell_slots`; the multiclass table is a
+constant in `spellcasting.ts`, digit for digit a full caster's `rowsSpellProgression`.
 
 ## Rest resets
 
