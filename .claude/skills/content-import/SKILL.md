@@ -32,7 +32,7 @@ export const spells: Loader = {
 
 `build-db.ts` runs `LOADERS` in array order — which is insert order, and all the ordering
 the framework has: a loader cannot read what an earlier one wrote. Everything runs in one
-transaction against `content.db.incoming`, renamed into place only once every loader has
+transaction against a per-process staging file, renamed into place only once every loader has
 succeeded. A throw anywhere aborts the build and leaves the previous catalog in place.
 
 ## The order
