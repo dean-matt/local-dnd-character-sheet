@@ -107,7 +107,6 @@ data/              the three SQLite databases, gitignored
 |---|---|
 | [`CLAUDE.md`](CLAUDE.md) | Working agreement for agents and contributors |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Why every fence in this repository exists, and how to work here |
-| [`.claude/PONYTAIL.md`](.claude/PONYTAIL.md) | The coding disposition imported by `CLAUDE.md` |
 | [`NOTICE`](NOTICE) | Licensing, and why game content is not committed |
 | [`docs/architecture.md`](docs/architecture.md) | Request flow, the three databases, content tiers, deliberate absences |
 | [`docs/data-model.md`](docs/data-model.md) | Character schema, overrides, references, resource counters |

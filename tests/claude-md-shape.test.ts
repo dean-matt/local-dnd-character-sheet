@@ -24,10 +24,6 @@ describe("CLAUDE.md", () => {
     ).toBeLessThanOrEqual(MAX_LINES);
   });
 
-  it("imports the coding disposition rather than restating it", () => {
-    expect(claudeMd).toContain("@.claude/PONYTAIL.md");
-  });
-
   it("indexes every skill, so skills compete for the same budget", () => {
     const skills = readdirSync(join(ROOT, ".claude/skills"), { withFileTypes: true })
       .filter((e) => e.isDirectory())
