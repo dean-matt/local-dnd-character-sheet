@@ -55,8 +55,13 @@ async function hashTree(dir: string): Promise<Record<string, string>> {
 
 /** Throws unless `vendor/` matches the lockfile. Returns the directory and the tag it pins. */
 export async function verifyVendor(): Promise<{ dir: string; tag: string }> {
-  const { dest }: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
-  const dir = join(ROOT, dest);
+  let manifest: Manifest;
+  try {
+    manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
+  } catch (cause) {
+    throw new Error(`Could not read ${relative(ROOT, MANIFEST)}`, { cause });
+  }
+  const dir = join(ROOT, manifest.dest);
   let lock: Lock;
   try {
     lock = JSON.parse(readFileSync(LOCKFILE, "utf8"));

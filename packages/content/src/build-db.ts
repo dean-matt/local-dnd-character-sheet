@@ -15,6 +15,7 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  statSync,
 } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
@@ -60,7 +61,11 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
       throw new Error(`no file under ${vendorDir} matches ${pattern}`);
     }
     for (const match of matches) {
-      sources.set(match, JSON.parse(readFileSync(join(vendorDir, match), "utf8")));
+      try {
+        sources.set(match, JSON.parse(readFileSync(join(vendorDir, match), "utf8")));
+      } catch (cause) {
+        throw new Error(`${match} could not be read`, { cause });
+      }
     }
   }
   return sources;
@@ -96,13 +101,23 @@ function isRunning(pid: number): boolean {
  * Removes staging files whose build is gone. A per-process name means no run
  * cleans up after another, so a killed build would otherwise leave a catalog's
  * worth of bytes in `data/` that no later run ever reaps.
+ *
+ * A pid outlives the build that held it and is eventually handed to something
+ * else, so age is the backstop: no build runs for a day.
  */
+const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+
 function reapStaging(dbPath: string): void {
   const dir = dirname(dbPath);
   for (const file of globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dir })) {
-    const pid = /\.(\d+)\.incoming(?:-wal|-shm)?$/.exec(file)?.[1];
-    if (!pid || (Number(pid) !== process.pid && isRunning(Number(pid)))) continue;
-    rmSync(join(dir, file), { force: true });
+    const path = join(dir, file);
+    const pid = Number(/\.(\d+)\.incoming(?:-wal|-shm)?$/.exec(file)?.[1]);
+    if (!pid) continue;
+    const mtimeMs = statSync(path, { throwIfNoEntry: false })?.mtimeMs;
+    if (mtimeMs === undefined) continue;
+    const stale = Date.now() - mtimeMs > STALE_AFTER_MS;
+    if (pid !== process.pid && isRunning(pid) && !stale) continue;
+    rmSync(path, { force: true });
   }
 }
 

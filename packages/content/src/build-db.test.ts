@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
@@ -148,7 +149,10 @@ describe("buildContent", () => {
   });
 
   it("reaps a staging file left behind by a build that is gone", () => {
-    const orphan = join(dirname(dbPath), `${basename(dbPath)}.999999.incoming`);
+    // A child that has already exited, rather than a pid picked out of the air:
+    // Linux's pid_max makes a large literal a live process often enough to flake.
+    const dead = spawnSync(process.execPath, ["-e", ""]).pid;
+    const orphan = join(dirname(dbPath), `${basename(dbPath)}.${dead}.incoming`);
     mkdirSync(dirname(dbPath), { recursive: true });
     writeFileSync(orphan, "stale");
     writeFileSync(`${orphan}-wal`, "stale");
@@ -158,12 +162,27 @@ describe("buildContent", () => {
     expect(globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dirname(dbPath) })).toEqual([]);
   });
 
-  it("reads only files, so a glob spanning directories still loads", () => {
+  it("reads only files, so a recursive glob spanning directories still loads", () => {
     mkdirSync(join(vendorDir, "data", "spells"), { recursive: true });
     writeFileSync(join(vendorDir, "data", "spells", "phb.json"), '{"entries":["Fireball"]}');
-    const wide: Loader = { ...lookup("condition"), files: ["data/*"] };
+    const wide: Loader = { ...lookup("condition"), files: ["data/**/*"] };
 
-    expect(buildContent({ vendorDir, dbPath, loaders: [wide], meta: {} })).toEqual({ lookups: 2 });
+    expect(buildContent({ vendorDir, dbPath, loaders: [wide], meta: {} })).toEqual({ lookups: 3 });
+  });
+
+  it("names the file a loader could not parse, not just the loader", () => {
+    writeFileSync(join(vendorDir, "data", "truncated.json"), '{"entries":[');
+
+    let thrown: Error | undefined;
+    try {
+      buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+    } catch (error) {
+      thrown = error as Error;
+    }
+
+    expect(thrown?.message).toMatch(/Loader "condition" failed/);
+    expect((thrown?.cause as Error)?.message).toMatch(/data\/truncated\.json/);
+    expect(((thrown?.cause as Error)?.cause as Error)?.name).toBe("SyntaxError");
   });
 
   it("leaves the previous catalog in place when a rebuild fails", () => {
