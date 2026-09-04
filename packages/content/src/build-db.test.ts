@@ -63,6 +63,41 @@ describe("buildContent", () => {
     db.close();
   });
 
+  it("spans the union of a batch's keys, so an optional column is never dropped", () => {
+    const partial: Loader = {
+      name: "conditions",
+      files: ["data/*.json"],
+      rows: () => ({
+        lookups: [
+          { kind: "condition", name: "Blinded", source: "PHB", json: "{}" },
+          { kind: "condition", name: "Prone", source: "XPHB", edition: "one", json: "{}" },
+        ],
+      }),
+    };
+
+    buildContent({ vendorDir, dbPath, loaders: [partial], meta: {} });
+
+    const db = new Database(dbPath, { readonly: true });
+    expect(db.prepare("SELECT name, edition FROM lookups ORDER BY rowid").all()).toEqual([
+      { name: "Blinded", edition: null },
+      { name: "Prone", edition: "one" },
+    ]);
+    db.close();
+  });
+
+  it("names the loader when its rows violate the schema", () => {
+    const invalid: Loader = {
+      name: "conditions",
+      files: ["data/*.json"],
+      rows: () => ({ lookups: [{ kind: "condition", name: "Blinded", source: "PHB" }] }),
+    };
+
+    expect(() => buildContent({ vendorDir, dbPath, loaders: [invalid], meta: {} })).toThrow(
+      /Loader "conditions" failed/,
+    );
+    expect(existsSync(dbPath)).toBe(false);
+  });
+
   it("runs the registry in array order, so a loader can depend on an earlier table", () => {
     const order: string[] = [];
     const record = (name: string): Loader => ({

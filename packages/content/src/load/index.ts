@@ -6,7 +6,8 @@
  * loader goes after whatever it reads.
  */
 
-export type Row = Record<string, string | number | null>;
+/** A column a row omits, or carries as `undefined`, is written as NULL. */
+export type Row = Record<string, string | number | null | undefined>;
 
 export type Loader = {
   name: string;

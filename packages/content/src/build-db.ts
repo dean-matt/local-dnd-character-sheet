@@ -58,13 +58,15 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
 }
 
 function insert(db: Database.Database, table: string, rows: Row[]): void {
-  const [first] = rows;
-  if (!first) return;
-  const columns = Object.keys(first);
+  if (rows.length === 0) return;
+  // Rows in one batch need not agree on the optional columns — an item with no
+  // rarity simply omits the key — so the statement spans their union and a key a
+  // row does not carry is written as NULL rather than dropped from the insert.
+  const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))];
   const statement = db.prepare(
     `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
   );
-  for (const row of rows) statement.run(columns.map((column) => row[column]));
+  for (const row of rows) statement.run(columns.map((column) => row[column] ?? null));
 }
 
 function discard(path: string): void {
@@ -90,15 +92,13 @@ export function buildContent({
     db.transaction(() => {
       for (const [key, value] of Object.entries(meta)) stamp.run(key, value);
       for (const loader of loaders) {
-        let tables: Record<string, Row[]>;
         try {
-          tables = loader.rows(readSources(vendorDir, loader));
+          for (const [table, rows] of Object.entries(loader.rows(readSources(vendorDir, loader)))) {
+            insert(db, table, rows);
+            counts[table] = (counts[table] ?? 0) + rows.length;
+          }
         } catch (cause) {
           throw new Error(`Loader "${loader.name}" failed`, { cause });
-        }
-        for (const [table, rows] of Object.entries(tables)) {
-          insert(db, table, rows);
-          counts[table] = (counts[table] ?? 0) + rows.length;
         }
       }
     })();
@@ -108,7 +108,9 @@ export function buildContent({
     throw error;
   }
   db.close();
-  discard(dbPath);
+  // renameSync replaces the target atomically, so the catalog is never missing.
+  // Only a stale WAL has to go first, or SQLite would apply it to the new file.
+  for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
   renameSync(staging, dbPath);
   return counts;
 }
