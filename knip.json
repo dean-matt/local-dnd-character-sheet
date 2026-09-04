@@ -7,6 +7,9 @@
     "packages/shared": {
       "entry": ["src/**/*.test.ts"]
     },
+    "packages/dice": {
+      "entry": ["src/**/*.test.ts"]
+    },
     "packages/content": {},
     "packages/api": {
       "entry": ["src/db/client.ts", "src/db/homebrew.ts", "drizzle.homebrew.config.ts"]

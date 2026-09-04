@@ -77,7 +77,8 @@ pnpm test:e2e:ui     # playwright in watch mode
 ## Project structure
 
 ```
-packages/shared    Zod schemas, tag parser, dice, 5e rules math — used by api and web
+packages/shared    Zod schemas, tag parser, 5e rules math — used by api and web
+packages/dice      Dice notation parsing and rolling
 packages/content   ETL that turns 5etools JSON into content.db
 packages/api       Hono API, Drizzle schemas, OpenAPI spec
 packages/web       React app
