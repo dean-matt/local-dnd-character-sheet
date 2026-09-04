@@ -97,17 +97,24 @@ function replaceText(node: unknown, pattern: RegExp, replacement: string): unkno
   );
 }
 
+/**
+ * splice clamps, so an index past the end appends instead of landing where the
+ * mod said. For `replaceArr` that also leaves the element it meant to replace
+ * in place. Negative indices count from the end, as splice does, and `insertArr`
+ * additionally accepts `length` because inserting there is an append.
+ */
+function checkIndex(index: number, list: unknown[], mode: string, context: string): number {
+  const last = mode === "insertArr" ? list.length : list.length - 1;
+  if (index < -list.length || index > last) {
+    throw new Error(`${context}: ${mode} index ${index} is outside a list of ${list.length}`);
+  }
+  return index;
+}
+
 /** `replace` is either the `name` of the element to swap out or an explicit `{ index }`. */
 function replaceIndex(list: unknown[], replace: unknown, context: string): number {
   if (isRecord(replace) && typeof replace.index === "number") {
-    // splice clamps, so an index past the end would append the replacement and
-    // leave the element it was meant to replace in place. The by-name path
-    // throws on a miss; this one has to as well.
-    const { index } = replace;
-    if (index < -list.length || index >= list.length) {
-      throw new Error(`${context}: replaceArr index ${index} is outside a list of ${list.length}`);
-    }
-    return index;
+    return checkIndex(replace.index, list, "replaceArr", context);
   }
   const index = list.findIndex((item) => isRecord(item) && item.name === replace);
   if (index === -1) {
@@ -121,17 +128,19 @@ const ARRAY_MODES = new Set(["appendArr", "prependArr", "insertArr", "replaceArr
 
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {
   const target = entry[property];
+  const splices = ARRAY_MODES.has(String(op.mode));
   // An absent property is normal — 18 entries append to a list the parent does
   // not have — but a property that is present and not a list means the mod and
   // the data disagree about the shape, and starting from `[]` would drop it.
-  if (target !== undefined && !Array.isArray(target)) {
+  // Only the splicing modes care: `replaceTxt` rewrites a scalar quite happily.
+  if (splices && target !== undefined && !Array.isArray(target)) {
     throw new Error(`${context}: _mod.${property} expects a list, found ${typeof target}`);
   }
   const list = Array.isArray(target) ? [...target] : [];
   // Every array mode carries `items`. Without this an upstream key rename would
   // splice a literal `undefined` into the entry and store it as null. Scoped to
   // the known modes so an unrecognized one still reports as unrecognized.
-  if (ARRAY_MODES.has(String(op.mode)) && op.items === undefined) {
+  if (splices && op.items === undefined) {
     throw new Error(`${context}: ${String(op.mode)} needs items`);
   }
   const items = asArray(op.items);
@@ -144,7 +153,7 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
       return;
     case "insertArr":
       if (typeof op.index !== "number") throw new Error(`${context}: insertArr needs an index`);
-      list.splice(op.index, 0, ...items);
+      list.splice(checkIndex(op.index, list, "insertArr", context), 0, ...items);
       entry[property] = list;
       return;
     case "replaceArr":
@@ -200,18 +209,42 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
   return merged;
 }
 
+/**
+ * The entry's `_copy` block, validated, or undefined when it has none.
+ *
+ * Gating on `isRecord` instead would read a malformed `_copy` as "no copy" — and
+ * so would `assertResolved`, which is the safety net — letting the entry reach a
+ * loader with none of the parent's fields, silently. Same for a `_mod` or
+ * `_preserve` of the wrong shape, which would be skipped rather than applied.
+ */
+function copyBlock(entry: Entry, context: string): Entry | undefined {
+  if (!("_copy" in entry)) return undefined;
+  const named = describe(entry, ["name", "source"]);
+  if (!isRecord(entry._copy)) {
+    throw new Error(`${context}: ${named} has a _copy that is not an object`);
+  }
+  for (const key of ["_mod", "_preserve"]) {
+    const value = entry._copy[key];
+    if (value !== undefined && !isRecord(value)) {
+      throw new Error(`${context}: ${named} has a ${key} that is not an object`);
+    }
+  }
+  return entry._copy;
+}
+
 function resolveEntries(entries: Entry[], context: string): Entry[] {
   const resolved = new Map<Entry, Entry>();
   const visiting = new Set<Entry>();
 
   const resolve = (entry: Entry): Entry => {
     if (!isRecord(entry)) {
-      throw new Error(`${context}: expected entries to be objects, found ${typeof entry}`);
+      const found = entry === null ? "null" : typeof entry;
+      throw new Error(`${context}: expected entries to be objects, found ${found}`);
     }
     const cached = resolved.get(entry);
     if (cached) return cached;
 
-    const copy = isRecord(entry._copy) ? entry._copy : undefined;
+    const copy = copyBlock(entry, context);
     if (!copy) {
       resolved.set(entry, entry);
       return entry;
@@ -253,11 +286,16 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
  * files are like that. Without this the gate below would hand a loader the diff
  * instead of the record, in silence — the one failure this module exists to
  * prevent.
+ *
+ * Direct elements only. A `_copy` further down a `data[].entries[]` tree — one
+ * exists in `renderdemo.json` — is not caught, because walking every node of
+ * `adventure/` and `book/` on every loader read is not worth it for a shape no
+ * character-relevant file uses.
  */
 function assertResolved(source: Entry, label: string): void {
   for (const [property, entries] of Object.entries(source)) {
     if (!Array.isArray(entries)) continue;
-    const unresolved = entries.filter((entry) => isRecord(entry) && isRecord(entry._copy));
+    const unresolved = entries.filter((entry) => isRecord(entry) && "_copy" in entry);
     const [first] = unresolved;
     if (!isRecord(first)) continue;
     throw new Error(

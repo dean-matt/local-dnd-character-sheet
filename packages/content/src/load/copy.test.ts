@@ -400,7 +400,63 @@ describe("resolveCopies", () => {
     it("keeps the file and entry label when an entry is not an object", () => {
       expect(() =>
         resolveCopies(file({ name: "A", source: "PHB" }, null as unknown as Entry), "data/x.json"),
-      ).toThrow("data/x.json background: expected entries to be objects, found object");
+      ).toThrow("data/x.json background: expected entries to be objects, found null");
+    });
+
+    it("refuses an insertArr index past the end, the way replaceArr does", () => {
+      const at = (index: number) =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: ["One", "Two"] },
+            {
+              name: "B",
+              source: "PHB",
+              _copy: {
+                name: "A",
+                source: "PHB",
+                _mod: { entries: { mode: "insertArr", index, items: "New." } },
+              },
+            },
+          ),
+          "data/items.json",
+        ) as { background: Entry[] };
+
+      // `length` is an append, and -length is the front — both legitimate.
+      expect(find(at(2).background, { name: "B" }).entries).toEqual(["One", "Two", "New."]);
+      expect(find(at(-2).background, { name: "B" }).entries).toEqual(["New.", "One", "Two"]);
+      expect(() => at(3)).toThrow("insertArr index 3 is outside a list of 2");
+      expect(() => at(-3)).toThrow("insertArr index -3 is outside a list of 2");
+    });
+
+    it("rewrites a scalar property with replaceTxt rather than demanding a list", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "A", source: "PHB", fluff: "Goblins everywhere." },
+          {
+            name: "B",
+            source: "PHB",
+            _copy: {
+              name: "A",
+              source: "PHB",
+              _mod: { fluff: { mode: "replaceTxt", replace: "Goblins", with: "Kobolds" } },
+            },
+          },
+        ),
+        "data/races.json",
+      ) as { background: Entry[] };
+
+      expect(find(resolved.background, { name: "B" }).fluff).toBe("Kobolds everywhere.");
+    });
+
+    it.each(["_copy", "_mod", "_preserve"])("refuses a malformed %s", (key) => {
+      const copy: Entry = { name: "A", source: "PHB" };
+      const child: Entry = { name: "B", source: "PHB", _copy: copy };
+      if (key === "_copy") child._copy = "A|PHB";
+      else copy[key] = [{ mode: "appendArr", items: "x" }];
+
+      expect(() =>
+        resolveCopies(file({ name: "A", source: "PHB" }, child), "data/backgrounds.json"),
+      ).toThrow(`"B" (PHB) has a ${key} that is not an object`);
     });
 
     it("reports a replaceArr whose target is not there", () => {
