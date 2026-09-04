@@ -12,7 +12,7 @@ schema. That is the failure this order prevents.
 ## The order
 
 ```
-1  packages/shared/src/schemas/<domain>.ts   Zod schema — the single definition
+1  the package that owns the domain          Zod schema — the single definition
 2  packages/api/src/routes/<domain>.ts       createRoute() using that schema
 3  packages/api/src/db/queries/<domain>.ts   Drizzle query (or raw SQL for content.db)
 4  packages/web/src/hooks/use<Domain>.ts     TanStack Query hook
@@ -22,11 +22,19 @@ schema. That is the failure this order prevents.
 Never skip step 1. A schema defined inline in a route cannot be reused by the web
 client, which is how a hand-written duplicate type appears and then drifts.
 
+Step 1 lands in a different package depending on what the schema describes:
+
+| Schema | Lives in |
+|---|---|
+| a character's definition or state | `packages/character` |
+| a catalog row — spell, item, class | its own leaf package, never `packages/content`, whose `better-sqlite3` must stay out of the web bundle |
+| path params, pagination, error envelopes | the route file — HTTP shape, not a domain |
+
 ## Route shape
 
 ```ts
 import { createRoute, z } from "@hono/zod-openapi";
-import { CharacterSchema } from "@dnd/shared";
+import { CharacterSchema } from "@dnd/character";
 
 const getCharacter = createRoute({
   method: "get",
@@ -53,21 +61,12 @@ const getCharacter = createRoute({
 A search endpoint that spans the catalog and homebrew queries both and merges. Homebrew
 rows carry source `HB` so the client can badge them.
 
-## Rules
-
 **Filter on edition.** Any content query without an edition filter returns both
 rulesets and shows duplicates.
-
-**Return references, not copies.** A character's spell list is `{name, source}` pairs.
-Resolve them in a separate lookup so the catalog stays the single owner of rules text.
-
-**Prune bounded logs in the write.** Inserting a roll or an undo entry prunes in the
-same statement — 200 and 50 rows per character respectively.
 
 ## Checking it
 
 ```bash
-pnpm dev
 curl -s http://127.0.0.1:8787/openapi.json | jq '.paths | keys'
 ```
 

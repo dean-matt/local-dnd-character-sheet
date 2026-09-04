@@ -1,7 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/shared" },
+    { "path": "./packages/rules" },
+    { "path": "./packages/character" },
     { "path": "./packages/dice" },
     { "path": "./packages/content" },
     { "path": "./packages/api" },

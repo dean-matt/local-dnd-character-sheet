@@ -76,6 +76,15 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
 
+  packages/character:
+    dependencies:
+      '@dnd/rules':
+        specifier: workspace:*
+        version: link:../rules
+      zod:
+        specifier: ^4.5.4
+        version: 4.5.4
+
   packages/content:
     dependencies:
       better-sqlite3:
@@ -88,11 +97,7 @@ importers:
 
   packages/dice: {}
 
-  packages/shared:
-    dependencies:
-      zod:
-        specifier: ^4.5.4
-        version: 4.5.4
+  packages/rules: {}
 
   packages/web:
     dependencies:

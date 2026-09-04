@@ -12,12 +12,18 @@ The package split and the three-database rule are the requested architecture.
 The ladder below applies *within* them, not against them.
 
 ```
-packages/shared    Zod schemas, tag parser, 5e rules math — used by api AND web
-packages/dice      Dice notation parsing and rolling — depends on nothing
-packages/content   ETL: sync + build -> content.db
-packages/api       Hono + zod-openapi + Drizzle, 127.0.0.1:8787
-packages/web       React + Vite + React Router + TanStack Query, 127.0.0.1:5173
+packages/rules      5e arithmetic — depends on nothing
+packages/dice       Dice notation parsing and rolling — depends on nothing
+packages/tags       {@tag} parser — depends on nothing, created by the parser
+packages/character  Zod schemas for definition and state -> rules
+packages/content    ETL: sync + build -> content.db
+packages/api        Hono + zod-openapi + Drizzle, 127.0.0.1:8787
+packages/web        React + Vite + React Router + TanStack Query, 127.0.0.1:5173
 ```
+
+A package is named for its domain, never for its position in the graph — there is no
+`shared`. `rules` takes primitives and never a `CharacterDefinition`: a function that
+wants the whole character is a projection and belongs with the schemas.
 
 | Database | Owner | Rule |
 |---|---|---|
@@ -57,11 +63,11 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 |---|---|
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `add-endpoint` | Adding an API route, end to end |
-| `5e-rules` | Any rules arithmetic — proficiency, DCs, slots, rests |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
 
 Skills are indexed here so they compete for this file's budget. There is no cap on how
-many exist; there is a cap on this file.
+many exist; there is a cap on this file. A skill never restates what code and tests
+already assert — no test runs on prose, so the copy is the half that goes wrong.
 
 ## Maintaining this document
 

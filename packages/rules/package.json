@@ -1,0 +1,29 @@
+{
+  "name": "@dnd/rules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "5e rules arithmetic over primitives — proficiency, spell save DC, multiclass caster level and slots, rest resets",
+  "keywords": [
+    "dnd",
+    "5e",
+    "rpg",
+    "tabletop",
+    "spell-slots"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dean-matt/local-dnd-character-sheet.git",
+    "directory": "packages/rules"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build"
+  }
+}

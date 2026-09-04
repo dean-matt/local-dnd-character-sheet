@@ -5,7 +5,7 @@ description: Add or fix support for a 5etools {@tag} in the renderer. Use when r
 
 # Rendering 5etools tags
 
-Rules text is markup, not prose. The parser is in `packages/shared/src/tags/` and
+Rules text is markup, not prose. The parser is in `packages/tags/src/` and
 returns tokens; `packages/web` renders tokens to React nodes. Keep those separate — the
 API needs plain text from the same parser for the FTS index.
 
@@ -66,6 +66,6 @@ Do not skip to tier 3 for a tag that has no tier 1 test.
 
 ## Testing
 
-Every tag gets a case in `packages/shared/src/tags/parse.test.ts` covering: the bare
+Every tag gets a case in `packages/tags/src/parse.test.ts` covering: the bare
 form, the piped form, an unknown-tag fallback, and one real string copied verbatim from
 `vendor/5etools/`. Real strings catch the nesting and escaping that invented cases miss.

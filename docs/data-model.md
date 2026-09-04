@@ -3,7 +3,7 @@
 Schemas live in code and are the source of truth:
 `packages/content/src/schema.ts` for the catalog, `packages/api/src/db/characters.ts`
 and `packages/api/src/db/homebrew.ts` for user data, and
-`packages/shared/src/character.ts` for what the `definition` and `state` JSON columns
+`packages/character/src/character.ts` for what the `definition` and `state` JSON columns
 hold. This describes the shape and the rules that are not visible in a table definition.
 
 ## Shape

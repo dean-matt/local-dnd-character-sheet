@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { abilityModifier, proficiencyBonus, spellAttackBonus, spellSaveDc } from "./rules.ts";
+import { abilityModifier, proficiencyBonus } from "./core.ts";
 
 describe("abilityModifier", () => {
   it.each([
@@ -30,15 +30,5 @@ describe("proficiencyBonus", () => {
 
   it.each([0, 21, -1])("rejects level %i", (level) => {
     expect(() => proficiencyBonus(level)).toThrow(RangeError);
-  });
-});
-
-describe("spell math", () => {
-  it("derives save DC from proficiency and modifier", () => {
-    expect(spellSaveDc(4, 5)).toBe(15);
-  });
-
-  it("derives attack bonus from proficiency and modifier", () => {
-    expect(spellAttackBonus(4, 5)).toBe(7);
   });
 });
