@@ -12,7 +12,7 @@ schema. That is the failure this order prevents.
 ## The order
 
 ```
-1  packages/shared/src/schemas/<domain>.ts   Zod schema — the single definition
+1  packages/character/src/<domain>.ts        Zod schema — the single definition
 2  packages/api/src/routes/<domain>.ts       createRoute() using that schema
 3  packages/api/src/db/queries/<domain>.ts   Drizzle query (or raw SQL for content.db)
 4  packages/web/src/hooks/use<Domain>.ts     TanStack Query hook
@@ -26,7 +26,7 @@ client, which is how a hand-written duplicate type appears and then drifts.
 
 ```ts
 import { createRoute, z } from "@hono/zod-openapi";
-import { CharacterSchema } from "@dnd/shared";
+import { CharacterSchema } from "@dnd/character";
 
 const getCharacter = createRoute({
   method: "get",

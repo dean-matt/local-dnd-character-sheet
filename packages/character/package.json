@@ -1,0 +1,33 @@
+{
+  "name": "@dnd/character",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Zod schemas a character is stored as, split the way the database is split",
+  "keywords": [
+    "dnd",
+    "5e",
+    "rpg",
+    "tabletop",
+    "zod"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dean-matt/local-dnd-character-sheet.git",
+    "directory": "packages/character"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "@dnd/rules": "workspace:*",
+    "zod": "^4.5.4"
+  }
+}

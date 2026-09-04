@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { type CasterClassLevel, multiclassCasterLevel, multiclassSlots } from "./spellcasting.ts";
+import {
+  type CasterClassLevel,
+  multiclassCasterLevel,
+  multiclassSlots,
+  spellAttackBonus,
+  spellSaveDc,
+} from "./spellcasting.ts";
+
+describe("spell math", () => {
+  it("derives save DC from proficiency and modifier", () => {
+    expect(spellSaveDc(4, 5)).toBe(15);
+  });
+
+  it("derives attack bonus from proficiency and modifier", () => {
+    expect(spellAttackBonus(4, 5)).toBe(7);
+  });
+});
 
 describe("multiclassCasterLevel", () => {
   it.each([

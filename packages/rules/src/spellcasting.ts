@@ -11,6 +11,16 @@
  * progression, the 2014 ones do not.
  */
 
+import { proficiencyBonus } from "./core.ts";
+
+export function spellSaveDc(spellcastingModifier: number, level: number): number {
+  return 8 + proficiencyBonus(level) + spellcastingModifier;
+}
+
+export function spellAttackBonus(spellcastingModifier: number, level: number): number {
+  return proficiencyBonus(level) + spellcastingModifier;
+}
+
 /**
  * Caster progression in upstream's own vocabulary, so there is no mapping table
  * to drift. `artificer` means half rounded up, which the 2024 paladin and

@@ -4,7 +4,10 @@
     ".": {
       "entry": ["tests/**/*.test.ts", "scripts/*.mjs", "e2e/**/*.spec.ts"]
     },
-    "packages/shared": {
+    "packages/rules": {
+      "entry": ["src/**/*.test.ts"]
+    },
+    "packages/character": {
       "entry": ["src/**/*.test.ts"]
     },
     "packages/dice": {

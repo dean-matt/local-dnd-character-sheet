@@ -17,7 +17,8 @@
     "../playwright.config.ts",
     "../vitest.config.ts",
     "../scripts/*.mjs",
-    "../packages/shared/src/**/*.test.ts",
+    "../packages/rules/src/**/*.test.ts",
+    "../packages/character/src/**/*.test.ts",
     "../packages/content/src/**/*.test.ts",
     "../packages/api/src/**/*.test.ts"
   ]

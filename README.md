@@ -77,15 +77,16 @@ pnpm test:e2e:ui     # playwright in watch mode
 ## Project structure
 
 ```
-packages/shared    Zod schemas, tag parser, 5e rules math — used by api and web
-packages/dice      Dice notation parsing and rolling
-packages/content   ETL that turns 5etools JSON into content.db
-packages/api       Hono API, Drizzle schemas, OpenAPI spec
-packages/web       React app
-docs/              reference documentation
-tests/             document shape and comment policy fences
-vendor/5etools/    fetched upstream data, gitignored
-data/              the three SQLite databases, gitignored
+packages/rules      5e rules arithmetic
+packages/dice       Dice notation parsing and rolling
+packages/character  Zod schemas for a character's definition and state
+packages/content    ETL that turns 5etools JSON into content.db
+packages/api        Hono API, Drizzle schemas, OpenAPI spec
+packages/web        React app
+docs/               reference documentation
+tests/              document shape and comment policy fences
+vendor/5etools/     fetched upstream data, gitignored
+data/               the three SQLite databases, gitignored
 ```
 
 [`CLAUDE.md`](CLAUDE.md) carries the working agreement and is kept current with the tree.

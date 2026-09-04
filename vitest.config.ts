@@ -14,7 +14,10 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["tests/**/*.test.ts", "packages/{shared,dice,content,api}/src/**/*.test.ts"],
+          include: [
+            "tests/**/*.test.ts",
+            "packages/{rules,character,dice,content,api}/src/**/*.test.ts",
+          ],
         },
       },
       {

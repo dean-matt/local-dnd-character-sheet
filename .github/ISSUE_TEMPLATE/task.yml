@@ -26,7 +26,10 @@ body:
     attributes:
       label: Package
       options:
-        - shared
+        - rules
+        - character
+        - dice
+        - tags
         - content
         - api
         - web
@@ -40,7 +43,7 @@ body:
     attributes:
       label: Relevant docs and files
       description: Point at the docs or code that carry the context, so it is not re-derived.
-      placeholder: docs/5etools-data.md — tag markup; packages/shared/src/tags/
+      placeholder: docs/5etools-data.md — tag markup; packages/tags/src/
 
   - type: textarea
     id: out-of-scope

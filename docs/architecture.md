@@ -14,9 +14,25 @@ browser :5173  ──/api/*──>  Vite dev proxy  ──>  Hono :8787
                               (raw SQL)         (Drizzle)        (Drizzle)
 ```
 
-`packages/shared` is imported by both `api` and `web`: Zod schemas, the tag parser, and
-rules arithmetic all need to run on both sides of the wire. `packages/dice` is imported
-the same way. Those two packages are the main reason the backend is TypeScript.
+Four packages are imported by both `api` and `web`, because schemas, rules arithmetic,
+tag rendering and dice all need to run on both sides of the wire. They are the main
+reason the backend is TypeScript.
+
+```
+rules      character   dice   tags
+  ▲            │
+  └────────────┘
+```
+
+Each is named for its domain rather than for the fact that two things import it, which
+is why there is no `shared`. `rules`, `dice` and `tags` depend on nothing at all;
+`character` depends on `rules` because the rest-trigger vocabulary a resource is stored
+with is a rule, not a storage detail. `rules` never takes a `CharacterDefinition` — a
+function that wants the whole character is a projection and belongs with the schemas,
+and the missing dependency edge is what enforces that.
+
+`packages/tags` does not exist until the tag parser is written; the parser goes there
+rather than into `character`.
 
 ## Three databases
 

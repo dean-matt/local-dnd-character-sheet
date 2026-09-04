@@ -10,6 +10,7 @@
  * rebuilding `content.db` updates every character. Homebrew is the exception:
  * nothing else owns it, so it is referenced by its row id.
  */
+import { RESET_TRIGGERS } from "@dnd/rules";
 import { z } from "zod";
 
 export const editionSchema = z.enum(["classic", "one"]);
@@ -134,8 +135,6 @@ export const spellSlotSchema = z
   })
   .refine((slot) => slot.expended <= slot.total, { error: "expended exceeds total" });
 
-export const RESET_TRIGGERS = ["short", "long", "dawn", "manual"] as const;
-
 /** Class resources and user-invented counters share one shape, so neither needs special casing. */
 export const resourceSchema = z
   .object({
@@ -185,6 +184,5 @@ export type HitPoints = z.infer<typeof hitPointsSchema>;
 export type HitDicePool = z.infer<typeof hitDicePoolSchema>;
 export type SpellSlot = z.infer<typeof spellSlotSchema>;
 export type Resource = z.infer<typeof resourceSchema>;
-export type ResetTrigger = (typeof RESET_TRIGGERS)[number];
 export type DeathSaves = z.infer<typeof deathSavesSchema>;
 export type CharacterState = z.infer<typeof characterStateSchema>;
