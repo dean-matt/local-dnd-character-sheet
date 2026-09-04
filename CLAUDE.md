@@ -82,7 +82,7 @@ duplicate a source of truth:
 | `README.md` | prerequisites, setup, the command list |
 | `CONTRIBUTING.md` | the reasoning behind every fence |
 | `docs/` | 5etools data quirks, data model, architecture, reviving the project |
-| `packages/*/README.md` | anything true of one package only, such as dice notation |
+| `packages/*/*.md` | anything true of one package only, such as dice notation |
 | `content.manifest.json` / `content.lock.json` | which upstream data is fetched |
 
 **Write the edit** by verifying against the code first, replacing the stale sentence
