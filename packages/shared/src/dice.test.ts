@@ -27,7 +27,9 @@ describe("rollDice", () => {
   });
 
   it("defaults an omitted count to one", () => {
-    expect(rollDice("d6", { random: loaded(6, 4) }).total).toBe(4);
+    const roll = rollDice("d6", { random: loaded(6, 4) });
+    expect(roll.total).toBe(4);
+    expect(roll.notation).toBe("1d6");
   });
 
   it("adds a positive modifier", () => {
@@ -55,8 +57,14 @@ describe("rollDice", () => {
     expect(roll.total).toBe(4);
   });
 
-  it("ignores whitespace", () => {
-    expect(rollDice(" 2d6 + 3 ", { random: loaded(6, 1, 1) }).total).toBe(5);
+  it("tolerates whitespace around operators and reports canonical notation", () => {
+    const roll = rollDice(" 2d6 + 3 ", { random: loaded(6, 1, 1) });
+    expect(roll.total).toBe(5);
+    expect(roll.notation).toBe("2d6+3");
+  });
+
+  it.each(["1d6 4", "1d2 0", "1 2d6"])("rejects %o rather than reading it as a bigger die", (n) => {
+    expect(() => rollDice(n)).toThrow(SyntaxError);
   });
 
   it("rolls twice and keeps the higher on advantage", () => {
@@ -72,8 +80,8 @@ describe("rollDice", () => {
     expect(roll.total).toBe(8);
   });
 
-  it("rejects advantage on notation that already keeps dice", () => {
-    expect(() => rollDice("4d6kh3", { mode: "advantage" })).toThrow('"4d6kh3"');
+  it.each(["4d6kh3", "2d6", "1d20kh1"])("rejects advantage on %s", (notation) => {
+    expect(() => rollDice(notation, { mode: "advantage" })).toThrow(`"${notation}"`);
   });
 
   it.each(["", "d", "20", "1d", "1d20kh", "1d20k2", "2d6+", "1d20 or bust", "-1d6"])(
@@ -83,7 +91,16 @@ describe("rollDice", () => {
     },
   );
 
-  it.each(["0d6", "1001d6", "1d0", "1d1001", "2d6kh3"])("rejects %s out of range", (notation) => {
+  it.each([
+    "0d6",
+    "1001d6",
+    "1d0",
+    "1d1001",
+    "2d6kh3",
+    "1d6+1001",
+    "1d6-1001",
+    `1d6+${"9".repeat(400)}`,
+  ])("rejects %s out of range", (notation) => {
     expect(() => rollDice(notation)).toThrow(RangeError);
   });
 

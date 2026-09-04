@@ -18,6 +18,7 @@ export type Roll = {
   total: number;
   dice: RolledDie[];
   modifier: number;
+  /** The notation in canonical form, so spacing does not split the roll log. */
   notation: string;
 };
 
@@ -36,8 +37,13 @@ export type RollOptions = {
 /** Bounds a single roll, so notation from upstream data cannot ask for a million dice. */
 const MAX_COUNT = 1000;
 const MAX_FACES = 1000;
+const MAX_MODIFIER = 1000;
 
-const NOTATION = /^(\d*)d(\d+)(?:k([hl])(\d+))?(?:([+-])(\d+))?$/i;
+/**
+ * Spaces are tolerated around the operators but not inside a number, where `1d6 4`
+ * would otherwise silently become a d64.
+ */
+const NOTATION = /^(\d*)\s*d\s*(\d+)(?:\s*k\s*([hl])\s*(\d+))?(?:\s*([+-])\s*(\d+))?$/i;
 
 type Keep = { high: boolean; count: number };
 
@@ -49,7 +55,7 @@ type ParsedDice = {
 };
 
 function parseDice(notation: string): ParsedDice {
-  const match = NOTATION.exec(notation.replaceAll(/\s+/g, ""));
+  const match = NOTATION.exec(notation.trim());
   if (match === null) {
     throw new SyntaxError(`Invalid dice notation: "${notation}"`);
   }
@@ -75,7 +81,17 @@ function parseDice(notation: string): ParsedDice {
   }
 
   const modifier = rawModifier === undefined ? 0 : Number(`${sign}${rawModifier}`);
+  if (Math.abs(modifier) > MAX_MODIFIER) {
+    throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
+  }
+
   return { count, faces, keep, modifier };
+}
+
+function canonical({ count, faces, keep, modifier }: ParsedDice): string {
+  const keptPart = keep === null ? "" : `k${keep.high ? "h" : "l"}${keep.count}`;
+  const modifierPart = modifier === 0 ? "" : `${modifier < 0 ? "-" : "+"}${Math.abs(modifier)}`;
+  return `${count}d${faces}${keptPart}${modifierPart}`;
 }
 
 function markKept(dice: RolledDie[], keep: Keep | null): void {
@@ -83,10 +99,8 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
     for (const die of dice) die.kept = true;
     return;
   }
-  const ranked = dice
-    .map((die, index) => ({ die, index }))
-    .sort((a, b) => (keep.high ? b.die.value - a.die.value : a.die.value - b.die.value));
-  ranked.forEach(({ die }, rank) => {
+  const ranked = [...dice].sort((a, b) => (keep.high ? b.value - a.value : a.value - b.value));
+  ranked.forEach((die, rank) => {
     die.kept = rank < keep.count;
   });
 }
@@ -94,19 +108,21 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 /**
  * Rolls `notation`, throwing a `SyntaxError` or `RangeError` naming the offending input.
  *
- * Advantage and disadvantage roll the pool twice and keep the better or worse half, so
- * both d20s appear in `dice`. They cannot be combined with an explicit keep clause.
+ * Advantage and disadvantage roll a second die and keep the higher or lower, so both
+ * appear in `dice`. The rules only ever apply them to a single die, so notation rolling
+ * a pool or carrying its own keep clause is rejected rather than reinterpreted.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { mode = "normal", random = Math.random } = options;
-  const { count, faces, keep, modifier } = parseDice(notation);
+  const parsed = parseDice(notation);
+  const { count, faces, keep, modifier } = parsed;
 
-  if (mode !== "normal" && keep !== null) {
-    throw new SyntaxError(`${mode} cannot be combined with a keep clause: "${notation}"`);
+  if (mode !== "normal" && (count !== 1 || keep !== null)) {
+    throw new SyntaxError(`${mode} applies to a single die, not to "${notation}"`);
   }
 
-  const pool = mode === "normal" ? count : count * 2;
-  const applied = mode === "normal" ? keep : { high: mode === "advantage", count };
+  const pool = mode === "normal" ? count : 2;
+  const applied = mode === "normal" ? keep : { high: mode === "advantage", count: 1 };
 
   const dice: RolledDie[] = Array.from({ length: pool }, () => ({
     faces,
@@ -116,5 +132,5 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
   markKept(dice, applied);
 
   const total = dice.reduce((sum, die) => sum + (die.kept ? die.value : 0), 0) + modifier;
-  return { total, dice, modifier, notation };
+  return { total, dice, modifier, notation: canonical(parsed) };
 }
