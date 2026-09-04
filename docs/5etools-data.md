@@ -54,8 +54,13 @@ Spells being clean is why they are the right first target for the ETL.
 `_meta.internalCopies` in each file names which keys need resolving, and
 `packages/content/src/load/copy.ts` does it as part of reading a source, so loaders only
 ever see complete records. Five `_mod` modes appear in character data — `appendArr`,
-`prependArr`, `insertArr`, `replaceArr` and `replaceTxt`. The bestiary's `setProp` and
-`addSkills` are unsupported on purpose, as are its cross-file parents.
+`prependArr`, `insertArr`, `replaceArr` and `replaceTxt`.
+
+Everything the bestiary needs and character data does not is refused rather than
+half-applied: cross-file parents, the `setProp` and `addSkills` modes, and the `*` and
+`_` wildcard `_mod` properties. `internalCopies` is not trustworthy on its own either —
+31 files carry a same-file `_copy` without declaring one — so a surviving `_copy` fails
+the build too.
 
 ## Tag markup
 

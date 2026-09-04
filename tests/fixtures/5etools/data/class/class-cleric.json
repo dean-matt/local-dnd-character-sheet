@@ -1,5 +1,7 @@
 {
-  "_meta": { "internalCopies": ["subclass", "subclassFeature"] },
+  "_meta": {
+    "internalCopies": ["subclass", "subclassFeature"]
+  },
   "subclass": [
     {
       "name": "Knowledge Domain",
@@ -12,7 +14,8 @@
       "subclassFeatures": [
         "Knowledge Domain|Cleric||Knowledge||1",
         "Visions of the Past|Cleric||Knowledge||17"
-      ]
+      ],
+      "isReprinted": true
     },
     {
       "name": "Knowledge Domain",
@@ -31,7 +34,10 @@
         "shortName": "Knowledge",
         "className": "Cleric",
         "classSource": "PHB",
-        "_preserve": { "page": true, "reprintedAs": true }
+        "_preserve": {
+          "page": true,
+          "reprintedAs": true
+        }
       }
     }
   ],
@@ -64,7 +70,9 @@
         "subclassShortName": "Death",
         "subclassSource": "DMG",
         "level": 2,
-        "_preserve": { "page": true }
+        "_preserve": {
+          "page": true
+        }
       }
     }
   ]

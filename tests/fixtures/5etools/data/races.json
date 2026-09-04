@@ -1,5 +1,7 @@
 {
-  "_meta": { "internalCopies": ["race", "subrace"] },
+  "_meta": {
+    "internalCopies": ["race", "subrace"]
+  },
   "race": [
     {
       "name": "Goblin",
@@ -8,13 +10,22 @@
       "lineage": "VRGR",
       "size": ["S"],
       "speed": 30,
-      "entries": [{ "name": "Fury of the Small", "type": "entries", "entries": ["Elided."] }]
+      "entries": [
+        {
+          "name": "Fury of the Small",
+          "type": "entries",
+          "entries": ["Elided."]
+        }
+      ]
     },
     {
       "name": "Boggart",
       "source": "LFL",
       "lineage": null,
-      "_copy": { "name": "Goblin", "source": "MPMM" }
+      "_copy": {
+        "name": "Goblin",
+        "source": "MPMM"
+      }
     },
     {
       "name": "Goblin",
@@ -24,8 +35,26 @@
       "size": ["S"],
       "speed": 30,
       "entries": [
-        { "name": "Darkvision", "type": "entries", "entries": ["Goblins see in the dark."] },
-        { "name": "Fury of the Small", "type": "entries", "entries": ["Elided."] }
+        {
+          "name": "Darkvision",
+          "type": "entries",
+          "entries": ["Goblins see in the dark."],
+          "data": {
+            "overwrite": "Goblins"
+          }
+        },
+        {
+          "name": "Fury of the Small",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "table",
+          "caption": "Goblins by Type",
+          "colLabels": ["Goblins", "Trait"],
+          "colStyles": ["col-6", "col-6"],
+          "rows": [["Goblins", "Elided."]]
+        }
       ]
     },
     {
@@ -45,7 +74,11 @@
             },
             {
               "mode": "appendArr",
-              "items": { "name": "Alignment", "type": "entries", "entries": ["Elided."] }
+              "items": {
+                "name": "Alignment",
+                "type": "entries",
+                "entries": ["Elided."]
+              }
             },
             {
               "mode": "replaceArr",
@@ -58,7 +91,9 @@
             }
           ]
         },
-        "_preserve": { "reprintedAs": true }
+        "_preserve": {
+          "reprintedAs": true
+        }
       }
     }
   ],
@@ -69,7 +104,13 @@
       "raceName": "Human",
       "raceSource": "PHB",
       "page": 31,
-      "entries": [{ "name": "Skills", "type": "entries", "entries": ["Elided."] }]
+      "entries": [
+        {
+          "name": "Skills",
+          "type": "entries",
+          "entries": ["Elided."]
+        }
+      ]
     },
     {
       "name": "Amonkhet",
@@ -89,9 +130,15 @@
                   "name": "Age",
                   "type": "entries",
                   "entries": ["Elided."],
-                  "data": { "overwrite": "Age" }
+                  "data": {
+                    "overwrite": "Age"
+                  }
                 },
-                { "name": "Alignment", "type": "entries", "entries": ["Elided."] }
+                {
+                  "name": "Alignment",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                }
               ]
             }
           ]

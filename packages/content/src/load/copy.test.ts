@@ -112,12 +112,34 @@ describe("resolveCopies", () => {
 
     it("applies a list of _mod operations in order", () => {
       const dankwood = find(races, { name: "Goblin (Dankwood)" });
-      expect(names(dankwood)).toEqual(["Darkvision", "Speak with Small Beasts", "Alignment"]);
+      expect(names(dankwood)).toEqual([
+        "Darkvision",
+        "Speak with Small Beasts",
+        undefined,
+        "Alignment",
+      ]);
     });
 
     it("applies replaceTxt to the prose, honoring its flags", () => {
       const [darkvision] = find(races, { name: "Goblin (Dankwood)" }).entries as Entry[];
       expect(darkvision?.entries).toEqual(["Dankwood goblins see in the dark."]);
+    });
+
+    it("reaches every prose key of a table, and no structural one", () => {
+      const entries = find(races, { name: "Goblin (Dankwood)" }).entries as Entry[];
+      const table = entries.find((entry) => entry.type === "table");
+      expect(table).toMatchObject({
+        type: "table",
+        caption: "Dankwood goblins by Type",
+        colLabels: ["Dankwood goblins", "Trait"],
+        colStyles: ["col-6", "col-6"],
+        rows: [["Dankwood goblins", "Elided."]],
+      });
+    });
+
+    it("leaves a reference string alone, so replaceTxt cannot break a link", () => {
+      const [darkvision] = find(races, { name: "Goblin (Dankwood)" }).entries as Entry[];
+      expect(darkvision?.data).toEqual({ overwrite: "Goblins" });
     });
 
     it("drops a field the child nulls out", () => {
@@ -145,6 +167,12 @@ describe("resolveCopies", () => {
         "Knowledge Domain|Cleric|XPHB|Knowledge||3",
         "Visions of the Past|Cleric||Knowledge||17",
       ]);
+    });
+
+    it("does not carry isReprinted onto the row that supersedes it", () => {
+      const subclass = find(subclasses, { classSource: "XPHB" });
+      expect(subclass.isReprinted).toBeUndefined();
+      expect(find(subclasses, { classSource: "PHB" }).isReprinted).toBe(true);
     });
 
     it("uses every field the _copy block names, so a shared (name, source) is not ambiguous", () => {
@@ -207,6 +235,74 @@ describe("resolveCopies", () => {
           "data/backgrounds.json",
         ),
       ).toThrow('unsupported _mod mode "setProp"');
+    });
+
+    it("refuses a _copy that no _meta.internalCopies claims", () => {
+      expect(() =>
+        resolveCopies(
+          {
+            background: [
+              { name: "Acolyte", source: "PHB" },
+              { name: "Augen Trust", source: "EGW", _copy: { name: "Acolyte", source: "PHB" } },
+            ],
+          },
+          "data/bestiary/bestiary-bmt.json",
+        ),
+      ).toThrow(
+        'data/bestiary/bestiary-bmt.json background: "Augen Trust" (EGW) carries a _copy that no _meta.internalCopies claims (1 in this property)',
+      );
+    });
+
+    it("refuses a _copy under a property internalCopies does not name", () => {
+      expect(() =>
+        resolveCopies(
+          {
+            _meta: { internalCopies: ["background"] },
+            background: [{ name: "Acolyte", source: "PHB" }],
+            itemGroup: [
+              { name: "Robes", source: "PHB" },
+              { name: "Vestments", source: "PHB", _copy: { name: "Robes", source: "PHB" } },
+            ],
+          },
+          "data/backgrounds.json",
+        ),
+      ).toThrow(/itemGroup: "Vestments" \(PHB\) carries a _copy/);
+    });
+
+    it("refuses a wildcard _mod property rather than writing it as a key", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [] },
+            {
+              name: "B",
+              source: "PHB",
+              _copy: {
+                name: "A",
+                source: "PHB",
+                _mod: { "*": { mode: "replaceTxt", replace: "x", with: "y" } },
+              },
+            },
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow('unsupported _mod property "*"');
+    });
+
+    it("refuses an array mode with no items rather than splicing in undefined", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [] },
+            {
+              name: "B",
+              source: "PHB",
+              _copy: { name: "A", source: "PHB", _mod: { entries: { mode: "appendArr" } } },
+            },
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow("appendArr needs items");
     });
 
     it("reports a replaceArr whose target is not there", () => {

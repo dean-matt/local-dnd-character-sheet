@@ -11,7 +11,8 @@
  * the `_copy` blocks stripped, and throws on a cycle or a missing parent rather
  * than leaving a half-inherited record for a loader to import.
  *
- * A parent is only ever looked up in the same file, which covers every
+ * A parent is only ever looked up in the same file, and matched on the fields it
+ * declares rather than ones it would inherit. That covers every
  * character-relevant source. Bestiary entries copy across files and would fail
  * here — loudly, which is the point.
  */
@@ -28,11 +29,20 @@ const NOT_INHERITED = [
   "otherSources",
   "referenceSources",
   "reprintedAs",
+  "isReprinted",
   "hasFluff",
   "hasFluffImages",
 ];
 
-/** Keys whose values `replaceTxt` descends into. Everything else is structure, not prose. */
+/**
+ * Keys whose values `replaceTxt` descends into — every string-valued key that
+ * holds prose anywhere in the vendored entry trees.
+ *
+ * An allowlist rather than a blocklist, because the strings it leaves alone are
+ * not only structural (`type`, `style`, `colStyles`) but referential:
+ * `subclassFeature`, `reprintedAs` and `data.overwrite` hold `Name|Source|...`
+ * pointers at other entries, and rewriting the prose must not rewrite a link.
+ */
 const TEXT_KEYS = new Set([
   "entry",
   "entries",
@@ -40,6 +50,9 @@ const TEXT_KEYS = new Set([
   "items",
   "rows",
   "caption",
+  "colLabels",
+  "footnotes",
+  "tableName",
   "headerEntries",
   "footerEntries",
 ]);
@@ -94,8 +107,17 @@ function replaceIndex(list: unknown[], replace: unknown, context: string): numbe
   return index;
 }
 
+/** The `_mod` modes that splice into an array, all of which require `items`. */
+const ARRAY_MODES = new Set(["appendArr", "prependArr", "insertArr", "replaceArr"]);
+
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {
   const list = Array.isArray(entry[property]) ? [...entry[property]] : [];
+  // Every array mode carries `items`. Without this an upstream key rename would
+  // splice a literal `undefined` into the entry and store it as null. Scoped to
+  // the known modes so an unrecognized one still reports as unrecognized.
+  if (ARRAY_MODES.has(String(op.mode)) && op.items === undefined) {
+    throw new Error(`${context}: ${String(op.mode)} needs items`);
+  }
   const items = asArray(op.items);
   switch (op.mode) {
     case "appendArr":
@@ -127,6 +149,21 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
   }
 }
 
+function applyMod(entry: Entry, mod: Entry, context: string): void {
+  for (const [property, operations] of Object.entries(mod)) {
+    // `*` means every property and `_` means the entry itself. Both are bestiary
+    // shapes; treating either as a literal property name would write a bogus key
+    // and drop the edit, so refuse them the way an unknown mode is refused.
+    if (property === "*" || property === "_") {
+      throw new Error(`${context}: unsupported _mod property "${property}"`);
+    }
+    for (const op of asArray(operations)) {
+      if (!isRecord(op)) throw new Error(`${context}: _mod.${property} is not an operation`);
+      applyOperation(entry, property, op, context);
+    }
+  }
+}
+
 function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry {
   const preserve = isRecord(copy._preserve) ? copy._preserve : {};
   const inherited = structuredClone(parent);
@@ -135,13 +172,7 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
   const { _copy: _dropped, ...own } = child;
   const merged: Entry = { ...inherited, ...own };
 
-  const mod = isRecord(copy._mod) ? copy._mod : {};
-  for (const [property, operations] of Object.entries(mod)) {
-    for (const op of asArray(operations)) {
-      if (!isRecord(op)) throw new Error(`${context}: _mod.${property} is not an operation`);
-      applyOperation(merged, property, op, context);
-    }
-  }
+  if (isRecord(copy._mod)) applyMod(merged, copy._mod, context);
   // A null in the child is upstream's idiom for erasing an inherited value —
   // `"lineage": null` on a race that copies one that has a lineage.
   for (const [key, value] of Object.entries(merged)) if (value === null) delete merged[key];
@@ -184,12 +215,35 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
   return entries.map(resolve);
 }
 
+/**
+ * Throws if a top-level entry still carries a `_copy`, which means the file
+ * needed resolving and `_meta.internalCopies` did not say so. Dozens of bestiary
+ * files are like that. Without this the gate below would hand a loader the diff
+ * instead of the record, in silence — the one failure this module exists to
+ * prevent.
+ */
+function assertResolved(source: Entry, label: string): void {
+  for (const [property, entries] of Object.entries(source)) {
+    if (!Array.isArray(entries)) continue;
+    const unresolved = entries.filter((entry) => isRecord(entry) && isRecord(entry._copy));
+    const [first] = unresolved;
+    if (!isRecord(first)) continue;
+    throw new Error(
+      `${label} ${property}: ${describe(first, ["name", "source"])} carries a _copy that no ` +
+        `_meta.internalCopies claims (${unresolved.length} in this property)`,
+    );
+  }
+}
+
 /** Returns `source` with every `_copy` under `_meta.internalCopies` resolved. */
 export function resolveCopies(source: unknown, label: string): unknown {
   if (!isRecord(source)) return source;
   const meta = isRecord(source._meta) ? source._meta : undefined;
   const types = Array.isArray(meta?.internalCopies) ? meta.internalCopies : [];
-  if (types.length === 0) return source;
+  if (types.length === 0) {
+    assertResolved(source, label);
+    return source;
+  }
 
   const result: Entry = { ...source };
   for (const type of types) {
@@ -197,5 +251,7 @@ export function resolveCopies(source: unknown, label: string): unknown {
     if (!Array.isArray(entries)) continue;
     result[type] = resolveEntries(entries as Entry[], `${label} ${type}`);
   }
+  // Also catches a `_copy` under a property `internalCopies` does not name.
+  assertResolved(result, label);
   return result;
 }
