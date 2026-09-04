@@ -8,7 +8,8 @@ description: Rules arithmetic for D&D 5e — proficiency bonus, ability modifier
 Implementations live in `packages/shared/src/rules.ts` and are used by both the API and
 the web client. Add to that file rather than recalculating anywhere else.
 
-Both the 2014 and 2024 rulesets agree on everything here. Edition-specific rules belong
+The two rulesets agree on everything here except caster progression, and that arrives
+as an argument rather than an edition branch. Anything that cannot be passed in belongs
 with the content that carries the `edition` column.
 
 ## Core
@@ -34,12 +35,21 @@ bonus    +2   +3    +4     +5     +6
 **Do not sum each class's own table.** Compute one combined caster level, then read the
 shared multiclass table.
 
+Do not classify by class name either — every casting class and subclass carries a
+`casterProgression`, and `multiclassCasterLevel` takes those values verbatim so no
+mapping can drift. Upstream calls half-rounded-up `artificer`, and the 2024 paladin and
+ranger use it while the 2014 ones round down:
+
 ```
-full caster    bard, cleric, druid, sorcerer, wizard      levels count fully
-half caster    paladin, ranger, artificer                 artificer rounds UP, others
-                                                          count as floor(level / 2)
-third caster   Eldritch Knight, Arcane Trickster          floor(level / 3)
+full         level                bard, cleric, druid, sorcerer, wizard
+artificer    ceil(level / 2)      artificer, 2024 paladin, 2024 ranger
+1/2          floor(level / 2)     2014 paladin, 2014 ranger
+1/3          floor(level / 3)     Eldritch Knight, Arcane Trickster
+pact         0                    warlock, counted apart
 ```
+
+Round each class on its own and then add: two levels of round-down half caster
+contribute nothing, not one.
 
 Warlock **pact magic** is not part of this. Pact slots are tracked separately, all at
 the same level, and recover on a short rest. A warlock/wizard has two independent slot
@@ -57,6 +67,11 @@ long rest    hit points to max, half total hit dice recovered (minimum 1),
              spell slots, all class resources, one level of exhaustion removed
 dawn         many magic items — a distinct trigger, not a long rest
 ```
+
+An item's upstream `recharge` maps onto those four triggers through `resetsOn`.
+`dusk`, `midnight` and `special` have no trigger of their own and degrade to `manual`,
+which is nine items in total. Class resources ship no recharge value at all — the
+trigger comes from feature prose, so the sheet stores what the user sets.
 
 Exhaustion differs by edition in effect but not in how it is tracked: an integer 0-6,
 where 6 is death.
