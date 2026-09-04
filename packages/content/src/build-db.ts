@@ -44,6 +44,10 @@ function repoCommit(): string {
 }
 
 function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
+  // ponytail: every matched file is parsed and held resident before the loader
+  // runs, so a loader over `data/bestiary/*.json` holds the whole corpus while
+  // the transaction is open. Upgrade path is a per-file callback that yields
+  // rows, so only one source is live at a time.
   const sources = new Map<string, unknown>();
   for (const pattern of loader.files) {
     const matches = globSync(pattern, { cwd: vendorDir }).sort();
@@ -106,10 +110,14 @@ export function buildContent({
         }
       }
     })();
-    // The rename moves the main file alone, so a WAL the close cannot fully
-    // checkpoint would take every row it still holds with it, silently.
+    // The rename moves the main file alone, so a WAL that neither the checkpoint
+    // nor the close drains would be left behind holding committed rows — a short
+    // catalog reported as a successful build. Refuse to publish one instead.
     db.pragma("wal_checkpoint(TRUNCATE)");
     db.close();
+    if (existsSync(`${staging}-wal`)) {
+      throw new Error(`${staging}-wal survived the close; refusing to publish a partial catalog`);
+    }
     // renameSync replaces the target atomically, so the catalog is never missing.
     // Only a stale WAL has to go first, or SQLite would apply it to the new file.
     for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
