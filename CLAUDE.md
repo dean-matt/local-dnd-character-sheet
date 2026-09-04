@@ -63,11 +63,11 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 |---|---|
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `add-endpoint` | Adding an API route, end to end |
-| `5e-rules` | Any rules arithmetic — proficiency, DCs, slots, rests |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
 
 Skills are indexed here so they compete for this file's budget. There is no cap on how
-many exist; there is a cap on this file.
+many exist; there is a cap on this file. A skill never restates what code and tests
+already assert — no test runs on prose, so the copy is the half that goes wrong.
 
 ## Maintaining this document
 
