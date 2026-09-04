@@ -5,8 +5,9 @@ description: Rules arithmetic for D&D 5e — proficiency bonus, ability modifier
 
 # 5e rules arithmetic
 
-Implementations live in `packages/shared/src/rules.ts` and are used by both the API and
-the web client. Add to that file rather than recalculating anywhere else.
+Implementations live in `packages/shared/src/rules.ts`, except multiclass spellcasting,
+which lives in `packages/shared/src/spellcasting.ts`. Both are used by the API and the
+web client. Add to them rather than recalculating anywhere else.
 
 The two rulesets agree on everything here except caster progression, and that arrives
 as an argument rather than an edition branch. Anything that cannot be passed in belongs
@@ -56,7 +57,7 @@ the same level, and recover on a short rest. A warlock/wizard has two independen
 pools.
 
 The combined table is in `content.db` under `spell_slots` for single-class casters; the
-multiclass table is a constant in `rules.ts` because upstream does not ship it.
+multiclass table is a constant in `spellcasting.ts` because upstream does not ship it.
 
 ## Rest resets
 
