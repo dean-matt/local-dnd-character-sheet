@@ -6,9 +6,8 @@
  * with more to come — single-class slots and pact tables both arrive from
  * `content.db` rather than from arithmetic.
  *
- * The editions disagree about progression, so it is an argument and never an
- * edition branch: the 2024 paladin and ranger arrive carrying the round-up
- * progression, the 2014 ones do not.
+ * Progression is an argument and never an edition branch, because the editions
+ * disagree about it.
  */
 
 import { proficiencyBonus } from "./core.ts";
@@ -28,8 +27,11 @@ export function spellAttackBonus(spellcastingModifier: number, characterLevel: n
 
 /**
  * Caster progression in upstream's own vocabulary, so there is no mapping table
- * to drift. `artificer` means half rounded up, which the 2024 paladin and
- * ranger also use; `pact` is warlock magic and contributes nothing here.
+ * to drift. `artificer` means half rounded up: the artificer, and the 2024
+ * paladin and ranger, where their 2014 versions round down. A third caster
+ * rounds down in both editions — XPHB says "half your levels (round up)" and
+ * "one third ... (round down)" in the same passage, so the asymmetry is the
+ * rules' own and not an oversight here. `pact` contributes nothing.
  */
 export const CASTER_PROGRESSIONS = ["full", "1/2", "1/3", "artificer", "pact"] as const;
 
@@ -50,10 +52,6 @@ export type SpellSlotTotal = {
  * A `Map` rather than an object, because a progression string comes from upstream
  * JSON: an object literal resolves `constructor` to `Object`, which passes an
  * `undefined` check and then contributes a number nobody wrote down.
- *
- * 2024 rounds a half caster up and still rounds a third caster down — XPHB says
- * "half your levels (round up)" and "one third ... (round down)" in the same
- * passage. The asymmetry is upstream's and correct; do not tidy it.
  */
 const CASTER_LEVEL_CONTRIBUTION = new Map<CasterProgression, (level: number) => number>([
   ["full", (level) => level],
@@ -123,9 +121,9 @@ export function multiclassSlots(casterLevel: number): SpellSlotTotal[] {
   if (!Number.isInteger(casterLevel) || casterLevel < 0 || casterLevel > 20) {
     throw new RangeError(`Caster level must be 0-20, got ${casterLevel}`);
   }
-  const row = MULTICLASS_SLOTS[casterLevel - 1];
-  if (!row) {
+  if (casterLevel === 0) {
     return [];
   }
+  const row = MULTICLASS_SLOTS[casterLevel - 1] ?? [];
   return row.flatMap((slots, index) => (slots > 0 ? [{ level: index + 1, total: slots }] : []));
 }
