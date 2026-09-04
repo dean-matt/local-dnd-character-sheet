@@ -88,6 +88,23 @@ describe("multiclassCasterLevel", () => {
     const unknown = [{ progression: "quarter", level: 4 }] as unknown as CasterClassLevel[];
     expect(() => multiclassCasterLevel(unknown)).toThrow(/quarter/);
   });
+
+  it.each(["constructor", "toString", "hasOwnProperty"])(
+    "rejects %s rather than inheriting it",
+    (progression) => {
+      const inherited = [{ progression, level: 4 }] as unknown as CasterClassLevel[];
+      expect(() => multiclassCasterLevel(inherited)).toThrow(RangeError);
+    },
+  );
+
+  it("rejects class levels that sum past 20, naming the caster level", () => {
+    expect(() =>
+      multiclassCasterLevel([
+        { progression: "full", level: 12 },
+        { progression: "full", level: 12 },
+      ]),
+    ).toThrow(/24/);
+  });
 });
 
 describe("multiclassSlots", () => {

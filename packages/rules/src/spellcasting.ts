@@ -46,29 +46,44 @@ export type SpellSlotTotal = {
   total: number;
 };
 
-const CASTER_LEVEL_CONTRIBUTION: Record<CasterProgression, (level: number) => number> = {
-  full: (level) => level,
-  "1/2": (level) => Math.floor(level / 2),
-  "1/3": (level) => Math.floor(level / 3),
-  artificer: (level) => Math.ceil(level / 2),
-  pact: () => 0,
-};
+/**
+ * A `Map` rather than an object, because a progression string comes from upstream
+ * JSON: an object literal resolves `constructor` to `Object`, which passes an
+ * `undefined` check and then contributes a number nobody wrote down.
+ *
+ * 2024 rounds a half caster up and still rounds a third caster down — XPHB says
+ * "half your levels (round up)" and "one third ... (round down)" in the same
+ * passage. The asymmetry is upstream's and correct; do not tidy it.
+ */
+const CASTER_LEVEL_CONTRIBUTION = new Map<CasterProgression, (level: number) => number>([
+  ["full", (level) => level],
+  ["1/2", (level) => Math.floor(level / 2)],
+  ["1/3", (level) => Math.floor(level / 3)],
+  ["artificer", (level) => Math.ceil(level / 2)],
+  ["pact", () => 0],
+]);
 
 /**
  * The single caster level the multiclass slot table is read with. Summing each
  * class's own slots instead would be wrong, and wrong upward.
  */
 export function multiclassCasterLevel(classes: readonly CasterClassLevel[]): number {
-  return classes.reduce((casterLevel, entry) => {
+  const casterLevel = classes.reduce((total, entry) => {
     if (!Number.isInteger(entry.level) || entry.level < 1 || entry.level > 20) {
       throw new RangeError(`Class level must be 1-20, got ${entry.level}`);
     }
-    const contribution = CASTER_LEVEL_CONTRIBUTION[entry.progression];
+    const contribution = CASTER_LEVEL_CONTRIBUTION.get(entry.progression);
     if (!contribution) {
       throw new RangeError(`Unknown caster progression "${entry.progression}"`);
     }
-    return casterLevel + contribution(entry.level);
+    return total + contribution(entry.level);
   }, 0);
+  // Caught here rather than in `multiclassSlots`, where the level no longer names
+  // the classes it came from.
+  if (casterLevel > 20) {
+    throw new RangeError(`Class levels sum past 20, giving caster level ${casterLevel}`);
+  }
+  return casterLevel;
 }
 
 /**

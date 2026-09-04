@@ -14,6 +14,13 @@ describe("resetsOn", () => {
     expect(resetsOn(recharge)).toBe("manual");
   });
 
+  it.each(["constructor", "toString", "hasOwnProperty"])(
+    "degrades the inherited key %s to manual",
+    (recharge) => {
+      expect(resetsOn(recharge)).toBe("manual");
+    },
+  );
+
   it.each([null, undefined])("degrades %s to manual", (recharge) => {
     expect(resetsOn(recharge)).toBe("manual");
   });
