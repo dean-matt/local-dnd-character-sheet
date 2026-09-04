@@ -5,6 +5,7 @@ import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "./build-db.ts";
 import type { Loader } from "./load/index.ts";
+import { CONTENT_SCHEMA } from "./schema.ts";
 
 /**
  * Fences the loader framework: the registry runs in order inside one
@@ -103,6 +104,16 @@ describe("buildContent", () => {
       /Loader "conditions" failed/,
     );
     expect(existsSync(dbPath)).toBe(false);
+  });
+
+  it("has no column DEFAULT for the union insert to apply inconsistently", () => {
+    expect(
+      CONTENT_SCHEMA,
+      "insert() spans the union of a batch's keys, so a row omitting this column stores an " +
+        "explicit NULL when a sibling row sets it and the DEFAULT when none does — the same " +
+        "row two ways, depending on its batch. Have the loader set the column, or make " +
+        "insert() build its statement per row.",
+    ).not.toMatch(/\bDEFAULT\b/i);
   });
 
   it("runs the registry in array order, so rows land in the order loaders are listed", () => {
