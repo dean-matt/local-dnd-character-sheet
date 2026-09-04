@@ -119,9 +119,15 @@ problem being solved.
 Module-level documentation is welcome where it clarifies inputs, outputs, or side effects
 that a signature does not convey.
 
-A `ponytail:` comment is the sanctioned exception for a deliberate corner-cut — name the
-ceiling and the upgrade path. That is a *why*, and it is the one kind of shortcut worth
-recording in the code rather than an issue.
+A deliberate corner-cut is worth recording in the code rather than an issue: name the
+ceiling and the upgrade path, because that is a *why*. Write it as an ordinary comment.
+
+`.claude/PONYTAIL.md` asks for a `ponytail:` prefix on those, and this repository does not
+use it — the only local departure from that document, which is otherwise binding. A prefix
+tells a reader nothing the sentence does not, and it invites the marker onto comments that
+have no ceiling to name, which is where it was going. `tests/comment-policy.test.ts`
+rejects it, and any other marker prefix, so the vendored document cannot quietly
+reintroduce one.
 
 ## Working with Claude here
 

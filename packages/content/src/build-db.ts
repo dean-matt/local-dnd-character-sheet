@@ -46,10 +46,10 @@ function repoCommit(): string {
 }
 
 function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
-  // ponytail: every matched file is parsed and held resident before the loader
-  // runs, so a loader over `data/bestiary/*.json` holds the whole corpus while
-  // the transaction is open. Upgrade path is a per-file callback that yields
-  // rows, so only one source is live at a time.
+  // Every matched file is parsed and held resident before the loader runs, so a
+  // loader over `data/bestiary/*.json` holds the whole corpus while the
+  // transaction is open. A per-file callback yielding rows would keep only one
+  // source live, if that ever matters.
   const sources = new Map<string, unknown>();
   for (const pattern of loader.files) {
     // A glob such as `data/*` matches the subdirectories too, and handing one to

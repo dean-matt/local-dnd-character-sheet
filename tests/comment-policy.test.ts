@@ -47,6 +47,14 @@ const RULES: { pattern: RegExp; why: string }[] = [
   { pattern: /\bpreviously\b/i, why: "narrates a past state" },
   { pattern: /\bwas\s+\w+\s+before\b/i, why: "narrates a past state" },
   { pattern: /\b(?:TODO|FIXME|XXX|HACK)\b/, why: "a task marker — file an issue instead" },
+  {
+    // `.claude/PONYTAIL.md` asks for this prefix. It is the one part of that
+    // document this repository does not follow: see CONTRIBUTING.md. Matching
+    // the label itself rather than any `word:` — the general form flags wrapped
+    // prose, and a false positive here costs more than the marker does.
+    pattern: /\bponytail:/i,
+    why: "a marker prefix — write the reason without the label",
+  },
 ];
 
 const COMMENTED_OUT =

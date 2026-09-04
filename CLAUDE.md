@@ -98,6 +98,7 @@ skill — do not raise the cap.
 Default to no comment. Add one only when it explains *why*. No history, no ticket or
 issue numbers, no restating what the code does, no commented-out code. Module-level docs
 are fine when they clarify inputs, outputs, or side effects that the signature does not.
-Asserted by `tests/comment-policy.test.ts`.
+No marker prefixes — including `ponytail:`, which the appended document below asks for.
+State the ceiling and leave the label off. Asserted by `tests/comment-policy.test.ts`.
 
 @.claude/PONYTAIL.md
