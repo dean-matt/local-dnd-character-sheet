@@ -16,7 +16,7 @@ import {
   renameSync,
   rmSync,
 } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
@@ -50,12 +50,17 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
   // rows, so only one source is live at a time.
   const sources = new Map<string, unknown>();
   for (const pattern of loader.files) {
-    const matches = globSync(pattern, { cwd: vendorDir }).sort();
+    // A glob such as `data/*` matches the subdirectories too, and handing one to
+    // readFileSync throws EISDIR from behind the loader's name.
+    const matches = globSync(pattern, { cwd: vendorDir, withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => posix(relative(vendorDir, join(entry.parentPath, entry.name))))
+      .sort();
     if (matches.length === 0) {
       throw new Error(`no file under ${vendorDir} matches ${pattern}`);
     }
     for (const match of matches) {
-      sources.set(posix(match), JSON.parse(readFileSync(join(vendorDir, match), "utf8")));
+      sources.set(match, JSON.parse(readFileSync(join(vendorDir, match), "utf8")));
     }
   }
   return sources;
@@ -78,6 +83,29 @@ function discard(path: string): void {
   for (const file of [path, `${path}-wal`, `${path}-shm`]) rmSync(file, { force: true });
 }
 
+function isRunning(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+/**
+ * Removes staging files whose build is gone. A per-process name means no run
+ * cleans up after another, so a killed build would otherwise leave a catalog's
+ * worth of bytes in `data/` that no later run ever reaps.
+ */
+function reapStaging(dbPath: string): void {
+  const dir = dirname(dbPath);
+  for (const file of globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dir })) {
+    const pid = /\.(\d+)\.incoming(?:-wal|-shm)?$/.exec(file)?.[1];
+    if (!pid || (Number(pid) !== process.pid && isRunning(Number(pid)))) continue;
+    rmSync(join(dir, file), { force: true });
+  }
+}
+
 /** Returns the row count per table written. */
 export function buildContent({
   vendorDir,
@@ -90,7 +118,7 @@ export function buildContent({
   // just race to rename a complete catalog, which is harmless either way.
   const staging = `${dbPath}.${process.pid}.incoming`;
   mkdirSync(dirname(dbPath), { recursive: true });
-  discard(staging);
+  reapStaging(dbPath);
 
   const db = new Database(staging);
   const counts: Record<string, number> = {};

@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "./build-db.ts";
@@ -133,7 +133,26 @@ describe("buildContent", () => {
       buildContent({ vendorDir, dbPath, loaders: [lookup("condition"), exploding], meta: {} }),
     ).toThrow(/Loader "broken" failed/);
     expect(existsSync(dbPath)).toBe(false);
-    expect(existsSync(`${dbPath}.incoming`)).toBe(false);
+    expect(globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dirname(dbPath) })).toEqual([]);
+  });
+
+  it("reaps a staging file left behind by a build that is gone", () => {
+    const orphan = join(dirname(dbPath), `${basename(dbPath)}.999999.incoming`);
+    mkdirSync(dirname(dbPath), { recursive: true });
+    writeFileSync(orphan, "stale");
+    writeFileSync(`${orphan}-wal`, "stale");
+
+    buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+
+    expect(globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dirname(dbPath) })).toEqual([]);
+  });
+
+  it("reads only files, so a glob spanning directories still loads", () => {
+    mkdirSync(join(vendorDir, "data", "spells"), { recursive: true });
+    writeFileSync(join(vendorDir, "data", "spells", "phb.json"), '{"entries":["Fireball"]}');
+    const wide: Loader = { ...lookup("condition"), files: ["data/*"] };
+
+    expect(buildContent({ vendorDir, dbPath, loaders: [wide], meta: {} })).toEqual({ lookups: 2 });
   });
 
   it("leaves the previous catalog in place when a rebuild fails", () => {
