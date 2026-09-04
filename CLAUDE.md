@@ -112,7 +112,7 @@ change in the wrong place is a second bug. Fix root causes, not the path a repor
 grep every caller and fix the shared function once. Prefer deleting to adding, boring to
 clever, and fewest files. Question a complex request rather than implementing it twice.
 
-Not lazy about: understanding the problem, input validation at trust boundaries, error
+Do not be lazy about: understanding the problem, input validation at trust boundaries, error
 handling that prevents data loss, security, accessibility, or anything explicitly asked
 for. Non-trivial logic leaves behind the smallest runnable check that fails if it breaks.
 
