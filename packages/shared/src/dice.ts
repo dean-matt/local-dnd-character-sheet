@@ -1,10 +1,10 @@
 /**
  * Dice notation parsing and rolling.
  *
- * `rollDice` is the only entry point. It takes standard notation
- * (`2d6+3`, `4d6kh3`) plus an optional mode and random source, and returns every
- * die it rolled — including the ones a keep clause discarded — so the roll log can
- * show the whole pool.
+ * `rollDice` is the only entry point. It takes standard notation (`2d6+3`, `4d6kh3`)
+ * and a random source, and returns every die it rolled — including the ones a keep
+ * clause discarded — so the roll log can show the whole pool. An advantage or
+ * disadvantage mode is legal only on single-die, keep-free notation.
  */
 
 export type RolledDie = {
@@ -106,11 +106,13 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 }
 
 /**
- * Rolls `notation`, throwing a `SyntaxError` or `RangeError` naming the offending input.
+ * Rolls `notation`, throwing a `SyntaxError` for malformed notation and a `RangeError`
+ * for a quantity out of bounds, both naming the offending input.
  *
  * Advantage and disadvantage roll a second die and keep the higher or lower, so both
  * appear in `dice`. The rules only ever apply them to a single die, so notation rolling
- * a pool or carrying its own keep clause is rejected rather than reinterpreted.
+ * a pool or carrying its own keep clause is rejected rather than reinterpreted — a
+ * `TypeError`, since the notation itself is fine and only the pairing is wrong.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { mode = "normal", random = Math.random } = options;
@@ -118,7 +120,7 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { count, faces, keep, modifier } = parsed;
 
   if (mode !== "normal" && (count !== 1 || keep !== null)) {
-    throw new SyntaxError(`${mode} applies to a single die, not to "${notation}"`);
+    throw new TypeError(`${mode} applies to a single die, not to "${notation}"`);
   }
 
   const pool = mode === "normal" ? count : 2;

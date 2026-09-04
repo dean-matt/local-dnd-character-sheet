@@ -81,6 +81,7 @@ describe("rollDice", () => {
   });
 
   it.each(["4d6kh3", "2d6", "1d20kh1"])("rejects advantage on %s", (notation) => {
+    expect(() => rollDice(notation, { mode: "advantage" })).toThrow(TypeError);
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(`"${notation}"`);
   });
 
