@@ -12,7 +12,8 @@ The package split and the three-database rule are the requested architecture.
 Ponytail's ladder applies *within* them, not against them.
 
 ```
-packages/shared    Zod schemas, tag parser, dice, 5e rules math — used by api AND web
+packages/shared    Zod schemas, tag parser, 5e rules math — used by api AND web
+packages/dice      Dice notation parsing and rolling — depends on nothing
 packages/content   ETL: sync + build -> content.db
 packages/api       Hono + zod-openapi + Drizzle, 127.0.0.1:8787
 packages/web       React + Vite + React Router + TanStack Query, 127.0.0.1:5173
@@ -81,6 +82,7 @@ duplicate a source of truth:
 | `README.md` | prerequisites, setup, the command list |
 | `CONTRIBUTING.md` | the reasoning behind every fence |
 | `docs/` | 5etools data quirks, data model, architecture, reviving the project |
+| `packages/*/README.md` | anything true of one package only, such as dice notation |
 | `content.manifest.json` / `content.lock.json` | which upstream data is fetched |
 
 **Write the edit** by verifying against the code first, replacing the stale sentence

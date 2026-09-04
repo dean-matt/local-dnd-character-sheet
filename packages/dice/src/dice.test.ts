@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rollDice } from "./dice.ts";
+import { rollDice } from "./index.ts";
 
 /** A random source that yields exactly the given die values, for a die of `faces` sides. */
 function loaded(faces: number, ...values: number[]): () => number {
