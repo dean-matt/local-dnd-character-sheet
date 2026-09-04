@@ -1,0 +1,72 @@
+{
+  "_meta": { "internalCopies": ["item"] },
+  "item": [
+    {
+      "name": "Slumbering Dragon Vessel",
+      "source": "FTD",
+      "page": 27,
+      "rarity": "uncommon",
+      "reqAttune": true,
+      "wondrous": true,
+      "entries": ["Elided.", "Slumbering: {@item potion of healing}."]
+    },
+    {
+      "name": "Stirring Dragon Vessel",
+      "source": "FTD",
+      "rarity": "rare",
+      "entries": ["Elided.", "Stirring: {@item potion of greater healing}."],
+      "_copy": {
+        "name": "Slumbering Dragon Vessel",
+        "source": "FTD",
+        "_preserve": { "page": true }
+      }
+    },
+    {
+      "name": "Wakened Dragon Vessel",
+      "source": "FTD",
+      "rarity": "very rare",
+      "entries": ["Elided.", "Wakened: {@item potion of superior healing}."],
+      "_copy": {
+        "name": "Stirring Dragon Vessel",
+        "source": "FTD",
+        "_preserve": { "page": true }
+      }
+    },
+    {
+      "name": "Ascendant Dragon Vessel",
+      "source": "FTD",
+      "rarity": "legendary",
+      "entries": ["Elided.", "Ascendant: {@item potion of supreme healing}."],
+      "_copy": {
+        "name": "Wakened Dragon Vessel",
+        "source": "FTD",
+        "_preserve": { "page": true }
+      }
+    },
+    {
+      "name": "Wand of Magic Missiles",
+      "source": "DMG",
+      "page": 211,
+      "type": "WD|DMG",
+      "rarity": "uncommon",
+      "srd": true,
+      "charges": 7,
+      "entries": ["Elided.", "Expend charges to cast {@spell magic missile}."]
+    },
+    {
+      "name": "Charred Wand of Magic Missiles",
+      "source": "WDH",
+      "page": 77,
+      "_copy": {
+        "name": "Wand of Magic Missiles",
+        "source": "DMG",
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": "There is a {@chance 50} chance the charge is wasted."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -14,7 +14,8 @@ grammar, the `_copy` counts per file, and the 21 class-resource labels.
    Tier C rows are searchable and resolve tags. Promote to Tier A only when the sheet
    queries specific columns.
 2. **Check `_copy` density** in the source file. Spells, feats, optional features,
-   conditions, and actions have none. Classes, items, backgrounds, and races do.
+   conditions, and actions have none. Classes, items, backgrounds, and races do —
+   `copy.ts` has already resolved them by the time a loader runs.
 3. **Check for a `classTableGroups`-style structure** before writing a parser for prose.
 
 ## The loader contract
@@ -39,7 +40,7 @@ succeeded. A throw anywhere aborts the build and leaves the previous catalog in 
 
 ```
 1  packages/content/src/schema.ts       add the table, with the edition CHECK
-2  packages/content/src/load/<type>.ts  read, resolve _copy, map rows
+2  packages/content/src/load/<type>.ts  map the parsed sources to rows
 3  packages/content/src/load/index.ts   add it to LOADERS, in insert order
 4  packages/content/src/load/<type>.test.ts   against tests/fixtures/
 5  pnpm content:build && pnpm test
@@ -54,9 +55,15 @@ succeeded. A throw anywhere aborts the build and leaves the previous catalog in 
 are `one`. A missing edition on a Tier A row is a bug, not a null. Tier B and C hold
 edition-less entries too, which is why `lookups` and `entities` allow it to be NULL.
 
-**Resolve `_copy` at build time, never at query time.** The `_meta.internalCopies` key
-in each file names which entity types need it. A `_copy` block names a parent by
-`(name, source)`; `_mod` describes changes to apply after copying.
+**`_copy` is resolved for you, at build time and never at query time.** `copy.ts` runs
+over every source the framework reads and fails the build on a cycle, a missing parent, or
+a shape it cannot apply. A loader never sees a `_copy`, and must not add handling for one —
+a new `_mod` mode belongs in `copy.ts`.
+
+**`_versions` is a different mechanism and is not resolved.** It carries its own `_mod`,
+including `removeArr` and `renameArr` modes that `copy.ts` does not implement, and it
+reaches loaders intact — 48 entries in `races.json`, 9 in `feats.json`. Decide explicitly
+whether your loader expands, ignores, or rejects them.
 
 **Unmapped class resource labels become generic counters**, not errors. Only about 80%
 of resources come from `classTableGroups`; Battle Master superiority dice and similar

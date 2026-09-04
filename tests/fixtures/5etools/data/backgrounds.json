@@ -1,0 +1,88 @@
+{
+  "_meta": { "internalCopies": ["background"] },
+  "background": [
+    {
+      "name": "Acolyte",
+      "source": "PHB",
+      "page": 127,
+      "srd": true,
+      "basicRules": true,
+      "skillProficiencies": [{ "insight": true, "religion": true }],
+      "entries": [
+        { "type": "list", "style": "list-hang-notitle", "items": [] },
+        {
+          "name": "Feature: Shelter of the Faithful",
+          "type": "entries",
+          "entries": ["Elided."],
+          "data": { "isFeature": true }
+        },
+        { "type": "table", "caption": "Personality Trait", "rows": [] }
+      ]
+    },
+    {
+      "name": "Baldur's Gate Acolyte",
+      "source": "BGDIA",
+      "page": 202,
+      "_copy": {
+        "name": "Acolyte",
+        "source": "PHB",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": 2,
+            "items": {
+              "name": "Baldur's Gate Feature: Religious Community",
+              "type": "entries",
+              "entries": ["Elided."],
+              "data": { "isFeature": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Criminal",
+      "source": "PHB",
+      "page": 129,
+      "basicRules": true,
+      "skillProficiencies": [{ "deception": true, "stealth": true }],
+      "entries": [
+        { "type": "list", "style": "list-hang-notitle", "items": [] },
+        {
+          "name": "Feature: Criminal Contact",
+          "type": "entries",
+          "entries": ["Elided."],
+          "data": { "isFeature": true }
+        }
+      ]
+    },
+    {
+      "name": "Variant Criminal (Spy)",
+      "source": "PHB",
+      "page": 130,
+      "basicRules": true,
+      "_copy": {
+        "name": "Criminal",
+        "source": "PHB",
+        "_mod": {
+          "entries": {
+            "mode": "replaceArr",
+            "replace": "Feature: Criminal Contact",
+            "items": {
+              "name": "Feature: Spy Contact",
+              "type": "entries",
+              "entries": ["Elided."],
+              "data": { "isFeature": true }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Augen Trust (Spy)",
+      "source": "EGW",
+      "page": 203,
+      "_copy": { "name": "Variant Criminal (Spy)", "source": "PHB" }
+    }
+  ]
+}

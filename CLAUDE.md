@@ -9,7 +9,7 @@ all future work. Detail that only some tasks need belongs in a skill or `docs/`.
 ## Architecture, decided
 
 The package split and the three-database rule are the requested architecture.
-Ponytail's ladder applies *within* them, not against them.
+The ladder below applies *within* them, not against them.
 
 ```
 packages/shared    Zod schemas, tag parser, 5e rules math — used by api AND web
@@ -96,8 +96,27 @@ skill — do not raise the cap.
 ## Code comments
 
 Default to no comment. Add one only when it explains *why*. No history, no ticket or
-issue numbers, no restating what the code does, no commented-out code. Module-level docs
-are fine when they clarify inputs, outputs, or side effects that the signature does not.
-Asserted by `tests/comment-policy.test.ts`.
+issue numbers, no restating what the code does, no commented-out code, no marker
+prefixes. Module-level docs are fine when they clarify inputs, outputs, or side effects
+that the signature does not. Asserted by `tests/comment-policy.test.ts`.
 
-@.claude/PONYTAIL.md
+## Coding disposition
+
+The best code is the one never written. Before writing any, stop at the first rung that
+holds: does this need to exist at all; does it already exist here; does the standard
+library or the platform do it; does a dependency already installed; can it be one line.
+Only then write the minimum that works.
+
+The ladder runs *after* understanding the problem, never instead of it — the smallest
+change in the wrong place is a second bug. Fix root causes, not the path a report names:
+grep every caller and fix the shared function once. Prefer deleting to adding, boring to
+clever, and fewest files. Question a complex request rather than implementing it twice.
+
+Do not be lazy about: understanding the problem, input validation at trust boundaries, error
+handling that prevents data loss, security, accessibility, or anything explicitly asked
+for. Non-trivial logic leaves behind the smallest runnable check that fails if it breaks.
+
+Where two approaches are the same size, take the edge-case-correct one. Where a
+simplification cuts a real corner — a global lock, an O(n²) scan, a naive heuristic —
+name the ceiling and the way out in a comment. If the explanation is longer than the
+code, delete the explanation.

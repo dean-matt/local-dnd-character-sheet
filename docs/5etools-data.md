@@ -51,7 +51,21 @@ actions.json      0
 
 Spells being clean is why they are the right first target for the ETL.
 
-`_meta.internalCopies` in each file names which keys need resolving.
+`_meta.internalCopies` in each file names which keys need resolving, and
+`packages/content/src/load/copy.ts` does it as part of reading a source, so loaders only
+ever see complete records. Five `_mod` modes appear in character data — `appendArr`,
+`prependArr`, `insertArr`, `replaceArr` and `replaceTxt`.
+
+Everything the bestiary needs and character data does not is refused rather than
+half-applied: cross-file parents, the `setProp` and `addSkills` modes, and the `*` and
+`_` wildcard `_mod` properties. `internalCopies` is not trustworthy on its own either —
+31 files carry a same-file `_copy` without declaring one — so a surviving `_copy` fails
+the build too.
+
+`_versions` is a **second, unrelated** inheritance mechanism and nothing resolves it yet.
+An entry lists variants of itself, each with its own `_mod`, using modes `_copy` never
+does — `removeArr`, `renameArr`, `addSpells`. It matters for characters: 48 entries in
+`races.json` and 9 in `feats.json`. A loader over either sees them intact.
 
 ## Tag markup
 

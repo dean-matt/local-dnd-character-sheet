@@ -98,8 +98,11 @@ When it overflows, extract to a skill — do not raise the cap. A skill loads on
 detail that only some tasks need costs nothing on the tasks that do not need it.
 
 The corollary matters just as much: anything that must apply on *every* task cannot be a
-skill. That is why the coding disposition in [`.claude/PONYTAIL.md`](.claude/PONYTAIL.md) is imported into
-`CLAUDE.md` rather than living in `.claude/skills/`.
+skill. That is why the coding disposition lives in `CLAUDE.md` rather than
+`.claude/skills/`, and why it is kept to the handful of rules that change what gets
+written. It is adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
+The original is a vendored file imported into `CLAUDE.md`; that arrangement put 53 lines
+of every-task instruction outside the 150-line cap, which the cap exists to prevent.
 
 Skills are indexed in `CLAUDE.md`, which is the only limit on how many exist. Capping the
 count would punish a project that legitimately grows; making skills compete for a budget
@@ -119,9 +122,13 @@ problem being solved.
 Module-level documentation is welcome where it clarifies inputs, outputs, or side effects
 that a signature does not convey.
 
-A `ponytail:` comment is the sanctioned exception for a deliberate corner-cut — name the
-ceiling and the upgrade path. That is a *why*, and it is the one kind of shortcut worth
-recording in the code rather than an issue.
+A deliberate corner-cut is worth recording in the code rather than an issue: name the
+ceiling and the upgrade path, because that is a *why*. Write it as an ordinary comment.
+
+No marker prefix on it. A label tells a reader nothing the sentence does not, and it
+invites itself onto comments with no ceiling to name — a labelled comment reads as
+sanctioned. `tests/comment-policy.test.ts` rejects `ponytail:`, the one such label this
+repository has carried.
 
 ## Working with Claude here
 
@@ -137,4 +144,5 @@ mid-task. `noUnusedLocals` and Biome's complexity rules catch the rest. The fenc
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
 and a line budget on code punishes a long correct function the same as a short pointless
-abstraction. Those stay with `.claude/PONYTAIL.md` and review on the pull request.
+abstraction. Those stay with the coding disposition in `CLAUDE.md` and review on the
+pull request.

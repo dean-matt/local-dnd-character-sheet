@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "internalCopies": ["subclass", "subclassFeature"]
+  },
+  "subclass": [
+    {
+      "name": "Knowledge Domain",
+      "shortName": "Knowledge",
+      "source": "PHB",
+      "className": "Cleric",
+      "classSource": "PHB",
+      "page": 59,
+      "reprintedAs": ["Knowledge|Cleric|XPHB|FRHoF"],
+      "subclassFeatures": [
+        "Knowledge Domain|Cleric||Knowledge||1",
+        "Visions of the Past|Cleric||Knowledge||17"
+      ],
+      "isReprinted": true
+    },
+    {
+      "name": "Knowledge Domain",
+      "shortName": "Knowledge",
+      "source": "PHB",
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "reprintedAs": ["Knowledge|Cleric|XPHB|FRHoF"],
+      "subclassFeatures": [
+        "Knowledge Domain|Cleric|XPHB|Knowledge||3",
+        "Visions of the Past|Cleric||Knowledge||17"
+      ],
+      "_copy": {
+        "name": "Knowledge Domain",
+        "source": "PHB",
+        "shortName": "Knowledge",
+        "className": "Cleric",
+        "classSource": "PHB",
+        "_preserve": {
+          "page": true,
+          "reprintedAs": true
+        }
+      }
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Channel Divinity: Touch of Death",
+      "source": "DMG",
+      "page": 96,
+      "className": "Cleric",
+      "classSource": "PHB",
+      "subclassShortName": "Death",
+      "subclassSource": "DMG",
+      "level": 2,
+      "header": 2,
+      "entries": ["Elided.", "Deals {@damage 1d10} necrotic damage."]
+    },
+    {
+      "name": "Channel Divinity: Touch of Death",
+      "source": "DMG",
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "subclassShortName": "Death",
+      "subclassSource": "DMG",
+      "level": 3,
+      "_copy": {
+        "name": "Channel Divinity: Touch of Death",
+        "source": "DMG",
+        "className": "Cleric",
+        "classSource": "PHB",
+        "subclassShortName": "Death",
+        "subclassSource": "DMG",
+        "level": 2,
+        "_preserve": {
+          "page": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "_meta": {
+    "internalCopies": ["race", "subrace"]
+  },
+  "race": [
+    {
+      "name": "Goblin",
+      "source": "MPMM",
+      "page": 20,
+      "lineage": "VRGR",
+      "size": ["S"],
+      "speed": 30,
+      "entries": [
+        {
+          "name": "Fury of the Small",
+          "type": "entries",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Boggart",
+      "source": "LFL",
+      "lineage": null,
+      "_copy": {
+        "name": "Goblin",
+        "source": "MPMM"
+      }
+    },
+    {
+      "name": "Goblin",
+      "source": "VGM",
+      "page": 119,
+      "reprintedAs": ["Goblin|MPMM"],
+      "size": ["S"],
+      "speed": 30,
+      "entries": [
+        {
+          "name": "Darkvision",
+          "type": "entries",
+          "entries": ["Goblins see in the dark."],
+          "data": {
+            "overwrite": "Goblins"
+          }
+        },
+        {
+          "name": "Fury of the Small",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "table",
+          "caption": "Goblins by Type",
+          "colLabels": ["Goblins", "Trait"],
+          "colStyles": ["col-6", "col-6"],
+          "rows": [["Goblins", "Elided."]]
+        }
+      ]
+    },
+    {
+      "name": "Goblin (Dankwood)",
+      "source": "AWM",
+      "page": 35,
+      "_copy": {
+        "name": "Goblin",
+        "source": "VGM",
+        "_mod": {
+          "entries": [
+            {
+              "mode": "replaceTxt",
+              "replace": "Goblins",
+              "with": "Dankwood goblins",
+              "flags": "i"
+            },
+            {
+              "mode": "appendArr",
+              "items": {
+                "name": "Alignment",
+                "type": "entries",
+                "entries": ["Elided."]
+              }
+            },
+            {
+              "mode": "replaceArr",
+              "replace": "Fury of the Small",
+              "items": {
+                "name": "Speak with Small Beasts",
+                "type": "entries",
+                "entries": ["Elided."]
+              }
+            }
+          ]
+        },
+        "_preserve": {
+          "reprintedAs": true
+        }
+      }
+    }
+  ],
+  "subrace": [
+    {
+      "name": "Variant",
+      "source": "PHB",
+      "raceName": "Human",
+      "raceSource": "PHB",
+      "page": 31,
+      "entries": [
+        {
+          "name": "Skills",
+          "type": "entries",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Amonkhet",
+      "source": "PSA",
+      "page": 14,
+      "_copy": {
+        "name": "Variant",
+        "source": "PHB",
+        "raceName": "Human",
+        "raceSource": "PHB",
+        "_mod": {
+          "entries": [
+            {
+              "mode": "appendArr",
+              "items": [
+                {
+                  "name": "Age",
+                  "type": "entries",
+                  "entries": ["Elided."],
+                  "data": {
+                    "overwrite": "Age"
+                  }
+                },
+                {
+                  "name": "Alignment",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
