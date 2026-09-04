@@ -12,7 +12,7 @@ schema. That is the failure this order prevents.
 ## The order
 
 ```
-1  packages/character/src/<domain>.ts        Zod schema — the single definition
+1  the package that owns the domain          Zod schema — the single definition
 2  packages/api/src/routes/<domain>.ts       createRoute() using that schema
 3  packages/api/src/db/queries/<domain>.ts   Drizzle query (or raw SQL for content.db)
 4  packages/web/src/hooks/use<Domain>.ts     TanStack Query hook
@@ -21,6 +21,14 @@ schema. That is the failure this order prevents.
 
 Never skip step 1. A schema defined inline in a route cannot be reused by the web
 client, which is how a hand-written duplicate type appears and then drifts.
+
+Step 1 lands in a different package depending on what the schema describes:
+
+| Schema | Lives in |
+|---|---|
+| a character's definition or state | `packages/character` |
+| a catalog row — spell, item, class | its own leaf package, never `packages/content`, whose `better-sqlite3` dependency must stay out of the web bundle |
+| path params, pagination, error envelopes | the route file — these are HTTP shape rather than a domain, and the web client takes them from the generated spec |
 
 ## Route shape
 
