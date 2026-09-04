@@ -1,37 +1,59 @@
 # Dice notation
 
-No formal standard exists. Roll20 set the dialect everyone borrows, Foundry extends it,
-and `@dice-roller/rpg-dice-roller` documents the fullest superset.
+The grammar `@dnd/dice` reads. Anything else raises a `SyntaxError` naming the input.
 
-| Feature | Syntax | What it does | Where it appears | Supported |
-|---|---|---|---|---|
-| Pool | `2d6`, `d20` | Rolls a number of dice of one size and sums them | every system | yes |
-| Flat modifier | `1d8+3`, `2d6-1` | Adds or subtracts a constant from the total | every system | yes |
-| Keep highest, keep lowest | `4d6kh3`, `2d20kl1` | Rolls the whole pool, counts only the best or worst few | 5e ability scores, advantage | yes |
-| Drop lowest, drop highest | `4d6dl1`, `4d6dh1` | The same operation spelled from the other end: names the dice to discard rather than the ones to count | 5e ability scores | no |
-| Multi-term sum | `1d8+1d6+3` | Adds several pools and constants in one expression | 5e smite, sneak attack, hex | no |
-| Percentile | `d%` | Shorthand for `d100` | 5e wild magic, loot tables | no |
-| Reroll once, reroll always | `2d6ro<3`, `2d6r<3` | Rerolls dice matching a condition, the lowest face by default, and keeps the new result. `ro` rerolls at most once, `r` repeats while the condition holds | 5e Great Weapon Fighting | no |
-| Clamp low, clamp high | `2d6min2`, `2d6max5` | Treats any die past the bound as the bound itself, without rerolling | 5e Elemental Adept | no |
-| Exploding | `4d6!` | A die at its highest face rolls again, and the extra die adds to the total, repeating | Savage Worlds, Hackmaster | no |
-| Compounding | `4d6!!` | Exploding, except the extra rolls fold into one die's value instead of appearing separately | Shadowrun | no |
-| Penetrating | `4d6!p` | Exploding, except every extra roll takes a -1 penalty | Hackmaster | no |
-| Success count | `5d10>=8` | Counts the dice that meet a condition instead of summing them | World of Darkness | no |
-| Failure count | `5d10>=8f1` | Subtracts the dice that meet a failure condition from the success count | Shadowrun | no |
-| Unique | `4d6u` | Rerolls duplicates until every die shows a different value | general purpose | no |
-| Fudge dice | `4dF` | Rolls dice whose faces are -1, 0, and +1 | Fate | no |
-| Grouped rolls | `{2d6+3, 1d8}kh1` | Applies a modifier to a bracketed set of rolls as one unit | general purpose | no |
-| Sort | `4d6s`, `4d6sd` | Orders the dice for display, ascending or descending. The total does not change | display only | no |
+```
+[count] d faces [kh n | kl n] [+ modifier | - modifier]
+```
 
-Multi-term sums and drop notation are tracked in
-[issue #16](https://github.com/dean-matt/local-dnd-character-sheet/issues/16). Drop
-carries a trap: `d` already separates the count from the faces, so `4d6d1` has to be
-read by position.
+| Part | Required | Default | Rules |
+|---|---|---|---|
+| `count` | no | `1` | 1 to 1000. `d20` and `1d20` are the same roll |
+| `d` | yes | | Separates the count from the faces. Case does not matter, so `1D20` reads |
+| `faces` | yes | | 1 to 1000 |
+| `kh n`, `kl n` | no | keep everything | Counts only the `n` highest or lowest dice toward the total. `n` cannot exceed `count` |
+| `+ modifier`, `- modifier` | no | `0` | A constant added to or subtracted from the total, up to 1000 |
 
-## References
+```
+d20        1d20        2d6+3       1d8-1
+4d6kh3     2d20kl1     1D20+5
+```
 
-- [rpg-dice-roller modifiers](https://dice-roller.github.io/documentation/guide/notation/modifiers.html) — exact syntax for every modifier
-- [rpg-dice-roller notation guide](https://dice-roller.github.io/documentation/guide/notation/) — dice types, groups, and maths
-- [Foundry VTT dice modifiers](https://foundryvtt.com/article/dice-modifiers/) — the dialect players type at the table
+Spaces are allowed around `d`, `k`, and the sign, but not inside a number: `2d6 + 3`
+reads, `1d6 4` does not. Rejecting it matters, because otherwise it would quietly roll a
+d64.
+
+## Advantage and disadvantage
+
+Not notation. Pass `mode` instead:
+
+```ts
+rollDice("1d20+5", { mode: "advantage" });
+```
+
+The rules only ever grant advantage on a single die, so a mode paired with notation that
+rolls a pool or carries its own keep clause raises a `TypeError`. Spelling it `2d20kh1`
+would work arithmetically but would leave a roll log unable to explain the second die.
+
+## Canonical form
+
+The returned `notation` is rebuilt from the parsed parts rather than echoed back, so
+spacing, case, and omitted defaults collapse:
+
+| Input | `notation` |
+|---|---|
+| `" 2d6 + 3 "` | `"2d6+3"` |
+| `"d20"` | `"1d20"` |
+| `"4D6KH3"` | `"4d6kh3"` |
+
+Store that, not the raw input, and the same roll typed two ways stays one row in a log.
+
+## Wider dialects
+
+No formal standard exists. Roll20 set the dialect most tools borrow, and others extend
+it with exploding dice, rerolls, success counting, and more. None of that is read here.
+
 - [Roll20 Dice Reference](https://wiki.roll20.net/Dice_Reference) — the dialect the others borrow from
+- [Foundry VTT dice modifiers](https://foundryvtt.com/article/dice-modifiers/) — the dialect players type at the table
+- [rpg-dice-roller modifiers](https://dice-roller.github.io/documentation/guide/notation/modifiers.html) — the fullest superset, with exact syntax for every modifier
 - [Dice notation](https://en.wikipedia.org/wiki/Dice_notation) — the core count-`d`-faces grammar

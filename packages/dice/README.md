@@ -85,7 +85,7 @@ Every message names the offending input.
 
 | File | What it is |
 |---|---|
-| [`NOTATION.md`](NOTATION.md) | The notation this package reads, the notation it does not, and where each form comes from |
+| [`NOTATION.md`](NOTATION.md) | The grammar this package reads, in full |
 
 ## Contributing
 
