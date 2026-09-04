@@ -27,8 +27,8 @@ Step 1 lands in a different package depending on what the schema describes:
 | Schema | Lives in |
 |---|---|
 | a character's definition or state | `packages/character` |
-| a catalog row — spell, item, class | its own leaf package, never `packages/content`, whose `better-sqlite3` dependency must stay out of the web bundle |
-| path params, pagination, error envelopes | the route file — these are HTTP shape rather than a domain, and the web client takes them from the generated spec |
+| a catalog row — spell, item, class | its own leaf package, never `packages/content`, whose `better-sqlite3` must stay out of the web bundle |
+| path params, pagination, error envelopes | the route file — HTTP shape, not a domain |
 
 ## Route shape
 
@@ -61,21 +61,12 @@ const getCharacter = createRoute({
 A search endpoint that spans the catalog and homebrew queries both and merges. Homebrew
 rows carry source `HB` so the client can badge them.
 
-## Rules
-
 **Filter on edition.** Any content query without an edition filter returns both
 rulesets and shows duplicates.
-
-**Return references, not copies.** A character's spell list is `{name, source}` pairs.
-Resolve them in a separate lookup so the catalog stays the single owner of rules text.
-
-**Prune bounded logs in the write.** Inserting a roll or an undo entry prunes in the
-same statement — 200 and 50 rows per character respectively.
 
 ## Checking it
 
 ```bash
-pnpm dev
 curl -s http://127.0.0.1:8787/openapi.json | jq '.paths | keys'
 ```
 
