@@ -1,9 +1,10 @@
 /**
  * The loader registry and the contract every entity loader implements.
  *
- * `build-db.ts` runs the registry in array order, which is also dependency
- * order: a loader may rely on tables that earlier entries filled, so a new
- * loader goes after whatever it reads.
+ * `build-db.ts` runs the registry in array order, and that order is the insert
+ * order: a loader whose rows must land after another's — an `entities` row whose
+ * FTS rank depends on an earlier one, say — goes later in the array. A loader
+ * cannot read what an earlier one wrote; it only ever sees its own files.
  */
 
 /** A column a row omits, or carries as `undefined`, is written as NULL. */

@@ -18,6 +18,7 @@ import {
   existsSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
   writeFileSync,
@@ -52,8 +53,8 @@ async function hashTree(dir: string): Promise<Record<string, string>> {
   return Object.fromEntries(Object.entries(files).sort(([a], [b]) => a.localeCompare(b)));
 }
 
-/** Throws unless `vendor/` matches the lockfile. Returns the directory it verified. */
-export async function verifyVendor(): Promise<string> {
+/** Throws unless `vendor/` matches the lockfile. Returns the directory and the tag it pins. */
+export async function verifyVendor(): Promise<{ dir: string; tag: string }> {
   const { dest }: Manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
   const dir = join(ROOT, dest);
   let lock: Lock;
@@ -80,7 +81,7 @@ export async function verifyVendor(): Promise<string> {
   console.log(
     `vendor/ matches content.lock.json — ${Object.keys(actual).length} files, tag ${lock.tag}`,
   );
-  return dir;
+  return { dir, tag: lock.tag };
 }
 
 async function sync(manifest: Manifest, tag: string, dest: string): Promise<void> {
@@ -129,6 +130,6 @@ async function main(): Promise<void> {
 
 // Only run when invoked as a script. Without this guard, importing anything from
 // this module — a test, for one — performs a full 109 MB fetch.
-if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
+if (process.argv[1] && realpathSync(process.argv[1]) === import.meta.filename) {
   await main();
 }

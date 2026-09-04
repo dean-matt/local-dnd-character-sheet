@@ -7,7 +7,7 @@
  * failure leaves the previous catalog untouched rather than a half-built one.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, globSync, mkdirSync, readFileSync, renameSync, rmSync } from "node:fs";
+import { globSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
@@ -16,7 +16,6 @@ import { posix, verifyVendor } from "./sync.ts";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 const DB_PATH = join(ROOT, "data", "content.db");
-const LOCKFILE = join(ROOT, "content.lock.json");
 
 export type BuildOptions = {
   vendorDir: string;
@@ -24,13 +23,6 @@ export type BuildOptions = {
   loaders: Loader[];
   meta: Record<string, string>;
 };
-
-function upstreamTag(): string {
-  if (!existsSync(LOCKFILE)) {
-    throw new Error("No content.lock.json. Run `pnpm content:sync` first.");
-  }
-  return JSON.parse(readFileSync(LOCKFILE, "utf8")).tag;
-}
 
 function repoCommit(): string {
   try {
@@ -63,8 +55,9 @@ function insert(db: Database.Database, table: string, rows: Row[]): void {
   // rarity simply omits the key — so the statement spans their union and a key a
   // row does not carry is written as NULL rather than dropped from the insert.
   const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+  const quoted = columns.map((column) => `"${column}"`).join(", ");
   const statement = db.prepare(
-    `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
+    `INSERT INTO "${table}" (${quoted}) VALUES (${columns.map(() => "?").join(", ")})`,
   );
   for (const row of rows) statement.run(columns.map((column) => row[column] ?? null));
 }
@@ -115,10 +108,10 @@ export function buildContent({
   return counts;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
-  const tag = upstreamTag();
+if (process.argv[1] && realpathSync(process.argv[1]) === import.meta.filename) {
+  const { dir, tag } = await verifyVendor();
   const counts = buildContent({
-    vendorDir: await verifyVendor(),
+    vendorDir: dir,
     dbPath: DB_PATH,
     loaders: LOADERS,
     meta: {
@@ -131,7 +124,6 @@ if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
 
   console.log(`Built ${DB_PATH}`);
   console.log(`  upstream ${tag}, node ${process.version}`);
-  const tables = Object.keys(counts).sort();
-  if (tables.length === 0) console.log("  no loaders registered — schema and meta only");
-  for (const table of tables) console.log(`  ${table} ${counts[table]}`);
+  if (LOADERS.length === 0) console.log("  no loaders registered — schema and meta only");
+  for (const table of Object.keys(counts).sort()) console.log(`  ${table} ${counts[table]}`);
 }

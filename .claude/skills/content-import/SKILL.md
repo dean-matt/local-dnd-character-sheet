@@ -39,7 +39,7 @@ succeeded. A throw anywhere aborts the build and leaves the previous catalog in 
 ```
 1  packages/content/src/schema.ts       add the table, with the edition CHECK
 2  packages/content/src/load/<type>.ts  read, resolve _copy, map rows
-3  packages/content/src/build-db.ts     register the loader
+3  packages/content/src/load/index.ts   add it to LOADERS, in insert order
 4  packages/content/src/load/<type>.test.ts   against tests/fixtures/
 5  pnpm content:build && pnpm test
 ```
@@ -48,9 +48,10 @@ succeeded. A throw anywhere aborts the build and leaves the previous catalog in 
 
 **Identity is `(name, source)`.** Never name alone. Sources collide across books.
 
-**Every row carries an edition** of `classic` or `one`. Derive it from the entry's
+**Every Tier A row carries an edition** of `classic` or `one`. Derive it from the entry's
 `edition` field where present, and from the source otherwise — `XPHB`, `XDMG`, `XMM`
-are `one`. A missing edition is a bug, not a null.
+are `one`. A missing edition on a Tier A row is a bug, not a null. Tier B and C hold
+edition-less entries too, which is why `lookups` and `entities` allow it to be NULL.
 
 **Resolve `_copy` at build time, never at query time.** The `_meta.internalCopies` key
 in each file names which entity types need it. A `_copy` block names a parent by

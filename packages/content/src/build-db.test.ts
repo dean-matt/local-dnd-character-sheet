@@ -65,12 +65,19 @@ describe("buildContent", () => {
 
   it("spans the union of a batch's keys, so an optional column is never dropped", () => {
     const partial: Loader = {
-      name: "conditions",
+      name: "items",
       files: ["data/*.json"],
       rows: () => ({
-        lookups: [
-          { kind: "condition", name: "Blinded", source: "PHB", json: "{}" },
-          { kind: "condition", name: "Prone", source: "XPHB", edition: "one", json: "{}" },
+        items: [
+          { name: "Club", source: "PHB", edition: "classic", requires_attunement: 0, json: "{}" },
+          {
+            name: "Wand of Magic Missiles",
+            source: "PHB",
+            edition: "classic",
+            rarity: "uncommon",
+            requires_attunement: 0,
+            json: "{}",
+          },
         ],
       }),
     };
@@ -78,9 +85,9 @@ describe("buildContent", () => {
     buildContent({ vendorDir, dbPath, loaders: [partial], meta: {} });
 
     const db = new Database(dbPath, { readonly: true });
-    expect(db.prepare("SELECT name, edition FROM lookups ORDER BY rowid").all()).toEqual([
-      { name: "Blinded", edition: null },
-      { name: "Prone", edition: "one" },
+    expect(db.prepare("SELECT name, rarity FROM items ORDER BY rowid").all()).toEqual([
+      { name: "Club", rarity: null },
+      { name: "Wand of Magic Missiles", rarity: "uncommon" },
     ]);
     db.close();
   });
@@ -98,7 +105,7 @@ describe("buildContent", () => {
     expect(existsSync(dbPath)).toBe(false);
   });
 
-  it("runs the registry in array order, so a loader can depend on an earlier table", () => {
+  it("runs the registry in array order, so rows land in the order loaders are listed", () => {
     const order: string[] = [];
     const record = (name: string): Loader => ({
       ...lookup(name),
@@ -127,6 +134,31 @@ describe("buildContent", () => {
     ).toThrow(/Loader "broken" failed/);
     expect(existsSync(dbPath)).toBe(false);
     expect(existsSync(`${dbPath}.incoming`)).toBe(false);
+  });
+
+  it("leaves the previous catalog in place when a rebuild fails", () => {
+    buildContent({
+      vendorDir,
+      dbPath,
+      loaders: [lookup("condition")],
+      meta: { upstream_tag: "a" },
+    });
+    const exploding: Loader = {
+      name: "broken",
+      files: ["data/*.json"],
+      rows: () => {
+        throw new Error("bad row");
+      },
+    };
+
+    expect(() =>
+      buildContent({ vendorDir, dbPath, loaders: [exploding], meta: { upstream_tag: "b" } }),
+    ).toThrow();
+
+    const db = new Database(dbPath, { readonly: true });
+    expect(db.prepare("SELECT value FROM meta WHERE key = 'upstream_tag'").pluck().get()).toBe("a");
+    expect(db.prepare("SELECT COUNT(*) FROM lookups").pluck().get()).toBe(2);
+    db.close();
   });
 
   it("names the loader when a source file is missing", () => {
