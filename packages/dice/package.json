@@ -2,7 +2,24 @@
   "name": "@dnd/dice",
   "version": "0.0.0",
   "private": true,
+  "description": "Parses dice notation and rolls it, returning every die including the ones a keep clause discarded",
+  "keywords": [
+    "dice",
+    "dice-notation",
+    "dnd",
+    "rpg",
+    "tabletop"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dean-matt/local-dnd-character-sheet.git",
+    "directory": "packages/dice"
+  },
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "exports": {
     ".": "./src/index.ts"
   },
