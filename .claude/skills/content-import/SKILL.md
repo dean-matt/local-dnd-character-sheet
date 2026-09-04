@@ -26,11 +26,12 @@ filesystem, opening the database, and inserting are the framework's job.
 export const spells: Loader = {
   name: "spells",
   files: ["data/spells/spells-*.json"],   // vendor-relative paths or globs
-  rows: (sources) => ({ spells: [...] }), // keyed by table, inserted in key order
+  rows: (sources) => ({ spells: [...] }), // keyed by table, in declaration order
 };
 ```
 
-`build-db.ts` runs `LOADERS` in array order — that is the dependency order — inside one
+`build-db.ts` runs `LOADERS` in array order — which is insert order, and all the ordering
+the framework has: a loader cannot read what an earlier one wrote. Everything runs in one
 transaction against `content.db.incoming`, renamed into place only once every loader has
 succeeded. A throw anywhere aborts the build and leaves the previous catalog in place.
 

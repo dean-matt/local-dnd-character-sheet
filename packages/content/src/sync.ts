@@ -130,6 +130,10 @@ async function main(): Promise<void> {
 
 // Only run when invoked as a script. Without this guard, importing anything from
 // this module — a test, for one — performs a full 109 MB fetch.
-if (process.argv[1] && realpathSync(process.argv[1]) === import.meta.filename) {
+if (
+  process.argv[1] &&
+  existsSync(process.argv[1]) &&
+  realpathSync(process.argv[1]) === import.meta.filename
+) {
   await main();
 }

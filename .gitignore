@@ -4,7 +4,7 @@ build/
 *.tsbuildinfo
 
 # Upstream 5etools data — fetched, never committed (see NOTICE)
-vendor/5etools/
+vendor/5etools*
 
 # Generated catalog — rebuilt by `pnpm content:build`
 data/content.db*

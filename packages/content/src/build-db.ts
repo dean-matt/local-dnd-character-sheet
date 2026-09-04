@@ -7,7 +7,15 @@
  * failure leaves the previous catalog untouched rather than a half-built one.
  */
 import { execFileSync } from "node:child_process";
-import { globSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  globSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
@@ -95,20 +103,32 @@ export function buildContent({
         }
       }
     })();
-  } catch (error) {
+    // The rename moves the main file alone, so a WAL the close cannot fully
+    // checkpoint would take every row it still holds with it, silently.
+    db.pragma("wal_checkpoint(TRUNCATE)");
     db.close();
+    // renameSync replaces the target atomically, so the catalog is never missing.
+    // Only a stale WAL has to go first, or SQLite would apply it to the new file.
+    for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
+    renameSync(staging, dbPath);
+  } catch (error) {
+    try {
+      db.close();
+    } catch {
+      // Already closed, or closing is itself what failed. Either way the error
+      // being thrown is the one worth reporting.
+    }
     discard(staging);
     throw error;
   }
-  db.close();
-  // renameSync replaces the target atomically, so the catalog is never missing.
-  // Only a stale WAL has to go first, or SQLite would apply it to the new file.
-  for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
-  renameSync(staging, dbPath);
   return counts;
 }
 
-if (process.argv[1] && realpathSync(process.argv[1]) === import.meta.filename) {
+if (
+  process.argv[1] &&
+  existsSync(process.argv[1]) &&
+  realpathSync(process.argv[1]) === import.meta.filename
+) {
   const { dir, tag } = await verifyVendor();
   const counts = buildContent({
     vendorDir: dir,
