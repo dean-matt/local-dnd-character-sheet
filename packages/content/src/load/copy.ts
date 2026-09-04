@@ -12,9 +12,8 @@
  * than leaving a half-inherited record for a loader to import.
  *
  * A parent is only ever looked up in the same file, and matched on the fields it
- * declares rather than ones it would inherit. That covers every
- * character-relevant source. Bestiary entries copy across files and would fail
- * here — loudly, which is the point.
+ * declares rather than ones it would inherit. Bestiary entries copy across files
+ * and so fail here.
  */
 
 type Entry = Record<string, unknown>;
@@ -79,8 +78,8 @@ function describe(entry: Entry, keys: string[]): string {
   return `"${String(entry.name)}" (${String(entry.source)})${extra ? ` [${extra}]` : ""}`;
 }
 
-// ponytail: a linear scan per copy — the heaviest file is 199 class copies against
-// ~600 features. Upgrade path is one index per identity-key shape, built once.
+// ponytail: O(copies x entries) per file. Upgrade path is one index per
+// identity-key shape, built once.
 function findParent(entries: Entry[], copy: Entry, keys: string[]): Entry | undefined {
   return entries.find((candidate) => keys.every((key) => candidate[key] === copy[key]));
 }
@@ -98,10 +97,10 @@ function replaceText(node: unknown, pattern: RegExp, replacement: string): unkno
 }
 
 /**
- * splice clamps, so an index past the end appends instead of landing where the
- * mod said. For `replaceArr` that also leaves the element it meant to replace
- * in place. Negative indices count from the end, as splice does, and `insertArr`
- * additionally accepts `length` because inserting there is an append.
+ * splice clamps, so an unchecked index past the end appends instead of landing
+ * where the mod said, and for `replaceArr` leaves the element it meant to
+ * replace in place. `insertArr` alone accepts `length`: inserting there is an
+ * append, but nothing sits at `length` to replace.
  */
 function checkIndex(index: number, list: unknown[], mode: string, context: string): number {
   const last = mode === "insertArr" ? list.length : list.length - 1;
@@ -129,17 +128,15 @@ const ARRAY_MODES = new Set(["appendArr", "prependArr", "insertArr", "replaceArr
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {
   const target = entry[property];
   const splices = ARRAY_MODES.has(String(op.mode));
-  // An absent property is normal — 18 entries append to a list the parent does
-  // not have — but a property that is present and not a list means the mod and
-  // the data disagree about the shape, and starting from `[]` would drop it.
-  // Only the splicing modes care: `replaceTxt` rewrites a scalar quite happily.
+  // Appending to a property the parent lacks is normal, so absent falls back to
+  // `[]`. Present and not a list means the mod and the data disagree, where that
+  // fallback would silently drop the value. `replaceTxt` needs no list at all.
   if (splices && target !== undefined && !Array.isArray(target)) {
     throw new Error(`${context}: _mod.${property} expects a list, found ${typeof target}`);
   }
   const list = Array.isArray(target) ? [...target] : [];
-  // Every array mode carries `items`. Without this an upstream key rename would
-  // splice a literal `undefined` into the entry and store it as null. Scoped to
-  // the known modes so an unrecognized one still reports as unrecognized.
+  // Splicing a missing `items` inserts a literal `undefined`, stored as NULL.
+  // Scoped to the known modes so an unrecognized one reports as unrecognized.
   if (splices && op.items === undefined) {
     throw new Error(`${context}: ${String(op.mode)} needs items`);
   }
@@ -164,8 +161,7 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
       if (typeof op.replace !== "string" || typeof op.with !== "string") {
         throw new Error(`${context}: replaceTxt needs a string "replace" and "with"`);
       }
-      // Rewriting an absent property would assign `undefined` and store a NULL —
-      // the same silent corruption the items guard above exists to stop.
+      // Rewriting an absent property assigns `undefined`, stored as NULL.
       if (target === undefined) {
         throw new Error(`${context}: replaceTxt has no ${property} to rewrite`);
       }
@@ -181,9 +177,8 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
 
 function applyMod(entry: Entry, mod: Entry, context: string): void {
   for (const [property, operations] of Object.entries(mod)) {
-    // `*` means every property and `_` means the entry itself. Both are bestiary
-    // shapes; treating either as a literal property name would write a bogus key
-    // and drop the edit, so refuse them the way an unknown mode is refused.
+    // `*` means every property, `_` the entry itself — both bestiary shapes. As
+    // literal property names they would write a bogus key and drop the edit.
     if (property === "*" || property === "_") {
       throw new Error(`${context}: unsupported _mod property "${property}"`);
     }
@@ -212,10 +207,10 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
 /**
  * The entry's `_copy` block, validated, or undefined when it has none.
  *
- * Gating on `isRecord` instead would read a malformed `_copy` as "no copy" — and
- * so would `assertResolved`, which is the safety net — letting the entry reach a
- * loader with none of the parent's fields, silently. Same for a `_mod` or
- * `_preserve` of the wrong shape, which would be skipped rather than applied.
+ * Gating on `isRecord` would read a malformed `_copy` as "no copy", and so would
+ * `assertResolved` — the net under this — letting the entry reach a loader with
+ * none of the parent's fields. A misshapen `_mod` or `_preserve` would likewise
+ * be skipped rather than applied.
  */
 function copyBlock(entry: Entry, context: string): Entry | undefined {
   if (!("_copy" in entry)) return undefined;
@@ -251,9 +246,7 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
     }
 
     const keys = identityKeys(copy);
-    // `entries.find` over no keys is vacuously true and would clone entry zero,
-    // which is the one malformed shape that yields a plausible wrong record
-    // rather than an error.
+    // `find` over no keys matches everything, so this would clone entry zero.
     if (keys.length === 0) {
       throw new Error(
         `${context}: ${describe(entry, ["name", "source"])} has a _copy that names no parent`,
@@ -281,15 +274,14 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
 }
 
 /**
- * Throws if a top-level entry still carries a `_copy`, which means the file
- * needed resolving and `_meta.internalCopies` did not say so. Dozens of bestiary
- * files are like that. Without this the gate below would hand a loader the diff
- * instead of the record, in silence — the one failure this module exists to
- * prevent.
+ * Throws if a top-level entry still carries a `_copy`, meaning the file needed
+ * resolving and `_meta.internalCopies` did not say so. Many bestiary files are
+ * like that, and without this the gate below hands a loader the diff instead of
+ * the record, in silence.
  *
- * Direct elements only. A `_copy` further down a `data[].entries[]` tree — one
- * exists in `renderdemo.json` — is not caught, because walking every node of
- * `adventure/` and `book/` on every loader read is not worth it for a shape no
+ * Direct elements only. A `_copy` deeper in a `data[].entries[]` tree, as
+ * `renderdemo.json` has, is missed. Catching it costs a full tree walk of
+ * `adventure/` and `book/` on every loader read, for a shape no
  * character-relevant file uses.
  */
 function assertResolved(source: Entry, label: string): void {
