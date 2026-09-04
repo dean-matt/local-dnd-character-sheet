@@ -99,7 +99,16 @@ function replaceText(node: unknown, pattern: RegExp, replacement: string): unkno
 
 /** `replace` is either the `name` of the element to swap out or an explicit `{ index }`. */
 function replaceIndex(list: unknown[], replace: unknown, context: string): number {
-  if (isRecord(replace) && typeof replace.index === "number") return replace.index;
+  if (isRecord(replace) && typeof replace.index === "number") {
+    // splice clamps, so an index past the end would append the replacement and
+    // leave the element it was meant to replace in place. The by-name path
+    // throws on a miss; this one has to as well.
+    const { index } = replace;
+    if (index < -list.length || index >= list.length) {
+      throw new Error(`${context}: replaceArr index ${index} is outside a list of ${list.length}`);
+    }
+    return index;
+  }
   const index = list.findIndex((item) => isRecord(item) && item.name === replace);
   if (index === -1) {
     throw new Error(`${context}: replaceArr matched no element named "${String(replace)}"`);
@@ -111,7 +120,14 @@ function replaceIndex(list: unknown[], replace: unknown, context: string): numbe
 const ARRAY_MODES = new Set(["appendArr", "prependArr", "insertArr", "replaceArr"]);
 
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {
-  const list = Array.isArray(entry[property]) ? [...entry[property]] : [];
+  const target = entry[property];
+  // An absent property is normal — 18 entries append to a list the parent does
+  // not have — but a property that is present and not a list means the mod and
+  // the data disagree about the shape, and starting from `[]` would drop it.
+  if (target !== undefined && !Array.isArray(target)) {
+    throw new Error(`${context}: _mod.${property} expects a list, found ${typeof target}`);
+  }
+  const list = Array.isArray(target) ? [...target] : [];
   // Every array mode carries `items`. Without this an upstream key rename would
   // splice a literal `undefined` into the entry and store it as null. Scoped to
   // the known modes so an unrecognized one still reports as unrecognized.
@@ -139,9 +155,14 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
       if (typeof op.replace !== "string" || typeof op.with !== "string") {
         throw new Error(`${context}: replaceTxt needs a string "replace" and "with"`);
       }
+      // Rewriting an absent property would assign `undefined` and store a NULL —
+      // the same silent corruption the items guard above exists to stop.
+      if (target === undefined) {
+        throw new Error(`${context}: replaceTxt has no ${property} to rewrite`);
+      }
       const flags = typeof op.flags === "string" ? op.flags : "";
       const pattern = new RegExp(op.replace, `g${flags}`);
-      entry[property] = replaceText(entry[property], pattern, op.with);
+      entry[property] = replaceText(target, pattern, op.with);
       return;
     }
     default:
@@ -184,6 +205,9 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
   const visiting = new Set<Entry>();
 
   const resolve = (entry: Entry): Entry => {
+    if (!isRecord(entry)) {
+      throw new Error(`${context}: expected entries to be objects, found ${typeof entry}`);
+    }
     const cached = resolved.get(entry);
     if (cached) return cached;
 
@@ -194,6 +218,14 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
     }
 
     const keys = identityKeys(copy);
+    // `entries.find` over no keys is vacuously true and would clone entry zero,
+    // which is the one malformed shape that yields a plausible wrong record
+    // rather than an error.
+    if (keys.length === 0) {
+      throw new Error(
+        `${context}: ${describe(entry, ["name", "source"])} has a _copy that names no parent`,
+      );
+    }
     const parent = findParent(entries, copy, keys);
     if (!parent) {
       throw new Error(

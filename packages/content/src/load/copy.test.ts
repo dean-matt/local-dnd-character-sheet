@@ -305,6 +305,104 @@ describe("resolveCopies", () => {
       ).toThrow("appendArr needs items");
     });
 
+    it("appends to a property the parent does not have, rather than refusing", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "A", source: "PHB" },
+          {
+            name: "B",
+            source: "PHB",
+            _copy: {
+              name: "A",
+              source: "PHB",
+              _mod: { entries: { mode: "appendArr", items: "Added." } },
+            },
+          },
+        ),
+        "data/items.json",
+      ) as { background: Entry[] };
+
+      expect(find(resolved.background, { name: "B" }).entries).toEqual(["Added."]);
+    });
+
+    it("refuses a _mod against a property that is present and not a list", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: "not a list" },
+            {
+              name: "B",
+              source: "PHB",
+              _copy: {
+                name: "A",
+                source: "PHB",
+                _mod: { entries: { mode: "appendArr", items: "Added." } },
+              },
+            },
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow("_mod.entries expects a list, found string");
+    });
+
+    it("refuses a replaceArr index past the end rather than letting splice clamp", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "Only" }] },
+            {
+              name: "B",
+              source: "PHB",
+              _copy: {
+                name: "A",
+                source: "PHB",
+                _mod: { entries: { mode: "replaceArr", replace: { index: 7 }, items: {} } },
+              },
+            },
+          ),
+          "data/items.json",
+        ),
+      ).toThrow("replaceArr index 7 is outside a list of 1");
+    });
+
+    it("refuses a replaceTxt with no property to rewrite", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB" },
+            {
+              name: "B",
+              source: "PHB",
+              _copy: {
+                name: "A",
+                source: "PHB",
+                _mod: { entries: { mode: "replaceTxt", replace: "x", with: "y" } },
+              },
+            },
+          ),
+          "data/races.json",
+        ),
+      ).toThrow("replaceTxt has no entries to rewrite");
+    });
+
+    it("refuses a _copy that names no parent instead of cloning the first entry", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: ["Not yours."] },
+            { name: "B", source: "PHB", _copy: { _mod: {} } },
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow('"B" (PHB) has a _copy that names no parent');
+    });
+
+    it("keeps the file and entry label when an entry is not an object", () => {
+      expect(() =>
+        resolveCopies(file({ name: "A", source: "PHB" }, null as unknown as Entry), "data/x.json"),
+      ).toThrow("data/x.json background: expected entries to be objects, found object");
+    });
+
     it("reports a replaceArr whose target is not there", () => {
       expect(() =>
         resolveCopies(

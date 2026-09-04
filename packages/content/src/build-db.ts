@@ -50,6 +50,10 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
   // runs, so a loader over `data/bestiary/*.json` holds the whole corpus while
   // the transaction is open. Upgrade path is a per-file callback that yields
   // rows, so only one source is live at a time.
+  //
+  // ponytail: this runs per loader, so two loaders over the same file parse and
+  // resolve it twice — a class file is ~199 copies and a structuredClone each.
+  // Upgrade path is a cache keyed by path, once enough loaders overlap to notice.
   const sources = new Map<string, unknown>();
   for (const pattern of loader.files) {
     // A glob such as `data/*` matches the subdirectories too, and handing one to

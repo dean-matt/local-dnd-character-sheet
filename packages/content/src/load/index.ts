@@ -17,9 +17,12 @@ export type Loader = {
   files: string[];
   /**
    * Maps the parsed sources, keyed by vendor-relative path, to the rows to
-   * insert, keyed by table. Every entry is a complete record — no `_copy` or
-   * `_mod` survives this far. Pure — loaders never touch the filesystem or the
-   * database themselves.
+   * insert, keyed by table. No `_copy` survives this far, so an entry is
+   * complete as far as that mechanism goes. `_versions` is a second, unrelated
+   * inheritance mechanism carrying its own `_mod`, and it is *not* resolved —
+   * `races.json` and `feats.json` have 57 of them. A loader over either has to
+   * decide what to do with them. Pure — loaders never touch the filesystem or
+   * the database themselves.
    */
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };

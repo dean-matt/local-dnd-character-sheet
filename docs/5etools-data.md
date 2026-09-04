@@ -62,6 +62,11 @@ half-applied: cross-file parents, the `setProp` and `addSkills` modes, and the `
 31 files carry a same-file `_copy` without declaring one — so a surviving `_copy` fails
 the build too.
 
+`_versions` is a **second, unrelated** inheritance mechanism and nothing resolves it yet.
+An entry lists variants of itself, each with its own `_mod`, using modes `_copy` never
+does — `removeArr`, `renameArr`, `addSpells`. It matters for characters: 48 entries in
+`races.json` and 9 in `feats.json`. A loader over either sees them intact.
+
 ## Tag markup
 
 Rules text is not plain prose. It is littered with `{@tag name|source|display}` markup:

@@ -56,9 +56,14 @@ are `one`. A missing edition on a Tier A row is a bug, not a null. Tier B and C 
 edition-less entries too, which is why `lookups` and `entities` allow it to be NULL.
 
 **`_copy` is resolved for you, at build time and never at query time.** `copy.ts` runs
-over every source the framework reads, driven by `_meta.internalCopies`, and fails the
-build on a cycle or a missing parent. A loader never sees a `_copy` or a `_mod`, and must
-not add handling for one. A new `_mod` mode belongs there, not in a loader.
+over every source the framework reads and fails the build on a cycle, a missing parent, or
+a shape it cannot apply. A loader never sees a `_copy`, and must not add handling for one —
+a new `_mod` mode belongs in `copy.ts`.
+
+**`_versions` is a different mechanism and is not resolved.** It carries its own `_mod`,
+including `removeArr` and `renameArr` modes that `copy.ts` does not implement, and it
+reaches loaders intact — 48 entries in `races.json`, 9 in `feats.json`. Decide explicitly
+whether your loader expands, ignores, or rejects them.
 
 **Unmapped class resource labels become generic counters**, not errors. Only about 80%
 of resources come from `classTableGroups`; Battle Master superiority dice and similar
