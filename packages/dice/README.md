@@ -1,90 +1,117 @@
 # @dnd/dice
 
-Dice notation parsing and rolling. One entry point:
+Parses dice notation and rolls it. No dependencies.
 
 ```ts
 import { rollDice } from "@dnd/dice";
 
 rollDice("4d6kh3");
-// { total, dice: [{ faces, value, kept }], modifier, notation }
-
 rollDice("1d20+5", { mode: "advantage" });
 rollDice("2d6", { random: () => 0.5 });
 ```
 
-Every die rolled comes back, discarded ones flagged `kept: false`, so the roll log can
-show the whole pool rather than a total the reader has to trust. `notation` is returned
-in canonical form (`" 2d6 + 3 "` becomes `"2d6+3"`), so the same roll typed with
-different spacing does not split into two rows.
+## API
 
-`random` is injected per call rather than set globally, so tests are deterministic
-without sharing state.
+`rollDice(notation, options?)`
+
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `mode` | `"normal" \| "advantage" \| "disadvantage"` | `"normal"` | Rolls a second die and keeps the higher or the lower |
+| `random` | `() => number` | `Math.random` | Returns a float in `[0, 1)` |
+
+It returns:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `total` | `number` | The kept dice plus the modifier |
+| `dice` | `RolledDie[]` | Every die rolled, in roll order |
+| `modifier` | `number` | The flat modifier, `0` when the notation carries none |
+| `notation` | `string` | The input in canonical form |
+
+Each `RolledDie` is `{ faces, value, kept }`. Discarded dice stay in the array with
+`kept: false`, so the roll log can show the whole pool instead of a bare total.
+
+Canonical form strips spacing and fills in defaults, turning `" 2d6 + 3 "` into
+`"2d6+3"` and `"d20"` into `"1d20"`. Two players who type the same roll differently
+therefore write the same string to the log.
+
+Pass `random` to make a test deterministic. Because it is an argument rather than a
+global, one test cannot disturb another.
 
 ## Advantage is a mode, not notation
 
-The rules grant advantage on a d20 test the sheet already knows how to make, before any
-string exists. Spelling it `2d20kh1` would leave the log unable to say why the second
-die is there, so it is a `mode` instead, and it is rejected on notation rolling a pool
-or carrying its own keep clause.
+A character sheet knows a roll is a d20 test before any notation exists, so advantage
+and disadvantage belong in `options`, not in the string. Writing `2d20kh1` would hide
+that: the log would show two dice and no reason for the second.
+
+The rules only ever grant advantage on a single die, so `rollDice` rejects a mode paired
+with notation that rolls a pool or carries its own keep clause.
 
 ## Errors
+
+Every message names the offending input.
 
 | Thrown | When |
 |---|---|
 | `SyntaxError` | The notation is malformed |
-| `RangeError` | A count, die size or modifier is out of bounds |
-| `TypeError` | The notation is fine but a mode does not fit it |
+| `RangeError` | A count, die size, or modifier exceeds 1000 |
+| `TypeError` | The notation is valid, but a mode does not fit it |
 
-Counts, faces and modifiers are capped at 1000. Notation also arrives from upstream
-`{@dice}` data, not only from something a user typed.
+The bounds matter because notation also arrives from upstream `{@dice}` data, where
+nobody has proofread it.
 
 ## The notation
 
-There is no formal standard. The Roll20 dialect is the closest thing to one, Foundry
-extends it, and `@dice-roller/rpg-dice-roller` documents the fullest superset.
+No formal standard exists. Roll20 set the dialect everyone borrows, Foundry extends it,
+and `@dice-roller/rpg-dice-roller` documents the fullest superset.
 
-| Feature | Syntax | Used by | Supported |
+| Feature | Syntax | Where it appears | Supported |
 |---|---|---|---|
-| Basic pool | `2d6`, `d20` | everything | yes |
-| Flat modifier | `1d8+3`, `2d6-1` | everything | yes |
-| Keep highest, lowest | `4d6kh3`, `2d20kl1` | 5e ability scores, advantage | yes |
-| Drop lowest, highest | `4d6dl1`, `4d6dh1` | the same roll, spelled the other way | no |
+| Pool | `2d6`, `d20` | every system | yes |
+| Flat modifier | `1d8+3`, `2d6-1` | every system | yes |
+| Keep highest, keep lowest | `4d6kh3`, `2d20kl1` | 5e ability scores, advantage | yes |
+| Drop lowest, drop highest | `4d6dl1`, `4d6dh1` | 5e ability scores | no |
 | Multi-term sum | `1d8+1d6+3` | 5e smite, sneak attack, hex | no |
 | Percentile | `d%`, short for `d100` | 5e wild magic, loot tables | no |
-| Reroll once, always | `2d6ro<3`, `2d6r<3` | 5e Great Weapon Fighting | no |
-| Clamp low, high | `2d6min2`, `2d6max5` | 5e Elemental Adept | no |
+| Reroll once, reroll always | `2d6ro<3`, `2d6r<3` | 5e Great Weapon Fighting | no |
+| Clamp low, clamp high | `2d6min2`, `2d6max5` | 5e Elemental Adept | no |
 | Exploding | `4d6!` | Savage Worlds, Hackmaster | no |
 | Compounding | `4d6!!` | Shadowrun | no |
 | Penetrating | `4d6!p` | Hackmaster | no |
-| Target and success count | `5d10>=8` | World of Darkness | no |
+| Success count | `5d10>=8` | World of Darkness | no |
 | Failure count | `5d10>=8f1` | Shadowrun | no |
-| Unique | `4d6u` | generic | no |
+| Unique | `4d6u` | general purpose | no |
 | Fudge dice | `4dF` | Fate | no |
-| Grouped rolls | `{2d6+3, 1d8}kh1` | generic | no |
+| Grouped rolls | `{2d6+3, 1d8}kh1` | general purpose | no |
 | Sort | `4d6s`, `4d6sd` | display only | no |
 
-Worth adding first, if a caller needs them:
+### What to add next
 
-1. **Multi-term sums.** A paladin who smites rolls `1d8+2d8`, and today that throws.
-2. **`dl` and `dh`.** `4d6dl1` and `4d6kh3` are the same roll, and both spellings appear
-   in the wild. The trap: `d` already separates count from faces, so `4d6d1` has to be
-   parsed positionally.
+Two gaps are worth closing when a caller hits them. The rest of the table serves other
+game systems.
 
-Everything below those belongs to other game systems.
+1. **Multi-term sums.** A paladin who smites rolls `1d8+2d8`, and that throws today.
+2. **`dl` and `dh`.** `4d6dl1` and `4d6kh3` are the same roll, and both spellings turn
+   up in the wild. Watch the ambiguity: `d` already separates the count from the faces,
+   so a parser has to read `4d6d1` by position.
+
+## Why not `@dice-roller/rpg-dice-roller`
+
+The community library is mature, MIT licensed, and covers every row above. Four things
+ruled it out:
+
+- Its random source is a module-level singleton, so tests share state.
+- Advantage would go back to being the `2d20kh1` hack.
+- Its result tree still needs flattening into the shape the roll log stores.
+- It pulls `mathjs` into a package the web bundle ships.
+
+Reconsider it the day this package needs the full grammar. `rollDice` is one function
+behind one export, so the swap stays cheap.
 
 ## References
 
-- [rpg-dice-roller modifiers](https://dice-roller.github.io/documentation/guide/notation/modifiers.html) — exact syntax per modifier, the fullest reference
-- [rpg-dice-roller notation guide](https://dice-roller.github.io/documentation/guide/notation/) — dice types, groups, maths
-- [Foundry VTT dice modifiers](https://foundryvtt.com/article/dice-modifiers/) — the dialect players actually type
+- [rpg-dice-roller modifiers](https://dice-roller.github.io/documentation/guide/notation/modifiers.html) — exact syntax for every modifier
+- [rpg-dice-roller notation guide](https://dice-roller.github.io/documentation/guide/notation/) — dice types, groups, and maths
+- [Foundry VTT dice modifiers](https://foundryvtt.com/article/dice-modifiers/) — the dialect players type at the table
+- [Roll20 Dice Reference](https://wiki.roll20.net/Dice_Reference) — the dialect the others borrow from
 - [Dice notation](https://en.wikipedia.org/wiki/Dice_notation) — the core count-`d`-faces grammar
-- Roll20's Dice Reference wiki is the other canonical source; it blocks automated fetching
-
-## Why this is not `@dice-roller/rpg-dice-roller`
-
-That library is mature, MIT and covers the whole table above. It was weighed and set
-aside: its random source is a module-level singleton rather than a per-call injection,
-advantage would have to be spelled as the `2d20kh1` hack, its result tree needs
-flattening to the shape the roll log stores anyway, and it pulls `mathjs` into a package
-the web bundle ships. Reconsider it the day this package needs the full grammar —
-`rollDice` is one function behind one export, so it can be swapped underneath.

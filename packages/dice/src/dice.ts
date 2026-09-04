@@ -1,16 +1,16 @@
 /**
  * Dice notation parsing and rolling.
  *
- * `rollDice` is the only entry point. It takes standard notation (`2d6+3`, `4d6kh3`)
- * and a random source, and returns every die it rolled — including the ones a keep
- * clause discarded — so the roll log can show the whole pool. An advantage or
- * disadvantage mode is legal only on single-die, keep-free notation.
+ * `rollDice` is the only entry point. It returns every die it rolled, including the
+ * ones a keep clause discarded, so the roll log can show the whole pool rather than a
+ * bare total. An advantage or disadvantage mode is legal only on notation that rolls a
+ * single die and keeps it.
  */
 
 export type RolledDie = {
   faces: number;
   value: number;
-  /** False for a die a keep clause, advantage or disadvantage discarded. */
+  /** False for a die discarded by a keep clause, advantage, or disadvantage. */
   kept: boolean;
 };
 
@@ -23,8 +23,9 @@ export type Roll = {
 };
 
 /**
- * Advantage and disadvantage are a mode rather than notation: the rules apply them to
- * a roll a character sheet already knows how to make, not to a string a user typed.
+ * A mode rather than notation: a character sheet knows the roll is a d20 test before
+ * any notation exists, and `2d20kh1` would leave the log unable to explain the second
+ * die.
  */
 export type RollMode = "normal" | "advantage" | "disadvantage";
 
@@ -40,8 +41,8 @@ const MAX_FACES = 1000;
 const MAX_MODIFIER = 1000;
 
 /**
- * Spaces are tolerated around the operators but not inside a number, where `1d6 4`
- * would otherwise silently become a d64.
+ * Spaces are allowed around the operators but not inside a number, where `1d6 4` would
+ * otherwise become a d64.
  */
 const NOTATION = /^(\d*)\s*d\s*(\d+)(?:\s*k\s*([hl])\s*(\d+))?(?:\s*([+-])\s*(\d+))?$/i;
 
@@ -106,13 +107,14 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 }
 
 /**
- * Rolls `notation`, throwing a `SyntaxError` for malformed notation and a `RangeError`
- * for a quantity out of bounds, both naming the offending input.
+ * Rolls `notation`. Malformed notation throws a `SyntaxError`, a quantity out of bounds
+ * a `RangeError`, and every message names the offending input.
  *
- * Advantage and disadvantage roll a second die and keep the higher or lower, so both
- * appear in `dice`. The rules only ever apply them to a single die, so notation rolling
- * a pool or carrying its own keep clause is rejected rather than reinterpreted — a
- * `TypeError`, since the notation itself is fine and only the pairing is wrong.
+ * Advantage and disadvantage roll a second die and keep the higher or the lower, so
+ * both appear in `dice`. The rules only ever apply them to a single die, so notation
+ * that rolls a pool or carries its own keep clause is rejected rather than
+ * reinterpreted — a `TypeError`, because the notation is valid and only the pairing
+ * is wrong.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { mode = "normal", random = Math.random } = options;

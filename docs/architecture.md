@@ -16,9 +16,9 @@ browser :5173  ──/api/*──>  Vite dev proxy  ──>  Hono :8787
 
 `packages/shared` is imported by both `api` and `web`: Zod schemas, the tag parser, and
 rules arithmetic all need to run on both sides of the wire. `packages/dice` is imported
-the same way and depends on nothing, so it stays separate rather than bloating what
-every consumer of a Zod schema has to pull in. Those shared packages are the main reason
-the backend is TypeScript.
+the same way but depends on nothing, so it stays separate: code that wants a Zod schema
+should not have to pull in a notation parser. Those two packages are the main reason the
+backend is TypeScript.
 
 ## Three databases
 
