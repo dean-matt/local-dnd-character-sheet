@@ -5,7 +5,7 @@ description: Rules arithmetic for D&D 5e — proficiency bonus, ability modifier
 
 # 5e rules arithmetic
 
-Implementations live in `packages/rules`: core arithmetic in `src/rules.ts`, multiclass
+Implementations live in `packages/rules`: core arithmetic in `src/core.ts`, multiclass
 spellcasting in `src/spellcasting.ts`. Add to them rather than recalculating anywhere
 else. The package depends on nothing and takes primitives — a function that wants a
 whole `CharacterDefinition` is a projection and belongs in `packages/character`.
@@ -46,7 +46,7 @@ ranger use it while the 2014 ones round down:
 full         level                bard, cleric, druid, sorcerer, wizard
 artificer    ceil(level / 2)      artificer, 2024 paladin, 2024 ranger
 1/2          floor(level / 2)     2014 paladin, 2014 ranger
-1/3          floor(level / 3)     Eldritch Knight, Arcane Trickster
+1/3          floor(level / 3)     Eldritch Knight, Arcane Trickster — both editions
 pact         0                    warlock, counted apart
 ```
 
