@@ -17,6 +17,7 @@ export type Token =
   | { kind: "style"; style: "italic" | "bold"; children: Token[] };
 
 type RefToken = Extract<Token, { kind: "ref" }>;
+type RollToken = Extract<Token, { kind: "roll" }>;
 
 /**
  * Which argument holds what, per tag. The position of the display argument is not
@@ -24,7 +25,7 @@ type RefToken = Extract<Token, { kind: "ref" }>;
  * `{@filter a|b|c}` displays `a`.
  */
 type Spec =
-  | { kind: "ref"; source: number; display: number }
+  | { kind: "ref"; source: number[]; display: number }
   | { kind: "roll"; notation: number; display: number }
   | { kind: "text"; display: number }
   | { kind: "style"; style: "italic" | "bold" }
@@ -49,12 +50,31 @@ function display(args: string[], index: number): string {
   return plain(arg(args, index) ?? arg(args, 0) ?? "");
 }
 
+const NOTATION = /^\s*(\d*)\s*d\s*\d+(?:\s*k\s*[hl]\s*(\d+))?(?:\s*[+-]\s*\d+)?\s*$/i;
+
 /**
  * Conservative, because `@dnd/dice` is the authority on notation and this package
  * depends on nothing. A false negative costs a click-to-roll button; a false positive
  * throws inside `@dnd/dice`, which the roll layer has to handle regardless.
+ *
+ * Keeping more dice than are rolled is checked here because it is self-contradictory
+ * rather than a limit. `@dnd/dice` also caps count, faces and modifier, and those
+ * numbers are deliberately not copied — one authority for a bound that may move.
  */
-const PLAIN_NOTATION = /^\d*\s*d\s*\d+(?:\s*k\s*[hl]\s*\d+)?(?:\s*[+-]\s*\d+)?$/i;
+function rollable(notation: string): boolean {
+  const match = NOTATION.exec(notation);
+  if (match === null) return false;
+  const [, rawCount, rawKeep] = match;
+  if (rawKeep === undefined) return true;
+  return Number(rawKeep) <= (rawCount === "" ? 1 : Number(rawCount));
+}
+
+/** Shared by every tag that renders a d20 bonus rather than notation. */
+function d20(bonus: string): RollToken {
+  const signed = /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
+  const notation = `1d20${signed}`;
+  return { kind: "roll", notation, display: signed, rollable: rollable(notation) };
+}
 
 const ABILITIES: Record<string, string> = {
   str: "Strength",
@@ -99,16 +119,23 @@ function attack(args: string[], suffix: string): Token {
 
 /** `{@hit 5}` is the d20 attack roll, so the notation is synthesized rather than read. */
 function attackRoll(args: string[]): Token {
-  const bonus = arg(args, 0) ?? "";
-  const signed = /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
-  const notation = `1d20${signed}`;
-  return {
-    kind: "roll",
-    notation,
-    display: arg(args, 1) ?? signed,
-    rollable: PLAIN_NOTATION.test(notation),
-  };
+  const token = d20(arg(args, 0) ?? "");
+  const display = arg(args, 1);
+  return display === undefined ? token : { ...token, display };
 }
+
+/**
+ * `{@skillCheck survival 4}` carries the skill and the bonus in one space-separated
+ * argument, and reads as "+4" beside the `{@skill}` tag that always precedes it.
+ */
+function skillCheck(args: string[]): Token {
+  const body = arg(args, 0) ?? "";
+  const split = body.lastIndexOf(" ");
+  return split === -1 ? text(body) : d20(body.slice(split + 1));
+}
+
+/** A numbered failure escalates, so collapsing them loses which effect applies when. */
+const FAILURE_ORDER: Record<string, string> = { "1": "First", "2": "Second" };
 
 /** A bare `{@recharge}` means a 6 only; a number is the low end of the range. */
 function recharge(args: string[]): Token {
@@ -168,11 +195,17 @@ const OUTBOUND_TAGS = [
 function buildSpecs(): Map<string, Spec> {
   const specs = new Map<string, Spec>();
 
-  for (const tag of REF_TAGS) specs.set(tag, { kind: "ref", source: 1, display: 2 });
+  for (const tag of REF_TAGS) specs.set(tag, { kind: "ref", source: [1], display: 2 });
   for (const tag of OUTBOUND_TAGS) specs.set(tag, { kind: "text", display: 0 });
 
-  specs.set("classFeature", { kind: "ref", source: 4, display: 5 });
-  specs.set("subclassFeature", { kind: "ref", source: 6, display: 7 });
+  // A deck or a pantheon sits between the name and the source.
+  specs.set("card", { kind: "ref", source: [2], display: 3 });
+  specs.set("deity", { kind: "ref", source: [2], display: 3 });
+  specs.set("subclass", { kind: "ref", source: [3], display: 4 });
+
+  // A feature source defaults to its subclass source, then to its class source.
+  specs.set("classFeature", { kind: "ref", source: [4, 2], display: 5 });
+  specs.set("subclassFeature", { kind: "ref", source: [6, 4, 2], display: 7 });
   specs.set("quickref", { kind: "text", display: 4 });
 
   specs.set("dice", { kind: "roll", notation: 0, display: 1 });
@@ -180,7 +213,9 @@ function buildSpecs(): Map<string, Spec> {
   specs.set("scaledamage", { kind: "roll", notation: 2, display: 2 });
 
   specs.set("i", { kind: "style", style: "italic" });
+  specs.set("italic", { kind: "style", style: "italic" });
   specs.set("b", { kind: "style", style: "bold" });
+  specs.set("bold", { kind: "style", style: "bold" });
   specs.set("note", { kind: "wrapper" });
 
   const computed: Record<string, (args: string[]) => Token> = {
@@ -198,12 +233,17 @@ function buildSpecs(): Map<string, Spec> {
       const ability = arg(args, 0) ?? "";
       return text(`${ABILITIES[ability.toLowerCase()] ?? ability} Saving Throw:`);
     },
-    actSaveFail: () => text("Failure:"),
+    actSaveFail: (args) => {
+      const order = FAILURE_ORDER[arg(args, 0) ?? ""];
+      return text(order === undefined ? "Failure:" : `${order} Failure:`);
+    },
     actSaveSuccess: () => text("Success:"),
     actSaveSuccessOrFail: () => text("Failure or Success:"),
     actTrigger: () => text("Trigger:"),
-    actResponse: () => text("Response:"),
+    // The `d` form supplies its own separator, because no space follows it in the data.
+    actResponse: (args) => text(arg(args, 0) === "d" ? "Response—" : "Response:"),
     hom: () => text("Hit or Miss: "),
+    skillCheck,
   };
   for (const [tag, render] of Object.entries(computed)) {
     specs.set(tag, { kind: "computed", render });
@@ -281,8 +321,13 @@ function expand(inner: string): Token[] {
         name: plain(arg(args, 0) ?? ""),
         display: display(args, spec.display),
       };
-      const source = arg(args, spec.source);
-      if (source !== undefined) token.source = source;
+      for (const index of spec.source) {
+        const source = arg(args, index);
+        if (source !== undefined) {
+          token.source = source;
+          break;
+        }
+      }
       return [token];
     }
     case "roll": {
@@ -292,7 +337,7 @@ function expand(inner: string): Token[] {
           kind: "roll",
           notation,
           display: display(args, spec.display),
-          rollable: PLAIN_NOTATION.test(notation),
+          rollable: rollable(notation),
         },
       ];
     }

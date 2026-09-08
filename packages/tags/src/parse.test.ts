@@ -190,6 +190,20 @@ describe("rolls", () => {
     });
   });
 
+  it("reads the bonus out of a skill check", () => {
+    expect(only("{@skillCheck survival 4}")).toEqual({
+      kind: "roll",
+      notation: "1d20+4",
+      display: "+4",
+      rollable: true,
+    });
+  });
+
+  it("rejects keeping more dice than are rolled", () => {
+    expect(only("{@dice 4d6kh9}")).toMatchObject({ rollable: false });
+    expect(only("{@dice 4d6kh3}")).toMatchObject({ rollable: true });
+  });
+
   it("leaves a save DC as text, because a target number is not rolled", () => {
     expect(only("{@dc 15}")).toEqual({ kind: "text", value: "DC 15" });
   });
@@ -214,6 +228,12 @@ describe("tags whose display is derived", () => {
     ["{@actTrigger}", "Trigger:"],
     ["{@actResponse}", "Response:"],
     ["{@hom}", "Hit or Miss: "],
+    ["{@actSaveFail 1}", "First Failure:"],
+    ["{@actSaveFail 2}", "Second Failure:"],
+    ["{@actSaveFail 9}", "Failure:"],
+    ["{@actResponse d}", "Response—"],
+    ["{@italic Ioun stone}", "Ioun stone"],
+    ["{@bold Limp.}", "Limp."],
     ["{@chance 50|display text}", "display text"],
     ["{@quickref Cover||3||three-quarters cover}", "three-quarters cover"],
     ["{@quickref difficult terrain||3}", "difficult terrain"],
@@ -223,6 +243,76 @@ describe("tags whose display is derived", () => {
 });
 
 describe("argument positions that are not name|source|display", () => {
+  it("skips the deck a card sits in", () => {
+    expect(only("{@card Ghost|Tarokka Deck|RHW}")).toEqual({
+      kind: "ref",
+      tag: "card",
+      name: "Ghost",
+      source: "RHW",
+      display: "Ghost",
+    });
+  });
+
+  it("reads a card display from the fourth argument", () => {
+    expect(only("{@card Mithral Chain Mail|Magic Item Cards|DIP|card}")).toEqual({
+      kind: "ref",
+      tag: "card",
+      name: "Mithral Chain Mail",
+      source: "DIP",
+      display: "card",
+    });
+  });
+
+  it("skips the pantheon a deity belongs to", () => {
+    expect(only("{@deity Umberlee|Faerûnian|SCAG}")).toEqual({
+      kind: "ref",
+      tag: "deity",
+      name: "Umberlee",
+      source: "SCAG",
+      display: "Umberlee",
+    });
+  });
+
+  it("reads a deity display from the fourth argument", () => {
+    expect(only("{@deity Corellon Larethian|Elven|MTF|Corellon}")).toEqual({
+      kind: "ref",
+      tag: "deity",
+      name: "Corellon Larethian",
+      source: "MTF",
+      display: "Corellon",
+    });
+  });
+
+  it("takes the subclass source, not the class source", () => {
+    expect(only("{@subclass Alchemist|Artificer|EFA|EFA}")).toEqual({
+      kind: "ref",
+      tag: "subclass",
+      name: "Alchemist",
+      source: "EFA",
+      display: "Alchemist",
+    });
+  });
+
+  it("falls back to the class source when a class feature omits its own", () => {
+    expect(only("{@classFeature Innate Sorcery|Sorcerer|XPHB|1}")).toEqual({
+      kind: "ref",
+      tag: "classFeature",
+      name: "Innate Sorcery",
+      source: "XPHB",
+      display: "Innate Sorcery",
+    });
+  });
+
+  it("falls back to the subclass source before the class source", () => {
+    expect(only("{@subclassFeature Form of Dread|Warlock|XPHB|Undead|RHW|3}")).toEqual({
+      kind: "ref",
+      tag: "subclassFeature",
+      name: "Form of Dread",
+      source: "RHW",
+      display: "Form of Dread",
+    });
+  });
+
   it("reads the display of a class feature from the sixth argument", () => {
     expect(only("{@classFeature Rage|Barbarian||1||optional display text}")).toEqual({
       kind: "ref",
@@ -287,6 +377,14 @@ describe("real strings from the corpus", () => {
     [
       "{@note Created by the {@subclassFeature Eldritch Cannon|Artificer|EFA|Artillerist|EFA|3} subclass feature.}",
       "Created by the Eldritch Cannon subclass feature.",
+    ],
+    [
+      "{@actTrigger} A creature the goblin can see hits it with an attack roll. {@actResponse d}{@actSave wis} {@dc 13}, the triggering creature. {@actSaveFail} The attack misses instead.",
+      "Trigger: A creature the goblin can see hits it with an attack roll. Response—Wisdom Saving Throw: DC 13, the triggering creature. Failure: The attack misses instead.",
+    ],
+    [
+      "{@creature Tribal warrior} with {@skill Survival} {@skillCheck survival 4}; speaks Common",
+      "Tribal warrior with Survival +4; speaks Common",
     ],
     [
       "Horn of Valhalla ({@item Horn of Valhalla, Silver||Silver|} or {@item Horn of Valhalla, Brass||Brass|})",
