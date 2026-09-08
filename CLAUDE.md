@@ -14,7 +14,7 @@ The ladder below applies *within* them, not against them.
 ```
 packages/rules      5e arithmetic — depends on nothing
 packages/dice       Dice notation parsing and rolling — depends on nothing
-packages/tags       {@tag} parser — depends on nothing, created by the parser
+packages/tags       {@tag} parser — depends on nothing
 packages/character  Zod schemas for definition and state -> rules
 packages/content    ETL: sync + build -> content.db
 packages/api        Hono + zod-openapi + Drizzle, 127.0.0.1:8787

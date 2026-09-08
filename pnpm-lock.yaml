@@ -99,6 +99,8 @@ importers:
 
   packages/rules: {}
 
+  packages/tags: {}
+
   packages/web:
     dependencies:
       '@tanstack/react-query':

@@ -79,6 +79,7 @@ pnpm test:e2e:ui     # playwright in watch mode
 ```
 packages/rules      5e rules arithmetic
 packages/dice       Dice notation parsing and rolling
+packages/tags       {@tag} markup parser
 packages/character  Zod schemas for a character's definition and state
 packages/content    ETL that turns 5etools JSON into content.db
 packages/api        Hono API, Drizzle schemas, OpenAPI spec

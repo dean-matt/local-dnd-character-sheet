@@ -22,8 +22,14 @@ Twelve tags cover ~95% of occurrences. Counts and the full list are in
 {@tag name|source|display|extra}    tag-specific trailing arguments
 ```
 
-Pipes separate arguments. An empty argument means "default" — `{@spell fireball||Fire}`
-has no explicit source. Nesting occurs: `{@i {@spell fireball}}`.
+Pipes separate arguments and an empty one means "default": `{@spell fireball||Fire}` has
+no explicit source. Nesting occurs: `{@i {@spell fireball}}`. Nothing is ever escaped —
+there is no `\|` or `\{` in the corpus.
+
+**Which argument holds the display text is per-tag**, so the forms above are a shape and
+not a rule. `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`, and
+`{@quickref a|b|c|d|e}` displays `e`. The table in `packages/tags/src/parse.ts` is the
+source of truth; a tag missing from it degrades to its first argument.
 
 ## Token contract
 
