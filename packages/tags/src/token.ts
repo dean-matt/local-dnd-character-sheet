@@ -32,10 +32,10 @@ export type Spec =
 
 export const text = (value: string): Token => ({ kind: "text", value });
 
-/** An empty argument means "default", not an empty string. */
+/** An empty argument means "default", not an empty string. Whitespace counts as empty. */
 export function arg(args: string[], index: number): string | undefined {
   const value = args[index];
-  return value === undefined || value === "" ? undefined : value;
+  return value === undefined || value.trim() === "" ? undefined : value;
 }
 
 /**

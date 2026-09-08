@@ -109,6 +109,10 @@ for (const file of jsonFiles(vendor)) {
       const close = spanEnd(source, match.index);
       if (close === -1) continue;
       const span = source.slice(match.index, close + 1);
+      // A bare tag with no arguments is allowed to render nothing: `{@i}` has no content
+      // and `{@hit}` has no bonus. A tag given arguments and rendering nothing has eaten
+      // them, which is the case worth reporting.
+      if (/^\{@\w+\}$/.test(span)) continue;
       if (parseTags(span).length === 0) {
         report("registered tag renders nothing", `${file}: ${span}`);
       }

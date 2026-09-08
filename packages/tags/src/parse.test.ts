@@ -274,6 +274,9 @@ describe("tags whose display is derived", () => {
     ["{@actSaveFail 3}", "Third Failure:"],
     ["{@actSaveFail 9}", "Failure 9:"],
     ["{@ability str  18}", "+4"],
+    ["{@savingThrow con  3}", "+3"],
+    ["{@savingThrow constitution}", "constitution"],
+    ["{@skillCheck survival  4}", "+4"],
     ["{@ability str}", "str"],
     ["{@atk MW}", "Melee Weapon Attack:"],
     ["{@actSave dex}", "Dexterity Saving Throw:"],
@@ -442,6 +445,31 @@ describe("tags that name something other than their first argument", () => {
 
   it("keeps the text of an unknown tag whose first argument is empty", () => {
     expect(shown("{@homebrew |removals}")).toBe("removals");
+  });
+
+  it("emits text rather than a nameless ref when the name is empty", () => {
+    expect(only("{@item |a mysterious shield}")).toEqual({
+      kind: "text",
+      value: "a mysterious shield",
+    });
+  });
+
+  it("treats a whitespace-only argument as absent", () => {
+    expect(only("{@item  |a shield}")).toEqual({ kind: "text", value: "a shield" });
+  });
+
+  it("keeps the display of a d20 tag that has no bonus to roll", () => {
+    expect(only("{@hit |+3 to hit}")).toEqual({ kind: "text", value: "+3 to hit" });
+  });
+
+  it("emits nothing for a roll or ref with no display at all", () => {
+    expect(parseTags("{@dice}")).toEqual([]);
+    expect(parseTags("{@spell}")).toEqual([]);
+  });
+
+  it("keeps a wrapper tag longer than any real one from leaking markup", () => {
+    const long = `{@note ${"x".repeat(2100)} and {@item rope}}`;
+    expect(renderText(parseTags(long))).not.toContain("{@");
   });
 
   it("keeps the text of a known tag whose first argument is empty", () => {

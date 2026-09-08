@@ -67,16 +67,19 @@ function flatten(token: Token, depth: number): Token {
 }
 
 /**
- * The longest tag in the corpus is under 300 characters. Bounding the scan keeps an
- * unmatched `{@` from costing a walk to end-of-string every time, which made a string
- * full of them quadratic. A tag longer than this is malformed and stays literal.
+ * `lastClose` is the final `}` in the whole input, computed once. Past it nothing can
+ * balance, so a string full of unmatched `{@` fails each scan immediately instead of
+ * walking to the end every time, which was quadratic. A wrapper tag of any length still
+ * scans as far as it needs.
+ *
+ * The ceiling: input that ends in one `}` after many `{@` still rescans per opening.
+ * Bounding by length instead would leak raw markup out of a long `{@note}`, which is
+ * the worse failure.
  */
-const MAX_TAG = 2000;
-
-function matchingBrace(input: string, open: number): number {
-  const limit = Math.min(input.length, open + MAX_TAG);
+function matchingBrace(input: string, open: number, lastClose: number): number {
+  if (open > lastClose) return -1;
   let depth = 0;
-  for (let index = open; index < limit; index += 1) {
+  for (let index = open; index < input.length; index += 1) {
     const char = input[index];
     if (char === "{") depth += 1;
     else if (char === "}") {
@@ -110,7 +113,11 @@ function expand(inner: string, depth: number): Token[] {
   const boundary = inner.search(/[\s|]/);
   const tag = boundary === -1 ? inner : inner.slice(0, boundary);
   const rest =
-    boundary === -1 ? "" : inner.slice(inner[boundary] === "|" ? boundary : boundary + 1);
+    boundary === -1
+      ? ""
+      : inner[boundary] === "|"
+        ? inner.slice(boundary)
+        : inner.slice(boundary).replace(/^\s+/, "");
   const args = rest === "" ? [] : splitArgs(rest);
 
   const spec = SPECS.get(tag);
@@ -118,10 +125,14 @@ function expand(inner: string, depth: number): Token[] {
 
   switch (spec.kind) {
     case "ref": {
+      const name = arg(args, 0);
+      // Without a name there is nothing to resolve, and a ref carrying prose as its
+      // source is a guaranteed miss. The words still render.
+      if (name === undefined) return [text(display(args, spec.display, depth))];
       const token: RefToken = {
         kind: "ref",
         tag,
-        name: plain(arg(args, 0) ?? "", depth),
+        name: plain(name, depth),
         display: display(args, spec.display, depth),
       };
       for (const index of spec.source) {
@@ -160,13 +171,19 @@ function expand(inner: string, depth: number): Token[] {
  * something every renderer would have to skip.
  */
 function worthKeeping(token: Token): boolean {
-  if (token.kind === "text") return token.value !== "";
-  if (token.kind === "style") return token.children.length > 0;
-  return true;
+  switch (token.kind) {
+    case "text":
+      return token.value !== "";
+    case "style":
+      return token.children.length > 0;
+    default:
+      return token.display !== "";
+  }
 }
 
 function walk(input: string, depth: number): Token[] {
   if (depth > MAX_DEPTH) return input === "" ? [] : [text(input)];
+  const lastClose = input.lastIndexOf("}");
   const tokens: Token[] = [];
   let literal = "";
   let index = 0;
@@ -184,7 +201,7 @@ function walk(input: string, depth: number): Token[] {
       literal += input.slice(index);
       break;
     }
-    const close = matchingBrace(input, open);
+    const close = matchingBrace(input, open, lastClose);
     if (close === -1) {
       // Confine a malformed tag to itself. Homebrew text is hand-written, and one
       // stray brace should not turn the rest of a paragraph into raw markup.

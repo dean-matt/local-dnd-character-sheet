@@ -87,12 +87,27 @@ function scaledice(args: string[]): Token {
   };
 }
 
+/**
+ * Shared by the d20 family. With no bonus there is nothing to roll, but a display the
+ * tag supplied is still words, and dropping them is the failure `firstFilled` exists to
+ * prevent on the other path.
+ */
+function d20Tag(args: string[], bonus: string): Token {
+  const token = d20(bonus);
+  const display = arg(args, 1);
+  if (token.kind !== "roll") return text(display ?? "");
+  return display === undefined ? token : { ...token, display };
+}
+
 /** `{@hit 5}` is the d20 attack roll, so the notation is synthesized rather than read. */
 function attackRoll(args: string[]): Token {
-  const token = d20(arg(args, 0) ?? "");
-  const display = arg(args, 1);
-  if (display === undefined || token.kind !== "roll") return token;
-  return { ...token, display };
+  return d20Tag(args, arg(args, 0) ?? "");
+}
+
+/** The trailing number of `{@skillCheck survival 4}` or `{@savingThrow con 3}`. */
+function trailingBonus(body: string): string | undefined {
+  const bonus = body.split(" ").at(-1) ?? "";
+  return /^[+-]?\d+$/.test(bonus) ? bonus : undefined;
 }
 
 /**
@@ -101,8 +116,8 @@ function attackRoll(args: string[]): Token {
  */
 function skillCheck(args: string[]): Token {
   const body = arg(args, 0) ?? "";
-  const split = body.lastIndexOf(" ");
-  return split === -1 ? text(body) : d20(body.slice(split + 1));
+  const bonus = trailingBonus(body);
+  return bonus === undefined ? text(body) : d20Tag(args, bonus);
 }
 
 /**
@@ -225,10 +240,14 @@ function buildSpecs(): Map<string, Spec> {
     ability,
     class: classRef,
     // A plain d20 bonus, the same shape as {@hit} without the attack.
-    d20: (args) => d20(arg(args, 0) ?? ""),
+    d20: (args) => d20Tag(args, arg(args, 0) ?? ""),
     hit: attackRoll,
     // A saving throw is a d20 test, and the tag already carries the bonus.
-    savingThrow: (args) => d20((arg(args, 0) ?? "").split(" ")[1] ?? ""),
+    savingThrow: (args) => {
+      const body = arg(args, 0) ?? "";
+      const bonus = trailingBonus(body);
+      return bonus === undefined ? text(body) : d20Tag(args, bonus);
+    },
     scaledice,
     hitYourSpellAttack: (args) => text(arg(args, 0) ?? "your spell attack modifier"),
     h: () => text("Hit: "),
