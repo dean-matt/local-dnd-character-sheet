@@ -62,6 +62,11 @@ does not exist here. 727 occurrences — do not special-case them one at a time.
 **A reference to a missing entity still renders**, as its display text without a link.
 The catalog may legitimately not have the target.
 
+**A `ref` names what its tag means, not always a row's `name`.** `{@subclass}` carries
+the `shortName` — `Berserker`, where the row reads `Path of the Berserker` — which is
+unique across every class, so a resolver matches on `shortName` for that tag. Class
+features need more than the token holds; see #29.
+
 Feed `generated/gendata-tag-redirects.json` to the resolver so renamed upstream entries
 still resolve.
 
