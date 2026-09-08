@@ -261,3 +261,6 @@ function buildSpecs(): Map<string, Spec> {
 }
 
 export const SPECS = buildSpecs();
+
+/** The tags this parser knows. Anything else degrades, which is a choice worth auditing. */
+export const KNOWN_TAGS: ReadonlySet<string> = new Set(SPECS.keys());

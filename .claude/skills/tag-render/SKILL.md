@@ -35,6 +35,9 @@ Check a new tag's display position against `vendor/5etools/data/renderdemo.json`
 upstream documents its own grammar with self-describing examples. Reading the wrong
 argument produces plausible text, so nothing else catches it.
 
+`pnpm tags:audit` runs the parser over every tag in the vendored data and lists the tags
+that fall through to plain text. It cannot judge whether a display is the right one.
+
 ## Token contract
 
 ```ts
