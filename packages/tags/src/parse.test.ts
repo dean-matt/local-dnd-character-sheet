@@ -181,6 +181,15 @@ describe("rolls", () => {
     });
   });
 
+  it("makes a plain d20 bonus rollable", () => {
+    expect(only("{@d20 3}")).toEqual({
+      kind: "roll",
+      notation: "1d20+3",
+      display: "+3",
+      rollable: true,
+    });
+  });
+
   it("reads the per-level dice out of a scaling dice tag", () => {
     expect(only("{@scaledice 8d6|3-9|1d6}")).toEqual({
       kind: "roll",
@@ -242,6 +251,11 @@ describe("tags whose display is derived", () => {
     ["{@actSaveFail 9}", "Failure:"],
     ["{@actResponse d}", "Response—"],
     ["{@italic Ioun stone}", "Ioun stone"],
+    ["{@ability str 18|+4}", "+4"],
+    ["{@ability str 20}", "Strength 20"],
+    ["{@savingThrow con 3}", "Constitution +3"],
+    ["{@d20 3}", "+3"],
+    ["{@d20 +9}", "+9"],
     ["{@bold Limp.}", "Limp."],
     ["{@chance 50|display text}", "display text"],
     ["{@quickref Cover||3||three-quarters cover}", "three-quarters cover"],

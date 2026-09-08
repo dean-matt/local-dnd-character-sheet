@@ -88,6 +88,30 @@ function skillCheck(args: string[]): Token {
   return split === -1 ? text(body) : d20(body.slice(split + 1));
 }
 
+/**
+ * `{@ability str 18|+4}` supplies its modifier, and six of the eleven occurrences do.
+ * The rest carry only a score, and turning a score into a modifier is 5e arithmetic
+ * that `@dnd/rules` owns — this package depends on nothing and will not hold a second
+ * copy of it. Naming the ability and its score is correct English either way.
+ */
+function ability(args: string[]): Token {
+  const override = arg(args, 1);
+  if (override !== undefined) return text(override);
+  const code = arg(args, 0) ?? "";
+  const [key = "", score = ""] = code.split(" ");
+  return text(`${ABILITY_NAMES[key.toLowerCase()] ?? key} ${score}`.trim());
+}
+
+/** `{@savingThrow con 3}` already carries the bonus, so no arithmetic is needed. */
+function savingThrow(args: string[]): Token {
+  const override = arg(args, 1);
+  if (override !== undefined) return text(override);
+  const code = arg(args, 0) ?? "";
+  const [key = "", bonus = ""] = code.split(" ");
+  const signed = bonus === "" || /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
+  return text(`${ABILITY_NAMES[key.toLowerCase()] ?? key} ${signed}`.trim());
+}
+
 /** A bare `{@recharge}` means a 6 only; a number is the low end of the range. */
 function recharge(args: string[]): Token {
   const low = arg(args, 0) ?? "6";
@@ -181,8 +205,12 @@ function buildSpecs(): Map<string, Spec> {
     // A save DC is a target number, not something to roll.
     dc: (args) => text(arg(args, 1) ?? `DC ${arg(args, 0) ?? ""}`),
     dcYourSpellSave: (args) => text(arg(args, 0) ?? "your spell save DC"),
+    ability,
     class: classRef,
+    // A plain d20 bonus, the same shape as {@hit} without the attack.
+    d20: (args) => d20(arg(args, 0) ?? ""),
     hit: attackRoll,
+    savingThrow,
     hitYourSpellAttack: (args) => text(arg(args, 0) ?? "your spell attack modifier"),
     h: () => text("Hit: "),
     atk: (args) => attack(args, " Attack:"),
