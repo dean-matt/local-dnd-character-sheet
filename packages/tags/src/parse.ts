@@ -210,6 +210,22 @@ function buildSpecs(): Map<string, Spec> {
 
 const SPECS = buildSpecs();
 
+/**
+ * A computed display can still hold nesting: `{@hit +3|{@hit 3} to hit}` puts a tag in
+ * the display argument. Flattening here covers every computed tag rather than each one
+ * remembering to do it.
+ */
+function flatten(token: Token): Token {
+  switch (token.kind) {
+    case "text":
+      return token.value.includes("{@") ? text(plain(token.value)) : token;
+    case "roll":
+      return token.display.includes("{@") ? { ...token, display: plain(token.display) } : token;
+    default:
+      return token;
+  }
+}
+
 function matchingBrace(input: string, open: number): number {
   let depth = 0;
   for (let index = open; index < input.length; index += 1) {
@@ -283,7 +299,7 @@ function expand(inner: string): Token[] {
     case "wrapper":
       return parseTags(rest);
     case "computed":
-      return [spec.render(args)];
+      return [flatten(spec.render(args))];
   }
 }
 

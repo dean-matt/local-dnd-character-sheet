@@ -96,6 +96,15 @@ describe("nesting", () => {
     );
   });
 
+  it("flattens a tag nested in a computed display", () => {
+    expect(only("{@hit +3|{@hit 3} to hit}")).toEqual({
+      kind: "roll",
+      notation: "1d20+3",
+      display: "+3 to hit",
+      rollable: true,
+    });
+  });
+
   it("does not split on a pipe inside a nested tag", () => {
     const token = only("{@i {@item longbow|XPHB|long}}");
     expect(renderText([token])).toBe("long");
