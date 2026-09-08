@@ -470,7 +470,7 @@ describe("tags that name something other than their first argument", () => {
   it("keeps a placeholder a d20 tag cannot roll, but not a lone sign", () => {
     expect(only("{@hit <$to_hit__str$>}")).toEqual({
       kind: "text",
-      value: "<$to_hit__str$>",
+      value: "+<$to_hit__str$>",
     });
     expect(parseTags("{@hit +}")).toEqual([]);
   });

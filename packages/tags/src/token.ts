@@ -47,10 +47,10 @@ export function arg(args: string[], index: number): string | undefined {
  * the bonus has nothing to roll, and a lone `+` is worse than nothing.
  */
 export function d20(bonus: string): Token {
-  // Nothing to roll without a number. A placeholder like `<$to_hit__str$>` still says
-  // something and stays as text; a lone sign says nothing and goes.
-  if (!/\d/.test(bonus)) return text(/\w/.test(bonus) ? bonus : "");
   const signed = /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
+  // Nothing to roll without a number, but a placeholder like `<$to_hit__str$>` still
+  // reads as a bonus and keeps its sign. A lone sign says nothing and goes.
+  if (!/\d/.test(bonus)) return text(/\w/.test(bonus) ? signed : "");
   const notation = `1d20${signed}`;
   return { kind: "roll", notation, display: signed, rollable: isRollable(notation) };
 }
