@@ -58,18 +58,17 @@ function matchingBrace(input: string, open: number): number {
 function splitArgs(body: string): string[] {
   const args: string[] = [];
   let depth = 0;
-  let current = "";
-  for (const char of body) {
+  let start = 0;
+  for (let i = 0; i < body.length; i += 1) {
+    const char = body[i];
     if (char === "{") depth += 1;
     else if (char === "}") depth -= 1;
-    if (char === "|" && depth === 0) {
-      args.push(current);
-      current = "";
-      continue;
+    else if (char === "|" && depth === 0) {
+      args.push(body.slice(start, i));
+      start = i + 1;
     }
-    current += char;
   }
-  args.push(current);
+  args.push(body.slice(start));
   return args;
 }
 
@@ -141,18 +140,19 @@ export function parseTags(input: string): Token[] {
   };
 
   while (index < input.length) {
-    if (!input.startsWith("{@", index)) {
-      literal += input[index] ?? "";
-      index += 1;
-      continue;
+    const open = input.indexOf("{@", index);
+    if (open === -1) {
+      literal += input.slice(index);
+      break;
     }
-    const close = matchingBrace(input, index);
+    const close = matchingBrace(input, open);
     if (close === -1) {
       literal += input.slice(index);
       break;
     }
+    literal += input.slice(index, open);
     flush();
-    for (const token of expand(input.slice(index + 2, close))) {
+    for (const token of expand(input.slice(open + 2, close))) {
       // An argument-less unknown tag has no display at all, and an empty token is only
       // something every renderer would have to skip.
       if (token.kind === "text" && token.value === "") continue;
