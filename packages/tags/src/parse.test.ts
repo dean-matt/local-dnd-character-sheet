@@ -86,6 +86,17 @@ describe("grammar", () => {
     );
   });
 
+  it("treats a leading pipe as a separator, not as content", () => {
+    expect(shown("{@b |bold text}")).toBe("bold text");
+    expect(shown("{@note |a note}")).toBe("a note");
+  });
+
+  it("keeps the words but not the markup past the nesting cap", () => {
+    const rendered = renderText(parseTags(`${"{@i ".repeat(34)}deep text${"}".repeat(34)}`));
+    expect(rendered).not.toContain("{@");
+    expect(rendered).toContain("deep text");
+  });
+
   it("emits nothing for a style tag with no content", () => {
     expect(parseTags("a {@i} b")).toEqual([
       { kind: "text", value: "a " },
@@ -266,6 +277,9 @@ describe("tags whose display is derived", () => {
     ["{@atkr m}", "Melee Attack Roll:"],
     ["{@atkr m,r}", "Melee or Ranged Attack Roll:"],
     ["{@atk zz}", "Attack:"],
+    ["{@atk mw,zz}", "Melee Weapon Attack:"],
+    ["{@ability str\t18}", "+4"],
+    ["{@unit {=amount1}|egg|eggs}", "eggs"],
     ["{@recharge}", "(Recharge 6)"],
     ["{@recharge 5}", "(Recharge 5–6)"],
     ["{@recharge 5|m}", "Recharge 5–6"],

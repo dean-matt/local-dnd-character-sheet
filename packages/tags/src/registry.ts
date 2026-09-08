@@ -42,7 +42,9 @@ function attack(args: string[], suffix: string): Token {
   for (const code of codes) {
     const range = ATTACK_RANGE[code.slice(0, 1).toLowerCase()];
     const means = code.length > 1 ? ATTACK_MEANS[code.slice(1).toLowerCase()] : "";
-    if (range === undefined || means === undefined) return text(suffix.trim());
+    // Skip a code this does not know rather than discard the ones it does. Upstream
+    // adds codes, and losing "Melee Weapon" to an unfamiliar sibling is the worse half.
+    if (range === undefined || means === undefined) continue;
     parts.push({ range, means });
   }
 
@@ -131,7 +133,7 @@ function ability(args: string[]): Token {
   const override = arg(args, 1);
   if (override !== undefined) return text(override);
   const raw = arg(args, 0) ?? "";
-  const score = raw.split(" ").at(-1) ?? "";
+  const score = raw.trim().split(/\s+/).at(-1) ?? "";
   if (!/^\d+$/.test(score)) return text(raw);
   const value = Number(score);
   const modifier = abilityModifier(value);
@@ -154,7 +156,6 @@ const REF_TAGS = [
   "action",
   "background",
   "boon",
-  "card",
   "charoption",
   "condition",
   "creature",
@@ -181,7 +182,6 @@ const REF_TAGS = [
   "skill",
   "spell",
   "status",
-  "subclass",
   "table",
   "trap",
   "variantrule",
@@ -221,9 +221,9 @@ function buildSpecs(): Map<string, Spec> {
   specs.set("classFeature", { kind: "ref", source: [4, 2], display: 5 });
   specs.set("subclassFeature", { kind: "ref", source: [6, 4, 2], display: 7 });
   specs.set("quickref", { kind: "text", display: 4 });
-  // `{@unit <amount>|singular|plural}`. The amount is a recipe-scaling template this
-  // parser does not evaluate, so the singular is the honest choice.
-  specs.set("unit", { kind: "text", display: 1 });
+  // `{@unit <amount>|singular|plural}`. Every amount in the data is an unresolved
+  // `{=…}` template, so the count cannot be known; recipe prose is mostly plural.
+  specs.set("unit", { kind: "text", display: 2 });
 
   specs.set("dice", { kind: "roll", notation: 0, display: 1 });
   specs.set("damage", { kind: "roll", notation: 0, display: 1 });

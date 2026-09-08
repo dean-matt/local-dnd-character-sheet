@@ -11,7 +11,7 @@
  * `vendor/5etools/data/renderdemo.json` is what settles that.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { rollDice } from "../packages/dice/src/index.ts";
 import { KNOWN_TAGS, parseTags, renderText, type Token } from "../packages/tags/src/index.ts";
@@ -24,10 +24,11 @@ if (!existsSync(vendor)) {
 }
 
 function* jsonFiles(dir: string): Generator<string> {
-  for (const name of readdirSync(dir)) {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) yield* jsonFiles(path);
-    else if (name.endsWith(".json")) yield path;
+  // withFileTypes, so a dangling symlink cannot abort the audit before it reports.
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) yield* jsonFiles(path);
+    else if (entry.isFile() && entry.name.endsWith(".json")) yield path;
   }
 }
 

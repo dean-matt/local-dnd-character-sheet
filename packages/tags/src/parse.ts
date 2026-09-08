@@ -41,6 +41,17 @@ function firstFilled(args: string[], depth: number): string {
   return "";
 }
 
+/**
+ * A wrapper's content is its first argument that has text, so a leading pipe stays a
+ * separator instead of being rendered, and `{@b |bold text}` keeps its words.
+ */
+function content(args: string[]): string {
+  for (const value of args) {
+    if (value.trim() !== "") return value;
+  }
+  return "";
+}
+
 /** Falls back through the tag's own position, then the name, then anything with text. */
 function display(args: string[], index: number, depth: number): string {
   const chosen = arg(args, index) ?? arg(args, 0);
@@ -168,9 +179,9 @@ function expand(inner: string, depth: number): Token[] {
     case "text":
       return [text(display(args, spec.display, depth))];
     case "style":
-      return [{ kind: "style", style: spec.style, children: walk(rest, depth + 1) }];
+      return [{ kind: "style", style: spec.style, children: walk(content(args), depth + 1) }];
     case "wrapper":
-      return walk(rest, depth + 1);
+      return walk(content(args), depth + 1);
     case "computed":
       return [flatten(spec.render(args), depth)];
   }
@@ -206,7 +217,12 @@ function worthKeeping(token: Token): boolean {
 }
 
 function walk(input: string, depth: number): Token[] {
-  if (depth > MAX_DEPTH) return input === "" ? [] : [text(input)];
+  if (depth > MAX_DEPTH) {
+    // Keep the words, drop the markup. Returning it raw would put `{@` into the FTS
+    // index, which is the one thing every other degradation path avoids.
+    const scrubbed = input.replace(/\{@\w+\s?|[{}]/g, "");
+    return scrubbed === "" ? [] : [text(scrubbed)];
+  }
   const closeOf = braceFinder(input);
   const tokens: Token[] = [];
   let literal = "";
