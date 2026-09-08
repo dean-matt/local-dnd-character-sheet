@@ -16,28 +16,35 @@ import { isRollable } from "@dnd/dice";
 import { SPECS } from "./registry.ts";
 import { arg, type RefToken, type Token, text } from "./token.ts";
 
+/**
+ * Upstream nests two or three levels deep. The cap is what keeps `parseTags` able to
+ * promise it never throws: past it the markup stays literal rather than overflowing the
+ * stack, which is the same bargain an unknown tag makes.
+ */
+const MAX_DEPTH = 32;
+
 /** Flattens nesting inside an argument, because a display is a string and not a tree. */
-function plain(value: string): string {
-  return value.includes("{@") ? renderText(parseTags(value)) : value;
+function plain(value: string, depth: number): string {
+  return value.includes("{@") ? renderText(walk(value, depth + 1)) : value;
 }
 
 /**
- * An unknown tag has no known display position, so the first argument carrying text is
- * the best guess. Taking argument zero unconditionally deletes the text of a tag that
- * leaves it empty, as `{@homebrew |removals}` does, and losing words is worse than
- * showing the wrong one.
+ * The last resort for any tag: the first argument that carries text. A tag whose
+ * expected argument is empty would otherwise render as nothing and be dropped, which
+ * loses words. `{@homebrew |removals}` and `{@item |a shield}` both keep theirs.
  */
-function firstFilled(args: string[]): string {
+function firstFilled(args: string[], depth: number): string {
   for (let index = 0; index < args.length; index += 1) {
     const value = arg(args, index);
-    if (value !== undefined) return plain(value);
+    if (value !== undefined) return plain(value, depth);
   }
   return "";
 }
 
-/** Falls back to the first argument, which is the name or notation for every tag. */
-function display(args: string[], index: number): string {
-  return plain(arg(args, index) ?? arg(args, 0) ?? "");
+/** Falls back through the tag's own position, then the name, then anything with text. */
+function display(args: string[], index: number, depth: number): string {
+  const chosen = arg(args, index) ?? arg(args, 0);
+  return chosen === undefined ? firstFilled(args, depth) : plain(chosen, depth);
 }
 
 /**
@@ -45,20 +52,31 @@ function display(args: string[], index: number): string {
  * the display argument. Flattening here covers every computed tag rather than each one
  * remembering to do it.
  */
-function flatten(token: Token): Token {
+function flatten(token: Token, depth: number): Token {
   switch (token.kind) {
     case "text":
-      return token.value.includes("{@") ? text(plain(token.value)) : token;
+      return token.value.includes("{@") ? text(plain(token.value, depth)) : token;
     case "roll":
-      return token.display.includes("{@") ? { ...token, display: plain(token.display) } : token;
+    case "ref":
+      return token.display.includes("{@")
+        ? { ...token, display: plain(token.display, depth) }
+        : token;
     default:
       return token;
   }
 }
 
+/**
+ * The longest tag in the corpus is under 300 characters. Bounding the scan keeps an
+ * unmatched `{@` from costing a walk to end-of-string every time, which made a string
+ * full of them quadratic. A tag longer than this is malformed and stays literal.
+ */
+const MAX_TAG = 2000;
+
 function matchingBrace(input: string, open: number): number {
+  const limit = Math.min(input.length, open + MAX_TAG);
   let depth = 0;
-  for (let index = open; index < input.length; index += 1) {
+  for (let index = open; index < limit; index += 1) {
     const char = input[index];
     if (char === "{") depth += 1;
     else if (char === "}") {
@@ -88,7 +106,7 @@ function splitArgs(body: string): string[] {
 }
 
 /** Turns the inside of one `{@…}` into tokens. An unknown tag becomes its display text. */
-function expand(inner: string): Token[] {
+function expand(inner: string, depth: number): Token[] {
   const boundary = inner.search(/[\s|]/);
   const tag = boundary === -1 ? inner : inner.slice(0, boundary);
   const rest =
@@ -96,15 +114,15 @@ function expand(inner: string): Token[] {
   const args = rest === "" ? [] : splitArgs(rest);
 
   const spec = SPECS.get(tag);
-  if (spec === undefined) return [text(firstFilled(args))];
+  if (spec === undefined) return [text(firstFilled(args, depth))];
 
   switch (spec.kind) {
     case "ref": {
       const token: RefToken = {
         kind: "ref",
         tag,
-        name: plain(arg(args, 0) ?? ""),
-        display: display(args, spec.display),
+        name: plain(arg(args, 0) ?? "", depth),
+        display: display(args, spec.display, depth),
       };
       for (const index of spec.source) {
         const source = arg(args, index);
@@ -121,28 +139,34 @@ function expand(inner: string): Token[] {
         {
           kind: "roll",
           notation,
-          display: display(args, spec.display),
+          display: display(args, spec.display, depth),
           rollable: isRollable(notation),
         },
       ];
     }
     case "text":
-      return [text(display(args, spec.display))];
+      return [text(display(args, spec.display, depth))];
     case "style":
-      return [{ kind: "style", style: spec.style, children: parseTags(rest) }];
+      return [{ kind: "style", style: spec.style, children: walk(rest, depth + 1) }];
     case "wrapper":
-      return parseTags(rest);
+      return walk(rest, depth + 1);
     case "computed":
-      return [flatten(spec.render(args))];
+      return [flatten(spec.render(args), depth)];
   }
 }
 
 /**
- * Tokenizes `input`. Never throws: an unknown tag degrades to its display text and
- * unbalanced markup stays literal, because upstream adds tags and existing characters
- * must keep rendering when it does.
+ * An argument-less unknown tag has no display at all, and an empty token is only
+ * something every renderer would have to skip.
  */
-export function parseTags(input: string): Token[] {
+function worthKeeping(token: Token): boolean {
+  if (token.kind === "text") return token.value !== "";
+  if (token.kind === "style") return token.children.length > 0;
+  return true;
+}
+
+function walk(input: string, depth: number): Token[] {
+  if (depth > MAX_DEPTH) return input === "" ? [] : [text(input)];
   const tokens: Token[] = [];
   let literal = "";
   let index = 0;
@@ -170,18 +194,23 @@ export function parseTags(input: string): Token[] {
     }
     literal += input.slice(index, open);
     flush();
-    for (const token of expand(input.slice(open + 2, close))) {
-      // An argument-less unknown tag has no display at all, and an empty token is only
-      // something every renderer would have to skip.
-      if (token.kind === "text" && token.value === "") continue;
-      if (token.kind === "style" && token.children.length === 0) continue;
-      tokens.push(token);
+    for (const token of expand(input.slice(open + 2, close), depth)) {
+      if (worthKeeping(token)) tokens.push(token);
     }
     index = close + 1;
   }
 
   flush();
   return tokens;
+}
+
+/**
+ * Tokenizes `input`. Never throws: an unknown tag degrades to its display text,
+ * unbalanced markup stays literal, and nesting past `MAX_DEPTH` stays literal too,
+ * because upstream adds tags and existing characters must keep rendering when it does.
+ */
+export function parseTags(input: string): Token[] {
+  return walk(input, 0);
 }
 
 /** Flattens tokens to plain text, which is what the FTS index stores. */

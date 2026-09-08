@@ -23,7 +23,7 @@ const ATTACK_RANGE: Record<string, string> = { m: "Melee", r: "Ranged", a: "Area
 const ATTACK_MEANS: Record<string, string> = { w: "Weapon", s: "Spell" };
 
 /** A numbered failure escalates, so collapsing them loses which effect applies when. */
-const FAILURE_ORDER: Record<string, string> = { "1": "First", "2": "Second" };
+const FAILURE_ORDER: Record<string, string> = { "1": "First", "2": "Second", "3": "Third" };
 
 /**
  * `{@atk mw,rw}` reads "Melee or Ranged Weapon Attack:" rather than repeating the
@@ -31,8 +31,8 @@ const FAILURE_ORDER: Record<string, string> = { "1": "First", "2": "Second" };
  */
 function attack(args: string[], suffix: string): Token {
   const raw = arg(args, 0) ?? "";
-  // An unrecognized code such as `g` means nothing to a reader, so it renders as
-  // nothing rather than as a stray letter in the middle of a sentence.
+  // An unrecognized code such as `g` means nothing to a reader, but deleting the label
+  // leaves the sentence claiming something it did not. The suffix alone still reads.
   const codes = raw
     .split(",")
     .map((code) => code.trim())
@@ -42,12 +42,12 @@ function attack(args: string[], suffix: string): Token {
   for (const code of codes) {
     const range = ATTACK_RANGE[code.slice(0, 1).toLowerCase()];
     const means = code.length > 1 ? ATTACK_MEANS[code.slice(1).toLowerCase()] : "";
-    if (range === undefined || means === undefined) return text("");
+    if (range === undefined || means === undefined) return text(suffix.trim());
     parts.push({ range, means });
   }
 
   const first = parts[0];
-  if (first === undefined) return text("");
+  if (first === undefined) return text(suffix.trim());
 
   const ranges = parts.map((part) => part.range).join(" or ");
   const phrase = parts.every((part) => part.means === first.means)
@@ -113,9 +113,10 @@ function skillCheck(args: string[]): Token {
 function ability(args: string[]): Token {
   const override = arg(args, 1);
   if (override !== undefined) return text(override);
-  const [, score] = (arg(args, 0) ?? "").split(" ");
+  const raw = arg(args, 0) ?? "";
+  const score = raw.split(" ").at(-1) ?? "";
+  if (!/^\d+$/.test(score)) return text(raw);
   const value = Number(score);
-  if (!Number.isFinite(value)) return text(arg(args, 0) ?? "");
   const modifier = abilityModifier(value);
   return text(modifier < 0 ? `${modifier}` : `+${modifier}`);
 }
@@ -241,8 +242,11 @@ function buildSpecs(): Map<string, Spec> {
       return text(`${ABILITY_NAMES[ability.toLowerCase()] ?? ability} Saving Throw:`);
     },
     actSaveFail: (args) => {
-      const order = FAILURE_ORDER[arg(args, 0) ?? ""];
-      return text(order === undefined ? "Failure:" : `${order} Failure:`);
+      const tier = arg(args, 0);
+      if (tier === undefined) return text("Failure:");
+      const order = FAILURE_ORDER[tier];
+      // An unnamed tier still has to read differently from the unnumbered form.
+      return text(order === undefined ? `Failure ${tier}:` : `${order} Failure:`);
     },
     actSaveFailBy: (args) => text(`Failure by ${arg(args, 0) ?? ""} or More:`),
     actSaveSuccess: () => text("Success:"),

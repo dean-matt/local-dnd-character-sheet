@@ -41,6 +41,32 @@ function* tagged(value: unknown): Generator<string> {
   }
 }
 
+/** Nesting is why: a ref inside `{@i …}` is a token like any other and gets checked. */
+function* flat(tokens: Token[]): Generator<Token> {
+  for (const token of tokens) {
+    yield token;
+    if (token.kind === "style") yield* flat(token.children);
+  }
+}
+
+/**
+ * A registered tag that yields no token has deleted itself, and the deletion is
+ * invisible in the rendered string. The empty-token rule cannot see this, because the
+ * parser drops empty tokens before they reach here.
+ */
+function spanEnd(source: string, open: number): number {
+  let depth = 0;
+  for (let index = open; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+  return -1;
+}
+
 /** An ALLCAPS display beside a name that is not ALLCAPS is a source read as a display. */
 const SOURCE_LIKE = /^[A-Z]{2,6}$/;
 
@@ -76,7 +102,16 @@ for (const file of jsonFiles(vendor)) {
 
     for (const match of source.matchAll(/\{@(\w+)/g)) {
       const tag = match[1] ?? "";
-      if (!KNOWN_TAGS.has(tag)) unregistered.set(tag, (unregistered.get(tag) ?? 0) + 1);
+      if (!KNOWN_TAGS.has(tag)) {
+        unregistered.set(tag, (unregistered.get(tag) ?? 0) + 1);
+        continue;
+      }
+      const close = spanEnd(source, match.index);
+      if (close === -1) continue;
+      const span = source.slice(match.index, close + 1);
+      if (parseTags(span).length === 0) {
+        report("registered tag renders nothing", `${file}: ${span}`);
+      }
     }
 
     const rendered = renderText(found);
@@ -84,10 +119,7 @@ for (const file of jsonFiles(vendor)) {
       report("markup survives a render", `${file}: ${rendered.slice(0, 90)}`);
     }
 
-    for (const token of found) {
-      if (token.kind === "text" && token.value === "") {
-        report("empty token", `${file}: ${source.slice(0, 80)}`);
-      }
+    for (const token of flat(found)) {
       if (token.kind === "ref") {
         if (token.display === "") report("ref with no display", `${file}: ${token.name}`);
         if (token.source !== undefined && token.display === token.source) {

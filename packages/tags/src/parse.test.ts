@@ -265,12 +265,16 @@ describe("tags whose display is derived", () => {
     ["{@atk ms,rs}", "Melee or Ranged Spell Attack:"],
     ["{@atkr m}", "Melee Attack Roll:"],
     ["{@atkr m,r}", "Melee or Ranged Attack Roll:"],
-    ["{@atk zz}", ""],
+    ["{@atk zz}", "Attack:"],
     ["{@recharge}", "(Recharge 6)"],
     ["{@recharge 5}", "(Recharge 5–6)"],
     ["{@recharge 5|m}", "Recharge 5–6"],
     ["{@m}", "Miss: "],
     ["{@actSaveFailBy 5}", "Failure by 5 or More:"],
+    ["{@actSaveFail 3}", "Third Failure:"],
+    ["{@actSaveFail 9}", "Failure 9:"],
+    ["{@ability str  18}", "+4"],
+    ["{@ability str}", "str"],
     ["{@atk MW}", "Melee Weapon Attack:"],
     ["{@actSave dex}", "Dexterity Saving Throw:"],
     ["{@actSaveFail}", "Failure:"],
@@ -282,7 +286,6 @@ describe("tags whose display is derived", () => {
     ["{@hom}", "Hit or Miss: "],
     ["{@actSaveFail 1}", "First Failure:"],
     ["{@actSaveFail 2}", "Second Failure:"],
-    ["{@actSaveFail 9}", "Failure:"],
     ["{@actResponse d}", "Response—"],
     ["{@italic Ioun stone}", "Ioun stone"],
     ["{@ability str 18|+4}", "+4"],
@@ -439,6 +442,33 @@ describe("tags that name something other than their first argument", () => {
 
   it("keeps the text of an unknown tag whose first argument is empty", () => {
     expect(shown("{@homebrew |removals}")).toBe("removals");
+  });
+
+  it("keeps the text of a known tag whose first argument is empty", () => {
+    expect(shown("Grants {@item |a mysterious shield} to the wielder.")).toBe(
+      "Grants a mysterious shield to the wielder.",
+    );
+  });
+
+  it("flattens nesting in a display a computed tag builds", () => {
+    expect(only("{@class Barbarian|XPHB|{@i Path of the Berserker}|Berserker|XPHB}")).toEqual({
+      kind: "ref",
+      tag: "subclass",
+      name: "Berserker",
+      source: "XPHB",
+      display: "Path of the Berserker",
+    });
+  });
+
+  it("never throws, however deeply nested", () => {
+    const deep = `${"{@i ".repeat(5000)}x${"}".repeat(5000)}`;
+    expect(() => parseTags(deep)).not.toThrow();
+  });
+
+  it("stays linear on a string of unmatched tag openings", () => {
+    const started = performance.now();
+    parseTags("{@".repeat(64000));
+    expect(performance.now() - started).toBeLessThan(1000);
   });
 });
 
