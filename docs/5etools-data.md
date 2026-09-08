@@ -18,8 +18,11 @@ handle the difference at load time through the tier system in
 **An entry is keyed `(name, source)`, never name alone.** Sources are book
 abbreviations: `PHB`, `XPHB`, `XGE`, `TCE`, `EGW`, and so on.
 
-Two rulesets ship side by side, marked with an `edition` field of `classic` (2014) or
-`one` (2024). All 13 core classes exist in both. Spells split 361 `PHB` to 391 `XPHB`.
+Two rulesets ship side by side, `classic` (2014) and `one` (2024). All 13 core classes
+exist in both. Spells split 361 `PHB` to 391 `XPHB`.
+
+The `edition` field marking them is sparse — no spell carries one, and no source carries
+both editions — so the source is what decides, through `load/edition.ts`.
 
 Every lookup table is doubled as a result — `skills.json` lists Acrobatics twice, once
 per edition. Filtering by edition is not optional; without it every picker shows
