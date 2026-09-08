@@ -21,8 +21,10 @@ abbreviations: `PHB`, `XPHB`, `XGE`, `TCE`, `EGW`, and so on.
 Two rulesets ship side by side, `classic` (2014) and `one` (2024). All 13 core classes
 exist in both. Spells split 361 `PHB` to 391 `XPHB`.
 
-The `edition` field marking them is sparse — no spell carries one, and no source carries
-both editions — so the source is what decides, through `load/edition.ts`.
+The `edition` field marking them is sparse — no spell carries one — so the source
+decides, by the publish date its `books.json` or `adventures.json` entry carries:
+2024-09-17, the 2024 Player's Handbook, onward is `one`. `load/edition.ts` does it. A
+hand-kept list of 2024 abbreviations was wrong within a year and said so nowhere.
 
 Every lookup table is doubled as a result — `skills.json` lists Acrobatics twice, once
 per edition. Filtering by edition is not optional; without it every picker shows

@@ -2,11 +2,11 @@
  * `data/spells/spells-*.json` into the Tier A `spells` table.
  *
  * Spells are the clean case: no `_copy` to resolve and no `edition` field to
- * read, so a row is four columns lifted off the entry plus an edition derived
+ * read, so a row is four columns lifted off the entry plus an edition resolved
  * from its source. Everything else stays in `json`, `{@tag}` markup included —
  * that is rendered at read time, not here.
  */
-import { editionOf } from "./edition.ts";
+import { EDITION_FILES, type Edition, editions } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord } from "./json.ts";
 
@@ -18,7 +18,7 @@ function text(entry: Entry, key: string, context: string): string {
   return value;
 }
 
-function toRow(entry: unknown, context: string): Row {
+function toRow(entry: unknown, context: string, editionOf: (source: string) => Edition): Row {
   if (!isRecord(entry)) throw new Error(`${context} is not an object`);
   const source = text(entry, "source", context);
   const level = entry.level;
@@ -39,15 +39,22 @@ function toRow(entry: unknown, context: string): Row {
   };
 }
 
+const SPELL_FILES = "data/spells/spells-";
+
 export const spells: Loader = {
   name: "spells",
-  files: ["data/spells/spells-*.json"],
-  rows: (sources) => ({
-    spells: [...sources].flatMap(([path, source]) => {
-      if (!isRecord(source) || !Array.isArray(source.spell)) {
-        throw new Error(`${path} carries no spell array`);
-      }
-      return source.spell.map((entry, index) => toRow(entry, `${path}[${index}]`));
-    }),
-  }),
+  files: ["data/spells/spells-*.json", ...EDITION_FILES],
+  rows: (sources) => {
+    const editionOf = editions(sources);
+    return {
+      spells: [...sources]
+        .filter(([path]) => path.startsWith(SPELL_FILES))
+        .flatMap(([path, source]) => {
+          if (!isRecord(source) || !Array.isArray(source.spell)) {
+            throw new Error(`${path} carries no spell array`);
+          }
+          return source.spell.map((entry, index) => toRow(entry, `${path}[${index}]`, editionOf));
+        }),
+    };
+  },
 };

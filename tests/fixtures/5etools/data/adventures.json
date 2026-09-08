@@ -1,0 +1,18 @@
+{
+  "adventure": [
+    {
+      "name": "Lost Mine of Phandelver",
+      "id": "LMoP",
+      "source": "LMoP",
+      "group": "supplement",
+      "published": "2014-07-15"
+    },
+    {
+      "name": "Heroes of the Borderlands",
+      "id": "HotB",
+      "source": "HotB",
+      "group": "supplement",
+      "published": "2025-09-16"
+    }
+  ]
+}

@@ -1,9 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "../build-db.ts";
+import { EDITION_FILES } from "./edition.ts";
 import { spells } from "./spells.ts";
 
 const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5etools");
@@ -97,6 +98,9 @@ describe("the spells loader", () => {
       join(vendorDir, "data", "spells", "spells-phb.json"),
       JSON.stringify({ spell: entries }),
     );
+    for (const file of EDITION_FILES) {
+      copyFileSync(join(FIXTURE_VENDOR, file), join(vendorDir, file));
+    }
     return vendorDir;
   };
 
