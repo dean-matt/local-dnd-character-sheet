@@ -22,8 +22,21 @@ Twelve tags cover ~95% of occurrences. Counts and the full list are in
 {@tag name|source|display|extra}    tag-specific trailing arguments
 ```
 
-Pipes separate arguments. An empty argument means "default" — `{@spell fireball||Fire}`
-has no explicit source. Nesting occurs: `{@i {@spell fireball}}`.
+Pipes separate arguments and an empty one means "default": `{@spell fireball||Fire}` has
+no explicit source. Nesting occurs: `{@i {@spell fireball}}`. Nothing is ever escaped —
+there is no `\|` or `\{` in the corpus.
+
+**Which argument holds the display text is per-tag**, so the forms above are a shape and
+not a rule. `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`, and
+`{@quickref a|b|c|d|e}` displays `e`. The table in `packages/tags/src/registry.ts` is
+the source of truth; a tag missing from it degrades to its first argument that has text.
+
+Check a new tag's display position against `vendor/5etools/data/renderdemo.json`, where
+upstream documents its own grammar with self-describing examples. Reading the wrong
+argument produces plausible text, so nothing else catches it.
+
+`pnpm tags:audit` runs the parser over every tag in the vendored data and lists the tags
+that fall through to plain text. It cannot judge whether a display is the right one.
 
 ## Token contract
 
@@ -48,6 +61,11 @@ does not exist here. 727 occurrences — do not special-case them one at a time.
 
 **A reference to a missing entity still renders**, as its display text without a link.
 The catalog may legitimately not have the target.
+
+**A `ref` names what its tag means, not always a row's `name`.** `{@subclass}` carries
+the `shortName` — `Berserker`, where the row reads `Path of the Berserker` — which is
+unique across every class, so a resolver matches on `shortName` for that tag. Class
+features need more than the token holds; see #29.
 
 Feed `generated/gendata-tag-redirects.json` to the resolver so renamed upstream entries
 still resolve.

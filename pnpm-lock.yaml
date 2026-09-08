@@ -99,6 +99,15 @@ importers:
 
   packages/rules: {}
 
+  packages/tags:
+    dependencies:
+      '@dnd/dice':
+        specifier: workspace:*
+        version: link:../dice
+      '@dnd/rules':
+        specifier: workspace:*
+        version: link:../rules
+
   packages/web:
     dependencies:
       '@tanstack/react-query':

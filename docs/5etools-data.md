@@ -96,6 +96,12 @@ the resolver so renames do not break links.
 Do not vendor upstream's renderer. `js/render.js` is 18,009 lines; the ~12 tags above
 are worth a small parser of our own. See the `tag-render` skill.
 
+`renderdemo.json` is upstream documenting its own tag grammar, with an example of each
+of 87 tags written to describe itself — `{@bold some text to be bolded}`. It is the only
+way to check that a tag's display argument is the right one, because reading the wrong
+argument yields text that looks fine. Three tags rendered machine text as prose until
+the registry was diffed against it.
+
 ## Class resources
 
 `classTableGroups` on a class entry is structured and indexed by level:

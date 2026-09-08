@@ -72,6 +72,10 @@ pnpm deadcode        # knip — unused files, exports, dependencies
 pnpm test            # vitest — unit and repo fences
 pnpm test:e2e        # playwright — boots the dev server itself
 pnpm test:e2e:ui     # playwright in watch mode
+
+# Audit, needs vendor/ so it is not part of pnpm check
+pnpm tags:audit      # every {@tag} in the vendored data, against the parser
+pnpm tags:audit <dir>   # or a subset of it
 ```
 
 ## Project structure
@@ -79,6 +83,7 @@ pnpm test:e2e:ui     # playwright in watch mode
 ```
 packages/rules      5e rules arithmetic
 packages/dice       Dice notation parsing and rolling
+packages/tags       {@tag} markup parser
 packages/character  Zod schemas for a character's definition and state
 packages/content    ETL that turns 5etools JSON into content.db
 packages/api        Hono API, Drizzle schemas, OpenAPI spec

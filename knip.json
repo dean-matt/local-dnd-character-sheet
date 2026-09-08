@@ -13,6 +13,9 @@
     "packages/dice": {
       "entry": ["src/**/*.test.ts"]
     },
+    "packages/tags": {
+      "entry": ["src/**/*.test.ts"]
+    },
     "packages/content": {},
     "packages/api": {
       "entry": ["src/db/client.ts", "src/db/homebrew.ts", "drizzle.homebrew.config.ts"]

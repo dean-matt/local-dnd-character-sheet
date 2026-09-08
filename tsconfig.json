@@ -4,6 +4,7 @@
     { "path": "./packages/rules" },
     { "path": "./packages/character" },
     { "path": "./packages/dice" },
+    { "path": "./packages/tags" },
     { "path": "./packages/content" },
     { "path": "./packages/api" },
     { "path": "./packages/web" },
