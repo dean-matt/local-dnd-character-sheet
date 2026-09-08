@@ -200,6 +200,10 @@ function buildSpecs(): Map<string, Spec> {
     },
     actSaveFail: () => text("Failure:"),
     actSaveSuccess: () => text("Success:"),
+    actSaveSuccessOrFail: () => text("Failure or Success:"),
+    actTrigger: () => text("Trigger:"),
+    actResponse: () => text("Response:"),
+    hom: () => text("Hit or Miss: "),
   };
   for (const [tag, render] of Object.entries(computed)) {
     specs.set(tag, { kind: "computed", render });
@@ -332,7 +336,12 @@ export function parseTags(input: string): Token[] {
       break;
     }
     flush();
-    tokens.push(...expand(input.slice(index + 2, close)));
+    for (const token of expand(input.slice(index + 2, close))) {
+      // An argument-less unknown tag has no display at all, and an empty token is only
+      // something every renderer would have to skip.
+      if (token.kind === "text" && token.value === "") continue;
+      tokens.push(token);
+    }
     index = close + 1;
   }
 

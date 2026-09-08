@@ -123,6 +123,13 @@ describe("degradation", () => {
     expect(shown("{@newtag Blade of Woe|XDMG|whatever}")).toBe("Blade of Woe");
   });
 
+  it("emits no token for an unknown tag that has no arguments", () => {
+    expect(parseTags("a {@unknowable} b")).toEqual([
+      { kind: "text", value: "a " },
+      { kind: "text", value: " b" },
+    ]);
+  });
+
   it("never throws on any tag name", () => {
     for (const input of ["{@}", "{@ }", "{@x}", "{@x|}", "{@x||||}", "{@i}", "{@dice}"]) {
       expect(() => parseTags(input)).not.toThrow();
@@ -203,6 +210,10 @@ describe("tags whose display is derived", () => {
     ["{@actSaveFail}", "Failure:"],
     ["{@actSaveSuccess}", "Success:"],
     ["{@chance 10}", "10 percent"],
+    ["{@actSaveSuccessOrFail}", "Failure or Success:"],
+    ["{@actTrigger}", "Trigger:"],
+    ["{@actResponse}", "Response:"],
+    ["{@hom}", "Hit or Miss: "],
     ["{@chance 50|display text}", "display text"],
     ["{@quickref Cover||3||three-quarters cover}", "three-quarters cover"],
     ["{@quickref difficult terrain||3}", "difficult terrain"],

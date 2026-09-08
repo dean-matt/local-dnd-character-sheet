@@ -9,3 +9,5 @@ extend-exclude = [
 [default.extend-words]
 # 5e and D&D terms typos would otherwise flag.
 ba = "ba"
+# The upstream tag for "Hit or Miss:" in a 2024 stat block.
+hom = "hom"
