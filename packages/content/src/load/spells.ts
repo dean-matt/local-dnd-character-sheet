@@ -8,12 +8,7 @@
  */
 import { editionOf } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-
-type Entry = Record<string, unknown>;
-
-function isRecord(value: unknown): value is Entry {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+import { type Entry, isRecord } from "./json.ts";
 
 function text(entry: Entry, key: string, context: string): string {
   const value = entry[key];
