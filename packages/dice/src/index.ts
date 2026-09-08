@@ -1,1 +1,8 @@
-export { type Roll, type RolledDie, type RollMode, type RollOptions, rollDice } from "./dice.ts";
+export {
+  isRollable,
+  type Roll,
+  type RolledDie,
+  type RollMode,
+  type RollOptions,
+  rollDice,
+} from "./dice.ts";

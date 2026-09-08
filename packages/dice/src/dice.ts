@@ -107,6 +107,21 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 }
 
 /**
+ * Whether `rollDice` would accept `notation`. Exposed so a caller that renders rules
+ * text can offer a roll only where one is possible, rather than keeping its own copy of
+ * the grammar and the bounds. It answers by parsing, so the answer cannot drift from
+ * what `rollDice` does.
+ */
+export function isRollable(notation: string): boolean {
+  try {
+    parseDice(notation);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Rolls `notation`. Malformed notation throws a `SyntaxError`, a quantity out of bounds
  * a `RangeError`, and every message names the offending input.
  *

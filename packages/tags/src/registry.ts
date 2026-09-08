@@ -6,6 +6,7 @@
  * from this table degrades to its first argument rather than failing.
  */
 
+import { abilityModifier } from "@dnd/rules";
 import { arg, d20, type RefToken, type Spec, type Token, text } from "./token.ts";
 
 const ABILITY_NAMES: Record<string, string> = {
@@ -89,27 +90,18 @@ function skillCheck(args: string[]): Token {
 }
 
 /**
- * `{@ability str 18|+4}` supplies its modifier, and six of the eleven occurrences do.
- * The rest carry only a score, and turning a score into a modifier is 5e arithmetic
- * that `@dnd/rules` owns — this package depends on nothing and will not hold a second
- * copy of it. Naming the ability and its score is correct English either way.
+ * `{@ability con 12|+1} on checks` shows that the display is the modifier alone, and
+ * every explicit one in the corpus equals what `abilityModifier` computes from the
+ * score beside it.
  */
 function ability(args: string[]): Token {
   const override = arg(args, 1);
   if (override !== undefined) return text(override);
-  const code = arg(args, 0) ?? "";
-  const [key = "", score = ""] = code.split(" ");
-  return text(`${ABILITY_NAMES[key.toLowerCase()] ?? key} ${score}`.trim());
-}
-
-/** `{@savingThrow con 3}` already carries the bonus, so no arithmetic is needed. */
-function savingThrow(args: string[]): Token {
-  const override = arg(args, 1);
-  if (override !== undefined) return text(override);
-  const code = arg(args, 0) ?? "";
-  const [key = "", bonus = ""] = code.split(" ");
-  const signed = bonus === "" || /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
-  return text(`${ABILITY_NAMES[key.toLowerCase()] ?? key} ${signed}`.trim());
+  const [, score] = (arg(args, 0) ?? "").split(" ");
+  const value = Number(score);
+  if (!Number.isFinite(value)) return text(arg(args, 0) ?? "");
+  const modifier = abilityModifier(value);
+  return text(modifier < 0 ? `${modifier}` : `+${modifier}`);
 }
 
 /** A bare `{@recharge}` means a 6 only; a number is the low end of the range. */
@@ -210,7 +202,8 @@ function buildSpecs(): Map<string, Spec> {
     // A plain d20 bonus, the same shape as {@hit} without the attack.
     d20: (args) => d20(arg(args, 0) ?? ""),
     hit: attackRoll,
-    savingThrow,
+    // A saving throw is a d20 test, and the tag already carries the bonus.
+    savingThrow: (args) => d20((arg(args, 0) ?? "").split(" ")[1] ?? ""),
     hitYourSpellAttack: (args) => text(arg(args, 0) ?? "your spell attack modifier"),
     h: () => text("Hit: "),
     atk: (args) => attack(args, " Attack:"),

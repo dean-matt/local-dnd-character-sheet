@@ -12,8 +12,9 @@
  * always separates arguments and a brace always nests.
  */
 
+import { isRollable } from "@dnd/dice";
 import { SPECS } from "./registry.ts";
-import { arg, type RefToken, rollable, type Token, text } from "./token.ts";
+import { arg, type RefToken, type Token, text } from "./token.ts";
 
 /** Flattens nesting inside an argument, because a display is a string and not a tree. */
 function plain(value: string): string {
@@ -121,7 +122,7 @@ function expand(inner: string): Token[] {
           kind: "roll",
           notation,
           display: display(args, spec.display),
-          rollable: rollable(notation),
+          rollable: isRollable(notation),
         },
       ];
     }

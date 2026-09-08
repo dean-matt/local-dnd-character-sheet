@@ -5,5 +5,13 @@
     "outDir": "dist"
   },
   "include": ["src/**/*"],
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["**/*.test.ts"],
+  "references": [
+    {
+      "path": "../dice"
+    },
+    {
+      "path": "../rules"
+    }
+  ]
 }

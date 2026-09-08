@@ -217,9 +217,10 @@ describe("rolls", () => {
     });
   });
 
-  it("rejects keeping more dice than are rolled", () => {
+  it("defers to @dnd/dice on what is rollable", () => {
     expect(only("{@dice 4d6kh9}")).toMatchObject({ rollable: false });
     expect(only("{@dice 4d6kh3}")).toMatchObject({ rollable: true });
+    expect(only("{@dice 5000d6}")).toMatchObject({ rollable: false });
   });
 
   it("leaves a save DC as text, because a target number is not rolled", () => {
@@ -252,8 +253,9 @@ describe("tags whose display is derived", () => {
     ["{@actResponse d}", "Response—"],
     ["{@italic Ioun stone}", "Ioun stone"],
     ["{@ability str 18|+4}", "+4"],
-    ["{@ability str 20}", "Strength 20"],
-    ["{@savingThrow con 3}", "Constitution +3"],
+    ["{@ability con 8}", "-1"],
+    ["{@ability str 20}", "+5"],
+    ["{@savingThrow con 3}", "+3"],
     ["{@d20 3}", "+3"],
     ["{@d20 +9}", "+9"],
     ["{@bold Limp.}", "Limp."],
@@ -440,6 +442,10 @@ describe("real strings from the corpus", () => {
     [
       "{@actTrigger} A creature the goblin can see hits it with an attack roll. {@actResponse d}{@actSave wis} {@dc 13}, the triggering creature. {@actSaveFail} The attack misses instead.",
       "Trigger: A creature the goblin can see hits it with an attack roll. Response—Wisdom Saving Throw: DC 13, the triggering creature. Failure: The attack misses instead.",
+    ],
+    [
+      "{@ability con 12|+1} on checks, {@savingThrow con 3} on saving throws",
+      "+1 on checks, +3 on saving throws",
     ],
     [
       "{@creature Tribal warrior} with {@skill Survival} {@skillCheck survival 4}; speaks Common",

@@ -55,6 +55,18 @@ It returns:
 Each `RolledDie` is `{ faces, value, kept }`. A die a keep clause discarded stays in the
 array with `kept: false`.
 
+`isRollable(notation)` answers whether `rollDice` would accept the notation, without
+rolling it. It parses, so it cannot disagree with `rollDice`. A caller that renders text
+uses it to decide whether to offer a roll at all:
+
+```ts
+import { isRollable } from "@dnd/dice";
+
+isRollable("4d6kh3");   // true
+isRollable("4d6kh9");   // false, keeping more dice than are rolled
+isRollable("5000d6");   // false, above the count bound
+```
+
 Canonical form strips spacing and fills in defaults, turning `" 2d6 + 3 "` into `"2d6+3"`
 and `"d20"` into `"1d20"`. Two players who type the same roll differently therefore
 write the same string to a log.
