@@ -6,6 +6,7 @@
  * from this table degrades to its first argument rather than failing.
  */
 
+import { isRollable } from "@dnd/dice";
 import { abilityModifier } from "@dnd/rules";
 import { arg, d20, type RefToken, type Spec, type Token, text } from "./token.ts";
 
@@ -39,8 +40,8 @@ function attack(args: string[], suffix: string): Token {
 
   const parts: { range: string; means: string }[] = [];
   for (const code of codes) {
-    const range = ATTACK_RANGE[code.slice(0, 1)];
-    const means = code.length > 1 ? ATTACK_MEANS[code.slice(1)] : "";
+    const range = ATTACK_RANGE[code.slice(0, 1).toLowerCase()];
+    const means = code.length > 1 ? ATTACK_MEANS[code.slice(1).toLowerCase()] : "";
     if (range === undefined || means === undefined) return text("");
     parts.push({ range, means });
   }
@@ -72,11 +73,26 @@ function classRef(args: string[]): Token {
   return token;
 }
 
+/**
+ * `{@scaledice 2d6|1,3,5,7,9|1d6|psi|extra amount}` names its own display in the fifth
+ * argument, where `{@scaledamage}` only ever carries `psi` there.
+ */
+function scaledice(args: string[]): Token {
+  const notation = arg(args, 2) ?? "";
+  return {
+    kind: "roll",
+    notation,
+    display: arg(args, 4) ?? notation,
+    rollable: isRollable(notation),
+  };
+}
+
 /** `{@hit 5}` is the d20 attack roll, so the notation is synthesized rather than read. */
 function attackRoll(args: string[]): Token {
   const token = d20(arg(args, 0) ?? "");
   const display = arg(args, 1);
-  return display === undefined ? token : { ...token, display };
+  if (display === undefined || token.kind !== "roll") return token;
+  return { ...token, display };
 }
 
 /**
@@ -104,10 +120,15 @@ function ability(args: string[]): Token {
   return text(modifier < 0 ? `${modifier}` : `+${modifier}`);
 }
 
-/** A bare `{@recharge}` means a 6 only; a number is the low end of the range. */
+/**
+ * A bare `{@recharge}` means a 6 only; a number is the low end of the range. An `m`
+ * second argument asks for the minimal look, which is the same words without brackets,
+ * because the sentence already supplies its own.
+ */
 function recharge(args: string[]): Token {
   const low = arg(args, 0) ?? "6";
-  return text(low === "6" ? "(Recharge 6)" : `(Recharge ${low}–6)`);
+  const range = low === "6" ? "Recharge 6" : `Recharge ${low}–6`;
+  return text(arg(args, 1) === "m" ? range : `(${range})`);
 }
 
 /** `name|source|display`, the shape of every tag that points at a catalog entity. */
@@ -119,6 +140,7 @@ const REF_TAGS = [
   "charoption",
   "condition",
   "creature",
+  "creatureFluff",
   "deck",
   "deity",
   "disease",
@@ -181,11 +203,13 @@ function buildSpecs(): Map<string, Spec> {
   specs.set("classFeature", { kind: "ref", source: [4, 2], display: 5 });
   specs.set("subclassFeature", { kind: "ref", source: [6, 4, 2], display: 7 });
   specs.set("quickref", { kind: "text", display: 4 });
+  // `{@unit <amount>|singular|plural}`. The amount is a recipe-scaling template this
+  // parser does not evaluate, so the singular is the honest choice.
+  specs.set("unit", { kind: "text", display: 1 });
 
   specs.set("dice", { kind: "roll", notation: 0, display: 1 });
   specs.set("damage", { kind: "roll", notation: 0, display: 1 });
   specs.set("scaledamage", { kind: "roll", notation: 2, display: 2 });
-  specs.set("scaledice", { kind: "roll", notation: 2, display: 2 });
 
   specs.set("i", { kind: "style", style: "italic" });
   specs.set("italic", { kind: "style", style: "italic" });
@@ -204,8 +228,10 @@ function buildSpecs(): Map<string, Spec> {
     hit: attackRoll,
     // A saving throw is a d20 test, and the tag already carries the bonus.
     savingThrow: (args) => d20((arg(args, 0) ?? "").split(" ")[1] ?? ""),
+    scaledice,
     hitYourSpellAttack: (args) => text(arg(args, 0) ?? "your spell attack modifier"),
     h: () => text("Hit: "),
+    m: () => text("Miss: "),
     atk: (args) => attack(args, " Attack:"),
     atkr: (args) => attack(args, " Attack Roll:"),
     recharge,
@@ -218,6 +244,7 @@ function buildSpecs(): Map<string, Spec> {
       const order = FAILURE_ORDER[arg(args, 0) ?? ""];
       return text(order === undefined ? "Failure:" : `${order} Failure:`);
     },
+    actSaveFailBy: (args) => text(`Failure by ${arg(args, 0) ?? ""} or More:`),
     actSaveSuccess: () => text("Success:"),
     actSaveSuccessOrFail: () => text("Failure or Success:"),
     actTrigger: () => text("Trigger:"),

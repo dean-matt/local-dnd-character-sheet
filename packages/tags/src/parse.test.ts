@@ -79,6 +79,19 @@ describe("grammar", () => {
   it("leaves unbalanced markup literal", () => {
     expect(shown("a {@spell fireball")).toBe("a {@spell fireball");
   });
+
+  it("confines a malformed tag to itself and keeps parsing after it", () => {
+    expect(shown("ok {@spell fireball} then {@i broken { and {@item rope}")).toBe(
+      "ok fireball then {@i broken { and rope",
+    );
+  });
+
+  it("emits nothing for a style tag with no content", () => {
+    expect(parseTags("a {@i} b")).toEqual([
+      { kind: "text", value: "a " },
+      { kind: "text", value: " b" },
+    ]);
+  });
 });
 
 describe("nesting", () => {
@@ -190,6 +203,22 @@ describe("rolls", () => {
     });
   });
 
+  it("prefers the display a scaling dice tag names for itself", () => {
+    expect(only("{@scaledice 2d6|1,3,5,7,9|1d6|psi|extra amount}")).toEqual({
+      kind: "roll",
+      notation: "1d6",
+      display: "extra amount",
+      rollable: true,
+    });
+  });
+
+  it("emits nothing for a d20 tag with no bonus", () => {
+    expect(parseTags("a {@hit} b")).toEqual([
+      { kind: "text", value: "a " },
+      { kind: "text", value: " b" },
+    ]);
+  });
+
   it("reads the per-level dice out of a scaling dice tag", () => {
     expect(only("{@scaledice 8d6|3-9|1d6}")).toEqual({
       kind: "roll",
@@ -239,6 +268,10 @@ describe("tags whose display is derived", () => {
     ["{@atk zz}", ""],
     ["{@recharge}", "(Recharge 6)"],
     ["{@recharge 5}", "(Recharge 5–6)"],
+    ["{@recharge 5|m}", "Recharge 5–6"],
+    ["{@m}", "Miss: "],
+    ["{@actSaveFailBy 5}", "Failure by 5 or More:"],
+    ["{@atk MW}", "Melee Weapon Attack:"],
     ["{@actSave dex}", "Dexterity Saving Throw:"],
     ["{@actSaveFail}", "Failure:"],
     ["{@actSaveSuccess}", "Success:"],
@@ -309,12 +342,12 @@ describe("argument positions that are not name|source|display", () => {
   });
 
   it("takes the subclass source, not the class source", () => {
-    expect(only("{@subclass Alchemist|Artificer|EFA|EFA}")).toEqual({
+    expect(only("{@subclass Ancestral Guardian|Barbarian||XGE}")).toEqual({
       kind: "ref",
       tag: "subclass",
-      name: "Alchemist",
-      source: "EFA",
-      display: "Alchemist",
+      name: "Ancestral Guardian",
+      source: "XGE",
+      display: "Ancestral Guardian",
     });
   });
 
@@ -443,6 +476,11 @@ describe("real strings from the corpus", () => {
       "{@actTrigger} A creature the goblin can see hits it with an attack roll. {@actResponse d}{@actSave wis} {@dc 13}, the triggering creature. {@actSaveFail} The attack misses instead.",
       "Trigger: A creature the goblin can see hits it with an attack roll. Response—Wisdom Saving Throw: DC 13, the triggering creature. Failure: The attack misses instead.",
     ],
+    [
+      "Acidic Bile Sprayer (Requires 1 Crew and Grants Half Cover, {@recharge 5|m})",
+      "Acidic Bile Sprayer (Requires 1 Crew and Grants Half Cover, Recharge 5–6)",
+    ],
+    ["{@creatureFluff Rusted|FRAiF|Other Rusted}", "Other Rusted"],
     [
       "{@ability con 12|+1} on checks, {@savingThrow con 3} on saving throws",
       "+1 on checks, +3 on saving throws",

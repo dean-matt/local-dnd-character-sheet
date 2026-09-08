@@ -162,8 +162,11 @@ export function parseTags(input: string): Token[] {
     }
     const close = matchingBrace(input, open);
     if (close === -1) {
-      literal += input.slice(index);
-      break;
+      // Confine a malformed tag to itself. Homebrew text is hand-written, and one
+      // stray brace should not turn the rest of a paragraph into raw markup.
+      literal += input.slice(index, open + 2);
+      index = open + 2;
+      continue;
     }
     literal += input.slice(index, open);
     flush();
@@ -171,6 +174,7 @@ export function parseTags(input: string): Token[] {
       // An argument-less unknown tag has no display at all, and an empty token is only
       // something every renderer would have to skip.
       if (token.kind === "text" && token.value === "") continue;
+      if (token.kind === "style" && token.children.length === 0) continue;
       tokens.push(token);
     }
     index = close + 1;

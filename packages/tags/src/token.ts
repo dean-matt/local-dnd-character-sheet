@@ -15,7 +15,6 @@ export type Token =
   | { kind: "style"; style: "italic" | "bold"; children: Token[] };
 
 export type RefToken = Extract<Token, { kind: "ref" }>;
-type RollToken = Extract<Token, { kind: "roll" }>;
 
 /**
  * Which argument holds what, per tag. The position of the display argument is not
@@ -39,8 +38,12 @@ export function arg(args: string[], index: number): string | undefined {
   return value === undefined || value === "" ? undefined : value;
 }
 
-/** Shared by every tag that renders a d20 bonus rather than notation. */
-export function d20(bonus: string): RollToken {
+/**
+ * Shared by every tag that renders a d20 bonus rather than notation. A tag that omits
+ * the bonus has nothing to roll, and a lone `+` is worse than nothing.
+ */
+export function d20(bonus: string): Token {
+  if (bonus === "") return text("");
   const signed = /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
   const notation = `1d20${signed}`;
   return { kind: "roll", notation, display: signed, rollable: isRollable(notation) };

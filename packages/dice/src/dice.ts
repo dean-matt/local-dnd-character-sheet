@@ -107,10 +107,13 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 }
 
 /**
- * Whether `rollDice` would accept `notation`. Exposed so a caller that renders rules
- * text can offer a roll only where one is possible, rather than keeping its own copy of
- * the grammar and the bounds. It answers by parsing, so the answer cannot drift from
- * what `rollDice` does.
+ * Whether the notation itself parses, which is what `rollDice` accepts in the default
+ * mode. Exposed so a caller that renders rules text can offer a roll only where one is
+ * possible, rather than keeping its own copy of the grammar and the bounds. It answers
+ * by parsing, so the answer cannot drift from the grammar `rollDice` uses.
+ *
+ * It says nothing about a mode: advantage and disadvantage additionally require a
+ * single die and no keep clause, so a caller passing a mode has to handle that itself.
  */
 export function isRollable(notation: string): boolean {
   try {
