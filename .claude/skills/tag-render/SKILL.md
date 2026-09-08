@@ -28,8 +28,12 @@ there is no `\|` or `\{` in the corpus.
 
 **Which argument holds the display text is per-tag**, so the forms above are a shape and
 not a rule. `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`, and
-`{@quickref a|b|c|d|e}` displays `e`. The table in `packages/tags/src/parse.ts` is the
-source of truth; a tag missing from it degrades to its first argument.
+`{@quickref a|b|c|d|e}` displays `e`. The table in `packages/tags/src/registry.ts` is
+the source of truth; a tag missing from it degrades to its first argument that has text.
+
+Check a new tag's display position against `vendor/5etools/data/renderdemo.json`, where
+upstream documents its own grammar with self-describing examples. Reading the wrong
+argument produces plausible text, so nothing else catches it.
 
 ## Token contract
 
