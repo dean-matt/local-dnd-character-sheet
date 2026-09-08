@@ -6,7 +6,7 @@
  * from this table degrades to its first argument rather than failing.
  */
 
-import { arg, d20, type Spec, type Token, text } from "./token.ts";
+import { arg, d20, type RefToken, type Spec, type Token, text } from "./token.ts";
 
 const ABILITY_NAMES: Record<string, string> = {
   str: "Strength",
@@ -29,6 +29,8 @@ const FAILURE_ORDER: Record<string, string> = { "1": "First", "2": "Second" };
  */
 function attack(args: string[], suffix: string): Token {
   const raw = arg(args, 0) ?? "";
+  // An unrecognized code such as `g` means nothing to a reader, so it renders as
+  // nothing rather than as a stray letter in the middle of a sentence.
   const codes = raw
     .split(",")
     .map((code) => code.trim())
@@ -38,18 +40,35 @@ function attack(args: string[], suffix: string): Token {
   for (const code of codes) {
     const range = ATTACK_RANGE[code.slice(0, 1)];
     const means = code.length > 1 ? ATTACK_MEANS[code.slice(1)] : "";
-    if (range === undefined || means === undefined) return text(raw);
+    if (range === undefined || means === undefined) return text("");
     parts.push({ range, means });
   }
 
   const first = parts[0];
-  if (first === undefined) return text(raw);
+  if (first === undefined) return text("");
 
   const ranges = parts.map((part) => part.range).join(" or ");
   const phrase = parts.every((part) => part.means === first.means)
     ? `${ranges}${first.means === "" ? "" : ` ${first.means}`}`
     : parts.map((part) => `${part.range} ${part.means}`.trim()).join(" or ");
   return text(`${phrase}${suffix}`);
+}
+
+/**
+ * `{@class Barbarian|XPHB|Path of the Berserker|Berserker|XPHB}` displays a subclass,
+ * and 500 of 1,054 occurrences do. The reference has to name what it displays, or it
+ * resolves to the class and the link goes to the wrong page.
+ */
+function classRef(args: string[]): Token {
+  const subclass = arg(args, 3);
+  const display = arg(args, 2) ?? arg(args, 0) ?? "";
+  const token: RefToken =
+    subclass === undefined
+      ? { kind: "ref", tag: "class", name: arg(args, 0) ?? "", display }
+      : { kind: "ref", tag: "subclass", name: subclass, display };
+  const source = subclass === undefined ? arg(args, 1) : (arg(args, 4) ?? arg(args, 1));
+  if (source !== undefined) token.source = source;
+  return token;
 }
 
 /** `{@hit 5}` is the d20 attack roll, so the notation is synthesized rather than read. */
@@ -79,8 +98,9 @@ function recharge(args: string[]): Token {
 const REF_TAGS = [
   "action",
   "background",
+  "boon",
   "card",
-  "class",
+  "charoption",
   "condition",
   "creature",
   "deck",
@@ -92,8 +112,12 @@ const REF_TAGS = [
   "item",
   "itemMastery",
   "itemProperty",
+  "cult",
   "language",
+  "legroup",
+  "object",
   "optfeature",
+  "psionic",
   "race",
   "recipe",
   "reward",
@@ -103,8 +127,10 @@ const REF_TAGS = [
   "status",
   "subclass",
   "table",
+  "trap",
   "variantrule",
   "vehicle",
+  "vehupgrade",
 ];
 
 /**
@@ -143,6 +169,7 @@ function buildSpecs(): Map<string, Spec> {
   specs.set("dice", { kind: "roll", notation: 0, display: 1 });
   specs.set("damage", { kind: "roll", notation: 0, display: 1 });
   specs.set("scaledamage", { kind: "roll", notation: 2, display: 2 });
+  specs.set("scaledice", { kind: "roll", notation: 2, display: 2 });
 
   specs.set("i", { kind: "style", style: "italic" });
   specs.set("italic", { kind: "style", style: "italic" });
@@ -154,6 +181,7 @@ function buildSpecs(): Map<string, Spec> {
     // A save DC is a target number, not something to roll.
     dc: (args) => text(arg(args, 1) ?? `DC ${arg(args, 0) ?? ""}`),
     dcYourSpellSave: (args) => text(arg(args, 0) ?? "your spell save DC"),
+    class: classRef,
     hit: attackRoll,
     hitYourSpellAttack: (args) => text(arg(args, 0) ?? "your spell attack modifier"),
     h: () => text("Hit: "),

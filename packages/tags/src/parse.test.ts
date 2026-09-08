@@ -181,6 +181,15 @@ describe("rolls", () => {
     });
   });
 
+  it("reads the per-level dice out of a scaling dice tag", () => {
+    expect(only("{@scaledice 8d6|3-9|1d6}")).toEqual({
+      kind: "roll",
+      notation: "1d6",
+      display: "1d6",
+      rollable: true,
+    });
+  });
+
   it("reads the current tier out of a scaling damage tag", () => {
     expect(only("{@scaledamage 2d6;3d6|2-9|1d6}")).toEqual({
       kind: "roll",
@@ -217,7 +226,7 @@ describe("tags whose display is derived", () => {
     ["{@atk ms,rs}", "Melee or Ranged Spell Attack:"],
     ["{@atkr m}", "Melee Attack Roll:"],
     ["{@atkr m,r}", "Melee or Ranged Attack Roll:"],
-    ["{@atk zz}", "zz"],
+    ["{@atk zz}", ""],
     ["{@recharge}", "(Recharge 6)"],
     ["{@recharge 5}", "(Recharge 5–6)"],
     ["{@actSave dex}", "Dexterity Saving Throw:"],
@@ -348,6 +357,42 @@ describe("argument positions that are not name|source|display", () => {
  * Copied verbatim from `vendor/5etools/data/`. Invented cases miss the nesting and the
  * argument shapes that upstream actually writes.
  */
+describe("tags that name something other than their first argument", () => {
+  it("names the subclass when a class tag carries one", () => {
+    expect(only("{@class Barbarian|XPHB|Path of the Berserker|Berserker|XPHB}")).toEqual({
+      kind: "ref",
+      tag: "subclass",
+      name: "Berserker",
+      source: "XPHB",
+      display: "Path of the Berserker",
+    });
+  });
+
+  it("names the class when it does not", () => {
+    expect(only("{@class Cleric|XPHB}")).toEqual({
+      kind: "ref",
+      tag: "class",
+      name: "Cleric",
+      source: "XPHB",
+      display: "Cleric",
+    });
+  });
+
+  it.each([
+    ["{@object ballista||ballistae}", "ballistae"],
+    ["{@trap pits||spiked pit}", "spiked pit"],
+    ["{@cult Cult of Asmodeus}", "Cult of Asmodeus"],
+    ["{@charoption Echoing Soul|VRGR}", "Echoing Soul"],
+    ["{@vehupgrade Arcane Artillery|GoS}", "Arcane Artillery"],
+  ])("renders the catalog entity %s as %s", (input, expected) => {
+    expect(shown(input)).toBe(expected);
+  });
+
+  it("keeps the text of an unknown tag whose first argument is empty", () => {
+    expect(shown("{@homebrew |removals}")).toBe("removals");
+  });
+});
+
 describe("real strings from the corpus", () => {
   it.each([
     [
@@ -385,6 +430,10 @@ describe("real strings from the corpus", () => {
     [
       "{@creature Tribal warrior} with {@skill Survival} {@skillCheck survival 4}; speaks Common",
       "Tribal warrior with Survival +4; speaks Common",
+    ],
+    [
+      "When you cast this spell using a spell slot of 4th level or higher, the damage increases by {@scaledice 8d6|3-9|1d6} for each slot level above 3rd.",
+      "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd.",
     ],
     [
       "Horn of Valhalla ({@item Horn of Valhalla, Silver||Silver|} or {@item Horn of Valhalla, Brass||Brass|})",

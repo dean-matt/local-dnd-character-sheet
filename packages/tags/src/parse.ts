@@ -20,6 +20,20 @@ function plain(value: string): string {
   return value.includes("{@") ? renderText(parseTags(value)) : value;
 }
 
+/**
+ * An unknown tag has no known display position, so the first argument carrying text is
+ * the best guess. Taking argument zero unconditionally deletes the text of a tag that
+ * leaves it empty, as `{@homebrew |removals}` does, and losing words is worse than
+ * showing the wrong one.
+ */
+function firstFilled(args: string[]): string {
+  for (let index = 0; index < args.length; index += 1) {
+    const value = arg(args, index);
+    if (value !== undefined) return plain(value);
+  }
+  return "";
+}
+
 /** Falls back to the first argument, which is the name or notation for every tag. */
 function display(args: string[], index: number): string {
   return plain(arg(args, index) ?? arg(args, 0) ?? "");
@@ -81,7 +95,7 @@ function expand(inner: string): Token[] {
   const args = rest === "" ? [] : splitArgs(rest);
 
   const spec = SPECS.get(tag);
-  if (spec === undefined) return [text(display(args, 0))];
+  if (spec === undefined) return [text(firstFilled(args))];
 
   switch (spec.kind) {
     case "ref": {
