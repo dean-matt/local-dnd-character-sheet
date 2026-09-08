@@ -1,1 +1,2 @@
-export { parseTags, renderText, type Token } from "./parse.ts";
+export { parseTags, renderText } from "./parse.ts";
+export type { Token } from "./token.ts";

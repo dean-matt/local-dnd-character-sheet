@@ -1,0 +1,187 @@
+/**
+ * What upstream's markup means, per tag: where each one keeps its display text and its
+ * source, and the English a tag with no display argument stands for.
+ *
+ * Adding support for a tag is a line here and no change to the parser. A tag absent
+ * from this table degrades to its first argument rather than failing.
+ */
+
+import { arg, d20, type Spec, type Token, text } from "./token.ts";
+
+const ABILITY_NAMES: Record<string, string> = {
+  str: "Strength",
+  dex: "Dexterity",
+  con: "Constitution",
+  int: "Intelligence",
+  wis: "Wisdom",
+  cha: "Charisma",
+};
+
+const ATTACK_RANGE: Record<string, string> = { m: "Melee", r: "Ranged", a: "Area" };
+const ATTACK_MEANS: Record<string, string> = { w: "Weapon", s: "Spell" };
+
+/** A numbered failure escalates, so collapsing them loses which effect applies when. */
+const FAILURE_ORDER: Record<string, string> = { "1": "First", "2": "Second" };
+
+/**
+ * `{@atk mw,rw}` reads "Melee or Ranged Weapon Attack:" rather than repeating the
+ * means, so a means shared by every code is factored out of the list.
+ */
+function attack(args: string[], suffix: string): Token {
+  const raw = arg(args, 0) ?? "";
+  const codes = raw
+    .split(",")
+    .map((code) => code.trim())
+    .filter((code) => code !== "");
+
+  const parts: { range: string; means: string }[] = [];
+  for (const code of codes) {
+    const range = ATTACK_RANGE[code.slice(0, 1)];
+    const means = code.length > 1 ? ATTACK_MEANS[code.slice(1)] : "";
+    if (range === undefined || means === undefined) return text(raw);
+    parts.push({ range, means });
+  }
+
+  const first = parts[0];
+  if (first === undefined) return text(raw);
+
+  const ranges = parts.map((part) => part.range).join(" or ");
+  const phrase = parts.every((part) => part.means === first.means)
+    ? `${ranges}${first.means === "" ? "" : ` ${first.means}`}`
+    : parts.map((part) => `${part.range} ${part.means}`.trim()).join(" or ");
+  return text(`${phrase}${suffix}`);
+}
+
+/** `{@hit 5}` is the d20 attack roll, so the notation is synthesized rather than read. */
+function attackRoll(args: string[]): Token {
+  const token = d20(arg(args, 0) ?? "");
+  const display = arg(args, 1);
+  return display === undefined ? token : { ...token, display };
+}
+
+/**
+ * `{@skillCheck survival 4}` carries the skill and the bonus in one space-separated
+ * argument, and reads as "+4" beside the `{@skill}` tag that always precedes it.
+ */
+function skillCheck(args: string[]): Token {
+  const body = arg(args, 0) ?? "";
+  const split = body.lastIndexOf(" ");
+  return split === -1 ? text(body) : d20(body.slice(split + 1));
+}
+
+/** A bare `{@recharge}` means a 6 only; a number is the low end of the range. */
+function recharge(args: string[]): Token {
+  const low = arg(args, 0) ?? "6";
+  return text(low === "6" ? "(Recharge 6)" : `(Recharge ${low}–6)`);
+}
+
+/** `name|source|display`, the shape of every tag that points at a catalog entity. */
+const REF_TAGS = [
+  "action",
+  "background",
+  "card",
+  "class",
+  "condition",
+  "creature",
+  "deck",
+  "deity",
+  "disease",
+  "facility",
+  "feat",
+  "hazard",
+  "item",
+  "itemMastery",
+  "itemProperty",
+  "language",
+  "optfeature",
+  "race",
+  "recipe",
+  "reward",
+  "sense",
+  "skill",
+  "spell",
+  "status",
+  "subclass",
+  "table",
+  "variantrule",
+  "vehicle",
+];
+
+/**
+ * `display|target|…`. These point outside the catalog — a book page, a filtered list,
+ * an external URL — so the display text is all there is to render.
+ */
+const OUTBOUND_TAGS = [
+  "5etools",
+  "5etoolsImg",
+  "adventure",
+  "area",
+  "book",
+  "color",
+  "comic",
+  "filter",
+  "font",
+  "link",
+];
+
+function buildSpecs(): Map<string, Spec> {
+  const specs = new Map<string, Spec>();
+
+  for (const tag of REF_TAGS) specs.set(tag, { kind: "ref", source: [1], display: 2 });
+  for (const tag of OUTBOUND_TAGS) specs.set(tag, { kind: "text", display: 0 });
+
+  // A deck or a pantheon sits between the name and the source.
+  specs.set("card", { kind: "ref", source: [2], display: 3 });
+  specs.set("deity", { kind: "ref", source: [2], display: 3 });
+  specs.set("subclass", { kind: "ref", source: [3], display: 4 });
+
+  // A feature source defaults to its subclass source, then to its class source.
+  specs.set("classFeature", { kind: "ref", source: [4, 2], display: 5 });
+  specs.set("subclassFeature", { kind: "ref", source: [6, 4, 2], display: 7 });
+  specs.set("quickref", { kind: "text", display: 4 });
+
+  specs.set("dice", { kind: "roll", notation: 0, display: 1 });
+  specs.set("damage", { kind: "roll", notation: 0, display: 1 });
+  specs.set("scaledamage", { kind: "roll", notation: 2, display: 2 });
+
+  specs.set("i", { kind: "style", style: "italic" });
+  specs.set("italic", { kind: "style", style: "italic" });
+  specs.set("b", { kind: "style", style: "bold" });
+  specs.set("bold", { kind: "style", style: "bold" });
+  specs.set("note", { kind: "wrapper" });
+
+  const computed: Record<string, (args: string[]) => Token> = {
+    // A save DC is a target number, not something to roll.
+    dc: (args) => text(arg(args, 1) ?? `DC ${arg(args, 0) ?? ""}`),
+    dcYourSpellSave: (args) => text(arg(args, 0) ?? "your spell save DC"),
+    hit: attackRoll,
+    hitYourSpellAttack: (args) => text(arg(args, 0) ?? "your spell attack modifier"),
+    h: () => text("Hit: "),
+    atk: (args) => attack(args, " Attack:"),
+    atkr: (args) => attack(args, " Attack Roll:"),
+    recharge,
+    chance: (args) => text(arg(args, 1) ?? `${arg(args, 0) ?? ""} percent`),
+    actSave: (args) => {
+      const ability = arg(args, 0) ?? "";
+      return text(`${ABILITY_NAMES[ability.toLowerCase()] ?? ability} Saving Throw:`);
+    },
+    actSaveFail: (args) => {
+      const order = FAILURE_ORDER[arg(args, 0) ?? ""];
+      return text(order === undefined ? "Failure:" : `${order} Failure:`);
+    },
+    actSaveSuccess: () => text("Success:"),
+    actSaveSuccessOrFail: () => text("Failure or Success:"),
+    actTrigger: () => text("Trigger:"),
+    // The `d` form supplies its own separator, because no space follows it in the data.
+    actResponse: (args) => text(arg(args, 0) === "d" ? "Response—" : "Response:"),
+    hom: () => text("Hit or Miss: "),
+    skillCheck,
+  };
+  for (const [tag, render] of Object.entries(computed)) {
+    specs.set(tag, { kind: "computed", render });
+  }
+
+  return specs;
+}
+
+export const SPECS = buildSpecs();
