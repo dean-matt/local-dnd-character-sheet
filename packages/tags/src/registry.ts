@@ -63,7 +63,9 @@ function attack(args: string[], suffix: string): Token {
  */
 function classRef(args: string[]): Token {
   const subclass = arg(args, 3);
-  const display = arg(args, 2) ?? arg(args, 0) ?? "";
+  const display = arg(args, 2) ?? arg(args, 0) ?? arg(args, 1) ?? "";
+  // Computed tags never reach the nameless-ref guard in the parser, so it repeats here.
+  if (arg(args, 0) === undefined && subclass === undefined) return text(display);
   const token: RefToken =
     subclass === undefined
       ? { kind: "ref", tag: "class", name: arg(args, 0) ?? "", display }
@@ -78,7 +80,7 @@ function classRef(args: string[]): Token {
  * argument, where `{@scaledamage}` only ever carries `psi` there.
  */
 function scaledice(args: string[]): Token {
-  const notation = arg(args, 2) ?? "";
+  const notation = arg(args, 2) ?? arg(args, 0) ?? "";
   return {
     kind: "roll",
     notation,
@@ -95,7 +97,7 @@ function scaledice(args: string[]): Token {
 function d20Tag(args: string[], bonus: string): Token {
   const token = d20(bonus);
   const display = arg(args, 1);
-  if (token.kind !== "roll") return text(display ?? "");
+  if (token.kind !== "roll") return display === undefined ? token : text(display);
   return display === undefined ? token : { ...token, display };
 }
 
@@ -106,7 +108,7 @@ function attackRoll(args: string[]): Token {
 
 /** The trailing number of `{@skillCheck survival 4}` or `{@savingThrow con 3}`. */
 function trailingBonus(body: string): string | undefined {
-  const bonus = body.split(" ").at(-1) ?? "";
+  const bonus = body.trim().split(/\s+/).at(-1) ?? "";
   return /^[+-]?\d+$/.test(bonus) ? bonus : undefined;
 }
 

@@ -275,6 +275,8 @@ describe("tags whose display is derived", () => {
     ["{@actSaveFail 9}", "Failure 9:"],
     ["{@ability str  18}", "+4"],
     ["{@savingThrow con  3}", "+3"],
+    ["{@savingThrow con 3 }", "+3"],
+    ["{@skillCheck survival 4 }", "+4"],
     ["{@savingThrow constitution}", "constitution"],
     ["{@skillCheck survival  4}", "+4"],
     ["{@ability str}", "str"],
@@ -454,6 +456,30 @@ describe("tags that name something other than their first argument", () => {
     });
   });
 
+  it("trims a padded name and source, which are catalog keys", () => {
+    expect(only("{@spell fireball |PHB}")).toEqual({
+      kind: "ref",
+      tag: "spell",
+      name: "fireball",
+      source: "PHB",
+      display: "fireball",
+    });
+    expect(only("{@item chain mail| phb }")).toMatchObject({ source: "phb" });
+  });
+
+  it("keeps a placeholder a d20 tag cannot roll, but not a lone sign", () => {
+    expect(only("{@hit <$to_hit__str$>}")).toEqual({
+      kind: "text",
+      value: "<$to_hit__str$>",
+    });
+    expect(parseTags("{@hit +}")).toEqual([]);
+  });
+
+  it("falls back when a computed tag has no name or notation", () => {
+    expect(shown("grants {@class |Barbarian} levels")).toBe("grants Barbarian levels");
+    expect(only("{@scaledice 2d6|1,3,5,7,9|}")).toMatchObject({ notation: "2d6" });
+  });
+
   it("treats a whitespace-only argument as absent", () => {
     expect(only("{@item  |a shield}")).toEqual({ kind: "text", value: "a shield" });
   });
@@ -493,9 +519,12 @@ describe("tags that name something other than their first argument", () => {
     expect(() => parseTags(deep)).not.toThrow();
   });
 
-  it("stays linear on a string of unmatched tag openings", () => {
+  it.each([
+    ["no closing brace at all", `${"{@".repeat(32000)}`],
+    ["one closing brace at the end", `${"{@".repeat(32000)}}`],
+  ])("stays linear on unmatched tag openings, %s", (_case, input) => {
     const started = performance.now();
-    parseTags("{@".repeat(64000));
+    parseTags(input);
     expect(performance.now() - started).toBeLessThan(1000);
   });
 });

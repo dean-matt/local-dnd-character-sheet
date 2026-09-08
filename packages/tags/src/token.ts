@@ -32,10 +32,14 @@ export type Spec =
 
 export const text = (value: string): Token => ({ kind: "text", value });
 
-/** An empty argument means "default", not an empty string. Whitespace counts as empty. */
+/**
+ * An empty argument means "default", not an empty string, and whitespace counts as
+ * empty. The value comes back trimmed: a name or source is a catalog key, and
+ * `"fireball "` matches nothing.
+ */
 export function arg(args: string[], index: number): string | undefined {
-  const value = args[index];
-  return value === undefined || value.trim() === "" ? undefined : value;
+  const value = args[index]?.trim();
+  return value === undefined || value === "" ? undefined : value;
 }
 
 /**
@@ -43,7 +47,9 @@ export function arg(args: string[], index: number): string | undefined {
  * the bonus has nothing to roll, and a lone `+` is worse than nothing.
  */
 export function d20(bonus: string): Token {
-  if (bonus === "") return text("");
+  // Nothing to roll without a number. A placeholder like `<$to_hit__str$>` still says
+  // something and stays as text; a lone sign says nothing and goes.
+  if (!/\d/.test(bonus)) return text(/\w/.test(bonus) ? bonus : "");
   const signed = /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
   const notation = `1d20${signed}`;
   return { kind: "roll", notation, display: signed, rollable: isRollable(notation) };

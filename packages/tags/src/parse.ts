@@ -66,18 +66,8 @@ function flatten(token: Token, depth: number): Token {
   }
 }
 
-/**
- * `lastClose` is the final `}` in the whole input, computed once. Past it nothing can
- * balance, so a string full of unmatched `{@` fails each scan immediately instead of
- * walking to the end every time, which was quadratic. A wrapper tag of any length still
- * scans as far as it needs.
- *
- * The ceiling: input that ends in one `}` after many `{@` still rescans per opening.
- * Bounding by length instead would leak raw markup out of a long `{@note}`, which is
- * the worse failure.
- */
-function matchingBrace(input: string, open: number, lastClose: number): number {
-  if (open > lastClose) return -1;
+/** Walks forward to the brace that closes `open`, or -1 when nothing does. */
+function matchingBrace(input: string, open: number): number {
   let depth = 0;
   for (let index = open; index < input.length; index += 1) {
     const char = input[index];
@@ -88,6 +78,26 @@ function matchingBrace(input: string, open: number, lastClose: number): number {
     }
   }
   return -1;
+}
+
+/**
+ * Every `{` mapped to the `}` that closes it, in one pass. Built only after a scan has
+ * failed, because repeated failures are what made scanning quadratic and a string with
+ * no malformed tag never pays for this. Bounding the scan by length instead made a long
+ * `{@note}` leak its markup, so neither ceiling is left.
+ */
+function braceMap(input: string): Map<number, number> {
+  const pairs = new Map<number, number>();
+  const open: number[] = [];
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    if (char === "{") open.push(index);
+    else if (char === "}") {
+      const start = open.pop();
+      if (start !== undefined) pairs.set(start, index);
+    }
+  }
+  return pairs;
 }
 
 /** Splits on pipes outside any nested tag, so `{@i a|b}` inside an argument survives. */
@@ -167,6 +177,20 @@ function expand(inner: string, depth: number): Token[] {
 }
 
 /**
+ * Finds the brace closing each tag. Scans, and switches to a full map the first time a
+ * scan fails, so a string with no malformed tag never builds one.
+ */
+function braceFinder(input: string): (open: number) => number {
+  let pairs: Map<number, number> | null = null;
+  return (open) => {
+    if (pairs !== null) return pairs.get(open) ?? -1;
+    const close = matchingBrace(input, open);
+    if (close === -1) pairs = braceMap(input);
+    return close;
+  };
+}
+
+/**
  * An argument-less unknown tag has no display at all, and an empty token is only
  * something every renderer would have to skip.
  */
@@ -183,7 +207,7 @@ function worthKeeping(token: Token): boolean {
 
 function walk(input: string, depth: number): Token[] {
   if (depth > MAX_DEPTH) return input === "" ? [] : [text(input)];
-  const lastClose = input.lastIndexOf("}");
+  const closeOf = braceFinder(input);
   const tokens: Token[] = [];
   let literal = "";
   let index = 0;
@@ -201,7 +225,7 @@ function walk(input: string, depth: number): Token[] {
       literal += input.slice(index);
       break;
     }
-    const close = matchingBrace(input, open, lastClose);
+    const close = closeOf(open);
     if (close === -1) {
       // Confine a malformed tag to itself. Homebrew text is hand-written, and one
       // stray brace should not turn the rest of a paragraph into raw markup.
