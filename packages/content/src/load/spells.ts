@@ -25,8 +25,12 @@ function toRow(entry: unknown, context: string, editionOf: (source: string) => E
   if (typeof level !== "number" || !Number.isInteger(level) || level < 0 || level > 9) {
     throw new Error(`${context}: level ${String(level)} is not a whole number from 0 to 9`);
   }
-  const duration = Array.isArray(entry.duration) ? entry.duration : [];
+  const duration = entry.duration;
+  if (!Array.isArray(duration) || duration.length === 0) {
+    throw new Error(`${context}: duration is missing or not a list of spans`);
+  }
   const meta = entry.meta;
+  if (meta !== undefined && !isRecord(meta)) throw new Error(`${context}: meta is not an object`);
   return {
     name: text(entry, "name", context),
     source,

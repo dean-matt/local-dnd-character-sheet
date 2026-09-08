@@ -105,14 +105,32 @@ describe("the spells loader", () => {
   };
 
   it("fails the build when two entries share a (name, source)", () => {
-    const fireball = { name: "Fireball", source: "PHB", level: 3, school: "V" };
+    const fireball = {
+      name: "Fireball",
+      source: "PHB",
+      level: 3,
+      school: "V",
+      duration: [{ type: "instant" }],
+    };
 
     expect(() => build(vendorHolding(fireball, fireball))).toThrow(/Loader "spells" failed/);
   });
 
-  it("fails the build on an entry the schema could not hold", () => {
-    expect(() =>
-      build(vendorHolding({ name: "Fireball", source: "PHB", level: "third", school: "V" })),
-    ).toThrow(/Loader "spells" failed/);
+  it.each([
+    ["a level that is not a number", { level: "third" }],
+    ["no school", { school: undefined }],
+    ["no duration", { duration: undefined }],
+    ["a duration that is not a list", { duration: { type: "instant" } }],
+  ])("refuses an entry with %s", (_, override) => {
+    const fireball = {
+      name: "Fireball",
+      source: "PHB",
+      level: 3,
+      school: "V",
+      duration: [{ type: "instant" }],
+      ...override,
+    };
+
+    expect(() => build(vendorHolding(fireball))).toThrow(/Loader "spells" failed/);
   });
 });
