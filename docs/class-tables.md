@@ -60,6 +60,10 @@ sorcerer knows the 2 kinds of metamagic it took at 3. Read as though it were den
 files a count at three levels and loses the other 15; a dense array read as sparse loses
 every level. Both are normalized to a row per level.
 
+`known` is the running total at that level, not the options gained there — a level 2
+`XPHB` warlock knows 3 invocations, having gained 2. What a level adds is the difference
+from the level below.
+
 One block carries more: Way of the Four Elements names a `required` discipline at level 3.
 The count is what the table holds, so that stays in the entry's `json` — a character's
 picks are not validated by the ETL.

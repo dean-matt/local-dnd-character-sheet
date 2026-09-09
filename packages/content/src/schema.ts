@@ -86,11 +86,15 @@ CREATE TABLE subclass_spell_slots (
   PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
 ) STRICT;
 
--- How many options of a feature type a level may pick — the other half of the
--- join optional_feature_types starts: that table says which options carry a
--- type, and these say how many of them a class knows. Every level that may pick
--- carries a row, since upstream states a count two ways and only one of them
--- says anything about a level it skips.
+-- How many options of a feature type a class knows at a level — the other half
+-- of the join optional_feature_types starts, where that table says which options
+-- carry a type. Every level that may pick carries a row, since upstream states a
+-- count two ways and only one of them says anything about a level it skips.
+--
+-- known is the running total, not the pick gained at that level: a level 2 XPHB
+-- warlock knows 3 invocations, having gained 2. What a level adds is the
+-- difference from the level below, so a picker reading known as new options
+-- offers too many and the arithmetic still looks plausible.
 
 CREATE TABLE class_optional_features (
   class_name   TEXT NOT NULL,
