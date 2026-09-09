@@ -82,10 +82,33 @@ the build too. A block two entries match is refused as well: identity is not alw
 No block in the corpus is ambiguous at the pinned tag — all six `_copy` deities name a
 pantheon — so this fences the next upstream bump, not today's data.
 
-`_versions` is a **second, unrelated** inheritance mechanism and nothing resolves it yet.
-An entry lists variants of itself, each with its own `_mod`, using modes `_copy` never
-does — `removeArr`, `renameArr`, `addSpells`. It matters for characters: 48 entries in
-`races.json` and 9 in `feats.json`. A loader over either sees them intact.
+## `_versions` inheritance
+
+`_versions` is a **second, unrelated** mechanism: a copy merges two entries into one, a
+version expands one entry into several. The base survives its versions — upstream offers
+the Dragonborn and each of its ten colours — so `load/versions.ts` adds entries beside
+the one they were written under, after `copy.ts` has run. Three race entries are both a
+copy and a source of versions, and a `_mod` here edits text the copy supplied.
+
+A version is either written out with its own `name`, `source` and differing fields, or
+written once as an `_abstract` template carrying `{{placeholder}}` text with an
+`_implementations` list supplying the substitutions. The four `{{...}}` names in the
+corpus are `color`, `damageType`, `area` and `savingThrow`; a variable holding a list
+rather than text substitutes whole, and interpolating one into surrounding prose is
+refused rather than written as `[object Object]`.
+
+Only four `_mod` modes appear across both files — `replaceArr`, `removeArr`,
+`prependArr`, `appendArr`. `removeArr` is the one `_copy` never needed. Neither
+`renameArr` nor `addSpells` occurs in character data.
+
+Every generated identity is a plain `(name, source)`: across 82 variants none collides
+with an existing entry or with another variant, so nothing has to be decorated.
+
+**Three dragonborn subraces refuse** — the nameless `PHB` one, `Draconblood` and
+`Ravenite` from `EGW`, worth 30 more variants. Their `_mod` replaces `Breath Weapon`, an
+element upstream renders from the parent race rather than storing on the subrace. The way
+out is the race-into-subrace entry merge, which is part of deciding where subraces live
+at all — see issue #32. Nothing reads `races.json` until then.
 
 ## Tag markup
 

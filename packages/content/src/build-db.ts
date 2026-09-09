@@ -21,6 +21,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { resolveCopies } from "./load/copy.ts";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
+import { resolveVersions } from "./load/versions.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
 import { posix, verifyVendor } from "./sync.ts";
 
@@ -68,7 +69,7 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
       } catch (cause) {
         throw new Error(`${match} could not be read`, { cause });
       }
-      sources.set(match, resolveCopies(parsed, match));
+      sources.set(match, resolveVersions(resolveCopies(parsed, match), match));
     }
   }
   return sources;

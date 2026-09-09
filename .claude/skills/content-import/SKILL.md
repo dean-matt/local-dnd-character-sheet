@@ -63,10 +63,11 @@ over every source the framework reads and fails the build on a cycle, a missing 
 a shape it cannot apply. A loader never sees a `_copy`, and must not add handling for one —
 a new `_mod` mode belongs in `copy.ts`.
 
-**`_versions` is a different mechanism and is not resolved.** It carries its own `_mod`,
-including `removeArr` and `renameArr` modes that `copy.ts` does not implement, and it
-reaches loaders intact — 48 entries in `races.json`, 9 in `feats.json`. Decide explicitly
-whether your loader expands, ignores, or rejects them.
+**`_versions` is a different mechanism and is also resolved for you.** It expands one
+entry into several rather than merging two into one, so a version arrives as an entry of
+its own beside the one it was written under — 82 extra entries across `races.json` and
+`feats.json`. A loader counts more entries than the file lists and needs no handling.
+Three dragonborn subraces still refuse; see `docs/5etools-data.md`.
 
 **Unmapped class resource labels become generic counters**, not errors. Only about 80%
 of resources come from `classTableGroups`; Battle Master superiority dice and similar

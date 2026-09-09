@@ -25,9 +25,9 @@ export type Loader = {
    * insert, keyed by table. Pure — loaders never touch the filesystem or the
    * database themselves.
    *
-   * No `_copy` survives this far. `_versions` is a separate inheritance
-   * mechanism with its own `_mod`, is not resolved, and reaches `races.json` and
-   * `feats.json` loaders intact.
+   * Neither `_copy` nor `_versions` survives this far. A version arrives as an
+   * entry of its own, beside the one it was written under, so a loader counts
+   * more entries than the file lists and needs no handling for either.
    */
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };

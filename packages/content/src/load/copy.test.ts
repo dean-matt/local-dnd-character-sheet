@@ -427,6 +427,48 @@ describe("resolveCopies", () => {
       expect(resolved.background[2]?.entries).toEqual(["Yours."]);
     });
 
+    const copying = (mod: unknown) => ({
+      name: "B",
+      source: "PHB",
+      _copy: { name: "A", source: "PHB", _mod: mod },
+    });
+
+    it("removes the named elements, and is available to a _copy as to a version", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "A", source: "PHB", entries: [{ name: "One" }, { name: "Two" }, { name: "3" }] },
+          copying({ entries: { mode: "removeArr", names: ["One", "3"] } }),
+        ),
+        "data/backgrounds.json",
+      ) as { background: Entry[] };
+
+      expect(names(resolved.background[1] as Entry)).toEqual(["Two"]);
+    });
+
+    it("refuses a removeArr naming an element the list does not hold", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "One" }] },
+            copying({ entries: { mode: "removeArr", names: ["One", "Missing"] } }),
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow("removeArr matched 1 of 2 named elements in entries");
+    });
+
+    it("treats a removeArr against a property the entry lacks as nothing to remove", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "A", source: "PHB" },
+          copying({ entries: { mode: "removeArr", names: "Anything" } }),
+        ),
+        "data/backgrounds.json",
+      ) as { background: Entry[] };
+
+      expect(resolved.background[1]).not.toHaveProperty("entries");
+    });
+
     it.each([
       ["on its own", []],
       // Scanning for a parent touches every entry, so a malformed one must not
