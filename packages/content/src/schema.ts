@@ -166,13 +166,25 @@ CREATE TABLE feats (
 ) STRICT;
 
 CREATE TABLE optional_features (
-  name         TEXT NOT NULL,
-  source       TEXT NOT NULL,
-  edition      TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
-  feature_type TEXT NOT NULL,
-  json         TEXT NOT NULL,
+  name    TEXT NOT NULL,
+  source  TEXT NOT NULL,
+  edition TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  json    TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;
+
+-- A feature's types are a list upstream: 9 of 213 carry two to four, because one
+-- fighting style is offered to several classes. Kept beside the feature rather
+-- than in it, so identity stays (name, source) and a character referencing
+-- Dueling gets one row however many classes may take it.
+CREATE TABLE optional_feature_types (
+  name         TEXT NOT NULL,
+  source       TEXT NOT NULL,
+  feature_type TEXT NOT NULL,
+  PRIMARY KEY (name, source, feature_type)
+) STRICT;
+
+CREATE INDEX optional_feature_types_by_type ON optional_feature_types (feature_type);
 
 -- Tier B ---------------------------------------------------------------------
 

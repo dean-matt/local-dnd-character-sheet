@@ -1,0 +1,79 @@
+{
+  "optionalfeature": [
+    {
+      "name": "Dueling",
+      "source": "PHB",
+      "page": 72,
+      "srd": true,
+      "otherSources": [
+        {
+          "source": "XGE",
+          "page": 15
+        },
+        {
+          "source": "PHB",
+          "page": 84
+        },
+        {
+          "source": "PHB",
+          "page": 91
+        }
+      ],
+      "reprintedAs": [
+        {
+          "uid": "Dueling|XPHB",
+          "tag": "feat"
+        }
+      ],
+      "featureType": ["FS:F", "FS:B", "FS:P", "FS:R"],
+      "entries": ["When you are wielding a melee weapon in one hand and no other weapons,"]
+    },
+    {
+      "name": "Archery",
+      "source": "PHB",
+      "page": 72,
+      "srd": true,
+      "otherSources": [
+        {
+          "source": "PHB",
+          "page": 91
+        }
+      ],
+      "reprintedAs": [
+        {
+          "uid": "Archery|XPHB",
+          "tag": "feat"
+        }
+      ],
+      "featureType": ["FS:F", "FS:R"],
+      "entries": ["You gain a +2 bonus to attack rolls you make with ranged weapons."]
+    },
+    {
+      "name": "Agonizing Blast",
+      "source": "XPHB",
+      "page": 155,
+      "srd52": true,
+      "featureType": ["EI"],
+      "prerequisite": [
+        {
+          "spell": [
+            {
+              "choose": "level=0|class=Warlock",
+              "entry": "a Warlock Cantrip That Deals Damage",
+              "entrySummary": "Warlock Cantrip That Deals Damage"
+            }
+          ],
+          "level": {
+            "level": 2,
+            "class": {
+              "name": "Warlock",
+              "source": "XPHB",
+              "visibleStats": true
+            }
+          }
+        }
+      ],
+      "entries": ["Choose one of your known {@filter Warlock cantrips|spells|level=0|clas"]
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "feat": [
+    {
+      "name": "Alert",
+      "source": "PHB",
+      "page": 165,
+      "reprintedAs": ["Alert|XPHB"],
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided.", "Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Alert",
+      "source": "XPHB",
+      "page": 200,
+      "srd52": true,
+      "basicRules2024": true,
+      "category": "O",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Initiative Proficiency",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Initiative Swap",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Magic Initiate",
+      "source": "XPHB",
+      "page": 201,
+      "srd52": true,
+      "basicRules2024": true,
+      "category": "O",
+      "repeatable": true,
+      "repeatableHidden": true,
+      "additionalSpells": [
+        {
+          "name": "Cleric Spells",
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "innate": {
+            "_": {
+              "daily": {
+                "1": [
+                  {
+                    "choose": "level=1|class=Cleric"
+                  }
+                ]
+              }
+            }
+          },
+          "known": {
+            "_": [
+              {
+                "choose": "level=0|class=Cleric",
+                "count": 2
+              }
+            ]
+          }
+        },
+        {
+          "name": "Druid Spells",
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "innate": {
+            "_": {
+              "daily": {
+                "1": [
+                  {
+                    "choose": "level=1|class=Druid"
+                  }
+                ]
+              }
+            }
+          },
+          "known": {
+            "_": [
+              {
+                "choose": "level=0|class=Druid",
+                "count": 2
+              }
+            ]
+          }
+        },
+        {
+          "name": "Wizard Spells",
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "innate": {
+            "_": {
+              "daily": {
+                "1": [
+                  {
+                    "choose": "level=1|class=Wizard"
+                  }
+                ]
+              }
+            }
+          },
+          "known": {
+            "_": [
+              {
+                "choose": "level=0|class=Wizard",
+                "count": 2
+              }
+            ]
+          }
+        }
+      ],
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Two Cantrips",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Level 1 Spell",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Spell Change",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Repeatable",
+          "entries": ["Elided."]
+        }
+      ],
+      "_versions": [
+        {
+          "name": "Magic Initiate; Cleric",
+          "source": "XPHB",
+          "_mod": {
+            "entries": [
+              {
+                "mode": "replaceArr",
+                "replace": "Two Cantrips",
+                "items": {
+                  "name": "Two Cantrips",
+                  "entries": [
+                    "You learn two cantrips of your choice from the {@filter Cleric|spells|level=0;1|class=Cleric} spell list. Intelligence, Wisdom, or Charisma is your spellcasting ability for this feat's spells (choose when you select this feat)."
+                  ]
+                }
+              },
+              {
+                "mode": "replaceArr",
+                "replace": "Level 1 Spell",
+                "items": {
+                  "name": "Level 1 Spell",
+                  "entries": [
+                    "Choose a level 1 spell from the {@filter Cleric|spells|level=0;1|class=Cleric} spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a {@variantrule Long Rest|XPHB}. You can also cast the spell using any spell slots you have."
+                  ]
+                }
+              }
+            ]
+          },
+          "additionalSpells": [
+            {
+              "ability": {
+                "choose": ["int", "wis", "cha"]
+              },
+              "innate": {
+                "_": {
+                  "daily": {
+                    "1": [
+                      {
+                        "choose": "level=1|class=Cleric"
+                      }
+                    ]
+                  }
+                }
+              },
+              "known": {
+                "_": [
+                  {
+                    "choose": "level=0|class=Cleric",
+                    "count": 2
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Magic Initiate; Druid",
+          "source": "XPHB",
+          "_mod": {
+            "entries": [
+              {
+                "mode": "replaceArr",
+                "replace": "Two Cantrips",
+                "items": {
+                  "name": "Two Cantrips",
+                  "entries": [
+                    "You learn two cantrips of your choice from the {@filter Druid|spells|level=0;1|class=Druid} spell list. Intelligence, Wisdom, or Charisma is your spellcasting ability for this feat's spells (choose when you select this feat)."
+                  ]
+                }
+              },
+              {
+                "mode": "replaceArr",
+                "replace": "Level 1 Spell",
+                "items": {
+                  "name": "Level 1 Spell",
+                  "entries": [
+                    "Choose a level 1 spell from the {@filter Druid|spells|level=0;1|class=Druid} spell list. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a {@variantrule Long Rest|XPHB}. You can also cast the spell using any spell slots you have."
+                  ]
+                }
+              }
+            ]
+          },
+          "additionalSpells": [
+            {
+              "ability": {
+                "choose": ["int", "wis", "cha"]
+              },
+              "innate": {
+                "_": {
+                  "daily": {
+                    "1": [
+                      {
+                        "choose": "level=1|class=Druid"
+                      }
+                    ]
+                  }
+                }
+              },
+              "known": {
+                "_": [
+                  {
+                    "choose": "level=0|class=Druid",
+                    "count": 2
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
