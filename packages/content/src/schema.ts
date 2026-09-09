@@ -95,6 +95,14 @@ CREATE TABLE subclass_spell_slots (
 -- warlock knows 3 invocations, having gained 2. What a level adds is the
 -- difference from the level below, so a picker reading known as new options
 -- offers too many and the arithmetic still looks plausible.
+--
+-- The ceiling: a row per level is 391 rows where 72 plateaus would say the same
+-- thing, and every plateau row past the first is redundant. It buys a primary
+-- key that makes two counts at one level impossible, which a (from_level,
+-- to_level) range cannot assert — SQLite has no exclusion constraint, so an
+-- overlap or a gap would load clean and answer wrong. The way out, if a real
+-- query finds a row per level awkward: ranges keyed (owner, feature_type,
+-- from_level), which is this loader and a rebuild, never a migration.
 
 CREATE TABLE class_optional_features (
   class_name   TEXT NOT NULL,

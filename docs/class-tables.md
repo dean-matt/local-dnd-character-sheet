@@ -64,6 +64,14 @@ every level. Both are normalized to a row per level.
 `XPHB` warlock knows 3 invocations, having gained 2. What a level adds is the difference
 from the level below.
 
+Both tables store a row per level rather than one per plateau — 391 rows where 72 would
+carry the same information. That redundancy buys an absent row that means *none*, the
+same reading `class_resources` and `spell_slots` already have, and a primary key that
+makes two counts at one level impossible. A `(from_level, to_level)` range would be
+smaller and could not assert either: SQLite has no exclusion constraint, so an overlapping
+or gapped range loads clean and answers wrong. Nothing queries these tables yet, so if a
+real query finds a row per level awkward, ranges are a loader change and a rebuild.
+
 One block carries more: Way of the Four Elements names a `required` discipline at level 3.
 The count is what the table holds, so that stays in the entry's `json` — a character's
 picks are not validated by the ETL.
