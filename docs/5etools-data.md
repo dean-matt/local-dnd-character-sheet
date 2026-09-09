@@ -77,7 +77,10 @@ Everything the bestiary needs and character data does not is refused rather than
 half-applied: cross-file parents, the `setProp` and `addSkills` modes, and the `*` and
 `_` wildcard `_mod` properties. `internalCopies` is not trustworthy on its own either —
 31 files carry a same-file `_copy` without declaring one — so a surviving `_copy` fails
-the build too.
+the build too. A block two entries match is refused as well: identity is not always
+`(name, source)`, and taking the first match would clone the wrong entry and say nothing.
+No block in the corpus is ambiguous at the pinned tag — all six `_copy` deities name a
+pantheon — so this fences the next upstream bump, not today's data.
 
 `_versions` is a **second, unrelated** inheritance mechanism and nothing resolves it yet.
 An entry lists variants of itself, each with its own `_mod`, using modes `_copy` never

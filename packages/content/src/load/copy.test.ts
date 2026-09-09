@@ -397,6 +397,36 @@ describe("resolveCopies", () => {
       ).toThrow('"B" (PHB) has a _copy that names no parent');
     });
 
+    it("refuses a _copy two entries match instead of cloning whichever comes first", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "Oghma", source: "PHB", pantheon: "Celtic", entries: ["Theirs."] },
+            { name: "Oghma", source: "PHB", pantheon: "Forgotten Realms", entries: ["Not yours."] },
+            { name: "Oghma", source: "VGM", _copy: { name: "Oghma", source: "PHB" } },
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow('copies "Oghma" (PHB), which 2 entries match');
+    });
+
+    it("takes the one parent a block names once a key tells the twins apart", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "Oghma", source: "PHB", pantheon: "Celtic", entries: ["Theirs."] },
+          { name: "Oghma", source: "PHB", pantheon: "Forgotten Realms", entries: ["Yours."] },
+          {
+            name: "Oghma",
+            source: "VGM",
+            _copy: { name: "Oghma", source: "PHB", pantheon: "Forgotten Realms" },
+          },
+        ),
+        "data/backgrounds.json",
+      ) as { background: Entry[] };
+
+      expect(resolved.background[2]?.entries).toEqual(["Yours."]);
+    });
+
     it("keeps the file and entry label when an entry is not an object", () => {
       expect(() =>
         resolveCopies(file({ name: "A", source: "PHB" }, null as unknown as Entry), "data/x.json"),

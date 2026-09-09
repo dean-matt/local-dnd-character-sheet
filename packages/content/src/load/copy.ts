@@ -68,8 +68,34 @@ function describe(entry: Entry, keys: string[]): string {
   return `"${String(entry.name)}" (${String(entry.source)})${extra ? ` [${extra}]` : ""}`;
 }
 
-function findParent(entries: Entry[], copy: Entry, keys: string[]): Entry | undefined {
-  return entries.find((candidate) => keys.every((key) => candidate[key] === copy[key]));
+/**
+ * Every entry the block's keys match, not the first. A block matching two is a
+ * block that does not name a parent, and taking the first would clone whichever
+ * upstream happened to list earlier — the wrong entry, silently, and only for
+ * the identities that collide.
+ */
+function findParents(entries: Entry[], copy: Entry, keys: string[]): Entry[] {
+  return entries.filter((candidate) => keys.every((key) => candidate[key] === copy[key]));
+}
+
+/** The one entry the block names, refusing a block that names none or several. */
+function onlyParent(
+  entries: Entry[],
+  entry: Entry,
+  copy: Entry,
+  keys: string[],
+  context: string,
+): Entry {
+  const parents = findParents(entries, copy, keys);
+  const only = parents[0];
+  if (parents.length === 1 && only) return only;
+  const trouble =
+    parents.length === 0
+      ? "which no entry in the file matches"
+      : `which ${parents.length} entries match — the block needs a key that tells them apart`;
+  throw new Error(
+    `${context}: ${describe(entry, keys)} copies ${describe(copy, keys)}, ${trouble}`,
+  );
 }
 
 function replaceText(node: unknown, pattern: RegExp, replacement: string): unknown {
@@ -236,12 +262,7 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
         `${context}: ${describe(entry, ["name", "source"])} has a _copy that names no parent`,
       );
     }
-    const parent = findParent(entries, copy, keys);
-    if (!parent) {
-      throw new Error(
-        `${context}: ${describe(entry, keys)} copies ${describe(copy, keys)}, which no entry in the file matches`,
-      );
-    }
+    const parent = onlyParent(entries, entry, copy, keys, context);
     visiting.add(entry);
     if (visiting.has(parent)) {
       throw new Error(
