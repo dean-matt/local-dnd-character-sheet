@@ -156,6 +156,28 @@ describe("resolveVersions", () => {
       );
     });
 
+    it("fills a variable named after a prototype key, which a file can carry", () => {
+      // Written through JSON, where "__proto__" is an ordinary key rather than
+      // the setter an object literal would reach.
+      const source = JSON.parse(
+        JSON.stringify(
+          templated({ name: "Elf ({{proto}})", source: "PHB" }, { proto: "Wood" }),
+        ).replace(/proto/g, "__proto__"),
+      );
+
+      const resolved = resolveVersions(source, "data/races.json") as { race: Entry[] };
+      expect(resolved.race[1]?.name).toBe("Elf (Wood)");
+    });
+
+    it("fills a placeholder standing in an object key, not only in a value", () => {
+      const resolved = resolveVersions(
+        templated({ name: "Elf", source: "PHB", "{{color}}Resist": "some" }, { color: "Wood" }),
+        "data/races.json",
+      ) as { race: Entry[] };
+
+      expect(resolved.race[1]).toHaveProperty("WoodResist", "some");
+    });
+
     it("drops a _versions a version declares of its own, which nothing revisits", () => {
       const resolved = resolveVersions(
         file({

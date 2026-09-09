@@ -96,8 +96,8 @@ function removeNamed(
   op: Entry,
   context: string,
 ): void {
-  if (op.names === undefined) throw new Error(`${context}: removeArr needs names`);
-  const names = asArray(op.names).map(String);
+  // asArray(undefined) is [undefined], which would read as a name of "undefined".
+  const names = op.names === undefined ? [] : asArray(op.names).map(String);
   if (names.length === 0) throw new Error(`${context}: removeArr needs names`);
   if (target === undefined) return;
   const held = new Set(list.filter(isRecord).map((item) => String(item.name)));

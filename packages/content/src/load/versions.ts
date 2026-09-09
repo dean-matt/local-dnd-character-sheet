@@ -37,8 +37,13 @@ function fill(node: unknown, variables: Record<string, string>): unknown {
   }
   if (Array.isArray(node)) return node.map((child) => fill(child, variables));
   if (!isRecord(node)) return node;
+  // Keys too, because `placeholdersIn` counts a placeholder wherever it reads
+  // one, and a name it called used has to be a name this fills.
   return Object.fromEntries(
-    Object.entries(node).map(([key, value]) => [key, fill(value, variables)]),
+    Object.entries(node).map(([key, value]) => [
+      fill(key, variables) as string,
+      fill(value, variables),
+    ]),
   );
 }
 
@@ -57,7 +62,9 @@ function variablesOf(
 ): Record<string, string> {
   const declared = implementation._variables;
   if (!isRecord(declared)) throw new Error(`${context}: an _implementation declares no _variables`);
-  const variables: Record<string, string> = {};
+  // Null-prototype: a variable named `__proto__` would otherwise hit the
+  // prototype setter and be dropped, and read back as never having been set.
+  const variables: Record<string, string> = Object.create(null) as Record<string, string>;
   for (const [name, value] of Object.entries(declared)) {
     if (!asked.has(name)) {
       throw new Error(`${context}: _variables.${name} is set, and no {{${name}}} uses it`);
