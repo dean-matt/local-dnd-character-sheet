@@ -299,7 +299,6 @@ function tableGroups(groups: unknown, owner: Owner, context: string): GroupRows 
   return { resources, slots };
 }
 
-/** A count of options, which is a whole number and may be none. */
 function optionCount(cell: unknown, context: string): number {
   if (typeof cell !== "number" || !Number.isInteger(cell) || cell < 0) {
     throw new Error(`${context}: ${JSON.stringify(cell)} is not a count of options`);
@@ -307,7 +306,6 @@ function optionCount(cell: unknown, context: string): number {
   return cell;
 }
 
-/** A `progression` of 20 cells, one per level, which states every level itself. */
 function stated(cells: unknown[], context: string): number[] {
   if (cells.length !== LEVELS) {
     throw new Error(`${context}: ${cells.length} cells, and a progression covers all 20 levels`);
@@ -367,14 +365,10 @@ function blockRows(block: Entry, owner: Owner, where: string): Row[] {
 }
 
 /**
- * `optionalfeatureProgression` into the other half of the join
- * `optional_feature_types` starts — how many options of a type this level knows,
- * where that table holds which options carry the type.
+ * `optionalfeatureProgression` into a row per level that may pick.
  *
- * Every level that may pick gets a row, so a count absent from the sparse form
- * is carried forward here rather than at query time and both forms become the
- * same rows. A level entitled to none stores nothing, matching the resource and
- * slot tables, so an absent row means none.
+ * A count absent from the sparse form is carried forward here rather than at
+ * query time, so both forms leave the same rows and a reader needs neither.
  */
 function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[] {
   if (blocks === undefined) return [];
