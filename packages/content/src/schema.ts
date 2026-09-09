@@ -90,7 +90,7 @@ CREATE TABLE subclass_spell_slots (
 -- of the join optional_feature_types starts, where that table says which options
 -- carry a type. Every level that may pick carries a row, since a class or
 -- subclass states a count two ways and only one of them says anything about a
--- level it skips. Five feats state it a third way, keyed \`*\` for a source that
+-- level it skips. Four feats and an optional feature state it a third way, keyed \`*\` for a source that
 -- has no level, and no table here holds those.
 --
 -- known is the running total, not the pick gained at that level: a level 2 XPHB

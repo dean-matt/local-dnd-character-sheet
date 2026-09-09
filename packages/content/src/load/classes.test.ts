@@ -607,6 +607,12 @@ describe("the classes loader", () => {
     );
   });
 
+  it("refuses one count offered under several types, which a row cannot divide", () => {
+    expect(
+      refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["MM", "EI"]))),
+    ).toMatch(/2 feature types share one count, and a row holds a count per type/);
+  });
+
   it("refuses a progression naming no feature type, which no option could match", () => {
     expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, [])))).toMatch(
       /featureType is missing or empty/,

@@ -324,7 +324,7 @@ function stated(cells: unknown[], context: string): number[] {
 function carried(progression: Entry, context: string): number[] {
   const changes = new Map<number, number>();
   for (const [key, cell] of Object.entries(progression)) {
-    // Five feats and one optional feature key a progression `*`, for "at any
+    // Four feats and one optional feature key a progression `*`, for "at any
     // level", since neither has one. No class or subclass entry does, and these
     // tables are keyed by level, so it is named rather than read as a number.
     if (key === "*") {
@@ -365,11 +365,16 @@ function blockRows(block: Entry, owner: Owner, where: string): Row[] {
   if (!counts.some((known) => known > 0)) {
     throw new Error(`${where}: a progression no level may pick from`);
   }
+  const types = strings(block, "featureType", where);
+  const [type] = types;
+  if (types.length !== 1 || type === undefined) {
+    throw new Error(
+      `${where}: ${types.length} feature types share one count, and a row holds a count per type`,
+    );
+  }
   const rows: Row[] = [];
-  for (const type of strings(block, "featureType", where)) {
-    for (const [at, known] of counts.entries()) {
-      if (known > 0) rows.push({ ...owner, level: at + 1, feature_type: type, known });
-    }
+  for (const [at, known] of counts.entries()) {
+    if (known > 0) rows.push({ ...owner, level: at + 1, feature_type: type, known });
   }
   return rows;
 }

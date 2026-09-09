@@ -77,13 +77,21 @@ makes two counts at one level impossible. A `(from_level, to_level)` range would
 smaller and could not assert either: SQLite has no exclusion constraint, so an overlapping
 or gapped range loads clean and answers wrong.
 
-A third shape exists, on entries these tables do not cover. Five feats and one optional
+A third shape exists, on entries these tables do not cover. Four feats and one optional
 feature key a progression `*` — Martial Adept grants 2 maneuvers, Metamagic Adept 2
 metamagics — because a feat has no level to hang a count on. `character-options.ts` does
 not read `optionalfeatureProgression`, so feat-granted options are absent from the catalog
 as counts and a class-side query cannot see them. The loader here refuses a `*` by name
 rather than coercing it, so the day upstream moves such a block onto a class, the build
 says which shape it found.
+
+Two upstream fields state the invocation and infusion counts, so two tables hold them:
+`class_resources.invocations_known` and `infusions_known` come from a `colLabels` column,
+and `class_optional_features.known` from `optionalfeatureProgression`. They agree cell for
+cell at the pinned tag and nothing asserts they will — a check would need a hand-kept map
+from type code to resource key, which is the list `edition.ts` warns about. The typed row
+is the one to join, because it carries the `featureType` that reaches the pool; the
+resource row is a number to print on a sheet.
 
 The subclass table's key includes `subclass_source`, and a class offers both editions of a
 subclass, so `Fighter|XPHB` holds `Battle Master|PHB` and `Battle Master|XPHB` — 5
