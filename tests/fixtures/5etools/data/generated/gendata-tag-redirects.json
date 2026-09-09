@@ -1,0 +1,13 @@
+{
+  "actions.html": {
+    "dash_phb": "dash_xphb",
+    "grapple_phb": {
+      "hash": "unarmed%20strike_xphb",
+      "page": "variantrules.html"
+    }
+  },
+  "skill": {
+    "acrobatics_phb": "acrobatics_xphb",
+    "animal%20handling_phb": "animal%20handling_xphb"
+  }
+}

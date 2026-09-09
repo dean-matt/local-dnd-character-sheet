@@ -30,6 +30,10 @@ Every lookup table is doubled as a result — `skills.json` lists Acrobatics twi
 per edition. Filtering by edition is not optional; without it every picker shows
 duplicates.
 
+Deities are the one exception to the two-part key: `{@deity Ioun|dawn war|dmg}` names a
+pantheon because five `PHB` gods share a name with a god of another one — Oghma,
+Silvanus, Surtur, Thrym and Tyr. `lookups.qualifier` holds it.
+
 Three of the 30 class entries are Tasha's sidekicks, flagged `isSidekick`. None carries
 `hd` or `proficiency`, because a sidekick's hit die comes from its creature stat block,
 so the class loader skips all three rather than inventing three holes. Spellcaster
@@ -103,8 +107,13 @@ books link glossary terms constantly — `variantrules.json` must be imported or
 links dangle. `{@filter}` points at a 5etools filtered list page, which means nothing
 here, so it must degrade to its display text rather than erroring.
 
-`generated/gendata-tag-redirects.json` is upstream's own map of renamed tags. Feed it to
-the resolver so renames do not break links.
+`generated/gendata-tag-redirects.json` is upstream's own map of renamed tags — 2,948 of
+them. Feed it to the resolver so renames do not break links. It is grouped by the
+namespace a link lands in, which is a page filename such as `variantrules.html` where the
+type has a page and a bare tag name such as `skill` where it does not. A page is coarser
+than a tag — `{@trap}` and `{@hazard}` share `trapshazards.html` — so the resolver maps
+its tag to a namespace, never back. 36 redirects land in a different namespace than they
+started in, and carry a `{ hash, page }` pair instead of a bare hash to say so.
 
 Do not vendor upstream's renderer. `js/render.js` is 18,009 lines; the ~12 tags above
 are worth a small parser of our own. See the `tag-render` skill.

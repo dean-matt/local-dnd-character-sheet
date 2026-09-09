@@ -56,3 +56,17 @@ export function editions(sources: Map<string, unknown>): (source: string) => Edi
   }
   return (source) => (one.has(source) ? "one" : "classic");
 }
+
+/** An entry's own `edition` where it declares one, and its source's otherwise. */
+export function editionOf(
+  entry: Entry,
+  source: string,
+  fromSource: (source: string) => Edition,
+): Edition {
+  const declared = entry.edition;
+  if (declared === undefined) return fromSource(source);
+  if (declared !== "classic" && declared !== "one") {
+    throw new Error(`edition ${JSON.stringify(declared)} is neither classic nor one`);
+  }
+  return declared;
+}
