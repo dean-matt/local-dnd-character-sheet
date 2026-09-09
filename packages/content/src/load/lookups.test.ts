@@ -53,6 +53,8 @@ describe("the lookups loader", () => {
       "action Dash|XPHB one",
       "condition Blinded|PHB classic",
       "condition Blinded|XPHB one",
+      "deity Bahgtru|SCAG|Orc classic",
+      "deity Bahgtru|VGM|Orc classic",
       "deity Moradin|PHB|Nonhuman classic",
       "deity Oghma|PHB|Celtic classic",
       "deity Oghma|PHB|Forgotten Realms classic",
@@ -85,6 +87,22 @@ describe("the lookups loader", () => {
 
     const entry = JSON.parse(json) as { entries: string[] };
     expect(entry.entries.join(" ")).toContain("{@variantrule Speed|XPHB}");
+  });
+
+  it("resolves a _copy whose parent is named by pantheon as well as by name and source", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const json = db
+      .prepare("SELECT json FROM lookups WHERE kind = 'deity' AND source = 'VGM'")
+      .pluck()
+      .get() as string;
+    db.close();
+
+    const entry = JSON.parse(json) as Record<string, unknown>;
+    expect(entry).not.toHaveProperty("_copy");
+    expect(entry.symbol).toBe("Broken thigh bone");
+    expect(entry.title).toBe("the Leg Breaker");
   });
 
   /** The fixture vendor with one file swapped, so a refusal has everything else to read. */

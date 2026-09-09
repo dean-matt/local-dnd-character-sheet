@@ -1,4 +1,7 @@
 {
+  "_meta": {
+    "internalCopies": ["deity"]
+  },
   "deity": [
     {
       "name": "Oghma",
@@ -38,6 +41,33 @@
       "title": "Dwarf god of creation",
       "domains": ["Forge", "Knowledge"],
       "symbol": "Hammer and anvil"
+    },
+    {
+      "name": "Bahgtru",
+      "source": "SCAG",
+      "page": 24,
+      "pantheon": "Orc",
+      "alignment": ["L", "E"],
+      "title": "God of strength",
+      "domains": ["War"],
+      "symbol": "Broken thigh bone",
+      "entries": ["Bahgtru is the son of Gruumsh and Luthic."]
+    },
+    {
+      "name": "Bahgtru",
+      "source": "VGM",
+      "page": 83,
+      "_copy": {
+        "name": "Bahgtru",
+        "source": "SCAG",
+        "pantheon": "Orc"
+      },
+      "pantheon": "Orc",
+      "customExtensionOf": "Bahgtru|Orc|SCAG",
+      "title": "the Leg Breaker",
+      "entries": [
+        "Despite the influence of Ilneval, orcs are and will forever be brutal and feral "
+      ]
     }
   ]
 }

@@ -141,9 +141,10 @@ CREATE TABLE optional_features (
 -- Tier B ---------------------------------------------------------------------
 
 -- qualifier is the identity a kind needs beyond (name, source): the pantheon a
--- deity tag names, and nothing else in the catalog. Empty rather than NULL,
--- because SQLite lets NULLs repeat inside a PRIMARY KEY, so the five deities
--- that share a (name, source) with another pantheon's god would insert unnoticed.
+-- deity tag names, which five PHB gods need to tell them from a god of another
+-- pantheon, and which nothing else in the catalog does. A kind without one
+-- stores the empty string, because a STRICT table makes every PRIMARY KEY
+-- column NOT NULL and there is no other way to write "this kind has none".
 CREATE TABLE lookups (
   kind      TEXT NOT NULL,
   name      TEXT NOT NULL,
