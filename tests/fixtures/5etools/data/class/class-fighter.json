@@ -12,7 +12,28 @@
       "classTableGroups": [
         {
           "colLabels": ["Second Wind", "Weapon Mastery"],
-          "rows": [[2, 3], [2, 3], [2, 3], [3, 4], [3, 4]]
+          "rows": [
+            [2, 3],
+            [2, 3],
+            [2, 3],
+            [3, 4],
+            [3, 4],
+            [3, 4],
+            [3, 4],
+            [3, 4],
+            [3, 4],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5],
+            [4, 5]
+          ]
         }
       ],
       "classFeatures": ["Second Wind|Fighter|XPHB|1"]
@@ -39,7 +60,28 @@
             "{@tip Die Size|Psionic Energy Die Size}",
             "{@tip Number|Psionic Energy Die Number}"
           ],
-          "rows": [[0, 0], [0, 0], ["{@dice D6}", 4], ["{@dice D6}", 4], ["{@dice D8}", 6]]
+          "rows": [
+            [0, 0],
+            [0, 0],
+            ["{@dice D6}", 4],
+            ["{@dice D6}", 4],
+            ["{@dice D8}", 6],
+            ["{@dice D8}", 6],
+            ["{@dice D8}", 6],
+            ["{@dice D8}", 6],
+            ["{@dice D8}", 6],
+            ["{@dice D8}", 6],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8],
+            ["{@dice D10}", 8]
+          ]
         }
       ],
       "subclassFeatures": ["Psi Warrior|Fighter|XPHB|Psi Warrior|XPHB|3"]
@@ -63,7 +105,28 @@
             }
           ],
           "colLabels": ["{@filter Spells Prepared|spells|subclass=Fighter: Eldritch Knight}"],
-          "rows": [[0], [0], [3], [4], [4]]
+          "rows": [
+            [0],
+            [0],
+            [3],
+            [4],
+            [4],
+            [4],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5],
+            [5]
+          ]
         },
         {
           "title": "Spell Slots per Spell Level",
@@ -77,7 +140,28 @@
             "{@filter 1st|spells|level=1|subclass=Fighter: Eldritch Knight}",
             "{@filter 2nd|spells|level=2|subclass=Fighter: Eldritch Knight}"
           ],
-          "rowsSpellProgression": [[0, 0], [0, 0], [2, 0], [3, 0], [3, 0]]
+          "rowsSpellProgression": [
+            [0, 0],
+            [0, 0],
+            [2, 0],
+            [3, 0],
+            [3, 0],
+            [3, 0],
+            [4, 2],
+            [4, 2],
+            [4, 2],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3]
+          ]
         }
       ],
       "subclassFeatures": ["Eldritch Knight|Fighter|XPHB|Eldritch Knight|XPHB|3"]

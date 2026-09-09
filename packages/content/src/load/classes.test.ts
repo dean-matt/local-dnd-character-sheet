@@ -106,7 +106,7 @@ describe("the classes loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT level, resource_key, value FROM class_resources WHERE class_name = 'Cleric' AND class_source = 'PHB' ORDER BY level, resource_key",
+        "SELECT level, resource_key, value FROM class_resources WHERE class_name = 'Cleric' AND class_source = 'PHB' AND level <= 5 ORDER BY level, resource_key",
       )
       .all();
     db.close();
@@ -121,7 +121,7 @@ describe("the classes loader", () => {
       { level: 4, resource_key: "cantrips_known", value: "4" },
       { level: 4, resource_key: "channel_divinity", value: "1" },
       { level: 5, resource_key: "cantrips_known", value: "4" },
-      { level: 5, resource_key: "channel_divinity", value: "2" },
+      { level: 5, resource_key: "channel_divinity", value: "1" },
     ]);
   });
 
@@ -149,7 +149,7 @@ describe("the classes loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT level, slot_level, slots FROM spell_slots WHERE class_name = 'Cleric' AND class_source = 'XPHB' ORDER BY level, slot_level",
+        "SELECT level, slot_level, slots FROM spell_slots WHERE class_name = 'Cleric' AND class_source = 'XPHB' AND level <= 5 ORDER BY level, slot_level",
       )
       .all();
     db.close();
@@ -172,7 +172,7 @@ describe("the classes loader", () => {
     const db = open();
     const slots = db
       .prepare(
-        "SELECT level, slot_level, slots FROM spell_slots WHERE class_name = 'Warlock' ORDER BY level",
+        "SELECT level, slot_level, slots FROM spell_slots WHERE class_name = 'Warlock' AND level <= 3 ORDER BY level",
       )
       .all();
     const keys = db
@@ -197,12 +197,12 @@ describe("the classes loader", () => {
     const db = open();
     const resources = db
       .prepare(
-        "SELECT subclass_name, level, resource_key, value FROM subclass_resources ORDER BY subclass_name, level, resource_key",
+        "SELECT subclass_name, level, resource_key, value FROM subclass_resources WHERE level <= 5 ORDER BY subclass_name, level, resource_key",
       )
       .all();
     const slots = db
       .prepare(
-        "SELECT subclass_name, level, slot_level, slots FROM subclass_spell_slots ORDER BY level, slot_level",
+        "SELECT subclass_name, level, slot_level, slots FROM subclass_spell_slots WHERE level <= 5 ORDER BY level, slot_level",
       )
       .all();
     db.close();
@@ -255,6 +255,12 @@ describe("the classes loader", () => {
     throw new Error("the build succeeded");
   };
 
+  /** The cell at level 1, and 19 levels of zero after it — a table is all 20. */
+  const table = (...cells: unknown[]): unknown[][] => [
+    cells,
+    ...Array.from({ length: 19 }, () => cells.map(() => 0)),
+  ];
+
   const barbarian = (rows: unknown[][], colLabels: string[]) => ({
     class: [
       {
@@ -287,7 +293,7 @@ describe("the classes loader", () => {
     ["a tagged die", "{@dice D8}", "D8"],
   ])("stores %s as the text upstream shows", (_case, cell, stored) => {
     expect(
-      resourcesIn(vendorHolding("class-barbarian.json", barbarian([[cell]], ["Rages"]))),
+      resourcesIn(vendorHolding("class-barbarian.json", barbarian(table(cell), ["Rages"]))),
     ).toEqual([{ level: 1, resource_key: "rages", value: stored }]);
   });
 
@@ -298,21 +304,23 @@ describe("the classes loader", () => {
     ["a zero speed bonus", { type: "bonusSpeed", value: 0 }],
   ])("stores no row for %s, so an absent row means none", (_case, cell) => {
     expect(
-      resourcesIn(vendorHolding("class-barbarian.json", barbarian([[cell]], ["Rages"]))),
+      resourcesIn(vendorHolding("class-barbarian.json", barbarian(table(cell), ["Rages"]))),
     ).toEqual([]);
   });
 
   it("refuses a cell shape it cannot read rather than storing a guess", () => {
     expect(
       refusal(
-        vendorHolding("class-barbarian.json", barbarian([[{ type: "elephant" }]], ["Rages"])),
+        vendorHolding("class-barbarian.json", barbarian(table({ type: "elephant" }), ["Rages"])),
       ),
     ).toMatch(/is not a value this loader reads/);
   });
 
   it("refuses a bonus carrying no number rather than storing the word undefined", () => {
     expect(
-      refusal(vendorHolding("class-barbarian.json", barbarian([[{ type: "bonus" }]], ["Rages"]))),
+      refusal(
+        vendorHolding("class-barbarian.json", barbarian(table({ type: "bonus" }), ["Rages"])),
+      ),
     ).toMatch(/bonus undefined is not a number/);
   });
 
@@ -328,7 +336,7 @@ describe("the classes loader", () => {
             {
               title: "Spell Slots per Spell Level",
               colLabels: ["{@filter 2nd|spells|level=2}", "{@filter 3rd|spells|level=3}"],
-              rowsSpellProgression: [[2, 0]],
+              rowsSpellProgression: table(2, 0),
             },
           ],
         },
@@ -342,7 +350,7 @@ describe("the classes loader", () => {
 
   it("refuses a Spell Slots column without the Slot Level that names its level", () => {
     expect(
-      refusal(vendorHolding("class-barbarian.json", barbarian([[2]], ["Spell Slots"]))),
+      refusal(vendorHolding("class-barbarian.json", barbarian(table(2), ["Spell Slots"]))),
     ).toMatch(/"Spell Slots" and "Slot Level" come as a pair/);
   });
 
@@ -359,7 +367,7 @@ describe("the classes loader", () => {
             {
               subclasses: [{ name: "Soulknife", source: "XPHB" }],
               colLabels: ["Number"],
-              rows: [[4]],
+              rows: table(4),
             },
           ],
         },

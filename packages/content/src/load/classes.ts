@@ -14,7 +14,7 @@
 import { parseTags, renderText } from "@dnd/tags";
 import { EDITION_FILES, type Edition, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord } from "./json.ts";
+import { type Entry, isRecord, text } from "./json.ts";
 
 /**
  * Every column label the corpus carries, pinned to a key rather than slugged
@@ -63,7 +63,10 @@ const RESOURCE_KEYS: Record<string, string> = {
   "Invocations Known": "invocations_known",
   Invocations: "invocations_known",
   // Psi Warrior and Soulknife label these "Die Size" and "Number", and each
-  // calls it an energy die in the {@tip} the label links to.
+  // calls it an energy die in the tip the label links to. The pin is corpus-wide
+  // and "Number" is the most generic label here, so a column labelled that on
+  // any other table would land on the energy die's key. The way out is a pin
+  // scoped to (class, subclass), once a second table wants one of these words.
   "Die Size": "energy_die_size",
   Number: "energy_die_number",
 };
@@ -73,14 +76,6 @@ const PACT_SLOT_LEVEL = "Slot Level";
 
 /** Keys identifying the owner of a table group — a class, or a class and subclass. */
 type Owner = Record<string, string>;
-
-function text(entry: Entry, key: string, context: string): string {
-  const value = entry[key];
-  if (typeof value !== "string" || value === "") {
-    throw new Error(`${context}: ${key} is missing or not a string`);
-  }
-  return value;
-}
 
 function editionOf(entry: Entry, source: string, fromSource: (source: string) => Edition): Edition {
   const declared = entry.edition;
@@ -145,7 +140,8 @@ function signed(cell: Entry, context: string, unit: string): string | null {
   if (typeof bonus !== "number" || !Number.isFinite(bonus)) {
     throw new Error(`${context}: bonus ${JSON.stringify(bonus)} is not a number`);
   }
-  return bonus === 0 ? null : `+${bonus}${unit}`;
+  if (bonus === 0) return null;
+  return `${bonus > 0 ? "+" : ""}${bonus}${unit}`;
 }
 
 /** The text to store, or null where the class has no such resource at that level. */
@@ -175,16 +171,27 @@ function slotLevel(cell: unknown, context: string): number {
 }
 
 function slotCount(cell: unknown, context: string): number {
-  const count = typeof cell === "number" ? cell : Number(String(cell).trim());
+  // Number("") is 0, which would read a blank cell as a level granting no slots.
+  const written = typeof cell === "number" ? cell : String(cell).trim();
+  const count = written === "" ? Number.NaN : Number(written);
   if (!Number.isInteger(count) || count < 0) {
     throw new Error(`${context}: ${JSON.stringify(cell)} is not a slot count`);
   }
   return count;
 }
 
+/**
+ * Row n is level n, which holds because every group in the corpus carries all
+ * 20 — the Psi Warrior table pads levels 1 and 2 with zeros rather than starting
+ * at the level the subclass is gained. A group that started higher would file
+ * every row too low and still build, so the count is checked rather than the
+ * convention assumed.
+ */
 function levelled(rows: unknown, context: string): unknown[][] {
   if (!Array.isArray(rows)) throw new Error(`${context}: rows is not a list`);
-  if (rows.length > 20) throw new Error(`${context}: ${rows.length} rows exceeds level 20`);
+  if (rows.length !== 20) {
+    throw new Error(`${context}: ${rows.length} rows, and a table covers all 20 levels`);
+  }
   return rows.map((row, index) => {
     if (!Array.isArray(row)) throw new Error(`${context} level ${index + 1}: row is not a list`);
     return row;
@@ -283,6 +290,9 @@ function tableGroups(groups: unknown, owner: Owner, context: string): GroupRows 
   for (const [index, group] of groups.entries()) {
     const where = `${context} group ${index}`;
     if (!isRecord(group)) throw new Error(`${where} is not an object`);
+    if (group.rowsSpellProgression !== undefined && group.rows !== undefined) {
+      throw new Error(`${where} carries both rows and rowsSpellProgression`);
+    }
     if (group.rowsSpellProgression !== undefined) {
       slots.push(...fromProgression(group, owner, where));
       continue;
@@ -345,6 +355,9 @@ export const classes: Loader = {
         // is upstream saying the same thing three ways.
         if (entry.isSidekick === true) continue;
         const context = `${path} class[${index}]`;
+        if (entry.subclassTableGroups !== undefined) {
+          throw new Error(`${context}: a class entry carries subclassTableGroups`);
+        }
         const name = text(entry, "name", context);
         const classSource = text(entry, "source", context);
         const owner = { class_name: name, class_source: classSource };
