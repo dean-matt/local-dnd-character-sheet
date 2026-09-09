@@ -88,8 +88,10 @@ CREATE TABLE subclass_spell_slots (
 
 -- How many options of a feature type a class knows at a level — the other half
 -- of the join optional_feature_types starts, where that table says which options
--- carry a type. Every level that may pick carries a row, since upstream states a
--- count two ways and only one of them says anything about a level it skips.
+-- carry a type. Every level that may pick carries a row, since a class or
+-- subclass states a count two ways and only one of them says anything about a
+-- level it skips. Five feats state it a third way, keyed \`*\` for a source that
+-- has no level, and no table here holds those.
 --
 -- known is the running total, not the pick gained at that level: a level 2 XPHB
 -- warlock knows 3 invocations, having gained 2. What a level adds is the
@@ -98,7 +100,13 @@ CREATE TABLE subclass_spell_slots (
 --
 -- A row per level rather than one per plateau: the redundancy buys an absent row
 -- that means none, the reading the resource and slot tables above already have,
--- and a key that makes two counts at one level impossible.
+-- and a key a second count for one level cannot fit.
+--
+-- On the subclass table that key includes subclass_source, and a class offers
+-- both editions of a subclass: Fighter|XPHB holds Battle Master|PHB and
+-- Battle Master|XPHB, each 5 maneuvers at level 7. Fixing class, level and type
+-- there returns two rows, so a query filters subclass_source or joins subclasses
+-- for the subclass's own edition, which is the row's edition and not the class's.
 --
 -- known counts one block, not one character. A class and its subclass can offer
 -- the same type, and the character gets both: a level 10 PHB Champion knows two

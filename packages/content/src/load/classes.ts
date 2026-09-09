@@ -185,7 +185,7 @@ function slotCount(cell: unknown, context: string): number {
 function levelled(rows: unknown, context: string): unknown[][] {
   if (!Array.isArray(rows)) throw new Error(`${context}: rows is not a list`);
   if (rows.length !== LEVELS) {
-    throw new Error(`${context}: ${rows.length} rows, and a table covers all 20 levels`);
+    throw new Error(`${context}: ${rows.length} rows, and a table covers all ${LEVELS} levels`);
   }
   return rows.map((row, index) => {
     if (!Array.isArray(row)) throw new Error(`${context} level ${index + 1}: row is not a list`);
@@ -308,7 +308,9 @@ function optionCount(cell: unknown, context: string): number {
 
 function stated(cells: unknown[], context: string): number[] {
   if (cells.length !== LEVELS) {
-    throw new Error(`${context}: ${cells.length} cells, and a progression covers all 20 levels`);
+    throw new Error(
+      `${context}: ${cells.length} cells, and a progression covers all ${LEVELS} levels`,
+    );
   }
   return cells.map((cell, index) => optionCount(cell, `${context} level ${index + 1}`));
 }
@@ -322,9 +324,17 @@ function stated(cells: unknown[], context: string): number[] {
 function carried(progression: Entry, context: string): number[] {
   const changes = new Map<number, number>();
   for (const [key, cell] of Object.entries(progression)) {
-    const level = Number(key);
+    // Five feats and one optional feature key a progression `*`, for "at any
+    // level", since neither has one. No class or subclass entry does, and these
+    // tables are keyed by level, so it is named rather than read as a number.
+    if (key === "*") {
+      throw new Error(`${context}: a progression keyed "*" has no level to file a count at`);
+    }
+    // Exactly the 20 spellings, so no two keys reach one level and overwrite it:
+    // Number would take "03", " 3" and "1e1" and land all three on a level.
+    const level = /^(?:[1-9]|1\d|20)$/.test(key) ? Number(key) : Number.NaN;
     if (!Number.isInteger(level) || level < 1 || level > LEVELS) {
-      throw new Error(`${context}: ${JSON.stringify(key)} is not a level from 1 to 20`);
+      throw new Error(`${context}: ${JSON.stringify(key)} is not a level from 1 to ${LEVELS}`);
     }
     changes.set(level, optionCount(cell, `${context} level ${level}`));
   }
@@ -370,7 +380,7 @@ function blockRows(block: Entry, owner: Owner, where: string): Row[] {
  * nor the type. They are also two counts that were meant to add up, and one row
  * holds one, so the refusal says that rather than the column that noticed.
  */
-function oneCountEach(rows: Row[], context: string): Row[] {
+function oneCountEach(rows: Row[], context: string): void {
   const seen = new Set<string>();
   for (const row of rows) {
     const key = `${String(row.feature_type)}|${String(row.level)}`;
@@ -381,7 +391,6 @@ function oneCountEach(rows: Row[], context: string): Row[] {
     }
     seen.add(key);
   }
-  return rows;
 }
 
 /**
@@ -400,7 +409,8 @@ function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[]
     if (!isRecord(block)) throw new Error(`${where} is not an object`);
     return blockRows(block, owner, where);
   });
-  return oneCountEach(rows, context);
+  oneCountEach(rows, context);
+  return rows;
 }
 
 /**

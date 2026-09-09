@@ -48,8 +48,8 @@ Four traps in reading a group:
 `optionalfeatureProgression` — 9 blocks over 8 class entries, the `PHB` warlock carrying
 two, and 13 over 13 subclass entries — says how many options of a `featureType` a level
 knows. It is the count half of the join whose pool half is a feature's own `featureType`
-list. It arrives in two shapes that mean different things at
-a level they skip:
+list. On a class or subclass it arrives in two shapes that mean different things at a
+level they skip:
 
 ```
 Warlock   progression [1,3,3,3,5,5,6,...]   20 cells, one per level
@@ -76,6 +76,20 @@ same reading `class_resources` and `spell_slots` already have, and a primary key
 makes two counts at one level impossible. A `(from_level, to_level)` range would be
 smaller and could not assert either: SQLite has no exclusion constraint, so an overlapping
 or gapped range loads clean and answers wrong.
+
+A third shape exists, on entries these tables do not cover. Five feats and one optional
+feature key a progression `*` — Martial Adept grants 2 maneuvers, Metamagic Adept 2
+metamagics — because a feat has no level to hang a count on. `character-options.ts` does
+not read `optionalfeatureProgression`, so feat-granted options are absent from the catalog
+as counts and a class-side query cannot see them. The loader here refuses a `*` by name
+rather than coercing it, so the day upstream moves such a block onto a class, the build
+says which shape it found.
+
+The subclass table's key includes `subclass_source`, and a class offers both editions of a
+subclass, so `Fighter|XPHB` holds `Battle Master|PHB` and `Battle Master|XPHB` — 5
+maneuvers each at level 7. Fixing class, level and type returns two rows there. A query
+filters `subclass_source`, or joins `subclasses` for the subclass's own edition, which is
+the row's edition and never the class's.
 
 One block carries more: Way of the Four Elements names a `required` discipline at level 3.
 The count is what the table holds, so that stays in the entry's `json` — a character's

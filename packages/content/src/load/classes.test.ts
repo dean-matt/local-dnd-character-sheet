@@ -572,6 +572,9 @@ describe("the classes loader", () => {
     ["a progression short of 20 levels", [1, 2], /2 cells, and a progression covers all 20 levels/],
     ["a level past 20", { 21: 1 }, /"21" is not a level from 1 to 20/],
     ["a level of 0", { 0: 1 }, /"0" is not a level from 1 to 20/],
+    ["a level that only coerces to one", { " 3": 1 }, /" 3" is not a level from 1 to 20/],
+    ["a padded level", { "03": 1 }, /"03" is not a level from 1 to 20/],
+    ["the wildcard five feats carry", { "*": 1 }, /keyed "\*" has no level/],
     ["a count that is not one", { 3: "two" }, /"two" is not a count of options/],
     ["a progression that entitles nothing", {}, /a progression no level may pick from/],
     [
