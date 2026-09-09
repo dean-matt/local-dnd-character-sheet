@@ -12,7 +12,7 @@
  * so an absent row means none.
  */
 import { parseTags, renderText } from "@dnd/tags";
-import { EDITION_FILES, type Edition, editions, ownFiles } from "./edition.ts";
+import { EDITION_FILES, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, text } from "./json.ts";
 
@@ -76,15 +76,6 @@ const PACT_SLOT_LEVEL = "Slot Level";
 
 /** Keys identifying the owner of a table group — a class, or a class and subclass. */
 type Owner = Record<string, string>;
-
-function editionOf(entry: Entry, source: string, fromSource: (source: string) => Edition): Edition {
-  const declared = entry.edition;
-  if (declared === undefined) return fromSource(source);
-  if (declared !== "classic" && declared !== "one") {
-    throw new Error(`edition ${JSON.stringify(declared)} is neither classic nor one`);
-  }
-  return declared;
-}
 
 /** Every class but the three sidekicks carries `hd`, and none rolls more than one. */
 function hitDie(entry: Entry, context: string): number {
