@@ -54,6 +54,13 @@ records. Rows carry source `HB` and are merged with catalog rows at query time.
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates.
 
+**A subclass carries its own edition, not its class's.** 124 of 322 subclass rows sit
+under a class variant of the other edition, because a 2024 class offers the 2014
+subclasses alongside its own — a `one` Barbarian has four `one` subclasses and nine
+`classic` ones. So a picker offering only current material filters on both `class_source`
+and `edition`, and one offering everything a character may legally take filters on
+`class_source` alone.
+
 **Overrides are sparse.** An absent `field_overrides` row means "use the computed
 value". Writing an override never changes the computed side, and clearing one restores
 the computed value rather than a remembered old number.

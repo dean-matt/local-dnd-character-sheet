@@ -30,6 +30,14 @@ Every lookup table is doubled as a result — `skills.json` lists Acrobatics twi
 per edition. Filtering by edition is not optional; without it every picker shows
 duplicates.
 
+Three of the 30 class entries are Tasha's sidekicks, flagged `isSidekick`. None carries
+`hd` or `proficiency`, because a sidekick's hit die comes from its creature stat block,
+so the class loader skips all three rather than inventing three holes. Spellcaster
+Sidekick does carry three `classTableGroups`, one of them a slot table written as plain
+`rows` labelled `1st` to `5th` rather than as a `rowsSpellProgression` — loosening that
+skip without handling it would file five spell slot columns as resources named after
+ordinals, and nothing would fail.
+
 `UATheMysticClass` is the only playtest source in character data — 66 entries, all of
 them the Mystic class and its subclasses. Nothing else in the catalog is Unearthed
 Arcana, and the Mystic has no official counterpart to collide with.
@@ -121,9 +129,10 @@ Sorcerer   colLabels ["Sorcery Points"]
 **Spell slots come free** via `rowsSpellProgression` — there is no need to hardcode the
 slot table for any full or half caster.
 
-Column labels are human strings, so the ETL needs a `colLabel -> resource key` map. The
-vocabulary is small — 21 distinct labels across all classes, each appearing once or
-twice (twice meaning both editions):
+Column labels are human strings, so the ETL needs a `colLabel -> resource key` map. Of
+the 130 distinct labels, 109 are `{@filter}` links to a 5etools spell or optional-feature
+list and two are `{@tip}` tags; reduced to display text they collapse to 33. Twelve of
+those arrive only as markup, and the remaining 21 are plain prose:
 
 ```
 Rages · Rage Damage · Ki Points · Focus Points · Sorcery Points · Channel Divinity
@@ -135,11 +144,15 @@ Spell Slots · Slot Level · Plans Known · Magic Items
 Three gaps the data cannot fill:
 
 - **Only 6 of 322 subclasses have `subclassTableGroups`** — Eldritch Knight and Arcane
-  Trickster spell progression, plus Psi Warrior dice. Battle Master superiority dice
-  live in feature prose and are not extractable.
+  Trickster spell progression, plus Psi Warrior and Soulknife energy dice. Battle Master
+  superiority dice live in feature prose and are not extractable. Each such group repeats
+  its own subclass in a `subclasses` list, and all 10 name only their owner.
 - **Warlock pact magic** uses separate `Spell Slots` and `Slot Level` columns instead of
-  `rowsSpellProgression`.
-- **Psi Warrior labels are `{@tip ...}` tags**, not plain strings.
+  `rowsSpellProgression`. The slot level reads as `1st` in `PHB` and as `1` in `XPHB`.
+- **Psi Warrior and Soulknife labels are `{@tip ...}` tags**, not plain strings.
+- **A cell is not always a number**: `{"type": "bonus"}`, `{"type": "bonusSpeed"}` and
+  `{"type": "dice"}` objects appear alongside counts, `{@dice D8}` markup, an em dash for
+  a resource the level has not reached, and `Unlimited` for a level 20 barbarian's rages.
 
 Generic user-defined counters cover all three: a name, current and maximum values, and
 a reset trigger. That one mechanism handles Battle Master dice and homebrew resources

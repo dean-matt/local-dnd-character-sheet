@@ -48,7 +48,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 - **Never commit `vendor/5etools/` or any `.db` file.** The data is WotC's; see `NOTICE`.
 - **Every content entity is keyed `(name, source)`**, never name alone. Tier A rows carry
   an `edition` of `classic` or `one`; Tier B and C allow NULL. Both editions ship for
-  every class.
+  every class but the Mystic, which is playtest and classic only.
 - **Derived character fields store computed *and* manual values plus an override flag.**
   A level-up recomputes without stomping a user's edit.
 - **`roll_log` and `undo_log` are bounded** — 200 and 50 rows per character, pruned on
