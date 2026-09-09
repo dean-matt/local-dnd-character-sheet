@@ -89,3 +89,8 @@ derivation fell through to a default.
 
 CI does not fetch 109 MB. Add representative entries to `tests/fixtures/` for any new
 type: one with a `_copy` chain, one of each edition, and one with tag-heavy text.
+
+`load/index.test.ts` builds the whole `LOADERS` registry over that subset, so a loader
+whose files are absent fails `readSources` under `pnpm test` — a new loader brings its
+fixture or CI goes red. It is also the only test that sees insert order, since every
+loader test passes its own loader alone.
