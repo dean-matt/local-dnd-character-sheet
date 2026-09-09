@@ -571,6 +571,12 @@ describe("the classes loader", () => {
     ["a level past 20", { 21: 1 }, /"21" is not a level from 1 to 20/],
     ["a level of 0", { 0: 1 }, /"0" is not a level from 1 to 20/],
     ["a count that is not one", { 3: "two" }, /"two" is not a count of options/],
+    ["a progression that entitles nothing", {}, /a progression no level may pick from/],
+    [
+      "a progression of 20 zeros, which is the same thing stated",
+      Array.from({ length: 20 }, () => 0),
+      /a progression no level may pick from/,
+    ],
   ])("refuses %s", (_case, progression, reason) => {
     expect(refusal(vendorHolding("class-sorcerer.json", progressing(progression)))).toMatch(reason);
   });

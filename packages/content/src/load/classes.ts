@@ -346,6 +346,27 @@ function progression(raw: unknown, context: string): number[] {
 }
 
 /**
+ * One block's rows: a level each, and a type each where a block names several.
+ *
+ * A block entitling no level to anything is upstream writing a progression and
+ * saying nothing with it. Stored, it is a block that silently vanishes, so it is
+ * refused the way a feature naming no class is.
+ */
+function blockRows(block: Entry, owner: Owner, where: string): Row[] {
+  const counts = progression(block.progression, where);
+  if (!counts.some((known) => known > 0)) {
+    throw new Error(`${where}: a progression no level may pick from`);
+  }
+  const rows: Row[] = [];
+  for (const type of strings(block, "featureType", where)) {
+    for (const [at, known] of counts.entries()) {
+      if (known > 0) rows.push({ ...owner, level: at + 1, feature_type: type, known });
+    }
+  }
+  return rows;
+}
+
+/**
  * `optionalfeatureProgression` into the other half of the join
  * `optional_feature_types` starts — how many options of a type this level knows,
  * where that table holds which options carry the type.
@@ -360,18 +381,11 @@ function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[]
   if (!Array.isArray(blocks)) {
     throw new Error(`${context}: optionalfeatureProgression is not a list`);
   }
-  const rows: Row[] = [];
-  for (const [index, block] of blocks.entries()) {
+  return blocks.flatMap((block, index) => {
     const where = `${context} optionalfeatureProgression[${index}]`;
     if (!isRecord(block)) throw new Error(`${where} is not an object`);
-    const counts = progression(block.progression, where);
-    for (const type of strings(block, "featureType", where)) {
-      for (const [at, known] of counts.entries()) {
-        if (known > 0) rows.push({ ...owner, level: at + 1, feature_type: type, known });
-      }
-    }
-  }
-  return rows;
+    return blockRows(block, owner, where);
+  });
 }
 
 /**
