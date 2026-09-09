@@ -63,12 +63,19 @@ pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates.
 
-**A subclass carries its own edition, not its class's.** 124 of 322 subclass rows sit
-under a class variant of the other edition, because a 2024 class offers the 2014
-subclasses alongside its own — a `one` Barbarian has four `one` subclasses and nine
-`classic` ones. So a picker offering only current material filters on both `class_source`
-and `edition`, and one offering everything a character may legally take filters on
-`class_source` alone.
+**A subclass carries its own edition, not its class's, and so does a feature.** 120 of
+322 subclass rows and 75 of 1,441 subclass feature rows sit under a class variant of the
+other edition, because a 2024 class offers the 2014 subclasses alongside its own — a
+`one` Barbarian has four `one` subclasses and nine `classic` ones, and the 2024 Cleric's
+Death Domain features are still `DMG` rows. So a picker offering only current material
+filters on both `class_source` and `edition`, and one offering everything a character may
+legally take filters on `class_source` alone. **Filtering a subclass or a feature on
+`edition` alone returns the wrong set, not a smaller one.**
+
+**A subclass is joined to its features by `short_name`.** A tag and a
+`subclass_features` row both name the Berserker; the `subclasses` row is the Path of the
+Berserker. `subclasses.short_name` carries the short form so the join is
+`(short_name, source, class_source)` in SQL rather than a `json_extract`.
 
 **Overrides are sparse.** An absent `field_overrides` row means "use the computed
 value". Writing an override never changes the computed side, and clearing one restores

@@ -48,42 +48,27 @@ describe("the classes loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT name, source, class_name, class_source, edition FROM subclasses ORDER BY class_name, name, class_source",
+        "SELECT name, source, short_name, class_name, class_source, edition FROM subclasses " +
+          "ORDER BY class_name, name, class_source",
       )
-      .all();
+      .all() as Record<string, string>[];
     db.close();
 
-    expect(rows).toEqual([
-      // Neither Knowledge Domain entry declares an edition, so PHB and XPHB
-      // decide it — the same subclass, filed under each edition of its class.
-      {
-        name: "Knowledge Domain",
-        source: "PHB",
-        class_name: "Cleric",
-        class_source: "PHB",
-        edition: "classic",
-      },
-      {
-        name: "Knowledge Domain",
-        source: "PHB",
-        class_name: "Cleric",
-        class_source: "XPHB",
-        edition: "classic",
-      },
-      {
-        name: "Eldritch Knight",
-        source: "XPHB",
-        class_name: "Fighter",
-        class_source: "XPHB",
-        edition: "one",
-      },
-      {
-        name: "Psi Warrior",
-        source: "XPHB",
-        class_name: "Fighter",
-        class_source: "XPHB",
-        edition: "one",
-      },
+    // Neither Domain entry declares an edition, so DMG and PHB decide it — the
+    // same subclass, filed under each edition of its class. short_name is what
+    // a tag and a subclass_features row call it.
+    expect(
+      rows.map(
+        ({ name, source, short_name, class_name, class_source, edition }) =>
+          `${name}|${source} (${short_name}) ${class_name}|${class_source} ${edition}`,
+      ),
+    ).toEqual([
+      "Death Domain|DMG (Death) Cleric|PHB classic",
+      "Death Domain|DMG (Death) Cleric|XPHB classic",
+      "Knowledge Domain|PHB (Knowledge) Cleric|PHB classic",
+      "Knowledge Domain|PHB (Knowledge) Cleric|XPHB classic",
+      "Eldritch Knight|XPHB (Eldritch Knight) Fighter|XPHB one",
+      "Psi Warrior|XPHB (Psi Warrior) Fighter|XPHB one",
     ]);
   });
 
@@ -252,6 +237,26 @@ describe("the classes loader", () => {
     ]);
   });
 
+  it("carries the subclass short name a feature and a tag both use", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT s.name, s.short_name, COUNT(f.name) AS features FROM subclasses s " +
+          "JOIN subclass_features f ON f.subclass_short_name = s.short_name " +
+          "AND f.subclass_source = s.source AND f.class_source = s.class_source " +
+          "GROUP BY s.name, s.short_name, s.class_source ORDER BY s.class_source",
+      )
+      .all();
+    db.close();
+
+    expect(rows).toEqual([
+      { name: "Death Domain", short_name: "Death", features: 1 },
+      { name: "Death Domain", short_name: "Death", features: 1 },
+    ]);
+  });
+
   it("keeps a sidekick's features out, since no row holds the class that grants them", () => {
     build(FIXTURE_VENDOR);
 
@@ -323,14 +328,20 @@ describe("the classes loader", () => {
     entries: ["Elided."],
   };
 
+  /** A feature is refused unless its class has a row, so one comes along. */
+  const granting = (...classFeature: unknown[]) => ({
+    class: [{ name: "Fighter", source: "PHB", hd: { number: 1, faces: 10 } }],
+    classFeature,
+  });
+
   it("fails the build when two features share their whole key", () => {
-    expect(refusal(vendorHolding("class-fighter.json", { classFeature: [ASI, ASI] }))).toMatch(
+    expect(refusal(vendorHolding("class-fighter.json", granting(ASI, ASI)))).toMatch(
       /UNIQUE constraint failed: class_features\./,
     );
   });
 
   it("keeps two features of one class apart by level", () => {
-    build(vendorHolding("class-fighter.json", { classFeature: [ASI, { ...ASI, level: 6 }] }));
+    build(vendorHolding("class-fighter.json", granting(ASI, { ...ASI, level: 6 })));
 
     const db = open();
     const levels = db.prepare("SELECT level FROM class_features ORDER BY level").pluck().all();
@@ -339,15 +350,21 @@ describe("the classes loader", () => {
     expect(levels).toEqual([4, 6]);
   });
 
+  it("refuses a feature whose class has no row, since no query would ever return it", () => {
+    expect(refusal(vendorHolding("class-fighter.json", { classFeature: [ASI] }))).toMatch(
+      /Ability Score Improvement names class Fighter\|PHB, which no row holds/,
+    );
+  });
+
   it.each([
     ["no className", { className: undefined }, /className is missing or not a string/],
     ["no level", { level: undefined }, /level undefined is not a whole number from 1 to 20/],
     ["a level of 0", { level: 0 }, /level 0 is not a whole number from 1 to 20/],
     ["a level past 20", { level: 21 }, /level 21 is not a whole number from 1 to 20/],
   ])("refuses a feature with %s", (_, override, reason) => {
-    expect(
-      refusal(vendorHolding("class-fighter.json", { classFeature: [{ ...ASI, ...override }] })),
-    ).toMatch(reason);
+    expect(refusal(vendorHolding("class-fighter.json", granting({ ...ASI, ...override })))).toMatch(
+      reason,
+    );
   });
 
   /** The cell at level 1, and 19 levels of zero after it — a table is all 20. */

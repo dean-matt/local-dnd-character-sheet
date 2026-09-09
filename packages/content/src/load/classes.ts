@@ -326,12 +326,6 @@ function entriesOf(source: unknown, key: string, path: string): Entry[] {
   });
 }
 
-/**
- * A feature's identity is longer than any other Tier A row's, and is the same
- * set of parts its tag carries. `Ability Score Improvement` from `PHB` is 63
- * rows across twelve classes and five levels, so a key of name and source alone
- * resolves 62 of them to the wrong feature and reports nothing wrong.
- */
 function featureLevel(entry: Entry, context: string): number {
   const { level } = entry;
   if (typeof level !== "number" || !Number.isInteger(level) || level < 1 || level > 20) {
@@ -340,6 +334,12 @@ function featureLevel(entry: Entry, context: string): number {
   return level;
 }
 
+/**
+ * A feature's identity is longer than any other Tier A row's, and is the same
+ * set of parts its tag carries. `Ability Score Improvement` from `PHB` is 63
+ * rows across twelve classes and five levels, so a key of name and source alone
+ * resolves 62 of them to the wrong feature and reports nothing wrong.
+ */
 function classFeatureRow(
   entry: Entry,
   context: string,
@@ -423,6 +423,7 @@ function addSubclasses(out: Tables, source: unknown, path: string, fromSource: F
     out.subclasses.push({
       name,
       source: subclassSource,
+      short_name: text(entry, "shortName", context),
       class_name: owner.class_name,
       class_source: owner.class_source,
       edition: editionOf(entry, subclassSource, fromSource),
@@ -445,15 +446,33 @@ function addFeatures(
   fromSource: FromSource,
   sidekicks: Set<string>,
 ): void {
-  const owned = (row: Row) =>
-    sidekicks.has(`${String(row.class_name)}|${String(row.class_source)}`);
+  const grantedBySidekick = (row: Row) => sidekicks.has(classKey(row));
   for (const [index, entry] of entriesOf(source, "classFeature", path).entries()) {
     const row = classFeatureRow(entry, `${path} classFeature[${index}]`, fromSource);
-    if (!owned(row)) out.class_features.push(row);
+    if (!grantedBySidekick(row)) out.class_features.push(row);
   }
   for (const [index, entry] of entriesOf(source, "subclassFeature", path).entries()) {
     const row = subclassFeatureRow(entry, `${path} subclassFeature[${index}]`, fromSource);
-    if (!owned(row)) out.subclass_features.push(row);
+    if (!grantedBySidekick(row)) out.subclass_features.push(row);
+  }
+}
+
+/** The class a row names, as the key the class and feature tables agree on. */
+function classKey(row: Row): string {
+  return `${String(row.class_name)}|${String(row.class_source)}`;
+}
+
+/**
+ * A feature naming a class no row holds loads fine and is then invisible: every
+ * query for that class comes back without it. The sidekick skip is one known
+ * case, so the rest are refused rather than assumed absent.
+ */
+function checkFeatureOwners(out: Tables): void {
+  const known = new Set(out.classes.map((row) => `${String(row.name)}|${String(row.source)}`));
+  for (const row of [...out.class_features, ...out.subclass_features]) {
+    if (!known.has(classKey(row))) {
+      throw new Error(`${String(row.name)} names class ${classKey(row)}, which no row holds`);
+    }
   }
 }
 
@@ -461,8 +480,10 @@ function addFeatures(
 function sidekickClasses(files: [string, unknown][]): Set<string> {
   const sidekicks = new Set<string>();
   for (const [path, source] of files) {
-    for (const entry of entriesOf(source, "class", path)) {
-      if (entry.isSidekick === true) sidekicks.add(`${String(entry.name)}|${String(entry.source)}`);
+    for (const [index, entry] of entriesOf(source, "class", path).entries()) {
+      if (entry.isSidekick !== true) continue;
+      const context = `${path} class[${index}]`;
+      sidekicks.add(`${text(entry, "name", context)}|${text(entry, "source", context)}`);
     }
   }
   return sidekicks;
@@ -491,6 +512,7 @@ export const classes: Loader = {
       addSubclasses(out, source, path, fromSource);
       addFeatures(out, source, path, fromSource, sidekicks);
     }
+    checkFeatureOwners(out);
     return out;
   },
 };

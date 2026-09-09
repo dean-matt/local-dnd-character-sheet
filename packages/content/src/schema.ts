@@ -28,9 +28,13 @@ CREATE TABLE classes (
   PRIMARY KEY (name, source)
 ) STRICT;
 
+-- short_name is what a tag and a feature row call this subclass — Berserker,
+-- where name is Path of the Berserker. Carried as a column so joining a
+-- subclass to its features is SQL rather than json_extract.
 CREATE TABLE subclasses (
   name         TEXT NOT NULL,
   source       TEXT NOT NULL,
+  short_name   TEXT NOT NULL,
   class_name   TEXT NOT NULL,
   class_source TEXT NOT NULL,
   edition      TEXT NOT NULL CHECK (edition IN ('classic', 'one')),

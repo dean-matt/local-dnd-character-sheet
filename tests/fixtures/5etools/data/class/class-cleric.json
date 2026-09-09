@@ -179,6 +179,70 @@
           "reprintedAs": true
         }
       }
+    },
+    {
+      "name": "Death Domain",
+      "shortName": "Death",
+      "source": "DMG",
+      "className": "Cleric",
+      "classSource": "PHB",
+      "page": 96,
+      "edition": "classic",
+      "additionalSpells": [
+        {
+          "known": {
+            "1": {
+              "_": [
+                {
+                  "choose": "level=0|school=N",
+                  "count": 1
+                }
+              ]
+            }
+          },
+          "prepared": {
+            "1": ["false life", "ray of sickness"],
+            "3": ["blindness/deafness", "ray of enfeeblement"],
+            "5": ["animate dead", "vampiric touch"],
+            "7": ["blight", "death ward"],
+            "9": ["antilife shell", "cloudkill"]
+          }
+        }
+      ],
+      "subclassFeatures": ["Death Domain|Cleric||Death|DMG|1"],
+      "hasFluffImages": true
+    },
+    {
+      "name": "Death Domain",
+      "shortName": "Death",
+      "source": "DMG",
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "_copy": {
+        "name": "Death Domain",
+        "source": "DMG",
+        "shortName": "Death",
+        "className": "Cleric",
+        "classSource": "PHB",
+        "_preserve": {
+          "page": true,
+          "otherSources": true,
+          "referenceSources": true,
+          "srd": true,
+          "basicRules": true,
+          "reprintedAs": true
+        }
+      },
+      "subclassFeatures": ["Death Domain|Cleric|XPHB|Death|DMG|3"],
+      "fluff": {
+        "_subclassFluff": {
+          "name": "Death Domain",
+          "source": "DMG",
+          "shortName": "Death",
+          "className": "Cleric",
+          "classSource": "PHB"
+        }
+      }
     }
   ],
   "subclassFeature": [
