@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "../build-db.ts";
+import { characterOptions } from "./character-options.ts";
 import { classes } from "./classes.ts";
 import { EDITION_FILES } from "./edition.ts";
 
@@ -68,6 +69,7 @@ describe("the classes loader", () => {
       "Death Domain|DMG (Death) Cleric|XPHB classic",
       "Knowledge Domain|PHB (Knowledge) Cleric|PHB classic",
       "Knowledge Domain|PHB (Knowledge) Cleric|XPHB classic",
+      "Battle Master|XPHB (Battle Master) Fighter|XPHB one",
       "Eldritch Knight|XPHB (Eldritch Knight) Fighter|XPHB one",
       "Psi Warrior|XPHB (Psi Warrior) Fighter|XPHB one",
     ]);
@@ -175,6 +177,83 @@ describe("the classes loader", () => {
       { level: 3, slot_level: 2, slots: 2 },
     ]);
     expect(keys).toEqual(["cantrips_known", "invocations_known"]);
+  });
+
+  it("carries a sparse progression forward, and stores a stated one as it stands", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT level, feature_type, known FROM class_optional_features " +
+          "WHERE class_name = 'Warlock' AND level <= 5 ORDER BY level, feature_type",
+      )
+      .all();
+    db.close();
+
+    // The invocations are 20 stated cells and the pact boon is {"3": 1}: level 4
+    // is silent in the sparse form and still knows the boon it took at 3, while
+    // levels 1 and 2 store nothing at all because neither grants one yet.
+    expect(rows).toEqual([
+      { level: 2, feature_type: "EI", known: 2 },
+      { level: 3, feature_type: "EI", known: 2 },
+      { level: 3, feature_type: "PB", known: 1 },
+      { level: 4, feature_type: "EI", known: 2 },
+      { level: 4, feature_type: "PB", known: 1 },
+      { level: 5, feature_type: "EI", known: 3 },
+      { level: 5, feature_type: "PB", known: 1 },
+    ]);
+  });
+
+  it("files a subclass progression under the subclass that grants it", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT subclass_name, level, feature_type, known FROM subclass_optional_features " +
+          "WHERE level IN (2, 3, 6, 7) ORDER BY level",
+      )
+      .all();
+    const classSide = db
+      .prepare("SELECT COUNT(*) FROM class_optional_features WHERE class_name = 'Fighter'")
+      .pluck()
+      .get();
+    db.close();
+
+    expect(rows).toEqual([
+      { subclass_name: "Battle Master", level: 3, feature_type: "MV:B", known: 3 },
+      { subclass_name: "Battle Master", level: 6, feature_type: "MV:B", known: 3 },
+      { subclass_name: "Battle Master", level: 7, feature_type: "MV:B", known: 5 },
+    ]);
+    expect(classSide).toBe(0);
+  });
+
+  it("answers what a class may pick at a level, as one join over both halves", () => {
+    buildContent({
+      vendorDir: FIXTURE_VENDOR,
+      dbPath,
+      loaders: [classes, characterOptions],
+      meta: {},
+    });
+
+    const db = open();
+    const query = db.prepare(
+      "SELECT known.known, options.name, options.source FROM class_optional_features AS known " +
+        "JOIN optional_feature_types AS types ON types.feature_type = known.feature_type " +
+        "JOIN optional_features AS options ON options.name = types.name " +
+        "AND options.source = types.source " +
+        "WHERE known.class_name = ? AND known.class_source = ? AND known.level = ? " +
+        "ORDER BY options.name",
+    );
+    const atFive = query.all("Warlock", "PHB", 5);
+    const atOne = query.all("Warlock", "PHB", 1);
+    db.close();
+
+    // Three invocations at level 5, chosen from every option carrying EI. Level
+    // 1 is entitled to none, which is an absent row rather than a zero.
+    expect(atFive).toEqual([{ known: 3, name: "Agonizing Blast", source: "XPHB" }]);
+    expect(atOne).toEqual([]);
   });
 
   it("files a subclass table under the subclass, tag labels and all", () => {
@@ -468,6 +547,38 @@ describe("the classes loader", () => {
     expect(
       refusal(vendorHolding("class-barbarian.json", barbarian(table(2), ["Spell Slots"]))),
     ).toMatch(/"Spell Slots" and "Slot Level" come as a pair/);
+  });
+
+  const progressing = (progression: unknown, featureType: unknown = ["MM"]) => ({
+    class: [
+      {
+        name: "Sorcerer",
+        source: "PHB",
+        edition: "classic",
+        hd: { number: 1, faces: 6 },
+        optionalfeatureProgression: [{ name: "Metamagic", featureType, progression }],
+      },
+    ],
+  });
+
+  it.each([
+    [
+      "a progression of neither shape",
+      4,
+      /progression is neither a list of levels nor a map of them/,
+    ],
+    ["a progression short of 20 levels", [1, 2], /2 cells, and a progression covers all 20 levels/],
+    ["a level past 20", { 21: 1 }, /"21" is not a level from 1 to 20/],
+    ["a level of 0", { 0: 1 }, /"0" is not a level from 1 to 20/],
+    ["a count that is not one", { 3: "two" }, /"two" is not a count of options/],
+  ])("refuses %s", (_case, progression, reason) => {
+    expect(refusal(vendorHolding("class-sorcerer.json", progressing(progression)))).toMatch(reason);
+  });
+
+  it("refuses a progression naming no feature type, which no option could match", () => {
+    expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, [])))).toMatch(
+      /featureType is missing or empty/,
+    );
   });
 
   it("refuses a subclass table group that names another subclass", () => {

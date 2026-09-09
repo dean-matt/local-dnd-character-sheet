@@ -42,3 +42,24 @@ Four traps in reading a group:
 - **A cell is not always a number**: `{"type": "bonus"}`, `{"type": "bonusSpeed"}` and
   `{"type": "dice"}` objects appear alongside counts, `{@dice D8}` markup, an em dash for
   a resource the level has not reached, and `Unlimited` for a level 20 barbarian's rages.
+
+## Optional features per level
+
+`optionalfeatureProgression`, on 9 class and 13 subclass entries, says how many options
+of a `featureType` a level knows — the count half of the join whose pool half is a
+feature's own `featureType` list. It arrives in two shapes that mean different things at
+a level they skip:
+
+```
+Warlock   progression [1,3,3,3,5,5,6,...]   20 cells, one per level
+Sorcerer  progression {"3":2,"10":3,"17":4} the levels it changes at, and silent between
+```
+
+19 of the 22 blocks are the sparse object, which **carries its count forward**: a level 9
+sorcerer knows the 2 kinds of metamagic it took at 3. Read as though it were dense, it
+files a count at three levels and loses the other 15; a dense array read as sparse loses
+every level. Both are normalized to a row per level.
+
+One block carries more: Way of the Four Elements names a `required` discipline at level 3.
+The count is what the table holds, so that stays in the entry's `json` — a character's
+picks are not validated by the ETL.

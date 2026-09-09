@@ -86,6 +86,32 @@ CREATE TABLE subclass_spell_slots (
   PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
 ) STRICT;
 
+-- How many options of a feature type a level may pick — the other half of the
+-- join optional_feature_types starts: that table says which options carry a
+-- type, and these say how many of them a class knows. Every level that may pick
+-- carries a row, since upstream states a count two ways and only one of them
+-- says anything about a level it skips.
+
+CREATE TABLE class_optional_features (
+  class_name   TEXT NOT NULL,
+  class_source TEXT NOT NULL,
+  level        INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  feature_type TEXT NOT NULL,
+  known        INTEGER NOT NULL CHECK (known > 0),
+  PRIMARY KEY (class_name, class_source, level, feature_type)
+) STRICT;
+
+CREATE TABLE subclass_optional_features (
+  class_name      TEXT NOT NULL,
+  class_source    TEXT NOT NULL,
+  subclass_name   TEXT NOT NULL,
+  subclass_source TEXT NOT NULL,
+  level           INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  feature_type    TEXT NOT NULL,
+  known           INTEGER NOT NULL CHECK (known > 0),
+  PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, feature_type)
+) STRICT;
+
 -- A feature is the one Tier A entity (name, source) does not identify: 55 class
 -- features and 117 subclass features share one with another, and Ability Score
 -- Improvement from PHB alone covers 63 rows across twelve classes and five

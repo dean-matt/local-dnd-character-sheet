@@ -152,8 +152,9 @@ the registry was diffed against it.
 
 ## Class tables
 
-`classTableGroups` and `subclassTableGroups` state what a class gets at each level, and
-have a document of their own: [`class-tables.md`](class-tables.md).
+`classTableGroups`, `subclassTableGroups` and `optionalfeatureProgression` state what a
+class gets at each level, and have a document of their own:
+[`class-tables.md`](class-tables.md).
 
 ## Useful generated files
 

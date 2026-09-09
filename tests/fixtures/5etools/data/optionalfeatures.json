@@ -74,6 +74,13 @@
         }
       ],
       "entries": ["Choose one of your known {@filter Warlock cantrips|spells|level=0|clas"]
+    },
+    {
+      "name": "Ambush",
+      "source": "XPHB",
+      "page": 94,
+      "featureType": ["MV:B"],
+      "entries": ["When you make a Dexterity ({@skill Stealth|XPHB}) check or a"]
     }
   ]
 }
