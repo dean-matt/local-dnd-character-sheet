@@ -427,9 +427,17 @@ describe("resolveCopies", () => {
       expect(resolved.background[2]?.entries).toEqual(["Yours."]);
     });
 
-    it("keeps the file and entry label when an entry is not an object", () => {
+    it.each([
+      ["on its own", []],
+      // Scanning for a parent touches every entry, so a malformed one must not
+      // be read as a candidate before `resolve` gets to report it.
+      ["alongside a _copy", [{ name: "B", source: "PHB", _copy: { name: "A", source: "PHB" } }]],
+    ])("keeps the file and entry label when an entry is not an object, %s", (_, rest) => {
       expect(() =>
-        resolveCopies(file({ name: "A", source: "PHB" }, null as unknown as Entry), "data/x.json"),
+        resolveCopies(
+          file({ name: "A", source: "PHB" }, ...(rest as Entry[]), null as unknown as Entry),
+          "data/x.json",
+        ),
       ).toThrow("data/x.json background: expected entries to be objects, found null");
     });
 

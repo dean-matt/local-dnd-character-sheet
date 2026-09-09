@@ -75,7 +75,12 @@ function describe(entry: Entry, keys: string[]): string {
  * the identities that collide.
  */
 function findParents(entries: Entry[], copy: Entry, keys: string[]): Entry[] {
-  return entries.filter((candidate) => keys.every((key) => candidate[key] === copy[key]));
+  // A scan touches every entry, malformed ones included. Reporting those is
+  // `resolve`'s job, and it names the file and the property; reading a key off
+  // one here throws a bare TypeError from underneath that.
+  return entries.filter(
+    (candidate) => isRecord(candidate) && keys.every((key) => candidate[key] === copy[key]),
+  );
 }
 
 /** The one entry the block names, refusing a block that names none or several. */
