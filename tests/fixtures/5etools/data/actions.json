@@ -1,0 +1,38 @@
+{
+  "action": [
+    {
+      "name": "Dash",
+      "source": "PHB",
+      "page": 192,
+      "srd": true,
+      "basicRules": true,
+      "reprintedAs": ["Dash|XPHB"],
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "entries": [
+        "When you take the Dash action, you gain extra movement for the current turn. The increase equals your speed, after applying any modifiers. With a speed of 30 feet, for example, you can move up to 60 feet on your turn if you dash.",
+        "Any increase or decrease to your speed changes this additional movement by the same amount. If your speed of 30 feet is reduced to 15 feet, for instance, you can move up to 30 feet this turn if you dash."
+      ]
+    },
+    {
+      "name": "Dash",
+      "source": "XPHB",
+      "page": 365,
+      "srd52": true,
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "entries": [
+        "When you take the Dash action, you gain extra movement for the current turn. The increase equals your {@variantrule Speed|XPHB} after applying any modifiers. With a {@variantrule Speed|XPHB} of 30 feet, for example, you can move up to 60 feet on your turn if you Dash. If your {@variantrule Speed|XPHB} of 30 feet is reduced to 15 feet, you can move up to 30 feet this turn if you Dash.",
+        "If you have a special speed, such as a {@variantrule Fly Speed|XPHB} or {@variantrule Swim Speed|XPHB}, you can use that speed instead of your {@variantrule Speed|XPHB} when you take this action. You choose which speed to use each time you take it."
+      ]
+    }
+  ]
+}

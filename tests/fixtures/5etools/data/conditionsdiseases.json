@@ -1,0 +1,84 @@
+{
+  "condition": [
+    {
+      "name": "Blinded",
+      "source": "PHB",
+      "page": 290,
+      "srd": true,
+      "basicRules": true,
+      "otherSources": [
+        {
+          "source": "RMR",
+          "page": 62
+        },
+        {
+          "source": "HftT",
+          "page": 48
+        }
+      ],
+      "reprintedAs": ["Blinded|XPHB"],
+      "entries": [
+        {
+          "type": "list",
+          "items": [
+            "A blinded creature can't see and automatically fails any ability check that requires sight.",
+            "Attack rolls against the creature have advantage, and the creature's attack rolls have disadvantage."
+          ]
+        }
+      ],
+      "hasFluffImages": true
+    },
+    {
+      "name": "Blinded",
+      "source": "XPHB",
+      "page": 361,
+      "srd52": true,
+      "basicRules2024": true,
+      "entries": [
+        "While you have the Blinded condition, you experience the following effects.",
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "name": "Can't See",
+              "entries": [
+                "You can't see and automatically fail any ability check that requires sight."
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Attacks Affected",
+              "entries": [
+                "{@action Attack|XPHB} rolls against you have {@variantrule Advantage|XPHB}, and your attack rolls have {@variantrule Disadvantage|XPHB}."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "disease": [
+    {
+      "name": "Blinding Sickness",
+      "source": "PHB",
+      "page": 227,
+      "entries": [
+        "Pain grips the creature's mind, and its eyes turn milky white. The creature has disadvantage on Wisdom checks and Wisdom saving throws and is {@condition blinded}.",
+        "{@note This disease can be inflicted with the {@spell contagion|PHB} spell.}"
+      ]
+    }
+  ],
+  "status": [
+    {
+      "name": "Bloodied",
+      "source": "XPHB",
+      "page": 362,
+      "srd52": true,
+      "basicRules2024": true,
+      "entries": [
+        "A creature is Bloodied while it has half its {@variantrule Hit Points|XPHB} or fewer remaining."
+      ]
+    }
+  ]
+}

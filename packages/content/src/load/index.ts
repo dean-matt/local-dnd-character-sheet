@@ -9,7 +9,9 @@
  */
 
 import { classes } from "./classes.ts";
+import { lookups } from "./lookups.ts";
 import { spells } from "./spells.ts";
+import { tagRedirects } from "./tag-redirects.ts";
 
 /** A column a row omits, or carries as `undefined`, is written as NULL. */
 export type Row = Record<string, string | number | null | undefined>;
@@ -30,4 +32,4 @@ export type Loader = {
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };
 
-export const LOADERS: Loader[] = [spells, classes];
+export const LOADERS: Loader[] = [spells, classes, lookups, tagRedirects];

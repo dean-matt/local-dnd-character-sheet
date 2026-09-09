@@ -1,0 +1,24 @@
+{
+  "sense": [
+    {
+      "name": "Darkvision",
+      "source": "PHB",
+      "page": 183,
+      "srd": true,
+      "basicRules": true,
+      "reprintedAs": ["Darkvision|XPHB"],
+      "entries": [
+        "Many creatures in fantasy gaming worlds, especially those that dwell underground, have darkvision. Within a specified range, a creature with darkvision can see in dim light as if it were bright light and in darkness as if it were dim light, so areas of darkness are only lightly obscured as far as that creature is concerned. However, the creature can't discern color in that darkness, only shades of gray."
+      ]
+    },
+    {
+      "name": "Darkvision",
+      "source": "XPHB",
+      "page": 365,
+      "srd52": true,
+      "entries": [
+        "If you have Darkvision, you can see in {@variantrule Dim Light|XPHB} within a specified range as if it were {@variantrule Bright Light|XPHB} and in {@variantrule Darkness|XPHB} within that range as if it were {@variantrule Dim Light|XPHB}. You discern colors in that {@variantrule Darkness|XPHB} only as shades of gray."
+      ]
+    }
+  ]
+}

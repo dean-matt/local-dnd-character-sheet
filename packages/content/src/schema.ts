@@ -140,13 +140,18 @@ CREATE TABLE optional_features (
 
 -- Tier B ---------------------------------------------------------------------
 
+-- qualifier is the identity a kind needs beyond (name, source): the pantheon a
+-- deity tag names, and nothing else in the catalog. Empty rather than NULL,
+-- because SQLite lets NULLs repeat inside a PRIMARY KEY, so the five deities
+-- that share a (name, source) with another pantheon's god would insert unnoticed.
 CREATE TABLE lookups (
-  kind    TEXT NOT NULL,
-  name    TEXT NOT NULL,
-  source  TEXT NOT NULL,
-  edition TEXT CHECK (edition IS NULL OR edition IN ('classic', 'one')),
-  json    TEXT NOT NULL,
-  PRIMARY KEY (kind, name, source)
+  kind      TEXT NOT NULL,
+  name      TEXT NOT NULL,
+  source    TEXT NOT NULL,
+  qualifier TEXT NOT NULL,
+  edition   TEXT CHECK (edition IS NULL OR edition IN ('classic', 'one')),
+  json      TEXT NOT NULL,
+  PRIMARY KEY (kind, name, source, qualifier)
 ) STRICT;
 
 CREATE INDEX lookups_by_kind ON lookups (kind, name);
@@ -191,9 +196,15 @@ CREATE TRIGGER entities_fts_update AFTER UPDATE ON entities BEGIN
 END;
 
 -- Upstream's own map of renamed and redirected tags, so links survive renames.
+-- A tag here is upstream's namespace for a link: a page filename where the type
+-- has a page, a bare tag name where it does not. The page is the coarser half of
+-- that mapping — trap and hazard tags share trapshazards.html — so a renderer
+-- resolves its own tag to one of these rather than the reverse. to_tag repeats
+-- tag except for the 36 redirects that land in another namespace.
 CREATE TABLE tag_redirects (
   tag       TEXT NOT NULL,
   from_key  TEXT NOT NULL,
+  to_tag    TEXT NOT NULL,
   to_key    TEXT NOT NULL,
   PRIMARY KEY (tag, from_key)
 ) STRICT;
