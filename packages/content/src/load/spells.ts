@@ -6,7 +6,7 @@
  * from its source. Everything else stays in `json`, `{@tag}` markup included —
  * that is rendered at read time, not here.
  */
-import { EDITION_FILES, type Edition, editions } from "./edition.ts";
+import { EDITION_FILES, type Edition, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord } from "./json.ts";
 
@@ -43,22 +43,18 @@ function toRow(entry: unknown, context: string, editionOf: (source: string) => E
   };
 }
 
-const SPELL_FILES = "data/spells/spells-";
-
 export const spells: Loader = {
   name: "spells",
   files: ["data/spells/spells-*.json", ...EDITION_FILES],
   rows: (sources) => {
     const editionOf = editions(sources);
     return {
-      spells: [...sources]
-        .filter(([path]) => path.startsWith(SPELL_FILES))
-        .flatMap(([path, source]) => {
-          if (!isRecord(source) || !Array.isArray(source.spell)) {
-            throw new Error(`${path} carries no spell array`);
-          }
-          return source.spell.map((entry, index) => toRow(entry, `${path}[${index}]`, editionOf));
-        }),
+      spells: ownFiles(sources).flatMap(([path, source]) => {
+        if (!isRecord(source) || !Array.isArray(source.spell)) {
+          throw new Error(`${path} carries no spell array`);
+        }
+        return source.spell.map((entry, index) => toRow(entry, `${path}[${index}]`, editionOf));
+      }),
     };
   },
 };

@@ -1,6 +1,6 @@
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "../build-db.ts";
@@ -91,6 +91,14 @@ describe("the spells loader", () => {
     expect(entry.entries[0]).toContain("{@variantrule Sphere [Area of Effect]|XPHB|Sphere}");
   });
 
+  const FIREBALL = {
+    name: "Fireball",
+    source: "PHB",
+    level: 3,
+    school: "V",
+    duration: [{ type: "instant" }],
+  };
+
   const vendorHolding = (...entries: unknown[]): string => {
     const vendorDir = join(workspace, "vendor");
     mkdirSync(join(vendorDir, "data", "spells"), { recursive: true });
@@ -99,38 +107,53 @@ describe("the spells loader", () => {
       JSON.stringify({ spell: entries }),
     );
     for (const file of EDITION_FILES) {
-      copyFileSync(join(FIXTURE_VENDOR, file), join(vendorDir, file));
+      const destination = join(vendorDir, file);
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(join(FIXTURE_VENDOR, file), destination);
     }
     return vendorDir;
   };
 
-  it("fails the build when two entries share a (name, source)", () => {
-    const fireball = {
-      name: "Fireball",
-      source: "PHB",
-      level: 3,
-      school: "V",
-      duration: [{ type: "instant" }],
-    };
+  /**
+   * The reason, not the wrapper. `buildContent` reports every loader failure as
+   * `Loader "spells" failed` — including a vendor directory missing a file the
+   * loader declared, which is what a broken `vendorHolding` looks like. Asserting
+   * the wrapper passes whether or not the entry was refused for the stated reason.
+   */
+  const refusal = (vendorDir: string): string => {
+    try {
+      build(vendorDir);
+    } catch (error) {
+      const { cause } = error as Error;
+      return cause instanceof Error ? cause.message : String(cause);
+    }
+    throw new Error("the build succeeded");
+  };
 
-    expect(() => build(vendorHolding(fireball, fireball))).toThrow(/Loader "spells" failed/);
+  it("fails the build when two entries share a (name, source)", () => {
+    expect(refusal(vendorHolding(FIREBALL, FIREBALL))).toMatch(
+      /UNIQUE constraint failed: spells\.name, spells\.source/,
+    );
   });
 
   it.each([
-    ["a level that is not a number", { level: "third" }],
-    ["no school", { school: undefined }],
-    ["no duration", { duration: undefined }],
-    ["a duration that is not a list", { duration: { type: "instant" } }],
-  ])("refuses an entry with %s", (_, override) => {
-    const fireball = {
-      name: "Fireball",
-      source: "PHB",
-      level: 3,
-      school: "V",
-      duration: [{ type: "instant" }],
-      ...override,
-    };
+    ["a level that is not a number", { level: "third" }, /level third is not a whole number/],
+    ["no school", { school: undefined }, /school is missing or not a string/],
+    ["no duration", { duration: undefined }, /duration is missing or not a list of spans/],
+    [
+      "a duration that is not a list",
+      { duration: { type: "instant" } },
+      /duration is missing or not a list of spans/,
+    ],
+  ])("refuses an entry with %s", (_, override, reason) => {
+    expect(refusal(vendorHolding({ ...FIREBALL, ...override }))).toMatch(reason);
+  });
 
-    expect(() => build(vendorHolding(fireball))).toThrow(/Loader "spells" failed/);
+  it("reports a missing declared file rather than refusing the entry", () => {
+    const vendorDir = vendorHolding(FIREBALL);
+    rmSync(join(vendorDir, EDITION_FILES[0] as string));
+
+    expect(() => build(vendorDir)).toThrow(/Loader "spells" failed/);
+    expect(refusal(vendorDir)).toMatch(/matches data\/books\.json/);
   });
 });
