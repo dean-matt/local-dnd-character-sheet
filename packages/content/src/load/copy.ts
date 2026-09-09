@@ -11,8 +11,7 @@
  * That includes a parent in another file: bestiary entries copy that way,
  * character-relevant ones never do.
  */
-
-type Entry = Record<string, unknown>;
+import { type Entry, isRecord } from "./json.ts";
 
 /** Parent metadata that does not survive a copy unless `_copy._preserve` names it. */
 const NOT_INHERITED = [
@@ -50,10 +49,6 @@ const TEXT_KEYS = new Set([
   "headerEntries",
   "footerEntries",
 ]);
-
-function isRecord(value: unknown): value is Entry {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 /** `_mod` accepts a single operation or a list of them, and `items` a single item or a list. */
 function asArray(value: unknown): unknown[] {

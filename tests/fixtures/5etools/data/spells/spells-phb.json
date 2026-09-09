@@ -1,0 +1,41 @@
+{
+  "spell": [
+    {
+      "name": "Acid Splash",
+      "source": "PHB",
+      "page": 211,
+      "srd": true,
+      "reprintedAs": ["Acid Splash|XPHB"],
+      "level": 0,
+      "school": "C",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "feet", "amount": 60 } },
+      "components": { "v": true, "s": true },
+      "duration": [{ "type": "instant" }],
+      "entries": [
+        "You hurl a bubble of acid. A target must succeed on a Dexterity saving throw or take {@damage 1d6} acid damage."
+      ],
+      "damageInflict": ["acid"],
+      "savingThrow": ["dexterity"]
+    },
+    {
+      "name": "Detect Magic",
+      "source": "PHB",
+      "page": 231,
+      "srd": true,
+      "reprintedAs": ["Detect Magic|XPHB"],
+      "level": 1,
+      "school": "D",
+      "time": [{ "number": 1, "unit": "action" }],
+      "range": { "type": "point", "distance": { "type": "self" } },
+      "components": { "v": true, "s": true },
+      "duration": [
+        { "type": "timed", "duration": { "type": "minute", "amount": 10 }, "concentration": true }
+      ],
+      "meta": { "ritual": true },
+      "entries": [
+        "For the duration, you sense the presence of magic within 30 feet of you, and you learn its {@book school of magic|PHB|10|The Schools of Magic}, if any."
+      ]
+    }
+  ]
+}

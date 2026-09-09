@@ -1,0 +1,25 @@
+{
+  "book": [
+    {
+      "name": "Player's Handbook (2014)",
+      "id": "PHB",
+      "source": "PHB",
+      "group": "core",
+      "published": "2014-08-19"
+    },
+    {
+      "name": "Puncheons and Flagons",
+      "id": "PaF",
+      "source": "PaF",
+      "group": "recipe",
+      "published": "2024-08-27"
+    },
+    {
+      "name": "Player's Handbook (2024)",
+      "id": "XPHB",
+      "source": "XPHB",
+      "group": "core",
+      "published": "2024-09-17"
+    }
+  ]
+}
