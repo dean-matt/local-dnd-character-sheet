@@ -84,7 +84,7 @@ describe("resolveVersions", () => {
       expect((black.entries as Entry[])[0]?.entries).toEqual(["Deals Acid damage."]);
     });
 
-    it("substitutes a variable holding a list whole, rather than as its text", () => {
+    it("lays an implementation's own fields over the filled template", () => {
       expect(find(races, "Dragonborn (Blue)").resist).toEqual(["lightning"]);
       expect(find(races, "Dragonborn").resist).not.toEqual(["lightning"]);
     });
@@ -124,20 +124,50 @@ describe("resolveVersions", () => {
       ).toMatch(/\{\{color\}\} was never given a value/);
     });
 
-    it("refuses a list-valued variable used inside surrounding prose", () => {
+    const templated = (template: Entry, variables: Entry) =>
+      file({
+        ...base,
+        _versions: [{ _abstract: template, _implementations: [{ _variables: variables }] }],
+      });
+
+    it("refuses a variable no placeholder uses, rather than dropping what it says", () => {
+      // FTD's chromatic dragonborn is this shape: five colours declaring a
+      // resistance the template never mentions, which would file all five under
+      // the base's "choose one of five" with nothing to show for it.
       expect(
         refusal(
-          file({
-            ...base,
-            _versions: [
-              {
-                _abstract: { name: "Elf of {{kind}} kind", source: "PHB" },
-                _implementations: [{ _variables: { kind: ["wood"] } }],
-              },
-            ],
-          }),
+          templated(
+            { name: "Elf ({{color}})", source: "PHB" },
+            { color: "Wood", resist: ["fire"] },
+          ),
         ),
-      ).toMatch(/\{\{kind\}\} holds no text, and sits inside some/);
+      ).toMatch(/_variables\.resist is set, and no \{\{resist\}\} uses it/);
+    });
+
+    it("refuses a variable that is not text, since a placeholder holds text", () => {
+      expect(
+        refusal(templated({ name: "Elf of {{kind}} kind", source: "PHB" }, { kind: ["wood"] })),
+      ).toMatch(/_variables\.kind is not text/);
+    });
+
+    it("refuses a placeholder named after something on Object's prototype", () => {
+      expect(refusal(templated({ name: "Elf ({{constructor}})", source: "PHB" }, {}))).toMatch(
+        /\{\{constructor\}\} was never given a value/,
+      );
+    });
+
+    it("drops a _versions a version declares of its own, which nothing revisits", () => {
+      const resolved = resolveVersions(
+        file({
+          ...base,
+          _versions: [
+            { name: "Wood Elf", source: "PHB", _versions: [{ name: "Deeper", source: "PHB" }] },
+          ],
+        }),
+        "data/races.json",
+      ) as { race: Entry[] };
+
+      expect(resolved.race.filter((entry) => "_versions" in entry)).toEqual([]);
     });
   });
 });

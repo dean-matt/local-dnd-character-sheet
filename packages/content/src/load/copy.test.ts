@@ -454,7 +454,31 @@ describe("resolveCopies", () => {
           ),
           "data/backgrounds.json",
         ),
-      ).toThrow("removeArr matched 1 of 2 named elements in entries");
+      ).toThrow('removeArr names "Missing", which entries does not hold');
+    });
+
+    it("checks each name, so a repeated one cannot cover for a typo", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "One" }, { name: "One" }] },
+            copying({ entries: { mode: "removeArr", names: ["One", "Typo"] } }),
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow('removeArr names "Typo", which entries does not hold');
+    });
+
+    it("refuses a removeArr with no names at all, not only an empty list", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "One" }] },
+            copying({ entries: { mode: "removeArr" } }),
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow("removeArr needs names");
     });
 
     it("treats a removeArr against a property the entry lacks as nothing to remove", () => {

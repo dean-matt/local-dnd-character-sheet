@@ -216,7 +216,6 @@
           "_abstract": {
             "name": "Dragonborn ({{color}})",
             "source": "XPHB",
-            "resist": "{{resist}}",
             "_mod": {
               "entries": [
                 {
@@ -239,16 +238,16 @@
             {
               "_variables": {
                 "color": "Black",
-                "damageType": "Acid",
-                "resist": ["acid"]
-              }
+                "damageType": "Acid"
+              },
+              "resist": ["acid"]
             },
             {
               "_variables": {
                 "color": "Blue",
-                "damageType": "Lightning",
-                "resist": ["lightning"]
-              }
+                "damageType": "Lightning"
+              },
+              "resist": ["lightning"]
             }
           ]
         }

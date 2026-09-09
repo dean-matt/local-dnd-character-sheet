@@ -96,17 +96,21 @@ function removeNamed(
   op: Entry,
   context: string,
 ): void {
-  const names = new Set(asArray(op.names).map(String));
-  if (names.size === 0) throw new Error(`${context}: removeArr needs names`);
+  if (op.names === undefined) throw new Error(`${context}: removeArr needs names`);
+  const names = asArray(op.names).map(String);
+  if (names.length === 0) throw new Error(`${context}: removeArr needs names`);
   if (target === undefined) return;
-  const kept = list.filter((item) => !(isRecord(item) && names.has(String(item.name))));
-  const removed = list.length - kept.length;
-  if (removed < names.size) {
+  const held = new Set(list.filter(isRecord).map((item) => String(item.name)));
+  // Each name, not the total removed: two elements sharing a name would other-
+  // wise cover for a third name that matches nothing, which is the typo.
+  const absent = names.filter((name) => !held.has(name));
+  if (absent.length > 0) {
     throw new Error(
-      `${context}: removeArr matched ${removed} of ${names.size} named elements in ${property}`,
+      `${context}: removeArr names ${absent.map((name) => `"${name}"`).join(", ")}, which ${property} does not hold`,
     );
   }
-  entry[property] = kept;
+  const wanted = new Set(names);
+  entry[property] = list.filter((item) => !(isRecord(item) && wanted.has(String(item.name))));
 }
 
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {

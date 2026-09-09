@@ -20,41 +20,54 @@ import { type Entry, isRecord } from "./json.ts";
 import { applyMod } from "./mod.ts";
 
 const PLACEHOLDER = /\{\{(\w+)\}\}/g;
-const WHOLE_VALUE = /^\{\{(\w+)\}\}$/;
 
-/**
- * Fills `{{name}}` throughout a template. A string that is nothing but one
- * placeholder becomes that variable's value whole, so a variable holding a list
- * — `resist` on the chromatic dragonborn — arrives as a list rather than as its
- * text. Interpolating one into surrounding prose would read `[object Object]`,
- * so it is refused instead. A placeholder with no variable is left for `expand`
- * to catch once the `_mod` has run.
- */
-function fill(node: unknown, variables: Entry, context: string): unknown {
+/** Every `{{name}}` the template asks for. */
+function placeholdersIn(template: Entry): Set<string> {
+  const asked = new Set<string>();
+  for (const [, name] of JSON.stringify(template).matchAll(PLACEHOLDER)) asked.add(name as string);
+  return asked;
+}
+
+/** Fills `{{name}}` throughout a template. Every name is known by the time this runs. */
+function fill(node: unknown, variables: Record<string, string>): unknown {
   if (typeof node === "string") {
-    const whole = WHOLE_VALUE.exec(node);
-    const named = whole?.[1];
-    if (named !== undefined && named in variables) return structuredClone(variables[named]);
-    return node.replace(PLACEHOLDER, (all, key: string) => {
-      if (!(key in variables)) return all;
-      const value = variables[key];
-      if (typeof value !== "string") {
-        throw new Error(`${context}: ${all} holds no text, and sits inside some`);
-      }
-      return value;
-    });
+    return node.replace(PLACEHOLDER, (all, name: string) =>
+      Object.hasOwn(variables, name) ? (variables[name] as string) : all,
+    );
   }
-  if (Array.isArray(node)) return node.map((child) => fill(child, variables, context));
+  if (Array.isArray(node)) return node.map((child) => fill(child, variables));
   if (!isRecord(node)) return node;
   return Object.fromEntries(
-    Object.entries(node).map(([key, value]) => [key, fill(value, variables, context)]),
+    Object.entries(node).map(([key, value]) => [key, fill(value, variables)]),
   );
 }
 
-function variablesOf(implementation: Entry, context: string): Entry {
+/**
+ * The substitutions one implementation supplies, checked against what the
+ * template asks for. A variable nothing references is upstream saying something
+ * this does not act on — `Dragonborn (Chromatic)` in `FTD` declares a `resist`
+ * list that no placeholder uses, and dropping it silently would file all five
+ * colours under the base's "choose one of five". A variable that is not text
+ * cannot be substituted into any of it.
+ */
+function variablesOf(
+  implementation: Entry,
+  asked: Set<string>,
+  context: string,
+): Record<string, string> {
   const declared = implementation._variables;
   if (!isRecord(declared)) throw new Error(`${context}: an _implementation declares no _variables`);
-  return declared;
+  const variables: Record<string, string> = {};
+  for (const [name, value] of Object.entries(declared)) {
+    if (!asked.has(name)) {
+      throw new Error(`${context}: _variables.${name} is set, and no {{${name}}} uses it`);
+    }
+    if (typeof value !== "string") {
+      throw new Error(`${context}: _variables.${name} is not text, and a placeholder holds text`);
+    }
+    variables[name] = value;
+  }
+  return variables;
 }
 
 /**
@@ -68,18 +81,22 @@ function specsOf(block: Entry, context: string): Entry[] {
   if (!isRecord(template) || !Array.isArray(implementations)) {
     throw new Error(`${context}: _abstract and _implementations come as a pair`);
   }
+  const asked = placeholdersIn(template);
   return implementations.map((implementation) => {
-    if (!isRecord(implementation))
+    if (!isRecord(implementation)) {
       throw new Error(`${context}: an _implementation is not an object`);
+    }
     const { _variables: _used, ...own } = implementation;
-    const filled = fill(template, variablesOf(implementation, context), context) as Entry;
+    const filled = fill(template, variablesOf(implementation, asked, context)) as Entry;
     return { ...filled, ...own };
   });
 }
 
 /** One complete entry: the base, the version's own fields, then its `_mod`. */
 function expand(base: Entry, spec: Entry, context: string): Entry {
-  const { _mod: mod, ...own } = spec;
+  // A version's own `_versions` is dropped with the base's: nothing revisits an
+  // entry this emits, so leaving one would hand a loader an unresolved block.
+  const { _mod: mod, _versions: _nested, ...own } = spec;
   const { _versions: _dropped, ...inherited } = base;
   const version: Entry = structuredClone({ ...inherited, ...own });
   if (mod !== undefined) {
