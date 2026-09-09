@@ -8,5 +8,16 @@
       "isSidekick": true,
       "classFeatures": ["Bonus Proficiencies|Expert Sidekick|TCE|1"]
     }
+  ],
+  "classFeature": [
+    {
+      "name": "Bonus Proficiencies",
+      "source": "TCE",
+      "page": 142,
+      "className": "Expert Sidekick",
+      "classSource": "TCE",
+      "level": 1,
+      "entries": ["{@i 1st-level Expert feature}"]
+    }
   ]
 }

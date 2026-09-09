@@ -28,9 +28,13 @@ CREATE TABLE classes (
   PRIMARY KEY (name, source)
 ) STRICT;
 
+-- short_name is what a tag and a feature row call this subclass — Berserker,
+-- where name is Path of the Berserker. Carried as a column so joining a
+-- subclass to its features is SQL rather than json_extract.
 CREATE TABLE subclasses (
   name         TEXT NOT NULL,
   source       TEXT NOT NULL,
+  short_name   TEXT NOT NULL,
   class_name   TEXT NOT NULL,
   class_source TEXT NOT NULL,
   edition      TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
@@ -80,6 +84,38 @@ CREATE TABLE subclass_spell_slots (
   slot_level      INTEGER NOT NULL CHECK (slot_level BETWEEN 1 AND 9),
   slots           INTEGER NOT NULL,
   PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
+) STRICT;
+
+-- A feature is the one Tier A entity (name, source) does not identify: 55 class
+-- features and 117 subclass features share one with another, and Ability Score
+-- Improvement from PHB alone covers 63 rows across twelve classes and five
+-- levels. The key is what the classFeature and subclassFeature tags spell out —
+-- the owning class, the subclass where there is one, and the level.
+
+CREATE TABLE class_features (
+  name         TEXT NOT NULL,
+  source       TEXT NOT NULL,
+  class_name   TEXT NOT NULL,
+  class_source TEXT NOT NULL,
+  level        INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  edition      TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  json         TEXT NOT NULL,
+  PRIMARY KEY (name, source, class_name, class_source, level)
+) STRICT;
+
+-- subclass_short_name, not the subclass name: a tag names the Berserker, while
+-- the subclasses row is the Path of the Berserker.
+CREATE TABLE subclass_features (
+  name                TEXT NOT NULL,
+  source              TEXT NOT NULL,
+  class_name          TEXT NOT NULL,
+  class_source        TEXT NOT NULL,
+  subclass_short_name TEXT NOT NULL,
+  subclass_source     TEXT NOT NULL,
+  level               INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  edition             TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  json                TEXT NOT NULL,
+  PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
 ) STRICT;
 
 CREATE TABLE spells (
