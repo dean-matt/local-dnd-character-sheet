@@ -95,6 +95,355 @@
           "reprintedAs": true
         }
       }
+    },
+    {
+      "name": "Aasimar",
+      "source": "MPMM",
+      "page": 7,
+      "reprintedAs": ["Aasimar|XPHB"],
+      "lineage": "VRGR",
+      "size": ["S", "M"],
+      "speed": 30,
+      "age": {
+        "max": 180
+      },
+      "darkvision": 60,
+      "resist": ["necrotic", "radiant"],
+      "soundClip": {
+        "type": "internal",
+        "path": "races/aasimar.opus"
+      },
+      "additionalSpells": [
+        {
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "1": ["light#c"]
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Celestial Revelation",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Healing Hands",
+          "entries": ["Elided."]
+        }
+      ],
+      "hasFluff": true,
+      "hasFluffImages": true,
+      "_versions": [
+        {
+          "name": "Aasimar; Necrotic Shroud",
+          "source": "MPMM",
+          "_mod": {
+            "entries": {
+              "mode": "replaceArr",
+              "replace": "Celestial Revelation",
+              "items": {
+                "type": "entries",
+                "name": "Necrotic Shroud",
+                "entries": ["Elided."]
+              }
+            }
+          }
+        },
+        {
+          "name": "Aasimar; Radiant Consumption",
+          "source": "MPMM",
+          "_mod": {
+            "entries": {
+              "mode": "replaceArr",
+              "replace": "Celestial Revelation",
+              "items": {
+                "type": "entries",
+                "name": "Radiant Consumption",
+                "entries": ["Elided."]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn",
+      "source": "XPHB",
+      "page": 187,
+      "srd52": true,
+      "basicRules2024": true,
+      "edition": "one",
+      "creatureTypes": ["humanoid"],
+      "size": ["M"],
+      "speed": 30,
+      "darkvision": 60,
+      "resist": [
+        {
+          "choose": {
+            "from": ["acid", "lightning", "fire", "poison", "cold"]
+          }
+        }
+      ],
+      "soundClip": {
+        "type": "internal",
+        "path": "races/dragonborn.opus"
+      },
+      "sizeEntry": {
+        "type": "item",
+        "name": "Size:",
+        "entries": ["Medium (about 5-7 feet tall)"]
+      },
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Draconic Ancestry",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Breath Weapon",
+          "entries": ["Elided."]
+        }
+      ],
+      "hasFluff": true,
+      "hasFluffImages": true,
+      "_versions": [
+        {
+          "_abstract": {
+            "name": "Dragonborn ({{color}})",
+            "source": "XPHB",
+            "_mod": {
+              "entries": [
+                {
+                  "mode": "removeArr",
+                  "names": "Draconic Ancestry"
+                },
+                {
+                  "mode": "replaceArr",
+                  "replace": "Breath Weapon",
+                  "items": {
+                    "type": "entries",
+                    "name": "Breath Weapon",
+                    "entries": ["Deals {{damageType}} damage."]
+                  }
+                }
+              ]
+            }
+          },
+          "_implementations": [
+            {
+              "_variables": {
+                "color": "Black",
+                "damageType": "Acid"
+              },
+              "resist": ["acid"]
+            },
+            {
+              "_variables": {
+                "color": "Blue",
+                "damageType": "Lightning"
+              },
+              "resist": ["lightning"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Elf",
+      "source": "XPHB",
+      "page": 189,
+      "srd52": true,
+      "basicRules2024": true,
+      "edition": "one",
+      "creatureTypes": ["humanoid"],
+      "size": ["M"],
+      "speed": 30,
+      "darkvision": 60,
+      "traitTags": ["Improved Resting"],
+      "skillProficiencies": [
+        {
+          "choose": {
+            "from": ["insight", "perception", "survival"]
+          }
+        }
+      ],
+      "soundClip": {
+        "type": "internal",
+        "path": "races/elf.opus"
+      },
+      "additionalSpells": [
+        {
+          "name": "Drow",
+          "innate": {
+            "3": {
+              "daily": {
+                "1": ["faerie fire|xphb"]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": ["darkness|xphb"]
+              }
+            }
+          },
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "1": ["dancing lights|xphb#c"]
+          }
+        },
+        {
+          "name": "High Elf",
+          "innate": {
+            "3": {
+              "daily": {
+                "1": ["detect magic|xphb"]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": ["misty step|xphb"]
+              }
+            }
+          },
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "1": {
+              "_": [
+                {
+                  "choose": "level=0|class=Wizard"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Wood Elf",
+          "innate": {
+            "3": {
+              "daily": {
+                "1": ["longstrider|xphb"]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": ["pass without trace|xphb"]
+              }
+            }
+          },
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "1": ["druidcraft|xphb#c"]
+          }
+        }
+      ],
+      "sizeEntry": {
+        "type": "item",
+        "name": "Size:",
+        "entries": ["Medium (about 5-6 feet tall)"]
+      },
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Elven Lineage",
+          "entries": ["Elided."]
+        }
+      ],
+      "hasFluff": true,
+      "hasFluffImages": true
+    },
+    {
+      "name": "Elf",
+      "source": "LFL",
+      "_copy": {
+        "name": "Elf",
+        "source": "XPHB"
+      },
+      "additionalSpells": [
+        {
+          "name": "Lorwyn",
+          "innate": {
+            "3": {
+              "daily": {
+                "1": ["command|xphb"]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": ["silence|xphb"]
+              }
+            }
+          },
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "1": {
+              "_": [
+                {
+                  "choose": "level=0|class=Druid"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Shadowmoor",
+          "innate": {
+            "3": {
+              "daily": {
+                "1": ["heroism|xphb"]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": ["gentle repose|xphb"]
+              }
+            }
+          },
+          "ability": {
+            "choose": ["int", "wis", "cha"]
+          },
+          "known": {
+            "1": ["starry wisp|xphb#c"]
+          }
+        }
+      ],
+      "hasFluff": true,
+      "hasFluffImages": true,
+      "_versions": [
+        {
+          "name": "Elf; Lorwyn Lineage",
+          "source": "LFL",
+          "_mod": {
+            "entries": {
+              "mode": "appendArr",
+              "items": {
+                "type": "entries",
+                "name": "Extra",
+                "entries": ["Elided."]
+              }
+            }
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Elven Lineage",
+          "entries": ["Elided."]
+        }
+      ]
     }
   ],
   "subrace": [

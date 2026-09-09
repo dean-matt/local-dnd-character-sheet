@@ -427,6 +427,72 @@ describe("resolveCopies", () => {
       expect(resolved.background[2]?.entries).toEqual(["Yours."]);
     });
 
+    const copying = (mod: unknown) => ({
+      name: "B",
+      source: "PHB",
+      _copy: { name: "A", source: "PHB", _mod: mod },
+    });
+
+    it("removes the named elements, and is available to a _copy as to a version", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "A", source: "PHB", entries: [{ name: "One" }, { name: "Two" }, { name: "3" }] },
+          copying({ entries: { mode: "removeArr", names: ["One", "3"] } }),
+        ),
+        "data/backgrounds.json",
+      ) as { background: Entry[] };
+
+      expect(names(resolved.background[1] as Entry)).toEqual(["Two"]);
+    });
+
+    it("refuses a removeArr naming an element the list does not hold", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "One" }] },
+            copying({ entries: { mode: "removeArr", names: ["One", "Missing"] } }),
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow('removeArr names "Missing", which entries does not hold');
+    });
+
+    it("checks each name, so a repeated one cannot cover for a typo", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "One" }, { name: "One" }] },
+            copying({ entries: { mode: "removeArr", names: ["One", "Typo"] } }),
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow('removeArr names "Typo", which entries does not hold');
+    });
+
+    it("refuses a removeArr with no names at all, not only an empty list", () => {
+      expect(() =>
+        resolveCopies(
+          file(
+            { name: "A", source: "PHB", entries: [{ name: "One" }] },
+            copying({ entries: { mode: "removeArr" } }),
+          ),
+          "data/backgrounds.json",
+        ),
+      ).toThrow("removeArr needs names");
+    });
+
+    it("treats a removeArr against a property the entry lacks as nothing to remove", () => {
+      const resolved = resolveCopies(
+        file(
+          { name: "A", source: "PHB" },
+          copying({ entries: { mode: "removeArr", names: "Anything" } }),
+        ),
+        "data/backgrounds.json",
+      ) as { background: Entry[] };
+
+      expect(resolved.background[1]).not.toHaveProperty("entries");
+    });
+
     it.each([
       ["on its own", []],
       // Scanning for a parent touches every entry, so a malformed one must not

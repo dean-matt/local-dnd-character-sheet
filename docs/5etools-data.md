@@ -82,10 +82,33 @@ the build too. A block two entries match is refused as well: identity is not alw
 No block in the corpus is ambiguous at the pinned tag — all six `_copy` deities name a
 pantheon — so this fences the next upstream bump, not today's data.
 
-`_versions` is a **second, unrelated** inheritance mechanism and nothing resolves it yet.
-An entry lists variants of itself, each with its own `_mod`, using modes `_copy` never
-does — `removeArr`, `renameArr`, `addSpells`. It matters for characters: 48 entries in
-`races.json` and 9 in `feats.json`. A loader over either sees them intact.
+## `_versions` inheritance
+
+A **second, unrelated** mechanism: a copy merges two entries into one, a version expands
+one into several. The base survives its versions — upstream offers the Dragonborn and
+each of its ten colours — so `load/versions.ts` adds entries beside the one they were
+written under, after `copy.ts` has run. Three race entries are both a copy and a source
+of versions, and a `_mod` here edits text the copy supplied.
+
+A version is written out with its own `name`, `source` and differing fields, or written
+once as an `_abstract` template of `{{placeholder}}` text with an `_implementations` list
+supplying the substitutions. All four placeholders in the corpus — `color`, `damageType`,
+`area`, `savingThrow` — hold text. An implementation's other fields ride beside its
+`_variables`, so a colour's `resist` is a field rather than a substitution, and a
+variable no placeholder uses is refused rather than dropped.
+
+Only four `_mod` modes appear across both files: `replaceArr`, `removeArr`, `prependArr`,
+`appendArr`. `removeArr` is the one `_copy` never needed; neither `renameArr` nor
+`addSpells` occurs in character data. Every generated identity is a plain
+`(name, source)` — across 82 variants none collides with anything.
+
+Two things in `races.json` refuse, both waiting on issue #32 to decide where subraces
+live; nothing reads the file until then. **Three dragonborn subraces** (30 variants) mod
+`Breath Weapon`, which upstream renders from the parent race rather than storing on the
+subrace — the way out is that merge. **`Dragonborn (Chromatic)` in `FTD`** (5) declares a
+`_variables.resist` its template never mentions, where the `XPHB` dragonborn spells the
+same thing as a field; accepting it would file all five colours under the base's "choose
+one of five", and the `XPHB` spelling saying it is *probably* shorthand is not knowing.
 
 ## Tag markup
 
