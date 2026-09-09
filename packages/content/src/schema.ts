@@ -56,6 +56,32 @@ CREATE TABLE spell_slots (
   PRIMARY KEY (class_name, class_source, level, slot_level)
 ) STRICT;
 
+-- Six of 322 subclasses carry a table of their own: the third-caster spell
+-- progressions, and the Psi Warrior and Soulknife energy dice. Kept apart from
+-- the class tables so neither key has to carry an empty subclass.
+
+CREATE TABLE subclass_resources (
+  class_name      TEXT NOT NULL,
+  class_source    TEXT NOT NULL,
+  subclass_name   TEXT NOT NULL,
+  subclass_source TEXT NOT NULL,
+  level           INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  resource_key    TEXT NOT NULL,
+  value           TEXT NOT NULL,
+  PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, resource_key)
+) STRICT;
+
+CREATE TABLE subclass_spell_slots (
+  class_name      TEXT NOT NULL,
+  class_source    TEXT NOT NULL,
+  subclass_name   TEXT NOT NULL,
+  subclass_source TEXT NOT NULL,
+  level           INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  slot_level      INTEGER NOT NULL CHECK (slot_level BETWEEN 1 AND 9),
+  slots           INTEGER NOT NULL,
+  PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
+) STRICT;
+
 CREATE TABLE spells (
   name        TEXT NOT NULL,
   source      TEXT NOT NULL,
