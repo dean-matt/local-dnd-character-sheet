@@ -60,6 +60,15 @@ feat(content): resolve _copy chains when importing classes
 fix(api): correct spell slot lookup for multiclass casters
 ```
 
+A commit carries one concern. Tests and fixtures ride with the code they cover, and a
+stale-doc correction rides with the change that made it stale — the same rule
+`CLAUDE.md` sets for itself. The squash merge means `main` gets one commit per pull
+request whatever the branch looks like, so this is for the reviewer stepping through it,
+not for the history.
+
+Nothing mechanizes this: no lint can tell one concern from two, and a commit-count
+ceiling would punish a branch that genuinely is one change.
+
 AI attribution is kept. A `Co-Authored-By` trailer naming Claude is accurate provenance
 for how this repository is built, and this is a personal project with no employer policy
 that says otherwise.
