@@ -1,0 +1,32 @@
+{
+  "class": [
+    {
+      "name": "Warlock",
+      "source": "PHB",
+      "page": 105,
+      "edition": "classic",
+      "hd": {
+        "number": 1,
+        "faces": 8
+      },
+      "spellcastingAbility": "cha",
+      "casterProgression": "pact",
+      "classTableGroups": [
+        {
+          "colLabels": [
+            "{@filter Cantrips Known|spells|level=0|class=Warlock}",
+            "Spell Slots",
+            "Slot Level",
+            "{@filter Invocations Known|optionalfeatures|feature type=ei}"
+          ],
+          "rows": [
+            [2, 1, "{@filter 1st|spells|level=1|class=Warlock}", 0],
+            [2, 2, "{@filter 1st|spells|level=1|class=Warlock}", 2],
+            [2, 2, "{@filter 2nd|spells|level=2|class=Warlock}", 2]
+          ]
+        }
+      ],
+      "classFeatures": ["Pact Magic|Warlock||1"]
+    }
+  ]
+}
