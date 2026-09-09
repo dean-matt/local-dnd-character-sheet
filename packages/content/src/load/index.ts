@@ -8,6 +8,7 @@
  * `_copy` inheritance already resolved by `copy.ts`.
  */
 
+import { classes } from "./classes.ts";
 import { spells } from "./spells.ts";
 
 /** A column a row omits, or carries as `undefined`, is written as NULL. */
@@ -29,4 +30,4 @@ export type Loader = {
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };
 
-export const LOADERS: Loader[] = [spells];
+export const LOADERS: Loader[] = [spells, classes];

@@ -12,6 +12,7 @@
     "build:db": "node --experimental-strip-types src/build-db.ts"
   },
   "dependencies": {
+    "@dnd/tags": "workspace:*",
     "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {

@@ -87,6 +87,9 @@ importers:
 
   packages/content:
     dependencies:
+      '@dnd/tags':
+        specifier: workspace:*
+        version: link:../tags
       better-sqlite3:
         specifier: ^13.0.3
         version: 13.0.3

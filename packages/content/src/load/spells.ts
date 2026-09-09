@@ -8,15 +8,7 @@
  */
 import { EDITION_FILES, type Edition, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord } from "./json.ts";
-
-function text(entry: Entry, key: string, context: string): string {
-  const value = entry[key];
-  if (typeof value !== "string" || value === "") {
-    throw new Error(`${context}: ${key} is missing or not a string`);
-  }
-  return value;
-}
+import { isRecord, text } from "./json.ts";
 
 function toRow(entry: unknown, context: string, editionOf: (source: string) => Edition): Row {
   if (!isRecord(entry)) throw new Error(`${context} is not an object`);

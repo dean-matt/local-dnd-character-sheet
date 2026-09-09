@@ -2,6 +2,146 @@
   "_meta": {
     "internalCopies": ["subclass", "subclassFeature"]
   },
+  "class": [
+    {
+      "name": "Cleric",
+      "source": "PHB",
+      "page": 56,
+      "edition": "classic",
+      "hd": {
+        "number": 1,
+        "faces": 8
+      },
+      "spellcastingAbility": "wis",
+      "casterProgression": "full",
+      "classTableGroups": [
+        {
+          "colLabels": ["{@filter Cantrips Known|spells|level=0|class=Cleric}", "Channel Divinity"],
+          "rows": [
+            [3, 0],
+            [3, 1],
+            [3, 1],
+            [4, 1],
+            [4, 1],
+            [4, 2],
+            [4, 2],
+            [4, 2],
+            [4, 2],
+            [5, 2],
+            [5, 2],
+            [5, 2],
+            [5, 2],
+            [5, 2],
+            [5, 2],
+            [5, 2],
+            [5, 2],
+            [5, 3],
+            [5, 3],
+            [5, 3]
+          ]
+        },
+        {
+          "title": "Spell Slots per Spell Level",
+          "colLabels": [
+            "{@filter 1st|spells|level=1|class=Cleric}",
+            "{@filter 2nd|spells|level=2|class=Cleric}"
+          ],
+          "rowsSpellProgression": [
+            [2, 0],
+            [3, 0],
+            [4, 2],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3]
+          ]
+        }
+      ],
+      "classFeatures": ["Spellcasting|Cleric||1", "Channel Divinity|Cleric||2"]
+    },
+    {
+      "name": "Cleric",
+      "source": "XPHB",
+      "page": 67,
+      "edition": "one",
+      "hd": {
+        "number": 1,
+        "faces": 8
+      },
+      "spellcastingAbility": "wis",
+      "casterProgression": "full",
+      "classTableGroups": [
+        {
+          "colLabels": ["{@filter Cantrips|spells|level=0|class=Cleric}", "Channel Divinity"],
+          "rows": [
+            [3, 2],
+            [3, 2],
+            [3, 2],
+            [4, 2],
+            [4, 2],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [5, 3],
+            [5, 3],
+            [5, 3],
+            [5, 3],
+            [5, 3],
+            [5, 3],
+            [5, 3],
+            [5, 3],
+            [5, 4],
+            [5, 4],
+            [5, 4]
+          ]
+        },
+        {
+          "title": "Spell Slots per Spell Level",
+          "colLabels": [
+            "{@filter 1st|spells|level=1|class=Cleric}",
+            "{@filter 2nd|spells|level=2|class=Cleric}"
+          ],
+          "rowsSpellProgression": [
+            [2, 0],
+            [3, 0],
+            [4, 2],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3],
+            [4, 3]
+          ]
+        }
+      ],
+      "classFeatures": ["Spellcasting|Cleric|XPHB|1", "Channel Divinity|Cleric|XPHB|2"]
+    }
+  ],
   "subclass": [
     {
       "name": "Knowledge Domain",
