@@ -42,6 +42,12 @@ pull request, including your own. Approvals are set to zero — GitHub does not 
 approve your own pull request, so requiring one would deadlock a solo repository. Raise
 it to one the day a second person joins.
 
+A branch ends when its issue does. `gh pr merge <n> --squash --delete-branch` merges it,
+deletes it here and on the remote, and leaves you on `main`. The repository has
+`delete_branch_on_merge` set as well, so a merge through the web UI still cleans up, and
+`fetch.prune` drops the stale `origin/` ref on the next fetch. Nothing reaps a branch
+that never became a pull request — delete those by hand.
+
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), enforced by
 `commitlint` on `commit-msg`. Types are `feat`, `fix`, `chore`, `docs`, `refactor`,
 `test`, `perf`, `build`, `ci`, `revert`, and `style`; scopes are `rules`, `character`,
