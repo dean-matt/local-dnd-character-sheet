@@ -1,9 +1,9 @@
 /**
  * `data/class/class-*.json` into the Tier A class tables.
  *
- * Eight tables come from one file: the class and subclass entries, their
+ * Ten tables come from one file: the class and subclass entries, their
  * level-indexed table groups split into spell slots and every other resource,
- * and the features each grants.
+ * the optional features each level may pick, and the features each grants.
  * Slots are the columns of a `rowsSpellProgression`, or — for pact magic — a
  * `Spell Slots` and `Slot Level` column pair; anything else is a resource.
  *
@@ -15,7 +15,7 @@
 import { parseTags, renderText } from "@dnd/tags";
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord, text } from "./json.ts";
+import { type Entry, isRecord, strings, text } from "./json.ts";
 
 /**
  * Every column label the corpus carries, pinned to a key rather than slugged
@@ -71,6 +71,9 @@ const RESOURCE_KEYS: Record<string, string> = {
   "Die Size": "energy_die_size",
   Number: "energy_die_number",
 };
+
+/** Every class table and progression in the corpus covers all 20 levels. */
+const LEVELS = 20;
 
 const PACT_SLOTS = "Spell Slots";
 const PACT_SLOT_LEVEL = "Slot Level";
@@ -181,8 +184,8 @@ function slotCount(cell: unknown, context: string): number {
  */
 function levelled(rows: unknown, context: string): unknown[][] {
   if (!Array.isArray(rows)) throw new Error(`${context}: rows is not a list`);
-  if (rows.length !== 20) {
-    throw new Error(`${context}: ${rows.length} rows, and a table covers all 20 levels`);
+  if (rows.length !== LEVELS) {
+    throw new Error(`${context}: ${rows.length} rows, and a table covers all ${LEVELS} levels`);
   }
   return rows.map((row, index) => {
     if (!Array.isArray(row)) throw new Error(`${context} level ${index + 1}: row is not a list`);
@@ -296,6 +299,125 @@ function tableGroups(groups: unknown, owner: Owner, context: string): GroupRows 
   return { resources, slots };
 }
 
+function optionCount(cell: unknown, context: string): number {
+  if (typeof cell !== "number" || !Number.isInteger(cell) || cell < 0) {
+    throw new Error(`${context}: ${JSON.stringify(cell)} is not a count of options`);
+  }
+  return cell;
+}
+
+function stated(cells: unknown[], context: string): number[] {
+  if (cells.length !== LEVELS) {
+    throw new Error(
+      `${context}: ${cells.length} cells, and a progression covers all ${LEVELS} levels`,
+    );
+  }
+  return cells.map((cell, index) => optionCount(cell, `${context} level ${index + 1}`));
+}
+
+/**
+ * A `progression` keyed by the levels the count changes at, which says nothing
+ * about the levels between: a sorcerer's `{"3":2,"10":3,"17":4}` knows two kinds
+ * of metamagic at level 9, not none. Read as though it were stated, it files
+ * every count at three levels and loses the other 15.
+ */
+function carried(progression: Entry, context: string): number[] {
+  const changes = new Map<number, number>();
+  for (const [key, cell] of Object.entries(progression)) {
+    // Four feats and one optional feature key a progression `*`, for "at any
+    // level", since neither has one. No class or subclass entry does, and these
+    // tables are keyed by level, so it is named rather than read as a number.
+    if (key === "*") {
+      throw new Error(`${context}: a progression keyed "*" has no level to file a count at`);
+    }
+    // Exactly the 20 spellings, so no two keys reach one level and overwrite it:
+    // Number would take "03", " 3" and "1e1" and land all three on a level.
+    const level = /^(?:[1-9]|1\d|20)$/.test(key) ? Number(key) : Number.NaN;
+    if (!Number.isInteger(level) || level < 1 || level > LEVELS) {
+      throw new Error(`${context}: ${JSON.stringify(key)} is not a level from 1 to ${LEVELS}`);
+    }
+    changes.set(level, optionCount(cell, `${context} level ${level}`));
+  }
+  const counts: number[] = [];
+  let held = 0;
+  for (let level = 1; level <= LEVELS; level += 1) {
+    held = changes.get(level) ?? held;
+    counts.push(held);
+  }
+  return counts;
+}
+
+function progression(raw: unknown, context: string): number[] {
+  if (Array.isArray(raw)) return stated(raw, context);
+  if (isRecord(raw)) return carried(raw, context);
+  throw new Error(`${context}: progression is neither a list of levels nor a map of them`);
+}
+
+/**
+ * One block's rows: a level each, and a type each where a block names several.
+ *
+ * A block entitling no level to anything is upstream writing a progression and
+ * saying nothing with it. Stored, it is a block that silently vanishes, so it is
+ * refused the way a feature naming no class is.
+ */
+function blockRows(block: Entry, owner: Owner, where: string): Row[] {
+  const counts = progression(block.progression, where);
+  if (!counts.some((known) => known > 0)) {
+    throw new Error(`${where}: a progression no level may pick from`);
+  }
+  const types = strings(block, "featureType", where);
+  const [type] = types;
+  if (types.length !== 1 || type === undefined) {
+    throw new Error(
+      `${where}: ${types.length} feature types share one count, and a row holds a count per type`,
+    );
+  }
+  const rows: Row[] = [];
+  for (const [at, known] of counts.entries()) {
+    if (known > 0) rows.push({ ...owner, level: at + 1, feature_type: type, known });
+  }
+  return rows;
+}
+
+/**
+ * Two blocks of one entry offering the same type collide on the primary key,
+ * which reaches the build as a bare UNIQUE constraint naming neither the class
+ * nor the type. They are also two counts that were meant to add up, and one row
+ * holds one, so the refusal says that rather than the column that noticed.
+ */
+function oneCountEach(rows: Row[], context: string): void {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const key = `${String(row.feature_type)}|${String(row.level)}`;
+    if (seen.has(key)) {
+      throw new Error(
+        `${context}: two progressions offer ${String(row.feature_type)} at level ${String(row.level)}, and one row holds one count`,
+      );
+    }
+    seen.add(key);
+  }
+}
+
+/**
+ * `optionalfeatureProgression` into a row per level that may pick.
+ *
+ * A count absent from the sparse form is carried forward here rather than at
+ * query time, so both forms leave the same rows and a reader needs neither.
+ */
+function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[] {
+  if (blocks === undefined) return [];
+  if (!Array.isArray(blocks)) {
+    throw new Error(`${context}: optionalfeatureProgression is not a list`);
+  }
+  const rows = blocks.flatMap((block, index) => {
+    const where = `${context} optionalfeatureProgression[${index}]`;
+    if (!isRecord(block)) throw new Error(`${where} is not an object`);
+    return blockRows(block, owner, where);
+  });
+  oneCountEach(rows, context);
+  return rows;
+}
+
 /**
  * A subclass table group repeats its owner in a `subclasses` list. Trusting the
  * owning entry instead would silently file another subclass's dice under this
@@ -376,6 +498,8 @@ type Tables = {
   spell_slots: Row[];
   subclass_resources: Row[];
   subclass_spell_slots: Row[];
+  class_optional_features: Row[];
+  subclass_optional_features: Row[];
   class_features: Row[];
   subclass_features: Row[];
 };
@@ -405,6 +529,9 @@ function addClasses(out: Tables, source: unknown, path: string, fromSource: From
     const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
     out.class_resources.push(...resources);
     out.spell_slots.push(...slots);
+    out.class_optional_features.push(
+      ...optionalFeatures(entry.optionalfeatureProgression, owner, context),
+    );
   }
 }
 
@@ -432,6 +559,9 @@ function addSubclasses(out: Tables, source: unknown, path: string, fromSource: F
     const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
     out.subclass_resources.push(...resources);
     out.subclass_spell_slots.push(...slots);
+    out.subclass_optional_features.push(
+      ...optionalFeatures(entry.optionalfeatureProgression, owner, context),
+    );
   }
 }
 
@@ -511,6 +641,8 @@ export const classes: Loader = {
       spell_slots: [],
       subclass_resources: [],
       subclass_spell_slots: [],
+      class_optional_features: [],
+      subclass_optional_features: [],
       class_features: [],
       subclass_features: [],
     };

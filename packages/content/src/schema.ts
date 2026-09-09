@@ -86,6 +86,52 @@ CREATE TABLE subclass_spell_slots (
   PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
 ) STRICT;
 
+-- How many options of a feature type a class knows at a level — the other half
+-- of the join optional_feature_types starts, where that table says which options
+-- carry a type. Every level that may pick carries a row, since a class or
+-- subclass states a count two ways and only one of them says anything about a
+-- level it skips. Four feats and an optional feature state it a third way, keyed \`*\` for a source that
+-- has no level, and no table here holds those.
+--
+-- known is the running total, not the pick gained at that level: a level 2 XPHB
+-- warlock knows 3 invocations, having gained 2. What a level adds is the
+-- difference from the level below, so a picker reading known as new options
+-- offers too many and the arithmetic still looks plausible.
+--
+-- A row per level rather than one per plateau: the redundancy buys an absent row
+-- that means none, the reading the resource and slot tables above already have,
+-- and a key a second count for one level cannot fit.
+--
+-- On the subclass table that key includes subclass_source, and a class offers
+-- both editions of a subclass: Fighter|XPHB holds Battle Master|PHB and
+-- Battle Master|XPHB, each 5 maneuvers at level 7. Fixing class, level and type
+-- there returns two rows, so a query filters subclass_source or joins subclasses
+-- for the subclass's own edition, which is the row's edition and not the class's.
+--
+-- known counts one block, not one character. A class and its subclass can offer
+-- the same type, and the character gets both: a level 10 PHB Champion knows two
+-- fighting styles, one from each table, so a query over either alone is short.
+
+CREATE TABLE class_optional_features (
+  class_name   TEXT NOT NULL,
+  class_source TEXT NOT NULL,
+  level        INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  feature_type TEXT NOT NULL,
+  known        INTEGER NOT NULL CHECK (known > 0),
+  PRIMARY KEY (class_name, class_source, level, feature_type)
+) STRICT;
+
+CREATE TABLE subclass_optional_features (
+  class_name      TEXT NOT NULL,
+  class_source    TEXT NOT NULL,
+  subclass_name   TEXT NOT NULL,
+  subclass_source TEXT NOT NULL,
+  level           INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
+  feature_type    TEXT NOT NULL,
+  known           INTEGER NOT NULL CHECK (known > 0),
+  PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, feature_type)
+) STRICT;
+
 -- A feature is the one Tier A entity (name, source) does not identify: 55 class
 -- features and 117 subclass features share one with another, and Ability Score
 -- Improvement from PHB alone covers 63 rows across twelve classes and five

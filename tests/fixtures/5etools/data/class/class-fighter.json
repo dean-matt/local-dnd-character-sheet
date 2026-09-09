@@ -165,6 +165,22 @@
         }
       ],
       "subclassFeatures": ["Eldritch Knight|Fighter|XPHB|Eldritch Knight|XPHB|3"]
+    },
+    {
+      "name": "Battle Master",
+      "shortName": "Battle Master",
+      "source": "XPHB",
+      "className": "Fighter",
+      "classSource": "XPHB",
+      "page": 93,
+      "edition": "one",
+      "optionalfeatureProgression": [
+        {
+          "name": "Maneuvers",
+          "featureType": ["MV:B"],
+          "progression": { "3": 3, "7": 5, "10": 7, "15": 9 }
+        }
+      ]
     }
   ],
   "classFeature": [

@@ -13,7 +13,7 @@
  */
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord, text } from "./json.ts";
+import { type Entry, isRecord, strings, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
@@ -45,16 +45,11 @@ function toRow(entry: Entry, context: string, fromSource: FromSource): Row {
 
 /** Every type a feature is offered under, as one row each. */
 function typeRows(entry: Entry, row: Row, context: string): Row[] {
-  const types = entry.featureType;
-  if (!Array.isArray(types) || types.length === 0) {
-    throw new Error(`${context}: featureType is missing or empty`);
-  }
-  return types.map((type, index) => {
-    if (typeof type !== "string" || type === "") {
-      throw new Error(`${context}: featureType[${index}] is not a string`);
-    }
-    return { name: row.name, source: row.source, feature_type: type };
-  });
+  return strings(entry, "featureType", context).map((type) => ({
+    name: row.name,
+    source: row.source,
+    feature_type: type,
+  }));
 }
 
 export const characterOptions: Loader = {

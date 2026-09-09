@@ -74,6 +74,21 @@
         }
       ],
       "entries": ["Choose one of your known {@filter Warlock cantrips|spells|level=0|clas"]
+    },
+    {
+      "name": "Agonizing Blast",
+      "source": "PHB",
+      "page": 110,
+      "featureType": ["EI"],
+      "prerequisite": [{ "spell": ["eldritch blast#c"] }],
+      "entries": ["When you cast {@spell eldritch blast}, add your Charisma mod"]
+    },
+    {
+      "name": "Ambush",
+      "source": "XPHB",
+      "page": 94,
+      "featureType": ["MV:B"],
+      "entries": ["When you make a Dexterity ({@skill Stealth|XPHB}) check or a"]
     }
   ]
 }

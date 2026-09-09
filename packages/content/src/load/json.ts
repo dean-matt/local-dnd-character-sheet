@@ -13,3 +13,17 @@ export function text(entry: Entry, key: string, context: string): string {
   }
   return value;
 }
+
+/** An entry's list of strings, refused rather than coerced when it is missing or empty. */
+export function strings(entry: Entry, key: string, context: string): string[] {
+  const values = entry[key];
+  if (!Array.isArray(values) || values.length === 0) {
+    throw new Error(`${context}: ${key} is missing or empty`);
+  }
+  return values.map((value, index) => {
+    if (typeof value !== "string" || value === "") {
+      throw new Error(`${context}: ${key}[${index}] is not a string`);
+    }
+    return value;
+  });
+}

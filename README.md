@@ -116,7 +116,8 @@ data/               the three SQLite databases, gitignored
 | [`NOTICE`](NOTICE) | Licensing, and why game content is not committed |
 | [`docs/architecture.md`](docs/architecture.md) | Request flow, the three databases, content tiers, deliberate absences |
 | [`docs/data-model.md`](docs/data-model.md) | Character schema, overrides, references, resource counters |
-| [`docs/5etools-data.md`](docs/5etools-data.md) | Editions, `_copy` inheritance, tag markup, class resource tables |
+| [`docs/5etools-data.md`](docs/5etools-data.md) | Editions, `_copy` inheritance, tag markup |
+| [`docs/class-tables.md`](docs/class-tables.md) | Level-indexed class tables, and what the ETL takes from them |
 | [`docs/reviving.md`](docs/reviving.md) | Getting back to a running app after a long gap |
 
 ## Contributing

@@ -62,7 +62,9 @@ describe("the character options loader", () => {
     build(FIXTURE_VENDOR);
 
     expect(identities("optional_features")).toEqual([
+      "Agonizing Blast|PHB classic",
       "Agonizing Blast|XPHB one",
+      "Ambush|XPHB one",
       "Archery|PHB classic",
       "Dueling|PHB classic",
     ]);
