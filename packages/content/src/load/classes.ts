@@ -365,6 +365,26 @@ function blockRows(block: Entry, owner: Owner, where: string): Row[] {
 }
 
 /**
+ * Two blocks of one entry offering the same type collide on the primary key,
+ * which reaches the build as a bare UNIQUE constraint naming neither the class
+ * nor the type. They are also two counts that were meant to add up, and one row
+ * holds one, so the refusal says that rather than the column that noticed.
+ */
+function oneCountEach(rows: Row[], context: string): Row[] {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const key = `${String(row.feature_type)}|${String(row.level)}`;
+    if (seen.has(key)) {
+      throw new Error(
+        `${context}: two progressions offer ${String(row.feature_type)} at level ${String(row.level)}, and one row holds one count`,
+      );
+    }
+    seen.add(key);
+  }
+  return rows;
+}
+
+/**
  * `optionalfeatureProgression` into a row per level that may pick.
  *
  * A count absent from the sparse form is carried forward here rather than at
@@ -375,11 +395,12 @@ function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[]
   if (!Array.isArray(blocks)) {
     throw new Error(`${context}: optionalfeatureProgression is not a list`);
   }
-  return blocks.flatMap((block, index) => {
+  const rows = blocks.flatMap((block, index) => {
     const where = `${context} optionalfeatureProgression[${index}]`;
     if (!isRecord(block)) throw new Error(`${where} is not an object`);
     return blockRows(block, owner, where);
   });
+  return oneCountEach(rows, context);
 }
 
 /**

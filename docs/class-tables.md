@@ -45,9 +45,10 @@ Four traps in reading a group:
 
 ## Optional features per level
 
-`optionalfeatureProgression`, on 9 class and 13 subclass entries, says how many options
-of a `featureType` a level knows — the count half of the join whose pool half is a
-feature's own `featureType` list. It arrives in two shapes that mean different things at
+`optionalfeatureProgression` — 9 blocks over 8 class entries, the `PHB` warlock carrying
+two, and 13 over 13 subclass entries — says how many options of a `featureType` a level
+knows. It is the count half of the join whose pool half is a feature's own `featureType`
+list. It arrives in two shapes that mean different things at
 a level they skip:
 
 ```
@@ -63,6 +64,11 @@ every level. Both are normalized to a row per level.
 `known` is the running total at that level, not the options gained there — a level 2
 `XPHB` warlock knows 3 invocations, having gained 2. What a level adds is the difference
 from the level below.
+
+It is also a total per block, not per character: a class and its subclass can both offer
+the same type, and a character gets the sum. A level 10 `PHB` Champion knows two fighting
+styles — one from the Fighter row at level 1, one from the Champion row at level 10 — so a
+query reading either table alone is short by the other.
 
 Both tables store a row per level rather than one per plateau — 391 rows where 72 would
 carry the same information. That redundancy buys an absent row that means *none*, the

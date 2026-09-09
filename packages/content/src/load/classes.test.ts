@@ -244,15 +244,17 @@ describe("the classes loader", () => {
         "JOIN optional_features AS options ON options.name = types.name " +
         "AND options.source = types.source " +
         "WHERE known.class_name = ? AND known.class_source = ? AND known.level = ? " +
-        "ORDER BY options.name",
+        "AND options.edition = ? ORDER BY options.name",
     );
-    const atFive = query.all("Warlock", "PHB", 5);
-    const atOne = query.all("Warlock", "PHB", 1);
+    const atFive = query.all("Warlock", "PHB", 5, "classic");
+    const atOne = query.all("Warlock", "PHB", 1, "classic");
     db.close();
 
-    // Three invocations at level 5, chosen from every option carrying EI. Level
-    // 1 is entitled to none, which is an absent row rather than a zero.
-    expect(atFive).toEqual([{ known: 3, name: "Agonizing Blast", source: "XPHB" }]);
+    // Three invocations at level 5, chosen from the options carrying EI in this
+    // warlock's own edition — the XPHB Agonizing Blast is a different row and a
+    // 2014 warlock may not take it. Level 1 is entitled to none, which is an
+    // absent row rather than a zero.
+    expect(atFive).toEqual([{ known: 3, name: "Agonizing Blast", source: "PHB" }]);
     expect(atOne).toEqual([]);
   });
 
@@ -579,6 +581,27 @@ describe("the classes loader", () => {
     ],
   ])("refuses %s", (_case, progression, reason) => {
     expect(refusal(vendorHolding("class-sorcerer.json", progressing(progression)))).toMatch(reason);
+  });
+
+  it("refuses two progressions of one entry that offer the same type", () => {
+    const contents = {
+      class: [
+        {
+          name: "Warlock",
+          source: "PHB",
+          edition: "classic",
+          hd: { number: 1, faces: 8 },
+          optionalfeatureProgression: [
+            { name: "Eldritch Invocations", featureType: ["EI"], progression: { 2: 2 } },
+            { name: "Pact Boon", featureType: ["EI"], progression: { 3: 1 } },
+          ],
+        },
+      ],
+    };
+
+    expect(refusal(vendorHolding("class-warlock.json", contents))).toMatch(
+      /two progressions offer EI at level 3, and one row holds one count/,
+    );
   });
 
   it("refuses a progression naming no feature type, which no option could match", () => {

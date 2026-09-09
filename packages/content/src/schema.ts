@@ -99,6 +99,10 @@ CREATE TABLE subclass_spell_slots (
 -- A row per level rather than one per plateau: the redundancy buys an absent row
 -- that means none, the reading the resource and slot tables above already have,
 -- and a key that makes two counts at one level impossible.
+--
+-- known counts one block, not one character. A class and its subclass can offer
+-- the same type, and the character gets both: a level 10 PHB Champion knows two
+-- fighting styles, one from each table, so a query over either alone is short.
 
 CREATE TABLE class_optional_features (
   class_name   TEXT NOT NULL,
