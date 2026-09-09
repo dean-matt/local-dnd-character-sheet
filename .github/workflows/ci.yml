@@ -62,8 +62,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # No --with-deps: it runs apt-get update, and the runner image carries
+      # Google's Chrome repo, so an index they publish badly fails the job before
+      # a test runs. The image already ships the libraries Chromium needs.
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install chromium
 
       - name: End-to-end tests
         run: pnpm test:e2e
