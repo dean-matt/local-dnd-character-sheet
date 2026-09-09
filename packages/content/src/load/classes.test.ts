@@ -54,9 +54,10 @@ describe("the classes loader", () => {
       .all() as Record<string, string>[];
     db.close();
 
-    // Neither Domain entry declares an edition, so DMG and PHB decide it — the
-    // same subclass, filed under each edition of its class. short_name is what
-    // a tag and a subclass_features row call it.
+    // Knowledge Domain declares no edition, so PHB decides it; Death Domain
+    // declares one and its XPHB variant inherits that through _copy. Either way
+    // the subclass is filed under each edition of its class rather than moved.
+    // short_name is what a tag and a subclass_features row call it.
     expect(
       rows.map(
         ({ name, source, short_name, class_name, class_source, edition }) =>
@@ -243,17 +244,20 @@ describe("the classes loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT s.name, s.short_name, COUNT(f.name) AS features FROM subclasses s " +
-          "JOIN subclass_features f ON f.subclass_short_name = s.short_name " +
-          "AND f.subclass_source = s.source AND f.class_source = s.class_source " +
-          "GROUP BY s.name, s.short_name, s.class_source ORDER BY s.class_source",
+        "SELECT s.name, s.short_name, s.class_source, f.level, COUNT(f.name) AS features " +
+          "FROM subclasses s JOIN subclass_features f ON f.subclass_short_name = s.short_name " +
+          "AND f.subclass_source = s.source AND f.class_name = s.class_name " +
+          "AND f.class_source = s.class_source " +
+          "GROUP BY s.name, s.short_name, s.class_source, f.level ORDER BY s.class_source",
       )
       .all();
     db.close();
 
+    // The 2014 Cleric gains the feature at 2 and the 2024 one at 3, so a join
+    // that lost class_source would file both under whichever came first.
     expect(rows).toEqual([
-      { name: "Death Domain", short_name: "Death", features: 1 },
-      { name: "Death Domain", short_name: "Death", features: 1 },
+      { name: "Death Domain", short_name: "Death", class_source: "PHB", level: 2, features: 1 },
+      { name: "Death Domain", short_name: "Death", class_source: "XPHB", level: 3, features: 1 },
     ]);
   });
 
@@ -352,7 +356,7 @@ describe("the classes loader", () => {
 
   it("refuses a feature whose class has no row, since no query would ever return it", () => {
     expect(refusal(vendorHolding("class-fighter.json", { classFeature: [ASI] }))).toMatch(
-      /Ability Score Improvement names class Fighter\|PHB, which no row holds/,
+      /class-fighter\.json classFeature\[0\]: Ability Score Improvement names class Fighter\|PHB, which no row holds/,
     );
   });
 

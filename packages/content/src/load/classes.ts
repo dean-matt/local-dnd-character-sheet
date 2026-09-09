@@ -441,19 +441,24 @@ function addSubclasses(out: Tables, source: unknown, path: string, fromSource: F
  */
 function addFeatures(
   out: Tables,
+  claims: Map<Row, string>,
   source: unknown,
   path: string,
   fromSource: FromSource,
   sidekicks: Set<string>,
 ): void {
-  const grantedBySidekick = (row: Row) => sidekicks.has(classKey(row));
+  const keep = (row: Row, into: Row[], context: string) => {
+    if (sidekicks.has(classKey(row))) return;
+    into.push(row);
+    claims.set(row, context);
+  };
   for (const [index, entry] of entriesOf(source, "classFeature", path).entries()) {
-    const row = classFeatureRow(entry, `${path} classFeature[${index}]`, fromSource);
-    if (!grantedBySidekick(row)) out.class_features.push(row);
+    const context = `${path} classFeature[${index}]`;
+    keep(classFeatureRow(entry, context, fromSource), out.class_features, context);
   }
   for (const [index, entry] of entriesOf(source, "subclassFeature", path).entries()) {
-    const row = subclassFeatureRow(entry, `${path} subclassFeature[${index}]`, fromSource);
-    if (!grantedBySidekick(row)) out.subclass_features.push(row);
+    const context = `${path} subclassFeature[${index}]`;
+    keep(subclassFeatureRow(entry, context, fromSource), out.subclass_features, context);
   }
 }
 
@@ -466,12 +471,17 @@ function classKey(row: Row): string {
  * A feature naming a class no row holds loads fine and is then invisible: every
  * query for that class comes back without it. The sidekick skip is one known
  * case, so the rest are refused rather than assumed absent.
+ *
+ * Runs once every file is read, since a feature need not arrive with its class,
+ * which is why the entry it came from is carried here rather than named again.
  */
-function checkFeatureOwners(out: Tables): void {
+function checkFeatureOwners(out: Tables, claims: Map<Row, string>): void {
   const known = new Set(out.classes.map((row) => `${String(row.name)}|${String(row.source)}`));
-  for (const row of [...out.class_features, ...out.subclass_features]) {
+  for (const [row, context] of claims) {
     if (!known.has(classKey(row))) {
-      throw new Error(`${String(row.name)} names class ${classKey(row)}, which no row holds`);
+      throw new Error(
+        `${context}: ${String(row.name)} names class ${classKey(row)}, which no row holds`,
+      );
     }
   }
 }
@@ -507,12 +517,13 @@ export const classes: Loader = {
 
     const files = ownFiles(sources);
     const sidekicks = sidekickClasses(files);
+    const claims = new Map<Row, string>();
     for (const [path, source] of files) {
       addClasses(out, source, path, fromSource);
       addSubclasses(out, source, path, fromSource);
-      addFeatures(out, source, path, fromSource, sidekicks);
+      addFeatures(out, claims, source, path, fromSource, sidekicks);
     }
-    checkFeatureOwners(out);
+    checkFeatureOwners(out, claims);
     return out;
   },
 };
