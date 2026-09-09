@@ -60,6 +60,12 @@ feature with nothing to show for it. These are the parts `{@classFeature}` and
 `{@subclassFeature}` already carry, so the key is the tag. A deity is the other, keyed by
 pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
 
+**An optional feature's types live beside it.** 9 of 213 are offered under more than one
+`featureType` — `Dueling` from `PHB` under all four fighting-style classes — so
+`optional_feature_types` holds one row per type and `optional_features` stays keyed
+`(name, source)`. A character referencing `Dueling` gets one row however many classes may
+take it, and a picker filters by joining.
+
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates.
 

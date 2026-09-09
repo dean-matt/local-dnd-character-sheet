@@ -8,6 +8,7 @@
  * `_copy` inheritance already resolved by `copy.ts`.
  */
 
+import { characterOptions } from "./character-options.ts";
 import { classes } from "./classes.ts";
 import { lookups } from "./lookups.ts";
 import { spells } from "./spells.ts";
@@ -32,4 +33,4 @@ export type Loader = {
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };
 
-export const LOADERS: Loader[] = [spells, classes, lookups, tagRedirects];
+export const LOADERS: Loader[] = [spells, classes, characterOptions, lookups, tagRedirects];
