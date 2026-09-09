@@ -62,12 +62,10 @@ export const characterOptions: Loader = {
   files: [...Object.keys(FILES), ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
-    const out: Record<string, Row[]> = {
-      backgrounds: [],
-      feats: [],
-      optional_features: [],
-      optional_feature_types: [],
-    };
+    // Seeded from FILES, not by hand: a table named there and missed here would
+    // take every one of its rows with it, and an absent table inserts nothing.
+    const out: Record<string, Row[]> = { optional_feature_types: [] };
+    for (const { table } of Object.values(FILES)) out[table] = [];
 
     for (const [path, parsed] of ownFiles(sources)) {
       const file = FILES[path];

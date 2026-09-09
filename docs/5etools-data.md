@@ -102,7 +102,7 @@ Only four `_mod` modes appear across both files: `replaceArr`, `removeArr`, `pre
 `addSpells` occurs in character data. Every generated identity is a plain
 `(name, source)` — across 82 variants none collides with anything.
 
-Two things in `races.json` refuse, both waiting on issue #32 to decide where subraces
+Two things in `races.json` refuse, both waiting on issue #44 to decide where subraces
 live; nothing reads the file until then. **Three dragonborn subraces** (30 variants) mod
 `Breath Weapon`, which upstream renders from the parent race rather than storing on the
 subrace — the way out is that merge. **`Dragonborn (Chromatic)` in `FTD`** (5) declares a

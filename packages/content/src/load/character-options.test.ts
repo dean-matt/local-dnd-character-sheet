@@ -33,10 +33,9 @@ describe("the character options loader", () => {
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));
 
-  it("loads backgrounds, letting a declared edition beat the one the source implies", () => {
+  it("loads backgrounds, keyed by name and source", () => {
     build(FIXTURE_VENDOR);
 
-    // Acolyte|XPHB declares `one`; every other row here has it read off its source.
     expect(identities("backgrounds")).toEqual([
       "Acolyte|PHB classic",
       "Acolyte|XPHB one",
@@ -113,6 +112,35 @@ describe("the character options loader", () => {
     }
     throw new Error("the build succeeded");
   };
+
+  /**
+   * Nothing upstream disagrees with its own source: all 78 entries that declare
+   * an `edition` at the pinned tag agree with the date their book was published,
+   * so the fixture cannot tell precedence from the fallback and this is written
+   * out by hand instead.
+   */
+  it("takes an entry's declared edition over the one its source implies", () => {
+    build(
+      vendorHolding("data/backgrounds.json", {
+        background: [
+          { name: "Backdated", source: "XPHB", edition: "classic" },
+          { name: "Undated", source: "XPHB" },
+        ],
+      }),
+    );
+
+    expect(identities("backgrounds")).toEqual(["Backdated|XPHB classic", "Undated|XPHB one"]);
+  });
+
+  it("refuses an edition an entry declares that is neither ruleset", () => {
+    expect(
+      refusal(
+        vendorHolding("data/backgrounds.json", {
+          background: [{ name: "Wrong", source: "XPHB", edition: "2024" }],
+        }),
+      ),
+    ).toMatch(/edition "2024" is neither classic nor one/);
+  });
 
   it("refuses a file missing the array it is read for", () => {
     expect(refusal(vendorHolding("data/feats.json", { feature: [] }))).toMatch(

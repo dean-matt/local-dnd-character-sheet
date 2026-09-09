@@ -184,7 +184,7 @@ CREATE TABLE optional_feature_types (
   PRIMARY KEY (name, source, feature_type)
 ) STRICT;
 
-CREATE INDEX optional_features_by_type ON optional_feature_types (feature_type);
+CREATE INDEX optional_feature_types_by_type ON optional_feature_types (feature_type);
 
 -- Tier B ---------------------------------------------------------------------
 
