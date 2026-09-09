@@ -48,9 +48,10 @@ succeeded. A throw anywhere aborts the build and leaves the previous catalog in 
 
 ## Rules that are easy to get wrong
 
-**Identity is `(name, source)`.** Never name alone. Sources collide across books. Check
-for a third part before keying a new kind: a deity is `(name, source, pantheon)`, held in
-`lookups.qualifier`, because five `PHB` gods share a name with a god of another pantheon.
+**Identity is `(name, source)`.** Never name alone. Sources collide across books. Count
+the distinct keys against the row count before settling on one — a deity needs `pantheon`
+and a feature needs its class and level, and both fail as a silent wrong answer rather
+than as an error. `docs/data-model.md` holds the keys that are longer than two parts.
 
 **Every Tier A row carries an edition** of `classic` or `one`. Derive it from the entry's
 `edition` field where present, and from the source otherwise — `XPHB`, `XDMG`, `XMM`

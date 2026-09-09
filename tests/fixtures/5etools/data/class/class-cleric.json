@@ -215,5 +215,40 @@
         }
       }
     }
+  ],
+  "classFeature": [
+    {
+      "name": "Ability Score Improvement",
+      "source": "PHB",
+      "page": 56,
+      "srd": true,
+      "basicRules": true,
+      "className": "Cleric",
+      "classSource": "PHB",
+      "level": 4,
+      "entries": ["When you reach 4th level, you can increase one ability score"]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "PHB",
+      "page": 56,
+      "srd": true,
+      "basicRules": true,
+      "className": "Cleric",
+      "classSource": "PHB",
+      "level": 8,
+      "entries": ["When you reach 8th level, you can increase one ability score"]
+    },
+    {
+      "name": "Ability Score Improvement",
+      "source": "XPHB",
+      "page": 71,
+      "srd52": true,
+      "basicRules2024": true,
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "level": 4,
+      "entries": ["You gain the {@feat Ability Score Improvement|XPHB} feat or "]
+    }
   ]
 }

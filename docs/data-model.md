@@ -51,6 +51,15 @@ freeze each character at the moment it was created.
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
 
+**Two entities need more than `(name, source)` to identify them.** A feature is keyed by
+the class that grants it and the level it arrives at — `(name, source, class_name,
+class_source, level)`, and a subclass feature by the subclass as well. Without the class
+and the level, `Ability Score Improvement` from `PHB` is one key over 63 rows, spread
+across twelve classes and five levels, and a Fighter's sheet resolves to a Barbarian's
+feature with nothing to show for it. These are the parts `{@classFeature}` and
+`{@subclassFeature}` already carry, so the key is the tag. A deity is the other, keyed by
+pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
+
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates.
 

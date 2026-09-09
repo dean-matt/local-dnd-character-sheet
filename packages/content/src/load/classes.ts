@@ -1,8 +1,9 @@
 /**
  * `data/class/class-*.json` into the Tier A class tables.
  *
- * Six tables come from one file: the class and subclass entries, and their
- * level-indexed table groups split into spell slots and every other resource.
+ * Eight tables come from one file: the class and subclass entries, their
+ * level-indexed table groups split into spell slots and every other resource,
+ * and the features each grants.
  * Slots are the columns of a `rowsSpellProgression`, or — for pact magic — a
  * `Spell Slots` and `Slot Level` column pair; anything else is a resource.
  *
@@ -12,7 +13,7 @@
  * so an absent row means none.
  */
 import { parseTags, renderText } from "@dnd/tags";
-import { EDITION_FILES, editionOf, editions, ownFiles } from "./edition.ts";
+import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, text } from "./json.ts";
 
@@ -325,68 +326,170 @@ function entriesOf(source: unknown, key: string, path: string): Entry[] {
   });
 }
 
+/**
+ * A feature's identity is longer than any other Tier A row's, and is the same
+ * set of parts its tag carries. `Ability Score Improvement` from `PHB` is 63
+ * rows across twelve classes and five levels, so a key of name and source alone
+ * resolves 62 of them to the wrong feature and reports nothing wrong.
+ */
+function featureLevel(entry: Entry, context: string): number {
+  const { level } = entry;
+  if (typeof level !== "number" || !Number.isInteger(level) || level < 1 || level > 20) {
+    throw new Error(`${context}: level ${String(level)} is not a whole number from 1 to 20`);
+  }
+  return level;
+}
+
+function classFeatureRow(
+  entry: Entry,
+  context: string,
+  fromSource: (source: string) => Edition,
+): Row {
+  const source = text(entry, "source", context);
+  return {
+    name: text(entry, "name", context),
+    source,
+    class_name: text(entry, "className", context),
+    class_source: text(entry, "classSource", context),
+    level: featureLevel(entry, context),
+    edition: editionOf(entry, source, fromSource),
+    json: JSON.stringify(entry),
+  };
+}
+
+function subclassFeatureRow(
+  entry: Entry,
+  context: string,
+  fromSource: (source: string) => Edition,
+): Row {
+  return {
+    ...classFeatureRow(entry, context, fromSource),
+    subclass_short_name: text(entry, "subclassShortName", context),
+    subclass_source: text(entry, "subclassSource", context),
+  };
+}
+
+type Tables = {
+  classes: Row[];
+  subclasses: Row[];
+  class_resources: Row[];
+  spell_slots: Row[];
+  subclass_resources: Row[];
+  subclass_spell_slots: Row[];
+  class_features: Row[];
+  subclass_features: Row[];
+};
+
+type FromSource = (source: string) => Edition;
+
+function addClasses(out: Tables, source: unknown, path: string, fromSource: FromSource): void {
+  for (const [index, entry] of entriesOf(source, "class", path).entries()) {
+    // The three sidekicks are stat-block companions rather than player classes:
+    // they carry no hit die, proficiencies or table groups, which is upstream
+    // saying the same thing three ways.
+    if (entry.isSidekick === true) continue;
+    const context = `${path} class[${index}]`;
+    if (entry.subclassTableGroups !== undefined) {
+      throw new Error(`${context}: a class entry carries subclassTableGroups`);
+    }
+    const name = text(entry, "name", context);
+    const classSource = text(entry, "source", context);
+    out.classes.push({
+      name,
+      source: classSource,
+      edition: editionOf(entry, classSource, fromSource),
+      hit_die: hitDie(entry, context),
+      json: JSON.stringify(entry),
+    });
+    const owner = { class_name: name, class_source: classSource };
+    const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
+    out.class_resources.push(...resources);
+    out.spell_slots.push(...slots);
+  }
+}
+
+function addSubclasses(out: Tables, source: unknown, path: string, fromSource: FromSource): void {
+  for (const [index, entry] of entriesOf(source, "subclass", path).entries()) {
+    const context = `${path} subclass[${index}]`;
+    const name = text(entry, "name", context);
+    const subclassSource = text(entry, "source", context);
+    const owner = {
+      class_name: text(entry, "className", context),
+      class_source: text(entry, "classSource", context),
+      subclass_name: name,
+      subclass_source: subclassSource,
+    };
+    ownsGroups(entry, name, subclassSource, context);
+    out.subclasses.push({
+      name,
+      source: subclassSource,
+      class_name: owner.class_name,
+      class_source: owner.class_source,
+      edition: editionOf(entry, subclassSource, fromSource),
+      json: JSON.stringify(entry),
+    });
+    const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
+    out.subclass_resources.push(...resources);
+    out.subclass_spell_slots.push(...slots);
+  }
+}
+
+/**
+ * A sidekick's class is skipped, so its 47 features are skipped too rather than
+ * left naming a class no row holds.
+ */
+function addFeatures(
+  out: Tables,
+  source: unknown,
+  path: string,
+  fromSource: FromSource,
+  sidekicks: Set<string>,
+): void {
+  const owned = (row: Row) =>
+    sidekicks.has(`${String(row.class_name)}|${String(row.class_source)}`);
+  for (const [index, entry] of entriesOf(source, "classFeature", path).entries()) {
+    const row = classFeatureRow(entry, `${path} classFeature[${index}]`, fromSource);
+    if (!owned(row)) out.class_features.push(row);
+  }
+  for (const [index, entry] of entriesOf(source, "subclassFeature", path).entries()) {
+    const row = subclassFeatureRow(entry, `${path} subclassFeature[${index}]`, fromSource);
+    if (!owned(row)) out.subclass_features.push(row);
+  }
+}
+
+/** Read before any row is built: a feature need not share a file with its class. */
+function sidekickClasses(files: [string, unknown][]): Set<string> {
+  const sidekicks = new Set<string>();
+  for (const [path, source] of files) {
+    for (const entry of entriesOf(source, "class", path)) {
+      if (entry.isSidekick === true) sidekicks.add(`${String(entry.name)}|${String(entry.source)}`);
+    }
+  }
+  return sidekicks;
+}
+
 export const classes: Loader = {
   name: "classes",
   files: ["data/class/class-*.json", ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
-    const out = {
-      classes: [] as Row[],
-      subclasses: [] as Row[],
-      class_resources: [] as Row[],
-      spell_slots: [] as Row[],
-      subclass_resources: [] as Row[],
-      subclass_spell_slots: [] as Row[],
+    const out: Tables = {
+      classes: [],
+      subclasses: [],
+      class_resources: [],
+      spell_slots: [],
+      subclass_resources: [],
+      subclass_spell_slots: [],
+      class_features: [],
+      subclass_features: [],
     };
 
-    for (const [path, source] of ownFiles(sources)) {
-      for (const [index, entry] of entriesOf(source, "class", path).entries()) {
-        // The three sidekicks are stat-block companions rather than player
-        // classes: they carry no hit die, proficiencies or table groups, which
-        // is upstream saying the same thing three ways.
-        if (entry.isSidekick === true) continue;
-        const context = `${path} class[${index}]`;
-        if (entry.subclassTableGroups !== undefined) {
-          throw new Error(`${context}: a class entry carries subclassTableGroups`);
-        }
-        const name = text(entry, "name", context);
-        const classSource = text(entry, "source", context);
-        const owner = { class_name: name, class_source: classSource };
-        out.classes.push({
-          name,
-          source: classSource,
-          edition: editionOf(entry, classSource, fromSource),
-          hit_die: hitDie(entry, context),
-          json: JSON.stringify(entry),
-        });
-        const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
-        out.class_resources.push(...resources);
-        out.spell_slots.push(...slots);
-      }
-
-      for (const [index, entry] of entriesOf(source, "subclass", path).entries()) {
-        const context = `${path} subclass[${index}]`;
-        const name = text(entry, "name", context);
-        const subclassSource = text(entry, "source", context);
-        const owner = {
-          class_name: text(entry, "className", context),
-          class_source: text(entry, "classSource", context),
-          subclass_name: name,
-          subclass_source: subclassSource,
-        };
-        ownsGroups(entry, name, subclassSource, context);
-        out.subclasses.push({
-          name,
-          source: subclassSource,
-          class_name: owner.class_name,
-          class_source: owner.class_source,
-          edition: editionOf(entry, subclassSource, fromSource),
-          json: JSON.stringify(entry),
-        });
-        const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
-        out.subclass_resources.push(...resources);
-        out.subclass_spell_slots.push(...slots);
-      }
+    const files = ownFiles(sources);
+    const sidekicks = sidekickClasses(files);
+    for (const [path, source] of files) {
+      addClasses(out, source, path, fromSource);
+      addSubclasses(out, source, path, fromSource);
+      addFeatures(out, source, path, fromSource, sidekicks);
     }
     return out;
   },

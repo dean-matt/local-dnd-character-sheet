@@ -227,6 +227,65 @@ describe("the classes loader", () => {
     ]);
   });
 
+  it("keys a class feature by its class and level, not by name and source", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT name, source, class_name, class_source, level, edition FROM class_features " +
+          "ORDER BY source, class_name, level",
+      )
+      .all() as Record<string, string | number>[];
+    db.close();
+
+    expect(
+      rows.map(
+        ({ name, source, class_name, class_source, level, edition }) =>
+          `${name}|${source} ${class_name}|${class_source} ${level} ${edition}`,
+      ),
+    ).toEqual([
+      "Ability Score Improvement|PHB Cleric|PHB 4 classic",
+      "Ability Score Improvement|PHB Cleric|PHB 8 classic",
+      "Ability Score Improvement|XPHB Cleric|XPHB 4 one",
+      "Ability Score Improvement|XPHB Fighter|XPHB 4 one",
+    ]);
+  });
+
+  it("keeps a sidekick's features out, since no row holds the class that grants them", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const orphans = db
+      .prepare(
+        "SELECT COUNT(*) FROM class_features f WHERE NOT EXISTS " +
+          "(SELECT 1 FROM classes c WHERE c.name = f.class_name AND c.source = f.class_source)",
+      )
+      .pluck()
+      .get();
+    db.close();
+
+    expect(orphans).toBe(0);
+  });
+
+  it("separates two subclass features that share a name and source", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT class_source, subclass_short_name, subclass_source, level FROM subclass_features " +
+          "WHERE name = ? AND source = ? ORDER BY level",
+      )
+      .all("Channel Divinity: Touch of Death", "DMG");
+    db.close();
+
+    expect(rows).toEqual([
+      { class_source: "PHB", subclass_short_name: "Death", subclass_source: "DMG", level: 2 },
+      { class_source: "XPHB", subclass_short_name: "Death", subclass_source: "DMG", level: 3 },
+    ]);
+  });
+
   const vendorHolding = (file: string, contents: unknown): string => {
     const vendorDir = join(workspace, "vendor");
     mkdirSync(join(vendorDir, "data", "class"), { recursive: true });
@@ -254,6 +313,42 @@ describe("the classes loader", () => {
     }
     throw new Error("the build succeeded");
   };
+
+  const ASI = {
+    name: "Ability Score Improvement",
+    source: "PHB",
+    className: "Fighter",
+    classSource: "PHB",
+    level: 4,
+    entries: ["Elided."],
+  };
+
+  it("fails the build when two features share their whole key", () => {
+    expect(refusal(vendorHolding("class-fighter.json", { classFeature: [ASI, ASI] }))).toMatch(
+      /UNIQUE constraint failed: class_features\./,
+    );
+  });
+
+  it("keeps two features of one class apart by level", () => {
+    build(vendorHolding("class-fighter.json", { classFeature: [ASI, { ...ASI, level: 6 }] }));
+
+    const db = open();
+    const levels = db.prepare("SELECT level FROM class_features ORDER BY level").pluck().all();
+    db.close();
+
+    expect(levels).toEqual([4, 6]);
+  });
+
+  it.each([
+    ["no className", { className: undefined }, /className is missing or not a string/],
+    ["no level", { level: undefined }, /level undefined is not a whole number from 1 to 20/],
+    ["a level of 0", { level: 0 }, /level 0 is not a whole number from 1 to 20/],
+    ["a level past 20", { level: 21 }, /level 21 is not a whole number from 1 to 20/],
+  ])("refuses a feature with %s", (_, override, reason) => {
+    expect(
+      refusal(vendorHolding("class-fighter.json", { classFeature: [{ ...ASI, ...override }] })),
+    ).toMatch(reason);
+  });
 
   /** The cell at level 1, and 19 levels of zero after it — a table is all 20. */
   const table = (...cells: unknown[]): unknown[][] => [
