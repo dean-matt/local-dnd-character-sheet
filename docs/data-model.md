@@ -66,6 +66,13 @@ pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
 `(name, source)`. A character referencing `Dueling` gets one row however many classes may
 take it, and a picker filters by joining.
 
+**An entitlement to optional features is a count, not a list.**
+`class_optional_features` and `subclass_optional_features` hold how many options of a
+type a level knows; `optional_feature_types` holds which options carry that type. Every
+level that may pick carries a row, because upstream states the count either per level or
+only at the levels it changes at — so the carry-forward happens in the ETL and a query is
+an equality join. An absent row means the level may pick none.
+
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates.
 
@@ -94,7 +101,7 @@ or a manual cleanup would be one more thing to forget.
 ## Resource counters
 
 Class resources come from `classTableGroups` where upstream provides them, which is
-about 80% of cases — see [`5etools-data.md`](5etools-data.md). The rest are stored as
+about 80% of cases — see [`class-tables.md`](class-tables.md). The rest are stored as
 generic counters:
 
 ```
