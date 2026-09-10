@@ -11,7 +11,7 @@
  * subraces have no table until it is decided where they belong. See the
  * `_versions` section of docs/5etools-data.md.
  */
-import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
+import { EDITION_FILES, EDITIONS, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, strings, text } from "./json.ts";
 
@@ -113,6 +113,25 @@ export function optionCount(cell: unknown, context: string): number {
 }
 
 /**
+ * A grant reaches whatever pool its holder may pick from, and that is both
+ * rulesets: a 2024 character may hold a 2014 feat, so the total the sheet asks
+ * for joins the options unfiltered by edition. Only a code nothing carries at
+ * all is a count over an empty join, which is the half a rebuild can refuse.
+ *
+ * The class side scopes its own check by edition, because a class row's pick is
+ * scoped — a sheet offers the options of the counting row's own ruleset.
+ */
+function reachesGrantPool(
+  featureType: string,
+  pool: Set<string>,
+  who: string,
+  context: string,
+): void {
+  if (EDITIONS.some((edition) => pool.has(poolKey(edition, featureType)))) return;
+  throw new Error(`${context}: ${who} grants ${featureType}, which no optional feature carries`);
+}
+
+/**
  * The count a leveless entry grants, keyed `*` for "at any level" because a feat
  * reaches a character at whatever level they took it.
  *
@@ -150,7 +169,6 @@ function grantRows(
   entry: Entry,
   row: Row,
   table: string,
-  edition: Edition,
   pool: Set<string>,
   context: string,
 ): Row[] {
@@ -159,7 +177,7 @@ function grantRows(
   if (!Array.isArray(blocks)) {
     throw new Error(`${context}: optionalfeatureProgression is not a list`);
   }
-  return blocks.map((block, index) => {
+  const rows = blocks.map((block, index) => {
     const where = `${context} optionalfeatureProgression[${index}]`;
     if (!isRecord(block)) throw new Error(`${where} is not an object`);
     const types = strings(block, "featureType", where);
@@ -170,7 +188,7 @@ function grantRows(
       );
     }
     const who = `${String(row.name)}|${String(row.source)}`;
-    reachesPool(type, edition, pool, who, where);
+    reachesGrantPool(type, pool, who, where);
     return {
       granted_by: table,
       name: row.name,
@@ -179,6 +197,17 @@ function grantRows(
       known: grantCount(block.progression, where),
     };
   });
+  // Two blocks granting one type collide on the primary key, which reaches the
+  // build as a bare UNIQUE constraint naming neither the grantor nor the type.
+  // They are also two counts that were meant to add up, and one row holds one.
+  const seen = new Set<string>();
+  for (const { feature_type: type } of rows) {
+    if (seen.has(type)) {
+      throw new Error(`${context}: two progressions grant ${type}, and one row holds one count`);
+    }
+    seen.add(type);
+  }
+  return rows;
 }
 
 /**
@@ -233,9 +262,7 @@ export const characterOptions: Loader = {
         if (file.table === "optional_features") {
           out.optional_feature_types?.push(...typeRows(entry, row, context));
         }
-        out.granted_optional_features?.push(
-          ...grantRows(entry, row, file.table, edition, pool, context),
-        );
+        out.granted_optional_features?.push(...grantRows(entry, row, file.table, pool, context));
       }
     }
     return out;

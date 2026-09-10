@@ -102,7 +102,8 @@ ignores it. So the day upstream moves such a block between the two, the build sa
 shape it found rather than storing a count nothing reads.
 
 A character's total for a type is the three tables summed — the class row, the subclass
-row, and a grant row for every feat and option they hold:
+row, and a grant row for every feat and option they hold, which is a row per grantor and
+not one row:
 
 ```sql
 SELECT COALESCE(SUM(known), 0) FROM (
@@ -114,15 +115,22 @@ SELECT COALESCE(SUM(known), 0) FROM (
      AND level = ? AND feature_type = ?
   UNION ALL
   SELECT known FROM granted_optional_features
-   WHERE granted_by = ? AND name = ? AND source = ? AND feature_type = ?
+   WHERE feature_type = ?
+     AND (granted_by, name, source) IN (VALUES ('feats', ?, ?), ('optional_features', ?, ?))
 );
 ```
 
 A Battle Master 7 who took `Martial Adept` knows 7 maneuvers — 5 from the subclass row and
-2 from the feat — out of the 43 options `optional_feature_types` carries for `MV:B`, 23 of
-them `classic` and 20 `one`. The pool is unfiltered by edition there: a 2024 Battle Master
-who took a 2014 feat picks from every maneuver the catalog holds, and what a table may
-legally offer is a question for the picker.
+2 from the feat — and 8 having also taken `Superior Technique`. The pool is the 43 options
+`optional_feature_types` carries for `MV:B`, 23 of them `classic` and 20 `one`, and it is
+joined unfiltered by edition: a 2024 Battle Master who took a 2014 feat picks from every
+maneuver the catalog holds, and what a table may legally offer is a question for the
+picker.
+
+The build refuses a grant of a code no optional feature carries **in either edition**,
+where a class or subclass count has to reach the pool of its own edition. The two differ
+because the picks do: a class row offers the options of the ruleset it belongs to, while a
+grant travels with a character who may hold grantors from both.
 
 Two upstream fields state the invocation and infusion counts, so two tables hold them:
 `class_resources.invocations_known` and `infusions_known` come from a `colLabels` column,

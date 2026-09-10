@@ -259,22 +259,66 @@ describe("the character options loader", () => {
     ).toMatch(/2 feature types share one count/);
   });
 
-  it("refuses a grant of a type no optional feature of that edition carries", () => {
+  it("refuses a grant of a type no optional feature carries", () => {
     expect(
       refusal(
         vendorHolding("data/feats.json", {
           feat: [
             {
               name: "Martial Adept",
-              source: "XPHB",
-              optionalfeatureProgression: [{ featureType: ["AI"], progression: { "*": 2 } }],
+              source: "PHB",
+              optionalfeatureProgression: [{ featureType: ["MM"], progression: { "*": 2 } }],
             },
           ],
         }),
       ),
-    ).toMatch(
-      /Martial Adept\|XPHB counts AI, which no optional feature of the one edition carries/,
+    ).toMatch(/Martial Adept\|PHB grants MM, which no optional feature carries/);
+  });
+
+  /**
+   * A grantor's pool spans both rulesets, since a 2024 character may hold a 2014
+   * feat — the class-side check is the scoped one.
+   */
+  it("takes a grant of a type only the other edition's features carry", () => {
+    build(
+      vendorHolding("data/feats.json", {
+        feat: [
+          {
+            name: "Martial Adept",
+            source: "XPHB",
+            optionalfeatureProgression: [{ featureType: ["MV:B"], progression: { "*": 2 } }],
+          },
+        ],
+      }),
     );
+
+    const db = open();
+    const known = db
+      .prepare("SELECT known FROM granted_optional_features WHERE source = ?")
+      .pluck()
+      .get("XPHB");
+    db.close();
+
+    expect(known).toBe(2);
+  });
+
+  it("refuses two blocks granting one type, which are two counts one row cannot hold", () => {
+    expect(
+      refusal(
+        vendorHolding("data/feats.json", {
+          feat: [
+            {
+              name: "Martial Adept",
+              source: "PHB",
+              optionalfeatureProgression: [
+                { featureType: ["MV:B"], progression: { "*": 1 } },
+                { featureType: ["MV:B"], progression: { "*": 1 } },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toMatch(/two progressions grant MV:B, and one row holds one count/);
   });
 
   it("fails the build when two entries share a (name, source)", () => {

@@ -81,7 +81,9 @@ tables summed, which [`class-tables.md`](class-tables.md) spells out; reading th
 side alone is short by whatever their feats granted.
 
 **Every content lookup filters on edition.** Both rulesets are present for every class,
-spell, and lookup table. A query without an edition filter returns duplicates.
+spell, and lookup table. A query without an edition filter returns duplicates. The pool a
+grant reaches is the exception: a character holding a 2014 feat picks from every option
+carrying its type, so a total joins `optional_feature_types` unfiltered.
 
 **A subclass carries its own edition, not its class's, and so does a feature.** 124 of
 322 subclass rows and 75 of 1,441 subclass feature rows sit under a class variant of the
