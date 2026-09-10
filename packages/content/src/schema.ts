@@ -176,16 +176,32 @@ CREATE TABLE spells (
   PRIMARY KEY (name, source)
 ) STRICT;
 
+-- kind is the array key the entry sits under upstream, and the four are one
+-- table because their keys do not collide and a {@item} tag names any of them
+-- without saying which. Two of the four are not things a character owns: an
+-- itemGroup is the entry a family of items is written under, and a magicvariant
+-- is a template upstream expands against every base item it matches. A picker
+-- filtering to item and baseitem is the only reading that offers equipment.
+--
+-- The expansions themselves are absent: +1 Chain Mail is in no upstream file
+-- and would be 6,155 rows synthesized here, 2,521 of them colliding on
+-- (name, source). docs/items.md holds the count and the way out.
+--
+-- requires_attunement answers the yes-or-no an attunement slot count needs.
+-- The condition — reqAttune is a string such as "by a wizard" 250 times over —
+-- stays in json, which is where a sheet reads why a character cannot attune.
 CREATE TABLE items (
   name     TEXT NOT NULL,
   source   TEXT NOT NULL,
   edition  TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  kind     TEXT NOT NULL CHECK (kind IN ('item', 'itemGroup', 'baseitem', 'magicvariant')),
   type     TEXT,
   rarity   TEXT,
   requires_attunement INTEGER NOT NULL CHECK (requires_attunement IN (0, 1)),
   json     TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;
+
 
 CREATE TABLE races (
   name    TEXT NOT NULL,

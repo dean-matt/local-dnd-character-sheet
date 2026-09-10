@@ -59,6 +59,10 @@ export const FIXTURES: Fixture[] = [
           items: [
             { id: "Lost Mine of Phandelver|LMoP|LMoP", fields: BOOK_FIELDS },
             { id: "Heroes of the Borderlands|HotB|HotB", fields: BOOK_FIELDS },
+            {
+              id: "Stranger Things: Welcome to the Hellfire Club|WttHC|WttHC",
+              fields: BOOK_FIELDS,
+            },
           ],
         },
       },
@@ -107,6 +111,7 @@ export const FIXTURES: Fixture[] = [
             { id: "Player's Handbook (2014)|PHB|PHB", fields: BOOK_FIELDS },
             { id: "Puncheons and Flagons|PaF|PaF", fields: BOOK_FIELDS },
             { id: "Player's Handbook (2024)|XPHB|XPHB", fields: BOOK_FIELDS },
+            { id: "Dungeon Master's Guide (2024)|XDMG|XDMG", fields: BOOK_FIELDS },
           ],
         },
       },
@@ -478,7 +483,7 @@ export const FIXTURES: Fixture[] = [
   {
     file: "data/items.json",
     keep: {
-      fields: ["_meta", "item"],
+      fields: ["_meta", "item", "itemGroup"],
       within: {
         item: {
           items: [
@@ -491,7 +496,36 @@ export const FIXTURES: Fixture[] = [
               fields: ["name", "source", "page", "srd", "type", "rarity", "charges", "entries"],
             },
             "Charred Wand of Magic Missiles|WDH",
+            "Bag of Holding|DMG",
+            "+1 Wand of the War Mage|DMG",
+            "Dragon Thighbone Club|SKT",
+            "Borderlands Tabard|HotB",
+            "Cloak of Billowing|XDMG",
+            "Cloak of Billowing|WttHC",
           ],
+        },
+        itemGroup: { items: ["Arcane Focus|PHB"] },
+      },
+    },
+  },
+  {
+    file: "data/items-base.json",
+    keep: {
+      fields: ["_meta", "baseitem"],
+      within: {
+        baseitem: {
+          items: ["Longsword|PHB", "Longsword|XPHB", "Alchemist's Supplies|PHB"],
+        },
+      },
+    },
+  },
+  {
+    file: "data/magicvariants.json",
+    keep: {
+      fields: ["magicvariant"],
+      within: {
+        magicvariant: {
+          items: ["Arrow of Slaying (*)", "Ammunition of Slaying", "Armblade"],
         },
       },
     },

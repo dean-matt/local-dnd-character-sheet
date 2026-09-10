@@ -154,6 +154,12 @@ way to check that a tag's display argument is the right one, because reading the
 argument yields text that looks fine. Three tags rendered machine text as prose until
 the registry was diffed against it.
 
+## Items
+
+Three files and four array keys land in the one `items` table, and the two decisions
+they force — what to do with a magic variant and with an item group — have a document
+of their own: [`items.md`](items.md).
+
 ## Class tables
 
 `classTableGroups`, `subclassTableGroups` and `optionalfeatureProgression` state what a

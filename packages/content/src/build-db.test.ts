@@ -72,11 +72,19 @@ describe("buildContent", () => {
       files: ["data/*.json"],
       rows: () => ({
         items: [
-          { name: "Club", source: "PHB", edition: "classic", requires_attunement: 0, json: "{}" },
+          {
+            name: "Club",
+            source: "PHB",
+            edition: "classic",
+            kind: "baseitem",
+            requires_attunement: 0,
+            json: "{}",
+          },
           {
             name: "Wand of Magic Missiles",
             source: "PHB",
             edition: "classic",
+            kind: "item",
             rarity: "uncommon",
             requires_attunement: 0,
             json: "{}",

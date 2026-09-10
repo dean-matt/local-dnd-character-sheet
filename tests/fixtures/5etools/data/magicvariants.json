@@ -1,0 +1,116 @@
+{
+  "magicvariant": [
+    {
+      "name": "Arrow of Slaying (*)",
+      "edition": "classic",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "arrow": true
+        },
+        {
+          "bolt": true
+        }
+      ],
+      "excludes": {
+        "cellEnergy": true,
+        "bulletFirearm": true
+      },
+      "ammo": true,
+      "entries": [
+        "Elided. {@item arrow of slaying} Elided.",
+        "Elided. {@i Elided.} Elided. {@i Elided.} Elided. {@i Elided.} Elided. {@i Elided.} Elided. {@dc 17} Elided. {@damage 6d10} Elided.",
+        "Elided. {@i Elided.} Elided.",
+        "Elided."
+      ],
+      "inherits": {
+        "nameSuffix": " of Slaying",
+        "source": "DMG",
+        "page": 152,
+        "srd": true,
+        "reprintedAs": ["Ammunition of Slaying|XDMG"],
+        "tier": "minor",
+        "rarity": "very rare",
+        "entries": ["Elided. {@dc 17} Elided. {@damage 6d10} Elided.", "Elided."]
+      },
+      "hasFluffImages": true
+    },
+    {
+      "name": "Ammunition of Slaying",
+      "type": "GV|XDMG",
+      "requires": [
+        {
+          "type": "A|XPHB"
+        },
+        {
+          "type": "AF|XDMG"
+        }
+      ],
+      "ammo": true,
+      "inherits": {
+        "nameSuffix": " of Slaying",
+        "source": "XDMG",
+        "page": 228,
+        "srd52": true,
+        "basicRules2024": true,
+        "rarity": "very rare",
+        "entries": [
+          "Elided. {@dc 17} Elided. {@damage 6d10} Elided.",
+          "Elided.",
+          {
+            "type": "table",
+            "colStyles": ["col-2 text-center", "col-10"],
+            "colLabels": ["1d100", "Creature Type"],
+            "rows": [
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."],
+              ["Elided.", "Elided."]
+            ]
+          }
+        ],
+        "lootTables": ["Armaments - Very Rare|XDMG"]
+      },
+      "hasFluffImages": true
+    },
+    {
+      "name": "Armblade",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "M"
+        },
+        {
+          "type": "M|XPHB"
+        }
+      ],
+      "excludes": {
+        "property": ["2H", "2H|XPHB"]
+      },
+      "inherits": {
+        "nameSuffix": " Armblade",
+        "source": "ERLW",
+        "page": 276,
+        "rarity": "common",
+        "reqAttune": "by a warforged",
+        "reqAttuneTags": [
+          {
+            "race": "warforged|erlw"
+          }
+        ],
+        "entries": ["Elided.", "Elided."]
+      },
+      "hasFluffImages": true
+    }
+  ]
+}
