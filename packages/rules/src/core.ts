@@ -11,7 +11,6 @@ export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
 
-/** Proficiency bonus for a total character level, 1-20. */
 export function proficiencyBonus(level: number): number {
   if (level < 1 || level > 20) {
     throw new RangeError(`Character level must be 1-20, got ${level}`);

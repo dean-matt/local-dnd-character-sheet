@@ -26,7 +26,6 @@ export const contentRefSchema = z.strictObject({
 
 export const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
 
-/** Anything a character can point at: a catalog row, or a row in `homebrew.db`. */
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
 /**

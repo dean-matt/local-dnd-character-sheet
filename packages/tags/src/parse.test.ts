@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseTags, renderText, type Token } from "./index.ts";
 
-/** The whole point of every token carrying display text. */
 const shown = (input: string) => renderText(parseTags(input));
 
 const only = (input: string): Token => {

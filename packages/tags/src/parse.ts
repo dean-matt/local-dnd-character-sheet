@@ -52,7 +52,6 @@ function content(args: string[]): string {
   return "";
 }
 
-/** Falls back through the tag's own position, then the name, then anything with text. */
 function display(args: string[], index: number, depth: number): string {
   const chosen = arg(args, index) ?? arg(args, 0);
   return chosen === undefined ? firstFilled(args, depth) : plain(chosen, depth);
