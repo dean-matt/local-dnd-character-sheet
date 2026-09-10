@@ -87,11 +87,37 @@ says which shape it found.
 
 Two upstream fields state the invocation and infusion counts, so two tables hold them:
 `class_resources.invocations_known` and `infusions_known` come from a `colLabels` column,
-and `class_optional_features.known` from `optionalfeatureProgression`. They agree cell for
-cell at the pinned tag and nothing asserts they will — a check would need a hand-kept map
-from type code to resource key, which is the list `edition.ts` warns about. The typed row
-is the one to join, because it carries the `featureType` that reaches the pool; the
-resource row is a number to print on a sheet.
+and `class_optional_features.known` from `optionalfeatureProgression`. The build refuses
+where they disagree, naming the level and both counts, so a newer tag that edits one field
+and not the other fails the rebuild rather than shipping a sheet that prints a count the
+picker does not offer. The typed row is the one to join, because it carries the
+`featureType` that reaches the pool; the resource row is a number to print on a sheet.
+
+The check pairs the two by reading the type code out of the column's own label —
+`{@filter Invocations Known|optionalfeatures|feature type=ei}` names `ei` beside the text
+the resource key comes from — rather than keeping a map from code to key, which would be
+the kind of hand-kept list `edition.ts` warns goes stale the day upstream ships a book.
+Three columns carry such a filter at the pinned tag. A column naming a type its entry
+offers no progression for is refused, as is a filter value that is not one plain code —
+the grammar also lists with `;`, negates with `!`, brackets groups and pads with spaces,
+and 265 tags in the corpus use some of that somewhere. The refusal names the label rather
+than the progression, because the label is the half this loader cannot read and blaming
+absent progression data would send a reader to the wrong file.
+
+The pairing is entry-local, which is its ceiling. All three pairs state the column and the
+progression on the same class, but the two do split across entries elsewhere —
+`Fighter|XPHB` carries no progression while `Battle Master|XPHB` carries `MV:B` — so a tag
+that put a maneuver column on the fighter's own table would be refused rather than resolved
+against the subclass. Collecting both across an entry and its subclasses before pairing is
+the way out, and is not worth the pass until that happens.
+
+What the check cannot see is a label that stops carrying the filter. The plain wordings are
+pinned in `RESOURCE_KEYS`, so prose in place of the tag would keep loading the resource row
+and pair nothing — the check going quiet rather than failing. Closing that needs the map
+from type code to resource key this reads the tag to avoid, so it stays open, and refusing a
+corpus that pairs nothing is not the way out: every loader test builds a small corpus that
+legitimately has no counted column. A fixture test pins the warlock's pairing, which is the
+half of the exposure a test can reach.
 
 The subclass table's key includes `subclass_source`, and a class offers both editions of a
 subclass, so `Fighter|XPHB` holds `Battle Master|PHB` and `Battle Master|XPHB` — 5
