@@ -39,7 +39,7 @@ const MAX_FACES = 1000;
 const MAX_MODIFIER = 1000;
 
 /**
- * Spaces surround the operators but never split a number: `1d6 4` would otherwise
+ * Spaces may surround the operators but never split a number: `1d6 4` would otherwise
  * become a d64.
  */
 const NOTATION = /^(\d*)\s*d\s*(\d+)(?:\s*k\s*([hl])\s*(\d+))?(?:\s*([+-])\s*(\d+))?$/i;
