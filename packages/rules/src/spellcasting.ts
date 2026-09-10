@@ -1,10 +1,10 @@
 /**
  * Multiclass spellcasting: one combined caster level, read against one table.
  *
- * Both halves are here because summing each class's own slots instead is the
- * mistake the rules exist to prevent, and because this is the only rules area
- * with more to come — single-class slots and pact tables both arrive from
- * `content.db` rather than from arithmetic.
+ * Both halves live here because summing each class's own slots is the mistake the
+ * rules exist to prevent, and because spellcasting is the one rules area still
+ * growing — single-class slots and pact tables arrive from `content.db`, not from
+ * arithmetic.
  *
  * Progression is an argument and never an edition branch, because the editions
  * disagree about it.
@@ -13,9 +13,9 @@
 import { proficiencyBonus } from "./core.ts";
 
 /**
- * Both take the total character level, never a caster level — proficiency comes
- * from the character, so passing `multiclassCasterLevel` here reads as if it
- * would work and is wrong by the difference between the two.
+ * Both take the total character level, never a caster level: proficiency comes from
+ * the character, so passing `multiclassCasterLevel` here reads as if it works and is
+ * wrong by the difference.
  */
 export function spellSaveDc(spellcastingModifier: number, characterLevel: number): number {
   return 8 + proficiencyBonus(characterLevel) + spellcastingModifier;
@@ -26,12 +26,12 @@ export function spellAttackBonus(spellcastingModifier: number, characterLevel: n
 }
 
 /**
- * Caster progression in upstream's own vocabulary, so there is no mapping table
- * to drift. `artificer` means half rounded up: the artificer, and the 2024
- * paladin and ranger, where their 2014 versions round down. A third caster
- * rounds down in both editions — XPHB says "half your levels (round up)" and
- * "one third ... (round down)" in the same passage, so the asymmetry is the
- * rules' own and not an oversight here. `pact` contributes nothing.
+ * Caster progression in upstream's own vocabulary, so no mapping table can drift.
+ * `artificer` means half rounded up: the artificer, and the 2024 paladin and
+ * ranger, where their 2014 versions round down. A third caster rounds down in both
+ * editions — XPHB says "half your levels (round up)" and "one third ... (round
+ * down)" in one passage, so the asymmetry is the rules', not an oversight here.
+ * `pact` contributes nothing.
  */
 export const CASTER_PROGRESSIONS = ["full", "1/2", "1/3", "artificer", "pact"] as const;
 
@@ -62,8 +62,8 @@ const CASTER_LEVEL_CONTRIBUTION = new Map<CasterProgression, (level: number) => 
 ]);
 
 /**
- * The single caster level the multiclass slot table is read with. Summing each
- * class's own slots instead would be wrong, and wrong upward.
+ * The single caster level that reads the multiclass slot table. Summing each
+ * class's own slots instead is wrong, and wrong upward.
  */
 export function multiclassCasterLevel(classes: readonly CasterClassLevel[]): number {
   const casterLevel = classes.reduce((total, entry) => {
@@ -86,8 +86,8 @@ export function multiclassCasterLevel(classes: readonly CasterClassLevel[]): num
 
 /**
  * Row n is caster level n + 1; the nine columns are slot levels 1-9. PHB p.165,
- * which is digit for digit any full caster's upstream `rowsSpellProgression` —
- * that is how a transposed digit here can be checked against the vendor data.
+ * digit for digit any full caster's upstream `rowsSpellProgression` — check a
+ * transposed digit here against the vendor data.
  */
 const MULTICLASS_SLOTS: readonly (readonly number[])[] = [
   [2, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -114,8 +114,8 @@ const MULTICLASS_SLOTS: readonly (readonly number[])[] = [
 
 /**
  * Slots a combined caster level grants, lowest level first, omitting the levels
- * it grants none of. Caster level 0 grants nothing, which a character with only
- * pact magic or a level 1 paladin reaches legitimately.
+ * it grants none of. Caster level 0 grants nothing, which a pact-only warlock or
+ * a level 1 paladin reaches legitimately.
  */
 export function multiclassSlots(casterLevel: number): SpellSlotTotal[] {
   if (!Number.isInteger(casterLevel) || casterLevel < 0 || casterLevel > 20) {

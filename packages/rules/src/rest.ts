@@ -8,8 +8,8 @@ export type ResetTrigger = (typeof RESET_TRIGGERS)[number];
 
 /**
  * Upstream `recharge` values that map onto a trigger the sheet tracks. `dusk`,
- * `midnight` and `special` do not, so they degrade to `manual` rather than
- * widening the four triggers a character's resources are stored with.
+ * `midnight` and `special` do not, so they degrade to `manual` rather than widen
+ * the four triggers above.
  */
 const RECHARGE_TRIGGERS = new Map<string, ResetTrigger>([
   ["restShort", "short"],

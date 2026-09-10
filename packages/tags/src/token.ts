@@ -2,8 +2,8 @@
  * The token contract and the helpers that build one.
  *
  * Every token carries display text, so a renderer can fall back to it without knowing
- * the tag. `Spec` says where a given tag keeps that display text, which is the whole
- * reason the parser is a table rather than one splitter.
+ * the tag. `Spec` says where each tag keeps that text, which is why the parser is a
+ * table and not one splitter.
  */
 
 import { isRollable } from "@dnd/dice";
@@ -17,10 +17,9 @@ export type Token =
 export type RefToken = Extract<Token, { kind: "ref" }>;
 
 /**
- * Which argument holds what, per tag. The position of the display argument is not
- * uniform: `{@spell a|b|c}` displays `c`, `{@dice a|b}` displays `b`, and
- * `{@filter a|b|c}` displays `a`. A `source` is a chain because upstream defaults a
- * feature's source to the subclass or class it belongs to.
+ * Which argument holds what, per tag. The display argument moves: `{@spell a|b|c}`
+ * displays `c`, `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`. A `source`
+ * is a chain because upstream defaults a feature's source to its subclass or class.
  */
 export type Spec =
   | { kind: "ref"; source: number[]; display: number }

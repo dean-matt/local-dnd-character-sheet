@@ -2,14 +2,14 @@
  * Walks 5etools `{@tag}` markup and turns it into tokens.
  *
  * `parseTags` is the entry point and `renderText` flattens tokens back to the plain
- * string an FTS index needs. No catalog lookups happen here — this package depends on
- * nothing, and resolving a `ref` belongs to a later layer.
+ * string an FTS index needs. Nothing looks up the catalog here — this package depends
+ * on nothing, and resolving a `ref` belongs to a later layer.
  *
- * What each tag means lives in `registry.ts`; this file only knows how to find the
- * arguments and hand them over.
+ * What each tag means lives in `registry.ts`; this file only finds the arguments and
+ * hands them over.
  *
- * Upstream writes no escapes: there is no `\|` or `\{` anywhere in the corpus. A pipe
- * always separates arguments and a brace always nests.
+ * Upstream writes no escapes: the corpus holds no `\|` or `\{`. A pipe always separates
+ * arguments and a brace always nests.
  */
 
 import { isRollable } from "@dnd/dice";
@@ -17,9 +17,9 @@ import { SPECS } from "./registry.ts";
 import { arg, type RefToken, type Token, text } from "./token.ts";
 
 /**
- * Upstream nests two or three levels deep. The cap is what keeps `parseTags` able to
- * promise it never throws: past it the markup stays literal rather than overflowing the
- * stack, which is the same bargain an unknown tag makes.
+ * Upstream nests two or three levels deep. The cap is how `parseTags` can promise it
+ * never throws: past it the markup stays literal instead of overflowing the stack, the
+ * same bargain an unknown tag makes.
  */
 const MAX_DEPTH = 32;
 
@@ -30,8 +30,8 @@ function plain(value: string, depth: number): string {
 
 /**
  * The last resort for any tag: the first argument that carries text. A tag whose
- * expected argument is empty would otherwise render as nothing and be dropped, which
- * loses words. `{@homebrew |removals}` and `{@item |a shield}` both keep theirs.
+ * expected argument is empty would otherwise render nothing and be dropped, losing
+ * words. `{@homebrew |removals}` and `{@item |a shield}` both keep theirs.
  */
 function firstFilled(args: string[], depth: number): string {
   for (let index = 0; index < args.length; index += 1) {
@@ -52,7 +52,6 @@ function content(args: string[]): string {
   return "";
 }
 
-/** Falls back through the tag's own position, then the name, then anything with text. */
 function display(args: string[], index: number, depth: number): string {
   const chosen = arg(args, index) ?? arg(args, 0);
   return chosen === undefined ? firstFilled(args, depth) : plain(chosen, depth);
@@ -93,9 +92,9 @@ function matchingBrace(input: string, open: number): number {
 
 /**
  * Every `{` mapped to the `}` that closes it, in one pass. Built only after a scan has
- * failed, because repeated failures are what made scanning quadratic and a string with
- * no malformed tag never pays for this. Bounding the scan by length instead made a long
- * `{@note}` leak its markup, so neither ceiling is left.
+ * failed: repeated failures made scanning quadratic, and a string with no malformed tag
+ * never pays for this. Bounding the scan by length instead made a long `{@note}` leak
+ * its markup, so there is no length ceiling.
  */
 function braceMap(input: string): Map<number, number> {
   const pairs = new Map<number, number>();
@@ -202,8 +201,8 @@ function braceFinder(input: string): (open: number) => number {
 }
 
 /**
- * An argument-less unknown tag has no display at all, and an empty token is only
- * something every renderer would have to skip.
+ * An argument-less unknown tag has no display at all, and an empty token is only work
+ * for every renderer to skip.
  */
 function worthKeeping(token: Token): boolean {
   switch (token.kind) {
@@ -219,7 +218,7 @@ function worthKeeping(token: Token): boolean {
 function walk(input: string, depth: number): Token[] {
   if (depth > MAX_DEPTH) {
     // Keep the words, drop the markup. Returning it raw would put `{@` into the FTS
-    // index, which is the one thing every other degradation path avoids.
+    // index, the one thing every other degradation path avoids.
     const scrubbed = input.replace(/\{@\w+\s?|[{}]/g, "");
     return scrubbed === "" ? [] : [text(scrubbed)];
   }

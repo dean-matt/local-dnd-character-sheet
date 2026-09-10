@@ -2,8 +2,8 @@
  * Rejects a commit on a branch that is not named `<type>/<issue>-<slug>`.
  *
  * The name is the only place the work carries its reason once the shell scrollback
- * is gone, and renaming a branch is free right up until the first commit — which
- * is why this runs on pre-commit rather than pre-push.
+ * is gone, and renaming a branch is free right up until the first commit — so this
+ * runs on pre-commit, not pre-push.
  *
  * Exports `checkBranchName` for `tests/branch-name.test.ts`; running the file
  * checks the current branch and exits non-zero when it fails.
