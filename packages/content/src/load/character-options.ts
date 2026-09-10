@@ -20,7 +20,12 @@ type FromSource = (source: string) => Edition;
 /** The pool a class progression's `featureType` reaches, named for the loaders that borrow it. */
 export const OPTIONAL_FEATURES_FILE = "data/optionalfeatures.json";
 
-/** The array key each file carries, and the table its entries become. */
+/**
+ * The array key each file carries, and the table its entries become. A table
+ * named here is also a `granted_by` value, so adding one widens that column's
+ * CHECK in `schema.ts` — a table this writes and that list omits fails the
+ * rebuild naming neither the entry nor the column.
+ */
 const FILES: Record<string, { key: string; table: string }> = {
   "data/backgrounds.json": { key: "background", table: "backgrounds" },
   "data/feats.json": { key: "feat", table: "feats" },
@@ -36,10 +41,10 @@ function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
   });
 }
 
-function toRow(entry: Entry, edition: Edition, context: string): Row {
+function toRow(entry: Entry, source: string, edition: Edition, context: string): Row {
   return {
     name: text(entry, "name", context),
-    source: text(entry, "source", context),
+    source,
     edition,
     json: JSON.stringify(entry),
   };
@@ -69,6 +74,11 @@ function poolKey(edition: Edition, featureType: string): string {
   return `${edition}|${featureType}`;
 }
 
+/** Whether any of the editions named offers an option of this type. */
+function carriedBy(featureType: string, editions: Edition[], pool: Set<string>): boolean {
+  return editions.some((edition) => pool.has(poolKey(edition, featureType)));
+}
+
 /**
  * Refuses a count of a type no optional feature of the counting entry's own
  * edition carries. Such a count entitles its holder to a pick over an empty
@@ -93,7 +103,7 @@ export function reachesPool(
   who: string,
   context: string,
 ): void {
-  if (pool.has(poolKey(edition, featureType))) return;
+  if (carriedBy(featureType, [edition], pool)) return;
   // Which edition, spelled out: "no one optional feature" reads as none at all,
   // and sending a reader after an upstream rename is the wrong hunt.
   throw new Error(
@@ -127,7 +137,7 @@ function reachesGrantPool(
   who: string,
   context: string,
 ): void {
-  if (EDITIONS.some((edition) => pool.has(poolKey(edition, featureType)))) return;
+  if (carriedBy(featureType, EDITIONS, pool)) return;
   throw new Error(`${context}: ${who} grants ${featureType}, which no optional feature carries`);
 }
 
@@ -257,7 +267,7 @@ export const characterOptions: Loader = {
         const context = `${path} ${file.key}[${index}]`;
         const source = text(entry, "source", context);
         const edition = editionOf(entry, source, fromSource);
-        const row = toRow(entry, edition, context);
+        const row = toRow(entry, source, edition, context);
         out[file.table]?.push(row);
         if (file.table === "optional_features") {
           out.optional_feature_types?.push(...typeRows(entry, row, context));
