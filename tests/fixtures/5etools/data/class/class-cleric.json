@@ -87,7 +87,7 @@
         {
           "colLabels": ["{@filter Cantrips|spells|level=0|class=Cleric}", "Channel Divinity"],
           "rows": [
-            [3, 2],
+            [3, 0],
             [3, 2],
             [3, 2],
             [4, 2],
