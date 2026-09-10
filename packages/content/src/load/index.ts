@@ -11,6 +11,7 @@
 import { characterOptions } from "./character-options.ts";
 import { classes } from "./classes.ts";
 import { lookups } from "./lookups.ts";
+import { races } from "./races.ts";
 import { spells } from "./spells.ts";
 import { tagRedirects } from "./tag-redirects.ts";
 
@@ -21,6 +22,16 @@ export type Loader = {
   name: string;
   /** Vendor-relative paths or globs. The framework reads and parses them. */
   files: string[];
+  /**
+   * Normalizes one parsed source between `_copy` and `_versions`, for a file
+   * neither of them leaves readable. Called for every file the loader declared,
+   * so one acting on a single file checks the path it was handed.
+   *
+   * `races.json` is the only file that needs it: a subrace's `_versions` `_mod`
+   * edits traits the parent race holds, so the two merge before a version
+   * expands, and the merge cannot wait for `rows`.
+   */
+  prepare?(parsed: unknown, path: string): unknown;
   /**
    * Maps the parsed sources, keyed by vendor-relative path, to the rows to
    * insert, keyed by table. Pure — loaders never touch the filesystem or the
@@ -33,4 +44,4 @@ export type Loader = {
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };
 
-export const LOADERS: Loader[] = [spells, classes, characterOptions, lookups, tagRedirects];
+export const LOADERS: Loader[] = [spells, classes, characterOptions, races, lookups, tagRedirects];

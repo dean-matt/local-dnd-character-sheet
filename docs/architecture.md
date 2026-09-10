@@ -66,7 +66,8 @@ TIER A   bespoke tables, full schema, queried directly by the sheet
          classes · subclasses · class_resources · spell_slots · spells · items
          subclass_resources · subclass_spell_slots · class_features
          subclass_features · class_optional_features · subclass_optional_features
-         races · backgrounds · feats · optional_features · optional_feature_types
+         races · subraces · backgrounds · feats · optional_features
+         optional_feature_types
 
 TIER B   thin lookup table, resolves {@tag} references and fills pickers
          conditions · statuses · skills · senses · languages · actions

@@ -195,6 +195,31 @@ CREATE TABLE races (
   PRIMARY KEY (name, source)
 ) STRICT;
 
+-- A subrace row is the race with the subrace over the top, not a delta against
+-- it: upstream renders the two together, and three dragonborn subraces edit a
+-- trait — Breath Weapon — that only the parent holds, so nothing else resolves
+-- them. json is therefore self-contained and race_name is a provenance key
+-- rather than a join a reader has to make.
+--
+-- name is the subrace's own — High, not Elf (High) — and the empty string where
+-- it has none, which the five PHB base variants of Dragonborn, Half-Elf,
+-- Half-Orc, Human and Tiefling do. A STRICT primary key column cannot be NULL,
+-- the same reason lookups.qualifier writes one.
+--
+-- Every row is classic: 2024 folds what a subrace did into the race itself, so
+-- an empty result for the one edition is the corpus and not a missing filter.
+CREATE TABLE subraces (
+  name        TEXT NOT NULL,
+  source      TEXT NOT NULL,
+  race_name   TEXT NOT NULL,
+  race_source TEXT NOT NULL,
+  edition     TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  json        TEXT NOT NULL,
+  PRIMARY KEY (name, source, race_name, race_source)
+) STRICT;
+
+CREATE INDEX subraces_by_race ON subraces (race_name, race_source);
+
 CREATE TABLE backgrounds (
   name    TEXT NOT NULL,
   source  TEXT NOT NULL,

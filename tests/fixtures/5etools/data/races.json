@@ -521,6 +521,222 @@
           }
         }
       ]
+    },
+    {
+      "name": "Human",
+      "source": "PHB",
+      "page": 29,
+      "size": ["M"],
+      "speed": 30,
+      "languageProficiencies": [
+        {
+          "common": true,
+          "anyStandard": 1
+        }
+      ],
+      "entries": [
+        {
+          "name": "Age",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Size",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Languages",
+          "entries": ["Elided."],
+          "type": "entries"
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn",
+      "source": "PHB",
+      "page": 32,
+      "size": ["M"],
+      "speed": 30,
+      "ability": [
+        {
+          "str": 2,
+          "cha": 1
+        }
+      ],
+      "traitTags": ["Uncommon Race"],
+      "languageProficiencies": [
+        {
+          "common": true,
+          "draconic": true
+        }
+      ],
+      "resist": [
+        {
+          "choose": {
+            "from": ["acid", "cold", "fire", "lightning", "poison"]
+          }
+        }
+      ],
+      "entries": [
+        {
+          "name": "Age",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Size",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Draconic Ancestry",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "caption": "Draconic Ancestry",
+              "colLabels": ["Dragon", "Damage Type", "Breath Weapon"],
+              "colStyles": ["col-3 text-center", "col-3 text-center", "col-6"],
+              "rows": [
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."]
+              ]
+            }
+          ],
+          "type": "entries"
+        },
+        {
+          "name": "Breath Weapon",
+          "entries": [
+            "Elided.",
+            "Elided. {@damage 2d6} Elided. {@damage 3d6} Elided. {@damage 4d6} Elided. {@damage 5d6} Elided.",
+            "Elided."
+          ],
+          "type": "entries"
+        },
+        {
+          "name": "Damage Resistance",
+          "entries": ["Elided."],
+          "type": "entries"
+        },
+        {
+          "name": "Languages",
+          "entries": ["Elided."],
+          "type": "entries"
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn (Chromatic)",
+      "source": "FTD",
+      "page": 10,
+      "lineage": "VRGR",
+      "size": ["M"],
+      "speed": 30,
+      "resist": [
+        {
+          "choose": {
+            "from": ["acid", "lightning", "poison", "fire", "cold"]
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Chromatic Ancestry",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "caption": "Chromatic Ancestry",
+              "colLabels": ["Dragon", "Damage Type"],
+              "colStyles": ["col-6 text-center", "col-6 text-center"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Breath Weapon",
+          "entries": [
+            "Elided. {@action Attack} Elided. {@damage 1d10} Elided. {@damage 1d10} Elided. {@damage 2d10} Elided. {@damage 3d10} Elided. {@damage 4d10} Elided.",
+            "Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Draconic Resistance",
+          "entries": ["Elided."]
+        }
+      ],
+      "_versions": [
+        {
+          "_abstract": {
+            "name": "Dragonborn (Chromatic; {{color}})",
+            "source": "FTD",
+            "_mod": {
+              "entries": [
+                {
+                  "mode": "removeArr",
+                  "names": "Chromatic Ancestry"
+                },
+                {
+                  "mode": "replaceArr",
+                  "replace": "Breath Weapon",
+                  "items": {
+                    "type": "entries",
+                    "name": "Breath Weapon",
+                    "entries": [
+                      "Elided. {@action Attack} Elided. {@damage 1d10} {{damageType}} Elided. {@damage 1d10} Elided. {@damage 2d10} Elided. {@damage 3d10} Elided. {@damage 4d10} Elided.",
+                      "Elided."
+                    ]
+                  }
+                },
+                {
+                  "mode": "replaceArr",
+                  "replace": "Draconic Resistance",
+                  "items": {
+                    "type": "entries",
+                    "name": "Draconic Resistance",
+                    "entries": ["Elided. {{damageType}} Elided."]
+                  }
+                }
+              ]
+            }
+          },
+          "_implementations": [
+            {
+              "_variables": {
+                "color": "Black",
+                "damageType": "acid",
+                "resist": ["acid"]
+              }
+            },
+            {
+              "_variables": {
+                "color": "Blue",
+                "damageType": "lightning",
+                "resist": ["lightning"]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "subrace": [
@@ -530,11 +746,189 @@
       "raceName": "Human",
       "raceSource": "PHB",
       "page": 31,
+      "ability": [
+        {
+          "choose": {
+            "from": ["str", "dex", "con", "int", "wis", "cha"],
+            "count": 2
+          }
+        }
+      ],
+      "skillProficiencies": [
+        {
+          "any": 1
+        }
+      ],
       "entries": [
         {
           "name": "Skills",
           "entries": ["Elided."],
           "type": "entries"
+        }
+      ]
+    },
+    {
+      "source": "PHB",
+      "raceName": "Dragonborn",
+      "raceSource": "PHB",
+      "page": 32,
+      "_versions": [
+        {
+          "_abstract": {
+            "name": "Dragonborn ({{color}})",
+            "source": "PHB",
+            "_mod": {
+              "entries": [
+                {
+                  "mode": "removeArr",
+                  "names": "Draconic Ancestry"
+                },
+                {
+                  "mode": "replaceArr",
+                  "replace": "Breath Weapon",
+                  "items": {
+                    "type": "entries",
+                    "name": "Breath Weapon",
+                    "entries": [
+                      "Elided. {{area}} Elided.",
+                      "Elided. {{savingThrow}} Elided. {@damage 2d6} {{damageType}} Elided. {@damage 3d6} Elided. {@damage 4d6} Elided. {@damage 5d6} Elided.",
+                      "Elided."
+                    ]
+                  }
+                },
+                {
+                  "mode": "replaceArr",
+                  "replace": "Damage Resistance",
+                  "items": {
+                    "type": "entries",
+                    "name": "Damage Resistance",
+                    "entries": ["Elided. {{damageType}} Elided."]
+                  }
+                }
+              ]
+            }
+          },
+          "_implementations": [
+            {
+              "_variables": {
+                "color": "Black",
+                "damageType": "acid",
+                "area": "5-foot-wide, 30-foot-long line",
+                "savingThrow": "Dexterity"
+              },
+              "resist": ["acid"]
+            },
+            {
+              "_variables": {
+                "color": "Blue",
+                "damageType": "lightning",
+                "area": "5-foot-wide, 30-foot-long line",
+                "savingThrow": "Dexterity"
+              },
+              "resist": ["lightning"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Draconblood",
+      "source": "EGW",
+      "raceName": "Dragonborn",
+      "raceSource": "PHB",
+      "page": 168,
+      "ability": [
+        {
+          "int": 2,
+          "cha": 1
+        }
+      ],
+      "darkvision": 60,
+      "resist": null,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Darkvision",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Forceful Presence",
+          "entries": ["Elided. {@skill Intimidation} Elided. {@skill Persuasion} Elided."],
+          "data": {
+            "overwrite": "Damage Resistance"
+          }
+        },
+        {
+          "name": "Draconic Ancestry",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "caption": "Draconic Ancestry",
+              "colLabels": ["Dragon", "Damage Type", "Breath Weapon"],
+              "colStyles": ["col-3 text-center", "col-3 text-center", "col-6"],
+              "rows": [
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."],
+                ["Elided.", "Elided.", "Elided."]
+              ]
+            }
+          ],
+          "type": "entries",
+          "data": {
+            "overwrite": "Draconic Ancestry"
+          }
+        }
+      ],
+      "overwrite": {
+        "ability": true,
+        "traitTags": true
+      },
+      "_versions": [
+        {
+          "_abstract": {
+            "name": "Dragonborn (Draconblood; {{color}})",
+            "source": "EGW",
+            "_mod": {
+              "entries": [
+                {
+                  "mode": "removeArr",
+                  "names": "Draconic Ancestry"
+                },
+                {
+                  "mode": "replaceArr",
+                  "replace": "Breath Weapon",
+                  "items": {
+                    "type": "entries",
+                    "name": "Breath Weapon",
+                    "entries": [
+                      "Elided. {{area}} Elided.",
+                      "Elided. {{savingThrow}} Elided. {@damage 2d6} {{damageType}} Elided. {@damage 3d6} Elided. {@damage 4d6} Elided. {@damage 5d6} Elided.",
+                      "Elided."
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "_implementations": [
+            {
+              "_variables": {
+                "color": "Black",
+                "damageType": "acid",
+                "area": "5-foot-wide, 30-foot-long line",
+                "savingThrow": "Dexterity"
+              }
+            }
+          ]
         }
       ]
     },

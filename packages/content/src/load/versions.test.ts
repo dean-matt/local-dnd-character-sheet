@@ -2,19 +2,19 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveCopies } from "./copy.ts";
+import { races } from "./races.ts";
 import { resolveVersions } from "./versions.ts";
 
 const FIXTURES = resolve(import.meta.dirname, "../../../../tests/fixtures/5etools");
 
 type Entry = Record<string, unknown>;
 
-/** As the framework does it: copies first, then versions over the result. */
+/** As the framework does it: copies, then the loader's prepare, then versions. */
 function load(file: string, property: string): Entry[] {
+  const path = `data/${file}`;
   const parsed = JSON.parse(readFileSync(join(FIXTURES, "data", file), "utf8"));
-  const resolved = resolveVersions(resolveCopies(parsed, `data/${file}`), `data/${file}`) as Record<
-    string,
-    Entry[]
-  >;
+  const copied = resolveCopies(parsed, path);
+  const resolved = resolveVersions(races.prepare?.(copied, path), path) as Record<string, Entry[]>;
   const entries = resolved[property];
   if (!entries) throw new Error(`${file} has no ${property}`);
   return entries;
@@ -63,6 +63,11 @@ describe("resolveVersions", () => {
         "Elf|XPHB",
         "Elf|LFL",
         "Elf; Lorwyn Lineage|LFL",
+        "Human|PHB",
+        "Dragonborn|PHB",
+        "Dragonborn (Chromatic)|FTD",
+        "Dragonborn (Chromatic; Black)|FTD",
+        "Dragonborn (Chromatic; Blue)|FTD",
       ]);
     });
 

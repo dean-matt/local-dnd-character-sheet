@@ -6,10 +6,6 @@
  * whole entry as `json` — and reading them together is one pass. Nothing here
  * is queried by column beyond a feature's type and the options it grants, both
  * of which are lists upstream and so land in tables of their own.
- *
- * `races.json` is not here: it refuses to resolve at the pinned tag, and its
- * subraces have no table until it is decided where they belong. See the
- * `_versions` section of docs/5etools-data.md.
  */
 import { EDITION_FILES, EDITIONS, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";

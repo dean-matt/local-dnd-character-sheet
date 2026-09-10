@@ -64,10 +64,10 @@ a shape it cannot apply. A loader never sees a `_copy`, and must not add handlin
 a new `_mod` mode belongs in `copy.ts`.
 
 **`_versions` is a different mechanism and is also resolved for you.** It expands one
-entry into several rather than merging two into one, so a version arrives as an entry of
-its own beside the one it was written under — 82 extra entries across `races.json` and
-`feats.json`. A loader counts more entries than the file lists and needs no handling.
-Three dragonborn subraces still refuse; see `docs/5etools-data.md`.
+entry into several rather than merging two into one, so a version arrives beside the one
+it was written under — 112 across `races.json` and `feats.json`, so a loader counts more
+than the file lists. A file neither mechanism leaves readable gets a `prepare` on its
+`Loader`, running between them: only `races.json` does, to merge a subrace with its race.
 
 **Unmapped class resource labels become generic counters**, not errors. Only about 80%
 of resources come from `classTableGroups`; Battle Master superiority dice and similar

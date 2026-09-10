@@ -94,21 +94,25 @@ A version is written out with its own `name`, `source` and differing fields, or 
 once as an `_abstract` template of `{{placeholder}}` text with an `_implementations` list
 supplying the substitutions. All four placeholders in the corpus — `color`, `damageType`,
 `area`, `savingThrow` — hold text. An implementation's other fields ride beside its
-`_variables`, so a colour's `resist` is a field rather than a substitution, and a
-variable no placeholder uses is refused rather than dropped.
+`_variables`, so a colour's `resist` is a field rather than a substitution.
 
 Only four `_mod` modes appear across both files: `replaceArr`, `removeArr`, `prependArr`,
 `appendArr`. `removeArr` is the one `_copy` never needed; neither `renameArr` nor
-`addSpells` occurs in character data. Every generated identity is a plain
-`(name, source)` — across 82 variants none collides with anything.
+`addSpells` occurs in character data. A generated race identity is a plain
+`(name, source)` and a subrace's is its four parts — across the 112 variants the two
+files expand, none collides with anything.
 
-Two things in `races.json` refuse, both waiting on issue #44 to decide where subraces
-live; nothing reads the file until then. **Three dragonborn subraces** (30 variants) mod
-`Breath Weapon`, which upstream renders from the parent race rather than storing on the
-subrace — the way out is that merge. **`Dragonborn (Chromatic)` in `FTD`** (5) declares a
-`_variables.resist` its template never mentions, where the `XPHB` dragonborn spells the
-same thing as a field; accepting it would file all five colours under the base's "choose
-one of five", and the `XPHB` spelling saying it is *probably* shorthand is not knowing.
+A `_variables` member the template never mentions is a field written one level too deep,
+where it is not text. A placeholder holds text, so such a member could never have been
+substituted, and `Dragonborn (Chromatic)` in `FTD` states each colour's `resist` inside
+`_variables` where the `PHB` and `EGW` dragonborn state the same key, in the same shape,
+beside it. A member that *is* text and goes unused stays refused: that one could have
+been substituted and was not, which is upstream saying something the ETL does not act on.
+
+Three dragonborn subraces mod `Breath Weapon`, a trait upstream renders from the parent
+race rather than storing on the subrace, so their 30 variants resolve only once the two
+are one entry. That is why the subrace merge runs between `_copy` and `_versions`,
+through the `prepare` hook on `Loader`, rather than in the races loader.
 
 ## Tag markup
 
