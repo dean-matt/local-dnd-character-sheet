@@ -1,0 +1,54 @@
+{
+  "class": [
+    {
+      "name": "Artificer",
+      "source": "TCE",
+      "page": 9,
+      "edition": "classic",
+      "hd": {
+        "number": 1,
+        "faces": 8
+      },
+      "spellcastingAbility": "int",
+      "classTableGroups": [
+        {
+          "colLabels": [
+            "{@filter Infusions Known|optionalfeatures|feature type=ai|source=TCE}",
+            "Infused Items",
+            "{@filter Cantrips Known|spells|level=0|class=artificer}"
+          ],
+          "rows": [
+            [0, 0, 2],
+            [4, 2, 2],
+            [4, 2, 2],
+            [4, 2, 2],
+            [4, 2, 2],
+            [6, 3, 2],
+            [6, 3, 2],
+            [6, 3, 2],
+            [6, 3, 2],
+            [8, 4, 3],
+            [8, 4, 3],
+            [8, 4, 3],
+            [8, 4, 3],
+            [10, 5, 4],
+            [10, 5, 4],
+            [10, 5, 4],
+            [10, 5, 4],
+            [12, 6, 4],
+            [12, 6, 4],
+            [12, 6, 4]
+          ]
+        }
+      ],
+      "optionalfeatureProgression": [
+        {
+          "name": "Infusions",
+          "featureType": ["AI"],
+          "progression": [0, 4, 4, 4, 4, 6, 6, 6, 6, 8, 8, 8, 8, 10, 10, 10, 10, 12, 12, 12]
+        }
+      ],
+      "classFeatures": ["Magical Tinkering|Artificer||1"]
+    }
+  ]
+}

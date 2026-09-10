@@ -65,6 +65,7 @@ describe("the character options loader", () => {
       "Agonizing Blast|PHB classic",
       "Agonizing Blast|XPHB one",
       "Ambush|XPHB one",
+      "Arcane Propulsion Armor|TCE classic",
       "Archery|PHB classic",
       "Dueling|PHB classic",
     ]);

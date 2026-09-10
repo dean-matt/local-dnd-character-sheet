@@ -36,6 +36,7 @@ describe("the classes loader", () => {
     db.close();
 
     expect(rows).toEqual([
+      { name: "Artificer", source: "TCE", edition: "classic", hit_die: 8 },
       { name: "Cleric", source: "PHB", edition: "classic", hit_die: 8 },
       { name: "Cleric", source: "XPHB", edition: "one", hit_die: 8 },
       { name: "Fighter", source: "XPHB", edition: "one", hit_die: 10 },
@@ -649,6 +650,29 @@ describe("the classes loader", () => {
     // that happens to the fixture, which is the half of the exposure a test can
     // reach; upstream doing it to a real class cannot be caught without the map
     // reading the tag exists to avoid.
+    expect(paired.length).toBe(19);
+    expect(paired.every((row) => row.value === String(row.known))).toBe(true);
+  });
+
+  it("pairs the artificer's infusion column with its progression, per level", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const paired = db
+      .prepare(
+        "SELECT printed.level, printed.value, offered.known FROM class_resources AS printed " +
+          "JOIN class_optional_features AS offered ON offered.class_name = printed.class_name " +
+          "AND offered.class_source = printed.class_source AND offered.level = printed.level " +
+          "WHERE printed.resource_key = 'infusions_known' AND offered.feature_type = 'AI' " +
+          "ORDER BY printed.level",
+      )
+      .all() as { level: number; value: string; known: number }[];
+    db.close();
+
+    // The second counted column the corpus carries, and the one whose filter
+    // trails `|source=TCE` after the code. Both columns are in the fixtures now,
+    // so a label that stops carrying its filter fails here rather than pairing
+    // nothing quietly.
     expect(paired.length).toBe(19);
     expect(paired.every((row) => row.value === String(row.known))).toBe(true);
   });

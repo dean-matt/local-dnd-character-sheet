@@ -80,7 +80,11 @@
       "source": "PHB",
       "page": 110,
       "featureType": ["EI"],
-      "prerequisite": [{ "spell": ["eldritch blast#c"] }],
+      "prerequisite": [
+        {
+          "spell": ["eldritch blast#c"]
+        }
+      ],
       "entries": ["When you cast {@spell eldritch blast}, add your Charisma mod"]
     },
     {
@@ -89,6 +93,13 @@
       "page": 94,
       "featureType": ["MV:B"],
       "entries": ["When you make a Dexterity ({@skill Stealth|XPHB}) check or a"]
+    },
+    {
+      "name": "Arcane Propulsion Armor",
+      "source": "TCE",
+      "page": 20,
+      "featureType": ["AI"],
+      "entries": ["The wearer of this armor gains these benefits:"]
     }
   ]
 }
