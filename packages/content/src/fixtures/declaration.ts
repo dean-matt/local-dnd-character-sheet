@@ -572,7 +572,13 @@ export const FIXTURES: Fixture[] = [
   },
   {
     file: "data/psionics.json",
-    keep: { within: { psionic: { items: ["Mastery of Force|UATheMysticClass"] } } },
+    keep: {
+      within: {
+        psionic: {
+          items: [{ id: "Mastery of Force|UATheMysticClass", prose: ["focus"] }],
+        },
+      },
+    },
   },
   {
     file: "data/races.json",

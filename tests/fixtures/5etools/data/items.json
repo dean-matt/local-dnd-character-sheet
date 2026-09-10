@@ -238,7 +238,7 @@
       "type": "SCF",
       "scfType": "arcane",
       "rarity": "none",
-      "focus": ["Elided.", "Elided.", "Elided."],
+      "focus": ["Sorcerer", "Warlock", "Wizard"],
       "items": ["Crystal|phb", "Orb|phb", "Rod|phb", "Staff|phb", "Wand|phb"]
     }
   ]

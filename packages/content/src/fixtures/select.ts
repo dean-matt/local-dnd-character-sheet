@@ -60,8 +60,13 @@ const IDENTITY_FIELDS = [
   "abbreviation",
 ];
 
-/** A field whose value is rules prose, all the way down. */
-const PROSE_FIELDS = ["entries", "entriesHigherLevel", "entry", "focus"];
+/**
+ * A field whose value is rules prose, all the way down, whatever holds it. A
+ * field that reads as prose under one entry and as machine data under another —
+ * `focus` is a psionic's discipline text and an item group's list of classes —
+ * is named per file instead, by that fixture's `prose`.
+ */
+const PROSE_FIELDS = ["entries", "entriesHigherLevel", "entry"];
 
 /**
  * Keys that stay verbatim inside a prose tree, because a loader reads them: an
