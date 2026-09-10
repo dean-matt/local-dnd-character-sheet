@@ -1,10 +1,9 @@
 /**
  * Dice notation parsing and rolling.
  *
- * `rollDice` is the only entry point. It returns every die it rolled, including the
- * ones a keep clause discarded, so the roll log can show the whole pool rather than a
- * bare total. An advantage or disadvantage mode is legal only on notation that rolls a
- * single die and keeps it.
+ * `rollDice` is the only entry point. It returns every die rolled, including the ones a
+ * keep clause discarded, so the roll log shows the pool and not a bare total. Advantage
+ * and disadvantage are legal only on notation that rolls a single die and keeps it.
  */
 
 export type RolledDie = {
@@ -23,9 +22,8 @@ export type Roll = {
 };
 
 /**
- * A mode rather than notation: a character sheet knows the roll is a d20 test before
- * any notation exists, and `2d20kh1` would leave the log unable to explain the second
- * die.
+ * A mode rather than notation: the sheet knows a roll is a d20 test before any notation
+ * exists, and `2d20kh1` leaves the log unable to explain the second die.
  */
 export type RollMode = "normal" | "advantage" | "disadvantage";
 
@@ -41,8 +39,8 @@ const MAX_FACES = 1000;
 const MAX_MODIFIER = 1000;
 
 /**
- * Spaces are allowed around the operators but not inside a number, where `1d6 4` would
- * otherwise become a d64.
+ * Spaces surround the operators but never split a number: `1d6 4` would otherwise
+ * become a d64.
  */
 const NOTATION = /^(\d*)\s*d\s*(\d+)(?:\s*k\s*([hl])\s*(\d+))?(?:\s*([+-])\s*(\d+))?$/i;
 
@@ -107,13 +105,12 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 }
 
 /**
- * Whether the notation itself parses, which is what `rollDice` accepts in the default
- * mode. Exposed so a caller that renders rules text can offer a roll only where one is
- * possible, rather than keeping its own copy of the grammar and the bounds. It answers
- * by parsing, so the answer cannot drift from the grammar `rollDice` uses.
+ * Whether the notation parses, which is what `rollDice` accepts in the default mode. It
+ * answers by parsing, so a caller rendering rules text can offer a roll only where one
+ * is possible without keeping its own copy of the grammar and the bounds.
  *
- * It says nothing about a mode: advantage and disadvantage additionally require a
- * single die and no keep clause, so a caller passing a mode has to handle that itself.
+ * It says nothing about a mode: advantage and disadvantage also need a single die and no
+ * keep clause, which a caller passing one checks itself.
  */
 export function isRollable(notation: string): boolean {
   try {
@@ -128,10 +125,9 @@ export function isRollable(notation: string): boolean {
  * Rolls `notation`. Malformed notation throws a `SyntaxError`, a quantity out of bounds
  * a `RangeError`, and every message names the offending input.
  *
- * Advantage and disadvantage roll a second die and keep the higher or the lower, so
- * both appear in `dice`. The rules only ever apply them to a single die, so notation
- * that rolls a pool or carries its own keep clause is rejected rather than
- * reinterpreted — a `TypeError`, because the notation is valid and only the pairing
+ * Advantage and disadvantage roll a second die and keep the higher or the lower, so both
+ * appear in `dice`. The rules apply them only to a single die, so pairing a mode with a
+ * pool or a keep clause throws a `TypeError` — the notation is valid, only the pairing
  * is wrong.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {

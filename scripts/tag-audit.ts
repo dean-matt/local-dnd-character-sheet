@@ -6,9 +6,9 @@
  * Needs `pnpm content:sync` first, because `vendor/` is WotC's data and is never
  * committed. Takes a directory so a fixture subset can stand in for the real thing.
  *
- * It cannot catch a display read from the wrong argument when both arguments are
- * plausible — `{@scaledice 8d6|3-9|1d6}` rendering "8d6" passes every check here.
- * `vendor/5etools/data/renderdemo.json` is what settles that.
+ * It cannot catch a display read from the wrong argument when both are plausible —
+ * `{@scaledice 8d6|3-9|1d6}` rendering "8d6" passes every check here.
+ * `vendor/5etools/data/renderdemo.json` settles that.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";

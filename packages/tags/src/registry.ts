@@ -92,9 +92,9 @@ function scaledice(args: string[]): Token {
 }
 
 /**
- * Shared by the d20 family. With no bonus there is nothing to roll, but a display the
- * tag supplied is still words, and dropping them is the failure `firstFilled` exists to
- * prevent on the other path.
+ * Shared by the d20 family. With no bonus there is nothing to roll, but a supplied
+ * display is still words, and dropping them is the failure `firstFilled` prevents on
+ * the other path.
  */
 function d20Tag(args: string[], bonus: string): Token {
   const token = d20(bonus);
@@ -287,5 +287,5 @@ function buildSpecs(): Map<string, Spec> {
 
 export const SPECS = buildSpecs();
 
-/** The tags this parser knows. Anything else degrades, which is a choice worth auditing. */
+/** The tags this parser knows. Anything else degrades, a choice worth auditing. */
 export const KNOWN_TAGS: ReadonlySet<string> = new Set(SPECS.keys());

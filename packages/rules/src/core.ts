@@ -1,9 +1,9 @@
 /**
  * The 5e numbers derived from one ability score or one character level.
  *
- * Terminal arithmetic: the two rulesets agree on all of it, and none of it grows
- * a second input. Spellcasting and rest resets are their own files because both
- * of those things are false of them.
+ * Terminal arithmetic: both rulesets agree on it, and none of it grows a second
+ * input. Spellcasting and rest resets are their own files because neither is true
+ * of them.
  */
 
 /** Ability scores below 1 or above 30 are outside the rules; callers clamp before display. */
