@@ -13,7 +13,7 @@
  */
 import { EDITION_FILES, EDITIONS, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord, strings, text } from "./json.ts";
+import { type Entry, entriesOf, isRecord, strings, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
@@ -31,15 +31,6 @@ const FILES: Record<string, { key: string; table: string }> = {
   "data/feats.json": { key: "feat", table: "feats" },
   [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
-
-function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
-  const entries = isRecord(parsed) ? parsed[key] : undefined;
-  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${key} array`);
-  return entries.map((entry, index) => {
-    if (!isRecord(entry)) throw new Error(`${path} ${key}[${index}] is not an object`);
-    return entry;
-  });
-}
 
 function toRow(entry: Entry, source: string, edition: Edition, context: string): Row {
   return {
