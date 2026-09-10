@@ -37,3 +37,18 @@ export function strings(entry: Entry, key: string, context: string): string[] {
     return value;
   });
 }
+
+/**
+ * An upstream file's entry array, refused when the file carries none and when
+ * an element is not an object. Every loader reads its sources this way, so a
+ * file that changed shape names itself rather than surfacing as a missing field
+ * on the first entry a mapper touches.
+ */
+export function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
+  const entries = isRecord(parsed) ? parsed[key] : undefined;
+  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${key} array`);
+  return entries.map((entry, index) => {
+    if (!isRecord(entry)) throw new Error(`${path} ${key}[${index}] is not an object`);
+    return entry;
+  });
+}
