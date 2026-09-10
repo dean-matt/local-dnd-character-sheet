@@ -114,6 +114,23 @@ describe("the classes loader", () => {
     ]);
   });
 
+  it("stores a cell upstream ships as a string, which the Fighter's table does", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT resource_key, value FROM class_resources WHERE class_name = 'Fighter' AND level = 1 ORDER BY resource_key",
+      )
+      .all();
+    db.close();
+
+    expect(rows).toEqual([
+      { resource_key: "second_wind", value: "2" },
+      { resource_key: "weapon_mastery", value: "3" },
+    ]);
+  });
+
   it("pins a renamed column to the key its other edition uses", () => {
     build(FIXTURE_VENDOR);
 

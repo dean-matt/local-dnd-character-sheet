@@ -86,7 +86,7 @@
         "_mod": {
           "entries": {
             "mode": "appendArr",
-            "items": "Each time you expend a charge from this wand, there is a {@chance 50} chance that nothing happens and the charge is wasted."
+            "items": "Elided. {@chance 50} Elided."
           }
         }
       }

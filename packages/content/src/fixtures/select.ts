@@ -26,6 +26,8 @@ export type Selection = {
   items?: Item[];
   /** Selections applied to a field's value. */
   within?: Record<string, Selection>;
+  /** Fields that hold prose here, where the name alone does not say so. */
+  prose?: string[];
   /** Values upstream does not carry, each saying why it has to be invented. */
   set?: Record<string, Override>;
 };
@@ -58,7 +60,31 @@ const IDENTITY_FIELDS = [
 ];
 
 /** A field whose value is rules prose, all the way down. */
-const PROSE_FIELDS = ["entries", "entriesHigherLevel"];
+const PROSE_FIELDS = ["entries", "entriesHigherLevel", "entry", "focus"];
+
+/**
+ * Keys that stay verbatim inside a prose tree, because a loader reads them: an
+ * element's name and type, a `_mod` operation's operands, a link's target. Anything
+ * else under a prose field is text, wherever it sits and whatever holds it.
+ */
+const STRUCTURAL_FIELDS = [
+  ...IDENTITY_FIELDS,
+  "type",
+  "style",
+  "caption",
+  "colLabels",
+  "colStyles",
+  "shortName",
+  "tableDisplayName",
+  "mode",
+  "names",
+  "replace",
+  "with",
+  "flags",
+  "href",
+  "path",
+  "hash",
+];
 
 /** What replaces every run of prose. Short, and obviously not upstream's. */
 const MARKER = "Elided.";
@@ -141,11 +167,10 @@ function selectFields(
   for (const [field, value] of Object.entries(node)) {
     if (selection.fields && !selection.fields.includes(field)) continue;
     const pruned = indexes ? pruneColumns(field, value, indexes) : value;
-    const inProse = (prose || PROSE_FIELDS.includes(field)) && !COLUMN_FIELDS.includes(field);
+    const named = PROSE_FIELDS.includes(field) || (selection.prose?.includes(field) ?? false);
+    const inProse = (prose || named) && !STRUCTURAL_FIELDS.includes(field);
     const within = selection.within?.[field] ?? {};
-    // A string a field holds is a name, a label or a type — prose is what an array holds.
-    out[field] =
-      typeof pruned === "string" ? pruned : select(pruned, within, `${where}.${field}`, inProse);
+    out[field] = select(pruned, within, `${where}.${field}`, inProse);
   }
   for (const [field, override] of Object.entries(selection.set ?? {})) out[field] = override.value;
   return out;
@@ -173,7 +198,8 @@ export function select(node: unknown, selection: Selection, where: string, prose
   if (typeof node === "string") return prose ? elide(node) : node;
   if (Array.isArray(node)) {
     if (selection.items) return selectItems(node, selection.items, where, prose);
-    return prose ? node.map((element, at) => select(element, {}, `${where}[${at}]`, true)) : node;
+    // Descend even with nothing selected here: a prose field can sit under any array.
+    return node.map((element, at) => select(element, {}, `${where}[${at}]`, prose));
   }
   if (isRecord(node)) return selectFields(node, selection, where, prose);
   return node;

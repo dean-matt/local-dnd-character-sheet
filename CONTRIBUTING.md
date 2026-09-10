@@ -31,9 +31,13 @@ coverage by naming another entry, field or column in
 `packages/content/src/fixtures/declaration.ts` and rebuilding.
 
 Rules prose is elided on the way through, because that text is WotC's and is never
-committed. `{@tag}` markup survives, so a fixture still exercises tag handling. Where a
-test needs a value upstream cannot supply, the declaration carries an override that says
-why — and those are meant to stay countable on one hand.
+committed. Inside a prose field every string goes, wherever it sits, except the keys a
+loader reads — an element's name and type, a `_mod` operand, a link's target. `{@tag}`
+and `{{variable}}` markup survives, so a fixture still exercises tag handling and version
+templating. What is left committed is names, sources, page numbers and table numbers.
+
+Where a test needs a value upstream cannot supply, the declaration carries an override
+that says why — and those are meant to stay countable on one hand.
 
 ## Branching and commits
 

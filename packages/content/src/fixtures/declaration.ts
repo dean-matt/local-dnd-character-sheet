@@ -721,7 +721,8 @@ export const FIXTURES: Fixture[] = [
   },
   {
     file: "data/tables.json",
-    keep: { within: { table: { items: ["Damage Types|PHB"] } } },
+    // A standalone table holds its prose in `rows`, where no field name says so.
+    keep: { within: { table: { items: [{ id: "Damage Types|PHB", prose: ["rows"] }] } } },
   },
   {
     file: "data/variantrules.json",

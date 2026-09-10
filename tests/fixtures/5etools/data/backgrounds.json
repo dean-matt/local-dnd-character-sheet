@@ -23,17 +23,17 @@
             {
               "type": "item",
               "name": "Skill Proficiencies:",
-              "entry": "{@skill Insight}, {@skill Religion}"
+              "entry": "{@skill Insight} Elided. {@skill Religion}"
             },
             {
               "type": "item",
               "name": "Languages:",
-              "entry": "Two of your choice"
+              "entry": "Elided."
             },
             {
               "type": "item",
               "name": "Equipment:",
-              "entry": "A {@item holy symbol|phb} (a gift to you when you entered the priesthood), a prayer {@item book|phb} or prayer wheel, 5 sticks of incense, vestments, a set of {@item common clothes|phb}, and a belt {@item pouch|phb} containing 15 gp"
+              "entry": "Elided. {@item holy symbol|phb} Elided. {@item book|phb} Elided. {@item common clothes|phb} Elided. {@item pouch|phb} Elided."
             }
           ]
         },
@@ -153,17 +153,17 @@
             {
               "type": "item",
               "name": "Skill Proficiencies:",
-              "entry": "{@skill Deception}, {@skill Stealth}"
+              "entry": "{@skill Deception} Elided. {@skill Stealth}"
             },
             {
               "type": "item",
               "name": "Tool Proficiencies:",
-              "entry": "One type of {@filter gaming set|items|source=phb|miscellaneous=mundane|type=gaming set}, {@item thieves' tools|phb}"
+              "entry": "Elided. {@filter gaming set|items|source=phb|miscellaneous=mundane|type=gaming set} Elided. {@item thieves' tools|phb}"
             },
             {
               "type": "item",
               "name": "Equipment:",
-              "entry": "A {@item crowbar|phb}, a set of dark {@item common clothes|phb} including a hood, and a belt {@item pouch|phb} containing 15 gp"
+              "entry": "Elided. {@item crowbar|phb} Elided. {@item common clothes|phb} Elided. {@item pouch|phb} Elided."
             }
           ]
         },
@@ -373,17 +373,17 @@
             {
               "type": "item",
               "name": "Ability Scores:",
-              "entry": "Intelligence, Wisdom, Charisma"
+              "entry": "Elided."
             },
             {
               "type": "item",
               "name": "Feat:",
-              "entry": "{@feat Magic Initiate|XPHB} (Cleric)"
+              "entry": "{@feat Magic Initiate|XPHB} Elided."
             },
             {
               "type": "item",
               "name": "Skill Proficiencies:",
-              "entry": "{@skill Insight|XPHB}, {@skill Religion|XPHB}"
+              "entry": "{@skill Insight|XPHB} Elided. {@skill Religion|XPHB}"
             },
             {
               "type": "item",
@@ -393,7 +393,7 @@
             {
               "type": "item",
               "name": "Equipment:",
-              "entry": "Choose A or B: (A) {@item Calligrapher's Supplies|XPHB}, {@item Book|XPHB|Book (prayers)}, {@item Holy Symbol|XPHB}, {@item Parchment|XPHB} (10 sheets), {@item Robe|xphb}, 8 GP; or (B) 50 GP"
+              "entry": "Elided. {@item Calligrapher's Supplies|XPHB} Elided. {@item Book|XPHB|Book (prayers)} Elided. {@item Holy Symbol|XPHB} Elided. {@item Parchment|XPHB} Elided. {@item Robe|xphb} Elided."
             }
           ]
         }
