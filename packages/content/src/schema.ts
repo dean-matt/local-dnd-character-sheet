@@ -90,8 +90,8 @@ CREATE TABLE subclass_spell_slots (
 -- of the join optional_feature_types starts, where that table says which options
 -- carry a type. Every level that may pick carries a row, since a class or
 -- subclass states a count two ways and only one of them says anything about a
--- level it skips. Four feats and an optional feature state it a third way, keyed \`*\` for a source that
--- has no level, and no table here holds those.
+-- level it skips. A source with no level states it a third way, keyed \`*\`, which
+-- granted_optional_features below holds.
 --
 -- known is the running total, not the pick gained at that level: a level 2 XPHB
 -- warlock knows 3 invocations, having gained 2. What a level adds is the
@@ -231,6 +231,29 @@ CREATE TABLE optional_feature_types (
 ) STRICT;
 
 CREATE INDEX optional_feature_types_by_type ON optional_feature_types (feature_type);
+
+-- The same count from a grantor that has no level: four feats and one optional
+-- feature grant options outright, keyed \`*\` upstream, since a feat reaches a
+-- character at whatever level they took it. Superior Technique is both — a
+-- fighting style that grants a maneuver in turn — so a grant row's identity is
+-- an optional feature's as readily as a feat's.
+--
+-- granted_by names the table the grantor is in. Nothing shares a (name, source)
+-- across the two at the pinned tag, and without the column a query from a
+-- character's feats would answer with an option's grant of the same name.
+--
+-- A character's total for a type is the class row, the subclass row and every
+-- grant row they hold, summed; docs/class-tables.md states that sum in one place.
+CREATE TABLE granted_optional_features (
+  granted_by   TEXT NOT NULL CHECK (granted_by IN ('backgrounds', 'feats', 'optional_features')),
+  name         TEXT NOT NULL,
+  source       TEXT NOT NULL,
+  feature_type TEXT NOT NULL,
+  known        INTEGER NOT NULL CHECK (known > 0),
+  PRIMARY KEY (granted_by, name, source, feature_type)
+) STRICT;
+
+CREATE INDEX granted_optional_features_by_type ON granted_optional_features (feature_type);
 
 -- Tier B ---------------------------------------------------------------------
 

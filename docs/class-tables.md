@@ -77,13 +77,60 @@ makes two counts at one level impossible. A `(from_level, to_level)` range would
 smaller and could not assert either: SQLite has no exclusion constraint, so an overlapping
 or gapped range loads clean and answers wrong.
 
-A third shape exists, on entries these tables do not cover. Four feats and one optional
-feature key a progression `*` — Martial Adept grants 2 maneuvers, Metamagic Adept 2
-metamagics — because a feat has no level to hang a count on. `character-options.ts` does
-not read `optionalfeatureProgression`, so feat-granted options are absent from the catalog
-as counts and a class-side query cannot see them. The loader here refuses a `*` by name
-rather than coercing it, so the day upstream moves such a block onto a class, the build
-says which shape it found.
+A third shape sits on entries with no level to hang a count on, and
+`granted_optional_features` holds it. Four feats and one optional feature key a
+progression `*`, for "at any level":
+
+```
+feats                Eldritch Adept|TCE      EI     1
+feats                Fighting Initiate|TCE   FS:F   1
+feats                Martial Adept|PHB       MV:B   2
+feats                Metamagic Adept|TCE     MM     2
+optional_features    Superior Technique|TCE  MV:B   1
+```
+
+All five are `classic`; no 2024 feat and no background or race carries one at the pinned
+tag. `granted_by` names the table the grantor is in, because `Superior Technique` is a
+fighting style that grants a maneuver in turn, so a grant row's identity is an optional
+feature's as readily as a feat's. Nothing shares a `(name, source)` across the two files,
+and without that column a query from a character's feats would answer with an option's
+grant of the same name.
+
+Each loader refuses the other's shape: a class or subclass progression keyed `*` has no
+level to file a count at, and a leveless one keyed by a level would file a row that
+ignores it. So the day upstream moves such a block between the two, the build says which
+shape it found rather than storing a count nothing reads.
+
+A character's total for a type is the three tables summed — the class row, the subclass
+row, and a grant row for every feat and option they hold, which is a row per grantor and
+not one row:
+
+```sql
+SELECT COALESCE(SUM(known), 0) FROM (
+  SELECT known FROM class_optional_features
+   WHERE class_name = ? AND class_source = ? AND level = ? AND feature_type = ?
+  UNION ALL
+  SELECT known FROM subclass_optional_features
+   WHERE class_name = ? AND class_source = ? AND subclass_name = ? AND subclass_source = ?
+     AND level = ? AND feature_type = ?
+  UNION ALL
+  SELECT known FROM granted_optional_features
+   WHERE feature_type = ?
+     AND (granted_by, name, source) IN (VALUES ('feats', ?, ?), ('optional_features', ?, ?))
+);
+```
+
+A Battle Master 7 who took `Martial Adept` knows 7 maneuvers — 5 from the subclass row and
+2 from the feat — and 8 having also taken `Superior Technique`. The pool is the 43 options
+`optional_feature_types` carries for `MV:B`, 23 of them `classic` and 20 `one`, and it is
+joined unfiltered by edition: a 2024 Battle Master who took a 2014 feat picks from every
+maneuver the catalog holds, and what a table may legally offer is a question for the
+picker.
+
+The build refuses a grant of a code no optional feature carries **in either edition**,
+where a class or subclass count has to reach the pool of its own edition. The two differ
+because the picks do: a class row offers the options of the ruleset it belongs to, while a
+grant travels with a character who may hold grantors from both.
 
 Two upstream fields state the invocation and infusion counts, so two tables hold them:
 `class_resources.invocations_known` and `infusions_known` come from a `colLabels` column,

@@ -22,6 +22,9 @@ import { type Entry, isRecord } from "./json.ts";
 
 export type Edition = "classic" | "one";
 
+/** Both rulesets, for a pool a query spans rather than picks one of. */
+export const EDITIONS: Edition[] = ["classic", "one"];
+
 const ONE_PUBLISHED_FROM = "2024-09-17";
 
 const CONTENTS = [

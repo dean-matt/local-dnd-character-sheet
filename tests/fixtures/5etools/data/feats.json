@@ -255,6 +255,30 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Martial Adept",
+      "source": "PHB",
+      "page": 168,
+      "optionalfeatureProgression": [
+        {
+          "name": "Maneuvers",
+          "featureType": ["MV:B"],
+          "progression": {
+            "*": 2
+          }
+        }
+      ],
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided. {@filter maneuvers|optionalfeatures|feature type=MV:B} Elided. {@class fighter|phb|Battle Master|Battle Master|phb|2-0} Elided.",
+            "Elided. {@dice d6} Elided."
+          ]
+        }
+      ]
     }
   ]
 }
