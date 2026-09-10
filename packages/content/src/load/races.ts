@@ -62,6 +62,12 @@ function mergeAbility(
 const traitName = (entry: unknown): string =>
   isRecord(entry) && typeof entry.name === "string" ? entry.name.trim().toLowerCase() : "";
 
+/** The trait a subrace's entry stands in for, where it names one. */
+function standsInFor(trait: unknown): string | undefined {
+  const replaces = isRecord(trait) && isRecord(trait.data) ? trait.data.overwrite : undefined;
+  return typeof replaces === "string" ? replaces.trim().toLowerCase() : undefined;
+}
+
 /**
  * The race's traits with the subrace's appended, except where one names a trait
  * to stand in for: `data.overwrite` holds that trait's name, so a subrace
@@ -70,11 +76,9 @@ const traitName = (entry: unknown): string =>
 function mergeEntries(mine: unknown, theirs: unknown[]): unknown {
   const merged = Array.isArray(mine) ? [...mine] : [];
   for (const trait of theirs) {
-    const replaces = isRecord(trait) && isRecord(trait.data) ? trait.data.overwrite : undefined;
+    const replaces = standsInFor(trait);
     const at =
-      typeof replaces === "string"
-        ? merged.findIndex((held) => traitName(held) === replaces.trim().toLowerCase())
-        : -1;
+      replaces === undefined ? -1 : merged.findIndex((held) => traitName(held) === replaces);
     if (at === -1) merged.push(trait);
     else merged[at] = trait;
   }
@@ -150,8 +154,28 @@ function overwriteOf(sub: Entry, where: string): Set<string> {
   return named;
 }
 
+/**
+ * The trait each merged field is the machine-readable half of, so that the two
+ * halves of one statement cannot disagree. A subrace whose Languages trait
+ * stands in for the race's is replacing its languages, flag or no flag:
+ * `Variant; Mark of Finding|ERLW` states that trait under both its parents and
+ * flags the field under only the Human, and the Half-Orc's row would otherwise
+ * grant an Orc the same row's prose says the character does not speak.
+ *
+ * Only languages are spelled out twice. A trait standing in for `Darkvision`
+ * or `Size` names a field the subrace replaces outright anyway, and no trait
+ * is the prose half of `traitTags`, which is filter metadata upstream renders
+ * nowhere.
+ */
+const SPELLED_OUT_BY: Record<string, string> = { languageProficiencies: "languages" };
+
 function merge(race: Entry, sub: Entry, where: string): Entry {
-  const overwritten = overwriteOf(sub, where);
+  const flagged = overwriteOf(sub, where);
+  const traits = Array.isArray(sub.entries) ? sub.entries : [];
+  const replaced = new Set(flagged);
+  for (const [field, trait] of Object.entries(SPELLED_OUT_BY)) {
+    if (traits.some((held) => standsInFor(held) === trait)) replaced.add(field);
+  }
   const merged: Entry = structuredClone(
     Object.fromEntries(Object.entries(race).filter(([field]) => !RACE_ONLY.has(field))),
   );
@@ -159,16 +183,18 @@ function merge(race: Entry, sub: Entry, where: string): Entry {
   for (const [field, value] of Object.entries(own)) {
     const rule = MERGE[field];
     merged[field] =
-      rule && Array.isArray(value)
-        ? rule(merged[field], value, overwritten.has(field), where)
-        : value;
+      rule && Array.isArray(value) ? rule(merged[field], value, replaced.has(field), where) : value;
   }
   // Overwriting with nothing leaves nothing. The Draconblood and the Ravenite
   // flag traitTags and then carry none, which upstream's renderer reads as no
   // instruction at all and leaves them tagged an Uncommon Race like the
   // Dragonborn they descend from. Here the flag is the only statement either
   // one makes about the field, so it is the one acted on.
-  for (const field of overwritten) {
+  //
+  // The flag alone, never a stand-in trait: a trait says how to combine two
+  // values, and the Ixalan vampire stands in for Languages while declaring no
+  // languages of its own — deleting the race's there would leave it mute.
+  for (const field of flagged) {
     if (!(field in own)) delete merged[field];
   }
   // A null is how a subrace un-sets an inherited trait — the Draconblood drops

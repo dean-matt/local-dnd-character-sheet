@@ -684,6 +684,21 @@ export const FIXTURES: Fixture[] = [
               ],
             },
             {
+              id: "Half-Orc|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "ability",
+                "traitTags",
+                "languageProficiencies",
+                "size",
+                "speed",
+                "entries",
+              ],
+              within: { entries: { items: ["Darkvision", "Languages"] } },
+            },
+            {
               id: "Dragonborn (Chromatic)|FTD",
               fields: [
                 "name",
@@ -751,6 +766,19 @@ export const FIXTURES: Fixture[] = [
                   ],
                 },
               },
+            },
+            {
+              id: "Variant; Mark of Finding|ERLW|Half-Orc|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "raceName",
+                "raceSource",
+                "languageProficiencies",
+                "entries",
+              ],
+              within: { entries: { items: ["Languages"] } },
             },
             {
               id: "Draconblood|EGW|Dragonborn|PHB",

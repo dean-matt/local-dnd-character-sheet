@@ -636,6 +636,38 @@
       ]
     },
     {
+      "name": "Half-Orc",
+      "source": "PHB",
+      "page": 40,
+      "size": ["M"],
+      "speed": 30,
+      "ability": [
+        {
+          "str": 2,
+          "con": 1
+        }
+      ],
+      "traitTags": ["Uncommon Race"],
+      "languageProficiencies": [
+        {
+          "common": true,
+          "orc": true
+        }
+      ],
+      "entries": [
+        {
+          "name": "Darkvision",
+          "entries": ["Elided."],
+          "type": "entries"
+        },
+        {
+          "name": "Languages",
+          "entries": ["Elided."],
+          "type": "entries"
+        }
+      ]
+    },
+    {
       "name": "Dragonborn (Chromatic)",
       "source": "FTD",
       "page": 10,
@@ -828,6 +860,29 @@
               "resist": ["lightning"]
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Variant; Mark of Finding",
+      "source": "ERLW",
+      "raceName": "Half-Orc",
+      "raceSource": "PHB",
+      "page": 41,
+      "languageProficiencies": [
+        {
+          "common": true,
+          "goblin": true
+        }
+      ],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Languages",
+          "entries": ["Elided."],
+          "data": {
+            "overwrite": "Languages"
+          }
         }
       ]
     },

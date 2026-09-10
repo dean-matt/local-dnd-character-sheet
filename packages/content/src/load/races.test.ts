@@ -68,6 +68,7 @@ describe("the races loader", () => {
         { name: "Elf; Lorwyn Lineage", source: "LFL", edition: "one" },
         { name: "Human", source: "PHB", edition: "classic" },
         { name: "Dragonborn", source: "PHB", edition: "classic" },
+        { name: "Half-Orc", source: "PHB", edition: "classic" },
         { name: "Dragonborn (Chromatic)", source: "FTD", edition: "classic" },
         { name: "Dragonborn (Chromatic; Black)", source: "FTD", edition: "classic" },
         { name: "Dragonborn (Chromatic; Blue)", source: "FTD", edition: "classic" },
@@ -101,6 +102,13 @@ describe("the races loader", () => {
           name: "Dragonborn (Blue)",
           source: "PHB",
           race_name: "Dragonborn",
+          race_source: "PHB",
+          edition: "classic",
+        },
+        {
+          name: "Variant; Mark of Finding",
+          source: "ERLW",
+          race_name: "Half-Orc",
           race_source: "PHB",
           edition: "classic",
         },
@@ -162,6 +170,15 @@ describe("the races loader", () => {
     it("replaces an inherited field the subrace's overwrite names", () => {
       // The Draconblood is INT and CHA, not the Dragonborn's STR and CHA.
       expect(merged("Draconblood", "EGW").ability).toEqual([{ int: 2, cha: 1 }]);
+    });
+
+    it("replaces the languages of a race whose Languages trait the subrace stands in for", () => {
+      // Upstream flags this subrace's languages under the Human parent and not
+      // under the Half-Orc, though it states the same replacing trait on both.
+      // Unioning would grant an Orc the row's own prose denies.
+      expect(merged("Variant; Mark of Finding", "ERLW").languageProficiencies).toEqual([
+        { common: true, goblin: true },
+      ]);
     });
 
     it("drops an inherited field the overwrite names and the subrace does not carry", () => {
@@ -272,6 +289,28 @@ describe("the races loader", () => {
         highElf({ languageProficiencies: [{ common: true, elvish: true, aquan: true }] })
           .languageProficiencies,
       ).toEqual([{ common: true, elvish: true, aquan: true }]);
+    });
+
+    const LANGUAGES = {
+      type: "entries",
+      name: "Languages",
+      entries: ["Elided."],
+      data: { overwrite: "Languages" },
+    };
+
+    it("keeps the languages a stand-in Languages trait states, not the race's as well", () => {
+      expect(
+        highElf({ languageProficiencies: [{ common: true, goblin: true }], entries: [LANGUAGES] })
+          .languageProficiencies,
+      ).toEqual([{ common: true, goblin: true }]);
+    });
+
+    it("leaves the race's languages alone where a stand-in trait states none of its own", () => {
+      // A trait says how to combine two values. With only one there is nothing
+      // to combine, and the race's is what the subrace inherits.
+      expect(highElf({ entries: [LANGUAGES] }).languageProficiencies).toEqual([
+        { common: true, elvish: true },
+      ]);
     });
 
     it("lays the subrace's ability increases over the race's, slot by slot", () => {

@@ -65,6 +65,7 @@ describe("resolveVersions", () => {
         "Elf; Lorwyn Lineage|LFL",
         "Human|PHB",
         "Dragonborn|PHB",
+        "Half-Orc|PHB",
         "Dragonborn (Chromatic)|FTD",
         "Dragonborn (Chromatic; Black)|FTD",
         "Dragonborn (Chromatic; Blue)|FTD",
