@@ -206,8 +206,10 @@ CREATE TABLE races (
 -- Half-Orc, Human and Tiefling do. A STRICT primary key column cannot be NULL,
 -- the same reason lookups.qualifier writes one.
 --
--- Every row is classic: 2024 folds what a subrace did into the race itself, so
--- an empty result for the one edition is the corpus and not a missing filter.
+-- Every row is classic at the pinned tag, because 2024 folds what a subrace did
+-- into the race itself — an empty result for the one edition is the corpus and
+-- not a missing filter. A row could still be one: a subrace takes the edition
+-- its race declares, as the rest of the race's traits do.
 CREATE TABLE subraces (
   name        TEXT NOT NULL,
   source      TEXT NOT NULL,

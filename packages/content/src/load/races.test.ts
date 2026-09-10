@@ -164,6 +164,13 @@ describe("the races loader", () => {
       expect(merged("Draconblood", "EGW").ability).toEqual([{ int: 2, cha: 1 }]);
     });
 
+    it("drops an inherited field the overwrite names and the subrace does not carry", () => {
+      // The Draconblood flags traitTags and carries none, so it keeps none —
+      // it is not the Uncommon Race the Dragonborn is.
+      expect(merged("Draconblood", "EGW")).not.toHaveProperty("traitTags");
+      expect(merged("Dragonborn (Draconblood; Black)", "EGW")).not.toHaveProperty("traitTags");
+    });
+
     it("drops an inherited field the subrace sets to null", () => {
       // The Dragonborn chooses one of five damage resistances. The Draconblood
       // has none, and says so by writing the field as null.
@@ -244,7 +251,7 @@ describe("the races loader", () => {
       return merged("High", "PHB");
     };
 
-    it("adds the subrace's list to the race's", () => {
+    it("adds the subrace's tags to the race's", () => {
       expect(highElf({ traitTags: ["Trance"] }).traitTags).toEqual(["Improved Resting", "Trance"]);
     });
 
@@ -252,6 +259,19 @@ describe("the races loader", () => {
       expect(highElf({ traitTags: ["Trance"], overwrite: { traitTags: true } }).traitTags).toEqual([
         "Trance",
       ]);
+    });
+
+    it("leaves nothing where overwrite names a field the subrace does not carry", () => {
+      expect(highElf({ overwrite: { traitTags: true } })).not.toHaveProperty("traitTags");
+    });
+
+    it("unions the two proficiency maps rather than offering a choice between them", () => {
+      // The Sea Elf restates the Elf's languages alongside its own, so appending
+      // would read as "the race's languages or the subrace's".
+      expect(
+        highElf({ languageProficiencies: [{ common: true, elvish: true, aquan: true }] })
+          .languageProficiencies,
+      ).toEqual([{ common: true, elvish: true, aquan: true }]);
     });
 
     it("lays the subrace's ability increases over the race's, slot by slot", () => {
@@ -276,9 +296,9 @@ describe("the races loader", () => {
       ).toMatch(/merging a choice of proficiencies is not handled/);
     });
 
-    it("refuses an overwrite of a field the merge replaces anyway", () => {
+    it("refuses an overwrite of entries, which stands in one trait at a time", () => {
       expect(refusal([ELF], [{ ...HIGH, overwrite: { entries: true } }])).toMatch(
-        /overwrite names entries, which the merge does not add to/,
+        /overwrite names entries, which the merge has no rule to replace/,
       );
     });
 

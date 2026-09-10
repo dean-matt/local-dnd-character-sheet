@@ -82,10 +82,14 @@ function mergeEntries(mine: unknown, theirs: unknown[]): unknown {
 }
 
 /**
- * One proficiency map with the other's entries over it. Upstream writes these
- * as a one-element list, and a longer one is a choice between sets: merging two
- * choices needs a rule for which of the two the character picks from, and no
- * entry has ever asked for one.
+ * One proficiency map with the other's entries over it, which is a union: the
+ * Sea Elf speaks Common, Elvish and Aquan.
+ *
+ * A proficiency list of more than one element is a choice between sets, not a
+ * longer set, so appending the subrace's would read as "the race's languages or
+ * the subrace's" — the Sea Elf choosing between Aquan and the Elvish it already
+ * restates. Merging two actual choices needs a rule for which of the two the
+ * character picks from, and no entry has ever asked for one.
  */
 function mergeProficiencies(
   mine: unknown,
@@ -100,6 +104,7 @@ function mergeProficiencies(
   return [{ ...(isRecord(mine[0]) ? mine[0] : {}), ...(isRecord(theirs[0]) ? theirs[0] : {}) }];
 }
 
+/** A flat list of tags, where the subrace's are more of the same kind. */
 function concat(mine: unknown, theirs: unknown[], overwritten: boolean): unknown {
   return overwritten || !Array.isArray(mine) ? theirs : [...mine, ...theirs];
 }
@@ -112,7 +117,7 @@ const MERGE: Record<
   ability: mergeAbility,
   entries: (mine, theirs) => mergeEntries(mine, theirs),
   skillProficiencies: mergeProficiencies,
-  languageProficiencies: concat,
+  languageProficiencies: mergeProficiencies,
   traitTags: concat,
 };
 
@@ -126,8 +131,9 @@ const OVERWRITABLE = new Set([
 
 /**
  * The fields a subrace's `overwrite` names. A flag on any other field is
- * refused rather than ignored: it reads as a decision the merge acted on, and
- * every field outside this set the subrace already replaces outright.
+ * refused rather than ignored, because it reads as a decision the merge acted
+ * on: every other field the subrace already replaces outright, and `entries`
+ * names the trait it stands in for one at a time instead.
  */
 function overwriteOf(sub: Entry, where: string): Set<string> {
   const declared = sub.overwrite;
@@ -137,7 +143,7 @@ function overwriteOf(sub: Entry, where: string): Set<string> {
   for (const [field, on] of Object.entries(declared)) {
     if (typeof on !== "boolean") throw new Error(`${where}: overwrite.${field} is not a flag`);
     if (!OVERWRITABLE.has(field)) {
-      throw new Error(`${where}: overwrite names ${field}, which the merge does not add to`);
+      throw new Error(`${where}: overwrite names ${field}, which the merge has no rule to replace`);
     }
     if (on) named.add(field);
   }
@@ -156,6 +162,14 @@ function merge(race: Entry, sub: Entry, where: string): Entry {
       rule && Array.isArray(value)
         ? rule(merged[field], value, overwritten.has(field), where)
         : value;
+  }
+  // Overwriting with nothing leaves nothing. The Draconblood and the Ravenite
+  // flag traitTags and then carry none, which upstream's renderer reads as no
+  // instruction at all and leaves them tagged an Uncommon Race like the
+  // Dragonborn they descend from. Here the flag is the only statement either
+  // one makes about the field, so it is the one acted on.
+  for (const field of overwritten) {
+    if (!(field in own)) delete merged[field];
   }
   // A null is how a subrace un-sets an inherited trait — the Draconblood drops
   // the Dragonborn's choice of damage resistance — so it stores as an absent
