@@ -692,6 +692,8 @@ describe("the classes loader", () => {
   it.each([
     ["two codes a row could not divide", "ei;mm"],
     ["a negated code", "!ei"],
+    ["a bracketed group", "[ei]"],
+    ["a padded code", " ei"],
   ])("refuses %s in a feature-type filter", (_case, filter) => {
     const contents = {
       class: [

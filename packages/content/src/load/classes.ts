@@ -421,20 +421,27 @@ function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[]
 /** The type code a counted column names, ahead of anything else the tag carries. */
 const FEATURE_TYPE = /\|feature type=([^|}]+)/;
 
+/** Every one of the 13 `featureType` codes in the corpus is this shape. */
+const PLAIN_CODE = /^[A-Z0-9:]+$/;
+
 /**
- * A filter value may list codes with `;` or negate one with `!`, and 322 tags in
- * the corpus do somewhere. None is on a `feature type=` yet, and a column
- * counting two types is a count a row cannot divide, so both forms are refused —
- * naming the form, since the alternative is a refusal blaming a progression for
- * a label this loader cannot read.
+ * A filter value is a small grammar: 265 tags in the corpus list values with `;`
+ * or negate one with `!`, and it also brackets groups and pads with spaces. None
+ * of that sits on a `feature type=` yet, and a column counting two types is a
+ * count a row cannot divide, so anything but one plain code is refused by shape
+ * rather than by listing the forms to reject. Matching the shape is what keeps
+ * the refusal honest: a value this cannot read would otherwise fold to a bogus
+ * code and be reported as a progression that does not offer it, sending a reader
+ * to the wrong file.
  */
 function plainCode(value: string, context: string): string {
-  if (value.includes(";") || value.includes("!")) {
+  const code = value.toUpperCase();
+  if (!PLAIN_CODE.test(code)) {
     throw new Error(
       `${context}: a column filters feature type ${JSON.stringify(value)}, and this reads one plain code`,
     );
   }
-  return value.toUpperCase();
+  return code;
 }
 
 /**
@@ -463,6 +470,16 @@ function countedColumns(groups: unknown, context: string): { code: string; key: 
  *
  * A column counting a type the entry never offers is refused rather than passed
  * over: a skip is how this check would stop running without saying so.
+ *
+ * The pairing is entry-local, which is the ceiling: a class states the column and
+ * a class states the progression, in all three pairs the corpus has. The two do
+ * split across entries already — `Fighter|XPHB` carries no progression while
+ * `Battle Master|XPHB` carries `MV:B` — so a tag that put a maneuver column on
+ * the fighter's own table would be refused here rather than resolved against the
+ * subclass. The way out is to collect the counted columns and the progressions
+ * across an entry and its subclasses first and pair them after, as
+ * `checkFeatureOwners` does for features; it is not worth the pass until a column
+ * and its progression actually land on different entries.
  */
 function countsAgree(resources: Row[], typed: Row[], groups: unknown, context: string): void {
   const counted = countedColumns(groups, context);
