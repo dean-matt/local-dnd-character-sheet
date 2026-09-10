@@ -77,6 +77,18 @@ describe("select", () => {
     );
   });
 
+  it("refuses a selection aimed at a value that holds nothing to select", () => {
+    expect(() => select({ page: 211 }, { within: { page: { fields: ["x"] } } }, "$")).toThrow(
+      "$.page: upstream holds number, which fields cannot select",
+    );
+  });
+
+  it("refuses naming a structural field prose, which would do nothing", () => {
+    expect(() => select({ caption: "Damage Types" }, { prose: ["caption"] }, "$")).toThrow(
+      "$: caption is structural, so naming it prose does nothing",
+    );
+  });
+
   it("refuses a prose field upstream does not carry", () => {
     expect(() => select({ rows: [["a"]] }, { prose: ["cells"] }, "$")).toThrow(
       "$: upstream has no field cells to elide",
@@ -107,5 +119,11 @@ describe("elide", () => {
 
   it("empties a formatting tag, whose body is prose however long", () => {
     expect(elide("{@note A whole paragraph of rules text lives in here.}")).toBe("{@note Elided.}");
+  });
+
+  it("refuses an unrecognised tag too long to be a name, rather than guessing", () => {
+    expect(() => elide(`{@newtag ${"a".repeat(201)}}`)).toThrow(
+      "{@newtag} carries 201 characters, too long to take for a name",
+    );
   });
 });

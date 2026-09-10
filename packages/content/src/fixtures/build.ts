@@ -49,7 +49,7 @@ function format(paths: string[]): void {
 function committedFixtures(): string[] {
   if (!existsSync(FIXTURE_DIR)) return [];
   return readdirSync(FIXTURE_DIR, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile())
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
     .map((entry) => posix(relative(FIXTURE_DIR, join(entry.parentPath, entry.name))));
 }
 

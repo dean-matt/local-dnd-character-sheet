@@ -73,7 +73,6 @@ const STRUCTURAL_FIELDS = [
   "type",
   "style",
   "caption",
-  "data",
   "overwrite",
   "colLabels",
   "colStyles",
@@ -103,12 +102,53 @@ const MARKUP = /\{@[^{}]+\}|\{\{[^{}]+\}\}/g;
  * Tags that wrap prose rather than name something. Their body is rules text, so a
  * whole paragraph inside one is not markup that may stay — only the tag itself is.
  */
-const PROSE_TAGS = new Set(["note", "i", "italic", "b", "bold", "s", "strike", "u", "highlight"]);
+const FORMATTING_TAGS = new Set([
+  "b",
+  "bold",
+  "code",
+  "color",
+  "comic",
+  "comicH1",
+  "comicH2",
+  "comicH3",
+  "comicNote",
+  "font",
+  "footnote",
+  "handwriting",
+  "highlight",
+  "i",
+  "italic",
+  "note",
+  "s",
+  "strike",
+  "sub",
+  "sup",
+  "u",
+  "underline",
+]);
+
+/**
+ * A backstop, not the rule: the list above is what actually separates prose from a
+ * name. Upstream adds tags faster than any list here is maintained, so a body too long
+ * to be a name is refused rather than guessed at — guessing "reference" leaks prose and
+ * guessing "prose" loses a reference. Set above the longest legitimate reference in the
+ * declared files, a 170-character `{@filter}` query, so it only catches a tag the list
+ * has yet to learn. A short unrecognised one still slips; only the list closes that.
+ */
+const REFERENCE_CEILING = 200;
 
 /** A tag whose body is prose, reduced to the tag. */
 function elideTag(markup: string): string {
   const name = markup.slice(2).split(/[\s|}]/, 1)[0] ?? "";
-  return PROSE_TAGS.has(name) ? `{@${name} ${MARKER}}` : markup;
+  if (FORMATTING_TAGS.has(name)) return `{@${name} ${MARKER}}`;
+  const body = markup.slice(3 + name.length, -1);
+  if (body.length > REFERENCE_CEILING) {
+    throw new Error(
+      `{@${name}} carries ${body.length} characters, too long to take for a name. ` +
+        "Add it to FORMATTING_TAGS if its body is prose, or raise REFERENCE_CEILING if it is not.",
+    );
+  }
+  return markup;
 }
 
 /** Prose, with the markup a loader reads left where it stood. */
@@ -161,6 +201,9 @@ function requireFields(node: Record<string, unknown>, selection: Selection, wher
   }
   for (const field of selection.prose ?? []) {
     if (!(field in node)) throw new Error(`${where}: upstream has no field ${field} to elide`);
+    if (STRUCTURAL_FIELDS.includes(field)) {
+      throw new Error(`${where}: ${field} is structural, so naming it prose does nothing`);
+    }
   }
 }
 
@@ -215,17 +258,19 @@ function selectItems(node: unknown[], items: Item[], where: string, prose: boole
 /** Keys of a selection that only an object can answer, and the one only an array can. */
 const OBJECT_KEYS = ["fields", "cols", "within", "prose", "set"] as const;
 
+function shapeOf(node: unknown): { name: string; answers: readonly string[] } {
+  if (Array.isArray(node)) return { name: "an array", answers: ["items"] };
+  if (isRecord(node)) return { name: "an object", answers: OBJECT_KEYS };
+  return { name: typeof node, answers: [] };
+}
+
 function requireShape(node: unknown, selection: Selection, where: string): void {
-  const wrong = Array.isArray(node)
-    ? OBJECT_KEYS.filter((key) => selection[key] !== undefined)
-    : selection.items === undefined
-      ? []
-      : ["items"];
+  const { name, answers } = shapeOf(node);
+  const wrong = [...OBJECT_KEYS, "items"].filter(
+    (key) => !answers.includes(key) && selection[key as keyof Selection] !== undefined,
+  );
   if (wrong.length > 0) {
-    const shape = Array.isArray(node) ? "an array" : "an object";
-    throw new Error(
-      `${where}: upstream holds ${shape}, which ${wrong.join(" and ")} cannot select`,
-    );
+    throw new Error(`${where}: upstream holds ${name}, which ${wrong.join(" and ")} cannot select`);
   }
 }
 
@@ -241,5 +286,6 @@ export function select(node: unknown, selection: Selection, where: string, prose
     requireShape(node, selection, where);
     return selectFields(node, selection, where, prose);
   }
+  requireShape(node, selection, where);
   return node;
 }
