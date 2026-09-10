@@ -132,18 +132,24 @@ describe("resolveVersions", () => {
         _versions: [{ _abstract: template, _implementations: [{ _variables: variables }] }],
       });
 
-    it("refuses a variable no placeholder uses, rather than dropping what it says", () => {
-      // FTD's chromatic dragonborn is this shape: five colours declaring a
-      // resistance the template never mentions, which would file all five under
-      // the base's "choose one of five" with nothing to show for it.
+    it("refuses a text variable no placeholder uses, rather than dropping what it says", () => {
       expect(
         refusal(
-          templated(
-            { name: "Elf ({{color}})", source: "PHB" },
-            { color: "Wood", resist: ["fire"] },
-          ),
+          templated({ name: "Elf ({{color}})", source: "PHB" }, { color: "Wood", kind: "fey" }),
         ),
-      ).toMatch(/_variables\.resist is set, and no \{\{resist\}\} uses it/);
+      ).toMatch(/_variables\.kind is set, and no \{\{kind\}\} uses it/);
+    });
+
+    it("reads an unused variable that is not text as a field written one level too deep", () => {
+      // FTD's chromatic dragonborn is this shape: each colour states its damage
+      // resistance inside _variables, where the PHB and EGW dragonborn state
+      // the same key, in the same shape, beside it.
+      const resolved = resolveVersions(
+        templated({ name: "Elf ({{color}})", source: "PHB" }, { color: "Wood", resist: ["fire"] }),
+        "data/races.json",
+      ) as { race: Entry[] };
+
+      expect(resolved.race[1]).toMatchObject({ name: "Elf (Wood)", resist: ["fire"] });
     });
 
     it("refuses a variable that is not text, since a placeholder holds text", () => {
