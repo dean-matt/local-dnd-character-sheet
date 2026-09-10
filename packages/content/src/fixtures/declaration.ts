@@ -519,6 +519,11 @@ export const FIXTURES: Fixture[] = [
             },
             { id: "Ambush|XPHB", fields: ["name", "source", "page", "featureType", "entries"] },
             {
+              id: "Pact of the Chain|PHB",
+              fields: ["name", "source", "page", "featureType", "entries"],
+              within: { entries: { items: [0] } },
+            },
+            {
               id: "Arcane Propulsion Armor|TCE",
               fields: ["name", "source", "page", "featureType", "entries"],
               within: { entries: { items: [0] } },

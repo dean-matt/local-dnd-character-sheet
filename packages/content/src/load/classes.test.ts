@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "../build-db.ts";
-import { characterOptions } from "./character-options.ts";
+import { characterOptions, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { classes } from "./classes.ts";
 import { EDITION_FILES } from "./edition.ts";
 
@@ -265,14 +265,23 @@ describe("the classes loader", () => {
         "AND options.edition = ? ORDER BY options.name",
     );
     const atFive = query.all("Warlock", "PHB", 5, "classic");
+    const atThree = query.all("Warlock", "PHB", 3, "classic");
     const atOne = query.all("Warlock", "PHB", 1, "classic");
     db.close();
 
     // Three invocations at level 5, chosen from the options carrying EI in this
     // warlock's own edition — the XPHB Agonizing Blast is a different row and a
-    // 2014 warlock may not take it. Level 1 is entitled to none, which is an
-    // absent row rather than a zero.
-    expect(atFive).toEqual([{ known: 3, name: "Agonizing Blast", source: "PHB" }]);
+    // 2014 warlock may not take it. The one pact boon at 3 is a second type the
+    // same class counts, so the join answers per type rather than per class.
+    // Level 1 is entitled to none, which is an absent row rather than a zero.
+    expect(atFive).toEqual([
+      { known: 3, name: "Agonizing Blast", source: "PHB" },
+      { known: 1, name: "Pact of the Chain", source: "PHB" },
+    ]);
+    expect(atThree).toEqual([
+      { known: 2, name: "Agonizing Blast", source: "PHB" },
+      { known: 1, name: "Pact of the Chain", source: "PHB" },
+    ]);
     expect(atOne).toEqual([]);
   });
 
@@ -398,7 +407,7 @@ describe("the classes loader", () => {
     const vendorDir = join(workspace, "vendor");
     mkdirSync(join(vendorDir, "data", "class"), { recursive: true });
     writeFileSync(join(vendorDir, "data", "class", file), JSON.stringify(contents));
-    for (const path of EDITION_FILES) {
+    for (const path of [...EDITION_FILES, OPTIONAL_FEATURES_FILE]) {
       const destination = join(vendorDir, path);
       mkdirSync(dirname(destination), { recursive: true });
       copyFileSync(join(FIXTURE_VENDOR, path), destination);
@@ -774,6 +783,85 @@ describe("the classes loader", () => {
     expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, [])))).toMatch(
       /featureType is missing or empty/,
     );
+  });
+
+  it("refuses a class progression counting a type no optional feature carries", () => {
+    // The pool is another loader's table, so this reads optionalfeatures.json
+    // itself: a rename upstream would otherwise leave the count over an empty
+    // join, which is two well formed halves and no query that reports it.
+    expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["XI"])))).toMatch(
+      /class\[0\]: Sorcerer\|PHB counts XI, which no optional feature of the classic edition carries/,
+    );
+  });
+
+  it("refuses a count whose pool is all of the other edition", () => {
+    const contents = {
+      class: [
+        {
+          name: "Warlock",
+          source: "XPHB",
+          hd: { number: 1, faces: 8 },
+          optionalfeatureProgression: [
+            { name: "Pact Boon", featureType: ["PB"], progression: { 3: 1 } },
+          ],
+        },
+      ],
+    };
+
+    // Pact of the Chain is PHB, and a sheet offers a character the options of
+    // its own edition, so a 2024 warlock counting PB picks from nothing. The
+    // pool is not empty, which is what makes this the quiet case.
+    expect(refusal(vendorHolding("class-warlock.json", contents))).toMatch(
+      /class\[0\]: Warlock\|XPHB counts PB, which no optional feature of the one edition carries/,
+    );
+  });
+
+  it("refuses a subclass progression counting a type no optional feature carries", () => {
+    const contents = {
+      subclass: [
+        {
+          name: "Psi Warrior",
+          shortName: "Psi Warrior",
+          source: "XPHB",
+          className: "Fighter",
+          classSource: "XPHB",
+          optionalfeatureProgression: [
+            { name: "Psionic Powers", featureType: ["XI"], progression: { 3: 2 } },
+          ],
+        },
+      ],
+    };
+
+    // Named by the entry that carries the progression, and by the file and
+    // index too, since a subclass name and source repeat across classes.
+    expect(refusal(vendorHolding("class-fighter.json", contents))).toMatch(
+      /subclass\[0\]: Psi Warrior\|XPHB counts XI, which no optional feature of the one edition carries/,
+    );
+  });
+
+  it("keeps a type the pool carries and no progression counts, as RP is", () => {
+    buildContent({
+      vendorDir: FIXTURE_VENDOR,
+      dbPath,
+      loaders: [classes, characterOptions],
+      meta: {},
+    });
+
+    const db = open();
+    const offered = db
+      .prepare("SELECT COUNT(*) FROM optional_feature_types WHERE feature_type = 'FS:B'")
+      .pluck()
+      .get();
+    const counted = db
+      .prepare("SELECT COUNT(*) FROM class_optional_features WHERE feature_type = 'FS:B'")
+      .pluck()
+      .get();
+    db.close();
+
+    // The invariant runs one way. Upstream ships four EFA options under RP,
+    // Eberron house renown, which a story award grants rather than a class, so
+    // an option no class counts has to load. FS:B is the fixture's own case.
+    expect([offered, counted]).toEqual([1, 0]);
   });
 
   it("refuses a subclass table group that names another subclass", () => {

@@ -17,11 +17,14 @@ import { type Entry, isRecord, strings, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
+/** The pool a class progression's `featureType` reaches, named for the loaders that borrow it. */
+export const OPTIONAL_FEATURES_FILE = "data/optionalfeatures.json";
+
 /** The array key each file carries, and the table its entries become. */
 const FILES: Record<string, { key: string; table: string }> = {
   "data/backgrounds.json": { key: "background", table: "backgrounds" },
   "data/feats.json": { key: "feat", table: "feats" },
-  "data/optionalfeatures.json": { key: "optionalfeature", table: "optional_features" },
+  [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
 
 function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
@@ -43,13 +46,54 @@ function toRow(entry: Entry, context: string, fromSource: FromSource): Row {
   };
 }
 
+/**
+ * Every type code a feature is offered under. The rows below and the pool a
+ * class-side count is checked against both read it here, so a feature stating
+ * its types some other way moves the two together rather than leaving one
+ * checking the other against a list it no longer builds.
+ */
+function featureTypes(entry: Entry, context: string): string[] {
+  return strings(entry, "featureType", context);
+}
+
 /** Every type a feature is offered under, as one row each. */
 function typeRows(entry: Entry, row: Row, context: string): Row[] {
-  return strings(entry, "featureType", context).map((type) => ({
+  return featureTypes(entry, context).map((type) => ({
     name: row.name,
     source: row.source,
     feature_type: type,
   }));
+}
+
+/** A pool entry, as the edition a character plays and the code a count names. */
+export function poolKey(edition: Edition, featureType: string): string {
+  return `${edition}|${featureType}`;
+}
+
+/**
+ * The pool a class-side count has to reach, for a loader that counts options by
+ * type and cannot read the rows this one writes.
+ *
+ * Keyed by edition as well as by code, because the pick is: a sheet offers the
+ * options of the counting row's own edition, so an entry counting a code only
+ * the other edition's features carry has the same empty join as one counting a
+ * code nothing carries at all.
+ *
+ * The caller passes its own `fromSource` rather than this reading `books.json`
+ * again — a hidden second file to declare, and a second scan of the same map.
+ */
+export function featureTypePool(
+  sources: Map<string, unknown>,
+  fromSource: FromSource,
+): Set<string> {
+  const path = OPTIONAL_FEATURES_FILE;
+  return new Set(
+    entriesOf(sources.get(path), "optionalfeature", path).flatMap((entry, index) => {
+      const context = `${path} optionalfeature[${index}]`;
+      const edition = editionOf(entry, text(entry, "source", context), fromSource);
+      return featureTypes(entry, context).map((type) => poolKey(edition, type));
+    }),
+  );
 }
 
 export const characterOptions: Loader = {

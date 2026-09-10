@@ -13,6 +13,7 @@
  * so an absent row means none.
  */
 import { parseTags, renderText } from "@dnd/tags";
+import { featureTypePool, OPTIONAL_FEATURES_FILE, poolKey } from "./character-options.ts";
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, strings, text } from "./json.ts";
@@ -596,7 +597,13 @@ type Tables = {
 
 type FromSource = (source: string) => Edition;
 
-function addClasses(out: Tables, source: unknown, path: string, fromSource: FromSource): void {
+function addClasses(
+  out: Tables,
+  source: unknown,
+  path: string,
+  fromSource: FromSource,
+  pool: Set<string>,
+): void {
   for (const [index, entry] of entriesOf(source, "class", path).entries()) {
     // The three sidekicks are stat-block companions rather than player classes:
     // they carry no hit die, proficiencies or table groups, which is upstream
@@ -608,10 +615,11 @@ function addClasses(out: Tables, source: unknown, path: string, fromSource: From
     }
     const name = text(entry, "name", context);
     const classSource = text(entry, "source", context);
+    const edition = editionOf(entry, classSource, fromSource);
     out.classes.push({
       name,
       source: classSource,
-      edition: editionOf(entry, classSource, fromSource),
+      edition,
       hit_die: hitDie(entry, context),
       json: JSON.stringify(entry),
     });
@@ -619,13 +627,20 @@ function addClasses(out: Tables, source: unknown, path: string, fromSource: From
     const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
     const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
     countsAgree(resources, typed, entry.classTableGroups, context);
+    typesOffered(typed, `${name}|${classSource}`, edition, pool, context);
     out.class_resources.push(...resources);
     out.spell_slots.push(...slots);
     out.class_optional_features.push(...typed);
   }
 }
 
-function addSubclasses(out: Tables, source: unknown, path: string, fromSource: FromSource): void {
+function addSubclasses(
+  out: Tables,
+  source: unknown,
+  path: string,
+  fromSource: FromSource,
+  pool: Set<string>,
+): void {
   for (const [index, entry] of entriesOf(source, "subclass", path).entries()) {
     const context = `${path} subclass[${index}]`;
     const name = text(entry, "name", context);
@@ -637,18 +652,20 @@ function addSubclasses(out: Tables, source: unknown, path: string, fromSource: F
       subclass_source: subclassSource,
     };
     ownsGroups(entry, name, subclassSource, context);
+    const edition = editionOf(entry, subclassSource, fromSource);
     out.subclasses.push({
       name,
       source: subclassSource,
       short_name: text(entry, "shortName", context),
       class_name: owner.class_name,
       class_source: owner.class_source,
-      edition: editionOf(entry, subclassSource, fromSource),
+      edition,
       json: JSON.stringify(entry),
     });
     const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
     const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
     countsAgree(resources, typed, entry.subclassTableGroups, context);
+    typesOffered(typed, `${name}|${subclassSource}`, edition, pool, context);
     out.subclass_resources.push(...resources);
     out.subclass_spell_slots.push(...slots);
     out.subclass_optional_features.push(...typed);
@@ -706,6 +723,44 @@ function checkFeatureOwners(out: Tables, claims: Map<Row, string>): void {
   }
 }
 
+/**
+ * A progression naming a type no optional feature carries entitles the entry to
+ * a count over an empty pool: the row says a level 7 warlock picks 6, the join
+ * returns 0 options, and both halves are well formed. An upstream rename of a
+ * code is all it takes, and nothing else reports it.
+ *
+ * Edition is half the key because the pick query is edition-scoped — a sheet
+ * offers the options of the edition the counting row itself belongs to, which is
+ * the subclass's own where a subclass counts — so an entry counting a code only
+ * the other edition's features carry has the same empty join. All 15 pairs the
+ * corpus states resolve, the thinnest of them by 2 options.
+ *
+ * The invariant is one-directional. A pool code no progression offers is
+ * legitimate — `RP` is Eberron house renown, four options granted by a story
+ * award rather than by a class — so only the count side has to resolve.
+ *
+ * The pool comes from `optionalfeatures.json` itself rather than from the rows
+ * `character-options` writes out of it, since a loader cannot see what an
+ * earlier one wrote.
+ */
+function typesOffered(
+  typed: Row[],
+  who: string,
+  edition: Edition,
+  pool: Set<string>,
+  context: string,
+): void {
+  for (const row of typed) {
+    const type = String(row.feature_type);
+    if (pool.has(poolKey(edition, type))) continue;
+    // Which edition, spelled out: "no one optional feature" reads as none at
+    // all, and sending a reader after an upstream rename is the wrong hunt.
+    throw new Error(
+      `${context}: ${who} counts ${type}, which no optional feature of the ${edition} edition carries`,
+    );
+  }
+}
+
 /** Read before any row is built: a feature need not share a file with its class. */
 function sidekickClasses(files: [string, unknown][]): Set<string> {
   const sidekicks = new Set<string>();
@@ -721,7 +776,7 @@ function sidekickClasses(files: [string, unknown][]): Set<string> {
 
 export const classes: Loader = {
   name: "classes",
-  files: ["data/class/class-*.json", ...EDITION_FILES],
+  files: ["data/class/class-*.json", OPTIONAL_FEATURES_FILE, ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
     const out: Tables = {
@@ -737,12 +792,13 @@ export const classes: Loader = {
       subclass_features: [],
     };
 
-    const files = ownFiles(sources);
+    const files = ownFiles(sources).filter(([path]) => path !== OPTIONAL_FEATURES_FILE);
     const sidekicks = sidekickClasses(files);
+    const pool = featureTypePool(sources, fromSource);
     const claims = new Map<Row, string>();
     for (const [path, source] of files) {
-      addClasses(out, source, path, fromSource);
-      addSubclasses(out, source, path, fromSource);
+      addClasses(out, source, path, fromSource, pool);
+      addSubclasses(out, source, path, fromSource, pool);
       addFeatures(out, claims, source, path, fromSource, sidekicks);
     }
     checkFeatureOwners(out, claims);
