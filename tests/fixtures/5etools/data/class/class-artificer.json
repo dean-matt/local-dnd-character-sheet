@@ -10,6 +10,13 @@
         "faces": 8
       },
       "spellcastingAbility": "int",
+      "optionalfeatureProgression": [
+        {
+          "name": "Infusions",
+          "featureType": ["AI"],
+          "progression": [0, 4, 4, 4, 4, 6, 6, 6, 6, 8, 8, 8, 8, 10, 10, 10, 10, 12, 12, 12]
+        }
+      ],
       "classTableGroups": [
         {
           "colLabels": [
@@ -41,14 +48,7 @@
           ]
         }
       ],
-      "optionalfeatureProgression": [
-        {
-          "name": "Infusions",
-          "featureType": ["AI"],
-          "progression": [0, 4, 4, 4, 4, 6, 6, 6, 6, 8, 8, 8, 8, 10, 10, 10, 10, 12, 12, 12]
-        }
-      ],
-      "classFeatures": ["Magical Tinkering|Artificer||1"]
+      "classFeatures": ["Magical Tinkering|Artificer|TCE|1"]
     }
   ]
 }

@@ -7,18 +7,38 @@
       "srd52": true,
       "level": 0,
       "school": "V",
-      "time": [{ "number": 1, "unit": "action" }],
-      "range": { "type": "point", "distance": { "type": "feet", "amount": 60 } },
-      "components": { "v": true, "s": true },
-      "duration": [{ "type": "instant" }],
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
       "entries": [
-        "You create an acidic bubble at a point within range, where it explodes in a 5-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere}. Each creature in that {@variantrule Sphere [Area of Effect]|XPHB|Sphere} must succeed on a Dexterity saving throw or take {@damage 1d6} Acid damage."
+        "Elided. {@variantrule Sphere [Area of Effect]|XPHB|Sphere} Elided. {@variantrule Sphere [Area of Effect]|XPHB|Sphere} Elided. {@damage 1d6} Elided."
       ],
       "entriesHigherLevel": [
         {
           "type": "entries",
           "name": "Cantrip Upgrade",
-          "entries": ["The damage increases by {@damage 1d6} when you reach levels 5, 11, and 17."]
+          "entries": [
+            "Elided. {@damage 1d6} Elided. {@damage 2d6} Elided. {@damage 3d6} Elided. {@damage 4d6} Elided."
+          ]
         }
       ],
       "damageInflict": ["acid"],
@@ -31,15 +51,39 @@
       "srd52": true,
       "level": 1,
       "school": "D",
-      "time": [{ "number": 1, "unit": "action" }],
-      "range": { "type": "sphere", "distance": { "type": "feet", "amount": 30 } },
-      "components": { "v": true, "s": true },
-      "duration": [
-        { "type": "timed", "duration": { "type": "minute", "amount": 10 }, "concentration": true }
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
       ],
-      "meta": { "ritual": true },
+      "range": {
+        "type": "sphere",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 10
+          },
+          "concentration": true
+        }
+      ],
+      "meta": {
+        "ritual": true
+      },
       "entries": [
-        "For the duration, you sense the presence of magical effects within 30 feet of yourself. You can take the {@action Magic|XPHB} action to see a faint aura around any visible creature or object in the area that bears the magic."
+        "Elided. {@action Magic|XPHB} Elided. {@book school of magic|XPHB|7|Schools of Magic} Elided.",
+        "Elided."
       ]
     }
   ]

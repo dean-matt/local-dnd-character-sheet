@@ -38,6 +38,7 @@ Characters reference catalog rows by `(name, source)` — they never copy them.
 ```bash
 pnpm content:sync    # fetch upstream 5etools data at the pinned tag
 pnpm content:build   # rebuild content.db from vendor/
+pnpm fixtures:build  # rebuild tests/fixtures/5etools/ from vendor/
 pnpm dev             # api + web
 pnpm db:studio       # visual database editor
 pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
@@ -55,6 +56,8 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 - **`roll_log` and `undo_log` are bounded** — 200 and 50 rows per character, pruned on
   insert. They are session affordances, not audit trails.
 - **Unknown `{@tag}` values degrade to plain text.** Never throw on unrecognized markup.
+- **`tests/fixtures/5etools/` is generated**, never hand-edited — `pnpm fixtures:build`
+  writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — `knip` will find it, but the commit should not have created it.
 

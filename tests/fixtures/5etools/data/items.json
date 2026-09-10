@@ -1,5 +1,7 @@
 {
-  "_meta": { "internalCopies": ["item"] },
+  "_meta": {
+    "internalCopies": ["item"]
+  },
   "item": [
     {
       "name": "Slumbering Dragon Vessel",
@@ -8,50 +10,71 @@
       "rarity": "uncommon",
       "reqAttune": true,
       "wondrous": true,
-      "entries": ["Elided.", "Slumbering: {@item potion of healing}."]
+      "entries": [
+        "Elided.",
+        "Elided. {@item potion of healing} Elided. {@item potion of climbing} Elided."
+      ]
     },
     {
       "name": "Stirring Dragon Vessel",
       "source": "FTD",
-      "rarity": "rare",
-      "entries": ["Elided.", "Stirring: {@item potion of greater healing}."],
       "_copy": {
         "name": "Slumbering Dragon Vessel",
         "source": "FTD",
-        "_preserve": { "page": true }
-      }
+        "_preserve": {
+          "page": true
+        }
+      },
+      "rarity": "rare",
+      "entries": [
+        "Elided.",
+        "Elided. {@item potion of healing} Elided. {@item potion of greater healing} Elided. {@item potion of climbing} Elided. {@item potion of fire breath} Elided."
+      ]
     },
     {
       "name": "Wakened Dragon Vessel",
       "source": "FTD",
-      "rarity": "very rare",
-      "entries": ["Elided.", "Wakened: {@item potion of superior healing}."],
       "_copy": {
         "name": "Stirring Dragon Vessel",
         "source": "FTD",
-        "_preserve": { "page": true }
-      }
+        "_preserve": {
+          "page": true
+        }
+      },
+      "rarity": "very rare",
+      "entries": [
+        "Elided.",
+        "Elided. {@item potion of healing} Elided. {@item potion of greater healing} Elided. {@item potion of superior healing} Elided. {@item potion of climbing} Elided. {@item potion of fire breath} Elided. {@item potion of flying} Elided."
+      ]
     },
     {
       "name": "Ascendant Dragon Vessel",
       "source": "FTD",
-      "rarity": "legendary",
-      "entries": ["Elided.", "Ascendant: {@item potion of supreme healing}."],
       "_copy": {
         "name": "Wakened Dragon Vessel",
         "source": "FTD",
-        "_preserve": { "page": true }
-      }
+        "_preserve": {
+          "page": true
+        }
+      },
+      "rarity": "legendary",
+      "entries": [
+        "Elided.",
+        "Elided. {@item potion of healing} Elided. {@item potion of greater healing} Elided. {@item potion of superior healing} Elided. {@item potion of supreme healing} Elided. {@item potion of climbing} Elided. {@item potion of fire breath} Elided. {@item potion of flying} Elided. {@item potion of dragon's majesty|FTD} Elided."
+      ]
     },
     {
       "name": "Wand of Magic Missiles",
       "source": "DMG",
       "page": 211,
+      "srd": true,
       "type": "WD|DMG",
       "rarity": "uncommon",
-      "srd": true,
       "charges": 7,
-      "entries": ["Elided.", "Expend charges to cast {@spell magic missile}."]
+      "entries": [
+        "Elided. {@spell magic missile} Elided.",
+        "Elided. {@dice 1d6 + 1} Elided. {@dice d20} Elided."
+      ]
     },
     {
       "name": "Charred Wand of Magic Missiles",
@@ -63,7 +86,7 @@
         "_mod": {
           "entries": {
             "mode": "appendArr",
-            "items": "There is a {@chance 50} chance the charge is wasted."
+            "items": "Each time you expend a charge from this wand, there is a {@chance 50} chance that nothing happens and the charge is wasted."
           }
         }
       }

@@ -19,20 +19,92 @@
         {
           "type": "list",
           "style": "list-hang-notitle",
-          "items": []
+          "items": [
+            {
+              "type": "item",
+              "name": "Skill Proficiencies:",
+              "entry": "{@skill Insight}, {@skill Religion}"
+            },
+            {
+              "type": "item",
+              "name": "Languages:",
+              "entry": "Two of your choice"
+            },
+            {
+              "type": "item",
+              "name": "Equipment:",
+              "entry": "A {@item holy symbol|phb} (a gift to you when you entered the priesthood), a prayer {@item book|phb} or prayer wheel, 5 sticks of incense, vestments, a set of {@item common clothes|phb}, and a belt {@item pouch|phb} containing 15 gp"
+            }
+          ]
         },
         {
           "name": "Feature: Shelter of the Faithful",
           "type": "entries",
-          "entries": ["Elided."],
+          "entries": ["Elided.", "Elided."],
           "data": {
             "isFeature": true
           }
         },
         {
-          "type": "table",
-          "caption": "Personality Trait",
-          "rows": []
+          "name": "Suggested Characteristics",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Personality Trait"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Ideal"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Bond"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Flaw"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
         }
       ]
     },
@@ -50,7 +122,10 @@
             "items": {
               "name": "Baldur's Gate Feature: Religious Community",
               "type": "entries",
-              "entries": ["Elided."],
+              "entries": [
+                "{@note The effects of a Baldur's Gate feature can be used only while the character is in Baldur's Gate—though, at the DM's discretion, they might have applicable effects in situations similar to those in Baldur's Gate.}",
+                "Elided."
+              ],
               "data": {
                 "isFeature": true
               }
@@ -74,7 +149,23 @@
         {
           "type": "list",
           "style": "list-hang-notitle",
-          "items": []
+          "items": [
+            {
+              "type": "item",
+              "name": "Skill Proficiencies:",
+              "entry": "{@skill Deception}, {@skill Stealth}"
+            },
+            {
+              "type": "item",
+              "name": "Tool Proficiencies:",
+              "entry": "One type of {@filter gaming set|items|source=phb|miscellaneous=mundane|type=gaming set}, {@item thieves' tools|phb}"
+            },
+            {
+              "type": "item",
+              "name": "Equipment:",
+              "entry": "A {@item crowbar|phb}, a set of dark {@item common clothes|phb} including a hood, and a belt {@item pouch|phb} containing 15 gp"
+            }
+          ]
         },
         {
           "name": "Feature: Criminal Contact",
@@ -83,6 +174,89 @@
           "data": {
             "isFeature": true
           }
+        },
+        {
+          "name": "Specialty",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Specialty"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Suggested Characteristics",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Personality Trait"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Ideal"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Bond"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Flaw"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
         }
       ]
     },
@@ -193,9 +367,35 @@
       ],
       "entries": [
         {
-          "type": "entries",
-          "name": "Elided",
-          "entries": ["Elided."]
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Ability Scores:",
+              "entry": "Intelligence, Wisdom, Charisma"
+            },
+            {
+              "type": "item",
+              "name": "Feat:",
+              "entry": "{@feat Magic Initiate|XPHB} (Cleric)"
+            },
+            {
+              "type": "item",
+              "name": "Skill Proficiencies:",
+              "entry": "{@skill Insight|XPHB}, {@skill Religion|XPHB}"
+            },
+            {
+              "type": "item",
+              "name": "Tool Proficiency:",
+              "entry": "{@item Calligrapher's Supplies|XPHB}"
+            },
+            {
+              "type": "item",
+              "name": "Equipment:",
+              "entry": "Choose A or B: (A) {@item Calligrapher's Supplies|XPHB}, {@item Book|XPHB|Book (prayers)}, {@item Holy Symbol|XPHB}, {@item Parchment|XPHB} (10 sheets), {@item Robe|xphb}, 8 GP; or (B) 50 GP"
+            }
+          ]
         }
       ],
       "hasFluff": true,
