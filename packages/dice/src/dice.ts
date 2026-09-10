@@ -105,9 +105,10 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
 }
 
 /**
- * Whether the notation parses, which is what `rollDice` accepts in the default mode. It
- * answers by parsing, so a caller rendering rules text can offer a roll only where one
- * is possible without keeping its own copy of the grammar and the bounds.
+ * Whether the notation parses, which is what `rollDice` accepts in the default mode. A
+ * caller rendering rules text can offer a roll only where one is possible without keeping
+ * its own copy of the grammar and the bounds, and because the answer comes from parsing
+ * it cannot drift from what `rollDice` uses.
  *
  * It says nothing about a mode: advantage and disadvantage also need a single die and no
  * keep clause, which a caller passing one checks itself.
@@ -126,9 +127,9 @@ export function isRollable(notation: string): boolean {
  * a `RangeError`, and every message names the offending input.
  *
  * Advantage and disadvantage roll a second die and keep the higher or the lower, so both
- * appear in `dice`. The rules apply them only to a single die, so pairing a mode with a
- * pool or a keep clause throws a `TypeError` — the notation is valid, only the pairing
- * is wrong.
+ * appear in `dice`. The rules apply them only to a single die, so a mode paired with a
+ * pool or a keep clause is rejected rather than reinterpreted — a `TypeError`, because
+ * the notation is valid and only the pairing is wrong.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { mode = "normal", random = Math.random } = options;
