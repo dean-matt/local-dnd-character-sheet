@@ -68,6 +68,7 @@ describe("the character options loader", () => {
       "Arcane Propulsion Armor|TCE classic",
       "Archery|PHB classic",
       "Dueling|PHB classic",
+      "Pact of the Chain|PHB classic",
     ]);
 
     const db = open();

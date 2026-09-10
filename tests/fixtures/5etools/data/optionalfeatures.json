@@ -109,6 +109,13 @@
       ]
     },
     {
+      "name": "Pact of the Chain",
+      "source": "PHB",
+      "page": 107,
+      "featureType": ["PB"],
+      "entries": ["Elided. {@spell find familiar} Elided."]
+    },
+    {
       "name": "Arcane Propulsion Armor",
       "source": "TCE",
       "page": 20,

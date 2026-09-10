@@ -265,14 +265,23 @@ describe("the classes loader", () => {
         "AND options.edition = ? ORDER BY options.name",
     );
     const atFive = query.all("Warlock", "PHB", 5, "classic");
+    const atThree = query.all("Warlock", "PHB", 3, "classic");
     const atOne = query.all("Warlock", "PHB", 1, "classic");
     db.close();
 
     // Three invocations at level 5, chosen from the options carrying EI in this
     // warlock's own edition — the XPHB Agonizing Blast is a different row and a
-    // 2014 warlock may not take it. Level 1 is entitled to none, which is an
-    // absent row rather than a zero.
-    expect(atFive).toEqual([{ known: 3, name: "Agonizing Blast", source: "PHB" }]);
+    // 2014 warlock may not take it. The one pact boon at 3 is a second type the
+    // same class counts, so the join answers per type rather than per class.
+    // Level 1 is entitled to none, which is an absent row rather than a zero.
+    expect(atFive).toEqual([
+      { known: 3, name: "Agonizing Blast", source: "PHB" },
+      { known: 1, name: "Pact of the Chain", source: "PHB" },
+    ]);
+    expect(atThree).toEqual([
+      { known: 2, name: "Agonizing Blast", source: "PHB" },
+      { known: 1, name: "Pact of the Chain", source: "PHB" },
+    ]);
     expect(atOne).toEqual([]);
   });
 
