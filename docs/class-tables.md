@@ -128,10 +128,12 @@ naming one no feature carries. An upstream rename then fails the rebuild rather 
 entitling a class to a count over an empty join — the row says a level 7 warlock picks 6,
 the join returns nothing, and both rows are well formed.
 
-The pool is keyed by edition as well as by code, because the pick is: a sheet offers a
-character the options of its own edition, so a 2024 class counting a code only 2014
-features carry has the same empty join as one counting a code nothing carries. The corpus
-states 15 such pairs and all of them resolve, the thinnest by 2 options.
+The pool is keyed by edition as well as by code, because the pick is: a sheet offers the
+options of the edition the counting row itself belongs to — the subclass's own where a
+subclass counts, which is the same edition the query above filters on and not always its
+class's. An entry counting a code only the other edition's features carry then has the
+same empty join as one counting a code nothing carries. The corpus states 15 such pairs
+and all of them resolve, the thinnest by 2 options.
 
 That invariant is one-directional. A pool code no progression offers is legitimate: `RP`
 is Eberron house renown, four `EFA` options a story award grants rather than a class, so

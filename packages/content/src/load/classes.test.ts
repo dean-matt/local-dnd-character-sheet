@@ -790,7 +790,7 @@ describe("the classes loader", () => {
     // itself: a rename upstream would otherwise leave the count over an empty
     // join, which is two well formed halves and no query that reports it.
     expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["XI"])))).toMatch(
-      /class\[0\]: a progression counts XI, which no classic optional feature carries/,
+      /class\[0\]: Sorcerer\|PHB counts XI, which no optional feature of the classic edition carries/,
     );
   });
 
@@ -812,7 +812,7 @@ describe("the classes loader", () => {
     // its own edition, so a 2024 warlock counting PB picks from nothing. The
     // pool is not empty, which is what makes this the quiet case.
     expect(refusal(vendorHolding("class-warlock.json", contents))).toMatch(
-      /class\[0\]: a progression counts PB, which no one optional feature carries/,
+      /class\[0\]: Warlock\|XPHB counts PB, which no optional feature of the one edition carries/,
     );
   });
 
@@ -832,10 +832,10 @@ describe("the classes loader", () => {
       ],
     };
 
-    // Named by the entry that carries the progression, since a subclass name
-    // and source repeat across classes and the file and index do not.
+    // Named by the entry that carries the progression, and by the file and
+    // index too, since a subclass name and source repeat across classes.
     expect(refusal(vendorHolding("class-fighter.json", contents))).toMatch(
-      /subclass\[0\]: a progression counts XI, which no one optional feature carries/,
+      /subclass\[0\]: Psi Warrior\|XPHB counts XI, which no optional feature of the one edition carries/,
     );
   });
 

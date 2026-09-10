@@ -627,7 +627,7 @@ function addClasses(
     const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
     const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
     countsAgree(resources, typed, entry.classTableGroups, context);
-    typesOffered(typed, edition, pool, context);
+    typesOffered(typed, `${name}|${classSource}`, edition, pool, context);
     out.class_resources.push(...resources);
     out.spell_slots.push(...slots);
     out.class_optional_features.push(...typed);
@@ -665,7 +665,7 @@ function addSubclasses(
     const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
     const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
     countsAgree(resources, typed, entry.subclassTableGroups, context);
-    typesOffered(typed, edition, pool, context);
+    typesOffered(typed, `${name}|${subclassSource}`, edition, pool, context);
     out.subclass_resources.push(...resources);
     out.subclass_spell_slots.push(...slots);
     out.subclass_optional_features.push(...typed);
@@ -730,9 +730,10 @@ function checkFeatureOwners(out: Tables, claims: Map<Row, string>): void {
  * code is all it takes, and nothing else reports it.
  *
  * Edition is half the key because the pick query is edition-scoped — a sheet
- * offers a character the options of its own edition — so a 2024 class counting a
- * code only 2014 features carry has the same empty join. All 15 pairs the corpus
- * states resolve, the thinnest of them by 2 options.
+ * offers the options of the edition the counting row itself belongs to, which is
+ * the subclass's own where a subclass counts — so an entry counting a code only
+ * the other edition's features carry has the same empty join. All 15 pairs the
+ * corpus states resolve, the thinnest of them by 2 options.
  *
  * The invariant is one-directional. A pool code no progression offers is
  * legitimate — `RP` is Eberron house renown, four options granted by a story
@@ -742,12 +743,20 @@ function checkFeatureOwners(out: Tables, claims: Map<Row, string>): void {
  * `character-options` writes out of it, since a loader cannot see what an
  * earlier one wrote.
  */
-function typesOffered(typed: Row[], edition: Edition, pool: Set<string>, context: string): void {
+function typesOffered(
+  typed: Row[],
+  who: string,
+  edition: Edition,
+  pool: Set<string>,
+  context: string,
+): void {
   for (const row of typed) {
     const type = String(row.feature_type);
     if (pool.has(poolKey(edition, type))) continue;
+    // Which edition, spelled out: "no one optional feature" reads as none at
+    // all, and sending a reader after an upstream rename is the wrong hunt.
     throw new Error(
-      `${context}: a progression counts ${type}, which no ${edition} optional feature carries`,
+      `${context}: ${who} counts ${type}, which no optional feature of the ${edition} edition carries`,
     );
   }
 }
@@ -785,7 +794,7 @@ export const classes: Loader = {
 
     const files = ownFiles(sources).filter(([path]) => path !== OPTIONAL_FEATURES_FILE);
     const sidekicks = sidekickClasses(files);
-    const pool = featureTypePool(sources);
+    const pool = featureTypePool(sources, fromSource);
     const claims = new Map<Row, string>();
     for (const [path, source] of files) {
       addClasses(out, source, path, fromSource, pool);

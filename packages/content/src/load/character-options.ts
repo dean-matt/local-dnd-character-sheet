@@ -74,12 +74,18 @@ export function poolKey(edition: Edition, featureType: string): string {
  * The pool a class-side count has to reach, for a loader that counts options by
  * type and cannot read the rows this one writes.
  *
- * Keyed by edition as well as by code, because a sheet offers the options of the
- * character's own edition: a 2024 class counting a code only 2014 features carry
- * has the same empty join as one counting a code nothing carries at all.
+ * Keyed by edition as well as by code, because the pick is: a sheet offers the
+ * options of the counting row's own edition, so an entry counting a code only
+ * the other edition's features carry has the same empty join as one counting a
+ * code nothing carries at all.
+ *
+ * The caller passes its own `fromSource` rather than this reading `books.json`
+ * again — a hidden second file to declare, and a second scan of the same map.
  */
-export function featureTypePool(sources: Map<string, unknown>): Set<string> {
-  const fromSource = editions(sources);
+export function featureTypePool(
+  sources: Map<string, unknown>,
+  fromSource: FromSource,
+): Set<string> {
   const path = OPTIONAL_FEATURES_FILE;
   return new Set(
     entriesOf(sources.get(path), "optionalfeature", path).flatMap((entry, index) => {
