@@ -17,11 +17,14 @@ import { type Entry, isRecord, strings, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
+/** The pool a class progression's `featureType` reaches, named for the loaders that borrow it. */
+export const OPTIONAL_FEATURES_FILE = "data/optionalfeatures.json";
+
 /** The array key each file carries, and the table its entries become. */
 const FILES: Record<string, { key: string; table: string }> = {
   "data/backgrounds.json": { key: "background", table: "backgrounds" },
   "data/feats.json": { key: "feat", table: "feats" },
-  "data/optionalfeatures.json": { key: "optionalfeature", table: "optional_features" },
+  [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
 
 function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
@@ -50,6 +53,24 @@ function typeRows(entry: Entry, row: Row, context: string): Row[] {
     source: row.source,
     feature_type: type,
   }));
+}
+
+/**
+ * Every type code the pool carries, for a loader that counts options by type and
+ * cannot read the rows this one writes.
+ *
+ * Read from the same field `typeRows` reads, so a change to how a feature states
+ * its types moves both together rather than leaving one checking the other
+ * against a list it no longer builds.
+ */
+export function featureTypePool(sources: Map<string, unknown>): Set<string> {
+  const path = OPTIONAL_FEATURES_FILE;
+  const entries = entriesOf(sources.get(path), "optionalfeature", path);
+  return new Set(
+    entries.flatMap((entry, index) =>
+      strings(entry, "featureType", `${path} optionalfeature[${index}]`),
+    ),
+  );
 }
 
 export const characterOptions: Loader = {

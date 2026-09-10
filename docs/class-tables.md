@@ -119,6 +119,20 @@ corpus that pairs nothing is not the way out: every loader test builds a small c
 legitimately has no counted column. A fixture test pins the warlock's pairing, which is the
 half of the exposure a test can reach.
 
+A count also has to reach a pool. `feature_type` names a code `optional_feature_types` is
+expected to carry, and the two halves come from different loaders — `classes` and
+`character-options` — so a SQL `REFERENCES` cannot hold it: a loader cannot read what an
+earlier one wrote. The classes loader reads `optionalfeatures.json` for the codes itself,
+the way every loader already reads `books.json` for an edition, and refuses a progression
+naming one no feature carries. An upstream rename then fails the rebuild rather than
+entitling a class to a count over an empty join — the row says a level 7 warlock picks 6,
+the join returns nothing, and both rows are well formed. It runs once every file is read,
+because a progression need not share a file with the options it counts.
+
+That invariant is one-directional. A pool code no progression offers is legitimate: `RP`
+is Eberron house renown, four `EFA` options a story award grants rather than a class, so
+only the count side has to resolve.
+
 The subclass table's key includes `subclass_source`, and a class offers both editions of a
 subclass, so `Fighter|XPHB` holds `Battle Master|PHB` and `Battle Master|XPHB` — 5
 maneuvers each at level 7. Fixing class, level and type returns two rows there. A query

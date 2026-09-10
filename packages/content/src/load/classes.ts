@@ -13,6 +13,7 @@
  * so an absent row means none.
  */
 import { parseTags, renderText } from "@dnd/tags";
+import { featureTypePool, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, strings, text } from "./json.ts";
@@ -706,6 +707,38 @@ function checkFeatureOwners(out: Tables, claims: Map<Row, string>): void {
   }
 }
 
+/** The entry a counted row came from, as the key its own table is filed under. */
+function countedBy(row: Row): string {
+  return row.subclass_name === undefined
+    ? classKey(row)
+    : `${String(row.subclass_name)}|${String(row.subclass_source)}`;
+}
+
+/**
+ * A progression naming a type no optional feature carries entitles a class to a
+ * count over an empty pool: the row says a level 7 warlock picks 6, the join
+ * returns 0 options, and both halves are well formed. An upstream rename of a
+ * code is all it takes, and nothing else reports it.
+ *
+ * The invariant is one-directional. A pool code no progression offers is
+ * legitimate — `RP` is Eberron house renown, four options granted by a story
+ * award rather than by a class — so only the count side has to resolve.
+ *
+ * The pool is read from `optionalfeatures.json` rather than from the rows
+ * `character-options` writes out of it, since a loader cannot see what an
+ * earlier one wrote. It runs once every file is read, because a progression need
+ * not share a file with the options it counts.
+ */
+function checkTypesOffered(out: Tables, pool: Set<string>): void {
+  for (const row of [...out.class_optional_features, ...out.subclass_optional_features]) {
+    const type = String(row.feature_type);
+    if (pool.has(type)) continue;
+    throw new Error(
+      `${countedBy(row)}: a progression counts ${type}, which no optional feature carries`,
+    );
+  }
+}
+
 /** Read before any row is built: a feature need not share a file with its class. */
 function sidekickClasses(files: [string, unknown][]): Set<string> {
   const sidekicks = new Set<string>();
@@ -721,7 +754,7 @@ function sidekickClasses(files: [string, unknown][]): Set<string> {
 
 export const classes: Loader = {
   name: "classes",
-  files: ["data/class/class-*.json", ...EDITION_FILES],
+  files: ["data/class/class-*.json", OPTIONAL_FEATURES_FILE, ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
     const out: Tables = {
@@ -737,7 +770,7 @@ export const classes: Loader = {
       subclass_features: [],
     };
 
-    const files = ownFiles(sources);
+    const files = ownFiles(sources).filter(([path]) => path !== OPTIONAL_FEATURES_FILE);
     const sidekicks = sidekickClasses(files);
     const claims = new Map<Row, string>();
     for (const [path, source] of files) {
@@ -746,6 +779,7 @@ export const classes: Loader = {
       addFeatures(out, claims, source, path, fromSource, sidekicks);
     }
     checkFeatureOwners(out, claims);
+    checkTypesOffered(out, featureTypePool(sources));
     return out;
   },
 };

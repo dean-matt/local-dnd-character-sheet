@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent } from "../build-db.ts";
-import { characterOptions } from "./character-options.ts";
+import { characterOptions, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { classes } from "./classes.ts";
 import { EDITION_FILES } from "./edition.ts";
 
@@ -407,7 +407,7 @@ describe("the classes loader", () => {
     const vendorDir = join(workspace, "vendor");
     mkdirSync(join(vendorDir, "data", "class"), { recursive: true });
     writeFileSync(join(vendorDir, "data", "class", file), JSON.stringify(contents));
-    for (const path of EDITION_FILES) {
+    for (const path of [...EDITION_FILES, OPTIONAL_FEATURES_FILE]) {
       const destination = join(vendorDir, path);
       mkdirSync(dirname(destination), { recursive: true });
       copyFileSync(join(FIXTURE_VENDOR, path), destination);
@@ -783,6 +783,62 @@ describe("the classes loader", () => {
     expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, [])))).toMatch(
       /featureType is missing or empty/,
     );
+  });
+
+  it("refuses a class progression counting a type no optional feature carries", () => {
+    // The pool is another loader's table, so this reads optionalfeatures.json
+    // itself: a rename upstream would otherwise leave the count over an empty
+    // join, which is two well formed halves and no query that reports it.
+    expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["XI"])))).toMatch(
+      /Sorcerer\|PHB: a progression counts XI, which no optional feature carries/,
+    );
+  });
+
+  it("refuses a subclass progression counting a type no optional feature carries", () => {
+    const contents = {
+      subclass: [
+        {
+          name: "Psi Warrior",
+          shortName: "Psi Warrior",
+          source: "XPHB",
+          className: "Fighter",
+          classSource: "XPHB",
+          optionalfeatureProgression: [
+            { name: "Psionic Powers", featureType: ["XI"], progression: { 3: 2 } },
+          ],
+        },
+      ],
+    };
+
+    // Named by the subclass, which is the entry that carries the progression.
+    expect(refusal(vendorHolding("class-fighter.json", contents))).toMatch(
+      /Psi Warrior\|XPHB: a progression counts XI, which no optional feature carries/,
+    );
+  });
+
+  it("keeps a type the pool carries and no progression counts, as RP is", () => {
+    buildContent({
+      vendorDir: FIXTURE_VENDOR,
+      dbPath,
+      loaders: [classes, characterOptions],
+      meta: {},
+    });
+
+    const db = open();
+    const offered = db
+      .prepare("SELECT COUNT(*) FROM optional_feature_types WHERE feature_type = 'FS:B'")
+      .pluck()
+      .get();
+    const counted = db
+      .prepare("SELECT COUNT(*) FROM class_optional_features WHERE feature_type = 'FS:B'")
+      .pluck()
+      .get();
+    db.close();
+
+    // The invariant runs one way. Upstream ships four EFA options under RP,
+    // Eberron house renown, which a story award grants rather than a class, so
+    // an option no class counts has to load. FS:B is the fixture's own case.
+    expect([offered, counted]).toEqual([1, 0]);
   });
 
   it("refuses a subclass table group that names another subclass", () => {
