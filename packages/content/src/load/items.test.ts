@@ -187,6 +187,16 @@ describe("the items loader", () => {
     expect(refusal(holdingBase({ ...LONGSWORD, ...override }))).toMatch(reason);
   });
 
+  it("refuses a magic variant whose inherits declares an edition", () => {
+    const vendorDir = vendorHolding({
+      "data/magicvariants.json": {
+        magicvariant: [{ name: "+1 Weapon", inherits: { source: "DMG", edition: "one" } }],
+      },
+    });
+
+    expect(refusal(vendorDir)).toMatch(/inherits declares an edition/);
+  });
+
   it("refuses a magic variant with no inherits block", () => {
     const vendorDir = vendorHolding({
       "data/magicvariants.json": { magicvariant: [{ name: "+1 Weapon" }] },

@@ -29,13 +29,19 @@ const VARIANT = "magicvariant";
 
 /**
  * Where an entry keeps the fields that describe the item, rather than the
- * template. An edition is read off the entry itself either way: no variant
- * declares one under `inherits`, and the 50 that declare one do it outside.
+ * template. An edition is the one field read off the entry itself either way,
+ * so an `inherits` that grew one would be filed under the template's ruleset
+ * instead — a wrong row that no CHECK can catch. None of the 214 carries one
+ * today, and the 50 that declare an edition do it outside, so it is refused
+ * rather than merged into a precedence this loader would then have to state.
  */
 function itemFields(entry: Entry, kind: string, context: string): Entry {
   if (kind !== VARIANT) return entry;
   const inherits = entry.inherits;
   if (!isRecord(inherits)) throw new Error(`${context}: inherits is missing or not an object`);
+  if (inherits.edition !== undefined) {
+    throw new Error(`${context}: inherits declares an edition, which is read off the variant`);
+  }
   return inherits;
 }
 
