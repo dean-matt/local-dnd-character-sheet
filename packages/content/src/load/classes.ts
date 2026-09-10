@@ -418,6 +418,62 @@ function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[]
   return rows;
 }
 
+/** The type code a counted column names, ahead of anything else the tag carries. */
+const FEATURE_TYPE = /\|feature type=([^|}]+)/;
+
+/**
+ * The columns that state a count `optionalfeatureProgression` states again, as
+ * the code the column names paired with the key its label resolves to. The code
+ * is in the tag `display` renders away, so pairing the two needs no hand-kept
+ * map from type code to resource key — the list `edition.ts` warns goes stale
+ * the day upstream ships a book.
+ */
+function countedColumns(groups: unknown, context: string): { code: string; key: string }[] {
+  const labels = (Array.isArray(groups) ? groups : [])
+    .filter(isRecord)
+    .flatMap((group) => (Array.isArray(group.colLabels) ? group.colLabels : []));
+  return labels.flatMap((raw: unknown) => {
+    const code = typeof raw === "string" ? FEATURE_TYPE.exec(raw)?.[1] : undefined;
+    if (code === undefined) return [];
+    return [{ code: code.toUpperCase(), key: resourceKey(display(raw, context)) }];
+  });
+}
+
+/**
+ * Refuses where the two tables holding one count disagree. They agree across the
+ * corpus and nothing made them, so a newer tag that edits the column and not the
+ * progression would ship a sheet printing a count the picker does not offer —
+ * two well formed rows, and no query that reports the difference.
+ *
+ * A column counting a type the entry never offers is refused rather than passed
+ * over: a skip is how this check would stop running without saying so.
+ */
+function countsAgree(resources: Row[], typed: Row[], groups: unknown, context: string): void {
+  for (const { code, key } of countedColumns(groups, context)) {
+    const offered = typed.filter((row) => row.feature_type === code);
+    if (offered.length === 0) {
+      throw new Error(
+        `${context}: a column counts ${code}, which no optionalfeatureProgression offers`,
+      );
+    }
+    const known = new Map(offered.map((row) => [row.level, String(row.known)]));
+    const printed = new Map(
+      resources
+        .filter((row) => row.resource_key === key)
+        .map((row) => [row.level, String(row.value)]),
+    );
+    for (let level = 1; level <= LEVELS; level += 1) {
+      const column = printed.get(level) ?? "0";
+      const progression = known.get(level) ?? "0";
+      if (column !== progression) {
+        throw new Error(
+          `${context} level ${level}: the ${key} column counts ${column} and ${code} offers ${progression}`,
+        );
+      }
+    }
+  }
+}
+
 /**
  * A subclass table group repeats its owner in a `subclasses` list. Trusting the
  * owning entry instead would silently file another subclass's dice under this
@@ -527,11 +583,11 @@ function addClasses(out: Tables, source: unknown, path: string, fromSource: From
     });
     const owner = { class_name: name, class_source: classSource };
     const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
+    const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
+    countsAgree(resources, typed, entry.classTableGroups, context);
     out.class_resources.push(...resources);
     out.spell_slots.push(...slots);
-    out.class_optional_features.push(
-      ...optionalFeatures(entry.optionalfeatureProgression, owner, context),
-    );
+    out.class_optional_features.push(...typed);
   }
 }
 
@@ -557,11 +613,11 @@ function addSubclasses(out: Tables, source: unknown, path: string, fromSource: F
       json: JSON.stringify(entry),
     });
     const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
+    const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
+    countsAgree(resources, typed, entry.subclassTableGroups, context);
     out.subclass_resources.push(...resources);
     out.subclass_spell_slots.push(...slots);
-    out.subclass_optional_features.push(
-      ...optionalFeatures(entry.optionalfeatureProgression, owner, context),
-    );
+    out.subclass_optional_features.push(...typed);
   }
 }
 

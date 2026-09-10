@@ -87,11 +87,19 @@ says which shape it found.
 
 Two upstream fields state the invocation and infusion counts, so two tables hold them:
 `class_resources.invocations_known` and `infusions_known` come from a `colLabels` column,
-and `class_optional_features.known` from `optionalfeatureProgression`. They agree cell for
-cell at the pinned tag and nothing asserts they will — a check would need a hand-kept map
-from type code to resource key, which is the list `edition.ts` warns about. The typed row
-is the one to join, because it carries the `featureType` that reaches the pool; the
-resource row is a number to print on a sheet.
+and `class_optional_features.known` from `optionalfeatureProgression`. The build refuses
+where they disagree, naming the level and both counts, so a newer tag that edits one field
+and not the other fails the rebuild rather than shipping a sheet that prints a count the
+picker does not offer. The typed row is the one to join, because it carries the
+`featureType` that reaches the pool; the resource row is a number to print on a sheet.
+
+The check pairs the two by reading the type code out of the column's own label —
+`{@filter Invocations Known|optionalfeatures|feature type=ei}` names `ei` beside the text
+the resource key comes from — rather than keeping a map from code to key, which would be
+the kind of hand-kept list `edition.ts` warns goes stale the day upstream ships a book.
+Three columns carry such a filter at the pinned tag, and a column naming a type its entry
+offers no progression for is refused rather than passed over: a skip is how the check would
+stop running without saying so.
 
 The subclass table's key includes `subclass_source`, and a class offers both editions of a
 subclass, so `Fighter|XPHB` holds `Battle Master|PHB` and `Battle Master|XPHB` — 5

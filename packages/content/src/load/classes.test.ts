@@ -607,6 +607,63 @@ describe("the classes loader", () => {
     );
   });
 
+  const counting = (rows: unknown[][], progression: unknown) => ({
+    class: [
+      {
+        name: "Warlock",
+        source: "PHB",
+        edition: "classic",
+        hd: { number: 1, faces: 8 },
+        classTableGroups: [
+          { colLabels: ["{@filter Invocations Known|optionalfeatures|feature type=ei}"], rows },
+        ],
+        ...(progression === undefined
+          ? {}
+          : {
+              optionalfeatureProgression: [
+                { name: "Eldritch Invocations", featureType: ["EI"], progression },
+              ],
+            }),
+      },
+    ],
+  });
+
+  it("refuses a counted column that disagrees with the progression restating it", () => {
+    expect(refusal(vendorHolding("class-warlock.json", counting(table(2), { 1: 3 })))).toMatch(
+      /level 1: the invocations_known column counts 2 and EI offers 3/,
+    );
+  });
+
+  it("refuses a counted column the entry offers no progression for", () => {
+    expect(refusal(vendorHolding("class-warlock.json", counting(table(2), undefined)))).toMatch(
+      /a column counts EI, which no optionalfeatureProgression offers/,
+    );
+  });
+
+  it("takes a counted column that agrees, tag and case difference and all", () => {
+    // A sparse count carries forward to level 20, so the column has to as well.
+    const held = Array.from({ length: 20 }, () => [2]);
+    const vendorDir = vendorHolding("class-warlock.json", counting(held, { 1: 2 }));
+    build(vendorDir);
+
+    const db = open();
+    const printed = db
+      .prepare(
+        "SELECT value FROM class_resources WHERE resource_key = 'invocations_known' AND level = 1",
+      )
+      .pluck()
+      .get();
+    const offered = db
+      .prepare("SELECT known FROM class_optional_features WHERE feature_type = 'EI' AND level = 1")
+      .pluck()
+      .get();
+    db.close();
+
+    // The label says `feature type=ei` and the progression says `EI`, so the
+    // pairing only holds if the check folds the case of the tag payload.
+    expect([printed, offered]).toEqual(["2", 2]);
+  });
+
   it("refuses one count offered under several types, which a row cannot divide", () => {
     expect(
       refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["MM", "EI"]))),
