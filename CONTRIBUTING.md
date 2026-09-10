@@ -170,6 +170,13 @@ positive — "the display argument is not uniform" leaves a reader to work out w
 instead. A clause padding a noun into a sentence — "which is a choice worth auditing" is
 "a choice worth auditing".
 
+The edit has one failure mode, worse than the wordiness it removes: "omit needless words"
+becomes "omit words", and the clause carrying the only *why* goes with them. A declined
+alternative reads like padding and is not — "rejected rather than reinterpreted" says a
+choice was made, where "throws a `TypeError`" only repeats the signature. So compare the
+claims and not the prose: every fact a comment asserted before the edit is asserted after
+it, and a claim that turns out to belong in the signature moves there instead of going.
+
 Nothing asserts this and nothing can. Every proxy for wordiness flags good comments too,
 and a length rule would trim the one comment that needed a paragraph to name a trap. Do
 it for what the rewrite turns up rather than the words it saves: a comment that resists
