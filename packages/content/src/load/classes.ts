@@ -13,7 +13,13 @@
  * so an absent row means none.
  */
 import { parseTags, renderText } from "@dnd/tags";
-import { featureTypePool, OPTIONAL_FEATURES_FILE, poolKey } from "./character-options.ts";
+import {
+  ANY_LEVEL,
+  featureTypePool,
+  OPTIONAL_FEATURES_FILE,
+  optionCount,
+  reachesPool,
+} from "./character-options.ts";
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, strings, text } from "./json.ts";
@@ -300,13 +306,6 @@ function tableGroups(groups: unknown, owner: Owner, context: string): GroupRows 
   return { resources, slots };
 }
 
-function optionCount(cell: unknown, context: string): number {
-  if (typeof cell !== "number" || !Number.isInteger(cell) || cell < 0) {
-    throw new Error(`${context}: ${JSON.stringify(cell)} is not a count of options`);
-  }
-  return cell;
-}
-
 function stated(cells: unknown[], context: string): number[] {
   if (cells.length !== LEVELS) {
     throw new Error(
@@ -328,8 +327,10 @@ function carried(progression: Entry, context: string): number[] {
     // Four feats and one optional feature key a progression `*`, for "at any
     // level", since neither has one. No class or subclass entry does, and these
     // tables are keyed by level, so it is named rather than read as a number.
-    if (key === "*") {
-      throw new Error(`${context}: a progression keyed "*" has no level to file a count at`);
+    if (key === ANY_LEVEL) {
+      throw new Error(
+        `${context}: a progression keyed ${JSON.stringify(ANY_LEVEL)} has no level to file a count at`,
+      );
     }
     // Exactly the 20 spellings, so no two keys reach one level and overwrite it:
     // Number would take "03", " 3" and "1e1" and land all three on a level.
@@ -724,23 +725,9 @@ function checkFeatureOwners(out: Tables, claims: Map<Row, string>): void {
 }
 
 /**
- * A progression naming a type no optional feature carries entitles the entry to
- * a count over an empty pool: the row says a level 7 warlock picks 6, the join
- * returns 0 options, and both halves are well formed. An upstream rename of a
- * code is all it takes, and nothing else reports it.
- *
- * Edition is half the key because the pick query is edition-scoped — a sheet
- * offers the options of the edition the counting row itself belongs to, which is
- * the subclass's own where a subclass counts — so an entry counting a code only
- * the other edition's features carry has the same empty join. All 15 pairs the
- * corpus states resolve, the thinnest of them by 2 options.
- *
- * The invariant is one-directional. A pool code no progression offers is
- * legitimate — `RP` is Eberron house renown, four options granted by a story
- * award rather than by a class — so only the count side has to resolve.
- *
- * The pool comes from `optionalfeatures.json` itself rather than from the rows
- * `character-options` writes out of it, since a loader cannot see what an
+ * Every count an entry states has to reach the pool of options carrying its
+ * type. The pool comes from `optionalfeatures.json` itself rather than from the
+ * rows `character-options` writes out of it, since a loader cannot see what an
  * earlier one wrote.
  */
 function typesOffered(
@@ -750,15 +737,7 @@ function typesOffered(
   pool: Set<string>,
   context: string,
 ): void {
-  for (const row of typed) {
-    const type = String(row.feature_type);
-    if (pool.has(poolKey(edition, type))) continue;
-    // Which edition, spelled out: "no one optional feature" reads as none at
-    // all, and sending a reader after an upstream rename is the wrong hunt.
-    throw new Error(
-      `${context}: ${who} counts ${type}, which no optional feature of the ${edition} edition carries`,
-    );
-  }
+  for (const row of typed) reachesPool(String(row.feature_type), edition, pool, who, context);
 }
 
 /** Read before any row is built: a feature need not share a file with its class. */

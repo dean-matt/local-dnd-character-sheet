@@ -121,6 +121,37 @@
       "page": 20,
       "featureType": ["AI"],
       "entries": ["Elided."]
+    },
+    {
+      "name": "Superior Technique",
+      "source": "TCE",
+      "page": 41,
+      "isClassFeatureVariant": true,
+      "featureType": ["FS:F"],
+      "optionalfeatureProgression": [
+        {
+          "name": "Maneuvers",
+          "featureType": ["MV:B"],
+          "progression": {
+            "*": 1
+          }
+        }
+      ],
+      "entries": [
+        "Elided. {@filter maneuver|optionalfeatures|feature type=MV:B} Elided. {@class fighter|phb|Battle Master|Battle Master|phb|2-0} Elided.",
+        "Elided. {@dice d6} Elided."
+      ]
+    },
+    {
+      "name": "Riposte",
+      "source": "PHB",
+      "page": 74,
+      "reprintedAs": ["Riposte|XPHB"],
+      "featureType": ["MV:B"],
+      "consumes": {
+        "name": "Superiority Die"
+      },
+      "entries": ["Elided."]
     }
   ]
 }

@@ -55,6 +55,7 @@ describe("the character options loader", () => {
       "Magic Initiate|XPHB one",
       "Magic Initiate; Cleric|XPHB one",
       "Magic Initiate; Druid|XPHB one",
+      "Martial Adept|PHB classic",
     ]);
   });
 
@@ -69,6 +70,8 @@ describe("the character options loader", () => {
       "Archery|PHB classic",
       "Dueling|PHB classic",
       "Pact of the Chain|PHB classic",
+      "Riposte|PHB classic",
+      "Superior Technique|TCE classic",
     ]);
 
     const db = open();
@@ -97,6 +100,58 @@ describe("the character options loader", () => {
     db.close();
 
     expect(rangers).toEqual(["Archery", "Dueling"]);
+  });
+
+  it("counts the options a leveless entry grants, from either file that grants any", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const grants = db
+      .prepare(
+        "SELECT granted_by, name, source, feature_type, known FROM granted_optional_features ORDER BY name",
+      )
+      .all();
+    db.close();
+
+    expect(grants).toEqual([
+      {
+        granted_by: "feats",
+        name: "Martial Adept",
+        source: "PHB",
+        feature_type: "MV:B",
+        known: 2,
+      },
+      {
+        granted_by: "optional_features",
+        name: "Superior Technique",
+        source: "TCE",
+        feature_type: "MV:B",
+        known: 1,
+      },
+    ]);
+  });
+
+  /**
+   * Superior Technique is a fighting style and a grant of a maneuver, so its two
+   * rows say different things about one entry: a query for what may take it
+   * reads the type, and one for what it hands over reads the grant.
+   */
+  it("keeps an option that grants an option in both tables", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const taken = db
+      .prepare("SELECT feature_type FROM optional_feature_types WHERE name = ?")
+      .pluck()
+      .all("Superior Technique");
+    const grants = db
+      .prepare("SELECT feature_type FROM granted_optional_features WHERE name = ?")
+      .pluck()
+      .all("Superior Technique");
+    db.close();
+
+    expect(taken).toEqual(["FS:F"]);
+    expect(grants).toEqual(["MV:B"]);
   });
 
   /** The fixture vendor with one file swapped, so a refusal has everything else to read. */
@@ -163,6 +218,63 @@ describe("the character options loader", () => {
         }),
       ),
     ).toMatch(/featureType is missing or empty/);
+  });
+
+  /** A feat carrying a progression the class tables' shape, which has no level here. */
+  const featGranting = (progression: unknown) => ({
+    feat: [
+      {
+        name: "Martial Adept",
+        source: "PHB",
+        optionalfeatureProgression: [{ featureType: ["MV:B"], progression }],
+      },
+    ],
+  });
+
+  it.each([
+    ["a level", { "3": 2 }, /keys a progression "\*" alone, not \["3"\]/],
+    ["a level beside the wildcard", { "*": 1, "3": 2 }, /"\*" alone, not \["3","\*"\]/],
+    ["one cell per level", [2], /progression is not a map keyed "\*" alone/],
+    ["a count that is not one", { "*": "two" }, /"two" is not a count of options/],
+    ["a grant of nothing", { "*": 0 }, /a grant of no options/],
+  ])("refuses a leveless progression keyed by %s", (_, progression, message) => {
+    expect(refusal(vendorHolding("data/feats.json", featGranting(progression)))).toMatch(message);
+  });
+
+  it("refuses one count shared by two feature types, since a row holds one type", () => {
+    expect(
+      refusal(
+        vendorHolding("data/feats.json", {
+          feat: [
+            {
+              name: "Martial Adept",
+              source: "PHB",
+              optionalfeatureProgression: [
+                { featureType: ["MV:B", "MM"], progression: { "*": 2 } },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toMatch(/2 feature types share one count/);
+  });
+
+  it("refuses a grant of a type no optional feature of that edition carries", () => {
+    expect(
+      refusal(
+        vendorHolding("data/feats.json", {
+          feat: [
+            {
+              name: "Martial Adept",
+              source: "XPHB",
+              optionalfeatureProgression: [{ featureType: ["AI"], progression: { "*": 2 } }],
+            },
+          ],
+        }),
+      ),
+    ).toMatch(
+      /Martial Adept\|XPHB counts AI, which no optional feature of the one edition carries/,
+    );
   });
 
   it("fails the build when two entries share a (name, source)", () => {

@@ -73,6 +73,13 @@ level that may pick carries a row, because upstream states the count either per 
 only at the levels it changes at — so the carry-forward happens in the ETL and a query is
 an equality join. An absent row means the level may pick none.
 
+**A grant with no level is the third table.** Four feats and `Superior Technique` grant
+options outright, so `granted_optional_features` is keyed `(granted_by, name, source,
+feature_type)` — `granted_by` naming the table the grantor is in, since an optional
+feature grants as readily as a feat does. A character's total for a type is all three
+tables summed, which [`class-tables.md`](class-tables.md) spells out; reading the class
+side alone is short by whatever their feats granted.
+
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates.
 
