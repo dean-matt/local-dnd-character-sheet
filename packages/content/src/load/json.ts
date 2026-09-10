@@ -14,16 +14,6 @@ export function text(entry: Entry, key: string, context: string): string {
   return value;
 }
 
-/** A document's array of entries under one key, each narrowed to an object. */
-export function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
-  const entries = isRecord(parsed) ? parsed[key] : undefined;
-  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${key} array`);
-  return entries.map((entry, index) => {
-    if (!isRecord(entry)) throw new Error(`${path} ${key}[${index}] is not an object`);
-    return entry;
-  });
-}
-
 /** An entry's list of strings, refused rather than coerced when it is missing or empty. */
 export function strings(entry: Entry, key: string, context: string): string[] {
   const values = entry[key];
