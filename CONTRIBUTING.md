@@ -162,6 +162,19 @@ invites itself onto comments with no ceiling to name — a labelled comment read
 sanctioned. `tests/comment-policy.test.ts` rejects `ponytail:`, the one such label this
 repository has carried.
 
+A comment that survives all of that is read on every visit afterwards, so it earns the
+same edit as any other prose: active voice, positive form, needless words out. Three
+faults recur. A passive naming no actor — "the table is read with this level" hides who
+reads it, where "the level that reads the table" does not. A negative standing in for a
+positive — "the display argument is not uniform" leaves a reader to work out what it is
+instead. A clause padding a noun into a sentence — "which is a choice worth auditing" is
+"a choice worth auditing".
+
+Nothing asserts this and nothing can. Every proxy for wordiness flags good comments too,
+and a length rule would trim the one comment that needed a paragraph to name a trap. Do
+it for what the rewrite turns up rather than the words it saves: a comment that resists
+compression is usually ambiguous, and the edit is where that shows.
+
 ## Working with Claude here
 
 The document rules above exist because prose asking for concision does not hold. That is
