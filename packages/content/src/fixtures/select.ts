@@ -28,6 +28,8 @@ export type Selection = {
   within?: Record<string, Selection>;
   /** Fields that hold prose here, where the name alone does not say so. */
   prose?: string[];
+  /** Fields that hold machine data here, where the name says prose everywhere else. */
+  verbatim?: string[];
   /** Values upstream does not carry, each saying why it has to be invented. */
   set?: Record<string, Override>;
 };
@@ -60,7 +62,15 @@ const IDENTITY_FIELDS = [
   "abbreviation",
 ];
 
-/** A field whose value is rules prose, all the way down. */
+/**
+ * A field whose value is rules prose, all the way down, whatever holds it.
+ *
+ * A field that reads as prose under one entry and as machine data under another
+ * stays here and is exempted where it does not — `focus` is a psionic's
+ * discipline text and an item group's list of classes. Elision is the safe
+ * default of the two: a fixture that forgets to name a field loses coverage,
+ * where the reverse commits WotC's prose. See NOTICE.
+ */
 const PROSE_FIELDS = ["entries", "entriesHigherLevel", "entry", "focus"];
 
 /**
@@ -192,17 +202,34 @@ function columnIndexes(node: Record<string, unknown>, cols: string[], where: str
 const atColumns = (row: unknown, indexes: number[]): unknown =>
   Array.isArray(row) ? indexes.map((index) => row[index]) : row;
 
+/** Every field a selection names has to be there, or it is addressing nothing. */
+function requirePresent(
+  node: Record<string, unknown>,
+  fields: string[],
+  where: string,
+  purpose: string,
+): void {
+  for (const field of fields) {
+    if (!(field in node)) throw new Error(`${where}: upstream has no field ${field}${purpose}`);
+  }
+}
+
 function requireFields(node: Record<string, unknown>, selection: Selection, where: string): void {
-  for (const field of selection.fields ?? []) {
-    if (!(field in node)) throw new Error(`${where}: upstream has no field ${field}`);
-  }
-  for (const field of Object.keys(selection.within ?? {})) {
-    if (!(field in node)) throw new Error(`${where}: upstream has no field ${field} to select in`);
-  }
-  for (const field of selection.prose ?? []) {
-    if (!(field in node)) throw new Error(`${where}: upstream has no field ${field} to elide`);
+  const prose = selection.prose ?? [];
+  const verbatim = selection.verbatim ?? [];
+  requirePresent(node, selection.fields ?? [], where, "");
+  requirePresent(node, Object.keys(selection.within ?? {}), where, " to select in");
+  requirePresent(node, prose, where, " to elide");
+  requirePresent(node, verbatim, where, " to keep");
+
+  for (const field of prose) {
     if (STRUCTURAL_FIELDS.includes(field)) {
       throw new Error(`${where}: ${field} is structural, so naming it prose does nothing`);
+    }
+  }
+  for (const field of verbatim) {
+    if (!PROSE_FIELDS.includes(field)) {
+      throw new Error(`${where}: ${field} is not elided, so naming it verbatim does nothing`);
     }
   }
 }
@@ -229,7 +256,8 @@ function selectFields(
     if (selection.fields && !selection.fields.includes(field)) continue;
     const pruned = indexes ? pruneColumns(field, value, indexes) : value;
     const named = PROSE_FIELDS.includes(field) || (selection.prose?.includes(field) ?? false);
-    const inProse = (prose || named) && !STRUCTURAL_FIELDS.includes(field);
+    const kept = selection.verbatim?.includes(field) ?? false;
+    const inProse = !kept && (prose || named) && !STRUCTURAL_FIELDS.includes(field);
     const within = selection.within?.[field] ?? {};
     out[field] = select(pruned, within, `${where}.${field}`, inProse);
   }
@@ -256,7 +284,7 @@ function selectItems(node: unknown[], items: Item[], where: string, prose: boole
 }
 
 /** Keys of a selection that only an object can answer, and the one only an array can. */
-const OBJECT_KEYS = ["fields", "cols", "within", "prose", "set"] as const;
+const OBJECT_KEYS = ["fields", "cols", "within", "prose", "verbatim", "set"] as const;
 
 function shapeOf(node: unknown): { name: string; answers: readonly string[] } {
   if (Array.isArray(node)) return { name: "an array", answers: ["items"] };

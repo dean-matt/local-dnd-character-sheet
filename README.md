@@ -118,6 +118,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/data-model.md`](docs/data-model.md) | Character schema, overrides, references, resource counters |
 | [`docs/5etools-data.md`](docs/5etools-data.md) | Editions, `_copy` inheritance, tag markup |
 | [`docs/class-tables.md`](docs/class-tables.md) | Level-indexed class tables, and what the ETL takes from them |
+| [`docs/items.md`](docs/items.md) | The four item arrays, magic variants, and attunement |
 | [`docs/reviving.md`](docs/reviving.md) | Getting back to a running app after a long gap |
 
 ## Contributing

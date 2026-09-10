@@ -20,6 +20,13 @@
       "source": "XPHB",
       "group": "core",
       "published": "2024-09-17"
+    },
+    {
+      "name": "Dungeon Master's Guide (2024)",
+      "id": "XDMG",
+      "source": "XDMG",
+      "group": "core",
+      "published": "2024-11-12"
     }
   ]
 }

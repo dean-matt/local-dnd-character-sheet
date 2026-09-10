@@ -95,6 +95,24 @@ describe("select", () => {
     );
   });
 
+  it("keeps a field named verbatim, where the same name is prose elsewhere", () => {
+    expect(select({ focus: ["Sorcerer", "Wizard"] }, { verbatim: ["focus"] }, "$")).toEqual({
+      focus: ["Sorcerer", "Wizard"],
+    });
+  });
+
+  it("refuses naming a field verbatim that nothing elides", () => {
+    expect(() => select({ rows: [["a"]] }, { verbatim: ["rows"] }, "$")).toThrow(
+      "$: rows is not elided, so naming it verbatim does nothing",
+    );
+  });
+
+  it("refuses a verbatim field upstream does not carry", () => {
+    expect(() => select({ entries: ["a"] }, { verbatim: ["focus"] }, "$")).toThrow(
+      "$: upstream has no field focus to keep",
+    );
+  });
+
   it("refuses a column label upstream does not carry", () => {
     expect(() => select({ colLabels: ["Rages"] }, { cols: ["Rage Damage"] }, "$")).toThrow(
       '$: no column labelled "Rage Damage"',

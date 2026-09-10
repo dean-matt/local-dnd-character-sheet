@@ -1,0 +1,136 @@
+{
+  "_meta": {
+    "internalCopies": ["itemType"]
+  },
+  "baseitem": [
+    {
+      "name": "Longsword",
+      "source": "PHB",
+      "page": 149,
+      "srd": true,
+      "basicRules": true,
+      "referenceSources": [
+        "CM",
+        "CoS",
+        "DSotDQ",
+        "GoS",
+        "IDRotF",
+        "KftGV",
+        "LK",
+        "LoX",
+        "PaBTSO",
+        "QftIS",
+        "RMBRE",
+        "TftYP-TSC",
+        "US",
+        "VEoR",
+        "WDH",
+        "WDMM"
+      ],
+      "reprintedAs": ["Longsword|XPHB"],
+      "edition": "classic",
+      "type": "M",
+      "rarity": "none",
+      "weight": 3,
+      "value": 1500,
+      "weaponCategory": "martial",
+      "property": ["V"],
+      "dmg1": "1d8",
+      "dmgType": "S",
+      "dmg2": "1d10",
+      "sword": true,
+      "weapon": true
+    },
+    {
+      "name": "Longsword",
+      "source": "XPHB",
+      "page": 215,
+      "srd52": true,
+      "basicRules2024": true,
+      "referenceSources": ["HotB"],
+      "edition": "one",
+      "type": "M|XPHB",
+      "rarity": "none",
+      "weight": 3,
+      "value": 1500,
+      "weaponCategory": "martial",
+      "property": ["V|XPHB"],
+      "mastery": ["Sap|XPHB"],
+      "dmg1": "1d8",
+      "dmgType": "S",
+      "dmg2": "1d10",
+      "sword": true,
+      "weapon": true,
+      "hasFluffImages": true
+    },
+    {
+      "name": "Alchemist's Supplies",
+      "source": "PHB",
+      "page": 154,
+      "srd": true,
+      "basicRules": true,
+      "additionalSources": [
+        {
+          "source": "XGE",
+          "page": 79
+        }
+      ],
+      "referenceSources": [
+        "IMR",
+        "JttRC",
+        "KftGV",
+        "OoW",
+        "PaBTSO",
+        "RtG",
+        "SCC-ARiR",
+        "TftYP-TSC",
+        "ToA",
+        "TTP",
+        "WDMM"
+      ],
+      "reprintedAs": ["Alchemist's Supplies|XPHB"],
+      "type": "AT",
+      "rarity": "none",
+      "weight": 8,
+      "value": 5000,
+      "additionalEntries": [
+        "Alchemist's supplies enable a character to produce useful concoctions, such as acid or alchemist's fire.",
+        {
+          "type": "entries",
+          "name": "Components",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Arcana",
+          "entries": ["Elided. {@skill Arcana} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Investigation",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Alchemical Crafting",
+          "entries": [
+            "Elided. {@item acid (vial)|phb|acid} Elided. {@item alchemist's fire (flask)|phb|alchemist's fire} Elided. {@item antitoxin (vial)|phb|antitoxin} Elided. {@item oil (flask)|phb|oil} Elided. {@item perfume (vial)|phb|perfume} Elided. {@item soap|phb} Elided."
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "Alchemist's Supplies",
+          "colLabels": ["Activity", "DC"],
+          "colStyles": ["col-10", "col-2 text-center"],
+          "rows": [
+            ["Create a puff of thick smoke", "10"],
+            ["Identify a poison", "10"],
+            ["Identify a substance", "15"],
+            ["Start a fire", "15"],
+            ["Neutralize acid", "20"]
+          ]
+        }
+      ]
+    }
+  ]
+}

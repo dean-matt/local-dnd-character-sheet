@@ -14,16 +14,6 @@ export function text(entry: Entry, key: string, context: string): string {
   return value;
 }
 
-/** A document's array of entries under one key, each narrowed to an object. */
-export function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
-  const entries = isRecord(parsed) ? parsed[key] : undefined;
-  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${key} array`);
-  return entries.map((entry, index) => {
-    if (!isRecord(entry)) throw new Error(`${path} ${key}[${index}] is not an object`);
-    return entry;
-  });
-}
-
 /** An entry's list of strings, refused rather than coerced when it is missing or empty. */
 export function strings(entry: Entry, key: string, context: string): string[] {
   const values = entry[key];
@@ -35,5 +25,45 @@ export function strings(entry: Entry, key: string, context: string): string[] {
       throw new Error(`${context}: ${key}[${index}] is not a string`);
     }
     return value;
+  });
+}
+
+/**
+ * An upstream file's entry array, refused when the file carries none and when
+ * an element is not an object. Every loader reads its sources this way, so a
+ * file that changed shape names itself rather than surfacing as a missing field
+ * on the first entry a mapper touches.
+ */
+export function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
+  const entries = isRecord(parsed) ? parsed[key] : undefined;
+  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${key} array`);
+  return entries.map((entry, index) => {
+    if (!isRecord(entry)) throw new Error(`${path} ${key}[${index}] is not an object`);
+    return entry;
+  });
+}
+
+/**
+ * Every entry of every kind the given files carry, mapped to a row each.
+ *
+ * `kinds` maps a vendor-relative path to the array keys it contributes, which
+ * is the shape a loader over several same-shaped files wants: the kind is what
+ * tells the rows apart once they share a table. A file the caller did not map
+ * is refused rather than skipped, so declaring a file and forgetting its key
+ * fails the build instead of writing a short table.
+ */
+export function kindedRows<T>(
+  files: [string, unknown][],
+  kinds: Record<string, string[]>,
+  toRow: (entry: Entry, kind: string, context: string) => T,
+): T[] {
+  return files.flatMap(([path, parsed]) => {
+    const carried = kinds[path];
+    if (carried === undefined) throw new Error(`${path} belongs to no kind`);
+    return carried.flatMap((kind) =>
+      entriesOf(parsed, kind, path).map((entry, index) =>
+        toRow(entry, kind, `${path} ${kind}[${index}]`),
+      ),
+    );
   });
 }

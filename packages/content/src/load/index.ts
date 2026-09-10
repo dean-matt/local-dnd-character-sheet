@@ -10,6 +10,7 @@
 
 import { characterOptions } from "./character-options.ts";
 import { classes } from "./classes.ts";
+import { items } from "./items.ts";
 import { lookups } from "./lookups.ts";
 import { races } from "./races.ts";
 import { spells } from "./spells.ts";
@@ -44,4 +45,12 @@ export type Loader = {
   rows(sources: Map<string, unknown>): Record<string, Row[]>;
 };
 
-export const LOADERS: Loader[] = [spells, classes, characterOptions, races, lookups, tagRedirects];
+export const LOADERS: Loader[] = [
+  spells,
+  classes,
+  characterOptions,
+  races,
+  items,
+  lookups,
+  tagRedirects,
+];

@@ -90,6 +90,156 @@
           }
         }
       }
+    },
+    {
+      "name": "Bag of Holding",
+      "source": "DMG",
+      "page": 153,
+      "srd": true,
+      "basicRules": true,
+      "referenceSources": [
+        "CM",
+        "CRCotN",
+        "DSotDQ",
+        "GoS",
+        "HftT",
+        "HoL",
+        "HotDQ",
+        "IDRotF",
+        "JttRC",
+        "KftGV",
+        "LLK",
+        "LRDT",
+        "OotA",
+        "PotA",
+        "QftIS",
+        "RoT",
+        "SCC-CK",
+        "SjA",
+        "SKT",
+        "TftYP-AtG",
+        "TftYP-ToH",
+        "ToFW",
+        "VEoR",
+        "WBtW",
+        "WDH"
+      ],
+      "reprintedAs": ["Bag of Holding|XDMG"],
+      "tier": "minor",
+      "rarity": "uncommon",
+      "wondrous": true,
+      "weight": 15,
+      "entries": [
+        "Elided.",
+        "Elided.",
+        "Elided. {@item Heward's handy haversack} Elided. {@item portable hole} Elided."
+      ],
+      "containerCapacity": {
+        "weight": [500],
+        "weightless": true
+      },
+      "optionalfeatures": ["replicate magic item|tce"],
+      "lootTables": ["Magic Item Table A", "Magic Item Table B"],
+      "hasFluffImages": true
+    },
+    {
+      "name": "+1 Wand of the War Mage",
+      "source": "DMG",
+      "page": 212,
+      "srd": true,
+      "referenceSources": [
+        "BGDIA",
+        "CM",
+        "CoA",
+        "DSotDQ",
+        "GoS",
+        "IDRotF",
+        "PotA",
+        "SKT",
+        "ToFW",
+        "WDMM"
+      ],
+      "reprintedAs": ["+1 Wand of the War Mage|XDMG"],
+      "type": "WD|DMG",
+      "tier": "major",
+      "rarity": "uncommon",
+      "reqAttune": "by a spellcaster",
+      "reqAttuneTags": [
+        {
+          "spellcasting": true
+        }
+      ],
+      "weight": 1,
+      "bonusSpellAttack": "+1",
+      "entries": ["Elided. {@quickref Cover||3||half cover} Elided."],
+      "lootTables": ["Magic Item Table F"]
+    },
+    {
+      "name": "Dragon Thighbone Club",
+      "source": "SKT",
+      "page": 105,
+      "baseItem": "greatclub|phb",
+      "type": "M",
+      "rarity": "unknown (magic)",
+      "reqAttune": "optional",
+      "weight": 250,
+      "weaponCategory": "simple",
+      "property": ["2H"],
+      "dmg1": "1d8",
+      "dmgType": "B",
+      "entries": ["Elided.", "Elided. {@damage 2d8} Elided.", "Elided."]
+    },
+    {
+      "name": "Borderlands Tabard",
+      "source": "HotB",
+      "page": 16,
+      "type": "G|XPHB",
+      "rarity": "none",
+      "entries": ["Elided. {@variantrule Friendly [Attitude]|XPHB|Friendly} Elided."]
+    },
+    {
+      "name": "Cloak of Billowing",
+      "source": "XDMG",
+      "page": 244,
+      "referenceSources": ["HotB"],
+      "rarity": "common",
+      "wondrous": true,
+      "entries": ["Elided. {@variantrule Bonus Action|XPHB} Elided."],
+      "lootTables": ["Arcana - Common|XDMG"],
+      "hasFluffImages": true
+    },
+    {
+      "name": "Cloak of Billowing",
+      "source": "WttHC",
+      "_copy": {
+        "name": "Cloak of Billowing",
+        "source": "XDMG",
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": {
+              "type": "entries",
+              "name": "Special Use:",
+              "entries": ["Elided. {@skill Performance|XPHB} Elided."]
+            }
+          }
+        }
+      },
+      "hasFluffImages": true
+    }
+  ],
+  "itemGroup": [
+    {
+      "name": "Arcane Focus",
+      "source": "PHB",
+      "page": 151,
+      "referenceSources": ["ToA", "TTP"],
+      "reprintedAs": ["Arcane Focus|XPHB"],
+      "type": "SCF",
+      "scfType": "arcane",
+      "rarity": "none",
+      "focus": ["Sorcerer", "Warlock", "Wizard"],
+      "items": ["Crystal|phb", "Orb|phb", "Rod|phb", "Staff|phb", "Wand|phb"]
     }
   ]
 }

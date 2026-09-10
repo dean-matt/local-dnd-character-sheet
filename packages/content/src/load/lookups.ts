@@ -12,7 +12,7 @@
  */
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord, text } from "./json.ts";
+import { type Entry, kindedRows, text } from "./json.ts";
 
 /** The array keys each file carries, which are the kinds it contributes. */
 const KINDS: Record<string, string[]> = {
@@ -29,11 +29,10 @@ const KINDS: Record<string, string[]> = {
 
 function toRow(
   kind: string,
-  entry: unknown,
+  entry: Entry,
   context: string,
   fromSource: (source: string) => Edition,
 ): Row {
-  if (!isRecord(entry)) throw new Error(`${context} is not an object`);
   const source = text(entry, "source", context);
   return {
     kind,
@@ -45,27 +44,15 @@ function toRow(
   };
 }
 
-function entriesOf(parsed: unknown, kind: string, path: string): Entry[] {
-  const entries = isRecord(parsed) ? parsed[kind] : undefined;
-  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${kind} array`);
-  return entries;
-}
-
 export const lookups: Loader = {
   name: "lookups",
   files: [...Object.keys(KINDS), ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
     return {
-      lookups: ownFiles(sources).flatMap(([path, parsed]) => {
-        const kinds = KINDS[path];
-        if (kinds === undefined) throw new Error(`${path} belongs to no kind`);
-        return kinds.flatMap((kind) =>
-          entriesOf(parsed, kind, path).map((entry, index) =>
-            toRow(kind, entry, `${path} ${kind}[${index}]`, fromSource),
-          ),
-        );
-      }),
+      lookups: kindedRows(ownFiles(sources), KINDS, (entry, kind, context) =>
+        toRow(kind, entry, context, fromSource),
+      ),
     };
   },
 };
