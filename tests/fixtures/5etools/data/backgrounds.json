@@ -122,10 +122,7 @@
             "items": {
               "name": "Baldur's Gate Feature: Religious Community",
               "type": "entries",
-              "entries": [
-                "{@note The effects of a Baldur's Gate feature can be used only while the character is in Baldur's Gate—though, at the DM's discretion, they might have applicable effects in situations similar to those in Baldur's Gate.}",
-                "Elided."
-              ],
+              "entries": ["{@note Elided.}", "Elided."],
               "data": {
                 "isFeature": true
               }

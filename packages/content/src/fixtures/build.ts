@@ -10,9 +10,17 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { verifyVendor } from "../sync.ts";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
+import { posix, verifyVendor } from "../sync.ts";
 import { FIXTURES } from "./declaration.ts";
 import { select } from "./select.ts";
 
@@ -37,9 +45,21 @@ function format(paths: string[]): void {
   });
 }
 
-/** The fixtures that no longer say what the declaration generates. Formatting is Biome's. */
-function stale(generated: Map<string, unknown>): string[] {
-  return [...generated]
+/** Everything committed under the fixture tree, as paths relative to it. */
+function committedFixtures(): string[] {
+  if (!existsSync(FIXTURE_DIR)) return [];
+  return readdirSync(FIXTURE_DIR, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => posix(relative(FIXTURE_DIR, join(entry.parentPath, entry.name))));
+}
+
+/**
+ * The fixtures that no longer say what the declaration generates, orphans included —
+ * a file the declaration has stopped naming is the value nobody can source that this
+ * whole arrangement exists to prevent. Formatting is Biome's, so the comparison parses.
+ */
+export function stale(generated: Map<string, unknown>): string[] {
+  const drifted = [...generated]
     .filter(([file, document]) => {
       const path = join(FIXTURE_DIR, file);
       if (!existsSync(path)) return true;
@@ -47,6 +67,8 @@ function stale(generated: Map<string, unknown>): string[] {
       return JSON.stringify(committed) !== JSON.stringify(document);
     })
     .map(([file]) => file);
+  const orphans = committedFixtures().filter((file) => !generated.has(file));
+  return [...drifted, ...orphans.map((file) => `${file} (no longer declared)`)];
 }
 
 async function main(): Promise<void> {
@@ -63,6 +85,11 @@ async function main(): Promise<void> {
     }
     console.log(`${generated.size} fixtures match the declaration at ${tag}`);
     return;
+  }
+
+  for (const file of committedFixtures().filter((name) => !generated.has(name))) {
+    rmSync(join(FIXTURE_DIR, file));
+    console.log(`Removed ${file}, which the declaration no longer names`);
   }
 
   const written = [...generated].map(([file, document]) => {

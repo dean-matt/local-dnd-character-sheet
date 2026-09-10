@@ -1,7 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FIXTURE_DIR, generate } from "./build.ts";
+import { generate, stale } from "./build.ts";
 
 const VENDOR = resolve(import.meta.dirname, "../../../../vendor/5etools");
 
@@ -12,9 +12,6 @@ const VENDOR = resolve(import.meta.dirname, "../../../../vendor/5etools");
  */
 describe.skipIf(!existsSync(VENDOR))("the committed fixtures", () => {
   it("are what the declaration generates from vendor/", () => {
-    for (const [file, generated] of generate(VENDOR)) {
-      const committed = JSON.parse(readFileSync(join(FIXTURE_DIR, file), "utf8"));
-      expect(generated, `${file} is stale — run pnpm fixtures:build`).toEqual(committed);
-    }
+    expect(stale(generate(VENDOR)), "run pnpm fixtures:build").toEqual([]);
   });
 });

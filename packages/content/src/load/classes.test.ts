@@ -120,7 +120,7 @@ describe("the classes loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT resource_key, value FROM class_resources WHERE class_name = 'Fighter' AND level = 1 ORDER BY resource_key",
+        "SELECT resource_key, value FROM class_resources WHERE class_name = 'Fighter' AND class_source = 'XPHB' AND level = 1 ORDER BY resource_key",
       )
       .all();
     db.close();

@@ -367,7 +367,7 @@ export const FIXTURES: Fixture[] = [
           items: [
             {
               id: "Bonus Proficiencies|TCE|Expert Sidekick|TCE|1",
-              within: { entries: { items: ["{@i 1st-level Expert feature}"] } },
+              within: { entries: { items: [0] } },
             },
           ],
         },
@@ -432,7 +432,13 @@ export const FIXTURES: Fixture[] = [
     keep: {
       within: {
         deity: {
-          items: ["Oghma|PHB", "Oghma|PHB", "Moradin|PHB", "Bahgtru|SCAG", "Bahgtru|VGM"],
+          items: [
+            "Oghma|PHB|Celtic",
+            "Oghma|PHB|Forgotten Realms",
+            "Moradin|PHB|Nonhuman",
+            "Bahgtru|SCAG|Orc",
+            "Bahgtru|VGM|Orc",
+          ],
         },
       },
     },
@@ -515,7 +521,7 @@ export const FIXTURES: Fixture[] = [
             {
               id: "Arcane Propulsion Armor|TCE",
               fields: ["name", "source", "page", "featureType", "entries"],
-              within: { entries: { items: ["The wearer of this armor gains these benefits:"] } },
+              within: { entries: { items: [0] } },
             },
           ],
         },

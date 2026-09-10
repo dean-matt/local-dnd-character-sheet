@@ -65,6 +65,24 @@ describe("select", () => {
     ).toThrow('$.spell: upstream has no unclaimed element "Fireball|PHB|3"');
   });
 
+  it("refuses a selection an array cannot answer, rather than ignoring it", () => {
+    expect(() => select(upstream, { within: { spell: { fields: ["name"] } } }, "$")).toThrow(
+      "$.spell: upstream holds an array, which fields cannot select",
+    );
+  });
+
+  it("refuses items on an object, rather than ignoring it", () => {
+    expect(() => select({ mode: "replaceArr" }, { items: [0] }, "$")).toThrow(
+      "$: upstream holds an object, which items cannot select",
+    );
+  });
+
+  it("refuses a prose field upstream does not carry", () => {
+    expect(() => select({ rows: [["a"]] }, { prose: ["cells"] }, "$")).toThrow(
+      "$: upstream has no field cells to elide",
+    );
+  });
+
   it("refuses a column label upstream does not carry", () => {
     expect(() => select({ colLabels: ["Rages"] }, { cols: ["Rage Damage"] }, "$")).toThrow(
       '$: no column labelled "Rage Damage"',
@@ -83,7 +101,11 @@ describe("elide", () => {
     );
   });
 
-  it("keeps markup that is the whole string", () => {
-    expect(elide("{@i 1st-level feature}")).toBe("{@i 1st-level feature}");
+  it("keeps a reference tag whole, because it names something rather than reading", () => {
+    expect(elide("{@item potion of healing}")).toBe("{@item potion of healing}");
+  });
+
+  it("empties a formatting tag, whose body is prose however long", () => {
+    expect(elide("{@note A whole paragraph of rules text lives in here.}")).toBe("{@note Elided.}");
   });
 });

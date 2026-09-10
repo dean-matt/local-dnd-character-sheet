@@ -47,6 +47,7 @@ const isOverride = (item: Item): item is Override => typeof item === "object" &&
 const IDENTITY_FIELDS = [
   "name",
   "source",
+  "pantheon",
   "className",
   "classSource",
   "subclassShortName",
@@ -72,6 +73,8 @@ const STRUCTURAL_FIELDS = [
   "type",
   "style",
   "caption",
+  "data",
+  "overwrite",
   "colLabels",
   "colStyles",
   "shortName",
@@ -96,13 +99,25 @@ const MARKER = "Elided.";
  */
 const MARKUP = /\{@[^{}]+\}|\{\{[^{}]+\}\}/g;
 
-/** Prose, with its markup left where it stood. */
+/**
+ * Tags that wrap prose rather than name something. Their body is rules text, so a
+ * whole paragraph inside one is not markup that may stay — only the tag itself is.
+ */
+const PROSE_TAGS = new Set(["note", "i", "italic", "b", "bold", "s", "strike", "u", "highlight"]);
+
+/** A tag whose body is prose, reduced to the tag. */
+function elideTag(markup: string): string {
+  const name = markup.slice(2).split(/[\s|}]/, 1)[0] ?? "";
+  return PROSE_TAGS.has(name) ? `{@${name} ${MARKER}}` : markup;
+}
+
+/** Prose, with the markup a loader reads left where it stood. */
 export function elide(text: string): string {
   const parts: string[] = [];
   let read = 0;
   for (const match of text.matchAll(MARKUP)) {
     if (text.slice(read, match.index).trim()) parts.push(MARKER);
-    parts.push(match[0]);
+    parts.push(elideTag(match[0]));
     read = match.index + match[0].length;
   }
   if (text.slice(read).trim()) parts.push(MARKER);
@@ -143,6 +158,9 @@ function requireFields(node: Record<string, unknown>, selection: Selection, wher
   }
   for (const field of Object.keys(selection.within ?? {})) {
     if (!(field in node)) throw new Error(`${where}: upstream has no field ${field} to select in`);
+  }
+  for (const field of selection.prose ?? []) {
+    if (!(field in node)) throw new Error(`${where}: upstream has no field ${field} to elide`);
   }
 }
 
@@ -194,13 +212,34 @@ function selectItems(node: unknown[], items: Item[], where: string, prose: boole
   });
 }
 
+/** Keys of a selection that only an object can answer, and the one only an array can. */
+const OBJECT_KEYS = ["fields", "cols", "within", "prose", "set"] as const;
+
+function requireShape(node: unknown, selection: Selection, where: string): void {
+  const wrong = Array.isArray(node)
+    ? OBJECT_KEYS.filter((key) => selection[key] !== undefined)
+    : selection.items === undefined
+      ? []
+      : ["items"];
+  if (wrong.length > 0) {
+    const shape = Array.isArray(node) ? "an array" : "an object";
+    throw new Error(
+      `${where}: upstream holds ${shape}, which ${wrong.join(" and ")} cannot select`,
+    );
+  }
+}
+
 export function select(node: unknown, selection: Selection, where: string, prose = false): unknown {
   if (typeof node === "string") return prose ? elide(node) : node;
   if (Array.isArray(node)) {
+    requireShape(node, selection, where);
     if (selection.items) return selectItems(node, selection.items, where, prose);
     // Descend even with nothing selected here: a prose field can sit under any array.
     return node.map((element, at) => select(element, {}, `${where}[${at}]`, prose));
   }
-  if (isRecord(node)) return selectFields(node, selection, where, prose);
+  if (isRecord(node)) {
+    requireShape(node, selection, where);
+    return selectFields(node, selection, where, prose);
+  }
   return node;
 }
