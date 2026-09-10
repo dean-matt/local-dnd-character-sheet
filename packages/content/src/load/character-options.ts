@@ -46,30 +46,47 @@ function toRow(entry: Entry, context: string, fromSource: FromSource): Row {
   };
 }
 
+/**
+ * Every type code a feature is offered under. The rows below and the pool a
+ * class-side count is checked against both read it here, so a feature stating
+ * its types some other way moves the two together rather than leaving one
+ * checking the other against a list it no longer builds.
+ */
+function featureTypes(entry: Entry, context: string): string[] {
+  return strings(entry, "featureType", context);
+}
+
 /** Every type a feature is offered under, as one row each. */
 function typeRows(entry: Entry, row: Row, context: string): Row[] {
-  return strings(entry, "featureType", context).map((type) => ({
+  return featureTypes(entry, context).map((type) => ({
     name: row.name,
     source: row.source,
     feature_type: type,
   }));
 }
 
+/** A pool entry, as the edition a character plays and the code a count names. */
+export function poolKey(edition: Edition, featureType: string): string {
+  return `${edition}|${featureType}`;
+}
+
 /**
- * Every type code the pool carries, for a loader that counts options by type and
- * cannot read the rows this one writes.
+ * The pool a class-side count has to reach, for a loader that counts options by
+ * type and cannot read the rows this one writes.
  *
- * Read from the same field `typeRows` reads, so a change to how a feature states
- * its types moves both together rather than leaving one checking the other
- * against a list it no longer builds.
+ * Keyed by edition as well as by code, because a sheet offers the options of the
+ * character's own edition: a 2024 class counting a code only 2014 features carry
+ * has the same empty join as one counting a code nothing carries at all.
  */
 export function featureTypePool(sources: Map<string, unknown>): Set<string> {
+  const fromSource = editions(sources);
   const path = OPTIONAL_FEATURES_FILE;
-  const entries = entriesOf(sources.get(path), "optionalfeature", path);
   return new Set(
-    entries.flatMap((entry, index) =>
-      strings(entry, "featureType", `${path} optionalfeature[${index}]`),
-    ),
+    entriesOf(sources.get(path), "optionalfeature", path).flatMap((entry, index) => {
+      const context = `${path} optionalfeature[${index}]`;
+      const edition = editionOf(entry, text(entry, "source", context), fromSource);
+      return featureTypes(entry, context).map((type) => poolKey(edition, type));
+    }),
   );
 }
 

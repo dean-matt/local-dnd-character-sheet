@@ -790,7 +790,29 @@ describe("the classes loader", () => {
     // itself: a rename upstream would otherwise leave the count over an empty
     // join, which is two well formed halves and no query that reports it.
     expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["XI"])))).toMatch(
-      /Sorcerer\|PHB: a progression counts XI, which no optional feature carries/,
+      /class\[0\]: a progression counts XI, which no classic optional feature carries/,
+    );
+  });
+
+  it("refuses a count whose pool is all of the other edition", () => {
+    const contents = {
+      class: [
+        {
+          name: "Warlock",
+          source: "XPHB",
+          hd: { number: 1, faces: 8 },
+          optionalfeatureProgression: [
+            { name: "Pact Boon", featureType: ["PB"], progression: { 3: 1 } },
+          ],
+        },
+      ],
+    };
+
+    // Pact of the Chain is PHB, and a sheet offers a character the options of
+    // its own edition, so a 2024 warlock counting PB picks from nothing. The
+    // pool is not empty, which is what makes this the quiet case.
+    expect(refusal(vendorHolding("class-warlock.json", contents))).toMatch(
+      /class\[0\]: a progression counts PB, which no one optional feature carries/,
     );
   });
 
@@ -810,9 +832,10 @@ describe("the classes loader", () => {
       ],
     };
 
-    // Named by the subclass, which is the entry that carries the progression.
+    // Named by the entry that carries the progression, since a subclass name
+    // and source repeat across classes and the file and index do not.
     expect(refusal(vendorHolding("class-fighter.json", contents))).toMatch(
-      /Psi Warrior\|XPHB: a progression counts XI, which no optional feature carries/,
+      /subclass\[0\]: a progression counts XI, which no one optional feature carries/,
     );
   });
 
