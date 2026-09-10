@@ -14,7 +14,7 @@
  */
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, entriesOf, isRecord, text } from "./json.ts";
+import { type Entry, isRecord, kindedRows, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
@@ -84,15 +84,9 @@ export const items: Loader = {
   rows: (sources) => {
     const fromSource = editions(sources);
     return {
-      items: ownFiles(sources).flatMap(([path, parsed]) => {
-        const kinds = KINDS[path];
-        if (kinds === undefined) throw new Error(`${path} belongs to no kind`);
-        return kinds.flatMap((kind) =>
-          entriesOf(parsed, kind, path).map((entry, index) =>
-            toRow(entry, kind, `${path} ${kind}[${index}]`, fromSource),
-          ),
-        );
-      }),
+      items: kindedRows(ownFiles(sources), KINDS, (entry, kind, context) =>
+        toRow(entry, kind, context, fromSource),
+      ),
     };
   },
 };
