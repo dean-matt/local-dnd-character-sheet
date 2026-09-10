@@ -69,7 +69,9 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
       } catch (cause) {
         throw new Error(`${match} could not be read`, { cause });
       }
-      sources.set(match, resolveVersions(resolveCopies(parsed, match), match));
+      const copied = resolveCopies(parsed, match);
+      const prepared = loader.prepare ? loader.prepare(copied, match) : copied;
+      sources.set(match, resolveVersions(prepared, match));
     }
   }
   return sources;

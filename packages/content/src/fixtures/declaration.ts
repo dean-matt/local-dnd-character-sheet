@@ -656,14 +656,160 @@ export const FIXTURES: Fixture[] = [
                 },
               },
             },
+            {
+              id: "Human|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "size",
+                "speed",
+                "languageProficiencies",
+                "entries",
+              ],
+            },
+            {
+              id: "Dragonborn|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "ability",
+                "resist",
+                "traitTags",
+                "languageProficiencies",
+                "size",
+                "speed",
+                "entries",
+              ],
+            },
+            {
+              id: "Half-Orc|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "ability",
+                "traitTags",
+                "languageProficiencies",
+                "size",
+                "speed",
+                "entries",
+              ],
+              within: { entries: { items: ["Darkvision", "Languages"] } },
+            },
+            {
+              id: "Dragonborn (Chromatic)|FTD",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "lineage",
+                "resist",
+                "size",
+                "speed",
+                "entries",
+                "_versions",
+              ],
+              within: {
+                entries: {
+                  items: ["Chromatic Ancestry", "Breath Weapon", "Draconic Resistance"],
+                },
+                _versions: {
+                  items: [
+                    {
+                      id: 0,
+                      within: {
+                        _abstract: {
+                          within: { _mod: { within: { entries: { items: [0, 1, 2] } } } },
+                        },
+                        _implementations: { items: [0, 1] },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
           ],
         },
         subrace: {
           items: [
             {
               id: "Variant|PHB|Human|PHB",
-              fields: ["name", "source", "raceName", "raceSource", "page", "entries"],
+              fields: [
+                "name",
+                "source",
+                "raceName",
+                "raceSource",
+                "page",
+                "ability",
+                "skillProficiencies",
+                "entries",
+              ],
               within: { entries: { items: ["Skills"] } },
+            },
+            {
+              id: "PHB|Dragonborn|PHB",
+              fields: ["source", "page", "raceName", "raceSource", "_versions"],
+              within: {
+                _versions: {
+                  items: [
+                    {
+                      id: 0,
+                      within: {
+                        _abstract: {
+                          within: { _mod: { within: { entries: { items: [0, 1, 2] } } } },
+                        },
+                        _implementations: { items: [0, 1] },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              id: "Variant; Mark of Finding|ERLW|Half-Orc|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "raceName",
+                "raceSource",
+                "languageProficiencies",
+                "entries",
+              ],
+              within: { entries: { items: ["Languages"] } },
+            },
+            {
+              id: "Draconblood|EGW|Dragonborn|PHB",
+              fields: [
+                "name",
+                "source",
+                "page",
+                "raceName",
+                "raceSource",
+                "ability",
+                "darkvision",
+                "overwrite",
+                "resist",
+                "entries",
+                "_versions",
+              ],
+              within: {
+                _versions: {
+                  items: [
+                    {
+                      id: 0,
+                      within: {
+                        _abstract: {
+                          within: { _mod: { within: { entries: { items: [0, 1] } } } },
+                        },
+                        _implementations: { items: [0] },
+                      },
+                    },
+                  ],
+                },
+              },
             },
             {
               id: "Amonkhet|PSA",

@@ -6,14 +6,10 @@
  * whole entry as `json` — and reading them together is one pass. Nothing here
  * is queried by column beyond a feature's type and the options it grants, both
  * of which are lists upstream and so land in tables of their own.
- *
- * `races.json` is not here: it refuses to resolve at the pinned tag, and its
- * subraces have no table until it is decided where they belong. See the
- * `_versions` section of docs/5etools-data.md.
  */
 import { EDITION_FILES, EDITIONS, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import type { Loader, Row } from "./index.ts";
-import { type Entry, isRecord, strings, text } from "./json.ts";
+import { type Entry, entriesOf, isRecord, strings, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
@@ -31,15 +27,6 @@ const FILES: Record<string, { key: string; table: string }> = {
   "data/feats.json": { key: "feat", table: "feats" },
   [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
-
-function entriesOf(parsed: unknown, key: string, path: string): Entry[] {
-  const entries = isRecord(parsed) ? parsed[key] : undefined;
-  if (!Array.isArray(entries)) throw new Error(`${path} carries no ${key} array`);
-  return entries.map((entry, index) => {
-    if (!isRecord(entry)) throw new Error(`${path} ${key}[${index}] is not an object`);
-    return entry;
-  });
-}
 
 function toRow(entry: Entry, source: string, edition: Edition, context: string): Row {
   return {

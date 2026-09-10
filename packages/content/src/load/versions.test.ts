@@ -2,19 +2,19 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveCopies } from "./copy.ts";
+import { races } from "./races.ts";
 import { resolveVersions } from "./versions.ts";
 
 const FIXTURES = resolve(import.meta.dirname, "../../../../tests/fixtures/5etools");
 
 type Entry = Record<string, unknown>;
 
-/** As the framework does it: copies first, then versions over the result. */
+/** As the framework does it: copies, then the loader's prepare, then versions. */
 function load(file: string, property: string): Entry[] {
+  const path = `data/${file}`;
   const parsed = JSON.parse(readFileSync(join(FIXTURES, "data", file), "utf8"));
-  const resolved = resolveVersions(resolveCopies(parsed, `data/${file}`), `data/${file}`) as Record<
-    string,
-    Entry[]
-  >;
+  const copied = resolveCopies(parsed, path);
+  const resolved = resolveVersions(races.prepare?.(copied, path), path) as Record<string, Entry[]>;
   const entries = resolved[property];
   if (!entries) throw new Error(`${file} has no ${property}`);
   return entries;
@@ -63,6 +63,12 @@ describe("resolveVersions", () => {
         "Elf|XPHB",
         "Elf|LFL",
         "Elf; Lorwyn Lineage|LFL",
+        "Human|PHB",
+        "Dragonborn|PHB",
+        "Half-Orc|PHB",
+        "Dragonborn (Chromatic)|FTD",
+        "Dragonborn (Chromatic; Black)|FTD",
+        "Dragonborn (Chromatic; Blue)|FTD",
       ]);
     });
 
@@ -132,18 +138,24 @@ describe("resolveVersions", () => {
         _versions: [{ _abstract: template, _implementations: [{ _variables: variables }] }],
       });
 
-    it("refuses a variable no placeholder uses, rather than dropping what it says", () => {
-      // FTD's chromatic dragonborn is this shape: five colours declaring a
-      // resistance the template never mentions, which would file all five under
-      // the base's "choose one of five" with nothing to show for it.
+    it("refuses a text variable no placeholder uses, rather than dropping what it says", () => {
       expect(
         refusal(
-          templated(
-            { name: "Elf ({{color}})", source: "PHB" },
-            { color: "Wood", resist: ["fire"] },
-          ),
+          templated({ name: "Elf ({{color}})", source: "PHB" }, { color: "Wood", kind: "fey" }),
         ),
-      ).toMatch(/_variables\.resist is set, and no \{\{resist\}\} uses it/);
+      ).toMatch(/_variables\.kind is set, and no \{\{kind\}\} uses it/);
+    });
+
+    it("reads an unused variable that is not text as a field written one level too deep", () => {
+      // FTD's chromatic dragonborn is this shape: each colour states its damage
+      // resistance inside _variables, where the PHB and EGW dragonborn state
+      // the same key, in the same shape, beside it.
+      const resolved = resolveVersions(
+        templated({ name: "Elf ({{color}})", source: "PHB" }, { color: "Wood", resist: ["fire"] }),
+        "data/races.json",
+      ) as { race: Entry[] };
+
+      expect(resolved.race[1]).toMatchObject({ name: "Elf (Wood)", resist: ["fire"] });
     });
 
     it("refuses a variable that is not text, since a placeholder holds text", () => {

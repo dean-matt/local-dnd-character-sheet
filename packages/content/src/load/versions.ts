@@ -49,32 +49,44 @@ function fill(node: unknown, variables: Record<string, string>): unknown {
 
 /**
  * The substitutions one implementation supplies, checked against what the
- * template asks for. A variable nothing references is upstream saying something
- * this does not act on — `Dragonborn (Chromatic)` in `FTD` declares a `resist`
- * list that no placeholder uses, and dropping it silently would file all five
- * colours under the base's "choose one of five". A variable that is not text
- * cannot be substituted into any of it.
+ * template asks for, and the fields written one level too deep.
+ *
+ * A placeholder holds text, so a member the template never mentions and that is
+ * not text cannot be a substitution at all. `Dragonborn (Chromatic)` in `FTD`
+ * writes each colour's `resist` inside `_variables`, where the `PHB` and `EGW`
+ * dragonborn write the same key, in the same shape, beside it — so an unasked
+ * member that is not text is read as one of those fields. Refusing it instead
+ * takes the whole entry with it, and the five colours are the entry.
+ *
+ * An unasked member that *is* text stays refused. That one could have been
+ * substituted and was not, which is upstream saying something this does not act
+ * on — dropping it would file all five colours under a base's "choose one".
  */
 function variablesOf(
   implementation: Entry,
   asked: Set<string>,
   context: string,
-): Record<string, string> {
+): { variables: Record<string, string>; beside: Entry } {
   const declared = implementation._variables;
   if (!isRecord(declared)) throw new Error(`${context}: an _implementation declares no _variables`);
-  // Null-prototype: a variable named `__proto__` would otherwise hit the
-  // prototype setter and be dropped, and read back as never having been set.
+  // Null-prototype: a member named `__proto__` would otherwise hit the prototype
+  // setter and be dropped, and read back as never having been set.
   const variables: Record<string, string> = Object.create(null) as Record<string, string>;
+  const beside: Entry = Object.create(null) as Entry;
   for (const [name, value] of Object.entries(declared)) {
+    if (typeof value !== "string") {
+      if (asked.has(name)) {
+        throw new Error(`${context}: _variables.${name} is not text, and a placeholder holds text`);
+      }
+      beside[name] = value;
+      continue;
+    }
     if (!asked.has(name)) {
       throw new Error(`${context}: _variables.${name} is set, and no {{${name}}} uses it`);
     }
-    if (typeof value !== "string") {
-      throw new Error(`${context}: _variables.${name} is not text, and a placeholder holds text`);
-    }
     variables[name] = value;
   }
-  return variables;
+  return { variables, beside };
 }
 
 /**
@@ -94,8 +106,9 @@ function specsOf(block: Entry, context: string): Entry[] {
       throw new Error(`${context}: an _implementation is not an object`);
     }
     const { _variables: _used, ...own } = implementation;
-    const filled = fill(template, variablesOf(implementation, asked, context)) as Entry;
-    return { ...filled, ...own };
+    const { variables, beside } = variablesOf(implementation, asked, context);
+    const filled = fill(template, variables) as Entry;
+    return { ...filled, ...beside, ...own };
   });
 }
 

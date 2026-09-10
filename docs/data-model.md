@@ -51,14 +51,25 @@ freeze each character at the moment it was created.
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
 
-**Two entities need more than `(name, source)` to identify them.** A feature is keyed by
-the class that grants it and the level it arrives at — `(name, source, class_name,
+**Three entities need more than `(name, source)` to identify them.** A feature is keyed
+by the class that grants it and the level it arrives at — `(name, source, class_name,
 class_source, level)`, and a subclass feature by the subclass as well. Without the class
 and the level, `Ability Score Improvement` from `PHB` is one key over 63 rows, spread
 across twelve classes and five levels, and a Fighter's sheet resolves to a Barbarian's
 feature with nothing to show for it. These are the parts `{@classFeature}` and
-`{@subclassFeature}` already carry, so the key is the tag. A deity is the other, keyed by
-pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
+`{@subclassFeature}` already carry, so the key is the tag. A subrace is the second,
+keyed by its parent too — `(name, source, race_name, race_source)` — since `(name,
+source)` collides three times across the 98 upstream writes. A deity is the third, keyed
+by pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
+
+**A subrace row is the race and the subrace merged, not a delta.** Upstream renders the
+pair together and states the difference between "add to the race's field" and "replace
+it" in the subrace's own `overwrite` map, which only a merge can act on; three dragonborn
+subraces go further and revise `Breath Weapon`, a trait the parent alone carries, through
+a `_versions` `_mod` that resolves against nothing until the two are one entry. So the
+merge runs in the ETL, `subraces.race_name` is provenance rather than a join a reader has
+to make, and the race's identity and printing history stay off the subrace — five `PHB` base
+variants have no name of their own and would otherwise answer to their parent's.
 
 **An optional feature's types live beside it.** 9 of 213 are offered under more than one
 `featureType` — `Dueling` from `PHB` under all four fighting-style classes — so
