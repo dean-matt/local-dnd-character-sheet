@@ -27,7 +27,11 @@ const KINDS: Record<string, string[]> = {
 
 const VARIANT = "magicvariant";
 
-/** Where an entry keeps the fields that describe the item, rather than the template. */
+/**
+ * Where an entry keeps the fields that describe the item, rather than the
+ * template. An edition is read off the entry itself either way: no variant
+ * declares one under `inherits`, and the 50 that declare one do it outside.
+ */
 function itemFields(entry: Entry, kind: string, context: string): Entry {
   if (kind !== VARIANT) return entry;
   const inherits = entry.inherits;
@@ -38,14 +42,14 @@ function itemFields(entry: Entry, kind: string, context: string): Entry {
 /**
  * A field upstream leaves out on some entries and writes as null on others —
  * 944 items carry no `type` and 43 no `rarity`. Present but not a string is a
- * shape change rather than an absence, so it is refused.
+ * shape change rather than an absence, so it is refused; so is the empty
+ * string, which reads as a value everywhere a NULL would not.
  */
 function optionalText(entry: Entry, key: string, context: string): string | undefined {
   const value = entry[key];
   if (value === undefined || value === null) return undefined;
-  if (typeof value !== "string" || value === "") {
-    throw new Error(`${context}: ${key} is neither absent nor a string`);
-  }
+  if (typeof value !== "string") throw new Error(`${context}: ${key} is not a string`);
+  if (value === "") throw new Error(`${context}: ${key} is empty`);
   return value;
 }
 

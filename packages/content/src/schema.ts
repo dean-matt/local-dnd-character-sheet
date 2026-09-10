@@ -188,7 +188,7 @@ CREATE TABLE spells (
 -- (name, source). docs/items.md holds the count and the way out.
 --
 -- requires_attunement answers the yes-or-no an attunement slot count needs.
--- The condition — reqAttune is a string such as "by a wizard" 250 times over —
+-- The condition — reqAttune is a string such as "by a wizard" 248 times over —
 -- stays in json, which is where a sheet reads why a character cannot attune.
 CREATE TABLE items (
   name     TEXT NOT NULL,
@@ -201,7 +201,6 @@ CREATE TABLE items (
   json     TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;
-
 
 CREATE TABLE races (
   name    TEXT NOT NULL,

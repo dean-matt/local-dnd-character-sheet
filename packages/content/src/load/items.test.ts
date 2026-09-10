@@ -175,8 +175,9 @@ describe("the items loader", () => {
 
   it.each([
     ["no name", { name: undefined }, /name is missing or not a string/],
-    ["a type that is not a string", { type: 7 }, /type is neither absent nor a string/],
-    ["a rarity that is not a string", { rarity: [] }, /rarity is neither absent nor a string/],
+    ["a type that is not a string", { type: 7 }, /type is not a string/],
+    ["a rarity that is not a string", { rarity: [] }, /rarity is not a string/],
+    ["a type that is the empty string", { type: "" }, /type is empty/],
     [
       "an attunement flag that is a number",
       { reqAttune: 1 },

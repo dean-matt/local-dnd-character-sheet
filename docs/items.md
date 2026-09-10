@@ -29,13 +29,13 @@ names, which is also how a character references a catalog row rather than copyin
 Four dangling targets survive both, all of them barding: `{@item leather barding|phb}`
 and its three fellows are written as one `Barding` variant upstream renders per animal.
 
-`rarity` spans all 11 upstream values, `none`, `varies` and `unknown (magic)` among
-them, and the column is nullable because 43 items carry none — though every one of
-those inherits a rarity through `_copy`, so nothing is NULL at the pinned tag.
+`rarity` spans 10 upstream values, `none`, `varies` and `unknown (magic)` among them,
+and the column is nullable because 43 items carry none — though every one of those
+inherits a rarity through `_copy`, so nothing is NULL at the pinned tag.
 `type` is absent on 944 items and carries the 2024 `G|XPHB` form on others.
 
 `reqAttune` is not a boolean. It is `true` 601 times, a condition such as `by a wizard`
-250 more, and `optional` on 11 items that work unattuned. `requires_attunement` answers
+248 more, and `optional` on 11 items that work unattuned. `requires_attunement` answers
 the yes-or-no an attunement slot count needs — `optional` is a 0 — and the condition
 stays in `json`, which is where a sheet reads why a character cannot attune.
 
