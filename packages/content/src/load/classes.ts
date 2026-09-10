@@ -422,6 +422,22 @@ function optionalFeatures(blocks: unknown, owner: Owner, context: string): Row[]
 const FEATURE_TYPE = /\|feature type=([^|}]+)/;
 
 /**
+ * A filter value may list codes with `;` or negate one with `!`, and 322 tags in
+ * the corpus do somewhere. None is on a `feature type=` yet, and a column
+ * counting two types is a count a row cannot divide, so both forms are refused —
+ * naming the form, since the alternative is a refusal blaming a progression for
+ * a label this loader cannot read.
+ */
+function plainCode(value: string, context: string): string {
+  if (value.includes(";") || value.includes("!")) {
+    throw new Error(
+      `${context}: a column filters feature type ${JSON.stringify(value)}, and this reads one plain code`,
+    );
+  }
+  return value.toUpperCase();
+}
+
+/**
  * The columns that state a count `optionalfeatureProgression` states again, as
  * the code the column names paired with the key its label resolves to. The code
  * is in the tag `display` renders away, so pairing the two needs no hand-kept
@@ -435,7 +451,7 @@ function countedColumns(groups: unknown, context: string): { code: string; key: 
   return labels.flatMap((raw: unknown) => {
     const code = typeof raw === "string" ? FEATURE_TYPE.exec(raw)?.[1] : undefined;
     if (code === undefined) return [];
-    return [{ code: code.toUpperCase(), key: resourceKey(display(raw, context)) }];
+    return [{ code: plainCode(code, context), key: resourceKey(display(raw, context)) }];
   });
 }
 
@@ -449,7 +465,8 @@ function countedColumns(groups: unknown, context: string): { code: string; key: 
  * over: a skip is how this check would stop running without saying so.
  */
 function countsAgree(resources: Row[], typed: Row[], groups: unknown, context: string): void {
-  for (const { code, key } of countedColumns(groups, context)) {
+  const counted = countedColumns(groups, context);
+  for (const { code, key } of counted) {
     const offered = typed.filter((row) => row.feature_type === code);
     if (offered.length === 0) {
       throw new Error(
@@ -464,10 +481,10 @@ function countsAgree(resources: Row[], typed: Row[], groups: unknown, context: s
     );
     for (let level = 1; level <= LEVELS; level += 1) {
       const column = printed.get(level) ?? "0";
-      const progression = known.get(level) ?? "0";
-      if (column !== progression) {
+      const offers = known.get(level) ?? "0";
+      if (column !== offers) {
         throw new Error(
-          `${context} level ${level}: the ${key} column counts ${column} and ${code} offers ${progression}`,
+          `${context} level ${level}: the ${key} column counts ${column} and ${code} offers ${offers}`,
         );
       }
     }

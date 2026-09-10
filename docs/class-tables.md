@@ -97,9 +97,18 @@ The check pairs the two by reading the type code out of the column's own label �
 `{@filter Invocations Known|optionalfeatures|feature type=ei}` names `ei` beside the text
 the resource key comes from — rather than keeping a map from code to key, which would be
 the kind of hand-kept list `edition.ts` warns goes stale the day upstream ships a book.
-Three columns carry such a filter at the pinned tag, and a column naming a type its entry
-offers no progression for is refused rather than passed over: a skip is how the check would
-stop running without saying so.
+Three columns carry such a filter at the pinned tag. A column naming a type its entry
+offers no progression for is refused, as is a filter listing two codes or negating one,
+naming the form: the label is the half this loader cannot read, and a refusal blaming
+absent progression data would send a reader to the wrong file.
+
+What the check cannot see is a label that stops carrying the filter. The plain wordings are
+pinned in `RESOURCE_KEYS`, so prose in place of the tag would keep loading the resource row
+and pair nothing — the check going quiet rather than failing. Closing that needs the map
+from type code to resource key this reads the tag to avoid, so it stays open, and refusing a
+corpus that pairs nothing is not the way out: every loader test builds a small corpus that
+legitimately has no counted column. A fixture test pins the warlock's pairing, which is the
+half of the exposure a test can reach.
 
 The subclass table's key includes `subclass_source`, and a class offers both editions of a
 subclass, so `Fighter|XPHB` holds `Battle Master|PHB` and `Battle Master|XPHB` — 5
