@@ -26,7 +26,7 @@
         }
       ],
       "featureType": ["FS:F", "FS:B", "FS:P", "FS:R"],
-      "entries": ["When you are wielding a melee weapon in one hand and no other weapons,"]
+      "entries": ["Elided."]
     },
     {
       "name": "Archery",
@@ -46,7 +46,7 @@
         }
       ],
       "featureType": ["FS:F", "FS:R"],
-      "entries": ["You gain a +2 bonus to attack rolls you make with ranged weapons."]
+      "entries": ["Elided."]
     },
     {
       "name": "Agonizing Blast",
@@ -59,7 +59,7 @@
           "spell": [
             {
               "choose": "level=0|class=Warlock",
-              "entry": "a Warlock Cantrip That Deals Damage",
+              "entry": "Elided.",
               "entrySummary": "Warlock Cantrip That Deals Damage"
             }
           ],
@@ -73,7 +73,19 @@
           }
         }
       ],
-      "entries": ["Choose one of your known {@filter Warlock cantrips|spells|level=0|clas"]
+      "entries": [
+        "Elided. {@filter Warlock cantrips|spells|level=0|class=Warlock|damage type=acid;bludgeoning;cold;fire;force;lightning;necrotic;piercing;poison;psychic;radiant;slashing;thunder} Elided.",
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "name": "Repeatable",
+              "entries": ["Elided."]
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "Agonizing Blast",
@@ -85,21 +97,23 @@
           "spell": ["eldritch blast#c"]
         }
       ],
-      "entries": ["When you cast {@spell eldritch blast}, add your Charisma mod"]
+      "entries": ["Elided. {@spell eldritch blast} Elided."]
     },
     {
       "name": "Ambush",
       "source": "XPHB",
       "page": 94,
       "featureType": ["MV:B"],
-      "entries": ["When you make a Dexterity ({@skill Stealth|XPHB}) check or a"]
+      "entries": [
+        "Elided. {@skill Stealth|XPHB} Elided. {@variantrule Initiative|XPHB} Elided. {@condition Incapacitated|XPHB} Elided."
+      ]
     },
     {
       "name": "Arcane Propulsion Armor",
       "source": "TCE",
       "page": 20,
       "featureType": ["AI"],
-      "entries": ["The wearer of this armor gains these benefits:"]
+      "entries": ["Elided."]
     }
   ]
 }

@@ -20,10 +20,7 @@
       "entries": [
         {
           "type": "list",
-          "items": [
-            "A blinded creature can't see and automatically fails any ability check that requires sight.",
-            "Attack rolls against the creature have advantage, and the creature's attack rolls have disadvantage."
-          ]
+          "items": ["Elided.", "Elided."]
         }
       ],
       "hasFluffImages": true
@@ -35,22 +32,20 @@
       "srd52": true,
       "basicRules2024": true,
       "entries": [
-        "While you have the Blinded condition, you experience the following effects.",
+        "Elided.",
         {
           "type": "entries",
           "entries": [
             {
               "type": "entries",
               "name": "Can't See",
-              "entries": [
-                "You can't see and automatically fail any ability check that requires sight."
-              ]
+              "entries": ["Elided."]
             },
             {
               "type": "entries",
               "name": "Attacks Affected",
               "entries": [
-                "{@action Attack|XPHB} rolls against you have {@variantrule Advantage|XPHB}, and your attack rolls have {@variantrule Disadvantage|XPHB}."
+                "{@action Attack|XPHB} Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
               ]
             }
           ]
@@ -63,10 +58,7 @@
       "name": "Blinding Sickness",
       "source": "PHB",
       "page": 227,
-      "entries": [
-        "Pain grips the creature's mind, and its eyes turn milky white. The creature has disadvantage on Wisdom checks and Wisdom saving throws and is {@condition blinded}.",
-        "{@note This disease can be inflicted with the {@spell contagion|PHB} spell.}"
-      ]
+      "entries": ["Elided. {@condition blinded} Elided.", "Elided. {@spell contagion|PHB} Elided."]
     }
   ],
   "status": [
@@ -76,9 +68,7 @@
       "page": 362,
       "srd52": true,
       "basicRules2024": true,
-      "entries": [
-        "A creature is Bloodied while it has half its {@variantrule Hit Points|XPHB} or fewer remaining."
-      ]
+      "entries": ["Elided. {@variantrule Hit Points|XPHB} Elided."]
     }
   ]
 }

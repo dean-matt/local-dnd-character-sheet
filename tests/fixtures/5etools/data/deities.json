@@ -50,8 +50,7 @@
       "alignment": ["L", "E"],
       "title": "God of strength",
       "domains": ["War"],
-      "symbol": "Broken thigh bone",
-      "entries": ["Bahgtru is the son of Gruumsh and Luthic."]
+      "symbol": "Broken thigh bone"
     },
     {
       "name": "Bahgtru",
@@ -66,7 +65,22 @@
       "customExtensionOf": "Bahgtru|Orc|SCAG",
       "title": "the Leg Breaker",
       "entries": [
-        "Despite the influence of Ilneval, orcs are and will forever be brutal and feral "
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Fearless and Mighty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Competing in Cruelty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "The Sacred Bull",
+          "entries": ["Elided. {@creature aurochs|vgm} Elided."]
+        }
       ]
     }
   ]

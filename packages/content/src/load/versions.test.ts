@@ -73,7 +73,7 @@ describe("resolveVersions", () => {
     it("applies a version's own _mod to a clone, leaving the base untouched", () => {
       expect(names(find(races, "Aasimar"))).toEqual(["Celestial Revelation", "Healing Hands"]);
       expect(names(find(races, "Aasimar; Necrotic Shroud"))).toEqual([
-        "Necrotic Shroud",
+        "Celestial Revelation (Necrotic Shroud)",
         "Healing Hands",
       ]);
     });
@@ -81,7 +81,9 @@ describe("resolveVersions", () => {
     it("fills a template's placeholders from each implementation", () => {
       const black = find(races, "Dragonborn (Black)");
       expect(names(black)).toEqual(["Breath Weapon"]);
-      expect((black.entries as Entry[])[0]?.entries).toEqual(["Deals Acid damage."]);
+      const [filled] = ((black.entries as Entry[])[0] as Entry).entries as string[];
+      expect(filled).toContain("Acid");
+      expect(filled).not.toContain("{{damageType}}");
     });
 
     it("lays an implementation's own fields over the filled template", () => {
@@ -90,9 +92,9 @@ describe("resolveVersions", () => {
     });
 
     it("expands a version of an entry that is itself a copy", () => {
-      // Elf|LFL inherits Elven Lineage from Elf|XPHB, and its version appends
-      // to the list the copy supplied — which only holds if copies run first.
-      expect(names(find(races, "Elf; Lorwyn Lineage"))).toEqual(["Elven Lineage", "Extra"]);
+      // Elf|LFL inherits Elven Lineage from Elf|XPHB, and its version replaces
+      // an element of the list the copy supplied — which only holds if copies run first.
+      expect(names(find(races, "Elf; Lorwyn Lineage"))).toEqual(["Elven Lineage (Lorwyn)"]);
     });
   });
 

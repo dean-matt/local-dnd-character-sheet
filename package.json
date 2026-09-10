@@ -13,6 +13,7 @@
     "build": "pnpm -r run build",
     "content:sync": "pnpm --filter @dnd/content run sync",
     "content:build": "pnpm --filter @dnd/content run build:db",
+    "fixtures:build": "pnpm --filter @dnd/content run build:fixtures",
     "db:studio": "pnpm --filter @dnd/api run db:studio",
     "db:generate": "pnpm --filter @dnd/api run db:generate",
     "db:migrate": "pnpm --filter @dnd/api run db:migrate",

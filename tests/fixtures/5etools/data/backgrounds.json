@@ -19,20 +19,92 @@
         {
           "type": "list",
           "style": "list-hang-notitle",
-          "items": []
+          "items": [
+            {
+              "type": "item",
+              "name": "Skill Proficiencies:",
+              "entry": "{@skill Insight} Elided. {@skill Religion}"
+            },
+            {
+              "type": "item",
+              "name": "Languages:",
+              "entry": "Elided."
+            },
+            {
+              "type": "item",
+              "name": "Equipment:",
+              "entry": "Elided. {@item holy symbol|phb} Elided. {@item book|phb} Elided. {@item common clothes|phb} Elided. {@item pouch|phb} Elided."
+            }
+          ]
         },
         {
           "name": "Feature: Shelter of the Faithful",
           "type": "entries",
-          "entries": ["Elided."],
+          "entries": ["Elided.", "Elided."],
           "data": {
             "isFeature": true
           }
         },
         {
-          "type": "table",
-          "caption": "Personality Trait",
-          "rows": []
+          "name": "Suggested Characteristics",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Personality Trait"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Ideal"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Bond"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Flaw"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
         }
       ]
     },
@@ -50,7 +122,7 @@
             "items": {
               "name": "Baldur's Gate Feature: Religious Community",
               "type": "entries",
-              "entries": ["Elided."],
+              "entries": ["{@note Elided.}", "Elided."],
               "data": {
                 "isFeature": true
               }
@@ -74,7 +146,23 @@
         {
           "type": "list",
           "style": "list-hang-notitle",
-          "items": []
+          "items": [
+            {
+              "type": "item",
+              "name": "Skill Proficiencies:",
+              "entry": "{@skill Deception} Elided. {@skill Stealth}"
+            },
+            {
+              "type": "item",
+              "name": "Tool Proficiencies:",
+              "entry": "Elided. {@filter gaming set|items|source=phb|miscellaneous=mundane|type=gaming set} Elided. {@item thieves' tools|phb}"
+            },
+            {
+              "type": "item",
+              "name": "Equipment:",
+              "entry": "Elided. {@item crowbar|phb} Elided. {@item common clothes|phb} Elided. {@item pouch|phb} Elided."
+            }
+          ]
         },
         {
           "name": "Feature: Criminal Contact",
@@ -83,6 +171,89 @@
           "data": {
             "isFeature": true
           }
+        },
+        {
+          "name": "Specialty",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Specialty"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Suggested Characteristics",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Personality Trait"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Ideal"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Bond"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            },
+            {
+              "type": "table",
+              "colLabels": ["d6", "Flaw"],
+              "colStyles": ["col-1 text-center", "col-11"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
         }
       ]
     },
@@ -193,9 +364,35 @@
       ],
       "entries": [
         {
-          "type": "entries",
-          "name": "Elided",
-          "entries": ["Elided."]
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Ability Scores:",
+              "entry": "Elided."
+            },
+            {
+              "type": "item",
+              "name": "Feat:",
+              "entry": "{@feat Magic Initiate|XPHB} Elided."
+            },
+            {
+              "type": "item",
+              "name": "Skill Proficiencies:",
+              "entry": "{@skill Insight|XPHB} Elided. {@skill Religion|XPHB}"
+            },
+            {
+              "type": "item",
+              "name": "Tool Proficiency:",
+              "entry": "{@item Calligrapher's Supplies|XPHB}"
+            },
+            {
+              "type": "item",
+              "name": "Equipment:",
+              "entry": "Elided. {@item Calligrapher's Supplies|XPHB} Elided. {@item Book|XPHB|Book (prayers)} Elided. {@item Holy Symbol|XPHB} Elided. {@item Parchment|XPHB} Elided. {@item Robe|xphb} Elided."
+            }
+          ]
         }
       ],
       "hasFluff": true,

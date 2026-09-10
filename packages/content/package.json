@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc --build",
     "sync": "node --experimental-strip-types src/sync.ts",
-    "build:db": "node --experimental-strip-types src/build-db.ts"
+    "build:db": "node --experimental-strip-types src/build-db.ts",
+    "build:fixtures": "node --experimental-strip-types src/fixtures/build.ts"
   },
   "dependencies": {
     "@dnd/tags": "workspace:*",

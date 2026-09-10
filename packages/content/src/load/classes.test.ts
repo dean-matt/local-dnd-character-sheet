@@ -95,7 +95,7 @@ describe("the classes loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT level, resource_key, value FROM class_resources WHERE class_name = 'Cleric' AND class_source = 'PHB' AND level <= 5 ORDER BY level, resource_key",
+        "SELECT level, resource_key, value FROM class_resources WHERE class_name = 'Cleric' AND class_source = 'XPHB' AND level <= 5 ORDER BY level, resource_key",
       )
       .all();
     db.close();
@@ -104,13 +104,30 @@ describe("the classes loader", () => {
       // Level 1 has no Channel Divinity: a zero cell stores no row at all.
       { level: 1, resource_key: "cantrips_known", value: "3" },
       { level: 2, resource_key: "cantrips_known", value: "3" },
-      { level: 2, resource_key: "channel_divinity", value: "1" },
+      { level: 2, resource_key: "channel_divinity", value: "2" },
       { level: 3, resource_key: "cantrips_known", value: "3" },
-      { level: 3, resource_key: "channel_divinity", value: "1" },
+      { level: 3, resource_key: "channel_divinity", value: "2" },
       { level: 4, resource_key: "cantrips_known", value: "4" },
-      { level: 4, resource_key: "channel_divinity", value: "1" },
+      { level: 4, resource_key: "channel_divinity", value: "2" },
       { level: 5, resource_key: "cantrips_known", value: "4" },
-      { level: 5, resource_key: "channel_divinity", value: "1" },
+      { level: 5, resource_key: "channel_divinity", value: "2" },
+    ]);
+  });
+
+  it("stores a cell upstream ships as a string, which the Fighter's table does", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT resource_key, value FROM class_resources WHERE class_name = 'Fighter' AND class_source = 'XPHB' AND level = 1 ORDER BY resource_key",
+      )
+      .all();
+    db.close();
+
+    expect(rows).toEqual([
+      { resource_key: "second_wind", value: "2" },
+      { resource_key: "weapon_mastery", value: "3" },
     ]);
   });
 

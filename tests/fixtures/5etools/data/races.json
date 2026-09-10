@@ -12,20 +12,20 @@
       "speed": 30,
       "entries": [
         {
-          "name": "Fury of the Small",
           "type": "entries",
-          "entries": ["Elided."]
+          "name": "Fury of the Small",
+          "entries": ["Elided.", "Elided."]
         }
       ]
     },
     {
       "name": "Boggart",
       "source": "LFL",
-      "lineage": null,
       "_copy": {
         "name": "Goblin",
         "source": "MPMM"
-      }
+      },
+      "lineage": null
     },
     {
       "name": "Goblin",
@@ -37,23 +37,23 @@
       "entries": [
         {
           "name": "Darkvision",
-          "type": "entries",
           "entries": ["Goblins see in the dark."],
+          "type": "entries",
           "data": {
             "overwrite": "Goblins"
           }
         },
         {
           "name": "Fury of the Small",
-          "type": "entries",
-          "entries": ["Elided."]
+          "entries": ["Elided."],
+          "type": "entries"
         },
         {
           "type": "table",
           "caption": "Goblins by Type",
           "colLabels": ["Goblins", "Trait"],
           "colStyles": ["col-6", "col-6"],
-          "rows": [["Goblins", "Elided."]]
+          "rows": [["Goblins", "Nimble Escape"]]
         }
       ]
     },
@@ -127,7 +127,30 @@
         {
           "type": "entries",
           "name": "Celestial Revelation",
-          "entries": ["Elided."]
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Necrotic Shroud",
+                  "entry": "Elided. {@dc 8} Elided. {@condition frightened} Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Radiant Consumption",
+                  "entry": "Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Radiant Soul",
+                  "entry": "Elided."
+                }
+              ],
+              "style": "list-hang-notitle"
+            }
+          ]
         },
         {
           "type": "entries",
@@ -146,9 +169,9 @@
               "mode": "replaceArr",
               "replace": "Celestial Revelation",
               "items": {
+                "name": "Celestial Revelation (Necrotic Shroud)",
                 "type": "entries",
-                "name": "Necrotic Shroud",
-                "entries": ["Elided."]
+                "entries": ["Elided.", "Elided. {@dc 8} Elided. {@condition frightened} Elided."]
               }
             }
           }
@@ -161,9 +184,9 @@
               "mode": "replaceArr",
               "replace": "Celestial Revelation",
               "items": {
+                "name": "Celestial Revelation (Radiant Consumption)",
                 "type": "entries",
-                "name": "Radiant Consumption",
-                "entries": ["Elided."]
+                "entries": ["Elided.", "Elided."]
               }
             }
           }
@@ -195,18 +218,41 @@
       "sizeEntry": {
         "type": "item",
         "name": "Size:",
-        "entries": ["Medium (about 5-7 feet tall)"]
+        "entries": ["Elided."]
       },
       "entries": [
         {
           "type": "entries",
           "name": "Draconic Ancestry",
-          "entries": ["Elided."]
+          "entries": [
+            "Elided. {@variantrule Damage|XPHB} {@variantrule Resistance|XPHB} Elided.",
+            {
+              "type": "table",
+              "caption": "Draconic Ancestors",
+              "colLabels": ["Dragon", "Damage Type"],
+              "colStyles": ["col-6", "col-6"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
         },
         {
           "type": "entries",
           "name": "Breath Weapon",
-          "entries": ["Elided."]
+          "entries": [
+            "Elided. {@action Attack|XPHB} Elided. {@variantrule Cone [Area of Effect]|XPHB|Cone} Elided. {@variantrule Line [Area of Effect]|XPHB|Line} Elided. {@dc 8} Elided. {@variantrule Proficiency|XPHB|Proficiency Bonus} Elided. {@damage 1d10} Elided. {@damage 1d10} Elided. {@damage 2d10} Elided. {@damage 3d10} Elided. {@damage 4d10} Elided.",
+            "Elided. {@variantrule Proficiency|XPHB|Proficiency Bonus} Elided. {@variantrule Long Rest|XPHB} Elided."
+          ]
         }
       ],
       "hasFluff": true,
@@ -228,7 +274,10 @@
                   "items": {
                     "type": "entries",
                     "name": "Breath Weapon",
-                    "entries": ["Deals {{damageType}} damage."]
+                    "entries": [
+                      "Elided. {@action Attack|XPHB} Elided. {@variantrule Cone [Area of Effect]|XPHB|Cone} Elided. {@variantrule Line [Area of Effect]|XPHB|Line} Elided. {@dc 8} Elided. {@variantrule Proficiency|XPHB|Proficiency Bonus} Elided. {@damage 1d10} {{damageType}} Elided. {@damage 1d10} Elided. {@damage 2d10} Elided. {@damage 3d10} Elided. {@damage 4d10} Elided.",
+                      "Elided. {@variantrule Proficiency|XPHB|Proficiency Bonus} Elided. {@variantrule Long Rest|XPHB} Elided."
+                    ]
                   }
                 }
               ]
@@ -350,13 +399,43 @@
       "sizeEntry": {
         "type": "item",
         "name": "Size:",
-        "entries": ["Medium (about 5-6 feet tall)"]
+        "entries": ["Elided."]
       },
       "entries": [
         {
           "type": "entries",
           "name": "Elven Lineage",
-          "entries": ["Elided."]
+          "entries": [
+            "Elided.",
+            "Elided. {@variantrule Long Rest|XPHB} Elided.",
+            "Elided.",
+            {
+              "type": "table",
+              "caption": "Elven Lineages",
+              "colLabels": ["Lineage", "Level 1", "Level 3", "Level 5"],
+              "colStyles": ["col-2", "col-6", "col-2", "col-2"],
+              "rows": [
+                [
+                  "Elided.",
+                  "Elided. {@sense Darkvision|XPHB} Elided. {@spell Dancing Lights|XPHB} Elided.",
+                  "{@spell Faerie Fire|XPHB}",
+                  "{@spell Darkness|XPHB}"
+                ],
+                [
+                  "Elided.",
+                  "Elided. {@spell Prestidigitation|XPHB} Elided. {@variantrule Long Rest|XPHB} Elided. {@filter cantrip from the Wizard spell list|spells|level=0|class=Wizard} Elided.",
+                  "{@spell Detect Magic|XPHB}",
+                  "{@spell Misty Step|XPHB}"
+                ],
+                [
+                  "Elided.",
+                  "Elided. {@variantrule Speed|XPHB} Elided. {@spell Druidcraft|XPHB} Elided.",
+                  "{@spell Longstrider|XPHB}",
+                  "{@spell Pass without Trace|XPHB}"
+                ]
+              ]
+            }
+          ]
         }
       ],
       "hasFluff": true,
@@ -427,21 +506,19 @@
           "source": "LFL",
           "_mod": {
             "entries": {
-              "mode": "appendArr",
+              "mode": "replaceArr",
+              "replace": "Elven Lineage",
               "items": {
+                "name": "Elven Lineage (Lorwyn)",
                 "type": "entries",
-                "name": "Extra",
-                "entries": ["Elided."]
+                "entries": [
+                  "Elided. {@spell Thorn Whip|XPHB} Elided. {@variantrule Long Rest|XPHB} Elided. {@filter Druid spell list|spells|class=druid} Elided.",
+                  "Elided. {@spell Command|XPHB} Elided. {@spell Silence|XPHB} Elided. {@variantrule Long Rest|XPHB} Elided.",
+                  "Elided."
+                ]
               }
             }
           }
-        }
-      ],
-      "entries": [
-        {
-          "type": "entries",
-          "name": "Elven Lineage",
-          "entries": ["Elided."]
         }
       ]
     }
@@ -456,8 +533,8 @@
       "entries": [
         {
           "name": "Skills",
-          "type": "entries",
-          "entries": ["Elided."]
+          "entries": ["Elided."],
+          "type": "entries"
         }
       ]
     },

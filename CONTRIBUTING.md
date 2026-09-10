@@ -23,6 +23,22 @@ theme and font in your user settings rather than here.
 copied byte-for-byte, so a lock hash equals the upstream file's hash and a mismatch means
 a real upstream change or a corrupt fetch. Run `pnpm content:sync --verify` to check.
 
+`tests/fixtures/5etools/` is generated from `vendor/` by `pnpm fixtures:build`, and is
+committed so that a checkout with no `vendor/` still runs the whole suite. Never edit a
+fixture by hand: three separate changes found values in them that upstream never shipped,
+and a hand-edited fixture is a test asserting against a number nobody can source. Widen
+coverage by naming another entry, field or column in
+`packages/content/src/fixtures/declaration.ts` and rebuilding.
+
+Rules prose is elided on the way through, because that text is WotC's and is never
+committed. Inside a prose field every string goes, wherever it sits, except the keys a
+loader reads — an element's name and type, a `_mod` operand, a link's target. `{@tag}`
+and `{{variable}}` markup survives, so a fixture still exercises tag handling and version
+templating. What is left committed is names, sources, page numbers and table numbers.
+
+Where a test needs a value upstream cannot supply, the declaration carries an override
+that says why — and those are meant to stay countable on one hand.
+
 ## Branching and commits
 
 Branches are cut from an issue, so the work and the reason for it stay linked, and are
