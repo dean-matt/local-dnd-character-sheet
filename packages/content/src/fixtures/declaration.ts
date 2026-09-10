@@ -504,7 +504,7 @@ export const FIXTURES: Fixture[] = [
             "Cloak of Billowing|WttHC",
           ],
         },
-        itemGroup: { items: ["Arcane Focus|PHB"] },
+        itemGroup: { items: [{ id: "Arcane Focus|PHB", verbatim: ["focus"] }] },
       },
     },
   },
@@ -572,13 +572,7 @@ export const FIXTURES: Fixture[] = [
   },
   {
     file: "data/psionics.json",
-    keep: {
-      within: {
-        psionic: {
-          items: [{ id: "Mastery of Force|UATheMysticClass", prose: ["focus"] }],
-        },
-      },
-    },
+    keep: { within: { psionic: { items: ["Mastery of Force|UATheMysticClass"] } } },
   },
   {
     file: "data/races.json",
