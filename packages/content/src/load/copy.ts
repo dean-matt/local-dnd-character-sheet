@@ -14,12 +14,12 @@
  * shadowing a real entry with a second match.
  *
  * Anything unresolvable throws, rather than reaching a loader half-inherited.
- * `_copy._templates` is the one exception: it names a `monsterTemplate` rather
- * than a parent, so `identityKeys` drops it with every other `_` key and the
- * copy resolves without the traits that template would have added.
+ * `_copy._templates` names a `monsterTemplate` rather than a parent, so
+ * `identityKeys` drops it with every other `_` key and `templates.ts` applies it.
  */
 import { type Entry, isRecord } from "./json.ts";
 import { applyMod } from "./mod.ts";
+import { applyTemplates, TEMPLATE_PROPERTY } from "./templates.ts";
 
 /** Parent metadata that does not survive a copy unless `_copy._preserve` names it. */
 const NOT_INHERITED = [
@@ -88,7 +88,13 @@ function onlyParent(
   );
 }
 
-function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry {
+function merge(
+  child: Entry,
+  parent: Entry,
+  copy: Entry,
+  context: string,
+  templates: (merged: Entry, own: Entry, declared: unknown[]) => void,
+): Entry {
   const preserve = isRecord(copy._preserve) ? copy._preserve : {};
   const inherited = structuredClone(parent);
   for (const key of NOT_INHERITED) if (!preserve[key]) delete inherited[key];
@@ -101,6 +107,10 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
   const { _copy: _dropped, ...own } = child;
   const merged: Entry = { ...inherited, ...own };
 
+  const declared = copy._templates;
+  if (declared !== undefined) {
+    templates(merged, own, Array.isArray(declared) ? declared : [declared]);
+  }
   if (isRecord(copy._mod)) applyMod(merged, copy._mod, context);
   // A null in the child is upstream's idiom for erasing an inherited value —
   // `"lineage": null` on a race that copies one that has a lineage.
@@ -206,7 +216,16 @@ export function resolveCopies(sources: Map<string, unknown>): Map<string, unknow
         `${context}: ${describe(entry, keys)} copies ${describe(parent, keys)}, which is already being resolved — _copy cycle`,
       );
     }
-    const merged = merge(entry, resolve(parent), copy, context);
+    const merged = merge(entry, resolve(parent), copy, context, (target, own, declared) =>
+      applyTemplates(
+        target,
+        own,
+        declared,
+        candidates.get(TEMPLATE_PROPERTY) ?? [],
+        resolve,
+        context,
+      ),
+    );
     visiting.delete(entry);
     resolved.set(entry, merged);
     return merged;

@@ -2,11 +2,12 @@
  * The `_mod` modes that read a creature rather than a property.
  *
  * Every other mode splices a list or rewrites text and needs to know nothing
- * about what it is editing. These four do: a skill bonus is arithmetic over the
- * creature's own ability scores and challenge rating, and a spell sits three
- * levels inside a `spellcasting` block under a key naming how often it recharges.
- * They arrive under the `_` property, which is upstream saying the operation
- * takes the whole entry.
+ * about what it is editing. These do: a skill bonus is arithmetic over the
+ * creature's own ability scores and challenge rating, a spell sits three levels
+ * inside a `spellcasting` block under a key naming how often it recharges, a
+ * sense is a sentence rather than a number, and experience comes from a table the
+ * creature does not carry. They arrive under the `_` property, which is upstream
+ * saying the operation takes the whole entry.
  */
 import { abilityModifier } from "@dnd/rules";
 import { type Entry, isRecord } from "./json.ts";
@@ -33,13 +34,8 @@ const SKILL_ABILITY: Record<string, string> = {
   persuasion: "cha",
 };
 
-/**
- * A creature's challenge rating as a number. Upstream writes it as a string, a
- * fraction below 1, and an object when a lair changes it — `{cr: "5", lair: "6"}`,
- * where the plain rating is the one a proficiency bonus comes from.
- */
-function challengeRating(entry: Entry, context: string): number {
-  const declared = isRecord(entry.cr) ? entry.cr.cr : entry.cr;
+/** One rating as a number. Upstream writes it as a string, and as a fraction below 1. */
+function ratingValue(declared: unknown, context: string): number {
   if (typeof declared === "number") return declared;
   if (typeof declared !== "string") {
     throw new Error(`${context}: needs a challenge rating, found ${typeof declared}`);
@@ -53,6 +49,15 @@ function challengeRating(entry: Entry, context: string): number {
 }
 
 /**
+ * A creature's challenge rating as a number. Upstream writes an object when a
+ * lair changes it — `{cr: "5", lair: "6"}`, where the plain rating is the one a
+ * proficiency bonus comes from.
+ */
+export function challengeRating(entry: Entry, context: string): number {
+  return ratingValue(isRecord(entry.cr) ? entry.cr.cr : entry.cr, context);
+}
+
+/**
  * Not `proficiencyBonus` from `@dnd/rules`, which takes a character level and
  * refuses anything outside 1-20. The curve is the same, but a creature's input is
  * its challenge rating, and ratings run from 0 to 30: everything below 1 shares
@@ -63,7 +68,7 @@ function creatureProficiencyBonus(entry: Entry, context: string): number {
 }
 
 /** A bonus as a stat block prints it, which is signed even when it is zero. */
-const signed = (value: number): string => (value < 0 ? String(value) : `+${value}`);
+export const signed = (value: number): string => (value < 0 ? String(value) : `+${value}`);
 
 /**
  * Adds a skill at a proficiency multiplier — 1 for proficient, 2 for expertise —
@@ -90,6 +95,135 @@ export function addSkills(entry: Entry, op: Entry, context: string): void {
     skills[skill] = signed(abilityModifier(score) + bonus * multiplier);
   }
   entry.skill = skills;
+}
+
+/**
+ * Adds a sense at a range, keeping the longer one where the creature already has
+ * it — a svirfneblin wererat sees 60 feet in rat form and 120 as a deep gnome.
+ *
+ * A sense is a sentence rather than a field, so the range is edited in place and
+ * whatever qualifies it survives: that wererat keeps "(rat form only)", which now
+ * describes the wrong half of the range. Upstream renders the same sentence. The
+ * way out is a parsed sense, which nothing on the sheet reads yet.
+ */
+export function addSenses(entry: Entry, op: Entry, context: string): void {
+  const senses: unknown[] = Array.isArray(entry.senses) ? [...entry.senses] : [];
+
+  for (const one of Array.isArray(op.senses) ? op.senses : [op.senses]) {
+    if (!isRecord(one) || typeof one.type !== "string" || typeof one.range !== "number") {
+      throw new Error(`${context}: addSenses needs a type and a range`);
+    }
+    const type = one.type.toLowerCase();
+    const at = senses.findIndex(
+      (held) => typeof held === "string" && held.toLowerCase().startsWith(`${type} `),
+    );
+    const held = senses[at];
+    if (typeof held !== "string") {
+      senses.push(`${type} ${one.range} ft.`);
+      continue;
+    }
+    const range = held.match(/\d+/);
+    if (range === null) {
+      throw new Error(`${context}: addSenses cannot read a range from ${JSON.stringify(held)}`);
+    }
+    if (Number(range[0]) < one.range) senses[at] = held.replace(/\d+/, String(one.range));
+  }
+  entry.senses = senses;
+}
+
+/** The sizes upstream uses, smallest first, which is the order `maxSize` caps against. */
+const SIZES = ["T", "S", "M", "L", "H", "G"];
+
+/** Caps every size the creature can be, so a gargantuan one reduced to large is large. */
+export function capSize(entry: Entry, op: Entry, context: string): void {
+  const ceiling = SIZES.indexOf(String(op.max));
+  if (ceiling === -1) throw new Error(`${context}: maxSize does not know size "${String(op.max)}"`);
+  if (!Array.isArray(entry.size)) {
+    throw new Error(`${context}: maxSize needs a size list, found ${typeof entry.size}`);
+  }
+
+  const capped: string[] = [];
+  for (const size of entry.size) {
+    const at = SIZES.indexOf(String(size));
+    if (at === -1) throw new Error(`${context}: maxSize does not know size "${String(size)}"`);
+    // Capping two sizes can land both on the ceiling, and a creature is not two
+    // of one size.
+    const kept = SIZES[Math.min(at, ceiling)] as string;
+    if (!capped.includes(kept)) capped.push(kept);
+  }
+  entry.size = capped;
+}
+
+/**
+ * Experience by challenge rating, from the DMG table of that name. A creature
+ * states its rating and almost never its experience, so scaling one means
+ * deriving it first. The table reads "0 or 10" at rating 0; 10 is what upstream
+ * awards.
+ */
+const XP_BY_RATING = new Map<number, number>([
+  [0, 10],
+  [0.125, 25],
+  [0.25, 50],
+  [0.5, 100],
+  [1, 200],
+  [2, 450],
+  [3, 700],
+  [4, 1100],
+  [5, 1800],
+  [6, 2300],
+  [7, 2900],
+  [8, 3900],
+  [9, 5000],
+  [10, 5900],
+  [11, 7200],
+  [12, 8400],
+  [13, 10000],
+  [14, 11500],
+  [15, 13000],
+  [16, 15000],
+  [17, 18000],
+  [18, 20000],
+  [19, 22000],
+  [20, 25000],
+  [21, 33000],
+  [22, 41000],
+  [23, 50000],
+  [24, 62000],
+  [25, 75000],
+  [26, 90000],
+  [27, 105000],
+  [28, 120000],
+  [29, 135000],
+  [30, 155000],
+]);
+
+/**
+ * Scales the experience a creature is worth, writing it out rather than leaving
+ * it derivable: once the award no longer matches the rating, the rating is no
+ * longer the thing to read it from. A lair rating is scaled alongside, so the two
+ * awards do not disagree about whether the mod happened.
+ */
+export function multiplyXp(entry: Entry, op: Entry, context: string): void {
+  if (typeof op.scalar !== "number") throw new Error(`${context}: scalarMultXp needs a scalar`);
+  if (entry.cr === undefined) {
+    throw new Error(`${context}: scalarMultXp needs a challenge rating to scale`);
+  }
+  const cr: Entry = isRecord(entry.cr) ? { ...entry.cr } : { cr: entry.cr };
+
+  const scaled = (held: unknown, rating: unknown): number => {
+    const base = typeof held === "number" ? held : award(ratingValue(rating, context), context);
+    const value = base * (op.scalar as number);
+    return op.floor === true ? Math.floor(value) : value;
+  };
+  cr.xp = scaled(cr.xp, cr.cr);
+  if (cr.lair !== undefined) cr.xpLair = scaled(cr.xpLair, cr.lair);
+  entry.cr = cr;
+}
+
+function award(rating: number, context: string): number {
+  const xp = XP_BY_RATING.get(rating);
+  if (xp === undefined) throw new Error(`${context}: no experience is listed for rating ${rating}`);
+  return xp;
 }
 
 /** One list of spells inside a `spellcasting` block, with the items the op aims at it. */

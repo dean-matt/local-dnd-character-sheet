@@ -78,10 +78,10 @@ file from answering — `class/foundry.json` holds a second `Battle Master` (PHB
 loader declares it. Names match case-insensitively, as upstream's own lowercased lookup
 does: `Ougalop` (OotA) copies `Kuo-Toa` (MM), which upstream spells `Kuo-toa`.
 
-Twelve `_mod` modes are applied — character data's five plus `removeArr`,
-`appendIfNotExistsArr`, `setProp`, `addSkills`, `addSpells`, `replaceSpells` and
-`removeSpells`, the last four reading the creature rather than one property and arriving
-under `_`. A bare `"remove"` deletes the property.
+Twenty-one `_mod` modes are applied. Eight arrive under `_`, which is upstream saying the
+operation takes the creature rather than one property: `setProp`, `addSkills`, `addSenses`,
+`maxSize`, `scalarMultXp` and the three spell modes. A bare `"remove"` deletes the
+property.
 
 **`*` reads as "every property" and is not applied that way.** All 802 uses rename a
 creature, so it sweeps the sections holding rules text and stops. Let loose on the whole
@@ -101,9 +101,9 @@ two entries match. Identity is not always `(name, source)`, and taking the first
 would clone the wrong entry silently. No block is ambiguous at the pinned tag — all six
 `_copy` deities name a pantheon — so that one fences the next upstream bump.
 
-One shape remains. `_copy._templates` resolves without being applied — it names a
-`monsterTemplate` in `bestiary/template.json`, 187 entries carry one, and the eight modes
-those templates use appear nowhere else. It costs a thinner row, not a wrong one.
+`_copy._templates` names a `monsterTemplate` in `bestiary/template.json`, and 187 entries
+carry one. `apply._root` writes the fields the entry has not stated itself, `apply._mod`
+runs before the entry's own, and `crMin` and `prerequisite` refuse a creature it misfits.
 
 ## `_versions` inheritance
 
