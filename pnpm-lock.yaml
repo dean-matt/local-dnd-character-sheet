@@ -87,6 +87,9 @@ importers:
 
   packages/content:
     dependencies:
+      '@dnd/rules':
+        specifier: workspace:*
+        version: link:../rules
       '@dnd/tags':
         specifier: workspace:*
         version: link:../tags

@@ -13,7 +13,7 @@ type Entry = Record<string, unknown>;
 function load(file: string, property: string): Entry[] {
   const path = `data/${file}`;
   const parsed = JSON.parse(readFileSync(join(FIXTURES, "data", file), "utf8"));
-  const copied = resolveCopies(parsed, path);
+  const copied = resolveCopies(new Map([[path, parsed]])).get(path);
   const resolved = resolveVersions(races.prepare?.(copied, path), path) as Record<string, Entry[]>;
   const entries = resolved[property];
   if (!entries) throw new Error(`${file} has no ${property}`);
