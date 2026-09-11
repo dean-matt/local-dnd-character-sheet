@@ -203,6 +203,16 @@ describe("the Tier C entity loaders", () => {
     ).toMatch(/data\/decks\.json card\[0\]: set is missing or not a string/);
   });
 
+  it("refuses a catalog key that no field in NOT_TEXT held", () => {
+    expect(
+      refusal(
+        vendorHolding("data/objects.json", {
+          object: [{ name: "Ballista", source: "DMG", pointsAt: "longsword|phb" }],
+        }),
+      ),
+    ).toMatch(/"longsword\|phb" is a catalog key rather than text/);
+  });
+
   it("refuses an index entry whose volume has no body file", () => {
     expect(
       refusal(

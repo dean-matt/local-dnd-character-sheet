@@ -66,29 +66,47 @@ const QUALIFIED_BY: Record<string, string> = { card: "set" };
 /**
  * Keys whose strings are a pointer rather than words: the books an entry was printed in,
  * the entries it names elsewhere, and the asset it renders with. Every one of them
- * spells a catalog key — `scimitar|phb` — or a file path, so indexing them answers a
- * search for `phb` with every monster carrying a Player's Handbook weapon.
+ * spells a source abbreviation, a catalog key — `scimitar|phb` — or a file path, so
+ * indexing them answers a search for `phb` with every monster carrying a Player's
+ * Handbook weapon.
  *
  * The names themselves still reach the index wherever the entry writes them as prose: a
  * goblin's `{@item scimitar|phb}` renders to `scimitar` in the line that attacks with it.
  */
 const NOT_TEXT = new Set([
   "source",
+  "parentSource",
+  "classSource",
+  "fauxGroupSource",
+  "id",
   "otherSources",
   "additionalSources",
   "referenceSources",
   "reprintedAs",
   "attachedItems",
   "gear",
+  "additionalSpells",
+  "cards",
+  "uid",
   "summonedBySpell",
+  "summonedByClass",
   "seeAlsoItem",
   "seeAlsoCreature",
+  "seeAlsoAdventureHeader",
+  "seeAlsoBookHeader",
   "chargesItem",
   "soundClip",
   "href",
   "hrefThumbnail",
   "path",
 ]);
+
+/**
+ * A catalog key upstream writes outside a tag — `scimitar|phb`, `Deafened|Condition
+ * Cards|ESK`. Prose spaces its pipes, as a column list in an image caption does, so the
+ * tight pipe is what separates the two.
+ */
+const CATALOG_KEY = /\S\|\S/;
 
 function collect(node: unknown, into: string[]): string[] {
   if (typeof node === "string") into.push(node);
@@ -108,10 +126,23 @@ function collect(node: unknown, into: string[]): string[] {
  * list of prose fields that misses one loses words with nothing raised. What is left is
  * words a reader would recognise, plus the structural values beside them: a `type` of
  * `entries` is indexed because the same key holds a creature's `humanoid`.
+ *
+ * `NOT_TEXT` is a list and every list is behind upstream, so a key it has yet to learn
+ * is refused rather than indexed. No string in the declared files survives this today,
+ * which is what makes the refusal affordable: a build that stops names the field to add.
  */
-function rendered(node: unknown): string {
+function rendered(node: unknown, context: string): string {
   return collect(node, [])
-    .map((value) => renderText(parseTags(value)))
+    .map((value) => {
+      const words = renderText(parseTags(value));
+      if (CATALOG_KEY.test(words)) {
+        throw new Error(
+          `${context}: ${JSON.stringify(words.slice(0, 60))} is a catalog key rather than ` +
+            "text — add the field holding it to NOT_TEXT",
+        );
+      }
+      return words;
+    })
     .join(" ")
     .replace(/\s+/g, " ")
     .trim();
@@ -132,7 +163,7 @@ function toRow(
     qualifier: qualifier === undefined ? "" : text(entry, qualifier, context),
     edition: editionOf(entry, source, fromSource),
     json: JSON.stringify(entry),
-    rendered_text: rendered(entry),
+    rendered_text: rendered(entry, context),
   };
 }
 
@@ -221,7 +252,7 @@ function volume({ type, bodies }: { type: string; bodies: string }): Loader {
             qualifier: "",
             edition: editionOf(entry, source, fromSource),
             json: JSON.stringify(entry),
-            rendered_text: rendered([entry, body]),
+            rendered_text: rendered([entry, body], context),
           };
         }),
       };
