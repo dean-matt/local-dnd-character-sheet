@@ -19,8 +19,8 @@ milestone is backlog, however small it looks, and waits for the user to name it.
 Within the live milestone, in order:
 
 1. Drop anything `blocked` whose `## Blocked by` still holds — a condition it names
-   blocks as much as an issue does. The label alone blocks where that section is
-   absent; only the section clears it.
+   blocks as much as an issue does. Where there is no such section the label is a
+   flag rather than a fence: read the issue and say why you are taking it.
 2. Leave an audit of the milestone's own work until last. It reads code that keeps
    moving until the milestone's final issue lands.
 3. Prefer the issue that builds on what just merged, while that code is fresh.
@@ -51,18 +51,20 @@ blocked, say so and stop rather than starting the milestone below.
    pre-commit runs neither the tests nor the caps.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
-10. **Review it** with `/code-review <pr> <level>` — naming the level, which
-    otherwise inherits whatever was typed last — then return to your branch, since
-    the review leaves the tree where it checked out.
+10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
+    inherits whatever was typed last. Then check `git branch --show-current`: the
+    review leaves the tree where it checked out, and a detached HEAD commits onto
+    nothing without the branch-name hook saying so.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
 12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
     mislead a reader, or contradict the repo**, three passes at most. A pass returning
     only preferences has stopped paying.
-13. **Stop.** Report what landed, what each review found, and CI's state. A red run is
-    the user's to weigh — the merge gate blocks on it either way, and the merge is
-    the user's call every time.
+13. **Stop.** Report what landed, what each review found, and what `gh pr checks`
+    says, noting a run still in flight as in flight. The gate needs `pnpm build` and
+    the end-to-end tests green too, and `pnpm check` runs neither, so local green is
+    not the answer. A red run is the user's to weigh, as is the merge, every time.
 
 ## The pull request body
 
