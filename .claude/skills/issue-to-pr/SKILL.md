@@ -1,6 +1,6 @@
 ---
 name: issue-to-pr
-description: Take one local-dnd-character-sheet issue from open to a reviewed pull request — gh issue develop, implement, pnpm check, prose pass, pull request, then review both the pull request and the fixes to it. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
+description: Take one local-dnd-character-sheet issue from open to a reviewed pull request — gh issue develop, implement, pnpm check, prose pass, pull request, then review it and re-review until it comes back clean. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
 ---
 
 # Issue to pull request
@@ -46,18 +46,17 @@ remains, the next milestone is live.
    pull request body, and every comment the change touched.
 9. **Commit and push.** One concern per commit.
 10. **Open the pull request** with `gh pr create`, body linking the issue.
-11. **Review it** with `/code-review <pr>`. Record `git rev-parse HEAD` before every
-    review: the next step reviews from the commit that one read, and step 12 commits
-    over it.
-12. **Return to your branch**, then apply what survives, `pnpm check`, commit and
-    push. A review leaves the tree wherever it checked out — `main`, in this
-    repository — where the branch-name hook refuses the commit; and fixes left
-    uncommitted leave the pull request holding the code the review rejected.
-13. **Review the fixes** with `/code-review <the recorded commit>..HEAD`. A range
-    excludes its left end, so naming the first fix skips it. Repeat 12 and 13 until a
-    pass comes back clean — always, not by judgment, because the fixes are the
-    least-reviewed code on the branch and a fix covering one instance of a class
-    rather than the class is how this goes wrong.
+11. **Review it** with `/code-review <pr>`.
+12. **Check `git branch --show-current` and return to your branch.** A review leaves
+    the tree where it checked out, and a detached HEAD commits onto nothing while the
+    branch-name hook stays quiet about it. Then apply what survives, `pnpm check`,
+    commit and push — fixes left in the working tree leave the pull request holding
+    the code the review rejected.
+13. **Repeat 11 and 12 until a review comes back clean.** Always, not by judgment:
+    the fixes are the least-reviewed code on the branch, and a fix covering one
+    instance of a class rather than the class is how this goes wrong. Re-reading the
+    whole pull request each pass costs less than a commit range, which needs a SHA
+    carried across the loop and reviews nothing at all when it names the wrong end.
 14. **Stop.** Report what landed and what each review found. The merge is the user's
     call, every time.
 
