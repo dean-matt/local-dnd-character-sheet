@@ -13,6 +13,7 @@
     "build:fixtures": "node --experimental-strip-types src/fixtures/build.ts"
   },
   "dependencies": {
+    "@dnd/rules": "workspace:*",
     "@dnd/tags": "workspace:*",
     "better-sqlite3": "^13.0.3"
   },

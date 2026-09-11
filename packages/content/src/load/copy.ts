@@ -1,15 +1,22 @@
 /**
  * Resolves 5etools `_copy` inheritance, so loaders only ever see complete records.
  *
- * An entry carrying a `_copy` block is a diff against another entry in the same
- * file. The block names the parent by the identity fields it lists, `_mod`
- * describes edits to apply after the clone, and `_preserve` names the parent
- * metadata that survives it. `_meta.internalCopies` names the properties that
- * need any of this, which is why no entity type is hardcoded here.
+ * An entry carrying a `_copy` block is a diff against another entry. The block
+ * names the parent by the identity fields it lists, `_mod` describes edits to
+ * apply after the clone, and `_preserve` names the parent metadata that survives
+ * it. No entity type is hardcoded: a property is resolved because it holds
+ * entries, and identity is whatever the block spells out.
+ *
+ * A parent may sit in another file — 1,060 blocks copy that way, all of them
+ * under `data/bestiary/` — so resolution spans every source a loader declared
+ * rather than one file at a time. The pool is that declared set and nothing
+ * wider, which is what keeps a mapping file such as `class/foundry.json` from
+ * shadowing a real entry with a second match.
  *
  * Anything unresolvable throws, rather than reaching a loader half-inherited.
- * That includes a parent in another file: bestiary entries copy that way,
- * character-relevant ones never do.
+ * `_copy._templates` is the one exception: it names a `monsterTemplate` rather
+ * than a parent, so `identityKeys` drops it with every other `_` key and the
+ * copy resolves without the traits that template would have added.
  */
 import { type Entry, isRecord } from "./json.ts";
 import { applyMod } from "./mod.ts";
@@ -43,17 +50,21 @@ function describe(entry: Entry, keys: string[]): string {
 }
 
 /**
+ * Case folded, because upstream's own lookup lowercases a key before matching and
+ * the data leans on that: `Ougalop` (OotA) copies `Kuo-Toa` (MM), which upstream
+ * spells `Kuo-toa`. Comparing verbatim makes that block name no parent.
+ */
+const fold = (value: unknown): unknown => (typeof value === "string" ? value.toLowerCase() : value);
+
+/**
  * Every entry the block's keys match, not the first. A block matching two is a
  * block that does not name a parent, and taking the first would clone whichever
  * upstream happened to list earlier — the wrong entry, silently, and only for
  * the identities that collide.
  */
 function findParents(entries: Entry[], copy: Entry, keys: string[]): Entry[] {
-  // A scan touches every entry, malformed ones included. Reporting those is
-  // `resolve`'s job, and it names the file and the property; reading a key off
-  // one here throws a bare TypeError from underneath that.
-  return entries.filter(
-    (candidate) => isRecord(candidate) && keys.every((key) => candidate[key] === copy[key]),
+  return entries.filter((candidate) =>
+    keys.every((key) => fold(candidate[key]) === fold(copy[key])),
   );
 }
 
@@ -70,7 +81,7 @@ function onlyParent(
   if (parents.length === 1 && only) return only;
   const trouble =
     parents.length === 0
-      ? "which no entry in the file matches"
+      ? "which no source the loader declared holds"
       : `which ${parents.length} entries match — the block needs a key that tells them apart`;
   throw new Error(
     `${context}: ${describe(entry, keys)} copies ${describe(copy, keys)}, ${trouble}`,
@@ -95,9 +106,8 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
 /**
  * The entry's `_copy` block, validated, or undefined when it has none.
  *
- * Gating on `isRecord` would read a malformed block as "no copy" — as would
- * `assertResolved`, the net under this — so the entry would reach a loader with
- * none of the parent's fields.
+ * Gating on `isRecord` would read a malformed block as "no copy", and the entry
+ * would reach a loader with none of the parent's fields and nothing raised.
  */
 function copyBlock(entry: Entry, context: string): Entry | undefined {
   if (!("_copy" in entry)) return undefined;
@@ -114,18 +124,57 @@ function copyBlock(entry: Entry, context: string): Entry | undefined {
   return entry._copy;
 }
 
-function resolveEntries(entries: Entry[], context: string): Entry[] {
+/** Where an entry was read, so a broken parent reports its own file rather than its child's. */
+type Located = { property: string; context: string };
+
+/**
+ * Every record element of every array property, pooled by property name.
+ *
+ * Pooling by property rather than by file is what lets a parent sit elsewhere,
+ * and pooling only the sources a loader declared is what stops that from finding
+ * two: `class/foundry.json` carries a second `Battle Master` (PHB), and no loader
+ * declares it.
+ */
+function locate(sources: Map<string, unknown>): {
+  candidates: Map<string, Entry[]>;
+  located: Map<Entry, Located>;
+} {
+  const candidates = new Map<string, Entry[]>();
+  const located = new Map<Entry, Located>();
+  for (const [path, source] of sources) {
+    if (!isRecord(source)) continue;
+    for (const [property, entries] of Object.entries(source)) {
+      if (!Array.isArray(entries)) continue;
+      const where: Located = { property, context: `${path} ${property}` };
+      const pool = candidates.get(property) ?? [];
+      for (const entry of entries.filter(isRecord)) {
+        pool.push(entry);
+        located.set(entry, where);
+      }
+      candidates.set(property, pool);
+    }
+  }
+  return { candidates, located };
+}
+
+/**
+ * Returns every source with its `_copy` blocks resolved, parents in other sources
+ * included. Takes the whole set rather than one file because a parent may be in
+ * any of them, and resolves every array property rather than the ones
+ * `_meta.internalCopies` names: 31 files carry a same-file `_copy` without
+ * declaring one, so that list has never been the thing worth trusting.
+ */
+export function resolveCopies(sources: Map<string, unknown>): Map<string, unknown> {
+  const { candidates, located } = locate(sources);
   const resolved = new Map<Entry, Entry>();
   const visiting = new Set<Entry>();
 
   const resolve = (entry: Entry): Entry => {
-    if (!isRecord(entry)) {
-      const found = entry === null ? "null" : typeof entry;
-      throw new Error(`${context}: expected entries to be objects, found ${found}`);
-    }
     const cached = resolved.get(entry);
     if (cached) return cached;
 
+    const here = located.get(entry);
+    const context = here?.context ?? "an entry no source holds";
     const copy = copyBlock(entry, context);
     if (!copy) {
       resolved.set(entry, entry);
@@ -133,13 +182,19 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
     }
 
     const keys = identityKeys(copy);
-    // `find` over no keys matches everything, so this would clone entry zero.
+    // `filter` over no keys matches everything, so this would clone entry zero.
     if (keys.length === 0) {
       throw new Error(
         `${context}: ${describe(entry, ["name", "source"])} has a _copy that names no parent`,
       );
     }
-    const parent = onlyParent(entries, entry, copy, keys, context);
+    const parent = onlyParent(
+      candidates.get(here?.property ?? "") ?? [],
+      entry,
+      copy,
+      keys,
+      context,
+    );
     visiting.add(entry);
     if (visiting.has(parent)) {
       throw new Error(
@@ -152,48 +207,18 @@ function resolveEntries(entries: Entry[], context: string): Entry[] {
     return merged;
   };
 
-  return entries.map(resolve);
-}
-
-/**
- * Throws if a top-level entry still carries a `_copy`, meaning the file needed
- * resolving and `_meta.internalCopies` did not say so — true of many bestiary
- * files, which would otherwise reach a loader as diffs, in silence.
- *
- * Direct elements only. Catching a `_copy` deeper in a `data[].entries[]` tree
- * costs a full walk of `adventure/` and `book/` on every read, for a shape no
- * character-relevant file uses.
- */
-function assertResolved(source: Entry, label: string): void {
-  for (const [property, entries] of Object.entries(source)) {
-    if (!Array.isArray(entries)) continue;
-    const unresolved = entries.filter((entry) => isRecord(entry) && "_copy" in entry);
-    const [first] = unresolved;
-    if (!isRecord(first)) continue;
-    throw new Error(
-      `${label} ${property}: ${describe(first, ["name", "source"])} carries a _copy that no ` +
-        `_meta.internalCopies claims (${unresolved.length} in this property)`,
-    );
+  const result = new Map<string, unknown>();
+  for (const [path, source] of sources) {
+    if (!isRecord(source)) {
+      result.set(path, source);
+      continue;
+    }
+    const next: Entry = { ...source };
+    for (const [property, entries] of Object.entries(source)) {
+      if (!Array.isArray(entries)) continue;
+      next[property] = entries.map((entry) => (isRecord(entry) ? resolve(entry) : entry));
+    }
+    result.set(path, next);
   }
-}
-
-/** Returns `source` with every `_copy` under `_meta.internalCopies` resolved. */
-export function resolveCopies(source: unknown, label: string): unknown {
-  if (!isRecord(source)) return source;
-  const meta = isRecord(source._meta) ? source._meta : undefined;
-  const types = Array.isArray(meta?.internalCopies) ? meta.internalCopies : [];
-  if (types.length === 0) {
-    assertResolved(source, label);
-    return source;
-  }
-
-  const result: Entry = { ...source };
-  for (const type of types) {
-    const entries = typeof type === "string" ? result[type] : undefined;
-    if (!Array.isArray(entries)) continue;
-    result[type] = resolveEntries(entries as Entry[], `${label} ${type}`);
-  }
-  // Also catches a `_copy` under a property `internalCopies` does not name.
-  assertResolved(result, label);
   return result;
 }

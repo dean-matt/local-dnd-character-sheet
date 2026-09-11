@@ -68,19 +68,44 @@ actions.json      0
 
 Spells being clean is why they are the right first target for the ETL.
 
-`_meta.internalCopies` in each file names which keys need resolving, and
-`packages/content/src/load/copy.ts` does it as part of reading a source, so loaders only
-ever see complete records. Five `_mod` modes appear in character data — `appendArr`,
-`prependArr`, `insertArr`, `replaceArr` and `replaceTxt`.
+`packages/content/src/load/copy.ts` resolves it as part of reading a loader's sources, so
+loaders only ever see complete records. Every array property is resolved, not the ones
+`_meta.internalCopies` names: 31 files carry a same-file `_copy` without declaring one,
+so that list has never been worth trusting on its own.
 
-Everything the bestiary needs and character data does not is refused rather than
-half-applied: cross-file parents, the `setProp` and `addSkills` modes, and the `*` and
-`_` wildcard `_mod` properties. `internalCopies` is not trustworthy on its own either —
-31 files carry a same-file `_copy` without declaring one — so a surviving `_copy` fails
-the build too. A block two entries match is refused as well: identity is not always
-`(name, source)`, and taking the first match would clone the wrong entry and say nothing.
-No block in the corpus is ambiguous at the pinned tag — all six `_copy` deities name a
-pantheon — so this fences the next upstream bump, not today's data.
+A parent may be in another file — 1,060 blocks copy that way, every one of them under
+`data/bestiary/` — so the pool is every source the loader declared rather than the
+entry's own file. That set and no wider is what keeps a mapping file from answering:
+`class/foundry.json` carries a second `Battle Master` (PHB), and no loader declares it.
+Names are matched case-insensitively, because upstream's own lookup lowercases a key and
+the data leans on it — `Ougalop` (OotA) copies `Kuo-Toa` (MM), which upstream spells
+`Kuo-toa`.
+
+Twelve `_mod` modes are applied. Character data uses five — `appendArr`, `prependArr`,
+`insertArr`, `replaceArr` and `replaceTxt`; the bestiary adds `removeArr`,
+`appendIfNotExistsArr`, `setProp`, `addSkills`, `addSpells`, `replaceSpells` and
+`removeSpells`, the last four reading the creature rather than one property and arriving
+under `_`. `*` means every property, and all 802 uses rewrite a creature's name
+throughout its stat block. A bare `"remove"` in place of an operation deletes the
+property.
+
+**A named property's operations run before either wildcard's**, whatever order the block
+was written in. `Flying Dagger` (MM) copies `Flying Sword` with a `*` rewriting "sword"
+to "dagger" and an `action` replacing the element named "Longsword", and upstream writes
+the `*` first — so rewriting first renames that element and the replacement matches
+nothing.
+
+What is still refused: an unknown `_mod` mode, a cycle, a parent no declared source
+holds, and a block two entries match. Identity is not always `(name, source)`, and taking
+the first match would clone the wrong entry and say nothing. No block in the corpus is
+ambiguous at the pinned tag — all six `_copy` deities name a pantheon — so that one
+fences the next upstream bump, not today's data.
+
+`_copy._templates` is the one shape resolved without being applied. It names a
+`monsterTemplate` in `bestiary/template.json` rather than a parent, 187 entries carry
+one, and the eight `_mod` modes those templates use appear nowhere else. A monster
+resolves without the traits its template would have added, which costs a thinner row
+rather than a wrong one.
 
 ## `_versions` inheritance
 

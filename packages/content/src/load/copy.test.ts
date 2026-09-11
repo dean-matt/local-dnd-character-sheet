@@ -13,12 +13,23 @@ const FIXTURES = resolve(import.meta.dirname, "../../../../tests/fixtures/5etool
 
 type Entry = Record<string, unknown>;
 
+/**
+ * One document through a resolver that takes every source a loader read. The
+ * cases where a parent sits in another file hand `resolveCopies` the map itself.
+ */
+function resolveOne(source: unknown, label: string): Entry {
+  return resolveCopies(new Map([[label, source]])).get(label) as Entry;
+}
+
+function entriesOf(document: Entry, property: string, where: string): Entry[] {
+  const entries = document[property];
+  if (!Array.isArray(entries)) throw new Error(`${where} has no ${property}`);
+  return entries as Entry[];
+}
+
 function load(file: string, property: string): Entry[] {
   const parsed = JSON.parse(readFileSync(join(FIXTURES, "data", file), "utf8"));
-  const resolved = resolveCopies(parsed, `data/${file}`) as Record<string, Entry[] | undefined>;
-  const entries = resolved[property];
-  if (!entries) throw new Error(`${file} has no ${property}`);
-  return entries;
+  return entriesOf(resolveOne(parsed, `data/${file}`), property, file);
 }
 
 function find(entries: Entry[], match: Entry): Entry {
@@ -32,9 +43,11 @@ function find(entries: Entry[], match: Entry): Entry {
 const names = (entry: Entry): unknown[] => (entry.entries as Entry[]).map((child) => child.name);
 
 describe("resolveCopies", () => {
-  it("leaves a file with no _meta.internalCopies alone", () => {
+  it("leaves a file with no _copy alone", () => {
     const source = { spell: [{ name: "Fireball", source: "PHB" }] };
-    expect(resolveCopies(source, "data/spells/spells-phb.json")).toBe(source);
+    const resolved = resolveOne(source, "data/spells/spells-phb.json");
+    expect(resolved).toEqual(source);
+    expect(resolved.spell).toEqual(source.spell);
   });
 
   describe("backgrounds.json", () => {
@@ -198,18 +211,18 @@ describe("resolveCopies", () => {
 
     it("names both entries when the parent does not exist", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file({ name: "Augen Trust", source: "EGW", _copy: { name: "Spy", source: "PHB" } }),
           "data/backgrounds.json",
         ),
       ).toThrow(
-        'data/backgrounds.json background: "Augen Trust" (EGW) copies "Spy" (PHB), which no entry in the file matches',
+        'data/backgrounds.json background: "Augen Trust" (EGW) copies "Spy" (PHB), which no source the loader declared holds',
       );
     });
 
     it("names both entries in a cycle", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", _copy: { name: "B", source: "PHB" } },
             { name: "B", source: "PHB", _copy: { name: "A", source: "PHB" } },
@@ -221,7 +234,7 @@ describe("resolveCopies", () => {
 
     it("catches an entry that copies itself", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file({ name: "A", source: "PHB", _copy: { name: "A", source: "PHB" } }),
           "data/backgrounds.json",
         ),
@@ -230,75 +243,23 @@ describe("resolveCopies", () => {
 
     it("refuses an unsupported _mod mode rather than importing a half-applied record", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [] },
             {
               name: "B",
               source: "PHB",
-              _copy: { name: "A", source: "PHB", _mod: { entries: { mode: "setProp" } } },
+              _copy: { name: "A", source: "PHB", _mod: { entries: { mode: "scalarAddHit" } } },
             },
           ),
           "data/backgrounds.json",
         ),
-      ).toThrow('unsupported _mod mode "setProp"');
-    });
-
-    it("refuses a _copy that no _meta.internalCopies claims", () => {
-      expect(() =>
-        resolveCopies(
-          {
-            background: [
-              { name: "Acolyte", source: "PHB" },
-              { name: "Augen Trust", source: "EGW", _copy: { name: "Acolyte", source: "PHB" } },
-            ],
-          },
-          "data/bestiary/bestiary-bmt.json",
-        ),
-      ).toThrow(
-        'data/bestiary/bestiary-bmt.json background: "Augen Trust" (EGW) carries a _copy that no _meta.internalCopies claims (1 in this property)',
-      );
-    });
-
-    it("refuses a _copy under a property internalCopies does not name", () => {
-      expect(() =>
-        resolveCopies(
-          {
-            _meta: { internalCopies: ["background"] },
-            background: [{ name: "Acolyte", source: "PHB" }],
-            itemGroup: [
-              { name: "Robes", source: "PHB" },
-              { name: "Vestments", source: "PHB", _copy: { name: "Robes", source: "PHB" } },
-            ],
-          },
-          "data/backgrounds.json",
-        ),
-      ).toThrow(/itemGroup: "Vestments" \(PHB\) carries a _copy/);
-    });
-
-    it("refuses a wildcard _mod property rather than writing it as a key", () => {
-      expect(() =>
-        resolveCopies(
-          file(
-            { name: "A", source: "PHB", entries: [] },
-            {
-              name: "B",
-              source: "PHB",
-              _copy: {
-                name: "A",
-                source: "PHB",
-                _mod: { "*": { mode: "replaceTxt", replace: "x", with: "y" } },
-              },
-            },
-          ),
-          "data/backgrounds.json",
-        ),
-      ).toThrow('unsupported _mod property "*"');
+      ).toThrow('unsupported _mod mode "scalarAddHit"');
     });
 
     it("refuses an array mode with no items rather than splicing in undefined", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [] },
             {
@@ -313,7 +274,7 @@ describe("resolveCopies", () => {
     });
 
     it("appends to a property the parent does not have, rather than refusing", () => {
-      const resolved = resolveCopies(
+      const resolved = resolveOne(
         file(
           { name: "A", source: "PHB" },
           {
@@ -327,14 +288,16 @@ describe("resolveCopies", () => {
           },
         ),
         "data/items.json",
-      ) as { background: Entry[] };
+      );
 
-      expect(find(resolved.background, { name: "B" }).entries).toEqual(["Added."]);
+      expect(find(entriesOf(resolved, "background", "items.json"), { name: "B" }).entries).toEqual([
+        "Added.",
+      ]);
     });
 
     it("refuses a _mod against a property that is present and not a list", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: "not a list" },
             {
@@ -354,7 +317,7 @@ describe("resolveCopies", () => {
 
     it("refuses a replaceArr index past the end rather than letting splice clamp", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [{ name: "Only" }] },
             {
@@ -374,7 +337,7 @@ describe("resolveCopies", () => {
 
     it("refuses a replaceTxt with no property to rewrite", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB" },
             {
@@ -394,7 +357,7 @@ describe("resolveCopies", () => {
 
     it("refuses a _copy that names no parent instead of cloning the first entry", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: ["Not yours."] },
             { name: "B", source: "PHB", _copy: { _mod: {} } },
@@ -406,7 +369,7 @@ describe("resolveCopies", () => {
 
     it("refuses a _copy two entries match instead of cloning whichever comes first", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "Oghma", source: "PHB", pantheon: "Celtic", entries: ["Theirs."] },
             { name: "Oghma", source: "PHB", pantheon: "Forgotten Realms", entries: ["Not yours."] },
@@ -418,7 +381,7 @@ describe("resolveCopies", () => {
     });
 
     it("takes the one parent a block names once a key tells the twins apart", () => {
-      const resolved = resolveCopies(
+      const resolved = resolveOne(
         file(
           { name: "Oghma", source: "PHB", pantheon: "Celtic", entries: ["Theirs."] },
           { name: "Oghma", source: "PHB", pantheon: "Forgotten Realms", entries: ["Yours."] },
@@ -441,7 +404,7 @@ describe("resolveCopies", () => {
     });
 
     it("removes the named elements, and is available to a _copy as to a version", () => {
-      const resolved = resolveCopies(
+      const resolved = resolveOne(
         file(
           { name: "A", source: "PHB", entries: [{ name: "One" }, { name: "Two" }, { name: "3" }] },
           copying({ entries: { mode: "removeArr", names: ["One", "3"] } }),
@@ -454,7 +417,7 @@ describe("resolveCopies", () => {
 
     it("refuses a removeArr naming an element the list does not hold", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [{ name: "One" }] },
             copying({ entries: { mode: "removeArr", names: ["One", "Missing"] } }),
@@ -466,7 +429,7 @@ describe("resolveCopies", () => {
 
     it("checks each name, so a repeated one cannot cover for a typo", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [{ name: "One" }, { name: "One" }] },
             copying({ entries: { mode: "removeArr", names: ["One", "Typo"] } }),
@@ -476,20 +439,20 @@ describe("resolveCopies", () => {
       ).toThrow('removeArr names "Typo", which entries does not hold');
     });
 
-    it("refuses a removeArr with no names at all, not only an empty list", () => {
+    it("refuses a removeArr with nothing to remove at all, not only an empty list", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [{ name: "One" }] },
             copying({ entries: { mode: "removeArr" } }),
           ),
           "data/backgrounds.json",
         ),
-      ).toThrow("removeArr needs names");
+      ).toThrow("removeArr needs names or items");
     });
 
     it("treats a removeArr against a property the entry lacks as nothing to remove", () => {
-      const resolved = resolveCopies(
+      const resolved = resolveOne(
         file(
           { name: "A", source: "PHB" },
           copying({ entries: { mode: "removeArr", names: "Anything" } }),
@@ -500,23 +463,29 @@ describe("resolveCopies", () => {
       expect(resolved.background[1]).not.toHaveProperty("entries");
     });
 
-    it.each([
-      ["on its own", []],
-      // Scanning for a parent touches every entry, so a malformed one must not
-      // be read as a candidate before `resolve` gets to report it.
-      ["alongside a _copy", [{ name: "B", source: "PHB", _copy: { name: "A", source: "PHB" } }]],
-    ])("keeps the file and entry label when an entry is not an object, %s", (_, rest) => {
-      expect(() =>
-        resolveCopies(
-          file({ name: "A", source: "PHB" }, ...(rest as Entry[]), null as unknown as Entry),
-          "data/x.json",
-        ),
-      ).toThrow("data/x.json background: expected entries to be objects, found null");
+    /**
+     * Every array property is resolved now, entity or not, so the scan meets
+     * arrays of strings and nulls that no loader would have handed it. One is
+     * passed through rather than reported: it carries no `_copy` to resolve and
+     * matches no `_copy` block, and refusing would fail a build over an array
+     * that has nothing to do with inheritance.
+     */
+    it("passes a non-object element through instead of reading it as an entry", () => {
+      const resolved = resolveOne(
+        {
+          background: [{ name: "A", source: "PHB" }, null, "text"],
+          colLabels: ["Name", "Source"],
+        },
+        "data/x.json",
+      );
+
+      expect(resolved.background).toEqual([{ name: "A", source: "PHB" }, null, "text"]);
+      expect(resolved.colLabels).toEqual(["Name", "Source"]);
     });
 
     it("refuses an insertArr index past the end, the way replaceArr does", () => {
       const at = (index: number) =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: ["One", "Two"] },
             {
@@ -540,7 +509,7 @@ describe("resolveCopies", () => {
     });
 
     it("rewrites a scalar property with replaceTxt rather than demanding a list", () => {
-      const resolved = resolveCopies(
+      const resolved = resolveOne(
         file(
           { name: "A", source: "PHB", fluff: "Goblins everywhere." },
           {
@@ -554,9 +523,11 @@ describe("resolveCopies", () => {
           },
         ),
         "data/races.json",
-      ) as { background: Entry[] };
+      );
 
-      expect(find(resolved.background, { name: "B" }).fluff).toBe("Kobolds everywhere.");
+      expect(find(entriesOf(resolved, "background", "races.json"), { name: "B" }).fluff).toBe(
+        "Kobolds everywhere.",
+      );
     });
 
     it.each(["_copy", "_mod", "_preserve"])("refuses a malformed %s", (key) => {
@@ -566,13 +537,13 @@ describe("resolveCopies", () => {
       else copy[key] = [{ mode: "appendArr", items: "x" }];
 
       expect(() =>
-        resolveCopies(file({ name: "A", source: "PHB" }, child), "data/backgrounds.json"),
+        resolveOne(file({ name: "A", source: "PHB" }, child), "data/backgrounds.json"),
       ).toThrow(`"B" (PHB) has a ${key} that is not an object`);
     });
 
     it("reports a replaceArr whose target is not there", () => {
       expect(() =>
-        resolveCopies(
+        resolveOne(
           file(
             { name: "A", source: "PHB", entries: [{ name: "Kept" }] },
             {
@@ -588,6 +559,259 @@ describe("resolveCopies", () => {
           "data/backgrounds.json",
         ),
       ).toThrow('replaceArr matched no element named "Gone"');
+    });
+  });
+
+  /**
+   * The shapes only `data/bestiary/` writes. Character data reaches none of them,
+   * which is why they went unhandled until a loader read everything.
+   */
+  describe("across the declared sources", () => {
+    const monsters = (...entries: Entry[]) => ({ monster: entries });
+
+    it("finds a parent in another source", () => {
+      const resolved = resolveCopies(
+        new Map<string, unknown>([
+          ["data/bestiary/bestiary-mm.json", monsters({ name: "Zombie", source: "MM", cr: "1/4" })],
+          [
+            "data/bestiary/bestiary-pabtso.json",
+            monsters({
+              name: "Ash Zombie",
+              source: "PaBTSO",
+              _copy: { name: "Zombie", source: "MM" },
+            }),
+          ],
+        ]),
+      );
+
+      const child = entriesOf(
+        resolved.get("data/bestiary/bestiary-pabtso.json") as Entry,
+        "monster",
+        "bestiary-pabtso.json",
+      );
+      expect(child[0]).toEqual({ name: "Ash Zombie", source: "PaBTSO", cr: "1/4" });
+    });
+
+    /**
+     * `Ougalop` (OotA) is the entry that needs this: it copies `Kuo-Toa` (MM),
+     * and upstream spells that monster `Kuo-toa`. Their own lookup lowercases a
+     * key before matching, so the typo has never shown up for them.
+     */
+    it("matches a parent whose name differs only in case", () => {
+      const resolved = resolveOne(
+        monsters(
+          { name: "Kuo-toa", source: "MM", cr: "1/4" },
+          { name: "Ougalop", source: "OotA", _copy: { name: "Kuo-Toa", source: "MM" } },
+        ),
+        "data/bestiary/bestiary-oota.json",
+      );
+
+      expect(entriesOf(resolved, "monster", "oota")[1]).toEqual({
+        name: "Ougalop",
+        source: "OotA",
+        cr: "1/4",
+      });
+    });
+
+    it("resolves a property that _meta.internalCopies does not name", () => {
+      const resolved = resolveOne(
+        {
+          _meta: { internalCopies: ["background"] },
+          background: [{ name: "Acolyte", source: "PHB" }],
+          itemGroup: [
+            { name: "Robes", source: "PHB", entries: ["Cloth."] },
+            { name: "Vestments", source: "PHB", _copy: { name: "Robes", source: "PHB" } },
+          ],
+        },
+        "data/items.json",
+      );
+
+      expect(entriesOf(resolved, "itemGroup", "items.json")[1]).toEqual({
+        name: "Vestments",
+        source: "PHB",
+        entries: ["Cloth."],
+      });
+    });
+
+    it("still refuses a parent two sources both hold", () => {
+      expect(() =>
+        resolveCopies(
+          new Map<string, unknown>([
+            [
+              "data/class/class-fighter.json",
+              { subclass: [{ name: "Battle Master", source: "PHB" }] },
+            ],
+            ["data/class/foundry.json", { subclass: [{ name: "Battle Master", source: "PHB" }] }],
+            [
+              "data/class/class-ranger.json",
+              {
+                subclass: [
+                  {
+                    name: "Gloom Stalker",
+                    source: "XGE",
+                    _copy: { name: "Battle Master", source: "PHB" },
+                  },
+                ],
+              },
+            ],
+          ]),
+        ),
+      ).toThrow('copies "Battle Master" (PHB), which 2 entries match');
+    });
+
+    it("names both entries in a cycle that spans two sources", () => {
+      expect(() =>
+        resolveCopies(
+          new Map<string, unknown>([
+            [
+              "data/bestiary/a.json",
+              monsters({ name: "A", source: "MM", _copy: { name: "B", source: "MM" } }),
+            ],
+            [
+              "data/bestiary/b.json",
+              monsters({ name: "B", source: "MM", _copy: { name: "A", source: "MM" } }),
+            ],
+          ]),
+        ),
+      ).toThrow(/_copy cycle/);
+    });
+  });
+
+  describe("a _mod that does not name one property", () => {
+    const copying = (mod: unknown, parent: Entry) => ({
+      monster: [
+        parent,
+        { name: "Child", source: "BGDIA", _copy: { name: "Parent", source: "MM", _mod: mod } },
+      ],
+    });
+
+    const child = (mod: unknown, parent: Entry): Entry =>
+      entriesOf(
+        resolveOne(copying(mod, parent), "data/bestiary/x.json"),
+        "monster",
+        "x",
+      )[1] as Entry;
+
+    /**
+     * `Bitter Breath` (BGDIA) is a Horned Devil renamed throughout its stat block.
+     * Upstream writes one rewrite against `*` rather than naming each field that
+     * says "the devil", so every property has to see it — the trait list here,
+     * and the plain string beside it.
+     */
+    it("applies a * operation to every property", () => {
+      const renamed = child(
+        { "*": { mode: "replaceTxt", replace: "the devil", with: "Bitter Breath", flags: "i" } },
+        {
+          name: "Parent",
+          source: "MM",
+          alignment: "The devil is lawful evil.",
+          trait: [{ name: "Devilish", entries: ["The devil regenerates."] }],
+        },
+      );
+
+      expect(renamed.alignment).toBe("Bitter Breath is lawful evil.");
+      expect(renamed.trait).toEqual([
+        { name: "Devilish", entries: ["Bitter Breath regenerates."] },
+      ]);
+    });
+
+    it("leaves the _ keys out of a * operation", () => {
+      const renamed = child(
+        { "*": { mode: "replaceTxt", replace: "devil", with: "demon" } },
+        {
+          name: "Parent",
+          source: "MM",
+          type: "devil",
+          _versions: [{ name: "A devil variant", source: "MM" }],
+        },
+      );
+
+      expect(renamed.type).toBe("demon");
+      expect(renamed._versions).toEqual([{ name: "A devil variant", source: "MM" }]);
+    });
+
+    it("writes a _ setProp at the dotted path it names", () => {
+      const written = child(
+        { _: { mode: "setProp", prop: "apply._root.type", value: { type: "humanoid" } } },
+        { name: "Parent", source: "MM", apply: { _root: { type: "beast", size: ["M"] } } },
+      );
+
+      expect(written.apply).toEqual({ _root: { type: { type: "humanoid" }, size: ["M"] } });
+    });
+
+    it("refuses a _ setProp that names no prop", () => {
+      expect(() =>
+        child({ _: { mode: "setProp", value: 1 } }, { name: "Parent", source: "MM" }),
+      ).toThrow("a whole-entry setProp has to name its prop");
+    });
+
+    it("refuses a whole-entry mode it does not implement", () => {
+      expect(() =>
+        child({ _: { mode: "addSenses", senses: {} } }, { name: "Parent", source: "MM" }),
+      ).toThrow('unsupported whole-entry _mod mode "addSenses"');
+    });
+
+    /** `Cat Skeleton` (CoS) erases the vulnerability its parent has this way. */
+    it("erases a property through a _ setProp of null", () => {
+      const erased = child(
+        { _: { mode: "setProp", prop: "vulnerable", value: null } },
+        {
+          name: "Parent",
+          source: "MM",
+          vulnerable: ["bludgeoning"],
+        },
+      );
+
+      expect(erased).not.toHaveProperty("vulnerable");
+    });
+
+    /** `Arabelle` (CoS) is a Commoner that does nothing on its turn. */
+    it("deletes a property written as a bare remove", () => {
+      const stripped = child(
+        { action: "remove" },
+        {
+          name: "Parent",
+          source: "MM",
+          action: [{ name: "Club" }],
+        },
+      );
+
+      expect(stripped).not.toHaveProperty("action");
+    });
+
+    it("refuses a bare word that is not remove", () => {
+      expect(() => child({ action: "delete" }, { name: "Parent", source: "MM" })).toThrow(
+        '_mod.action is "delete", which is not an operation',
+      );
+    });
+
+    /** `Blurg` (OotA) is a Deep Gnome who already speaks Undercommon. */
+    it("appends only what a list does not already hold", () => {
+      const spoken = child(
+        {
+          languages: {
+            mode: "appendIfNotExistsArr",
+            items: ["Dwarvish", "Elvish", "Undercommon"],
+          },
+        },
+        { name: "Parent", source: "MM", languages: ["Gnomish", "Undercommon"] },
+      );
+
+      expect(spoken.languages).toEqual(["Gnomish", "Undercommon", "Dwarvish", "Elvish"]);
+    });
+
+    /** 35 fluff entries replace their parent's prose with a setProp and no `prop`. */
+    it("writes a setProp with no prop at the property it sits under", () => {
+      const rewritten = child(
+        { entries: { mode: "setProp", value: ["Ours."] } },
+        {
+          name: "Parent",
+          source: "MM",
+          entries: ["Theirs."],
+        },
+      );
+
+      expect(rewritten.entries).toEqual(["Ours."]);
     });
   });
 });

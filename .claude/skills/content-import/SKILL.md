@@ -13,10 +13,7 @@ Read [`docs/5etools-data.md`](../../../docs/5etools-data.md) for the tag grammar
 1. **Check the tier.** Does this need a bespoke table, or does Tier C already serve it?
    Tier C rows are searchable and resolve tags. Promote to Tier A only when the sheet
    queries specific columns.
-2. **Check `_copy` density** in the source file. Spells, feats, optional features,
-   conditions, and actions have none. Classes, items, backgrounds, and races do —
-   `copy.ts` has already resolved them by the time a loader runs.
-3. **Check for a `classTableGroups`-style structure** before writing a parser for prose.
+2. **Check for a `classTableGroups`-style structure** before writing a parser for prose.
 
 ## The loader contract
 
@@ -58,10 +55,13 @@ than as an error. `docs/data-model.md` holds the keys that are longer than two p
 are `one`. A missing edition on a Tier A row is a bug, not a null. Tier B and C hold
 edition-less entries too, which is why `lookups` and `entities` allow it to be NULL.
 
-**`_copy` is resolved for you, at build time and never at query time.** `copy.ts` runs
-over every source the framework reads and fails the build on a cycle, a missing parent, or
-a shape it cannot apply. A loader never sees a `_copy`, and must not add handling for one —
-a new `_mod` mode belongs in `copy.ts`.
+**`_copy` is resolved for you**, at build time, across the declared set rather than one
+file, failing the build on a cycle, an unheld or ambiguous parent, or an unimplemented
+mode. A loader never sees a `_copy` and must not add handling for one — a new `_mod` mode
+belongs in `mod.ts`, or `stat-block.ts` when it reads the creature and not one property.
+
+**Declare files narrowly**, because that set is the parent pool: a glob wide enough to
+catch `foundry-*.json` or `generated/` shadows real entries and makes a parent ambiguous.
 
 **`_versions` is a different mechanism and is also resolved for you.** It expands one
 entry into several rather than merging two into one, so a version arrives beside the one

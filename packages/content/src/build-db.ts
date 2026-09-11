@@ -49,9 +49,9 @@ function repoCommit(): string {
 function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
   // Every matched file is parsed and held resident before the loader runs, so a
   // loader over `data/bestiary/*.json` holds the whole corpus while the
-  // transaction is open. A per-file callback yielding rows would keep only one
-  // source live, if that ever matters.
-  const sources = new Map<string, unknown>();
+  // transaction is open. Copy resolution needs that anyway: a parent may be in
+  // any of the declared files, so the set has to be complete before it starts.
+  const parsed = new Map<string, unknown>();
   for (const pattern of loader.files) {
     // A glob such as `data/*` matches the subdirectories too, and handing one to
     // readFileSync throws EISDIR from behind the loader's name.
@@ -63,16 +63,20 @@ function readSources(vendorDir: string, loader: Loader): Map<string, unknown> {
       throw new Error(`no file under ${vendorDir} matches ${pattern}`);
     }
     for (const match of matches) {
-      let parsed: unknown;
       try {
-        parsed = JSON.parse(readFileSync(join(vendorDir, match), "utf8"));
+        parsed.set(match, JSON.parse(readFileSync(join(vendorDir, match), "utf8")));
       } catch (cause) {
         throw new Error(`${match} could not be read`, { cause });
       }
-      const copied = resolveCopies(parsed, match);
-      const prepared = loader.prepare ? loader.prepare(copied, match) : copied;
-      sources.set(match, resolveVersions(prepared, match));
     }
+  }
+
+  // `prepare` runs between the two mechanisms, so versions stay per file even
+  // though copies no longer are.
+  const sources = new Map<string, unknown>();
+  for (const [path, copied] of resolveCopies(parsed)) {
+    const prepared = loader.prepare ? loader.prepare(copied, path) : copied;
+    sources.set(path, resolveVersions(prepared, path));
   }
   return sources;
 }
