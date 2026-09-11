@@ -1,17 +1,18 @@
 /**
  * Applies a 5etools `_mod` block to an entry.
  *
- * Both inheritance mechanisms in the data carry one: `_copy` merges a parent
- * into a child and then mods the result, and `_versions` mods a clone of the
- * entry per variant. The modes are the same in both, so they are applied here
- * and neither mechanism owns them.
+ * All three inheritance mechanisms in the data carry one: `_copy` merges a parent
+ * into a child and then mods the result, `_versions` mods a clone of the entry
+ * per variant, and a `monsterTemplate` mods whatever creature names it. The modes
+ * are the same in all three, so they are applied here and none of the mechanisms
+ * owns them.
  *
  * Anything unrecognized throws. A mode this does not implement is a mode whose
  * effect nobody has checked, and half-applying it writes an entry that looks
  * complete.
  */
 import { type Entry, isRecord } from "./json.ts";
-import { addSkills, modifySpells } from "./stat-block.ts";
+import { addSenses, addSkills, capSize, modifySpells, multiplyXp, signed } from "./stat-block.ts";
 
 /**
  * Keys whose values `replaceTxt` descends into: every prose-bearing key in the
@@ -40,14 +41,14 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [value];
 }
 
-function replaceText(node: unknown, pattern: RegExp, replacement: string): unknown {
-  if (typeof node === "string") return node.replace(pattern, replacement);
-  if (Array.isArray(node)) return node.map((child) => replaceText(child, pattern, replacement));
+function rewriteText(node: unknown, edit: (text: string) => string): unknown {
+  if (typeof node === "string") return edit(node);
+  if (Array.isArray(node)) return node.map((child) => rewriteText(child, edit));
   if (!isRecord(node)) return node;
   return Object.fromEntries(
     Object.entries(node).map(([key, value]) => [
       key,
-      TEXT_KEYS.has(key) ? replaceText(value, pattern, replacement) : value,
+      TEXT_KEYS.has(key) ? rewriteText(value, edit) : value,
     ]),
   );
 }
@@ -171,6 +172,11 @@ const BY_VALUE = {
  * `names` matches an element by its `name` and `items` matches the element
  * itself, which is what a list of plain strings needs — the `Snow Maiden` (CoS)
  * drops "cold" from her parent's resistances. Upstream writes one or the other.
+ *
+ * `force` waives the check, for a removal written against many entries rather
+ * than one: the Dracolich template drops "Amphibious", which only some of the
+ * dragons it is applied to have. It is the one use in the data, and the reason a
+ * typo has somewhere to hide, so it stays opt-in.
  */
 function removeFrom(
   entry: Entry,
@@ -191,7 +197,7 @@ function removeFrom(
   // Each one, not the total removed: two elements sharing a name would otherwise
   // cover for a third that matches nothing, which is the typo.
   const absent = wanted.filter((value) => !held.has(match.wanted(value)));
-  if (absent.length > 0) {
+  if (absent.length > 0 && op.force !== true) {
     throw new Error(
       `${context}: removeArr names ${absent.map((value) => `"${String(value)}"`).join(", ")}, which ${property} does not hold`,
     );
@@ -234,11 +240,129 @@ function rewrite(
     throw new Error(`${context}: replaceTxt has no ${property} to rewrite`);
   }
   const flags = typeof op.flags === "string" ? op.flags : "";
-  entry[property] = replaceText(target, new RegExp(op.replace, `g${flags}`), op.with);
+  const pattern = new RegExp(op.replace, `g${flags}`);
+  const replacement = op.with;
+  entry[property] = rewriteText(target, (text) => text.replace(pattern, replacement));
 }
+
+/**
+ * Shifts every `{@hit}` or `{@dc}` under one property, which is where a creature's
+ * arithmetic actually sits: a −2 to attack rolls is not a field on the stat block
+ * but a number inside each attack's prose.
+ *
+ * An operand that is not a plain integer is refused rather than left standing. The
+ * only other thing upstream writes there is a `_versions` placeholder such as
+ * `<$to_hit__str$>`, and a shifted block that silently kept an unshifted number
+ * reads as a working mod.
+ */
+function shiftTag(entry: Entry, property: string, tag: string, op: Entry, context: string): void {
+  const mode = String(op.mode);
+  if (typeof op.scalar !== "number") throw new Error(`${context}: ${mode} needs a scalar`);
+  const scalar = op.scalar;
+  const pattern = new RegExp(`\\{@${tag} ([^}]*)\\}`, "g");
+
+  entry[property] = rewriteText(entry[property], (text) =>
+    text.replace(pattern, (_whole, operand: string) => {
+      if (!/^[+-]?\d+$/.test(operand)) {
+        throw new Error(`${context}: ${mode} cannot shift {@${tag} ${operand}}`);
+      }
+      const shifted = Number(operand) + scalar;
+      // `{@hit +7}` and `{@hit 7}` both occur and render alike, so the operand
+      // keeps the form upstream wrote it in.
+      return `{@${tag} ${operand.startsWith("+") ? signed(shifted) : String(shifted)}}`;
+    }),
+  );
+}
+
+/** The keys inside a property one of the `Prop` modes edits — `*` is every key it holds. */
+function propsToEdit(target: Entry, op: Entry, context: string): string[] {
+  const prop = op.prop;
+  if (typeof prop !== "string") throw new Error(`${context}: ${String(op.mode)} needs a prop`);
+  return prop === "*" ? Object.keys(target) : [prop];
+}
+
+/** What a value the mode cannot compute over raises. */
+type Refuse = () => never;
+
+function wrapValue(value: unknown, op: Entry, refuse: Refuse): string {
+  if (typeof value !== "string") refuse();
+  const prefix = typeof op.prefix === "string" ? op.prefix : "";
+  const suffix = typeof op.suffix === "string" ? op.suffix : "";
+  return `${prefix}${String(value)}${suffix}`;
+}
+
+function scaleValue(value: unknown, op: Entry, scalar: number, refuse: Refuse): number {
+  if (typeof value !== "number") refuse();
+  const scaled = (value as number) * scalar;
+  return op.floor === true ? Math.floor(scaled) : scaled;
+}
+
+function shiftValue(value: unknown, scalar: number, refuse: Refuse): number | string {
+  if (typeof value === "number") return value + scalar;
+  // A bonus is written signed, and stays signed once shifted.
+  if (typeof value === "string" && /^[+-]?\d+$/.test(value)) return signed(Number(value) + scalar);
+  return refuse();
+}
+
+/**
+ * One value, edited by whichever of the three `Prop` modes named it.
+ *
+ * A value the mode cannot compute over is refused: `skill` carries an `other` key
+ * whose value is a list of conditional bonuses, and a `*` that skipped it would
+ * scale the printed skills and leave one of them alone.
+ */
+function editValue(value: unknown, op: Entry, path: string, context: string): unknown {
+  const mode = String(op.mode);
+  const refuse: Refuse = () => {
+    throw new Error(`${context}: ${mode} cannot edit ${path}`);
+  };
+
+  if (mode === "prefixSuffixStringProp") return wrapValue(value, op, refuse);
+  if (typeof op.scalar !== "number") throw new Error(`${context}: ${mode} needs a scalar`);
+  if (mode === "scalarMultProp") return scaleValue(value, op, op.scalar, refuse);
+  return shiftValue(value, op.scalar, refuse);
+}
+
+/**
+ * Adds, multiplies or wraps values inside a property's object — the −2 on every
+ * saving throw a reduced-threat creature is proficient in, and the halved average
+ * hit points beside the formula that says so.
+ */
+function editProps(entry: Entry, property: string, op: Entry, context: string): void {
+  const target = entry[property];
+  if (!isRecord(target)) {
+    throw new Error(
+      `${context}: ${String(op.mode)} needs ${property} to be an object, found ${typeof target}`,
+    );
+  }
+  const edited: Entry = { ...target };
+  for (const prop of propsToEdit(target, op, context)) {
+    edited[prop] = editValue(edited[prop], op, `${property}.${prop}`, context);
+  }
+  entry[property] = edited;
+}
+
+/**
+ * The modes that scale what a property already holds, rather than splicing or
+ * rewriting it.
+ *
+ * A property the creature lacks is nothing for one of these to scale, and every
+ * template carrying them names more properties than any one creature has: the
+ * Reduced Threat template shifts `save`, `skill`, `legendary` and `variant`, and
+ * the reduced basilisk has none of the four. `replaceTxt` refuses the same case
+ * because it assigns unconditionally, where these return.
+ */
+const SCALAR_MODES = new Set([
+  "scalarAddHit",
+  "scalarAddDc",
+  "scalarAddProp",
+  "scalarMultProp",
+  "prefixSuffixStringProp",
+]);
 
 function applyOperation(entry: Entry, property: string, op: Entry, context: string): void {
   const target = entry[property];
+  if (target === undefined && SCALAR_MODES.has(String(op.mode))) return;
   const list = listToSplice(target, property, op, context);
   const items = asArray(op.items);
   switch (op.mode) {
@@ -274,6 +398,17 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
     case "replaceTxt":
       rewrite(entry, property, target, op, context);
       return;
+    case "scalarAddHit":
+      shiftTag(entry, property, "hit", op, context);
+      return;
+    case "scalarAddDc":
+      shiftTag(entry, property, "dc", op, context);
+      return;
+    case "scalarAddProp":
+    case "scalarMultProp":
+    case "prefixSuffixStringProp":
+      editProps(entry, property, op, context);
+      return;
     default:
       throw new Error(`${context}: unsupported _mod mode "${String(op.mode)}"`);
   }
@@ -307,6 +442,15 @@ function applyToEntry(entry: Entry, op: Entry, context: string): void {
       return;
     case "addSkills":
       addSkills(entry, op, context);
+      return;
+    case "addSenses":
+      addSenses(entry, op, context);
+      return;
+    case "maxSize":
+      capSize(entry, op, context);
+      return;
+    case "scalarMultXp":
+      multiplyXp(entry, op, context);
       return;
     case "addSpells":
     case "replaceSpells":

@@ -249,12 +249,12 @@ describe("resolveCopies", () => {
             {
               name: "B",
               source: "PHB",
-              _copy: { name: "A", source: "PHB", _mod: { entries: { mode: "scalarAddHit" } } },
+              _copy: { name: "A", source: "PHB", _mod: { entries: { mode: "scalarSubtractArr" } } },
             },
           ),
           "data/backgrounds.json",
         ),
-      ).toThrow('unsupported _mod mode "scalarAddHit"');
+      ).toThrow('unsupported _mod mode "scalarSubtractArr"');
     });
 
     it("refuses an array mode with no items rather than splicing in undefined", () => {
@@ -828,8 +828,8 @@ describe("resolveCopies", () => {
 
     it("refuses a whole-entry mode it does not implement", () => {
       expect(() =>
-        child({ _: { mode: "addSenses", senses: {} } }, { name: "Parent", source: "MM" }),
-      ).toThrow('unsupported whole-entry _mod mode "addSenses"');
+        child({ _: { mode: "addAllSkills" } }, { name: "Parent", source: "MM" }),
+      ).toThrow('unsupported whole-entry _mod mode "addAllSkills"');
     });
 
     /** `Cat Skeleton` (CoS) erases the vulnerability its parent has this way. */
