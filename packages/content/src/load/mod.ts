@@ -297,6 +297,11 @@ const isWildcard = (property: string): boolean => property === "*" || property =
 /** One operation, whichever of the three kinds of property it was written under. */
 function applyOne(entry: Entry, property: string, op: unknown, context: string): void {
   if (typeof op === "string") {
+    // Ahead of the shorthand, which would delete the key `*` and report nothing,
+    // an entry having no such property. A wildcard names no property to remove.
+    if (isWildcard(property)) {
+      throw new Error(`${context}: _mod.${property} cannot be "${op}"`);
+    }
     applyShorthand(entry, property, op, context);
   } else if (!isRecord(op)) {
     throw new Error(`${context}: _mod.${property} is not an operation`);
@@ -326,16 +331,29 @@ function applyOne(entry: Entry, property: string, op: unknown, context: string):
  * "(40 ft. in tiger form)" where its prose says jaguar. Stale text in a machine
  * field is the cheaper of the two, and the invariant this file already states —
  * rewriting prose must not rewrite a link — is the one that decides it.
+ *
+ * The ceiling is that this is a hand-kept list, so a section upstream adds is
+ * skipped in silence, which is the failure it fixes running the other way. The
+ * header and note keys are here for that reason rather than because a `*` reaches
+ * them: `reactionNote` reads "Charmayne can take up to three reactions per round",
+ * a creature's name in free text, and leaving a sibling out is how the gap starts.
+ * The way out is a fixture asserting the set against a rebuilt corpus, which needs
+ * the vendored data CI does not fetch.
  */
 const PROSE_SECTIONS = [
   "action",
+  "actionNote",
   "bonus",
   "entries",
   "legendary",
   "legendaryHeader",
   "mythic",
   "mythicHeader",
+  "pbNote",
   "reaction",
+  "reactionHeader",
+  "reactionNote",
+  "sizeNote",
   "spellcasting",
   "trait",
   "variant",

@@ -752,6 +752,34 @@ describe("resolveCopies", () => {
       ]);
     });
 
+    /**
+     * `X01` (ToFW) is the entry that needs this: its `*` renames the hexton, and
+     * the sentence above its reaction list is the only place the old name is left
+     * if a header is not swept alongside the section it heads.
+     */
+    it("sweeps a section's header and note as well as the section", () => {
+      const renamed = child(
+        { "*": { mode: "replaceTxt", replace: "The hexton", with: "X01", flags: "i" } },
+        {
+          name: "Parent",
+          source: "MM",
+          reactionHeader: ["The hexton can take up to three reactions per round."],
+          reaction: [{ name: "Parry", entries: ["The hexton adds 3 to its AC."] }],
+          pbNote: "equals the hexton's bonus",
+        },
+      );
+
+      expect(renamed.reactionHeader).toEqual(["X01 can take up to three reactions per round."]);
+      expect(renamed.reaction).toEqual([{ name: "Parry", entries: ["X01 adds 3 to its AC."] }]);
+      expect(renamed.pbNote).toBe("equals X01's bonus");
+    });
+
+    it.each(["*", "_"])("refuses a bare word under %s, which names no property", (wildcard) => {
+      expect(() => child({ [wildcard]: "remove" }, { name: "Parent", source: "MM" })).toThrow(
+        `_mod.${wildcard} cannot be "remove"`,
+      );
+    });
+
     it("writes a _ setProp at the dotted path it names", () => {
       const written = child(
         { _: { mode: "setProp", prop: "apply._root.type", value: { type: "humanoid" } } },
