@@ -304,6 +304,11 @@ CREATE INDEX granted_optional_features_by_type ON granted_optional_features (fea
 -- pantheon, and which nothing else in the catalog does. A kind without one
 -- stores the empty string, because a STRICT table makes every PRIMARY KEY
 -- column NOT NULL and there is no other way to write "this kind has none".
+--
+-- name holds what a reference to the row spells, which for an itemProperty and
+-- an itemType is the abbreviation: 'M', never 'Melee Weapon'. A query naming the
+-- human label finds nothing and reports no error, so it reads that label out of
+-- json. load/lookups.ts holds the rule.
 CREATE TABLE lookups (
   kind      TEXT NOT NULL,
   name      TEXT NOT NULL,

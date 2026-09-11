@@ -119,12 +119,21 @@ describe("the lookups loader", () => {
 
     const db = open();
     const named = db
-      .prepare("SELECT name FROM lookups WHERE kind = 'itemProperty' AND source = 'PHB'")
+      .prepare(
+        "SELECT kind || ' ' || name FROM lookups WHERE kind IN ('itemProperty', 'itemType') ORDER BY kind, name",
+      )
       .pluck()
       .all() as string[];
     db.close();
 
-    expect(named).toEqual(["2H", "S"]);
+    expect(named).toEqual([
+      "itemProperty 2H",
+      "itemProperty 2H",
+      "itemProperty S",
+      "itemType AIR",
+      "itemType M",
+      "itemType SHP",
+    ]);
   });
 
   it("resolves an itemType _copy whose parent is named by abbreviation", () => {

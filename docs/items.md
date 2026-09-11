@@ -69,7 +69,7 @@ closes that one — safe here, because no two abbreviations collide once case is
 
 **`itemEntry` and `itemTypeAdditionalEntries` are loaded although no `{@tag}` reaches
 them.** An item's rendered text needs both: `items.json` and `magicvariants.json` carry
-123 `{#itemEntry Name|SOURCE}` references, and the two additional-entry rows attach to
+122 `{#itemEntry Name|SOURCE}` references, and the two additional-entry rows attach to
 every item whose type their `appliesTo` names. Expanding either into an item's text is
 the renderer's half; the rows are here so that half is a query rather than a second ETL
 change.
