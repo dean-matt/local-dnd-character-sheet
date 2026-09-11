@@ -29,6 +29,7 @@ export default defineConfig({
           // runner spends 100 s over a suite that takes 4 s here — enough for the
           // 5 s default to fail a passing test. 30 s is 300 times the slowest test
           // here, so a hang still fails; the hooks share it, making the same calls.
+          // A database test in another package needs its own project saying this.
           testTimeout: 30_000,
           hookTimeout: 30_000,
         },
