@@ -66,8 +66,8 @@ export function editionOf(
 ): Edition {
   const declared = entry.edition;
   if (declared === undefined) return fromSource(source);
-  if (declared !== "classic" && declared !== "one") {
-    throw new Error(`edition ${JSON.stringify(declared)} is neither classic nor one`);
+  if (!EDITIONS.includes(declared as Edition)) {
+    throw new Error(`edition ${JSON.stringify(declared)} is neither ${EDITIONS.join(" nor ")}`);
   }
-  return declared;
+  return declared as Edition;
 }

@@ -13,27 +13,25 @@ export const SIZES = ["tiny", "small", "medium", "large", "huge", "gargantuan"] 
 
 export type Size = (typeof SIZES)[number];
 
-/**
- * A `Map`, so a string outside the vocabulary throws rather than resolving an
- * inherited key. Upstream spells sizes `T` through `G`, which the caller translates.
- */
-const SIZE_MULTIPLIER = new Map<Size, number>([
-  ["tiny", 0.5],
-  ["small", 1],
-  ["medium", 1],
-  ["large", 2],
-  ["huge", 4],
-  ["gargantuan", 8],
-]);
+/** Keyed by `Size`, so adding a size to the vocabulary fails to compile until it lands here. */
+const SIZE_MULTIPLIER: Record<Size, number> = {
+  tiny: 0.5,
+  small: 1,
+  medium: 1,
+  large: 2,
+  huge: 4,
+  gargantuan: 8,
+};
 
 const POUNDS_PER_STRENGTH_POINT = 15;
 
+/** Upstream spells sizes `T` through `G`, which the caller translates. */
 function multiplierFor(size: Size): number {
-  const multiplier = SIZE_MULTIPLIER.get(size);
-  if (multiplier === undefined) {
+  // `hasOwn` rather than a truthiness check, so an inherited key cannot answer for a size.
+  if (!Object.hasOwn(SIZE_MULTIPLIER, size)) {
     throw new RangeError(`Unknown size "${size}"`);
   }
-  return multiplier;
+  return SIZE_MULTIPLIER[size];
 }
 
 /** Pounds, and fractional for a Tiny creature — upstream's own table reads "Str. x 7.5". */
@@ -56,12 +54,16 @@ export type EncumbranceThresholds = {
  * the first and 20 feet at the second, which also imposes disadvantage on Strength,
  * Dexterity and Constitution rolls.
  *
- * Flat multiples of the Strength score: the size rule scales carrying, pushing,
- * dragging and lifting, and names these nowhere.
+ * Flat multiples of the Strength score, because the size rule scales carrying,
+ * pushing, dragging and lifting and names these nowhere. Size still enters through
+ * the ceiling the rule does name — heavy encumbrance runs "up to your maximum
+ * carrying capacity", which for a Tiny creature arrives first and leaves the band
+ * empty rather than inverted.
  */
-export function encumbranceThresholds(strengthScore: number): EncumbranceThresholds {
+export function encumbranceThresholds(strengthScore: number, size: Size): EncumbranceThresholds {
+  const capacity = carryingCapacity(strengthScore, size);
   return {
-    encumbered: strengthScore * 5,
-    heavilyEncumbered: strengthScore * 10,
+    encumbered: Math.min(strengthScore * 5, capacity),
+    heavilyEncumbered: Math.min(strengthScore * 10, capacity),
   };
 }

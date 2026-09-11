@@ -3,6 +3,7 @@ import {
   carryingCapacity,
   encumbranceThresholds,
   pushDragLiftCapacity,
+  SIZES,
   type Size,
 } from "./carrying.ts";
 
@@ -46,15 +47,24 @@ describe("encumbranceThresholds", () => {
     [14, 70, 140],
     [1, 5, 10],
   ])("a Strength of %i is encumbered at %i and heavily at %i", (score, encumbered, heavy) => {
-    expect(encumbranceThresholds(score)).toEqual({
+    expect(encumbranceThresholds(score, "medium")).toEqual({
       encumbered,
       heavilyEncumbered: heavy,
     });
   });
 
-  it("stays under the weight the same creature can carry", () => {
-    expect(encumbranceThresholds(14).heavilyEncumbered).toBeLessThan(
-      carryingCapacity(14, "medium"),
-    );
+  it("stops a Tiny creature at the weight it can carry", () => {
+    expect(encumbranceThresholds(14, "tiny")).toEqual({
+      encumbered: 70,
+      heavilyEncumbered: carryingCapacity(14, "tiny"),
+    });
+  });
+
+  it.each(SIZES)("never passes what a %s creature can carry", (size) => {
+    for (const score of [1, 8, 14, 20, 30]) {
+      const { encumbered, heavilyEncumbered } = encumbranceThresholds(score, size);
+      expect(heavilyEncumbered).toBeLessThanOrEqual(carryingCapacity(score, size));
+      expect(encumbered).toBeLessThanOrEqual(heavilyEncumbered);
+    }
   });
 });

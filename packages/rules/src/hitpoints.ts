@@ -21,6 +21,7 @@ export type HitPointLevel = {
 
 /** The fixed value a class table prints, which is the die's average rounded up. */
 export function averageHitPoints(die: HitDie): number {
+  assertHitDie(die);
   return Math.floor(die / 2) + 1;
 }
 

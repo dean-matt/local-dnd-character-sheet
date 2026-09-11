@@ -50,6 +50,9 @@ importers:
 
   packages/api:
     dependencies:
+      '@dnd/rules':
+        specifier: workspace:*
+        version: link:../rules
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.5)

@@ -14,13 +14,14 @@
  * Cascading deletes need `PRAGMA foreign_keys = ON`, which SQLite leaves off by
  * default. Open these databases through `./client.ts`, never directly.
  */
+import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const characters = sqliteTable("characters", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  edition: text("edition", { enum: ["classic", "one"] }).notNull(),
+  edition: text("edition", { enum: EDITIONS }).notNull(),
   level: integer("level").notNull(),
   definition: text("definition", { mode: "json" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
