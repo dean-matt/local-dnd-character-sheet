@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { abilityModifier, proficiencyBonus } from "./core.ts";
+import { abilityModifier, passiveScore, proficiencyBonus } from "./core.ts";
 
 describe("abilityModifier", () => {
   it.each([
@@ -30,5 +30,23 @@ describe("proficiencyBonus", () => {
 
   it.each([0, 21, -1])("rejects level %i", (level) => {
     expect(() => proficiencyBonus(level)).toThrow(RangeError);
+  });
+});
+
+describe("passiveScore", () => {
+  it.each([
+    [2, 2, 14],
+    [0, 0, 10],
+    [-1, 0, 9],
+  ])("a modifier of %i and proficiency of %i gives %i", (modifier, proficiency, expected) => {
+    expect(passiveScore(modifier, proficiency)).toBe(expected);
+  });
+
+  it("doubles for expertise without a second function", () => {
+    expect(passiveScore(2, proficiencyBonus(1) * 2)).toBe(16);
+  });
+
+  it("rounds half of an odd proficiency bonus down", () => {
+    expect(passiveScore(2, proficiencyBonus(5) / 2)).toBe(13);
   });
 });

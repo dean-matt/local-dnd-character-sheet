@@ -18,12 +18,10 @@
  * 60 backgrounds and 18 races declare an `edition` of their own, and a loader
  * over either should let that win over this.
  */
+import { EDITIONS, type Edition } from "@dnd/rules";
 import { type Entry, isRecord } from "./json.ts";
 
-export type Edition = "classic" | "one";
-
-/** Both rulesets, for a pool a query spans rather than picks one of. */
-export const EDITIONS: Edition[] = ["classic", "one"];
+export { EDITIONS, type Edition };
 
 const ONE_PUBLISHED_FROM = "2024-09-17";
 
@@ -60,6 +58,10 @@ export function editions(sources: Map<string, unknown>): (source: string) => Edi
   return (source) => (one.has(source) ? "one" : "classic");
 }
 
+function isEdition(value: unknown): value is Edition {
+  return EDITIONS.some((edition) => edition === value);
+}
+
 /** An entry's own `edition` where it declares one, and its source's otherwise. */
 export function editionOf(
   entry: Entry,
@@ -68,8 +70,8 @@ export function editionOf(
 ): Edition {
   const declared = entry.edition;
   if (declared === undefined) return fromSource(source);
-  if (declared !== "classic" && declared !== "one") {
-    throw new Error(`edition ${JSON.stringify(declared)} is neither classic nor one`);
+  if (!isEdition(declared)) {
+    throw new Error(`edition ${JSON.stringify(declared)} is neither ${EDITIONS.join(" nor ")}`);
   }
   return declared;
 }

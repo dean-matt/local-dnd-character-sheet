@@ -5,6 +5,7 @@
  * official content can never touch your homebrew. Rows carry source "HB" and are
  * merged with catalog rows at query time.
  */
+import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
@@ -15,7 +16,7 @@ export const homebrewItems = sqliteTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    edition: text("edition", { enum: ["classic", "one"] }).notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
     type: text("type"),
     rarity: text("rarity"),
     requiresAttunement: integer("requires_attunement", { mode: "boolean" })
@@ -32,7 +33,7 @@ export const homebrewSpells = sqliteTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    edition: text("edition", { enum: ["classic", "one"] }).notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
     level: integer("level").notNull(),
     school: text("school").notNull(),
     concentration: integer("concentration", { mode: "boolean" }).notNull().default(false),

@@ -2,7 +2,7 @@
   "name": "@dnd/rules",
   "version": "0.0.0",
   "private": true,
-  "description": "5e rules arithmetic over primitives — proficiency, spell save DC, multiclass caster level and slots, rest resets",
+  "description": "5e rules arithmetic over primitives — proficiency, passive scores, spell save DC, multiclass caster level and slots, hit points, carrying capacity, rest resets",
   "keywords": [
     "dnd",
     "5e",
