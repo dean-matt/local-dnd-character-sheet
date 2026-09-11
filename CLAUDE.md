@@ -65,6 +65,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 
 | Skill | Use when |
 |---|---|
+| `work-issue` | Taking any issue from open to a reviewed pull request |
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `add-endpoint` | Adding an API route, end to end |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
