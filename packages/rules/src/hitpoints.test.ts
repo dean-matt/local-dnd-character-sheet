@@ -70,6 +70,10 @@ describe("maxHitPoints", () => {
   it.each([0, 9, 1.5])("rejects %s as a roll of a d8", (rolled) => {
     expect(() => maxHitPoints([{ die: 8 }, { die: 8, rolled }], 0)).toThrow(RangeError);
   });
+
+  it("rejects a corrupt roll on the first level, which otherwise discards it", () => {
+    expect(() => maxHitPoints([{ die: 8, rolled: 40 }], 0)).toThrow(RangeError);
+  });
 });
 
 describe("hitDiceRecovered", () => {
@@ -81,18 +85,25 @@ describe("hitDiceRecovered", () => {
     [9, 4],
     [20, 10],
   ])("a classic long rest returns %i of %i dice", (total, expected) => {
-    expect(hitDiceRecovered(total, "classic")).toBe(expected);
+    expect(hitDiceRecovered([total], "classic")).toBe(expected);
   });
 
   it.each([1, 8, 20])("a 2024 long rest returns all %i dice", (total) => {
-    expect(hitDiceRecovered(total, "one")).toBe(total);
+    expect(hitDiceRecovered([total], "one")).toBe(total);
+  });
+
+  it("halves the pools together, not one by one", () => {
+    expect(hitDiceRecovered([1, 1], "classic")).toBe(1);
+    expect(hitDiceRecovered([2, 2], "classic")).toBe(2);
+    expect(hitDiceRecovered([5, 5], "classic")).toBe(5);
   });
 
   it.each(["classic", "one"] as const)("returns nothing from an empty pool under %s", (edition) => {
-    expect(hitDiceRecovered(0, edition)).toBe(0);
+    expect(hitDiceRecovered([], edition)).toBe(0);
+    expect(hitDiceRecovered([0, 0], edition)).toBe(0);
   });
 
   it.each([-1, 1.5])("rejects a pool of %s", (total) => {
-    expect(() => hitDiceRecovered(total, "classic")).toThrow(RangeError);
+    expect(() => hitDiceRecovered([1, total], "classic")).toThrow(RangeError);
   });
 });

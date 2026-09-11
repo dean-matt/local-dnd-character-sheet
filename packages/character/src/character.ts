@@ -10,10 +10,10 @@
  * rebuilding `content.db` updates every character. Homebrew is the exception:
  * nothing else owns it, so it is referenced by its row id.
  */
-import { RESET_TRIGGERS } from "@dnd/rules";
+import { EDITIONS, HIT_DICE, RESET_TRIGGERS } from "@dnd/rules";
 import { z } from "zod";
 
-export const editionSchema = z.enum(["classic", "one"]);
+export const editionSchema = z.enum(EDITIONS);
 
 export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 export const abilitySchema = z.enum(ABILITIES);
@@ -120,7 +120,7 @@ export const hitPointsSchema = z.object({
 /** Grouped by die size, not by class: two d8 classes share one pool at rest. */
 export const hitDicePoolSchema = z
   .object({
-    die: z.literal([6, 8, 10, 12]),
+    die: z.literal(HIT_DICE),
     total: z.int().min(0),
     remaining: z.int().min(0),
   })

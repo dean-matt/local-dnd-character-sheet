@@ -7,6 +7,8 @@
  * longer knows.
  */
 
+import type { Edition } from "./edition.ts";
+
 export const HIT_DICE = [6, 8, 10, 12] as const;
 
 export type HitDie = (typeof HIT_DICE)[number];
@@ -16,9 +18,6 @@ export type HitPointLevel = {
   die: HitDie;
   rolled?: number;
 };
-
-/** Which ruleset the character plays under. The two long rests return hit dice differently. */
-export type Edition = "classic" | "one";
 
 /** The fixed value a class table prints, which is the die's average rounded up. */
 export function averageHitPoints(die: HitDie): number {
@@ -33,16 +32,17 @@ function assertHitDie(die: number): asserts die is HitDie {
 
 function faceRolled(level: HitPointLevel, isFirstLevel: boolean): number {
   assertHitDie(level.die);
+  // Checked even where the first level discards it, so a corrupt stored roll cannot
+  // round-trip at the one position that ignores it.
+  if (level.rolled !== undefined) {
+    if (!Number.isInteger(level.rolled) || level.rolled < 1 || level.rolled > level.die) {
+      throw new RangeError(`A d${level.die} rolls 1-${level.die}, got ${level.rolled}`);
+    }
+  }
   if (isFirstLevel) {
     return level.die;
   }
-  if (level.rolled === undefined) {
-    return averageHitPoints(level.die);
-  }
-  if (!Number.isInteger(level.rolled) || level.rolled < 1 || level.rolled > level.die) {
-    throw new RangeError(`A d${level.die} rolls 1-${level.die}, got ${level.rolled}`);
-  }
-  return level.rolled;
+  return level.rolled ?? averageHitPoints(level.die);
 }
 
 /**
@@ -68,17 +68,23 @@ export function maxHitPoints(
 }
 
 /**
- * The most hit dice a long rest returns — the caller recovers the lesser of this
- * and the dice spent. The 2014 rest returns half the pool rounded down,
- * never fewer than one; the 2024 rest returns all of it.
+ * The most hit dice a long rest returns, given every pool the character holds —
+ * the caller recovers the lesser of this and the dice spent, and picks the sizes.
+ *
+ * Pools rather than one total, because the 2014 rest halves the character's dice
+ * and not each size's: a d10 pool and a d6 pool of one die each return one die
+ * between them, where halving them apart would return two. The 2024 rest returns
+ * every die, and an empty pool returns none.
  */
-export function hitDiceRecovered(total: number, edition: Edition): number {
-  if (!Number.isInteger(total) || total < 0) {
-    throw new RangeError(`A hit dice pool holds 0 or more dice, got ${total}`);
-  }
-  if (edition === "one") {
+export function hitDiceRecovered(pools: readonly number[], edition: Edition): number {
+  const total = pools.reduce((sum, pool) => {
+    if (!Number.isInteger(pool) || pool < 0) {
+      throw new RangeError(`A hit dice pool holds 0 or more dice, got ${pool}`);
+    }
+    return sum + pool;
+  }, 0);
+  if (edition === "one" || total === 0) {
     return total;
   }
-  // The minimum of one floors the halving, rather than granting a die from an empty pool.
-  return total === 0 ? 0 : Math.max(1, Math.floor(total / 2));
+  return Math.max(1, Math.floor(total / 2));
 }

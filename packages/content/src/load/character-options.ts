@@ -62,7 +62,7 @@ function poolKey(edition: Edition, featureType: string): string {
 }
 
 /** Whether any of the editions named offers an option of this type. */
-function carriedBy(featureType: string, editions: Edition[], pool: Set<string>): boolean {
+function carriedBy(featureType: string, editions: readonly Edition[], pool: Set<string>): boolean {
   return editions.some((edition) => pool.has(poolKey(edition, featureType)));
 }
 

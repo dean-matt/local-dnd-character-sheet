@@ -13,7 +13,10 @@ export const SIZES = ["tiny", "small", "medium", "large", "huge", "gargantuan"] 
 
 export type Size = (typeof SIZES)[number];
 
-/** A `Map`, because a size can arrive as a string from a catalog row rather than a literal. */
+/**
+ * A `Map`, so a string outside the vocabulary throws rather than resolving an
+ * inherited key. Upstream spells sizes `T` through `G`, which the caller translates.
+ */
 const SIZE_MULTIPLIER = new Map<Size, number>([
   ["tiny", 0.5],
   ["small", 1],

@@ -18,12 +18,10 @@
  * 60 backgrounds and 18 races declare an `edition` of their own, and a loader
  * over either should let that win over this.
  */
+import { EDITIONS, type Edition } from "@dnd/rules";
 import { type Entry, isRecord } from "./json.ts";
 
-export type Edition = "classic" | "one";
-
-/** Both rulesets, for a pool a query spans rather than picks one of. */
-export const EDITIONS: Edition[] = ["classic", "one"];
+export { EDITIONS, type Edition };
 
 const ONE_PUBLISHED_FROM = "2024-09-17";
 

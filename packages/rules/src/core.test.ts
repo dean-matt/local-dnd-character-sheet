@@ -45,4 +45,8 @@ describe("passiveScore", () => {
   it("doubles for expertise without a second function", () => {
     expect(passiveScore(2, proficiencyBonus(1) * 2)).toBe(16);
   });
+
+  it("rounds half of an odd proficiency bonus down", () => {
+    expect(passiveScore(2, proficiencyBonus(5) / 2)).toBe(13);
+  });
 });
