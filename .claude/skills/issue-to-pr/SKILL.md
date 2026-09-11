@@ -1,6 +1,6 @@
 ---
-name: work-issue
-description: Take one issue from open to a reviewed pull request. Use when asked to work, build, implement or pick up an issue, or to decide which issue is next. Runs the whole sequence — branch, implement, prose pass, pull request, self-review — and stops before merging.
+name: issue-to-pr
+description: Take one issue in this repository from open to a reviewed pull request — branch, implement, pnpm check, prose pass, pull request, then review the pull request and the fixes made to it. Use when asked to work, build, implement or pick up an issue, or to decide which issue is next. Defers to CONTRIBUTING.md, and stops before merging.
 ---
 
 # Working an issue
