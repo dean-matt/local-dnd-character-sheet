@@ -42,7 +42,11 @@ blocker that closed this morning leaves the label behind.
 9. **Commit and push.** One concern per commit.
 10. **Open the pull request** with `gh pr create`, body linking the issue.
 11. **Review it** with `/code-review <pr>`, then apply what survives.
-12. **Stop.** Report what landed and what the review found. The merge is the user's
+12. **Review the fixes** with `/code-review <before>..<after>`, and keep going until a
+    pass is clean. Not a judgment call — the fixes are the least-reviewed code in the
+    branch, and a fix that covers one instance of a class rather than the class is
+    the way this goes wrong.
+13. **Stop.** Report what landed and what each review found. The merge is the user's
     call, every time.
 
 ## The pull request body
@@ -54,6 +58,20 @@ same choice without one reads as a preference.
 
 Close with how it was verified. "`pnpm check` is green" is the floor, not the
 answer: say what was run against the real corpus and what came out.
+
+## Counts are evidence, so source them
+
+A number in a comment, a commit message or a pull request body is the reason the
+code is shaped the way it is, and a reader acts on it. Cite one only from a
+measurement made in this session, and re-run that measurement after any change that
+could move it — a figure quoted from earlier in the conversation is a figure nobody
+checked. It is the same argument `CONTRIBUTING.md` makes about a hand-edited
+fixture: an assertion against a number with no source.
+
+Two ways this goes wrong, both cheap to prevent and invisible once written. Quoting
+a count taken before the fix, as though it described the state after. And reading
+the neighbouring row of your own output — the population that shares a name with
+the one you meant.
 
 ## What this skill will not do
 
