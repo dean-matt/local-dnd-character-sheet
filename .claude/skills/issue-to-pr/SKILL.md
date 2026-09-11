@@ -18,8 +18,9 @@ milestone is backlog, however small it looks, and waits for the user to name it.
 
 Within the live milestone, in order:
 
-1. Drop anything `blocked` whose blocker is still open. Read the blocker rather than
-   the label, which stays behind when the blocker closes.
+1. Drop anything `blocked` whose `## Blocked by` still holds. Read that section
+   rather than the label, which stays behind, and treat a condition it names — not
+   only an issue — as blocking until it is met.
 2. Leave an audit of the milestone's own work until last. It reads code that keeps
    moving until the milestone's final issue lands.
 3. Prefer the issue that builds on what just merged, while that code is fresh.
@@ -40,15 +41,17 @@ blocked, say so and stop rather than starting the milestone below.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
    Tests ride with the code they cover.
 6. **Correct the docs the change made stale**, in the same commit. `docs/` and
-   `CLAUDE.md` both have caps: past one, replace a sentence rather than append.
-7. **Prose pass** with `writing-clearly-and-concisely` over the commit message, the
-   pull request body, and every comment the change touched.
+   `CLAUDE.md` have caps, and a new `docs/` file needs a README row: past a cap,
+   replace a sentence rather than append.
+7. **Prose pass** with `writing-clearly-and-concisely` over the commit message and
+   every comment the change touched.
 8. **`pnpm check`, then commit and push**, once per concern the issue carries. Never
    push past a failure with a note about it, and run it after steps 6 and 7:
    pre-commit runs neither the tests nor the caps.
-9. **Open the pull request** with `gh pr create`, body linking the issue. This is what
-   starts CI; the pushes before it started nothing.
-10. **Review it** with `/code-review <pr>`, then check `git branch --show-current` and
+9. **Open the pull request** with `gh pr create`, body linking the issue and prose
+   passed. This is what starts CI; the pushes before it started nothing.
+10. **Review it** with `/code-review <pr> <level>` — naming the level, which otherwise
+    inherits whatever was typed last — then check `git branch --show-current` and
     return to your branch — a review leaves the tree where it checked out, and a
     detached HEAD commits onto nothing with the branch-name hook silent.
 11. **Apply what survives**, `pnpm check`, prose pass everything the fixes touched,
@@ -57,10 +60,12 @@ blocked, say so and stop rather than starting the milestone below.
 12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
     mislead a reader, or contradict the repo.** Stop otherwise, and stop at the third
     pass regardless: report what the last one found and let the user weigh it. A pass
-    returning only preferences has stopped paying. A red CI goes round the same loop —
-    Windows and the end-to-end tests run nowhere else.
-13. **Stop.** Report what landed, what each review found, and CI on the last push.
-    The merge is the user's call, every time.
+    returning only preferences has stopped paying.
+13. **Repeat them while CI is red**, under no ceiling — it runs the build and the
+    end-to-end tests on Windows as well, none of which `pnpm check` covers.
+14. **Stop** once `gh pr checks --watch` returns, since the push at 11 restarted CI.
+    Report what landed, what each review found, and where CI ended. The merge is the
+    user's call, every time.
 
 ## The pull request body
 
