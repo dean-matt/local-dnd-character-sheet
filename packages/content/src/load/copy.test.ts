@@ -694,40 +694,62 @@ describe("resolveCopies", () => {
 
     /**
      * `Bitter Breath` (BGDIA) is a Horned Devil renamed throughout its stat block.
-     * Upstream writes one rewrite against `*` rather than naming each field that
-     * says "the devil", so every property has to see it — the trait list here,
-     * and the plain string beside it.
+     * Upstream writes one rewrite against `*` rather than naming each section that
+     * says "the devil", so every section holding rules text has to see it.
      */
-    it("applies a * operation to every property", () => {
+    it("applies a * operation to every prose section", () => {
       const renamed = child(
         { "*": { mode: "replaceTxt", replace: "the devil", with: "Bitter Breath", flags: "i" } },
         {
           name: "Parent",
           source: "MM",
-          alignment: "The devil is lawful evil.",
-          trait: [{ name: "Devilish", entries: ["The devil regenerates."] }],
+          trait: [{ name: "Devil's Sight", entries: ["Darkness does not impede the devil."] }],
+          action: [{ name: "Multiattack", entries: ["The devil makes three attacks."] }],
+          reaction: [{ name: "Parry", entries: ["The devil adds 4 to its AC."] }],
         },
       );
 
-      expect(renamed.alignment).toBe("Bitter Breath is lawful evil.");
       expect(renamed.trait).toEqual([
-        { name: "Devilish", entries: ["Bitter Breath regenerates."] },
+        { name: "Devil's Sight", entries: ["Darkness does not impede Bitter Breath."] },
+      ]);
+      expect(renamed.action).toEqual([
+        { name: "Multiattack", entries: ["Bitter Breath makes three attacks."] },
+      ]);
+      expect(renamed.reaction).toEqual([
+        { name: "Parry", entries: ["Bitter Breath adds 4 to its AC."] },
       ]);
     });
 
-    it("leaves the _ keys out of a * operation", () => {
+    /**
+     * A rename let loose on the whole entry rewrites what is not prose, and the
+     * bestiary shows every way that goes wrong at once. `Ctenmiir the Vampire`
+     * (LLK) is the identity case — its `*` replaces "the vampire" with
+     * "Ctenmiir", and its own name already ends in the words being replaced.
+     */
+    it("leaves identity, references and machine fields out of a * operation", () => {
       const renamed = child(
-        { "*": { mode: "replaceTxt", replace: "devil", with: "demon" } },
+        { "*": { mode: "replaceTxt", replace: "the vampire", with: "Ctenmiir", flags: "i" } },
         {
           name: "Parent",
           source: "MM",
-          type: "devil",
-          _versions: [{ name: "A devil variant", source: "MM" }],
+          type: "undead",
+          soundClip: { type: "internal", path: "bestiary/the-vampire.opus" },
+          legendaryGroup: { name: "The Vampire", source: "MM" },
+          ac: [{ ac: 15, condition: "with {@spell the vampire armor}" }],
+          languages: ["The Vampire"],
+          trait: [{ name: "Regeneration", entries: ["The vampire regains 20 hit points."] }],
         },
       );
 
-      expect(renamed.type).toBe("demon");
-      expect(renamed._versions).toEqual([{ name: "A devil variant", source: "MM" }]);
+      expect(renamed.name).toBe("Child");
+      expect(renamed.type).toBe("undead");
+      expect(renamed.soundClip).toEqual({ type: "internal", path: "bestiary/the-vampire.opus" });
+      expect(renamed.legendaryGroup).toEqual({ name: "The Vampire", source: "MM" });
+      expect(renamed.ac).toEqual([{ ac: 15, condition: "with {@spell the vampire armor}" }]);
+      expect(renamed.languages).toEqual(["The Vampire"]);
+      expect(renamed.trait).toEqual([
+        { name: "Regeneration", entries: ["Ctenmiir regains 20 hit points."] },
+      ]);
     });
 
     it("writes a _ setProp at the dotted path it names", () => {

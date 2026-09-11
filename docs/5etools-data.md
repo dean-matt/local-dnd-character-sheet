@@ -68,44 +68,44 @@ actions.json      0
 
 Spells being clean is why they are the right first target for the ETL.
 
-`packages/content/src/load/copy.ts` resolves it as part of reading a loader's sources, so
+`packages/content/src/load/copy.ts` resolves it while a loader's sources are read, so
 loaders only ever see complete records. Every array property is resolved, not the ones
-`_meta.internalCopies` names: 31 files carry a same-file `_copy` without declaring one,
-so that list has never been worth trusting on its own.
+`_meta.internalCopies` names — 31 files carry an undeclared same-file `_copy`.
 
-A parent may be in another file — 1,060 blocks copy that way, every one of them under
-`data/bestiary/` — so the pool is every source the loader declared rather than the
-entry's own file. That set and no wider is what keeps a mapping file from answering:
-`class/foundry.json` carries a second `Battle Master` (PHB), and no loader declares it.
-Names are matched case-insensitively, because upstream's own lookup lowercases a key and
-the data leans on it — `Ougalop` (OotA) copies `Kuo-Toa` (MM), which upstream spells
-`Kuo-toa`.
+A parent may be in another file: 1,060 blocks copy that way, all under `data/bestiary/`,
+so the pool is every source the loader declared. That set and no wider keeps a mapping
+file from answering — `class/foundry.json` holds a second `Battle Master` (PHB), and no
+loader declares it. Names match case-insensitively, as upstream's own lowercased lookup
+does: `Ougalop` (OotA) copies `Kuo-Toa` (MM), which upstream spells `Kuo-toa`.
 
-Twelve `_mod` modes are applied. Character data uses five — `appendArr`, `prependArr`,
-`insertArr`, `replaceArr` and `replaceTxt`; the bestiary adds `removeArr`,
+Twelve `_mod` modes are applied — character data's five plus `removeArr`,
 `appendIfNotExistsArr`, `setProp`, `addSkills`, `addSpells`, `replaceSpells` and
 `removeSpells`, the last four reading the creature rather than one property and arriving
-under `_`. `*` means every property, and all 802 uses rewrite a creature's name
-throughout its stat block. A bare `"remove"` in place of an operation deletes the
-property.
+under `_`. A bare `"remove"` deletes the property.
+
+**`*` reads as "every property" and is not applied that way.** All 802 uses rename a
+creature, so it sweeps the sections holding rules text and stops. Let loose on the whole
+entry it rewrites what is not prose: `Ctenmiir the Vampire` becomes `Ctenmiir Ctenmiir`
+and keys a monster upstream never printed, `soundClip.path` names audio nobody recorded,
+`ac.condition` asks for `{@spell aarakocra armor}`, and `type`, `languages`, `altArt` and
+`legendaryGroup` stop naming anything. It costs one rewrite upstream made — the
+Werejaguar's speed still reads "(40 ft. in tiger form)".
 
 **A named property's operations run before either wildcard's**, whatever order the block
 was written in. `Flying Dagger` (MM) copies `Flying Sword` with a `*` rewriting "sword"
-to "dagger" and an `action` replacing the element named "Longsword", and upstream writes
-the `*` first — so rewriting first renames that element and the replacement matches
-nothing.
+to "dagger" *and* an `action` replacing the element named "Longsword", the `*` first — so
+rewriting first renames that element and the replacement matches nothing.
 
-What is still refused: an unknown `_mod` mode, a cycle, a parent no declared source
-holds, and a block two entries match. Identity is not always `(name, source)`, and taking
-the first match would clone the wrong entry and say nothing. No block in the corpus is
-ambiguous at the pinned tag — all six `_copy` deities name a pantheon — so that one
-fences the next upstream bump, not today's data.
+Still refused: an unknown mode, a cycle, a parent no declared source holds, and a block
+two entries match. Identity is not always `(name, source)`, and taking the first match
+would clone the wrong entry silently. No block is ambiguous at the pinned tag — all six
+`_copy` deities name a pantheon — so that one fences the next upstream bump.
 
-`_copy._templates` is the one shape resolved without being applied. It names a
-`monsterTemplate` in `bestiary/template.json` rather than a parent, 187 entries carry
-one, and the eight `_mod` modes those templates use appear nowhere else. A monster
-resolves without the traits its template would have added, which costs a thinner row
-rather than a wrong one.
+Two shapes remain. `renameArr` is unimplemented: all 63 uses sit in a bestiary
+`_versions` block, so no `_copy` reaches it, and five bestiary files fail `_versions` for
+that and two other reasons. `_copy._templates` resolves without being applied — it names
+a `monsterTemplate` in `bestiary/template.json`, 187 entries carry one, and the eight
+modes those templates use appear nowhere else. Both cost a thinner row, not a wrong one.
 
 ## `_versions` inheritance
 

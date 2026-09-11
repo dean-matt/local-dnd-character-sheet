@@ -11,11 +11,10 @@
 import { abilityModifier } from "@dnd/rules";
 import { type Entry, isRecord } from "./json.ts";
 
-/** The ability a skill is rolled with. Upstream keys a skill lowercase and unspaced. */
+/** The ability a skill is rolled with. Upstream keys a skill lowercase, spaces and all. */
 const SKILL_ABILITY: Record<string, string> = {
   athletics: "str",
   acrobatics: "dex",
-  sleight: "dex",
   "sleight of hand": "dex",
   stealth: "dex",
   arcana: "int",

@@ -294,17 +294,6 @@ function applyToEntry(entry: Entry, op: Entry, context: string): void {
 /** `*` is every property, `_` the entry itself. Neither is a property an entry has. */
 const isWildcard = (property: string): boolean => property === "*" || property === "_";
 
-/**
- * A named property's operations run before either wildcard's, whatever order the
- * block was written in.
- *
- * `Flying Dagger` (MM) is why: it copies `Flying Sword` with a `*` rewriting
- * "sword" to "dagger" and an `action` replacing the element named "Longsword",
- * and upstream writes the `*` first. Rewriting first renames that element to
- * "Longdagger", so the replacement matches nothing and the build fails on data
- * upstream renders correctly. A wildcard is a sweep over whatever the named
- * operations have left, which is the only order that reads both as written.
- */
 /** One operation, whichever of the three kinds of property it was written under. */
 function applyOne(entry: Entry, property: string, op: unknown, context: string): void {
   if (typeof op === "string") {
@@ -321,14 +310,40 @@ function applyOne(entry: Entry, property: string, op: unknown, context: string):
 }
 
 /**
- * All 802 uses of `*` rename a creature throughout its stat block, where naming
- * each field that mentions it would be a list nobody keeps current. The entry's
- * own `_` keys stay out of it: a `_versions` template is markup a later pass
- * reads, not text this one rewrites.
+ * The stat block sections a `*` operation sweeps: the ones holding rules text,
+ * and nothing else.
+ *
+ * `*` reads as "every property" and cannot be taken that way. All 802 uses rename
+ * a creature — `{replace: "the vampire", with: "Ctenmiir"}` — and a rename let
+ * loose on the whole entry rewrites the parts that are not prose. Against the
+ * real bestiary that corrupts an identity key, a file path, a tag and a
+ * reference: `Ctenmiir the Vampire` becomes `Ctenmiir Ctenmiir`, `soundClip.path`
+ * points at audio that was never recorded, `ac.condition` asks for
+ * `{@spell aarakocra armor}`, and `reprintedAs`, `altArt`, `legendaryGroup` and
+ * `type` stop naming anything.
+ *
+ * It costs one rewrite upstream would have made: the Werejaguar's speed reads
+ * "(40 ft. in tiger form)" where its prose says jaguar. Stale text in a machine
+ * field is the cheaper of the two, and the invariant this file already states —
+ * rewriting prose must not rewrite a link — is the one that decides it.
  */
+const PROSE_SECTIONS = [
+  "action",
+  "bonus",
+  "entries",
+  "legendary",
+  "legendaryHeader",
+  "mythic",
+  "mythicHeader",
+  "reaction",
+  "spellcasting",
+  "trait",
+  "variant",
+];
+
 function applyToEvery(entry: Entry, op: Entry, context: string): void {
-  for (const key of Object.keys(entry)) {
-    if (!key.startsWith("_")) applyOperation(entry, key, op, context);
+  for (const key of PROSE_SECTIONS) {
+    if (entry[key] !== undefined) applyOperation(entry, key, op, context);
   }
 }
 
