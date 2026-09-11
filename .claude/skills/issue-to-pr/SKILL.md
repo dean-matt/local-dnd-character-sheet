@@ -1,6 +1,6 @@
 ---
 name: issue-to-pr
-description: Take one local-dnd-character-sheet issue from open to a reviewed pull request: gh issue develop, implement, pnpm check, prose pass, pull request, then review both the pull request and the fixes to it. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
+description: Take one local-dnd-character-sheet issue from open to a reviewed pull request — gh issue develop, implement, pnpm check, prose pass, pull request, then review both the pull request and the fixes to it. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
 ---
 
 # Issue to pull request
@@ -46,12 +46,14 @@ remains, the next milestone is live.
    pull request body, and every comment the change touched.
 9. **Commit and push.** One concern per commit.
 10. **Open the pull request** with `gh pr create`, body linking the issue.
-11. **Review it** with `/code-review <pr>`. Check `git branch --show-current` before
-    editing anything: the review checks out what it reviewed and leaves it there.
+11. **Review it** with `/code-review <pr>`. It checks out what it reviewed and leaves
+    the tree there, so check `git branch --show-current` and return to your branch
+    before editing anything.
 12. **Apply what survives**, then `pnpm check`, commit and push. Fixes that sit in
     the working tree leave the pull request holding the code the review rejected.
-13. **Review the fixes** with `/code-review <first fix>..<last fix>`, and repeat 12
-    and 13 until a pass comes back clean. Always, not by judgment: the fixes are the
+13. **Review the fixes** with `/code-review <the commit the review read>..HEAD` — a
+    range excludes its left end, so naming the first fix skips it — and repeat 12 and
+    13 until a pass comes back clean. Always, not by judgment: the fixes are the
     least-reviewed code on the branch, and a fix covering one instance of a class
     rather than the class is how this goes wrong.
 14. **Stop.** Report what landed and what each review found. The merge is the user's
