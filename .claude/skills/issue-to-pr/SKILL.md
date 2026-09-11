@@ -51,25 +51,18 @@ blocked, say so and stop rather than starting the milestone below.
    pre-commit runs neither the tests nor the caps.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
-10. **Review it** with `/code-review <pr> <level>` — naming the level, which otherwise
-    inherits whatever was typed last — then check `git branch --show-current` and
-    return to your branch — a review leaves the tree where it checked out, and a
-    detached HEAD commits onto nothing with the branch-name hook silent.
-11. **Apply what survives**, `pnpm check`, prose pass everything the fixes touched,
-    commit and push, and bring the pull request body back in line. Fixes left in the
-    working tree leave the pull request holding the code the review rejected.
+10. **Review it** with `/code-review <pr> <level>` — naming the level, which
+    otherwise inherits whatever was typed last — then return to your branch, since
+    the review leaves the tree where it checked out.
+11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
+    and push, and bring the pull request body back in line. Fixes left in the working
+    tree leave the pull request holding the code the review rejected.
 12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
-    mislead a reader, or contradict the repo.** Stop otherwise, and stop at the third
-    pass regardless: report what the last one found and let the user weigh it. A pass
-    returning only preferences has stopped paying.
-13. **Fix a red CI from its log**, with `gh run view --log-failed`, through 11 rather
-    than through the review, which cannot see the job. CI builds on Linux and Windows
-    and runs the end-to-end tests on Linux, none of which `pnpm check` covers. Three
-    attempts, then report it unsolved: a run reddens on things outside the diff.
-14. **Stop** once `gh pr checks --watch` reports the run for the current head. Started
-    too soon it finds no checks and returns at once, so the head it watched is the
-    claim to make. Report what landed, what each review found, and where CI ended.
-    The merge is the user's call, every time.
+    mislead a reader, or contradict the repo**, three passes at most. A pass returning
+    only preferences has stopped paying.
+13. **Stop.** Report what landed, what each review found, and CI's state. A red run is
+    the user's to weigh — the merge gate blocks on it either way, and the merge is
+    the user's call every time.
 
 ## The pull request body
 
