@@ -59,6 +59,15 @@ describe("the lookups loader", () => {
       "deity Oghma|PHB|Celtic classic",
       "deity Oghma|PHB|Forgotten Realms classic",
       "disease Blinding Sickness|PHB classic",
+      "itemEntry Armor of Resistance|DMG classic",
+      "itemMastery Cleave|XPHB one",
+      "itemProperty 2H|PHB classic",
+      "itemProperty 2H|XPHB one",
+      "itemProperty S|PHB classic",
+      "itemType AIR|DMG classic",
+      "itemType M|XPHB one",
+      "itemType SHP|DMG classic",
+      "itemTypeAdditionalEntries Gaming Set|XGE classic",
       "language Common|PHB classic",
       "language Common|XPHB one",
       "language Draconic|PHB classic",
@@ -105,6 +114,43 @@ describe("the lookups loader", () => {
     expect(entry.title).toBe("the Leg Breaker");
   });
 
+  it("names an item property and an item type by the abbreviation their links spell", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const named = db
+      .prepare(
+        "SELECT kind || ' ' || name FROM lookups WHERE kind IN ('itemProperty', 'itemType') ORDER BY kind, name",
+      )
+      .pluck()
+      .all() as string[];
+    db.close();
+
+    expect(named).toEqual([
+      "itemProperty 2H",
+      "itemProperty 2H",
+      "itemProperty S",
+      "itemType AIR",
+      "itemType M",
+      "itemType SHP",
+    ]);
+  });
+
+  it("resolves an itemType _copy whose parent is named by abbreviation", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const json = db
+      .prepare("SELECT json FROM lookups WHERE kind = 'itemType' AND name = 'AIR'")
+      .pluck()
+      .get() as string;
+    db.close();
+
+    const entry = JSON.parse(json) as { name: string; entries: { name: string }[] };
+    expect(entry.name).toBe("Vehicle (Air)");
+    expect(entry.entries.map((section) => section.name)).toContain("Ship Repair");
+  });
+
   /** The fixture vendor with one file swapped, so a refusal has everything else to read. */
   const vendorHolding = (file: string, contents: unknown): string => {
     const vendorDir = join(workspace, "vendor");
@@ -139,6 +185,21 @@ describe("the lookups loader", () => {
     expect(
       refusal(vendorHolding("data/deities.json", { deity: [{ name: "Oghma", source: "PHB" }] })),
     ).toMatch(/data\/deities\.json deity\[0\]: pantheon is missing or not a string/);
+  });
+
+  it("refuses an item property with no abbreviation, which is the name its link spells", () => {
+    expect(
+      refusal(
+        vendorHolding("data/items-base.json", {
+          baseitem: [],
+          itemProperty: [{ name: "special", source: "PHB" }],
+          itemType: [],
+          itemMastery: [],
+          itemEntry: [],
+          itemTypeAdditionalEntries: [],
+        }),
+      ),
+    ).toMatch(/data\/items-base\.json itemProperty\[0\]: abbreviation is missing or not a string/);
   });
 
   it("fails the build when two entries share a whole key", () => {

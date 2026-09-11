@@ -132,5 +132,150 @@
         }
       ]
     }
+  ],
+  "itemProperty": [
+    {
+      "abbreviation": "2H",
+      "source": "PHB",
+      "page": 147,
+      "reprintedAs": ["2H|XPHB"],
+      "template": "{{prop_name_lower}}",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Two-Handed",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "abbreviation": "2H",
+      "source": "XPHB",
+      "page": 214,
+      "basicRules2024": true,
+      "template": "{{prop_name}}",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Two-Handed",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "special",
+      "abbreviation": "S",
+      "source": "PHB",
+      "page": 147,
+      "template": "{{prop_name_lower}}"
+    }
+  ],
+  "itemType": [
+    {
+      "name": "Vehicle (Water)",
+      "abbreviation": "SHP",
+      "source": "DMG",
+      "page": 119,
+      "reprintedAs": ["SHP|XPHB"],
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Crew",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Passengers",
+          "entries": ["Elided.", "Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Cargo",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Damage Threshold",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Ship Repair",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Vehicle (Air)",
+      "abbreviation": "AIR",
+      "source": "DMG",
+      "page": 119,
+      "reprintedAs": ["AIR|XPHB"],
+      "_copy": {
+        "abbreviation": "SHP",
+        "source": "DMG"
+      }
+    },
+    {
+      "name": "Melee Weapon",
+      "abbreviation": "M",
+      "source": "XPHB",
+      "page": 213,
+      "basicRules2024": true
+    }
+  ],
+  "itemTypeAdditionalEntries": [
+    {
+      "name": "Gaming Set",
+      "source": "XGE",
+      "appliesTo": "GS|PHB",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Components",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "History",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Insight",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Sleight of Hand",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "table",
+          "caption": "Gaming Set",
+          "colLabels": ["Activity", "DC"],
+          "colStyles": ["col-10", "col-2 text-center"],
+          "rows": [["Elided.", "Elided."], ["Elided.", "Elided."]]
+        }
+      ]
+    }
+  ],
+  "itemEntry": [
+    {
+      "name": "Armor of Resistance",
+      "source": "DMG",
+      "entriesTemplate": ["Elided. {{item.resist}} Elided."]
+    }
+  ],
+  "itemMastery": [
+    {
+      "name": "Cleave",
+      "source": "XPHB",
+      "page": 214,
+      "srd52": true,
+      "basicRules2024": true,
+      "entries": ["Elided."]
+    }
   ]
 }

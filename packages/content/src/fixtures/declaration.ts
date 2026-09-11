@@ -511,11 +511,28 @@ export const FIXTURES: Fixture[] = [
   {
     file: "data/items-base.json",
     keep: {
-      fields: ["_meta", "baseitem"],
+      fields: [
+        "_meta",
+        "baseitem",
+        "itemProperty",
+        "itemType",
+        "itemMastery",
+        "itemEntry",
+        "itemTypeAdditionalEntries",
+      ],
       within: {
         baseitem: {
           items: ["Longsword|PHB", "Longsword|XPHB", "Alchemist's Supplies|PHB"],
         },
+        itemProperty: { items: ["PHB|2H", "XPHB|2H", "special|PHB|S"] },
+        itemType: {
+          items: ["Vehicle (Water)|DMG|SHP", "Vehicle (Air)|DMG|AIR", "Melee Weapon|XPHB|M"],
+        },
+        itemMastery: { items: ["Cleave|XPHB"] },
+        itemEntry: {
+          items: [{ id: "Armor of Resistance|DMG", prose: ["entriesTemplate"] }],
+        },
+        itemTypeAdditionalEntries: { items: ["Gaming Set|XGE"] },
       },
     },
   },

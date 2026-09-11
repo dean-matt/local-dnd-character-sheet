@@ -1,5 +1,5 @@
 /**
- * The nine Tier B files into the one `lookups` table.
+ * The ten Tier B files into the one `lookups` table.
  *
  * `kind` is the array key the entry sits under upstream — `condition`,
  * `variantrule`, `deity` — which is also the `{@tag}` that links to it for every
@@ -25,6 +25,30 @@ const KINDS: Record<string, string[]> = {
   "data/tables.json": ["table"],
   "data/deities.json": ["deity"],
   "data/psionics.json": ["psionic"],
+  "data/items-base.json": [
+    "itemProperty",
+    "itemType",
+    "itemMastery",
+    "itemEntry",
+    "itemTypeAdditionalEntries",
+  ],
+};
+
+/**
+ * The field a kind spells its name with, where that field is not `name`.
+ *
+ * A property and a type are both linked by abbreviation — `{@itemProperty
+ * 2H|XPHB}`, and `type` on an item reads `M|XPHB` — so the abbreviation is what
+ * a reference resolves against. The one property carrying a `name` writes
+ * `special`, the lowercase word an item's line renders, not a title, so taking
+ * `name` where it exists would key one of the 26 differently from the rest.
+ *
+ * The human label an `itemType` also carries stays in `json`, which is where a
+ * picker listing types reads it.
+ */
+const NAMED_BY: Record<string, string> = {
+  itemProperty: "abbreviation",
+  itemType: "abbreviation",
 };
 
 function toRow(
@@ -36,7 +60,7 @@ function toRow(
   const source = text(entry, "source", context);
   return {
     kind,
-    name: text(entry, "name", context),
+    name: text(entry, NAMED_BY[kind] ?? "name", context),
     source,
     qualifier: kind === "deity" ? text(entry, "pantheon", context) : "",
     edition: editionOf(entry, source, fromSource),
