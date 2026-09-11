@@ -80,14 +80,6 @@ reviewer would otherwise derive, the entry in the data that decided it, named as
 Close with the verification. "`pnpm check` is green" is the floor: say what ran
 against the real corpus and what came out.
 
-## Counts are evidence, so source them
-
-A reader acts on a number in a comment, a commit message or a pull request body,
-because it is the reason the code is shaped the way it is. Cite one only from a
-measurement made this session, and re-run it after any change that could move it.
-A number a fence already asserts is the exception: name the fence and leave the
-number out, because the fence cannot go stale where a copy of it can.
-
 ## What this skill will not do
 
 **Merge.** Report and wait, whatever the review found and however small the change.
