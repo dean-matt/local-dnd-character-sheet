@@ -101,11 +101,9 @@ two entries match. Identity is not always `(name, source)`, and taking the first
 would clone the wrong entry silently. No block is ambiguous at the pinned tag — all six
 `_copy` deities name a pantheon — so that one fences the next upstream bump.
 
-Two shapes remain. `renameArr` is unimplemented: all 63 uses sit in a bestiary
-`_versions` block, so no `_copy` reaches it, and five bestiary files fail `_versions` for
-that and two other reasons. `_copy._templates` resolves without being applied — it names
-a `monsterTemplate` in `bestiary/template.json`, 187 entries carry one, and the eight
-modes those templates use appear nowhere else. Both cost a thinner row, not a wrong one.
+One shape remains. `_copy._templates` resolves without being applied — it names a
+`monsterTemplate` in `bestiary/template.json`, 187 entries carry one, and the eight modes
+those templates use appear nowhere else. It costs a thinner row, not a wrong one.
 
 ## `_versions` inheritance
 
@@ -113,7 +111,10 @@ A **second, unrelated** mechanism: a copy merges two entries into one, a version
 one into several. The base survives its versions — upstream offers the Dragonborn and
 each of its ten colours — so `load/versions.ts` adds entries beside the one they were
 written under, after `copy.ts` has run. Three race entries are both a copy and a source
-of versions, and a `_mod` here edits text the copy supplied.
+of versions, and a `_mod` here edits text the copy supplied. A block does not travel the
+other way: a version names itself, the parent's source included, so an inherited one emits
+the parent's variant again under the child — 105 bestiary copies carry one, and `Drow
+Commander` (TftYP) replaces the very action its parent's version replaces.
 
 A version is written out with its own `name`, `source` and differing fields, or written
 once as an `_abstract` template of `{{placeholder}}` text with an `_implementations` list
@@ -121,11 +122,12 @@ supplying the substitutions. All four placeholders in the corpus — `color`, `d
 `area`, `savingThrow` — hold text. An implementation's other fields ride beside its
 `_variables`, so a colour's `resist` is a field rather than a substitution.
 
-Only four `_mod` modes appear across both files: `replaceArr`, `removeArr`, `prependArr`,
-`appendArr`. `removeArr` is the one `_copy` never needed; neither `renameArr` nor
-`addSpells` occurs in character data. A generated race identity is a plain
-`(name, source)` and a subrace's is its four parts — across the 112 variants the two
-files expand, none collides with anything.
+Character data writes four `_mod` modes across both files: `replaceArr`, `removeArr`,
+`prependArr`, `appendArr`. A bestiary `_versions` adds `replaceTxt`, `addSpells` and
+`renameArr`, of which only `renameArr` reaches nothing else: its 63 uses strip a
+qualifier the base carries for every version, `Parry (Duelist Only)` to `Parry`.
+A generated race identity is a plain `(name, source)` and a subrace's is its four parts —
+across the 112 variants the two files expand, none collides with anything.
 
 A `_variables` member the template never mentions is a field written one level too deep,
 where it is not text. A placeholder holds text, so such a member could never have been

@@ -92,6 +92,11 @@ function merge(child: Entry, parent: Entry, copy: Entry, context: string): Entry
   const preserve = isRecord(copy._preserve) ? copy._preserve : {};
   const inherited = structuredClone(parent);
   for (const key of NOT_INHERITED) if (!preserve[key]) delete inherited[key];
+  // A version belongs to the entry that declared it. Each one names itself
+  // outright, the parent's source included, so an inherited block emits the
+  // parent's variant a second time under the child: 105 bestiary copies carry
+  // one, and `Mage (Familiar)` (MM) would arrive from thirty-five of them.
+  delete inherited._versions;
 
   const { _copy: _dropped, ...own } = child;
   const merged: Entry = { ...inherited, ...own };

@@ -77,6 +77,29 @@ function replaceIndex(list: unknown[], replace: unknown, context: string): numbe
   return index;
 }
 
+/**
+ * Renames elements by name, in place. Every use strips a qualifier the base
+ * carries for all of its versions — the Aberrant Spirit's `Parry (Duelist Only)`
+ * is `Parry` on the version that is the duelist.
+ *
+ * A name matching nothing is refused, for the reason `replaceArr` refuses it: a
+ * rename that renames nothing reads as a working mod.
+ */
+function renameIn(list: unknown[], declared: unknown, context: string): unknown[] {
+  const renamed = [...list];
+  for (const one of asArray(declared)) {
+    if (!isRecord(one) || typeof one.rename !== "string" || typeof one.with !== "string") {
+      throw new Error(`${context}: renameArr needs a "rename" and a "with", both text`);
+    }
+    const at = renamed.findIndex((item) => isRecord(item) && item.name === one.rename);
+    if (at === -1) {
+      throw new Error(`${context}: renameArr matched no element named "${one.rename}"`);
+    }
+    renamed[at] = { ...(renamed[at] as Entry), name: one.with };
+  }
+  return renamed;
+}
+
 const ARRAY_MODES = new Set([
   "appendArr",
   "appendIfNotExistsArr",
@@ -84,6 +107,7 @@ const ARRAY_MODES = new Set([
   "insertArr",
   "replaceArr",
   "removeArr",
+  "renameArr",
 ]);
 
 /** Every mode but `removeArr` splices something in, and needs `items` to do it. */
@@ -238,6 +262,9 @@ function applyOperation(entry: Entry, property: string, op: Entry, context: stri
       return;
     case "removeArr":
       removeFrom(entry, property, target, list, op, context);
+      return;
+    case "renameArr":
+      entry[property] = renameIn(list, op.renames, context);
       return;
     // The property this sits under is the one it writes, unless it names another.
     // Only a whole-entry op has to name one, having no property of its own.

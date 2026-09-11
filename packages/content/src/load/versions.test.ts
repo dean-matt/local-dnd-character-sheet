@@ -104,6 +104,132 @@ describe("resolveVersions", () => {
     });
   });
 
+  /**
+   * The shapes only `data/bestiary/` writes. `renameArr` reaches nothing outside
+   * one: all 63 uses sit in a bestiary `_versions` `_mod`, and character data
+   * writes four modes, none of them this one.
+   */
+  describe("across the bestiary", () => {
+    const bestiary = (path: string, ...monster: Entry[]): [string, unknown] => [path, { monster }];
+
+    /** As `readSources` runs them: copies over the whole set, then versions per file. */
+    const expand = (...files: [string, unknown][]): Entry[] =>
+      [...resolveCopies(new Map(files))].flatMap(
+        ([path, source]) =>
+          (resolveVersions(source, path) as Record<string, Entry[]>).monster ?? [],
+      );
+
+    const traits = (entry: Entry): unknown[] => (entry.trait as Entry[]).map((one) => one.name);
+
+    const spirit = (mod: unknown): [string, unknown] =>
+      bestiary("data/bestiary/bestiary-tce.json", {
+        name: "Aberrant Spirit",
+        source: "TCE",
+        trait: [
+          { name: "Regeneration (Slaad Only)" },
+          { name: "Whispering Aura (Star Spawn Only)" },
+        ],
+        _versions: [{ name: "Aberrant Spirit (Slaad)", source: "TCE", _mod: mod }],
+      });
+
+    it("renames an element on the version, leaving the entry it was written under alone", () => {
+      const monsters = expand(
+        spirit({
+          trait: {
+            mode: "renameArr",
+            renames: { rename: "Regeneration (Slaad Only)", with: "Regeneration" },
+          },
+        }),
+      );
+
+      expect(monsters.map(traits)).toEqual([
+        ["Regeneration (Slaad Only)", "Whispering Aura (Star Spawn Only)"],
+        ["Regeneration", "Whispering Aura (Star Spawn Only)"],
+      ]);
+    });
+
+    it("renames every element a list of renames names", () => {
+      const monsters = expand(
+        spirit({
+          trait: {
+            mode: "renameArr",
+            renames: [
+              { rename: "Regeneration (Slaad Only)", with: "Regeneration" },
+              { rename: "Whispering Aura (Star Spawn Only)", with: "Whispering Aura" },
+            ],
+          },
+        }),
+      );
+
+      expect(traits(monsters[1] as Entry)).toEqual(["Regeneration", "Whispering Aura"]);
+    });
+
+    it("refuses a rename matching no element, the way replaceArr does", () => {
+      expect(() =>
+        expand(
+          spirit({ trait: { mode: "renameArr", renames: { rename: "Parry", with: "Riposte" } } }),
+        ),
+      ).toThrow('renameArr matched no element named "Parry"');
+    });
+
+    it("refuses a rename that is not a pair of names", () => {
+      expect(() =>
+        expand(spirit({ trait: { mode: "renameArr", renames: { with: "Parry" } } })),
+      ).toThrow('renameArr needs a "rename" and a "with", both text');
+    });
+
+    /**
+     * `Drow Commander` (TftYP) is why a copy leaves its parent's `_versions`
+     * behind: it replaces the action the parent's own version replaces, so an
+     * inherited block matches nothing — and a version names itself, the parent's
+     * source and all, so expanding it here would emit `Drow Elite Warrior
+     * (Magic Equipment)` (MM) a second time.
+     */
+    it("expands no version of the parent an entry copied", () => {
+      const monsters = expand(
+        bestiary("data/bestiary/bestiary-mm.json", {
+          name: "Drow Elite Warrior",
+          source: "MM",
+          action: [{ name: "Shortsword" }],
+          _versions: [
+            {
+              name: "Drow Elite Warrior (Magic Equipment)",
+              source: "MM",
+              _mod: {
+                action: {
+                  mode: "replaceArr",
+                  replace: "Shortsword",
+                  items: { name: "+2 Shortsword" },
+                },
+              },
+            },
+          ],
+        }),
+        bestiary("data/bestiary/bestiary-tftyp.json", {
+          name: "Drow Commander",
+          source: "TftYP",
+          _copy: {
+            name: "Drow Elite Warrior",
+            source: "MM",
+            _mod: {
+              action: {
+                mode: "replaceArr",
+                replace: "Shortsword",
+                items: { name: "Shortsword +2" },
+              },
+            },
+          },
+        }),
+      );
+
+      expect(monsters.map((entry) => `${String(entry.name)}|${String(entry.source)}`)).toEqual([
+        "Drow Elite Warrior|MM",
+        "Drow Elite Warrior (Magic Equipment)|MM",
+        "Drow Commander|TftYP",
+      ]);
+    });
+  });
+
   describe("failing the build", () => {
     const base = { name: "Elf", source: "PHB", entries: [{ type: "entries", name: "Keen" }] };
 
