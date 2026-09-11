@@ -46,7 +46,9 @@ remains, the next milestone is live.
    pull request body, and every comment the change touched.
 9. **Commit and push.** One concern per commit.
 10. **Open the pull request** with `gh pr create`, body linking the issue.
-11. **Review it** with `/code-review <pr>`.
+11. **Review it** with `/code-review <pr>`. The push has already started CI, which
+    runs Windows and the end-to-end tests `pnpm check` does not — let it run beside
+    the review rather than waiting on it.
 12. **Check `git branch --show-current` and return to your branch.** A review leaves
     the tree where it checked out, and a detached HEAD commits onto nothing while the
     branch-name hook stays quiet about it. Then apply what survives, `pnpm check`,
@@ -57,8 +59,9 @@ remains, the next milestone is live.
     instance of a class rather than the class is how this goes wrong. Re-reading the
     whole pull request each pass costs less than a commit range, which needs a SHA
     carried across the loop and reviews nothing at all when it names the wrong end.
-14. **Stop.** Report what landed and what each review found. The merge is the user's
-    call, every time.
+14. **Stop.** Report what landed, what each review found, and where CI ended up; the
+    review loop gives it longer than it needs. The merge is the user's call, every
+    time.
 
 ## The pull request body
 
