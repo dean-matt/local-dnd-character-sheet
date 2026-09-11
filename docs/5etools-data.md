@@ -101,11 +101,9 @@ two entries match. Identity is not always `(name, source)`, and taking the first
 would clone the wrong entry silently. No block is ambiguous at the pinned tag — all six
 `_copy` deities name a pantheon — so that one fences the next upstream bump.
 
-Two shapes remain. `renameArr` is unimplemented: all 63 uses sit in a bestiary
-`_versions` block, so no `_copy` reaches it, and five bestiary files fail `_versions` for
-that and two other reasons. `_copy._templates` resolves without being applied — it names
-a `monsterTemplate` in `bestiary/template.json`, 187 entries carry one, and the eight
-modes those templates use appear nowhere else. Both cost a thinner row, not a wrong one.
+One shape remains. `_copy._templates` resolves without being applied — it names a
+`monsterTemplate` in `bestiary/template.json`, 187 entries carry one, and the eight modes
+those templates use appear nowhere else. It costs a thinner row, not a wrong one.
 
 ## `_versions` inheritance
 
@@ -121,11 +119,12 @@ supplying the substitutions. All four placeholders in the corpus — `color`, `d
 `area`, `savingThrow` — hold text. An implementation's other fields ride beside its
 `_variables`, so a colour's `resist` is a field rather than a substitution.
 
-Only four `_mod` modes appear across both files: `replaceArr`, `removeArr`, `prependArr`,
-`appendArr`. `removeArr` is the one `_copy` never needed; neither `renameArr` nor
-`addSpells` occurs in character data. A generated race identity is a plain
-`(name, source)` and a subrace's is its four parts — across the 112 variants the two
-files expand, none collides with anything.
+Character data writes four `_mod` modes across both files: `replaceArr`, `removeArr`,
+`prependArr`, `appendArr`. A bestiary `_versions` adds `replaceTxt`, `addSpells` and
+`renameArr`, of which only `renameArr` reaches nothing else: its 63 uses strip a
+qualifier the base carries for every version, `Parry (Duelist Only)` to `Parry`.
+A generated race identity is a plain `(name, source)` and a subrace's is its four parts —
+across the 112 variants the two files expand, none collides with anything.
 
 A `_variables` member the template never mentions is a field written one level too deep,
 where it is not text. A placeholder holds text, so such a member could never have been
