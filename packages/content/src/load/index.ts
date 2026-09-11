@@ -10,6 +10,7 @@
 
 import { characterOptions } from "./character-options.ts";
 import { classes } from "./classes.ts";
+import { entityLoaders } from "./entities.ts";
 import { items } from "./items.ts";
 import { lookups } from "./lookups.ts";
 import { races } from "./races.ts";
@@ -53,4 +54,5 @@ export const LOADERS: Loader[] = [
   items,
   lookups,
   tagRedirects,
+  ...entityLoaders,
 ];

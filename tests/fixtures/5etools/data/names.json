@@ -1,0 +1,267 @@
+{
+  "name": [
+    {
+      "name": "Dragonborn",
+      "source": "XGE",
+      "page": 175,
+      "tables": [
+        {
+          "option": "Female",
+          "diceExpression": "d100",
+          "table": [
+            {
+              "min": 1,
+              "max": 2,
+              "result": "Akra"
+            },
+            {
+              "min": 3,
+              "max": 4,
+              "result": "Aasathra"
+            },
+            {
+              "min": 5,
+              "max": 6,
+              "result": "Antrara"
+            },
+            {
+              "min": 7,
+              "max": 8,
+              "result": "Arava"
+            },
+            {
+              "min": 9,
+              "max": 10,
+              "result": "Biri"
+            },
+            {
+              "min": 11,
+              "max": 12,
+              "result": "Blendaeth"
+            },
+            {
+              "min": 13,
+              "max": 14,
+              "result": "Burana"
+            },
+            {
+              "min": 15,
+              "max": 16,
+              "result": "Chassath"
+            },
+            {
+              "min": 17,
+              "max": 18,
+              "result": "Daar"
+            },
+            {
+              "min": 19,
+              "max": 20,
+              "result": "Dentratha"
+            },
+            {
+              "min": 21,
+              "max": 22,
+              "result": "Doudra"
+            },
+            {
+              "min": 23,
+              "max": 24,
+              "result": "Driindar"
+            },
+            {
+              "min": 25,
+              "max": 26,
+              "result": "Eggren"
+            },
+            {
+              "min": 27,
+              "max": 28,
+              "result": "Farideh"
+            },
+            {
+              "min": 29,
+              "max": 30,
+              "result": "Findex"
+            },
+            {
+              "min": 31,
+              "max": 32,
+              "result": "Furrele"
+            },
+            {
+              "min": 33,
+              "max": 34,
+              "result": "Gesrethe"
+            },
+            {
+              "min": 35,
+              "max": 36,
+              "result": "Gilkass"
+            },
+            {
+              "min": 37,
+              "max": 38,
+              "result": "Harann"
+            },
+            {
+              "min": 39,
+              "max": 40,
+              "result": "Havilar"
+            },
+            {
+              "min": 41,
+              "max": 42,
+              "result": "Hethress"
+            },
+            {
+              "min": 43,
+              "max": 44,
+              "result": "Hillanot"
+            },
+            {
+              "min": 45,
+              "max": 46,
+              "result": "Jaxi"
+            },
+            {
+              "min": 47,
+              "max": 48,
+              "result": "Jezean"
+            },
+            {
+              "min": 49,
+              "max": 50,
+              "result": "Jheri"
+            },
+            {
+              "min": 51,
+              "max": 52,
+              "result": "Kadana"
+            },
+            {
+              "min": 53,
+              "max": 54,
+              "result": "Kava"
+            },
+            {
+              "min": 55,
+              "max": 56,
+              "result": "Korinn"
+            },
+            {
+              "min": 57,
+              "max": 58,
+              "result": "Megren"
+            },
+            {
+              "min": 59,
+              "max": 60,
+              "result": "Mijira"
+            },
+            {
+              "min": 61,
+              "max": 62,
+              "result": "Mishann"
+            },
+            {
+              "min": 63,
+              "max": 64,
+              "result": "Nala"
+            },
+            {
+              "min": 65,
+              "max": 66,
+              "result": "Nuthra"
+            },
+            {
+              "min": 67,
+              "max": 68,
+              "result": "Perra"
+            },
+            {
+              "min": 69,
+              "max": 70,
+              "result": "Pogranix"
+            },
+            {
+              "min": 71,
+              "max": 72,
+              "result": "Pyxrin"
+            },
+            {
+              "min": 73,
+              "max": 74,
+              "result": "Quespa"
+            },
+            {
+              "min": 75,
+              "max": 76,
+              "result": "Raiann"
+            },
+            {
+              "min": 77,
+              "max": 78,
+              "result": "Rezena"
+            },
+            {
+              "min": 79,
+              "max": 80,
+              "result": "Ruloth"
+            },
+            {
+              "min": 81,
+              "max": 82,
+              "result": "Saphara"
+            },
+            {
+              "min": 83,
+              "max": 84,
+              "result": "Savaran"
+            },
+            {
+              "min": 85,
+              "max": 86,
+              "result": "Sora"
+            },
+            {
+              "min": 87,
+              "max": 88,
+              "result": "Surina"
+            },
+            {
+              "min": 89,
+              "max": 90,
+              "result": "Synthrin"
+            },
+            {
+              "min": 91,
+              "max": 92,
+              "result": "Tatyan"
+            },
+            {
+              "min": 93,
+              "max": 94,
+              "result": "Thava"
+            },
+            {
+              "min": 95,
+              "max": 96,
+              "result": "Uadjit"
+            },
+            {
+              "min": 97,
+              "max": 98,
+              "result": "Vezera"
+            },
+            {
+              "min": 99,
+              "max": 0,
+              "result": "Zykroff"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

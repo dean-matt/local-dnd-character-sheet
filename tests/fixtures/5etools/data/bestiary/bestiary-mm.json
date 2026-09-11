@@ -1,0 +1,173 @@
+{
+  "monster": [
+    {
+      "name": "Archmage",
+      "source": "MM",
+      "page": 342,
+      "size": ["M"],
+      "type": {
+        "type": "humanoid",
+        "tags": ["any race"]
+      },
+      "alignment": ["A"],
+      "ac": [
+        12,
+        {
+          "ac": 15,
+          "condition": "with {@spell mage armor}",
+          "braces": true
+        }
+      ],
+      "hp": {
+        "average": 99,
+        "formula": "18d8 + 18"
+      },
+      "speed": {
+        "walk": 30
+      },
+      "cr": "12",
+      "spellcasting": [
+        {
+          "name": "Spellcasting",
+          "type": "spellcasting",
+          "headerEntries": [
+            "The archmage is an 18th-level spellcaster. Its spellcasting ability is Intelligence (spell save {@dc 17}, {@hit 9} to hit with spell attacks). The archmage can cast {@spell disguise self} and {@spell invisibility} at will and has the following wizard spells prepared:"
+          ],
+          "will": ["{@spell disguise self}", "{@spell invisibility}"],
+          "spells": {
+            "0": {
+              "spells": [
+                "{@spell fire bolt}",
+                "{@spell light}",
+                "{@spell mage hand}",
+                "{@spell prestidigitation}",
+                "{@spell shocking grasp}"
+              ]
+            },
+            "1": {
+              "slots": 4,
+              "spells": [
+                "{@spell detect magic}",
+                "{@spell identify}",
+                "{@spell mage armor}*",
+                "{@spell magic missile}"
+              ]
+            },
+            "2": {
+              "slots": 3,
+              "spells": ["{@spell detect thoughts}", "{@spell mirror image}", "{@spell misty step}"]
+            },
+            "3": {
+              "slots": 3,
+              "spells": ["{@spell counterspell}", "{@spell fly}", "{@spell lightning bolt}"]
+            },
+            "4": {
+              "slots": 3,
+              "spells": ["{@spell banishment}", "{@spell fire shield}", "{@spell stoneskin}*"]
+            },
+            "5": {
+              "slots": 3,
+              "spells": ["{@spell cone of cold}", "{@spell scrying}", "{@spell wall of force}"]
+            },
+            "6": {
+              "slots": 1,
+              "spells": ["{@spell globe of invulnerability}"]
+            },
+            "7": {
+              "slots": 1,
+              "spells": ["{@spell teleport}"]
+            },
+            "8": {
+              "slots": 1,
+              "spells": ["{@spell mind blank}*"]
+            },
+            "9": {
+              "slots": 1,
+              "spells": ["{@spell time stop}"]
+            }
+          },
+          "footerEntries": ["*The archmage casts these spells on itself before combat."],
+          "ability": "int",
+          "hidden": ["will"]
+        }
+      ],
+      "trait": [
+        {
+          "name": "Magic Resistance",
+          "entries": ["Elided."]
+        }
+      ],
+      "action": [
+        {
+          "name": "Dagger",
+          "entries": ["{@atk mw,rw} {@hit 6} Elided. {@h} Elided. {@damage 1d4 + 2} Elided."]
+        }
+      ],
+      "_versions": [
+        {
+          "name": "Archmage (Familiar)",
+          "source": "MM",
+          "_mod": {
+            "_": {
+              "mode": "addSpells",
+              "spells": {
+                "1": {
+                  "spells": [
+                    "{@spell find familiar} (one of the creatures described in the spell or some other Tiny monster, such as a {@creature crawling claw}, {@creature imp}, {@creature pseudodragon}, or {@creature quasit})"
+                  ]
+                }
+              }
+            }
+          },
+          "variant": null
+        }
+      ]
+    },
+    {
+      "name": "Goblin",
+      "source": "MM",
+      "page": 166,
+      "size": ["S"],
+      "type": {
+        "type": "humanoid",
+        "tags": ["goblinoid"]
+      },
+      "alignment": ["N", "E"],
+      "ac": [
+        {
+          "ac": 15,
+          "from": ["{@item leather armor|phb}", "{@item shield|phb}"]
+        }
+      ],
+      "hp": {
+        "average": 7,
+        "formula": "2d6"
+      },
+      "speed": {
+        "walk": 30
+      },
+      "cr": "1/4",
+      "trait": [
+        {
+          "name": "Nimble Escape",
+          "entries": ["Elided. {@action Disengage} Elided. {@action Hide} Elided."]
+        }
+      ],
+      "action": [
+        {
+          "name": "Scimitar",
+          "entries": ["{@atk mw} {@hit 4} Elided. {@h} Elided. {@damage 1d6 + 2} Elided."]
+        },
+        {
+          "name": "Shortbow",
+          "entries": ["{@atk rw} {@hit 4} Elided. {@h} Elided. {@damage 1d6 + 2} Elided."]
+        }
+      ],
+      "soundClip": {
+        "type": "internal",
+        "path": "bestiary/goblin.opus"
+      },
+      "attachedItems": ["scimitar|phb", "shortbow|phb"]
+    }
+  ]
+}

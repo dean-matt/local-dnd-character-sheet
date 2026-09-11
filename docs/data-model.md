@@ -51,7 +51,7 @@ freeze each character at the moment it was created.
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
 
-**Three entities need more than `(name, source)` to identify them.** A feature is keyed
+**Four entities need more than `(name, source)` to identify them.** A feature is keyed
 by the class that grants it and the level it arrives at — `(name, source, class_name,
 class_source, level)`, and a subclass feature by the subclass as well. Without the class
 and the level, `Ability Score Improvement` from `PHB` is one key over 63 rows, spread
@@ -60,7 +60,10 @@ feature with nothing to show for it. These are the parts `{@classFeature}` and
 `{@subclassFeature}` already carry, so the key is the tag. A subrace is the second,
 keyed by its parent too — `(name, source, race_name, race_source)` — since `(name,
 source)` collides three times across the 98 upstream writes. A deity is the third, keyed
-by pantheon as well — held in `lookups.qualifier`, since Tier B shares one table.
+by pantheon as well — held in `lookups.qualifier`, since Tier B shares one table. A card
+is the fourth, keyed by the deck it belongs to, which is what `{@card}` names between the
+two: `Balance` from `BMT` is a card in the Deck of Many Things and another in the Deck of
+Many More Things. `entities.qualifier` holds it, for the same reason Tier B needs one.
 
 **A subrace row is the race and the subrace merged, not a delta.** Upstream renders the
 pair together and states the difference between "add to the race's field" and "replace

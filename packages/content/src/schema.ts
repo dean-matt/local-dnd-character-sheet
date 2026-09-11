@@ -323,14 +323,23 @@ CREATE INDEX lookups_by_kind ON lookups (kind, name);
 
 -- Tier C ---------------------------------------------------------------------
 
+-- qualifier is the identity a type needs beyond (name, source), the column lookups
+-- carries for a deity's pantheon. A card is named inside its deck, which is what
+-- {@card Balance|Deck of Many Things|BMT} spells out: Balance from BMT alone names two.
+-- Every other type stores the empty string, because a STRICT primary key column cannot
+-- be NULL.
+--
+-- rendered_text is every string the entry holds with {@tag} markup reduced to what it
+-- displays, so a plain-word query reaches the words a tag would otherwise hide.
 CREATE TABLE entities (
   type          TEXT NOT NULL,
   name          TEXT NOT NULL,
   source        TEXT NOT NULL,
+  qualifier     TEXT NOT NULL,
   edition       TEXT CHECK (edition IS NULL OR edition IN ('classic', 'one')),
   json          TEXT NOT NULL,
   rendered_text TEXT NOT NULL,
-  PRIMARY KEY (type, name, source)
+  PRIMARY KEY (type, name, source, qualifier)
 ) STRICT;
 
 CREATE VIRTUAL TABLE entities_fts USING fts5 (

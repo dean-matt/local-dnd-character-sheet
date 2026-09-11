@@ -1,0 +1,35 @@
+{
+  "cult": [
+    {
+      "name": "Cult of Asmodeus",
+      "source": "MTF",
+      "page": 21,
+      "type": "Diabolical",
+      "entries": [
+        "{@deity Asmodeus|Faerûnian|scag} Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Demands of Nessus",
+          "entries": ["Elided. {@condition incapacitated} Elided."]
+        }
+      ]
+    }
+  ],
+  "boon": [
+    {
+      "name": "Demonic Boon of Balor",
+      "source": "MTF",
+      "page": 32,
+      "type": "Demonic",
+      "entries": [
+        "Elided. {@creature balor} Elided.",
+        {
+          "type": "entries",
+          "name": "Fiery Soul",
+          "entries": ["Elided."]
+        }
+      ]
+    }
+  ]
+}

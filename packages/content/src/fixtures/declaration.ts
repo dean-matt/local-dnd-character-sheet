@@ -16,6 +16,20 @@ export type Fixture = { file: string; keep: Selection };
 
 const BOOK_FIELDS = ["name", "id", "source", "group", "published"];
 
+const MONSTER_FIELDS = [
+  "name",
+  "source",
+  "page",
+  "size",
+  "type",
+  "alignment",
+  "ac",
+  "hp",
+  "speed",
+  "cr",
+  "action",
+];
+
 const CLASS_FIELDS = [
   "name",
   "source",
@@ -50,6 +64,18 @@ export const FIXTURES: Fixture[] = [
   {
     file: "data/actions.json",
     keep: { within: { action: { items: ["Dash|PHB", "Dash|XPHB"] } } },
+  },
+  {
+    file: "data/adventure/adventure-hotb.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
+    file: "data/adventure/adventure-lmop.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
+    file: "data/adventure/adventure-wtthc.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
   },
   {
     file: "data/adventures.json",
@@ -103,6 +129,70 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/bastions.json",
+    keep: {
+      within: { facility: { items: ["Ancient Altar|RHW|9", "Arcane Study|XDMG|5"] } },
+    },
+  },
+  {
+    file: "data/bestiary/bestiary-bgdia.json",
+    keep: {
+      within: {
+        monster: { items: [{ id: "Feonor|BGDIA", fields: ["name", "source", "page", "_copy"] }] },
+      },
+    },
+  },
+  {
+    file: "data/bestiary/bestiary-mm.json",
+    keep: {
+      within: {
+        monster: {
+          items: [
+            {
+              id: "Archmage|MM",
+              fields: [...MONSTER_FIELDS, "spellcasting", "trait", "_versions"],
+            },
+            { id: "Goblin|MM", fields: [...MONSTER_FIELDS, "trait", "attachedItems", "soundClip"] },
+          ],
+        },
+      },
+    },
+  },
+  {
+    file: "data/bestiary/bestiary-xmm.json",
+    keep: {
+      within: { monster: { items: [{ id: "Goblin Warrior|XMM", fields: MONSTER_FIELDS }] } },
+    },
+  },
+  {
+    file: "data/bestiary/legendarygroups.json",
+    keep: { within: { legendaryGroup: { items: ["Aboleth|MM", "Aboleth|XMM"] } } },
+  },
+  {
+    file: "data/bestiary/template.json",
+    keep: { within: { monsterTemplate: { items: ["Awakened|PHB"] } } },
+  },
+  {
+    file: "data/book/book-paf.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
+    file: "data/book/book-phb.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
+    file: "data/book/book-xdmg.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
+    file: "data/book/book-xmm.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
+    file: "data/book/book-xphb.json",
+    keep: { within: { data: { items: [{ id: 0, within: { entries: { items: [0] } } }] } } },
+  },
+  {
     file: "data/books.json",
     keep: {
       within: {
@@ -112,10 +202,15 @@ export const FIXTURES: Fixture[] = [
             { id: "Puncheons and Flagons|PaF|PaF", fields: BOOK_FIELDS },
             { id: "Player's Handbook (2024)|XPHB|XPHB", fields: BOOK_FIELDS },
             { id: "Dungeon Master's Guide (2024)|XDMG|XDMG", fields: BOOK_FIELDS },
+            { id: "Monster Manual (2025)|XMM|XMM", fields: BOOK_FIELDS },
           ],
         },
       },
     },
+  },
+  {
+    file: "data/charcreationoptions.json",
+    keep: { within: { charoption: { items: ["Anvilwrought|MOT"] } } },
   },
   {
     file: "data/class/class-artificer.json",
@@ -433,6 +528,26 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/cultsboons.json",
+    keep: {
+      within: {
+        cult: { items: ["Cult of Asmodeus|MTF"] },
+        boon: { items: ["Demonic Boon of Balor|MTF"] },
+      },
+    },
+  },
+  {
+    file: "data/decks.json",
+    keep: {
+      within: {
+        deck: { items: ["Condition Cards|ESK"] },
+        card: {
+          items: ["Balance|BMT|Deck of Many More Things", "Balance|BMT|Deck of Many Things"],
+        },
+      },
+    },
+  },
+  {
     file: "data/deities.json",
     keep: {
       within: {
@@ -444,6 +559,16 @@ export const FIXTURES: Fixture[] = [
             "Bahgtru|SCAG|Orc",
             "Bahgtru|VGM|Orc",
           ],
+        },
+      },
+    },
+  },
+  {
+    file: "data/encounters.json",
+    keep: {
+      within: {
+        encounter: {
+          items: [{ id: "Arctic|XGE", within: { tables: { items: [0] } } }],
         },
       },
     },
@@ -477,6 +602,21 @@ export const FIXTURES: Fixture[] = [
       within: {
         "actions.html": { fields: ["dash_phb", "grapple_phb"] },
         skill: { fields: ["acrobatics_phb", "animal%20handling_phb"] },
+      },
+    },
+  },
+  {
+    file: "data/homecrafts.json",
+    keep: {
+      within: {
+        crochetPattern: {
+          items: [
+            {
+              id: "Bag of Holding|CaBoMP|A",
+              fields: ["name", "source", "page", "level", "patternType", "instructions"],
+            },
+          ],
+        },
       },
     },
   },
@@ -555,6 +695,16 @@ export const FIXTURES: Fixture[] = [
         languageScript: { items: ["Draconic|PHB"] },
       },
     },
+  },
+  {
+    file: "data/names.json",
+    keep: {
+      within: { name: { items: [{ id: "Dragonborn|XGE", within: { tables: { items: [0] } } }] } },
+    },
+  },
+  {
+    file: "data/objects.json",
+    keep: { within: { object: { items: ["Ballista|DMG"] } } },
   },
   {
     file: "data/optionalfeatures.json",
@@ -885,6 +1035,14 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/recipes.json",
+    keep: { within: { recipe: { items: ["Almond Brandy|PaF"] } } },
+  },
+  {
+    file: "data/rewards.json",
+    keep: { within: { reward: { items: ["Ancient Seal|VRGR", "Arcane Study Charm|XDMG"] } } },
+  },
+  {
     file: "data/senses.json",
     keep: { within: { sense: { items: ["Darkvision|PHB", "Darkvision|XPHB"] } } },
   },
@@ -936,7 +1094,25 @@ export const FIXTURES: Fixture[] = [
     keep: { within: { table: { items: [{ id: "Damage Types|PHB", prose: ["rows"] }] } } },
   },
   {
+    file: "data/trapshazards.json",
+    keep: {
+      within: {
+        trap: { items: ["Bear Trap|XGE"] },
+        hazard: { items: ["Avalanche|IDRotF"] },
+      },
+    },
+  },
+  {
     file: "data/variantrules.json",
     keep: { within: { variantrule: { items: ["Cover|XPHB", "Customizing Ability Scores|PHB"] } } },
+  },
+  {
+    file: "data/vehicles.json",
+    keep: {
+      within: {
+        vehicle: { items: ["Apparatus of Kwalish|DMG", "Apparatus of Kwalish|XDMG"] },
+        vehicleUpgrade: { items: ["Arcane Artillery|GoS"] },
+      },
+    },
   },
 ];

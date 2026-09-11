@@ -10,9 +10,9 @@ Read [`docs/5etools-data.md`](../../../docs/5etools-data.md) for the tag grammar
 
 ## Before writing any loader
 
-1. **Check the tier.** Does this need a bespoke table, or does Tier C already serve it?
-   Tier C rows are searchable and resolve tags. Promote to Tier A only when the sheet
-   queries specific columns.
+1. **Check the tier.** A Tier C type is a line in the `KINDS` of `load/entities.ts` plus
+   a fixture, and those rows are searchable. Take the order below only when the sheet
+   queries specific columns, which is what Tier A buys.
 2. **Check for a `classTableGroups`-style structure** before writing a parser for prose.
 
 ## The loader contract

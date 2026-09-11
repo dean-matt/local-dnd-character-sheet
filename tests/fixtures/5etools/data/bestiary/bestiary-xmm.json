@@ -1,0 +1,38 @@
+{
+  "monster": [
+    {
+      "name": "Goblin Warrior",
+      "source": "XMM",
+      "page": 142,
+      "size": ["S"],
+      "type": {
+        "type": "fey",
+        "tags": ["goblinoid"]
+      },
+      "alignment": ["C", "N"],
+      "ac": [15],
+      "hp": {
+        "average": 10,
+        "formula": "3d6"
+      },
+      "speed": {
+        "walk": 30
+      },
+      "cr": "1/4",
+      "action": [
+        {
+          "name": "Scimitar",
+          "entries": [
+            "{@atkr m} {@hit 4} Elided. {@h} Elided. {@damage 1d6 + 2} Elided. {@damage 1d4} Elided. {@variantrule Advantage|XPHB} Elided."
+          ]
+        },
+        {
+          "name": "Shortbow",
+          "entries": [
+            "{@atkr r} {@hit 4} Elided. {@h} Elided. {@damage 1d6 + 2} Elided. {@damage 1d4} Elided. {@variantrule Advantage|XPHB} Elided."
+          ]
+        }
+      ]
+    }
+  ]
+}

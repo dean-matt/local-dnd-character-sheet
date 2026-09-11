@@ -1,0 +1,56 @@
+{
+  "reward": [
+    {
+      "name": "Ancient Seal",
+      "source": "VRGR",
+      "page": 193,
+      "type": "Curse",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "name": "Pronouncement",
+              "page": 193,
+              "entries": ["Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Burden",
+              "page": 193,
+              "entries": ["Elided. {@creature wraith} Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Resolution",
+              "page": 193,
+              "entries": ["Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Arcane Study Charm",
+      "source": "XDMG",
+      "page": 336,
+      "type": "Charm",
+      "additionalSpells": [
+        {
+          "innate": {
+            "_": {
+              "limited": {
+                "1": ["identify|xphb"]
+              }
+            }
+          }
+        }
+      ],
+      "entries": [
+        "Elided. {@variantrule Long Rest|XPHB} Elided. {@book Bastion|XDMG|7} Elided. {@book Supernatural Gifts|XDMG|2|Supernatural Gifts} Elided. {@book chapter 3|XDMG|2} Elided. {@spell Identify|XPHB} Elided."
+      ]
+    }
+  ]
+}

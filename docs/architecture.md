@@ -71,16 +71,28 @@ TIER A   bespoke tables, full schema, queried directly by the sheet
 
 TIER B   thin lookup table, resolves {@tag} references and fills pickers
          conditions · statuses · skills · senses · languages · actions
-         variant_rules · tables · deities · creatures · rewards · psionics
+         variant_rules · tables · deities · psionics · item properties and types
 
 TIER C   one generic table for everything else, adventures and books included
-         entities(type, name, source, edition, json, rendered_text) + FTS5
+         creatures · legendary groups · rewards · objects · traps · hazards
+         vehicles and upgrades · decks and cards · bastion facilities · recipes
+         character options · cults and boons · crochet patterns · encounter and
+         name tables
+         entities(type, name, source, qualifier, edition, json, rendered_text) + FTS5
 ```
 
-Tier C is what makes "import everything" possible. No `{@tag}` ever dangles, because an
-unrecognized type still resolves to a name, a source, and body text. Everything is
-searchable from day one. And promotion is incremental — moving a type from C to A means
-a new table and a backfill, with no re-fetch.
+Tier C is what makes "import everything" possible: a type nothing queries by column is
+a row here rather than a table, so nothing has to be left out. Everything is searchable
+from day one — `rendered_text` is every string an entry holds with the markup reduced to
+what it displays — and an adventure or a book is one row whose text is its whole prose,
+searchable but not navigable, which is the trade the tier exists to make. Promotion is
+incremental: moving a type from C to A means a new table and a backfill, with no
+re-fetch.
+
+`type` is the array key the entry sits under upstream, as `lookups.kind` is, and that is
+not always what a `{@tag}` spells: `{@creature}` names a `monster` row and `{@legroup}` a
+`legendaryGroup`. Mapping the one to the other belongs to the renderer that resolves a
+tag, and until it exists a tag of those types finds nothing rather than erroring.
 
 ## Character state
 

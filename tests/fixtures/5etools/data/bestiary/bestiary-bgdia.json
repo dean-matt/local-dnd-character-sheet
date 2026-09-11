@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "dependencies": {
+      "monster": ["MM", "SKT", "MTF"]
+    },
+    "internalCopies": ["monster"],
+    "otherSources": {
+      "monster": {
+        "MM": "BGDIA",
+        "ToA": "BGDIA",
+        "MTF": "BGDIA",
+        "VGM": "BGDIA",
+        "RoT": "BGDIA",
+        "DMG": "BGDIA"
+      }
+    }
+  },
+  "monster": [
+    {
+      "name": "Feonor",
+      "source": "BGDIA",
+      "page": 130,
+      "_copy": {
+        "name": "Archmage",
+        "source": "MM",
+        "_mod": {
+          "*": {
+            "mode": "replaceTxt",
+            "replace": "the archmage",
+            "with": "Feonor",
+            "flags": "i"
+          }
+        }
+      }
+    }
+  ]
+}

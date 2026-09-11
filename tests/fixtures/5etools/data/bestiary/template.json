@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "internalCopies": ["monsterTemplate"]
+  },
+  "monsterTemplate": [
+    {
+      "name": "Awakened",
+      "source": "PHB",
+      "page": 216,
+      "ref": "{@spell Awaken}",
+      "prerequisite": {
+        "size": {
+          "max": "H"
+        },
+        "type": {
+          "oneOf": ["beast", "plant"]
+        },
+        "int": {
+          "max": 3
+        }
+      },
+      "apply": {
+        "_root": {
+          "int": 10
+        },
+        "_mod": {
+          "languages": {
+            "mode": "appendIfNotExistsArr",
+            "items": "one language known by its creator"
+          }
+        }
+      }
+    }
+  ],
+  "legendaryGroupTemplate": [
+    {
+      "name": "Shadow Dragon",
+      "source": "FTD",
+      "page": 142,
+      "ref": "{@legroup Shadow Dragon|FTD}",
+      "apply": {
+        "_mod": {
+          "lairActions": {
+            "mode": "appendArr",
+            "items": [
+              {
+                "type": "entries",
+                "name": "Additional Lair Action",
+                "entries": [
+                  "Elided.",
+                  {
+                    "type": "list",
+                    "style": "list-hang-notitle",
+                    "items": [
+                      {
+                        "type": "item",
+                        "name": "Banish Light",
+                        "entry": "Elided."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "regionalEffects": {
+            "mode": "appendArr",
+            "items": [
+              "When a shadow dragon establishes a lair on the Material Plane, the region around the lair takes on some of the characteristics of the Shadowfell, creating one or more of the following effects:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Brooding Despair",
+                    "entry": "Elided."
+                  },
+                  {
+                    "type": "item",
+                    "name": "Dying Light",
+                    "entry": "Elided. {@quickref Vision and Light|PHB|2||lightly obscuring} Elided."
+                  },
+                  {
+                    "type": "item",
+                    "name": "Gloomy Portals",
+                    "entry": "Elided."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

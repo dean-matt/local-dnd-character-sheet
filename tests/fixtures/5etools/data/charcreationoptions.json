@@ -1,0 +1,56 @@
+{
+  "charoption": [
+    {
+      "name": "Anvilwrought",
+      "source": "MOT",
+      "page": 12,
+      "optionType": ["SG"],
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "name": "Constructed Resilience",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided. {@condition poisoned} Elided.",
+                    "Elided.",
+                    "Elided.",
+                    "Elided."
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Sentry's Rest",
+              "page": 12,
+              "entries": [
+                "Elided. {@condition unconscious} Elided.",
+                {
+                  "type": "table",
+                  "caption": "Anvilwrought Characteristics",
+                  "colLabels": ["d6", "Characteristic"],
+                  "colStyles": ["col-2 text-center", "col-10"],
+                  "rows": [
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

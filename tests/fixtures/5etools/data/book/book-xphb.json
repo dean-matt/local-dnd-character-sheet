@@ -1,0 +1,18 @@
+{
+  "data": [
+    {
+      "type": "section",
+      "name": "Introduction: Welcome to Adventure",
+      "page": 4,
+      "id": "000",
+      "entries": [
+        {
+          "type": "quote",
+          "skipMarks": true,
+          "entries": ["Elided.", "Elided.", "Elided."],
+          "by": "Elided."
+        }
+      ]
+    }
+  ]
+}

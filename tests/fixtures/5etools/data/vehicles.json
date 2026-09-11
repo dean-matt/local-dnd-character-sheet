@@ -1,0 +1,124 @@
+{
+  "vehicle": [
+    {
+      "name": "Apparatus of Kwalish",
+      "source": "DMG",
+      "page": 151,
+      "srd": "Apparatus of the Crab",
+      "reprintedAs": ["Apparatus of Kwalish|XDMG"],
+      "vehicleType": "OBJECT",
+      "size": ["L"],
+      "terrain": ["sea"],
+      "capCrew": 1,
+      "capPassenger": 1,
+      "ac": 20,
+      "speed": {
+        "walk": 30,
+        "swim": {
+          "number": 30,
+          "condition": "(or 0 ft. for both if the legs aren't extended)"
+        }
+      },
+      "hp": 200,
+      "immune": ["poison", "psychic"],
+      "entries": [
+        "Elided. {@dc 20} Elided. {@skill Investigation} Elided.",
+        "Elided.",
+        "Elided. {@damage 2d6} Elided.",
+        "Elided.",
+        {
+          "type": "table",
+          "caption": "Apparatus of Kwalish Levers:",
+          "colLabels": ["Lever", "Up", "Down"],
+          "colStyles": ["col-1 text-center", "col-5-5", "col-5-5"],
+          "rows": [
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            [
+              "Elided.",
+              "Elided. {@hit 8} Elided. {@h} Elided. {@damage 2d6} Elided.",
+              "Elided. {@hit 8} Elided. {@h} Elided. {@condition grappled} Elided. {@dc 15} Elided."
+            ],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."]
+          ]
+        }
+      ],
+      "hasToken": true,
+      "hasFluffImages": true
+    },
+    {
+      "name": "Apparatus of Kwalish",
+      "source": "XDMG",
+      "page": 229,
+      "srd": "Apparatus of the Crab",
+      "vehicleType": "OBJECT",
+      "size": ["L"],
+      "terrain": ["sea"],
+      "capCrew": 1,
+      "capPassenger": 1,
+      "ac": 20,
+      "speed": {
+        "walk": 30,
+        "swim": {
+          "number": 30,
+          "condition": "(or 0 ft. for both if the legs aren't extended)"
+        }
+      },
+      "hp": 200,
+      "immune": ["poison", "psychic"],
+      "entries": [
+        "Elided. {@dc 20} Elided. {@skill Investigation|XPHB} Elided.",
+        "Elided.",
+        "Elided. {@damage 2d6} Elided.",
+        "Elided. {@action Utilize|XPHB} Elided.",
+        {
+          "type": "table",
+          "caption": "Apparatus of Kwalish Levers",
+          "colStyles": ["col-1 text-center", "col-5-5", "col-5-5"],
+          "colLabels": ["Lever", "Up", "Down"],
+          "rows": [
+            [
+              "Elided.",
+              "Elided.",
+              "Elided. {@variantrule Speed|XPHB} Elided. {@variantrule Swim Speed|XPHB} Elided."
+            ],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            [
+              "Elided.",
+              "Elided. {@hit 8} Elided. {@h} Elided. {@damage 2d6} Elided.",
+              "Elided. {@hit 8} Elided. {@h} Elided. {@condition Grappled|XPHB} Elided. {@dc 15} Elided."
+            ],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."],
+            [
+              "Elided.",
+              "Elided. {@variantrule Bright Light|XPHB} Elided. {@variantrule Dim Light|XPHB} Elided.",
+              "Elided."
+            ],
+            ["Elided.", "Elided.", "Elided."],
+            ["Elided.", "Elided.", "Elided."]
+          ]
+        }
+      ],
+      "hasToken": true,
+      "hasFluffImages": true
+    }
+  ],
+  "vehicleUpgrade": [
+    {
+      "name": "Arcane Artillery",
+      "source": "GoS",
+      "page": 197,
+      "upgradeType": ["SHP:W"],
+      "entries": ["Elided."]
+    }
+  ]
+}

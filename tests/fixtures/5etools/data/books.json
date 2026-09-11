@@ -27,6 +27,13 @@
       "source": "XDMG",
       "group": "core",
       "published": "2024-11-12"
+    },
+    {
+      "name": "Monster Manual (2025)",
+      "id": "XMM",
+      "source": "XMM",
+      "group": "core",
+      "published": "2025-02-18"
     }
   ]
 }
