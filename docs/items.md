@@ -39,7 +39,37 @@ inherits a rarity through `_copy`, so nothing is NULL at the pinned tag.
 the yes-or-no an attunement slot count needs — `optional` is a 0 — and the condition
 stays in `json`, which is where a sheet reads why a character cannot attune.
 
-`itemProperty`, `itemType` and `itemMastery` in `items-base.json` are Tier B rather than
-items, and are not loaded yet: 383 `{@itemProperty}` and `{@itemMastery}` occurrences
-dangle until they are. An `itemProperty` carries an `abbreviation` and no `name`, which
-is the key its tag spells, so `lookups` needs a per-kind name before it can hold them.
+## The five arrays in `items-base.json` that are not items
+
+They are Tier B, so they land in `lookups` beside the conditions and the skills:
+
+```
+itemProperty                26   keyed by abbreviation, only one carrying a name
+itemType                    67   name and abbreviation both, 2 _copy
+itemMastery                  8   the 2024 weapon masteries the classes reference
+itemEntry                   13   an entriesTemplate an item expands into its own text
+itemTypeAdditionalEntries    2   entries appended to every item of a type
+```
+
+**A property and a type are named in `lookups` by their abbreviation**, because that is
+what a reference spells: `{@itemProperty 2H|XPHB}`, and an item's `type` reads `M|XPHB`.
+Only one of the 26 properties carries a `name` at all, and it writes `special` — the
+lowercase word an item's line renders rather than a title — so reading `name` where it
+exists would key that one differently from the rest. The human label a type also carries
+stays in `json`, which is where a picker listing types reads it. `load/lookups.ts` states
+the rule once, as `qualifier` already does for a deity's pantheon.
+
+An `itemType` `_copy` names its parent by abbreviation too, which `copy.ts` needs no
+telling: a block's identity is whatever fields it lists.
+
+382 of the 383 `{@itemProperty}` and `{@itemMastery}` occurrences now resolve. The last
+is `{@itemProperty 2h|XPHB|Two-Handed}`, spelling the abbreviation in lowercase. A row
+keeps the spelling upstream gave it, so a case-folding resolve in the renderer is what
+closes that one — safe here, because no two abbreviations collide once case is folded.
+
+**`itemEntry` and `itemTypeAdditionalEntries` are loaded although no `{@tag}` reaches
+them.** An item's rendered text needs both: `items.json` and `magicvariants.json` carry
+123 `{#itemEntry Name|SOURCE}` references, and the two additional-entry rows attach to
+every item whose type their `appliesTo` names. Expanding either into an item's text is
+the renderer's half; the rows are here so that half is a query rather than a second ETL
+change.
