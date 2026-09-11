@@ -2,8 +2,8 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 /**
- * Two projects, because they need different environments. Node code and the repo
- * fences run in `node`; anything touching React needs a DOM.
+ * Three projects. Node code and the repo fences run in `node`; anything touching
+ * React needs a DOM; the content tests need a budget the other two do not.
  *
  * End-to-end specs live in `e2e/` and are run by Playwright, not Vitest.
  */
@@ -16,8 +16,21 @@ export default defineConfig({
           environment: "node",
           include: [
             "tests/**/*.test.ts",
-            "packages/{rules,character,dice,tags,content,api}/src/**/*.test.ts",
+            "packages/{rules,character,dice,tags,api}/src/**/*.test.ts",
           ],
+        },
+      },
+      {
+        test: {
+          name: "content",
+          environment: "node",
+          include: ["packages/content/src/**/*.test.ts"],
+          // Most content tests build a database on disk, and a hosted Windows
+          // runner spends 100 s over a suite that takes 4 s here — enough for the
+          // 5 s default to fail a passing test. 30 s is 300 times the slowest test
+          // here, so a hang still fails; the hooks share it, making the same calls.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
         },
       },
       {
