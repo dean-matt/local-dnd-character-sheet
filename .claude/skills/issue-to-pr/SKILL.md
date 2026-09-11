@@ -25,8 +25,9 @@ Within the live milestone, in order:
    moving until the milestone's final issue lands.
 3. Prefer the issue that builds on what just merged, while that code is fresh.
 
-When the audit is all that remains, take it: last is where it belongs. When nothing
-remains, the next milestone is live.
+When the audit is all that remains, take it: last is where it belongs. When the
+milestone has nothing open, the next one is live; when everything open in it is
+blocked, say so and stop rather than starting the milestone below.
 
 ## The sequence
 
@@ -44,26 +45,25 @@ remains, the next milestone is live.
    `CLAUDE.md` both have caps: past one, replace a sentence rather than append.
 8. **Prose pass** with `writing-clearly-and-concisely` over the commit message, the
    pull request body, and every comment the change touched.
-9. **`pnpm check` again, then commit and push.** Steps 7 and 8 edit files after the
-   last check, and pre-commit runs neither the tests nor the caps. One concern per
-   commit.
-10. **Open the pull request** with `gh pr create`, body linking the issue.
-11. **Review it** with `/code-review <pr>`. The push has already started CI, which
-    runs Windows and the end-to-end tests `pnpm check` does not — let it run beside
-    the review rather than waiting on it.
-12. **Check `git branch --show-current` and return to your branch** — a review leaves
-    the tree where it checked out, and a detached HEAD commits onto nothing with the
-    branch-name hook silent. Then apply what survives, `pnpm check`, prose pass the
-    fix message, commit and push, and bring the pull request body back in line.
-    Uncommitted fixes leave the pull request holding the code the review rejected.
-13. **Repeat 11 and 12 until a review comes back clean, or until every finding left
-    is one you decline.** Declining is an exit, not a failure — name the finding and
-    the evidence against it in the report, because a pass that answers a preference
-    with a rewrite never converges. Re-read the whole pull request each time: a
-    commit range carries a SHA across the loop and reviews nothing when it is wrong.
-14. **Stop.** Report what landed, what each review found, and where CI ended up; the
-    review loop gives it longer than it needs. The merge is the user's call, every
-    time.
+9. **`pnpm check` again, then commit and push**, once per concern the issue carries.
+   Steps 7 and 8 edit files after the last check, and pre-commit runs neither the
+   tests nor the caps.
+10. **Open the pull request** with `gh pr create`, body linking the issue. This is
+    what starts CI: the workflow triggers on a pull request, so the pushes before it
+    started nothing.
+11. **Review it** with `/code-review <pr>`, then check `git branch --show-current` and
+    return to your branch — a review leaves the tree where it checked out, and a
+    detached HEAD commits onto nothing with the branch-name hook silent.
+12. **Apply what survives**, `pnpm check`, prose pass everything the fixes touched,
+    commit and push, and bring the pull request body back in line. Fixes left in the
+    working tree leave the pull request holding the code the review rejected.
+13. **Repeat 11 and 12 until a review comes back clean, or until every finding left is
+    one you decline** — declining is an exit, so name it and the evidence against it,
+    because answering a preference with a rewrite never converges. A red CI goes round
+    the same loop: Windows and the end-to-end tests run nowhere else.
+14. **Stop.** Report what landed, what each review found, and CI on the last push,
+    which is the only run to read — each push cancels the one before it. The merge is
+    the user's call, every time.
 
 ## The pull request body
 
