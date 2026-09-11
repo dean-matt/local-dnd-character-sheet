@@ -18,9 +18,9 @@ milestone is backlog, however small it looks, and waits for the user to name it.
 
 Within the live milestone, in order:
 
-1. Drop anything `blocked` whose `## Blocked by` still holds. Read that section
-   rather than the label, which stays behind, and treat a condition it names — not
-   only an issue — as blocking until it is met.
+1. Drop anything `blocked` whose `## Blocked by` still holds — a condition it names
+   blocks as much as an issue does. The label alone blocks where that section is
+   absent; only the section clears it.
 2. Leave an audit of the milestone's own work until last. It reads code that keeps
    moving until the milestone's final issue lands.
 3. Prefer the issue that builds on what just merged, while that code is fresh.
@@ -37,7 +37,8 @@ blocked, say so and stop rather than starting the milestone below.
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`.
-4. **Invoke the skill the work names**, where `CLAUDE.md` indexes one.
+4. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one — not this
+   one, which is the sequence around the work rather than the work.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
    Tests ride with the code they cover.
 6. **Correct the docs the change made stale**, in the same commit. `docs/` and
@@ -61,11 +62,14 @@ blocked, say so and stop rather than starting the milestone below.
     mislead a reader, or contradict the repo.** Stop otherwise, and stop at the third
     pass regardless: report what the last one found and let the user weigh it. A pass
     returning only preferences has stopped paying.
-13. **Repeat them while CI is red**, under no ceiling — it runs the build and the
-    end-to-end tests on Windows as well, none of which `pnpm check` covers.
-14. **Stop** once `gh pr checks --watch` returns, since the push at 11 restarted CI.
-    Report what landed, what each review found, and where CI ended. The merge is the
-    user's call, every time.
+13. **Fix a red CI from its log**, with `gh run view --log-failed`, through 11 rather
+    than through the review, which cannot see the job. CI builds on Linux and Windows
+    and runs the end-to-end tests on Linux, none of which `pnpm check` covers. Three
+    attempts, then report it unsolved: a run reddens on things outside the diff.
+14. **Stop** once `gh pr checks --watch` reports the run for the current head. Started
+    too soon it finds no checks and returns at once, so the head it watched is the
+    claim to make. Report what landed, what each review found, and where CI ended.
+    The merge is the user's call, every time.
 
 ## The pull request body
 
