@@ -57,10 +57,11 @@ blocked, say so and stop rather than starting the milestone below.
 12. **Apply what survives**, `pnpm check`, prose pass everything the fixes touched,
     commit and push, and bring the pull request body back in line. Fixes left in the
     working tree leave the pull request holding the code the review rejected.
-13. **Repeat 11 and 12 until a review comes back clean, or until every finding left is
-    one you decline** — declining is an exit, so name it and the evidence against it,
-    because answering a preference with a rewrite never converges. A red CI goes round
-    the same loop: Windows and the end-to-end tests run nowhere else.
+13. **Repeat 11 and 12 while a pass returns something that would fail at runtime,
+    mislead a reader, or contradict the repo.** Stop otherwise, and stop at the third
+    pass regardless: report what the last one found and let the user weigh it. A pass
+    returning only preferences has stopped paying. A red CI goes round the same loop —
+    Windows and the end-to-end tests run nowhere else.
 14. **Stop.** Report what landed, what each review found, and CI on the last push,
     which is the only run to read — each push cancels the one before it. The merge is
     the user's call, every time.
