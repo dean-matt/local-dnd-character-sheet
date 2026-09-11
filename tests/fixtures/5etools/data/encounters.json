@@ -1,0 +1,213 @@
+{
+  "encounter": [
+    {
+      "name": "Arctic",
+      "source": "XGE",
+      "page": 92,
+      "tables": [
+        {
+          "minlvl": 1,
+          "maxlvl": 4,
+          "diceExpression": "d100",
+          "table": [
+            {
+              "min": 1,
+              "max": 1,
+              "result": "1 {@creature giant owl}"
+            },
+            {
+              "min": 2,
+              "max": 5,
+              "result": "{@dice 1d6 + 3} {@creature kobold||kobolds}"
+            },
+            {
+              "min": 6,
+              "max": 8,
+              "result": "{@dice 1d4 + 3} trappers ({@creature commoner||commoners})"
+            },
+            {
+              "min": 9,
+              "max": 10,
+              "result": "1 {@creature owl}"
+            },
+            {
+              "min": 11,
+              "max": 12,
+              "result": "{@dice 2d4} {@creature blood hawk||blood hawks}"
+            },
+            {
+              "min": 13,
+              "max": 17,
+              "result": "{@dice 2d6} {@creature bandit||bandits}"
+            },
+            {
+              "min": 18,
+              "max": 20,
+              "result": "{@dice 1d3} {@creature winged kobold||winged kobolds} with {@dice 1d6} {@creature kobold||kobolds}"
+            },
+            {
+              "min": 21,
+              "max": 25,
+              "result": "The partially eaten carcass of a mammoth, from which {@dice 1d4} weeks of rations can be harvested."
+            },
+            {
+              "min": 26,
+              "max": 29,
+              "result": "{@dice 2d8} hunters {@creature tribal warrior||tribal warriors}"
+            },
+            {
+              "min": 30,
+              "max": 35,
+              "result": "1 {@creature half-ogre (ogrillon)||half-ogre}"
+            },
+            {
+              "min": 36,
+              "max": 40,
+              "result": "Single-file tracks in the snow that stop abruptly"
+            },
+            {
+              "min": 41,
+              "max": 45,
+              "result": "{@dice 1d3} {@creature ice mephit||ice mephits}"
+            },
+            {
+              "min": 46,
+              "max": 50,
+              "result": "1 {@creature brown bear}"
+            },
+            {
+              "min": 51,
+              "max": 53,
+              "result": "{@dice 1d6 + 1} {@creature orc||orcs}"
+            },
+            {
+              "min": 54,
+              "max": 55,
+              "result": "1 {@creature polar bear}"
+            },
+            {
+              "min": 56,
+              "max": 57,
+              "result": "{@dice 1d6} {@creature scout||scouts}"
+            },
+            {
+              "min": 58,
+              "max": 60,
+              "result": "1 {@creature saber-toothed tiger}"
+            },
+            {
+              "min": 61,
+              "max": 65,
+              "result": "A frozen pond with a jagged hole in the ice that appears recently made"
+            },
+            {
+              "min": 66,
+              "max": 68,
+              "result": "1 {@creature berserker}"
+            },
+            {
+              "min": 69,
+              "max": 70,
+              "result": "1 {@creature ogre}"
+            },
+            {
+              "min": 71,
+              "max": 72,
+              "result": "1 {@creature griffon}"
+            },
+            {
+              "min": 73,
+              "max": 75,
+              "result": "1 {@creature druid}"
+            },
+            {
+              "min": 76,
+              "max": 80,
+              "result": "{@dice 3d4} refugees ({@creature commoner||commoners}) fleeing from orcs"
+            },
+            {
+              "min": 81,
+              "max": 81,
+              "result": "{@dice 1d3} {@creature veteran||veterans}"
+            },
+            {
+              "min": 82,
+              "max": 82,
+              "result": "{@dice 1d4} {@creature orog||orogs}"
+            },
+            {
+              "min": 83,
+              "max": 83,
+              "result": "2 {@creature brown bear||brown bears}"
+            },
+            {
+              "min": 84,
+              "max": 84,
+              "result": "1 {@creature orc Eye of Gruumsh} and {@dice 2d8} {@creature orc||orcs}"
+            },
+            {
+              "min": 85,
+              "max": 85,
+              "result": "{@dice 1d3} {@creature winter wolf||winter wolves}"
+            },
+            {
+              "min": 86,
+              "max": 87,
+              "result": "{@dice 1d4} {@creature yeti||yetis}"
+            },
+            {
+              "min": 88,
+              "max": 88,
+              "result": "1 {@creature half-ogre (ogrillon)||half-ogre}"
+            },
+            {
+              "min": 89,
+              "max": 89,
+              "result": "{@dice 1d3} {@creature manticore||manticores}"
+            },
+            {
+              "min": 90,
+              "max": 90,
+              "result": "1 {@creature bandit captain} with {@dice 2d6} {@creature bandit||bandits}"
+            },
+            {
+              "min": 91,
+              "max": 91,
+              "result": "1 {@creature revenant}"
+            },
+            {
+              "min": 92,
+              "max": 93,
+              "result": "1 {@creature troll}"
+            },
+            {
+              "min": 94,
+              "max": 95,
+              "result": "1 {@creature werebear}"
+            },
+            {
+              "min": 96,
+              "max": 97,
+              "result": "1 {@creature young remorhaz}"
+            },
+            {
+              "min": 98,
+              "max": 98,
+              "result": "1 {@creature mammoth}"
+            },
+            {
+              "min": 99,
+              "max": 99,
+              "result": "1 {@creature young white dragon}"
+            },
+            {
+              "min": 0,
+              "max": 0,
+              "result": "1 {@creature frost giant}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

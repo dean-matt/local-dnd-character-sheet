@@ -1,0 +1,314 @@
+{
+  "crochetPattern": [
+    {
+      "name": "Bag of Holding",
+      "source": "CaBoMP",
+      "page": 113,
+      "level": "A",
+      "patternType": "wearable",
+      "instructions": [
+        {
+          "type": "entries",
+          "name": "Front Flap Panel",
+          "page": 114,
+          "entries": [
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "page": 114,
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Row 1:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 2:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 3:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 4:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 5:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 6:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 7:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 8:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 9:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 10:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 11:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 12:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 13:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 14:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 15:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 16:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 17:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 18:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 19:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 20:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 21:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 22:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 23:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 24:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 25:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 26:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 27:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 28:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 29:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 30:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 31:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 32:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 33:",
+                  "entries": ["Elided."]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Front and Back Panels",
+          "page": 117,
+          "entries": [
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "page": 117,
+              "items": [
+                "{@b Elided.}",
+                {
+                  "type": "item",
+                  "name": "Row 1:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 2:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 3:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 4:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 5:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 6:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 7:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 8:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 9:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 10:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 11:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 12:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Row 13:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Rows 14–37:",
+                  "entries": ["Elided."]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Side Strip",
+          "page": 118,
+          "entries": [
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "page": 118,
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Row 1:",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "item",
+                  "name": "Rows 2–119:",
+                  "entries": ["Elided."]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Finishing and Assembly",
+          "page": 118,
+          "entries": [
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "page": 118,
+              "items": ["Elided.", "Elided.", "Elided.", "Elided."]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

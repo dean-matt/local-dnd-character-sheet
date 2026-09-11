@@ -1,0 +1,87 @@
+{
+  "facility": [
+    {
+      "name": "Ancient Altar",
+      "source": "RHW",
+      "facilityType": "special",
+      "level": 9,
+      "space": ["cramped"],
+      "hirelings": [
+        {
+          "exact": 1
+        }
+      ],
+      "orders": ["empower"],
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Empower: Purge Haunted Facility",
+          "entries": ["Elided. {@book Bastion Hauntings table|RHW|3|Bastion Hauntings} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Blasphemous Charm",
+          "entries": ["Elided. {@reward Blasphemous Charm|RHW|Charm} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Arcane Study",
+      "source": "XDMG",
+      "page": 336,
+      "facilityType": "special",
+      "level": 5,
+      "prerequisite": [
+        {
+          "spellcastingFocus": ["arcane", "tool"]
+        }
+      ],
+      "space": ["roomy"],
+      "hirelings": [
+        {
+          "exact": 1
+        }
+      ],
+      "orders": ["craft"],
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Arcane Study Charm",
+          "entries": [
+            "Elided. {@variantrule Long Rest|XPHB} Elided. {@reward Arcane Study Charm|XDMG|Charm} Elided. {@book Supernatural Gifts|XDMG|2|Supernatural Gifts} Elided. {@book chapter 3|XDMG|2} Elided. {@spell Identify|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Craft Options",
+          "entries": [
+            "Elided. {@book Craft|XDMG|7|Craft} Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Craft:",
+                  "entry": "Elided. {@item Arcane Focus|XPHB} Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Craft:",
+                  "entry": "Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Craft:",
+                  "entry": "Elided. {@book Arcana tables|XDMG|6|Arcana Tables} Elided. {@book chapter 7|XDMG|6} Elided. {@skill Arcana|XPHB} Elided. {@book Crafting Magic Items|XDMG|6|Crafting Magic Items} Elided. {@book chapter 7|XDMG|6} Elided."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

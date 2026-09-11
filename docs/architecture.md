@@ -71,16 +71,21 @@ TIER A   bespoke tables, full schema, queried directly by the sheet
 
 TIER B   thin lookup table, resolves {@tag} references and fills pickers
          conditions · statuses · skills · senses · languages · actions
-         variant_rules · tables · deities · creatures · rewards · psionics
+         variant_rules · tables · deities · psionics · item properties and types
 
 TIER C   one generic table for everything else, adventures and books included
-         entities(type, name, source, edition, json, rendered_text) + FTS5
+         creatures · rewards · objects · traps · hazards · vehicles · decks
+         facilities · charoptions · recipes · cults and boons · encounters
+         entities(type, name, source, qualifier, edition, json, rendered_text) + FTS5
 ```
 
 Tier C is what makes "import everything" possible. No `{@tag}` ever dangles, because an
 unrecognized type still resolves to a name, a source, and body text. Everything is
-searchable from day one. And promotion is incremental — moving a type from C to A means
-a new table and a backfill, with no re-fetch.
+searchable from day one: `rendered_text` is every string an entry holds with the markup
+reduced to what it displays. An adventure or a book is one row, its whole prose as that
+text — searchable, but not navigable, which is the trade the tier exists to make. And
+promotion is incremental — moving a type from C to A means a new table and a backfill,
+with no re-fetch.
 
 ## Character state
 

@@ -1,0 +1,50 @@
+{
+  "recipe": [
+    {
+      "name": "Almond Brandy",
+      "source": "PaF",
+      "page": 113,
+      "type": "The Driftwood Tavern",
+      "dishTypes": ["cocktail"],
+      "diet": "V",
+      "allergenGroups": ["nuts"],
+      "serves": {
+        "exact": 2
+      },
+      "ingredients": [
+        {
+          "type": "ingredient",
+          "entry": "Elided.",
+          "amount1": 4
+        },
+        {
+          "type": "ingredient",
+          "entry": "Elided.",
+          "amount1": 1.5
+        },
+        {
+          "type": "ingredient",
+          "entry": "Elided.",
+          "amount1": 1.5
+        },
+        {
+          "type": "ingredient",
+          "entry": "Elided.",
+          "amount1": 4
+        }
+      ],
+      "equipment": [
+        {
+          "type": "ingredient",
+          "entry": "Elided.",
+          "amount1": 2
+        }
+      ],
+      "instructions": [
+        "In a cocktail shaker, combine the brandy, amaretto, lime juice, and bitters. Fill the shaker halfway with ice, cover, and shake until well chilled, about 30 seconds. Strain and divide the mixture evenly between two cocktail glasses. Serve at once."
+      ],
+      "miscTags": ["alcohol"],
+      "hasFluff": true
+    }
+  ]
+}

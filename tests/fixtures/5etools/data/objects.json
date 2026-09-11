@@ -1,0 +1,33 @@
+{
+  "object": [
+    {
+      "name": "Ballista",
+      "source": "DMG",
+      "page": 255,
+      "reprintedAs": ["Ballista|XDMG"],
+      "size": ["L"],
+      "objectType": "SW",
+      "ac": 15,
+      "hp": 50,
+      "immune": ["poison", "psychic"],
+      "entries": ["Elided."],
+      "actionEntries": [
+        {
+          "type": "actions",
+          "name": "Bolt",
+          "entries": [
+            {
+              "type": "attack",
+              "attackType": "Elided.",
+              "attackEntries": ["{@hit +6} Elided."],
+              "hitEntries": ["Elided. {@damage 3d10} Elided."]
+            }
+          ]
+        }
+      ],
+      "tokenCredit": "warmtail",
+      "tokenCustom": true,
+      "hasToken": true
+    }
+  ]
+}

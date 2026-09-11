@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "internalCopies": ["deck"]
+  },
+  "deck": [
+    {
+      "name": "Condition Cards",
+      "source": "ESK",
+      "page": 3,
+      "cards": [
+        {
+          "uid": "Deafened|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Charmed|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Blinded|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Incapacitated|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Grappled|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Frightened|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Petrified|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Paralyzed|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Invisible|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Restrained|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Prone|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Poisoned|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Unconscious|Condition Cards|ESK",
+          "replacement": true
+        },
+        {
+          "uid": "Stunned|Condition Cards|ESK",
+          "replacement": true
+        }
+      ],
+      "entries": ["Elided. {@adventure printed copies|DIP|18} Elided."],
+      "hasCardArt": true
+    }
+  ],
+  "card": [
+    {
+      "name": "Balance",
+      "source": "BMT",
+      "set": "Deck of Many More Things",
+      "page": 16,
+      "face": {
+        "type": "image",
+        "href": {
+          "type": "internal",
+          "path": "decks/DMTCRG/Deck of Many More Things/02-balance.webp"
+        },
+        "credit": "Francesca Resta",
+        "width": 720,
+        "height": 1227
+      },
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Balance",
+      "source": "BMT",
+      "set": "Deck of Many Things",
+      "page": 13,
+      "face": {
+        "type": "image",
+        "href": {
+          "type": "internal",
+          "path": "decks/BMT/Deck of Many Things/03-balance.webp"
+        },
+        "width": 850,
+        "height": 1552,
+        "credit": "Francesca Resta"
+      },
+      "entries": ["Elided. {@dc 17} Elided. {@damage 4d8} Elided."]
+    }
+  ]
+}

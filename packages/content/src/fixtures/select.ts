@@ -45,10 +45,12 @@ const isOverride = (item: Item): item is Override => typeof item === "object" &&
 /**
  * Fields that identify an entry, in the order they are joined. An entry is addressed
  * by the ones it carries: `Acid Splash|PHB|0`, `Death Domain|DMG|Cleric|PHB`.
+ * `set` is a card's deck, which is the only thing telling two cards of a name apart.
  */
 const IDENTITY_FIELDS = [
   "name",
   "source",
+  "set",
   "pantheon",
   "className",
   "classSource",

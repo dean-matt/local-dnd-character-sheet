@@ -48,7 +48,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 
 - **Never commit `vendor/5etools/` or any `.db` file.** The data is WotC's; see `NOTICE`.
 - **Every content entity is keyed `(name, source)`**, never name alone. Features,
-  subraces and deities need more; `docs/data-model.md` has the keys. Tier A rows carry
+  subraces, deities and cards need more; `docs/data-model.md` has the keys. Tier A rows carry
   an `edition` of `classic` or `one`; Tier B and C allow NULL. Both editions ship for
   every class but the Mystic, which is playtest and classic only.
 - **Derived character fields store computed *and* manual values plus an override flag.**

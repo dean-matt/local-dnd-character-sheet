@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "type": "section",
+      "name": "Introduction",
+      "page": 7,
+      "entries": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "book/PaF/016_1.webp"
+          },
+          "credit": "Elided.",
+          "width": 2312,
+          "height": 1497
+        }
+      ],
+      "id": "000"
+    }
+  ]
+}
