@@ -57,8 +57,9 @@ export type EncumbranceThresholds = {
  * Flat multiples of the Strength score, because the size rule scales carrying,
  * pushing, dragging and lifting and names these nowhere. Size still enters through
  * the ceiling the rule does name — heavy encumbrance runs "up to your maximum
- * carrying capacity", which for a Tiny creature arrives first and leaves the band
- * empty rather than inverted.
+ * carrying capacity". Only a Tiny creature meets that ceiling first, so only Tiny
+ * clamps; a Gargantuan creature is heavily encumbered at a twelfth of what it can
+ * carry, which is the variant's own arithmetic and not an oversight here.
  */
 export function encumbranceThresholds(strengthScore: number, size: Size): EncumbranceThresholds {
   const capacity = carryingCapacity(strengthScore, size);

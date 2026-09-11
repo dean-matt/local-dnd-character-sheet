@@ -9,6 +9,10 @@
  *   B  thin lookup tables that resolve {@tag} references and fill pickers
  *   C  one generic table for everything else, so no tag ever dangles
  */
+import { EDITIONS } from "@dnd/rules";
+
+const EDITION_LIST = EDITIONS.map((edition) => `'${edition}'`).join(", ");
+
 export const CONTENT_SCHEMA = /* sql */ `
 PRAGMA journal_mode = WAL;
 
@@ -22,7 +26,7 @@ CREATE TABLE meta (
 CREATE TABLE classes (
   name        TEXT NOT NULL,
   source      TEXT NOT NULL,
-  edition     TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition     TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   hit_die     INTEGER NOT NULL,
   json        TEXT NOT NULL,
   PRIMARY KEY (name, source)
@@ -37,7 +41,7 @@ CREATE TABLE subclasses (
   short_name   TEXT NOT NULL,
   class_name   TEXT NOT NULL,
   class_source TEXT NOT NULL,
-  edition      TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition      TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json         TEXT NOT NULL,
   PRIMARY KEY (name, source, class_name, class_source)
 ) STRICT;
@@ -144,7 +148,7 @@ CREATE TABLE class_features (
   class_name   TEXT NOT NULL,
   class_source TEXT NOT NULL,
   level        INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
-  edition      TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition      TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json         TEXT NOT NULL,
   PRIMARY KEY (name, source, class_name, class_source, level)
 ) STRICT;
@@ -159,7 +163,7 @@ CREATE TABLE subclass_features (
   subclass_short_name TEXT NOT NULL,
   subclass_source     TEXT NOT NULL,
   level               INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
-  edition             TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition             TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json                TEXT NOT NULL,
   PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
 ) STRICT;
@@ -167,7 +171,7 @@ CREATE TABLE subclass_features (
 CREATE TABLE spells (
   name        TEXT NOT NULL,
   source      TEXT NOT NULL,
-  edition     TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition     TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   level       INTEGER NOT NULL CHECK (level BETWEEN 0 AND 9),
   school      TEXT NOT NULL,
   concentration INTEGER NOT NULL CHECK (concentration IN (0, 1)),
@@ -193,7 +197,7 @@ CREATE TABLE spells (
 CREATE TABLE items (
   name     TEXT NOT NULL,
   source   TEXT NOT NULL,
-  edition  TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition  TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   kind     TEXT NOT NULL CHECK (kind IN ('item', 'itemGroup', 'baseitem', 'magicvariant')),
   type     TEXT,
   rarity   TEXT,
@@ -205,7 +209,7 @@ CREATE TABLE items (
 CREATE TABLE races (
   name    TEXT NOT NULL,
   source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json    TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;
@@ -230,7 +234,7 @@ CREATE TABLE subraces (
   source      TEXT NOT NULL,
   race_name   TEXT NOT NULL,
   race_source TEXT NOT NULL,
-  edition     TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition     TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json        TEXT NOT NULL,
   PRIMARY KEY (name, source, race_name, race_source)
 ) STRICT;
@@ -240,7 +244,7 @@ CREATE INDEX subraces_by_race ON subraces (race_name, race_source);
 CREATE TABLE backgrounds (
   name    TEXT NOT NULL,
   source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json    TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;
@@ -248,7 +252,7 @@ CREATE TABLE backgrounds (
 CREATE TABLE feats (
   name    TEXT NOT NULL,
   source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json    TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;
@@ -256,7 +260,7 @@ CREATE TABLE feats (
 CREATE TABLE optional_features (
   name    TEXT NOT NULL,
   source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN ('classic', 'one')),
+  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json    TEXT NOT NULL,
   PRIMARY KEY (name, source)
 ) STRICT;

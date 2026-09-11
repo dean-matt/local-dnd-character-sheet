@@ -69,20 +69,21 @@ export function maxHitPoints(
 }
 
 /**
- * The most hit dice a long rest returns, given every pool the character holds —
+ * The most hit dice a long rest returns, given how many each die size totals —
  * the caller recovers the lesser of this and the dice spent, and picks the sizes.
  *
- * Pools rather than one total, because the 2014 rest halves the character's dice
- * and not each size's: a d10 pool and a d6 pool of one die each return one die
- * between them, where halving them apart would return two. The 2024 rest returns
- * every die, and an empty pool returns none.
+ * Totals and never the dice left unspent, because the rest is a fraction of what
+ * the character has rather than of what is on the sheet right now. Every size at
+ * once for the same reason: the 2014 rest halves the character's dice and not each
+ * size's, so a d10 pool and a d6 pool of one die each return one die between them
+ * where halving them apart would return two. The 2024 rest returns every die.
  */
-export function hitDiceRecovered(pools: readonly number[], edition: Edition): number {
-  const total = pools.reduce((sum, pool) => {
-    if (!Number.isInteger(pool) || pool < 0) {
-      throw new RangeError(`A hit dice pool holds 0 or more dice, got ${pool}`);
+export function hitDiceRecovered(totalsPerDie: readonly number[], edition: Edition): number {
+  const total = totalsPerDie.reduce((sum, dice) => {
+    if (!Number.isInteger(dice) || dice < 0) {
+      throw new RangeError(`A hit dice pool holds 0 or more dice, got ${dice}`);
     }
-    return sum + pool;
+    return sum + dice;
   }, 0);
   if (edition === "one" || total === 0) {
     return total;

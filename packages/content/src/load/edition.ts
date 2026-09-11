@@ -58,6 +58,10 @@ export function editions(sources: Map<string, unknown>): (source: string) => Edi
   return (source) => (one.has(source) ? "one" : "classic");
 }
 
+function isEdition(value: unknown): value is Edition {
+  return EDITIONS.some((edition) => edition === value);
+}
+
 /** An entry's own `edition` where it declares one, and its source's otherwise. */
 export function editionOf(
   entry: Entry,
@@ -66,8 +70,8 @@ export function editionOf(
 ): Edition {
   const declared = entry.edition;
   if (declared === undefined) return fromSource(source);
-  if (!EDITIONS.includes(declared as Edition)) {
+  if (!isEdition(declared)) {
     throw new Error(`edition ${JSON.stringify(declared)} is neither ${EDITIONS.join(" nor ")}`);
   }
-  return declared as Edition;
+  return declared;
 }
