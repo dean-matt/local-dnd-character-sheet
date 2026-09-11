@@ -62,6 +62,41 @@ describe("_copy._templates", () => {
   });
 
   /**
+   * One template writes the same `_root` onto every creature naming it — 17
+   * mountain dwarf NPCs share a `speed` — and a `setProp` down a dotted path
+   * mutates in place.
+   */
+  it("gives each creature its own copy of what _root writes", () => {
+    const template = {
+      name: "Mountain Dwarf",
+      source: "PHB",
+      apply: { _root: { speed: { walk: 25 } } },
+    };
+    const under = (name: string, mod: Entry) => ({
+      name,
+      source: "MM",
+      _copy: {
+        name: "Base",
+        source: "MM",
+        _templates: [{ name: "Mountain Dwarf", source: "PHB" }],
+        _mod: mod,
+      },
+    });
+    const resolved = resolve(
+      [
+        { name: "Base", source: "MM" },
+        under("Flier", { _: { mode: "setProp", prop: "speed.fly", value: 60 } }),
+        under("Walker", {}),
+      ],
+      [template],
+    );
+
+    expect((resolved[1] as Entry).speed).toEqual({ walk: 25, fly: 60 });
+    expect((resolved[2] as Entry).speed).toEqual({ walk: 25 });
+    expect(template.apply._root.speed).toEqual({ walk: 25 });
+  });
+
+  /**
    * `Umbraxakar` (WDMM) is why. It takes the Legendary Shadow Dragon template,
    * whose `_root` names the generic legendary group, and states the bronze one
    * itself. A `_root` that won would erase the reason the entry spells it out.
@@ -136,6 +171,40 @@ describe("_copy._templates", () => {
     );
 
     expect(child.trait).toEqual([{ name: "Bite", entries: ["Oracs bites."] }]);
+  });
+
+  /**
+   * Every block in the data names one template, so this fences the list the
+   * schema allows rather than a creature that exists: a second template reads a
+   * creature the first has already changed.
+   */
+  it("checks, roots and mods each template before reading the next", () => {
+    const under = (...names: string[]) => [
+      { name: "Base", source: "MM", int: 2, size: ["M"], type: "beast" },
+      {
+        name: "Child",
+        source: "MM",
+        _copy: {
+          name: "Base",
+          source: "MM",
+          _templates: names.map((name) => ({ name, source: "PHB" })),
+        },
+      },
+    ];
+    const templates = [
+      { name: "Awaken", source: "PHB", apply: { _root: { int: 10 } } },
+      {
+        name: "Awakened",
+        source: "PHB",
+        prerequisite: { int: { max: 3 } },
+        apply: { _root: { type: "plant" } },
+      },
+    ];
+
+    expect((resolve(under("Awakened", "Awaken"), templates)[1] as Entry).int).toBe(10);
+    expect(() => resolve(under("Awaken", "Awakened"), templates)).toThrow(
+      "its int is 10, over the template's 3",
+    );
   });
 
   /**
@@ -307,6 +376,10 @@ describe("_copy._templates", () => {
       expect(() =>
         underTemplate({ size: ["L"], type: { type: "dragon" }, int: 2 }, {}, awakened),
       ).toThrow("it is a dragon, and the template takes beast or plant");
+      // A bare "G" read as no sizes at all clears the very gate it fails.
+      expect(() => underTemplate({ size: "G", type: "beast", int: 2 }, {}, awakened)).toThrow(
+        "its size is string, and has to be a list",
+      );
     });
 
     it("refuses a prerequisite nothing checks rather than applying the template anyway", () => {
@@ -361,6 +434,19 @@ describe("_copy._templates", () => {
       );
 
       expect(child.senses).toEqual(["darkvision 120 ft."]);
+    });
+
+    it("refuses a sense list it cannot read rather than dropping what is there", () => {
+      expect(() =>
+        underTemplate(
+          { senses: "darkvision 60 ft." },
+          {},
+          whole("Goblin", {
+            mode: "addSenses",
+            senses: { type: "darkvision", range: 120 },
+          }),
+        ),
+      ).toThrow("addSenses needs a sense list, found string");
     });
 
     it("caps a size, and does not leave a creature two of one size", () => {
@@ -520,6 +606,23 @@ describe("_copy._templates", () => {
 
       expect(child.save).toBeUndefined();
       expect(child.legendary).toBeUndefined();
+    });
+
+    /** Upstream writes `hp.special` for a creature whose points are not rolled. */
+    it("treats a key the property lacks the same way", () => {
+      const child = underTemplate(
+        { hp: { special: "equal to its summoner's" } },
+        {},
+        {
+          name: "Reduced Threat",
+          source: "TftYP",
+          apply: {
+            _mod: { hp: { mode: "scalarMultProp", prop: "average", scalar: 0.5, floor: true } },
+          },
+        },
+      );
+
+      expect(child.hp).toEqual({ special: "equal to its summoner's" });
     });
 
     it("refuses a value it cannot compute over, so a * cannot skip one in silence", () => {

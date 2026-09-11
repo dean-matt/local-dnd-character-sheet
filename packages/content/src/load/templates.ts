@@ -60,8 +60,11 @@ function checkSize(entry: Entry, want: Entry, context: string): void {
   if (ceiling === -1) {
     throw new Error(`${context}: it wants a size of ${String(want.max)}, which is not a size`);
   }
-  const sizes = Array.isArray(entry.size) ? entry.size : [];
-  const over = sizes.filter((size) => order.indexOf(String(size)) > ceiling);
+  // Reading a bare "G" as no sizes at all would clear the very gate it fails.
+  if (!Array.isArray(entry.size)) {
+    throw new Error(`${context}: its size is ${typeof entry.size}, and has to be a list`);
+  }
+  const over = entry.size.filter((size) => order.indexOf(String(size)) > ceiling);
   if (over.length > 0) {
     throw new Error(
       `${context}: it is size ${over.map(String).join(", ")}, over ${String(want.max)}`,
@@ -135,11 +138,19 @@ function applyBlock(template: Entry, context: string): Entry {
   return template.apply;
 }
 
+/**
+ * Cloned, because one template writes the same `_root` onto every creature that
+ * names it: 17 mountain dwarf NPCs share a `speed`, and a later `setProp` down a
+ * dotted path mutates in place. Handing out the object would give all seventeen a
+ * fly speed one entry asked for, and the entry's own diff would not show it.
+ */
 function writeRoot(merged: Entry, own: Entry, template: Entry, context: string): void {
   const root = applyBlock(template, context)._root;
   if (root === undefined) return;
   if (!isRecord(root)) throw new Error(`${context}: a template _root is not an object`);
-  for (const [key, value] of Object.entries(root)) if (!(key in own)) merged[key] = value;
+  for (const [key, value] of Object.entries(root)) {
+    if (!(key in own)) merged[key] = structuredClone(value);
+  }
 }
 
 function runMod(merged: Entry, template: Entry, context: string): void {
@@ -150,7 +161,10 @@ function runMod(merged: Entry, template: Entry, context: string): void {
 }
 
 /**
- * Applies every template a block names, in the order it names them.
+ * Applies every template a block names, in the order it names them — each one
+ * checked, rooted and modded before the next is read, which is the order upstream
+ * applies them in and the only one where a second template's prerequisite sees
+ * what the first did.
  *
  * `own` is the child's own fields, which `_root` writes under rather than over: a
  * template states what a race does to a base creature, and an entry that spells
@@ -176,7 +190,9 @@ export function applyTemplates(
     return resolve(findTemplate(pool, reference, context));
   });
 
-  for (const template of templates) checkRequirements(merged, template, context);
-  for (const template of templates) writeRoot(merged, own, template, context);
-  for (const template of templates) runMod(merged, template, context);
+  for (const template of templates) {
+    checkRequirements(merged, template, context);
+    writeRoot(merged, own, template, context);
+    runMod(merged, template, context);
+  }
 }

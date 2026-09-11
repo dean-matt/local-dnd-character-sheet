@@ -107,6 +107,12 @@ export function addSkills(entry: Entry, op: Entry, context: string): void {
  * way out is a parsed sense, which nothing on the sheet reads yet.
  */
 export function addSenses(entry: Entry, op: Entry, context: string): void {
+  // A creature that erased its inherited senses with a null has none, and one
+  // that wrote them as a bare string is a shape this cannot read — dropping that
+  // silently leaves the creature with the template's sense and nothing it had.
+  if (entry.senses != null && !Array.isArray(entry.senses)) {
+    throw new Error(`${context}: addSenses needs a sense list, found ${typeof entry.senses}`);
+  }
   const senses: unknown[] = Array.isArray(entry.senses) ? [...entry.senses] : [];
 
   for (const one of Array.isArray(op.senses) ? op.senses : [op.senses]) {
