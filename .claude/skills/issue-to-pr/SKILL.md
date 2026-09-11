@@ -33,8 +33,8 @@ remains, the next milestone is live.
 1. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of
    scope is a fence, not a suggestion.
 2. **Where the issue states counts or shapes, verify them against `vendor/`** before
-   designing against them. It states them from an earlier read and can be wrong about
-   its own corpus. Say so when one is.
+   designing against them: an issue states them from an earlier read and can be wrong
+   about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`.
 4. **Invoke the skill the work names**, where `CLAUDE.md` indexes one.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
@@ -44,21 +44,23 @@ remains, the next milestone is live.
    `CLAUDE.md` both have caps: past one, replace a sentence rather than append.
 8. **Prose pass** with `writing-clearly-and-concisely` over the commit message, the
    pull request body, and every comment the change touched.
-9. **Commit and push.** One concern per commit.
+9. **`pnpm check` again, then commit and push.** Steps 7 and 8 edit files after the
+   last check, and pre-commit runs neither the tests nor the caps. One concern per
+   commit.
 10. **Open the pull request** with `gh pr create`, body linking the issue.
 11. **Review it** with `/code-review <pr>`. The push has already started CI, which
     runs Windows and the end-to-end tests `pnpm check` does not — let it run beside
     the review rather than waiting on it.
-12. **Check `git branch --show-current` and return to your branch.** A review leaves
-    the tree where it checked out, and a detached HEAD commits onto nothing while the
-    branch-name hook stays quiet about it. Then apply what survives, `pnpm check`,
-    commit and push — fixes left in the working tree leave the pull request holding
-    the code the review rejected.
-13. **Repeat 11 and 12 until a review comes back clean.** Always, not by judgment:
-    the fixes are the least-reviewed code on the branch, and a fix covering one
-    instance of a class rather than the class is how this goes wrong. Re-reading the
-    whole pull request each pass costs less than a commit range, which needs a SHA
-    carried across the loop and reviews nothing at all when it names the wrong end.
+12. **Check `git branch --show-current` and return to your branch** — a review leaves
+    the tree where it checked out, and a detached HEAD commits onto nothing with the
+    branch-name hook silent. Then apply what survives, `pnpm check`, prose pass the
+    fix message, commit and push, and bring the pull request body back in line.
+    Uncommitted fixes leave the pull request holding the code the review rejected.
+13. **Repeat 11 and 12 until a review comes back clean, or until every finding left
+    is one you decline.** Declining is an exit, not a failure — name the finding and
+    the evidence against it in the report, because a pass that answers a preference
+    with a rewrite never converges. Re-read the whole pull request each time: a
+    commit range carries a SHA across the loop and reviews nothing when it is wrong.
 14. **Stop.** Report what landed, what each review found, and where CI ended up; the
     review loop gives it longer than it needs. The merge is the user's call, every
     time.
