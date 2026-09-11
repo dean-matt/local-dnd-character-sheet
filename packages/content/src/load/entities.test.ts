@@ -108,15 +108,23 @@ describe("the Tier C entity loaders", () => {
     build(FIXTURE_VENDOR);
 
     const db = open();
-    const card = db
-      .prepare("SELECT json, rendered_text FROM entities WHERE type = 'card' AND qualifier = ?")
-      .get("Deck of Many Things") as { json: string; rendered_text: string };
+    const read = (type: string, where: string, value: string) =>
+      db
+        .prepare(`SELECT json, rendered_text FROM entities WHERE type = ? AND ${where} = ?`)
+        .get(type, value) as { json: string; rendered_text: string };
+    const card = read("card", "qualifier", "Deck of Many Things");
+    const goblin = read("monster", "name", "Goblin");
     db.close();
 
-    // An image path would answer a search for `image` with every card that has art.
+    // A card's art path, and the goblin's `scimitar|phb`, which answers a search for the
+    // book rather than for anything the entry says.
     expect(card.json).toContain(".webp");
     expect(card.rendered_text).not.toContain(".webp");
-    expect(card.rendered_text).not.toContain("internal");
+    expect(goblin.json).toContain("scimitar|phb");
+    expect(goblin.rendered_text).not.toContain("|phb");
+    expect(goblin.rendered_text).not.toContain("goblin.opus");
+    // The weapon is still searchable, because the action that swings it names it.
+    expect(goblin.rendered_text).toContain("Scimitar");
   });
 
   it("answers a plain-word query against the index over both columns", () => {

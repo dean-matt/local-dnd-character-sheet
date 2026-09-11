@@ -162,7 +162,12 @@
           "name": "Shortbow",
           "entries": ["{@atk rw} {@hit 4} Elided. {@h} Elided. {@damage 1d6 + 2} Elided."]
         }
-      ]
+      ],
+      "soundClip": {
+        "type": "internal",
+        "path": "bestiary/goblin.opus"
+      },
+      "attachedItems": ["scimitar|phb", "shortbow|phb"]
     }
   ]
 }

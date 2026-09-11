@@ -152,7 +152,7 @@ export const FIXTURES: Fixture[] = [
               id: "Archmage|MM",
               fields: [...MONSTER_FIELDS, "spellcasting", "trait", "_versions"],
             },
-            { id: "Goblin|MM", fields: [...MONSTER_FIELDS, "trait"] },
+            { id: "Goblin|MM", fields: [...MONSTER_FIELDS, "trait", "attachedItems", "soundClip"] },
           ],
         },
       },

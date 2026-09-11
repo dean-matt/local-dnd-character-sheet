@@ -64,10 +64,13 @@ const VOLUMES = [
 const QUALIFIED_BY: Record<string, string> = { card: "set" };
 
 /**
- * Keys whose strings are a pointer rather than words: the books an entry was printed
- * in, the entry that reprinted it, and the path to an image. Indexed, they answer a
- * search for `phb` with every entry that book ever held and a search for `image` with
- * every entry carrying art.
+ * Keys whose strings are a pointer rather than words: the books an entry was printed in,
+ * the entries it names elsewhere, and the asset it renders with. Every one of them
+ * spells a catalog key — `scimitar|phb` — or a file path, so indexing them answers a
+ * search for `phb` with every monster carrying a Player's Handbook weapon.
+ *
+ * The names themselves still reach the index wherever the entry writes them as prose: a
+ * goblin's `{@item scimitar|phb}` renders to `scimitar` in the line that attacks with it.
  */
 const NOT_TEXT = new Set([
   "source",
@@ -75,7 +78,15 @@ const NOT_TEXT = new Set([
   "additionalSources",
   "referenceSources",
   "reprintedAs",
+  "attachedItems",
+  "gear",
+  "summonedBySpell",
+  "seeAlsoItem",
+  "seeAlsoCreature",
+  "chargesItem",
+  "soundClip",
   "href",
+  "hrefThumbnail",
   "path",
 ]);
 
@@ -190,6 +201,8 @@ function volume({ type, bodies }: { type: string; bodies: string }): Loader {
   const index = `data/${type}s.json`;
   return {
     name: `entities-${type}s`,
+    // `index` is one of EDITION_FILES today. Declared anyway, because this loader reads
+    // it for its rows and would otherwise break on the day edition derivation stops.
     files: [index, ...EDITION_FILES, `${bodies}*.json`],
     rows: (sources) => {
       const fromSource = editions(sources);
