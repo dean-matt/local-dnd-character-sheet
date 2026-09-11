@@ -15,13 +15,21 @@ them.
 
 ## Choosing, when no issue is named
 
-Milestones are the build order, so the live milestone is the one with open issues
-whose predecessors are closed. Within it, prefer an issue that builds on code that
-just landed over one that starts a new area. Say which you picked and why before
-starting, so a wrong pick costs a sentence rather than a branch.
+Pick one and start on it. Name the pick and the reason in a sentence first — a wrong
+pick then costs that sentence rather than a branch — but do not wait to be told to go.
 
-`gh issue list` reports a `blocked` label. Check what blocks it is still true — a
-blocker that closed this morning leaves the label behind.
+Milestones are the build order and are numbered, so the live one is the
+lowest-numbered with any issue still open. Take from it and nothing else. An issue
+carrying no milestone is backlog rather than next, however small it looks, and waits
+for the user to name it.
+
+Within the live milestone, in order:
+
+1. Drop anything `blocked` whose blocker is still open. Read what blocks it rather
+   than trusting the label, which stays behind when the blocker closes.
+2. Leave an audit or sweep of the milestone's own work until last — it reads code
+   that keeps moving until the milestone's final issue lands.
+3. Prefer the issue that builds on what just merged, while that code is fresh.
 
 ## The sequence
 
@@ -61,17 +69,15 @@ answer: say what was run against the real corpus and what came out.
 
 ## Counts are evidence, so source them
 
-A number in a comment, a commit message or a pull request body is the reason the
-code is shaped the way it is, and a reader acts on it. Cite one only from a
-measurement made in this session, and re-run that measurement after any change that
-could move it — a figure quoted from earlier in the conversation is a figure nobody
-checked. It is the same argument `CONTRIBUTING.md` makes about a hand-edited
-fixture: an assertion against a number with no source.
+A number in a comment, a commit message or a pull request body is the reason the code
+is shaped the way it is, and a reader acts on it. Cite one only from a measurement
+made this session, and re-run it after any change that could move it: a figure quoted
+from earlier in the conversation is a figure nobody checked. `CONTRIBUTING.md` makes
+the same argument about a hand-edited fixture.
 
-Two ways this goes wrong, both cheap to prevent and invisible once written. Quoting
-a count taken before the fix, as though it described the state after. And reading
-the neighbouring row of your own output — the population that shares a name with
-the one you meant.
+Both ways it goes wrong are invisible once written: quoting a count taken before the
+fix as though it described the state after, and reading the neighbouring row of your
+own output — the population that shares a name with the one you meant.
 
 ## What this skill will not do
 
