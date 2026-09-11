@@ -1,6 +1,6 @@
 ---
 name: issue-to-pr
-description: Take one issue in this repository from open to a reviewed pull request — branch, implement, pnpm check, prose pass, pull request, then review both the pull request and the fixes to it. Use when asked to work, build, implement or pick up an issue, or to decide which issue is next. Follows CONTRIBUTING.md and stops before merging.
+description: Take one local-dnd-character-sheet issue from open to a reviewed pull request: gh issue develop, implement, pnpm check, prose pass, pull request, then review both the pull request and the fixes to it. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
 ---
 
 # Issue to pull request
@@ -25,13 +25,16 @@ Within the live milestone, in order:
    moving until the milestone's final issue lands.
 3. Prefer the issue that builds on what just merged, while that code is fresh.
 
+When the audit is all that remains, take it: last is where it belongs. When nothing
+remains, the next milestone is live.
+
 ## The sequence
 
 1. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of
    scope is a fence, not a suggestion.
-2. **Verify the issue's data claims against `vendor/`** before designing against
-   them. An issue states counts and shapes from an earlier read and can be wrong
-   about its own corpus. Say so when one is.
+2. **Where the issue states counts or shapes, verify them against `vendor/`** before
+   designing against them. It states them from an earlier read and can be wrong about
+   its own corpus. Say so when one is.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`.
 4. **Invoke the skill the work names**, where `CLAUDE.md` indexes one.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
@@ -43,12 +46,15 @@ Within the live milestone, in order:
    pull request body, and every comment the change touched.
 9. **Commit and push.** One concern per commit.
 10. **Open the pull request** with `gh pr create`, body linking the issue.
-11. **Review it** with `/code-review <pr>`, then apply what survives.
-12. **Review the fixes** with `/code-review <before>..<after>`, and repeat until a
-    pass comes back clean. Always, not by judgment: the fixes are the least-reviewed
-    code on the branch, and a fix covering one instance of a class rather than the
-    class is how this goes wrong.
-13. **Stop.** Report what landed and what each review found. The merge is the user's
+11. **Review it** with `/code-review <pr>`. Check `git branch --show-current` before
+    editing anything: the review checks out what it reviewed and leaves it there.
+12. **Apply what survives**, then `pnpm check`, commit and push. Fixes that sit in
+    the working tree leave the pull request holding the code the review rejected.
+13. **Review the fixes** with `/code-review <first fix>..<last fix>`, and repeat 12
+    and 13 until a pass comes back clean. Always, not by judgment: the fixes are the
+    least-reviewed code on the branch, and a fix covering one instance of a class
+    rather than the class is how this goes wrong.
+14. **Stop.** Report what landed and what each review found. The merge is the user's
     call, every time.
 
 ## The pull request body
@@ -81,9 +87,3 @@ it in the report; leave it out of this branch.
 
 **Raise a cap to fit.** The line caps on `CLAUDE.md`, `docs/` and a skill are the
 fence: hitting one means extracting, not editing the number.
-
-## After the merge
-
-`gh pr merge <n> --squash --delete-branch` deletes the branch here and on the remote
-and leaves you on `main`. Nothing reaps a branch that never became a pull request —
-delete that one by hand.
