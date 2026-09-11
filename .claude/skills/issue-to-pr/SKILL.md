@@ -81,7 +81,8 @@ against the real corpus and what came out.
 A reader acts on a number in a comment, a commit message or a pull request body,
 because it is the reason the code is shaped the way it is. Cite one only from a
 measurement made this session, and re-run it after any change that could move it.
-`CONTRIBUTING.md` makes the same argument about a hand-edited fixture.
+A number a fence already asserts is the exception: name the fence and leave the
+number out, because the fence cannot go stale where a copy of it can.
 
 ## What this skill will not do
 
