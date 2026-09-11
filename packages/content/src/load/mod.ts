@@ -337,11 +337,6 @@ function editProps(entry: Entry, property: string, op: Entry, context: string): 
   }
   const edited: Entry = { ...target };
   for (const prop of propsToEdit(target, op, context)) {
-    // A key the object lacks is nothing to scale, for the reason a property it
-    // lacks is: the same template reaches a creature written with `hp.special`
-    // and one written with `hp.average`. A key that is *there* and uncomputable
-    // still refuses.
-    if (!(prop in edited)) continue;
     edited[prop] = editValue(edited[prop], op, `${property}.${prop}`, context);
   }
   entry[property] = edited;

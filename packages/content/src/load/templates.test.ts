@@ -97,6 +97,51 @@ describe("_copy._templates", () => {
   });
 
   /**
+   * A splicing mode puts the op's own `items` into the creature's list, so the
+   * eight NPCs naming the Vistana template held one `Curse` action. `modifySpells`
+   * writes through the block it is handed, which is the path that turned that
+   * into a wrong row: one creature's added spell reached every other creature
+   * naming the template, and `template.json` for the rest of the build.
+   */
+  it("gives each creature its own copy of what a template's mod splices in", () => {
+    const template = {
+      name: "Drow",
+      source: "PHB",
+      apply: {
+        _mod: {
+          spellcasting: {
+            mode: "appendArr",
+            items: { name: "Innate Spellcasting", daily: { "1e": ["darkness"] } },
+          },
+        },
+      },
+    };
+    const under = (name: string, mod: Entry) => ({
+      name,
+      source: "MM",
+      _copy: {
+        name: "Base",
+        source: "MM",
+        _templates: [{ name: "Drow", source: "PHB" }],
+        _mod: mod,
+      },
+    });
+    const resolved = resolve(
+      [
+        { name: "Base", source: "MM" },
+        under("Special", { _: { mode: "addSpells", daily: { "1e": ["fly"] } } }),
+        under("Plain", {}),
+      ],
+      [template],
+    );
+    const daily = (entry: Entry) => ((entry.spellcasting as Entry[])[0] as Entry).daily as Entry;
+
+    expect(daily(resolved[1] as Entry)).toEqual({ "1e": ["darkness", "fly"] });
+    expect(daily(resolved[2] as Entry)).toEqual({ "1e": ["darkness"] });
+    expect(template.apply._mod.spellcasting.items.daily).toEqual({ "1e": ["darkness"] });
+  });
+
+  /**
    * `Umbraxakar` (WDMM) is why. It takes the Legendary Shadow Dragon template,
    * whose `_root` names the generic legendary group, and states the bronze one
    * itself. A `_root` that won would erase the reason the entry spells it out.
@@ -608,21 +653,26 @@ describe("_copy._templates", () => {
       expect(child.legendary).toBeUndefined();
     });
 
-    /** Upstream writes `hp.special` for a creature whose points are not rolled. */
-    it("treats a key the property lacks the same way", () => {
-      const child = underTemplate(
-        { hp: { special: "equal to its summoner's" } },
-        {},
-        {
-          name: "Reduced Threat",
-          source: "TftYP",
-          apply: {
-            _mod: { hp: { mode: "scalarMultProp", prop: "average", scalar: 0.5, floor: true } },
+    /**
+     * A property the creature lacks is a no-op; a *key* it lacks is not. Only two
+     * props are named in the data, both on `hp`, so skipping an absent one would
+     * make a rename upstream or a typo in a block stop halving hit points on
+     * every reduced-threat creature with the build still green.
+     */
+    it("refuses a key the property lacks, where a missing property is a no-op", () => {
+      expect(() =>
+        underTemplate(
+          { hp: { special: "equal to its summoner's" } },
+          {},
+          {
+            name: "Reduced Threat",
+            source: "TftYP",
+            apply: {
+              _mod: { hp: { mode: "scalarMultProp", prop: "average", scalar: 0.5, floor: true } },
+            },
           },
-        },
-      );
-
-      expect(child.hp).toEqual({ special: "equal to its summoner's" });
+        ),
+      ).toThrow("scalarMultProp cannot edit hp.average");
     });
 
     it("refuses a value it cannot compute over, so a * cannot skip one in silence", () => {

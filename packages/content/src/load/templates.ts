@@ -60,9 +60,13 @@ function checkSize(entry: Entry, want: Entry, context: string): void {
   if (ceiling === -1) {
     throw new Error(`${context}: it wants a size of ${String(want.max)}, which is not a size`);
   }
-  // Reading a bare "G" as no sizes at all would clear the very gate it fails.
+  // Reading a bare "G", or a null erasing the parent's size, as no sizes at all
+  // would clear the very gate it fails. `addSenses` takes the opposite line on a
+  // null because adding to nothing is defined, where checking against nothing is
+  // the vacuous pass this refuses.
   if (!Array.isArray(entry.size)) {
-    throw new Error(`${context}: its size is ${typeof entry.size}, and has to be a list`);
+    const found = entry.size === null ? "null" : typeof entry.size;
+    throw new Error(`${context}: its size is ${found}, and has to be a list`);
   }
   const over = entry.size.filter((size) => order.indexOf(String(size)) > ceiling);
   if (over.length > 0) {
@@ -153,11 +157,19 @@ function writeRoot(merged: Entry, own: Entry, template: Entry, context: string):
   }
 }
 
+/**
+ * Cloned for the reason `_root` is, and more urgently: a splicing mode puts the
+ * op's own `items` into the creature's list, so the eight NPCs naming the Vistana
+ * template held one `Curse` action between them, and a shadow dragon shared a
+ * trait with the template itself. `modifySpells` writes through the block it is
+ * handed, so one creature adding a daily spell wrote it into every other creature
+ * naming the template, and into `template.json` for the rest of the build.
+ */
 function runMod(merged: Entry, template: Entry, context: string): void {
   const mod = applyBlock(template, context)._mod;
   if (mod === undefined) return;
   if (!isRecord(mod)) throw new Error(`${context}: a template _mod is not an object`);
-  applyMod(merged, mod, context);
+  applyMod(merged, structuredClone(mod), context);
 }
 
 /**
