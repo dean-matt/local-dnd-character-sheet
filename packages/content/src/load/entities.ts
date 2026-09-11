@@ -63,11 +63,29 @@ const VOLUMES = [
 /** The field holding the identity a type needs beyond `(name, source)`, as a pantheon. */
 const QUALIFIED_BY: Record<string, string> = { card: "set" };
 
+/**
+ * Keys whose strings are a pointer rather than words: the books an entry was printed
+ * in, the entry that reprinted it, and the path to an image. Indexed, they answer a
+ * search for `phb` with every entry that book ever held and a search for `image` with
+ * every entry carrying art.
+ */
+const NOT_TEXT = new Set([
+  "source",
+  "otherSources",
+  "additionalSources",
+  "referenceSources",
+  "reprintedAs",
+  "href",
+  "path",
+]);
+
 function collect(node: unknown, into: string[]): string[] {
   if (typeof node === "string") into.push(node);
   else if (Array.isArray(node)) for (const child of node) collect(child, into);
   else if (node !== null && typeof node === "object") {
-    for (const child of Object.values(node)) collect(child, into);
+    for (const [key, child] of Object.entries(node)) {
+      if (!NOT_TEXT.has(key)) collect(child, into);
+    }
   }
   return into;
 }
@@ -75,10 +93,10 @@ function collect(node: unknown, into: string[]): string[] {
 /**
  * Everything the entry says, as one searchable string.
  *
- * Every string it holds rather than the prose fields alone, because a list of prose
- * fields that misses one loses words with nothing raised, where a structural value such
- * as a `type` of `entries` only costs an index term. The way out, if a search reads
- * noisily, is to skip keys by name here.
+ * Every string it holds but the pointers, rather than the prose fields alone, because a
+ * list of prose fields that misses one loses words with nothing raised. What is left is
+ * words a reader would recognise, plus the structural values beside them: a `type` of
+ * `entries` is indexed because the same key holds a creature's `humanoid`.
  */
 function rendered(node: unknown): string {
   return collect(node, [])
@@ -107,8 +125,14 @@ function toRow(
   };
 }
 
-/** Whether a declared path or glob covers this source. `readSources` expands the glob
- * and keeps no record of which pattern matched, so the kinds are matched back to it. */
+/**
+ * Whether a declared path or glob covers this source. `readSources` expands the glob and
+ * keeps no record of which pattern matched, so the kinds are matched back to it.
+ *
+ * One `*`, matching within a directory, which is every declaration above. A pattern with
+ * a second one matches nothing here while `readSources` still reads its files, so they
+ * reach `kindedRows` belonging to no kind and the build stops there.
+ */
 function matches(pattern: string, path: string): boolean {
   const star = pattern.indexOf("*");
   if (star === -1) return pattern === path;
@@ -127,8 +151,16 @@ function matches(pattern: string, path: string): boolean {
 function expand(kinds: Record<string, string[]>, paths: string[]): Record<string, string[]> {
   return Object.fromEntries(
     paths.flatMap((path) => {
-      const pattern = Object.keys(kinds).find((candidate) => matches(candidate, path));
-      return pattern === undefined ? [] : [[path, kinds[pattern] as string[]]];
+      const patterns = Object.keys(kinds).filter((candidate) => matches(candidate, path));
+      // Two patterns over one file is a declaration that does not say which kinds the
+      // file carries. Taking the first would make their order load-bearing and silent.
+      if (patterns.length > 1) {
+        throw new Error(
+          `${path} is declared by ${patterns.length} patterns: ${patterns.join(", ")}`,
+        );
+      }
+      const only = patterns[0];
+      return only === undefined ? [] : [[path, kinds[only] as string[]]];
     }),
   );
 }
@@ -158,7 +190,7 @@ function volume({ type, bodies }: { type: string; bodies: string }): Loader {
   const index = `data/${type}s.json`;
   return {
     name: `entities-${type}s`,
-    files: [...EDITION_FILES, `${bodies}*.json`],
+    files: [index, ...EDITION_FILES, `${bodies}*.json`],
     rows: (sources) => {
       const fromSource = editions(sources);
       return {

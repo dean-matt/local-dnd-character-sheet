@@ -104,6 +104,21 @@ describe("the Tier C entity loaders", () => {
     expect(row.json).toContain("{@atk mw}");
   });
 
+  it("indexes the words an entry holds and not the pointers beside them", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const card = db
+      .prepare("SELECT json, rendered_text FROM entities WHERE type = 'card' AND qualifier = ?")
+      .get("Deck of Many Things") as { json: string; rendered_text: string };
+    db.close();
+
+    // An image path would answer a search for `image` with every card that has art.
+    expect(card.json).toContain(".webp");
+    expect(card.rendered_text).not.toContain(".webp");
+    expect(card.rendered_text).not.toContain("internal");
+  });
+
   it("answers a plain-word query against the index over both columns", () => {
     build(FIXTURE_VENDOR);
 
