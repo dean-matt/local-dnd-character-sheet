@@ -659,6 +659,37 @@ describe("resolveCopies", () => {
       ).toThrow('copies "Battle Master" (PHB), which 2 entries match');
     });
 
+    /**
+     * `Sarcelle Malinosh` (VEoR) copies `Mage` (MM) and erases its spellcasting
+     * with a null, where the parent's one version adds a spell to that block.
+     * 105 bestiary copies inherit a `_versions`, and every version in one names
+     * the parent's variant, source included.
+     */
+    it("leaves the parent's _versions behind", () => {
+      const resolved = resolveOne(
+        monsters(
+          {
+            name: "Mage",
+            source: "MM",
+            spellcasting: [{ name: "Spellcasting" }],
+            _versions: [{ name: "Mage (Familiar)", source: "MM" }],
+          },
+          {
+            name: "Sarcelle Malinosh",
+            source: "VEoR",
+            spellcasting: null,
+            _copy: { name: "Mage", source: "MM" },
+          },
+        ),
+        "data/bestiary/bestiary-veor.json",
+      );
+
+      expect(entriesOf(resolved, "monster", "veor")[1]).toEqual({
+        name: "Sarcelle Malinosh",
+        source: "VEoR",
+      });
+    });
+
     it("names both entries in a cycle that spans two sources", () => {
       expect(() =>
         resolveCopies(

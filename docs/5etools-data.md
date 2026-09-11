@@ -111,7 +111,10 @@ A **second, unrelated** mechanism: a copy merges two entries into one, a version
 one into several. The base survives its versions — upstream offers the Dragonborn and
 each of its ten colours — so `load/versions.ts` adds entries beside the one they were
 written under, after `copy.ts` has run. Three race entries are both a copy and a source
-of versions, and a `_mod` here edits text the copy supplied.
+of versions, and a `_mod` here edits text the copy supplied. A block does not travel the
+other way: a version names itself, the parent's source included, so an inherited one emits
+the parent's variant again under the child — 105 bestiary copies carry one, and `Drow
+Commander` (TftYP) replaces the very action its parent's version replaces.
 
 A version is written out with its own `name`, `source` and differing fields, or written
 once as an `_abstract` template of `{{placeholder}}` text with an `_implementations` list

@@ -177,6 +177,57 @@ describe("resolveVersions", () => {
         expand(spirit({ trait: { mode: "renameArr", renames: { with: "Parry" } } })),
       ).toThrow('renameArr needs a "rename" and a "with", both text');
     });
+
+    /**
+     * `Drow Commander` (TftYP) is why a copy leaves its parent's `_versions`
+     * behind: it replaces the action the parent's own version replaces, so an
+     * inherited block matches nothing — and a version names itself, the parent's
+     * source and all, so expanding it here would emit `Drow Elite Warrior
+     * (Magic Equipment)` (MM) a second time.
+     */
+    it("expands no version of the parent an entry copied", () => {
+      const monsters = expand(
+        bestiary("data/bestiary/bestiary-mm.json", {
+          name: "Drow Elite Warrior",
+          source: "MM",
+          action: [{ name: "Shortsword" }],
+          _versions: [
+            {
+              name: "Drow Elite Warrior (Magic Equipment)",
+              source: "MM",
+              _mod: {
+                action: {
+                  mode: "replaceArr",
+                  replace: "Shortsword",
+                  items: { name: "+2 Shortsword" },
+                },
+              },
+            },
+          ],
+        }),
+        bestiary("data/bestiary/bestiary-tftyp.json", {
+          name: "Drow Commander",
+          source: "TftYP",
+          _copy: {
+            name: "Drow Elite Warrior",
+            source: "MM",
+            _mod: {
+              action: {
+                mode: "replaceArr",
+                replace: "Shortsword",
+                items: { name: "Shortsword +2" },
+              },
+            },
+          },
+        }),
+      );
+
+      expect(monsters.map((entry) => `${String(entry.name)}|${String(entry.source)}`)).toEqual([
+        "Drow Elite Warrior|MM",
+        "Drow Elite Warrior (Magic Equipment)|MM",
+        "Drow Commander|TftYP",
+      ]);
+    });
   });
 
   describe("failing the build", () => {
