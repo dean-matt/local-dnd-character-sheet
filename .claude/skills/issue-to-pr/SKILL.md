@@ -84,12 +84,12 @@ because reranking is the user's call.
       -f side=RIGHT -f body=<body>
     ```
 
-    Open the body with the verdict — `**Applied** in <sha>`, or `**Declined** — <reason>` —
-    and put the severity and the defect after it. Applying a finding moves its line, and
+    Open the body with the verdict: `**Applied** in <sha>`, or `**Declined** — <reason>`.
+    Put the severity and the defect after it. Applying a finding moves its line, and
     GitHub folds an outdated comment away, so a verdict buried in the body is a verdict
     nobody reads. A finding naming no line, or naming one the diff misses, takes
     `gh pr comment <n> --body <body>` with the path written into the body: anchored to
-    nothing, it never folds. A pass that returned nothing posts nothing, and a later
+    nothing, it never folds. A pass that returns nothing posts nothing, and a later
     pass adds, leaving an earlier pass's comments where they are.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most. A pass returning only `comment` findings has stopped paying.
