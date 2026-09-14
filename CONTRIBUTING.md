@@ -136,6 +136,16 @@ written. It is adapted from [ponytail](https://github.com/DietrichGebert/ponytai
 The original is a vendored file imported into `CLAUDE.md`; that arrangement put 53 lines
 of every-task instruction outside the 150-line cap, which the cap exists to prevent.
 
+A skill is named for the job rather than the obvious verb, checked against what is
+installed on the machine. Namespacing keeps an explicit invocation unambiguous, but a
+request in prose picks between two similar descriptions, so a skill here called
+`work-issue` would compete with any plugin that owns the name. This repository's is
+`issue-to-pr` for that reason.
+
+Editing one earns a `writing-clearly-and-concisely` pass before it is committed, which an
+ordinary file does not. A skill is the prose read at the start of every task it governs,
+so an ambiguous sentence misroutes the work rather than merely reading badly.
+
 Skills are indexed in `CLAUDE.md`, which is the only limit on how many exist. Capping the
 count would punish a project that legitimately grows; making skills compete for a budget
 you can see does not. `tests/skill-shape.test.ts` caps each `SKILL.md` at 150 lines, which
