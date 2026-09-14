@@ -103,6 +103,9 @@ because reranking is the user's call.
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
+    Each reply arrives as an empty review of its own and renders inside its thread, so a
+    pass leaves one review carrying the findings and one shell per verdict.
+
     Anchor against the current head, at the line the finding names in that tree: against
     the commit the pass read, a thread goes outdated the moment a fix moves the line, and
     GitHub folds the reply away with it. A pass that returns nothing posts nothing, and a
