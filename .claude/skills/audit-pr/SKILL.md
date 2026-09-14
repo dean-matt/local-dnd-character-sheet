@@ -37,9 +37,9 @@ too, or a stale merge base widens the diff. Pruning before the add cleans up aft
 that died. Read context from `$dir`, and end the pass with
 `git worktree remove --force "$dir"`.
 
-The excludes are generated: where the diff holds any, count them with `--name-only` and
-no pathspec, and read `packages/content/src/fixtures/declaration.ts` rather than the rows
-it wrote.
+The excludes are generated: count them by rerunning the diff with `--name-only` and the
+excluded paths as the pathspec. Read `packages/content/src/fixtures/declaration.ts`
+rather than the rows it wrote.
 
 ```bash
 gh pr view "$n" --json title,body        # the body names the issue it closes
@@ -120,7 +120,10 @@ findings left ends the loop. Every finding goes to the caller's report.
 ## What this skill will not do
 
 **Touch the caller's tree.** A checkout there strands step 11 on a detached HEAD, where
-the branch-name hook goes quiet and a commit lands anywhere.
+the branch-name hook goes quiet and a commit lands anywhere. Running something to settle
+a claim is not touching it: the worktree has no `node_modules`, so take a test, a
+mutated copy or a scratch repository wherever it runs, and change nothing that is
+tracked.
 
 **Apply findings, or label the pull request.** Steps 10 to 13 of
 [`issue-to-pr`](../issue-to-pr/SKILL.md) do that.
