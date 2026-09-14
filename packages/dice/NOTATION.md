@@ -13,8 +13,8 @@ pool = [count] d faces [kh n | kl n | dh n | dl n]
 | `count` | no | `1` | 1 to 1000. `d20` and `1d20` are the same roll |
 | `d` | yes | | Separates the count from the faces. Case does not matter, so `1D20` reads |
 | `faces` | yes | | 1 to 1000 |
-| `kh n`, `kl n` | no | keep everything | Counts only the `n` highest or lowest dice toward the total. `n` cannot exceed `count` |
-| `dl n`, `dh n` | no | keep everything | Discards the `n` lowest or highest dice, the same operation named from the other end. `dl` is the default, so `4d6d1` drops one. `n` discards at least one die and leaves at least one behind |
+| `kh n`, `kl n` | no | keep everything | Counts only the `n` highest or lowest dice toward the total. `n` cannot exceed `count`, and an `n` equal to it discards nothing, so it reads as no clause at all |
+| `dl n`, `dh n` | no | keep everything | Discards the `n` lowest or highest dice, the same operation named from the other end. `dl` is the default, so `4d6d1` drops one. `n` must leave a die behind, and an `n` of `0` reads as no clause at all |
 | `+ pool`, `- pool` | no | | Adds or subtracts a further pool. Each pool's dice appear in `dice` in the order they were rolled |
 | `+ modifier`, `- modifier` | no | `0` | A constant added to or subtracted from the total. Several may appear; each is within 1000, and so is their sum |
 
@@ -57,6 +57,7 @@ it means, and scattered constants come back as one trailing modifier:
 | `"4D6KH3"` | `"4d6kh3"` |
 | `"4d6dl1"`, `"4d6d1"` | `"4d6kh3"` |
 | `"4d6dh1"` | `"4d6kl3"` |
+| `"4d6kh4"`, `"4d6d0"` | `"4d6"` |
 | `"1d2-2+2d3+5"` | `"1d2+2d3+3"` |
 
 Store that, not the raw input, and the same roll typed two ways stays one row in a log.

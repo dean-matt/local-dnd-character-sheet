@@ -3,8 +3,8 @@
  *
  * `rollDice` is the only entry point. It returns every die from every pool, discarded
  * ones included, so the roll log shows the dice and not a bare total. Advantage and
- * disadvantage are legal only on notation that rolls a single die, keeps it, and sums
- * nothing further.
+ * disadvantage are legal only on notation that rolls a single die, keeps it, and sums no
+ * second pool.
  */
 
 export type RolledDie = {
@@ -84,7 +84,7 @@ function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm
   if (count < 1 || count > MAX_COUNT) {
     throw new RangeError(`Dice count must be 1-${MAX_COUNT}: "${notation}"`);
   }
-  if (faces < 1 || faces > MAX_FACES) {
+  if (!Number.isInteger(faces) || faces < 1 || faces > MAX_FACES) {
     throw new RangeError(`Die faces must be 1-${MAX_FACES}: "${notation}"`);
   }
 
@@ -97,13 +97,15 @@ function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm
     keep = { high: groups.keep === "h", count: keepCount };
   } else if (groups.drop !== undefined) {
     const dropCount = Number(groups.dropCount);
-    if (dropCount < 1 || dropCount >= count) {
+    if (dropCount >= count) {
       throw new RangeError(`Cannot drop ${dropCount} of ${count} dice: "${notation}"`);
     }
     keep = { high: groups.drop !== "h", count: count - dropCount };
   }
 
-  return { sign, count, faces, keep };
+  // A clause that discards nothing is no clause: `4d6kh4`, `4d6d0` and `4d6` are one
+  // roll, so they take one row in the log and one answer from the advantage guard.
+  return { sign, count, faces, keep: keep !== null && keep.count === count ? null : keep };
 }
 
 /**
@@ -111,7 +113,7 @@ function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm
  * cancel into a value neither the sum nor a double can represent: `1e19-9.99e18` loses
  * the 1 it should carry, and a pair of 400-digit constants cancels to `NaN`.
  */
-function parseConstant(raw: string | undefined, notation: string): number {
+function parseConstant(raw: string, notation: string): number {
   const constant = Number(raw);
   if (constant > MAX_MODIFIER) {
     throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
@@ -141,8 +143,9 @@ function parseDice(notation: string): ParsedDice {
     if (groups.constant === undefined) {
       terms.push(parseTerm(groups, sign, notation));
     } else if (terms.length === 0) {
-      // `3-1d6` would canonicalize to `-1d6+3`, which the grammar rejects. Starting a
-      // roll at a pool keeps `notation` round-tripping.
+      // `3-1d6` would canonicalize to `-1d6+3`, which the grammar rejects, so `notation`
+      // would stop round-tripping. `3+1d6` round-trips and goes anyway: a roll starts with
+      // a pool, rather than starting with one whenever the sign happens to allow it.
       throw new SyntaxError(`Dice notation must start with a die: "${notation}"`);
     } else {
       modifier += sign * parseConstant(groups.constant, notation);

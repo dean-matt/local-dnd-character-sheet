@@ -72,9 +72,10 @@ isRollable("5000d6");   // false, above the count bound
 ```
 
 Canonical form strips spacing and fills in defaults, turning `" 2d6 + 3 "` into `"2d6+3"`
-and `"d20"` into `"1d20"`. It also rewrites a drop clause as the keep clause it means and
-collects scattered constants into one modifier, so `"4d6dl1"` becomes `"4d6kh3"` and
-`"1d2-2+2d3+5"` becomes `"1d2+2d3+3"`. Two players who type the same roll differently
+and `"d20"` into `"1d20"`. It also rewrites a drop clause as the keep clause it means,
+drops a clause that discards nothing, and collects scattered constants into one modifier,
+so `"4d6dl1"` becomes `"4d6kh3"`, `"4d6kh4"` becomes `"4d6"`, and `"1d2-2+2d3+5"` becomes
+`"1d2+2d3+3"`. Two players who type the same roll differently
 therefore write the same string to a log.
 
 Die sizes and the summed modifier are capped at 1000, as is the number of dice a single

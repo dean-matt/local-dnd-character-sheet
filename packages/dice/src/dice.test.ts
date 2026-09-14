@@ -87,6 +87,11 @@ describe("rollDice", () => {
     },
   );
 
+  it("takes advantage on a clause that keeps the only die", () => {
+    const roll = rollDice("1d20kh1", { mode: "advantage", random: loaded(20, 8, 19) });
+    expect(kept(roll)).toEqual([19]);
+  });
+
   it.each(["1d", "3d", "20d"])("reports %o as malformed, not as a leading constant", (n) => {
     expect(() => rollDice(n)).toThrow(/Invalid dice notation/);
   });
@@ -104,7 +109,7 @@ describe("rollDice", () => {
     expect(roll.total).toBe(8);
   });
 
-  it.each(["4d6kh3", "2d6", "1d20kh1", "1d20+1d4"])("rejects advantage on %s", (notation) => {
+  it.each(["4d6kh3", "2d6", "2d20kh1", "1d20+1d4"])("rejects advantage on %s", (notation) => {
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(TypeError);
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(`"${notation}"`);
   });
@@ -126,8 +131,6 @@ describe("rollDice", () => {
     "1d6-1001",
     "4d6dl4",
     "4d6d4",
-    "4d6d0",
-    "4d6dl0",
     "1d6+10000000000000000000-9999999999999999999",
     "1000d6+1d6",
     `1d6+${"9".repeat(400)}`,
@@ -192,6 +195,8 @@ describe("rollDice", () => {
     ["4d6dl1", "4d6kh3"],
     ["4d6d1", "4d6kh3"],
     ["4D6DH1", "4d6kl3"],
+    ["4d6d0", "4d6"],
+    ["4d6kh4", "4d6"],
   ])("canonicalizes %s to %s and round-trips it", (notation, canonical) => {
     expect(rollDice(notation).notation).toBe(canonical);
     expect(rollDice(canonical).notation).toBe(canonical);
