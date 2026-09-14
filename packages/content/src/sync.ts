@@ -8,7 +8,7 @@
  *
  *   pnpm content:sync                 fetch the tag in content.manifest.json
  *   pnpm content:sync --tag v2.35.0   fetch a different tag and rewrite the lock
- *   pnpm content:sync --verify        check vendor/ against the lock, fetch nothing
+ *   pnpm content:sync --verify        check the lock and vendor/, fetch nothing
  */
 
 import { execFileSync } from "node:child_process";
