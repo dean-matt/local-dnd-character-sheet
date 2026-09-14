@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: Review a pull request in this repository through the lenses it actually needs — the coding ladder, test depth, the issue's own criteria, and the 5e, catalog, API and accessibility judgments that fire only where the diff reaches them. Use when reviewing a pull request here, from issue-to-pr or by hand. Skips everything pnpm check and the shape tests already assert.
+description: Review a pull request in this repository through the lenses it actually needs — the coding ladder, test depth, the issue's own criteria, the prose it writes, and the 5e, catalog, API and accessibility judgments that fire only where the diff reaches them. Use when reviewing a pull request here, from issue-to-pr or by hand. Skips everything pnpm check and the shape tests already assert.
 ---
 
 # Reviewing a pull request
@@ -45,7 +45,7 @@ gh pr checks <n>                   # a red check is a finding: pnpm check misses
 
 ## The lenses
 
-Three run on every pull request:
+Four run on every pull request:
 
 - **Senior engineer** — the ladder in `CLAUDE.md`: need it, exists here already, one
   line. Package boundaries, and the root cause over the path the issue named.
@@ -54,8 +54,14 @@ Three run on every pull request:
   implementation back to itself counts as none.
 - **QA** — acceptance criteria met, **Out of scope** respected, edges exercised: empty,
   absent, zero, negative, multiclass, a homebrew row shadowing a catalog one.
+- **Editor** — the prose the change writes: the commit message, the pull request body,
+  `docs/`, a skill, a comment. Active voice, positive form, needless words out, and the
+  register of the file it lands in — prose an agent reads every pass is instructions, not
+  an essay. A comment restating what the code does is a finding. History, markers and
+  ticket keys are fenced, so leave them.
 
-Four more fire only where the diff reaches them, so a `repo`-only change runs three:
+Four more fire only where the diff reaches them, so a `repo`-only change runs the four
+above and stops:
 
 | Lens | Fires on | Weighs |
 |---|---|---|
