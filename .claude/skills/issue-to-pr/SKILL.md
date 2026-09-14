@@ -12,25 +12,25 @@ Read `CONTRIBUTING.md` first; it holds the reasoning these steps assume.
 Say which issue you are taking and start. Naming it first makes a wrong pick cost a
 sentence rather than a branch.
 
-The `D&D Character Sheet` project board decides. Its one view groups by milestone and
-sorts by a `Rank` the user sets knowing what blocks what and what an audit has to follow.
-The live milestone is the lowest-numbered holding a ranked open issue; take the open
-issue ranked lowest in it. Nothing else decides the pick — not the issue number, not
-which code just merged, not how small it looks.
+The `D&D Character Sheet` project board decides — not the issue number, not which code
+just merged, not how small it looks. The live milestone is the lowest-numbered holding a
+ranked open issue; the pick is the open issue ranked lowest in it.
 
 ```bash
 # from the repo root: gh reads the account from the directory
-gh project item-list 1 --owner dean-matt --limit 200 --format json
-gh issue list --state open --limit 200 --json number
+open=$(gh issue list --state open --limit 200 --json number --jq '[.[].number]')
+gh project item-list 1 --owner dean-matt --limit 200 --format json |
+  jq --argjson open "$open" '
+    if (.items | length) < .totalCount then error("board truncated — raise --limit") else . end
+    | [.items[] | select(.rank and .milestone and (.content.number | IN($open[])))]
+    | sort_by(.milestone.title, .rank) | .[0]'
 ```
 
-Pass both limits and check `.items | length` against `.totalCount`: each defaults to 30
-rows and truncates in silence, hiding the ranked issue you came for. An item holds
-`id`, `rank`, `milestone`, `status`, `labels`, `content.number` and `content.body`, and
-omits `rank` when unranked. `status` is hand-maintained, so the open list says what is open.
-
-An issue with no rank or no milestone is backlog: it waits for the user to name it and
-holds no milestone open. Where no milestone holds a ranked open issue, say so and stop.
+Both limits default to 30 rows and truncate in silence, which the guard turns into an
+error. `gh project item-list --jq` takes no `--argjson`, so the filter runs in `jq`.
+Milestones sort by title, which holds while they are numbered. An issue with no rank or
+no milestone is backlog: the filter drops it and it waits for the user to name it. `null`
+means no milestone holds a ranked open issue — say so and stop.
 
 A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
 rather than a fence: read the issue and say why you are taking it. Where the top-ranked
@@ -86,8 +86,14 @@ skippable — name the condition and stop, because reranking is the user's call.
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
     on nobody, and CI does not enter into it. Then report what landed, what each review
-    found, and what `gh pr checks` says, noting a run still in flight as in flight. The
-    gate needs `pnpm build` and the end-to-end tests green too, and `pnpm check` runs
+    found, and what CI says — a run still in flight is reported as in flight, or waited
+    out. It reports none at all for a few seconds after a push, which reads as pending.
+
+    ```bash
+    until gh pr checks <n> --json bucket --jq 'all(.[]; .bucket != "pending")' | grep -qx true; do sleep 15; done; gh pr checks <n>
+    ```
+
+    The gate needs `pnpm build` and the end-to-end tests green too, and `pnpm check` runs
     neither, so local green is not the answer. A red run is the user's to weigh, as is
     the merge, every time.
 
