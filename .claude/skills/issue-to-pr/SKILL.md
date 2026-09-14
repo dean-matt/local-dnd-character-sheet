@@ -44,7 +44,21 @@ skippable — name the condition and stop, because reranking is the user's call.
 2. **Where the issue states counts or shapes, verify them against `vendor/`** before
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
-3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`.
+3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then move
+   the board to `In Progress`. Nothing else does: the board's own workflow waits for a
+   pull request, by which time the work is over, so it shows the whole run as untouched.
+   `item-list` already returned the item id; the project, field and option ids come from
+   the two lookups below and hold still, so read them once a session.
+
+   ```bash
+   gh project view 1 --owner dean-matt --format json --jq .id
+   gh project field-list 1 --owner dean-matt --format json \
+     --jq '.fields[] | select(.name == "Status")'
+   gh project item-edit --id <item> --project-id <project> \
+     --field-id <field> --single-select-option-id <In Progress>
+   ```
+
+   `Done` is not yours to set, because the merge is not either.
 4. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one — not this
    one, which is the sequence around the work rather than the work.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
