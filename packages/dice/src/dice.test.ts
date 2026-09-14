@@ -11,6 +11,17 @@ function loaded(faces: number, ...values: number[]): () => number {
   };
 }
 
+/** A random source that yields the given `[faces, value]` pairs, for mixed dice. */
+function loadedMixed(...rolls: [number, number][]): () => number {
+  const queue = [...rolls];
+  return () => {
+    const roll = queue.shift();
+    if (roll === undefined) throw new Error("loaded die ran out of values");
+    const [faces, value] = roll;
+    return (value - 1) / faces;
+  };
+}
+
 const values = (roll: { dice: { value: number }[] }) => roll.dice.map((die) => die.value);
 const kept = (roll: { dice: { value: number; kept: boolean }[] }) =>
   roll.dice.filter((die) => die.kept).map((die) => die.value);
@@ -22,7 +33,7 @@ describe("rollDice", () => {
       total: 14,
       modifier: 0,
       notation: "1d20",
-      dice: [{ faces: 20, value: 14, kept: true }],
+      dice: [{ faces: 20, value: 14, kept: true, sign: 1 }],
     });
   });
 
@@ -80,12 +91,12 @@ describe("rollDice", () => {
     expect(roll.total).toBe(8);
   });
 
-  it.each(["4d6kh3", "2d6", "1d20kh1"])("rejects advantage on %s", (notation) => {
+  it.each(["4d6kh3", "2d6", "1d20kh1", "1d20+1d4"])("rejects advantage on %s", (notation) => {
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(TypeError);
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(`"${notation}"`);
   });
 
-  it.each(["", "d", "20", "1d", "1d20kh", "1d20k2", "2d6+", "1d20 or bust", "-1d6"])(
+  it.each(["", "d", "20", "1d", "1d20kh", "1d20k2", "2d6+", "1d20 or bust", "-1d6", "3+1d6"])(
     "rejects %o with the input in the message",
     (notation) => {
       expect(() => rollDice(notation)).toThrow(`"${notation}"`);
@@ -100,9 +111,73 @@ describe("rollDice", () => {
     "2d6kh3",
     "1d6+1001",
     "1d6-1001",
+    "4d6dl4",
+    "4d6d4",
+    "1000d6+1d6",
     `1d6+${"9".repeat(400)}`,
   ])("rejects %s out of range", (notation) => {
     expect(() => rollDice(notation)).toThrow(RangeError);
+  });
+
+  it("sums several terms and reports every die in roll order", () => {
+    const roll = rollDice("1d8+1d6+3", { random: loadedMixed([8, 5], [6, 2]) });
+    expect(roll.dice).toEqual([
+      { faces: 8, value: 5, kept: true, sign: 1 },
+      { faces: 6, value: 2, kept: true, sign: 1 },
+    ]);
+    expect(roll.modifier).toBe(3);
+    expect(roll.total).toBe(10);
+  });
+
+  it("subtracts a term's dice from the total and signs them", () => {
+    const roll = rollDice("2d6-1d4", { random: loadedMixed([6, 4], [6, 3], [4, 2]) });
+    expect(roll.dice.map((die) => die.sign)).toEqual([1, 1, -1]);
+    expect(roll.modifier).toBe(0);
+    expect(roll.total).toBe(5);
+  });
+
+  it("collects scattered constants into one modifier", () => {
+    const roll = rollDice("1d2-2+2d3+5", { random: loadedMixed([2, 1], [3, 3], [3, 1]) });
+    expect(roll.modifier).toBe(3);
+    expect(roll.total).toBe(8);
+    expect(roll.notation).toBe("1d2+2d3+3");
+  });
+
+  it("keeps a clause to its own term", () => {
+    const roll = rollDice("4d6kh3+1d4", {
+      random: loadedMixed([6, 1], [6, 5], [6, 3], [6, 6], [4, 2]),
+    });
+    expect(kept(roll)).toEqual([5, 3, 6, 2]);
+    expect(roll.total).toBe(16);
+  });
+
+  it.each([
+    ["4d6dl1", [5, 3, 6]],
+    ["4d6d1", [5, 3, 6]],
+    ["4d6dh1", [1, 5, 3]],
+  ])("reads %s as the keep clause it inverts", (notation, expected) => {
+    const roll = rollDice(notation, { random: loaded(6, 1, 5, 3, 6) });
+    expect(values(roll)).toEqual([1, 5, 3, 6]);
+    expect(kept(roll)).toEqual(expected);
+  });
+
+  it("rolls a drop clause and its keep spelling alike", () => {
+    const drop = rollDice("4d6dl1", { random: loaded(6, 1, 5, 3, 6) });
+    const keep = rollDice("4d6kh3", { random: loaded(6, 1, 5, 3, 6) });
+    expect(drop).toEqual(keep);
+  });
+
+  it.each([
+    ["1d8+1d6+3", "1d8+1d6+3"],
+    ["2d6-1d4", "2d6-1d4"],
+    ["2d8 + 1d6", "2d8+1d6"],
+    ["1d2-2+2d3+5", "1d2+2d3+3"],
+    ["4d6dl1", "4d6kh3"],
+    ["4d6d1", "4d6kh3"],
+    ["4D6DH1", "4d6kl3"],
+  ])("canonicalizes %s to %s and round-trips it", (notation, canonical) => {
+    expect(rollDice(notation).notation).toBe(canonical);
+    expect(rollDice(canonical).notation).toBe(canonical);
   });
 
   it("stays within the die's faces over many rolls", () => {

@@ -1,9 +1,10 @@
 /**
  * Dice notation parsing and rolling.
  *
- * `rollDice` is the only entry point. It returns every die rolled, including the ones a
- * keep clause discarded, so the roll log shows the pool and not a bare total. Advantage
- * and disadvantage are legal only on notation that rolls a single die and keeps it.
+ * `rollDice` is the only entry point. It returns every die from every pool, discarded
+ * ones included, so the roll log shows the dice and not a bare total. Advantage and
+ * disadvantage are legal only on notation that rolls a single die, keeps it, and sums
+ * nothing further.
  */
 
 export type RolledDie = {
@@ -11,6 +12,11 @@ export type RolledDie = {
   value: number;
   /** False for a die discarded by a keep clause, advantage, or disadvantage. */
   kept: boolean;
+  /**
+   * `-1` for a die in a subtracted pool, as the `1d4` of `2d6-1d4`. Signing the die lets
+   * a log add the dice up and reach the same `total`.
+   */
+  sign: 1 | -1;
 };
 
 export type Roll = {
@@ -39,29 +45,39 @@ const MAX_FACES = 1000;
 const MAX_MODIFIER = 1000;
 
 /**
- * Spaces may surround the operators but never split a number: `1d6 4` would otherwise
- * become a d64.
+ * One term of an already-lowercased notation: a dice pool with an optional keep or drop
+ * clause, or a bare constant. Spaces may surround the operators but never split a number,
+ * because `1d6 4` would otherwise become a d64. A keep clause names its end, because `k`
+ * alone says neither highest nor lowest; a drop clause defaults to the lowest, so the
+ * second `d` of `4d6d1` reads by position as a drop, not as another die separator.
  */
-const NOTATION = /^(\d*)\s*d\s*(\d+)(?:\s*k\s*([hl])\s*(\d+))?(?:\s*([+-])\s*(\d+))?$/i;
+const TERM =
+  /\s*(?:(?<count>\d*)\s*d\s*(?<faces>\d+)(?:\s*k\s*(?<keep>[hl])\s*(?<keepCount>\d+)|\s*d\s*(?<drop>[hl]?)\s*(?<dropCount>\d+))?|(?<constant>\d+))\s*/y;
+
+const OPERATOR = /([+-])/y;
 
 type Keep = { high: boolean; count: number };
 
+type DiceTerm = { sign: 1 | -1; count: number; faces: number; keep: Keep | null };
+
 type ParsedDice = {
-  count: number;
-  faces: number;
-  keep: Keep | null;
+  terms: DiceTerm[];
   modifier: number;
 };
 
-function parseDice(notation: string): ParsedDice {
-  const match = NOTATION.exec(notation.trim());
-  if (match === null) {
-    throw new SyntaxError(`Invalid dice notation: "${notation}"`);
-  }
+type TermGroups = {
+  count?: string;
+  faces?: string;
+  keep?: string;
+  keepCount?: string;
+  drop?: string;
+  dropCount?: string;
+  constant?: string;
+};
 
-  const [, rawCount, rawFaces, keepKind, rawKeep, sign, rawModifier] = match;
-  const count = rawCount === "" ? 1 : Number(rawCount);
-  const faces = Number(rawFaces);
+function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm {
+  const count = groups.count === "" ? 1 : Number(groups.count);
+  const faces = Number(groups.faces);
 
   if (count < 1 || count > MAX_COUNT) {
     throw new RangeError(`Dice count must be 1-${MAX_COUNT}: "${notation}"`);
@@ -71,26 +87,85 @@ function parseDice(notation: string): ParsedDice {
   }
 
   let keep: Keep | null = null;
-  if (keepKind !== undefined) {
-    const keepCount = Number(rawKeep);
+  if (groups.keep !== undefined) {
+    const keepCount = Number(groups.keepCount);
     if (keepCount < 1 || keepCount > count) {
       throw new RangeError(`Cannot keep ${keepCount} of ${count} dice: "${notation}"`);
     }
-    keep = { high: keepKind.toLowerCase() === "h", count: keepCount };
+    keep = { high: groups.keep === "h", count: keepCount };
+  } else if (groups.drop !== undefined) {
+    const dropCount = Number(groups.dropCount);
+    if (dropCount >= count) {
+      throw new RangeError(`Cannot drop ${dropCount} of ${count} dice: "${notation}"`);
+    }
+    keep = { high: groups.drop !== "h", count: count - dropCount };
   }
 
-  const modifier = rawModifier === undefined ? 0 : Number(`${sign}${rawModifier}`);
+  return { sign, count, faces, keep };
+}
+
+function parseDice(notation: string): ParsedDice {
+  const source = notation.trim().toLowerCase();
+  const terms: DiceTerm[] = [];
+  let modifier = 0;
+  let sign: 1 | -1 = 1;
+  let index = 0;
+
+  for (;;) {
+    TERM.lastIndex = index;
+    const match = TERM.exec(source);
+    if (match === null || match.groups === undefined) {
+      throw new SyntaxError(`Invalid dice notation: "${notation}"`);
+    }
+    index = TERM.lastIndex;
+
+    const groups: TermGroups = match.groups;
+    if (groups.constant === undefined) {
+      terms.push(parseTerm(groups, sign, notation));
+    } else if (terms.length === 0) {
+      // `3-1d6` would canonicalize to `-1d6+3`, which the grammar rejects. Starting a
+      // roll at a pool keeps `notation` round-tripping.
+      throw new SyntaxError(`Dice notation must start with a die: "${notation}"`);
+    } else {
+      modifier += sign * Number(groups.constant);
+    }
+
+    if (index === source.length) break;
+
+    OPERATOR.lastIndex = index;
+    const operator = OPERATOR.exec(source);
+    if (operator === null) {
+      throw new SyntaxError(`Invalid dice notation: "${notation}"`);
+    }
+    index = OPERATOR.lastIndex;
+    sign = operator[1] === "-" ? -1 : 1;
+  }
+
+  const pooled = terms.reduce((sum, term) => sum + term.count, 0);
+  if (pooled > MAX_COUNT) {
+    throw new RangeError(`Cannot roll more than ${MAX_COUNT} dice at once: "${notation}"`);
+  }
   if (Math.abs(modifier) > MAX_MODIFIER) {
     throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
   }
 
-  return { count, faces, keep, modifier };
+  return { terms, modifier };
 }
 
-function canonical({ count, faces, keep, modifier }: ParsedDice): string {
-  const keptPart = keep === null ? "" : `k${keep.high ? "h" : "l"}${keep.count}`;
+/**
+ * Rebuilt from the parsed terms, so a drop clause comes back as the keep clause it means,
+ * and scattered constants as one trailing modifier.
+ */
+function canonical({ terms, modifier }: ParsedDice): string {
+  const pools = terms
+    .map(({ sign, count, faces, keep }, position) => {
+      const operator = sign < 0 ? "-" : position === 0 ? "" : "+";
+      const keptPart = keep === null ? "" : `k${keep.high ? "h" : "l"}${keep.count}`;
+      return `${operator}${count}d${faces}${keptPart}`;
+    })
+    .join("");
   const modifierPart = modifier === 0 ? "" : `${modifier < 0 ? "-" : "+"}${Math.abs(modifier)}`;
-  return `${count}d${faces}${keptPart}${modifierPart}`;
+  return `${pools}${modifierPart}`;
 }
 
 function markKept(dice: RolledDie[], keep: Keep | null): void {
@@ -128,28 +203,34 @@ export function isRollable(notation: string): boolean {
  *
  * Advantage and disadvantage roll a second die and keep the higher or the lower, so both
  * appear in `dice`. The rules apply them only to a single die, so a mode paired with a
- * pool or a keep clause is rejected rather than reinterpreted — a `TypeError`, because
- * the notation is valid and only the pairing is wrong.
+ * pool, a keep clause, or a second pool is rejected rather than reinterpreted — a
+ * `TypeError`, because the notation is valid and only the pairing is wrong.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { mode = "normal", random = Math.random } = options;
   const parsed = parseDice(notation);
-  const { count, faces, keep, modifier } = parsed;
+  const { terms, modifier } = parsed;
 
-  if (mode !== "normal" && (count !== 1 || keep !== null)) {
+  const single = terms.length === 1 ? terms[0] : undefined;
+  if (mode !== "normal" && (single === undefined || single.count !== 1 || single.keep !== null)) {
     throw new TypeError(`${mode} applies to a single die, not to "${notation}"`);
   }
 
-  const pool = mode === "normal" ? count : 2;
-  const applied = mode === "normal" ? keep : { high: mode === "advantage", count: 1 };
+  const dice: RolledDie[] = [];
+  for (const term of terms) {
+    const pool = mode === "normal" ? term.count : 2;
+    const applied = mode === "normal" ? term.keep : { high: mode === "advantage", count: 1 };
+    const rolled: RolledDie[] = Array.from({ length: pool }, () => ({
+      faces: term.faces,
+      value: Math.floor(random() * term.faces) + 1,
+      kept: true,
+      sign: term.sign,
+    }));
+    markKept(rolled, applied);
+    dice.push(...rolled);
+  }
 
-  const dice: RolledDie[] = Array.from({ length: pool }, () => ({
-    faces,
-    value: Math.floor(random() * faces) + 1,
-    kept: true,
-  }));
-  markKept(dice, applied);
-
-  const total = dice.reduce((sum, die) => sum + (die.kept ? die.value : 0), 0) + modifier;
+  const total =
+    dice.reduce((sum, die) => sum + (die.kept ? die.sign * die.value : 0), 0) + modifier;
   return { total, dice, modifier, notation: canonical(parsed) };
 }
