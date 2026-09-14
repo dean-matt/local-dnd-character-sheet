@@ -87,6 +87,10 @@ describe("rollDice", () => {
     },
   );
 
+  it.each(["1d", "3d", "20d"])("reports %o as malformed, not as a leading constant", (n) => {
+    expect(() => rollDice(n)).toThrow(/Invalid dice notation/);
+  });
+
   it("rolls twice and keeps the higher on advantage", () => {
     const roll = rollDice("1d20+5", { mode: "advantage", random: loaded(20, 8, 19) });
     expect(values(roll)).toEqual([8, 19]);
@@ -122,6 +126,9 @@ describe("rollDice", () => {
     "1d6-1001",
     "4d6dl4",
     "4d6d4",
+    "4d6d0",
+    "4d6dl0",
+    "1d6+10000000000000000000-9999999999999999999",
     "1000d6+1d6",
     `1d6+${"9".repeat(400)}`,
     `1d6+${"9".repeat(400)}-${"9".repeat(400)}`,

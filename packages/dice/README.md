@@ -87,7 +87,7 @@ Every message names the offending input.
 | Thrown | When |
 |---|---|
 | `SyntaxError` | The notation is malformed |
-| `RangeError` | A count, die size, modifier, or the dice a roll puts on the table at once falls outside 1-1000, or a keep or drop clause names more dice than its pool holds |
+| `RangeError` | A count, die size, modifier, or the dice a roll puts on the table at once falls outside 1-1000, or a keep or drop clause names a number its pool cannot honor |
 | `TypeError` | The notation is valid, but a mode does not fit it |
 
 ## Troubleshooting

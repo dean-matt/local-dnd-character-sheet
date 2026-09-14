@@ -49,10 +49,12 @@ const MAX_MODIFIER = 1000;
  * clause, or a bare constant. Spaces may surround the operators but never split a number,
  * because `1d6 4` would otherwise become a d64. A keep clause names its end, because `k`
  * alone says neither highest nor lowest; a drop clause defaults to the lowest, so the
- * second `d` of `4d6d1` reads by position as a drop, not as another die separator.
+ * second `d` of `4d6d1` reads by position as a drop, not as another die separator. A
+ * constant runs to the next operator or to the end, so the `1` of `1d` cannot pass for
+ * one and the truncated die reports itself as malformed.
  */
 const TERM =
-  /\s*(?:(?<count>\d*)\s*d\s*(?<faces>\d+)(?:\s*k\s*(?<keep>[hl])\s*(?<keepCount>\d+)|\s*d\s*(?<drop>[hl]?)\s*(?<dropCount>\d+))?|(?<constant>\d+))\s*/y;
+  /\s*(?:(?<count>\d*)\s*d\s*(?<faces>\d+)(?:\s*k\s*(?<keep>[hl])\s*(?<keepCount>\d+)|\s*d\s*(?<drop>[hl]?)\s*(?<dropCount>\d+))?|(?<constant>\d+)(?=\s*[+-]|\s*$))\s*/y;
 
 const OPERATOR = /([+-])/y;
 
@@ -76,7 +78,7 @@ type TermGroups = {
 };
 
 function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm {
-  const count = groups.count === "" ? 1 : Number(groups.count);
+  const count = groups.count === undefined || groups.count === "" ? 1 : Number(groups.count);
   const faces = Number(groups.faces);
 
   if (count < 1 || count > MAX_COUNT) {
@@ -95,13 +97,26 @@ function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm
     keep = { high: groups.keep === "h", count: keepCount };
   } else if (groups.drop !== undefined) {
     const dropCount = Number(groups.dropCount);
-    if (dropCount >= count) {
+    if (dropCount < 1 || dropCount >= count) {
       throw new RangeError(`Cannot drop ${dropCount} of ${count} dice: "${notation}"`);
     }
     keep = { high: groups.drop !== "h", count: count - dropCount };
   }
 
   return { sign, count, faces, keep };
+}
+
+/**
+ * Each constant is bounded on its own and not only in the sum, because two past the bound
+ * cancel into a value neither the sum nor a double can represent: `1e19-9.99e18` loses
+ * the 1 it should carry, and a pair of 400-digit constants cancels to `NaN`.
+ */
+function parseConstant(raw: string | undefined, notation: string): number {
+  const constant = Number(raw);
+  if (constant > MAX_MODIFIER) {
+    throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
+  }
+  return constant;
 }
 
 function parseDice(notation: string): ParsedDice {
@@ -130,7 +145,7 @@ function parseDice(notation: string): ParsedDice {
       // roll at a pool keeps `notation` round-tripping.
       throw new SyntaxError(`Dice notation must start with a die: "${notation}"`);
     } else {
-      modifier += sign * Number(groups.constant);
+      modifier += sign * parseConstant(groups.constant, notation);
     }
 
     if (index === source.length) break;
@@ -148,9 +163,7 @@ function parseDice(notation: string): ParsedDice {
   if (pooled > MAX_COUNT) {
     throw new RangeError(`Cannot roll more than ${MAX_COUNT} dice at once: "${notation}"`);
   }
-  // Two constants of 309 digits or more each coerce to `Infinity` and cancel to a `NaN`
-  // no magnitude test catches, reaching the roll log as a total nobody can read.
-  if (!Number.isFinite(modifier) || Math.abs(modifier) > MAX_MODIFIER) {
+  if (Math.abs(modifier) > MAX_MODIFIER) {
     throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
   }
 
