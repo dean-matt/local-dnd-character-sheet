@@ -59,7 +59,8 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 - **`tests/fixtures/5etools/` is generated**, never hand-edited — `pnpm fixtures:build`
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
 - **A pushed commit is never rewritten.** No amend, no rebase, no force push — add a
-  commit. `scripts/no-rewrite.mjs` rejects a push that is not fast-forward.
+  commit. `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the branch you
+  are on.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — `knip` will find it, but the commit should not have created it.
 

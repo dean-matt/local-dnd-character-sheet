@@ -69,7 +69,9 @@ only as a force push, which discards the commit a reviewer read — the comment 
 a line, the CI run and every permalink now point at nothing. Add a commit instead; the
 squash merge collapses them anyway.
 
-On `pre-push`, `scripts/no-rewrite.mjs` rejects a push that is not fast-forward. Amending
+On `pre-push`, `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the branch
+you are on — a force push aimed at another branch from somewhere else goes through, as
+its module comment records. Amending
 a commit you have not pushed yet costs a reader nothing and leaves no trace for a hook to
 find, so the fence holds only the half it can judge — but add a commit there too, rather
 than keeping two habits.
