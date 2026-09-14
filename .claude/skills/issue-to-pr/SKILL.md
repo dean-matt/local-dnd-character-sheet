@@ -30,9 +30,9 @@ milestone-less issue is backlog: the filter drops it and it waits for the user t
 it. `null` means no milestone holds a ranked open issue — say so and stop.
 
 A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
-rather than a fence: read the issue and say why you are taking it. Where the top-ranked
-issue names a condition that still holds, the rank is stale rather than the issue
-skippable — name the condition and stop, because reranking is the user's call.
+rather than a fence: read the issue and say why you are taking it. Where the condition
+still holds, the rank is stale rather than the issue skippable — name it and stop,
+because reranking is the user's call.
 
 ## The sequence
 
@@ -43,8 +43,8 @@ skippable — name the condition and stop, because reranking is the user's call.
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then set
    the board to `In Progress`; its own workflow waits for the pull request. `item-add`
-   returns the item an issue already has, so it serves whether or not the board holds it.
-   The project, field and option ids hold still, so read them once a session.
+   returns the item an issue already has; the other three ids hold still, so read them
+   once a session.
 
    ```bash
    gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
@@ -67,12 +67,11 @@ skippable — name the condition and stop, because reranking is the user's call.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
 10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
-    inherits whatever was typed last. Then check `git branch --show-current`: the
-    review leaves the tree where it checked out, and a detached HEAD commits onto
-    nothing without the branch-name hook saying so. A pass returning anything to weigh
-    swaps `review:changes-requested` on before you apply, so a run that dies mid-apply
-    leaves the pull request marked. One `gh pr edit <n> --add-label <one> --remove-label
-    <other>` does both halves, so it never carries both.
+    inherits whatever was typed last. Then `git branch --show-current`: the review leaves
+    the tree where it checked out, and the branch-name hook stays quiet on a detached
+    HEAD. A pass returning anything to weigh swaps `review:changes-requested` on before
+    you apply, so a run that dies mid-apply leaves the pull request marked; one `gh pr
+    edit <n> --add-label <one> --remove-label <other>` does both halves.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
@@ -83,29 +82,21 @@ skippable — name the condition and stop, because reranking is the user's call.
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
     on nobody, and CI does not enter into it. Then report what landed, what each review
-    found, and what CI says — a run still in flight is reported as in flight, or waited
-    out. It reports none at all for a few seconds after a push, which reads as pending.
-
-    ```bash
-    until gh pr checks <n> --json bucket --jq 'all(.[]; .bucket != "pending")' | grep -qx true; do sleep 15; done; gh pr checks <n>
-    ```
-
-    The gate needs `pnpm build` and the end-to-end tests green too, and `pnpm check` runs
-    neither, so local green is not the answer. A red run is the user's to weigh, as is
-    the merge, every time.
+    found, and what `gh pr checks` says, reporting a run still in flight as in flight
+    rather than waiting on it. The gate needs `pnpm build` and the end-to-end tests green
+    too, and `pnpm check` runs neither, so local green is not the answer. A red run is
+    the user's to weigh.
 
 ## The pull request body
 
 `Closes #<issue>` on the first line. Then what the change does and, for anything a
 reviewer would otherwise derive, the entry in the data that decided it, named as
-`Name` (SOURCE).
-
-Close with the verification. "`pnpm check` is green" is the floor: say what ran
-against the real corpus and what came out.
+`Name` (SOURCE). Close with the verification: "`pnpm check` is green" is the floor, so
+say what ran against the real corpus and what came out.
 
 ## What this skill will not do
 
 **Merge.** Report and wait, whatever the review found and however small the change.
 
-**Widen the issue.** A second bug found on the way is a second issue. File it or name
-it in the report; leave it out of this branch.
+**Widen the issue.** A second bug found on the way is a second issue: file it or name it
+in the report, and leave it out of this branch.
