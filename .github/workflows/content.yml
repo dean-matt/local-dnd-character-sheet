@@ -22,12 +22,15 @@ jobs:
   corpus:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # The sync clones a third-party repository from inside a checkout that carries the
-    # token in its git config, and the job then parses 109 MB of upstream JSON.
     permissions:
       contents: read
     steps:
+      # The sync clones a third-party repository from inside this checkout, so a persisted
+      # token would be sent on that clone. Nothing here needs git credentials: the restore
+      # is local and the clone is public.
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
 
