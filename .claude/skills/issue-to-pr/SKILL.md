@@ -45,9 +45,9 @@ skippable — name the condition and stop, because reranking is the user's call.
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then set
-   the board to `In Progress`. Nothing else does until the pull request, which is the end
-   of the run. Look the item up by number, because choosing may not have run; the project,
-   field and option ids hold still, so read them once a session.
+   the board to `In Progress`; its own workflow waits for the pull request. Look the item
+   up by number, because choosing may not have run; the project, field and option ids hold
+   still, so read them once a session.
 
    ```bash
    gh project item-list 1 --owner dean-matt --limit 200 --format json --jq '.items[] | select(.content.number == <n>) | .id'
