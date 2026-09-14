@@ -15,24 +15,24 @@ sentence rather than a branch.
 The `D&D Character Sheet` project board decides. Its one view groups by milestone and
 sorts by a `Rank` number field, which the user sets knowing what blocks what and what an
 audit has to follow. Milestones order the work above it, so the live one is the
-lowest-numbered with any issue open, and the next is live once it empties.
+lowest-numbered holding a ranked open issue.
 
 Take the open issue with the lowest `Rank` in the live milestone. Nothing else decides
 it — not the issue number, not which code just merged, not how small it looks.
 
 ```bash
+# from the repo root: gh reads the account from the directory
 gh project item-list 1 --owner dean-matt --limit 200 --format json
-gh issue list --state open --limit 200
+gh issue list --state open --limit 200 --json number
 ```
 
-Pass both limits: each defaults to 30 rows against 63 board items and 51 open issues, and
-the truncated board carries one ranked row. An item holds `rank`, `milestone`, `status`,
-`labels` and `content.number`, and omits `rank` when unranked. `status` is
-hand-maintained, so the open list is what says an issue is still open.
+Pass both limits and check `.items | length` against `.totalCount`: each command defaults
+to 30 rows and truncates in silence, hiding the ranked issue you came for. An item holds
+`rank`, `milestone`, `status`, `labels`, `content.number` and `content.body`, and omits
+`rank` when unranked. `status` is hand-maintained, so the open list says what is open.
 
-An issue with no rank or no milestone is backlog and waits for the user to name it. `M3
-API` and every milestone below it is unranked, so the live milestone can hold open issues
-and no ranked one: say so and stop rather than starting the milestone below.
+An issue with no rank or no milestone is backlog: it waits for the user to name it and
+holds no milestone open. Where no milestone holds a ranked open issue, say so and stop.
 
 A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
 rather than a fence: read the issue and say why you are taking it. Where the top-ranked
