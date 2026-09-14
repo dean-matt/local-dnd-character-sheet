@@ -227,10 +227,11 @@ files and unused dependencies, which is the residue of an agent changing directi
 mid-task. `noUnusedLocals` and Biome's complexity rules catch the rest. The fences run in
 `pnpm check`, on pre-commit, and in CI.
 
-CI splits by what a check needs to read. Everything that reads only committed data runs on
-every pull request; `check` runs on Linux and Windows, the rest on Linux alone. The jobs that read `vendor/` fetch 109 MB to do
-it, so they wait for a change to `content.manifest.json`, `content.lock.json` or the
-workflow itself. A tag bump is the event those exist for: it is the one change that can
+CI splits by what a check needs to read. Everything that reads only committed data runs
+on every pull request; `check` runs on Linux and Windows, the rest on Linux alone. The
+`corpus` job reads `vendor/` and fetches 109 MB to do it, so it waits for a change to
+`content.manifest.json`, `content.lock.json` or the workflow itself — or for a
+`workflow_dispatch`, which is how a loader or fixture-declaration change reaches it. A tag bump is the event those exist for: it is the one change that can
 leave the lockfile and the committed fixtures each describing a different upstream.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
