@@ -26,8 +26,8 @@ gh issue list --state open --limit 200 --json number
 
 Pass both limits and check `.items | length` against `.totalCount`: each defaults to 30
 rows and truncates in silence, hiding the ranked issue you came for. An item holds
-`rank`, `milestone`, `status`, `labels`, `content.number` and `content.body`, and omits
-`rank` when unranked. `status` is hand-maintained, so the open list says what is open.
+`id`, `rank`, `milestone`, `status`, `labels`, `content.number` and `content.body`, and
+omits `rank` when unranked. `status` is hand-maintained, so the open list says what is open.
 
 An issue with no rank or no milestone is backlog: it waits for the user to name it and
 holds no milestone open. Where no milestone holds a ranked open issue, say so and stop.
@@ -47,10 +47,14 @@ skippable — name the condition and stop, because reranking is the user's call.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then move
    the board to `In Progress`. Nothing else does: the board's own workflow waits for a
    pull request, by which time the work is over, so it shows the whole run as untouched.
-   `item-list` already returned the item id; the project, field and option ids come from
-   the two lookups below and hold still, so read them once a session.
+   The edit needs four ids. Look the item up by issue number rather than reusing what
+   choosing read, because an issue the user named skipped that step. The other three
+   name the project, the `Status` field and its `In Progress` option, and hold still,
+   so read them once a session.
 
    ```bash
+   gh project item-list 1 --owner dean-matt --limit 200 --format json \
+     --jq '.items[] | select(.content.number == <n>) | .id'
    gh project view 1 --owner dean-matt --format json --jq .id
    gh project field-list 1 --owner dean-matt --format json \
      --jq '.fields[] | select(.name == "Status")'
