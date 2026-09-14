@@ -9,25 +9,33 @@ Read `CONTRIBUTING.md` first; it holds the reasoning these steps assume.
 
 ## Choosing, when no issue is named
 
-Pick one, say which and why in a sentence, and start. Naming it first makes a wrong
-pick cost a sentence rather than a branch.
+Say which issue you are taking and start. Naming it first makes a wrong pick cost a
+sentence rather than a branch.
 
-Milestones are numbered and are the build order, so the live one is the
-lowest-numbered with any issue open. Take from it alone: an issue carrying no
-milestone is backlog, however small it looks, and waits for the user to name it.
+The `D&D Character Sheet` project board decides. Its one view groups by milestone and
+sorts by a `Rank` the user sets knowing what blocks what and what an audit has to follow.
+The live milestone is the lowest-numbered holding a ranked open issue; take the open
+issue ranked lowest in it. Nothing else decides the pick — not the issue number, not
+which code just merged, not how small it looks.
 
-Within the live milestone, in order:
+```bash
+# from the repo root: gh reads the account from the directory
+gh project item-list 1 --owner dean-matt --limit 200 --format json
+gh issue list --state open --limit 200 --json number
+```
 
-1. Drop anything `blocked` whose `## Blocked by` still holds — a condition it names
-   blocks as much as an issue does. Where there is no such section the label is a
-   flag rather than a fence: read the issue and say why you are taking it.
-2. Leave an audit of the milestone's own work until last. It reads code that keeps
-   moving until the milestone's final issue lands.
-3. Prefer the issue that builds on what just merged, while that code is fresh.
+Pass both limits and check `.items | length` against `.totalCount`: each defaults to 30
+rows and truncates in silence, hiding the ranked issue you came for. An item holds
+`rank`, `milestone`, `status`, `labels`, `content.number` and `content.body`, and omits
+`rank` when unranked. `status` is hand-maintained, so the open list says what is open.
 
-When the audit is all that remains, take it: last is where it belongs. When the
-milestone has nothing open, the next one is live; when everything open in it is
-blocked, say so and stop rather than starting the milestone below.
+An issue with no rank or no milestone is backlog: it waits for the user to name it and
+holds no milestone open. Where no milestone holds a ranked open issue, say so and stop.
+
+A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
+rather than a fence: read the issue and say why you are taking it. Where the top-ranked
+issue names a condition that still holds, the rank is stale rather than the issue
+skippable — name the condition and stop, because reranking is the user's call.
 
 ## The sequence
 
