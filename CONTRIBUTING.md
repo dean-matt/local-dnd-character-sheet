@@ -70,8 +70,9 @@ a line, the CI run and every permalink now point at nothing. Add a commit instea
 squash merge collapses them anyway.
 
 On `pre-push`, `scripts/no-rewrite.mjs` rejects a push that is not fast-forward. Amending
-before a push breaks the same rule and nothing sees it: that one leaves no trace and costs
-a reader nothing, so the fence holds the half a hook can judge.
+a commit you have not pushed yet costs a reader nothing and leaves no trace for a hook to
+find, so the fence holds only the half it can judge — but add a commit there too, rather
+than keeping two habits.
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), enforced by
 `commitlint` on `commit-msg`. Types are `feat`, `fix`, `chore`, `docs`, `refactor`,
@@ -227,7 +228,7 @@ mid-task. `noUnusedLocals` and Biome's complexity rules catch the rest. The fenc
 `pnpm check`, on pre-commit, and in CI.
 
 CI splits by what a check needs to read. Everything that reads only committed data runs on
-every pull request, on Linux and Windows. The jobs that read `vendor/` fetch 109 MB to do
+every pull request; `check` runs on Linux and Windows, the rest on Linux alone. The jobs that read `vendor/` fetch 109 MB to do
 it, so they wait for a change to `content.manifest.json`, `content.lock.json` or the
 workflow itself. A tag bump is the event those exist for: it is the one change that can
 leave the lockfile and the committed fixtures each describing a different upstream.

@@ -24,24 +24,33 @@ and the caller's tree never moves:
 n=<pr>
 head=$(gh pr view "$n" --json headRefOid --jq .headRefOid)
 dir="${TMPDIR:-/tmp}/audit-pr-$n"
-git fetch --quiet origin "$head"
-git worktree prune && git worktree remove --force "$dir" 2>/dev/null
+git fetch --quiet origin main "$head"
+git worktree prune
+git worktree remove --force "$dir" 2>/dev/null || true
 git worktree add --detach --quiet "$dir" "$head"
 git -C "$dir" diff origin/main...HEAD -- . ':(exclude)tests/fixtures/5etools/*' \
   ':(exclude)pnpm-lock.yaml' ':(exclude)content.lock.json'
 ```
 
-Outside the repository, or the worktree joins every glob `pnpm check` runs. Pruning
-before the add means a pass that died cleans up on the next run. Read context from
-`$dir`, and end the pass with `git worktree remove --force "$dir"`.
+Keep it outside the repository, where it joins no glob `pnpm check` runs. Fetch `main`
+with the head, or a stale `origin/main` moves the merge base and the diff quietly grows
+by whatever landed on main since. Pruning before the add cleans up after a pass that
+died. Read context from `$dir`, and end the pass with `git worktree remove --force
+"$dir"`.
 
-The excludes are generated. Count them with `--name-only` and no pathspec, and read
-`packages/content/src/fixtures/declaration.ts` rather than the fixture rows it wrote.
+The excludes are generated: where the diff holds any, count them with `--name-only` and
+no pathspec, and read `packages/content/src/fixtures/declaration.ts` rather than the rows
+it wrote.
 
 ```bash
-gh pr view <n> --json title,body   # and the issue it closes — what the QA lens weighs
-gh pr checks <n>                   # a red check is a finding: pnpm check misses build, e2e, Windows
+gh pr view "$n" --json title,body        # the body names the issue it closes
+gh issue view <issue> --json title,body  # acceptance criteria and Out of scope
+gh pr checks "$n"
 ```
+
+A red check is a finding — `pnpm check` misses the build, the end-to-end tests and
+Windows. `gh pr checks` also exits non-zero on a run still in flight, which is reported
+in flight rather than waited on.
 
 ## The lenses
 
@@ -107,7 +116,8 @@ A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 | `comment` | Neither — a taste call, reported once |
 
 A finding naming no line goes against the file or the pull request. Only `comment`
-findings left ends the loop.
+findings left ends the loop. Every finding goes to the caller's report; the pass writes
+nothing to the branch and posts nothing.
 
 ## What this skill will not do
 

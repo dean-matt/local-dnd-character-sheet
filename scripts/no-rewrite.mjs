@@ -13,8 +13,8 @@ import { realpathSync } from "node:fs";
 
 /**
  * Takes what git reports rather than reading it, so the rule is testable without a
- * repository. `upstream` is null on a branch that has never been pushed, where there
- * is nothing to rewrite.
+ * repository. `upstream` is null only where the remote holds no such branch, which is
+ * the one state with nothing to rewrite.
  */
 export function checkRewrite({ upstream, upstreamIsAncestor }) {
   if (upstream === null) return null;
@@ -22,9 +22,9 @@ export function checkRewrite({ upstream, upstreamIsAncestor }) {
   return `Pushing drops commits that ${upstream} already holds.`;
 }
 
-function upstreamRef() {
+function rev(ref) {
   try {
-    return execFileSync("git", ["rev-parse", "--abbrev-ref", "@{u}"], {
+    return execFileSync("git", ["rev-parse", "--verify", "--quiet", ref], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
@@ -33,9 +33,21 @@ function upstreamRef() {
   }
 }
 
-function upstreamIsAncestor() {
+/**
+ * `@{u}` misses a branch pushed without `-u`, which has a remote to overwrite and no
+ * tracking config to name it, so the remote-tracking ref is the fallback.
+ */
+function upstreamRef() {
+  if (rev("@{u}") !== null) return "@{u}";
+  const branch = execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim();
+  if (branch === "") return null;
+  const remote = `refs/remotes/origin/${branch}`;
+  return rev(remote) === null ? null : remote;
+}
+
+function isAncestor(ref) {
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", "@{u}", "HEAD"], { stdio: "ignore" });
+    execFileSync("git", ["merge-base", "--is-ancestor", ref, "HEAD"], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -47,14 +59,14 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
   const upstream = upstreamRef();
   const error = checkRewrite({
     upstream,
-    upstreamIsAncestor: upstream === null ? true : upstreamIsAncestor(),
+    upstreamIsAncestor: upstream === null ? true : isAncestor(upstream),
   });
   if (error !== null) {
     console.error(
       `${error}\n\n` +
         "  A pushed commit stays as it is. Add one instead — the squash merge\n" +
         "  collapses the branch anyway, so the extra commits cost nothing.\n\n" +
-        "  Undo a local rewrite:  git reset --hard @{u} && git cherry-pick ..\n",
+        "  Undo a local rewrite:  git reset --hard @{u} && git cherry-pick ..ORIG_HEAD\n",
     );
     process.exit(1);
   }
