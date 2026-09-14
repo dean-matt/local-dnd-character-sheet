@@ -33,10 +33,9 @@ git -C "$dir" diff origin/main...HEAD -- . ':(exclude)tests/fixtures/5etools/*' 
 ```
 
 Keep it outside the repository, where it joins no glob `pnpm check` runs. Fetch `main`
-with the head, or a stale `origin/main` moves the merge base and the diff quietly grows
-by whatever landed on main since. Pruning before the add cleans up after a pass that
-died. Read context from `$dir`, and end the pass with `git worktree remove --force
-"$dir"`.
+too, or a stale merge base widens the diff. Pruning before the add cleans up after a pass
+that died. Read context from `$dir`, and end the pass with
+`git worktree remove --force "$dir"`.
 
 The excludes are generated: where the diff holds any, count them with `--name-only` and
 no pathspec, and read `packages/content/src/fixtures/declaration.ts` rather than the rows
@@ -116,8 +115,7 @@ A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 | `comment` | Neither — a taste call, reported once |
 
 A finding naming no line goes against the file or the pull request. Only `comment`
-findings left ends the loop. Every finding goes to the caller's report; the pass writes
-nothing to the branch and posts nothing.
+findings left ends the loop. Every finding goes to the caller's report.
 
 ## What this skill will not do
 
