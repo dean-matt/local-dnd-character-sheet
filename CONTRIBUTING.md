@@ -64,6 +64,16 @@ deletes it here and on the remote, and leaves you on `main`. The repository has
 `fetch.prune` drops the stale `origin/` ref on the next fetch. Nothing reaps a branch
 that never became a pull request — delete those by hand.
 
+A pushed commit is never rewritten. Amending or rebasing one that is already on the
+remote lands only as a force push, and that discards the commit a reviewer read: a
+comment anchored to a line, a CI run, and every permalink into the branch now point at
+something that does not exist. Add a commit instead. The squash merge collapses the
+branch anyway, so the extra commits cost nothing that survives the merge.
+
+`scripts/no-rewrite.mjs` rejects a push that is not fast-forward, on `pre-push`. The rule
+covers amending a commit you have not pushed too, but nothing can see that one — it
+leaves no trace and costs a reader nothing, so the fence holds the half a hook can judge.
+
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), enforced by
 `commitlint` on `commit-msg`. Types are `feat`, `fix`, `chore`, `docs`, `refactor`,
 `test`, `perf`, `build`, `ci`, `revert`, and `style`; scopes are `rules`, `character`,
