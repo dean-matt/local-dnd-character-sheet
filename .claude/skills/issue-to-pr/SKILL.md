@@ -13,8 +13,7 @@ Say which issue you are taking and start. Naming it first makes a wrong pick cos
 sentence rather than a branch.
 
 The `D&D Character Sheet` project board decides — not the issue number, not which code
-just merged, not how small it looks. The live milestone is the lowest-numbered holding a
-ranked open issue; the pick is the open issue ranked lowest in it.
+just merged, not how small it looks.
 
 ```bash
 # from the repo root: gh reads the account from the directory
@@ -26,11 +25,9 @@ gh project item-list 1 --owner dean-matt --limit 200 --format json |
     | sort_by(.milestone.title, .rank) | .[0]'
 ```
 
-Both limits default to 30 rows and truncate in silence, which the guard turns into an
-error. `gh project item-list --jq` takes no `--argjson`, so the filter runs in `jq`.
-Milestones sort by title, which holds while they are numbered. An issue with no rank or
-no milestone is backlog: the filter drops it and it waits for the user to name it. `null`
-means no milestone holds a ranked open issue — say so and stop.
+Milestones sort by title, which holds while they are numbered. An unranked or
+milestone-less issue is backlog: the filter drops it and it waits for the user to name
+it. `null` means no milestone holds a ranked open issue — say so and stop.
 
 A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
 rather than a fence: read the issue and say why you are taking it. Where the top-ranked
@@ -45,12 +42,12 @@ skippable — name the condition and stop, because reranking is the user's call.
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then set
-   the board to `In Progress`; its own workflow waits for the pull request. Look the item
-   up by number, because choosing may not have run; the project, field and option ids hold
-   still, so read them once a session.
+   the board to `In Progress`; its own workflow waits for the pull request. `item-add`
+   returns the item an issue already has, so it serves whether or not the board holds it.
+   The project, field and option ids hold still, so read them once a session.
 
    ```bash
-   gh project item-list 1 --owner dean-matt --limit 200 --format json --jq '.items[] | select(.content.number == <n>) | .id'
+   gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
    gh project view 1 --owner dean-matt --format json --jq .id
    gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")'
    gh project item-edit --id <item> --project-id <project> --field-id <field> --single-select-option-id <option>
