@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { deepHeadings, findForbidden, lineCount, links, ROOT, read } from "./lib/doc-helpers.ts";
 
@@ -57,12 +57,17 @@ const skills = readdirSync(SKILLS_DIR, { withFileTypes: true })
   .filter((e) => e.isDirectory())
   .map((e) => e.name);
 
+/** Skip dotfiles: a fence must not fail on a .DS_Store that git already ignores. */
 function entries(skill: string) {
-  return readdirSync(join(SKILLS_DIR, skill), { withFileTypes: true });
+  return readdirSync(join(SKILLS_DIR, skill), { withFileTypes: true }).filter(
+    (e) => !e.name.startsWith("."),
+  );
 }
 
 function files(skill: string): string[] {
-  return entries(skill).map((e) => e.name);
+  return entries(skill)
+    .filter((e) => e.isFile())
+    .map((e) => e.name);
 }
 
 function references(skill: string): string[] {
@@ -158,6 +163,9 @@ describe(".claude/skills/", () => {
     for (const skill of skills) {
       for (const target of cites(skill)) {
         if (!target.startsWith(SKILLS_DIR + sep)) continue;
+        // A SKILL.md is the skill itself. Two may point at one, and it cannot take the
+        // fix this rule names: moving to docs/.
+        if (basename(target) === "SKILL.md") continue;
         const first = owner.get(target);
         expect(
           first,

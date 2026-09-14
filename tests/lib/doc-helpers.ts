@@ -43,12 +43,14 @@ export function deepHeadings(markdown: string, minLevel: number): string[] {
 }
 
 /**
- * Relative link targets, as written. An http, mailto or anchor link names no file, and
- * only a path can dangle.
+ * The file each relative link points at. An http, mailto or in-page link names no file,
+ * and a fragment names a heading inside one, so both drop out — only a path can dangle.
  */
 export function links(markdown: string): string[] {
   const pattern = /\]\((?!https?:|mailto:|#)([^)\s]+)\)/g;
-  return [...prose(markdown).matchAll(pattern)].map((m) => m[1] as string);
+  return [...prose(markdown).matchAll(pattern)].map(
+    (m) => (m[1] as string).split("#")[0] as string,
+  );
 }
 
 export function lineCount(markdown: string): number {
