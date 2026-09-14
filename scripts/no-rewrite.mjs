@@ -5,6 +5,11 @@
  * discards the commit a reviewer read: a comment anchored to a line, a CI run, and
  * every permalink into the branch point at a commit that no longer exists.
  *
+ * It judges the branch that is checked out, not the refs being pushed, so
+ * `git push --force origin other-branch` from somewhere else goes through. Reading the
+ * ref lines git sends a pre-push hook on stdin would cover those; lefthook skipped the
+ * job before stdin arrived every time it was tried.
+ *
  * Exports `checkRewrite` for `tests/no-rewrite.test.ts`; running the file checks the
  * current branch and exits non-zero when the push would rewrite.
  */
@@ -41,7 +46,7 @@ function upstreamRef() {
   if (rev("@{u}") !== null) return "@{u}";
   const branch = execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim();
   if (branch === "") return null;
-  const remote = `refs/remotes/origin/${branch}`;
+  const remote = `origin/${branch}`;
   return rev(remote) === null ? null : remote;
 }
 
@@ -66,7 +71,7 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
       `${error}\n\n` +
         "  A pushed commit stays as it is. Add one instead — the squash merge\n" +
         "  collapses the branch anyway, so the extra commits cost nothing.\n\n" +
-        "  Undo a local rewrite:  git reset --hard @{u} && git cherry-pick ..ORIG_HEAD\n",
+        `  Keep the work, drop the rewrite:  git reset --soft ${upstream} && git commit\n`,
     );
     process.exit(1);
   }
