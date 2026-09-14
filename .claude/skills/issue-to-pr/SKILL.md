@@ -74,42 +74,24 @@ because reranking is the user's call.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
-12. **Post the pass as one review**, after the fixes are pushed. A review holds a summary
-    and its line comments in one object, where a loose comment posts as a review of its
-    own — which is how one pass scatters into a dozen down the timeline:
+12. **Post the pass as one review**, after the fixes are pushed, so every finding carries
+    a verdict. One call sends `commit_id`, `event`, a `body` and each line comment as
+    `{path, line, side, body}`; posted one at a time they arrive as a review each. The
+    `body` summarizes the pass and holds any finding no line anchors. `event` is `COMMENT`,
+    because GitHub refuses an approval on your own pull request — step 14's labels carry
+    that verdict instead.
 
     ```bash
-    gh api 'repos/{owner}/{repo}/pulls/<n>/reviews' --input <the review below>
-    ```
-
-    ```json
-    { "commit_id": "<the current head>",
-      "event": "COMMENT",
-      "body": "<what the pass found, and every finding no line anchors>",
-      "comments": [
-        { "path": "<path>", "line": <line>, "side": "RIGHT",
-          "body": "<the severity and the defect>" }
-      ] }
-    ```
-
-    `COMMENT` is the only event open to you, because `CONTRIBUTING.md` records that GitHub
-    refuses an approval on your own pull request. Step 14's labels carry that verdict.
-
-    Then reply into each thread the review opened, so a finding reads as a defect
-    answered. The verdict is `**Applied** in <sha>`, or `**Declined** — <reason>`:
-
-    ```bash
+    gh api 'repos/{owner}/{repo}/pulls/<n>/reviews' --input <the pass, as json>
     gh api 'repos/{owner}/{repo}/pulls/<n>/reviews/<review>/comments' --jq '.[].id'
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
-    Each reply arrives as an empty review of its own and renders inside its thread, so a
-    pass leaves one review carrying the findings and one shell per verdict.
-
-    Anchor against the current head, at the line the finding names in that tree: against
-    the commit the pass read, a thread goes outdated the moment a fix moves the line, and
-    GitHub folds the reply away with it. A pass that returns nothing posts nothing, and a
-    later pass adds a review, leaving an earlier pass's threads where they are.
+    Reply into each thread with `**Applied** in <sha>` or `**Declined** — <reason>`. Every
+    reply lands as its own empty review, so expect one per verdict beside the pass's.
+    Anchor at the current head: against the commit the pass read, a fix that moves the line
+    outdates the thread and folds the reply with it. A pass that returns nothing posts
+    nothing, and a later pass adds, leaving earlier threads alone.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most. A pass returning only `comment` findings has stopped paying.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
