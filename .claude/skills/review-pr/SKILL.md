@@ -95,18 +95,18 @@ Each fails as a plausible wrong answer rather than an error:
 ## What a finding says
 
 ```
-packages/rules/src/spell-slots.ts:42  bug
+packages/rules/src/spell-slots.ts:42  critical
 A multiclass caster's slots read the highest class level rather than the sum.
 A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 ```
 
 | Severity | Means |
 |---|---|
-| `bug` | Wrong at runtime, or misleading about what the code does |
-| `repo` | Contradicts `CLAUDE.md`, `CONTRIBUTING.md` or a skill |
-| `preference` | Neither — a taste call, reported once |
+| `critical` | Wrong at runtime, or misleading about what the code does |
+| `warning` | Contradicts `CLAUDE.md`, `CONTRIBUTING.md` or a skill |
+| `comment` | Neither — a taste call, reported once |
 
-A finding naming no line goes against the file or the pull request. Only `preference`
+A finding naming no line goes against the file or the pull request. Only `comment`
 findings left ends the loop.
 
 ## What this skill will not do
