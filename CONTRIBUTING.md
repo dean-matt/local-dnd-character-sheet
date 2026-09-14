@@ -138,8 +138,9 @@ of every-task instruction outside the 150-line cap, which the cap exists to prev
 
 Skills are indexed in `CLAUDE.md`, which is the only limit on how many exist. Capping the
 count would punish a project that legitimately grows; making skills compete for a budget
-you can see does not. `tests/skill-shape.test.ts` caps each `SKILL.md` at 100 lines, which
-is where skill bloat shows up.
+you can see does not. `tests/skill-shape.test.ts` caps each `SKILL.md` at 150 lines, which
+is where skill bloat shows up. The cap matches `CLAUDE.md`'s, because a skill that drives
+a whole workflow carries about as much as the file that indexes it.
 
 A skill may carry reference documents beside its `SKILL.md`, capped at 200 lines each like
 `docs/`. Banning the second file is the weaker proxy, and it costs more than it holds:

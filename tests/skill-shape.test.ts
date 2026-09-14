@@ -19,7 +19,7 @@ import { deepHeadings, findForbidden, lineCount, links, ROOT, read } from "./lib
  * that would punish real growth. Every skill is indexed in CLAUDE.md, so they compete
  * for that file's budget.
  */
-const MAX_SKILL_LINES = 100;
+const MAX_SKILL_LINES = 150;
 const MAX_REFERENCE_LINES = 200;
 
 const SKILLS_DIR = join(ROOT, ".claude/skills");
@@ -112,7 +112,7 @@ describe(".claude/skills/", () => {
     }
   });
 
-  it.each(skills)("%s SKILL.md is at most 100 lines", (skill) => {
+  it.each(skills)("%s SKILL.md is at most 150 lines", (skill) => {
     const actual = lineCount(read(`.claude/skills/${skill}/SKILL.md`));
     expect(
       actual,
