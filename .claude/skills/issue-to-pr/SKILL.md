@@ -74,23 +74,24 @@ because reranking is the user's call.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
-12. **Post every finding the pass returned**, one comment per finding, after the fixes
-    are pushed so each comment carries a verdict. Anchor each comment to the line it
-    names, against the commit the pass read:
+12. **Post every finding the pass returned**, after the fixes are pushed. The finding is
+    a comment on the line it names and the verdict is a reply to it, so a thread reads as
+    a defect answered rather than one paragraph holding both:
 
     ```bash
-    gh api 'repos/{owner}/{repo}/pulls/<n>/comments' \
-      -f commit_id=<head the pass read> -f path=<path> -F line=<line> \
-      -f side=RIGHT -f body=<body>
+    id=$(gh api 'repos/{owner}/{repo}/pulls/<n>/comments' \
+      -f commit_id=<head the fixes left> -f path=<path> -F line=<line> \
+      -f side=RIGHT -f body=<the severity and the defect> --jq .id)
+    gh api "repos/{owner}/{repo}/pulls/<n>/comments/$id/replies" -f body=<the verdict>
     ```
 
-    Open the body with the verdict: `**Applied** in <sha>`, or `**Declined** — <reason>`.
-    Put the severity and the defect after it. Applying a finding moves its line, and
-    GitHub folds an outdated comment away, so a verdict buried in the body is a verdict
-    nobody reads. A finding naming no line, or naming one the diff misses, takes
-    `gh pr comment <n> --body <body>` with the path written into the body: anchored to
-    nothing, it never folds. A pass that returns nothing posts nothing, and a later
-    pass adds, leaving an earlier pass's comments where they are.
+    The verdict reads `**Applied** in <sha>` or `**Declined** — <reason>`. Anchor against
+    the head the fixes left, at the line the finding names in that tree: anchoring against
+    the commit the pass read marks the thread outdated the moment a fix moves the line,
+    and GitHub folds the reply away with it. A finding naming no line, or one a fix
+    deleted, takes `gh pr comment <n> --body <body>` carrying the path, the defect and the
+    verdict together. A pass that returns nothing posts nothing, and a later pass adds,
+    leaving an earlier pass's threads where they are.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most. A pass returning only `comment` findings has stopped paying.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
