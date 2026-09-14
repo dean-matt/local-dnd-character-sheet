@@ -73,9 +73,9 @@ export async function verifyVendor(): Promise<{ dir: string; tag: string }> {
       `${relative(ROOT, dir)} does not exist. Run \`pnpm content:sync\` to fetch it.`,
     );
   }
-  // The manifest names a whole repository and only `include` is hashed, so a tag that
-  // moved nothing under `data/` leaves every hash matching. Without this, a hand-edited
-  // manifest verifies green against a lockfile pinning the tag before it.
+  // The manifest names a whole repository and the hash covers only `include`, so a tag
+  // that moved nothing under `data/` leaves every hash matching. Without this check a
+  // hand-edited manifest verifies green against a lockfile pinning the tag before it.
   if (lock.tag !== manifest.tag) {
     throw new Error(
       `content.manifest.json pins ${manifest.tag}, content.lock.json ${lock.tag}. ` +
