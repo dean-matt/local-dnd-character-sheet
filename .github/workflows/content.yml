@@ -1,14 +1,14 @@
 name: content
 
 # The checks here read vendor/5etools/, which is WotC's data and is never committed.
-# Fetching 109 MB on every pull request to check something that moves only when the
-# pinned tag moves is the wrong trade, so the trigger is the tag bump.
+# Fetching 109 MB on every pull request is the wrong trade, so the tag bump is the
+# trigger. A change to a loader or to the fixture declaration wants workflow_dispatch.
 on:
   pull_request:
     paths:
       # A sync with no `--tag` rewrites the lockfile and leaves the manifest alone, so the
       # lockfile is the only file a re-fetch of the same tag moves. The workflow itself is
-      # here so a change to a step is exercised by the pull request that makes it.
+      # here so the pull request that changes a step is the one that runs it.
       - content.manifest.json
       - content.lock.json
       - .github/workflows/content.yml
@@ -26,8 +26,8 @@ jobs:
       contents: read
     steps:
       # The sync clones a third-party repository from inside this checkout, so a persisted
-      # token would be sent on that clone. Nothing here needs git credentials: the restore
-      # is local and the clone is public.
+      # token would ride along on that clone. Nothing here needs git credentials: the
+      # restore is local and the clone is public.
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -45,8 +45,9 @@ jobs:
         run: pnpm content:sync
 
       # The fetch rewrites content.lock.json, so verifying against it would compare the
-      # fetch to itself. Restoring the committed lockfile first makes --verify answer the
-      # question worth asking: does the pinned tag still hash to what the bump recorded?
+      # fetch to itself. Restoring the committed lockfile first makes `--verify` answer
+      # the question worth asking: does the pinned tag still hash to what the bump
+      # recorded?
       - name: Verify the fetch against the committed lockfile
         run: |
           git checkout -- content.lock.json

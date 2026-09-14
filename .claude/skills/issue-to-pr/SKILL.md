@@ -54,17 +54,24 @@ blocked, say so and stop rather than starting the milestone below.
 10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
     inherits whatever was typed last. Then check `git branch --show-current`: the
     review leaves the tree where it checked out, and a detached HEAD commits onto
-    nothing without the branch-name hook saying so.
+    nothing without the branch-name hook saying so. A pass returning anything to weigh
+    swaps `review:changes-requested` on before you apply, so a run that dies mid-apply
+    leaves the pull request marked. One `gh pr edit <n> --add-label <one> --remove-label
+    <other>` does both halves, so it never carries both.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
 12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
     mislead a reader, or contradict the repo**, three passes at most. A pass returning
     only preferences has stopped paying.
-13. **Stop.** Report what landed, what each review found, and what `gh pr checks`
-    says, noting a run still in flight as in flight. The gate needs `pnpm build` and
-    the end-to-end tests green too, and `pnpm check` runs neither, so local green is
-    not the answer. A red run is the user's to weigh, as is the merge, every time.
+13. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
+    pass returned still waits on the user; `review:changes-requested` where something
+    does — a decline, a second bug filed as its own issue, a red check. Preferences wait
+    on nobody, and CI does not enter into it. Then report what landed, what each review
+    found, and what `gh pr checks` says, noting a run still in flight as in flight. The
+    gate needs `pnpm build` and the end-to-end tests green too, and `pnpm check` runs
+    neither, so local green is not the answer. A red run is the user's to weigh, as is
+    the merge, every time.
 
 ## The pull request body
 
