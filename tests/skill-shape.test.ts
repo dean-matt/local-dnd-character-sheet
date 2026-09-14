@@ -74,10 +74,12 @@ function references(skill: string): string[] {
   return files(skill).filter((name) => name !== "SKILL.md");
 }
 
-/** Where one file's links land. A skill directory is flat, so every link resolves from it. */
+/** Where one file's links land. A skill directory is flat, so a relative link resolves from it. */
 function targets(skill: string, file: string): string[] {
   const dir = join(SKILLS_DIR, skill);
-  return links(read(`.claude/skills/${skill}/${file}`)).map((l) => resolve(dir, l));
+  return links(read(`.claude/skills/${skill}/${file}`)).map((l) =>
+    l.startsWith("/") ? join(ROOT, l) : resolve(dir, l),
+  );
 }
 
 /** Every distinct path the SKILL.md cites, which is what the citation rules read. */
@@ -97,12 +99,12 @@ describe(".claude/skills/", () => {
   it.each(skills)("%s holds markdown and nothing else", (skill) => {
     for (const entry of entries(skill)) {
       expect(
-        entry.isFile(),
-        `${skill}/${entry.name} is not a file. A skill directory is flat markdown — put a script or a fixture in the package it belongs to.`,
+        entry.isFile() && entry.name.endsWith(".md"),
+        `${skill}/${entry.name} is not markdown. A skill directory is flat markdown — put a script, a fixture or a subdirectory in the package it belongs to.`,
       ).toBe(true);
       expect(
         entry.name === "SKILL.md" || KEBAB_MARKDOWN.test(entry.name),
-        `${skill}/${entry.name} is not kebab-case markdown. Rename it to something like spell-slots.md.`,
+        `${skill}/${entry.name} is not kebab-case. Rename it to something like spell-slots.md.`,
       ).toBe(true);
     }
   });

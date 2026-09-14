@@ -46,15 +46,27 @@ export function deepHeadings(markdown: string, minLevel: number): string[] {
  * The file each relative link points at. An http, mailto or in-page link names no file,
  * and a fragment names a heading inside one, so both drop out — only a path can dangle.
  *
- * A title after the path is matched and discarded. Skipping it would take the link with
- * it, which reads as no link at all: a dangling path passes and a cited file looks
- * uncited.
+ * A `](` the pattern cannot read throws rather than yielding nothing. A link that
+ * vanishes is the worst outcome available: the dangling path it held passes the
+ * existence check, and the file it cited is reported as cited by nobody.
  */
+const LINK = /\]\(\s*([^)\s]+)(?:\s+["'][^"']*["'])?\s*\)/g;
+const EXTERNAL = /^(?:https?:|mailto:|#)/i;
+
 export function links(markdown: string): string[] {
-  const pattern = /\]\((?!https?:|mailto:|#)([^)\s]+)(?:\s+["'][^"']*["'])?\)/g;
-  return [...prose(markdown).matchAll(pattern)].map(
-    (m) => (m[1] as string).split("#")[0] as string,
-  );
+  const text = prose(markdown);
+  const matched = [...text.matchAll(LINK)];
+  const openers = [...text.matchAll(/\]\(/g)].length;
+  if (matched.length !== openers) {
+    throw new Error(
+      `${openers - matched.length} link(s) in a form this fence cannot read — write each as [text](path)`,
+    );
+  }
+  return matched
+    .map((m) => m[1] as string)
+    .filter((target) => !EXTERNAL.test(target))
+    .map((target) => target.split("#")[0] as string)
+    .filter((target) => target.length > 0);
 }
 
 export function lineCount(markdown: string): number {
