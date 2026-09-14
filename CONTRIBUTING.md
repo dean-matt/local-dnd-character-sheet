@@ -138,8 +138,28 @@ of every-task instruction outside the 150-line cap, which the cap exists to prev
 
 Skills are indexed in `CLAUDE.md`, which is the only limit on how many exist. Capping the
 count would punish a project that legitimately grows; making skills compete for a budget
-you can see does not. Individual skills are capped at 100 lines and one file each, by
-`tests/skill-shape.test.ts` — that is where skill bloat actually shows up.
+you can see does not. `tests/skill-shape.test.ts` caps each `SKILL.md` at 100 lines, which
+is where skill bloat shows up.
+
+A skill may carry reference documents beside its `SKILL.md`, capped at 200 lines each like
+`docs/`. Banning the second file is the weaker proxy, and it costs more than it holds:
+detail only one skill needs then has nowhere to go but `docs/`, where it sits beside
+reference a human reads, takes a README row, and is indexed for tasks that will never cite
+it. Nor is a file count what holds the growth back — a thousand lines comes from a file
+with no subject, and a `reference.md` takes whatever does not fit, so it never reaches a
+stopping point.
+
+So the fence sits on the names and the links. A document is named for what it holds,
+against a denylist of position names, so it has somewhere to stop. Each `SKILL.md` links
+every document beside it and every link it writes resolves, both directions failing
+loudly, the way `tests/readme-shape.test.ts` already checks `docs/`. Cite each one at the
+step that needs it rather than in a closing list: a document is read only if the skill
+reads it, and one the agent skips is worse than prose written inline.
+
+The boundary with `docs/` needs its own rule, or the two blur. A `docs/` file is cited
+from more than one place, or by a task that runs no skill; a skill reference is read only
+when its skill runs. The second `SKILL.md` to link a file is the signal that it belongs in
+`docs/`, and the test fails on it.
 
 ## Code comments
 

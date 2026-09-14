@@ -42,6 +42,15 @@ export function deepHeadings(markdown: string, minLevel: number): string[] {
   return [...prose(markdown).matchAll(pattern)].map((m) => m[1] as string);
 }
 
+/**
+ * Relative link targets, as written. An http, mailto or anchor link names no file, and
+ * only a path can dangle.
+ */
+export function links(markdown: string): string[] {
+  const pattern = /\]\((?!https?:|mailto:|#)([^)\s]+)\)/g;
+  return [...prose(markdown).matchAll(pattern)].map((m) => m[1] as string);
+}
+
 export function lineCount(markdown: string): number {
   return markdown.trimEnd().split("\n").length;
 }
