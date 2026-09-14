@@ -121,9 +121,8 @@ findings left ends the loop. Every finding goes to the caller's report.
 
 **Touch the caller's tree.** A checkout there strands step 11 on a detached HEAD, where
 the branch-name hook goes quiet and a commit lands anywhere. Running something to settle
-a claim is not touching it: the worktree has no `node_modules`, so take a test, a
-mutated copy or a scratch repository wherever it runs, and change nothing that is
-tracked.
+a claim is not touching it — the worktree has no `node_modules`, so run a test or a
+scratch repository where it works, and change nothing tracked.
 
 **Apply findings, or label the pull request.** Steps 10 to 13 of
 [`issue-to-pr`](../issue-to-pr/SKILL.md) do that.

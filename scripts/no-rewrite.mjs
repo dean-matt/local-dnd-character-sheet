@@ -5,10 +5,9 @@
  * discards the commit a reviewer read: a comment anchored to a line, a CI run, and
  * every permalink into the branch point at a commit that no longer exists.
  *
- * It judges the branch that is checked out, not the refs being pushed, so
- * `git push --force origin other-branch` from somewhere else goes through. Reading the
- * ref lines git sends a pre-push hook on stdin would cover those; lefthook skipped the
- * job before stdin arrived every time it was tried.
+ * It judges the branch that is checked out rather than the refs being pushed, so a force
+ * push aimed at another branch from somewhere else goes through. The ref lines git hands
+ * a pre-push hook on stdin close that, once lefthook forwards them.
  *
  * Exports `checkRewrite` for `tests/no-rewrite.test.ts`; running the file checks the
  * current branch and exits non-zero when the push would rewrite.
