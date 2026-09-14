@@ -145,12 +145,12 @@ A skill may carry reference documents beside its `SKILL.md`, capped at 200 lines
 `docs/`. Banning the second file is the weaker proxy, and it costs more than it holds:
 detail only one skill needs then has nowhere to go but `docs/`, where it sits beside
 reference a human reads, takes a README row, and is indexed for tasks that will never cite
-it. Nor is a file count what holds the growth back — a thousand lines comes from a file
-with no subject, and a `reference.md` takes whatever does not fit, so it never reaches a
-stopping point.
+it. What holds the growth back is the subject, not the count: a thousand lines comes from
+a file that has none, and a `reference.md` takes whatever does not fit, so it never
+reaches a stopping point.
 
-So the fence sits on the names and the links. A document is named for what it holds,
-against a denylist of position names, so it has somewhere to stop. Each `SKILL.md` links
+So the fence sits on the names and the links. Name each document for what it holds; a
+denylist rejects the position names, which stop nowhere. Each `SKILL.md` links
 every document beside it and every link it writes resolves, both directions failing
 loudly, the way `tests/readme-shape.test.ts` already checks `docs/`. Cite each one at the
 step that needs it rather than in a closing list: a document is read only if the skill
