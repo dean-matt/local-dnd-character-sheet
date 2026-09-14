@@ -98,7 +98,7 @@ Every message names the offending input.
 | `TypeError: advantage applies to a single die` | A mode was paired with `2d6`, `4d6kh3`, or `1d20+1d6`. | Apply the mode to the d20 test itself, then add the pool separately |
 | `SyntaxError` on notation that looks fine | A space inside a number, as in `1d6 4`. | Spaces are allowed around `d`, `k`, and the sign, nowhere else |
 | `SyntaxError` on `3+1d6` | A roll starts with a pool, not a constant. | Write `1d6+3` |
-| `SyntaxError` on `1d20k2` | A keep clause names its end. | Write `1d20kh2` or `1d20kl2` |
+| `SyntaxError` on `4d6k3` | A keep clause names its end. | Write `4d6kh3` or `4d6kl3` |
 | The same roll logs as two different rows | The raw input was stored rather than `notation`. | Store the returned `notation`, which is canonical |
 | A test fails intermittently | The roll used the default `Math.random`. | Pass `random` |
 
