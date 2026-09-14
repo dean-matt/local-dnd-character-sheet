@@ -5,10 +5,6 @@ description: Review a pull request in this repository through the lenses it actu
 
 # Reviewing a pull request
 
-`CONTRIBUTING.md` holds the reasoning: the pattern here is assert it rather than request
-it, so most of what a general reviewer looks for is already a failing test. This pass
-takes the remainder.
-
 ## What a pass never looks for
 
 `pnpm check` and the `tests/*-shape` suites assert types, lint, dead code, spelling, the
@@ -17,8 +13,11 @@ finding there is either already red or already wrong. So say nothing about forma
 import order, a missing annotation, a line length, a ticket key in a comment, or a file
 over a cap. Adding that coverage back re-checks a fence that has already run.
 
-`CONTRIBUTING.md` names the two judgments no fence can make: whether an abstraction is
-warranted, and how many tests a piece of logic deserves. Those are this pass's subject.
+The pattern is assert it rather than request it, so most of what a general reviewer looks
+for is already a failing test. What is left is where this pass spends itself:
+`CONTRIBUTING.md` names the two judgments no fence can make — whether an abstraction is
+warranted, and how many tests a piece of logic deserves — and the invariants below name
+the rest.
 
 ## What to read
 
@@ -83,14 +82,12 @@ three lenses rather than seven:
 
 | Lens | Fires on | Weighs |
 |---|---|---|
-| Rules lawyer | `packages/{rules,character,dice,tags}` | Whether the arithmetic is what 5e says, and whether the `classic` and `one` split holds |
+| Rules lawyer | `packages/{rules,character,dice,tags}` | Whether the arithmetic is what 5e says, whether the `classic` and `one` split holds, and the token contract [`tag-render`](../tag-render/SKILL.md) states |
 | Data steward | `packages/content` | What [`content-import`](../content-import/SKILL.md) states: identity keys, edition tiers, `_copy` resolution, the lockfile, and interpolation in the raw SQL that builds the catalog |
 | API contract | `packages/api` | What [`add-endpoint`](../add-endpoint/SKILL.md) states: the Zod to OpenAPI to Drizzle to query-hook order, spec drift, and a migration that cannot be rerun |
 | UI and accessibility | `packages/web` | Semantics, keyboard reachability, contrast — what the `accessibility` label marks |
 
-A lens returning nothing is the common case rather than a failure. Where a diff touches
-a `{@tag}`, [`tag-render`](../tag-render/SKILL.md) holds the token contract the rules
-lawyer reads.
+A lens returning nothing is the common case rather than a failure.
 
 ## The invariants no test asserts
 
