@@ -54,27 +54,28 @@ blocked, say so and stop rather than starting the milestone below.
 10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
     inherits whatever was typed last. Then check `git branch --show-current`: the
     review leaves the tree where it checked out, and a detached HEAD commits onto
-    nothing without the branch-name hook saying so. A pass that returns anything swaps
-    `review:changes-requested` on and `review:approved` off before you apply, so a run
-    that dies mid-apply leaves the pull request marked rather than clean.
+    nothing without the branch-name hook saying so. A pass returning anything to weigh
+    swaps `review:changes-requested` on and `review:approved` off before you apply, so a
+    run that dies mid-apply leaves the pull request marked rather than clean. One call
+    does it — `gh pr edit <n> --add-label <one> --remove-label <other>` — and it applies
+    neither half where a name does not resolve, so create a label the repository lacks
+    first, with `gh label create <name> --color <hex> --description <text>`.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
 12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
     mislead a reader, or contradict the repo**, three passes at most. A pass returning
     only preferences has stopped paying.
-13. **Label, then stop.** Swapping is one call — `gh pr edit <n> --add-label <one>
-    --remove-label <other>`. `gh` resolves a name against the repository first, so
-    create either label with `gh label create` where it is missing and carry on;
-    removing one the pull request does not carry is a no-op, so it can never wear both,
-    and one no pass has read wears neither. `review:approved` where `pnpm check` is
-    green and nothing a pass returned still waits on the user; `review:changes-requested`
-    where something does — a finding declined, one spun out as its own issue, or a run
-    that stopped before applying. Preferences the last pass returned are not findings
-    and leave nothing waiting. The label does not wait on CI; the report states it.
-    Report what landed, what each review found, and what `gh pr checks` says, noting
-    a run still in flight as in flight. The gate needs `pnpm build` and the end-to-end
-    tests green too, and `pnpm check` runs neither, so local green is not the answer.
+13. **Label, then stop.** Swap once more: `review:approved` where `pnpm check` is green
+    and nothing a pass returned still waits on the user; `review:changes-requested`
+    where something does — a finding declined, one spun out as its own issue, a red
+    `pnpm check`, or a run that stopped before applying. Preferences wait on nobody.
+    Removing a label the pull request does not carry is a no-op, so it can never wear
+    both, and one no pass has read wears neither. The label does not wait on CI; the
+    report states it. Report what landed, what each review found, and what
+    `gh pr checks` says, noting a run still in flight as in flight. The gate needs
+    `pnpm build` and the end-to-end tests green too, and `pnpm check` runs neither, so
+    local green is not the answer.
     A red run is the user's to weigh, as is the merge, every time.
 
 ## The pull request body
