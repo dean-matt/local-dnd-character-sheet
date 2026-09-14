@@ -75,7 +75,7 @@ because reranking is the user's call.
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
 12. **Repeat 10 and 11 while a pass returns a `bug` or a `repo` finding**, three passes
-    at most. A pass returning only preferences has stopped paying.
+    at most. A pass returning only `preference` findings has stopped paying.
 13. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait

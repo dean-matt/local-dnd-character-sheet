@@ -12,10 +12,10 @@ takes the remainder.
 ## What a pass never looks for
 
 `pnpm check` and the `tests/*-shape` suites assert types, lint, dead code, spelling, the
-comment policy and the document caps, and every one of them fails before a pull request
-exists. A finding there is either already red or already wrong. So say nothing about
-formatting, import order, a missing annotation, a line length, a ticket key in a comment,
-or a file over a cap — and leave that coverage out later too.
+comment policy and the document caps, and each fails before a pull request exists. A
+finding there is either already red or already wrong. So say nothing about formatting,
+import order, a missing annotation, a line length, a ticket key in a comment, or a file
+over a cap. Adding that coverage back re-checks a fence that has already run.
 
 `CONTRIBUTING.md` names the two judgments no fence can make: whether an abstraction is
 warranted, and how many tests a piece of logic deserves. Those are this pass's subject.
@@ -24,16 +24,21 @@ warranted, and how many tests a piece of logic deserves. Those are this pass's s
 
 ```bash
 gh pr view <n> --json title,body,files
-gh pr diff <n>
+gh pr checks <n>
+gh pr diff <n> --name-only
+gh pr diff <n> -e 'tests/fixtures/5etools/*' -e 'pnpm-lock.yaml' -e 'content.lock.json'
 ```
 
-Read the issue the body closes. Its acceptance criteria and **Out of scope** are what
-the QA lens weighs against, and nothing else states them.
+Read the issue the body closes. The QA lens weighs the change against its acceptance
+criteria and **Out of scope**, which nothing else states.
 
-Count the generated files rather than reading them line by line:
-`tests/fixtures/5etools/`, `pnpm-lock.yaml`, `content.lock.json`, and anything under
-`dist/`. A fixture is wrong only where its declaration is wrong, so read
+The excludes are the generated files: count them from `--name-only` rather than reading
+them line by line. A fixture is wrong only where its declaration is wrong, so read
 `packages/content/src/fixtures/declaration.ts` instead of the rows it wrote.
+
+A red check is a finding. `pnpm check` runs on one platform and covers neither
+`pnpm build` nor the end-to-end tests, so a green local run leaves the Windows job and
+the e2e job unread.
 
 ## The lenses
 
@@ -41,11 +46,11 @@ Three run on every pull request, because every change is subject to them:
 
 **Senior engineer** — the ladder in `CLAUDE.md`. Did this need to exist, does it already
 exist here, does an installed dependency do it, can it be one line. Package boundaries
-hold, and the root cause is fixed rather than the path the issue named — one shared
-function, not every caller.
+hold, and the change fixes the root cause rather than the path the issue named — one
+shared function, not every caller.
 
 **Tester** — test depth. Non-trivial logic leaves behind the smallest runnable check that
-fails if it breaks; tests ride with the code they cover; a fixture is widened in its
+fails if it breaks; tests ride with the code they cover; fixtures widen through their
 declaration rather than by hand. A test that asserts the implementation back to itself
 counts as none.
 
@@ -69,19 +74,20 @@ lawyer reads.
 
 ## The invariants no test asserts
 
-Each of these fails as a plausible wrong answer rather than as an error, which is why a
-reader has to catch it:
+Each of these fails as a plausible wrong answer rather than as an error, so a reader has
+to catch it:
 
 - **Every content entity is keyed `(name, source)`**, never name alone, and a character
-  references a catalog row by that key rather than copying it. Features, subraces,
-  deities and cards key on more; `docs/data-model.md` holds those.
+  references a catalog row by that key rather than copying it. A key of name alone
+  collides across books and answers with the wrong book's entry.
 - **The three-database rule.** `content.db` is read-only, rebuilt wholesale, never
-  migrated, and reached through raw SQL; `characters.db` and `homebrew.db` are Drizzle
-  and are migrated. Anything durable written to `content.db` is lost on the next build.
+  migrated, and reached through raw SQL; `characters.db` and `homebrew.db` take Drizzle
+  migrations. The next build discards anything written to `content.db`.
 - **A derived character field stores the computed value, the manual one and an override
-  flag.** A field that stores one number means a level-up stomps a user's edit.
-- **`roll_log` and `undo_log` are bounded** at 200 and 50 rows per character, pruned on
-  insert. An insert path that skips the prune grows an unbounded table.
+  flag.** A field holding one number lets a level-up stomp a user's edit.
+- **`roll_log` and `undo_log` are bounded** per character and pruned on insert, to the
+  numbers `CLAUDE.md` holds. An insert path that skips the prune grows the table without
+  limit.
 - **An unknown `{@tag}` degrades to plain text.** A renderer that throws on unrecognized
   markup takes the sheet down over one upstream addition.
 - **`rules` takes primitives and never a `CharacterDefinition`.** A function wanting the
@@ -104,17 +110,21 @@ The severity is one of three, and it decides whether the loop keeps paying:
 
 | Severity | Means |
 |---|---|
-| `bug` | Wrong at runtime, or a reader is misled about what the code does |
+| `bug` | Wrong at runtime, or misleading about what the code does |
 | `repo` | Contradicts a rule in `CLAUDE.md`, `CONTRIBUTING.md` or a skill |
-| `preference` | Neither — a taste call, reported and not argued |
+| `preference` | Neither — a taste call, reported once and left there |
 
-Report a finding that names no line against the file or the pull request instead of
-dropping it. A pass returning only `preference` findings ends the loop.
+Where a finding names no line, report it against the file or the pull request. A pass
+returning only `preference` findings ends the loop.
 
 ## What this skill will not do
 
 **Review anything but a pull request diff.** Not the working tree, not a branch, not a
 path. `/code-review` takes those and stays available to type by hand.
 
-**Apply what it finds, or label the pull request.** The pass returns findings; steps 11
+**Check out the branch.** `gh` serves the whole pass, so the tree stays where the caller
+left it — a checkout here strands step 11 on a detached HEAD, where the branch-name hook
+goes quiet and a commit lands anywhere.
+
+**Apply what it finds, or label the pull request.** The pass returns findings; steps 10
 to 13 of [`issue-to-pr`](../issue-to-pr/SKILL.md) decide what happens to them.
