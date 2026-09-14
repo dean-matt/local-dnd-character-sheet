@@ -6,7 +6,12 @@ name: content
 on:
   pull_request:
     paths:
+      # The lockfile alone moves when upstream rewrites a tag, since the manifest is
+      # rewritten only by `--tag`; the workflow itself is here so a change to a step is
+      # exercised by the pull request that makes it rather than by the next tag bump.
       - content.manifest.json
+      - content.lock.json
+      - .github/workflows/content.yml
   workflow_dispatch:
 
 concurrency:
@@ -17,6 +22,10 @@ jobs:
   corpus:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The sync clones a third-party repository from inside a checkout that carries the
+    # token in its git config, and the job then parses 109 MB of upstream JSON.
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
 
