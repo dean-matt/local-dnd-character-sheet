@@ -54,11 +54,12 @@ Four run on every pull request:
   implementation back to itself counts as none.
 - **QA** — acceptance criteria met, **Out of scope** respected, edges exercised: empty,
   absent, zero, negative, multiclass, a homebrew row shadowing a catalog one.
-- **Editor** — the prose the change writes: the commit message, the pull request body,
-  `docs/`, a skill, a comment. Active voice, positive form, needless words out, and the
-  register of the file it lands in — prose an agent reads every pass is instructions, not
-  an essay. A comment restating what the code does is a finding. History, markers and
-  ticket keys are fenced, so leave them.
+- **Editor** — the prose the change writes: commit message, pull request body, `docs/`, a
+  skill, a comment. Take it through `writing-clearly-and-concisely`, then weigh what that
+  cannot: a sentence ambiguous rather than dense, and a register that fits its reader —
+  instructions an agent rereads every pass, in the voice a developer writes, not a
+  technical writer. A comment restating the code is a finding. History and markers are
+  fenced everywhere but the commit message and the pull request body, where they belong.
 
 Four more fire only where the diff reaches them, so a `repo`-only change runs the four
 above and stops:
