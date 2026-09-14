@@ -66,18 +66,16 @@ because reranking is the user's call.
    pre-commit runs neither the tests nor the caps.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
-10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
-    inherits whatever was typed last. Then `git branch --show-current`: the review leaves
-    the tree where it checked out, and the branch-name hook stays quiet on a detached
-    HEAD. A pass returning anything to weigh swaps `review:changes-requested` on before
-    you apply, so a run that dies mid-apply leaves the pull request marked; one `gh pr
-    edit <n> --add-label <one> --remove-label <other>` does both halves.
+10. **Review it** with [`review-pr`](../review-pr/SKILL.md), which reads the diff through
+    `gh` and leaves the tree on this branch. A pass returning anything to weigh swaps
+    `review:changes-requested` on before you apply, so a run that dies mid-apply leaves
+    the pull request marked; one `gh pr edit <n> --add-label <one> --remove-label
+    <other>` does both halves.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
-12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
-    mislead a reader, or contradict the repo**, three passes at most. A pass returning
-    only preferences has stopped paying.
+12. **Repeat 10 and 11 while a pass returns a `bug` or a `repo` finding**, three passes
+    at most. A pass returning only preferences has stopped paying.
 13. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
