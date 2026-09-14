@@ -119,9 +119,6 @@ returning only `preference` findings ends the loop.
 
 ## What this skill will not do
 
-**Review anything but a pull request diff.** Not the working tree, not a branch, not a
-path. `/code-review` takes those and stays available to type by hand.
-
 **Check out the branch.** `gh` serves the whole pass, so the tree stays where the caller
 left it — a checkout here strands step 11 on a detached HEAD, where the branch-name hook
 goes quiet and a commit lands anywhere.
