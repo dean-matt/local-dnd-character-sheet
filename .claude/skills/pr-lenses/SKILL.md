@@ -1,6 +1,6 @@
 ---
-name: review-pr
-description: Review a pull request in this repository through the lenses it actually needs — the coding ladder, test depth, the issue's own criteria, the prose it writes, and the 5e, catalog, API and accessibility judgments that fire only where the diff reaches them. Use when reviewing a pull request here, from issue-to-pr or by hand. Skips everything pnpm check and the shape tests already assert.
+name: pr-lenses
+description: Review one local-dnd-character-sheet pull request through this repository's own lenses — the coding ladder, test depth, the issue's own criteria, the prose it writes, and the 5e, catalog, API and accessibility judgments that fire only where the diff reaches them. Use when reviewing a pull request here, from issue-to-pr or by hand. Skips everything pnpm check and the shape tests already assert.
 ---
 
 # Reviewing a pull request
@@ -23,7 +23,7 @@ and the caller's tree never moves:
 ```bash
 n=<pr>
 head=$(gh pr view "$n" --json headRefOid --jq .headRefOid)
-dir="${TMPDIR:-/tmp}/review-pr-$n"
+dir="${TMPDIR:-/tmp}/pr-lenses-$n"
 git fetch --quiet origin "$head"
 git worktree prune && git worktree remove --force "$dir" 2>/dev/null
 git worktree add --detach --quiet "$dir" "$head"
