@@ -54,17 +54,25 @@ blocked, say so and stop rather than starting the milestone below.
 10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
     inherits whatever was typed last. Then check `git branch --show-current`: the
     review leaves the tree where it checked out, and a detached HEAD commits onto
-    nothing without the branch-name hook saying so.
+    nothing without the branch-name hook saying so. A pass that returns anything puts
+    `review:changes-requested` on before you apply, so a run that dies mid-apply leaves
+    the pull request marked rather than clean.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
 12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
     mislead a reader, or contradict the repo**, three passes at most. A pass returning
     only preferences has stopped paying.
-13. **Stop.** Report what landed, what each review found, and what `gh pr checks`
-    says, noting a run still in flight as in flight. The gate needs `pnpm build` and
-    the end-to-end tests green too, and `pnpm check` runs neither, so local green is
-    not the answer. A red run is the user's to weigh, as is the merge, every time.
+13. **Label, then stop.** `review:approved` where every finding worth applying is
+    applied and `pnpm check` is green; `review:changes-requested` where one was
+    declined, spun out as its own issue, or left unapplied. Swap them in one call with
+    `gh pr edit <n> --add-label <one> --remove-label <other>` — removing a label the
+    pull request lacks is a no-op, so it never carries both, and a pull request no pass
+    has read carries neither. The label does not wait on CI; the report states it.
+    Report what landed, what each review found, and what `gh pr checks` says, noting a
+    run still in flight as in flight. The gate needs `pnpm build` and the end-to-end
+    tests green too, and `pnpm check` runs neither, so local green is not the answer.
+    A red run is the user's to weigh, as is the merge, every time.
 
 ## The pull request body
 
