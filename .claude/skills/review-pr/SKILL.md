@@ -22,19 +22,39 @@ warranted, and how many tests a piece of logic deserves. Those are this pass's s
 
 ## What to read
 
+Code comes from a worktree at the pull request's head, so every local read is the commit
+under review and the caller's tree never moves:
+
 ```bash
-gh pr view <n> --json title,body,files
+n=<pr>
+head=$(gh pr view "$n" --json headRefOid --jq .headRefOid)
+dir="${TMPDIR:-/tmp}/review-pr-$n"
+git fetch --quiet origin "$head"
+git worktree prune && git worktree remove --force "$dir" 2>/dev/null
+git worktree add --detach --quiet "$dir" "$head"
+git -C "$dir" diff origin/main...HEAD -- . ':(exclude)tests/fixtures/5etools/*' \
+  ':(exclude)pnpm-lock.yaml' ':(exclude)content.lock.json'
+```
+
+`--detach` because the branch is already checked out in the caller's tree, which git
+refuses to do twice. Outside the repository, because a worktree inside it joins every
+glob `pnpm check` runs. Pruning before the add rather than trusting the remove after
+means a pass that died cleans up on the next run. Read every file for context from
+`$dir`, and end the pass with `git worktree remove --force "$dir"`.
+
+The excludes are the generated files. Count them by rerunning the diff with
+`--name-only` and no pathspec. A fixture is wrong only where its declaration is wrong,
+so read `packages/content/src/fixtures/declaration.ts` instead of the rows it wrote.
+
+The pull request itself has no copy on disk, so it comes from `gh`:
+
+```bash
+gh pr view <n> --json title,body
 gh pr checks <n>
-gh pr diff <n> --name-only
-gh pr diff <n> -e 'tests/fixtures/5etools/*' -e 'pnpm-lock.yaml' -e 'content.lock.json'
 ```
 
 Read the issue the body closes. The QA lens weighs the change against its acceptance
 criteria and **Out of scope**, which nothing else states.
-
-The excludes are the generated files: count them from `--name-only` rather than reading
-them line by line. A fixture is wrong only where its declaration is wrong, so read
-`packages/content/src/fixtures/declaration.ts` instead of the rows it wrote.
 
 A red check is a finding. `pnpm check` runs on one platform and covers neither
 `pnpm build` nor the end-to-end tests, so a green local run leaves the Windows job and
@@ -119,9 +139,9 @@ returning only `preference` findings ends the loop.
 
 ## What this skill will not do
 
-**Check out the branch.** `gh` serves the whole pass, so the tree stays where the caller
-left it — a checkout here strands step 11 on a detached HEAD, where the branch-name hook
-goes quiet and a commit lands anywhere.
+**Touch the caller's tree.** The worktree holds the commit under review, so the branch
+stays where step 11 needs it. A checkout there strands step 11 on a detached HEAD, where
+the branch-name hook goes quiet and a commit lands anywhere.
 
 **Apply what it finds, or label the pull request.** The pass returns findings; steps 10
 to 13 of [`issue-to-pr`](../issue-to-pr/SKILL.md) decide what happens to them.

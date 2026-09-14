@@ -66,8 +66,8 @@ because reranking is the user's call.
    pre-commit runs neither the tests nor the caps.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
-10. **Review it** with [`review-pr`](../review-pr/SKILL.md), which reads the diff through
-    `gh` and leaves the tree on this branch. A pass returning anything to weigh swaps
+10. **Review it** with [`review-pr`](../review-pr/SKILL.md), which reviews from a
+    worktree and leaves this branch where it is. A pass returning anything to weigh swaps
     `review:changes-requested` on before you apply, so a run that dies mid-apply leaves
     the pull request marked; one `gh pr edit <n> --add-label <one> --remove-label
     <other>` does both halves.
