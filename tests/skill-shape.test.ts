@@ -74,10 +74,15 @@ function references(skill: string): string[] {
   return files(skill).filter((name) => name !== "SKILL.md");
 }
 
-/** Every distinct path a skill cites, resolved from the skill's own directory. */
-function cites(skill: string): Set<string> {
+/** Where one file's links land. A skill directory is flat, so every link resolves from it. */
+function targets(skill: string, file: string): string[] {
   const dir = join(SKILLS_DIR, skill);
-  return new Set(links(read(`.claude/skills/${skill}/SKILL.md`)).map((l) => resolve(dir, l)));
+  return links(read(`.claude/skills/${skill}/${file}`)).map((l) => resolve(dir, l));
+}
+
+/** Every distinct path the SKILL.md cites, which is what the citation rules read. */
+function cites(skill: string): Set<string> {
+  return new Set(targets(skill, "SKILL.md"));
 }
 
 describe(".claude/skills/", () => {
@@ -150,11 +155,13 @@ describe(".claude/skills/", () => {
   });
 
   it.each(skills)("%s links only to files that exist", (skill) => {
-    for (const target of cites(skill)) {
-      expect(
-        existsSync(target),
-        `${skill}/SKILL.md links to "${relative(ROOT, target)}", which does not exist. Fix the path or write the file.`,
-      ).toBe(true);
+    for (const name of files(skill)) {
+      for (const target of targets(skill, name)) {
+        expect(
+          existsSync(target),
+          `${skill}/${name} links to "${relative(ROOT, target)}", which does not exist. Fix the path or write the file.`,
+        ).toBe(true);
+      }
     }
   });
 
