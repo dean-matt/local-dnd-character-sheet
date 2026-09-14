@@ -57,7 +57,7 @@ blocked, say so and stop rather than starting the milestone below.
     nothing without the branch-name hook saying so. A pass returning anything to weigh
     swaps `review:changes-requested` on before you apply, so a run that dies mid-apply
     leaves the pull request marked. One `gh pr edit <n> --add-label <one> --remove-label
-    <other>` does both halves, so it never wears both.
+    <other>` does both halves, so it never carries both.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
