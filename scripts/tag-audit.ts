@@ -163,7 +163,7 @@ console.log(`${strings} tagged strings, ${tokens} tokens, ${rolls} rolls, from $
 const unknown = [...unregistered].sort((a, b) => b[1] - a[1]);
 if (unknown.length > 0) {
   console.log(`\n${unknown.length} tags fall through to plain text:`);
-  for (const [tag, count] of unknown.slice(0, 25)) {
+  for (const [tag, count] of unknown) {
     console.log(`  ${String(count).padStart(6)}  {@${tag}}`);
   }
   console.log("  check any of these against renderdemo.json before trusting the output");

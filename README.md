@@ -102,6 +102,7 @@ data/               the three SQLite databases, gitignored
 |---|---|---|
 | `No content.lock.json` | The data has never been fetched. | `pnpm content:sync` |
 | `vendor/ does not match content.lock.json` | An interrupted fetch, or files edited by hand. | `pnpm content:sync` |
+| `content.manifest.json pins X, content.lock.json Y` | The pinned tag moved without a fetch. | `pnpm content:sync` |
 | `pnpm check` fails with `typos not installed` | The spellchecker is a separate binary. | `brew install typos-cli` |
 | `Error: Could not locate the bindings file` | `better-sqlite3` was built for a different Node major. | `pnpm rebuild better-sqlite3` |
 | Port 5173 or 8787 already in use | An earlier dev server is still running. | macOS/Linux `lsof -ti tcp:8787 \| xargs kill`; Windows `npx kill-port 8787` |

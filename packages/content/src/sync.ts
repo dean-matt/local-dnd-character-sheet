@@ -8,7 +8,7 @@
  *
  *   pnpm content:sync                 fetch the tag in content.manifest.json
  *   pnpm content:sync --tag v2.35.0   fetch a different tag and rewrite the lock
- *   pnpm content:sync --verify        check vendor/ against the lock, fetch nothing
+ *   pnpm content:sync --verify        check the lock and vendor/, fetch nothing
  */
 
 import { execFileSync } from "node:child_process";
@@ -71,6 +71,15 @@ export async function verifyVendor(): Promise<{ dir: string; tag: string }> {
   if (!existsSync(dir)) {
     throw new Error(
       `${relative(ROOT, dir)} does not exist. Run \`pnpm content:sync\` to fetch it.`,
+    );
+  }
+  // The manifest names a whole repository and only `include` is hashed, so a tag that
+  // moved nothing under `data/` leaves every hash matching. Without this, a hand-edited
+  // manifest verifies green against a lockfile pinning the tag before it.
+  if (lock.tag !== manifest.tag) {
+    throw new Error(
+      `content.manifest.json pins ${manifest.tag}, content.lock.json ${lock.tag}. ` +
+        "Run `pnpm content:sync` to fetch the pinned tag.",
     );
   }
   const actual = await hashTree(dir);

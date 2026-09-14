@@ -193,6 +193,16 @@ files and unused dependencies, which is the residue of an agent changing directi
 mid-task. `noUnusedLocals` and Biome's complexity rules catch the rest. The fences run in
 `pnpm check`, on pre-commit, and in CI.
 
+CI splits by what a check needs to read. Every pull request runs the typecheck, Biome,
+`knip`, the tests and the build on Linux and Windows, the `typos` pass that `pnpm spell`
+wraps, and the end-to-end tests — all against committed data. Four more read `vendor/`,
+which is 109 MB and fetched rather than committed, so they run only when
+`content.manifest.json`, `content.lock.json` or the workflow itself changes, or on demand:
+`pnpm content:sync --verify` against the restored lockfile, `pnpm content:build` against
+the real corpus, `pnpm fixtures:build --check`, and `pnpm tags:audit`. A tag bump is the
+event all four exist for — the verify catches a bump whose lockfile says something else,
+and the fixtures check catches one that moved them without regenerating them.
+
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
 and a line budget on code punishes a long correct function the same as a short pointless
