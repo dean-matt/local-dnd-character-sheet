@@ -124,5 +124,5 @@ the branch-name hook goes quiet and a commit lands anywhere. Running something t
 a claim is not touching it — the worktree has no `node_modules`, so run a test or a
 scratch repository where it works, and change nothing tracked.
 
-**Apply findings, or label the pull request.** Steps 10 to 13 of
+**Apply findings, post them, or label the pull request.** Steps 10 to 14 of
 [`issue-to-pr`](../issue-to-pr/SKILL.md) do that.

@@ -74,9 +74,26 @@ because reranking is the user's call.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
-12. **Repeat 10 and 11 while a pass returns a `critical` or `warning` finding**, three
+12. **Post every finding the pass returned**, one comment per finding, after the fixes
+    are pushed so each comment carries a verdict. Anchor it to the line, against the
+    commit the pass read:
+
+    ```bash
+    gh api repos/dean-matt/local-dnd-character-sheet/pulls/<n>/comments \
+      -f commit_id=<head the pass read> -f path=<path> -F line=<line> \
+      -f side=RIGHT -f body=<body>
+    ```
+
+    Open the body with the verdict — `**Applied** in <sha>`, or `**Declined** — <why>` —
+    and put the severity and the defect after it. Applying a finding moves its line, and
+    GitHub folds an outdated comment away, so a verdict buried in the body is a verdict
+    nobody reads. A finding naming no line, or naming one the diff misses, takes
+    `gh pr comment <n> --body <body>` with the path written into the body: anchored to
+    nothing, it never folds. A pass that returned nothing posts nothing, and a later
+    pass adds, leaving an earlier pass's comments where they are.
+13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most. A pass returning only `comment` findings has stopped paying.
-13. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
+14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
     on nobody. Then report what landed, what each review found, and what `gh pr checks`
