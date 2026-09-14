@@ -9,8 +9,7 @@ Read `CONTRIBUTING.md` first; it holds the reasoning these steps assume.
 
 ## Choosing, when no issue is named
 
-Say which issue you are taking and start. Naming it first makes a wrong pick cost a
-sentence rather than a branch.
+Say which issue you are taking, then start.
 
 The `D&D Character Sheet` project board decides — not the issue number, not which code
 just merged, not how small it looks.
@@ -52,40 +51,37 @@ because reranking is the user's call.
    gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")'
    gh project item-edit --id <item> --project-id <project> --field-id <field> --single-select-option-id <option>
    ```
-4. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one — not this
-   one, which is the sequence around the work rather than the work.
+4. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
-   Tests ride with the code they cover.
+   Tests ride with the code they cover, and a command written into a skill is run before
+   it lands — whoever reads that skill next executes it.
 6. **Correct the docs the change made stale**, in the same commit. `docs/` and
    `CLAUDE.md` have caps, and a new `docs/` file needs a README row: past a cap,
    replace a sentence rather than append.
-7. **Prose pass** with `writing-clearly-and-concisely` over the commit message and
-   every comment the change touched.
+7. **Prose pass** with `writing-clearly-and-concisely` over all the prose the change
+   wrote — commit message, comments, `docs/`, a skill, `CLAUDE.md` — and weigh the
+   register: a skill is instructions an agent rereads, not an essay a human reads once.
 8. **`pnpm check`, then commit and push**, once per concern the issue carries. Never
    push past a failure with a note about it, and run it after steps 6 and 7:
    pre-commit runs neither the tests nor the caps.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
-10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
-    inherits whatever was typed last. Then `git branch --show-current`: the review leaves
-    the tree where it checked out, and the branch-name hook stays quiet on a detached
-    HEAD. A pass returning anything to weigh swaps `review:changes-requested` on before
-    you apply, so a run that dies mid-apply leaves the pull request marked; one `gh pr
-    edit <n> --add-label <one> --remove-label <other>` does both halves.
+10. **Review it** with [`audit-pr`](../audit-pr/SKILL.md), which reviews from a
+    worktree and leaves this branch where it is. A pass returning anything to weigh swaps
+    `review:changes-requested` on before you apply, so a run that dies mid-apply leaves
+    the pull request marked; one `gh pr edit <n> --add-label <one> --remove-label
+    <other>` does both halves.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
-12. **Repeat 10 and 11 while a pass returns something that would fail at runtime,
-    mislead a reader, or contradict the repo**, three passes at most. A pass returning
-    only preferences has stopped paying.
+12. **Repeat 10 and 11 while a pass returns a `critical` or `warning` finding**, three
+    passes at most. A pass returning only `comment` findings has stopped paying.
 13. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
-    on nobody, and CI does not enter into it. Then report what landed, what each review
-    found, and what `gh pr checks` says, reporting a run still in flight as in flight
-    rather than waiting on it. The gate needs `pnpm build` and the end-to-end tests green
-    too, and `pnpm check` runs neither, so local green is not the answer. A red run is
-    the user's to weigh.
+    on nobody. Then report what landed, what each review found, and what `gh pr checks`
+    says, reporting a run still in flight as in flight rather than waiting on it. A red
+    run is the user's to weigh.
 
 ## The pull request body
 

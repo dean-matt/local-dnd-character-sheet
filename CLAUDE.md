@@ -58,6 +58,9 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 - **Unknown `{@tag}` values degrade to plain text.** Never throw on unrecognized markup.
 - **`tests/fixtures/5etools/` is generated**, never hand-edited — `pnpm fixtures:build`
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
+- **A pushed commit is never rewritten.** No amend, no rebase, no force push — add a
+  commit. `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the branch you
+  are on.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — `knip` will find it, but the commit should not have created it.
 
@@ -66,6 +69,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 | Skill | Use when |
 |---|---|
 | `issue-to-pr` | Taking any issue from open to a reviewed pull request |
+| `audit-pr` | Reviewing a pull request in this repository |
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `add-endpoint` | Adding an API route, end to end |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
