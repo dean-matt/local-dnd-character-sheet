@@ -1,0 +1,50 @@
+name: content
+
+# The checks here read vendor/5etools/, which is WotC's data and is never committed.
+# Fetching 109 MB on every pull request to check something that moves only when the
+# pinned tag moves is the wrong trade, so the trigger is the tag bump.
+on:
+  pull_request:
+    paths:
+      - content.manifest.json
+  workflow_dispatch:
+
+concurrency:
+  group: content-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  corpus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Fetch the pinned tag
+        run: pnpm content:sync
+
+      # The fetch rewrites content.lock.json, so verifying against it would compare the
+      # fetch to itself. Restoring the committed lockfile first makes --verify answer the
+      # question worth asking: does the pinned tag still hash to what the bump recorded?
+      - name: Verify the fetch against the committed lockfile
+        run: |
+          git checkout -- content.lock.json
+          pnpm content:sync --verify
+
+      - name: Build content.db from the real corpus
+        run: pnpm content:build
+
+      - name: Check the fixtures still say what the declaration generates
+        run: pnpm fixtures:build --check
+
+      - name: Audit every tag in the corpus
+        run: pnpm tags:audit
