@@ -74,9 +74,18 @@ describe("rollDice", () => {
     expect(roll.notation).toBe("2d6+3");
   });
 
-  it.each(["1d6 4", "1d2 0", "1 2d6"])("rejects %o rather than reading it as a bigger die", (n) => {
-    expect(() => rollDice(n)).toThrow(SyntaxError);
+  it("reads a run of spaces as one", () => {
+    const roll = rollDice("2d6   +   3", { random: loaded(6, 1, 1) });
+    expect(roll.total).toBe(5);
+    expect(roll.notation).toBe("2d6+3");
   });
+
+  it.each(["1d6    4", "1d6 4", "1d2 0", "1 2d6"])(
+    "rejects %o rather than reading it as a bigger die",
+    (n) => {
+      expect(() => rollDice(n)).toThrow(SyntaxError);
+    },
+  );
 
   it("rolls twice and keeps the higher on advantage", () => {
     const roll = rollDice("1d20+5", { mode: "advantage", random: loaded(20, 8, 19) });
@@ -115,6 +124,7 @@ describe("rollDice", () => {
     "4d6d4",
     "1000d6+1d6",
     `1d6+${"9".repeat(400)}`,
+    `1d6+${"9".repeat(400)}-${"9".repeat(400)}`,
   ])("rejects %s out of range", (notation) => {
     expect(() => rollDice(notation)).toThrow(RangeError);
   });

@@ -105,7 +105,10 @@ function parseTerm(groups: TermGroups, sign: 1 | -1, notation: string): DiceTerm
 }
 
 function parseDice(notation: string): ParsedDice {
-  const source = notation.trim().toLowerCase();
+  // Collapsing each whitespace run leaves the grammar alone — `\s*` reads one space the
+  // same as ten — and caps `TERM`'s backtracking, quadratic in a run's length on notation
+  // that fails. `isRollable` reads every {@dice} argument, so homebrew chooses that input.
+  const source = notation.trim().toLowerCase().replace(/\s+/g, " ");
   const terms: DiceTerm[] = [];
   let modifier = 0;
   let sign: 1 | -1 = 1;
@@ -145,7 +148,9 @@ function parseDice(notation: string): ParsedDice {
   if (pooled > MAX_COUNT) {
     throw new RangeError(`Cannot roll more than ${MAX_COUNT} dice at once: "${notation}"`);
   }
-  if (Math.abs(modifier) > MAX_MODIFIER) {
+  // Two constants of 309 digits or more each coerce to `Infinity` and cancel to a `NaN`
+  // no magnitude test catches, reaching the roll log as a total nobody can read.
+  if (!Number.isFinite(modifier) || Math.abs(modifier) > MAX_MODIFIER) {
     throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
   }
 
@@ -185,8 +190,8 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
  * its own copy of the grammar and the bounds, and because the answer comes from parsing
  * it cannot drift from what `rollDice` uses.
  *
- * It says nothing about a mode: advantage and disadvantage also need a single die and no
- * keep clause, which a caller passing one checks itself.
+ * It says nothing about a mode: advantage and disadvantage also need a single die, no keep
+ * clause and no second pool, which a caller passing one checks itself.
  */
 export function isRollable(notation: string): boolean {
   try {
