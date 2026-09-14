@@ -13,20 +13,26 @@ Say which issue you are taking and start. Naming it first makes a wrong pick cos
 sentence rather than a branch.
 
 The `D&D Character Sheet` project board decides. Its one view groups by milestone and
-sorts by a `Rank` number field, and the user sets that rank knowing what blocks what and
-what an audit has to follow. Milestones order the work above it, so the live one is the
-lowest-numbered with any issue open.
+sorts by a `Rank` number field, which the user sets knowing what blocks what and what an
+audit has to follow. Milestones order the work above it, so the live one is the
+lowest-numbered with any issue open, and the next is live once it empties.
 
 Take the open issue with the lowest `Rank` in the live milestone. Nothing else decides
-it — not the issue number, not which code just merged, not how small the issue looks.
-`gh project item-list 1 --owner dean-matt --format json` carries `rank` as a top-level
-key. Its `Status` column is hand-maintained rather than issue state, so intersect it
-with `gh issue list --state open` and pick from what both agree on.
+it — not the issue number, not which code just merged, not how small it looks.
 
-An issue with no rank or no milestone is backlog and waits for the user to name it. Most
-of the board is still unranked, so the live milestone can hold open issues and no ranked
-one: say so and stop rather than starting the milestone below. When the milestone has
-nothing open, the next one is live.
+```bash
+gh project item-list 1 --owner dean-matt --limit 200 --format json
+gh issue list --state open --limit 200
+```
+
+Pass both limits: each defaults to 30 rows against 63 board items and 51 open issues, and
+the truncated board carries one ranked row. An item holds `rank`, `milestone`, `status`,
+`labels` and `content.number`, and omits `rank` when unranked. `status` is
+hand-maintained, so the open list is what says an issue is still open.
+
+An issue with no rank or no milestone is backlog and waits for the user to name it. `M3
+API` and every milestone below it is unranked, so the live milestone can hold open issues
+and no ranked one: say so and stop rather than starting the milestone below.
 
 A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
 rather than a fence: read the issue and say why you are taking it. Where the top-ranked
