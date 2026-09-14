@@ -80,13 +80,13 @@ because reranking is the user's call.
 
     ```bash
     id=$(gh api 'repos/{owner}/{repo}/pulls/<n>/comments' \
-      -f commit_id=<head the fixes left> -f path=<path> -F line=<line> \
+      -f commit_id=<the current head> -f path=<path> -F line=<line> \
       -f side=RIGHT -f body=<the severity and the defect> --jq .id)
     gh api "repos/{owner}/{repo}/pulls/<n>/comments/$id/replies" -f body=<the verdict>
     ```
 
     The verdict reads `**Applied** in <sha>` or `**Declined** — <reason>`. Anchor against
-    the head the fixes left, at the line the finding names in that tree: anchoring against
+    the current head, at the line the finding names in that tree: anchoring against
     the commit the pass read marks the thread outdated the moment a fix moves the line,
     and GitHub folds the reply away with it. A finding naming no line, or one a fix
     deleted, takes `gh pr comment <n> --body <body>` carrying the path, the defect and the
