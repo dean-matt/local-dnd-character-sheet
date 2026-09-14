@@ -13,21 +13,25 @@ Say which issue you are taking and start. Naming it first makes a wrong pick cos
 sentence rather than a branch.
 
 The `D&D Character Sheet` project board decides. Its one view groups by milestone and
-sorts by a `Rank` number field, and the user sets that rank knowing what blocks what
-and what an audit has to follow. Milestones order the work above it, so the live one
-is the lowest-numbered with any issue open.
+sorts by a `Rank` number field, and the user sets that rank knowing what blocks what and
+what an audit has to follow. Milestones order the work above it, so the live one is the
+lowest-numbered with any issue open.
 
 Take the open issue with the lowest `Rank` in the live milestone. Nothing else decides
 it — not the issue number, not which code just merged, not how small the issue looks.
-An issue with no rank or no milestone is backlog and waits for the user to name it.
+`gh project item-list 1 --owner dean-matt --format json` carries `rank` as a top-level
+key. Its `Status` column is hand-maintained rather than issue state, so intersect it
+with `gh issue list --state open` and pick from what both agree on.
 
-Read `Rank` from the field itself, through the GraphQL API. `gh project item-list`
-prints an order of its own, which looks like the rank and is not.
+An issue with no rank or no milestone is backlog and waits for the user to name it. Most
+of the board is still unranked, so the live milestone can hold open issues and no ranked
+one: say so and stop rather than starting the milestone below. When the milestone has
+nothing open, the next one is live.
 
-When the milestone has nothing open, the next one is live. Where the top-ranked issue
-names a condition that still holds — a `## Blocked by`, a `## Do not start before` —
-the rank is stale rather than the issue skippable: say which condition holds and stop,
-because reranking is the user's call.
+A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
+rather than a fence: read the issue and say why you are taking it. Where the top-ranked
+issue names a condition that still holds, the rank is stale rather than the issue
+skippable — name the condition and stop, because reranking is the user's call.
 
 ## The sequence
 
