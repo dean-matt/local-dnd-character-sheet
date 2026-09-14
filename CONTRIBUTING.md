@@ -140,10 +140,10 @@ detail that only some tasks need costs nothing on the tasks that do not need it.
 
 The corollary matters just as much: anything that must apply on *every* task cannot be a
 skill. That is why the coding disposition lives in `CLAUDE.md` rather than
-`.claude/skills/`, and why it is kept to the handful of rules that change what gets
-written. It is adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
-The original is a vendored file imported into `CLAUDE.md`; that arrangement put 53 lines
-of every-task instruction outside the 150-line cap, which the cap exists to prevent.
+`.claude/skills/`, kept to the handful of rules that change what gets written, and why it
+is written inline rather than imported from a vendored file — an import puts every-task
+instruction outside the cap that exists to bound it. Adapted from
+[ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
 
 A skill is named for the job rather than the obvious verb, checked against what is
 installed on the machine. Namespacing keeps an explicit invocation unambiguous, but a
@@ -161,25 +161,19 @@ you can see does not. `tests/skill-shape.test.ts` caps each `SKILL.md` at 150 li
 is where skill bloat shows up. The cap matches `CLAUDE.md`'s, because a skill that drives
 a whole workflow carries about as much as the file that indexes it.
 
-A skill may carry reference documents beside its `SKILL.md`, capped at 200 lines each like
-`docs/`. Banning the second file is the weaker proxy, and it costs more than it holds:
-detail only one skill needs then has nowhere to go but `docs/`, where it sits beside
-reference a human reads, takes a README row, and is indexed for tasks that will never cite
-it. What holds the growth back is the subject, not the count: a thousand lines comes from
-a file that has none, and a `reference.md` takes whatever does not fit, so it never
-reaches a stopping point.
-
-So the fence sits on the names and the links. Name each document for what it holds; a
-denylist rejects the position names, which stop nowhere. Each `SKILL.md` links
-every document beside it and every link it writes resolves, both directions failing
-loudly, the way `tests/readme-shape.test.ts` already checks `docs/`. Cite each one at the
-step that needs it rather than in a closing list: a document is read only if the skill
-reads it, and one the agent skips is worse than prose written inline.
+A skill may carry reference documents beside its `SKILL.md`. Banning the second file is
+the weaker proxy and costs more than it holds: detail only one skill needs then has
+nowhere to go but `docs/`, where it sits beside reference a human reads, takes a README
+row, and is indexed for tasks that will never cite it. What produces a thousand lines is a
+file with no subject, so the fence sits on the names and the links instead;
+`tests/skill-shape.test.ts` holds which. Each document is cited at the step that needs it
+rather than in a closing list, because one the agent skips is worse than prose written
+inline.
 
 The boundary with `docs/` needs its own rule, or the two blur. A `docs/` file is cited
 from more than one place, or by a task that runs no skill; a skill reference is read only
-when its skill runs. The second `SKILL.md` to link a file is the signal that it belongs in
-`docs/`, and the test fails on it.
+when its skill runs. That makes the second `SKILL.md` to link a file the signal that it
+belongs in `docs/`.
 
 ## Code comments
 
@@ -217,9 +211,8 @@ choice was made, where "throws a `TypeError`" only repeats the signature. So com
 claims and not the prose: every fact a comment asserted before the edit is asserted after
 it, and a claim that turns out to belong in the signature moves there instead of going.
 
-Nothing asserts this and nothing can. Every proxy for wordiness flags good comments too,
-and a length rule would trim the one comment that needed a paragraph to name a trap. Do
-it for what the rewrite turns up rather than the words it saves: a comment that resists
+Nothing asserts this and nothing can: every proxy for wordiness flags good comments too.
+Edit for what the rewrite turns up rather than the words it saves — a comment that resists
 compression is usually ambiguous, and the edit is where that shows.
 
 ## Working with Claude here
@@ -233,16 +226,11 @@ files and unused dependencies, which is the residue of an agent changing directi
 mid-task. `noUnusedLocals` and Biome's complexity rules catch the rest. The fences run in
 `pnpm check`, on pre-commit, and in CI.
 
-CI splits by what a check needs to read. Every pull request runs the typecheck, Biome,
-`knip`, the tests and the build — on Linux and Windows — plus the `typos` pass that
-`pnpm spell` wraps and the end-to-end tests, all against committed data. Four more read
-`vendor/`, which is fetched rather than committed and runs to 109 MB, so they run only
-when `content.manifest.json`, `content.lock.json` or the workflow itself changes, or on
-demand: `pnpm content:sync --verify` against the restored lockfile, `pnpm content:build`
-against the real corpus, `pnpm fixtures:build --check`, and `pnpm tags:audit`. A tag bump
-is the event all four exist for — the verify catches a bump whose lockfile says something
-else, and the fixtures check catches one whose new upstream data never reached the
-committed fixtures.
+CI splits by what a check needs to read. Everything that reads only committed data runs on
+every pull request, on Linux and Windows. The jobs that read `vendor/` fetch 109 MB to do
+it, so they wait for a change to `content.manifest.json`, `content.lock.json` or the
+workflow itself. A tag bump is the event those exist for: it is the one change that can
+leave the lockfile and the committed fixtures each describing a different upstream.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
