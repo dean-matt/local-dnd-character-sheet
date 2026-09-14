@@ -12,30 +12,27 @@ Read `CONTRIBUTING.md` first; it holds the reasoning these steps assume.
 Say which issue you are taking and start. Naming it first makes a wrong pick cost a
 sentence rather than a branch.
 
-The `D&D Character Sheet` project board decides. Its one view groups by milestone and
-sorts by a `Rank` the user sets knowing what blocks what and what an audit has to follow.
-The live milestone is the lowest-numbered holding a ranked open issue; take the open
-issue ranked lowest in it. Nothing else decides the pick — not the issue number, not
-which code just merged, not how small it looks.
+The `D&D Character Sheet` project board decides — not the issue number, not which code
+just merged, not how small it looks.
 
 ```bash
 # from the repo root: gh reads the account from the directory
-gh project item-list 1 --owner dean-matt --limit 200 --format json
-gh issue list --state open --limit 200 --json number
+open=$(gh issue list --state open --limit 200 --json number --jq '[.[].number]')
+gh project item-list 1 --owner dean-matt --limit 200 --format json |
+  jq --argjson open "$open" '
+    if (.items | length) < .totalCount then error("board truncated — raise --limit") else . end
+    | [.items[] | select(.rank and .milestone and (.content.number | IN($open[])))]
+    | sort_by(.milestone.title, .rank) | .[0]'
 ```
 
-Pass both limits and check `.items | length` against `.totalCount`: each defaults to 30
-rows and truncates in silence, hiding the ranked issue you came for. An item holds
-`rank`, `milestone`, `status`, `labels`, `content.number` and `content.body`, and omits
-`rank` when unranked. `status` is hand-maintained, so the open list says what is open.
-
-An issue with no rank or no milestone is backlog: it waits for the user to name it and
-holds no milestone open. Where no milestone holds a ranked open issue, say so and stop.
+Milestones sort by title, which holds while they are numbered. An unranked or
+milestone-less issue is backlog: the filter drops it and it waits for the user to name
+it. `null` means no milestone holds a ranked open issue — say so and stop.
 
 A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag
-rather than a fence: read the issue and say why you are taking it. Where the top-ranked
-issue names a condition that still holds, the rank is stale rather than the issue
-skippable — name the condition and stop, because reranking is the user's call.
+rather than a fence: read the issue and say why you are taking it. Where the condition
+still holds, the rank is stale rather than the issue skippable — name it and stop,
+because reranking is the user's call.
 
 ## The sequence
 
@@ -44,7 +41,17 @@ skippable — name the condition and stop, because reranking is the user's call.
 2. **Where the issue states counts or shapes, verify them against `vendor/`** before
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
-3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`.
+3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then set
+   the board to `In Progress`; its own workflow waits for the pull request. `item-add`
+   returns the item an issue already has; the other three ids hold still, so read them
+   once a session.
+
+   ```bash
+   gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
+   gh project view 1 --owner dean-matt --format json --jq .id
+   gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")'
+   gh project item-edit --id <item> --project-id <project> --field-id <field> --single-select-option-id <option>
+   ```
 4. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one — not this
    one, which is the sequence around the work rather than the work.
 5. **Implement**, stopping at the first rung of the ladder in `CLAUDE.md` that holds.
@@ -60,12 +67,11 @@ skippable — name the condition and stop, because reranking is the user's call.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
 10. **Review it** with `/code-review <pr> <level>`, naming the level, which otherwise
-    inherits whatever was typed last. Then check `git branch --show-current`: the
-    review leaves the tree where it checked out, and a detached HEAD commits onto
-    nothing without the branch-name hook saying so. A pass returning anything to weigh
-    swaps `review:changes-requested` on before you apply, so a run that dies mid-apply
-    leaves the pull request marked. One `gh pr edit <n> --add-label <one> --remove-label
-    <other>` does both halves, so it never carries both.
+    inherits whatever was typed last. Then `git branch --show-current`: the review leaves
+    the tree where it checked out, and the branch-name hook stays quiet on a detached
+    HEAD. A pass returning anything to weigh swaps `review:changes-requested` on before
+    you apply, so a run that dies mid-apply leaves the pull request marked; one `gh pr
+    edit <n> --add-label <one> --remove-label <other>` does both halves.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
@@ -76,23 +82,21 @@ skippable — name the condition and stop, because reranking is the user's call.
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
     on nobody, and CI does not enter into it. Then report what landed, what each review
-    found, and what `gh pr checks` says, noting a run still in flight as in flight. The
-    gate needs `pnpm build` and the end-to-end tests green too, and `pnpm check` runs
-    neither, so local green is not the answer. A red run is the user's to weigh, as is
-    the merge, every time.
+    found, and what `gh pr checks` says, reporting a run still in flight as in flight
+    rather than waiting on it. The gate needs `pnpm build` and the end-to-end tests green
+    too, and `pnpm check` runs neither, so local green is not the answer. A red run is
+    the user's to weigh.
 
 ## The pull request body
 
 `Closes #<issue>` on the first line. Then what the change does and, for anything a
 reviewer would otherwise derive, the entry in the data that decided it, named as
-`Name` (SOURCE).
-
-Close with the verification. "`pnpm check` is green" is the floor: say what ran
-against the real corpus and what came out.
+`Name` (SOURCE). Close with the verification: "`pnpm check` is green" is the floor, so
+say what ran against the real corpus and what came out.
 
 ## What this skill will not do
 
 **Merge.** Report and wait, whatever the review found and however small the change.
 
-**Widen the issue.** A second bug found on the way is a second issue. File it or name
-it in the report; leave it out of this branch.
+**Widen the issue.** A second bug found on the way is a second issue: file it or name it
+in the report, and leave it out of this branch.

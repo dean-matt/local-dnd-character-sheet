@@ -42,6 +42,33 @@ export function deepHeadings(markdown: string, minLevel: number): string[] {
   return [...prose(markdown).matchAll(pattern)].map((m) => m[1] as string);
 }
 
+/**
+ * The file each relative link points at. An http, mailto or in-page link names no file,
+ * and a fragment names a heading inside one, so both drop out — only a path can dangle.
+ *
+ * A `](` the pattern cannot read throws rather than yielding nothing. A link that
+ * vanishes is the worst outcome available: the dangling path it held passes the
+ * existence check, and the file it cited is reported as cited by nobody.
+ */
+const LINK = /\]\(\s*([^)\s]+)(?:\s+["'][^"']*["'])?\s*\)/g;
+const EXTERNAL = /^(?:https?:|mailto:|#)/i;
+
+export function links(markdown: string): string[] {
+  const text = prose(markdown);
+  const matched = [...text.matchAll(LINK)];
+  const openers = [...text.matchAll(/\]\(/g)].length;
+  if (matched.length !== openers) {
+    throw new Error(
+      `${openers - matched.length} link(s) in a form this fence cannot read — write each as [text](path)`,
+    );
+  }
+  return matched
+    .map((m) => m[1] as string)
+    .filter((target) => !EXTERNAL.test(target))
+    .map((target) => target.split("#")[0] as string)
+    .filter((target) => target.length > 0);
+}
+
 export function lineCount(markdown: string): number {
   return markdown.trimEnd().split("\n").length;
 }
