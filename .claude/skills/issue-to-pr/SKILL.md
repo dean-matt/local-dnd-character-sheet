@@ -58,8 +58,9 @@ blocked, say so and stop rather than starting the milestone below.
     swaps `review:changes-requested` on and `review:approved` off before you apply, so a
     run that dies mid-apply leaves the pull request marked rather than clean.
     `gh pr edit <n> --add-label <one> --remove-label <other>` does both halves in one
-    call. A name the repository lacks fails that call outright, so create a missing label
-    first with `gh label create <name> --color <hex> --description <text>`.
+    call. A name the repository lacks fails that call outright, here or at step 13, so
+    create it first: `gh label create <name> --force --color <hex> --description <what it
+    means>`, taking `2da44e` for `review:approved` and `d1242f` for the other.
 11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
     and push, and bring the pull request body back in line. Fixes left in the working
     tree leave the pull request holding the code the review rejected.
@@ -68,8 +69,9 @@ blocked, say so and stop rather than starting the milestone below.
     only preferences has stopped paying.
 13. **Label, then stop.** Swap once more: `review:approved` where `pnpm check` is green
     and nothing a pass returned still waits on the user; `review:changes-requested`
-    where something does — a finding declined, a second bug spun out as its own issue, a
-    red `pnpm check`, or a run that stopped before applying. Preferences wait on nobody.
+    where something does — a finding declined, a second bug spun out as its own issue, or
+    a red `pnpm check`. Preferences wait on nobody, and a run that stopped before
+    applying never reaches here: step 10's label is what it leaves behind.
     Removing a label the pull request does not carry is a no-op, so the swap can never
     leave both on. A pull request no pass has read carries neither. The label does not
     wait on CI, but the report says where CI stands: what landed, what each review found,

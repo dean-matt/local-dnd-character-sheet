@@ -1,8 +1,8 @@
 name: content
 
 # The checks here read vendor/5etools/, which is WotC's data and is never committed.
-# Fetching 109 MB on every pull request is the wrong trade for a check that only a tag
-# bump can change, so the tag bump is the trigger.
+# Fetching 109 MB on every pull request is the wrong trade, so the tag bump is the
+# trigger. A change to a loader or to the fixture declaration wants workflow_dispatch.
 on:
   pull_request:
     paths:

@@ -201,8 +201,8 @@ when `content.manifest.json`, `content.lock.json` or the workflow itself changes
 demand: `pnpm content:sync --verify` against the restored lockfile, `pnpm content:build`
 against the real corpus, `pnpm fixtures:build --check`, and `pnpm tags:audit`. A tag bump
 is the event all four exist for — the verify catches a bump whose lockfile says something
-else, and the fixtures check catches a bump that moved the fixtures without rebuilding
-them.
+else, and the fixtures check catches one whose new upstream data never reached the
+committed fixtures.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
