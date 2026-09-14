@@ -231,8 +231,9 @@ CI splits by what a check needs to read. Everything that reads only committed da
 on every pull request; `check` runs on Linux and Windows, the rest on Linux alone. The
 `corpus` job reads `vendor/` and fetches 109 MB to do it, so it waits for a change to
 `content.manifest.json`, `content.lock.json` or the workflow itself — or for a
-`workflow_dispatch`, which is how a loader or fixture-declaration change reaches it. A tag bump is the event those exist for: it is the one change that can
-leave the lockfile and the committed fixtures each describing a different upstream.
+`workflow_dispatch`, which is how a loader or fixture-declaration change reaches it. A
+tag bump is the event it exists for: that is the one change that can leave the lockfile
+and the committed fixtures each describing a different upstream.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
