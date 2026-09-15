@@ -43,7 +43,7 @@ export type CasterClassLevel = {
   level: number;
 };
 
-export type SpellSlotTotal = {
+type SpellSlotTotal = {
   level: number;
   total: number;
 };

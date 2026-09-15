@@ -51,13 +51,12 @@ It returns:
 | Field | Type | Meaning |
 |---|---|---|
 | `total` | `number` | The kept dice plus the modifier |
-| `dice` | `RolledDie[]` | Every die rolled, across every pool, in roll order |
+| `dice` | `{ faces, value, kept, sign }[]` | Every die rolled, across every pool, in roll order |
 | `modifier` | `number` | Every constant in the notation, summed. `0` when it carries none |
 | `notation` | `string` | The input in canonical form |
 
-Each `RolledDie` is `{ faces, value, kept, sign }`. A die a keep clause discarded stays in
-the array with `kept: false`, and a die belonging to a subtracted pool carries
-`sign: -1`, so `total` can be read back off the dice.
+A die a keep clause discarded stays in the array with `kept: false`, and a die belonging to
+a subtracted pool carries `sign: -1`, so `total` can be read back off the dice.
 
 `isRollable(notation)` answers whether `rollDice` would accept the notation, without
 rolling it. It parses, so it cannot disagree with `rollDice`. A caller that renders text

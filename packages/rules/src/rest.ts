@@ -4,7 +4,7 @@
  */
 export const RESET_TRIGGERS = ["short", "long", "dawn", "manual"] as const;
 
-export type ResetTrigger = (typeof RESET_TRIGGERS)[number];
+type ResetTrigger = (typeof RESET_TRIGGERS)[number];
 
 /**
  * Upstream `recharge` values that map onto a trigger the sheet tracks. `dusk`,

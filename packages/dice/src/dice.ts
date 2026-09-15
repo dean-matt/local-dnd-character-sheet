@@ -19,7 +19,7 @@ type RolledDie = {
   sign: 1 | -1;
 };
 
-export type Roll = {
+type Roll = {
   total: number;
   dice: RolledDie[];
   modifier: number;
@@ -33,7 +33,7 @@ export type Roll = {
  */
 type RollMode = "normal" | "advantage" | "disadvantage";
 
-export type RollOptions = {
+type RollOptions = {
   mode?: RollMode;
   /** Returns a float in [0, 1), like `Math.random`. Injected so tests are deterministic. */
   random?: () => number;

@@ -14,6 +14,9 @@ type KnipConfig = {
 
 const TEST_ENTRY = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
 
+/** The four, repeated here so a workspace joining or leaving the set is deliberate. */
+const LEAF_PACKAGES = ["packages/rules", "packages/character", "packages/dice", "packages/tags"];
+
 const config = JSON.parse(read("knip.json")) as KnipConfig;
 
 const testOnly = Object.entries(config.workspaces).filter(
@@ -24,8 +27,8 @@ const testOnly = Object.entries(config.workspaces).filter(
 );
 
 describe("knip.json", () => {
-  it("finds workspaces whose only entry is their own tests", () => {
-    expect(testOnly.length).toBeGreaterThan(0);
+  it("finds exactly the workspaces whose only entry is their own tests", () => {
+    expect(testOnly.map(([name]) => name)).toEqual(LEAF_PACKAGES);
   });
 
   it.each(testOnly.map(([name]) => name))("%s can report an export on its own surface", (name) => {
