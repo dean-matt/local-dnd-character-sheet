@@ -240,8 +240,9 @@ reader reaches it through the single entry its `exports` map declares — an ent
 exports knip counts as used. So `includeEntryExports` is on for the four, and without it
 knip reports nothing on those surfaces at all. They export a schema or a type the day
 something reads it, and their tests import through the package index, so the surface is
-what the tests exercise. `tests/knip-shape.test.ts` holds the setting to every workspace
-whose only entry is its own tests.
+what the tests exercise. `tests/knip-shape.test.ts` names the four and holds the setting
+to each, so a workspace joining or leaving that set is a deliberate edit rather than an
+inference.
 
 One hole stays open, deliberately. A test import counts as a reader, so an export its own
 tests alone keep alive stays invisible. Separating the two needs knip's production mode,
