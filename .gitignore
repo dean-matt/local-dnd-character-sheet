@@ -21,7 +21,7 @@ data/homebrew.db-*
 !.vscode/extensions.json
 .idea/
 
-# Agents — share the skills, ignore the permission overrides and worktrees of one machine
+# Agents — share the skills, ignore what belongs to one machine
 .claude/settings.local.json
 .claude/worktrees/
 
