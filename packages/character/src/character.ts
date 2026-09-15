@@ -116,7 +116,7 @@ export const abilityScoresSchema = z.record(abilitySchema, z.int().min(1).max(30
 
 const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 
-/** One skill, with how proficient in it the character is. */
+/** One skill, and how proficient the character is in it. */
 const skillProficiencySchema = z.strictObject({
   ref: contentRefSchema,
   level: proficiencyLevelSchema,
@@ -429,7 +429,6 @@ export function hitPointMaximum(
   return maxHitPoints(levels, abilityModifier(definition.abilityScores.con));
 }
 
-type EntryRef = z.infer<typeof entryRefSchema>;
 /**
  * The passive score for one skill: 10, the ability modifier, and whatever the character's
  * proficiency in that skill is worth at this level.
@@ -452,6 +451,7 @@ export function passiveSkill(
   );
 }
 
+type EntryRef = z.infer<typeof entryRefSchema>;
 export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;

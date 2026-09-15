@@ -59,16 +59,17 @@ describe("passiveScore", () => {
 describe("proficiencyContribution", () => {
   it.each([
     ["none", 0],
-    ["half", 1.5],
+    ["half", 1],
     ["proficient", 3],
     ["expertise", 6],
   ] as const)("a level-5 character proficient at %s adds %d", (level, expected) => {
     expect(proficiencyContribution(5, level)).toBe(expected);
   });
 
-  it("leaves half proficiency for the caller to round, which passiveScore does", () => {
-    expect(proficiencyContribution(5, "half")).toBe(1.5);
+  it("rounds half proficiency down, so a check modifier never shows a fraction", () => {
+    expect(proficiencyContribution(5, "half")).toBe(1);
     expect(passiveScore(2, proficiencyContribution(5, "half"))).toBe(13);
+    expect(passiveScore(2, proficiencyBonus(5) / 2)).toBe(13);
   });
 
   it("rejects a level outside 1-20, as the bonus it reads does", () => {
