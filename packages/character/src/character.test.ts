@@ -14,6 +14,7 @@ import {
   entryRefSchema,
   hitDicePoolSchema,
   hitPointMaximum,
+  houseRule,
   passiveSkill,
   refKey,
   resourceSchema,
@@ -103,6 +104,7 @@ const definition: CharacterDefinition = {
   ],
   money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
+  houseRules: { encumbrance: true },
   notes: "Owes the Clasp a favor.",
 };
 
@@ -251,6 +253,41 @@ describe("appearance", () => {
   });
 });
 
+describe("houseRules", () => {
+  it("keeps an option the table set", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+    expect(parsed.houseRules).toEqual({ encumbrance: true });
+  });
+
+  it("stores nothing for an option the table never named", () => {
+    const parsed = characterDefinitionSchema.parse({ ...definition, houseRules: {} });
+    expect(parsed.houseRules).not.toHaveProperty("encumbrance");
+  });
+
+  it("rejects an option for a rule the sheet does not compute", () => {
+    const flanking = { ...definition, houseRules: { flanking: true } };
+    expect(characterDefinitionSchema.safeParse(flanking).success).toBe(false);
+  });
+
+  it("falls back to the printed rule for an option the table never named", () => {
+    const parsed = characterDefinitionSchema.parse({ ...definition, houseRules: {} });
+    expect(houseRule(parsed, "encumbrance")).toBe(false);
+  });
+
+  it("falls back to the printed rule for an option stored as undefined", () => {
+    const parsed = characterDefinitionSchema.parse({
+      ...definition,
+      houseRules: { encumbrance: undefined },
+    });
+    expect(houseRule(parsed, "encumbrance")).toBe(false);
+  });
+
+  it("reads back the option the table set", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+    expect(houseRule(parsed, "encumbrance")).toBe(true);
+  });
+});
+
 describe("notes", () => {
   it("survives the JSON round trip the database column makes, newlines included", () => {
     const written = "Line one.\n\n  Line two, indented.\nLine three.\n";
@@ -306,6 +343,7 @@ describe("a character stored before these fields existed", () => {
       notes: _notes,
       feats: _feats,
       optionalFeatures: _optionalFeatures,
+      houseRules: _houseRules,
       ...older
     } = definition;
     const parsed = characterDefinitionSchema.parse(structuredClone(older));
@@ -320,6 +358,7 @@ describe("a character stored before these fields existed", () => {
       platinum: 0,
     });
     expect(parsed.appearance).toEqual({});
+    expect(parsed.houseRules).toEqual({});
     expect(parsed.notes).toBe("");
     expect(parsed).toMatchObject(older);
   });
