@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 import { deepHeadings, findForbidden, lineCount, links, ROOT, read } from "./lib/doc-helpers.ts";
 
 /**
@@ -86,6 +87,61 @@ function targets(skill: string, file: string): string[] {
 function cites(skill: string): Set<string> {
   return new Set(targets(skill, "SKILL.md"));
 }
+
+const FRONTMATTER = /^---\n([\s\S]*?)\n---(?:\n|$)/;
+
+/**
+ * The frontmatter as a mapping, or a throw naming what stopped it. The loader parses
+ * YAML, so matching the file text proves nothing: a description holding an unquoted
+ * colon-space reads as a nested mapping, so a skill matching every regex still fails
+ * to load.
+ */
+function frontmatter(body: string): Record<string, unknown> {
+  const matched = FRONTMATTER.exec(body);
+  if (!matched) throw new Error("no YAML frontmatter — open and close it with a --- line");
+  let parsed: unknown;
+  try {
+    parsed = parse(matched[1] as string);
+  } catch (error) {
+    const reason = (error as Error).message.split("\n")[0];
+    throw new Error(`YAML rejects the frontmatter: ${reason}. Quote any value holding a colon.`);
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("frontmatter is not a mapping — write it as name: value lines");
+  }
+  return parsed as Record<string, unknown>;
+}
+
+describe("frontmatter", () => {
+  const skillFile = (lines: string) => `---\n${lines}\n---\n\n# Heading\n`;
+
+  it("rejects a description holding an unquoted colon", () => {
+    expect(() =>
+      frontmatter(
+        skillFile("name: audit-pr\ndescription: Review one pull request: the ladder, the tests."),
+      ),
+    ).toThrow(/YAML rejects/);
+  });
+
+  it("accepts that description quoted", () => {
+    expect(
+      frontmatter(
+        skillFile('name: audit-pr\ndescription: "Review one pull request: the ladder, the tests."'),
+      ),
+    ).toEqual({
+      name: "audit-pr",
+      description: "Review one pull request: the ladder, the tests.",
+    });
+  });
+
+  it("rejects a file with no frontmatter", () => {
+    expect(() => frontmatter("# Heading\n")).toThrow(/no YAML frontmatter/);
+  });
+
+  it("rejects frontmatter that is not a mapping", () => {
+    expect(() => frontmatter(skillFile("- add-endpoint\n- audit-pr"))).toThrow(/not a mapping/);
+  });
+});
 
 describe(".claude/skills/", () => {
   it("has at least one skill", () => {
@@ -185,11 +241,13 @@ describe(".claude/skills/", () => {
     }
   });
 
-  it.each(skills)("%s has frontmatter with a name and description", (skill) => {
-    const body = read(`.claude/skills/${skill}/SKILL.md`);
-    expect(body.startsWith("---\n"), `${skill}/SKILL.md needs YAML frontmatter`).toBe(true);
-    expect(body).toMatch(/\nname:\s*\S+/);
-    expect(body).toMatch(/\ndescription:\s*\S+/);
+  it.each(skills)("%s has frontmatter naming and describing the skill", (skill) => {
+    const data = frontmatter(read(`.claude/skills/${skill}/SKILL.md`));
+    expect(data.name, `${skill}/SKILL.md must name the skill for its directory`).toBe(skill);
+    expect(
+      typeof data.description === "string" && data.description.trim().length > 0,
+      `${skill}/SKILL.md needs a description — it is what routes a request to this skill`,
+    ).toBe(true);
   });
 
   it.each(skills)("%s describes what is true now", (skill) => {
