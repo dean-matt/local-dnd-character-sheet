@@ -239,6 +239,8 @@ export const characterStateSchema = z.strictObject({
  * Feet per round, by movement mode. Every race grants a walking speed, so `walk` is
  * required and the rest stay absent until a race grants them. No upstream race grants a
  * burrowing speed, so an override is the only thing that reaches `burrow`.
+ *
+ * Upstream spells a mode equal to the walking speed as `true`, which the caller resolves.
  */
 const speedSchema = z.strictObject({
   walk: z.int().min(0),
