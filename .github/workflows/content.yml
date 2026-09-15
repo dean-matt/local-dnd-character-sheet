@@ -28,13 +28,13 @@ jobs:
       # The sync clones a third-party repository from inside this checkout, so a persisted
       # token would ride along on that clone. Nothing here needs git credentials: the
       # restore is local and the clone is public.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           cache: pnpm

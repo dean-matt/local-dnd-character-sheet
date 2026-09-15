@@ -39,6 +39,13 @@ const contentRefSchema = z.strictObject({
 
 const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
 
+/**
+ * A deity, keyed by its pantheon as well as `(name, source)`. Five `PHB` gods —
+ * `Oghma`, `Silvanus`, `Surtur`, `Thrym` and `Tyr` — are each written twice under
+ * different pantheons, so the pair alone names two rows.
+ */
+const deityRefSchema = contentRefSchema.extend({ pantheon: z.string().min(1) });
+
 /** A union needs strictness doubly: open branches would each strip the keys of the other. */
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
@@ -127,6 +134,34 @@ const spellEntrySchema = z.strictObject({
   origin: contentRefSchema.optional(),
 });
 
+/**
+ * Coins, counted per denomination. A single converted total would lose which coins the
+ * character holds, and a party splitting treasure divides the coins rather than the
+ * total. Exchanging denominations is a rule, and belongs in `@dnd/rules` the day
+ * something needs it.
+ */
+const moneySchema = z
+  .strictObject({
+    copper: z.int().min(0).default(0),
+    silver: z.int().min(0).default(0),
+    electrum: z.int().min(0).default(0),
+    gold: z.int().min(0).default(0),
+    platinum: z.int().min(0).default(0),
+  })
+  .prefault({});
+
+/** The boxes the printed sheet has, each absent until a player fills it in. */
+const appearanceSchema = z
+  .strictObject({
+    age: z.string().min(1).optional(),
+    height: z.string().min(1).optional(),
+    weight: z.string().min(1).optional(),
+    eyes: z.string().min(1).optional(),
+    skin: z.string().min(1).optional(),
+    hair: z.string().min(1).optional(),
+  })
+  .prefault({});
+
 export const characterDefinitionSchema = z.strictObject({
   name: z.string().min(1),
   edition: editionSchema,
@@ -158,6 +193,17 @@ export const characterDefinitionSchema = z.strictObject({
   proficiencies: proficienciesSchema,
   inventory: z.array(inventoryEntrySchema),
   spells: z.array(spellEntrySchema),
+  deity: deityRefSchema.optional(),
+  /**
+   * Free text rather than an enum: the 2024 ruleset drops alignment from character
+   * creation, and a setting is free to invent its own, so a closed list would make a
+   * legal character unstorable.
+   */
+  alignment: z.string().min(1).optional(),
+  money: moneySchema,
+  appearance: appearanceSchema,
+  /** Whatever the player writes down, unbounded and stored verbatim. */
+  notes: z.string().default(""),
 });
 
 export const totalLevel = (definition: CharacterDefinition): number => definition.levels.length;
