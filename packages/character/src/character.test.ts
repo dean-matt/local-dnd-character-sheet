@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -256,5 +257,48 @@ describe("invariants a duplicate row would break", () => {
   it("refuses a reference carrying both key styles rather than dropping one", () => {
     const ambiguous = { name: "Dagger", source: "XPHB", homebrewId: "hb_01" };
     expect(entryRefSchema.safeParse(ambiguous).success).toBe(false);
+  });
+});
+
+describe("a key the schema does not name", () => {
+  it("fails the state parse rather than letting the key vanish on the next save", () => {
+    const newer = { ...state, concentration: { name: "Bless", source: "XPHB" } };
+    const result = characterStateSchema.safeParse(newer);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      code: "unrecognized_keys",
+      keys: ["concentration"],
+    });
+  });
+
+  it("fails the definition parse", () => {
+    expect(characterDefinitionSchema.safeParse({ ...definition, alignment: "CN" }).success).toBe(
+      false,
+    );
+  });
+
+  it("fails inside a nested object, not only at the top level", () => {
+    const nested = { ...state, hitPoints: { ...state.hitPoints, maximum: 40 } };
+    expect(characterStateSchema.safeParse(nested).success).toBe(false);
+  });
+
+  it("fails a derived field, whose two states have no room for a third", () => {
+    expect(derivedSchema(z.int()).safeParse({ computed: 38, cleared: true }).success).toBe(false);
+  });
+
+  /**
+   * The parses above each name a schema. This one holds the schema added next: an open
+   * object anywhere in the file reopens the hole, and a parse of a fixed shape misses it.
+   *
+   * Comments come out first, so that prose naming the forbidden call — as the module
+   * doc above this one has every reason to — stays free to say it.
+   */
+  it("keeps every object in the file strict, including the one added next", async () => {
+    const source = await readFile(new URL("./character.ts", import.meta.url), "utf8");
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*/g, "");
+
+    expect(code).toContain("z.strictObject(");
+    expect(code).not.toMatch(/\.(object|looseObject)\(/);
   });
 });

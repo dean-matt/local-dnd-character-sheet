@@ -9,6 +9,12 @@
  * Catalog content is referenced by `(name, source)` and never copied, so
  * rebuilding `content.db` updates every character. Homebrew is the exception:
  * nothing else owns it, so it is referenced by its row id.
+ *
+ * Every object here is strict. The sheet reads a definition or a state out of a JSON
+ * column, edits it and writes the whole column back, so an open object drops a key it
+ * does not name and the next save deletes that key from the database. Refusing the row
+ * loses nothing and says so. The derived tree is assembled rather than stored, and
+ * strict for the plainer reason: a key nothing named means the caller built it wrong.
  */
 import {
   abilityModifier,
@@ -25,7 +31,6 @@ const editionSchema = z.enum(EDITIONS);
 const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 const abilitySchema = z.enum(ABILITIES);
 
-/** Strict: a union of open objects would silently strip the keys of the other branch. */
 const contentRefSchema = z.strictObject({
   name: z.string().min(1),
   source: z.string().min(1),
@@ -33,6 +38,7 @@ const contentRefSchema = z.strictObject({
 
 const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
 
+/** A union needs strictness doubly: open branches would each strip the keys of the other. */
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
 /** The identity of a catalog row, flattened so a Map or a Set can hold it. */
@@ -47,7 +53,7 @@ export const refKey = (ref: ContentRef): string => `${ref.name}|${ref.source}`;
  * stomping the edit.
  */
 export function derivedSchema<T extends z.ZodType>(value: T) {
-  return z.object({
+  return z.strictObject({
     computed: value,
     manual: value.nullable().default(null),
   });
@@ -72,7 +78,7 @@ const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
  *
  * `subclass` sits on the level it was chosen at, so a class names it once.
  */
-const levelEntrySchema = z.object({
+const levelEntrySchema = z.strictObject({
   class: contentRefSchema,
   subclass: contentRefSchema.optional(),
   /**
@@ -90,7 +96,7 @@ const levelEntrySchema = z.object({
 /** Exhaustive: a record keyed by an enum requires every ability to be present. */
 export const abilityScoresSchema = z.record(abilitySchema, z.int().min(1).max(30));
 
-const proficienciesSchema = z.object({
+const proficienciesSchema = z.strictObject({
   savingThrows: z.array(abilitySchema),
   skills: z.array(z.string().min(1)),
   armor: z.array(z.string().min(1)),
@@ -99,21 +105,21 @@ const proficienciesSchema = z.object({
   languages: z.array(z.string().min(1)),
 });
 
-const inventoryEntrySchema = z.object({
+const inventoryEntrySchema = z.strictObject({
   ref: entryRefSchema,
   quantity: z.int().min(1).default(1),
   equipped: z.boolean().default(false),
   attuned: z.boolean().default(false),
 });
 
-const spellEntrySchema = z.object({
+const spellEntrySchema = z.strictObject({
   ref: entryRefSchema,
   prepared: z.boolean().default(false),
   /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
   origin: contentRefSchema.optional(),
 });
 
-export const characterDefinitionSchema = z.object({
+export const characterDefinitionSchema = z.strictObject({
   name: z.string().min(1),
   edition: editionSchema,
   levels: z
@@ -140,14 +146,14 @@ export const totalLevel = (definition: CharacterDefinition): number => definitio
 
 // State ----------------------------------------------------------------------
 
-const hitPointsSchema = z.object({
+const hitPointsSchema = z.strictObject({
   current: z.int(),
   temporary: z.int().min(0).default(0),
 });
 
 /** Grouped by die size, not by class: two d8 classes share one pool at rest. */
 export const hitDicePoolSchema = z
-  .object({
+  .strictObject({
     die: z.literal(HIT_DICE),
     total: z.int().min(0),
     remaining: z.int().min(0),
@@ -155,7 +161,7 @@ export const hitDicePoolSchema = z
   .refine((pool) => pool.remaining <= pool.total, { error: "remaining exceeds total" });
 
 export const spellSlotSchema = z
-  .object({
+  .strictObject({
     level: z.int().min(1).max(9),
     total: z.int().min(0),
     expended: z.int().min(0),
@@ -164,7 +170,7 @@ export const spellSlotSchema = z
 
 /** Class resources and user-invented counters share one shape, so neither needs special casing. */
 export const resourceSchema = z
-  .object({
+  .strictObject({
     name: z.string().min(1),
     current: z.int().min(0),
     maximum: z.int().min(0),
@@ -172,12 +178,12 @@ export const resourceSchema = z
   })
   .refine((resource) => resource.current <= resource.maximum, { error: "current exceeds maximum" });
 
-const deathSavesSchema = z.object({
+const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
 });
 
-export const characterStateSchema = z.object({
+export const characterStateSchema = z.strictObject({
   hitPoints: hitPointsSchema,
   hitDice: z
     .array(hitDicePoolSchema)
@@ -204,7 +210,7 @@ export const characterStateSchema = z.object({
  * on read rather than stored: `computed` comes from the definition and `manual` from
  * `field_overrides`.
  */
-export const characterDerivedSchema = z.object({
+export const characterDerivedSchema = z.strictObject({
   hitPointMaximum: derivedSchema(z.int().min(1)),
 });
 
