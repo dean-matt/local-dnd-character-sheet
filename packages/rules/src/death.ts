@@ -108,6 +108,6 @@ export function damageAtZeroHitPoints(saves: DeathSaves, critical: boolean): Dea
   if (settled?.outcome === "dead") {
     return settled;
   }
-  const disturbed = saves.successes >= REQUIRED ? { successes: 0, failures: 0 } : saves;
-  return settle(disturbed.successes, disturbed.failures + (critical ? DOUBLE_FAILURE : 1));
+  const counts = settled ?? saves;
+  return settle(counts.successes, counts.failures + (critical ? DOUBLE_FAILURE : 1));
 }
