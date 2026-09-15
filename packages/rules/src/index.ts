@@ -5,7 +5,13 @@ export {
   pushDragLiftCapacity,
   SIZES,
 } from "./carrying.ts";
-export { abilityModifier, passiveScore, proficiencyBonus } from "./core.ts";
+export {
+  abilityModifier,
+  PROFICIENCY_LEVELS,
+  passiveScore,
+  proficiencyBonus,
+  proficiencyContribution,
+} from "./core.ts";
 export type { Edition } from "./edition.ts";
 export { EDITIONS } from "./edition.ts";
 export type { HitDie, HitPointLevel } from "./hitpoints.ts";

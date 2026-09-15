@@ -29,3 +29,30 @@ export function proficiencyBonus(totalLevel: number): number {
 export function passiveScore(modifier: number, proficiency: number): number {
   return Math.floor(10 + modifier + proficiency);
 }
+
+/**
+ * How proficient a character is in one skill or tool. One value rather than a
+ * `proficient` and an `expertise` flag, which can contradict each other and leave half
+ * proficiency nowhere to go.
+ */
+export const PROFICIENCY_LEVELS = ["none", "half", "proficient", "expertise"] as const;
+
+export type ProficiencyLevel = (typeof PROFICIENCY_LEVELS)[number];
+
+/** Keyed by `ProficiencyLevel`, so a level added to the vocabulary fails to compile until it lands here. */
+const PROFICIENCY_MULTIPLIER: Record<ProficiencyLevel, number> = {
+  none: 0,
+  half: 0.5,
+  proficient: 1,
+  expertise: 2,
+};
+
+/**
+ * What a level of proficiency is worth at a character level: the number `passiveScore`
+ * takes and a check adds. Rounded here rather than left to the caller, because half
+ * proficiency is the only level that can produce a fraction and the rule already says
+ * what to do with it — Jack of All Trades adds half the bonus rounded down.
+ */
+export function proficiencyContribution(totalLevel: number, level: ProficiencyLevel): number {
+  return Math.floor(proficiencyBonus(totalLevel) * PROFICIENCY_MULTIPLIER[level]);
+}
