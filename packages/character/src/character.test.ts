@@ -32,6 +32,10 @@ const PERCEPTION = { name: "Perception", source: "XPHB" };
 /** The `subclasses` row's own name; its features and tags spell `Fiend`. */
 const FIEND_PATRON = { name: "Fiend Patron", source: "XPHB" };
 
+/** The background grants the Origin feat it names: `Charlatan` (XPHB) grants `Skilled`. */
+const CHARLATAN = { name: "Charlatan", source: "XPHB" };
+const SKILLED = { name: "Skilled", source: "XPHB" };
+
 /** What the Half-Elf row supplies: Medium, 30 feet, and no second movement mode. */
 const raceTraits = {
   size: { computed: "medium" },
@@ -62,7 +66,7 @@ const definition: CharacterDefinition = {
     { class: ROGUE },
   ],
   race: { name: "Half-Elf", source: "XPHB" },
-  background: { name: "Charlatan", source: "XPHB" },
+  background: CHARLATAN,
   abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
   proficiencies: {
     savingThrows: ["wis", "cha"],
@@ -89,7 +93,7 @@ const definition: CharacterDefinition = {
       origin: WARLOCK,
     },
   ],
-  feats: [{ name: "Eldritch Adept", source: "TCE" }],
+  feats: [{ ref: SKILLED, grantedBy: { kind: "background", ref: CHARLATAN } }],
   optionalFeatures: [
     {
       ref: { name: "Agonizing Blast", source: "XPHB" },
@@ -322,23 +326,97 @@ describe("a character stored before these fields existed", () => {
 });
 
 describe("feats", () => {
+  const ASI = { name: "Ability Score Improvement", source: "XPHB" };
+  const FIGHTER = { name: "Fighter", source: "XPHB" };
+  const HUMAN = { name: "Human", source: "PHB" };
+
+  const fighter = (feats: object[]) => ({
+    ...definition,
+    levels: Array.from({ length: 8 }, () => ({ class: FIGHTER })),
+    feats,
+  });
+
   it("references the catalog and homebrew alike, as inventory and spells do", () => {
-    const taken = {
-      ...definition,
-      feats: [{ name: "Lucky", source: "PHB" }, { homebrewId: "hb_02" }],
-    };
+    const taken = fighter([
+      { ref: { name: "Lucky", source: "PHB" } },
+      { ref: { homebrewId: "hb_02" }, grantedBy: { kind: "class", ref: FIGHTER }, level: 4 },
+    ]);
     expect(characterDefinitionSchema.parse(structuredClone(taken))).toEqual(taken);
   });
 
-  /** `Ability Score Improvement` (XPHB) is a feat, and the one a character repeats. */
-  it("accepts the same feat twice, which the 2024 ruleset lets a character take", () => {
-    const repeated = [
-      { name: "Ability Score Improvement", source: "XPHB" },
-      { name: "Ability Score Improvement", source: "XPHB" },
-    ];
-    expect(characterDefinitionSchema.parse({ ...definition, feats: repeated }).feats).toEqual(
-      repeated,
-    );
+  /** `Ability Score Improvement` (XPHB) is one reference under one grantor, taken twice. */
+  it("tells two takings of a repeatable feat apart by the level each spent", () => {
+    const twice = fighter([
+      { ref: ASI, grantedBy: { kind: "class", ref: FIGHTER }, level: 4 },
+      { ref: ASI, grantedBy: { kind: "class", ref: FIGHTER }, level: 8 },
+    ]);
+    expect(characterDefinitionSchema.parse(structuredClone(twice))).toEqual(twice);
+  });
+
+  it.each([
+    ["a background, which grants the Origin feat it names", { kind: "background", ref: CHARLATAN }],
+    ["a race", { kind: "race", ref: { name: "Human", source: "XPHB" } }],
+    [
+      "a subrace, beside the race its row is keyed on",
+      { kind: "subrace", ref: { name: "Variant", source: "PHB" }, race: HUMAN },
+    ],
+    [
+      "a subclass, beside the class its row is keyed on",
+      { kind: "subclass", ref: { name: "Champion", source: "XPHB" }, class: FIGHTER },
+    ],
+  ])("records %s as the grantor of a feat", (_kind, grantedBy) => {
+    const granted = { ...definition, feats: [{ ref: SKILLED, grantedBy }] };
+    expect(characterDefinitionSchema.parse(structuredClone(granted))).toEqual(granted);
+  });
+
+  /** `Archery` (XPHB) is a feat where `Archery` (PHB) is an `FS:F` option. */
+  it("names the class entitlement a 2024 fighting style spends, as an option pick does", () => {
+    const archery = fighter([
+      {
+        ref: { name: "Archery", source: "XPHB" },
+        grantedBy: { kind: "class", ref: FIGHTER },
+        level: 1,
+      },
+    ]);
+    expect(characterDefinitionSchema.parse(structuredClone(archery))).toEqual(archery);
+  });
+
+  it.each([
+    ["a feat", { kind: "feat", ref: { name: "Fighting Initiate", source: "TCE" } }],
+    ["an optional feature", { kind: "optionalFeature", ref: { name: "Riposte", source: "PHB" } }],
+  ])("rejects %s as a grantor, which grants no feat in the catalog", (_kind, grantedBy) => {
+    const granted = { ...definition, feats: [{ ref: SKILLED, grantedBy }] };
+    expect(characterDefinitionSchema.safeParse(granted).success).toBe(false);
+  });
+
+  it("rejects a subrace grantor naming no race, since the pair alone collides", () => {
+    const short = {
+      ...definition,
+      feats: [
+        { ref: SKILLED, grantedBy: { kind: "subrace", ref: { name: "Variant", source: "PHB" } } },
+      ],
+    };
+    expect(characterDefinitionSchema.safeParse(short).success).toBe(false);
+  });
+
+  it.each([0, 21])("rejects level %i, which no character spends an entitlement at", (level) => {
+    const granted = {
+      ...definition,
+      feats: [{ ref: SKILLED, grantedBy: { kind: "class", ref: FIGHTER }, level }],
+    };
+    expect(characterDefinitionSchema.safeParse(granted).success).toBe(false);
+  });
+
+  it("reads a definition stored as a bare list of references, which said nothing", () => {
+    const older = {
+      ...definition,
+      feats: [ASI, ASI, { homebrewId: "hb_02" }],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(older)).feats).toEqual([
+      { ref: ASI },
+      { ref: ASI },
+      { ref: { homebrewId: "hb_02" } },
+    ]);
   });
 });
 
