@@ -103,11 +103,16 @@ describe("references", () => {
 });
 
 describe("subrace", () => {
+  /** Classic throughout, because upstream ships no subrace in the 2024 ruleset. */
   const elf = {
     ...definition,
     edition: "classic",
+    levels: [{ class: { name: "Wizard", source: "PHB" } }],
     race: { name: "Elf", source: "PHB" },
     subrace: { name: "High", source: "PHB" },
+    background: { name: "Sage", source: "PHB" },
+    inventory: [],
+    spells: [],
   };
 
   it("names one beside the race that completes its key", () => {

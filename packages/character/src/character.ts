@@ -147,9 +147,9 @@ export const characterDefinitionSchema = z.strictObject({
    * parts of the `subraces` key, because `(name, source)` alone collides three times
    * across the 98 upstream rows.
    *
-   * An absent `subrace` is a race taken plain, which is what the five `PHB` races with
-   * an unnamed base variant store: that row is keyed on the empty string, and a reader
-   * reaches it from the race.
+   * An absent `subrace` is a race taken plain, which is all a character can store for
+   * the five `PHB` races whose base variant upstream leaves unnamed: their row is keyed
+   * on the empty string, and a reader reaches it from the race.
    */
   subrace: contentRefSchema.optional(),
   background: contentRefSchema,
