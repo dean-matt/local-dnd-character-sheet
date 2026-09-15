@@ -6,7 +6,7 @@
  *   definition vs state   `characters` holds who the character is; `character_state`
  *                         holds what is true right now. A long rest touches state
  *                         only, so it can never corrupt the sheet.
- *   computed vs manual    derived numbers are computed on read; `field_overrides`
+ *   computed vs manual    derived values are computed on read; `field_overrides`
  *                         holds only the values a user has edited. An absent row
  *                         means "use the computed value", so a level-up recomputes
  *                         without stomping an edit.

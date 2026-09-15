@@ -3,12 +3,18 @@
  *
  *   CharacterDefinition   who the character is — stored in `characters.definition`
  *   CharacterState        what is true right now — stored in `character_state.state`
- *   Derived<T>            a number the sheet computes, plus the value a user typed
+ *   Derived<T>            what the sheet computes, plus the value a user typed
  *                         over it — the computed side is never overwritten
  *
  * Catalog content is referenced by `(name, source)` and never copied, so
  * rebuilding `content.db` updates every character. Homebrew is the exception:
  * nothing else owns it, so it is referenced by its row id.
+ *
+ * Every object here is strict. The sheet reads a definition or a state out of a JSON
+ * column, edits it and writes the whole column back, so an open object drops a key it
+ * does not name and the next save deletes that key from the database. Refusing the row
+ * loses nothing and says so. The derived tree is assembled rather than stored, and
+ * strict for the plainer reason: a key nothing named means the caller built it wrong.
  */
 import {
   abilityModifier,
@@ -17,6 +23,7 @@ import {
   type HitDie,
   maxHitPoints,
   RESET_TRIGGERS,
+  SIZES,
 } from "@dnd/rules";
 import { z } from "zod";
 
@@ -25,7 +32,6 @@ const editionSchema = z.enum(EDITIONS);
 const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 const abilitySchema = z.enum(ABILITIES);
 
-/** Strict: a union of open objects would silently strip the keys of the other branch. */
 const contentRefSchema = z.strictObject({
   name: z.string().min(1),
   source: z.string().min(1),
@@ -33,6 +39,14 @@ const contentRefSchema = z.strictObject({
 
 const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
 
+/**
+ * A deity, keyed by its pantheon as well as `(name, source)`. Five `PHB` gods —
+ * `Oghma`, `Silvanus`, `Surtur`, `Thrym` and `Tyr` — are each written twice under
+ * different pantheons, so the pair alone names two rows.
+ */
+const deityRefSchema = contentRefSchema.extend({ pantheon: z.string().min(1) });
+
+/** A union needs strictness doubly: open branches would each strip the keys of the other. */
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
 /** The identity of a catalog row, flattened so a Map or a Set can hold it. */
@@ -47,7 +61,7 @@ export const refKey = (ref: ContentRef): string => `${ref.name}|${ref.source}`;
  * stomping the edit.
  */
 export function derivedSchema<T extends z.ZodType>(value: T) {
-  return z.object({
+  return z.strictObject({
     computed: value,
     manual: value.nullable().default(null),
   });
@@ -72,8 +86,15 @@ const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
  *
  * `subclass` sits on the level it was chosen at, so a class names it once.
  */
-const levelEntrySchema = z.object({
+const levelEntrySchema = z.strictObject({
   class: contentRefSchema,
+  /**
+   * The `subclasses` row's own name — `Fiend Patron`, not the `Fiend` its features and
+   * tags spell. A character names a row by that row's key, and the short name keys no
+   * `subclasses` row; it keys the features instead, and the catalog carries it as
+   * `subclasses.short_name` so a sheet reaches them through the subclass. The level's
+   * own class supplies the other two parts of that key.
+   */
   subclass: contentRefSchema.optional(),
   /**
    * The roll taken in place of the class table's fixed value. Bounded here by the
@@ -90,7 +111,7 @@ const levelEntrySchema = z.object({
 /** Exhaustive: a record keyed by an enum requires every ability to be present. */
 export const abilityScoresSchema = z.record(abilitySchema, z.int().min(1).max(30));
 
-const proficienciesSchema = z.object({
+const proficienciesSchema = z.strictObject({
   savingThrows: z.array(abilitySchema),
   skills: z.array(z.string().min(1)),
   armor: z.array(z.string().min(1)),
@@ -99,21 +120,49 @@ const proficienciesSchema = z.object({
   languages: z.array(z.string().min(1)),
 });
 
-const inventoryEntrySchema = z.object({
+const inventoryEntrySchema = z.strictObject({
   ref: entryRefSchema,
   quantity: z.int().min(1).default(1),
   equipped: z.boolean().default(false),
   attuned: z.boolean().default(false),
 });
 
-const spellEntrySchema = z.object({
+const spellEntrySchema = z.strictObject({
   ref: entryRefSchema,
   prepared: z.boolean().default(false),
   /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
   origin: contentRefSchema.optional(),
 });
 
-export const characterDefinitionSchema = z.object({
+/**
+ * Coins, counted per denomination. A single converted total would lose which coins the
+ * character holds, and a party splitting treasure divides the coins rather than the
+ * total. Exchanging denominations is a rule, and belongs in `@dnd/rules` the day
+ * something needs it.
+ */
+const moneySchema = z
+  .strictObject({
+    copper: z.int().min(0).default(0),
+    silver: z.int().min(0).default(0),
+    electrum: z.int().min(0).default(0),
+    gold: z.int().min(0).default(0),
+    platinum: z.int().min(0).default(0),
+  })
+  .prefault({});
+
+/** The boxes the printed sheet has, each absent until a player fills it in. */
+const appearanceSchema = z
+  .strictObject({
+    age: z.string().min(1).optional(),
+    height: z.string().min(1).optional(),
+    weight: z.string().min(1).optional(),
+    eyes: z.string().min(1).optional(),
+    skin: z.string().min(1).optional(),
+    hair: z.string().min(1).optional(),
+  })
+  .prefault({});
+
+export const characterDefinitionSchema = z.strictObject({
   name: z.string().min(1),
   edition: editionSchema,
   levels: z
@@ -129,25 +178,46 @@ export const characterDefinitionSchema = z.object({
       { error: "a class names a subclass on more than one level" },
     ),
   race: contentRefSchema,
+  /**
+   * The subrace's own name — `High`, not `Elf (High)`. The race supplies the other two
+   * parts of the `subraces` key, because `(name, source)` alone collides three times
+   * across the 98 upstream rows.
+   *
+   * An absent `subrace` is a race taken plain, which is all a character can store for
+   * the five `PHB` races whose base variant upstream leaves unnamed: their row is keyed
+   * on the empty string, and a reader reaches it from the race.
+   */
+  subrace: contentRefSchema.optional(),
   background: contentRefSchema,
   abilityScores: abilityScoresSchema,
   proficiencies: proficienciesSchema,
   inventory: z.array(inventoryEntrySchema),
   spells: z.array(spellEntrySchema),
+  deity: deityRefSchema.optional(),
+  /**
+   * Free text rather than an enum: the 2024 ruleset drops alignment from character
+   * creation, and a setting is free to invent its own, so a closed list would make a
+   * legal character unstorable.
+   */
+  alignment: z.string().min(1).optional(),
+  money: moneySchema,
+  appearance: appearanceSchema,
+  /** Whatever the player writes down, unbounded and stored verbatim. */
+  notes: z.string().default(""),
 });
 
 export const totalLevel = (definition: CharacterDefinition): number => definition.levels.length;
 
 // State ----------------------------------------------------------------------
 
-const hitPointsSchema = z.object({
+const hitPointsSchema = z.strictObject({
   current: z.int(),
   temporary: z.int().min(0).default(0),
 });
 
 /** Grouped by die size, not by class: two d8 classes share one pool at rest. */
 export const hitDicePoolSchema = z
-  .object({
+  .strictObject({
     die: z.literal(HIT_DICE),
     total: z.int().min(0),
     remaining: z.int().min(0),
@@ -155,7 +225,7 @@ export const hitDicePoolSchema = z
   .refine((pool) => pool.remaining <= pool.total, { error: "remaining exceeds total" });
 
 export const spellSlotSchema = z
-  .object({
+  .strictObject({
     level: z.int().min(1).max(9),
     total: z.int().min(0),
     expended: z.int().min(0),
@@ -164,7 +234,7 @@ export const spellSlotSchema = z
 
 /** Class resources and user-invented counters share one shape, so neither needs special casing. */
 export const resourceSchema = z
-  .object({
+  .strictObject({
     name: z.string().min(1),
     current: z.int().min(0),
     maximum: z.int().min(0),
@@ -172,12 +242,15 @@ export const resourceSchema = z
   })
   .refine((resource) => resource.current <= resource.maximum, { error: "current exceeds maximum" });
 
-const deathSavesSchema = z.object({
+const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
 });
 
-export const characterStateSchema = z.object({
+/** The catalog's spelling in both rulesets. The list matches the name alone, so no source can smuggle in a second one. */
+const EXHAUSTION = "Exhaustion";
+
+export const characterStateSchema = z.strictObject({
   hitPoints: hitPointsSchema,
   hitDice: z
     .array(hitDicePoolSchema)
@@ -191,7 +264,16 @@ export const characterStateSchema = z.object({
     }),
   /** Warlock slots recharge on a short rest, so they are counted apart from the rest. */
   pactSlots: spellSlotSchema.nullable().default(null),
-  conditions: z.array(contentRefSchema),
+  /**
+   * Exhaustion is a catalog condition row in both rulesets, but only `exhaustion` carries
+   * its level. Listing it here too gives a sheet two places to read and nothing to
+   * reconcile them, so the list refuses the row and a reader renders it from the level.
+   */
+  conditions: z
+    .array(contentRefSchema)
+    .refine((conditions) => conditions.every((condition) => condition.name !== EXHAUSTION), {
+      error: "exhaustion is held as a level, not a condition reference",
+    }),
   resources: z.array(resourceSchema),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
@@ -200,12 +282,39 @@ export const characterStateSchema = z.object({
 // Derived --------------------------------------------------------------------
 
 /**
- * Numbers the sheet computes, each beside the value a user typed over it. Assembled
- * on read rather than stored: `computed` comes from the definition and `manual` from
- * `field_overrides`.
+ * Feet per round, by movement mode. Every race grants a walking speed, so `walk` is
+ * required and the rest stay absent until a race grants them. No upstream race grants a
+ * burrowing speed, so an override is the only thing that reaches `burrow`.
+ *
+ * Upstream spells a mode equal to the walking speed as `true`, which the caller resolves.
  */
-export const characterDerivedSchema = z.object({
+const speedSchema = z.strictObject({
+  walk: z.int().min(0),
+  burrow: z.int().min(0).optional(),
+  climb: z.int().min(0).optional(),
+  fly: z.int().min(0).optional(),
+  swim: z.int().min(0).optional(),
+});
+
+/**
+ * What the sheet computes, each beside the value a user typed over it. Assembled on
+ * read rather than stored: `computed` comes from the definition and the catalog rows it
+ * names, `manual` from `field_overrides`.
+ */
+export const characterDerivedSchema = z.strictObject({
   hitPointMaximum: derivedSchema(z.int().min(1)),
+  /**
+   * The race's size, in the vocabulary `carryingCapacity` reads, so the two cannot
+   * drift. A subrace never states one — all 98 upstream rows leave it to the race — so
+   * a race change moves it and nothing else does.
+   */
+  size: derivedSchema(z.enum(SIZES)),
+  /**
+   * The race's speeds, one field rather than one per mode because a subrace that states
+   * a speed replaces the set outright rather than adding to it — a Wood Elf walks 35
+   * feet, not the Elf's 30 and 5 more.
+   */
+  speed: derivedSchema(speedSchema),
 });
 
 /**
