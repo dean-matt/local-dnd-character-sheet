@@ -51,8 +51,8 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   subraces, deities and cards need more; `docs/data-model.md` has the keys. Tier A rows carry
   an `edition` of `classic` or `one`; Tier B and C allow NULL. Both editions ship for
   every class but the Mystic, which is playtest and classic only.
-- **Derived character fields store computed *and* manual values plus an override flag.**
-  A level-up recomputes without stomping a user's edit.
+- **Derived character fields store the computed value beside the manual one.** A null
+  `manual` is no override, so a level-up recomputes without stomping a user's edit.
 - **`roll_log` and `undo_log` are bounded** — 200 and 50 rows per character, pruned on
   insert. They are session affordances, not audit trails.
 - **Unknown `{@tag}` values degrade to plain text.** Never throw on unrecognized markup.
