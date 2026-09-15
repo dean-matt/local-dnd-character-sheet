@@ -142,6 +142,16 @@ export const characterDefinitionSchema = z.strictObject({
       { error: "a class names a subclass on more than one level" },
     ),
   race: contentRefSchema,
+  /**
+   * The subrace's own name — `High`, not `Elf (High)`. The race supplies the other two
+   * parts of the `subraces` key, because `(name, source)` alone collides three times
+   * across the 98 upstream rows.
+   *
+   * An absent `subrace` is a race taken plain, which is what the five `PHB` races with
+   * an unnamed base variant store: that row is keyed on the empty string, and a reader
+   * reaches it from the race.
+   */
+  subrace: contentRefSchema.optional(),
   background: contentRefSchema,
   abilityScores: abilityScoresSchema,
   proficiencies: proficienciesSchema,
