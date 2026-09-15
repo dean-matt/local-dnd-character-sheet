@@ -46,7 +46,7 @@ because reranking is the user's call.
    `git` call a shell wrapper rewrites.
 
    ```bash
-   main=$PWD; b=<type>/<n>-<slug>; d=.claude/worktrees/<n>
+   main=$(git rev-parse --show-toplevel); b=<type>/<n>-<slug>; d=.claude/worktrees/<n>
    gh issue develop <n> --name "$b"
    git fetch --quiet origin "$b"
    git worktree prune
@@ -57,12 +57,13 @@ because reranking is the user's call.
    done
    ```
 
-   Install costs seconds, because pnpm hardlinks from the shared store. Pruning clears
-   what a dead run left; a worktree still on disk means another agent holds this issue, so
-   let the add fail rather than force it. Git ignores all three linked paths, so a new
-   worktree has none of them and `vendor/` is not even a directory; skip each one the main
-   checkout lacks. Never link `characters.db` — two agents writing it collide. Every later
-   step runs from the worktree, and step 14 removes it.
+   Pruning clears a registration whose directory has gone, so the add fails on one still
+   on disk — another agent holding this issue, or a crash that kept its directory. Let it
+   fail either way, and remove the directory by hand once `git worktree list` and the
+   other sessions agree nobody holds it. Git ignores all three linked paths, so a new
+   worktree has none of them and `vendor/` is not even a directory. Never link
+   `characters.db` — two agents writing it collide. Every later step runs from the
+   worktree, and step 14 removes it.
 
    Then set the board to `In Progress`; its own workflow waits for the pull request.
    `item-add` returns the item an issue already has; the other three ids hold still, so
@@ -124,9 +125,10 @@ because reranking is the user's call.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
-    on nobody. Then remove the worktree: `cd "$main" && git worktree remove "$d"` refuses
-    rather than discards anything step 12 left uncommitted. The branch and the pull
-    request stand, because this skill does not merge.
+    on nobody. Then remove the worktree, from the main checkout three levels above it:
+    `cd ../../.. && git worktree remove .claude/worktrees/<n>` refuses rather than
+    discarding anything step 12 left uncommitted. The branch and the pull request stand,
+    because this skill does not merge.
 
     Then report what landed, what each review found, and what `gh pr checks`
     says, reporting a run still in flight as in flight rather than waiting on it. A red
