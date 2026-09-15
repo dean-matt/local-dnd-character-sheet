@@ -21,18 +21,22 @@ const WORKFLOWS = join(ROOT, ".github/workflows");
 
 type Workflow = { jobs?: Record<string, { steps?: { uses?: string }[] }> };
 
-/** Every action a job step runs, paired with the ref it names. */
+/**
+ * Every published action a job step runs, paired with the ref it names. A `./`
+ * path is this repository's own code, which no upstream push can change.
+ */
 function actionRefs(workflow: string): { uses: string; ref: string }[] {
   const parsed = parse(read(`.github/workflows/${workflow}`)) as Workflow;
   return Object.values(parsed.jobs ?? {}).flatMap((job) =>
     (job.steps ?? [])
       .map((step) => step.uses)
       .filter((uses) => uses !== undefined)
+      .filter((uses) => !uses.startsWith("./"))
       .map((uses) => ({ uses, ref: uses.slice(uses.lastIndexOf("@") + 1) })),
   );
 }
 
-const workflows = readdirSync(WORKFLOWS).filter((f) => f.endsWith(".yml"));
+const workflows = readdirSync(WORKFLOWS).filter((f) => /\.ya?ml$/.test(f));
 
 describe(".github/workflows/", () => {
   it("is not empty", () => {
