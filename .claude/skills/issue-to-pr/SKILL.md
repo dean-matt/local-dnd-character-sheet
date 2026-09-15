@@ -67,19 +67,14 @@ because reranking is the user's call.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
 10. **Review it** with [`audit-pr`](../audit-pr/SKILL.md), which reviews from a
-    worktree and leaves this branch where it is. A pass returning anything to weigh swaps
-    `review:changes-requested` on before you apply, so a run that dies mid-apply leaves
-    the pull request marked; one `gh pr edit <n> --add-label <one> --remove-label
-    <other>` does both halves.
-11. **Apply what survives**, `pnpm check`, prose pass what the fixes touched, commit
-    and push, and bring the pull request body back in line. Fixes left in the working
-    tree leave the pull request holding the code the review rejected.
-12. **Post the pass as one review**, after the fixes are pushed, so every finding carries
-    a verdict. One call sends `commit_id`, `event`, a `body` and each line comment as
-    `{path, line, side, body}`; posted one at a time they arrive as a review each. The
-    `body` summarizes the pass and holds any finding no line anchors. `event` is `COMMENT`,
-    because GitHub refuses an approval on your own pull request — step 14's labels carry
-    that verdict instead.
+    worktree and leaves this branch where it is.
+11. **Post the pass as one review**, before you apply, so a run that dies mid-apply
+    leaves the findings standing rather than a label pointing at nothing. One call sends
+    `commit_id`, `event`, a `body` and each line comment as `{path, line, side, body}`;
+    posted one at a time they arrive as a review each. The `body` says what the pass
+    found and holds any finding no line anchors. The verdicts say what became of each,
+    and they come after the fixes. `event` is `COMMENT`, because GitHub refuses an
+    approval on your own pull request — step 14's labels carry that verdict instead.
 
     ```bash
     gh api 'repos/{owner}/{repo}/pulls/<n>/reviews' --input <the pass, as json>
@@ -87,11 +82,20 @@ because reranking is the user's call.
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
-    Reply into each thread with `**Applied** in <sha>` or `**Declined** — <reason>`. Every
-    reply lands as its own empty review, so expect one per verdict beside the pass's.
-    Anchor at the current head: against the commit the pass read, a fix that moves the line
-    outdates the thread and folds the reply with it. A pass that returns nothing posts
-    nothing, and a later pass adds, leaving earlier threads alone.
+    A pass that returns nothing posts nothing and applies nothing, so skip step 12;
+    step 14 labels. A later pass adds, leaving earlier threads alone.
+12. **Label, apply, reply.** Swap `review:changes-requested` on first, so the mark and
+    the findings stand together; one `gh pr edit <n> --add-label <one> --remove-label
+    <other>` does both halves. Then apply what survives, `pnpm check`, prose pass what
+    the fixes touched, commit and push, and bring the pull request body back in line —
+    fixes left in the working tree leave the pull request holding the code the review
+    rejected.
+
+    Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
+    every finding carries a verdict. Every reply lands as its own empty review, so expect
+    one per verdict beside the pass's. A fix that moves a line outdates its thread —
+    Files changed folds it, but the reply still posts and the Conversation tab shows
+    both.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most. A pass returning only `comment` findings has stopped paying.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
