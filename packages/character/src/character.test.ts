@@ -77,6 +77,14 @@ const definition: CharacterDefinition = {
       origin: WARLOCK,
     },
   ],
+  feats: [{ name: "Eldritch Adept", source: "TCE" }],
+  optionalFeatures: [
+    {
+      ref: { name: "Agonizing Blast", source: "XPHB" },
+      featureType: "EI",
+      grantedBy: { kind: "class", ref: WARLOCK },
+    },
+  ],
   money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
   notes: "Owes the Clasp a favor.",
@@ -129,6 +137,8 @@ describe("subrace", () => {
     background: { name: "Sage", source: "PHB" },
     inventory: [],
     spells: [],
+    feats: [],
+    optionalFeatures: [],
   };
 
   it("names one beside the race that completes its key", () => {
@@ -274,9 +284,18 @@ describe("deity", () => {
 
 describe("a character stored before these fields existed", () => {
   it("parses unchanged, defaulting every one of them", () => {
-    const { money: _money, appearance: _appearance, notes: _notes, ...older } = definition;
+    const {
+      money: _money,
+      appearance: _appearance,
+      notes: _notes,
+      feats: _feats,
+      optionalFeatures: _optionalFeatures,
+      ...older
+    } = definition;
     const parsed = characterDefinitionSchema.parse(structuredClone(older));
 
+    expect(parsed.feats).toEqual([]);
+    expect(parsed.optionalFeatures).toEqual([]);
     expect(parsed.money).toEqual({
       copper: 0,
       silver: 0,
@@ -287,6 +306,138 @@ describe("a character stored before these fields existed", () => {
     expect(parsed.appearance).toEqual({});
     expect(parsed.notes).toBe("");
     expect(parsed).toMatchObject(older);
+  });
+});
+
+describe("feats", () => {
+  it("references the catalog and homebrew alike, as inventory and spells do", () => {
+    const taken = {
+      ...definition,
+      feats: [{ name: "Lucky", source: "PHB" }, { homebrewId: "hb_02" }],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(taken))).toEqual(taken);
+  });
+
+  /** `Ability Score Improvement` (XPHB) is a feat, and the one a character repeats. */
+  it("accepts the same feat twice, which the 2024 ruleset lets a character take", () => {
+    const repeated = [
+      { name: "Ability Score Improvement", source: "XPHB" },
+      { name: "Ability Score Improvement", source: "XPHB" },
+    ];
+    expect(characterDefinitionSchema.parse({ ...definition, feats: repeated }).feats).toEqual(
+      repeated,
+    );
+  });
+});
+
+describe("optional features", () => {
+  /** Offered under all four fighting-style codes, so the pick names the one it spends. */
+  const dueling = { name: "Dueling", source: "PHB" };
+
+  const pick = (featureType: string, grantedBy: object) => ({
+    ref: dueling,
+    featureType,
+    grantedBy,
+  });
+
+  const FIGHTER = { name: "Fighter", source: "PHB" };
+  /** The Fighter subclass that offers `FS:F`, at level 10; Battle Master offers `MV:B`. */
+  const CHAMPION = { name: "Champion", source: "PHB" };
+
+  it.each([
+    ["a class", { kind: "class", ref: FIGHTER }],
+    [
+      "a subclass, beside the class its row is keyed on",
+      { kind: "subclass", ref: CHAMPION, class: FIGHTER },
+    ],
+    ["a feat", { kind: "feat", ref: { name: "Fighting Initiate", source: "TCE" } }],
+  ])("records %s as the grantor of a fighting style", (_kind, grantedBy) => {
+    const picked = { ...definition, optionalFeatures: [pick("FS:F", grantedBy)] };
+    expect(characterDefinitionSchema.parse(structuredClone(picked))).toEqual(picked);
+  });
+
+  /** A fighting style that grants a maneuver, so the pick it entitles is an `MV:B`. */
+  it("records an optional feature as the grantor, as Superior Technique is", () => {
+    const riposte = {
+      ...definition,
+      optionalFeatures: [
+        {
+          ref: { name: "Riposte", source: "PHB" },
+          featureType: "MV:B",
+          grantedBy: {
+            kind: "optionalFeature",
+            ref: { name: "Superior Technique", source: "TCE" },
+          },
+        },
+      ],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(riposte))).toEqual(riposte);
+  });
+
+  it("rejects a grantor kind nothing in the catalog grants from", () => {
+    const race = {
+      ...definition,
+      optionalFeatures: [pick("FS:F", { kind: "race", ref: dueling })],
+    };
+    expect(characterDefinitionSchema.safeParse(race).success).toBe(false);
+  });
+
+  it("rejects a subclass grantor naming no class, since 124 subclass rows need one", () => {
+    const short = {
+      ...definition,
+      optionalFeatures: [pick("FS:F", { kind: "subclass", ref: CHAMPION })],
+    };
+    expect(characterDefinitionSchema.safeParse(short).success).toBe(false);
+  });
+
+  /** What a Fighter 1 / Bard 3 of that college holds: `Dueling` twice, once per type. */
+  it("keeps one option picked under two types, which spends two entitlements", () => {
+    const both = {
+      ...definition,
+      optionalFeatures: [
+        pick("FS:F", { kind: "class", ref: FIGHTER }),
+        pick("FS:B", {
+          kind: "subclass",
+          ref: { name: "College of Swords", source: "XGE" },
+          class: { name: "Bard", source: "PHB" },
+        }),
+      ],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(both)).optionalFeatures).toHaveLength(2);
+  });
+
+  it("rejects the same option twice under one type", () => {
+    const twice = {
+      ...definition,
+      optionalFeatures: [
+        pick("FS:F", { kind: "class", ref: FIGHTER }),
+        pick("FS:F", { kind: "feat", ref: { name: "Fighting Initiate", source: "TCE" } }),
+      ],
+    };
+    expect(characterDefinitionSchema.safeParse(twice).success).toBe(false);
+  });
+
+  it("accepts a homebrew option, and tells its id from a catalog pair", () => {
+    const homebrew = {
+      ...definition,
+      optionalFeatures: [
+        {
+          ref: { homebrewId: "hb_03" },
+          featureType: "EI",
+          grantedBy: { kind: "class", ref: WARLOCK },
+        },
+        pick("EI", { kind: "class", ref: WARLOCK }),
+      ],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(homebrew))).toEqual(homebrew);
+  });
+
+  it("rejects a pick with no feature type, which names no entitlement", () => {
+    const untyped = {
+      ...definition,
+      optionalFeatures: [pick("", { kind: "class", ref: FIGHTER })],
+    };
+    expect(characterDefinitionSchema.safeParse(untyped).success).toBe(false);
   });
 });
 
