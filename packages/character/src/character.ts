@@ -135,6 +135,46 @@ const spellEntrySchema = z.strictObject({
 });
 
 /**
+ * A reference flattened for comparison, tagged so a homebrew id cannot spell a catalog
+ * pair.
+ */
+const entryKey = (ref: EntryRef): string =>
+  "homebrewId" in ref ? `homebrew|${ref.homebrewId}` : `catalog|${refKey(ref)}`;
+
+/**
+ * What entitled a pick, in the shape the table holding that entitlement is keyed on.
+ *
+ * A subclass names its class because `subclass_optional_features` keys on both, and 124
+ * of the 198 upstream subclass rows answer to more than one class — `Path of the
+ * Berserker` (PHB) to `Barbarian` (PHB) and `Barbarian` (XPHB) alike.
+ *
+ * An optional feature grants as readily as a feat does: `Superior Technique` (TCE) is a
+ * fighting style that grants a maneuver. No background and no race grants one at the
+ * pinned tag, so neither is a kind a character can store.
+ */
+const grantorSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("class"), ref: contentRefSchema }),
+  z.strictObject({
+    kind: z.literal("subclass"),
+    ref: contentRefSchema,
+    class: contentRefSchema,
+  }),
+  z.strictObject({ kind: z.literal("feat"), ref: entryRefSchema }),
+  z.strictObject({ kind: z.literal("optionalFeature"), ref: entryRefSchema }),
+]);
+
+const optionalFeatureEntrySchema = z.strictObject({
+  ref: entryRefSchema,
+  /**
+   * The code the catalog keys on — `FS:F`, `MV:B` — rather than the label a sheet
+   * prints. 9 of the 213 upstream options carry more than one, `Dueling` (PHB) under all
+   * four fighting-style classes, so the type says which entitlement a pick spends.
+   */
+  featureType: z.string().min(1),
+  grantedBy: grantorSchema,
+});
+
+/**
  * Coins, counted per denomination. A single converted total would lose which coins the
  * character holds, and a party splitting treasure divides the coins rather than the
  * total. Exchanging denominations is a rule, and belongs in `@dnd/rules` the day
@@ -193,6 +233,17 @@ export const characterDefinitionSchema = z.strictObject({
   proficiencies: proficienciesSchema,
   inventory: z.array(inventoryEntrySchema),
   spells: z.array(spellEntrySchema),
+  /**
+   * No uniqueness rule: the 2024 ruleset repeats `Ability Score Improvement` (XPHB), so
+   * a list refusing a second copy would make a legal character unstorable.
+   */
+  feats: z.array(entryRefSchema).default([]),
+  optionalFeatures: z
+    .array(optionalFeatureEntrySchema)
+    .refine((picks) => isUnique(picks, (pick) => `${pick.featureType}|${entryKey(pick.ref)}`), {
+      error: "the same option is picked twice under one feature type",
+    })
+    .default([]),
   deity: deityRefSchema.optional(),
   /**
    * Free text rather than an enum: the 2024 ruleset drops alignment from character
@@ -338,6 +389,7 @@ export function hitPointMaximum(
   return maxHitPoints(levels, abilityModifier(definition.abilityScores.con));
 }
 
+type EntryRef = z.infer<typeof entryRefSchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;
 export type CharacterState = z.infer<typeof characterStateSchema>;
