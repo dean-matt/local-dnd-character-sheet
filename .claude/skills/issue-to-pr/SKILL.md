@@ -40,9 +40,9 @@ because reranking is the user's call.
 2. **Where the issue states counts or shapes, verify them against `vendor/`** before
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
-3. **Branch into a worktree**, so a second agent on a second issue moves neither this
-   branch nor this tree. Enter it with `cd`, not the harness's worktree tool, whose
-   isolation refuses every `git` call a shell wrapper rewrites.
+3. **Branch into a worktree**, so a second agent can take a second issue at the same
+   time. Enter it with `cd`, not the harness's worktree tool, whose isolation refuses
+   every `git` call a shell wrapper rewrites.
 
    ```bash
    main=$(git rev-parse --show-toplevel); b=<type>/<n>-<slug>; d=.claude/worktrees/<n>
