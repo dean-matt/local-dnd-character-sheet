@@ -72,7 +72,9 @@ subraces go further and revise `Breath Weapon`, a trait the parent alone carries
 a `_versions` `_mod` that resolves against nothing until the two are one entry. So the
 merge runs in the ETL, `subraces.race_name` is provenance rather than a join a reader has
 to make, and the race's identity and printing history stay off the subrace — five `PHB` base
-variants have no name of their own and would otherwise answer to their parent's.
+variants have no name of their own and would otherwise answer to their parent's. A
+character stores the subrace's own pair and its race carries the other two parts of the
+key, so those five are the subraces no character names.
 
 **An optional feature's types live beside it.** 9 of 213 are offered under more than one
 `featureType` — `Dueling` from `PHB` under all four fighting-style classes — so

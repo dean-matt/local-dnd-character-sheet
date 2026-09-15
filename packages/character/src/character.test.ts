@@ -102,6 +102,35 @@ describe("references", () => {
   });
 });
 
+describe("subrace", () => {
+  /** Classic throughout, because upstream ships no subrace in the 2024 ruleset. */
+  const elf = {
+    ...definition,
+    edition: "classic",
+    levels: [{ class: { name: "Wizard", source: "PHB" } }],
+    race: { name: "Elf", source: "PHB" },
+    subrace: { name: "High", source: "PHB" },
+    background: { name: "Sage", source: "PHB" },
+    inventory: [],
+    spells: [],
+  };
+
+  it("names one beside the race that completes its key", () => {
+    expect(characterDefinitionSchema.parse(structuredClone(elf))).toEqual(elf);
+  });
+
+  it("stays absent rather than being invented", () => {
+    expect(characterDefinitionSchema.parse(structuredClone(definition))).not.toHaveProperty(
+      "subrace",
+    );
+  });
+
+  it("rejects the empty name a base variant's row is keyed on", () => {
+    const base = { ...elf, subrace: { name: "", source: "PHB" } };
+    expect(characterDefinitionSchema.safeParse(base).success).toBe(false);
+  });
+});
+
 describe("derived fields", () => {
   const schema = derivedSchema(z.int());
 
