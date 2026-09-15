@@ -189,9 +189,10 @@ describe("hit point maximum", () => {
   });
 
   it("has somewhere to live, overridable like any derived field", () => {
-    const derived = characterDerivedSchema.parse({ hitPointMaximum: { computed: 38 } });
-    expect(derivedValue(derived.hitPointMaximum)).toBe(38);
-    expect(derivedValue({ computed: 38, manual: 45 })).toBe(45);
+    const computed = hitPointMaximum(definition, hitDice);
+    const derived = characterDerivedSchema.parse({ hitPointMaximum: { computed } });
+    expect(derivedValue(derived.hitPointMaximum)).toBe(37);
+    expect(derivedValue({ ...derived.hitPointMaximum, manual: 45 })).toBe(45);
   });
 });
 
