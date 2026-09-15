@@ -121,9 +121,10 @@ because reranking is the user's call.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
-    on nobody. Then remove the worktree: `cd ../../.. && git worktree remove
-    .claude/worktrees/<n>` refuses rather than discarding anything step 12 left
-    uncommitted. The branch and the pull request stand.
+    on nobody. Then remove the worktree from anywhere inside it:
+    `cd "$(git rev-parse --show-toplevel)/../../.."` reaches the main checkout, and
+    `git worktree remove .claude/worktrees/<n>` refuses rather than discarding anything
+    step 12 left uncommitted. The branch and the pull request stand.
 
     Then report what landed, what each review found, and what `gh pr checks`
     says, reporting a run still in flight as in flight rather than waiting on it. A red
