@@ -187,21 +187,74 @@ const entryKey = (ref: EntryRef): string =>
  * A subclass names its class because `subclass_optional_features` keys on both, and 124
  * of the 198 upstream subclass rows answer to more than one class — `Path of the
  * Berserker` (PHB) to `Barbarian` (PHB) and `Barbarian` (XPHB) alike.
- *
- * An optional feature grants as readily as a feat does: `Superior Technique` (TCE) is a
- * fighting style that grants a maneuver. No background and no race grants one at the
- * pinned tag, so neither is a kind a character can store.
+ */
+const classGrantor = z.strictObject({ kind: z.literal("class"), ref: contentRefSchema });
+
+const subclassGrantor = z.strictObject({
+  kind: z.literal("subclass"),
+  ref: contentRefSchema,
+  class: contentRefSchema,
+});
+
+/**
+ * What entitled an optional feature. One option grants another as readily as a feat does:
+ * `Superior Technique` (TCE) is a fighting style that grants a maneuver. No background
+ * and no race grants an option at the pinned tag, so neither is a kind a pick can store.
  */
 const grantorSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("class"), ref: contentRefSchema }),
-  z.strictObject({
-    kind: z.literal("subclass"),
-    ref: contentRefSchema,
-    class: contentRefSchema,
-  }),
+  classGrantor,
+  subclassGrantor,
   z.strictObject({ kind: z.literal("feat"), ref: entryRefSchema }),
   z.strictObject({ kind: z.literal("optionalFeature"), ref: entryRefSchema }),
 ]);
+
+/**
+ * What entitled a feat. A class and a subclass grant one as they grant an option —
+ * `Fighting Style` on the `Fighter` (XPHB) table at level 1, `Additional Fighting Style`
+ * on `Champion` (XPHB) at 7 — so those two branches are `grantorSchema`'s own rather
+ * than a second spelling of them.
+ *
+ * Three more grant a feat and no option, which is why `grantorSchema` carries none of
+ * them: 74 backgrounds, the `Custom Lineage` (TCE) and `Human` (XPHB) races, and the
+ * `Variant` subrace of `Human` (PHB). A subrace names its race for the reason a subclass
+ * names its class — `(name, source)` alone collides across the 98 upstream rows.
+ *
+ * No feat and no optional feature grants a feat at the pinned tag, so neither is a kind
+ * this union carries.
+ */
+const featGrantorSchema = z.discriminatedUnion("kind", [
+  classGrantor,
+  subclassGrantor,
+  z.strictObject({ kind: z.literal("background"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("race"), ref: contentRefSchema }),
+  z.strictObject({
+    kind: z.literal("subrace"),
+    ref: contentRefSchema,
+    race: contentRefSchema,
+  }),
+]);
+
+/**
+ * One feat, what entitled it, and the character level that spent that entitlement. The
+ * level tells two takings of a repeatable feat apart: `Ability Score Improvement` (XPHB)
+ * at 4 and again at 8 is one reference under one grantor. A background or a race grants
+ * at creation and states no level.
+ *
+ * A fighting style reaches this list on a 2024 character and `optionalFeatures` on a
+ * classic one — `Archery` (XPHB) is an `FS` feat where `Archery` (PHB) is an `FS:F`
+ * option — so both say which class entitlement the pick spends.
+ *
+ * A definition written before the grantor existed holds bare references, so an entry
+ * that parses as one is read as a feat whose entitlement nothing recorded.
+ */
+const featEntrySchema = z.preprocess(
+  (entry) => (entryRefSchema.safeParse(entry).success ? { ref: entry } : entry),
+  z.strictObject({
+    ref: entryRefSchema,
+    grantedBy: featGrantorSchema.optional(),
+    level: z.int().min(1).max(20).optional(),
+  }),
+);
 
 const optionalFeatureEntrySchema = z.strictObject({
   ref: entryRefSchema,
@@ -277,7 +330,7 @@ export const characterDefinitionSchema = z.strictObject({
    * The 2024 ruleset repeats `Ability Score Improvement` (XPHB), so the list accepts a
    * duplicate that a uniqueness rule would make unstorable.
    */
-  feats: z.array(entryRefSchema).default([]),
+  feats: z.array(featEntrySchema).default([]),
   optionalFeatures: z
     .array(optionalFeatureEntrySchema)
     .refine((picks) => isUnique(picks, (pick) => `${pick.featureType}|${entryKey(pick.ref)}`), {
