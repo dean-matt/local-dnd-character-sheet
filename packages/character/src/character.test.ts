@@ -345,10 +345,14 @@ describe("exhaustion", () => {
     expect(parsed.conditions).toEqual([]);
   });
 
-  it.each(["PHB", "XPHB"])("rejects the %s condition row beside the level", (source) => {
-    const both = { ...state, conditions: [{ name: "Exhaustion", source }] };
-    expect(characterStateSchema.safeParse(both).success).toBe(false);
-  });
+  /** The two catalog sources, and a homebrew one the name-alone match still has to catch. */
+  it.each(["PHB", "XPHB", "hb_conditions"])(
+    "rejects the %s condition row beside the level",
+    (source) => {
+      const both = { ...state, conditions: [{ name: "Exhaustion", source }] };
+      expect(characterStateSchema.safeParse(both).success).toBe(false);
+    },
+  );
 
   it("rejects the row even where the level says zero", () => {
     const silent = {
