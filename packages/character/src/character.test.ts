@@ -357,7 +357,7 @@ describe("optional features", () => {
   });
 
   /** A fighting style that grants a maneuver, so the pick it entitles is an `MV:B`. */
-  it("records an optional feature as the grantor, which Superior Technique is", () => {
+  it("records an optional feature as the grantor, as Superior Technique is", () => {
     const riposte = {
       ...definition,
       optionalFeatures: [
