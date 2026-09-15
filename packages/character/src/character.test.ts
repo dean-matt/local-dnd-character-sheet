@@ -258,3 +258,31 @@ describe("invariants a duplicate row would break", () => {
     expect(entryRefSchema.safeParse(ambiguous).success).toBe(false);
   });
 });
+
+describe("a key the schema does not name", () => {
+  it("fails the state parse rather than vanishing on the next save", () => {
+    const newer = { ...state, concentration: { name: "Bless", source: "XPHB" } };
+    const result = characterStateSchema.safeParse(newer);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      code: "unrecognized_keys",
+      keys: ["concentration"],
+    });
+  });
+
+  it("fails the definition parse", () => {
+    expect(characterDefinitionSchema.safeParse({ ...definition, alignment: "CN" }).success).toBe(
+      false,
+    );
+  });
+
+  it("fails inside a nested object, not only at the top level", () => {
+    const nested = { ...state, hitPoints: { ...state.hitPoints, maximum: 40 } };
+    expect(characterStateSchema.safeParse(nested).success).toBe(false);
+  });
+
+  it("fails a derived field, whose two states have no room for a third", () => {
+    expect(derivedSchema(z.int()).safeParse({ computed: 38, cleared: true }).success).toBe(false);
+  });
+});
