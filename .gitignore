@@ -21,6 +21,10 @@ data/homebrew.db-*
 !.vscode/extensions.json
 .idea/
 
+# Agents — share the skills, ignore what belongs to one machine
+.claude/settings.local.json
+.claude/worktrees/
+
 .env
 .env.*
 !.env.example
