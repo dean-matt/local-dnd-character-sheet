@@ -102,10 +102,10 @@ Two splits, both of which exist to make level-ups safe.
 holds what is true right now — current hit points, spent slots, active conditions. A
 long rest touches state only, so it can never corrupt the sheet.
 
-**Computed versus manual.** Derived fields carry the computed value, an optional manual
-override, and a flag. Recomputing on level-up updates the computed side and leaves
-overrides intact. No rule ever hard-blocks a value the user insists on, which is what
-makes the builder usable at a table with house rules.
+**Computed versus manual.** Derived fields carry the computed value beside a manual
+override, null where the user has typed nothing. Recomputing on level-up updates the
+computed side and leaves overrides intact. No rule ever hard-blocks a value the user
+insists on, which is what makes the builder usable at a table with house rules.
 
 Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per
 character. They are session affordances, not audit trails.

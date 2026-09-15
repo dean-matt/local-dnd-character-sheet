@@ -1,3 +1,4 @@
+import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -5,26 +6,37 @@ import {
   type CharacterDefinition,
   type CharacterState,
   characterDefinitionSchema,
+  characterDerivedSchema,
   characterStateSchema,
   derivedSchema,
   derivedValue,
   entryRefSchema,
   hitDicePoolSchema,
+  hitPointMaximum,
+  refKey,
   resourceSchema,
   spellSlotSchema,
   totalLevel,
 } from "./character.ts";
 
+const WARLOCK = { name: "Warlock", source: "XPHB" };
+const ROGUE = { name: "Rogue", source: "XPHB" };
+
+/** Both d8 upstream, in both editions. */
+const hitDice = new Map<string, HitDie>([
+  [refKey(WARLOCK), 8],
+  [refKey(ROGUE), 8],
+]);
+
 const definition: CharacterDefinition = {
   name: "Vex",
   edition: "one",
-  classes: [
-    {
-      class: { name: "Warlock", source: "XPHB" },
-      subclass: { name: "Fiend", source: "XPHB" },
-      level: 3,
-    },
-    { class: { name: "Rogue", source: "XPHB" }, level: 2 },
+  levels: [
+    { class: WARLOCK },
+    { class: WARLOCK, rolled: 6 },
+    { class: WARLOCK, subclass: { name: "Fiend", source: "XPHB" } },
+    { class: ROGUE, rolled: 3 },
+    { class: ROGUE },
   ],
   race: { name: "Half-Elf", source: "XPHB" },
   background: { name: "Charlatan", source: "XPHB" },
@@ -45,17 +57,14 @@ const definition: CharacterDefinition = {
     {
       ref: { name: "Eldritch Blast", source: "XPHB" },
       prepared: true,
-      origin: { name: "Warlock", source: "XPHB" },
+      origin: WARLOCK,
     },
   ],
 };
 
 const state: CharacterState = {
   hitPoints: { current: 21, temporary: 5 },
-  hitDice: [
-    { die: 8, total: 3, remaining: 1 },
-    { die: 6, total: 2, remaining: 2 },
-  ],
+  hitDice: [{ die: 8, total: 5, remaining: 1 }],
   spellSlots: [],
   pactSlots: { level: 2, total: 2, expended: 1 },
   conditions: [{ name: "Prone", source: "XPHB" }],
@@ -129,12 +138,61 @@ describe("counters cannot exceed their pool", () => {
 });
 
 describe("class levels", () => {
-  it("sums a multiclass character", () => {
+  it("counts a multiclass character", () => {
     expect(totalLevel(definition)).toBe(5);
   });
 
-  it("requires at least one class", () => {
-    expect(characterDefinitionSchema.safeParse({ ...definition, classes: [] }).success).toBe(false);
+  it("requires at least one level", () => {
+    expect(characterDefinitionSchema.safeParse({ ...definition, levels: [] }).success).toBe(false);
+  });
+
+  it("keeps the order the levels were taken", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+    expect(parsed.levels.map((level) => level.class.name)).toEqual([
+      "Warlock",
+      "Warlock",
+      "Warlock",
+      "Rogue",
+      "Rogue",
+    ]);
+  });
+});
+
+describe("hit point maximum", () => {
+  it("takes the first die's highest face, then the roll or the average", () => {
+    expect(hitPointMaximum(definition, hitDice)).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
+  });
+
+  it("reads a character back out of the database column it was stored in", () => {
+    const stored = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(definition)));
+    expect(hitPointMaximum(stored, hitDice)).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
+  });
+
+  it("moves when a multiclass character reorders the levels it took", () => {
+    const fighter = { name: "Fighter", source: "XPHB" };
+    const wizard = { name: "Wizard", source: "XPHB" };
+    const dice = new Map<string, HitDie>([
+      [refKey(fighter), 10],
+      [refKey(wizard), 6],
+    ]);
+    const fighterFirst = { ...definition, levels: [{ class: fighter }, { class: wizard }] };
+    const wizardFirst = { ...definition, levels: [{ class: wizard }, { class: fighter }] };
+
+    expect(hitPointMaximum(fighterFirst, dice)).toBe(10 + 4 + 2 * 2);
+    expect(hitPointMaximum(wizardFirst, dice)).toBe(6 + 6 + 2 * 2);
+  });
+
+  it("rejects a class whose die the catalog did not supply", () => {
+    expect(() => hitPointMaximum(definition, new Map([[refKey(ROGUE), 8]]))).toThrow(
+      "No hit die for Warlock (XPHB)",
+    );
+  });
+
+  it("has somewhere to live, overridable like any derived field", () => {
+    const computed = hitPointMaximum(definition, hitDice);
+    const derived = characterDerivedSchema.parse({ hitPointMaximum: { computed } });
+    expect(derivedValue(derived.hitPointMaximum)).toBe(37);
+    expect(derivedValue({ ...derived.hitPointMaximum, manual: 45 })).toBe(45);
   });
 });
 
@@ -153,25 +211,24 @@ describe("ability scores", () => {
 
 describe("invariants a duplicate row would break", () => {
   it("rejects a total level above 20", () => {
-    const overLevelled = {
-      ...definition,
-      classes: [
-        { class: { name: "Warlock", source: "XPHB" }, level: 20 },
-        { class: { name: "Rogue", source: "XPHB" }, level: 20 },
-      ],
-    };
+    const overLevelled = { ...definition, levels: Array(21).fill({ class: ROGUE }) };
     expect(characterDefinitionSchema.safeParse(overLevelled).success).toBe(false);
   });
 
-  it("rejects the same class listed twice", () => {
-    const doubled = {
+  it("rejects a class naming a subclass on two levels", () => {
+    const twice = {
       ...definition,
-      classes: [
-        { class: { name: "Rogue", source: "XPHB" }, level: 3 },
-        { class: { name: "Rogue", source: "XPHB" }, level: 2 },
+      levels: [
+        { class: ROGUE, subclass: { name: "Thief", source: "XPHB" } },
+        { class: ROGUE, subclass: { name: "Assassin", source: "XPHB" } },
       ],
     };
-    expect(characterDefinitionSchema.safeParse(doubled).success).toBe(false);
+    expect(characterDefinitionSchema.safeParse(twice).success).toBe(false);
+  });
+
+  it("rejects a roll no hit die can make", () => {
+    const impossible = { ...definition, levels: [{ class: ROGUE, rolled: 13 }] };
+    expect(characterDefinitionSchema.safeParse(impossible).success).toBe(false);
   });
 
   it("rejects two pools of the same hit die size", () => {
