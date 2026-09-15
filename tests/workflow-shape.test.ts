@@ -11,9 +11,8 @@ import { ROOT, read } from "./lib/doc-helpers.ts";
  * asks for the version; this asserts it.
  *
  * A major tag moves across releases as well, and is taken anyway: repointing `v5`
- * is what the ecosystem publishes against, and four actions here are not worth a
- * SHA to maintain by hand. The exact pin is reserved for the ref that picks a
- * binary.
+ * is what the ecosystem publishes against, and Dependabot reads a tag as readily
+ * as a SHA. The exact pin is reserved for the ref that picks a binary.
  *
  * Parses each workflow rather than matching its text: a `uses:` inside a comment
  * or a run block is not a step, and a regex cannot tell the difference.
