@@ -46,7 +46,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: crate-ci/typos@master
+
+      # Pinned, unlike the actions above, because this entrypoint downloads the typos
+      # release its ref names. A moving ref takes whatever upstream tagged last, which
+      # can be minutes before its release assets exist, and the download 404s before a
+      # file is read. Dependabot raises the version once a month; the pin is what
+      # makes that a reviewed change rather than a surprise.
+      - uses: crate-ci/typos@v1.50.2
 
   e2e:
     runs-on: ubuntu-latest

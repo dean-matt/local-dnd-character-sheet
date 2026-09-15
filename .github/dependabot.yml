@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Actions only. An npm entry here would open a pull request per dependency on a
+  # repository whose lockfile is updated deliberately, and pnpm workspaces are not
+  # what this bot is good at.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
