@@ -33,9 +33,9 @@ export function spellAttackBonus(spellcastingModifier: number, characterLevel: n
  * down)" in one passage, so the asymmetry is the rules', not an oversight here.
  * `pact` contributes nothing.
  */
-export const CASTER_PROGRESSIONS = ["full", "1/2", "1/3", "artificer", "pact"] as const;
+const CASTER_PROGRESSIONS = ["full", "1/2", "1/3", "artificer", "pact"] as const;
 
-export type CasterProgression = (typeof CASTER_PROGRESSIONS)[number];
+type CasterProgression = (typeof CASTER_PROGRESSIONS)[number];
 
 /** A class or subclass that casts, and the character's level in it. */
 export type CasterClassLevel = {
@@ -43,7 +43,7 @@ export type CasterClassLevel = {
   level: number;
 };
 
-export type SpellSlotTotal = {
+type SpellSlotTotal = {
   level: number;
   total: number;
 };

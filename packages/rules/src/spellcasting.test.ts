@@ -5,7 +5,7 @@ import {
   multiclassSlots,
   spellAttackBonus,
   spellSaveDc,
-} from "./spellcasting.ts";
+} from "./index.ts";
 
 describe("spell math", () => {
   it("derives save DC from proficiency and modifier", () => {

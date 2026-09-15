@@ -20,18 +20,18 @@ import {
 } from "@dnd/rules";
 import { z } from "zod";
 
-export const editionSchema = z.enum(EDITIONS);
+const editionSchema = z.enum(EDITIONS);
 
-export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
-export const abilitySchema = z.enum(ABILITIES);
+const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
+const abilitySchema = z.enum(ABILITIES);
 
 /** Strict: a union of open objects would silently strip the keys of the other branch. */
-export const contentRefSchema = z.strictObject({
+const contentRefSchema = z.strictObject({
   name: z.string().min(1),
   source: z.string().min(1),
 });
 
-export const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
+const homebrewRefSchema = z.strictObject({ homebrewId: z.string().min(1) });
 
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
@@ -72,7 +72,7 @@ const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
  *
  * `subclass` sits on the level it was chosen at, so a class names it once.
  */
-export const levelEntrySchema = z.object({
+const levelEntrySchema = z.object({
   class: contentRefSchema,
   subclass: contentRefSchema.optional(),
   /**
@@ -90,7 +90,7 @@ export const levelEntrySchema = z.object({
 /** Exhaustive: a record keyed by an enum requires every ability to be present. */
 export const abilityScoresSchema = z.record(abilitySchema, z.int().min(1).max(30));
 
-export const proficienciesSchema = z.object({
+const proficienciesSchema = z.object({
   savingThrows: z.array(abilitySchema),
   skills: z.array(z.string().min(1)),
   armor: z.array(z.string().min(1)),
@@ -99,14 +99,14 @@ export const proficienciesSchema = z.object({
   languages: z.array(z.string().min(1)),
 });
 
-export const inventoryEntrySchema = z.object({
+const inventoryEntrySchema = z.object({
   ref: entryRefSchema,
   quantity: z.int().min(1).default(1),
   equipped: z.boolean().default(false),
   attuned: z.boolean().default(false),
 });
 
-export const spellEntrySchema = z.object({
+const spellEntrySchema = z.object({
   ref: entryRefSchema,
   prepared: z.boolean().default(false),
   /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
@@ -140,7 +140,7 @@ export const totalLevel = (definition: CharacterDefinition): number => definitio
 
 // State ----------------------------------------------------------------------
 
-export const hitPointsSchema = z.object({
+const hitPointsSchema = z.object({
   current: z.int(),
   temporary: z.int().min(0).default(0),
 });
@@ -172,7 +172,7 @@ export const resourceSchema = z
   })
   .refine((resource) => resource.current <= resource.maximum, { error: "current exceeds maximum" });
 
-export const deathSavesSchema = z.object({
+const deathSavesSchema = z.object({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
 });
@@ -229,20 +229,6 @@ export function hitPointMaximum(
   return maxHitPoints(levels, abilityModifier(definition.abilityScores.con));
 }
 
-export type Edition = z.infer<typeof editionSchema>;
-export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
-export type EntryRef = z.infer<typeof entryRefSchema>;
-export type LevelEntry = z.infer<typeof levelEntrySchema>;
-export type AbilityScores = z.infer<typeof abilityScoresSchema>;
-export type Proficiencies = z.infer<typeof proficienciesSchema>;
-export type InventoryEntry = z.infer<typeof inventoryEntrySchema>;
-export type SpellEntry = z.infer<typeof spellEntrySchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;
-export type HitPoints = z.infer<typeof hitPointsSchema>;
-export type HitDicePool = z.infer<typeof hitDicePoolSchema>;
-export type SpellSlot = z.infer<typeof spellSlotSchema>;
-export type Resource = z.infer<typeof resourceSchema>;
-export type DeathSaves = z.infer<typeof deathSavesSchema>;
 export type CharacterState = z.infer<typeof characterStateSchema>;
-export type CharacterDerived = z.infer<typeof characterDerivedSchema>;

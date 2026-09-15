@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resetsOn } from "./rest.ts";
+import { resetsOn } from "./index.ts";
 
 describe("resetsOn", () => {
   it.each([

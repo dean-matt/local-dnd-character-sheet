@@ -5,7 +5,7 @@ import {
   pushDragLiftCapacity,
   SIZES,
   type Size,
-} from "./carrying.ts";
+} from "./index.ts";
 
 describe("carryingCapacity", () => {
   it.each([

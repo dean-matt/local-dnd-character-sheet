@@ -44,7 +44,7 @@ export function pushDragLiftCapacity(strengthScore: number, size: Size): number 
   return carryingCapacity(strengthScore, size) * 2;
 }
 
-export type EncumbranceThresholds = {
+type EncumbranceThresholds = {
   encumbered: number;
   heavilyEncumbered: number;
 };
