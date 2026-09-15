@@ -72,8 +72,8 @@ because reranking is the user's call.
     leaves the findings standing rather than a label pointing at nothing. One call sends
     `commit_id`, `event`, a `body` and each line comment as `{path, line, side, body}`;
     posted one at a time they arrive as a review each. The `body` says what the pass
-    found and holds any finding no line anchors. What became of a finding is a verdict's
-    to say, and the verdicts come later. `event` is `COMMENT`, because GitHub refuses an
+    found and holds any finding no line anchors. The verdicts say what became of each,
+    and they come after the fixes. `event` is `COMMENT`, because GitHub refuses an
     approval on your own pull request — step 14's labels carry that verdict instead.
 
     ```bash
@@ -82,18 +82,20 @@ because reranking is the user's call.
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
-    A pass that returns nothing posts nothing and applies nothing, so step 12 is skipped
-    and step 14 does the labelling. A later pass adds, leaving earlier threads alone.
+    A pass that returns nothing posts nothing and applies nothing, so skip step 12;
+    step 14 labels. A later pass adds, leaving earlier threads alone.
 12. **Label, apply, reply.** Swap `review:changes-requested` on first, so the mark and
     the findings stand together; one `gh pr edit <n> --add-label <one> --remove-label
     <other>` does both halves. Then apply what survives, `pnpm check`, prose pass what
     the fixes touched, commit and push, and bring the pull request body back in line —
     fixes left in the working tree leave the pull request holding the code the review
-    rejected. Reply into each thread last, `**Applied** in <sha>` or `**Declined** —
-    <reason>`, so every finding carries a verdict. Each reply lands as its own empty
-    review, so expect one per verdict beside the pass's. A fix that moves a line
-    outdates its thread: Files changed folds it, the reply still posts, and the
-    Conversation tab shows both.
+    rejected.
+
+    Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
+    every finding carries a verdict. Every reply lands as its own empty review, so expect
+    one per verdict beside the pass's. A fix that moves a line outdates its thread —
+    Files changed folds it, but the reply still posts and the Conversation tab shows
+    both.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most. A pass returning only `comment` findings has stopped paying.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
