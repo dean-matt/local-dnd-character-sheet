@@ -76,6 +76,20 @@ describe("deathSave", () => {
     expect(() => deathSave({ successes: count, failures: 0 }, 10)).toThrow(RangeError);
     expect(() => deathSave({ successes: 0, failures: count }, 10)).toThrow(RangeError);
   });
+
+  it.each(["successes", "failures"])("rejects an absent %s count", (label) => {
+    const saves = { successes: 0, failures: 0 };
+    delete (saves as Record<string, number>)[label];
+    expect(() => deathSave(saves, 10)).toThrow(RangeError);
+  });
+
+  it("stabilizes a character who arrives already holding three successes", () => {
+    expect(deathSave({ successes: 3, failures: 0 }, 5)).toEqual({
+      successes: 0,
+      failures: 0,
+      outcome: "stable",
+    });
+  });
 });
 
 describe("damageAtZeroHitPoints", () => {
@@ -114,5 +128,11 @@ describe("damageAtZeroHitPoints", () => {
     expect(() => damageAtZeroHitPoints({ successes: 0, failures: count }, false)).toThrow(
       RangeError,
     );
+  });
+
+  it.each(["successes", "failures"])("rejects an absent %s count", (label) => {
+    const saves = { successes: 0, failures: 0 };
+    delete (saves as Record<string, number>)[label];
+    expect(() => damageAtZeroHitPoints(saves, false)).toThrow(RangeError);
   });
 });

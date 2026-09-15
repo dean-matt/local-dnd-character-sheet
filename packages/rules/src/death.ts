@@ -4,8 +4,8 @@
  * One roll ends the dying four ways: a 20 restores a hit point outright, a 1 costs two
  * failures, a third success stabilizes, and a third failure kills. A sheet comparing
  * `failures >= 3` gets three of them wrong, so the outcome comes back beside the counts
- * rather than a caller reading it off them. Damage taken at 0 hit points records a
- * failure without a roll, so it takes its own entry point.
+ * rather than a caller deriving it. Damage taken at 0 hit points records a failure
+ * without a roll, so it takes its own entry point.
  *
  * No `Edition` parameter. The 2024 ruleset moves this text under the Unconscious
  * condition and renames the headings, but the thresholds, the DC and both natural-roll
@@ -21,7 +21,7 @@ const SUCCESS_DC = 10;
 
 const D20_FACES = 20;
 
-const CRITICAL_FAILURES = 2;
+const DOUBLE_FAILURE = 2;
 
 type DeathSaves = {
   successes: number;
@@ -38,8 +38,10 @@ type DeathSaveResult = DeathSaves & {
   outcome: DeathSaveOutcome;
 };
 
+/** Both columns by name, so an absent one is rejected rather than skipped. */
 function assertSaves(saves: DeathSaves): void {
-  for (const [label, count] of Object.entries(saves)) {
+  for (const label of ["successes", "failures"] as const) {
+    const count = saves[label];
     if (!Number.isInteger(count) || count < 0 || count > REQUIRED) {
       throw new RangeError(`Death save ${label} must be an integer 0-${REQUIRED}, got ${count}`);
     }
@@ -69,7 +71,7 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
   if (roll >= SUCCESS_DC) {
     return settle(saves.successes + 1, saves.failures);
   }
-  return settle(saves.successes, saves.failures + (roll === 1 ? CRITICAL_FAILURES : 1));
+  return settle(saves.successes, saves.failures + (roll === 1 ? DOUBLE_FAILURE : 1));
 }
 
 /**
@@ -79,5 +81,5 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
  */
 export function damageAtZeroHitPoints(saves: DeathSaves, critical: boolean): DeathSaveResult {
   assertSaves(saves);
-  return settle(saves.successes, saves.failures + (critical ? CRITICAL_FAILURES : 1));
+  return settle(saves.successes, saves.failures + (critical ? DOUBLE_FAILURE : 1));
 }
