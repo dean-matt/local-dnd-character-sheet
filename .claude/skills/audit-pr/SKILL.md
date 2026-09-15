@@ -90,8 +90,8 @@ Each fails as a plausible wrong answer rather than an error:
 - **Three databases.** `content.db` read-only, rebuilt, never migrated, raw SQL;
   `characters.db` and `homebrew.db` take Drizzle migrations. The next build discards
   anything written to `content.db`.
-- **Derived fields store computed, manual and an override flag.** One number lets a
-  level-up stomp an edit.
+- **Derived fields store the computed value beside a nullable manual one.** One number
+  lets a level-up stomp an edit.
 - **`roll_log` and `undo_log` are bounded and pruned on insert**, to `CLAUDE.md`'s
   numbers. A skipped prune grows the table without limit.
 - **An unknown `{@tag}` degrades to plain text.** A throw takes the sheet down.

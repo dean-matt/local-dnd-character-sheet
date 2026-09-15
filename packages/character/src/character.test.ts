@@ -1,4 +1,4 @@
-import { type HitDie, maxHitPoints } from "@dnd/rules";
+import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -64,10 +64,7 @@ const definition: CharacterDefinition = {
 
 const state: CharacterState = {
   hitPoints: { current: 21, temporary: 5 },
-  hitDice: [
-    { die: 8, total: 3, remaining: 1 },
-    { die: 6, total: 2, remaining: 2 },
-  ],
+  hitDice: [{ die: 8, total: 5, remaining: 1 }],
   spellSlots: [],
   pactSlots: { level: 2, total: 2, expended: 1 },
   conditions: [{ name: "Prone", source: "XPHB" }],
@@ -162,18 +159,13 @@ describe("class levels", () => {
 });
 
 describe("hit point maximum", () => {
-  it("round trips a stored character through maxHitPoints", () => {
-    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
-    expect(hitPointMaximum(parsed, hitDice)).toBe(
-      maxHitPoints(
-        [{ die: 8 }, { die: 8, rolled: 6 }, { die: 8 }, { die: 8, rolled: 3 }, { die: 8 }],
-        2,
-      ),
-    );
-  });
-
   it("takes the first die's highest face, then the roll or the average", () => {
     expect(hitPointMaximum(definition, hitDice)).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
+  });
+
+  it("reads a character back out of the database column it was stored in", () => {
+    const stored = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(definition)));
+    expect(hitPointMaximum(stored, hitDice)).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
   });
 
   it("moves when a multiclass character reorders the levels it took", () => {
