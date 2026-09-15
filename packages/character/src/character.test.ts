@@ -770,8 +770,8 @@ describe("size and speed", () => {
 
     expect(carryingCapacity(stored.abilityScores.str, size)).toBe(120);
     expect(encumbranceThresholds(stored.abilityScores.str, size)).toEqual({
-      encumbered: 40,
-      heavilyEncumbered: 80,
+      encumbered: { atWeight: 40, speedReduction: 10, disadvantage: false },
+      heavilyEncumbered: { atWeight: 80, speedReduction: 20, disadvantage: true },
     });
   });
 

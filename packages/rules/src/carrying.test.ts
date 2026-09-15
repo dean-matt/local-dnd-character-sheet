@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   carryingCapacity,
+  encumbranceAt,
   encumbranceThresholds,
   pushDragLiftCapacity,
   SIZES,
@@ -48,23 +49,59 @@ describe("encumbranceThresholds", () => {
     [1, 5, 10],
   ])("a Strength of %i is encumbered at %i and heavily at %i", (score, encumbered, heavy) => {
     expect(encumbranceThresholds(score, "medium")).toEqual({
-      encumbered,
-      heavilyEncumbered: heavy,
+      encumbered: { atWeight: encumbered, speedReduction: 10, disadvantage: false },
+      heavilyEncumbered: { atWeight: heavy, speedReduction: 20, disadvantage: true },
     });
   });
 
   it("stops a Tiny creature at the weight it can carry", () => {
     expect(encumbranceThresholds(14, "tiny")).toEqual({
-      encumbered: 70,
-      heavilyEncumbered: carryingCapacity(14, "tiny"),
+      encumbered: { atWeight: 70, speedReduction: 10, disadvantage: false },
+      heavilyEncumbered: {
+        atWeight: carryingCapacity(14, "tiny"),
+        speedReduction: 20,
+        disadvantage: true,
+      },
     });
   });
 
   it.each(SIZES)("never passes what a %s creature can carry", (size) => {
     for (const score of [1, 8, 14, 20, 30]) {
       const { encumbered, heavilyEncumbered } = encumbranceThresholds(score, size);
-      expect(heavilyEncumbered).toBeLessThanOrEqual(carryingCapacity(score, size));
-      expect(encumbered).toBeLessThanOrEqual(heavilyEncumbered);
+      expect(heavilyEncumbered.atWeight).toBeLessThanOrEqual(carryingCapacity(score, size));
+      expect(encumbered.atWeight).toBeLessThanOrEqual(heavilyEncumbered.atWeight);
     }
+  });
+});
+
+describe("encumbranceAt", () => {
+  it.each([
+    [0, 0, false],
+    [70, 0, false],
+    [70.5, 10, false],
+    [140, 10, false],
+    [140.5, 20, true],
+    [1000, 20, true],
+  ])("carrying %d costs a Strength 14 Medium creature %i feet", (weight, speed, disadvantage) => {
+    expect(encumbranceAt(weight, 14, "medium")).toEqual({
+      speedReduction: speed,
+      disadvantage,
+    });
+  });
+
+  it("never returns the shared penalty object a caller could mutate", () => {
+    const penalty = encumbranceAt(1000, 14, "medium");
+    penalty.speedReduction = 0;
+    expect(encumbranceAt(1000, 14, "medium").speedReduction).toBe(20);
+  });
+
+  it.each(SIZES)("agrees with the thresholds it reads for a %s creature", (size) => {
+    const { encumbered, heavilyEncumbered } = encumbranceThresholds(14, size);
+    expect(encumbranceAt(encumbered.atWeight, 14, size).speedReduction).toBe(0);
+    expect(encumbranceAt(heavilyEncumbered.atWeight, 14, size).speedReduction).toBe(10);
+    expect(encumbranceAt(heavilyEncumbered.atWeight + 1, 14, size)).toEqual({
+      speedReduction: 20,
+      disadvantage: true,
+    });
   });
 });
