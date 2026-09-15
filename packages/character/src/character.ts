@@ -200,6 +200,9 @@ const deathSavesSchema = z.strictObject({
   failures: z.int().min(0).max(3).default(0),
 });
 
+/** The catalog's spelling in both rulesets. The list matches the name alone, so no other source admits it. */
+const EXHAUSTION = "Exhaustion";
+
 export const characterStateSchema = z.strictObject({
   hitPoints: hitPointsSchema,
   hitDice: z
@@ -214,7 +217,16 @@ export const characterStateSchema = z.strictObject({
     }),
   /** Warlock slots recharge on a short rest, so they are counted apart from the rest. */
   pactSlots: spellSlotSchema.nullable().default(null),
-  conditions: z.array(contentRefSchema),
+  /**
+   * Exhaustion is a catalog condition row in both rulesets, but only `exhaustion` carries
+   * its level. Listing it here too gives a sheet two places to read and nothing to
+   * reconcile them, so the list refuses the row and a reader renders it from the level.
+   */
+  conditions: z
+    .array(contentRefSchema)
+    .refine((conditions) => conditions.every((condition) => condition.name !== EXHAUSTION), {
+      error: "exhaustion is held as a level, not a condition reference",
+    }),
   resources: z.array(resourceSchema),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
