@@ -94,9 +94,9 @@ export function encumbranceThresholds(strengthScore: number, size: Size): Encumb
  * null check.
  */
 export function encumbranceAt(
-  carriedWeight: number,
   strengthScore: number,
   size: Size,
+  carriedWeight: number,
 ): EncumbrancePenalty {
   const { encumbered, heavilyEncumbered } = encumbranceThresholds(strengthScore, size);
   if (carriedWeight > heavilyEncumbered.atWeight) {

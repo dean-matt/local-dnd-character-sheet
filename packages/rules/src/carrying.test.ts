@@ -83,23 +83,23 @@ describe("encumbranceAt", () => {
     [140.5, 20, true],
     [1000, 20, true],
   ])("carrying %d costs a Strength 14 Medium creature %i feet", (weight, speed, disadvantage) => {
-    expect(encumbranceAt(weight, 14, "medium")).toEqual({
+    expect(encumbranceAt(14, "medium", weight)).toEqual({
       speedReduction: speed,
       disadvantage,
     });
   });
 
   it("never returns the shared penalty object a caller could mutate", () => {
-    const penalty = encumbranceAt(1000, 14, "medium");
+    const penalty = encumbranceAt(14, "medium", 1000);
     penalty.speedReduction = 0;
-    expect(encumbranceAt(1000, 14, "medium").speedReduction).toBe(20);
+    expect(encumbranceAt(14, "medium", 1000).speedReduction).toBe(20);
   });
 
-  it.each(SIZES)("agrees with the thresholds it reads for a %s creature", (size) => {
+  it.each(SIZES)("costs a %s creature nothing at a threshold it has only reached", (size) => {
     const { encumbered, heavilyEncumbered } = encumbranceThresholds(14, size);
-    expect(encumbranceAt(encumbered.atWeight, 14, size).speedReduction).toBe(0);
-    expect(encumbranceAt(heavilyEncumbered.atWeight, 14, size).speedReduction).toBe(10);
-    expect(encumbranceAt(heavilyEncumbered.atWeight + 1, 14, size)).toEqual({
+    expect(encumbranceAt(14, size, encumbered.atWeight).speedReduction).toBe(0);
+    expect(encumbranceAt(14, size, heavilyEncumbered.atWeight).speedReduction).toBe(10);
+    expect(encumbranceAt(14, size, heavilyEncumbered.atWeight + 1)).toEqual({
       speedReduction: 20,
       disadvantage: true,
     });
