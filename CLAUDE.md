@@ -62,9 +62,9 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   commit. `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the branch you
   are on.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
-  useful later" — a leaf package exports a schema or a type the day something reads it.
-  `knip` reports an orphaned file and an export nothing imports, a test import counting as
-  a reader, but the commit should not have created it.
+  useful later" — a leaf package exports a schema or a type the day something reads it,
+  and a test import counts as a reader. `knip` reports an orphaned file and an export
+  nothing imports, but the commit should not have created it.
 
 ## Skills
 
