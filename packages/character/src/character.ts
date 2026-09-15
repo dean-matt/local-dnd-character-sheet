@@ -331,7 +331,7 @@ const PRINTED_RULE: Required<HouseRules> = {
 
 /**
  * How every reader asks. Reading `houseRules` directly restates the printed value at
- * each site, the duplication `derivedValue` also exists to prevent.
+ * each site — the duplication `derivedValue` also exists to prevent.
  *
  * One option at a time rather than a resolved set: a key written as `undefined` survives
  * the parse, so spreading the stored options over the printed ones would overwrite a
