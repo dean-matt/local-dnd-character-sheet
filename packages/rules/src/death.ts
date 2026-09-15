@@ -51,8 +51,8 @@ function assertSaves(saves: DeathSaves): void {
 }
 
 /**
- * Three of a kind on arrival, which no roll moves. Death wins where both columns somehow
- * read three; no path here produces that pair.
+ * Three of a kind on arrival, which no roll moves. Death wins where both columns read
+ * three; no path here produces that pair.
  */
 function alreadySettled(saves: DeathSaves): DeathSaveResult | undefined {
   if (saves.failures >= REQUIRED) {
@@ -104,8 +104,9 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
  */
 export function damageAtZeroHitPoints(saves: DeathSaves, critical: boolean): DeathSaveResult {
   assertSaves(saves);
-  if (saves.failures >= REQUIRED) {
-    return { ...saves, outcome: "dead" };
+  const settled = alreadySettled(saves);
+  if (settled?.outcome === "dead") {
+    return settled;
   }
   const disturbed = saves.successes >= REQUIRED ? { successes: 0, failures: 0 } : saves;
   return settle(disturbed.successes, disturbed.failures + (critical ? DOUBLE_FAILURE : 1));

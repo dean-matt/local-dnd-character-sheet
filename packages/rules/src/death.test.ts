@@ -105,19 +105,30 @@ describe("deathSave", () => {
     expect(deathSave(counts, 20).outcome).toBe("dead");
   });
 
-  it.each([1, 5, 10, 15, 20])("never returns three in both columns, on a %i", (roll) => {
-    for (const successes of [0, 1, 2, 3]) {
-      for (const failures of [0, 1, 2, 3]) {
-        const result = deathSave({ successes, failures }, roll);
-        expect(successes === 3 && failures === 3).toBe(
-          result.successes === 3 && result.failures === 3,
-        );
+  it.each([1, 5, 10, 15, 20])(
+    "returns three in both columns only where given them, on a %i",
+    (roll) => {
+      for (const successes of [0, 1, 2, 3]) {
+        for (const failures of [0, 1, 2, 3]) {
+          const result = deathSave({ successes, failures }, roll);
+          expect(successes === 3 && failures === 3).toBe(
+            result.successes === 3 && result.failures === 3,
+          );
+        }
       }
-    }
-  });
+    },
+  );
 });
 
 describe("damageAtZeroHitPoints", () => {
+  it("starts the saves again on a stable character, whose counts are cleared", () => {
+    expect(damageAtZeroHitPoints({ successes: 0, failures: 0 }, false)).toEqual({
+      successes: 0,
+      failures: 1,
+      outcome: "dying",
+    });
+  });
+
   it("records one failure", () => {
     expect(damageAtZeroHitPoints({ successes: 1, failures: 0 }, false)).toEqual({
       successes: 1,
