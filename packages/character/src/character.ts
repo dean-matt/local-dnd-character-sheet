@@ -235,10 +235,11 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
 ]);
 
 /**
- * One feat, what entitled it, and the character level that spent that entitlement. The
- * level tells two takings of a repeatable feat apart: `Ability Score Improvement` (XPHB)
- * at 4 and again at 8 is one reference under one grantor. A background or a race grants
- * at creation and states no level.
+ * One feat, what entitled it, and the level that spent that entitlement — a character
+ * level, which is a position in `levels` rather than the grantor's own level a
+ * multiclass character reaches later. The level tells two takings of a repeatable feat
+ * apart: `Ability Score Improvement` (XPHB) taken twice is one reference under one
+ * grantor. A background or a race grants at creation and states no level.
  *
  * A fighting style reaches this list on a 2024 character and `optionalFeatures` on a
  * classic one — `Archery` (XPHB) is an `FS` feat where `Archery` (PHB) is an `FS:F`

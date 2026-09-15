@@ -337,13 +337,10 @@ describe("feats", () => {
   });
 
   it("references the catalog and homebrew alike, as inventory and spells do", () => {
-    const taken = {
-      ...definition,
-      feats: [
-        { ref: { name: "Lucky", source: "PHB" } },
-        { ref: { homebrewId: "hb_02" }, grantedBy: { kind: "class", ref: WARLOCK }, level: 4 },
-      ],
-    };
+    const taken = fighter([
+      { ref: { name: "Lucky", source: "PHB" } },
+      { ref: { homebrewId: "hb_02" }, grantedBy: { kind: "class", ref: FIGHTER }, level: 4 },
+    ]);
     expect(characterDefinitionSchema.parse(structuredClone(taken))).toEqual(taken);
   });
 
