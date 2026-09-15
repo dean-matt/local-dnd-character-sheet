@@ -44,15 +44,34 @@ export function pushDragLiftCapacity(strengthScore: number, size: Size): number 
   return carryingCapacity(strengthScore, size) * 2;
 }
 
-type EncumbranceThresholds = {
-  encumbered: number;
-  heavilyEncumbered: number;
+/** What a level of encumbrance costs a creature. */
+type EncumbrancePenalty = {
+  /** Feet of speed lost. */
+  speedReduction: number;
+  /**
+   * Disadvantage on ability checks, attack rolls and saving throws that use
+   * Strength, Dexterity or Constitution — the rule's own list, wider than the
+   * ability checks alone.
+   */
+  disadvantage: boolean;
 };
 
+type EncumbranceThreshold = EncumbrancePenalty & {
+  /** Pounds, exclusive: the rule reads "in excess of", so carrying exactly this costs nothing. */
+  atWeight: number;
+};
+
+type EncumbranceThresholds = {
+  encumbered: EncumbranceThreshold;
+  heavilyEncumbered: EncumbranceThreshold;
+};
+
+const UNENCUMBERED: EncumbrancePenalty = { speedReduction: 0, disadvantage: false };
+const ENCUMBERED: EncumbrancePenalty = { speedReduction: 10, disadvantage: false };
+const HEAVILY_ENCUMBERED: EncumbrancePenalty = { speedReduction: 20, disadvantage: true };
+
 /**
- * The weights at which the 2014 variant slows a creature: speed drops 10 feet at
- * the first and 20 feet at the second, which also imposes disadvantage on Strength,
- * Dexterity and Constitution rolls.
+ * The weights at which the 2014 variant slows a creature, and what each costs.
  *
  * Flat multiples of the Strength score, because the size rule scales carrying,
  * pushing, dragging and lifting and names these nowhere. Size still enters through
@@ -64,7 +83,27 @@ type EncumbranceThresholds = {
 export function encumbranceThresholds(strengthScore: number, size: Size): EncumbranceThresholds {
   const capacity = carryingCapacity(strengthScore, size);
   return {
-    encumbered: Math.min(strengthScore * 5, capacity),
-    heavilyEncumbered: Math.min(strengthScore * 10, capacity),
+    encumbered: { atWeight: Math.min(strengthScore * 5, capacity), ...ENCUMBERED },
+    heavilyEncumbered: { atWeight: Math.min(strengthScore * 10, capacity), ...HEAVILY_ENCUMBERED },
   };
+}
+
+/**
+ * What a creature carrying this weight suffers. Below the lighter threshold the
+ * reduction is zero rather than absent, so a caller sums it into a speed without a
+ * null check.
+ */
+export function encumbranceAt(
+  strengthScore: number,
+  size: Size,
+  carriedWeight: number,
+): EncumbrancePenalty {
+  const { encumbered, heavilyEncumbered } = encumbranceThresholds(strengthScore, size);
+  if (carriedWeight > heavilyEncumbered.atWeight) {
+    return { ...HEAVILY_ENCUMBERED };
+  }
+  if (carriedWeight > encumbered.atWeight) {
+    return { ...ENCUMBERED };
+  }
+  return { ...UNENCUMBERED };
 }

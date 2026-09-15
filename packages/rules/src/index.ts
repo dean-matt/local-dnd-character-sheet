@@ -1,6 +1,7 @@
 export type { Size } from "./carrying.ts";
 export {
   carryingCapacity,
+  encumbranceAt,
   encumbranceThresholds,
   pushDragLiftCapacity,
   SIZES,
