@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { HitDie } from "@dnd/rules";
+import { carryingCapacity, encumbranceThresholds, type HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -25,6 +25,19 @@ const ROGUE = { name: "Rogue", source: "XPHB" };
 
 /** The `subclasses` row's own name; its features and tags spell `Fiend`. */
 const FIEND_PATRON = { name: "Fiend Patron", source: "XPHB" };
+
+/** What the Half-Elf row supplies: Medium, 30 feet, and no second movement mode. */
+const raceTraits = {
+  size: { computed: "medium" },
+  speed: { computed: { walk: 30 } },
+} as const;
+
+/** The derived tree as the endpoint assembles it, with the traits under test swapped in. */
+const derivedInput = (traits: object = {}) => ({
+  hitPointMaximum: { computed: 37 },
+  ...raceTraits,
+  ...traits,
+});
 
 /** Both d8 upstream, in both editions. */
 const hitDice = new Map<string, HitDie>([
@@ -223,9 +236,61 @@ describe("hit point maximum", () => {
 
   it("has somewhere to live, overridable like any derived field", () => {
     const computed = hitPointMaximum(definition, hitDice);
-    const derived = characterDerivedSchema.parse({ hitPointMaximum: { computed } });
+    const derived = characterDerivedSchema.parse(derivedInput({ hitPointMaximum: { computed } }));
     expect(derivedValue(derived.hitPointMaximum)).toBe(37);
     expect(derivedValue({ ...derived.hitPointMaximum, manual: 45 })).toBe(45);
+  });
+});
+
+describe("size and speed", () => {
+  it("feeds the rules functions a caller would otherwise invent a size for", () => {
+    const stored = characterDefinitionSchema.parse(structuredClone(definition));
+    const size = derivedValue(characterDerivedSchema.parse(derivedInput()).size);
+
+    expect(carryingCapacity(stored.abilityScores.str, size)).toBe(120);
+    expect(encumbranceThresholds(stored.abilityScores.str, size)).toEqual({
+      encumbered: 40,
+      heavilyEncumbered: 80,
+    });
+  });
+
+  it("recomputes both when the race changes, keeping a manual size", () => {
+    const enlarged = characterDerivedSchema.parse(
+      derivedInput({ size: { computed: "medium", manual: "large" } }),
+    );
+    const asHalfling = characterDerivedSchema.parse({
+      ...enlarged,
+      size: { ...enlarged.size, computed: "small" },
+      speed: { computed: { walk: 25 } },
+    });
+
+    expect(asHalfling.size.computed).toBe("small");
+    expect(derivedValue(asHalfling.size)).toBe("large");
+    expect(derivedValue(asHalfling.speed)).toEqual({ walk: 25 });
+  });
+
+  it("carries the other movement modes a race grants", () => {
+    const winged = characterDerivedSchema.parse(
+      derivedInput({ speed: { computed: { walk: 30, fly: 30 } } }),
+    );
+    expect(derivedValue(winged.speed)).toEqual({ walk: 30, fly: 30 });
+  });
+
+  it("refuses a size the rules vocabulary does not name", () => {
+    expect(
+      characterDerivedSchema.safeParse(derivedInput({ size: { computed: "colossal" } })).success,
+    ).toBe(false);
+  });
+
+  it("requires a walking speed, and refuses a mode the vocabulary does not name", () => {
+    expect(
+      characterDerivedSchema.safeParse(derivedInput({ speed: { computed: { fly: 30 } } })).success,
+    ).toBe(false);
+    expect(
+      characterDerivedSchema.safeParse(
+        derivedInput({ speed: { computed: { walk: 30, hover: 30 } } }),
+      ).success,
+    ).toBe(false);
   });
 });
 
