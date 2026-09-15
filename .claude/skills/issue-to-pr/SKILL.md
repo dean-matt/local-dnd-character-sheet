@@ -40,10 +40,33 @@ because reranking is the user's call.
 2. **Where the issue states counts or shapes, verify them against `vendor/`** before
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
-3. **Branch** with `gh issue develop <n> --name <type>/<n>-<slug> --checkout`, then set
-   the board to `In Progress`; its own workflow waits for the pull request. `item-add`
-   returns the item an issue already has; the other three ids hold still, so read them
-   once a session.
+3. **Branch into a worktree**, so a second agent on a second issue moves neither this
+   branch nor this tree. Omitting `--checkout` leaves the caller's tree where it is. Enter
+   the worktree with `cd`, not the harness's worktree tool, whose isolation refuses every
+   `git` call a shell wrapper rewrites.
+
+   ```bash
+   main=$PWD; b=<type>/<n>-<slug>; d=.claude/worktrees/<n>
+   gh issue develop <n> --name "$b"
+   git fetch --quiet origin "$b"
+   git worktree prune
+   git worktree add --quiet "$d" "$b"
+   cd "$d" && pnpm install --frozen-lockfile && mkdir -p vendor
+   for p in vendor/5etools data/content.db .claude/settings.local.json; do
+     [ -e "$main/$p" ] && ln -sfn "$main/$p" "$p"
+   done
+   ```
+
+   Install costs seconds, because pnpm hardlinks from the shared store. Pruning clears
+   what a dead run left; a worktree still on disk means another agent holds this issue, so
+   let the add fail rather than force it. Git ignores all three linked paths, so a new
+   worktree has none of them and `vendor/` is not even a directory; skip each one the main
+   checkout lacks. Never link `characters.db` — two agents writing it collide. Every later
+   step runs from the worktree, and step 14 removes it.
+
+   Then set the board to `In Progress`; its own workflow waits for the pull request.
+   `item-add` returns the item an issue already has; the other three ids hold still, so
+   read them once a session.
 
    ```bash
    gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
@@ -101,7 +124,11 @@ because reranking is the user's call.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
-    on nobody. Then report what landed, what each review found, and what `gh pr checks`
+    on nobody. Then remove the worktree: `cd "$main" && git worktree remove "$d"` refuses
+    rather than discards anything step 12 left uncommitted. The branch and the pull
+    request stand, because this skill does not merge.
+
+    Then report what landed, what each review found, and what `gh pr checks`
     says, reporting a run still in flight as in flight rather than waiting on it. A red
     run is the user's to weigh.
 
