@@ -82,8 +82,8 @@ because reranking is the user's call.
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
-    A pass that returns nothing posts nothing and applies nothing, so step 14 labels
-    `review:approved`. A later pass adds, leaving earlier threads alone.
+    A pass that returns nothing posts nothing and applies nothing, so step 12 is skipped
+    and step 14 does the labelling. A later pass adds, leaving earlier threads alone.
 12. **Label, apply, reply.** Swap `review:changes-requested` on first, so the mark and
     the findings stand together; one `gh pr edit <n> --add-label <one> --remove-label
     <other>` does both halves. Then apply what survives, `pnpm check`, prose pass what
