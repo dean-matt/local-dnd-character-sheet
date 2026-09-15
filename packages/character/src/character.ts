@@ -80,6 +80,12 @@ const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
  */
 const levelEntrySchema = z.strictObject({
   class: contentRefSchema,
+  /**
+   * The `subclasses` row's own name — `Fiend Patron`, not the `Fiend` its features and
+   * tags spell. A character names a row by that row's key, and the short name keys no
+   * row; the catalog carries it as a column so a sheet reaches the features through the
+   * subclass. The level's own class supplies the other two parts of that key.
+   */
   subclass: contentRefSchema.optional(),
   /**
    * The roll taken in place of the class table's fixed value. Bounded here by the

@@ -23,6 +23,9 @@ import {
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const ROGUE = { name: "Rogue", source: "XPHB" };
 
+/** The `subclasses` row's own name; its features and tags spell `Fiend`. */
+const FIEND_PATRON = { name: "Fiend Patron", source: "XPHB" };
+
 /** Both d8 upstream, in both editions. */
 const hitDice = new Map<string, HitDie>([
   [refKey(WARLOCK), 8],
@@ -35,7 +38,7 @@ const definition: CharacterDefinition = {
   levels: [
     { class: WARLOCK },
     { class: WARLOCK, rolled: 6 },
-    { class: WARLOCK, subclass: { name: "Fiend", source: "XPHB" } },
+    { class: WARLOCK, subclass: FIEND_PATRON },
     { class: ROGUE, rolled: 3 },
     { class: ROGUE },
   ],
