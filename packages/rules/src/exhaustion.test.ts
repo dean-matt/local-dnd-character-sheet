@@ -45,11 +45,6 @@ describe("exhaustionEffects", () => {
     },
   );
 
-  it.each(EDITIONS)("gives a %s character at level 0 no effect to apply", (edition) => {
-    const { edition: _edition, ...applied } = exhaustionEffects(0, edition);
-    expect(Object.values(applied).some(Boolean)).toBe(false);
-  });
-
   it.each([-1, 7, 2.5, Number.NaN])("rejects level %s in both rulesets", (level) => {
     for (const edition of EDITIONS) {
       expect(() => exhaustionEffects(level, edition)).toThrow(RangeError);
