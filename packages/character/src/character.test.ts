@@ -334,3 +334,37 @@ describe("a key the schema does not name", () => {
     expect(code).not.toMatch(/\.(object|looseObject)\(/);
   });
 });
+
+describe("exhaustion", () => {
+  it("is held as a level, with no reference in the condition list", () => {
+    const parsed = characterStateSchema.parse(
+      structuredClone({ ...state, conditions: [], exhaustion: 3 }),
+    );
+
+    expect(parsed.exhaustion).toBe(3);
+    expect(parsed.conditions).toEqual([]);
+  });
+
+  /** The two catalog sources, and a homebrew one the name-alone match still has to catch. */
+  it.each(["PHB", "XPHB", "hb_conditions"])(
+    "rejects the %s condition row beside the level",
+    (source) => {
+      const both = { ...state, conditions: [{ name: "Exhaustion", source }] };
+      expect(characterStateSchema.safeParse(both).success).toBe(false);
+    },
+  );
+
+  it("rejects the row even where the level says zero", () => {
+    const silent = {
+      ...state,
+      conditions: [{ name: "Exhaustion", source: "XPHB" }],
+      exhaustion: 0,
+    };
+    expect(characterStateSchema.safeParse(silent).success).toBe(false);
+  });
+
+  it("accepts every other condition row", () => {
+    const prone = { ...state, conditions: [{ name: "Prone", source: "XPHB" }] };
+    expect(characterStateSchema.safeParse(prone).success).toBe(true);
+  });
+});
