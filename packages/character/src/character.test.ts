@@ -17,7 +17,7 @@ import {
   resourceSchema,
   spellSlotSchema,
   totalLevel,
-} from "./character.ts";
+} from "./index.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const ROGUE = { name: "Rogue", source: "XPHB" };

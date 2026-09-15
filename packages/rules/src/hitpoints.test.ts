@@ -5,7 +5,7 @@ import {
   type HitPointLevel,
   hitDiceRecovered,
   maxHitPoints,
-} from "./hitpoints.ts";
+} from "./index.ts";
 
 const levels = (die: HitDie, count: number): HitPointLevel[] =>
   Array.from({ length: count }, () => ({ die }));

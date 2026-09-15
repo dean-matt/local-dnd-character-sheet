@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { abilityModifier, passiveScore, proficiencyBonus } from "./core.ts";
+import { abilityModifier, passiveScore, proficiencyBonus } from "./index.ts";
 
 describe("abilityModifier", () => {
   it.each([

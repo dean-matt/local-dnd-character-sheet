@@ -7,7 +7,7 @@
  * second pool.
  */
 
-export type RolledDie = {
+type RolledDie = {
   faces: number;
   value: number;
   /** False for a die discarded by a keep clause, advantage, or disadvantage. */
@@ -31,7 +31,7 @@ export type Roll = {
  * A mode rather than notation: the sheet knows a roll is a d20 test before any notation
  * exists, and `2d20kh1` leaves the log unable to explain the second die.
  */
-export type RollMode = "normal" | "advantage" | "disadvantage";
+type RollMode = "normal" | "advantage" | "disadvantage";
 
 export type RollOptions = {
   mode?: RollMode;

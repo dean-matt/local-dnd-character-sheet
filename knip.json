@@ -5,16 +5,20 @@
       "entry": ["tests/**/*.test.ts", "scripts/*.mjs", "e2e/**/*.spec.ts"]
     },
     "packages/rules": {
-      "entry": ["src/**/*.test.ts"]
+      "entry": ["src/**/*.test.ts"],
+      "includeEntryExports": true
     },
     "packages/character": {
-      "entry": ["src/**/*.test.ts"]
+      "entry": ["src/**/*.test.ts"],
+      "includeEntryExports": true
     },
     "packages/dice": {
-      "entry": ["src/**/*.test.ts"]
+      "entry": ["src/**/*.test.ts"],
+      "includeEntryExports": true
     },
     "packages/tags": {
-      "entry": ["src/**/*.test.ts"]
+      "entry": ["src/**/*.test.ts"],
+      "includeEntryExports": true
     },
     "packages/content": {},
     "packages/api": {
