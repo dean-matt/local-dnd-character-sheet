@@ -234,8 +234,8 @@ export const characterDefinitionSchema = z.strictObject({
   inventory: z.array(inventoryEntrySchema),
   spells: z.array(spellEntrySchema),
   /**
-   * No uniqueness rule: the 2024 ruleset repeats `Ability Score Improvement` (XPHB), so
-   * a list refusing a second copy would make a legal character unstorable.
+   * The 2024 ruleset repeats `Ability Score Improvement` (XPHB), so the list accepts a
+   * duplicate that a uniqueness rule would make unstorable.
    */
   feats: z.array(entryRefSchema).default([]),
   optionalFeatures: z

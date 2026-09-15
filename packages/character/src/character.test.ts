@@ -341,29 +341,37 @@ describe("optional features", () => {
   });
 
   const FIGHTER = { name: "Fighter", source: "PHB" };
-  const BATTLE_MASTER = { name: "Battle Master", source: "PHB" };
+  /** The Fighter subclass that offers `FS:F`, at level 10; Battle Master offers `MV:B`. */
+  const CHAMPION = { name: "Champion", source: "PHB" };
 
   it.each([
     ["a class", { kind: "class", ref: FIGHTER }],
     [
       "a subclass, beside the class its row is keyed on",
-      {
-        kind: "subclass",
-        ref: BATTLE_MASTER,
-        class: FIGHTER,
-      },
+      { kind: "subclass", ref: CHAMPION, class: FIGHTER },
     ],
     ["a feat", { kind: "feat", ref: { name: "Fighting Initiate", source: "TCE" } }],
-    [
-      "an optional feature",
-      {
-        kind: "optionalFeature",
-        ref: { name: "Superior Technique", source: "TCE" },
-      },
-    ],
-  ])("records %s as the grantor", (_kind, grantedBy) => {
+  ])("records %s as the grantor of a fighting style", (_kind, grantedBy) => {
     const picked = { ...definition, optionalFeatures: [pick("FS:F", grantedBy)] };
     expect(characterDefinitionSchema.parse(structuredClone(picked))).toEqual(picked);
+  });
+
+  /** A fighting style that grants a maneuver, so the pick it entitles is an `MV:B`. */
+  it("records an optional feature as the grantor, which Superior Technique is", () => {
+    const riposte = {
+      ...definition,
+      optionalFeatures: [
+        {
+          ref: { name: "Riposte", source: "PHB" },
+          featureType: "MV:B",
+          grantedBy: {
+            kind: "optionalFeature",
+            ref: { name: "Superior Technique", source: "TCE" },
+          },
+        },
+      ],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(riposte))).toEqual(riposte);
   });
 
   it("rejects a grantor kind nothing in the catalog grants from", () => {
@@ -377,17 +385,22 @@ describe("optional features", () => {
   it("rejects a subclass grantor naming no class, since 124 subclass rows need one", () => {
     const short = {
       ...definition,
-      optionalFeatures: [pick("FS:F", { kind: "subclass", ref: BATTLE_MASTER })],
+      optionalFeatures: [pick("FS:F", { kind: "subclass", ref: CHAMPION })],
     };
     expect(characterDefinitionSchema.safeParse(short).success).toBe(false);
   });
 
+  /** What a Fighter 1 / Bard 3 of that college holds: `Dueling` twice, once per type. */
   it("keeps one option picked under two types, which spends two entitlements", () => {
     const both = {
       ...definition,
       optionalFeatures: [
         pick("FS:F", { kind: "class", ref: FIGHTER }),
-        pick("FS:B", { kind: "class", ref: { name: "Bard", source: "PHB" } }),
+        pick("FS:B", {
+          kind: "subclass",
+          ref: { name: "College of Swords", source: "XGE" },
+          class: { name: "Bard", source: "PHB" },
+        }),
       ],
     };
     expect(characterDefinitionSchema.parse(structuredClone(both)).optionalFeatures).toHaveLength(2);
