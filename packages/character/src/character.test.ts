@@ -290,11 +290,15 @@ describe("a key the schema does not name", () => {
   /**
    * The parses above each name a schema. This one holds the schema added next: an open
    * object anywhere in the file reopens the hole, and a parse of a fixed shape misses it.
+   *
+   * Comments come out first, so that prose naming the forbidden call — as the module
+   * doc above this one has every reason to — stays free to say it.
    */
   it("keeps every object in the file strict, including the one added next", async () => {
     const source = await readFile(new URL("./character.ts", import.meta.url), "utf8");
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*/g, "");
 
-    expect(source).toContain("z.strictObject(");
-    expect(source).not.toMatch(/\.(object|looseObject)\(/);
+    expect(code).toContain("z.strictObject(");
+    expect(code).not.toMatch(/\.(object|looseObject)\(/);
   });
 });
