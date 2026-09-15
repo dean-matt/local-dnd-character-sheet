@@ -70,6 +70,7 @@ const definition: CharacterDefinition = {
     { ref: { name: "Dagger", source: "XPHB" }, quantity: 2, equipped: true, attuned: false },
     { ref: { homebrewId: "hb_01" }, quantity: 1, equipped: false, attuned: true },
   ],
+  money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   spells: [
     {
       ref: { name: "Eldritch Blast", source: "XPHB" },
@@ -77,6 +78,8 @@ const definition: CharacterDefinition = {
       origin: WARLOCK,
     },
   ],
+  appearance: { age: "24", height: "5'6\"", eyes: "green" },
+  notes: "Owes the Clasp a favor.",
 };
 
 const state: CharacterState = {
@@ -141,6 +144,149 @@ describe("subrace", () => {
   it("rejects the empty name a base variant's row is keyed on", () => {
     const base = { ...elf, subrace: { name: "", source: "PHB" } };
     expect(characterDefinitionSchema.safeParse(base).success).toBe(false);
+  });
+});
+
+describe("money", () => {
+  it("keeps the coins the character holds rather than one converted total", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+    expect(parsed.money).toEqual({ copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 });
+  });
+
+  it("counts a denomination the character has none of as zero", () => {
+    const gold = { ...definition, money: { gold: 41 } };
+    expect(characterDefinitionSchema.parse(gold).money).toEqual({
+      copper: 0,
+      silver: 0,
+      electrum: 0,
+      gold: 41,
+      platinum: 0,
+    });
+  });
+
+  it("rejects a debt and a fraction of a coin", () => {
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, money: { gold: -1 } }).success,
+    ).toBe(false);
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, money: { gold: 1.5 } }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a denomination no ruleset mints", () => {
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, money: { adamantine: 1 } }).success,
+    ).toBe(false);
+  });
+});
+
+describe("alignment", () => {
+  /** Two closed lists would each refuse the other, and neither reaches a setting's own. */
+  it.each(["Chaotic Neutral", "CN", "Unaligned", "Sigil-neutral"])(
+    "accepts %s, which no enum would hold at once",
+    (alignment) => {
+      const parsed = characterDefinitionSchema.parse({ ...definition, alignment });
+      expect(parsed.alignment).toBe(alignment);
+    },
+  );
+
+  it("stays absent for a character whose ruleset never asked", () => {
+    expect(characterDefinitionSchema.parse(structuredClone(definition))).not.toHaveProperty(
+      "alignment",
+    );
+  });
+
+  it("rejects the empty string, which says nothing an absent field does not", () => {
+    expect(characterDefinitionSchema.safeParse({ ...definition, alignment: "" }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("appearance", () => {
+  it("keeps each box the printed sheet prints apart from the others", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+    expect(parsed.appearance).toEqual({ age: "24", height: "5'6\"", eyes: "green" });
+  });
+
+  it("leaves a box the player skipped absent rather than blank", () => {
+    const parsed = characterDefinitionSchema.parse({
+      ...definition,
+      appearance: { hair: "black" },
+    });
+    expect(parsed.appearance).toEqual({ hair: "black" });
+  });
+
+  it("rejects a box the printed sheet does not have", () => {
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, appearance: { tattoos: "a raven" } })
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe("notes", () => {
+  it("survives the JSON round trip the database column makes, newlines included", () => {
+    const written = "Line one.\n\n  Line two, indented.\nLine three.\n";
+    const stored = { ...definition, notes: written };
+    const parsed = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(stored)));
+
+    expect(parsed.notes).toBe(written);
+  });
+
+  it("has no length ceiling", () => {
+    const long = "word ".repeat(20_000);
+    expect(characterDefinitionSchema.parse({ ...definition, notes: long }).notes).toBe(long);
+  });
+});
+
+describe("deity", () => {
+  /** Upstream writes this pair twice, one god in each pantheon. */
+  const celtic = { name: "Oghma", source: "PHB", pantheon: "Celtic" };
+  const faerunian = { name: "Oghma", source: "PHB", pantheon: "Forgotten Realms" };
+
+  it("names the pantheon that tells two gods of one pair apart", () => {
+    const first = characterDefinitionSchema.parse({ ...definition, deity: celtic });
+    const second = characterDefinitionSchema.parse({ ...definition, deity: faerunian });
+
+    expect(first.deity).toEqual(celtic);
+    expect(second.deity).toEqual(faerunian);
+    expect(first.deity).not.toEqual(second.deity);
+  });
+
+  it("rejects the pair alone, which names two rows", () => {
+    const pair = { ...definition, deity: { name: "Oghma", source: "PHB" } };
+    expect(characterDefinitionSchema.safeParse(pair).success).toBe(false);
+  });
+
+  /** It extends a reference rather than restating one, so it inherits that strictness. */
+  it("stays strict, failing a key it does not name", () => {
+    const domain = { ...definition, deity: { ...celtic, domains: ["Knowledge"] } };
+    expect(characterDefinitionSchema.safeParse(domain).success).toBe(false);
+  });
+
+  it("stays absent for a character who worships nobody", () => {
+    expect(characterDefinitionSchema.parse(structuredClone(definition))).not.toHaveProperty(
+      "deity",
+    );
+  });
+});
+
+describe("a character stored before these fields existed", () => {
+  it("parses unchanged, defaulting every one of them", () => {
+    const { money: _money, appearance: _appearance, notes: _notes, ...older } = definition;
+    const parsed = characterDefinitionSchema.parse(structuredClone(older));
+
+    expect(parsed.money).toEqual({
+      copper: 0,
+      silver: 0,
+      electrum: 0,
+      gold: 0,
+      platinum: 0,
+    });
+    expect(parsed.appearance).toEqual({});
+    expect(parsed.notes).toBe("");
+    expect(parsed).toMatchObject(older);
   });
 });
 
@@ -370,9 +516,9 @@ describe("a key the schema does not name", () => {
   });
 
   it("fails the definition parse", () => {
-    expect(characterDefinitionSchema.safeParse({ ...definition, alignment: "CN" }).success).toBe(
-      false,
-    );
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, hitPointMaximum: 37 }).success,
+    ).toBe(false);
   });
 
   it("fails inside a nested object, not only at the top level", () => {
