@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -260,7 +261,7 @@ describe("invariants a duplicate row would break", () => {
 });
 
 describe("a key the schema does not name", () => {
-  it("fails the state parse rather than vanishing on the next save", () => {
+  it("fails the state parse rather than letting the key vanish on the next save", () => {
     const newer = { ...state, concentration: { name: "Bless", source: "XPHB" } };
     const result = characterStateSchema.safeParse(newer);
 
@@ -284,5 +285,16 @@ describe("a key the schema does not name", () => {
 
   it("fails a derived field, whose two states have no room for a third", () => {
     expect(derivedSchema(z.int()).safeParse({ computed: 38, cleared: true }).success).toBe(false);
+  });
+
+  /**
+   * The parses above each name a schema. This one holds the schema added next: an open
+   * object anywhere in the file reopens the hole, and a parse of a fixed shape misses it.
+   */
+  it("keeps every object in the file strict, including the one added next", async () => {
+    const source = await readFile(new URL("./character.ts", import.meta.url), "utf8");
+
+    expect(source).toContain("z.strictObject(");
+    expect(source).not.toMatch(/\.(object|looseObject)\(/);
   });
 });

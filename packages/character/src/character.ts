@@ -12,8 +12,9 @@
  *
  * Every object here is strict. The sheet reads a definition or a state out of a JSON
  * column, edits it and writes the whole column back, so an open object drops a key it
- * does not name and the next save deletes that key from the database. Refusing the
- * row loses nothing and says so.
+ * does not name and the next save deletes that key from the database. Refusing the row
+ * loses nothing and says so. The derived tree is assembled rather than stored, and
+ * strict for the plainer reason: a key nothing named means the caller built it wrong.
  */
 import {
   abilityModifier,
