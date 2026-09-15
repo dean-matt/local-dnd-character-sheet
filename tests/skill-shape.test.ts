@@ -93,7 +93,8 @@ const FRONTMATTER = /^---\n([\s\S]*?)\n---(?:\n|$)/;
 /**
  * The frontmatter as a mapping, or a throw naming what stopped it. The loader parses
  * YAML, so matching the file text proves nothing: a description holding an unquoted
- * colon-space reads as a nested mapping, matches every regex, and does not load.
+ * colon-space reads as a nested mapping, so a skill matching every regex still fails
+ * to load.
  */
 function frontmatter(body: string): Record<string, unknown> {
   const matched = FRONTMATTER.exec(body);
@@ -112,12 +113,12 @@ function frontmatter(body: string): Record<string, unknown> {
 }
 
 describe("frontmatter", () => {
-  const document = (lines: string) => `---\n${lines}\n---\n\n# Heading\n`;
+  const skillFile = (lines: string) => `---\n${lines}\n---\n\n# Heading\n`;
 
   it("rejects a description holding an unquoted colon", () => {
     expect(() =>
       frontmatter(
-        document("name: audit-pr\ndescription: Review one pull request: the ladder, the tests."),
+        skillFile("name: audit-pr\ndescription: Review one pull request: the ladder, the tests."),
       ),
     ).toThrow(/YAML rejects/);
   });
@@ -125,7 +126,7 @@ describe("frontmatter", () => {
   it("accepts that description quoted", () => {
     expect(
       frontmatter(
-        document('name: audit-pr\ndescription: "Review one pull request: the ladder, the tests."'),
+        skillFile('name: audit-pr\ndescription: "Review one pull request: the ladder, the tests."'),
       ),
     ).toEqual({
       name: "audit-pr",
@@ -138,7 +139,7 @@ describe("frontmatter", () => {
   });
 
   it("rejects frontmatter that is not a mapping", () => {
-    expect(() => frontmatter(document("- add-endpoint\n- audit-pr"))).toThrow(/not a mapping/);
+    expect(() => frontmatter(skillFile("- add-endpoint\n- audit-pr"))).toThrow(/not a mapping/);
   });
 });
 

@@ -166,8 +166,9 @@ a whole workflow carries about as much as the file that indexes it.
 
 That test parses the frontmatter rather than matching the file text, because a regex
 proves nothing about the mapping a loader reads: a description holding an unquoted
-colon-space matches both `name:` and `description:` and still does not load. The test
-also holds `name` to the directory, the other way to write a skill nobody can invoke.
+colon-space matches both `name:` and `description:`, and the skill still fails to load.
+The test also holds `name` to the directory, because a mismatch is the other way to write
+a skill nobody can invoke.
 
 A skill may carry reference documents beside its `SKILL.md`. Banning the second file is
 the weaker proxy and costs more than it holds: detail only one skill needs then has
