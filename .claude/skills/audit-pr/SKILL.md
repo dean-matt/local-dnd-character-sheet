@@ -119,7 +119,7 @@ findings left ends the loop. Every finding goes to the caller's report.
 
 ## What this skill will not do
 
-**Touch the caller's tree.** A checkout there strands step 11 on a detached HEAD, where
+**Touch the caller's tree.** A checkout there strands step 12 on a detached HEAD, where
 the branch-name hook goes quiet and a commit lands anywhere. Running something to settle
 a claim is not touching it — the worktree has no `node_modules`, so run a test or a
 scratch repository where it works, and change nothing tracked.
