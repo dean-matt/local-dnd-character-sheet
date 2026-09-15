@@ -204,7 +204,7 @@ describe("alignment", () => {
 });
 
 describe("appearance", () => {
-  it("keeps each box the printed sheet prints apart from the others", () => {
+  it("keeps each box the printed sheet has apart from the others", () => {
     const parsed = characterDefinitionSchema.parse(structuredClone(definition));
     expect(parsed.appearance).toEqual({ age: "24", height: "5'6\"", eyes: "green" });
   });
