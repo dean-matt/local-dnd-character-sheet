@@ -12,7 +12,9 @@
  * rules are word for word the 2014 ones.
  *
  * Stabilizing clears both counts, as both rulesets say, so a character who drops again
- * starts from zero.
+ * starts from zero. Three in a column therefore reaches these functions only from storage,
+ * where a sheet holds the pips it is drawing. A state that arrives settled is answered
+ * rather than rolled for — without that, a 20 revives the character the last roll killed.
  */
 
 const REQUIRED = 3;
@@ -48,6 +50,20 @@ function assertSaves(saves: DeathSaves): void {
   }
 }
 
+/**
+ * Three of a kind on arrival, which no roll moves. Death wins where both columns read
+ * three; no path here produces that pair.
+ */
+function alreadySettled(saves: DeathSaves): DeathSaveResult | undefined {
+  if (saves.failures >= REQUIRED) {
+    return { ...saves, outcome: "dead" };
+  }
+  if (saves.successes >= REQUIRED) {
+    return { successes: 0, failures: 0, outcome: "stable" };
+  }
+  return undefined;
+}
+
 /** A fourth failure is the same death as the third, so the stored count stops at three. */
 function settle(successes: number, failures: number): DeathSaveResult {
   if (failures >= REQUIRED) {
@@ -65,6 +81,10 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
   if (!Number.isInteger(roll) || roll < 1 || roll > D20_FACES) {
     throw new RangeError(`A d20 rolls 1-${D20_FACES}, got ${roll}`);
   }
+  const settled = alreadySettled(saves);
+  if (settled) {
+    return settled;
+  }
   if (roll === D20_FACES) {
     return { successes: 0, failures: 0, outcome: "conscious" };
   }
@@ -75,11 +95,19 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
 }
 
 /**
- * Damage taken at 0 hit points. Whether the damage kills outright by equalling the hit
- * point maximum is the caller's to judge, because that rule reads a number this one
- * never sees.
+ * Damage taken at 0 hit points. Only death short-circuits here, because damage ends being
+ * stable in both rulesets and starts the saves again. So three successes on arrival clear,
+ * and the failure lands on an empty sheet.
+ *
+ * Whether the damage kills outright by equalling the hit point maximum is the caller's to
+ * judge, because that rule reads a number this one never sees.
  */
 export function damageAtZeroHitPoints(saves: DeathSaves, critical: boolean): DeathSaveResult {
   assertSaves(saves);
-  return settle(saves.successes, saves.failures + (critical ? DOUBLE_FAILURE : 1));
+  const settled = alreadySettled(saves);
+  if (settled?.outcome === "dead") {
+    return settled;
+  }
+  const counts = settled ?? saves;
+  return settle(counts.successes, counts.failures + (critical ? DOUBLE_FAILURE : 1));
 }
