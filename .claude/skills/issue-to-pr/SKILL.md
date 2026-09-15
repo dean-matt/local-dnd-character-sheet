@@ -41,9 +41,8 @@ because reranking is the user's call.
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch into a worktree**, so a second agent on a second issue moves neither this
-   branch nor this tree. Omitting `--checkout` leaves the caller's tree where it is. Enter
-   the worktree with `cd`, not the harness's worktree tool, whose isolation refuses every
-   `git` call a shell wrapper rewrites.
+   branch nor this tree. Enter it with `cd`, not the harness's worktree tool: that tool's
+   isolation refuses every `git` call a shell wrapper rewrites.
 
    ```bash
    main=$(git rev-parse --show-toplevel); b=<type>/<n>-<slug>; d=.claude/worktrees/<n>
@@ -57,13 +56,13 @@ because reranking is the user's call.
    done
    ```
 
-   Pruning clears a registration whose directory has gone, so the add fails on one still
-   on disk — another agent holding this issue, or a crash that kept its directory. Let it
-   fail either way, and remove the directory by hand once `git worktree list` and the
-   other sessions agree nobody holds it. Git ignores all three linked paths, so a new
-   worktree has none of them and `vendor/` is not even a directory. Never link
-   `characters.db` — two agents writing it collide. Every later step runs from the
-   worktree, and step 14 removes it.
+   `gh issue develop` creates the branch on the remote only, so the fetch is what `add`
+   branches from. Pruning clears a registration whose directory has gone, leaving the add
+   to fail on one still on disk — another agent holding this issue, or a crash that kept
+   its directory. Let it fail either way and clear the directory by hand once no agent
+   holds it. A new worktree has none of the three linked paths, and `vendor/` is not even
+   a directory. Never link `characters.db` — two agents writing it collide. Every later
+   step runs from the worktree, and step 14 removes it.
 
    Then set the board to `In Progress`; its own workflow waits for the pull request.
    `item-add` returns the item an issue already has; the other three ids hold still, so
@@ -125,10 +124,9 @@ because reranking is the user's call.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
-    on nobody. Then remove the worktree, from the main checkout three levels above it:
+    on nobody. Then remove the worktree from three levels up:
     `cd ../../.. && git worktree remove .claude/worktrees/<n>` refuses rather than
-    discarding anything step 12 left uncommitted. The branch and the pull request stand,
-    because this skill does not merge.
+    discarding anything step 12 left uncommitted. The branch and the pull request stand.
 
     Then report what landed, what each review found, and what `gh pr checks`
     says, reporting a run still in flight as in flight rather than waiting on it. A red
