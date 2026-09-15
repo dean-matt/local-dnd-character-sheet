@@ -15,6 +15,7 @@ export {
 } from "./core.ts";
 export type { Edition } from "./edition.ts";
 export { EDITIONS } from "./edition.ts";
+export { exhaustionEffects } from "./exhaustion.ts";
 export type { HitDie, HitPointLevel } from "./hitpoints.ts";
 export { averageHitPoints, HIT_DICE, hitDiceRecovered, maxHitPoints } from "./hitpoints.ts";
 export { RESET_TRIGGERS, resetsOn } from "./rest.ts";
