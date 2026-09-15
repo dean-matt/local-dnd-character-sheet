@@ -83,12 +83,37 @@ describe("deathSave", () => {
     expect(() => deathSave(saves, 10)).toThrow(RangeError);
   });
 
-  it("stabilizes a character who arrives already holding three successes", () => {
+  it("answers a state already holding three successes without reading the roll", () => {
     expect(deathSave({ successes: 3, failures: 0 }, 5)).toEqual({
       successes: 0,
       failures: 0,
       outcome: "stable",
     });
+  });
+
+  it.each([20, 15, 1])("leaves a character already dead dead on a %i", (roll) => {
+    expect(deathSave({ successes: 2, failures: 3 }, roll)).toEqual({
+      successes: 2,
+      failures: 3,
+      outcome: "dead",
+    });
+  });
+
+  it("round-trips its own dead result rather than reviving on a natural 20", () => {
+    const { outcome, ...counts } = deathSave({ successes: 2, failures: 2 }, 9);
+    expect(outcome).toBe("dead");
+    expect(deathSave(counts, 20).outcome).toBe("dead");
+  });
+
+  it.each([1, 5, 10, 15, 20])("never returns three in both columns, on a %i", (roll) => {
+    for (const successes of [0, 1, 2, 3]) {
+      for (const failures of [0, 1, 2, 3]) {
+        const result = deathSave({ successes, failures }, roll);
+        expect(successes === 3 && failures === 3).toBe(
+          result.successes === 3 && result.failures === 3,
+        );
+      }
+    }
   });
 });
 
@@ -134,5 +159,24 @@ describe("damageAtZeroHitPoints", () => {
     const saves = { successes: 0, failures: 0 };
     delete (saves as Record<string, number>)[label];
     expect(() => damageAtZeroHitPoints(saves, false)).toThrow(RangeError);
+  });
+
+  it.each([false, true])("leaves a character already dead dead, critical %s", (critical) => {
+    expect(damageAtZeroHitPoints({ successes: 2, failures: 3 }, critical)).toEqual({
+      successes: 2,
+      failures: 3,
+      outcome: "dead",
+    });
+  });
+
+  it.each([
+    [false, 1],
+    [true, 2],
+  ])("ends being stable and records %s damage as %i failure(s)", (critical, failures) => {
+    expect(damageAtZeroHitPoints({ successes: 3, failures: 0 }, critical)).toEqual({
+      successes: 0,
+      failures,
+      outcome: "dying",
+    });
   });
 });
