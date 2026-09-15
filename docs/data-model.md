@@ -113,8 +113,8 @@ legally take filters on `class_source` alone. **Filtering a subclass or a featur
 Berserker. `subclasses.short_name` carries the short form so the join is
 `(short_name, source, class_name, class_source)` in SQL rather than a `json_extract` —
 the same four parts the `subclasses` key uses, with the short name in place of the full one.
-A character stores the full one, because it names a row rather than a join — the level's
-own class carries the other two parts, and the short name keys no row.
+A character stores the full name, because it names a row rather than a join — the level's
+own class carries the other two parts, and the short name keys the features instead.
 
 **Overrides are sparse.** An absent `field_overrides` row means "use the computed
 value". Writing an override never changes the computed side, and clearing one restores
