@@ -3,7 +3,7 @@
  *
  *   CharacterDefinition   who the character is — stored in `characters.definition`
  *   CharacterState        what is true right now — stored in `character_state.state`
- *   Derived<T>            a number the sheet computes, plus the value a user typed
+ *   Derived<T>            what the sheet computes, plus the value a user typed
  *                         over it — the computed side is never overwritten
  *
  * Catalog content is referenced by `(name, source)` and never copied, so
@@ -23,6 +23,7 @@ import {
   type HitDie,
   maxHitPoints,
   RESET_TRIGGERS,
+  SIZES,
 } from "@dnd/rules";
 import { z } from "zod";
 
@@ -235,12 +236,37 @@ export const characterStateSchema = z.strictObject({
 // Derived --------------------------------------------------------------------
 
 /**
- * Numbers the sheet computes, each beside the value a user typed over it. Assembled
- * on read rather than stored: `computed` comes from the definition and `manual` from
- * `field_overrides`.
+ * Feet per round, by movement mode. Every race grants a walking speed, so `walk` is
+ * required and the rest stay absent until a race grants them. No upstream race grants a
+ * burrowing speed, so an override is the only thing that reaches `burrow`.
+ */
+const speedSchema = z.strictObject({
+  walk: z.int().min(0),
+  burrow: z.int().min(0).optional(),
+  climb: z.int().min(0).optional(),
+  fly: z.int().min(0).optional(),
+  swim: z.int().min(0).optional(),
+});
+
+/**
+ * What the sheet computes, each beside the value a user typed over it. Assembled on
+ * read rather than stored: `computed` comes from the definition and the catalog rows it
+ * names, `manual` from `field_overrides`.
  */
 export const characterDerivedSchema = z.strictObject({
   hitPointMaximum: derivedSchema(z.int().min(1)),
+  /**
+   * The race's size, in the vocabulary `carryingCapacity` reads, so the two cannot
+   * drift. A subrace never states one — all 98 upstream rows leave it to the race — so
+   * a race change moves it and nothing else does.
+   */
+  size: derivedSchema(z.enum(SIZES)),
+  /**
+   * The race's speeds, one field rather than one per mode because a subrace that states
+   * a speed replaces the set outright rather than adding to it — a Wood Elf walks 35
+   * feet, not the Elf's 30 and 5 more.
+   */
+  speed: derivedSchema(speedSchema),
 });
 
 /**
