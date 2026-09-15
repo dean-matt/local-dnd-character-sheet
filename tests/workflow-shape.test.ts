@@ -10,6 +10,11 @@ import { ROOT, read } from "./lib/doc-helpers.ts";
  * lets an upstream push turn every pull request red. The comment beside the pin
  * asks for the version; this asserts it.
  *
+ * A major tag moves across releases as well, and is taken anyway: repointing `v5`
+ * is what the ecosystem publishes against, and four actions here are not worth a
+ * SHA to maintain by hand. The exact pin is reserved for the ref that picks a
+ * binary.
+ *
  * Parses each workflow rather than matching its text: a `uses:` inside a comment
  * or a run block is not a step, and a regex cannot tell the difference.
  */
@@ -49,7 +54,7 @@ describe(".github/workflows/", () => {
     );
     expect(
       moving.map(({ uses }) => uses),
-      "a branch ref lets an upstream push decide what CI runs",
+      "a branch ref runs whatever upstream last pushed there",
     ).toEqual([]);
   });
 
