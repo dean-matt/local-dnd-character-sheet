@@ -41,7 +41,7 @@ because reranking is the user's call.
    designing against them: an issue states them from an earlier read and can be wrong
    about its own corpus. Say which are wrong, or that `vendor/` was not there to ask.
 3. **Branch into a worktree**, so a second agent on a second issue moves neither this
-   branch nor this tree. Enter it with `cd`, not the harness's worktree tool: that tool's
+   branch nor this tree. Enter it with `cd`, not the harness's worktree tool, whose
    isolation refuses every `git` call a shell wrapper rewrites.
 
    ```bash
