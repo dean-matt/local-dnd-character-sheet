@@ -200,7 +200,7 @@ const deathSavesSchema = z.strictObject({
   failures: z.int().min(0).max(3).default(0),
 });
 
-/** The catalog's spelling in both rulesets. The list matches the name alone, so no other source admits it. */
+/** The catalog's spelling in both rulesets. The list matches the name alone, so no source can smuggle in a second one. */
 const EXHAUSTION = "Exhaustion";
 
 export const characterStateSchema = z.strictObject({
