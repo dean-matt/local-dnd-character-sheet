@@ -53,6 +53,9 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   every class but the Mystic, which is playtest and classic only.
 - **Derived character fields store the computed value beside the manual one.** A null
   `manual` is no override, so a level-up recomputes without stomping a user's edit.
+- **A rule a table bends ships its house-rule option in the same commit as the rule.**
+  `character` owns the vocabulary and an absent option means the rule as printed;
+  `rules` takes a parameter and never learns what a house rule is.
 - **`roll_log` and `undo_log` are bounded** — 200 and 50 rows per character, pruned on
   insert. They are session affordances, not audit trails.
 - **Unknown `{@tag}` values degrade to plain text.** Never throw on unrecognized markup.
