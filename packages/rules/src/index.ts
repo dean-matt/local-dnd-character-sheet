@@ -13,6 +13,7 @@ export {
   proficiencyBonus,
   proficiencyContribution,
 } from "./core.ts";
+export { damageAtZeroHitPoints, deathSave } from "./death.ts";
 export type { Edition } from "./edition.ts";
 export { EDITIONS } from "./edition.ts";
 export { exhaustionEffects } from "./exhaustion.ts";
