@@ -14,6 +14,7 @@ import {
   entryRefSchema,
   hitDicePoolSchema,
   hitPointMaximum,
+  passiveSkill,
   refKey,
   resourceSchema,
   spellSlotSchema,
@@ -22,6 +23,11 @@ import {
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const ROGUE = { name: "Rogue", source: "XPHB" };
+
+/** Upstream writes each of the eighteen skills twice, once per ruleset. */
+const DECEPTION = { name: "Deception", source: "XPHB" };
+const STEALTH = { name: "Stealth", source: "XPHB" };
+const PERCEPTION = { name: "Perception", source: "XPHB" };
 
 /** The `subclasses` row's own name; its features and tags spell `Fiend`. */
 const FIEND_PATRON = { name: "Fiend Patron", source: "XPHB" };
@@ -60,11 +66,17 @@ const definition: CharacterDefinition = {
   abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
   proficiencies: {
     savingThrows: ["wis", "cha"],
-    skills: ["Deception", "Stealth"],
+    skills: [
+      { ref: DECEPTION, level: "proficient" },
+      { ref: STEALTH, level: "expertise" },
+    ],
     armor: ["Light"],
     weapons: ["Simple"],
-    tools: ["Thieves' Tools"],
-    languages: ["Common", "Infernal"],
+    tools: [{ name: "Thieves' Tools", level: "expertise" }],
+    languages: [
+      { name: "Common", source: "XPHB" },
+      { name: "Infernal", source: "XPHB" },
+    ],
   },
   inventory: [
     { ref: { name: "Dagger", source: "XPHB" }, quantity: 2, equipped: true, attuned: false },
@@ -498,6 +510,140 @@ describe("class levels", () => {
       "Rogue",
       "Rogue",
     ]);
+  });
+});
+
+const withSkills = (skills: unknown) => ({
+  ...definition,
+  proficiencies: { ...definition.proficiencies, skills },
+});
+
+describe("proficiencies", () => {
+  it("names the row a {@skill} or {@language} token resolves against", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+
+    expect(parsed.proficiencies.skills.map((skill) => skill.ref)).toEqual([DECEPTION, STEALTH]);
+    expect(parsed.proficiencies.languages).toEqual([
+      { name: "Common", source: "XPHB" },
+      { name: "Infernal", source: "XPHB" },
+    ]);
+  });
+
+  it("rejects the bare name, which upstream writes over several rows", () => {
+    expect(characterDefinitionSchema.safeParse(withSkills(["Stealth"])).success).toBe(false);
+
+    const languages = {
+      ...definition,
+      proficiencies: { ...definition.proficiencies, languages: ["Common"] },
+    };
+    expect(characterDefinitionSchema.safeParse(languages).success).toBe(false);
+  });
+
+  it("keeps armor and weapons as the categories an item's type names", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+
+    expect(parsed.proficiencies.armor).toEqual(["Light"]);
+    expect(parsed.proficiencies.weapons).toEqual(["Simple"]);
+  });
+
+  it("records a tool's level, which a rogue's expertise in Thieves' Tools needs", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(definition));
+
+    expect(parsed.proficiencies.tools).toEqual([{ name: "Thieves' Tools", level: "expertise" }]);
+  });
+
+  it.each(["none", "half", "proficient", "expertise"])("accepts a level of %s", (level) => {
+    const parsed = characterDefinitionSchema.parse(withSkills([{ ref: STEALTH, level }]));
+
+    expect(parsed.proficiencies.skills).toEqual([{ ref: STEALTH, level }]);
+  });
+
+  it("rejects a level the vocabulary does not name", () => {
+    expect(
+      characterDefinitionSchema.safeParse(withSkills([{ ref: STEALTH, level: "double" }])).success,
+    ).toBe(false);
+  });
+
+  it("rejects the flag the level replaced, rather than storing both", () => {
+    expect(
+      characterDefinitionSchema.safeParse(
+        withSkills([{ ref: STEALTH, level: "proficient", expertise: true }]),
+      ).success,
+    ).toBe(false);
+  });
+
+  it("rejects the same skill, language or tool listed twice", () => {
+    const skills = [
+      { ref: STEALTH, level: "proficient" },
+      { ref: STEALTH, level: "expertise" },
+    ];
+    expect(characterDefinitionSchema.safeParse(withSkills(skills)).success).toBe(false);
+
+    const languages = {
+      ...definition,
+      proficiencies: {
+        ...definition.proficiencies,
+        languages: [
+          { name: "Common", source: "XPHB" },
+          { name: "Common", source: "XPHB" },
+        ],
+      },
+    };
+    expect(characterDefinitionSchema.safeParse(languages).success).toBe(false);
+
+    const tools = {
+      ...definition,
+      proficiencies: {
+        ...definition.proficiencies,
+        tools: [
+          { name: "Thieves' Tools", level: "proficient" },
+          { name: "Thieves' Tools", level: "expertise" },
+        ],
+      },
+    };
+    expect(characterDefinitionSchema.safeParse(tools).success).toBe(false);
+  });
+
+  it("holds one language under each source that reprints it", () => {
+    const both = {
+      ...definition,
+      proficiencies: {
+        ...definition.proficiencies,
+        languages: [
+          { name: "Common", source: "PHB" },
+          { name: "Common", source: "XPHB" },
+        ],
+      },
+    };
+    expect(characterDefinitionSchema.safeParse(both).success).toBe(true);
+  });
+});
+
+/** Vex is level 5, so the proficiency bonus is +3; Dexterity 16 and Charisma 17 give +3, Wisdom 12 gives +1. */
+describe("passive scores", () => {
+  it("doubles the bonus for expertise and adds it once for proficiency", () => {
+    expect(passiveSkill(definition, STEALTH, "dex")).toBe(19);
+    expect(passiveSkill(definition, DECEPTION, "cha")).toBe(16);
+  });
+
+  it("scores a skill the character is not proficient in rather than refusing it", () => {
+    expect(passiveSkill(definition, PERCEPTION, "wis")).toBe(11);
+  });
+
+  it("rounds half proficiency down, as a bard's Jack of All Trades does", () => {
+    const bard = withSkills([{ ref: STEALTH, level: "half" }]);
+
+    expect(passiveSkill(characterDefinitionSchema.parse(bard), STEALTH, "dex")).toBe(14);
+  });
+
+  it("matches on the source too, so the other ruleset's row is a different skill", () => {
+    expect(passiveSkill(definition, { name: "Stealth", source: "PHB" }, "dex")).toBe(13);
+  });
+
+  it("reads a character back out of the database column it was stored in", () => {
+    const stored = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(definition)));
+
+    expect(passiveSkill(stored, STEALTH, "dex")).toBe(19);
   });
 });
 

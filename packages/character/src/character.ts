@@ -22,6 +22,9 @@ import {
   HIT_DICE,
   type HitDie,
   maxHitPoints,
+  PROFICIENCY_LEVELS,
+  passiveScore,
+  proficiencyContribution,
   RESET_TRIGGERS,
   SIZES,
 } from "@dnd/rules";
@@ -111,13 +114,50 @@ const levelEntrySchema = z.strictObject({
 /** Exhaustive: a record keyed by an enum requires every ability to be present. */
 export const abilityScoresSchema = z.record(abilitySchema, z.int().min(1).max(30));
 
+const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
+
+/** One skill, with how proficient in it the character is. */
+const skillProficiencySchema = z.strictObject({
+  ref: contentRefSchema,
+  level: proficiencyLevelSchema,
+});
+
+/**
+ * A tool, named rather than referenced: proficiency in `Artisan's Tools` names the whole
+ * group, which upstream spells as an item type rather than an `items` row. The level is
+ * here because expertise reaches tools — a rogue takes it in Thieves' Tools — and that is
+ * what separates this field from `armor` and `weapons`.
+ */
+const toolProficiencySchema = z.strictObject({
+  name: z.string().min(1),
+  level: proficiencyLevelSchema,
+});
+
+/**
+ * The two halves are shaped differently because what they hold is. A skill and a language
+ * are catalog rows, doubled across the editions and further still by every setting that
+ * reprints them — `Common` is seven rows — so a name alone picks one arbitrarily and no
+ * `{@skill}` or `{@language}` token can resolve against it.
+ *
+ * `armor` and `weapons` stay strings because they are categories an item's `type` names
+ * rather than rows: `Light` covers every suit of light armor, where a reference would
+ * name one suit and grant proficiency in nothing else.
+ */
 const proficienciesSchema = z.strictObject({
   savingThrows: z.array(abilitySchema),
-  skills: z.array(z.string().min(1)),
+  skills: z
+    .array(skillProficiencySchema)
+    .refine((skills) => isUnique(skills, (skill) => refKey(skill.ref)), {
+      error: "the same skill is listed twice",
+    }),
   armor: z.array(z.string().min(1)),
   weapons: z.array(z.string().min(1)),
-  tools: z.array(z.string().min(1)),
-  languages: z.array(z.string().min(1)),
+  tools: z.array(toolProficiencySchema).refine((tools) => isUnique(tools, (tool) => tool.name), {
+    error: "the same tool is listed twice",
+  }),
+  languages: z.array(contentRefSchema).refine((languages) => isUnique(languages, refKey), {
+    error: "the same language is listed twice",
+  }),
 });
 
 const inventoryEntrySchema = z.strictObject({
@@ -390,6 +430,29 @@ export function hitPointMaximum(
 }
 
 type EntryRef = z.infer<typeof entryRefSchema>;
+/**
+ * The passive score for one skill: 10, the ability modifier, and whatever the character's
+ * proficiency in that skill is worth at this level.
+ *
+ * `ability` is the `skills` row's own, catalog data a character references rather than
+ * copies, the way `hitPointMaximum` takes the hit die. A skill the character lists no
+ * entry for scores as unproficient rather than throwing: every skill has a passive score,
+ * and only the proficiency is optional.
+ */
+export function passiveSkill(
+  definition: CharacterDefinition,
+  skill: ContentRef,
+  ability: Ability,
+): number {
+  const key = refKey(skill);
+  const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
+  return passiveScore(
+    abilityModifier(definition.abilityScores[ability]),
+    proficiencyContribution(totalLevel(definition), entry?.level ?? "none"),
+  );
+}
+
+export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;
 export type CharacterState = z.infer<typeof characterStateSchema>;
