@@ -70,7 +70,6 @@ const definition: CharacterDefinition = {
     { ref: { name: "Dagger", source: "XPHB" }, quantity: 2, equipped: true, attuned: false },
     { ref: { homebrewId: "hb_01" }, quantity: 1, equipped: false, attuned: true },
   ],
-  money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   spells: [
     {
       ref: { name: "Eldritch Blast", source: "XPHB" },
@@ -78,6 +77,7 @@ const definition: CharacterDefinition = {
       origin: WARLOCK,
     },
   ],
+  money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
   notes: "Owes the Clasp a favor.",
 };

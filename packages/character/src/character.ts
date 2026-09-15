@@ -127,6 +127,13 @@ const inventoryEntrySchema = z.strictObject({
   attuned: z.boolean().default(false),
 });
 
+const spellEntrySchema = z.strictObject({
+  ref: entryRefSchema,
+  prepared: z.boolean().default(false),
+  /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
+  origin: contentRefSchema.optional(),
+});
+
 /**
  * Coins, counted per denomination. A single converted total would lose which coins the
  * character holds, and a party splitting treasure divides the coins rather than the
@@ -155,13 +162,6 @@ const appearanceSchema = z
   })
   .prefault({});
 
-const spellEntrySchema = z.strictObject({
-  ref: entryRefSchema,
-  prepared: z.boolean().default(false),
-  /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
-  origin: contentRefSchema.optional(),
-});
-
 export const characterDefinitionSchema = z.strictObject({
   name: z.string().min(1),
   edition: editionSchema,
@@ -189,6 +189,10 @@ export const characterDefinitionSchema = z.strictObject({
    */
   subrace: contentRefSchema.optional(),
   background: contentRefSchema,
+  abilityScores: abilityScoresSchema,
+  proficiencies: proficienciesSchema,
+  inventory: z.array(inventoryEntrySchema),
+  spells: z.array(spellEntrySchema),
   deity: deityRefSchema.optional(),
   /**
    * Free text rather than an enum: the 2024 ruleset drops alignment from character
@@ -196,11 +200,7 @@ export const characterDefinitionSchema = z.strictObject({
    * legal character unstorable.
    */
   alignment: z.string().min(1).optional(),
-  abilityScores: abilityScoresSchema,
-  proficiencies: proficienciesSchema,
-  inventory: z.array(inventoryEntrySchema),
   money: moneySchema,
-  spells: z.array(spellEntrySchema),
   appearance: appearanceSchema,
   /** Whatever the player writes down, unbounded and stored verbatim. */
   notes: z.string().default(""),
