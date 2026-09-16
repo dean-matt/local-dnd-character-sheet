@@ -6,8 +6,8 @@ describe("armorClass", () => {
     [-1, 10],
     [0, 11],
     [4, 15],
-  ])("adds the whole modifier of %i under uncapped light armor", (dexterityModifier, expected) => {
-    expect(armorClass({ base: 11, dexterityModifier })).toBe(expected);
+  ])("adds the whole modifier of %i under light armor", (dexterityModifier, expected) => {
+    expect(armorClass({ base: 11, dexterityModifier, dexterityCap: "all" })).toBe(expected);
   });
 
   it.each([
@@ -38,6 +38,15 @@ describe("armorClass", () => {
     expect(() => armorClass({ base: 15, dexterityModifier: 0, dexterityCap })).toThrow(RangeError);
   });
 
+  it.each([
+    ["base", { base: 1.5, dexterityModifier: 0 }],
+    ["dexterityModifier", { base: 15, dexterityModifier: Number.NaN }],
+    ["shield", { base: 15, dexterityModifier: 0, shield: 0.5 }],
+    ["bonus", { base: 15, dexterityModifier: 0, bonus: Number.NaN }],
+  ])("rejects a fractional %s rather than reaching the sheet as one", (_label, parts) => {
+    expect(() => armorClass({ ...parts, dexterityCap: "all" })).toThrow(RangeError);
+  });
+
   it("stacks a shield with an armored base", () => {
     expect(armorClass({ base: 18, dexterityModifier: 0, dexterityCap: "none", shield: 2 })).toBe(
       20,
@@ -45,17 +54,17 @@ describe("armorClass", () => {
   });
 
   it("stacks a shield with an unarmored base", () => {
-    expect(armorClass({ base: 10, dexterityModifier: 3, shield: 2 })).toBe(15);
+    expect(armorClass({ base: 10, dexterityModifier: 3, dexterityCap: "all", shield: 2 })).toBe(15);
   });
 
-  it("takes one base, so an unarmored formula replaces the armored one rather than adding to it", () => {
-    expect(armorClass({ base: 10, dexterityModifier: 2, bonus: 3 })).toBe(15);
-    expect(armorClass({ base: 13, dexterityModifier: 2 })).toBe(15);
+  it("reaches the printed number for a Barbarian, Mage Armor and Chain Mail", () => {
+    expect(armorClass({ base: 10, dexterityModifier: 2, dexterityCap: "all", bonus: 3 })).toBe(15);
+    expect(armorClass({ base: 13, dexterityModifier: 2, dexterityCap: "all" })).toBe(15);
     expect(armorClass({ base: 16, dexterityModifier: 2, dexterityCap: "none" })).toBe(16);
   });
 
   it("adds a flat bonus to every form", () => {
-    expect(armorClass({ base: 11, dexterityModifier: 3, bonus: 1 })).toBe(15);
+    expect(armorClass({ base: 11, dexterityModifier: 3, dexterityCap: "all", bonus: 1 })).toBe(15);
     expect(armorClass({ base: 18, dexterityModifier: 3, dexterityCap: "none", bonus: 1 })).toBe(19);
   });
 });
