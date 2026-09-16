@@ -1,5 +1,13 @@
 [files]
+# typos walks like ripgrep and skips hidden paths, so without this nothing under
+# .github/ or .claude/ is read — including the skill prose an agent rereads at the
+# start of every task it governs.
+ignore-hidden = false
+
 extend-exclude = [
+  # Reaching hidden paths also reaches .git, whose objects are compressed binary that
+  # typos reads as prose. A worktree's .git is a file, so the pattern takes no slash.
+  ".git",
   "vendor/",
   "pnpm-lock.yaml",
   "*.db",
