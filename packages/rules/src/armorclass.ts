@@ -11,6 +11,8 @@
  * the projection over the definition and arrive here as numbers.
  */
 
+import { assertInteger } from "./integer.ts";
+
 /**
  * How much of the Dexterity modifier the base admits. A number is a ceiling rather than
  * a clamp, so a negative modifier still subtracts under medium armor's maximum of +2.
@@ -36,13 +38,6 @@ type ArmorClassParts = {
    */
   bonus?: number;
 };
-
-/** Armor class is a whole number, so this rejects a fraction rather than rounding it. */
-function assertInteger(label: string, value: number): void {
-  if (!Number.isInteger(value)) {
-    throw new RangeError(`${label} must be an integer, got ${value}`);
-  }
-}
 
 function admittedDexterity(modifier: number, cap: DexterityCap): number {
   if (cap === "none") {
