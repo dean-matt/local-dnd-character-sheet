@@ -57,9 +57,9 @@ Six conditions, each named where it fails:
 - the branch merges cleanly
 
 Merge where it exits 0. Where it does not, hand the user the condition it named and stop.
-"the branch merges cleanly" is the exception: the detail line under it says which of the
-three blocked the merge, and a branch that is behind goes to the next section rather than to
-the user. Read the pass body the script points at as well: a finding no line anchors is
+"the branch merges cleanly" is the exception: its detail line says whether the branch
+conflicts, is behind, or has a mergeability GitHub has not computed, and a behind branch
+goes to the next section rather than to the user. Read the pass body the script points at as well: a finding no line anchors is
 written there rather than on a comment.
 
 `scripts/merge-gate.mjs` holds those conditions and says what each one costs when it is
@@ -71,36 +71,40 @@ Branch protection requires a head carrying the tip of `main`, so `gh pr merge` r
 pull request that sat while another merged, whatever the rest of the gate said.
 
 ```bash
-old=$(gh pr view "$n" --json headRefOid --jq .headRefOid)
 gh api --method PUT "repos/{owner}/{repo}/pulls/$n/update-branch" --jq .message
 ```
 
 That merges `main` into the branch on the server, leaving every pushed commit where it is.
-Never rebase the branch or force push it.
+Never rebase the branch or force push it. The 422 splits two ways: `There are no new commits
+on the base branch` means the branch is already current, so carry on to the wait, and any
+other 422 is a conflict the update could not resolve. It leaves the branch untouched, and
+resolving one is a code decision this skill does not make, so stop and hand it to the user.
 
 The call answers 202 and queues the merge, so two windows follow and each hands out a
-verdict for the wrong commit. Until the head flips, `gh pr checks` still lists the old
-commit's green checks. Once it flips, the new head has no checks at all — `--watch` exits
+verdict for the wrong commit. Until the head carries `main`, `gh pr checks` still lists the
+old commit's green checks. Once it does, the new head has no checks at all — `--watch` exits
 on that, and the gate reads the same emptiness as "every check is green". Wait out both.
 
 ```bash
-for _ in $(seq 30); do
+for _ in $(seq 10); do
   sleep 10
-  [ "$(gh pr view "$n" --json headRefOid --jq .headRefOid)" != "$old" ] &&
+  head=$(gh pr view "$n" --json headRefOid --jq .headRefOid)
+  git fetch --quiet origin main "$head"
+  git merge-base --is-ancestor origin/main "$head" &&
     gh pr checks "$n" --json name --jq 'length > 0' 2>/dev/null | grep -q true &&
     { echo ready; break; }
 done
 ```
 
-No `ready` inside five minutes is a condition for the user: GitHub has scheduled nothing,
-and nothing below can judge a commit that was never built. On `ready`, go back to *Block on
-the checks* and run it and the gate again. A gate run still answering `UNKNOWN` is the
-server-side merge landing, and that condition already says to ask again.
+It carries nothing from the block above and fits inside a default tool timeout, so reinvoke
+it where a run ends without `ready`. Three runs without one goes to the user, naming which
+window is stuck: `--is-ancestor` failing means the update never landed, and passing with no
+checks means GitHub scheduled nothing.
 
-The 422 splits two ways. `There are no new commits on the base branch` means the branch is
-already current, so carry on to the checks. Any other 422 is a conflict the update could
-not resolve; it leaves the branch untouched, and resolving one is a code decision this
-skill does not make, so stop and hand it to the user.
+On `ready`, go back to *Block on the checks* and run it and the gate again. A gate run still
+answering `UNKNOWN` is the server-side merge landing, and that condition already says to ask
+again. Twice around is the ceiling — a third `BEHIND` means `main` moves faster than the
+checks run, and sequencing that is the user's call.
 
 ## Merge, then clean up
 

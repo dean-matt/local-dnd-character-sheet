@@ -136,6 +136,10 @@ describe("the other three conditions", () => {
     expect(behind).not.toBe(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "DIRTY" }));
   });
 
+  it("asks again where a behind branch has no computed mergeability yet", () => {
+    expect(mergeBlocked({ mergeable: "UNKNOWN", mergeStateStatus: "BEHIND" })).toMatch(/ask again/);
+  });
+
   it("reads a branch that is both behind and conflicting as the conflict", () => {
     expect(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "BEHIND" })).toMatch(
       /conflicts/,
