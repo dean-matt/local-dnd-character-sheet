@@ -268,8 +268,8 @@ That trigger covers the pin and not the code the job runs against it. The `corpu
 runs a loader, the tag parser and `scripts/tag-audit.ts` against the real corpus, and
 `pnpm test` runs the same code against a fixture subset, so a loader that breaks only on
 a file the fixtures elide passes every check a pull request runs. Naming those paths in
-`paths` would close the gap and fetch 109 MB on most pull requests in the milestone that
-writes them, so the job runs nightly instead. That makes the corpus a post-merge check
+`paths` would close the gap and fetch 109 MB on every pull request that touches a loader,
+so the job runs nightly instead. That makes the corpus a post-merge check
 rather than a gate. The break still merges; the difference is that it surfaces the same
 night, in front of whoever wrote it, rather than at the next tag bump months later in
 front of whoever ran the bump. The schedule earns its place twice, because re-verifying

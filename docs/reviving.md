@@ -62,7 +62,7 @@ pnpm check        # confirm the fences still pass
 ## Re-enable the nightly corpus check
 
 GitHub disables a scheduled workflow after 60 days without activity in the repository, so
-the `content` job stopped running shortly after you did. Nothing announces it on the way
+the `corpus` job stopped running shortly after you did. Nothing announces it on the way
 back in: the workflow is still committed and still reads as correct.
 
 ```bash
