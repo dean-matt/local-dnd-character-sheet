@@ -107,11 +107,11 @@ Each fails as a plausible wrong answer rather than an error:
 
 ## What a finding says
 
-A finding opens with its severity in bold and nothing before it, then the defect and
-what it costs:
+A finding opens with its severity in bold and nothing before it, then the defect and what
+it costs. The location anchors the comment rather than opening the body — against
+`packages/rules/src/spell-slots.ts:42`:
 
 ```
-packages/rules/src/spell-slots.ts:42
 **critical** — a multiclass caster's slots read the highest class level rather than the sum.
 A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 ```

@@ -59,15 +59,15 @@ tells those apart. Merge only where all five hold; where one fails, name it and 
 gh pr checks "$n" --json name,bucket --jq '[.[] | select(.bucket != "pass" and .bucket != "skipping")]'
 ```
 
-**The last review pass returned no `critical` and no `warning`.** A pass is a review
-carrying a body; the replies `issue-to-pr` posts land as reviews with none. Read the body
-too: a finding no line anchors is written there rather than on a comment.
+**The last review pass returned no `critical`, no `warning` and nothing unreadable.** A pass
+is a review carrying a body; the replies `issue-to-pr` posts land as reviews with none. Read
+the body too: a finding no line anchors is written there rather than on a comment.
 
 ```bash
 sev='capture("^\\*\\*(?<s>critical|warning|comment)\\*\\*").s // "unreadable"'
 pass=$(gh api --paginate "repos/{owner}/{repo}/pulls/$n/reviews" --jq '[.[] | select(.body != "")] | last | .id')
 gh api "repos/{owner}/{repo}/pulls/$n/reviews/$pass" --jq .body
-gh api "repos/{owner}/{repo}/pulls/$n/reviews/$pass/comments" --jq '[.[] | select((.body | '"$sev"') != "comment") | .html_url]'
+gh api --paginate "repos/{owner}/{repo}/pulls/$n/reviews/$pass/comments" --jq '[.[] | select((.body | '"$sev"') != "comment") | .html_url]'
 ```
 
 **Every thread carries a verdict, and no declined finding is `critical` or `warning`.** A
@@ -80,13 +80,12 @@ c="repos/{owner}/{repo}/pulls/$n/comments"
 gh api --paginate "$c" --jq '[.[]] | (map(select(.in_reply_to_id == null) | .id))
   - (map(select(.body | test("^\\*\\*(Applied|Declined)\\*\\*")) | .in_reply_to_id))'
 gh api --paginate "$c" --jq '[.[]] | (map(select(.in_reply_to_id == null)) | INDEX(.id | tostring)) as $f
-  | map(select((.body | test("^\\*\\*Declined\\*\\*")) and (($f[.in_reply_to_id | tostring].body | '"$sev"') != "comment")) | .html_url)'
+  | map(select((.body | test("^\\*\\*Declined\\*\\*")) and (($f[.in_reply_to_id | tostring].body // "" | '"$sev"') != "comment")) | .html_url)'
 ```
 
 `$sev` is the marker [`audit-pr`](../audit-pr/SKILL.md) writes, and both conditions read it
-through that expression. A body it cannot parse becomes `unreadable`, which is not `comment`:
-an unreadable finding stops the merge rather than vanishing from the answer. `tests/review-
-severity.test.ts` holds the alternation to every severity `audit-pr` defines.
+through that one expression. A body it cannot parse becomes `unreadable`, which the filter
+keeps rather than drops. `tests/review-severity.test.ts` holds it to `audit-pr`'s whole table.
 
 **The diff reaches no fenced path.** Each is a file where a wrong merge costs more than the
 wait: the schema of a precious database, what the ETL fetches, the documents that govern
@@ -104,9 +103,10 @@ git diff --name-only "$base" "$head" | grep -E '(^|/)package\.json$' | while rea
 done
 ```
 
-`packages/api/drizzle/` is where both `drizzle.config.ts` files write, and `tests/merge-
-gate.test.ts` fails where either leaves it. Comparing parsed dependency maps rather than the
-diff lets a version bump stop the merge while a rename or a reordered script does not.
+`packages/api/drizzle/` is where both `drizzle.config.ts` files write, and
+`tests/merge-gate.test.ts` fails where either leaves it. Comparing parsed dependency maps
+rather than the diff lets a version bump stop the merge while a rename or a reordered script
+does not.
 
 **The branch merges cleanly.** A `mergeable` of `CONFLICTING`, or a `mergeStateStatus` of
 `DIRTY`, stops the run — resolving it is the user's. `UNKNOWN` means GitHub is still

@@ -14,7 +14,11 @@ const MERGE = read(".claude/skills/merge-pr/SKILL.md");
 function severities(): string[] {
   const rows = AUDIT.slice(AUDIT.indexOf("| Severity | Means |")).split("\n").slice(2);
   const end = rows.findIndex((row) => !row.startsWith("|"));
-  return rows.slice(0, end).map((row) => /^\|\s*`([a-z]+)`/.exec(row)?.[1] ?? row);
+  return rows.slice(0, end === -1 ? rows.length : end).map((row) => {
+    const severity = /^\|\s*`([a-z]+)`/.exec(row)?.[1];
+    if (!severity) throw new Error(`a severity row this fence cannot read: ${row}`);
+    return severity;
+  });
 }
 
 /** merge-pr's `$sev` as a JavaScript regex: inside a jq string every backslash is doubled. */
@@ -38,8 +42,11 @@ describe("the severity the merge gate reads", () => {
   });
 
   it("parses the finding audit-pr writes", () => {
-    const example = /^\*\*.+$/m.exec(AUDIT)?.[0];
-    expect(example, "audit-pr shows no example finding opening with a marker").toBeDefined();
-    expect(severities()).toContain(marker().exec(example as string)?.groups?.s);
+    const example = /## What a finding says[\s\S]*?```\n([\s\S]*?)```/.exec(AUDIT)?.[1];
+    expect(example, "audit-pr shows no example finding under its own heading").toBeDefined();
+    expect(
+      severities(),
+      "the example reads as a comment body, and the gate parses one from its first character",
+    ).toContain(marker().exec(example as string)?.groups?.s);
   });
 });
