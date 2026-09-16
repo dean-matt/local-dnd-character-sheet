@@ -81,8 +81,9 @@ old one. Go back to *Block on the checks*, and run it and the gate again from th
 merges asynchronously, so a gate run in the first seconds answers `UNKNOWN` and asks for
 another.
 
-Where the update itself conflicts, the API answers 422 and leaves the branch untouched.
-Stop and hand it to the user: resolving it is a code decision this skill does not make.
+Where the update itself conflicts, the API answers 422 with the reason and leaves the
+branch untouched. Stop and hand it to the user: resolving a conflict is a code decision
+this skill does not make.
 
 ## Merge, then clean up
 
