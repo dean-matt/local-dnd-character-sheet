@@ -75,6 +75,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 |---|---|
 | `issue-to-pr` | Taking any issue from open to a reviewed pull request |
 | `audit-pr` | Reviewing a pull request in this repository |
+| `merge-pr` | Carrying a reviewed pull request to main |
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `add-endpoint` | Adding an API route, end to end |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
@@ -107,8 +108,7 @@ duplicate a source of truth:
 | `content.manifest.json` / `content.lock.json` | which upstream data is fetched |
 
 **Write the edit** by verifying against the code first, replacing the stale sentence
-rather than appending a correction beside it, and preferring to tighten an existing
-bullet over adding a new one.
+rather than appending a correction beside it, and tightening a bullet over adding one.
 
 `tests/claude-md-shape.test.ts` caps this file at 150 lines. Past the cap, extract to a
 skill — do not raise the cap.
