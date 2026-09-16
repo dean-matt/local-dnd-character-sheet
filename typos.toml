@@ -26,8 +26,8 @@ extend-exclude = [
   ".git",
 
   # Generated, and named here rather than left to .gitignore because ignore-parent is
-  # off: a walk rooted at packages/web would otherwise read this repository's own
-  # ignore file as a parent's and skip it.
+  # off: a walk rooted at packages/web would otherwise disregard this repository's own
+  # ignore file as a parent's.
   "node_modules/",
   "dist/",
   "build/",
