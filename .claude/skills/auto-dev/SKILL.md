@@ -24,14 +24,15 @@ if [ "$(date +%s)" -ge <deadline> ]; then echo past; else echo within; fi
 ```
 
 Read them here and nowhere else — abandoning an issue mid-flight leaves a branch and a pull
-request nobody asked for.
+request nobody asked for. The deadline is a floor on the run and not a ceiling: an issue
+started inside it runs to its end.
 
 **2. Build.** Dispatch a fresh subagent naming [`issue-to-pr`](../issue-to-pr/SKILL.md) and
 no issue; its *Choosing, when no issue is named* picks. Reading the board here too would
 make two readers that can disagree. Ask for the issue it took, the pull request number,
 whatever waits on the user, and where its review pass ran. Stop where the report:
 
-- **puts that pass outside its own subagent** — a review one agent writes and reads still
+- **puts that pass outside its own subagent** — an agent that reviews its own work still
   earns `review:approved`, and GitHub cannot check the claim, so this catches a failed
   dispatch and not a skipped one
 - **names no issue** — give the reason it named; that query stops the same way on a
@@ -45,8 +46,8 @@ whatever waits on the user, and where its review pass ran. Stop where the report
 gh pr view <pr> --json labels --jq '[.labels[].name] | any(. == "review:approved")'
 ```
 
-A `false` stops the run. Without that label the gate refuses the same pull request anyway,
-a whole CI watch later.
+A `false` stops the run. The gate reads no label, so this is the only stop for a pass that
+left a second issue with the user.
 
 **4. Merge.** Dispatch a second fresh subagent naming
 [`merge-pr`](../merge-pr/SKILL.md) and the pull request number — the agent that wrote the
@@ -64,12 +65,14 @@ One line per issue attempted, in order:
 - `#<n>` **merged** — the pull request, the merge commit, and anything left waiting on the
   user, such as a second issue `issue-to-pr` filed
 - `#<n>` **stopped** — the pull request, the condition quoted from the skill that named it,
-  and that the issue still reads `In Progress`, so the next run picks it again
+  and that the next run picks the same issue: the board query sorts on milestone and rank,
+  never on status
 
 Close with why the run ended and what stands. `issue-to-pr` removes its worktree at its
 last step only, so a stop before it took the issue leaves nothing, a stop after it branched
-leaves the branch and a worktree under `.claude/worktrees/`, and a stop at step 3 or later
-here leaves the branch and the pull request.
+leaves the branch and a worktree, and a stop at step 3 or later here leaves the branch and
+the pull request. Name a worktree left standing: the next run's `git worktree add` fails on
+it until the user clears `.claude/worktrees/<n>`.
 
 ## What this skill will not do
 
