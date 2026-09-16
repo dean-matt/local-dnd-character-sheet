@@ -8,8 +8,8 @@
 # start of every task it governs.
 ignore-hidden = false
 
-# The ignore files in the repository are shared, and are how .claude/worktrees/ and
-# an untracked database stay out of the walk.
+# The ignore files in the repository are shared, and are how .claude/worktrees/ stays
+# out of the walk.
 ignore-files = true
 ignore-dot = true
 ignore-vcs = true
@@ -24,6 +24,15 @@ extend-exclude = [
   # Reaching hidden paths also reaches .git, whose objects are compressed binary that
   # typos reads as prose. A worktree's .git is a file, so the pattern takes no slash.
   ".git",
+
+  # Generated, and named here rather than left to .gitignore because ignore-parent is
+  # off: a walk rooted at packages/web would otherwise read this repository's own
+  # ignore file as a parent's and skip it.
+  "node_modules/",
+  "dist/",
+  "build/",
+  "*.tsbuildinfo",
+
   "vendor/",
   "pnpm-lock.yaml",
   "*.db",
