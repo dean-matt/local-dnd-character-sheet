@@ -11,6 +11,7 @@
  */
 
 import { proficiencyBonus } from "./core.ts";
+import { assertInteger } from "./integer.ts";
 
 /**
  * Both take the total character level, never a caster level: proficiency comes from
@@ -160,9 +161,7 @@ export function preparedSpellCount(
   classLevel: number,
   rule: PreparationRule,
 ): number {
-  if (!Number.isInteger(spellcastingModifier)) {
-    throw new RangeError(`Spellcasting modifier must be an integer, got ${spellcastingModifier}`);
-  }
+  assertInteger("A spellcasting modifier", spellcastingModifier);
   if (!Number.isInteger(classLevel) || classLevel < 1 || classLevel > 20) {
     throw new RangeError(`Class level must be 1-20, got ${classLevel}`);
   }

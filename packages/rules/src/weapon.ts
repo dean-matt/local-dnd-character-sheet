@@ -38,11 +38,10 @@ export type Weapon = {
    */
   properties?: readonly WeaponProperty[];
   /**
-   * The base item's `dmg1`, passed through for `@dnd/dice` to parse. `Net` (PHB) is the
-   * one weapon upstream gives none: it deals no damage, so there is nothing to pass and
-   * nothing to show.
+   * The base item's `dmg1`, passed through for `@dnd/dice` to parse. Optional because
+   * `Net` (PHB) carries none: it still rolls an attack, and deals no damage.
    */
-  damage: string;
+  damage?: string;
   /** A versatile weapon's `dmg2`, the die it rolls in two hands. */
   versatileDamage?: string;
 };
@@ -71,8 +70,9 @@ type WeaponAttack = {
   ability: WeaponAbility;
   attackBonus: number;
   /** Dice notation, beside the flat modifier rather than folded into it. */
-  damage: string;
-  damageModifier: number;
+  damage?: string;
+  /** Absent with `damage`: a modifier on no dice is not a number a sheet can show. */
+  damageModifier?: number;
 };
 
 const FINESSE = "F";
@@ -92,8 +92,9 @@ function abbreviation(property: WeaponProperty): string {
  * choice, which a sheet resolves to the better of the two.
  *
  * Thrown needs no branch: a thrown melee weapon is still melee, and the two thrown weapons
- * upstream types as ranged — the dart and the net — reach Dexterity by being ranged. A tie
- * leaves the choice moot, so the weapon's own ability keeps the label steady.
+ * upstream types as ranged reach Dexterity by being ranged — the net outright, the dart
+ * only until its own finesse offers Strength back. A tie leaves the choice moot, so the
+ * weapon's own ability keeps the label steady.
  */
 function weaponAbility(
   weapon: Weapon,
@@ -128,10 +129,10 @@ export function weaponAttack({
   assertInteger("A weapon bonus", bonus);
   const ability = weaponAbility(weapon, strengthModifier, dexterityModifier);
   const abilityModifier = ability === "strength" ? strengthModifier : dexterityModifier;
-  return {
-    ability,
-    attackBonus: abilityModifier + proficiency + bonus,
-    damage: (grip === "two-handed" ? weapon.versatileDamage : undefined) ?? weapon.damage,
-    damageModifier: abilityModifier + bonus,
-  };
+  const attack = { ability, attackBonus: abilityModifier + proficiency + bonus };
+  const damage = (grip === "two-handed" ? weapon.versatileDamage : undefined) ?? weapon.damage;
+  if (damage === undefined) {
+    return attack;
+  }
+  return { ...attack, damage, damageModifier: abilityModifier + bonus };
 }

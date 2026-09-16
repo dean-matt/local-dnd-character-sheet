@@ -113,8 +113,8 @@ describe("weaponAttack", () => {
     });
   });
 
-  it("keeps Strength for a thrown melee weapon", () => {
-    expect(weaponAttack({ weapon: JAVELIN, ...STRONG }).ability).toBe("strength");
+  it("keeps Strength for a thrown melee weapon that is not finesse", () => {
+    expect(weaponAttack({ weapon: JAVELIN, ...NIMBLE }).ability).toBe("strength");
   });
 
   it("reaches Strength for a ranged weapon that is also finesse", () => {
@@ -135,8 +135,8 @@ describe("weaponAttack", () => {
   });
 
   it.each([["F|XPHB"], ["f|xphb"]])("reads a property abbreviation spelled %s", (property) => {
-    expect(weaponAttack({ weapon: { ...RAPIER, properties: [property] }, ...STRONG }).ability).toBe(
-      "strength",
+    expect(weaponAttack({ weapon: { ...RAPIER, properties: [property] }, ...NIMBLE }).ability).toBe(
+      "dexterity",
     );
   });
 
@@ -144,7 +144,7 @@ describe("weaponAttack", () => {
     expect(
       weaponAttack({
         weapon: { kind: "melee", properties: ["BF", "RLD"], damage: "1d8" },
-        ...STRONG,
+        ...NIMBLE,
       }).ability,
     ).toBe("strength");
   });
@@ -153,6 +153,11 @@ describe("weaponAttack", () => {
     expect(weaponAttack({ weapon: { kind: "melee", damage: "1d4" }, ...STRONG }).ability).toBe(
       "strength",
     );
+  });
+
+  it("returns an attack but no damage for a weapon with no dice, as Net (PHB) has none", () => {
+    const attack = weaponAttack({ weapon: { kind: "ranged", properties: ["S", "T"] }, ...STRONG });
+    expect(attack).toStrictEqual({ ability: "dexterity", attackBonus: 4 });
   });
 
   it.each(["Melee", "M|XPHB", ""])("rejects a weapon kind of %o", (kind) => {

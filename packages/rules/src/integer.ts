@@ -1,8 +1,7 @@
 /**
- * The guard `armorclass` and `weapon` share, where an integer check stands alone. A sheet
- * shows whole numbers, so this rejects a fraction rather than rounding it somewhere a
- * reader cannot see. Elsewhere in the package a check pairs with a range and states both
- * in one message.
+ * The guard every standalone integer check in the package shares. A sheet shows whole
+ * numbers, so this rejects a fraction rather than rounding it somewhere a reader cannot
+ * see. A check that also bounds a range states both in one message and stays where it is.
  */
 export function assertInteger(label: string, value: number): void {
   if (!Number.isInteger(value)) {
