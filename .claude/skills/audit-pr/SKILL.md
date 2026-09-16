@@ -5,6 +5,11 @@ description: Review one local-dnd-character-sheet pull request through this repo
 
 # Reviewing a pull request
 
+The pull request number is the whole input. `issue-to-pr` dispatches this skill to a
+subagent told nothing else, and a review by hand starts the same way. An agent that knows
+how the change was written reads its own intent into the diff and reviews that intent
+rather than the code.
+
 ## Skip what the fences assert
 
 `pnpm check` and the `tests/*-shape` suites assert types, lint, dead code, spelling, the
