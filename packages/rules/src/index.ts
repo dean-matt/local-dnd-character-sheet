@@ -1,3 +1,4 @@
+export { armorClass } from "./armorclass.ts";
 export type { Size } from "./carrying.ts";
 export {
   carryingCapacity,
