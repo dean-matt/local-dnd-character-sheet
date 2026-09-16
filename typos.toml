@@ -1,8 +1,24 @@
+# The walk is stated here rather than inherited, because the two entry points —
+# `pnpm spell` and the crate-ci/typos job — take their arguments separately, and a
+# default that narrows it drops prose without reporting anything.
+
 [files]
 # typos walks like ripgrep and skips hidden paths, so without this nothing under
 # .github/ or .claude/ is read — including the skill prose an agent rereads at the
 # start of every task it governs.
 ignore-hidden = false
+
+# The ignore files in the repository are shared, and are how .claude/worktrees/ and
+# an untracked database stay out of the walk.
+ignore-files = true
+ignore-dot = true
+ignore-vcs = true
+
+# The ones outside it are not. A contributor's ~/.config/git/ignore narrows their
+# `pnpm spell` while the job keeps reading the file, which is the silent skip this
+# configuration exists to close.
+ignore-global = false
+ignore-parent = false
 
 extend-exclude = [
   # Reaching hidden paths also reaches .git, whose objects are compressed binary that
