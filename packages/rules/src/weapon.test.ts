@@ -12,7 +12,6 @@ const RAPIER: Weapon = { kind: "melee", properties: ["F"], damage: "1d8" };
 const SHORTBOW: Weapon = { kind: "ranged", properties: ["A", "2H"], damage: "1d6" };
 const JAVELIN: Weapon = { kind: "melee", properties: ["T"], damage: "1d6" };
 const DART: Weapon = { kind: "ranged", properties: ["F", "T"], damage: "1d4" };
-const NET: Weapon = { kind: "ranged", properties: ["S", "T"], damage: "0" };
 
 const STRONG = {
   strengthModifier: 4,
@@ -118,12 +117,21 @@ describe("weaponAttack", () => {
     expect(weaponAttack({ weapon: JAVELIN, ...STRONG }).ability).toBe("strength");
   });
 
-  it("keeps Dexterity for a thrown weapon upstream types as ranged", () => {
-    expect(weaponAttack({ weapon: NET, ...STRONG }).ability).toBe("dexterity");
-  });
-
   it("reaches Strength for a ranged weapon that is also finesse", () => {
     expect(weaponAttack({ weapon: DART, ...STRONG }).ability).toBe("strength");
+  });
+
+  it("reads a property upstream wraps in an object, as Lance (XPHB) spells its 2H", () => {
+    expect(
+      weaponAttack({
+        weapon: {
+          kind: "melee",
+          properties: ["H|XPHB", "R|XPHB", { uid: "F|XPHB" }],
+          damage: "1d12",
+        },
+        ...NIMBLE,
+      }).ability,
+    ).toBe("dexterity");
   });
 
   it.each([["F|XPHB"], ["f|xphb"]])("reads a property abbreviation spelled %s", (property) => {
@@ -145,6 +153,18 @@ describe("weaponAttack", () => {
     expect(weaponAttack({ weapon: { kind: "melee", damage: "1d4" }, ...STRONG }).ability).toBe(
       "strength",
     );
+  });
+
+  it.each(["Melee", "M|XPHB", ""])("rejects a weapon kind of %o", (kind) => {
+    expect(() =>
+      weaponAttack({ weapon: { ...LONGSWORD, kind: kind as "melee" }, ...STRONG }),
+    ).toThrow(RangeError);
+  });
+
+  it.each(["twohanded", ""])("rejects a grip of %o", (grip) => {
+    expect(() =>
+      weaponAttack({ weapon: LONGSWORD, ...STRONG, grip: grip as "one-handed" }),
+    ).toThrow(RangeError);
   });
 
   it.each([

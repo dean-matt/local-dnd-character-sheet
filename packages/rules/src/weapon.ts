@@ -9,18 +9,26 @@
 
 import { assertInteger } from "./integer.ts";
 
-type WeaponKind = "melee" | "ranged";
+const WEAPON_KINDS = ["melee", "ranged"] as const;
+
+type WeaponKind = (typeof WEAPON_KINDS)[number];
 
 /** The ability a weapon attacks with. Returned so a sheet can label the number. */
 type WeaponAbility = "strength" | "dexterity";
 
 /** Which damage die a versatile weapon rolls; every other weapon rolls its one die. */
-type Grip = "one-handed" | "two-handed";
+const GRIPS = ["one-handed", "two-handed"] as const;
+
+type Grip = (typeof GRIPS)[number];
+
+/** Upstream spells a property as an abbreviation, or — on `Lance` (XPHB) alone — as `{uid, note}`. */
+type WeaponProperty = string | { uid: string };
 
 export type Weapon = {
   /**
-   * From the base item's `type`, `M` or `R` — never its `weaponCategory`, which says
-   * simple or martial and decides nothing here.
+   * Derived from the base item's `type`, `M` or `R` — never its `weaponCategory`, which
+   * says simple or martial and decides nothing here, and never the raw `type`, which
+   * carries a source as `M|XPHB`.
    */
   kind: WeaponKind;
   /**
@@ -28,8 +36,12 @@ export type Weapon = {
    * all: `F`, `V|XPHB`. Only finesse changes a number; every other abbreviation is
    * ignored.
    */
-  properties?: readonly string[];
-  /** The base item's `dmg1`, passed through for `@dnd/dice` to parse. */
+  properties?: readonly WeaponProperty[];
+  /**
+   * The base item's `dmg1`, passed through for `@dnd/dice` to parse. `Net` (PHB) is the
+   * one weapon upstream gives none: it deals no damage, so there is nothing to pass and
+   * nothing to show.
+   */
   damage: string;
   /** A versatile weapon's `dmg2`, the die it rolls in two hands. */
   versatileDamage?: string;
@@ -65,9 +77,14 @@ type WeaponAttack = {
 
 const FINESSE = "F";
 
-/** An abbreviation carries an optional source, and upstream spells one occurrence lowercase. */
-function abbreviation(property: string): string {
-  return property.replace(/\|.*$/, "").toUpperCase();
+/**
+ * The abbreviation alone, from either spelling. Case is folded because `homebrew.db`
+ * merges with the catalog at query time and a hand-written row is free to spell `f`;
+ * every base item spells it uppercase.
+ */
+function abbreviation(property: WeaponProperty): string {
+  const uid = typeof property === "string" ? property : property.uid;
+  return uid.replace(/\|.*$/, "").toUpperCase();
 }
 
 /**
@@ -99,6 +116,12 @@ export function weaponAttack({
   bonus = 0,
   grip,
 }: WeaponAttackParts): WeaponAttack {
+  if (!WEAPON_KINDS.includes(weapon.kind)) {
+    throw new RangeError(`Unknown weapon kind "${weapon.kind}"`);
+  }
+  if (!GRIPS.includes(grip)) {
+    throw new RangeError(`Unknown grip "${grip}"`);
+  }
   assertInteger("A Strength modifier", strengthModifier);
   assertInteger("A Dexterity modifier", dexterityModifier);
   assertInteger("A proficiency bonus", proficiency);
