@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type CasterClassLevel,
+  concentrationSaveDc,
   multiclassCasterLevel,
   multiclassSlots,
   type PreparationRule,
@@ -16,6 +17,32 @@ describe("spell math", () => {
 
   it("derives attack bonus from proficiency and modifier", () => {
     expect(spellAttackBonus(4, 5)).toBe(7);
+  });
+});
+
+describe("concentrationSaveDc", () => {
+  it.each([
+    [0, 10],
+    [1, 10],
+    [20, 10],
+    [21, 10],
+    [22, 11],
+    [23, 11],
+    [40, 20],
+  ])("damage %i gives DC %i", (damage, expected) => {
+    expect(concentrationSaveDc(damage, "classic")).toBe(expected);
+    expect(concentrationSaveDc(damage, "one")).toBe(expected);
+  });
+
+  it("caps the 2024 DC at 30 where the 2014 DC keeps climbing", () => {
+    expect(concentrationSaveDc(62, "one")).toBe(30);
+    expect(concentrationSaveDc(62, "classic")).toBe(31);
+    expect(concentrationSaveDc(200, "one")).toBe(30);
+    expect(concentrationSaveDc(200, "classic")).toBe(100);
+  });
+
+  it.each([-1, -20, 2.5])("rejects damage %s", (damage) => {
+    expect(() => concentrationSaveDc(damage, "classic")).toThrow(RangeError);
   });
 });
 

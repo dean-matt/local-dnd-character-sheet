@@ -1,16 +1,18 @@
 /**
- * Multiclass spellcasting: one combined caster level, read against one table.
+ * Spell math: the DCs a caster sets and saves against, and the slots a multiclass
+ * caster gets.
  *
- * Both halves live here because summing each class's own slots is the mistake the
- * rules exist to prevent, and because spellcasting is the one rules area still
- * growing — single-class slots and pact tables arrive from `content.db`, not from
- * arithmetic.
+ * Caster level and the slot table live together because summing each class's own
+ * slots is the mistake the rules exist to prevent, and because spellcasting is the
+ * one rules area still growing — single-class slots and pact tables arrive from
+ * `content.db`, not from arithmetic.
  *
  * Progression is an argument and never an edition branch, because the editions
  * disagree about it.
  */
 
 import { proficiencyBonus } from "./core.ts";
+import type { Edition } from "./edition.ts";
 import { assertInteger } from "./integer.ts";
 
 /**
@@ -24,6 +26,29 @@ export function spellSaveDc(spellcastingModifier: number, characterLevel: number
 
 export function spellAttackBonus(spellcastingModifier: number, characterLevel: number): number {
   return proficiencyBonus(characterLevel) + spellcastingModifier;
+}
+
+/**
+ * The cap the 2024 rule adds and the 2014 rule lacks: PHB p.203 stops at "whichever
+ * number is higher", where XPHB p.363 adds "up to a maximum DC of 30". That clause is
+ * the only disagreement, and the only reason this takes an edition.
+ */
+const CONCENTRATION_DC_CAP_ONE = 30;
+
+/**
+ * The Constitution save DC to keep concentration after taking damage: 10, or half the
+ * damage rounded down, whichever is higher.
+ *
+ * One source of damage per call: PHB p.203 says an arrow and a dragon's breath each
+ * take their own save, and summing them first gives a single DC, too high. The 2024
+ * text leaves the point unstated, so the narrower contract holds for both.
+ */
+export function concentrationSaveDc(damage: number, edition: Edition): number {
+  if (!Number.isInteger(damage) || damage < 0) {
+    throw new RangeError(`Damage taken must be a non-negative integer, got ${damage}`);
+  }
+  const dc = Math.max(10, Math.floor(damage / 2));
+  return edition === "one" ? Math.min(dc, CONCENTRATION_DC_CAP_ONE) : dc;
 }
 
 /**
