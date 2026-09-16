@@ -8,11 +8,14 @@
 # start of every task it governs.
 ignore-hidden = false
 
-# One ignore mechanism decides the walk, and it is the repository's own .gitignore:
-# committed, reviewed, and read by both entry points alike. Honoring .ignore files
-# beside it would give a second answer, and one kept above the repository — a habit
-# ripgrep encourages — reaches in and narrows a contributor's `pnpm spell` while the
-# job keeps reading the file.
+# The repository's own .gitignore decides the walk: committed, reviewed, and read by
+# both entry points alike. Honoring .ignore files beside it would give a second answer,
+# and one kept above the repository — a habit ripgrep encourages — reaches in and
+# narrows a contributor's `pnpm spell` while the job keeps reading the file.
+#
+# .git/info/exclude decides it too, and is per-clone. It rides ignore-vcs rather than
+# ignore-dot, so refusing it would take .gitignore with it; the way out is a typos
+# release that separates the two.
 ignore-files = true
 ignore-vcs = true
 ignore-dot = false
