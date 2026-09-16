@@ -126,6 +126,23 @@ describe("the other three conditions", () => {
     expect(mergeBlocked({ mergeable: "UNKNOWN", mergeStateStatus: "BLOCKED" })).not.toBeNull();
   });
 
+  /**
+   * GitHub reports a branch missing the tip of `main` as `MERGEABLE`/`BEHIND`, which this
+   * repository's branch protection then refuses. It takes its own message because
+   * `merge-pr` recovers it and cannot recover a conflict.
+   */
+  it("stops a branch that is behind, and says so rather than calling it a conflict", () => {
+    const behind = mergeBlocked({ mergeable: "MERGEABLE", mergeStateStatus: "BEHIND" });
+    expect(behind).toMatch(/behind/);
+    expect(behind).not.toBe(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "DIRTY" }));
+  });
+
+  it("reads a branch that is both behind and conflicting as the conflict", () => {
+    expect(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "BEHIND" })).toMatch(
+      /conflicts/,
+    );
+  });
+
   it("stops a version bump and ignores a rename or a reordering", () => {
     const before = {
       name: "a",

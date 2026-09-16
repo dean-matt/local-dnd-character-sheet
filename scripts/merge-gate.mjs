@@ -72,9 +72,16 @@ export function blockingDeclines(comments) {
     .map((c) => c.html_url);
 }
 
+/**
+ * A non-null return blocks the merge and is the sentence the user reads, so a branch that
+ * is only behind takes its own: `merge-pr` recovers that one by merging `main` in, and
+ * cannot recover a conflict.
+ */
 export function mergeBlocked({ mergeable, mergeStateStatus }) {
   if (mergeable === "CONFLICTING" || mergeStateStatus === "DIRTY") return "the branch conflicts";
   if (mergeable === "UNKNOWN") return "GitHub is still computing mergeability — ask again";
+  if (mergeStateStatus === "BEHIND")
+    return "the branch is behind main — update it, then run the checks and the gate again";
   return null;
 }
 

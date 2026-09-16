@@ -56,12 +56,33 @@ Six conditions, each named where it fails:
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0. Where it does not, hand the user the condition it named and stop.
-Read the pass body the script points at as well: a finding no line anchors is written
-there rather than on a comment.
+Merge where it exits 0. Where it does not, hand the user the condition it named and stop. A
+branch it names as behind is the exception, and the next section recovers it. Read the pass
+body the script points at as well: a finding no line anchors is written there rather than on
+a comment.
 
 `scripts/merge-gate.mjs` holds those conditions and says what each one costs when it is
 wrong; `tests/merge-gate.test.ts` calls them.
+
+## Where the branch is behind
+
+Branch protection requires a head carrying the tip of `main`, so `gh pr merge` refuses a
+pull request that sat while another merged, whatever the rest of the gate said.
+
+```bash
+gh api --method PUT "repos/{owner}/{repo}/pulls/$n/update-branch" --jq .message
+```
+
+That merges `main` into the branch on the server, leaving every pushed commit where it is.
+Never rebase the branch or force push it.
+
+The new head is a commit nothing has judged: the checks and the gate both ran against the
+old one. Go back to *Block on the checks*, and run it and the gate again from there. GitHub
+merges asynchronously, so a gate run in the first seconds answers `UNKNOWN` and asks for
+another.
+
+Where the update itself conflicts, the API answers 422 and leaves the branch untouched.
+Stop and hand it to the user: resolving it is a code decision this skill does not make.
 
 ## Merge, then clean up
 
