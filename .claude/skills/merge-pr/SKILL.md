@@ -77,13 +77,21 @@ That merges `main` into the branch on the server, leaving every pushed commit wh
 Never rebase the branch or force push it.
 
 The new head is a commit nothing has judged: the checks and the gate both ran against the
-old one. Go back to *Block on the checks*, and run it and the gate again from there. GitHub
-merges asynchronously, so a gate run in the first seconds answers `UNKNOWN` and asks for
-another.
+old one. For the first minutes `gh pr checks` reports none at all — `--watch` exits on
+that, and the gate reads the same emptiness as "every check is green" — so wait for the new
+run to appear before trusting either.
 
-Where the update itself conflicts, the API answers 422 with the reason and leaves the
-branch untouched. Stop and hand it to the user: resolving a conflict is a code decision
-this skill does not make.
+```bash
+until gh pr checks "$n" --json name --jq 'length > 0' 2>/dev/null | grep -q true; do sleep 20; done
+```
+
+Then go back to *Block on the checks* and run it and the gate again. A gate run still
+answering `UNKNOWN` is the merge landing, and that condition already says to ask again.
+
+The 422 splits two ways. `There are no new commits on the base branch` means the branch is
+already current, so carry on to the checks. Any other 422 is a conflict the update could
+not resolve; it leaves the branch untouched, and resolving one is a code decision this
+skill does not make, so stop and hand it to the user.
 
 ## Merge, then clean up
 

@@ -128,8 +128,7 @@ describe("the other three conditions", () => {
 
   /**
    * GitHub reports a branch missing the tip of `main` as `MERGEABLE`/`BEHIND`, which this
-   * repository's branch protection then refuses. It takes its own message because
-   * `merge-pr` recovers it and cannot recover a conflict.
+   * repository's branch protection then refuses.
    */
   it("stops a branch that is behind, and says so rather than calling it a conflict", () => {
     const behind = mergeBlocked({ mergeable: "MERGEABLE", mergeStateStatus: "BEHIND" });
