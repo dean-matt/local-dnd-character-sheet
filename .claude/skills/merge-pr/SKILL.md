@@ -5,11 +5,9 @@ description: Carry one reviewed local-dnd-character-sheet pull request to main �
 
 # Merging a pull request
 
-[`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops, on purpose.
-This is the separate invocation that lands it.
-
-Run every command from the main checkout. A worktree holds its branch, and the merge
-deletes it.
+[`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops, on purpose. This
+is the separate invocation that lands it. Run every command from the main checkout: a
+worktree holds its branch, and the merge deletes it.
 
 ```bash
 n=<pr>
@@ -46,10 +44,9 @@ while :; do
 done
 ```
 
-`jq` prints nothing where `gh` gave it nothing — a pull request whose checks have yet to
-register — and `${pending:-1}` reads that as one still to come rather than none left. Thirty
-minutes outlasts the slowest run here, and the sleep covers the seconds a rerun takes to
-show as pending.
+`jq` prints nothing where `gh` gave it nothing — checks that have yet to register — and
+`${pending:-1}` reads that as one still to come rather than none left. Thirty minutes outlasts
+the slowest run here, and the sleep covers the seconds a rerun takes to show as pending.
 
 ## The gate
 
@@ -63,27 +60,33 @@ gh pr checks "$n" --json name,bucket --jq '[.[] | select(.bucket != "pass" and .
 ```
 
 **The last review pass returned no `critical` and no `warning`.** A pass is a review
-carrying a body; the replies `issue-to-pr` posts land as reviews with none.
+carrying a body; the replies `issue-to-pr` posts land as reviews with none. Read the body
+too: a finding no line anchors is written there rather than on a comment.
 
 ```bash
+sev='capture("^\\*\\*(?<s>critical|warning|comment)\\*\\*").s // "unreadable"'
 pass=$(gh api --paginate "repos/{owner}/{repo}/pulls/$n/reviews" --jq '[.[] | select(.body != "")] | last | .id')
 gh api "repos/{owner}/{repo}/pulls/$n/reviews/$pass" --jq .body
-gh api "repos/{owner}/{repo}/pulls/$n/reviews/$pass/comments" --jq '[.[].body | capture("^\\*\\*(?<sev>[a-z]+)\\*\\*").sev]'
+gh api "repos/{owner}/{repo}/pulls/$n/reviews/$pass/comments" --jq '[.[] | select((.body | '"$sev"') != "comment") | .html_url]'
 ```
 
-Read the body too: a finding no line anchors is written there rather than on a comment.
-
-**Every thread carries a verdict, and none reads `Declined`.** The first query returns
-the threads still waiting on a reply, the second the findings declined. Both come back empty.
+**Every thread carries a verdict, and no declined finding is `critical` or `warning`.** A
+declined `comment` is a taste call refused, which is how a healthy review ends; anything else
+is a judgment the user has not seen. The first query returns the threads still waiting on a
+reply, the second the declines that go to the user. Both come back empty.
 
 ```bash
 c="repos/{owner}/{repo}/pulls/$n/comments"
 gh api --paginate "$c" --jq '[.[]] | (map(select(.in_reply_to_id == null) | .id))
   - (map(select(.body | test("^\\*\\*(Applied|Declined)\\*\\*")) | .in_reply_to_id))'
-gh api --paginate "$c" --jq '[.[] | select(.body | test("^\\*\\*Declined\\*\\*")) | .html_url]'
+gh api --paginate "$c" --jq '[.[]] | (map(select(.in_reply_to_id == null)) | INDEX(.id | tostring)) as $f
+  | map(select((.body | test("^\\*\\*Declined\\*\\*")) and (($f[.in_reply_to_id | tostring].body | '"$sev"') != "comment")) | .html_url)'
 ```
 
-A decline is a judgment the user has not seen, whatever its reasoning. It goes to them.
+`$sev` is the marker [`audit-pr`](../audit-pr/SKILL.md) writes, and both conditions read it
+through that expression. A body it cannot parse becomes `unreadable`, which is not `comment`:
+an unreadable finding stops the merge rather than vanishing from the answer. `tests/review-
+severity.test.ts` holds the alternation to every severity `audit-pr` defines.
 
 **The diff reaches no fenced path.** Each is a file where a wrong merge costs more than the
 wait: the schema of a precious database, what the ETL fetches, the documents that govern
@@ -101,10 +104,9 @@ git diff --name-only "$base" "$head" | grep -E '(^|/)package\.json$' | while rea
 done
 ```
 
-`packages/api/drizzle/` is where both `drizzle.config.ts` files write, and
-`tests/merge-gate.test.ts` fails where either one leaves it. Comparing the parsed dependency
-maps rather than the diff lets a version bump stop the merge while a rename or a reordered
-script does not.
+`packages/api/drizzle/` is where both `drizzle.config.ts` files write, and `tests/merge-
+gate.test.ts` fails where either leaves it. Comparing parsed dependency maps rather than the
+diff lets a version bump stop the merge while a rename or a reordered script does not.
 
 **The branch merges cleanly.** A `mergeable` of `CONFLICTING`, or a `mergeStateStatus` of
 `DIRTY`, stops the run — resolving it is the user's. `UNKNOWN` means GitHub is still

@@ -107,9 +107,12 @@ Each fails as a plausible wrong answer rather than an error:
 
 ## What a finding says
 
+A finding opens with its severity in bold and nothing before it, then the defect and
+what it costs:
+
 ```
-packages/rules/src/spell-slots.ts:42  critical
-A multiclass caster's slots read the highest class level rather than the sum.
+packages/rules/src/spell-slots.ts:42
+**critical** — a multiclass caster's slots read the highest class level rather than the sum.
 A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 ```
 
@@ -118,6 +121,11 @@ A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 | `critical` | Wrong at runtime, or misleading about what the code does |
 | `warning` | Contradicts `CLAUDE.md`, `CONTRIBUTING.md` or a skill |
 | `comment` | Neither — a taste call, reported once |
+
+Write the marker as `**critical**` and never as `` `critical` ``. It carries through to the
+posted comment, where [`merge-pr`](../merge-pr/SKILL.md)'s gate is its only reader: a marker
+the gate cannot parse stops the merge, and `tests/review-severity.test.ts` holds the two
+files to one vocabulary.
 
 A finding naming no line goes against the file or the pull request. Only `comment`
 findings left ends the loop. Every finding goes to the caller's report.
