@@ -24,8 +24,8 @@ if [ "$(date +%s)" -ge <deadline> ]; then echo past; else echo within; fi
 ```
 
 Read them here and nowhere else — abandoning an issue mid-flight leaves a branch and a pull
-request nobody asked for. The deadline is a floor on the run and not a ceiling: an issue
-started inside it runs to its end.
+request nobody asked for. The deadline stops the next issue from starting, not the issue
+already running.
 
 **2. Build.** Dispatch a fresh subagent naming [`issue-to-pr`](../issue-to-pr/SKILL.md) and
 no issue; its *Choosing, when no issue is named* picks. Reading the board here too would
@@ -55,7 +55,7 @@ code is the worst reader of a gate judging its own work. Stop where it names a c
 instead of a merge commit.
 
 **5. Count the merge and loop.** `gh pr view <pr> --json state,mergeCommit` settles whether
-it merged, not the report of the subagent that merged it. A `state` other than `MERGED`
+it merged; the report of the subagent that merged it does not. A `state` other than `MERGED`
 stops the run. The count is of merges, not attempts.
 
 ## The report
@@ -68,11 +68,10 @@ One line per issue attempted, in order:
   and that the next run picks the same issue: the board query sorts on milestone and rank,
   never on status
 
-Close with why the run ended and what stands. `issue-to-pr` removes its worktree at its
-last step only, so a stop before it took the issue leaves nothing, a stop after it branched
-leaves the branch and a worktree, and a stop at step 3 or later here leaves the branch and
-the pull request. Name a worktree left standing: the next run's `git worktree add` fails on
-it until the user clears `.claude/worktrees/<n>`.
+Close with why the run ended, and say which of a branch, a pull request and a worktree are
+there — read them off disk and GitHub rather than inferring them from where the run stopped,
+since `issue-to-pr` can leave all three. Name a worktree in particular: the next run's `git
+worktree add` fails on it until the user clears `.claude/worktrees/<n>`.
 
 ## What this skill will not do
 
