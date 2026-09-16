@@ -41,14 +41,15 @@ while :; do
   [ -n "$red" ] || break
   [ "$rerun" = 1 ] || { echo "still red after a rerun: $red"; break; }
   rerun=0
-  for id in $red; do gh run rerun "$id" --failed; done
+  printf '%s\n' "$red" | while read -r id; do gh run rerun "$id" --failed; done
   sleep 30
 done
 ```
 
 `jq` prints nothing where `gh` gave it nothing — a pull request whose checks have yet to
 register — and `${pending:-1}` reads that as one still to come rather than none left. Thirty
-minutes outlasts the slowest run here, and the sleep covers the seconds a rerun takes to register.
+minutes outlasts the slowest run here, and the sleep covers the seconds a rerun takes to
+show as pending.
 
 ## The gate
 
@@ -72,8 +73,8 @@ gh api "repos/{owner}/{repo}/pulls/$n/reviews/$pass/comments" --jq '[.[].body | 
 
 Read the body too: a finding no line anchors is written there rather than on a comment.
 
-**Every thread carries a verdict, and none of them declined.** The first query returns the
-threads still waiting on a reply, the second the findings declined. Both come back empty.
+**Every thread carries a verdict, and none reads `Declined`.** The first query returns
+the threads still waiting on a reply, the second the findings declined. Both come back empty.
 
 ```bash
 c="repos/{owner}/{repo}/pulls/$n/comments"
@@ -95,14 +96,15 @@ base=$(git merge-base origin/main "$head")
 git diff --name-only "$base" "$head" | grep -E \
   '^(CLAUDE|CONTRIBUTING)\.md$|^content\.(lock|manifest)\.json$|^\.github/|^\.claude/skills/|^packages/api/drizzle/'
 deps() { git show "$1:$2" 2>/dev/null | jq -S '{dependencies,devDependencies,peerDependencies,optionalDependencies,pnpm}'; }
-for f in $(git diff --name-only "$base" "$head" | grep -E '(^|/)package\.json$'); do
+git diff --name-only "$base" "$head" | grep -E '(^|/)package\.json$' | while read -r f; do
   [ "$(deps "$base" "$f")" = "$(deps "$head" "$f")" ] || echo "$f"
 done
 ```
 
-`packages/api/drizzle/` is where both `drizzle.config.ts` files write. Comparing the parsed
-dependency maps rather than the diff lets a version bump stop the merge while a rename or a
-reordered script does not.
+`packages/api/drizzle/` is where both `drizzle.config.ts` files write, and
+`tests/merge-gate.test.ts` fails where either one leaves it. Comparing the parsed dependency
+maps rather than the diff lets a version bump stop the merge while a rename or a reordered
+script does not.
 
 **The branch merges cleanly.** A `mergeable` of `CONFLICTING`, or a `mergeStateStatus` of
 `DIRTY`, stops the run — resolving it is the user's. `UNKNOWN` means GitHub is still
