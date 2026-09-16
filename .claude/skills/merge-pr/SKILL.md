@@ -120,7 +120,7 @@ Remove the worktree first, or `gh` cannot delete the branch it holds. The board'
 may reach `Done` unaided, and setting it again changes nothing.
 
 ```bash
-wt=".claude/worktrees/$issue"; [ -e "$wt" ] && git worktree remove "$wt"
+wt=".claude/worktrees/$issue"; [ -e "$wt" ] && { git worktree remove "$wt" || exit 1; }
 git worktree prune
 gh pr merge "$n" --squash --delete-branch
 git checkout main && git pull --ff-only
@@ -134,8 +134,8 @@ gh project item-edit \
 ```
 
 `item-add` returns the item an issue already has. `git worktree remove` refuses rather than
-discarding anything uncommitted, which is a reason to stop and look. Then report the merge
-commit, the issue it closed, and that the checkout is on `main`.
+discarding anything uncommitted, and the `exit` makes that refusal stop the run. Then report
+the merge commit, the issue it closed, and that the checkout is on `main`.
 
 ## What this skill will not do
 
