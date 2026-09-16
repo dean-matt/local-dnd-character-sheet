@@ -259,11 +259,24 @@ and the sheet are those readers.
 
 CI splits by what a check needs to read. Everything that reads only committed data runs
 on every pull request; `check` runs on Linux and Windows, the rest on Linux alone. The
-`corpus` job reads `vendor/` and fetches 109 MB to do it, so it waits for a change to
-`content.manifest.json`, `content.lock.json` or the workflow itself — or for a
-`workflow_dispatch`, which is how a loader or fixture-declaration change reaches it. A
+`corpus` job reads `vendor/` and fetches 109 MB to do it, so on a pull request it waits
+for a change to `content.manifest.json`, `content.lock.json` or the workflow itself. A
 tag bump is the event it exists for: that is the one change that can leave the lockfile
 and the committed fixtures each describing a different upstream.
+
+That trigger covers the pin and not the code the job runs against it. The `corpus` job
+runs a loader, the tag parser and `scripts/tag-audit.ts` against the real corpus, and
+`pnpm test` runs the same code against a fixture subset, so a loader that breaks only on
+a file the fixtures elide passes every check a pull request runs. Naming those paths in
+`paths` would close the gap and fetch 109 MB on most pull requests in the milestone that
+writes them, so the job runs nightly instead. That makes the corpus a post-merge check
+rather than a gate. The break still merges; the difference is that it surfaces the same
+night, in front of whoever wrote it, rather than at the next tag bump months later in
+front of whoever ran the bump. The schedule earns its place twice, because re-verifying
+the pin is also the only thing that notices an upstream retag before a local change asks
+about it. A run takes about a minute and costs nothing on a public repository, so the
+trade is queue noise rather than money. `workflow_dispatch` stays for the loader change
+that wants the answer before it merges.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,

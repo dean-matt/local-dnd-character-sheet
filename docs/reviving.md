@@ -59,6 +59,17 @@ pnpm dev          # api on 8787, web on 5173
 pnpm check        # confirm the fences still pass
 ```
 
+## Re-enable the nightly corpus check
+
+GitHub disables a scheduled workflow after 60 days without activity in the repository, so
+the `content` job stopped running shortly after you did. Nothing announces it on the way
+back in: the workflow is still committed and still reads as correct.
+
+```bash
+gh workflow enable content.yml
+gh workflow run content.yml     # the first run answers for the whole gap
+```
+
 ## If you want to update the rules data
 
 ```bash

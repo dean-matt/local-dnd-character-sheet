@@ -1,9 +1,20 @@
 name: content
 
 # The checks here read vendor/5etools/, which is WotC's data and is never committed.
-# Fetching 109 MB on every pull request is the wrong trade, so the tag bump is the
-# trigger. A change to a loader or to the fixture declaration wants workflow_dispatch.
+# Fetching 109 MB on every pull request is the wrong trade, so a pull request runs them
+# only when it moves the pin.
+#
+# The schedule covers what that leaves open. A loader, the tag parser and the tag audit
+# meet the real corpus here and a fixture subset under `pnpm test`, so a break on a file
+# the fixtures elide merges green — the nightly run catches it while the commit that
+# caused it is still the last one in, rather than at the next tag bump months later. It
+# also re-verifies the pin, which is the only way an upstream retag surfaces before a
+# local change asks about it. `workflow_dispatch` answers the loader change that cannot
+# wait for the night.
 on:
+  schedule:
+    # Off the hour, where a scheduled run queues behind every other repository's.
+    - cron: "17 7 * * *"
   pull_request:
     paths:
       # A sync with no `--tag` rewrites the lockfile and leaves the manifest alone, so the
