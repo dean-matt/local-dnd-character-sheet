@@ -1,9 +1,14 @@
 name: content
 
-# The checks here read vendor/5etools/, which is WotC's data and is never committed.
-# Fetching 109 MB on every pull request is the wrong trade, so the tag bump is the
-# trigger. A change to a loader or to the fixture declaration wants workflow_dispatch.
+# The checks here read vendor/5etools/, which is WotC's data and is never committed, so
+# every run fetches 109 MB. CONTRIBUTING.md holds what each trigger below buys for that,
+# and why the gap a pin-only trigger leaves is closed on a schedule rather than by a
+# wider `paths`.
 on:
+  schedule:
+    # Monday, so the week's work starts behind a corpus the schedule has just checked.
+    # Not on the hour: that is where every other repository's scheduled run queues.
+    - cron: "17 7 * * 1"
   pull_request:
     paths:
       # A sync with no `--tag` rewrites the lockfile and leaves the manifest alone, so the
@@ -15,7 +20,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: content-${{ github.ref }}
+  group: content-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

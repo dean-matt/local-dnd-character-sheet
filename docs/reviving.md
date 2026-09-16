@@ -59,6 +59,19 @@ pnpm dev          # api on 8787, web on 5173
 pnpm check        # confirm the fences still pass
 ```
 
+## Re-enable the content workflow
+
+GitHub disables a workflow carrying a `schedule:` after 60 days without repository
+activity, so `content.yml` stopped running shortly after you did — the weekly corpus
+check and the run a tag bump triggers both. Do this before the rules-data update below,
+or that pull request merges with no corpus check: an absent check is not a red one, and
+the merge gate reads it as green.
+
+```bash
+gh workflow enable content.yml
+gh workflow run content.yml     # the first run answers for the whole gap
+```
+
 ## If you want to update the rules data
 
 ```bash
