@@ -17,9 +17,9 @@ this skill does not make: hand it over.
 
 ## Wait out both windows
 
-The call answers 202 and queues the merge, so two windows each give a verdict for the wrong
-commit — the old commit's green checks until the head carries `main`, then no checks at all,
-which `--watch` exits on and the gate reads as green.
+The call answers 202 and queues the merge, so two windows each give a verdict you must not
+trust — the old commit's green checks until the head carries `main`, then the new head with
+nothing scheduled, which `--watch` exits on.
 
 ```bash
 for _ in $(seq 8); do
@@ -31,8 +31,15 @@ for _ in $(seq 8); do
 done
 ```
 
-The guard reads the two fields the gate judges, so a reinvocation re-derives it, and eight
-iterations fit a default tool timeout. Reinvoke where a run ends without `ready`; three such
-reinvocations go to the user, naming the stuck window. Still `BEHIND` means the update never
-landed or `main` moved again, and the branch needs another update either way; not `BEHIND`
-with no checks means GitHub scheduled nothing.
+The guard reads the two fields the gate judges, so it cannot clear a wait the gate then
+refuses, and eight iterations fit a default tool timeout. Where a run ends without `ready`,
+read the window it stopped in, then reinvoke:
+
+```bash
+gh pr view "$n" --json mergeStateStatus --jq .mergeStateStatus
+gh pr checks "$n" --json name --jq length
+```
+
+Still `BEHIND` means the update never landed or `main` moved again, and the branch needs
+another update either way; not `BEHIND` with no checks means GitHub scheduled nothing. Three
+reinvocations go to the user, carrying both readings.

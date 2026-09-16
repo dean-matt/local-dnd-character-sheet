@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
+  checksBlocked,
   dependenciesDiffer,
   FENCE,
   lastPass,
@@ -117,6 +118,12 @@ describe("the other three conditions", () => {
       { name: "spellcheck", bucket: "fail" },
     ];
     expect(notGreen(checks)).toEqual(["e2e", "spellcheck"]);
+  });
+
+  it("names the red checks, and reads an empty rollup as too new to judge", () => {
+    expect(checksBlocked([{ name: "check", bucket: "pass" }])).toBeNull();
+    expect(checksBlocked([{ name: "e2e", bucket: "fail" }])).toBe("e2e");
+    expect(checksBlocked([])).toMatch(/no check has reported/);
   });
 
   it("stops a conflict and asks again on UNKNOWN", () => {
