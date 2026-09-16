@@ -55,8 +55,9 @@ holds, stop and name it; reranking is the user's call.
    crash. Clear it by hand once no agent holds it. Never link `characters.db`: two agents
    writing it collide. Run every later step from the worktree; step 14 removes it.
 
-   Then set the board to `In Progress`. `item-add` returns the item an issue already has,
-   and the other three ids hold still, so read them once a session.
+   Then set the board to `In Progress`; its own workflow waits for the pull request.
+   `item-add` returns the item an issue already has, and the other three ids hold still, so
+   read them once a session.
 
    ```bash
    gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
@@ -72,12 +73,13 @@ holds, stop and name it; reranking is the user's call.
    README row.
 7. **Prose pass** with `writing-clearly-and-concisely` over every piece of prose the change
    wrote — commit message, comments, `docs/`, a skill, `CLAUDE.md`. A skill says what to
-   do; keep a reason only where losing it lets the next agent delete a fence.
+   do; keep a reason only where losing it lets the next agent delete a fence or walk into a
+   failure that passes silently.
 8. **`pnpm check`, then commit and push**, once per concern the issue carries. Run it after
    steps 6 and 7 — pre-commit runs neither the tests nor the caps. Never push past a
    failure with a note about it.
-9. **Open the pull request** with `gh pr create`, body linking the issue. This starts CI;
-   the pushes before it started nothing.
+9. **Open the pull request** with `gh pr create`, body linking the issue and prose passed.
+   This starts CI; the pushes before it started nothing.
 10. **Dispatch the review to a subagent** whose prompt carries the pull request number and
     nothing else — no rationale, no account of what you wrote, no defense of a choice. It
     invokes [`audit-pr`](../audit-pr/SKILL.md), which reviews from its own worktree. Its

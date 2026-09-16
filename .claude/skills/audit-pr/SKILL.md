@@ -65,7 +65,8 @@ Four run on every pull request:
   cannot: a sentence ambiguous rather than dense, and a register that fits its reader —
   instructions an agent rereads every pass, in the voice a developer writes, not a
   technical writer. A skill says what to do, and a reason earns its line only where losing
-  it lets the next agent delete a fence. A comment restating the code is a finding, and
+  it lets the next agent delete a fence or walk into a failure that passes silently. A
+  comment restating the code is a finding, and
   history and markers belong in the commit message and the pull request body alone.
 
 Four more fire only where the diff reaches them, so a `repo`-only change runs the four

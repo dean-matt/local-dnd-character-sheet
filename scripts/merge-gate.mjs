@@ -62,10 +62,12 @@ export function unanswered(comments) {
  * A declined `comment` is a taste call refused and ends a healthy review; anything else is
  * a judgment the user has not seen.
  */
+const DECLINED = /^\*\*Declined\*\*/;
+
 export function blockingDeclines(comments) {
   const findings = new Map(comments.map((c) => [String(c.id), c.body]));
   return comments
-    .filter((c) => /^\*\*Declined\*\*/.test(c.body))
+    .filter((c) => DECLINED.test(c.body))
     .filter((c) => severity(findings.get(String(c.in_reply_to_id))) !== "comment")
     .map((c) => c.html_url);
 }
@@ -78,13 +80,26 @@ export function mergeBlocked({ mergeable, mergeStateStatus }) {
 
 const DEP_KEYS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
 
-/** A version bump stops the merge; a rename or a reordered script does not. */
+/** A version bump stops the merge; a rename, a reordered script or a reordered map does not. */
 export function dependenciesDiffer(before, after) {
-  const pick = (pkg) => JSON.stringify([...DEP_KEYS, "pnpm"].map((k) => [k, pkg?.[k] ?? null]));
+  const sorted = (v) =>
+    v === null || typeof v !== "object" || Array.isArray(v)
+      ? v
+      : Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)));
+  const pick = (pkg) =>
+    JSON.stringify([...DEP_KEYS, "pnpm"].map((k) => [k, sorted(pkg?.[k] ?? null)]));
   return pick(before) !== pick(after);
 }
 
 const gh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8" }));
+
+function tolerate(read, fallback) {
+  try {
+    return read();
+  } catch {
+    return fallback;
+  }
+}
 const git = (args) => execFileSync("git", args, { encoding: "utf8" }).trim();
 
 function show(ref, path) {
@@ -103,10 +118,13 @@ function gate(n) {
     if (!ok) failures.push(condition);
   };
 
-  const red = notGreen(gh(["pr", "checks", n, "--json", "name,bucket"]));
+  // gh exits non-zero where no check has reported at all, which is not a bucket.
+  const checks = tolerate(() => gh(["pr", "checks", n, "--json", "name,bucket"]), []);
+  const red = notGreen(checks);
   report(red.length === 0, "every check is green", red.join(", "));
 
   const pass = lastPass(api(`repos/{owner}/{repo}/pulls/${n}/reviews`));
+  if (pass === null) console.log("      no review pass found — nothing has reviewed this");
   const findings =
     pass === null ? [] : api(`repos/{owner}/{repo}/pulls/${n}/reviews/${pass.id}/comments`);
   const blocking = blockingFindings(findings);

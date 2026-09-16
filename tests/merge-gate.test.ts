@@ -126,7 +126,7 @@ describe("the other three conditions", () => {
     expect(mergeBlocked({ mergeable: "UNKNOWN", mergeStateStatus: "BLOCKED" })).not.toBeNull();
   });
 
-  it("stops a version bump and ignores a rename or a reordered script", () => {
+  it("stops a version bump and ignores a rename or a reordering", () => {
     const before = {
       name: "a",
       dependencies: { zod: "^3.0.0" },
@@ -137,6 +137,10 @@ describe("the other three conditions", () => {
     expect(dependenciesDiffer(before, { ...before, scripts: { build: "y", dev: "x" } })).toBe(
       false,
     );
+    const two = { ...before, dependencies: { zod: "^3.0.0", hono: "^4.0.0" } };
+    expect(
+      dependenciesDiffer(two, { ...two, dependencies: { hono: "^4.0.0", zod: "^3.0.0" } }),
+    ).toBe(false);
     expect(dependenciesDiffer(before, { ...before, devDependencies: { vitest: "^4" } })).toBe(true);
   });
 });
