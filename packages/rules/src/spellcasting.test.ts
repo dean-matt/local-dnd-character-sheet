@@ -174,9 +174,12 @@ describe("preparedSpellCount", () => {
     expect(preparedSpellCount(modifier, level, rule)).toBe(1);
   });
 
-  it("counts each class separately for a multiclassed character", () => {
-    expect(preparedSpellCount(3, 5, "level")).toBe(8);
-    expect(preparedSpellCount(2, 5, "half-level")).toBe(4);
+  it("counts each class of a multiclassed character separately", () => {
+    const cleric = preparedSpellCount(3, 5, "level");
+    const paladin = preparedSpellCount(3, 7, "half-level");
+    expect(cleric).toBe(8);
+    expect(paladin).toBe(6);
+    expect(preparedSpellCount(3, 12, "level")).not.toBe(cleric + paladin);
   });
 
   it.each([0, 21, 2.5])("rejects class level %s", (level) => {

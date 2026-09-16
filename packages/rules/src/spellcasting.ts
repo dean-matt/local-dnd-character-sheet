@@ -139,11 +139,6 @@ const PREPARATION_RULES = ["level", "half-level"] as const;
 
 export type PreparationRule = (typeof PREPARATION_RULES)[number];
 
-const PREPARED_LEVEL_CONTRIBUTION = new Map<PreparationRule, (level: number) => number>([
-  ["level", (level) => level],
-  ["half-level", (level) => Math.floor(level / 2)],
-]);
-
 /**
  * Spells a `classic` caster prepares: the spellcasting ability modifier plus the
  * level the rule counts, floored at one. PHB p.56 (cleric), p.64 (druid), p.82
@@ -155,6 +150,10 @@ const PREPARED_LEVEL_CONTRIBUTION = new Map<PreparationRule, (level: number) => 
  *
  * `classLevel` is the level in that class, never the character's total: a
  * multiclassed character prepares one list per class, so call this once per class.
+ *
+ * The caller decides whether the class casts at all: a PHB paladin has no
+ * Spellcasting feature below level 2, while a TCE artificer has one at level 1. The
+ * floor of one assumes a class that already casts.
  */
 export function preparedSpellCount(
   spellcastingModifier: number,
@@ -167,9 +166,9 @@ export function preparedSpellCount(
   if (!Number.isInteger(classLevel) || classLevel < 1 || classLevel > 20) {
     throw new RangeError(`Class level must be 1-20, got ${classLevel}`);
   }
-  const contribution = PREPARED_LEVEL_CONTRIBUTION.get(rule);
-  if (!contribution) {
+  if (!PREPARATION_RULES.includes(rule)) {
     throw new RangeError(`Unknown preparation rule "${rule}"`);
   }
-  return Math.max(1, spellcastingModifier + contribution(classLevel));
+  const levelCounted = rule === "half-level" ? Math.floor(classLevel / 2) : classLevel;
+  return Math.max(1, spellcastingModifier + levelCounted);
 }
