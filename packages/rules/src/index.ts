@@ -23,6 +23,7 @@ export { averageHitPoints, HIT_DICE, hitDiceRecovered, maxHitPoints } from "./hi
 export { RESET_TRIGGERS, resetsOn } from "./rest.ts";
 export type { CasterClassLevel, PreparationRule } from "./spellcasting.ts";
 export {
+  concentrationSaveDc,
   multiclassCasterLevel,
   multiclassSlots,
   preparedSpellCount,
