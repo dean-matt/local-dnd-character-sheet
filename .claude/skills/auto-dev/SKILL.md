@@ -46,9 +46,13 @@ user, and whether its review pass ran in a subagent of its own.
 
 Stop where that pass ran anywhere else. `issue-to-pr` sends its review to a subagent that
 did not write the code, and a review one agent both writes and reads still earns
-`review:approved` — merging on that defeats the gate silently.
+`review:approved` — merging on that defeats the gate silently. The claim is the build
+subagent's own and GitHub cannot tell a subagent's review from a self-written one, so this
+catches a dispatch that failed, not one an agent skipped and did not say so.
 
-A report naming no issue means the board holds nothing ranked and open: stop.
+A report naming no issue stops the run. Report the reason it named rather than calling the
+board empty — `issue-to-pr`'s query stops the same way on a truncated board and on a
+failed `gh` call.
 
 A report naming an issue but no pull request means `issue-to-pr` stopped on the way — a
 `blocked` condition that still holds, or a `pnpm check` it refused to push past. Stop and
@@ -77,13 +81,15 @@ the rest of this skill holds. The count is of merges, not of attempts.
 
 One line per issue attempted, in the order taken:
 
-- `#<n>` **merged** — the pull request and the merge commit
+- `#<n>` **merged** — the pull request, the merge commit, and anything `issue-to-pr` left
+  waiting on the user, such as a second issue it filed
 - `#<n>` **stopped** — the pull request, and the condition, quoted from the skill that
   named it
 
-Close with why the run ended and what the user now holds. A stop leaves the branch, the
-pull request and the worktree standing; `merge-pr` leaves the checkout on an up-to-date
-`main` wherever one merged.
+Close with why the run ended and what the user now holds. A stop leaves the branch and the
+pull request standing; `issue-to-pr` removes its own worktree whichever label it leaves, so
+one still under `.claude/worktrees/` means a run died before that step. `merge-pr` leaves
+the checkout on an up-to-date `main` wherever one merged.
 
 ## What this skill will not do
 
