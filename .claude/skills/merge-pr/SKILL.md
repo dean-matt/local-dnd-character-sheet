@@ -53,12 +53,12 @@ Six conditions, each named where it fails:
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0; otherwise hand the user the condition it named and stop. Read the
-pass body the script points at too: a finding no line anchors is written there, not on a
-comment. "the branch merges cleanly" is the exception — its detail line separates a
-conflict, a behind branch, and a mergeability GitHub has not computed, and a behind branch
-goes to the next section rather than to the user. `scripts/merge-gate.mjs` holds the six and
-what each costs when wrong; `tests/merge-gate.test.ts` calls them.
+Merge where it exits 0; otherwise hand the user the condition it named and stop — except
+"the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
+mergeability GitHub has not computed. A behind branch goes to the next section rather than
+to the user. Read the pass body the script points at too: a finding no line
+anchors is written there, not on a comment. `scripts/merge-gate.mjs` holds the six and what
+each costs when wrong; `tests/merge-gate.test.ts` calls them.
 
 ## Where the branch is behind
 
@@ -67,8 +67,8 @@ pull request that sat while another merged, whatever the rest of the gate said.
 [`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
 the server and waits out the two windows where the checks describe the wrong commit. On its
 `ready`, run *Block on the checks* and the gate again; a gate still answering `UNKNOWN` is
-the queued merge landing, so ask again. Twice around is the ceiling — a third `BEHIND` means
-`main` moves faster than the checks run, and sequencing that is the user's call.
+the queued merge landing, so ask again. Two round trips is the ceiling — a third `BEHIND`
+means `main` moves faster than the checks run, and sequencing that is the user's call.
 
 ## Merge, then clean up
 

@@ -6,13 +6,14 @@ Reached from *Where the branch is behind* in [SKILL.md](SKILL.md), where the gat
 ## Update the branch on the server
 
 ```bash
-gh api --method PUT "repos/{owner}/{repo}/pulls/$n/update-branch" --jq .message
+gh api --method PUT "repos/{owner}/{repo}/pulls/$n/update-branch"
 ```
 
 That merges `main` in on the server and leaves every pushed commit alone; never rebase or
-force push instead. A 422 of `There are no new commits on the base branch` means the branch
-is already current, so carry on to the wait. Any other 422 is a conflict the update left
-untouched, and resolving one is a code decision this skill does not make: hand it over.
+force push instead. A 422 exits non-zero with its reason on stderr. `There are no new
+commits on the base branch` means the branch is already current, so carry on to the wait.
+Any other 422 is a conflict the update left untouched, and resolving one is a code decision
+this skill does not make: hand it over.
 
 ## Wait out both windows
 
@@ -21,17 +22,17 @@ commit — the old commit's green checks until the head carries `main`, then no 
 which `--watch` exits on and the gate reads as green.
 
 ```bash
-for _ in $(seq 10); do
+for _ in $(seq 8); do
   sleep 10
-  head=$(gh pr view "$n" --json headRefOid --jq .headRefOid)
-  git fetch --quiet origin main "$head"
-  git merge-base --is-ancestor origin/main "$head" &&
+  gh pr view "$n" --json mergeable,mergeStateStatus \
+    --jq 'select(.mergeable != "UNKNOWN" and .mergeStateStatus != "BEHIND")' | grep -q . &&
     gh pr checks "$n" --json name --jq 'length > 0' 2>/dev/null | grep -q true &&
     { echo ready; break; }
 done
 ```
 
-The loop carries nothing from the block above and fits a default tool timeout, so reinvoke
-it where a run ends without `ready`. Three such runs go to the user, naming the stuck
-window: `--is-ancestor` failing means the update never landed, passing with no checks means
-GitHub scheduled nothing.
+The guard reads the two fields the gate judges, so a reinvocation re-derives it, and eight
+iterations fit a default tool timeout. Reinvoke where a run ends without `ready`; three such
+reinvocations go to the user, naming the stuck window. Still `BEHIND` means the update never
+landed or `main` moved again, and the branch needs another update either way; not `BEHIND`
+with no checks means GitHub scheduled nothing.
