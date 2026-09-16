@@ -35,7 +35,8 @@ describe("concentrationSaveDc", () => {
   });
 
   it("caps the 2024 DC at 30 where the 2014 DC keeps climbing", () => {
-    expect(concentrationSaveDc(60, "one")).toBe(30);
+    expect(concentrationSaveDc(62, "one")).toBe(30);
+    expect(concentrationSaveDc(62, "classic")).toBe(31);
     expect(concentrationSaveDc(200, "one")).toBe(30);
     expect(concentrationSaveDc(200, "classic")).toBe(100);
   });
