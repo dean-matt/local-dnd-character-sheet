@@ -271,11 +271,11 @@ a file the fixtures elide passes every check a pull request runs. Naming those p
 `paths` would close the gap and fetch 109 MB on every pull request that touches a loader,
 so the job runs nightly instead. That makes the corpus a post-merge check
 rather than a gate. The break still merges; the difference is that it surfaces the same
-night, in front of whoever wrote it, rather than at the next tag bump months later in
-front of whoever ran the bump. The schedule earns its place twice, because re-verifying
+night rather than at the next tag bump months later. The schedule earns its place twice, because re-verifying
 the pin is also the only thing that notices an upstream retag before a local change asks
 about it. A run takes about a minute and costs nothing on a public repository, so the
-trade is queue noise rather than money. `workflow_dispatch` stays for the loader change
+trade is not money. It is upstream bandwidth: every run clones the 5etools mirror, and a
+nightly schedule pulls roughly 40 GB a year from it whether or not `main` moved. `workflow_dispatch` stays for the loader change
 that wants the answer before it merges.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
