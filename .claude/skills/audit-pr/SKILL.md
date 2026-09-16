@@ -33,8 +33,8 @@ git -C "$dir" diff origin/main...HEAD -- . ':(exclude)tests/fixtures/5etools/*' 
 ```
 
 Keep it outside the repository, where it joins no glob `pnpm check` runs, and fetch `main`
-too, or a stale merge base widens the diff. End the pass with `git worktree remove --force
-"$dir"`.
+too, or a stale merge base widens the diff. Pruning before the add cleans up after a pass
+that died. End the pass with `git worktree remove --force "$dir"`.
 
 Count the excluded paths by rerunning the diff with `--name-only` and those paths as the
 pathspec. Read `packages/content/src/fixtures/declaration.ts`, never the rows it wrote.
@@ -62,10 +62,11 @@ Four run on every pull request:
   absent, zero, negative, multiclass, a homebrew row shadowing a catalog one.
 - **Editor** — the prose the change writes: commit message, pull request body, `docs/`, a
   skill, a comment. Take it through `writing-clearly-and-concisely`, then weigh what that
-  cannot: a sentence ambiguous rather than dense, and a register that fits its reader. A
-  skill says what to do; a reason earns its line only where losing it lets the next agent
-  delete a fence. A comment restating the code is a finding, and history and markers belong
-  in the commit message and the pull request body alone.
+  cannot: a sentence ambiguous rather than dense, and a register that fits its reader —
+  instructions an agent rereads every pass, in the voice a developer writes, not a
+  technical writer. A skill says what to do, and a reason earns its line only where losing
+  it lets the next agent delete a fence. A comment restating the code is a finding, and
+  history and markers belong in the commit message and the pull request body alone.
 
 Four more fire only where the diff reaches them, so a `repo`-only change runs the four
 above and stops:

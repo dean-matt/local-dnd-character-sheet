@@ -1,10 +1,9 @@
 /**
- * The five conditions that decide whether a pull request is fit to land.
+ * The six conditions that decide whether a pull request is fit to land.
  *
  * `merge-pr` runs this and stops where it exits non-zero, handing the user the condition
- * it named. Every decision is a pure function over the shapes GitHub returns, so
- * `tests/merge-gate.test.ts` calls them on real reviews instead of asserting that a
- * skill's prose still holds a pattern.
+ * it named. Every decision is a pure function over the shapes GitHub returns, which is
+ * what lets `tests/merge-gate.test.ts` call them on payloads copied from real reviews.
  *
  * Running the file gathers the inputs with `gh` and `git`, prints a line per condition,
  * and exits 1 where any of them blocks.
@@ -31,7 +30,11 @@ export function notGreen(checks) {
   return checks.filter((c) => c.bucket !== "pass" && c.bucket !== "skipping").map((c) => c.name);
 }
 
-/** A pass is a review carrying a body; the verdict replies land as reviews with none. */
+/**
+ * A pass is a review carrying a body; the verdict replies land as reviews with none. Any
+ * bodied review counts, so a human's "LGTM" posted after an audit pass becomes the pass
+ * and its findings go uncounted. Keying on the pass's own comments would close that.
+ */
 export function lastPass(reviews) {
   return reviews.filter((r) => r.body !== "").at(-1) ?? null;
 }
@@ -42,13 +45,17 @@ export function blockingFindings(comments) {
 
 const VERDICT = /^\*\*(Applied|Declined)\*\*/;
 
+/**
+ * The API omits `in_reply_to_id` on a top-level comment rather than sending null, so a
+ * strict comparison against null matches nothing and the condition passes everything.
+ */
+const isFinding = (c) => c.in_reply_to_id === undefined || c.in_reply_to_id === null;
+
 export function unanswered(comments) {
   const answered = new Set(
     comments.filter((c) => VERDICT.test(c.body)).map((c) => String(c.in_reply_to_id)),
   );
-  return comments
-    .filter((c) => c.in_reply_to_id === null && !answered.has(String(c.id)))
-    .map((c) => c.html_url);
+  return comments.filter((c) => isFinding(c) && !answered.has(String(c.id))).map((c) => c.html_url);
 }
 
 /**
@@ -73,8 +80,7 @@ const DEP_KEYS = ["dependencies", "devDependencies", "peerDependencies", "option
 
 /** A version bump stops the merge; a rename or a reordered script does not. */
 export function dependenciesDiffer(before, after) {
-  const pick = (pkg) =>
-    JSON.stringify([...DEP_KEYS, "pnpm"].map((k) => [k, pkg?.[k] ?? null].flat()));
+  const pick = (pkg) => JSON.stringify([...DEP_KEYS, "pnpm"].map((k) => [k, pkg?.[k] ?? null]));
   return pick(before) !== pick(after);
 }
 
@@ -153,5 +159,5 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
     console.error(`\n${failures.length} condition(s) block the merge. Hand each to the user.`);
     process.exit(1);
   }
-  console.log("\nall five conditions hold");
+  console.log("\nall six conditions hold");
 }

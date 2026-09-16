@@ -56,8 +56,7 @@ holds, stop and name it; reranking is the user's call.
    writing it collide. Run every later step from the worktree; step 14 removes it.
 
    Then set the board to `In Progress`. `item-add` returns the item an issue already has,
-   and adds one that is missing — `gh issue create` does not put an issue on the board. The
-   other three ids hold still, so read them once a session.
+   and the other three ids hold still, so read them once a session.
 
    ```bash
    gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
@@ -134,5 +133,5 @@ real corpus and what came out.
 
 **Merge.** Report and wait, whatever the review found and however small the change.
 
-**Widen the issue.** A second bug found on the way is a second issue: file it, put it on
-the board with `gh project item-add`, and leave it out of this branch.
+**Widen the issue.** A second bug found on the way is a second issue: file it or name it
+in the report, and leave it out of this branch.

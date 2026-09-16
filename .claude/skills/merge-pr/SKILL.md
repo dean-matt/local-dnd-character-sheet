@@ -34,8 +34,12 @@ failure is the branch's.
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
   | .link | capture("/runs/(?<id>[0-9]+)").id] | unique | .[]' |
   while read -r id; do gh run rerun "$id" --failed; done
+sleep 30
 gh pr checks "$n" --watch --fail-fast
 ```
+
+The sleep covers the seconds a rerun takes to show as pending: `--fail-fast` reads the old
+conclusion where a requested rerun has yet to flip its jobs, and exits on it.
 
 ## The gate
 
@@ -56,8 +60,8 @@ Merge where it exits 0. Where it does not, hand the user the condition it named 
 Read the pass body the script points at as well: a finding no line anchors is written
 there rather than on a comment.
 
-`tests/merge-gate.test.ts` holds those conditions, and `scripts/merge-gate.mjs` says what
-each one costs when it is wrong.
+`scripts/merge-gate.mjs` holds those conditions and says what each one costs when it is
+wrong; `tests/merge-gate.test.ts` calls them.
 
 ## Merge, then clean up
 

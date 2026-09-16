@@ -19,28 +19,28 @@ import { ROOT, read } from "./lib/doc-helpers.ts";
  * a review this repository already posted: one pass wrote its severities backticked and
  * another wrote them in bold, which is the drift the gate exists to survive. A body
  * composed to match the parser would assert the parser back to itself.
+ *
+ * The envelope matters as much as the body. The API omits `in_reply_to_id` on a top-level
+ * comment rather than sending null, so `finding()` omits it too — a fixture that sets it
+ * to null hides the one bug this condition can have.
  */
 const BACKTICKED = '`comment` — "It invokes" has a loose antecedent: the nearest nouns are';
 const BOLD = "**critical** — `for id in $red` runs once with both ids as a single word.";
 const DECLINED = "**Declined** — the trade stands as described. Replacing elapsed time";
 
-const comment = (id: number, body: string, inReplyTo: number | null = null) => ({
+const finding = (id: number, body: string) => ({
   id,
   body,
-  in_reply_to_id: inReplyTo,
   html_url: `https://example.invalid/#discussion_r${id}`,
 });
 
-describe("severity", () => {
-  it.each([
-    ["**critical** — x", "critical"],
-    ["**warning** — x", "warning"],
-    ["**comment** — x", "comment"],
-  ])("reads %s", (body, expected) => {
-    expect(severity(body)).toBe(expected);
-  });
+const reply = (id: number, body: string, inReplyTo: number) => ({
+  ...finding(id, body),
+  in_reply_to_id: inReplyTo,
+});
 
-  it("reads the backticked form #176 posted as unreadable", () => {
+describe("severity", () => {
+  it("reads the backticked form one pass posted as unreadable", () => {
     expect(severity(BACKTICKED)).toBe("unreadable");
   });
 
@@ -71,39 +71,39 @@ describe("the last review pass", () => {
 
 describe("blocking findings", () => {
   it("keeps an unreadable marker rather than dropping it", () => {
-    expect(blockingFindings([comment(1, BACKTICKED)])).toHaveLength(1);
+    expect(blockingFindings([finding(1, BACKTICKED)])).toHaveLength(1);
   });
 
   it("keeps critical and warning, and lets comment through", () => {
     const findings = [
-      comment(1, BOLD),
-      comment(2, "**warning** — y"),
-      comment(3, "**comment** — z"),
+      finding(1, BOLD),
+      finding(2, "**warning** — y"),
+      finding(3, "**comment** — z"),
     ];
     expect(blockingFindings(findings)).toHaveLength(2);
   });
 });
 
 describe("thread verdicts", () => {
-  const finding = comment(10, BOLD);
+  const critical = finding(10, BOLD);
 
   it("reports a finding no reply answers", () => {
-    expect(unanswered([finding])).toHaveLength(1);
+    expect(unanswered([critical])).toHaveLength(1);
   });
 
   it("accepts Applied and Declined alike", () => {
-    expect(unanswered([finding, comment(11, "**Applied** in abc1234", 10)])).toEqual([]);
-    expect(unanswered([finding, comment(12, DECLINED, 10)])).toEqual([]);
+    expect(unanswered([critical, reply(11, "**Applied** in abc1234", 10)])).toEqual([]);
+    expect(unanswered([critical, reply(12, DECLINED, 10)])).toEqual([]);
   });
 
   it("lets a declined comment through and stops a declined critical", () => {
-    const taste = [comment(20, "**comment** — a taste call"), comment(21, DECLINED, 20)];
+    const taste = [finding(20, "**comment** — a taste call"), reply(21, DECLINED, 20)];
     expect(blockingDeclines(taste)).toEqual([]);
-    expect(blockingDeclines([finding, comment(13, DECLINED, 10)])).toHaveLength(1);
+    expect(blockingDeclines([critical, reply(13, DECLINED, 10)])).toHaveLength(1);
   });
 
   it("stops a decline whose finding carries no readable marker", () => {
-    const orphan = [comment(30, BACKTICKED), comment(31, DECLINED, 30)];
+    const orphan = [finding(30, BACKTICKED), reply(31, DECLINED, 30)];
     expect(blockingDeclines(orphan)).toHaveLength(1);
   });
 });
