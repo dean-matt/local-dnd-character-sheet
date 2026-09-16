@@ -154,6 +154,13 @@ request in prose picks between two similar descriptions, so a skill here called
 `work-issue` would compete with any plugin that owns the name. This repository's is
 `issue-to-pr` for that reason.
 
+A skill says what to do. It is instructions an agent executes, not an essay a human reads
+once, so a sentence explaining a decision nobody will revisit is one every future run pays
+for. Keep a reason where losing it lets the next agent delete a fence or walk into a
+failure that passes silently — those are the ones that cost a review pass to find. Nothing
+asserts this: the cap catches the symptom, and the register is a judgment on the pull
+request.
+
 Editing one earns a `writing-clearly-and-concisely` pass before it is committed, which an
 ordinary file does not. A skill is the prose read at the start of every task it governs,
 so an ambiguous sentence misroutes the work rather than merely reading badly.
