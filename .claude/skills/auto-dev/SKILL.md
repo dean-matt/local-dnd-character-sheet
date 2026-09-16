@@ -54,8 +54,8 @@ code is the worst reader of a gate judging its own work. Stop where it names a c
 instead of a merge commit.
 
 **5. Count the merge and loop.** `gh pr view <pr> --json state,mergeCommit` settles whether
-it merged, not the report of the subagent that merged it. The count is of merges, not
-attempts.
+it merged, not the report of the subagent that merged it. A `state` other than `MERGED`
+stops the run. The count is of merges, not attempts.
 
 ## The report
 
@@ -63,12 +63,13 @@ One line per issue attempted, in order:
 
 - `#<n>` **merged** — the pull request, the merge commit, and anything left waiting on the
   user, such as a second issue `issue-to-pr` filed
-- `#<n>` **stopped** — the pull request and the condition, quoted from the skill that named
-  it
+- `#<n>` **stopped** — the pull request, the condition quoted from the skill that named it,
+  and that the issue still reads `In Progress`, so the next run picks it again
 
-Close with why the run ended. A stop leaves the branch and the pull request standing, and
-no worktree: `issue-to-pr` removes its own whichever label it leaves, so one still under
-`.claude/worktrees/` means a run died early.
+Close with why the run ended and what stands. `issue-to-pr` removes its worktree at its
+last step only, so a stop before it took the issue leaves nothing, a stop after it branched
+leaves the branch and a worktree under `.claude/worktrees/`, and a stop at step 3 or later
+here leaves the branch and the pull request.
 
 ## What this skill will not do
 
