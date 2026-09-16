@@ -31,6 +31,16 @@ export function notGreen(checks) {
 }
 
 /**
+ * An empty rollup is not a green one: the required checks run on every pull request, so
+ * nothing reporting means the head is too new to judge rather than that it passed.
+ */
+export function checksBlocked(checks) {
+  if (checks.length === 0) return "no check has reported on this head yet";
+  const red = notGreen(checks);
+  return red.length === 0 ? null : red.join(", ");
+}
+
+/**
  * A pass is a review carrying a body; the verdict replies land as reviews with none. Any
  * bodied review counts, so a human's "LGTM" posted after an audit pass becomes the pass
  * and its findings go uncounted. Keying on the pass's own comments would close that.
@@ -72,9 +82,16 @@ export function blockingDeclines(comments) {
     .map((c) => c.html_url);
 }
 
+/**
+ * A non-null return blocks the merge and is the sentence the user reads, so a branch that
+ * is only behind takes its own: `merge-pr` recovers that one by merging `main` in, and
+ * cannot recover a conflict.
+ */
 export function mergeBlocked({ mergeable, mergeStateStatus }) {
   if (mergeable === "CONFLICTING" || mergeStateStatus === "DIRTY") return "the branch conflicts";
   if (mergeable === "UNKNOWN") return "GitHub is still computing mergeability — ask again";
+  if (mergeStateStatus === "BEHIND")
+    return "the branch is behind main — update it, then run the checks and the gate again";
   return null;
 }
 
@@ -120,8 +137,8 @@ function gate(n) {
 
   // gh exits non-zero where no check has reported at all, which is not a bucket.
   const checks = tolerate(() => gh(["pr", "checks", n, "--json", "name,bucket"]), []);
-  const red = notGreen(checks);
-  report(red.length === 0, "every check is green", red.join(", "));
+  const checkFailure = checksBlocked(checks);
+  report(checkFailure === null, "every check is green", checkFailure);
 
   const pass = lastPass(api(`repos/{owner}/{repo}/pulls/${n}/reviews`));
   if (pass === null) console.log("      no review pass found — nothing has reviewed this");

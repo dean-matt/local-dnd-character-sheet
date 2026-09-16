@@ -5,9 +5,8 @@ description: Carry one reviewed local-dnd-character-sheet pull request to main �
 
 # Merging a pull request
 
-[`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops; this is the
-separate invocation that lands it. Run every command from the main checkout — a worktree
-holds its branch, and the merge deletes it.
+[`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops; this lands it. Run
+every command from the main checkout — a worktree holds its branch, and the merge deletes it.
 
 ```bash
 n=<pr>
@@ -24,11 +23,9 @@ stops here.
 gh pr checks "$n" --watch --fail-fast
 ```
 
-`--watch` blocks until every check finishes, so on a slow run it outlives a single tool
-call. Reinvoke it rather than shortening the wait.
-
-Rerun a red run once, never twice — one rerun covers a flaky runner, a second says the
-failure is the branch's.
+`--watch` blocks until every check finishes, so a slow run outlives a single tool call —
+reinvoke it rather than shortening the wait. Rerun a red run once, never twice: one rerun
+covers a flaky runner, a second says the failure is the branch's.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
@@ -38,8 +35,8 @@ sleep 30
 gh pr checks "$n" --watch --fail-fast
 ```
 
-The sleep covers the seconds a rerun takes to show as pending: `--fail-fast` reads the old
-conclusion where a requested rerun has yet to flip its jobs, and exits on it.
+The sleep covers the seconds before a rerun shows as pending; without it `--fail-fast` reads
+the old conclusion and exits on it.
 
 ## The gate
 
@@ -56,12 +53,22 @@ Six conditions, each named where it fails:
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0. Where it does not, hand the user the condition it named and stop.
-Read the pass body the script points at as well: a finding no line anchors is written
-there rather than on a comment.
+Merge where it exits 0; otherwise hand the user the condition it named and stop — except
+"the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
+verdict GitHub has not computed yet. A behind branch goes to the next section rather than
+to the user. Read the pass body the script points at too: a finding no line
+anchors is written there, not on a comment. `scripts/merge-gate.mjs` holds the six and what
+each costs when wrong; `tests/merge-gate.test.ts` calls them.
 
-`scripts/merge-gate.mjs` holds those conditions and says what each one costs when it is
-wrong; `tests/merge-gate.test.ts` calls them.
+## Where the branch is behind
+
+Branch protection requires a head carrying the tip of `main`, so `gh pr merge` refuses a
+pull request that sat while another merged, whatever the rest of the gate said.
+[`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
+the server and waits out the two windows where the checks describe the wrong commit. On its
+`ready`, run *Block on the checks* and the gate again; a gate still saying GitHub is
+computing mergeability is the queued merge landing, so ask again. Two round trips is the ceiling — a third `BEHIND`
+means `main` moves faster than the checks run, and sequencing that is the user's call.
 
 ## Merge, then clean up
 
@@ -82,9 +89,8 @@ gh project item-edit \
 ```
 
 `git worktree remove` refuses rather than discarding anything uncommitted, and the `exit`
-makes that refusal stop the run. Setting a board item already `Done` changes nothing.
-
-Then report the merge commit, the issue it closed, and that the checkout is on `main`.
+makes that refusal stop the run. Setting a board item already `Done` changes nothing. Then
+report the merge commit, the issue it closed, and that the checkout is on `main`.
 
 ## What this skill will not do
 

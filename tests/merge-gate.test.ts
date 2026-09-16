@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
+  checksBlocked,
   dependenciesDiffer,
   FENCE,
   lastPass,
@@ -119,11 +120,37 @@ describe("the other three conditions", () => {
     expect(notGreen(checks)).toEqual(["e2e", "spellcheck"]);
   });
 
+  it("names the red checks, and reads an empty rollup as too new to judge", () => {
+    expect(checksBlocked([{ name: "check", bucket: "pass" }])).toBeNull();
+    expect(checksBlocked([{ name: "e2e", bucket: "fail" }])).toBe("e2e");
+    expect(checksBlocked([])).toMatch(/no check has reported/);
+  });
+
   it("stops a conflict and asks again on UNKNOWN", () => {
     expect(mergeBlocked({ mergeable: "MERGEABLE", mergeStateStatus: "CLEAN" })).toBeNull();
     expect(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "CLEAN" })).not.toBeNull();
     expect(mergeBlocked({ mergeable: "MERGEABLE", mergeStateStatus: "DIRTY" })).not.toBeNull();
     expect(mergeBlocked({ mergeable: "UNKNOWN", mergeStateStatus: "BLOCKED" })).not.toBeNull();
+  });
+
+  /**
+   * GitHub reports a branch missing the tip of `main` as `MERGEABLE`/`BEHIND`, which this
+   * repository's branch protection then refuses.
+   */
+  it("stops a branch that is behind, and says so rather than calling it a conflict", () => {
+    const behind = mergeBlocked({ mergeable: "MERGEABLE", mergeStateStatus: "BEHIND" });
+    expect(behind).toMatch(/behind/);
+    expect(behind).not.toBe(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "DIRTY" }));
+  });
+
+  it("asks again where a behind branch has no computed mergeability yet", () => {
+    expect(mergeBlocked({ mergeable: "UNKNOWN", mergeStateStatus: "BEHIND" })).toMatch(/ask again/);
+  });
+
+  it("reads a branch that is both behind and conflicting as the conflict", () => {
+    expect(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "BEHIND" })).toMatch(
+      /conflicts/,
+    );
   });
 
   it("stops a version bump and ignores a rename or a reordering", () => {
