@@ -269,14 +269,21 @@ runs a loader, the tag parser and `scripts/tag-audit.ts` against the real corpus
 `pnpm test` runs the same code against a fixture subset, so a loader that breaks only on
 a file the fixtures elide passes every check a pull request runs. Naming those paths in
 `paths` would close the gap and fetch 109 MB on every pull request that touches a loader,
-so the job runs nightly instead. That makes the corpus a post-merge check
-rather than a gate. The break still merges; the difference is that it surfaces the same
-night rather than at the next tag bump months later. The schedule earns its place twice, because re-verifying
-the pin is also the only thing that notices an upstream retag before a local change asks
-about it. A run takes about a minute and costs nothing on a public repository, so the
-trade is not money. It is upstream bandwidth: every run clones the 5etools mirror, and a
-nightly schedule pulls roughly 40 GB a year from it whether or not `main` moved. `workflow_dispatch` stays for the loader change
-that wants the answer before it merges.
+so the job runs nightly instead. That makes the corpus a post-merge check rather than a
+gate: the break still merges, and surfaces the same night rather than at the next tag
+bump months later. The schedule earns its place twice, because re-verifying the pin is
+also the only thing that notices an upstream retag before a local change asks about it.
+A run takes about a minute and costs nothing on a public repository, so the trade is not
+money. It is upstream bandwidth: every run clones the 5etools mirror, and a nightly
+schedule pulls roughly 40 GB a year from it whether or not `main` moved.
+`workflow_dispatch` stays for the loader change that wants the answer before it merges.
+
+The `schedule:` costs one thing beyond bandwidth: it makes the whole workflow subject to
+GitHub's 60-day inactivity disable, which the pin-only trigger was not. A disabled
+workflow does not fire on a tag bump either, and `notGreen` in `scripts/merge-gate.mjs`
+filters checks that report — so the bump merges with no corpus check and nothing red to
+show for it. `docs/reviving.md` carries the commands that turn it back on, because
+returning after a year is when it bites.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many
 tests a piece of logic deserves. A test-count ceiling would discourage tests worth having,
