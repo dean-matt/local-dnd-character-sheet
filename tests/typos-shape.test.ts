@@ -9,16 +9,16 @@ import { read } from "./lib/doc-helpers.ts";
  *
  * Every walker setting is asserted, because each one fails silently: the run stays
  * green over the paths it stopped reading. `ignore-hidden` is the one the default gets
- * wrong for this repository, and the outside-the-repository pair is the one that lets
- * a contributor's machine check less prose than the job does.
+ * wrong for this repository, and the `.ignore` pair is what keeps a file nobody
+ * committed from deciding which prose a contributor checks.
  */
 const WALK = {
   "ignore-hidden": false,
   "ignore-files": true,
-  "ignore-dot": true,
   "ignore-vcs": true,
+  "ignore-dot": false,
+  "ignore-parent": true,
   "ignore-global": false,
-  "ignore-parent": false,
 };
 
 const config = parse(read("typos.toml")) as {

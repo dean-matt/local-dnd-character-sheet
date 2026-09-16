@@ -8,31 +8,25 @@
 # start of every task it governs.
 ignore-hidden = false
 
-# The ignore files in the repository are shared, and are how .claude/worktrees/ stays
-# out of the walk.
+# One ignore mechanism decides the walk, and it is the repository's own .gitignore:
+# committed, reviewed, and read by both entry points alike. Honoring .ignore files
+# beside it would give a second answer, and one kept above the repository — a habit
+# ripgrep encourages — reaches in and narrows a contributor's `pnpm spell` while the
+# job keeps reading the file.
 ignore-files = true
-ignore-dot = true
 ignore-vcs = true
+ignore-dot = false
 
-# The ones outside it are not. A contributor's ~/.config/git/ignore narrows their
-# `pnpm spell` while the job keeps reading the file, which is the silent skip this
-# configuration exists to close.
+# A .gitignore above the repository never applies, because the walk stops at the git
+# boundary, so parent ignore files cost nothing once .ignore is off. The global one
+# does apply, and is the machine-dependent file this setting exists to refuse.
+ignore-parent = true
 ignore-global = false
-ignore-parent = false
 
 extend-exclude = [
   # Reaching hidden paths also reaches .git, whose objects are compressed binary that
   # typos reads as prose. A worktree's .git is a file, so the pattern takes no slash.
   ".git",
-
-  # Generated, and named here rather than left to .gitignore because ignore-parent is
-  # off: a walk rooted at packages/web would otherwise disregard this repository's own
-  # ignore file as a parent's.
-  "node_modules/",
-  "dist/",
-  "build/",
-  "*.tsbuildinfo",
-
   "vendor/",
   "pnpm-lock.yaml",
   "*.db",
