@@ -22,7 +22,7 @@ const GRIPS = ["one-handed", "two-handed"] as const;
 type Grip = (typeof GRIPS)[number];
 
 /** Upstream spells a property as an abbreviation, or — on `Lance` (XPHB) alone — as `{uid, note}`. */
-type WeaponProperty = string | { uid: string };
+type WeaponProperty = string | { uid: string; note?: string };
 
 export type Weapon = {
   /**
@@ -71,7 +71,7 @@ type WeaponAttack = {
   attackBonus: number;
   /** Dice notation, beside the flat modifier rather than folded into it. */
   damage?: string;
-  /** Absent with `damage`: a modifier on no dice is not a number a sheet can show. */
+  /** Absent when `damage` is: a modifier on no dice is not a number a sheet can show. */
   damageModifier?: number;
 };
 

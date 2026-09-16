@@ -121,12 +121,12 @@ describe("weaponAttack", () => {
     expect(weaponAttack({ weapon: DART, ...STRONG }).ability).toBe("strength");
   });
 
-  it("reads a property upstream wraps in an object, as Lance (XPHB) spells its 2H", () => {
+  it("reads a finesse property upstream wraps in an object, as Lance (XPHB) wraps its 2H", () => {
     expect(
       weaponAttack({
         weapon: {
           kind: "melee",
-          properties: ["H|XPHB", "R|XPHB", { uid: "F|XPHB" }],
+          properties: ["H|XPHB", "R|XPHB", { uid: "F|XPHB", note: "unless mounted" }],
           damage: "1d12",
         },
         ...NIMBLE,
@@ -158,6 +158,30 @@ describe("weaponAttack", () => {
   it("returns an attack but no damage for a weapon with no dice, as Net (PHB) has none", () => {
     const attack = weaponAttack({ weapon: { kind: "ranged", properties: ["S", "T"] }, ...STRONG });
     expect(attack).toStrictEqual({ ability: "dexterity", attackBonus: 4 });
+  });
+
+  it("takes the better of two negative modifiers for a finesse weapon", () => {
+    expect(
+      weaponAttack({
+        weapon: RAPIER,
+        strengthModifier: -2,
+        dexterityModifier: -1,
+        proficiency: 2,
+        grip: "one-handed",
+      }),
+    ).toMatchObject({ ability: "dexterity", attackBonus: 1, damageModifier: -1 });
+  });
+
+  it("returns a negative damage modifier rather than clamping it, so the roller sums it", () => {
+    expect(
+      weaponAttack({
+        weapon: GREATSWORD,
+        strengthModifier: -3,
+        dexterityModifier: 0,
+        proficiency: 2,
+        grip: "two-handed",
+      }),
+    ).toMatchObject({ ability: "strength", attackBonus: -1, damage: "2d6", damageModifier: -3 });
   });
 
   it.each(["Melee", "M|XPHB", ""])("rejects a weapon kind of %o", (kind) => {
