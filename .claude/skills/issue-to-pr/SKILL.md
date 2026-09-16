@@ -5,7 +5,7 @@ description: Take one local-dnd-character-sheet issue from open to a reviewed pu
 
 # Issue to pull request
 
-Read `CONTRIBUTING.md` first; it holds the reasoning these steps assume.
+Read `CONTRIBUTING.md` first; it holds teh reasoning these steps assume.
 
 ## Choosing, when no issue is named
 
