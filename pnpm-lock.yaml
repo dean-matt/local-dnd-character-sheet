@@ -41,6 +41,9 @@ importers:
       lefthook:
         specifier: ^2.1.12
         version: 2.1.12
+      smol-toml:
+        specifier: ^1.8.0
+        version: 1.8.0
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
