@@ -14,8 +14,9 @@ ignore-hidden = false
 # narrows a contributor's `pnpm spell` while the job keeps reading the file.
 #
 # .git/info/exclude decides it too, and is per-clone. It rides ignore-vcs rather than
-# ignore-dot, so refusing it would take .gitignore with it; the way out is a typos
-# release that separates the two.
+# ignore-dot, so refusing it means refusing .gitignore as well and naming every
+# exclusion below — which works, and costs a line here for each generated directory
+# somebody adds.
 ignore-files = true
 ignore-vcs = true
 ignore-dot = false
