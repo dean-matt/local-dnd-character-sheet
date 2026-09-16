@@ -32,7 +32,7 @@ dispatch, so an unbounded run is the caller's choice rather than a surprise.
 deadline has passed:
 
 ```bash
-[ "$(date +%s)" -ge <deadline> ] && echo "deadline passed"
+if [ "$(date +%s)" -ge <deadline> ]; then echo past; else echo within; fi
 ```
 
 Read them here and nowhere else. A run that abandons an issue mid-flight leaves a branch
@@ -41,8 +41,8 @@ and a pull request nobody asked for.
 **2. Build.** Dispatch a fresh subagent whose prompt names
 [`issue-to-pr`](../issue-to-pr/SKILL.md) and no issue. That skill's *Choosing, when no
 issue is named* picks; running its board query here would give the board two readers that
-can disagree. Ask for the issue it took, the pull request number, the label it left,
-whatever waits on the user, and whether its review pass ran in a subagent of its own.
+can disagree. Ask for the issue it took, the pull request number, whatever waits on the
+user, and whether its review pass ran in a subagent of its own.
 
 Stop where that pass ran anywhere else. `issue-to-pr` sends its review to a subagent that
 did not write the code, and a review one agent both writes and reads still earns
@@ -57,10 +57,10 @@ report the condition. Looping back either retakes that issue forever or skips it
 **3. Read the verdict.**
 
 ```bash
-gh pr view <pr> --json labels --jq '[.labels[].name] | index("review:approved")'
+gh pr view <pr> --json labels --jq '[.labels[].name] | any(. == "review:approved")'
 ```
 
-A null stops the run. That label is `issue-to-pr` saying nothing waits on the user, and
+A `false` stops the run. That label is `issue-to-pr` saying nothing waits on the user, and
 dispatching `merge-pr` without it spends a whole CI watch before the gate refuses the same
 pull request.
 
@@ -69,13 +69,9 @@ pull request.
 that wrote the code is the worst reader of a gate judging its own work. Stop where it
 names a condition instead of a merge commit.
 
-**5. Count the merge and loop.** The count is of merges, not of attempts.
-
-## Stopping
-
-Stop on the first issue that does not merge. The board is ordered, so an issue that stops
-the run is the issue the user is deciding about, and taking the next one buries that
-decision under a second pull request.
+**5. Count the merge and loop.** `gh pr view <pr> --json state,mergeCommit` settles
+whether it merged, rather than the report of the subagent that merged it — the standard
+the rest of this skill holds. The count is of merges, not of attempts.
 
 ## The report
 
@@ -91,9 +87,10 @@ pull request and the worktree standing; `merge-pr` leaves the checkout on an up-
 
 ## What this skill will not do
 
-**Resolve what stopped it.** A declined finding, a red check and a merge-gate condition
-are each the user's to weigh. Reporting one and taking the next issue answers it by
-walking away.
+**Resolve what stopped it, or skip past it.** A declined finding, a red check and a
+merge-gate condition are each the user's to weigh. The board is ordered, so an issue that
+stops the run is the issue the user is deciding about, and taking the next one buries that
+decision under a second pull request.
 
 **Rerank the board.** The order is the user's.
 
