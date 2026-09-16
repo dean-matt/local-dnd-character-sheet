@@ -3,6 +3,8 @@ import {
   type CasterClassLevel,
   multiclassCasterLevel,
   multiclassSlots,
+  type PreparationRule,
+  preparedSpellCount,
   spellAttackBonus,
   spellSaveDc,
 } from "./index.ts";
@@ -147,5 +149,48 @@ describe("multiclassSlots", () => {
 
   it.each([21, -1, 2.5])("rejects caster level %s", (casterLevel) => {
     expect(() => multiclassSlots(casterLevel)).toThrow(RangeError);
+  });
+});
+
+describe("preparedSpellCount", () => {
+  it.each<[PreparationRule, number, number, number]>([
+    ["level", 3, 3, 6],
+    ["level", 3, 1, 4],
+    ["level", 5, 20, 25],
+    ["half-level", 2, 5, 4],
+    ["half-level", 3, 3, 4],
+    ["half-level", 3, 4, 5],
+    ["half-level", 4, 20, 14],
+  ])("a %s caster with modifier %i at level %i prepares %i", (rule, modifier, level, expected) => {
+    expect(preparedSpellCount(modifier, level, rule)).toBe(expected);
+  });
+
+  it.each<[PreparationRule, number, number]>([
+    ["level", -1, 1],
+    ["level", -3, 2],
+    ["half-level", 0, 1],
+    ["half-level", -2, 3],
+  ])("floors a %s caster with modifier %i at level %i at one spell", (rule, modifier, level) => {
+    expect(preparedSpellCount(modifier, level, rule)).toBe(1);
+  });
+
+  it("counts each class of a multiclassed character separately", () => {
+    const cleric = preparedSpellCount(3, 5, "level");
+    const paladin = preparedSpellCount(3, 7, "half-level");
+    expect(cleric).toBe(8);
+    expect(paladin).toBe(6);
+    expect(preparedSpellCount(3, 12, "level")).not.toBe(cleric + paladin);
+  });
+
+  it.each([0, 21, 2.5])("rejects class level %s", (level) => {
+    expect(() => preparedSpellCount(3, level, "level")).toThrow(RangeError);
+  });
+
+  it("rejects a fractional modifier", () => {
+    expect(() => preparedSpellCount(2.5, 3, "level")).toThrow(RangeError);
+  });
+
+  it("rejects a preparation rule it does not know", () => {
+    expect(() => preparedSpellCount(3, 3, "constructor" as PreparationRule)).toThrow(RangeError);
   });
 });

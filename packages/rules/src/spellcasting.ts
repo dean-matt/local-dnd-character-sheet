@@ -127,3 +127,48 @@ export function multiclassSlots(casterLevel: number): SpellSlotTotal[] {
   const row = MULTICLASS_SLOTS[casterLevel - 1] ?? [];
   return row.flatMap((slots, index) => (slots > 0 ? [{ level: index + 1, total: slots }] : []));
 }
+
+/**
+ * How a classic prepared caster counts its level toward its prepared list:
+ * `level` for the cleric, druid and wizard, `half-level` rounded down for the
+ * paladin and the 2014 artificer. Not the caster progression above — an
+ * artificer's caster level rounds *up* while its prepared count rounds down, so
+ * one vocabulary serving both is wrong by a spell on every odd level.
+ */
+const PREPARATION_RULES = ["level", "half-level"] as const;
+
+export type PreparationRule = (typeof PREPARATION_RULES)[number];
+
+/**
+ * Spells a `classic` caster prepares: the spellcasting ability modifier plus the
+ * level the rule counts, floored at one. PHB p.56 (cleric), p.64 (druid), p.82
+ * (paladin), p.112 (wizard); TCE p.9 (artificer).
+ *
+ * For `one`, read the `Prepared Spells` column from `class_resources` instead —
+ * the 2024 rules state the count as a class-table column, and a second source for
+ * one number is how the two drift.
+ *
+ * `classLevel` is the level in that class, never the character's total: a
+ * multiclassed character prepares one list per class, so call this once per class.
+ *
+ * The caller decides whether the class casts at all: a PHB paladin has no
+ * Spellcasting feature below level 2, while a TCE artificer has one at level 1. The
+ * floor of one assumes a class that already casts.
+ */
+export function preparedSpellCount(
+  spellcastingModifier: number,
+  classLevel: number,
+  rule: PreparationRule,
+): number {
+  if (!Number.isInteger(spellcastingModifier)) {
+    throw new RangeError(`Spellcasting modifier must be an integer, got ${spellcastingModifier}`);
+  }
+  if (!Number.isInteger(classLevel) || classLevel < 1 || classLevel > 20) {
+    throw new RangeError(`Class level must be 1-20, got ${classLevel}`);
+  }
+  if (!PREPARATION_RULES.includes(rule)) {
+    throw new RangeError(`Unknown preparation rule "${rule}"`);
+  }
+  const levelCounted = rule === "half-level" ? Math.floor(classLevel / 2) : classLevel;
+  return Math.max(1, spellcastingModifier + levelCounted);
+}
