@@ -16,58 +16,66 @@ worktree.
 ## The limits, before the first dispatch
 
 Take from the caller a count of issues to merge, a wall-clock deadline, both, or neither.
-Wall clock is the budget a skill can measure, so it is what a budget means here. Record
-the deadline once:
+Wall clock is the budget a skill can measure, so it is what a budget means here. Print the
+deadline once and carry the number it gives:
 
 ```bash
-end=$(( $(date +%s) + <seconds> ))
+echo $(( $(date +%s) + <seconds> ))
 ```
 
 With neither, the run ends when the board query returns nothing. Say so before the first
 dispatch, so an unbounded run is the caller's choice rather than a surprise.
 
-Check both limits before dispatching an issue, never during one. A run that abandons an
-issue mid-flight leaves a branch and a pull request nobody asked for.
-
 ## Per issue
 
-**1. Build.** Dispatch a fresh subagent whose prompt names
+**1. Read the limits.** Stop where the run has merged the caller's count, or where the
+deadline has passed:
+
+```bash
+[ "$(date +%s)" -ge <deadline> ] && echo "deadline passed"
+```
+
+Read them here and nowhere else. A run that abandons an issue mid-flight leaves a branch
+and a pull request nobody asked for.
+
+**2. Build.** Dispatch a fresh subagent whose prompt names
 [`issue-to-pr`](../issue-to-pr/SKILL.md) and no issue. That skill's *Choosing, when no
 issue is named* picks; running its board query here would give the board two readers that
-can disagree. Ask for the issue it took, the pull request number, the label it left, and
-whatever waits on the user.
+can disagree. Ask for the issue it took, the pull request number, the label it left,
+whatever waits on the user, and whether its review pass ran in a subagent of its own.
 
-Dispatch a subagent that can itself dispatch one: `issue-to-pr` sends its review pass to a
-subagent that did not write the code, and where that nesting fails the pass approves its
-own work.
+Stop where that pass ran anywhere else. `issue-to-pr` sends its review to a subagent that
+did not write the code, and a review one agent both writes and reads still earns
+`review:approved` — merging on that defeats the gate silently.
 
 A report naming no issue means the board holds nothing ranked and open: stop.
 
-**2. Read the verdict.**
+A report naming an issue but no pull request means `issue-to-pr` stopped on the way — a
+`blocked` condition that still holds, or a `pnpm check` it refused to push past. Stop and
+report the condition. Looping back either retakes that issue forever or skips it.
+
+**3. Read the verdict.**
 
 ```bash
-gh pr view <pr> --json labels --jq '[.labels[].name]'
+gh pr view <pr> --json labels --jq '[.labels[].name] | index("review:approved")'
 ```
 
-Anything but `review:approved` stops the run. That label is `issue-to-pr` saying nothing
-waits on the user, and dispatching `merge-pr` without it spends a whole CI watch before
-the gate refuses the same pull request.
+A null stops the run. That label is `issue-to-pr` saying nothing waits on the user, and
+dispatching `merge-pr` without it spends a whole CI watch before the gate refuses the same
+pull request.
 
-**3. Merge.** Dispatch a second fresh subagent, naming
+**4. Merge.** Dispatch a second fresh subagent, naming
 [`merge-pr`](../merge-pr/SKILL.md) and the pull request number. Fresh, because the agent
-that wrote the code is the worst reader of a gate judging its own work.
+that wrote the code is the worst reader of a gate judging its own work. Stop where it
+names a condition instead of a merge commit.
 
-**4. Count the merge and loop.** The count is of merges, not of attempts.
+**5. Count the merge and loop.** The count is of merges, not of attempts.
 
 ## Stopping
 
 Stop on the first issue that does not merge. The board is ordered, so an issue that stops
 the run is the issue the user is deciding about, and taking the next one buries that
 decision under a second pull request.
-
-A run ends when the board returns no issue, the run hits the merge count, the deadline
-passes, `issue-to-pr` leaves anything but `review:approved`, or `merge-pr` names a
-condition it stops on.
 
 ## The report
 
