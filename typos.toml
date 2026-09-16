@@ -1,5 +1,36 @@
+# The walk is stated here rather than inherited, because the two entry points —
+# `pnpm spell` and the crate-ci/typos job — take their arguments separately, and a
+# default that narrows it drops prose without reporting anything.
+
 [files]
+# typos walks like ripgrep and skips hidden paths, so without this nothing under
+# .github/ or .claude/ is read — including the skill prose an agent rereads at the
+# start of every task it governs.
+ignore-hidden = false
+
+# The repository's own .gitignore decides the walk: committed, reviewed, and read by
+# both entry points alike. Honoring .ignore files beside it would give a second answer,
+# and one kept above the repository — a habit ripgrep encourages — reaches in and
+# narrows a contributor's `pnpm spell` while the job keeps reading the file.
+#
+# .git/info/exclude decides it too, and is per-clone. It rides ignore-vcs rather than
+# ignore-dot, so refusing it means refusing .gitignore as well and naming every
+# exclusion below — which works, and costs a line here for each generated directory
+# somebody adds.
+ignore-files = true
+ignore-vcs = true
+ignore-dot = false
+
+# A .gitignore above the repository never applies, because the walk stops at the git
+# boundary, so parent ignore files cost nothing once .ignore is off. The global one
+# does apply, and is the machine-dependent file this setting exists to refuse.
+ignore-parent = true
+ignore-global = false
+
 extend-exclude = [
+  # Reaching hidden paths also reaches .git, whose objects are compressed binary that
+  # typos reads as prose. A worktree's .git is a file, so the pattern takes no slash.
+  ".git",
   "vendor/",
   "pnpm-lock.yaml",
   "*.db",
