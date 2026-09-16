@@ -136,4 +136,7 @@ real corpus and what came out.
 **Merge.** Report and wait, whatever the review found and however small the change.
 
 **Widen the issue.** A second bug found on the way is a second issue: file it or name it
-in the report, and leave it out of this branch.
+in the report, and leave it out of this branch. `gh issue create` leaves that issue off the
+board, so put it there with step 3's `item-add`. It lands unranked and without a milestone,
+which *Choosing, when no issue is named* reads as backlog until the user ranks it under a
+milestone.
