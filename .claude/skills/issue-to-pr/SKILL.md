@@ -87,8 +87,8 @@ because reranking is the user's call.
 9. **Open the pull request** with `gh pr create`, body linking the issue and prose
    passed. This is what starts CI; the pushes before it started nothing.
 10. **Dispatch the review to a subagent** whose prompt carries the pull request number
-    and nothing else — no rationale, no account of what you implemented, no defense of a
-    choice. It invokes [`audit-pr`](../audit-pr/SKILL.md), which reviews from its own
+    and nothing else — no rationale, no account of what you wrote, no defense of a choice.
+    The subagent invokes [`audit-pr`](../audit-pr/SKILL.md), which reviews from its own
     worktree and leaves this branch untouched. Its findings go to step 11 unchanged.
 11. **Post the pass as one review**, before you apply, so a run that dies mid-apply
     leaves the findings standing rather than a label pointing at nothing. One call sends
@@ -120,7 +120,8 @@ because reranking is the user's call.
     both.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
     passes at most, a fresh subagent each pass so none inherits the last one's
-    conclusions. A pass returning only `comment` findings has stopped paying.
+    conclusions — a finding you declined comes back and takes the same reply. A pass
+    returning only `comment` findings has stopped paying.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a
     pass returned still waits on the user; `review:changes-requested` where something
     does — a decline, a second bug filed as its own issue, a red check. Preferences wait
