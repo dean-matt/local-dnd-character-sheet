@@ -116,8 +116,8 @@ A level 3 cleric and level 3 wizard get 2nd-level slots instead of 3rd.
 | `comment` | Neither — a taste call, reported once |
 
 Write `**critical**`, never `` `critical` ``. The marker carries onto the posted comment,
-where [`merge-pr`](../merge-pr/SKILL.md)'s gate is its only reader and one it cannot parse
-stops the merge. `tests/review-severity.test.ts` holds the two files to one vocabulary.
+where `scripts/merge-gate.mjs` is its only reader and one it cannot parse stops the merge.
+`tests/review-severity.test.ts` holds this table to that parser.
 
 A finding naming no line goes against the file or the pull request. Only `comment` findings
 left ends the loop. Every finding goes to the caller's report.
