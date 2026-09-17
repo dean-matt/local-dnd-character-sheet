@@ -180,6 +180,20 @@ CREATE TABLE spells (
   PRIMARY KEY (name, source)
 ) STRICT;
 
+-- class and classVariant both grant, from data/spells/sources.json, and carry
+-- no distinct meaning to a query, so both land here as one fact. Neither the
+-- spell nor the class carries the other's edition, so a picker filtering to
+-- one ruleset joins spells or classes and filters there.
+CREATE TABLE spell_classes (
+  spell_name   TEXT NOT NULL,
+  spell_source TEXT NOT NULL,
+  class_name   TEXT NOT NULL,
+  class_source TEXT NOT NULL,
+  PRIMARY KEY (spell_name, spell_source, class_name, class_source)
+) STRICT;
+
+CREATE INDEX spell_classes_by_class ON spell_classes (class_name, class_source);
+
 -- kind is the array key the entry sits under upstream, and the four are one
 -- table because their keys do not collide and a {@item} tag names any of them
 -- without saying which. Two of the four are not things a character owns: an

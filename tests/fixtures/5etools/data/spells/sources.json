@@ -1,0 +1,24 @@
+{
+  "PHB": {
+    "Acid Splash": {
+      "class": [
+        {
+          "name": "Artificer",
+          "source": "TCE"
+        }
+      ]
+    },
+    "Detect Magic": {
+      "class": [
+        {
+          "name": "Cleric",
+          "source": "PHB"
+        },
+        {
+          "name": "Artificer",
+          "source": "TCE"
+        }
+      ]
+    }
+  }
+}

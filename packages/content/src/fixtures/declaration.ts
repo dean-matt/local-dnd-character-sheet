@@ -1051,6 +1051,27 @@ export const FIXTURES: Fixture[] = [
     keep: { within: { skill: { items: ["Acrobatics|PHB", "Acrobatics|XPHB"] } } },
   },
   {
+    // Narrowed to the two grantors the class fixtures carry at PHB/TCE:
+    // the real corpus also grants both spells to Bard, Cleric's 2024
+    // reprint, Druid, Paladin, Ranger, Sorcerer, Warlock and Wizard, none of
+    // which a fixture needs a whole class file to cover. The edition split
+    // and the classVariant/duplicate cases spells.test.ts exercises against
+    // a synthetic vendor instead, where a class fixture is one line to add.
+    file: "data/spells/sources.json",
+    keep: {
+      fields: ["PHB"],
+      within: {
+        PHB: {
+          fields: ["Acid Splash", "Detect Magic"],
+          within: {
+            "Acid Splash": { within: { class: { items: ["Artificer|TCE"] } } },
+            "Detect Magic": { within: { class: { items: ["Cleric|PHB", "Artificer|TCE"] } } },
+          },
+        },
+      },
+    },
+  },
+  {
     file: "data/spells/spells-phb.json",
     keep: {
       within: {

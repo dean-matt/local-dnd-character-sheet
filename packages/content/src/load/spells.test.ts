@@ -76,6 +76,40 @@ describe("the spells loader", () => {
     ]);
   });
 
+  it("maps a spell to the classes data/spells/sources.json grants it to", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT spell_name, spell_source, class_name, class_source FROM spell_classes " +
+          "ORDER BY spell_source, spell_name, class_name",
+      )
+      .all();
+    db.close();
+
+    expect(rows).toEqual([
+      {
+        spell_name: "Acid Splash",
+        spell_source: "PHB",
+        class_name: "Artificer",
+        class_source: "TCE",
+      },
+      {
+        spell_name: "Detect Magic",
+        spell_source: "PHB",
+        class_name: "Artificer",
+        class_source: "TCE",
+      },
+      {
+        spell_name: "Detect Magic",
+        spell_source: "PHB",
+        class_name: "Cleric",
+        class_source: "PHB",
+      },
+    ]);
+  });
+
   it("keeps the rest of the entry in json, tag markup untouched", () => {
     build(FIXTURE_VENDOR);
 
@@ -99,12 +133,22 @@ describe("the spells loader", () => {
     duration: [{ type: "instant" }],
   };
 
-  const vendorHolding = (...entries: unknown[]): string => {
+  const writeVendor = (
+    spellEntries: unknown[],
+    sourcesJson: unknown,
+    classEntries: unknown[],
+  ): string => {
     const vendorDir = join(workspace, "vendor");
     mkdirSync(join(vendorDir, "data", "spells"), { recursive: true });
     writeFileSync(
       join(vendorDir, "data", "spells", "spells-phb.json"),
-      JSON.stringify({ spell: entries }),
+      JSON.stringify({ spell: spellEntries }),
+    );
+    writeFileSync(join(vendorDir, "data", "spells", "sources.json"), JSON.stringify(sourcesJson));
+    mkdirSync(join(vendorDir, "data", "class"), { recursive: true });
+    writeFileSync(
+      join(vendorDir, "data", "class", "class-test.json"),
+      JSON.stringify({ class: classEntries }),
     );
     for (const file of EDITION_FILES) {
       const destination = join(vendorDir, file);
@@ -113,6 +157,8 @@ describe("the spells loader", () => {
     }
     return vendorDir;
   };
+
+  const vendorHolding = (...entries: unknown[]): string => writeVendor(entries, {}, []);
 
   /**
    * The reason, not the wrapper. `buildContent` reports every loader failure as
@@ -155,5 +201,97 @@ describe("the spells loader", () => {
 
     expect(() => build(vendorDir)).toThrow(/Loader "spells" failed/);
     expect(refusal(vendorDir)).toMatch(/matches data\/books\.json/);
+  });
+
+  const WIZARD = { name: "Wizard", source: "PHB" };
+
+  it("grants a spell to a class named only under classVariant", () => {
+    const vendorDir = writeVendor([FIREBALL], { PHB: { Fireball: { classVariant: [WIZARD] } } }, [
+      WIZARD,
+    ]);
+    build(vendorDir);
+
+    const db = open();
+    const rows = db.prepare("SELECT class_name, class_source FROM spell_classes").all();
+    db.close();
+
+    expect(rows).toEqual([{ class_name: "Wizard", class_source: "PHB" }]);
+  });
+
+  it("keeps a spell's grants findable by its own edition", () => {
+    const PRESTIDIGITATION = {
+      name: "Prestidigitation",
+      source: "XPHB",
+      level: 0,
+      school: "T",
+      duration: [{ type: "instant" }],
+    };
+    const vendorDir = writeVendor(
+      [FIREBALL, PRESTIDIGITATION],
+      {
+        PHB: { Fireball: { class: [WIZARD] } },
+        XPHB: { Prestidigitation: { class: [WIZARD] } },
+      },
+      [WIZARD],
+    );
+    build(vendorDir);
+
+    const db = open();
+    const classic = db
+      .prepare(
+        "SELECT sc.spell_name FROM spell_classes sc " +
+          "JOIN spells s ON s.name = sc.spell_name AND s.source = sc.spell_source " +
+          "WHERE s.edition = 'classic'",
+      )
+      .pluck()
+      .all();
+    db.close();
+
+    expect(classic).toEqual(["Fireball"]);
+  });
+
+  it("inserts one row for a (spell, class) pair class and classVariant both name", () => {
+    const vendorDir = writeVendor(
+      [FIREBALL],
+      { PHB: { Fireball: { class: [WIZARD], classVariant: [WIZARD] } } },
+      [WIZARD],
+    );
+    build(vendorDir);
+
+    const db = open();
+    const count = db.prepare("SELECT COUNT(*) FROM spell_classes").pluck().get();
+    db.close();
+
+    expect(count).toBe(1);
+  });
+
+  it("fails the build when sources.json names a spell no spells row holds", () => {
+    const vendorDir = writeVendor([FIREBALL], { PHB: { "Magic Missile": { class: [WIZARD] } } }, [
+      WIZARD,
+    ]);
+
+    expect(refusal(vendorDir)).toMatch(
+      /sources\.json\.PHB\.Magic Missile names a spell no spells row holds/,
+    );
+  });
+
+  it("fails the build when a grantor names a class no row holds", () => {
+    const vendorDir = writeVendor(
+      [FIREBALL],
+      { PHB: { Fireball: { class: [{ name: "Ghost", source: "PHB" }] } } },
+      [],
+    );
+
+    expect(refusal(vendorDir)).toMatch(/names class Ghost\|PHB, which no row holds/);
+  });
+
+  it("fails the build when the only row for a grantor is a sidekick", () => {
+    const vendorDir = writeVendor(
+      [FIREBALL],
+      { PHB: { Fireball: { class: [{ name: "Expert", source: "PHB" }] } } },
+      [{ name: "Expert", source: "PHB", isSidekick: true }],
+    );
+
+    expect(refusal(vendorDir)).toMatch(/names class Expert\|PHB, which no row holds/);
   });
 });

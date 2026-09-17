@@ -96,6 +96,13 @@ feature grants as readily as a feat does. A character's total for a type is all 
 tables summed, which [`class-tables.md`](class-tables.md) spells out; reading the class
 side alone is short by whatever their feats granted.
 
+**A spell's class list is a join, not an entity.** `spell_classes` is keyed
+`(spell_name, spell_source, class_name, class_source)` — a spell answers to several
+classes and a class to hundreds of spells, so neither pair identifies the row alone.
+`data/spells/sources.json`'s `class` and `classVariant` both contribute, collapsed into
+one row each: a class either grants a spell or it doesn't, and upstream's split between
+the two carries no meaning a query needs.
+
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates. The pool a
 grant reaches is the exception: a character holding a 2014 feat picks from every option
