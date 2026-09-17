@@ -1,6 +1,8 @@
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
@@ -15,6 +17,8 @@ import {
   passes,
   reviewBlocked,
   severity,
+  sinceLastPass,
+  staleNote,
   unanswered,
 } from "../scripts/merge-gate.mjs";
 import { ROOT, read } from "./lib/doc-helpers.ts";
@@ -100,9 +104,10 @@ describe("the review passes", () => {
   });
 });
 
+const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
+const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
+
 describe("the review converged", () => {
-  const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
-  const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
   const critical = finding(1, BOLD);
 
   it("stops a pull request nothing has reviewed", () => {
@@ -150,6 +155,34 @@ describe("the review converged", () => {
     expect(capNote(spent(PASS_CAP), [critical])).toContain("stopped this condition asking");
     expect(capNote(spent(PASS_CAP), [])).toBeNull();
     expect(capNote(spent(1), [critical])).toBeNull();
+  });
+});
+
+/** The commit a merged pull request's only pass read: its branch's first, five behind the tip. */
+const READ = "d285e8a6a4b1c0d9e8f7a6b5c4d3e2f10a9b8c7d";
+const TIP = "66a51b0d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b";
+
+describe("the distance from the last pass", () => {
+  it("names the tip where the pass is anchored there", () => {
+    expect(staleNote(READ, TIP, 0)).toContain("the tip");
+  });
+
+  it("counts the commits the pass never read, and names the range that counted them", () => {
+    expect(staleNote(READ, TIP, 1)).toContain("1 commit of this branch's own");
+    expect(staleNote(READ, TIP, 5)).toContain("5 commits of this branch's own");
+    expect(staleNote(READ, TIP, 5)).toContain("git log d285e8a6..66a51b0d ^origin/main");
+  });
+
+  /**
+   * A human reviews whatever head they were shown, so a `commit_id` this branch never
+   * carried relates to nothing here and has no distance to report.
+   */
+  it("says so where this branch does not carry the commit the pass read", () => {
+    expect(staleNote(READ, TIP, null)).toMatch(/not on this branch/);
+  });
+
+  it("stays quiet where no pass left a commit to read", () => {
+    expect(staleNote(null, TIP, null)).toBeNull();
   });
 });
 
@@ -304,6 +337,57 @@ describe("the other three conditions", () => {
       dependenciesDiffer(two, { ...two, dependencies: { hono: "^4.0.0", zod: "^3.0.0" } }),
     ).toBe(false);
     expect(dependenciesDiffer(before, { ...before, devDependencies: { vitest: "^4" } })).toBe(true);
+  });
+});
+
+/**
+ * The one piece of this note that runs git, over a repository built to hold the shape
+ * `merge-pr`'s behind-branch recovery leaves: a branch that merged `main` in after the pass
+ * read it. A fabricated count cannot fail on a range that reads main's commits as the
+ * branch's own.
+ */
+describe("the commits since the last pass", () => {
+  let dir = "";
+  const git = (...args: string[]) =>
+    execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim();
+  const commit = (path: string, message: string) => {
+    mkdirSync(join(dir, dirname(path)), { recursive: true });
+    writeFileSync(join(dir, path), message);
+    git("add", "-A");
+    git("commit", "-q", "-m", message);
+    return git("rev-parse", "HEAD");
+  };
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "merge-gate-"));
+    git("init", "-q", "-b", "main");
+    git("config", "user.email", "gate@example.invalid");
+    git("config", "user.name", "gate");
+    git("config", "commit.gpgsign", "false");
+    commit("src/a.ts", "the base");
+  });
+
+  // Windows writes pack files read-only, and rmSync does not chmod before unlinking.
+  afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 3 }));
+
+  it("counts the branch's own commits and never the main it merged in", () => {
+    git("checkout", "-q", "-b", "topic");
+    const read = commit("src/b.ts", "the commit the pass read");
+    git("checkout", "-q", "main");
+    commit("src/c.ts", "main moved on");
+    git("update-ref", "refs/remotes/origin/main", "main");
+    git("checkout", "-q", "topic");
+    git("merge", "-q", "--no-edit", "main");
+
+    // The merge commit is the branch's own; main's is not, so a range keeping it counts two.
+    expect(sinceLastPass(read, git("rev-parse", "HEAD"), dir)).toBe(1);
+
+    commit("src/b.ts", "the fix the pass never read");
+    expect(sinceLastPass(read, git("rev-parse", "HEAD"), dir)).toBe(2);
+  });
+
+  it("reads a commit this branch does not carry as no relation", () => {
+    expect(sinceLastPass("0".repeat(40), git("rev-parse", "HEAD"), dir)).toBeNull();
   });
 });
 

@@ -69,6 +69,28 @@ export function blockingFindings(comments) {
  */
 export const PASS_CAP = 3;
 
+const plural = (n, noun) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
+/**
+ * Where the last pass sits against the tip, printed on every run beside "the review
+ * converged". No condition reads it, because what a later commit means is a judgment: the
+ * fix answering that pass, or code nobody has read. The number is what lets a reader tell
+ * the two apart, which a verdict alone cannot, and the range it names is what lets them
+ * read the commits — a count excluding `origin/main` is not the count a plain `sha..head`
+ * returns, so the line hands over the one that produced it.
+ *
+ * @param {string | null} sha
+ * @param {string} head
+ * @param {number | null} behind
+ */
+export function staleNote(sha, head, behind) {
+  if (sha === null) return null;
+  const short = sha.slice(0, 8);
+  if (behind === null) return `the last pass read ${short}, which is not on this branch`;
+  if (behind === 0) return `the last pass read ${short}, the tip of this branch`;
+  return `the last pass read ${short}, with ${plural(behind, "commit")} of this branch's own since — git log ${short}..${head.slice(0, 8)} ^origin/main`;
+}
+
 /**
  * The pass that reads a fix is what answers the finding, so this wants a last pass whose
  * findings are all `comment`. A pass that found nothing satisfies it by posting a body and
@@ -178,6 +200,33 @@ function show(ref, path) {
   }
 }
 
+/**
+ * How many of the branch's own commits on `head` the last pass never saw, or null where the
+ * branch does not carry the pass's `commit_id` — a review left on another head relates to
+ * nothing here, so a distance from it would count a different branch's work.
+ *
+ * `^origin/main` keeps the behind-branch recovery out of that count: the recovery merges
+ * `main` in, and everything it carries arrived with a review of its own.
+ *
+ * @param {string | null} sha
+ * @param {string} head
+ * @param {string | undefined} [cwd]
+ * @returns {number | null}
+ */
+export function sinceLastPass(sha, head, cwd) {
+  if (sha === null) return null;
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", sha, head], { stdio: "ignore", cwd });
+  } catch {
+    return null;
+  }
+  const count = execFileSync("git", ["rev-list", "--count", `${sha}..${head}`, "^origin/main"], {
+    encoding: "utf8",
+    cwd,
+  });
+  return Number(count.trim());
+}
+
 function gate(n) {
   const api = (path) => gh(["api", "--paginate", path]);
   const failures = [];
@@ -191,6 +240,9 @@ function gate(n) {
   const checkFailure = checksBlocked(checks);
   report(checkFailure === null, "every check is green", checkFailure);
 
+  const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;
+  execFileSync("git", ["fetch", "--quiet", "origin", "main", head]);
+
   const reviews = api(`repos/{owner}/{repo}/pulls/${n}/reviews`);
   const pass = passes(reviews).at(-1) ?? null;
   const findings =
@@ -199,6 +251,9 @@ function gate(n) {
   report(reviewFailure === null, "the review converged", reviewFailure);
   const note = capNote(reviews, findings);
   if (note !== null) console.log(`      ${note}`);
+  const readSha = pass?.commit_id ?? null;
+  const age = staleNote(readSha, head, sinceLastPass(readSha, head));
+  if (age !== null) console.log(`      ${age}`);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 
@@ -212,8 +267,6 @@ function gate(n) {
     declined.join("\n      "),
   );
 
-  const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;
-  execFileSync("git", ["fetch", "--quiet", "origin", "main", head]);
   const base = git(["merge-base", "origin/main", head]);
   const changed = git(["diff", "--name-only", base, head]).split("\n").filter(Boolean);
   const fenced = changed.filter((p) => FENCE.test(p));
