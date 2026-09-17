@@ -243,11 +243,11 @@ export function isRollable(notation: string): boolean {
  * pool, a keep clause, or a second pool is rejected rather than reinterpreted — a
  * `TypeError`, because the notation is valid and only the pairing is wrong.
  *
- * A critical rolls every pool a second time, adds the modifier once, and returns both
- * pools' dice. A mode with it is a `TypeError` too: doubling belongs to a damage roll and
- * a mode to the d20 test that preceded it, so the pair names no roll anyone makes. Each
- * doubled pool resolves its own keep clause, so a critical `4d6kh3` keeps three of four
- * twice rather than six of eight, because doubling repeats the roll the notation describes.
+ * A critical pairs with no mode — doubling belongs to a damage roll and a mode to the d20
+ * test that preceded it, so the pair names no roll anyone makes, and it is a `TypeError`
+ * for the same reason. Each doubled pool resolves its own keep clause, so a critical
+ * `4d6kh3` keeps three of four twice rather than six of eight, because doubling repeats
+ * the roll the notation describes.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const { mode = "normal", critical = false, random = Math.random } = options;

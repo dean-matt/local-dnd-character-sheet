@@ -247,5 +247,6 @@ describe("rollDice", () => {
   it("counts a critical's extra dice against the bound on one roll", () => {
     expect(rollDice("500d6", { critical: true }).dice).toHaveLength(1000);
     expect(() => rollDice("501d6", { critical: true })).toThrow(RangeError);
+    expect(() => rollDice("501d6", { critical: true })).toThrow("asks for 1002");
   });
 });
