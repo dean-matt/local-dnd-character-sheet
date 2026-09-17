@@ -102,17 +102,21 @@ describe("the review passes", () => {
   });
 });
 
+const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
+const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
+
+/** No commit relation between the last pass and the tip, which blocks nothing. */
+const NONE = { commits: null, changed: [] };
+
 describe("the review converged", () => {
-  const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
-  const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
   const critical = finding(1, BOLD);
 
   it("stops a pull request nothing has reviewed", () => {
-    expect(reviewBlocked([], [])).toMatch(/nothing has reviewed this/);
+    expect(reviewBlocked([], [], NONE)).toMatch(/nothing has reviewed this/);
   });
 
   it("holds where the last pass returned only a taste call", () => {
-    expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")])).toBeNull();
+    expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")], NONE)).toBeNull();
   });
 
   /**
@@ -121,11 +125,11 @@ describe("the review converged", () => {
    * that forever, since no later clean pass can move the count.
    */
   it("holds where the last pass posted a body and no findings", () => {
-    expect(reviewBlocked(spent(2), [])).toBeNull();
+    expect(reviewBlocked(spent(2), [], NONE)).toBeNull();
   });
 
   it("names which pass returned the blocking finding, and the finding", () => {
-    const blocked = reviewBlocked(spent(1), [critical]);
+    const blocked = reviewBlocked(spent(1), [critical], NONE);
     expect(blocked).toContain(`pass 1 of ${PASS_CAP}`);
     expect(blocked).toContain(critical.html_url);
   });
@@ -136,7 +140,7 @@ describe("the review converged", () => {
    * stop. The verdict conditions carry the applied fix from here.
    */
   it("stops asking at the cap, where the fix rides on the thread verdicts", () => {
-    expect(reviewBlocked(spent(PASS_CAP), [critical])).toBeNull();
+    expect(reviewBlocked(spent(PASS_CAP), [critical], NONE)).toBeNull();
   });
 
   /**
@@ -144,14 +148,14 @@ describe("the review converged", () => {
    * withdrawn. The overage is reported rather than enforced.
    */
   it("prints the overage past the cap rather than blocking on it", () => {
-    expect(reviewBlocked(spent(PASS_CAP + 1), [critical])).toBeNull();
-    expect(capNote(spent(PASS_CAP + 1), [])).toContain(`${PASS_CAP + 1} passes`);
+    expect(reviewBlocked(spent(PASS_CAP + 1), [critical], NONE)).toBeNull();
+    expect(capNote(spent(PASS_CAP + 1), [], NONE)).toContain(`${PASS_CAP + 1} passes`);
   });
 
   it("says so where the cap waived a blocking finding, and stays quiet otherwise", () => {
-    expect(capNote(spent(PASS_CAP), [critical])).toContain("stopped this condition asking");
-    expect(capNote(spent(PASS_CAP), [])).toBeNull();
-    expect(capNote(spent(1), [critical])).toBeNull();
+    expect(capNote(spent(PASS_CAP), [critical], NONE)).toContain("stopped this condition asking");
+    expect(capNote(spent(PASS_CAP), [], NONE)).toBeNull();
+    expect(capNote(spent(1), [critical], NONE)).toBeNull();
   });
 });
 
@@ -166,8 +170,6 @@ const AFTER = [
 ];
 
 describe("the last pass against the tip", () => {
-  const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
-  const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
   const behind = (changed: string[]) => ({ commits: AFTER, changed });
   const unrelated = { commits: null, changed: ["scripts/merge-gate.mjs"] };
 
@@ -185,7 +187,7 @@ describe("the last pass against the tip", () => {
 
   it("stops a pass that never read a source commit, and names the commits", () => {
     const blocked = reviewBlocked(spent(1), [], behind(["scripts/merge-gate.mjs", "docs/x.md"]));
-    expect(blocked).toContain("1 file that pass never read");
+    expect(blocked).toContain("1 file that the pass never read");
     for (const commit of AFTER) {
       expect(blocked).toContain(commit.sha.slice(0, 8));
       expect(blocked).toContain(commit.subject);
@@ -205,8 +207,10 @@ describe("the last pass against the tip", () => {
   });
 
   /** The same waiver the cap gives the findings: at it, no further pass is on offer. */
-  it("stops asking at the cap, where the thread verdicts carry the fix", () => {
-    expect(reviewBlocked(spent(PASS_CAP), [], behind(["scripts/merge-gate.mjs"]))).toBeNull();
+  it("stops asking at the cap, and says which waiver it spent", () => {
+    const stale = behind(["scripts/merge-gate.mjs"]);
+    expect(reviewBlocked(spent(PASS_CAP), [], stale)).toBeNull();
+    expect(capNote(spent(PASS_CAP), [], stale)).toContain("commits the last pass never read");
   });
 });
 

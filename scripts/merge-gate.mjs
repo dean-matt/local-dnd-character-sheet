@@ -76,7 +76,7 @@ export const PASS_CAP = 3;
  */
 const PROSE = /\.md$/;
 
-const count = (n, noun) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+const plural = (n, noun) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
 /**
  * @typedef {object} Since
@@ -97,7 +97,7 @@ export function staleBlocked({ commits, changed }) {
   const source = changed.filter((path) => !PROSE.test(path));
   if (source.length === 0) return null;
   return [
-    `${count(commits.length, "commit")} after the last pass changed ${count(source.length, "file")} that pass never read — review again`,
+    `${plural(commits.length, "commit")} after the last pass changed ${plural(source.length, "file")} that the pass never read — review again`,
     ...commits.map((c) => `${c.sha.slice(0, 8)}  ${c.subject}`),
   ].join("\n      ");
 }
@@ -115,7 +115,7 @@ export function staleNote(sha, { commits }) {
   const short = sha.slice(0, 8);
   if (commits === null) return `the last pass read ${short}, which is not on this branch`;
   if (commits.length === 0) return `the last pass read ${short}, the tip of this branch`;
-  return `the last pass read ${short}, ${count(commits.length, "commit")} behind the tip`;
+  return `the last pass read ${short}, ${plural(commits.length, "commit")} behind the tip`;
 }
 
 /**
@@ -129,7 +129,7 @@ export function staleNote(sha, { commits }) {
  *
  * @param {Since} since
  */
-export function reviewBlocked(reviews, findings, since = { commits: null, changed: [] }) {
+export function reviewBlocked(reviews, findings, since) {
   const count = passes(reviews).length;
   if (count === 0) return "no review pass found — nothing has reviewed this";
   if (count >= PASS_CAP) return null;
@@ -144,17 +144,23 @@ export function reviewBlocked(reviews, findings, since = { commits: null, change
 
 /**
  * What the cap did, printed beside the condition whether it passed or not — the two states
- * the condition itself cannot show. At the cap it names the waiver, since a condition that
+ * the condition itself cannot show. At the cap it names each waiver, since a condition that
  * stops asking in silence is a condition nobody audits. Past the cap it names the overage
  * rather than blocking: a submitted review cannot be withdrawn and any bodied one counts, a
  * human's "LGTM" included, so a block there is one nothing clears.
+ *
+ * @param {Since} since
  */
-export function capNote(reviews, findings) {
+export function capNote(reviews, findings, since) {
   const count = passes(reviews).length;
   if (count > PASS_CAP)
     return `${count} passes, past the cap of ${PASS_CAP} — read the extra passes before merging`;
-  if (count === PASS_CAP && blockingFindings(findings).length > 0)
-    return `the cap of ${PASS_CAP} passes stopped this condition asking — the thread verdicts carry what it found`;
+  const waived = [
+    blockingFindings(findings).length > 0 ? "a blocking finding the thread verdicts carry" : null,
+    staleBlocked(since) === null ? null : "commits the last pass never read",
+  ].filter(Boolean);
+  if (count === PASS_CAP && waived.length > 0)
+    return `the cap of ${PASS_CAP} passes stopped this condition asking — it waived ${waived.join(" and ")}`;
   return null;
 }
 
@@ -275,7 +281,7 @@ function gate(n) {
   const since = sinceLastPass(pass?.commit_id ?? null, head);
   const reviewFailure = reviewBlocked(reviews, findings, since);
   report(reviewFailure === null, "the review converged", reviewFailure);
-  const note = capNote(reviews, findings);
+  const note = capNote(reviews, findings, since);
   if (note !== null) console.log(`      ${note}`);
   const age = staleNote(pass?.commit_id ?? null, since);
   if (age !== null) console.log(`      ${age}`);
