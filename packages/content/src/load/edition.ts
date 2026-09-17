@@ -14,9 +14,10 @@
  * The ceiling: a source no book or adventure names falls to `classic` silently,
  * and the schema cannot catch a wrong-but-valid edition. Six are absent at the
  * pinned tag — `EET`, `EEPC`, `TftYP`, `RoTOS`, `HAT-LMI`, `MCV2DC` — all of
- * them classic, so nothing is wrong yet. The way out is entry-level precedence:
- * 60 backgrounds and 18 races declare an `edition` of their own, and a loader
- * over either should let that win over this.
+ * them classic, so nothing is wrong yet. `editionOf` below is the escape hatch
+ * for the 60 backgrounds and 18 races that declare an `edition` of their own:
+ * every loader but spells' calls it, letting a declared edition win over the
+ * source-only `editions` this file also exports.
  */
 import { EDITIONS, type Edition } from "@dnd/rules";
 import { type Entry, isRecord } from "./json.ts";
