@@ -15,6 +15,8 @@ import {
   passes,
   reviewBlocked,
   severity,
+  staleBlocked,
+  staleNote,
   unanswered,
 } from "../scripts/merge-gate.mjs";
 import { ROOT, read } from "./lib/doc-helpers.ts";
@@ -150,6 +152,61 @@ describe("the review converged", () => {
     expect(capNote(spent(PASS_CAP), [critical])).toContain("stopped this condition asking");
     expect(capNote(spent(PASS_CAP), [])).toBeNull();
     expect(capNote(spent(1), [critical])).toBeNull();
+  });
+});
+
+/**
+ * Two of the commits a merged pull request carried after the only pass it posted. That
+ * pass read the branch's first commit, and the gate called the review converged.
+ */
+const READ = "d285e8a6a4b1c0d9e8f7a6b5c4d3e2f10a9b8c7d";
+const AFTER = [
+  { sha: "9acb2010b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8", subject: "fix: apply the review pass" },
+  { sha: "ebc308448a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d", subject: "feat: return the reduction" },
+];
+
+describe("the last pass against the tip", () => {
+  const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
+  const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
+  const behind = (changed: string[]) => ({ commits: AFTER, changed });
+  const unrelated = { commits: null, changed: ["scripts/merge-gate.mjs"] };
+
+  it("holds where the pass is anchored at the tip", () => {
+    const tip = { commits: [], changed: [] };
+    expect(staleBlocked(tip)).toBeNull();
+    expect(reviewBlocked(spent(1), [], tip)).toBeNull();
+    expect(staleNote(READ, tip)).toContain("the tip");
+  });
+
+  it("holds where only prose landed after the pass, and still reports the distance", () => {
+    expect(staleBlocked(behind(["docs/architecture.md", "README.md"]))).toBeNull();
+    expect(staleNote(READ, behind([]))).toContain("2 commits behind");
+  });
+
+  it("stops a pass that never read a source commit, and names the commits", () => {
+    const blocked = reviewBlocked(spent(1), [], behind(["scripts/merge-gate.mjs", "docs/x.md"]));
+    expect(blocked).toContain("1 file that pass never read");
+    for (const commit of AFTER) {
+      expect(blocked).toContain(commit.sha.slice(0, 8));
+      expect(blocked).toContain(commit.subject);
+    }
+  });
+
+  /**
+   * A human reviews whatever head they were shown, so a `commit_id` this branch never
+   * carried relates to nothing here — and the fallback hands that review to the condition
+   * as the last pass. Blocking on it is a block no further pass can clear.
+   */
+  it("lets a review through whose commit this branch does not carry", () => {
+    expect(staleBlocked(unrelated)).toBeNull();
+    expect(reviewBlocked([{ id: 1, body: "LGTM" }], [], unrelated)).toBeNull();
+    expect(staleNote(READ, unrelated)).toMatch(/not on this branch/);
+    expect(staleNote(null, unrelated)).toBeNull();
+  });
+
+  /** The same waiver the cap gives the findings: at it, no further pass is on offer. */
+  it("stops asking at the cap, where the thread verdicts carry the fix", () => {
+    expect(reviewBlocked(spent(PASS_CAP), [], behind(["scripts/merge-gate.mjs"]))).toBeNull();
   });
 });
 

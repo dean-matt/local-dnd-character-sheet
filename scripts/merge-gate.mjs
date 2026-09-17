@@ -70,22 +70,76 @@ export function blockingFindings(comments) {
 export const PASS_CAP = 3;
 
 /**
- * The pass that reads a fix is what answers the finding, so this wants a last pass whose
- * findings are all `comment`. A pass that found nothing satisfies it by posting a body and
- * no comments, which is the only record the gate has that the code was read again. At
- * `PASS_CAP` it stops asking: "every thread carries a verdict" and "no declined finding is
- * critical or warning" already hold the fix, and demanding a pass the run may not take
- * leaves a hand merge as the only way out.
+ * Prose the last pass's judgment does not rest on. A fix ships its prose pass in the same
+ * commit, so a commit touching only these after the last pass answers that pass rather
+ * than adding code nobody read.
  */
-export function reviewBlocked(reviews, findings) {
+const PROSE = /\.md$/;
+
+const count = (n, noun) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
+/**
+ * @typedef {object} Since
+ * @property {{ sha: string, subject: string }[] | null} commits the commits between the
+ *   last pass and the tip, or null where the branch does not carry the pass's `commit_id`
+ * @property {string[]} changed the paths those commits changed
+ */
+
+/**
+ * Whether the commits after the last pass changed code that pass never read. `commits` is
+ * null where the branch does not carry the pass's `commit_id` — a review left on a head
+ * this branch never had relates to nothing here, and a block there is one nothing clears.
+ *
+ * @param {Since} since
+ */
+export function staleBlocked({ commits, changed }) {
+  if (commits === null) return null;
+  const source = changed.filter((path) => !PROSE.test(path));
+  if (source.length === 0) return null;
+  return [
+    `${count(commits.length, "commit")} after the last pass changed ${count(source.length, "file")} that pass never read — review again`,
+    ...commits.map((c) => `${c.sha.slice(0, 8)}  ${c.subject}`),
+  ].join("\n      ");
+}
+
+/**
+ * Where the last pass sits against the tip, printed whether the condition passed or
+ * failed. A verdict alone cannot separate a pass anchored at the tip from one that skipped
+ * a prose-only commit.
+ *
+ * @param {string | null} sha
+ * @param {Since} since
+ */
+export function staleNote(sha, { commits }) {
+  if (sha === null) return null;
+  const short = sha.slice(0, 8);
+  if (commits === null) return `the last pass read ${short}, which is not on this branch`;
+  if (commits.length === 0) return `the last pass read ${short}, the tip of this branch`;
+  return `the last pass read ${short}, ${count(commits.length, "commit")} behind the tip`;
+}
+
+/**
+ * The pass that reads a fix is what answers the finding, so this wants a last pass whose
+ * findings are all `comment` and whose `commit_id` carries the code being merged. A pass
+ * that found nothing satisfies the first by posting a body and no comments, which is the
+ * only record the gate has that the code was read again. At `PASS_CAP` it stops asking on
+ * both counts: "every thread carries a verdict" and "no declined finding is critical or
+ * warning" already hold the fix, and demanding a pass the run may not take leaves a hand
+ * merge as the only way out.
+ *
+ * @param {Since} since
+ */
+export function reviewBlocked(reviews, findings, since = { commits: null, changed: [] }) {
   const count = passes(reviews).length;
   if (count === 0) return "no review pass found — nothing has reviewed this";
+  if (count >= PASS_CAP) return null;
   const blocking = blockingFindings(findings);
-  if (blocking.length === 0 || count >= PASS_CAP) return null;
-  return [
-    `pass ${count} of ${PASS_CAP} returned a blocking finding — review again`,
-    ...blocking,
-  ].join("\n      ");
+  if (blocking.length > 0)
+    return [
+      `pass ${count} of ${PASS_CAP} returned a blocking finding — review again`,
+      ...blocking,
+    ].join("\n      ");
+  return staleBlocked(since);
 }
 
 /**
@@ -178,6 +232,26 @@ function show(ref, path) {
   }
 }
 
+/**
+ * The commits on `head` that the last pass never saw, and the paths they changed. An
+ * unreachable `commit_id` reads as no relation rather than as an empty range, so a review
+ * left on another head cannot pass the condition by looking like a pass at the tip.
+ */
+function sinceLastPass(sha, head) {
+  const unrelated = { commits: null, changed: [] };
+  if (sha === null) return unrelated;
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", sha, head], { stdio: "ignore" });
+  } catch {
+    return unrelated;
+  }
+  const commits = git(["log", "--format=%H %s", `${sha}..${head}`])
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => ({ sha: line.slice(0, 40), subject: line.slice(41) }));
+  return { commits, changed: git(["diff", "--name-only", sha, head]).split("\n").filter(Boolean) };
+}
+
 function gate(n) {
   const api = (path) => gh(["api", "--paginate", path]);
   const failures = [];
@@ -191,14 +265,20 @@ function gate(n) {
   const checkFailure = checksBlocked(checks);
   report(checkFailure === null, "every check is green", checkFailure);
 
+  const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;
+  execFileSync("git", ["fetch", "--quiet", "origin", "main", head]);
+
   const reviews = api(`repos/{owner}/{repo}/pulls/${n}/reviews`);
   const pass = passes(reviews).at(-1) ?? null;
   const findings =
     pass === null ? [] : api(`repos/{owner}/{repo}/pulls/${n}/reviews/${pass.id}/comments`);
-  const reviewFailure = reviewBlocked(reviews, findings);
+  const since = sinceLastPass(pass?.commit_id ?? null, head);
+  const reviewFailure = reviewBlocked(reviews, findings, since);
   report(reviewFailure === null, "the review converged", reviewFailure);
   const note = capNote(reviews, findings);
   if (note !== null) console.log(`      ${note}`);
+  const age = staleNote(pass?.commit_id ?? null, since);
+  if (age !== null) console.log(`      ${age}`);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 
@@ -212,8 +292,6 @@ function gate(n) {
     declined.join("\n      "),
   );
 
-  const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;
-  execFileSync("git", ["fetch", "--quiet", "origin", "main", head]);
   const base = git(["merge-base", "origin/main", head]);
   const changed = git(["diff", "--name-only", base, head]).split("\n").filter(Boolean);
   const fenced = changed.filter((p) => FENCE.test(p));
