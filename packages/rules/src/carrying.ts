@@ -28,7 +28,8 @@ const POUNDS_PER_STRENGTH_POINT = 15;
 /**
  * Both rulesets weigh every coin the same: fifty to the pound, whatever the
  * denomination, so a purse of copper weighs what the platinum it converts to does.
- * Upstream agrees — the five `$C` rows in `items.json` each state 0.02 — but a character
+ * Upstream agrees — the five `PHB` denominations each state 0.02, where the 14 setting
+ * coins under the same `$C` type state no weight at all — but a character
  * counts coins by denomination rather than holding an inventory row for them, so the
  * number is a rule here rather than a catalog lookup.
  */

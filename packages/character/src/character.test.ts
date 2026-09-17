@@ -842,9 +842,12 @@ describe("carried weight", () => {
   const packing = (inventory: object[], money: object = {}) =>
     characterDefinitionSchema.parse({ ...structuredClone(definition), inventory, money });
 
-  it("totals what the character holds, coins included", () => {
-    const packed = packing([{ ref: ROPE }, { ref: ARROW, quantity: 20 }], { gold: 50 });
-    expect(carriedWeight(packed, catalog)).toBe(10 + 1 + 1);
+  it("totals what the character holds, homebrew and coins included", () => {
+    const packed = packing(
+      [{ ref: ROPE }, { ref: ARROW, quantity: 20 }, { ref: { homebrewId: "hb_01" }, quantity: 3 }],
+      { gold: 50 },
+    );
+    expect(carriedWeight(packed, catalog)).toBe(10 + 1 + 3 + 1);
   });
 
   it("leaves out what is stored elsewhere, equipment and containers alike", () => {

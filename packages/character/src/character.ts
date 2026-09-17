@@ -596,18 +596,15 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
  * The pounds a character is carrying: every inventory entry flagged `carried`, times its
  * quantity, plus the coins.
  *
- * `weights` maps `entryKey` to an item's weight in pounds, content a character
- * references rather than copies — from the catalog or from homebrew, which a caller
- * merges into one map — the way `hitPointMaximum` takes the hit die. A `null` is a row
- * that states no weight, which 1,540 of the 2,428 upstream items do, and adds nothing
- * rather than failing the sum. A reference the map does not name is refused: there the
- * character points at a row neither store holds, which a silent zero would hide.
+ * `weights` maps `entryKey` to an item's weight in pounds, from the catalog and from
+ * homebrew, which the caller merges into one map and expands a magic variant into first.
+ * A `null` is a row that states no weight and adds nothing; a reference the map does not
+ * name is refused, because a silent zero would hide it.
  *
- * Coins count whatever `carried` says of the rest, because `money` is a purse the
- * definition has nowhere to put down. So a character who banked 1,000 gp in town carries
- * 20 pounds they left there, and `encumbranceAt` reads this total straight. The way out
- * is a flag on `money`, or an inventory entry per denomination, the day a sheet lets a
- * character leave coins behind.
+ * Coins count regardless of `carried`, because `money` is a purse the definition has
+ * nowhere to put down: a character who banked 1,000 gp in town carries 20 pounds they
+ * left there, and `encumbranceAt` reads this total straight. The way out is a flag on
+ * `money`, or an inventory entry per denomination.
  */
 export function carriedWeight(
   definition: CharacterDefinition,
