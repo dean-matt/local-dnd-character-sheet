@@ -1095,7 +1095,7 @@ describe("encumbered speed", () => {
   };
 
   it.each(["one", "classic"] as const)(
-    "hands the reduction back unapplied, so %s exhaustion composes against the race's speed",
+    "hands the reduction back unapplied, so %s exhaustion composes against the derived speed",
     (edition) => {
       const exhaustion = exhaustionSpeedCost(2, edition);
       const base = derivedValue(characterDerivedSchema.parse(derivedInput(winged)).speed).walk;
@@ -1113,10 +1113,13 @@ describe("encumbered speed", () => {
     },
   );
 
-  it("carries a mode written as undefined rather than reducing it", () => {
-    const absent = { speed: { computed: { walk: 30, fly: undefined } } };
-    expect(speeds(ENCUMBERED_AT + 1, { encumbrance: true }, absent).speed).toEqual({ walk: 20 });
-  });
+  it.each([{ encumbrance: true }, {}])(
+    "drops a mode written as undefined, which the parse keeps, under house rules %j",
+    (houseRules) => {
+      const absent = { speed: { computed: { walk: 30, fly: undefined } } };
+      expect(Object.keys(speeds(ENCUMBERED_AT + 1, houseRules, absent).speed)).toEqual(["walk"]);
+    },
+  );
 
   it("stores nothing, so turning the option off restores the race's speeds", () => {
     const derived = characterDerivedSchema.parse(derivedInput(winged));

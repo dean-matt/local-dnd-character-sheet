@@ -625,6 +625,14 @@ export function carriedWeight(
 }
 
 /**
+ * The modes a character actually has. A key written as `undefined` survives the parse, so
+ * dropping it here keeps it out of the arithmetic and out of every reader downstream.
+ */
+function presentModes(speed: Speed): [string, number][] {
+  return Object.entries(speed).filter((entry): entry is [string, number] => entry[1] !== undefined);
+}
+
+/**
  * What a load costs a character: the speeds they move at now, and the disadvantage heavy
  * encumbrance imposes.
  *
@@ -642,9 +650,9 @@ export function encumberedSpeed(
   derived: CharacterDerived,
   weight: number,
 ): EncumberedSpeed {
-  const speed = derivedValue(derived.speed);
+  const modes = presentModes(derivedValue(derived.speed));
   if (!houseRule(definition, "encumbrance")) {
-    return { speed: { ...speed }, speedReduction: 0, disadvantage: false };
+    return { speed: Object.fromEntries(modes) as Speed, speedReduction: 0, disadvantage: false };
   }
   const { speedReduction, disadvantage } = encumbranceAt(
     definition.abilityScores.str,
@@ -652,12 +660,7 @@ export function encumberedSpeed(
     weight,
   );
   const reduced = Object.fromEntries(
-    Object.entries(speed).map(([mode, base]) => [
-      mode,
-      // A mode written as `undefined` survives the parse, and is a mode the character
-      // does not have rather than a base speed of zero.
-      base === undefined ? undefined : reducedSpeed({ base, reduction: speedReduction }),
-    ]),
+    modes.map(([mode, base]) => [mode, reducedSpeed({ base, reduction: speedReduction })]),
   ) as Speed;
   return { speed: reduced, speedReduction, disadvantage };
 }
@@ -675,7 +678,7 @@ export type EncumberedSpeed = {
   speed: Speed;
   /**
    * The feet `speed` already lost, handed back unapplied so a caller composes another
-   * reduction against the race's speeds rather than reducing `speed` twice: sum this
+   * reduction against the derived speeds rather than reducing `speed` twice: sum this
    * into `reducedSpeed`'s `reduction`. 2014 exhaustion states `halved` and `zeroed`
    * instead of feet, so those go to `reducedSpeed` in the same call. Zero where the
    * table never opted in.
