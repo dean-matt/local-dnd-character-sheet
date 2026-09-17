@@ -20,7 +20,10 @@
       "entry": ["src/**/*.test.ts"],
       "includeEntryExports": true
     },
-    "packages/content": {},
+    "packages/content": {
+      "entry": ["src/**/*.test.ts"],
+      "includeEntryExports": true
+    },
     "packages/api": {
       "entry": ["src/db/client.ts", "src/db/homebrew.ts", "drizzle.homebrew.config.ts"]
     },
