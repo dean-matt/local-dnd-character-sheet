@@ -82,16 +82,19 @@ export function reviewBlocked(reviews, findings) {
 }
 
 /**
- * Blocking a run that spent more passes than the cap deadlocks the pull request one pass
- * higher, because a submitted review cannot be withdrawn and any bodied one counts — a
- * human's "LGTM" included. The overage prints beside the condition instead, so a run
- * cannot raise its own cap unseen.
+ * What the cap did, printed beside the condition whether it passed or not — the two states
+ * the condition itself cannot show. At the cap it names the waiver, since a condition that
+ * stops asking in silence is a condition nobody audits. Past the cap it names the overage
+ * rather than blocking: a submitted review cannot be withdrawn and any bodied one counts, a
+ * human's "LGTM" included, so a block there is one nothing clears.
  */
-export function overspent(reviews) {
+export function capNote(reviews, findings) {
   const count = passes(reviews).length;
-  return count > PASS_CAP
-    ? `${count} passes, past the cap of ${PASS_CAP} — read the extra passes before merging`
-    : null;
+  if (count > PASS_CAP)
+    return `${count} passes, past the cap of ${PASS_CAP} — read the extra passes before merging`;
+  if (count === PASS_CAP && blockingFindings(findings).length > 0)
+    return `the cap of ${PASS_CAP} passes stopped this condition asking — the thread verdicts carry what it found`;
+  return null;
 }
 
 const VERDICT = /^\*\*(Applied|Declined)\*\*/;
@@ -187,8 +190,8 @@ function gate(n) {
     pass === null ? [] : api(`repos/{owner}/{repo}/pulls/${n}/reviews/${pass.id}/comments`);
   const reviewFailure = reviewBlocked(reviews, findings);
   report(reviewFailure === null, "the review converged", reviewFailure);
-  const over = overspent(reviews);
-  if (over !== null) console.log(`      ${over}`);
+  const note = capNote(reviews, findings);
+  if (note !== null) console.log(`      ${note}`);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 

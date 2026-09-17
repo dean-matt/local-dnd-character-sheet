@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
+  capNote,
   checksBlocked,
   dependenciesDiffer,
   FENCE,
   mergeBlocked,
   notGreen,
-  overspent,
   PASS_CAP,
   passes,
   reviewBlocked,
@@ -116,8 +116,13 @@ describe("the review converged", () => {
    */
   it("prints the overage past the cap rather than blocking on it", () => {
     expect(reviewBlocked(spent(PASS_CAP + 1), [critical])).toBeNull();
-    expect(overspent(spent(PASS_CAP + 1))).toContain(`${PASS_CAP + 1} passes`);
-    expect(overspent(spent(PASS_CAP))).toBeNull();
+    expect(capNote(spent(PASS_CAP + 1), [])).toContain(`${PASS_CAP + 1} passes`);
+  });
+
+  it("says so where the cap waived a blocking finding, and stays quiet otherwise", () => {
+    expect(capNote(spent(PASS_CAP), [critical])).toContain("stopped this condition asking");
+    expect(capNote(spent(PASS_CAP), [])).toBeNull();
+    expect(capNote(spent(1), [critical])).toBeNull();
   });
 });
 
@@ -128,13 +133,15 @@ describe("the review converged", () => {
 const NUMBER = "one|two|three|four|five|six|seven|eight|nine|ten|\\d+";
 
 /**
- * A pass count against the word, and a ceiling named with the number beside it. Two
- * patterns over English catch the wording a skill would plausibly reach for and no more,
- * and they hold `issue-to-pr`, where the loop lives.
+ * A number beside the word "pass", either way round, in `issue-to-pr` — where the loop
+ * lives. Both patterns keep the word, because a ceiling named without it matches ordinary
+ * prose: a skill dense with step numbers reads "most of step 14" as a cap. That leaves
+ * subtler wordings through, so the fence catches the second cap a skill would plainly
+ * write rather than every one it could.
  */
 const SECOND_CAP = [
   new RegExp(`\\b(?:${NUMBER})\\s+(?:\\w+\\s+)?passes\\b`),
-  new RegExp(`\\b(?:cap|ceiling|most)\\s+(?:\\w+\\s+){0,2}(?:${NUMBER})\\b`),
+  new RegExp(`\\bpasses?\\b(?:\\s+\\w+){0,3}\\s+(?:${NUMBER})\\b`),
 ];
 
 describe("the cap and the condition the skills cite", () => {
