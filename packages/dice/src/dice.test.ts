@@ -235,6 +235,15 @@ describe("rollDice", () => {
     expect(() => rollDice("1d20", { mode, critical: true })).toThrow('"1d20"');
   });
 
+  it("doubles a subtracted pool on a critical and signs every die of it", () => {
+    const roll = rollDice("2d6-1d4", {
+      critical: true,
+      random: loadedMixed([6, 4], [6, 3], [6, 5], [6, 1], [4, 2], [4, 3]),
+    });
+    expect(roll.dice.map((die) => die.sign)).toEqual([1, 1, 1, 1, -1, -1]);
+    expect(roll.total).toBe(8);
+  });
+
   it("counts a critical's extra dice against the bound on one roll", () => {
     expect(rollDice("500d6", { critical: true }).dice).toHaveLength(1000);
     expect(() => rollDice("501d6", { critical: true })).toThrow(RangeError);

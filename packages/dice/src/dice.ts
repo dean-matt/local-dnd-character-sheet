@@ -131,7 +131,9 @@ function parseConstant(raw: string, notation: string): number {
 
 function checkPooled(pooled: number, notation: string): void {
   if (pooled > MAX_COUNT) {
-    throw new RangeError(`Cannot roll more than ${MAX_COUNT} dice at once: "${notation}"`);
+    throw new RangeError(
+      `Cannot roll more than ${MAX_COUNT} dice at once, and this asks for ${pooled}: "${notation}"`,
+    );
   }
 }
 
@@ -218,8 +220,10 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
  * its own copy of the grammar and the bounds, and because the answer comes from parsing
  * it cannot drift from what `rollDice` uses.
  *
- * It says nothing about a mode: advantage and disadvantage also need a single die, no keep
- * clause and no second pool, which a caller passing one checks itself.
+ * It says nothing about the options: a mode needs a single die, no keep clause and no
+ * second pool, and a critical doubles the dice against the same bound, so
+ * `isRollable("501d6")` is true where a critical `501d6` is not. A caller passing either
+ * checks that itself.
  */
 export function isRollable(notation: string): boolean {
   try {
