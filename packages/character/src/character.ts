@@ -583,10 +583,10 @@ export function passiveSkill(
 /**
  * Ten-thousandths of a pound, the grid the sum counts on. Upstream prints nothing finer
  * — `Bead of Force` (DMG) at 0.0625 and `Energy Cell` (DMG) at 0.3125 hold the four
- * decimals — so the scale costs no accuracy and buys an exact total: a quiver of 20
- * arrows at 0.05 each weighs 1 rather than a float's near miss. A finer weight rounds to
- * the grid, and the way out is a larger scale, bounded by the 2^53 the integer sum stays
- * inside.
+ * decimals — so the scale costs no accuracy and buys an exact total across rows of
+ * different weights, where adding five kinds of ammunition and a purse of coins as
+ * floats lands beside the answer rather than on it. A finer weight rounds to the grid,
+ * and the way out is a larger scale, bounded by the 2^53 the integer sum stays inside.
  */
 const WEIGHT_SCALE = 10_000;
 

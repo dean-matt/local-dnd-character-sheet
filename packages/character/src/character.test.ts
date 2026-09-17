@@ -839,7 +839,7 @@ describe("carried weight", () => {
     [entryKey({ homebrewId: "hb_01" }), 1],
   ]);
 
-  const packing = (inventory: object[], money: object = {}) =>
+  const packing = (inventory: object[], money: object) =>
     characterDefinitionSchema.parse({ ...structuredClone(definition), inventory, money });
 
   it("totals what the character holds, homebrew and coins included", () => {
