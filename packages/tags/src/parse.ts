@@ -29,9 +29,9 @@ function plain(value: string, depth: number): string {
 }
 
 /**
- * The last resort for any tag: the first argument that carries text. A tag whose
- * expected argument is empty would otherwise render nothing and be dropped, losing
- * words. `{@homebrew |removals}` and `{@item |a shield}` both keep theirs.
+ * The fallback display for a tag whose expected argument is empty: the first argument
+ * that carries text. Without it the tag renders nothing and is dropped, losing words.
+ * `{@homebrew |removals}` and `{@item |a shield}` both keep theirs.
  */
 function firstFilled(args: string[], depth: number): string {
   for (let index = 0; index < args.length; index += 1) {
@@ -39,6 +39,15 @@ function firstFilled(args: string[], depth: number): string {
     if (value !== undefined) return plain(value, depth);
   }
   return "";
+}
+
+/**
+ * An unknown tag with no text to show still stands for a word: dropping `{@coinflip}`
+ * leaves "Flip a ." Its name is the only text the markup carries.
+ */
+function unknown(tag: string, args: string[], depth: number): Token {
+  const shown = firstFilled(args, depth);
+  return text(shown === "" ? tag : shown);
 }
 
 /**
@@ -141,7 +150,7 @@ function expand(inner: string, depth: number): Token[] {
   const args = rest === "" ? [] : splitArgs(rest);
 
   const spec = SPECS.get(tag);
-  if (spec === undefined) return [text(firstFilled(args, depth))];
+  if (spec === undefined) return [unknown(tag, args, depth)];
 
   switch (spec.kind) {
     case "ref": {
@@ -201,8 +210,8 @@ function braceFinder(input: string): (open: number) => number {
 }
 
 /**
- * An argument-less unknown tag has no display at all, and an empty token is only work
- * for every renderer to skip.
+ * A registered tag can legitimately render nothing — `{@i}` has no content, `{@hit}` has
+ * no bonus — and an empty token is only work for every renderer to skip.
  */
 function worthKeeping(token: Token): boolean {
   switch (token.kind) {

@@ -3,7 +3,8 @@
  * source, and the English a tag with no display argument stands for.
  *
  * Adding support for a tag is a line here and no change to the parser. A tag absent
- * from this table degrades to its first argument rather than failing.
+ * from this table degrades to its first argument that has text, or to its own name
+ * when it carries none, rather than failing.
  */
 
 import { isRollable } from "@dnd/dice";
