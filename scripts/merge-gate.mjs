@@ -41,16 +41,43 @@ export function checksBlocked(checks) {
 }
 
 /**
- * A pass is a review carrying a body; the verdict replies land as reviews with none. Any
- * bodied review counts, so a human's "LGTM" posted after an audit pass becomes the pass
- * and its findings go uncounted. Keying on the pass's own comments would close that.
+ * The passes, oldest first. A pass is a review carrying a body; the verdict replies land
+ * as reviews with none. Any bodied review counts, so a human's "LGTM" posted after an
+ * audit pass becomes a pass and its findings go uncounted. Keying on the pass's own
+ * comments would close that.
  */
-export function lastPass(reviews) {
-  return reviews.filter((r) => r.body !== "").at(-1) ?? null;
+export function passes(reviews) {
+  return reviews.filter((r) => r.body !== "");
 }
 
 export function blockingFindings(comments) {
   return comments.filter((c) => severity(c.body) !== "comment").map((c) => c.html_url);
+}
+
+/**
+ * The passes a run spends before this condition stops asking for a clean one.
+ * `issue-to-pr` step 13 loops against this number rather than carrying one of its own.
+ */
+export const PASS_CAP = 3;
+
+/**
+ * The pass that reads a fix is what answers the finding, so this wants a last pass that
+ * came back clean. At `PASS_CAP` it stops asking: "every thread carries a verdict" and "no
+ * declined finding is critical or warning" already hold the fix, and demanding a pass the
+ * run may not take leaves a hand merge as the only way out. Past the cap it blocks again,
+ * because a run that reviews until nothing is left has set its own cap — the user weighs
+ * that one.
+ */
+export function reviewBlocked(reviews, findings) {
+  const count = passes(reviews).length;
+  if (count === 0) return "no review pass found — nothing has reviewed this";
+  if (count > PASS_CAP) return `${count} passes, past the cap of ${PASS_CAP}`;
+  const blocking = blockingFindings(findings);
+  if (blocking.length === 0 || count === PASS_CAP) return null;
+  return [
+    `pass ${count} of ${PASS_CAP} returned a blocking finding — review again`,
+    ...blocking,
+  ].join("\n      ");
 }
 
 const VERDICT = /^\*\*(Applied|Declined)\*\*/;
@@ -140,16 +167,12 @@ function gate(n) {
   const checkFailure = checksBlocked(checks);
   report(checkFailure === null, "every check is green", checkFailure);
 
-  const pass = lastPass(api(`repos/{owner}/{repo}/pulls/${n}/reviews`));
-  if (pass === null) console.log("      no review pass found — nothing has reviewed this");
+  const reviews = api(`repos/{owner}/{repo}/pulls/${n}/reviews`);
+  const pass = passes(reviews).at(-1) ?? null;
   const findings =
     pass === null ? [] : api(`repos/{owner}/{repo}/pulls/${n}/reviews/${pass.id}/comments`);
-  const blocking = blockingFindings(findings);
-  report(
-    blocking.length === 0,
-    "the last pass returned only comment findings",
-    blocking.join("\n      "),
-  );
+  const reviewFailure = reviewBlocked(reviews, findings);
+  report(reviewFailure === null, "the review converged", reviewFailure);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 

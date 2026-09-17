@@ -108,10 +108,12 @@ holds, stop and name it; reranking is the user's call.
     Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
     every finding carries a verdict. Each reply lands as its own empty review. A fix that
     moves a line outdates its thread, and the reply still posts.
-13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, three
-    passes at most, a fresh subagent each so none inherits the last one's conclusions. A
-    finding you declined comes back and takes the same reply. Only `comment` findings left
-    has stopped paying.
+13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, a fresh
+    subagent each so none inherits the last one's conclusions. `PASS_CAP` in
+    `scripts/merge-gate.mjs` caps the loop and the gate's "the review converged" reads the
+    same number: a clean pass ends the loop earlier, at the cap an applied finding
+    stands on its verdict reply, and a pass past the cap blocks the merge. A finding you
+    declined comes back and takes the same reply.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a pass
     returned still waits on the user; `review:changes-requested` where something does — a
     decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.

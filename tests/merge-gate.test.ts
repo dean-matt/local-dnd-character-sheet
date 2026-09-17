@@ -7,9 +7,11 @@ import {
   checksBlocked,
   dependenciesDiffer,
   FENCE,
-  lastPass,
   mergeBlocked,
   notGreen,
+  PASS_CAP,
+  passes,
+  reviewBlocked,
   severity,
   unanswered,
 } from "../scripts/merge-gate.mjs";
@@ -54,19 +56,78 @@ describe("severity", () => {
   });
 });
 
-describe("the last review pass", () => {
-  it("is the last review carrying a body, never a verdict reply", () => {
+describe("the review passes", () => {
+  it("are the reviews carrying a body, never the verdict replies", () => {
     const reviews = [
       { id: 1, body: "pass 1" },
       { id: 2, body: "" },
       { id: 3, body: "pass 2" },
       { id: 4, body: "" },
     ];
-    expect(lastPass(reviews)?.id).toBe(3);
+    expect(passes(reviews).map((r: { id: number }) => r.id)).toEqual([1, 3]);
   });
 
-  it("is null where no review carries a body", () => {
-    expect(lastPass([{ id: 1, body: "" }])).toBeNull();
+  it("are none where no review carries a body", () => {
+    expect(passes([{ id: 1, body: "" }])).toEqual([]);
+  });
+});
+
+describe("the review converged", () => {
+  const pass = (id: number) => ({ id, body: `pass ${id}` });
+  const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
+  const critical = finding(1, BOLD);
+
+  it("stops a pull request nothing has reviewed", () => {
+    expect(reviewBlocked([], [])).toMatch(/nothing has reviewed this/);
+  });
+
+  it("holds where the last pass came back clean", () => {
+    expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")])).toBeNull();
+  });
+
+  it("names which pass returned the blocking finding, and the finding", () => {
+    const blocked = reviewBlocked(spent(1), [critical]);
+    expect(blocked).toContain(`pass 1 of ${PASS_CAP}`);
+    expect(blocked).toContain(critical.html_url);
+  });
+
+  /**
+   * A last pass at the cap that returns a blocking finding leaves the run nowhere to go:
+   * another pass is one the skill forbids, and a hand merge is what the gate exists to
+   * stop. The verdict conditions carry the applied fix from here.
+   */
+  it("stops asking at the cap, where the fix rides on the thread verdicts", () => {
+    expect(reviewBlocked(spent(PASS_CAP), [critical])).toBeNull();
+  });
+
+  it("stops a run that spent more passes than the cap", () => {
+    const blocked = reviewBlocked(spent(PASS_CAP + 1), []);
+    expect(blocked).toContain(`${PASS_CAP + 1} passes`);
+    expect(blocked).toContain(String(PASS_CAP));
+  });
+});
+
+/**
+ * The cap is one number and both skills read it here. A skill spelling it out again
+ * leaves prose and code each holding half a rule that only holds whole.
+ */
+describe("the cap and the condition the skills cite", () => {
+  it("is cited by issue-to-pr rather than restated", () => {
+    const skill = read(".claude/skills/issue-to-pr/SKILL.md");
+    expect(skill, "issue-to-pr names no cap, so a run cannot tell when to stop").toContain(
+      "PASS_CAP",
+    );
+    expect(
+      /\b(two|three|four|five) passes\b/.test(skill),
+      "issue-to-pr spells a pass count out, which is a second cap the gate cannot read",
+    ).toBe(false);
+  });
+
+  it("reaches merge-pr in the words the gate prints", () => {
+    expect(
+      read(".claude/skills/merge-pr/SKILL.md"),
+      "merge-pr lists a condition the gate no longer prints, so a run cannot match the two",
+    ).toContain("the review converged");
   });
 });
 

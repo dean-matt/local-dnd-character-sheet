@@ -47,7 +47,7 @@ node scripts/merge-gate.mjs "$n"
 Six conditions, each named where it fails:
 
 - every check is green
-- the last review pass returned only `comment` findings
+- the review converged
 - every thread carries a verdict
 - no declined finding is `critical` or `warning`
 - the diff reaches no fenced path, and no `package.json` changed a dependency
