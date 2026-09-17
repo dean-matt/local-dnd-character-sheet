@@ -66,7 +66,7 @@ function grantsOf(grants: Entry, kind: "class" | "classVariant", context: string
 }
 
 /** Every row one spell's grants contribute, `class` and `classVariant` alike. */
-function spellRows(
+function grantRows(
   spellName: string,
   spellSource: string,
   grants: Entry,
@@ -113,7 +113,7 @@ function spellClassRows(
       if (!knownSpells.has(`${spellName}|${spellSource}`)) {
         throw new Error(`${context} names a spell no spells row holds`);
       }
-      rows.push(...spellRows(spellName, spellSource, grants, context, knownClasses, seen));
+      rows.push(...grantRows(spellName, spellSource, grants, context, knownClasses, seen));
     }
   }
   return rows;
