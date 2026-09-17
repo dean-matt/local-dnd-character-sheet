@@ -127,11 +127,7 @@ describe("inline emphasis", () => {
     expect(only(input)).toMatchObject({ kind: "style", style });
   });
 
-  it.each([
-    ["{@u}", "u"],
-    ["{@highlight}", "highlight"],
-    ["{@kbd}", "kbd"],
-  ])("emits nothing for the bare form %s", (input) => {
+  it.each(["{@u}", "{@highlight}", "{@kbd}"])("emits nothing for the bare form %s", (input) => {
     expect(parseTags(input)).toEqual([]);
   });
 
@@ -139,24 +135,32 @@ describe("inline emphasis", () => {
     expect(shown("{@highlight |marked text}")).toBe("marked text");
   });
 
-  // Copied from `vendor/5etools/data/renderdemo.json`, upstream's own tag documentation.
-  it("keeps every word of the sentence upstream documents its style tags with", () => {
+  // The whole sentence, verbatim from `vendor/5etools/data/renderdemo.json`, where
+  // upstream documents its own style tags.
+  it("renders every style tag in upstream's own documentation", () => {
     const demo =
-      "{@bold some text to be bolded} (alternative {@b shorthand}), " +
+      "Style tags; {@bold some text to be bolded} (alternative {@b shorthand}), " +
+      "{@italic some text to be italicised} (alternative {@i shorthand}), " +
       "{@underline some text to be underlined} (alternative {@u shorthand}), " +
       "{@underlineDouble some text to be underlined} (alternative {@u2 shorthand}), " +
       "{@strike some text to strike-through}, (alternative {@s shorthand}), , " +
       "{@strikeDouble some text to strike-through}, (alternative {@s2 shorthand}), " +
+      "{@color color|e40707}/{@color color variable|--rgb-name} tags, " +
       "{@highlight highlight} tags, {@sup superscript} tags, {@sub subscript} tags, " +
-      "{@kbd keyboard} tags, {@code print(&quot;hello world&quot;)} tags";
+      "{@kbd keyboard} tags, {@code print(&quot;hello world&quot;)} tags, " +
+      "misc {@style Style|small-caps;small;capitalize;dnd-font} tags, " +
+      "{@font alternate font|Comic Sans MS} tags";
     expect(shown(demo)).toBe(
-      "some text to be bolded (alternative shorthand), " +
+      "Style tags; some text to be bolded (alternative shorthand), " +
+        "some text to be italicised (alternative shorthand), " +
         "some text to be underlined (alternative shorthand), " +
         "some text to be underlined (alternative shorthand), " +
         "some text to strike-through, (alternative shorthand), , " +
         "some text to strike-through, (alternative shorthand), " +
+        "color/color variable tags, " +
         "highlight tags, superscript tags, subscript tags, " +
-        "keyboard tags, print(&quot;hello world&quot;) tags",
+        "keyboard tags, print(&quot;hello world&quot;) tags, " +
+        "misc Style tags, alternate font tags",
     );
   });
 

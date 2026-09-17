@@ -53,9 +53,9 @@ Every token carries a `display` string. That is what makes degradation safe: any
 renderer can fall back to `display` without knowing the tag.
 
 `Emphasis` names the inline formatting: bold, italic, underline, strike, their doubled
-forms, highlight, superscript, subscript, keyboard and code. Add a new one to
-`STYLE_TAGS` in `registry.ts`, whose comment names the markup tags left to degrade and
-the count `pnpm tags:audit` prints.
+forms, highlight, superscript, subscript, keyboard and code. Add a new one as a member on
+that union in `token.ts` and a row in `STYLE_TAGS` in `registry.ts`, whose comment names
+the markup tags left to degrade and the count `pnpm tags:audit` prints.
 
 ## Degradation rules
 

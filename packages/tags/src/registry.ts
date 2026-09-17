@@ -219,6 +219,11 @@ const OUTBOUND_TAGS = [
  * `coinflip`, `autodice` and `crochet` each mean more than emphasis — a marker, a flip,
  * a rolled result, a pattern reference — so each waits for the tier that can act on it.
  * Registering any as a style would only name text the fallback already renders.
+ *
+ * `code` alone can hold a literal pipe, which the argument split takes for a separator,
+ * so `{@code a|b}` shows `a`. The one such string in the corpus is renderdemo's own
+ * example of another tag's grammar; the day homebrew carries shell or JSON, `code`
+ * leaves this table for a spec that joins its arguments back.
  */
 const STYLE_TAGS: Record<string, Emphasis> = {
   b: "bold",
