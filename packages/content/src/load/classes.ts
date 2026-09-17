@@ -753,9 +753,30 @@ function sidekickClasses(files: [string, unknown][]): Set<string> {
   return sidekicks;
 }
 
+/**
+ * Every `(name, source)` this loader would write to `classes`, sidekicks
+ * excluded. `spells.ts` calls this to check a spell's grantors against, since a
+ * loader only ever sees its own files and cannot read what this one writes.
+ */
+export function classIdentities(sources: Map<string, unknown>): Set<string> {
+  const known = new Set<string>();
+  for (const [path, source] of sources) {
+    if (!path.startsWith("data/class/")) continue;
+    for (const [index, entry] of entriesOf(source, "class", path).entries()) {
+      if (entry.isSidekick === true) continue;
+      const context = `${path} class[${index}]`;
+      known.add(`${text(entry, "name", context)}|${text(entry, "source", context)}`);
+    }
+  }
+  return known;
+}
+
+/** Shared with `spells.ts`, which needs a class's identity but not its tables. */
+export const CLASS_FILES = "data/class/class-*.json";
+
 export const classes: Loader = {
   name: "classes",
-  files: ["data/class/class-*.json", OPTIONAL_FEATURES_FILE, ...EDITION_FILES],
+  files: [CLASS_FILES, OPTIONAL_FEATURES_FILE, ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
     const out: Tables = {
