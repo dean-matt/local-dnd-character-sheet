@@ -47,7 +47,7 @@ node scripts/merge-gate.mjs "$n"
 Six conditions, each named where it fails:
 
 - every check is green
-- the last review pass returned only `comment` findings
+- the review converged
 - every thread carries a verdict
 - no declined finding is `critical` or `warning`
 - the diff reaches no fenced path, and no `package.json` changed a dependency
@@ -56,9 +56,10 @@ Six conditions, each named where it fails:
 Merge where it exits 0; otherwise hand the user the condition it named and stop — except
 "the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
 verdict GitHub has not computed yet. A behind branch goes to the next section rather than
-to the user. Read the pass body the script points at too: a finding no line
-anchors is written there, not on a comment. `scripts/merge-gate.mjs` holds the six and what
-each costs when wrong; `tests/merge-gate.test.ts` calls them.
+to the user. Read the pass body the script points at too: a finding no line anchors is
+written there, not on a comment. A line about the pass cap — a waiver at it, an overage past
+it — is a note to carry into the report rather than a condition. `scripts/merge-gate.mjs`
+holds the six and what each costs when wrong; `tests/merge-gate.test.ts` calls them.
 
 ## Where the branch is behind
 

@@ -121,8 +121,9 @@ Write `**critical**`, never `` `critical` ``. The marker carries onto the posted
 where `scripts/merge-gate.mjs` is its only reader and one it cannot parse stops the merge.
 `tests/review-severity.test.ts` holds this table to that parser.
 
-A finding naming no line goes against the file or the pull request. Only `comment` findings
-left ends the loop. Every finding goes to the caller's report.
+A finding naming no line goes against the file or the pull request. Every finding goes to
+the caller's report, and [`issue-to-pr`](../issue-to-pr/SKILL.md) step 13 decides whether
+another pass follows.
 
 ## What this skill will not do
 

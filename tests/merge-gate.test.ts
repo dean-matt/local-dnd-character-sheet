@@ -4,12 +4,16 @@ import { describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
+  capNote,
   checksBlocked,
   dependenciesDiffer,
   FENCE,
-  lastPass,
   mergeBlocked,
   notGreen,
+  PASS_CAP,
+  PASS_MARKER,
+  passes,
+  reviewBlocked,
   severity,
   unanswered,
 } from "../scripts/merge-gate.mjs";
@@ -54,19 +58,150 @@ describe("severity", () => {
   });
 });
 
-describe("the last review pass", () => {
-  it("is the last review carrying a body, never a verdict reply", () => {
+describe("the review passes", () => {
+  const ids = (reviews: { id: number; body: string }[]) =>
+    passes(reviews).map((r: { id: number }) => r.id);
+
+  it("are the marked reviews, never the verdict replies", () => {
     const reviews = [
-      { id: 1, body: "pass 1" },
+      { id: 1, body: `${PASS_MARKER}\npass 1` },
       { id: 2, body: "" },
-      { id: 3, body: "pass 2" },
+      { id: 3, body: `${PASS_MARKER}\npass 2` },
       { id: 4, body: "" },
     ];
-    expect(lastPass(reviews)?.id).toBe(3);
+    expect(ids(reviews)).toEqual([1, 3]);
   });
 
-  it("is null where no review carries a body", () => {
-    expect(lastPass([{ id: 1, body: "" }])).toBeNull();
+  /**
+   * The reason the marker exists: an unmarked bodied review is a human's, and counting it
+   * spent one of `PASS_CAP` and handed the condition that reviewer's findings instead.
+   */
+  it("leave a human's review out where the passes are marked", () => {
+    const reviews = [
+      { id: 1, body: `${PASS_MARKER}\npass 1` },
+      { id: 2, body: "LGTM" },
+    ];
+    expect(ids(reviews)).toEqual([1]);
+  });
+
+  /** A pull request reviewed before the marker landed still reaches the gate. */
+  it("fall back to every bodied review where none is marked", () => {
+    expect(
+      ids([
+        { id: 1, body: "pass 1" },
+        { id: 2, body: "" },
+        { id: 3, body: "LGTM" },
+      ]),
+    ).toEqual([1, 3]);
+  });
+
+  it("are none where no review carries a body", () => {
+    expect(passes([{ id: 1, body: "" }])).toEqual([]);
+  });
+});
+
+describe("the review converged", () => {
+  const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
+  const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
+  const critical = finding(1, BOLD);
+
+  it("stops a pull request nothing has reviewed", () => {
+    expect(reviewBlocked([], [])).toMatch(/nothing has reviewed this/);
+  });
+
+  it("holds where the last pass returned only a taste call", () => {
+    expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")])).toBeNull();
+  });
+
+  /**
+   * The shape a converging review takes: a blocking pass, the fix, then a pass that found
+   * nothing and posted a body with no comments. Reading the earlier pass's findings blocks
+   * that forever, since no later clean pass can move the count.
+   */
+  it("holds where the last pass posted a body and no findings", () => {
+    expect(reviewBlocked(spent(2), [])).toBeNull();
+  });
+
+  it("names which pass returned the blocking finding, and the finding", () => {
+    const blocked = reviewBlocked(spent(1), [critical]);
+    expect(blocked).toContain(`pass 1 of ${PASS_CAP}`);
+    expect(blocked).toContain(critical.html_url);
+  });
+
+  /**
+   * A last pass at the cap that returns a blocking finding leaves the run nowhere to go:
+   * another pass is one the skill forbids, and a hand merge is what the gate exists to
+   * stop. The verdict conditions carry the applied fix from here.
+   */
+  it("stops asking at the cap, where the fix rides on the thread verdicts", () => {
+    expect(reviewBlocked(spent(PASS_CAP), [critical])).toBeNull();
+  });
+
+  /**
+   * A block past the cap is a block nothing clears, because a submitted review cannot be
+   * withdrawn. The overage is reported rather than enforced.
+   */
+  it("prints the overage past the cap rather than blocking on it", () => {
+    expect(reviewBlocked(spent(PASS_CAP + 1), [critical])).toBeNull();
+    expect(capNote(spent(PASS_CAP + 1), [])).toContain(`${PASS_CAP + 1} passes`);
+  });
+
+  it("says so where the cap waived a blocking finding, and stays quiet otherwise", () => {
+    expect(capNote(spent(PASS_CAP), [critical])).toContain("stopped this condition asking");
+    expect(capNote(spent(PASS_CAP), [])).toBeNull();
+    expect(capNote(spent(1), [critical])).toBeNull();
+  });
+});
+
+/**
+ * The cap is one number and both skills read it here. A skill spelling it out again
+ * leaves prose and code each holding half a rule that only holds whole.
+ */
+const NUMBER = "one|two|three|four|five|six|seven|eight|nine|ten|\\d+";
+
+/**
+ * A number beside "passes", either way round, in `issue-to-pr` — where the loop lives. Both
+ * patterns keep the word, because a ceiling named without it matches ordinary prose: a
+ * skill dense with step numbers reads "most of step 14" as a cap. Both keep it plural,
+ * because the singular sits beside a small number innocently — "post the pass as one
+ * review" counts reviews and caps nothing — while a cap is a count and reads plural.
+ */
+const SECOND_CAP = [
+  new RegExp(`\\b(?:${NUMBER})\\s+(?:\\w+\\s+)?passes\\b`),
+  new RegExp(`\\bpasses\\b(?:\\s+\\w+){0,3}\\s+(?:${NUMBER})\\b`),
+];
+
+describe("the cap and the condition the skills cite", () => {
+  /**
+   * A fence nothing fires is a fence that passes whatever it was pointed at, and the
+   * patterns are read by nobody until one does. These are the wordings they claim.
+   */
+  it("fires on a pass count written either way round, and not on the singular", () => {
+    const caught = (line: string) => SECOND_CAP.some((second) => second.test(line));
+    expect(caught("three passes at most")).toBe(true);
+    expect(caught("at most 3 review passes")).toBe(true);
+    expect(caught("passes are capped at three")).toBe(true);
+    expect(caught("post the pass as one review")).toBe(false);
+    expect(caught("a pass returning nothing ends the loop earlier")).toBe(false);
+  });
+
+  it("is cited by issue-to-pr rather than restated", () => {
+    const skill = read(".claude/skills/issue-to-pr/SKILL.md");
+    expect(skill, "issue-to-pr names no cap, so a run cannot tell when to stop").toContain(
+      "PASS_CAP",
+    );
+    for (const second of SECOND_CAP)
+      expect(
+        second.test(skill),
+        `issue-to-pr spells a pass count out (${second}), which is a second cap the gate cannot read`,
+      ).toBe(false);
+  });
+
+  it("reaches merge-pr in the words the gate prints", () => {
+    expect(
+      read(".claude/skills/merge-pr/SKILL.md"),
+      "merge-pr lists a condition the gate no longer prints, so a run cannot match the two",
+    ).toContain("the review converged");
   });
 });
 

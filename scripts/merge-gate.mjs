@@ -40,17 +40,68 @@ export function checksBlocked(checks) {
   return red.length === 0 ? null : red.join(", ");
 }
 
+/** The line `issue-to-pr` step 11 opens a pass body with. It renders as nothing on GitHub. */
+export const PASS_MARKER = "<!-- audit-pass -->";
+
 /**
- * A pass is a review carrying a body; the verdict replies land as reviews with none. Any
- * bodied review counts, so a human's "LGTM" posted after an audit pass becomes the pass
- * and its findings go uncounted. Keying on the pass's own comments would close that.
+ * The audit passes, oldest first. A pass carries `PASS_MARKER`; the verdict replies land as
+ * reviews with no body at all, and a human's review carries neither, so neither spends one
+ * of `PASS_CAP` nor stands in as the last pass whose findings this reads.
+ *
+ * Where no review carries the marker the bodied ones are the passes, which is how a pull
+ * request reviewed before the marker existed still reaches the gate. That fallback reads a
+ * human's "LGTM" as a pass, as the gate always did — a pull request holding both takes the
+ * marked ones alone, so the mix only costs the passes posted before the marker landed.
  */
-export function lastPass(reviews) {
-  return reviews.filter((r) => r.body !== "").at(-1) ?? null;
+export function passes(reviews) {
+  const bodied = reviews.filter((r) => r.body !== "");
+  const marked = bodied.filter((r) => r.body.includes(PASS_MARKER));
+  return marked.length === 0 ? bodied : marked;
 }
 
 export function blockingFindings(comments) {
   return comments.filter((c) => severity(c.body) !== "comment").map((c) => c.html_url);
+}
+
+/**
+ * The passes a run spends before this condition stops asking for a clean one.
+ * `issue-to-pr` step 13 loops against this number rather than carrying one of its own.
+ */
+export const PASS_CAP = 3;
+
+/**
+ * The pass that reads a fix is what answers the finding, so this wants a last pass whose
+ * findings are all `comment`. A pass that found nothing satisfies it by posting a body and
+ * no comments, which is the only record the gate has that the code was read again. At
+ * `PASS_CAP` it stops asking: "every thread carries a verdict" and "no declined finding is
+ * critical or warning" already hold the fix, and demanding a pass the run may not take
+ * leaves a hand merge as the only way out.
+ */
+export function reviewBlocked(reviews, findings) {
+  const count = passes(reviews).length;
+  if (count === 0) return "no review pass found — nothing has reviewed this";
+  const blocking = blockingFindings(findings);
+  if (blocking.length === 0 || count >= PASS_CAP) return null;
+  return [
+    `pass ${count} of ${PASS_CAP} returned a blocking finding — review again`,
+    ...blocking,
+  ].join("\n      ");
+}
+
+/**
+ * What the cap did, printed beside the condition whether it passed or not — the two states
+ * the condition itself cannot show. At the cap it names the waiver, since a condition that
+ * stops asking in silence is a condition nobody audits. Past the cap it names the overage
+ * rather than blocking: a submitted review cannot be withdrawn and any bodied one counts, a
+ * human's "LGTM" included, so a block there is one nothing clears.
+ */
+export function capNote(reviews, findings) {
+  const count = passes(reviews).length;
+  if (count > PASS_CAP)
+    return `${count} passes, past the cap of ${PASS_CAP} — read the extra passes before merging`;
+  if (count === PASS_CAP && blockingFindings(findings).length > 0)
+    return `the cap of ${PASS_CAP} passes stopped this condition asking — the thread verdicts carry what it found`;
+  return null;
 }
 
 const VERDICT = /^\*\*(Applied|Declined)\*\*/;
@@ -140,16 +191,14 @@ function gate(n) {
   const checkFailure = checksBlocked(checks);
   report(checkFailure === null, "every check is green", checkFailure);
 
-  const pass = lastPass(api(`repos/{owner}/{repo}/pulls/${n}/reviews`));
-  if (pass === null) console.log("      no review pass found — nothing has reviewed this");
+  const reviews = api(`repos/{owner}/{repo}/pulls/${n}/reviews`);
+  const pass = passes(reviews).at(-1) ?? null;
   const findings =
     pass === null ? [] : api(`repos/{owner}/{repo}/pulls/${n}/reviews/${pass.id}/comments`);
-  const blocking = blockingFindings(findings);
-  report(
-    blocking.length === 0,
-    "the last pass returned only comment findings",
-    blocking.join("\n      "),
-  );
+  const reviewFailure = reviewBlocked(reviews, findings);
+  report(reviewFailure === null, "the review converged", reviewFailure);
+  const note = capNote(reviews, findings);
+  if (note !== null) console.log(`      ${note}`);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 
