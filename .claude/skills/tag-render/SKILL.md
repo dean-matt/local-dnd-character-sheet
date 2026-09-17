@@ -29,7 +29,8 @@ there is no `\|` or `\{` in the corpus.
 **Which argument holds the display text is per-tag**, so the forms above are a shape and
 not a rule. `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`, and
 `{@quickref a|b|c|d|e}` displays `e`. The table in `packages/tags/src/registry.ts` is
-the source of truth; a tag missing from it degrades to its first argument that has text.
+the source of truth; a tag missing from it degrades to its first argument that has text,
+or to its own name when no argument has any.
 
 Check a new tag's display position against `vendor/5etools/data/renderdemo.json`, where
 upstream documents its own grammar with self-describing examples. Reading the wrong
@@ -54,7 +55,8 @@ renderer can fall back to `display` without knowing the tag.
 ## Degradation rules
 
 **An unknown tag is never an error.** Emit `{kind: "text", value: display}` and move on.
-Upstream adds tags; this must not break when they do.
+Upstream adds tags; this must not break when they do. A tag carrying no text, such as
+`{@coinflip}`, displays its own name: dropping it strands the surrounding punctuation.
 
 **`{@filter}` always degrades to text.** It links to a 5etools filtered list page, which
 does not exist here. 727 occurrences — do not special-case them one at a time.

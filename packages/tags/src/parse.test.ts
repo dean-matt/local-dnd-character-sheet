@@ -146,8 +146,16 @@ describe("degradation", () => {
     expect(shown("{@newtag Blade of Woe|XDMG|whatever}")).toBe("Blade of Woe");
   });
 
-  it("emits no token for an unknown tag that has no arguments", () => {
-    expect(parseTags("a {@unknowable} b")).toEqual([
+  it("degrades an unknown tag with no arguments to its own name", () => {
+    expect(shown("Flip a {@coinflip}.")).toBe("Flip a coinflip.");
+  });
+
+  it("degrades an unknown tag to its own name when every argument is empty", () => {
+    expect(shown("Flip a {@coinflip| |}.")).toBe("Flip a coinflip.");
+  });
+
+  it("emits no token for a tag with no name to fall back on", () => {
+    expect(parseTags("a {@} b")).toEqual([
       { kind: "text", value: "a " },
       { kind: "text", value: " b" },
     ]);

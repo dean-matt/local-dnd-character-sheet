@@ -51,9 +51,9 @@ function* flat(tokens: Token[]): Generator<Token> {
 }
 
 /**
- * A registered tag that yields no token has deleted itself, and the deletion is
- * invisible in the rendered string. The empty-token rule cannot see this, because the
- * parser drops empty tokens before they reach here.
+ * A tag that yields no token has deleted itself, and the deletion is invisible in the
+ * rendered string. The empty-token rule cannot see this, because the parser drops empty
+ * tokens before they reach here.
  */
 function spanEnd(source: string, open: number): number {
   let depth = 0;
@@ -103,19 +103,18 @@ for (const file of jsonFiles(vendor)) {
 
     for (const match of source.matchAll(/\{@(\w+)/g)) {
       const tag = match[1] ?? "";
-      if (!KNOWN_TAGS.has(tag)) {
-        unregistered.set(tag, (unregistered.get(tag) ?? 0) + 1);
-        continue;
-      }
+      const registered = KNOWN_TAGS.has(tag);
+      if (!registered) unregistered.set(tag, (unregistered.get(tag) ?? 0) + 1);
       const close = spanEnd(source, match.index);
       if (close === -1) continue;
       const span = source.slice(match.index, close + 1);
-      // A tag with nothing in it is allowed to render nothing: `{@i}` has no content and
-      // `{@hit}` has no bonus. A tag given arguments and rendering nothing has eaten
-      // them, which is the case worth reporting.
-      if (span.slice(2 + tag.length, -1).trim() === "") continue;
+      // A registered tag with nothing in it may render nothing: `{@i}` has no content
+      // and `{@hit}` has no bonus. One given arguments that renders nothing has eaten
+      // them. An unregistered tag falls back to its own name, so it must always render
+      // something.
+      if (registered && span.slice(2 + tag.length, -1).trim() === "") continue;
       if (parseTags(span).length === 0) {
-        report("registered tag renders nothing", `${file}: ${span}`);
+        report("tag renders nothing", `${file}: ${span}`);
       }
     }
 
