@@ -40,16 +40,23 @@ export function checksBlocked(checks) {
   return red.length === 0 ? null : red.join(", ");
 }
 
+/** The line `issue-to-pr` step 11 opens a pass body with. It renders as nothing on GitHub. */
+export const PASS_MARKER = "<!-- audit-pass -->";
+
 /**
- * The passes, oldest first. A pass is a review carrying a body; the verdict replies land
- * as reviews with none. Any bodied review counts, so a human's "LGTM" posted after an audit
- * pass becomes a pass: its findings go uncounted and it spends one of `PASS_CAP`. The
- * comments cannot separate the two, since a pass that found nothing posts a body and none
- * — a marker the pass writes into its body could, the day a second reviewer makes the
- * confusion real.
+ * The audit passes, oldest first. A pass carries `PASS_MARKER`; the verdict replies land as
+ * reviews with no body at all, and a human's review carries neither, so neither spends one
+ * of `PASS_CAP` nor stands in as the last pass whose findings this reads.
+ *
+ * Where no review carries the marker the bodied ones are the passes, which is how a pull
+ * request reviewed before the marker existed still reaches the gate. That fallback reads a
+ * human's "LGTM" as a pass, as the gate always did — a pull request holding both takes the
+ * marked ones alone, so the mix only costs the passes posted before the marker landed.
  */
 export function passes(reviews) {
-  return reviews.filter((r) => r.body !== "");
+  const bodied = reviews.filter((r) => r.body !== "");
+  const marked = bodied.filter((r) => r.body.includes(PASS_MARKER));
+  return marked.length === 0 ? bodied : marked;
 }
 
 export function blockingFindings(comments) {

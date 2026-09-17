@@ -87,9 +87,11 @@ holds, stop and name it; reranking is the user's call.
 11. **Post the pass as one review, before applying** — a run that dies mid-apply then
     leaves the findings standing rather than a label pointing at nothing. One call sends
     `commit_id`, `event`, a `body` and each line comment as `{path, line, side, body}`;
-    posted one at a time they arrive as a review each. The `body` holds what the pass found
-    and any finding no line anchors. `event` is `COMMENT`, because GitHub refuses an
-    approval on your own pull request; step 14's labels carry that verdict.
+    posted one at a time they arrive as a review each. The `body` opens with `PASS_MARKER`
+    from `scripts/merge-gate.mjs`, which is how the gate tells a pass from a human's review,
+    then holds what the pass found and any finding no line anchors. `event` is `COMMENT`,
+    because GitHub refuses an approval on your own pull request; step 14's labels carry that
+    verdict.
 
     ```bash
     gh api 'repos/{owner}/{repo}/pulls/<n>/reviews' --input <the pass, as json>
@@ -97,8 +99,8 @@ holds, stop and name it; reranking is the user's call.
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
-    A pass returning nothing still posts its `body`, with no comments, then skips to step
-    14 — that review is the only record the gate has that the code was read again, and
+    A pass returning nothing still posts its marked `body`, with no comments, then skips to
+    step 14 — that review is the only record the gate has that the code was read again, and
     "the review converged" reads the findings of the last pass to post. A later pass adds,
     leaving earlier threads alone.
 12. **Label, apply, reply.** Swap `review:changes-requested` on first, in one `gh pr edit

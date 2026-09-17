@@ -11,6 +11,7 @@ import {
   mergeBlocked,
   notGreen,
   PASS_CAP,
+  PASS_MARKER,
   passes,
   reviewBlocked,
   severity,
@@ -58,14 +59,40 @@ describe("severity", () => {
 });
 
 describe("the review passes", () => {
-  it("are the reviews carrying a body, never the verdict replies", () => {
+  const ids = (reviews: { id: number; body: string }[]) =>
+    passes(reviews).map((r: { id: number }) => r.id);
+
+  it("are the marked reviews, never the verdict replies", () => {
     const reviews = [
-      { id: 1, body: "pass 1" },
+      { id: 1, body: `${PASS_MARKER}\npass 1` },
       { id: 2, body: "" },
-      { id: 3, body: "pass 2" },
+      { id: 3, body: `${PASS_MARKER}\npass 2` },
       { id: 4, body: "" },
     ];
-    expect(passes(reviews).map((r: { id: number }) => r.id)).toEqual([1, 3]);
+    expect(ids(reviews)).toEqual([1, 3]);
+  });
+
+  /**
+   * The reason the marker exists: an unmarked bodied review is a human's, and counting it
+   * spent one of `PASS_CAP` and handed the condition that reviewer's findings instead.
+   */
+  it("leave a human's review out where the passes are marked", () => {
+    const reviews = [
+      { id: 1, body: `${PASS_MARKER}\npass 1` },
+      { id: 2, body: "LGTM" },
+    ];
+    expect(ids(reviews)).toEqual([1]);
+  });
+
+  /** A pull request reviewed before the marker landed still reaches the gate. */
+  it("fall back to every bodied review where none is marked", () => {
+    expect(
+      ids([
+        { id: 1, body: "pass 1" },
+        { id: 2, body: "" },
+        { id: 3, body: "LGTM" },
+      ]),
+    ).toEqual([1, 3]);
   });
 
   it("are none where no review carries a body", () => {
@@ -74,7 +101,7 @@ describe("the review passes", () => {
 });
 
 describe("the review converged", () => {
-  const pass = (id: number) => ({ id, body: `pass ${id}` });
+  const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
   const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
   const critical = finding(1, BOLD);
 
@@ -133,18 +160,31 @@ describe("the review converged", () => {
 const NUMBER = "one|two|three|four|five|six|seven|eight|nine|ten|\\d+";
 
 /**
- * A number beside the word "pass", either way round, in `issue-to-pr` — where the loop
- * lives. Both patterns keep the word, because a ceiling named without it matches ordinary
- * prose: a skill dense with step numbers reads "most of step 14" as a cap. That leaves
- * subtler wordings through, so the fence catches the second cap a skill would plainly
- * write rather than every one it could.
+ * A number beside "passes", either way round, in `issue-to-pr` — where the loop lives. Both
+ * patterns keep the word, because a ceiling named without it matches ordinary prose: a
+ * skill dense with step numbers reads "most of step 14" as a cap. Both keep it plural,
+ * because the singular sits beside a small number innocently — "post the pass as one
+ * review" counts reviews and caps nothing — while a cap is a count and reads plural.
  */
 const SECOND_CAP = [
   new RegExp(`\\b(?:${NUMBER})\\s+(?:\\w+\\s+)?passes\\b`),
-  new RegExp(`\\bpasses?\\b(?:\\s+\\w+){0,3}\\s+(?:${NUMBER})\\b`),
+  new RegExp(`\\bpasses\\b(?:\\s+\\w+){0,3}\\s+(?:${NUMBER})\\b`),
 ];
 
 describe("the cap and the condition the skills cite", () => {
+  /**
+   * A fence nothing fires is a fence that passes whatever it was pointed at, and the
+   * patterns are read by nobody until one does. These are the wordings they claim.
+   */
+  it("fires on a pass count written either way round, and not on the singular", () => {
+    const caught = (line: string) => SECOND_CAP.some((second) => second.test(line));
+    expect(caught("three passes at most")).toBe(true);
+    expect(caught("at most 3 review passes")).toBe(true);
+    expect(caught("passes are capped at three")).toBe(true);
+    expect(caught("post the pass as one review")).toBe(false);
+    expect(caught("a pass returning nothing ends the loop earlier")).toBe(false);
+  });
+
   it("is cited by issue-to-pr rather than restated", () => {
     const skill = read(".claude/skills/issue-to-pr/SKILL.md");
     expect(skill, "issue-to-pr names no cap, so a run cannot tell when to stop").toContain(
