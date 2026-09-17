@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
@@ -390,13 +390,17 @@ describe("the commits since the last pass", () => {
     return git("rev-parse", "HEAD");
   };
 
-  afterAll(() => rmSync(dir, { recursive: true, force: true }));
-
-  it("reads the branch's own commits and never the main it merged in", () => {
+  beforeAll(() => {
     git("init", "-q", "-b", "main");
     git("config", "user.email", "gate@example.invalid");
     git("config", "user.name", "gate");
     git("config", "commit.gpgsign", "false");
+  });
+
+  // Windows writes pack files read-only, and rmSync does not chmod before unlinking.
+  afterAll(() => rmSync(dir, { recursive: true, force: true, maxRetries: 3 }));
+
+  it("reads the branch's own commits and never the main it merged in", () => {
     commit("src/a.ts", "the base");
     git("checkout", "-q", "-b", "topic");
     const read = commit("src/b.ts", "the commit the pass read");
