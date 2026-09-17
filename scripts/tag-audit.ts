@@ -50,11 +50,7 @@ function* flat(tokens: Token[]): Generator<Token> {
   }
 }
 
-/**
- * A tag that yields no token has deleted itself, and the deletion is invisible in the
- * rendered string. The empty-token rule cannot see this, because the parser drops empty
- * tokens before they reach here.
- */
+/** Walks forward to the brace that closes the tag at `open`, or -1 when nothing does. */
 function spanEnd(source: string, open: number): number {
   let depth = 0;
   for (let index = open; index < source.length; index += 1) {
@@ -108,10 +104,11 @@ for (const file of jsonFiles(vendor)) {
       const close = spanEnd(source, match.index);
       if (close === -1) continue;
       const span = source.slice(match.index, close + 1);
-      // A registered tag with nothing in it may render nothing: `{@i}` has no content
-      // and `{@hit}` has no bonus. One given arguments that renders nothing has eaten
-      // them. An unregistered tag falls back to its own name, so it must always render
-      // something.
+      // A tag yielding no token has deleted itself, and nothing downstream shows the
+      // gap: the parser drops an empty token, so the rules below never see one. A
+      // registered tag with nothing in it may render nothing — `{@i}` has no content,
+      // `{@hit}` has no bonus — but one given arguments has eaten them. An unregistered
+      // tag falls back to its own name, so it must always render something.
       if (registered && span.slice(2 + tag.length, -1).trim() === "") continue;
       if (parseTags(span).length === 0) {
         report("tag renders nothing", `${file}: ${span}`);

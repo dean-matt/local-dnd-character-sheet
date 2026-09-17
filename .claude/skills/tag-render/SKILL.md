@@ -55,8 +55,9 @@ renderer can fall back to `display` without knowing the tag.
 ## Degradation rules
 
 **An unknown tag is never an error.** Emit `{kind: "text", value: display}` and move on.
-Upstream adds tags; this must not break when they do. A tag carrying no text, such as
-`{@coinflip}`, displays its own name: dropping it strands the surrounding punctuation.
+Upstream adds tags; this must not break when they do. An unknown tag carrying no text,
+such as `{@coinflip}`, displays its own name: dropping it strands the surrounding
+punctuation. A registered one may render nothing — `{@i}` has no content.
 
 **`{@filter}` always degrades to text.** It links to a 5etools filtered list page, which
 does not exist here. 727 occurrences — do not special-case them one at a time.
