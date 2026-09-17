@@ -12,6 +12,7 @@ import {
   characterStateSchema,
   derivedSchema,
   derivedValue,
+  encumberedSpeed,
   entryKey,
   entryRefSchema,
   hitDicePoolSchema,
@@ -989,6 +990,84 @@ describe("size and speed", () => {
         derivedInput({ speed: { computed: { walk: 30, hover: 30 } } }),
       ).success,
     ).toBe(false);
+  });
+});
+
+describe("encumbered speed", () => {
+  /** A Strength of 8 at Medium: encumbered above 40 pounds, heavily above 80. */
+  const ENCUMBERED_AT = 40;
+  const HEAVILY_ENCUMBERED_AT = 80;
+
+  const winged = { speed: { computed: { walk: 30, fly: 30, swim: 10 } } };
+
+  const speeds = (
+    weight: number,
+    houseRules: object = { encumbrance: true },
+    traits: object = winged,
+  ) =>
+    encumberedSpeed(
+      characterDefinitionSchema.parse({ ...structuredClone(definition), houseRules }),
+      characterDerivedSchema.parse(derivedInput(traits)),
+      weight,
+    );
+
+  it("leaves the race's speeds alone where the table never opted in", () => {
+    expect(speeds(HEAVILY_ENCUMBERED_AT * 10, {})).toEqual({
+      speed: { walk: 30, fly: 30, swim: 10 },
+      disadvantage: false,
+    });
+  });
+
+  it("reduces every movement mode, not only walking", () => {
+    expect(speeds(ENCUMBERED_AT + 1).speed).toEqual({ walk: 20, fly: 20, swim: 0 });
+  });
+
+  it("floors a mode at zero rather than moving the character backwards", () => {
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 1).speed).toEqual({ walk: 10, fly: 10, swim: 0 });
+  });
+
+  it.each([0, ENCUMBERED_AT])(
+    "carries no penalty at %s pounds, the rule reading in excess of",
+    (weight) => {
+      expect(speeds(weight)).toEqual({
+        speed: { walk: 30, fly: 30, swim: 10 },
+        disadvantage: false,
+      });
+    },
+  );
+
+  it.each([ENCUMBERED_AT + 0.05, HEAVILY_ENCUMBERED_AT])(
+    "loses 10 feet in excess of the lighter threshold, at %s pounds",
+    (weight) => {
+      expect(speeds(weight)).toEqual({
+        speed: { walk: 20, fly: 20, swim: 0 },
+        disadvantage: false,
+      });
+    },
+  );
+
+  it("surfaces the disadvantage the heavily encumbered state carries", () => {
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 0.05)).toEqual({
+      speed: { walk: 10, fly: 10, swim: 0 },
+      disadvantage: true,
+    });
+  });
+
+  it("reduces the speed a user typed over, not the one the race granted", () => {
+    const typedOver = { speed: { computed: { walk: 30 }, manual: { walk: 40 } } };
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 1, { encumbrance: true }, typedOver).speed).toEqual({
+      walk: 20,
+    });
+  });
+
+  it("stores nothing, so turning the option off restores the race's speeds", () => {
+    const derived = characterDerivedSchema.parse(derivedInput(winged));
+    const stored = characterDefinitionSchema.parse(structuredClone(definition));
+    const laden = encumberedSpeed(stored, derived, HEAVILY_ENCUMBERED_AT + 1);
+
+    expect(laden.speed).toEqual({ walk: 10, fly: 10, swim: 0 });
+    expect(derivedValue(derived.speed)).toEqual({ walk: 30, fly: 30, swim: 10 });
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 1, {}).speed).toEqual({ walk: 30, fly: 30, swim: 10 });
   });
 });
 

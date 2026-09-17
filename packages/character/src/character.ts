@@ -19,6 +19,7 @@
 import {
   abilityModifier,
   EDITIONS,
+  encumbranceAt,
   HIT_DICE,
   type HitDie,
   maxHitPoints,
@@ -27,6 +28,7 @@ import {
   passiveScore,
   proficiencyContribution,
   RESET_TRIGGERS,
+  reducedSpeed,
   SIZES,
 } from "@dnd/rules";
 import { z } from "zod";
@@ -622,8 +624,57 @@ export function carriedWeight(
   return (total + scaled(POUNDS_PER_COIN) * coins) / WEIGHT_SCALE;
 }
 
+/**
+ * What a load costs a character: the speeds they move at now, and the disadvantage heavy
+ * encumbrance imposes.
+ *
+ * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
+ * no stale derived value behind.
+ *
+ * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone.
+ * Exhaustion reduces a speed too, and `reducedSpeed` takes both reductions in one call,
+ * so a caller holding an exhaustion level passes both against the race's speeds rather
+ * than reducing this result again.
+ */
+export function encumberedSpeed(
+  definition: CharacterDefinition,
+  derived: CharacterDerived,
+  weight: number,
+): EncumberedSpeed {
+  const speed = derivedValue(derived.speed);
+  if (!houseRule(definition, "encumbrance")) {
+    return { speed, disadvantage: false };
+  }
+  const { speedReduction, disadvantage } = encumbranceAt(
+    definition.abilityScores.str,
+    derivedValue(derived.size),
+    weight,
+  );
+  const reduced = { ...speed };
+  // The schema names the movement modes, so adding one there needs no second edit here.
+  for (const mode of Object.keys(speedSchema.shape) as (keyof Speed)[]) {
+    const base = reduced[mode];
+    if (base !== undefined) {
+      reduced[mode] = reducedSpeed({ base, reduction: speedReduction });
+    }
+  }
+  return { speed: reduced, disadvantage };
+}
+
 export type EntryRef = z.infer<typeof entryRefSchema>;
 export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;
 export type CharacterState = z.infer<typeof characterStateSchema>;
+export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
+export type Speed = z.infer<typeof speedSchema>;
+
+/** A character's speeds under the encumbrance variant, and what else the load costs. */
+export type EncumberedSpeed = {
+  speed: Speed;
+  /**
+   * Disadvantage on ability checks, attack rolls and saving throws that use Strength,
+   * Dexterity or Constitution — the heavily encumbered row's own list.
+   */
+  disadvantage: boolean;
+};
