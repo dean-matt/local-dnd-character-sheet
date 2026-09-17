@@ -113,9 +113,9 @@ holds, stop and name it; reranking is the user's call.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, a fresh
     subagent each so none inherits the last one's conclusions. `PASS_CAP` in
     `scripts/merge-gate.mjs` caps the loop and the gate's "the review converged" reads it:
-    a pass returning nothing ends the loop earlier, at the cap an applied finding stands on
-    its verdict reply, and past the cap the gate prints the overage rather than blocking. A
-    finding you declined comes back and takes the same reply.
+    a pass returning nothing ends the loop earlier, and at the cap you apply what the pass
+    found and let the verdict reply carry it. A finding you declined comes back and takes
+    the same reply.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a pass
     returned still waits on the user; `review:changes-requested` where something does — a
     decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.

@@ -127,7 +127,11 @@ describe("the review converged", () => {
  */
 const NUMBER = "one|two|three|four|five|six|seven|eight|nine|ten|\\d+";
 
-/** A pass count against the word, and a ceiling named with the number beside it. */
+/**
+ * A pass count against the word, and a ceiling named with the number beside it. Two
+ * patterns over English catch the wording a skill would plausibly reach for and no more,
+ * and they hold `issue-to-pr`, where the loop lives.
+ */
 const SECOND_CAP = [
   new RegExp(`\\b(?:${NUMBER})\\s+(?:\\w+\\s+)?passes\\b`),
   new RegExp(`\\b(?:cap|ceiling|most)\\s+(?:\\w+\\s+){0,2}(?:${NUMBER})\\b`),

@@ -42,9 +42,11 @@ export function checksBlocked(checks) {
 
 /**
  * The passes, oldest first. A pass is a review carrying a body; the verdict replies land
- * as reviews with none. Any bodied review counts, so a human's "LGTM" posted after an
- * audit pass becomes a pass and its findings go uncounted. Keying on the pass's own
- * comments would close that.
+ * as reviews with none. Any bodied review counts, so a human's "LGTM" posted after an audit
+ * pass becomes a pass: its findings go uncounted and it spends one of `PASS_CAP`. The
+ * comments cannot separate the two, since a pass that found nothing posts a body and none
+ * — a marker the pass writes into its body could, the day a second reviewer makes the
+ * confusion real.
  */
 export function passes(reviews) {
   return reviews.filter((r) => r.body !== "");
