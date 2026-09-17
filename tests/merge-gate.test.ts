@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
@@ -160,15 +160,17 @@ describe("the review converged", () => {
 
 /** The commit a merged pull request's only pass read: its branch's first, five behind the tip. */
 const READ = "d285e8a6a4b1c0d9e8f7a6b5c4d3e2f10a9b8c7d";
+const TIP = "66a51b0d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b";
 
 describe("the distance from the last pass", () => {
   it("names the tip where the pass is anchored there", () => {
-    expect(staleNote(READ, 0)).toContain("the tip");
+    expect(staleNote(READ, TIP, 0)).toContain("the tip");
   });
 
-  it("counts the commits the pass never read", () => {
-    expect(staleNote(READ, 1)).toContain("1 commit behind");
-    expect(staleNote(READ, 5)).toContain("5 commits behind");
+  it("counts the commits the pass never read, and names the range that counted them", () => {
+    expect(staleNote(READ, TIP, 1)).toContain("1 commit of this branch's own");
+    expect(staleNote(READ, TIP, 5)).toContain("5 commits of this branch's own");
+    expect(staleNote(READ, TIP, 5)).toContain("git log d285e8a6..66a51b0d ^origin/main");
   });
 
   /**
@@ -176,11 +178,11 @@ describe("the distance from the last pass", () => {
    * carried relates to nothing here and has no distance to report.
    */
   it("says so where this branch does not carry the commit the pass read", () => {
-    expect(staleNote(READ, null)).toMatch(/not on this branch/);
+    expect(staleNote(READ, TIP, null)).toMatch(/not on this branch/);
   });
 
   it("stays quiet where no pass left a commit to read", () => {
-    expect(staleNote(null, null)).toBeNull();
+    expect(staleNote(null, TIP, null)).toBeNull();
   });
 });
 
@@ -345,7 +347,7 @@ describe("the other three conditions", () => {
  * branch's own.
  */
 describe("the commits since the last pass", () => {
-  const dir = mkdtempSync(join(tmpdir(), "merge-gate-"));
+  let dir = "";
   const git = (...args: string[]) =>
     execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim();
   const commit = (path: string, message: string) => {
@@ -356,18 +358,19 @@ describe("the commits since the last pass", () => {
     return git("rev-parse", "HEAD");
   };
 
-  beforeAll(() => {
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "merge-gate-"));
     git("init", "-q", "-b", "main");
     git("config", "user.email", "gate@example.invalid");
     git("config", "user.name", "gate");
     git("config", "commit.gpgsign", "false");
+    commit("src/a.ts", "the base");
   });
 
   // Windows writes pack files read-only, and rmSync does not chmod before unlinking.
-  afterAll(() => rmSync(dir, { recursive: true, force: true, maxRetries: 3 }));
+  afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 3 }));
 
   it("counts the branch's own commits and never the main it merged in", () => {
-    commit("src/a.ts", "the base");
     git("checkout", "-q", "-b", "topic");
     const read = commit("src/b.ts", "the commit the pass read");
     git("checkout", "-q", "main");

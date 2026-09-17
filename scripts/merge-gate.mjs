@@ -75,17 +75,20 @@ const plural = (n, noun) => `${n} ${noun}${n === 1 ? "" : "s"}`;
  * Where the last pass sits against the tip, printed on every run beside "the review
  * converged". No condition reads it, because what a later commit means is a judgment: the
  * fix answering that pass, or code nobody has read. The number is what lets a reader tell
- * the two apart, which a verdict alone cannot.
+ * the two apart, which a verdict alone cannot, and the range it names is what lets them
+ * read the commits — a count excluding `origin/main` is not the count a plain `sha..head`
+ * returns, so the line hands over the one that produced it.
  *
  * @param {string | null} sha
+ * @param {string} head
  * @param {number | null} behind
  */
-export function staleNote(sha, behind) {
+export function staleNote(sha, head, behind) {
   if (sha === null) return null;
   const short = sha.slice(0, 8);
   if (behind === null) return `the last pass read ${short}, which is not on this branch`;
   if (behind === 0) return `the last pass read ${short}, the tip of this branch`;
-  return `the last pass read ${short}, ${plural(behind, "commit")} behind the tip`;
+  return `the last pass read ${short}, with ${plural(behind, "commit")} of this branch's own since — git log ${short}..${head.slice(0, 8)} ^origin/main`;
 }
 
 /**
@@ -206,6 +209,7 @@ function show(ref, path) {
  * `main` in, and everything it carries arrived with a review of its own.
  *
  * @param {string | null} sha
+ * @param {string} head
  * @param {string | undefined} [cwd]
  * @returns {number | null}
  */
@@ -248,7 +252,7 @@ function gate(n) {
   const note = capNote(reviews, findings);
   if (note !== null) console.log(`      ${note}`);
   const readSha = pass?.commit_id ?? null;
-  const age = staleNote(readSha, sinceLastPass(readSha, head));
+  const age = staleNote(readSha, head, sinceLastPass(readSha, head));
   if (age !== null) console.log(`      ${age}`);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
