@@ -1060,6 +1060,18 @@ describe("encumbered speed", () => {
     });
   });
 
+  it("reads the size, which clamps a Tiny character's threshold to what it can carry", () => {
+    const tiny = { size: { computed: "tiny" }, speed: { computed: { walk: 30 } } };
+    const clamped = carryingCapacity(definition.abilityScores.str, "tiny");
+
+    expect(clamped).toBe(60);
+    expect(speeds(clamped, { encumbrance: true }, tiny).disadvantage).toBe(false);
+    expect(speeds(clamped + 0.05, { encumbrance: true }, tiny)).toEqual({
+      speed: { walk: 10 },
+      disadvantage: true,
+    });
+  });
+
   it("stores nothing, so turning the option off restores the race's speeds", () => {
     const derived = characterDerivedSchema.parse(derivedInput(winged));
     const stored = characterDefinitionSchema.parse(structuredClone(definition));

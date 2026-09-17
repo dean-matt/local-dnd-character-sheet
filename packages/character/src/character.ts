@@ -631,6 +631,9 @@ export function carriedWeight(
  * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
  * no stale derived value behind.
  *
+ * The variant reads "your speed drops by 10 feet" and names no movement mode, so the
+ * reduction comes off every mode the character has rather than walking alone.
+ *
  * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone.
  * Exhaustion reduces a speed too, and `reducedSpeed` takes both reductions in one call,
  * so a caller holding an exhaustion level passes both against the race's speeds rather
@@ -643,21 +646,19 @@ export function encumberedSpeed(
 ): EncumberedSpeed {
   const speed = derivedValue(derived.speed);
   if (!houseRule(definition, "encumbrance")) {
-    return { speed, disadvantage: false };
+    return { speed: { ...speed }, disadvantage: false };
   }
   const { speedReduction, disadvantage } = encumbranceAt(
     definition.abilityScores.str,
     derivedValue(derived.size),
     weight,
   );
-  const reduced = { ...speed };
-  // The schema names the movement modes, so adding one there needs no second edit here.
-  for (const mode of Object.keys(speedSchema.shape) as (keyof Speed)[]) {
-    const base = reduced[mode];
-    if (base !== undefined) {
-      reduced[mode] = reducedSpeed({ base, reduction: speedReduction });
-    }
-  }
+  const reduced = Object.fromEntries(
+    Object.entries(speed).map(([mode, base]) => [
+      mode,
+      reducedSpeed({ base, reduction: speedReduction }),
+    ]),
+  ) as Speed;
   return { speed: reduced, disadvantage };
 }
 
@@ -672,9 +673,6 @@ export type Speed = z.infer<typeof speedSchema>;
 /** A character's speeds under the encumbrance variant, and what else the load costs. */
 export type EncumberedSpeed = {
   speed: Speed;
-  /**
-   * Disadvantage on ability checks, attack rolls and saving throws that use Strength,
-   * Dexterity or Constitution — the heavily encumbered row's own list.
-   */
+  /** From `encumbranceAt`, which names the rolls the rule covers. */
   disadvantage: boolean;
 };
