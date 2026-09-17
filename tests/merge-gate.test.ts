@@ -18,7 +18,6 @@ import {
   reviewBlocked,
   severity,
   sinceLastPass,
-  staleBlocked,
   staleNote,
   unanswered,
 } from "../scripts/merge-gate.mjs";
@@ -108,18 +107,15 @@ describe("the review passes", () => {
 const pass = (id: number) => ({ id, body: `${PASS_MARKER}\npass ${id}` });
 const spent = (n: number) => Array.from({ length: n }, (_, i) => pass(i + 1));
 
-/** No commit relation between the last pass and the tip, which blocks nothing. */
-const NONE = { commits: null, changed: [] };
-
 describe("the review converged", () => {
   const critical = finding(1, BOLD);
 
   it("stops a pull request nothing has reviewed", () => {
-    expect(reviewBlocked([], [], NONE)).toMatch(/nothing has reviewed this/);
+    expect(reviewBlocked([], [])).toMatch(/nothing has reviewed this/);
   });
 
   it("holds where the last pass returned only a taste call", () => {
-    expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")], NONE)).toBeNull();
+    expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")])).toBeNull();
   });
 
   /**
@@ -128,11 +124,11 @@ describe("the review converged", () => {
    * that forever, since no later clean pass can move the count.
    */
   it("holds where the last pass posted a body and no findings", () => {
-    expect(reviewBlocked(spent(2), [], NONE)).toBeNull();
+    expect(reviewBlocked(spent(2), [])).toBeNull();
   });
 
   it("names which pass returned the blocking finding, and the finding", () => {
-    const blocked = reviewBlocked(spent(1), [critical], NONE);
+    const blocked = reviewBlocked(spent(1), [critical]);
     expect(blocked).toContain(`pass 1 of ${PASS_CAP}`);
     expect(blocked).toContain(critical.html_url);
   });
@@ -143,7 +139,7 @@ describe("the review converged", () => {
    * stop. The verdict conditions carry the applied fix from here.
    */
   it("stops asking at the cap, where the fix rides on the thread verdicts", () => {
-    expect(reviewBlocked(spent(PASS_CAP), [critical], NONE)).toBeNull();
+    expect(reviewBlocked(spent(PASS_CAP), [critical])).toBeNull();
   });
 
   /**
@@ -151,70 +147,40 @@ describe("the review converged", () => {
    * withdrawn. The overage is reported rather than enforced.
    */
   it("prints the overage past the cap rather than blocking on it", () => {
-    expect(reviewBlocked(spent(PASS_CAP + 1), [critical], NONE)).toBeNull();
-    expect(capNote(spent(PASS_CAP + 1), [], NONE)).toContain(`${PASS_CAP + 1} passes`);
+    expect(reviewBlocked(spent(PASS_CAP + 1), [critical])).toBeNull();
+    expect(capNote(spent(PASS_CAP + 1), [])).toContain(`${PASS_CAP + 1} passes`);
   });
 
   it("says so where the cap waived a blocking finding, and stays quiet otherwise", () => {
-    expect(capNote(spent(PASS_CAP), [critical], NONE)).toContain("stopped this condition asking");
-    expect(capNote(spent(PASS_CAP), [], NONE)).toBeNull();
-    expect(capNote(spent(1), [critical], NONE)).toBeNull();
+    expect(capNote(spent(PASS_CAP), [critical])).toContain("stopped this condition asking");
+    expect(capNote(spent(PASS_CAP), [])).toBeNull();
+    expect(capNote(spent(1), [critical])).toBeNull();
   });
 });
 
-/**
- * Two of the commits a merged pull request carried after the only pass it posted. That
- * pass read the branch's first commit, and the gate called the review converged.
- */
+/** The commit a merged pull request's only pass read: its branch's first, five behind the tip. */
 const READ = "d285e8a6a4b1c0d9e8f7a6b5c4d3e2f10a9b8c7d";
-const AFTER = [
-  { sha: "9acb2010b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8", subject: "fix: apply the review pass" },
-  { sha: "ebc308448a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d", subject: "feat: return the reduction" },
-];
 
-describe("the last pass against the tip", () => {
-  const behind = (changed: string[]) => ({ commits: AFTER, changed });
-  const unrelated = { commits: null, changed: ["scripts/merge-gate.mjs"] };
-
-  it("holds where the pass is anchored at the tip", () => {
-    const tip = { commits: [], changed: [] };
-    expect(staleBlocked(tip)).toBeNull();
-    expect(reviewBlocked(spent(1), [], tip)).toBeNull();
-    expect(staleNote(READ, tip)).toContain("the tip");
+describe("the distance from the last pass", () => {
+  it("names the tip where the pass is anchored there", () => {
+    expect(staleNote(READ, 0)).toContain("the tip");
   });
 
-  it("holds where only prose landed after the pass, and still reports the distance", () => {
-    const prose = behind(["docs/architecture.md", "README.md"]);
-    expect(staleBlocked(prose)).toBeNull();
-    expect(staleNote(READ, prose)).toContain("2 commits behind");
-  });
-
-  it("stops a pass that never read a source commit, and names the commits", () => {
-    const blocked = reviewBlocked(spent(1), [], behind(["scripts/merge-gate.mjs", "docs/x.md"]));
-    expect(blocked).toContain("1 file that the pass never read");
-    for (const commit of AFTER) {
-      expect(blocked).toContain(commit.sha.slice(0, 8));
-      expect(blocked).toContain(commit.subject);
-    }
+  it("counts the commits the pass never read", () => {
+    expect(staleNote(READ, 1)).toContain("1 commit behind");
+    expect(staleNote(READ, 5)).toContain("5 commits behind");
   });
 
   /**
    * A human reviews whatever head they were shown, so a `commit_id` this branch never
-   * carried relates to nothing here — and the fallback hands that review to the condition
-   * as the last pass. Blocking on it is a block no further pass can clear.
+   * carried relates to nothing here and has no distance to report.
    */
-  it("lets a review through whose commit this branch does not carry", () => {
-    expect(staleBlocked(unrelated)).toBeNull();
-    expect(reviewBlocked([{ id: 1, body: "LGTM" }], [], unrelated)).toBeNull();
-    expect(staleNote(READ, unrelated)).toMatch(/not on this branch/);
-    expect(staleNote(null, unrelated)).toBeNull();
+  it("says so where this branch does not carry the commit the pass read", () => {
+    expect(staleNote(READ, null)).toMatch(/not on this branch/);
   });
 
-  /** The same waiver the cap gives the findings: at it, no further pass is on offer. */
-  it("stops asking at the cap, and says which waiver it spent", () => {
-    const stale = behind(["scripts/merge-gate.mjs"]);
-    expect(reviewBlocked(spent(PASS_CAP), [], stale)).toBeNull();
-    expect(capNote(spent(PASS_CAP), [], stale)).toContain("commits the last pass never read");
+  it("stays quiet where no pass left a commit to read", () => {
+    expect(staleNote(null, null)).toBeNull();
   });
 });
 
@@ -373,10 +339,10 @@ describe("the other three conditions", () => {
 });
 
 /**
- * The one piece of this condition that runs git, over a repository built to hold the shape
+ * The one piece of this note that runs git, over a repository built to hold the shape
  * `merge-pr`'s behind-branch recovery leaves: a branch that merged `main` in after the pass
- * read it. A fabricated `Since` cannot fail on a range that reads main's commits as
- * unreviewed code.
+ * read it. A fabricated count cannot fail on a range that reads main's commits as the
+ * branch's own.
  */
 describe("the commits since the last pass", () => {
   const dir = mkdtempSync(join(tmpdir(), "merge-gate-"));
@@ -400,7 +366,7 @@ describe("the commits since the last pass", () => {
   // Windows writes pack files read-only, and rmSync does not chmod before unlinking.
   afterAll(() => rmSync(dir, { recursive: true, force: true, maxRetries: 3 }));
 
-  it("reads the branch's own commits and never the main it merged in", () => {
+  it("counts the branch's own commits and never the main it merged in", () => {
     commit("src/a.ts", "the base");
     git("checkout", "-q", "-b", "topic");
     const read = commit("src/b.ts", "the commit the pass read");
@@ -410,19 +376,15 @@ describe("the commits since the last pass", () => {
     git("checkout", "-q", "topic");
     git("merge", "-q", "--no-edit", "main");
 
-    const merged = sinceLastPass(read, git("rev-parse", "HEAD"), dir);
-    expect(merged.changed).toEqual([]);
-    expect(staleBlocked(merged)).toBeNull();
+    // The merge commit is the branch's own; main's is not, so a range keeping it counts two.
+    expect(sinceLastPass(read, git("rev-parse", "HEAD"), dir)).toBe(1);
 
-    const fix = commit("src/b.ts", "the fix the pass never read");
-    const after = sinceLastPass(read, git("rev-parse", "HEAD"), dir);
-    expect(after.changed).toEqual(["src/b.ts"]);
-    expect(after.commits?.map((c: { sha: string }) => c.sha)).toContain(fix);
-    expect(staleBlocked(after)).toContain("1 file that the pass never read");
+    commit("src/b.ts", "the fix the pass never read");
+    expect(sinceLastPass(read, git("rev-parse", "HEAD"), dir)).toBe(2);
   });
 
   it("reads a commit this branch does not carry as no relation", () => {
-    expect(sinceLastPass("0".repeat(40), git("rev-parse", "HEAD"), dir).commits).toBeNull();
+    expect(sinceLastPass("0".repeat(40), git("rev-parse", "HEAD"), dir)).toBeNull();
   });
 });
 

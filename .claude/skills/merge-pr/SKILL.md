@@ -57,10 +57,12 @@ Merge where it exits 0; otherwise hand the user the condition it named and stop 
 "the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
 verdict GitHub has not computed yet. A behind branch goes to the next section rather than
 to the user. Read the pass body the script points at too: a finding no line anchors is
-written there, not on a comment. Two notes print beside that condition rather than as
-conditions, both for the report. The distance line, always: how far the last pass sits
-behind the tip. The cap line, at or past the cap: a waiver at it, an overage past it. `scripts/merge-gate.mjs`
-holds the six and what each costs when wrong; `tests/merge-gate.test.ts` calls them.
+written there, not on a comment. Two lines print beside that condition and stop nothing.
+The distance line, every run: how far behind the tip the last pass sits. A pass short of
+the tip may be a fix answering it or code nobody read, so weigh the commits and say which
+in the report. The cap line, at or past the cap: a waiver at it, an overage past it.
+`scripts/merge-gate.mjs` holds the six and what each costs when wrong;
+`tests/merge-gate.test.ts` calls them.
 
 ## Where the branch is behind
 
