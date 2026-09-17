@@ -627,6 +627,9 @@ export function carriedWeight(
 /**
  * The modes a character actually has. A key written as `undefined` survives the parse, so
  * dropping it here keeps it out of the arithmetic and out of every reader downstream.
+ *
+ * A caller casts the rebuilt object back to `Speed`, which holds only while `walk` is
+ * required: an optional one would let this return nothing and the cast stay quiet.
  */
 function presentModes(speed: Speed): [string, number][] {
   return Object.entries(speed).filter((entry): entry is [string, number] => entry[1] !== undefined);
