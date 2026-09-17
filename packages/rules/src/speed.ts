@@ -3,21 +3,17 @@
  *
  * Two rules reduce a speed and neither says how they combine: the 2014 exhaustion table
  * halves it from level 2, and the 2014 encumbrance variant drops it by a flat 10 or 20
- * feet. The order decides the answer — a Wood Elf at 35 feet, heavily encumbered and two
- * levels exhausted, walks 7 feet subtracting first and none at all halving first.
+ * feet. Subtracting first and halving first give different answers, so this picks one.
  *
  * The exhaustion table settles it. Level 2 halves the speed and level 5 sets it to zero,
  * and the table keeps those rows apart, so a creature at level 2 is meant to still move.
- * Only halving last holds them apart. No walking speed upstream prints is above 40, so
- * halving first hands heavy encumbrance a speed of 20 or less and the load alone stops
- * every creature in the game — the level-2 row read as the level-5 row. Subtracting
- * first, the printed speeds above 20 keep something: 25 walks 2 feet and 35 walks 7. A
- * race that walks 20 or 10 stops under that load either way, which is the load's doing
- * rather than the order's. So the flat reductions come off first and the halving takes
- * what is left.
+ * Halving first hands heavy encumbrance half the base, and its 20 feet swallow that at
+ * any base up to 40 — which upstream's walking speeds stay within — so the load alone
+ * stops every creature and the level-2 row reads as the level-5 row. Subtracting first,
+ * only a race walking 20 feet or less stops, and that is the load's doing rather than the
+ * order's. So the flat reductions come off first and the halving takes what is left.
  *
- * That leaves one division, and a halved odd speed rounds down as the rulesets round
- * down on every division.
+ * A halved odd speed rounds down, as the rulesets round down on every division.
  *
  * Reductions arrive as magnitudes, as `encumbranceAt` and `exhaustionEffects` return
  * them.
