@@ -6,11 +6,13 @@ import {
   abilityScoresSchema,
   type CharacterDefinition,
   type CharacterState,
+  carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
   characterStateSchema,
   derivedSchema,
   derivedValue,
+  entryKey,
   entryRefSchema,
   hitDicePoolSchema,
   hitPointMaximum,
@@ -84,8 +86,20 @@ const definition: CharacterDefinition = {
     ],
   },
   inventory: [
-    { ref: { name: "Dagger", source: "XPHB" }, quantity: 2, equipped: true, attuned: false },
-    { ref: { homebrewId: "hb_01" }, quantity: 1, equipped: false, attuned: true },
+    {
+      ref: { name: "Dagger", source: "XPHB" },
+      quantity: 2,
+      carried: true,
+      equipped: true,
+      attuned: false,
+    },
+    {
+      ref: { homebrewId: "hb_01" },
+      quantity: 1,
+      carried: true,
+      equipped: false,
+      attuned: true,
+    },
   ],
   spells: [
     {
@@ -799,6 +813,124 @@ describe("hit point maximum", () => {
     const derived = characterDerivedSchema.parse(derivedInput({ hitPointMaximum: { computed } }));
     expect(derivedValue(derived.hitPointMaximum)).toBe(37);
     expect(derivedValue({ ...derived.hitPointMaximum, manual: 45 })).toBe(45);
+  });
+});
+
+describe("carried weight", () => {
+  const ARROW = { name: "Arrow", source: "XPHB" };
+  const BALL_BEARING = { name: "Ball Bearing", source: "PHB" };
+  const CALTROP = { name: "Caltrop", source: "PHB" };
+  const SLING_BULLET = { name: "Sling Bullet", source: "XPHB" };
+  const DART = { name: "Dart", source: "XPHB" };
+  const ROPE = { name: "Rope, Hempen (50 feet)", source: "PHB" };
+  const VIAL = { name: "Vial", source: "XPHB" };
+  const CHEST = { name: "Chest", source: "PHB" };
+
+  /** Upstream's own pounds, `Vial` (XPHB) among the rows that print none. */
+  const catalog = new Map<string, number | null>([
+    [entryKey(ARROW), 0.05],
+    [entryKey(BALL_BEARING), 0.002],
+    [entryKey(CALTROP), 0.1],
+    [entryKey(SLING_BULLET), 0.075],
+    [entryKey(DART), 0.25],
+    [entryKey(ROPE), 10],
+    [entryKey(VIAL), null],
+    [entryKey(CHEST), 25],
+    [entryKey({ homebrewId: "hb_01" }), 1],
+  ]);
+
+  const packing = (inventory: object[], money: object = {}) =>
+    characterDefinitionSchema.parse({ ...structuredClone(definition), inventory, money });
+
+  it("totals what the character holds, coins included", () => {
+    const packed = packing([{ ref: ROPE }, { ref: ARROW, quantity: 20 }], { gold: 50 });
+    expect(carriedWeight(packed, catalog)).toBe(10 + 1 + 1);
+  });
+
+  it("leaves out what is stored elsewhere, equipment and containers alike", () => {
+    const packed = packing(
+      [{ ref: ROPE }, { ref: CHEST, carried: false }, { ref: ARROW, quantity: 20, carried: false }],
+      {},
+    );
+    expect(carriedWeight(packed, catalog)).toBe(10);
+  });
+
+  it("weighs an item whose row states no weight as nothing", () => {
+    const packed = packing([{ ref: VIAL, quantity: 12 }, { ref: ROPE }], {});
+    expect(carriedWeight(packed, catalog)).toBe(10);
+  });
+
+  it("rejects a reference the catalog does not name, rather than weighing it zero", () => {
+    const packed = packing([{ ref: { name: "Hat of Disguise", source: "XDMG" } }], {});
+    expect(() => carriedWeight(packed, catalog)).toThrow(
+      "No catalog row for catalog|Hat of Disguise|XDMG",
+    );
+  });
+
+  it("sums fractional weights exactly at the quantities a real pack reaches", () => {
+    /** The printed bundles: a quiver, a bag of bearings, a bag of caltrops, a pouch, a sheaf. */
+    const ammunition = [
+      { ref: ARROW, quantity: 20 },
+      { ref: BALL_BEARING, quantity: 1000 },
+      { ref: CALTROP, quantity: 20 },
+      { ref: SLING_BULLET, quantity: 20 },
+      { ref: DART, quantity: 10 },
+    ];
+    const packed = packing(ammunition, { gold: 400, copper: 12 });
+    const drifting = ammunition.reduce(
+      (sum, entry) => sum + (catalog.get(entryKey(entry.ref)) ?? 0) * entry.quantity,
+      0.02 * 412,
+    );
+
+    expect(carriedWeight(packed, catalog)).toBe(17.24);
+    expect(drifting).not.toBe(17.24);
+  });
+
+  it("counts every denomination the same, because every coin weighs the same", () => {
+    const purse = { copper: 10, silver: 10, electrum: 10, gold: 10, platinum: 10 };
+    expect(carriedWeight(packing([], purse), catalog)).toBe(1);
+  });
+
+  it("feeds the encumbrance thresholds a caller would otherwise invent a weight for", () => {
+    const packed = packing([{ ref: ROPE, quantity: 5 }], {});
+    const { encumbered } = encumbranceThresholds(packed.abilityScores.str, "medium");
+    expect(carriedWeight(packed, catalog)).toBeGreaterThan(encumbered.atWeight);
+  });
+});
+
+describe("inventory", () => {
+  it("records a thing left behind apart from one merely unequipped", () => {
+    const stored = characterDefinitionSchema.parse({
+      ...structuredClone(definition),
+      inventory: [
+        { ref: { name: "Rope, Hempen (50 feet)", source: "PHB" }, carried: true },
+        { ref: { name: "Chest", source: "PHB" }, carried: false },
+      ],
+    });
+    expect(stored.inventory.map((entry) => entry.carried)).toEqual([true, false]);
+    expect(stored.inventory.map((entry) => entry.equipped)).toEqual([false, false]);
+  });
+
+  it("carries an entry stored before the field existed", () => {
+    const older = {
+      ...structuredClone(definition),
+      inventory: [{ ref: { name: "Dagger", source: "XPHB" }, quantity: 2, equipped: true }],
+    };
+    expect(characterDefinitionSchema.parse(older).inventory[0]).toEqual({
+      ref: { name: "Dagger", source: "XPHB" },
+      quantity: 2,
+      carried: true,
+      equipped: true,
+      attuned: false,
+    });
+  });
+
+  it("rejects an item wielded from a chest at the inn", () => {
+    const wielded = {
+      ...structuredClone(definition),
+      inventory: [{ ref: { name: "Dagger", source: "XPHB" }, carried: false, equipped: true }],
+    };
+    expect(characterDefinitionSchema.safeParse(wielded).success).toBe(false);
   });
 });
 

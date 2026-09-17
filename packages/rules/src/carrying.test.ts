@@ -3,6 +3,7 @@ import {
   carryingCapacity,
   encumbranceAt,
   encumbranceThresholds,
+  POUNDS_PER_COIN,
   pushDragLiftCapacity,
   SIZES,
   type Size,
@@ -103,5 +104,11 @@ describe("encumbranceAt", () => {
       speedReduction: 20,
       disadvantage: true,
     });
+  });
+});
+
+describe("coins", () => {
+  it("weighs fifty to the pound, which is what the catalog rows print", () => {
+    expect(POUNDS_PER_COIN * 50).toBe(1);
   });
 });
