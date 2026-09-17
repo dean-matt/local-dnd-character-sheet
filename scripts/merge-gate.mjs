@@ -72,7 +72,10 @@ export const PASS_CAP = 3;
 /**
  * Prose the last pass's judgment does not rest on. A fix ships its prose pass in the same
  * commit, so a commit touching only these after the last pass answers that pass rather
- * than adding code nobody read.
+ * than adding code nobody read. `CLAUDE.md`, `CONTRIBUTING.md` and a `SKILL.md` are
+ * instructions rather than prose, and a rewritten fence is exactly what a pass must read —
+ * what makes the exemption safe there is `FENCE`, which stops all three on its own
+ * condition.
  */
 const PROSE = /\.md$/;
 
@@ -247,7 +250,10 @@ function show(ref, path) {
  * `^origin/main` is what keeps the behind-branch recovery from reading main's commits as
  * unreviewed code: that recovery merges `main` in, and everything it carries arrived with a
  * review of its own. The cost is a union over the branch's commits rather than a net diff,
- * so a file changed and reverted after the pass asks for a pass it does not need.
+ * so a file changed and reverted after the pass asks for a pass it does not need, and a
+ * merge commit contributes no paths at all — a conflict resolved by hand and pushed reads
+ * as nothing. The server-side recovery refuses on conflict and `mergeBlocked` stops a
+ * conflicting branch, so that is the one route left open.
  *
  * @param {string | null} sha
  * @param {string | undefined} [cwd]
