@@ -25,6 +25,12 @@ type Roll = {
   modifier: number;
   /** The notation in canonical form, so spacing does not split the roll log. */
   notation: string;
+  /**
+   * Whether every pool was rolled a second time. `dice` alone cannot say: a `1d20` that
+   * comes back with two dice is a critical or an advantage roll, and a stored roll cannot
+   * be asked which.
+   */
+  critical: boolean;
 };
 
 /**
@@ -282,5 +288,5 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
 
   const total =
     dice.reduce((sum, die) => sum + (die.kept ? die.sign * die.value : 0), 0) + modifier;
-  return { total, dice, modifier, notation: canonical(parsed) };
+  return { total, dice, modifier, notation: canonical(parsed), critical };
 }

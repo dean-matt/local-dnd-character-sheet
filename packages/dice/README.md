@@ -26,7 +26,7 @@ types.
 import { rollDice } from "@dnd/dice";
 
 rollDice("2d6+3");
-// { total: 10, modifier: 3, notation: "2d6+3",
+// { total: 10, modifier: 3, notation: "2d6+3", critical: false,
 //   dice: [{ faces: 6, value: 2, kept: true, sign: 1 },
 //          { faces: 6, value: 5, kept: true, sign: 1 }] }
 
@@ -56,16 +56,17 @@ It returns:
 | `dice` | `{ faces, value, kept, sign }[]` | Every die rolled, across every pool, in roll order |
 | `modifier` | `number` | Every constant in the notation, summed. `0` when it carries none |
 | `notation` | `string` | The input in canonical form |
+| `critical` | `boolean` | Whether the `critical` option doubled the pools |
 
 A die a keep clause discarded stays in the array with `kept: false`, and a die belonging to
 a subtracted pool carries `sign: -1`, so `total` can be read back off the dice.
 
-A critical's extra dice join `dice` beside the originals, each pool's dice together.
-`notation` still reports what was asked for, because doubling `1d8+3` into `2d8+6` would
-add the modifier twice. Both the 2014 and the 2024 rules roll the damage dice twice and
-add the modifiers once, so the option takes no edition. Each doubled pool settles its own
-keep clause, so a critical `4d6kh3` keeps three of four twice rather than six of eight,
-and the 1000-dice bound counts the doubled total.
+A critical's extra dice join `dice` beside the originals, each pool's dice together, and
+`critical` is `true` so a log can say why they are there. `notation` still reports what was
+asked for, because doubling `1d8+3` into `2d8+6` would add the modifier twice. Both the 2014
+and the 2024 rules roll the damage dice twice and add the modifiers once, so the option takes
+no edition. Each doubled pool settles its own keep clause, so a critical `4d6kh3` keeps three
+of four twice rather than six of eight, and the 1000-dice bound counts the doubled total.
 
 `isRollable(notation)` answers whether `rollDice` would accept the notation, without
 rolling it. It parses, so it cannot disagree with `rollDice` about the notation. It says
