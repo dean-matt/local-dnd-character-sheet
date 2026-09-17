@@ -22,6 +22,7 @@ export { exhaustionEffects } from "./exhaustion.ts";
 export type { HitDie, HitPointLevel } from "./hitpoints.ts";
 export { averageHitPoints, HIT_DICE, hitDiceRecovered, maxHitPoints } from "./hitpoints.ts";
 export { RESET_TRIGGERS, resetsOn } from "./rest.ts";
+export { reducedSpeed } from "./speed.ts";
 export type { CasterClassLevel, PreparationRule } from "./spellcasting.ts";
 export {
   concentrationSaveDc,
