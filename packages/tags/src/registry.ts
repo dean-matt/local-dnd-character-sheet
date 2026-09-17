@@ -212,13 +212,14 @@ const OUTBOUND_TAGS = [
  * writes most of these twice, a full name and a shorthand, and gives `underline` and
  * `strike` a doubled form as well.
  *
- * Fourteen more markup tags stay out, each settled against
- * `vendor/5etools/data/renderdemo.json`, and they are the count `pnpm tags:audit`
- * prints. `comicH1` to `comicH4`, `comicNote`, `style` and `tip` set type on a printed
- * page. `loader`, `5etoolsAudio` and `homebrew` drive the upstream site. `footnote`,
- * `coinflip`, `autodice` and `crochet` each mean more than emphasis — a marker, a flip,
- * a rolled result, a pattern reference — so each waits for the tier that can act on it.
- * Registering any as a style would only name text the fallback already renders.
+ * Fourteen more markup tags stay out, and they are the count `pnpm tags:audit` prints.
+ * `comicH1` to `comicH4` and `comicNote` set type on an adventure's printed page, which
+ * their corpus uses settle rather than `renderdemo.json`, where no comic markup appears.
+ * `style` asks for a typographic class, and `loader`, `5etoolsAudio` and `homebrew`
+ * drive the upstream site. `tip`, `footnote`, `coinflip`, `autodice` and `crochet` each
+ * mean more than emphasis — a tooltip, a marker, a flip, a rolled result, a pattern
+ * reference — so each waits for the tier that can act on it. Registering any as a style
+ * would only name text the fallback already renders.
  *
  * `code` alone can hold a literal pipe, which the argument split takes for a separator,
  * so `{@code a|b}` shows `a`. The one such string in the corpus is renderdemo's own
