@@ -4,7 +4,7 @@
  * `rollDice` is the only entry point. It returns every die from every pool, discarded
  * ones included, so the roll log shows the dice and not a bare total. Advantage and
  * disadvantage are legal only on notation that rolls a single die, keeps it, and sums no
- * second pool.
+ * second pool; a critical rolls every pool a second time and leaves the modifier alone.
  */
 
 type RolledDie = {
@@ -35,6 +35,12 @@ type RollMode = "normal" | "advantage" | "disadvantage";
 
 type RollOptions = {
   mode?: RollMode;
+  /**
+   * Rolls every pool a second time and adds the modifier once, as a critical hit does. An
+   * option rather than notation for the same reason a mode is: doubling the string
+   * `1d8+3` gives `2d8+6`, wrong by the modifier.
+   */
+  critical?: boolean;
   /** Returns a float in [0, 1), like `Math.random`. Injected so tests are deterministic. */
   random?: () => number;
 };
@@ -65,6 +71,8 @@ type DiceTerm = { sign: 1 | -1; count: number; faces: number; keep: Keep | null 
 type ParsedDice = {
   terms: DiceTerm[];
   modifier: number;
+  /** Every pool's dice counted together, which a critical doubles. */
+  pooled: number;
 };
 
 type TermGroups = {
@@ -121,6 +129,14 @@ function parseConstant(raw: string, notation: string): number {
   return constant;
 }
 
+function checkPooled(pooled: number, notation: string): void {
+  if (pooled > MAX_COUNT) {
+    throw new RangeError(
+      `Cannot roll more than ${MAX_COUNT} dice at once, and this asks for ${pooled}: "${notation}"`,
+    );
+  }
+}
+
 function parseDice(notation: string): ParsedDice {
   // Collapsing each whitespace run leaves the grammar alone — `\s*` reads one space the
   // same as ten — and caps `TERM`'s backtracking, quadratic in a run's length on notation
@@ -163,14 +179,12 @@ function parseDice(notation: string): ParsedDice {
   }
 
   const pooled = terms.reduce((sum, term) => sum + term.count, 0);
-  if (pooled > MAX_COUNT) {
-    throw new RangeError(`Cannot roll more than ${MAX_COUNT} dice at once: "${notation}"`);
-  }
+  checkPooled(pooled, notation);
   if (Math.abs(modifier) > MAX_MODIFIER) {
     throw new RangeError(`Modifier must be within ${MAX_MODIFIER}: "${notation}"`);
   }
 
-  return { terms, modifier };
+  return { terms, modifier, pooled };
 }
 
 /**
@@ -206,8 +220,10 @@ function markKept(dice: RolledDie[], keep: Keep | null): void {
  * its own copy of the grammar and the bounds, and because the answer comes from parsing
  * it cannot drift from what `rollDice` uses.
  *
- * It says nothing about a mode: advantage and disadvantage also need a single die, no keep
- * clause and no second pool, which a caller passing one checks itself.
+ * It says nothing about the options: a mode needs a single die, no keep clause and no
+ * second pool, and a critical doubles the dice against the same bound, so
+ * `isRollable("501d6")` is true where a critical `501d6` is not. A caller passing either
+ * checks that itself.
  */
 export function isRollable(notation: string): boolean {
   try {
@@ -226,29 +242,42 @@ export function isRollable(notation: string): boolean {
  * appear in `dice`. The rules apply them only to a single die, so a mode paired with a
  * pool, a keep clause, or a second pool is rejected rather than reinterpreted — a
  * `TypeError`, because the notation is valid and only the pairing is wrong.
+ *
+ * A critical pairs with no mode — doubling belongs to a damage roll and a mode to the d20
+ * test that preceded it, so the pair names no roll anyone makes, and it is a `TypeError`
+ * for the same reason. Each doubled pool resolves its own keep clause, so a critical
+ * `4d6kh3` keeps three of four twice rather than six of eight, because doubling repeats
+ * the roll the notation describes.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
-  const { mode = "normal", random = Math.random } = options;
+  const { mode = "normal", critical = false, random = Math.random } = options;
   const parsed = parseDice(notation);
-  const { terms, modifier } = parsed;
+  const { terms, modifier, pooled } = parsed;
 
   const single = terms.length === 1 ? terms[0] : undefined;
   if (mode !== "normal" && (single === undefined || single.count !== 1 || single.keep !== null)) {
     throw new TypeError(`${mode} applies to a single die, not to "${notation}"`);
   }
+  if (critical && mode !== "normal") {
+    throw new TypeError(`a critical does not combine with ${mode}: "${notation}"`);
+  }
+  const repeats = critical ? 2 : 1;
+  checkPooled(pooled * repeats, notation);
 
   const dice: RolledDie[] = [];
   for (const term of terms) {
     const pool = mode === "normal" ? term.count : 2;
     const applied = mode === "normal" ? term.keep : { high: mode === "advantage", count: 1 };
-    const rolled: RolledDie[] = Array.from({ length: pool }, () => ({
-      faces: term.faces,
-      value: Math.floor(random() * term.faces) + 1,
-      kept: true,
-      sign: term.sign,
-    }));
-    markKept(rolled, applied);
-    dice.push(...rolled);
+    for (let repeat = 0; repeat < repeats; repeat += 1) {
+      const rolled: RolledDie[] = Array.from({ length: pool }, () => ({
+        faces: term.faces,
+        value: Math.floor(random() * term.faces) + 1,
+        kept: true,
+        sign: term.sign,
+      }));
+      markKept(rolled, applied);
+      dice.push(...rolled);
+    }
   }
 
   const total =

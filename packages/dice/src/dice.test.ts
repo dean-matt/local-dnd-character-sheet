@@ -206,4 +206,47 @@ describe("rollDice", () => {
     const roll = rollDice("100d6");
     expect(roll.dice.every((die) => die.value >= 1 && die.value <= 6)).toBe(true);
   });
+
+  it("rolls the dice twice and adds the modifier once on a critical", () => {
+    const roll = rollDice("1d8+3", { critical: true, random: loaded(8, 5, 7) });
+    expect(values(roll)).toEqual([5, 7]);
+    expect(roll.modifier).toBe(3);
+    expect(roll.total).toBe(15);
+    expect(roll.notation).toBe("1d8+3");
+  });
+
+  it("doubles every pool of a critical and keeps each pool's dice together", () => {
+    const roll = rollDice("1d8+1d6+3", {
+      critical: true,
+      random: loadedMixed([8, 5], [8, 7], [6, 2], [6, 4]),
+    });
+    expect(values(roll)).toEqual([5, 7, 2, 4]);
+    expect(roll.total).toBe(21);
+  });
+
+  it("resolves a keep clause within each doubled pool, not across both", () => {
+    const roll = rollDice("4d6kh3", { critical: true, random: loaded(6, 6, 6, 6, 6, 1, 1, 1, 1) });
+    expect(kept(roll)).toEqual([6, 6, 6, 1, 1, 1]);
+    expect(roll.total).toBe(21);
+  });
+
+  it.each(["advantage", "disadvantage"] as const)("rejects a critical with %s", (mode) => {
+    expect(() => rollDice("1d20", { mode, critical: true })).toThrow(TypeError);
+    expect(() => rollDice("1d20", { mode, critical: true })).toThrow('"1d20"');
+  });
+
+  it("doubles a subtracted pool on a critical and signs every die of it", () => {
+    const roll = rollDice("2d6-1d4", {
+      critical: true,
+      random: loadedMixed([6, 4], [6, 3], [6, 5], [6, 1], [4, 2], [4, 3]),
+    });
+    expect(roll.dice.map((die) => die.sign)).toEqual([1, 1, 1, 1, -1, -1]);
+    expect(roll.total).toBe(8);
+  });
+
+  it("counts a critical's extra dice against the bound on one roll", () => {
+    expect(rollDice("500d6", { critical: true }).dice).toHaveLength(1000);
+    expect(() => rollDice("501d6", { critical: true })).toThrow(RangeError);
+    expect(() => rollDice("501d6", { critical: true })).toThrow("asks for 1002");
+  });
 });
