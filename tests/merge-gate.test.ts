@@ -1,6 +1,8 @@
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
 import {
   blockingDeclines,
   blockingFindings,
@@ -15,6 +17,7 @@ import {
   passes,
   reviewBlocked,
   severity,
+  sinceLastPass,
   staleBlocked,
   staleNote,
   unanswered,
@@ -181,8 +184,9 @@ describe("the last pass against the tip", () => {
   });
 
   it("holds where only prose landed after the pass, and still reports the distance", () => {
-    expect(staleBlocked(behind(["docs/architecture.md", "README.md"]))).toBeNull();
-    expect(staleNote(READ, behind([]))).toContain("2 commits behind");
+    const prose = behind(["docs/architecture.md", "README.md"]);
+    expect(staleBlocked(prose)).toBeNull();
+    expect(staleNote(READ, prose)).toContain("2 commits behind");
   });
 
   it("stops a pass that never read a source commit, and names the commits", () => {
@@ -365,6 +369,56 @@ describe("the other three conditions", () => {
       dependenciesDiffer(two, { ...two, dependencies: { hono: "^4.0.0", zod: "^3.0.0" } }),
     ).toBe(false);
     expect(dependenciesDiffer(before, { ...before, devDependencies: { vitest: "^4" } })).toBe(true);
+  });
+});
+
+/**
+ * The one piece of this condition that runs git, over a repository built to hold the shape
+ * `merge-pr`'s behind-branch recovery leaves: a branch that merged `main` in after the pass
+ * read it. A fabricated `Since` cannot fail on a range that reads main's commits as
+ * unreviewed code.
+ */
+describe("the commits since the last pass", () => {
+  const dir = mkdtempSync(join(tmpdir(), "merge-gate-"));
+  const git = (...args: string[]) =>
+    execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim();
+  const commit = (path: string, message: string) => {
+    mkdirSync(join(dir, dirname(path)), { recursive: true });
+    writeFileSync(join(dir, path), message);
+    git("add", "-A");
+    git("commit", "-q", "-m", message);
+    return git("rev-parse", "HEAD");
+  };
+
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  it("reads the branch's own commits and never the main it merged in", () => {
+    git("init", "-q", "-b", "main");
+    git("config", "user.email", "gate@example.invalid");
+    git("config", "user.name", "gate");
+    git("config", "commit.gpgsign", "false");
+    commit("src/a.ts", "the base");
+    git("checkout", "-q", "-b", "topic");
+    const read = commit("src/b.ts", "the commit the pass read");
+    git("checkout", "-q", "main");
+    commit("src/c.ts", "main moved on");
+    git("update-ref", "refs/remotes/origin/main", "main");
+    git("checkout", "-q", "topic");
+    git("merge", "-q", "--no-edit", "main");
+
+    const merged = sinceLastPass(read, git("rev-parse", "HEAD"), dir);
+    expect(merged.changed).toEqual([]);
+    expect(staleBlocked(merged)).toBeNull();
+
+    const fix = commit("src/b.ts", "the fix the pass never read");
+    const after = sinceLastPass(read, git("rev-parse", "HEAD"), dir);
+    expect(after.changed).toEqual(["src/b.ts"]);
+    expect(after.commits?.map((c: { sha: string }) => c.sha)).toContain(fix);
+    expect(staleBlocked(after)).toContain("1 file that the pass never read");
+  });
+
+  it("reads a commit this branch does not carry as no relation", () => {
+    expect(sinceLastPass("0".repeat(40), git("rev-parse", "HEAD"), dir).commits).toBeNull();
   });
 });
 

@@ -239,23 +239,37 @@ function show(ref, path) {
 }
 
 /**
- * The commits on `head` that the last pass never saw, and the paths they changed. An
- * unreachable `commit_id` reads as no relation rather than as an empty range, so a review
- * left on another head cannot pass the condition by looking like a pass at the tip.
+ * The branch's own commits on `head` that the last pass never saw, and the paths they
+ * changed. An unreachable `commit_id` reads as no relation rather than as an empty range,
+ * so a review left on another head cannot pass the condition by looking like a pass at the
+ * tip.
+ *
+ * `^origin/main` is what keeps the behind-branch recovery from reading main's commits as
+ * unreviewed code: that recovery merges `main` in, and everything it carries arrived with a
+ * review of its own. The cost is a union over the branch's commits rather than a net diff,
+ * so a file changed and reverted after the pass asks for a pass it does not need.
+ *
+ * @param {string | null} sha
+ * @param {string | undefined} [cwd]
  */
-function sinceLastPass(sha, head) {
+export function sinceLastPass(sha, head, cwd) {
   const unrelated = { commits: null, changed: [] };
   if (sha === null) return unrelated;
+  const run = (args) => execFileSync("git", args, { encoding: "utf8", cwd }).trim();
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", sha, head], { stdio: "ignore" });
+    execFileSync("git", ["merge-base", "--is-ancestor", sha, head], { stdio: "ignore", cwd });
   } catch {
     return unrelated;
   }
-  const commits = git(["log", "--format=%H %s", `${sha}..${head}`])
+  const own = [`${sha}..${head}`, "^origin/main"];
+  const commits = run(["log", "--format=%H %s", ...own])
     .split("\n")
     .filter(Boolean)
     .map((line) => ({ sha: line.slice(0, 40), subject: line.slice(41) }));
-  return { commits, changed: git(["diff", "--name-only", sha, head]).split("\n").filter(Boolean) };
+  const changed = run(["log", "--name-only", "--format=", ...own])
+    .split("\n")
+    .filter(Boolean);
+  return { commits, changed: [...new Set(changed)] };
 }
 
 function gate(n) {
