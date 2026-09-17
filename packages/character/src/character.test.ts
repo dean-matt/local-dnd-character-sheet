@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import {
   carryingCapacity,
+  type Edition,
   encumbranceThresholds,
   exhaustionEffects,
   type HitDie,
@@ -1083,14 +1084,38 @@ describe("encumbered speed", () => {
     });
   });
 
-  it("hands the reduction back unapplied, so a second one composes against the race's speed", () => {
-    const exhaustion = exhaustionEffects(2, "one");
-    const fromExhaustion = exhaustion.edition === "one" ? exhaustion.speedReduction : 0;
-    const base = derivedValue(characterDerivedSchema.parse(derivedInput(winged)).speed).walk;
-    const laden = speeds(ENCUMBERED_AT + 1);
+  /** What exhaustion costs a speed, in the terms `reducedSpeed` takes. */
+  const exhaustionSpeedCost = (level: number, edition: Edition) => {
+    const effects = exhaustionEffects(level, edition);
+    return {
+      reduction: effects.edition === "one" ? effects.speedReduction : 0,
+      halved: effects.edition === "classic" && effects.speedHalved,
+      zeroed: effects.edition === "classic" && effects.speedZero,
+    };
+  };
 
-    expect(laden.speedReduction).toBe(10);
-    expect(reducedSpeed({ base, reduction: laden.speedReduction + fromExhaustion })).toBe(10);
+  it.each(["one", "classic"] as const)(
+    "hands the reduction back unapplied, so %s exhaustion composes against the race's speed",
+    (edition) => {
+      const exhaustion = exhaustionSpeedCost(2, edition);
+      const base = derivedValue(characterDerivedSchema.parse(derivedInput(winged)).speed).walk;
+      const laden = speeds(ENCUMBERED_AT + 1);
+
+      expect(laden.speedReduction).toBe(10);
+      expect(laden.speed.walk).toBe(20);
+      expect(
+        reducedSpeed({
+          ...exhaustion,
+          base,
+          reduction: laden.speedReduction + exhaustion.reduction,
+        }),
+      ).toBe(10);
+    },
+  );
+
+  it("carries a mode written as undefined rather than reducing it", () => {
+    const absent = { speed: { computed: { walk: 30, fly: undefined } } };
+    expect(speeds(ENCUMBERED_AT + 1, { encumbrance: true }, absent).speed).toEqual({ walk: 20 });
   });
 
   it("stores nothing, so turning the option off restores the race's speeds", () => {

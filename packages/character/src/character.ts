@@ -634,10 +634,8 @@ export function carriedWeight(
  * The variant reads "your speed drops by 10 feet" and names no movement mode, so the
  * reduction comes off every mode the character has rather than walking alone.
  *
- * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone.
- * Exhaustion reduces a speed too, so `speedReduction` comes back unapplied beside the
- * speeds: a caller holding an exhaustion level sums the two and passes them to
- * `reducedSpeed` against the race's speeds, rather than reducing `speed` a second time.
+ * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone, and
+ * `speedReduction` is how a caller composes another reduction with it.
  */
 export function encumberedSpeed(
   definition: CharacterDefinition,
@@ -656,7 +654,9 @@ export function encumberedSpeed(
   const reduced = Object.fromEntries(
     Object.entries(speed).map(([mode, base]) => [
       mode,
-      reducedSpeed({ base, reduction: speedReduction }),
+      // A mode written as `undefined` survives the parse, and is a mode the character
+      // does not have rather than a base speed of zero.
+      base === undefined ? undefined : reducedSpeed({ base, reduction: speedReduction }),
     ]),
   ) as Speed;
   return { speed: reduced, speedReduction, disadvantage };
@@ -674,9 +674,11 @@ export type Speed = z.infer<typeof speedSchema>;
 export type EncumberedSpeed = {
   speed: Speed;
   /**
-   * The feet `speed` already lost, so a caller carrying another reduction composes the
-   * two against the race's speeds instead of reaching past this for `encumbranceAt`.
-   * Zero where the table never opted in.
+   * The feet `speed` already lost, handed back unapplied so a caller composes another
+   * reduction against the race's speeds rather than reducing `speed` twice: sum this
+   * into `reducedSpeed`'s `reduction`. 2014 exhaustion states `halved` and `zeroed`
+   * instead of feet, so those go to `reducedSpeed` in the same call. Zero where the
+   * table never opted in.
    */
   speedReduction: number;
   /** From `encumbranceAt`, which names the rolls the rule covers. */
