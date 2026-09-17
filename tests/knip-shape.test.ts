@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 import { read } from "./lib/doc-helpers.ts";
 
 /**
- * Fence for the one knip setting a leaf package cannot do without. Where a workspace's
- * only entry is its own tests, a reader reaches everything else through the entry its
- * `exports` map declares — and knip counts an entry's exports as used. Without
- * `includeEntryExports` knip reports nothing on such a package's surface, leaving the
- * check silent exactly where a package is all surface.
+ * Fence for the one knip setting a workspace cannot do without once its only
+ * *configured* entry is its own tests. A reader still reaches its surface through an
+ * entry knip finds another way — an `exports` map, or a file a `package.json` script
+ * names — and knip counts an entry's exports as used. Without `includeEntryExports`
+ * knip reports nothing on that surface, leaving the check silent exactly where a
+ * package is all surface.
  */
 type KnipConfig = {
   workspaces: Record<string, { entry?: string[]; includeEntryExports?: boolean }>;
@@ -14,8 +15,14 @@ type KnipConfig = {
 
 const TEST_ENTRY = /\.(?:test|spec)\.[cm]?[jt]sx?$/;
 
-/** The four, repeated here so a workspace joining or leaving the set is deliberate. */
-const LEAF_PACKAGES = ["packages/rules", "packages/character", "packages/dice", "packages/tags"];
+/** Repeated here so a workspace joining or leaving the set is deliberate. */
+const TEST_ONLY_PACKAGES = [
+  "packages/rules",
+  "packages/character",
+  "packages/dice",
+  "packages/tags",
+  "packages/content",
+];
 
 const config = JSON.parse(read("knip.json")) as KnipConfig;
 
@@ -27,8 +34,8 @@ const testOnly = Object.entries(config.workspaces).filter(
 );
 
 describe("knip.json", () => {
-  it("finds exactly the workspaces whose only entry is their own tests", () => {
-    expect(testOnly.map(([name]) => name)).toEqual(LEAF_PACKAGES);
+  it("finds exactly the workspaces whose only configured entry is their own tests", () => {
+    expect(testOnly.map(([name]) => name)).toEqual(TEST_ONLY_PACKAGES);
   });
 
   it.each(testOnly.map(([name]) => name))("%s can report an export on its own surface", (name) => {
