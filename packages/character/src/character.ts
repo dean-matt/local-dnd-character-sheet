@@ -594,15 +594,20 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
 
 /**
  * The pounds a character is carrying: every inventory entry flagged `carried`, times its
- * quantity, plus the coins, which weigh the same whatever they are worth and have no
- * inventory entry to flag.
+ * quantity, plus the coins.
  *
- * `weights` maps `entryKey` to an item's weight in pounds, catalog data a character
- * references rather than copies, the way `hitPointMaximum` takes the hit die. A `null`
- * is a row that states no weight — 1,540 of the 2,428 upstream items state none — and
- * adds nothing rather than failing the sum. A reference the map does not name is
- * refused: there the character points at a row the catalog lacks, which a silent zero
- * would hide.
+ * `weights` maps `entryKey` to an item's weight in pounds, content a character
+ * references rather than copies — from the catalog or from homebrew, which a caller
+ * merges into one map — the way `hitPointMaximum` takes the hit die. A `null` is a row
+ * that states no weight, which 1,540 of the 2,428 upstream items do, and adds nothing
+ * rather than failing the sum. A reference the map does not name is refused: there the
+ * character points at a row neither store holds, which a silent zero would hide.
+ *
+ * Coins count whatever `carried` says of the rest, because `money` is a purse the
+ * definition has nowhere to put down. So a character who banked 1,000 gp in town carries
+ * 20 pounds they left there, and `encumbranceAt` reads this total straight. The way out
+ * is a flag on `money`, or an inventory entry per denomination, the day a sheet lets a
+ * character leave coins behind.
  */
 export function carriedWeight(
   definition: CharacterDefinition,
@@ -613,7 +618,7 @@ export function carriedWeight(
     if (!entry.carried) continue;
     const key = entryKey(entry.ref);
     const weight = weights.get(key);
-    if (weight === undefined) throw new RangeError(`No catalog row for ${key}`);
+    if (weight === undefined) throw new RangeError(`No item row for ${key}`);
     total += scaled(weight ?? 0) * entry.quantity;
   }
   const coins = Object.values(definition.money).reduce((sum, count) => sum + count, 0);

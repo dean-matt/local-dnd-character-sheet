@@ -822,7 +822,7 @@ describe("carried weight", () => {
   const CALTROP = { name: "Caltrop", source: "PHB" };
   const SLING_BULLET = { name: "Sling Bullet", source: "XPHB" };
   const DART = { name: "Dart", source: "XPHB" };
-  const ROPE = { name: "Rope, Hempen (50 feet)", source: "PHB" };
+  const ROPE = { name: "Hempen Rope (50 feet)", source: "PHB" };
   const VIAL = { name: "Vial", source: "XPHB" };
   const CHEST = { name: "Chest", source: "PHB" };
 
@@ -860,11 +860,14 @@ describe("carried weight", () => {
     expect(carriedWeight(packed, catalog)).toBe(10);
   });
 
-  it("rejects a reference the catalog does not name, rather than weighing it zero", () => {
+  it("rejects a reference neither store names, rather than weighing it zero", () => {
     const packed = packing([{ ref: { name: "Hat of Disguise", source: "XDMG" } }], {});
     expect(() => carriedWeight(packed, catalog)).toThrow(
-      "No catalog row for catalog|Hat of Disguise|XDMG",
+      "No item row for catalog|Hat of Disguise|XDMG",
     );
+
+    const homebrew = packing([{ ref: { homebrewId: "hb_99" } }], {});
+    expect(() => carriedWeight(homebrew, catalog)).toThrow("No item row for homebrew|hb_99");
   });
 
   it("sums fractional weights exactly at the quantities a real pack reaches", () => {
@@ -903,7 +906,7 @@ describe("inventory", () => {
     const stored = characterDefinitionSchema.parse({
       ...structuredClone(definition),
       inventory: [
-        { ref: { name: "Rope, Hempen (50 feet)", source: "PHB" }, carried: true },
+        { ref: { name: "Hempen Rope (50 feet)", source: "PHB" }, carried: true },
         { ref: { name: "Chest", source: "PHB" }, carried: false },
       ],
     });
