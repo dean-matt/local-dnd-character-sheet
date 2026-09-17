@@ -19,6 +19,7 @@
 import {
   abilityModifier,
   EDITIONS,
+  encumbranceAt,
   HIT_DICE,
   type HitDie,
   maxHitPoints,
@@ -27,6 +28,7 @@ import {
   passiveScore,
   proficiencyContribution,
   RESET_TRIGGERS,
+  reducedSpeed,
   SIZES,
 } from "@dnd/rules";
 import { z } from "zod";
@@ -622,8 +624,69 @@ export function carriedWeight(
   return (total + scaled(POUNDS_PER_COIN) * coins) / WEIGHT_SCALE;
 }
 
+/**
+ * The modes a character actually has. A key written as `undefined` survives the parse, so
+ * dropping it here keeps it out of the arithmetic and out of every reader downstream.
+ *
+ * A caller casts the rebuilt object back to `Speed`, which holds only while `walk` is
+ * required: an optional one would let this return nothing and the cast stay quiet.
+ */
+function presentModes(speed: Speed): [string, number][] {
+  return Object.entries(speed).filter((entry): entry is [string, number] => entry[1] !== undefined);
+}
+
+/**
+ * What a load costs a character: the speeds they move at now, and the disadvantage heavy
+ * encumbrance imposes.
+ *
+ * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
+ * no stale derived value behind.
+ *
+ * The variant reads "your speed drops by 10 feet" and names no movement mode, so the
+ * reduction comes off every mode the character has rather than walking alone.
+ *
+ * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone, and
+ * `speedReduction` is how a caller composes another reduction with it.
+ */
+export function encumberedSpeed(
+  definition: CharacterDefinition,
+  derived: CharacterDerived,
+  weight: number,
+): EncumberedSpeed {
+  const modes = presentModes(derivedValue(derived.speed));
+  if (!houseRule(definition, "encumbrance")) {
+    return { speed: Object.fromEntries(modes) as Speed, speedReduction: 0, disadvantage: false };
+  }
+  const { speedReduction, disadvantage } = encumbranceAt(
+    definition.abilityScores.str,
+    derivedValue(derived.size),
+    weight,
+  );
+  const reduced = Object.fromEntries(
+    modes.map(([mode, base]) => [mode, reducedSpeed({ base, reduction: speedReduction })]),
+  ) as Speed;
+  return { speed: reduced, speedReduction, disadvantage };
+}
+
 export type EntryRef = z.infer<typeof entryRefSchema>;
 export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;
 export type CharacterState = z.infer<typeof characterStateSchema>;
+export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
+export type Speed = z.infer<typeof speedSchema>;
+
+/** A character's speeds under the encumbrance variant, and what else the load costs. */
+export type EncumberedSpeed = {
+  speed: Speed;
+  /**
+   * The feet `speed` already lost, handed back unapplied so a caller composes another
+   * reduction against the derived speeds rather than reducing `speed` twice: sum this
+   * into `reducedSpeed`'s `reduction`. 2014 exhaustion states `halved` and `zeroed`
+   * instead of feet, so those go to `reducedSpeed` in the same call. Zero where the
+   * table never opted in.
+   */
+  speedReduction: number;
+  /** From `encumbranceAt`, which names the rolls the rule covers. */
+  disadvantage: boolean;
+};

@@ -1,5 +1,12 @@
 import { readFile } from "node:fs/promises";
-import { carryingCapacity, encumbranceThresholds, type HitDie } from "@dnd/rules";
+import {
+  carryingCapacity,
+  type Edition,
+  encumbranceThresholds,
+  exhaustionEffects,
+  type HitDie,
+  reducedSpeed,
+} from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -12,6 +19,7 @@ import {
   characterStateSchema,
   derivedSchema,
   derivedValue,
+  encumberedSpeed,
   entryKey,
   entryRefSchema,
   hitDicePoolSchema,
@@ -989,6 +997,138 @@ describe("size and speed", () => {
         derivedInput({ speed: { computed: { walk: 30, hover: 30 } } }),
       ).success,
     ).toBe(false);
+  });
+});
+
+describe("encumbered speed", () => {
+  /** A Strength of 8 at Medium: encumbered above 40 pounds, heavily above 80. */
+  const ENCUMBERED_AT = 40;
+  const HEAVILY_ENCUMBERED_AT = 80;
+
+  const winged = { speed: { computed: { walk: 30, fly: 30, swim: 10 } } };
+
+  const speeds = (
+    weight: number,
+    houseRules: object = { encumbrance: true },
+    traits: object = winged,
+  ) =>
+    encumberedSpeed(
+      characterDefinitionSchema.parse({ ...structuredClone(definition), houseRules }),
+      characterDerivedSchema.parse(derivedInput(traits)),
+      weight,
+    );
+
+  it("leaves the race's speeds alone where the table never opted in", () => {
+    expect(speeds(HEAVILY_ENCUMBERED_AT * 10, {})).toEqual({
+      speed: { walk: 30, fly: 30, swim: 10 },
+      speedReduction: 0,
+      disadvantage: false,
+    });
+  });
+
+  it("reduces every movement mode, not only walking", () => {
+    expect(speeds(ENCUMBERED_AT + 1).speed).toEqual({ walk: 20, fly: 20, swim: 0 });
+  });
+
+  it("floors a mode at zero rather than moving the character backwards", () => {
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 1).speed).toEqual({ walk: 10, fly: 10, swim: 0 });
+  });
+
+  it.each([0, ENCUMBERED_AT])(
+    "carries no penalty at %s pounds, the rule reading in excess of",
+    (weight) => {
+      expect(speeds(weight)).toEqual({
+        speed: { walk: 30, fly: 30, swim: 10 },
+        speedReduction: 0,
+        disadvantage: false,
+      });
+    },
+  );
+
+  it.each([ENCUMBERED_AT + 0.05, HEAVILY_ENCUMBERED_AT])(
+    "loses 10 feet in excess of the lighter threshold, at %s pounds",
+    (weight) => {
+      expect(speeds(weight)).toEqual({
+        speed: { walk: 20, fly: 20, swim: 0 },
+        speedReduction: 10,
+        disadvantage: false,
+      });
+    },
+  );
+
+  it("surfaces the disadvantage the heavily encumbered state carries", () => {
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 0.05)).toEqual({
+      speed: { walk: 10, fly: 10, swim: 0 },
+      speedReduction: 20,
+      disadvantage: true,
+    });
+  });
+
+  it("reduces the speed a user typed over, not the one the race granted", () => {
+    const typedOver = { speed: { computed: { walk: 30 }, manual: { walk: 40 } } };
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 1, { encumbrance: true }, typedOver).speed).toEqual({
+      walk: 20,
+    });
+  });
+
+  it("reads the size, which clamps a Tiny character's threshold to what it can carry", () => {
+    const tiny = { size: { computed: "tiny" }, speed: { computed: { walk: 30 } } };
+    const clamped = carryingCapacity(definition.abilityScores.str, "tiny");
+
+    expect(clamped).toBe(60);
+    expect(speeds(clamped, { encumbrance: true }, tiny).disadvantage).toBe(false);
+    expect(speeds(clamped + 0.05, { encumbrance: true }, tiny)).toEqual({
+      speed: { walk: 10 },
+      speedReduction: 20,
+      disadvantage: true,
+    });
+  });
+
+  /** What exhaustion costs a speed, in the terms `reducedSpeed` takes. */
+  const exhaustionSpeedCost = (level: number, edition: Edition) => {
+    const effects = exhaustionEffects(level, edition);
+    return {
+      reduction: effects.edition === "one" ? effects.speedReduction : 0,
+      halved: effects.edition === "classic" && effects.speedHalved,
+      zeroed: effects.edition === "classic" && effects.speedZero,
+    };
+  };
+
+  it.each(["one", "classic"] as const)(
+    "hands the reduction back unapplied, so %s exhaustion composes against the derived speed",
+    (edition) => {
+      const exhaustion = exhaustionSpeedCost(2, edition);
+      const base = derivedValue(characterDerivedSchema.parse(derivedInput(winged)).speed).walk;
+      const laden = speeds(ENCUMBERED_AT + 1);
+
+      expect(laden.speedReduction).toBe(10);
+      expect(laden.speed.walk).toBe(20);
+      expect(
+        reducedSpeed({
+          ...exhaustion,
+          base,
+          reduction: laden.speedReduction + exhaustion.reduction,
+        }),
+      ).toBe(10);
+    },
+  );
+
+  it.each([{ encumbrance: true }, {}])(
+    "drops a mode written as undefined, which the parse keeps, under house rules %j",
+    (houseRules) => {
+      const absent = { speed: { computed: { walk: 30, fly: undefined } } };
+      expect(Object.keys(speeds(ENCUMBERED_AT + 1, houseRules, absent).speed)).toEqual(["walk"]);
+    },
+  );
+
+  it("stores nothing, so turning the option off restores the race's speeds", () => {
+    const derived = characterDerivedSchema.parse(derivedInput(winged));
+    const stored = characterDefinitionSchema.parse(structuredClone(definition));
+    const laden = encumberedSpeed(stored, derived, HEAVILY_ENCUMBERED_AT + 1);
+
+    expect(laden.speed).toEqual({ walk: 10, fly: 10, swim: 0 });
+    expect(derivedValue(derived.speed)).toEqual({ walk: 30, fly: 30, swim: 10 });
+    expect(speeds(HEAVILY_ENCUMBERED_AT + 1, {}).speed).toEqual({ walk: 30, fly: 30, swim: 10 });
   });
 });
 
