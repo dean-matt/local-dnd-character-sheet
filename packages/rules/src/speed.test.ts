@@ -87,7 +87,7 @@ describe("reducedSpeed against the two tables", () => {
   });
 
   it("stops a classic character at exhaustion 5 whatever they carry", () => {
-    const load = encumbranceAt(10, "medium", 0);
+    const load = encumbranceAt(10, "medium", 105);
     const exhaustion = exhaustionSpeedCost(5, "classic");
     expect(
       reducedSpeed({
