@@ -46,11 +46,16 @@ type Token =
   | { kind: "text"; value: string }
   | { kind: "ref"; tag: string; name: string; source?: string; display: string }
   | { kind: "roll"; notation: string; display: string; rollable: boolean }
-  | { kind: "style"; style: "italic" | "bold"; children: Token[] };
+  | { kind: "style"; style: Emphasis; children: Token[] };
 ```
 
 Every token carries a `display` string. That is what makes degradation safe: any
 renderer can fall back to `display` without knowing the tag.
+
+`Emphasis` names the inline formatting: bold, italic, underline, strike, their doubled
+forms, highlight, superscript, subscript, keyboard and code. Add a new one to
+`STYLE_TAGS` in `registry.ts`, whose comment names the markup tags left to degrade and
+the count `pnpm tags:audit` prints.
 
 ## Degradation rules
 

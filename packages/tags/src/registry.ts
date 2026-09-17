@@ -9,7 +9,7 @@
 
 import { isRollable } from "@dnd/dice";
 import { abilityModifier } from "@dnd/rules";
-import { arg, d20, type RefToken, type Spec, type Token, text } from "./token.ts";
+import { arg, d20, type Emphasis, type RefToken, type Spec, type Token, text } from "./token.ts";
 
 const ABILITY_NAMES: Record<string, string> = {
   str: "Strength",
@@ -207,6 +207,39 @@ const OUTBOUND_TAGS = [
   "link",
 ];
 
+/**
+ * Inline emphasis: the body is prose and the tag says only how to set it. Upstream
+ * writes most of these twice, a full name and a shorthand, and gives `underline` and
+ * `strike` a doubled form as well.
+ *
+ * Fourteen more markup tags stay out, each settled against
+ * `vendor/5etools/data/renderdemo.json`, and they are the count `pnpm tags:audit`
+ * prints. `comicH1` to `comicH4`, `comicNote`, `style` and `tip` set type on a printed
+ * page. `loader`, `5etoolsAudio` and `homebrew` drive the upstream site. `footnote`,
+ * `coinflip`, `autodice` and `crochet` each mean more than emphasis — a marker, a flip,
+ * a rolled result, a pattern reference — so each waits for the tier that can act on it.
+ * Registering any as a style would only name text the fallback already renders.
+ */
+const STYLE_TAGS: Record<string, Emphasis> = {
+  b: "bold",
+  bold: "bold",
+  i: "italic",
+  italic: "italic",
+  u: "underline",
+  underline: "underline",
+  u2: "underlineDouble",
+  underlineDouble: "underlineDouble",
+  s: "strike",
+  strike: "strike",
+  s2: "strikeDouble",
+  strikeDouble: "strikeDouble",
+  highlight: "highlight",
+  sup: "superscript",
+  sub: "subscript",
+  kbd: "keyboard",
+  code: "code",
+};
+
 function buildSpecs(): Map<string, Spec> {
   const specs = new Map<string, Spec>();
 
@@ -230,10 +263,7 @@ function buildSpecs(): Map<string, Spec> {
   specs.set("damage", { kind: "roll", notation: 0, display: 1 });
   specs.set("scaledamage", { kind: "roll", notation: 2, display: 2 });
 
-  specs.set("i", { kind: "style", style: "italic" });
-  specs.set("italic", { kind: "style", style: "italic" });
-  specs.set("b", { kind: "style", style: "bold" });
-  specs.set("bold", { kind: "style", style: "bold" });
+  for (const [tag, style] of Object.entries(STYLE_TAGS)) specs.set(tag, { kind: "style", style });
   specs.set("note", { kind: "wrapper" });
 
   const computed: Record<string, (args: string[]) => Token> = {
