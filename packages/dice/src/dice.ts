@@ -25,6 +25,11 @@ type Roll = {
   modifier: number;
   /** The notation in canonical form, so spacing does not split the roll log. */
   notation: string;
+  /**
+   * Whether every pool was rolled a second time. Without it a reader re-parses `notation`
+   * and counts `dice` to guess, and a stored roll cannot be rolled again.
+   */
+  critical: boolean;
 };
 
 /**
@@ -282,5 +287,5 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
 
   const total =
     dice.reduce((sum, die) => sum + (die.kept ? die.sign * die.value : 0), 0) + modifier;
-  return { total, dice, modifier, notation: canonical(parsed) };
+  return { total, dice, modifier, notation: canonical(parsed), critical };
 }

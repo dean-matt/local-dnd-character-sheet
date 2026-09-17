@@ -34,6 +34,7 @@ describe("rollDice", () => {
       modifier: 0,
       notation: "1d20",
       dice: [{ faces: 20, value: 14, kept: true, sign: 1 }],
+      critical: false,
     });
   });
 
@@ -242,6 +243,18 @@ describe("rollDice", () => {
     });
     expect(roll.dice.map((die) => die.sign)).toEqual([1, 1, 1, 1, -1, -1]);
     expect(roll.total).toBe(8);
+  });
+
+  it("records the critical on the roll it doubled and on no other", () => {
+    expect(rollDice("1d8+3", { critical: true, random: loaded(8, 5, 7) }).critical).toBe(true);
+    expect(rollDice("1d8+3", { random: loaded(8, 5) }).critical).toBe(false);
+    expect(rollDice("1d20", { mode: "advantage", random: loaded(20, 9, 17) }).critical).toBe(false);
+  });
+
+  it("records the critical on a pooled notation with a keep clause", () => {
+    const random = loaded(6, 6, 6, 6, 1, 6, 6, 6, 1);
+    expect(rollDice("4d6kh3", { critical: true, random }).critical).toBe(true);
+    expect(rollDice("4d6kh3", { random: loaded(6, 6, 6, 6, 1) }).critical).toBe(false);
   });
 
   it("counts a critical's extra dice against the bound on one roll", () => {
