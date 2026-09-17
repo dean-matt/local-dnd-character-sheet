@@ -8,11 +8,28 @@
 
 import { isRollable } from "@dnd/dice";
 
+/**
+ * Which emphasis a `style` token carries. A renderer picks the element; the token says
+ * only what the markup meant.
+ */
+export type Emphasis =
+  | "bold"
+  | "italic"
+  | "underline"
+  | "underlineDouble"
+  | "strike"
+  | "strikeDouble"
+  | "highlight"
+  | "superscript"
+  | "subscript"
+  | "keyboard"
+  | "code";
+
 export type Token =
   | { kind: "text"; value: string }
   | { kind: "ref"; tag: string; name: string; source?: string; display: string }
   | { kind: "roll"; notation: string; display: string; rollable: boolean }
-  | { kind: "style"; style: "italic" | "bold"; children: Token[] };
+  | { kind: "style"; style: Emphasis; children: Token[] };
 
 export type RefToken = Extract<Token, { kind: "ref" }>;
 
@@ -25,7 +42,7 @@ export type Spec =
   | { kind: "ref"; source: number[]; display: number }
   | { kind: "roll"; notation: number; display: number }
   | { kind: "text"; display: number }
-  | { kind: "style"; style: "italic" | "bold" }
+  | { kind: "style"; style: Emphasis }
   | { kind: "wrapper" }
   | { kind: "computed"; render: (args: string[]) => Token };
 

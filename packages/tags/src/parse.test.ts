@@ -104,6 +104,84 @@ describe("grammar", () => {
   });
 });
 
+describe("inline emphasis", () => {
+  it.each([
+    ["{@b bolded}", "bold"],
+    ["{@bold bolded}", "bold"],
+    ["{@i italicised}", "italic"],
+    ["{@italic italicised}", "italic"],
+    ["{@u underlined}", "underline"],
+    ["{@underline underlined}", "underline"],
+    ["{@u2 underlined}", "underlineDouble"],
+    ["{@underlineDouble underlined}", "underlineDouble"],
+    ["{@s struck}", "strike"],
+    ["{@strike struck}", "strike"],
+    ["{@s2 struck}", "strikeDouble"],
+    ["{@strikeDouble struck}", "strikeDouble"],
+    ["{@highlight marked}", "highlight"],
+    ["{@sup above}", "superscript"],
+    ["{@sub below}", "subscript"],
+    ["{@kbd ALT}", "keyboard"],
+    ['{@code print("hello world")}', "code"],
+  ])("reads the emphasis %s carries", (input, style) => {
+    expect(only(input)).toMatchObject({ kind: "style", style });
+  });
+
+  it.each(["{@u}", "{@highlight}", "{@kbd}"])("emits nothing for the bare form %s", (input) => {
+    expect(parseTags(input)).toEqual([]);
+  });
+
+  it("treats a leading pipe in an emphasis tag as a separator", () => {
+    expect(shown("{@highlight |marked text}")).toBe("marked text");
+  });
+
+  // The whole sentence, verbatim from `vendor/5etools/data/renderdemo.json`, where
+  // upstream documents its own style tags.
+  it("renders every style tag in upstream's own documentation", () => {
+    const demo =
+      "Style tags; {@bold some text to be bolded} (alternative {@b shorthand}), " +
+      "{@italic some text to be italicised} (alternative {@i shorthand}), " +
+      "{@underline some text to be underlined} (alternative {@u shorthand}), " +
+      "{@underlineDouble some text to be underlined} (alternative {@u2 shorthand}), " +
+      "{@strike some text to strike-through}, (alternative {@s shorthand}), , " +
+      "{@strikeDouble some text to strike-through}, (alternative {@s2 shorthand}), " +
+      "{@color color|e40707}/{@color color variable|--rgb-name} tags, " +
+      "{@highlight highlight} tags, {@sup superscript} tags, {@sub subscript} tags, " +
+      "{@kbd keyboard} tags, {@code print(&quot;hello world&quot;)} tags, " +
+      "misc {@style Style|small-caps;small;capitalize;dnd-font} tags, " +
+      "{@font alternate font|Comic Sans MS} tags";
+    expect(shown(demo)).toBe(
+      "Style tags; some text to be bolded (alternative shorthand), " +
+        "some text to be italicised (alternative shorthand), " +
+        "some text to be underlined (alternative shorthand), " +
+        "some text to be underlined (alternative shorthand), " +
+        "some text to strike-through, (alternative shorthand), , " +
+        "some text to strike-through, (alternative shorthand), " +
+        "color/color variable tags, " +
+        "highlight tags, superscript tags, subscript tags, " +
+        "keyboard tags, print(&quot;hello world&quot;) tags, " +
+        "misc Style tags, alternate font tags",
+    );
+  });
+
+  // `adventure-cm.json` strikes a completed line off a checklist.
+  it("strikes a checklist line copied from the corpus", () => {
+    expect(only("{@s Test rockets!}")).toEqual({
+      kind: "style",
+      style: "strike",
+      children: [{ kind: "text", value: "Test rockets!" }],
+    });
+  });
+
+  it("carries a nested tag inside an emphasis tag", () => {
+    expect(only("{@sup {@footnote *1|Guarantee does not apply}}")).toEqual({
+      kind: "style",
+      style: "superscript",
+      children: [{ kind: "text", value: "*1" }],
+    });
+  });
+});
+
 describe("nesting", () => {
   it("nests a tag inside a style tag", () => {
     expect(only("{@i {@spell fireball}}")).toEqual({

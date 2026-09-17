@@ -131,13 +131,18 @@ const FORMATTING_TAGS = new Set([
   "highlight",
   "i",
   "italic",
+  "kbd",
   "note",
   "s",
+  "s2",
   "strike",
+  "strikeDouble",
   "sub",
   "sup",
   "u",
+  "u2",
   "underline",
+  "underlineDouble",
 ]);
 
 /**
