@@ -1,5 +1,11 @@
 import { readFile } from "node:fs/promises";
-import { carryingCapacity, encumbranceThresholds, type HitDie } from "@dnd/rules";
+import {
+  carryingCapacity,
+  encumbranceThresholds,
+  exhaustionEffects,
+  type HitDie,
+  reducedSpeed,
+} from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -1014,6 +1020,7 @@ describe("encumbered speed", () => {
   it("leaves the race's speeds alone where the table never opted in", () => {
     expect(speeds(HEAVILY_ENCUMBERED_AT * 10, {})).toEqual({
       speed: { walk: 30, fly: 30, swim: 10 },
+      speedReduction: 0,
       disadvantage: false,
     });
   });
@@ -1031,6 +1038,7 @@ describe("encumbered speed", () => {
     (weight) => {
       expect(speeds(weight)).toEqual({
         speed: { walk: 30, fly: 30, swim: 10 },
+        speedReduction: 0,
         disadvantage: false,
       });
     },
@@ -1041,6 +1049,7 @@ describe("encumbered speed", () => {
     (weight) => {
       expect(speeds(weight)).toEqual({
         speed: { walk: 20, fly: 20, swim: 0 },
+        speedReduction: 10,
         disadvantage: false,
       });
     },
@@ -1049,6 +1058,7 @@ describe("encumbered speed", () => {
   it("surfaces the disadvantage the heavily encumbered state carries", () => {
     expect(speeds(HEAVILY_ENCUMBERED_AT + 0.05)).toEqual({
       speed: { walk: 10, fly: 10, swim: 0 },
+      speedReduction: 20,
       disadvantage: true,
     });
   });
@@ -1068,8 +1078,19 @@ describe("encumbered speed", () => {
     expect(speeds(clamped, { encumbrance: true }, tiny).disadvantage).toBe(false);
     expect(speeds(clamped + 0.05, { encumbrance: true }, tiny)).toEqual({
       speed: { walk: 10 },
+      speedReduction: 20,
       disadvantage: true,
     });
+  });
+
+  it("hands the reduction back unapplied, so a second one composes against the race's speed", () => {
+    const exhaustion = exhaustionEffects(2, "one");
+    const fromExhaustion = exhaustion.edition === "one" ? exhaustion.speedReduction : 0;
+    const base = derivedValue(characterDerivedSchema.parse(derivedInput(winged)).speed).walk;
+    const laden = speeds(ENCUMBERED_AT + 1);
+
+    expect(laden.speedReduction).toBe(10);
+    expect(reducedSpeed({ base, reduction: laden.speedReduction + fromExhaustion })).toBe(10);
   });
 
   it("stores nothing, so turning the option off restores the race's speeds", () => {

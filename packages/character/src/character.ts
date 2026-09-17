@@ -635,9 +635,9 @@ export function carriedWeight(
  * reduction comes off every mode the character has rather than walking alone.
  *
  * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone.
- * Exhaustion reduces a speed too, and `reducedSpeed` takes both reductions in one call,
- * so a caller holding an exhaustion level passes both against the race's speeds rather
- * than reducing this result again.
+ * Exhaustion reduces a speed too, so `speedReduction` comes back unapplied beside the
+ * speeds: a caller holding an exhaustion level sums the two and passes them to
+ * `reducedSpeed` against the race's speeds, rather than reducing `speed` a second time.
  */
 export function encumberedSpeed(
   definition: CharacterDefinition,
@@ -646,7 +646,7 @@ export function encumberedSpeed(
 ): EncumberedSpeed {
   const speed = derivedValue(derived.speed);
   if (!houseRule(definition, "encumbrance")) {
-    return { speed: { ...speed }, disadvantage: false };
+    return { speed: { ...speed }, speedReduction: 0, disadvantage: false };
   }
   const { speedReduction, disadvantage } = encumbranceAt(
     definition.abilityScores.str,
@@ -659,7 +659,7 @@ export function encumberedSpeed(
       reducedSpeed({ base, reduction: speedReduction }),
     ]),
   ) as Speed;
-  return { speed: reduced, disadvantage };
+  return { speed: reduced, speedReduction, disadvantage };
 }
 
 export type EntryRef = z.infer<typeof entryRefSchema>;
@@ -673,6 +673,12 @@ export type Speed = z.infer<typeof speedSchema>;
 /** A character's speeds under the encumbrance variant, and what else the load costs. */
 export type EncumberedSpeed = {
   speed: Speed;
+  /**
+   * The feet `speed` already lost, so a caller carrying another reduction composes the
+   * two against the race's speeds instead of reaching past this for `encumbranceAt`.
+   * Zero where the table never opted in.
+   */
+  speedReduction: number;
   /** From `encumbranceAt`, which names the rolls the rule covers. */
   disadvantage: boolean;
 };
