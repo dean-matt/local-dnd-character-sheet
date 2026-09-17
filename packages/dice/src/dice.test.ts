@@ -252,9 +252,14 @@ describe("rollDice", () => {
   });
 
   it("records the critical on a pooled notation with a keep clause", () => {
-    const random = loaded(6, 6, 6, 6, 1, 6, 6, 6, 1);
-    expect(rollDice("4d6kh3", { critical: true, random }).critical).toBe(true);
-    expect(rollDice("4d6kh3", { random: loaded(6, 6, 6, 6, 1) }).critical).toBe(false);
+    const random = loaded(6, 6, 5, 4, 1, 6, 5, 4, 1);
+    const doubled = rollDice("4d6kh3", { critical: true, random });
+    expect(doubled.critical).toBe(true);
+    expect(kept(doubled)).toEqual([6, 5, 4, 6, 5, 4]);
+
+    const plain = rollDice("4d6kh3", { random: loaded(6, 6, 5, 4, 1) });
+    expect(plain.critical).toBe(false);
+    expect(kept(plain)).toEqual([6, 5, 4]);
   });
 
   it("counts a critical's extra dice against the bound on one roll", () => {
