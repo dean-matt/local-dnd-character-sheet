@@ -8,11 +8,13 @@
  *
  * The exhaustion table settles it. Level 2 halves the speed and level 5 sets it to zero,
  * and the table keeps those rows apart, so a creature at level 2 is meant to still move.
- * Only halving last holds them apart. Halve first and heavy encumbrance takes its 20
- * feet off a speed of 20 or less — every walking speed upstream prints tops out at 40 —
- * so a load alone immobilizes a level-2 creature and reads its row as the level-5 row.
- * Subtract first and that creature still walks half of what the load left it. So the
- * flat reductions come off first and the halving takes what is left.
+ * Only halving last holds them apart. No walking speed upstream prints is above 40, so
+ * halving first hands heavy encumbrance a speed of 20 or less and the load alone stops
+ * every creature in the game — the level-2 row read as the level-5 row. Subtracting
+ * first, the printed speeds above 20 keep something: 25 walks 2 feet and 35 walks 7. A
+ * race that walks 20 or 10 stops under that load either way, which is the load's doing
+ * rather than the order's. So the flat reductions come off first and the halving takes
+ * what is left.
  *
  * That leaves one division, and a halved odd speed rounds down as the rulesets round
  * down on every division.

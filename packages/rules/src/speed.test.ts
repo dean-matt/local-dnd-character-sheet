@@ -4,6 +4,7 @@ import { type Edition, encumbranceAt, exhaustionEffects, reducedSpeed } from "./
 const WOOD_ELF_SPEED = 35;
 const DWARF_SPEED = 25;
 const HUMAN_SPEED = 30;
+const AARAKOCRA_SPEED = 20;
 
 /** What exhaustion costs a speed, in the three terms `reducedSpeed` takes. */
 function exhaustionSpeedCost(level: number, edition: Edition) {
@@ -25,6 +26,10 @@ describe("reducedSpeed", () => {
     const halvingFirst = Math.max(0, Math.floor(WOOD_ELF_SPEED / 2) - 20);
     expect(halvingFirst).toBe(0);
     expect(speed).toBe(7);
+  });
+
+  it("stops a 20-foot race under heavy encumbrance, which either order does", () => {
+    expect(reducedSpeed({ base: AARAKOCRA_SPEED, reduction: 20, halved: true })).toBe(0);
   });
 
   it("rounds a halved odd speed down", () => {
