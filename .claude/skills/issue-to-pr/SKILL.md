@@ -97,8 +97,10 @@ holds, stop and name it; reranking is the user's call.
     gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
     ```
 
-    A pass returning nothing posts nothing and applies nothing: skip to step 14. A later
-    pass adds, leaving earlier threads alone.
+    A pass returning nothing still posts its `body`, with no comments, then skips to step
+    14 — that review is the only record the gate has that the code was read again, and
+    "the review converged" reads the findings of the last pass to post. A later pass adds,
+    leaving earlier threads alone.
 12. **Label, apply, reply.** Swap `review:changes-requested` on first, in one `gh pr edit
     <n> --add-label <one> --remove-label <other>`, so the mark and the findings stand
     together. Then apply what survives, `pnpm check`, prose pass what the fixes touched,
@@ -110,10 +112,10 @@ holds, stop and name it; reranking is the user's call.
     moves a line outdates its thread, and the reply still posts.
 13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, a fresh
     subagent each so none inherits the last one's conclusions. `PASS_CAP` in
-    `scripts/merge-gate.mjs` caps the loop and the gate's "the review converged" reads the
-    same number: a clean pass ends the loop earlier, at the cap an applied finding
-    stands on its verdict reply, and a pass past the cap blocks the merge. A finding you
-    declined comes back and takes the same reply.
+    `scripts/merge-gate.mjs` caps the loop and the gate's "the review converged" reads it:
+    a pass returning nothing ends the loop earlier, at the cap an applied finding stands on
+    its verdict reply, and past the cap the gate prints the overage rather than blocking. A
+    finding you declined comes back and takes the same reply.
 14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a pass
     returned still waits on the user; `review:changes-requested` where something does — a
     decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.

@@ -9,6 +9,7 @@ import {
   FENCE,
   mergeBlocked,
   notGreen,
+  overspent,
   PASS_CAP,
   passes,
   reviewBlocked,
@@ -81,8 +82,17 @@ describe("the review converged", () => {
     expect(reviewBlocked([], [])).toMatch(/nothing has reviewed this/);
   });
 
-  it("holds where the last pass came back clean", () => {
+  it("holds where the last pass returned only a taste call", () => {
     expect(reviewBlocked(spent(1), [finding(1, "**comment** — a taste call")])).toBeNull();
+  });
+
+  /**
+   * The shape a converging review takes: a blocking pass, the fix, then a pass that found
+   * nothing and posted a body with no comments. Reading the earlier pass's findings blocks
+   * that forever, since no later clean pass can move the count.
+   */
+  it("holds where the last pass posted a body and no findings", () => {
+    expect(reviewBlocked(spent(2), [])).toBeNull();
   });
 
   it("names which pass returned the blocking finding, and the finding", () => {
@@ -100,10 +110,14 @@ describe("the review converged", () => {
     expect(reviewBlocked(spent(PASS_CAP), [critical])).toBeNull();
   });
 
-  it("stops a run that spent more passes than the cap", () => {
-    const blocked = reviewBlocked(spent(PASS_CAP + 1), []);
-    expect(blocked).toContain(`${PASS_CAP + 1} passes`);
-    expect(blocked).toContain(String(PASS_CAP));
+  /**
+   * A block past the cap is a block nothing clears, because a submitted review cannot be
+   * withdrawn. The overage is reported rather than enforced.
+   */
+  it("prints the overage past the cap rather than blocking on it", () => {
+    expect(reviewBlocked(spent(PASS_CAP + 1), [critical])).toBeNull();
+    expect(overspent(spent(PASS_CAP + 1))).toContain(`${PASS_CAP + 1} passes`);
+    expect(overspent(spent(PASS_CAP))).toBeNull();
   });
 });
 
@@ -111,16 +125,25 @@ describe("the review converged", () => {
  * The cap is one number and both skills read it here. A skill spelling it out again
  * leaves prose and code each holding half a rule that only holds whole.
  */
+const NUMBER = "one|two|three|four|five|six|seven|eight|nine|ten|\\d+";
+
+/** A pass count against the word, and a ceiling named with the number beside it. */
+const SECOND_CAP = [
+  new RegExp(`\\b(?:${NUMBER})\\s+(?:\\w+\\s+)?passes\\b`),
+  new RegExp(`\\b(?:cap|ceiling|most)\\s+(?:\\w+\\s+){0,2}(?:${NUMBER})\\b`),
+];
+
 describe("the cap and the condition the skills cite", () => {
   it("is cited by issue-to-pr rather than restated", () => {
     const skill = read(".claude/skills/issue-to-pr/SKILL.md");
     expect(skill, "issue-to-pr names no cap, so a run cannot tell when to stop").toContain(
       "PASS_CAP",
     );
-    expect(
-      /\b(two|three|four|five) passes\b/.test(skill),
-      "issue-to-pr spells a pass count out, which is a second cap the gate cannot read",
-    ).toBe(false);
+    for (const second of SECOND_CAP)
+      expect(
+        second.test(skill),
+        `issue-to-pr spells a pass count out (${second}), which is a second cap the gate cannot read`,
+      ).toBe(false);
   });
 
   it("reaches merge-pr in the words the gate prints", () => {

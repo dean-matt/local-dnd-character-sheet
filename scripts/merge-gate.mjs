@@ -61,23 +61,35 @@ export function blockingFindings(comments) {
 export const PASS_CAP = 3;
 
 /**
- * The pass that reads a fix is what answers the finding, so this wants a last pass that
- * came back clean. At `PASS_CAP` it stops asking: "every thread carries a verdict" and "no
- * declined finding is critical or warning" already hold the fix, and demanding a pass the
- * run may not take leaves a hand merge as the only way out. Past the cap it blocks again,
- * because a run that reviews until nothing is left has set its own cap — the user weighs
- * that one.
+ * The pass that reads a fix is what answers the finding, so this wants a last pass whose
+ * findings are all `comment`. A pass that found nothing satisfies it by posting a body and
+ * no comments, which is the only record the gate has that the code was read again. At
+ * `PASS_CAP` it stops asking: "every thread carries a verdict" and "no declined finding is
+ * critical or warning" already hold the fix, and demanding a pass the run may not take
+ * leaves a hand merge as the only way out.
  */
 export function reviewBlocked(reviews, findings) {
   const count = passes(reviews).length;
   if (count === 0) return "no review pass found — nothing has reviewed this";
-  if (count > PASS_CAP) return `${count} passes, past the cap of ${PASS_CAP}`;
   const blocking = blockingFindings(findings);
-  if (blocking.length === 0 || count === PASS_CAP) return null;
+  if (blocking.length === 0 || count >= PASS_CAP) return null;
   return [
     `pass ${count} of ${PASS_CAP} returned a blocking finding — review again`,
     ...blocking,
   ].join("\n      ");
+}
+
+/**
+ * Blocking a run that spent more passes than the cap deadlocks the pull request one pass
+ * higher, because a submitted review cannot be withdrawn and any bodied one counts — a
+ * human's "LGTM" included. The overage prints beside the condition instead, so a run
+ * cannot raise its own cap unseen.
+ */
+export function overspent(reviews) {
+  const count = passes(reviews).length;
+  return count > PASS_CAP
+    ? `${count} passes, past the cap of ${PASS_CAP} — read the extra passes before merging`
+    : null;
 }
 
 const VERDICT = /^\*\*(Applied|Declined)\*\*/;
@@ -173,6 +185,8 @@ function gate(n) {
     pass === null ? [] : api(`repos/{owner}/{repo}/pulls/${n}/reviews/${pass.id}/comments`);
   const reviewFailure = reviewBlocked(reviews, findings);
   report(reviewFailure === null, "the review converged", reviewFailure);
+  const over = overspent(reviews);
+  if (over !== null) console.log(`      ${over}`);
   if (pass !== null)
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 
