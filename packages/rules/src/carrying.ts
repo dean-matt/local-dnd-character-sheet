@@ -25,6 +25,17 @@ const SIZE_MULTIPLIER: Record<Size, number> = {
 
 const POUNDS_PER_STRENGTH_POINT = 15;
 
+/**
+ * Both rulesets weigh every coin the same: fifty to the pound, whatever the
+ * denomination, which is why converting a purse up lightens it — 1,000 cp weighs 20
+ * pounds and the 10 gp it buys weighs 0.2. Upstream agrees, the five `PHB`
+ * denominations each stating 0.02 where the 14 setting coins under the same `$C` type
+ * state no weight at all, but a character counts coins by denomination rather than
+ * holding an inventory row for them, so the number is a rule here rather than a catalog
+ * lookup.
+ */
+export const POUNDS_PER_COIN = 0.02;
+
 /** Upstream spells sizes `T` through `G`, which the caller translates. */
 function multiplierFor(size: Size): number {
   // `hasOwn` rather than a truthiness check, so an inherited key cannot answer for a size.

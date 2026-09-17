@@ -22,6 +22,7 @@ import {
   HIT_DICE,
   type HitDie,
   maxHitPoints,
+  POUNDS_PER_COIN,
   PROFICIENCY_LEVELS,
   passiveScore,
   proficiencyContribution,
@@ -160,12 +161,32 @@ const proficienciesSchema = z.strictObject({
   }),
 });
 
-const inventoryEntrySchema = z.strictObject({
-  ref: entryRefSchema,
-  quantity: z.int().min(1).default(1),
-  equipped: z.boolean().default(false),
-  attuned: z.boolean().default(false),
-});
+/**
+ * `carried` is a flag rather than a reference to a container, because an entry has no
+ * identity a reference could name: two rows may hold the same `ref`, so pointing at one
+ * means giving every entry an id, and nothing yet reads the grouping that id would buy.
+ * The weight sum asks only whether a thing is on the character, and a container that
+ * changes the weight it holds is magic-item behavior rather than the carrying rule. A
+ * reference stays open the day a sheet groups a pack by the bag it sits in.
+ *
+ * It is not `equipped`, which means worn or wielded: a rope in the pack is carried and
+ * unequipped, a sword left in the cart is neither. A wielded sword is always on the
+ * character, so the refinement refuses an equipped entry left behind.
+ *
+ * It defaults true where the other flags default false: an entry naming no container is
+ * a thing the character has on them.
+ */
+const inventoryEntrySchema = z
+  .strictObject({
+    ref: entryRefSchema,
+    quantity: z.int().min(1).default(1),
+    carried: z.boolean().default(true),
+    equipped: z.boolean().default(false),
+    attuned: z.boolean().default(false),
+  })
+  .refine((entry) => entry.carried || !entry.equipped, {
+    error: "an item is equipped but not carried",
+  });
 
 const spellEntrySchema = z.strictObject({
   ref: entryRefSchema,
@@ -176,9 +197,10 @@ const spellEntrySchema = z.strictObject({
 
 /**
  * A reference flattened for comparison, tagged so a homebrew id cannot spell a catalog
- * pair.
+ * pair. Exported because a caller building a catalog lookup for `carriedWeight` keys it
+ * the same way.
  */
-const entryKey = (ref: EntryRef): string =>
+export const entryKey = (ref: EntryRef): string =>
   "homebrewId" in ref ? `homebrew|${ref.homebrewId}` : `catalog|${refKey(ref)}`;
 
 /**
@@ -558,7 +580,49 @@ export function passiveSkill(
   );
 }
 
-type EntryRef = z.infer<typeof entryRefSchema>;
+/**
+ * Ten-thousandths of a pound, the grid the sum counts on. Upstream prints nothing finer
+ * — `Bead of Force` (DMG) at 0.0625 and `Energy Cell` (DMG) at 0.3125 hold the four
+ * decimals — so the scale costs no accuracy and buys an exact total across rows of
+ * different weights, where adding five kinds of ammunition and a purse of coins as
+ * floats lands beside the answer rather than on it. A finer weight rounds to the grid,
+ * and the way out is a larger scale, bounded by the 2^53 the integer sum stays inside.
+ */
+const WEIGHT_SCALE = 10_000;
+
+const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
+
+/**
+ * The pounds a character is carrying: every inventory entry flagged `carried`, times its
+ * quantity, plus the coins.
+ *
+ * `weights` maps `entryKey` to an item's weight in pounds, from the catalog and from
+ * homebrew, which the caller merges into one map and expands a magic variant into first.
+ * A `null` is a row that states no weight and adds nothing; a reference the map does not
+ * name is refused, because a silent zero would hide it.
+ *
+ * Coins count regardless of `carried`, because `money` is a purse the definition has
+ * nowhere to put down: a character who banked 1,000 gp in town carries 20 pounds they
+ * left there, and `encumbranceAt` reads this total straight. The way out is a flag on
+ * `money`, or an inventory entry per denomination.
+ */
+export function carriedWeight(
+  definition: CharacterDefinition,
+  weights: ReadonlyMap<string, number | null>,
+): number {
+  let total = 0;
+  for (const entry of definition.inventory) {
+    if (!entry.carried) continue;
+    const key = entryKey(entry.ref);
+    const weight = weights.get(key);
+    if (weight === undefined) throw new RangeError(`No item row for ${key}`);
+    total += scaled(weight ?? 0) * entry.quantity;
+  }
+  const coins = Object.values(definition.money).reduce((sum, count) => sum + count, 0);
+  return (total + scaled(POUNDS_PER_COIN) * coins) / WEIGHT_SCALE;
+}
+
+export type EntryRef = z.infer<typeof entryRefSchema>;
 export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type CharacterDefinition = z.infer<typeof characterDefinitionSchema>;

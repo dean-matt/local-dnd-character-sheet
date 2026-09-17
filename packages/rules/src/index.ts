@@ -4,6 +4,7 @@ export {
   carryingCapacity,
   encumbranceAt,
   encumbranceThresholds,
+  POUNDS_PER_COIN,
   pushDragLiftCapacity,
   SIZES,
 } from "./carrying.ts";

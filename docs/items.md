@@ -34,6 +34,17 @@ and the column is nullable because 43 items carry none — though every one of t
 inherits a rarity through `_copy`, so nothing is NULL at the pinned tag.
 `type` is absent on 944 items and carries the 2024 `G|XPHB` form on others.
 
+**`weight` stays in `json` rather than becoming a column.** It is pounds, a plain
+number, so a column would project it unchanged — where a magic variant hides `type` and
+`rarity` under `inherits`, and `requires_attunement` folds three `reqAttune` shapes into
+a flag. That indirection never reaches weight: no variant states one, inside
+`inherits` or out. So `json_extract(json, '$.weight')` reads every row that carries one,
+nothing filters or sorts on it, and a column would cost a full `content.db` rebuild for
+a value already there. 888 of the 2,428 items and 216 of the 230 base items carry a
+weight, the `_copy` items among them inheriting theirs; the rest state none and weigh
+nothing to a character. The way out, the day a sum over a whole pack wants an index: the
+column is a rebuild rather than a migration, which this table takes wholesale anyway.
+
 `reqAttune` is not a boolean. It is `true` 601 times, a condition such as `by a wizard`
 248 more, and `optional` on 11 items that work unattuned. `requires_attunement` answers
 the yes-or-no an attunement slot count needs — `optional` is a 0 — and the condition
