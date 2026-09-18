@@ -518,6 +518,36 @@ export const characterStateSchema = z.strictObject({
   exhaustion: z.int().min(0).max(6).default(0),
 });
 
+/**
+ * A stored character's state, as an endpoint returns it. Mirrors
+ * `characterRecordSchema`: `characterId` and `updatedAt` are what the table adds beyond
+ * the JSON column itself.
+ */
+export const characterStateRecordSchema = z.strictObject({
+  characterId: z.string(),
+  state: characterStateSchema,
+  updatedAt: z.iso.datetime(),
+});
+
+export type CharacterStateRecord = z.infer<typeof characterStateRecordSchema>;
+
+/**
+ * The state a new character starts with: no damage taken, nothing spent, nothing
+ * tracked yet. `hitPoints.current` is 0 rather than a computed maximum, because that
+ * maximum needs the catalog's hit dice, which this package never reaches — the first
+ * read that has the catalog in hand sets it.
+ */
+export function defaultCharacterState(): CharacterState {
+  return characterStateSchema.parse({
+    hitPoints: { current: 0 },
+    hitDice: [],
+    spellSlots: [],
+    conditions: [],
+    resources: [],
+    deathSaves: {},
+  });
+}
+
 // Derived --------------------------------------------------------------------
 
 /**

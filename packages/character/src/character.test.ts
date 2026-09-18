@@ -17,7 +17,9 @@ import {
   characterDefinitionSchema,
   characterDerivedSchema,
   characterRecordSchema,
+  characterStateRecordSchema,
   characterStateSchema,
+  defaultCharacterState,
   derivedSchema,
   derivedValue,
   encumberedSpeed,
@@ -166,6 +168,34 @@ describe("round trips", () => {
       updatedAt: "2026-01-01T00:00:00.000Z",
     };
     expect(characterRecordSchema.parse(structuredClone(record))).toEqual(record);
+  });
+
+  it("preserves a stored state record through parse", () => {
+    const record = {
+      characterId: "1",
+      state,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    expect(characterStateRecordSchema.parse(structuredClone(record))).toEqual(record);
+  });
+});
+
+describe("default state", () => {
+  it("is unhurt, unspent and unconditioned", () => {
+    expect(defaultCharacterState()).toEqual({
+      hitPoints: { current: 0, temporary: 0 },
+      hitDice: [],
+      spellSlots: [],
+      pactSlots: null,
+      conditions: [],
+      resources: [],
+      deathSaves: { successes: 0, failures: 0 },
+      exhaustion: 0,
+    });
+  });
+
+  it("parses as a character's state", () => {
+    expect(characterStateSchema.safeParse(defaultCharacterState()).success).toBe(true);
   });
 });
 

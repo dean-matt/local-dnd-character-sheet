@@ -1,7 +1,11 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  characterDefinitionSchema,
+  defaultCharacterState,
+} from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../db/client.ts";
 import { charactersRoutes } from "./characters.ts";
@@ -123,5 +127,44 @@ describe("charactersRoutes", () => {
     expect(res.status).toBe(204);
 
     expect((await routes.request(`/characters/${created.id}`)).status).toBe(404);
+  });
+
+  it("reads the default state a character is created with", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+
+    const res = await routes.request(`/characters/${created.id}/state`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      characterId: created.id,
+      state: defaultCharacterState(),
+    });
+  });
+
+  it("replaces a character's state without touching its definition", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+
+    const hurt = { ...defaultCharacterState(), hitPoints: { current: 4, temporary: 0 } };
+    const res = await routes.request(`/characters/${created.id}/state`, {
+      ...json(hurt),
+      method: "PUT",
+    });
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ characterId: created.id, state: hurt });
+
+    const definition = await (await routes.request(`/characters/${created.id}`)).json();
+    expect(definition).toEqual(created);
+  });
+
+  it("404s reading or writing the state of an id that does not exist", async () => {
+    const getRes = await routes.request("/characters/missing/state");
+    expect(getRes.status).toBe(404);
+    expect(await getRes.json()).toEqual({ error: "No character with that id" });
+
+    const putRes = await routes.request("/characters/missing/state", {
+      ...json(defaultCharacterState()),
+      method: "PUT",
+    });
+    expect(putRes.status).toBe(404);
   });
 });
