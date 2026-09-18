@@ -22,8 +22,9 @@ export function getCharacter(db: CharactersDb, id: string) {
 export function insertCharacter(
   db: CharactersDb,
   input: { id: string; definition: CharacterDefinition },
-): void {
-  db.insert(characters)
+) {
+  return db
+    .insert(characters)
     .values({
       id: input.id,
       name: input.definition.name,
@@ -31,15 +32,18 @@ export function insertCharacter(
       level: totalLevel(input.definition),
       definition: input.definition,
     })
-    .run();
+    .returning()
+    .get();
 }
 
+/** `undefined` where `id` names no row, so a caller reads a missed update the way `getCharacter` reads a miss. */
 export function updateCharacterDefinition(
   db: CharactersDb,
   id: string,
   definition: CharacterDefinition,
-): void {
-  db.update(characters)
+) {
+  return db
+    .update(characters)
     .set({
       definition,
       name: definition.name,
@@ -48,7 +52,8 @@ export function updateCharacterDefinition(
       updatedAt: new Date(),
     })
     .where(eq(characters.id, id))
-    .run();
+    .returning()
+    .get();
 }
 
 /** Returns whether a row existed to delete. The `character_state` cascade needs `PRAGMA foreign_keys = ON`, set in `client.ts`. */

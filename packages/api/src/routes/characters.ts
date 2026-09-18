@@ -37,6 +37,8 @@ function toRecord(row: CharacterRow): CharacterRecord {
 
 const idParam = z.object({ id: z.string() });
 
+const NOT_FOUND = "no character with that id";
+
 const list = createRoute({
   method: "get",
   path: "/characters",
@@ -118,30 +120,25 @@ export function charactersRoutes(db: CharactersDb) {
 
   routes.openapi(read, (c) => {
     const row = getCharacter(db, c.req.valid("param").id);
-    if (!row) return c.json({ error: "no character with that id" }, 404);
+    if (!row) return c.json({ error: NOT_FOUND }, 404);
     return c.json(toRecord(row), 200);
   });
 
   routes.openapi(create, (c) => {
-    const id = randomUUID();
-    insertCharacter(db, { id, definition: c.req.valid("json") });
-    const row = getCharacter(db, id);
-    if (!row) throw new Error("insertCharacter did not persist the row it just wrote");
+    const row = insertCharacter(db, { id: randomUUID(), definition: c.req.valid("json") });
     return c.json(toRecord(row), 201);
   });
 
   routes.openapi(update, (c) => {
     const { id } = c.req.valid("param");
-    if (!getCharacter(db, id)) return c.json({ error: "no character with that id" }, 404);
-    updateCharacterDefinition(db, id, c.req.valid("json"));
-    const row = getCharacter(db, id);
-    if (!row) throw new Error("updateCharacterDefinition did not persist the row it just wrote");
+    const row = updateCharacterDefinition(db, id, c.req.valid("json"));
+    if (!row) return c.json({ error: NOT_FOUND }, 404);
     return c.json(toRecord(row), 200);
   });
 
   routes.openapi(remove, (c) => {
     const { id } = c.req.valid("param");
-    if (!deleteCharacter(db, id)) return c.json({ error: "no character with that id" }, 404);
+    if (!deleteCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
     return c.body(null, 204);
   });
 
