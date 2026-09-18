@@ -20,6 +20,7 @@ import {
 import { basename, dirname, join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { resolveCopies } from "./load/copy.ts";
+import { drainUnmatchedFluff } from "./load/fluff.ts";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
 import { resolveVersions } from "./load/versions.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
@@ -98,6 +99,20 @@ function discard(path: string): void {
   for (const file of [path, `${path}-wal`, `${path}-shm`]) rmSync(file, { force: true });
 }
 
+/**
+ * Warns on a fluff entry no row's `json` claimed — see `drainUnmatchedFluff`.
+ * The count includes the known-benign shapes `fluff.ts` documents, which is
+ * why this warns rather than fails.
+ */
+function warnUnmatchedFluff(): void {
+  const unmatched = drainUnmatchedFluff();
+  if (unmatched.length === 0) return;
+  const byFile = new Map<string, number>();
+  for (const [path] of unmatched) byFile.set(path, (byFile.get(path) ?? 0) + 1);
+  console.warn(`${unmatched.length} fluff entries matched no row:`);
+  for (const [path, count] of [...byFile].sort()) console.warn(`  ${path}: ${count}`);
+}
+
 function isRunning(pid: number): boolean {
   try {
     process.kill(pid, 0);
@@ -163,6 +178,7 @@ export function buildContent({
         }
       }
     })();
+    warnUnmatchedFluff();
     // The rename moves the main file alone, so a WAL that neither the checkpoint
     // nor the close drains would be left behind holding committed rows — a short
     // catalog reported as a successful build. Refuse to publish one instead.

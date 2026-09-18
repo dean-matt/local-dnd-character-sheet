@@ -14,6 +14,11 @@
  * class files carry a placeholder `subclassFluff` naming the class itself
  * rather than a subclass, for the same reason. Checking every promise instead
  * of every fluff entry reaches the real lore without tripping on either.
+ *
+ * `drainUnmatchedFluff` answers the question that check leaves open: which
+ * fluff entries no row claimed at all, promised or not. `content:build` warns
+ * on the count rather than failing, since both known-benign shapes above show
+ * up in it too.
  */
 import { type Entry, isRecord, text } from "./json.ts";
 
@@ -45,6 +50,19 @@ function fluffEntries(parsed: unknown, arrayKey: string): Entry[] {
   return Array.isArray(list) ? list.filter(isRecord) : [];
 }
 
+/** A pool's lookup, plus the entries no lookup against it ever claimed. */
+type FluffPool = ((key: string) => Entry | undefined) & {
+  unclaimed(): [path: string, entry: Entry][];
+};
+
+/**
+ * Every pool `collectFluff` has built since the last drain. A build funnels
+ * every fluff file through `collectFluff`, so registering here — rather than
+ * threading a return value through each of the seven loaders that call it —
+ * is what lets `drainUnmatchedFluff` see the whole corpus.
+ */
+const pools: FluffPool[] = [];
+
 /**
  * Every fluff entry the given files carry under `arrayKey`, indexed by the key
  * `keyOf` derives from each one. Several files pool into one lookup because a
@@ -56,14 +74,33 @@ export function collectFluff(
   files: [string, unknown][],
   arrayKey: string,
   keyOf: (entry: Entry, context: string) => string,
-): (key: string) => Entry | undefined {
-  const byKey = new Map<string, Entry>();
+): FluffPool {
+  const byKey = new Map<string, { path: string; entry: Entry }>();
   for (const [path, parsed] of files) {
     fluffEntries(parsed, arrayKey).forEach((entry, index) => {
-      byKey.set(keyOf(entry, `${path} ${arrayKey}[${index}]`), entry);
+      byKey.set(keyOf(entry, `${path} ${arrayKey}[${index}]`), { path, entry });
     });
   }
-  return (key) => byKey.get(key);
+  const claimed = new Set<string>();
+  const pool = ((key) => {
+    const hit = byKey.get(key);
+    if (hit !== undefined) claimed.add(key);
+    return hit?.entry;
+  }) as FluffPool;
+  pool.unclaimed = () =>
+    [...byKey].filter(([key]) => !claimed.has(key)).map(([, hit]) => [hit.path, hit.entry]);
+  pools.push(pool);
+  return pool;
+}
+
+/**
+ * Every fluff entry no row's `json` claimed, across every pool built since
+ * the last drain — the two known-benign shapes above show up here too.
+ * Drains the registry, so a later build in the same process starts from
+ * zero rather than re-reporting what this call already returned.
+ */
+export function drainUnmatchedFluff(): [path: string, entry: Entry][] {
+  return pools.splice(0).flatMap((pool) => pool.unclaimed());
 }
 
 /** Fields a fluff entry carries only to state which row it describes. */
