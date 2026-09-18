@@ -1,17 +1,23 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  characterDefinitionSchema,
+  defaultCharacterState,
+} from "@dnd/character";
 import { eq } from "drizzle-orm";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters } from "../characters.ts";
 import { openDatabases } from "../client.ts";
 import {
   deleteCharacter,
   getCharacter,
+  getCharacterState,
   insertCharacter,
   listCharacters,
   updateCharacterDefinition,
+  updateCharacterState,
 } from "./characters.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
@@ -109,6 +115,52 @@ describe("characters queries", () => {
 
     it("reports false for an id that does not exist", () => {
       expect(deleteCharacter(db, "missing")).toBe(false);
+    });
+  });
+
+  describe("getCharacterState and updateCharacterState", () => {
+    it("creates a default state alongside the character", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+
+      expect(getCharacterState(db, "1")).toMatchObject({
+        characterId: "1",
+        state: defaultCharacterState(),
+      });
+    });
+
+    it("reads nothing for an id that does not exist", () => {
+      expect(getCharacterState(db, "missing")).toBeUndefined();
+    });
+
+    it("replaces the state without touching the character's definition", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+      const before = getCharacter(db, "1");
+
+      const hurt = { ...defaultCharacterState(), hitPoints: { current: 4, temporary: 0 } };
+      updateCharacterState(db, "1", hurt);
+
+      expect(getCharacterState(db, "1")).toMatchObject({ characterId: "1", state: hurt });
+      expect(getCharacter(db, "1")).toEqual(before);
+    });
+
+    it("moves updatedAt on every write", () => {
+      vi.useFakeTimers();
+      try {
+        insertCharacter(db, { id: "1", definition: baseDefinition() });
+        const before = getCharacterState(db, "1");
+
+        vi.advanceTimersByTime(5_000);
+        updateCharacterState(db, "1", defaultCharacterState());
+
+        const after = getCharacterState(db, "1");
+        expect(after?.updatedAt.getTime()).toBeGreaterThan(before?.updatedAt.getTime() ?? 0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("reports nothing for an id that does not exist", () => {
+      expect(updateCharacterState(db, "missing", defaultCharacterState())).toBeUndefined();
     });
   });
 });

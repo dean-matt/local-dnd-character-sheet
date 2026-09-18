@@ -1,26 +1,33 @@
 /**
- * List, read, create, update and delete for `characters.db`'s `characters` table.
- * `name`, `level` and `edition` are never accepted from a request body — the query
- * layer derives all three from `definition` on every write.
+ * List, read, create, update and delete for `characters.db`'s `characters` table, plus
+ * read and replace for the `character_state` row each one owns. `name`, `level` and
+ * `edition` are never accepted from a request body — the query layer derives all three
+ * from `definition` on every write, and a state write never reaches that table.
  */
 import { randomUUID } from "node:crypto";
 import {
   type CharacterRecord,
+  type CharacterStateRecord,
   characterDefinitionSchema,
   characterRecordSchema,
+  characterStateRecordSchema,
+  characterStateSchema,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import {
   deleteCharacter,
   getCharacter,
+  getCharacterState,
   insertCharacter,
   listCharacters,
   updateCharacterDefinition,
+  updateCharacterState,
 } from "../db/queries/characters.ts";
 import { notFound } from "./errors.ts";
 
 type CharacterRow = NonNullable<ReturnType<typeof getCharacter>>;
+type CharacterStateRow = NonNullable<ReturnType<typeof getCharacterState>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
 function toRecord(row: CharacterRow): CharacterRecord {
@@ -31,6 +38,15 @@ function toRecord(row: CharacterRow): CharacterRecord {
     level: row.level,
     definition: row.definition,
     createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  });
+}
+
+/** Validates a row read back from SQLite against the same schema its write went through. */
+function toStateRecord(row: CharacterStateRow): CharacterStateRecord {
+  return characterStateRecordSchema.parse({
+    characterId: row.characterId,
+    state: row.state,
     updatedAt: row.updatedAt.toISOString(),
   });
 }
@@ -113,6 +129,39 @@ const remove = createRoute({
   },
 });
 
+const readState = createRoute({
+  method: "get",
+  path: "/characters/{id}/state",
+  tags: ["characters"],
+  summary: "Read a character's state",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The character's state",
+      content: { "application/json": { schema: characterStateRecordSchema } },
+    },
+    404: notFound("character"),
+  },
+});
+
+const writeState = createRoute({
+  method: "put",
+  path: "/characters/{id}/state",
+  tags: ["characters"],
+  summary: "Replace a character's state",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: characterStateSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The updated state",
+      content: { "application/json": { schema: characterStateRecordSchema } },
+    },
+    404: notFound("character"),
+  },
+});
+
 export function charactersRoutes(db: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -140,6 +189,19 @@ export function charactersRoutes(db: CharactersDb) {
     const { id } = c.req.valid("param");
     if (!deleteCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
     return c.body(null, 204);
+  });
+
+  routes.openapi(readState, (c) => {
+    const row = getCharacterState(db, c.req.valid("param").id);
+    if (!row) return c.json({ error: NOT_FOUND }, 404);
+    return c.json(toStateRecord(row), 200);
+  });
+
+  routes.openapi(writeState, (c) => {
+    const { id } = c.req.valid("param");
+    const row = updateCharacterState(db, id, c.req.valid("json"));
+    if (!row) return c.json({ error: NOT_FOUND }, 404);
+    return c.json(toStateRecord(row), 200);
   });
 
   return routes;
