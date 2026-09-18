@@ -84,7 +84,6 @@ next issue buries that decision under a second pull request.
 **Start itself.** No cron, no workflow trigger, nothing that begins a run without a person
 asking. Nobody reads an unwatched run, and it merges to `main` all the same.
 
-**Share a dispatch.** Once step 2 or step 4 sends a subagent off, that subagent is the only
-writer its worktree has until it reports back. Resuming it by hand from its own transcript,
-or dispatching a second one at the same issue, hands the worktree two drivers at once —
-wait for the report instead.
+**Share a dispatch.** Once step 2 or step 4 sends a subagent off, it is the worktree's only
+writer until it reports back. Resuming it by hand, or dispatching a second one at the same
+issue, hands the worktree two drivers — wait for the report instead.
