@@ -2,12 +2,14 @@
  * Opens the two user databases and brings each to its latest migration.
  *
  * Everything that reads or writes `characters.db` or `homebrew.db` goes through
- * here, because SQLite leaves `PRAGMA foreign_keys` OFF by default: opened any
- * other way, every `onDelete: "cascade"` in the schemas is silently inert and
- * deleting a character orphans its state, overrides and logs.
+ * `openDatabases`, because SQLite leaves `PRAGMA foreign_keys` OFF by default:
+ * opened any other way, every `onDelete: "cascade"` in the schemas is silently
+ * inert and deleting a character orphans its state, overrides and logs.
  *
- * Migrating on import means an API start can never skip a pending schema change,
- * unlike a documented manual step.
+ * Migrating on open means an API start can never skip a pending schema change,
+ * unlike a documented manual step. `openDatabases` takes the directory rather
+ * than reading one from module scope, so a test brings up its own pair at a
+ * path it controls instead of touching the user's real data.
  */
 import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -17,10 +19,8 @@ import * as charactersSchema from "./characters.ts";
 import * as homebrewSchema from "./homebrew.ts";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
 
-const DATA_DIR = resolve(import.meta.dirname, "../../../../data");
-
-function open(fileName: string) {
-  const path = join(DATA_DIR, fileName);
+function open(dataDir: string, fileName: string) {
+  const path = join(dataDir, fileName);
   mkdirSync(dirname(path), { recursive: true });
   const sqlite = new Database(path);
   sqlite.pragma("journal_mode = WAL");
@@ -28,8 +28,16 @@ function open(fileName: string) {
   return sqlite;
 }
 
-export const charactersDb = drizzle(open("characters.db"), { schema: charactersSchema });
-migrateCharacters(charactersDb);
+export function openDatabases(dataDir: string) {
+  const charactersDb = drizzle(open(dataDir, "characters.db"), { schema: charactersSchema });
+  migrateCharacters(charactersDb);
 
-export const homebrewDb = drizzle(open("homebrew.db"), { schema: homebrewSchema });
-migrateHomebrew(homebrewDb);
+  const homebrewDb = drizzle(open(dataDir, "homebrew.db"), { schema: homebrewSchema });
+  migrateHomebrew(homebrewDb);
+
+  return { charactersDb, homebrewDb };
+}
+
+const DATA_DIR = resolve(import.meta.dirname, "../../../../data");
+
+export const { charactersDb, homebrewDb } = openDatabases(DATA_DIR);

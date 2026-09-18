@@ -18,6 +18,11 @@ export default defineConfig({
             "tests/**/*.test.ts",
             "packages/{rules,character,dice,tags,api}/src/**/*.test.ts",
           ],
+          // packages/api/src/db/{client,migrate}.test.ts build a database on disk
+          // too, but each does a handful of inserts rather than a catalog import,
+          // so they still fit the 5 s default. If an api database test grows past
+          // that, split it into its own project with the content project's budget
+          // rather than raising this one for every test here.
         },
       },
       {
@@ -29,7 +34,6 @@ export default defineConfig({
           // runner spends 100 s over a suite that takes 4 s here — enough for the
           // 5 s default to fail a passing test. 30 s is 300 times the slowest test
           // here, so a hang still fails; the hooks share it, making the same calls.
-          // A database test in another package needs its own project saying this.
           testTimeout: 30_000,
           hookTimeout: 30_000,
         },
