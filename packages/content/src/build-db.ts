@@ -178,7 +178,6 @@ export function buildContent({
         }
       }
     })();
-    warnUnmatchedFluff();
     // The rename moves the main file alone, so a WAL that neither the checkpoint
     // nor the close drains would be left behind holding committed rows — a short
     // catalog reported as a successful build. Refuse to publish one instead.
@@ -191,6 +190,7 @@ export function buildContent({
     // Only a stale WAL has to go first, or SQLite would apply it to the new file.
     for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
     renameSync(staging, dbPath);
+    warnUnmatchedFluff();
   } catch (error) {
     // A pool a failed loader registered would otherwise sit in fluff.ts's
     // module scope and get swept into whatever call runs next, misattributing
