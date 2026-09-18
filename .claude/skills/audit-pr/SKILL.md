@@ -122,7 +122,7 @@ where `scripts/merge-gate.mjs` is its only reader and one it cannot parse stops 
 `tests/review-severity.test.ts` holds this table to that parser.
 
 A finding naming no line goes against the file or the pull request. Every finding goes to
-the caller's report, and [`issue-to-pr`](../issue-to-pr/SKILL.md) step 13 decides whether
+the caller's report, and [`converge-review`](../converge-review/SKILL.md) decides whether
 another pass follows.
 
 ## What this skill will not do
@@ -132,5 +132,5 @@ the branch-name hook goes quiet and a commit lands anywhere. Settling a claim by
 something is not touching it — the worktree has no `node_modules`, so use a scratch
 repository and change nothing tracked.
 
-**Apply findings, post them, or label the pull request.** Steps 11 to 14 of
-[`issue-to-pr`](../issue-to-pr/SKILL.md) do that.
+**Apply findings, post them, or label the pull request.** Steps 1 to 4 of
+[`converge-review`](../converge-review/SKILL.md) do that.

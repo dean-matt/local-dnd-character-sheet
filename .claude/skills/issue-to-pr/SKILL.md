@@ -45,7 +45,7 @@ it took none — stop there.
 
    The add fails where a directory is already there — another agent on this issue, or a
    crash. Clear it by hand once no agent holds it. Never link `characters.db`: two agents
-   writing it collide. Run every later step from the worktree; step 14 removes it.
+   writing it collide. Run every later step from the worktree; step 12 removes it.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
@@ -61,55 +61,17 @@ it took none — stop there.
    failure with a note about it.
 10. **Open the pull request** with `gh pr create`, body linking the issue and prose passed.
    This starts CI; the pushes before it started nothing.
-11. **Dispatch the review to a subagent** whose prompt carries the pull request number and
-    nothing else — no rationale, no account of what you wrote, no defense of a choice. It
-    invokes [`audit-pr`](../audit-pr/SKILL.md), which reviews from its own worktree. Its
-    findings reach step 11 unchanged.
-12. **Post the pass as one review, before applying** — a run that dies mid-apply then
-    leaves the findings standing rather than a label pointing at nothing. One call sends
-    `commit_id`, `event`, a `body` and each line comment as `{path, line, side, body}`;
-    posted one at a time they arrive as a review each. The `body` opens with `PASS_MARKER`
-    from `scripts/merge-gate.mjs`, which is how the gate tells a pass from a human's review,
-    then holds what the pass found and any finding no line anchors. `event` is `COMMENT`,
-    because GitHub refuses an approval on your own pull request; step 14's labels carry that
-    verdict.
-
-    ```bash
-    gh api 'repos/{owner}/{repo}/pulls/<n>/reviews' --input <the pass, as json>
-    gh api 'repos/{owner}/{repo}/pulls/<n>/reviews/<review>/comments' --jq '.[].id'
-    gh api 'repos/{owner}/{repo}/pulls/<n>/comments/<id>/replies' -f body=<the verdict>
-    ```
-
-    A pass returning nothing still posts its marked `body`, with no comments, then skips to
-    step 14 — that review is the only record the gate has that the code was read again, and
-    "the review converged" reads the findings of the last pass to post. A later pass adds,
-    leaving earlier threads alone.
-13. **Label, apply, reply.** Swap `review:changes-requested` on first, in one `gh pr edit
-    <n> --add-label <one> --remove-label <other>`, so the mark and the findings stand
-    together. Then apply what survives, `pnpm check`, prose pass what the fixes touched,
-    commit, push, and bring the pull request body back in line — fixes left in the working
-    tree leave the pull request holding the code the review rejected.
-
-    Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
-    every finding carries a verdict. Each reply lands as its own empty review. A fix that
-    moves a line outdates its thread, and the reply still posts.
-14. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, a fresh
-    subagent each so none inherits the last one's conclusions. `PASS_CAP` in
-    `scripts/merge-gate.mjs` caps the loop and the gate's "the review converged" reads it:
-    a pass returning nothing ends the loop earlier, and at the cap you apply what the pass
-    found and let the verdict reply carry it. A finding you declined comes back and takes
-    the same reply.
-15. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a pass
-    returned still waits on the user; `review:changes-requested` where something does — a
-    decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.
-
-    Then remove the worktree from anywhere inside it: `cd "$(git rev-parse
+11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
+    number and nothing else. It dispatches the review, posts and applies each pass, and
+    labels the pull request `review:approved` or `review:changes-requested`. It returns
+    that label, what each pass found, and what `gh pr checks` says.
+12. **Remove the worktree**, from anywhere inside it: `cd "$(git rev-parse
     --show-toplevel)/../../.."` reaches the main checkout, and `git worktree remove
-    .claude/worktrees/<n>` refuses rather than discarding anything step 12 left
+    .claude/worktrees/<n>` refuses rather than discarding anything `converge-review` left
     uncommitted. The branch and the pull request stand.
 
-    Report what landed, what each review found, and what `gh pr checks` says. A run still
-    in flight is reported in flight rather than waited on; a red run is the user's to weigh.
+    Report what `converge-review` returned. A run still in flight is reported in flight
+    rather than waited on; a red run is the user's to weigh.
 
 ## The pull request body
 
@@ -124,6 +86,6 @@ real corpus and what came out.
 
 **Widen the issue.** A second bug found on the way is a second issue: file it or name it
 in the report, and leave it out of this branch. `gh issue create` leaves that issue off the
-board, so put it there with step 3's `item-add`. It lands unranked and without a milestone,
+board, so put it there with step 1's `item-add`. It lands unranked and without a milestone,
 which [`pick-issue`](../pick-issue/SKILL.md) reads as backlog until the user ranks it under
 a milestone.
