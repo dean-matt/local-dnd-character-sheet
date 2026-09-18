@@ -15,6 +15,9 @@ data/characters.db-*
 data/homebrew.db
 data/homebrew.db-*
 
+# Backups taken before each migration — see docs/reviving.md to restore one
+data/backups/
+
 # Editors — share the project-level config, ignore anything personal
 .vscode/*
 !.vscode/settings.json
