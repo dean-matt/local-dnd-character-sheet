@@ -183,9 +183,10 @@ the registry was diffed against it.
 
 ## Documents of their own
 
-Three subjects here outgrew a section: what a magic variant and an item group need in
-[`items.md`](items.md), what `classTableGroups` and `optionalfeatureProgression` state in
-[`class-tables.md`](class-tables.md), and what a `fluff-*.json` file carries in
+Four subjects here outgrew a section: what a magic variant and an item group need in
+[`items.md`](items.md), what `classTableGroups` states in [`class-tables.md`](class-tables.md),
+what `optionalfeatureProgression` states in
+[`optional-features.md`](optional-features.md), and what a `fluff-*.json` file carries in
 [`fluff.md`](fluff.md).
 
 ## Useful generated files

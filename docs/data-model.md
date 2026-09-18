@@ -93,8 +93,8 @@ an equality join. An absent row means the level may pick none.
 options outright, so `granted_optional_features` is keyed `(granted_by, name, source,
 feature_type)` — `granted_by` naming the table the grantor is in, since an optional
 feature grants as readily as a feat does. A character's total for a type is all three
-tables summed, which [`class-tables.md`](class-tables.md) spells out; reading the class
-side alone is short by whatever their feats granted.
+tables summed, which [`optional-features.md`](optional-features.md) spells out; reading
+the class side alone is short by whatever their feats granted.
 
 **A spell's class list is a join, not an entity.** `spell_classes` is keyed
 `(spell_name, spell_source, class_name, class_source)` — a spell answers to several

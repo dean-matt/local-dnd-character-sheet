@@ -6,7 +6,9 @@ description: Add or change an entity type in the 5etools ETL. Use when importing
 # Adding an entity type to the ETL
 
 Read [`docs/5etools-data.md`](../../../docs/5etools-data.md) for the tag grammar and the
-`_copy` counts, and [`class-tables.md`](../../../docs/class-tables.md) for level tables.
+`_copy` counts, [`class-tables.md`](../../../docs/class-tables.md) for class resource
+tables, and [`optional-features.md`](../../../docs/optional-features.md) for
+optional-feature counts per level.
 
 ## Before writing any loader
 

@@ -301,7 +301,7 @@ CREATE INDEX optional_feature_types_by_type ON optional_feature_types (feature_t
 -- character's feats would answer with an option's grant of the same name.
 --
 -- A character's total for a type is the class row, the subclass row and every
--- grant row they hold, summed; docs/class-tables.md states that sum in one place.
+-- grant row they hold, summed; docs/optional-features.md states that sum in one place.
 CREATE TABLE granted_optional_features (
   granted_by   TEXT NOT NULL CHECK (granted_by IN ('backgrounds', 'feats', 'optional_features')),
   name         TEXT NOT NULL,
