@@ -15,17 +15,20 @@ function tableNames(sqlite: Database.Database) {
 
 describe("migrations", () => {
   let workspace: string;
+  let sqlite: Database.Database;
 
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "db-migrate-"));
   });
 
   afterEach(() => {
+    // Windows keeps the file locked until the handle closes, and rmSync then fails.
+    sqlite.close();
     rmSync(workspace, { recursive: true, force: true });
   });
 
   it("creates every table characters.ts defines", () => {
-    const sqlite = new Database(join(workspace, "characters.db"));
+    sqlite = new Database(join(workspace, "characters.db"));
     migrateCharacters(drizzle(sqlite));
 
     expect(tableNames(sqlite)).toEqual(
@@ -40,7 +43,7 @@ describe("migrations", () => {
   });
 
   it("creates every table homebrew.ts defines", () => {
-    const sqlite = new Database(join(workspace, "homebrew.db"));
+    sqlite = new Database(join(workspace, "homebrew.db"));
     migrateHomebrew(drizzle(sqlite));
 
     expect(tableNames(sqlite)).toEqual(
