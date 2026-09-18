@@ -44,6 +44,9 @@ text is copyrighted by Wizards of the Coast and is never committed here. See
 Both ports are pinned and the dev servers refuse to start if something else holds them —
 free the port rather than letting it move, since the Vite proxy targets 8787 by name.
 
+`pnpm dev` also creates `data/characters.db` and `data/homebrew.db` if they are missing
+and brings each to its latest migration — no separate setup step for either.
+
 ## Common commands
 
 ```bash
@@ -60,7 +63,7 @@ pnpm content:build           # rebuild data/content.db from vendor/
 # Database
 pnpm db:studio       # visual editor for characters.db
 pnpm db:generate     # generate a migration from schema changes
-pnpm db:migrate      # apply pending migrations
+pnpm db:migrate      # apply pending migrations without starting the api
 
 # Check
 pnpm check           # everything below, in order — what CI runs

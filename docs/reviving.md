@@ -46,7 +46,8 @@ sqlite3 data/content.db "SELECT key, value FROM meta;"
 
 `characters.db` and `homebrew.db` are gitignored and are **not** regenerable. If they
 are missing, restore them from wherever you back them up. If they are present but the
-schema has moved on:
+schema has moved on, `pnpm dev` migrates each automatically on startup. To bring them
+current without starting anything else:
 
 ```bash
 pnpm db:migrate
