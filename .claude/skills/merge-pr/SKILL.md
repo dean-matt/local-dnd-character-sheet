@@ -84,17 +84,11 @@ uncommitted; stop on that refusal.
 ```bash
 gh pr merge "$n" --squash --delete-branch
 git checkout main && git pull --ff-only
-
-statusField=$(gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")')
-gh project item-edit \
-  --id "$(gh project item-add 1 --owner dean-matt --url "$(gh issue view "$issue" --json url --jq .url)" --format json --jq .id)" \
-  --project-id "$(gh project view 1 --owner dean-matt --format json --jq .id)" \
-  --field-id "$(printf %s "$statusField" | jq -r .id)" \
-  --single-select-option-id "$(printf %s "$statusField" | jq -r '.options[] | select(.name == "Done") | .id')"
 ```
 
-Setting a board item already `Done` changes nothing. Then report the merge commit, the issue
-it closed, and that the checkout is on `main`.
+Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
+a board item already `Done` changes nothing. Then report the merge commit, the issue it
+closed, and that the checkout is on `main`.
 
 ## What this skill will not do
 

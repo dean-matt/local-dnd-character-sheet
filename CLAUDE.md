@@ -76,6 +76,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 | `issue-to-pr` | Taking any issue from open to a reviewed pull request |
 | `pick-issue` | Choosing which issue to take, when `issue-to-pr` names none |
 | `issue-worktree` | Opening or closing the git worktree an issue is built in |
+| `board-status` | Moving an issue's card to a named status on the project board |
 | `open-pr` | Opening a pull request and writing its body |
 | `audit-pr` | Reviewing a pull request in this repository |
 | `converge-review` | Running the review-and-fix loop on an open pull request |

@@ -14,16 +14,8 @@ it took none — stop there.
 
 ## The sequence
 
-1. Set the board to `In Progress`; its own workflow waits for the pull request.
-   `item-add` returns the item an issue already has, and the other three ids hold still, so
-   read them once a session.
-
-   ```bash
-   gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
-   gh project view 1 --owner dean-matt --format json --jq .id
-   gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")'
-   gh project item-edit --id <item> --project-id <project> --field-id <field> --single-select-option-id <option>
-   ```
+1. **Invoke [`board-status`](../board-status/SKILL.md) to set `In Progress`.** Its own
+   workflow waits for the pull request.
 2. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of scope
    is a fence.
 3. **Verify every count and shape the issue states against `vendor/`** before designing
@@ -61,6 +53,6 @@ it took none — stop there.
 
 **Widen the issue.** A second bug found on the way is a second issue: file it or name it
 in the report, and leave it out of this branch. `gh issue create` leaves that issue off the
-board, so put it there with step 1's `item-add`. It lands unranked and without a milestone,
-which [`pick-issue`](../pick-issue/SKILL.md) reads as backlog until the user ranks it under
-a milestone.
+board, so put it there with [`board-status`](../board-status/SKILL.md). It lands unranked
+and without a milestone, which [`pick-issue`](../pick-issue/SKILL.md) reads as backlog
+until the user ranks it under a milestone.
