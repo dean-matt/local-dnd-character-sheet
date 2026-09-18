@@ -16,7 +16,7 @@ export default defineConfig({
           environment: "node",
           include: [
             "tests/**/*.test.ts",
-            "packages/{rules,character,dice,tags,api}/src/**/*.test.ts",
+            "packages/{rules,character,dice,tags,catalog,api}/src/**/*.test.ts",
           ],
           // packages/api/src/db/{client,migrate}.test.ts build a database on disk
           // too, but each does a handful of inserts rather than a catalog import,

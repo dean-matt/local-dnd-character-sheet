@@ -20,6 +20,10 @@
       "entry": ["src/**/*.test.ts"],
       "includeEntryExports": true
     },
+    "packages/catalog": {
+      "entry": ["src/**/*.test.ts"],
+      "includeEntryExports": true
+    },
     "packages/content": {
       "entry": ["src/**/*.test.ts"],
       "includeEntryExports": true

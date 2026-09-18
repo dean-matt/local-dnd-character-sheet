@@ -51,6 +51,16 @@ freeze each character at the moment it was created.
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
 
+**A `homebrew_items` or `homebrew_spells` row's `json` holds the 5etools entry shape**,
+not a shape of our own — `packages/catalog` defines it. One renderer then serves the
+catalog and homebrew alike, `{@tag}` markup in homebrew text works by construction, and
+the query-time merge with catalog rows is a union of like things. The schema accepts the
+subset the content loaders and a renderer read — `name`, `source`, `entries`, and the few
+fields each entity type derives a row column from — and passes every other field through
+unvalidated. A homebrew item or spell is written once and displayed, never edited field
+by field, so it needs none of the round-trip guarantee `characterDefinitionSchema`'s
+strict objects give a character.
+
 **Four entities need more than `(name, source)` to identify them.** A feature is keyed
 by the class that grants it and the level it arrives at — `(name, source, class_name,
 class_source, level)`, and a subclass feature by the subclass as well. Without the class
