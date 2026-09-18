@@ -68,7 +68,6 @@ function findParents(entries: Entry[], copy: Entry, keys: string[]): Entry[] {
   );
 }
 
-/** The one entry the block names, refusing a block that names none or several. */
 function onlyParent(
   entries: Entry[],
   entry: Entry,
