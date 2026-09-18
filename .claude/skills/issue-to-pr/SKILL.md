@@ -28,24 +28,8 @@ it took none — stop there.
    is a fence.
 3. **Verify every count and shape the issue states against `vendor/`** before designing
    against it. Say which are wrong, or that `vendor/` was not there to ask.
-4. **Branch into a worktree.** Enter it with `cd`, not the harness's worktree tool, which
-   refuses every `git` call a shell wrapper rewrites.
-
-   ```bash
-   main=$(git rev-parse --show-toplevel); b=<type>/<n>-<slug>; d=.claude/worktrees/<n>
-   gh issue develop <n> --name "$b"
-   git fetch --quiet origin "$b"
-   git worktree prune
-   git worktree add --quiet "$d" "$b"
-   cd "$d" && pnpm install --frozen-lockfile && mkdir -p vendor
-   for p in vendor/5etools data/content.db .claude/settings.local.json; do
-     [ -e "$main/$p" ] && ln -sfn "$main/$p" "$p"
-   done
-   ```
-
-   The add fails where a directory is already there — another agent on this issue, or a
-   crash. Clear it by hand once no agent holds it. Never link `characters.db`: two agents
-   writing it collide. Run every later step from the worktree; step 12 removes it.
+4. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to open the worktree**, then
+   `cd` into it. Run every later step from inside; step 12 closes it.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
@@ -65,10 +49,8 @@ it took none — stop there.
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
     that label, what each pass found, and what `gh pr checks` says.
-12. **Remove the worktree**, from anywhere inside it: `cd "$(git rev-parse
-    --show-toplevel)/../../.."` reaches the main checkout, and `git worktree remove
-    .claude/worktrees/<n>` refuses rather than discarding anything `converge-review` left
-    uncommitted. The branch and the pull request stand.
+12. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
+    branch and the pull request stand.
 
     Report what `converge-review` returned. A run still in flight is reported in flight
     rather than waited on; a red run is the user's to weigh.

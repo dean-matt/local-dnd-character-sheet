@@ -77,11 +77,11 @@ means `main` moves faster than the checks run, and sequencing that is the user's
 
 ## Merge, then clean up
 
-Remove the worktree first, or `gh` cannot delete the branch it holds.
+Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree for `$issue`
+first, or `gh` cannot delete the branch it holds. It refuses rather than discarding anything
+uncommitted; stop on that refusal.
 
 ```bash
-wt=".claude/worktrees/$issue"; [ -e "$wt" ] && { git worktree remove "$wt" || exit 1; }
-git worktree prune
 gh pr merge "$n" --squash --delete-branch
 git checkout main && git pull --ff-only
 
@@ -93,9 +93,8 @@ gh project item-edit \
   --single-select-option-id "$(printf %s "$statusField" | jq -r '.options[] | select(.name == "Done") | .id')"
 ```
 
-`git worktree remove` refuses rather than discarding anything uncommitted, and the `exit`
-makes that refusal stop the run. Setting a board item already `Done` changes nothing. Then
-report the merge commit, the issue it closed, and that the checkout is on `main`.
+Setting a board item already `Done` changes nothing. Then report the merge commit, the issue
+it closed, and that the checkout is on `main`.
 
 ## What this skill will not do
 
