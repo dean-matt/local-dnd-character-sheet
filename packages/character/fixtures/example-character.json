@@ -1,0 +1,43 @@
+{
+  "name": "Toren Ashbeck",
+  "edition": "classic",
+  "levels": [{ "class": { "name": "Fighter", "source": "PHB" } }],
+  "race": { "name": "Human", "source": "PHB" },
+  "background": { "name": "Soldier", "source": "PHB" },
+  "abilityScores": { "str": 16, "dex": 13, "con": 14, "int": 10, "wis": 12, "cha": 8 },
+  "proficiencies": {
+    "savingThrows": ["str", "con"],
+    "skills": [
+      { "ref": { "name": "Athletics", "source": "PHB" }, "level": "proficient" },
+      { "ref": { "name": "Intimidation", "source": "PHB" }, "level": "proficient" }
+    ],
+    "armor": ["Light", "Medium", "Heavy", "Shield"],
+    "weapons": ["Simple", "Martial"],
+    "tools": [],
+    "languages": [{ "name": "Common", "source": "PHB" }]
+  },
+  "inventory": [
+    {
+      "ref": { "name": "Longsword", "source": "PHB" },
+      "quantity": 1,
+      "carried": true,
+      "equipped": true,
+      "attuned": false
+    },
+    {
+      "ref": { "name": "Shield", "source": "PHB" },
+      "quantity": 1,
+      "carried": true,
+      "equipped": true,
+      "attuned": false
+    }
+  ],
+  "spells": [],
+  "feats": [],
+  "optionalFeatures": [],
+  "alignment": "Lawful Good",
+  "money": { "gold": 10 },
+  "appearance": { "age": "27", "eyes": "brown" },
+  "notes": "Retired watch captain, called back to service.",
+  "houseRules": {}
+}

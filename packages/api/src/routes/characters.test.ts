@@ -71,6 +71,40 @@ describe("charactersRoutes", () => {
     expect(typeof body.id).toBe("string");
   });
 
+  it("rejects a definition missing a required field, naming which one failed", async () => {
+    const { race: _race, ...withoutRace } = baseDefinition();
+    const res = await routes.request("/characters", json(withoutRace));
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    const issues = JSON.parse(body.error.message);
+    expect(issues).toContainEqual(expect.objectContaining({ path: ["race"] }));
+  });
+
+  it("creates a second, distinct character when the same definition is imported twice", async () => {
+    const definition = baseDefinition();
+    const first = await (await routes.request("/characters", json(definition))).json();
+    const second = await (await routes.request("/characters", json(definition))).json();
+
+    expect(second.id).not.toBe(first.id);
+    const res = await routes.request("/characters");
+    expect((await res.json()).map((row: { id: string }) => row.id).sort()).toEqual(
+      [first.id, second.id].sort(),
+    );
+  });
+
+  it("imports a character whose catalog reference resolves against nothing", async () => {
+    const renamed = baseDefinition({
+      levels: [{ class: WARLOCK, subclass: { name: "Renamed Patron", source: "XPHB" } }],
+    });
+    const res = await routes.request("/characters", json(renamed));
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.definition.levels[0].subclass).toEqual({ name: "Renamed Patron", source: "XPHB" });
+  });
+
   it("reads a character it just created", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
 

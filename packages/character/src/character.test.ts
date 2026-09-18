@@ -180,6 +180,16 @@ describe("round trips", () => {
   });
 });
 
+describe("the example definition shipped with the repository", () => {
+  it("parses against the schema", async () => {
+    const raw = await readFile(
+      new URL("../fixtures/example-character.json", import.meta.url),
+      "utf8",
+    );
+    expect(() => characterDefinitionSchema.parse(JSON.parse(raw))).not.toThrow();
+  });
+});
+
 describe("default state", () => {
   it("is unhurt, unspent and unconditioned", () => {
     expect(defaultCharacterState()).toEqual({
