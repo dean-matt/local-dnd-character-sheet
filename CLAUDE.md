@@ -74,6 +74,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 | Skill | Use when |
 |---|---|
 | `issue-to-pr` | Taking any issue from open to a reviewed pull request |
+| `pick-issue` | Choosing which issue to take, when `issue-to-pr` names none |
 | `audit-pr` | Reviewing a pull request in this repository |
 | `merge-pr` | Carrying a reviewed pull request to main |
 | `auto-dev` | Working the board issue after issue, from open to merged |

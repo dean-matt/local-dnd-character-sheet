@@ -9,26 +9,8 @@ Read `CONTRIBUTING.md` first.
 
 ## Choosing, when no issue is named
 
-Say which issue you are taking, then start. The `D&D Character Sheet` project board
-decides — not the issue number, not what just merged, not how small it looks.
-
-```bash
-# from the repo root: gh reads the account from the directory
-open=$(gh issue list --state open --limit 200 --json number --jq '[.[].number]')
-gh project item-list 1 --owner dean-matt --limit 200 --format json |
-  jq --argjson open "$open" '
-    if (.items | length) < .totalCount then error("board truncated — raise --limit") else . end
-    | [.items[] | select(.rank and .milestone and (.content.number | IN($open[])))]
-    | sort_by(.milestone.title, .rank) | .[0]'
-```
-
-Milestones sort by title, which holds while they are numbered. An unranked or
-milestone-less issue is backlog and waits for the user to name it. `null` means no
-milestone holds a ranked open issue: say so and stop.
-
-A `blocked` label with no `## Blocked by` and no `## Do not start before` is a flag rather
-than a fence — read the issue and say why you are taking it. Where the condition still
-holds, stop and name it; reranking is the user's call.
+Invoke [`pick-issue`](../pick-issue/SKILL.md). It returns the issue to take, or the reason
+it took none — stop there.
 
 ## The sequence
 
@@ -143,5 +125,5 @@ real corpus and what came out.
 **Widen the issue.** A second bug found on the way is a second issue: file it or name it
 in the report, and leave it out of this branch. `gh issue create` leaves that issue off the
 board, so put it there with step 3's `item-add`. It lands unranked and without a milestone,
-which *Choosing, when no issue is named* reads as backlog until the user ranks it under a
-milestone.
+which [`pick-issue`](../pick-issue/SKILL.md) reads as backlog until the user ranks it under
+a milestone.
