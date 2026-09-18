@@ -1,0 +1,65 @@
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import Database from "better-sqlite3";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { backupDatabase, RETAINED_BACKUPS } from "./backup.ts";
+
+describe("backupDatabase", () => {
+  let workspace: string;
+  let backupDir: string;
+  let sqlite: Database.Database;
+
+  beforeEach(() => {
+    workspace = mkdtempSync(join(tmpdir(), "db-backup-"));
+    backupDir = join(workspace, "backups");
+    sqlite = new Database(join(workspace, "characters.db"));
+    sqlite.exec("CREATE TABLE characters (id TEXT PRIMARY KEY, name TEXT)");
+    sqlite.prepare("INSERT INTO characters (id, name) VALUES (?, ?)").run("1", "Vex");
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    sqlite.close();
+    rmSync(workspace, { recursive: true, force: true });
+  });
+
+  it("snapshots the database with VACUUM INTO, restorable by opening the file directly", () => {
+    const dest = backupDatabase(sqlite, backupDir, "characters");
+
+    expect(existsSync(dest)).toBe(true);
+    const restored = new Database(dest, { readonly: true });
+    const row = restored.prepare("SELECT name FROM characters WHERE id = ?").get("1") as
+      | { name: string }
+      | undefined;
+    restored.close();
+
+    expect(row?.name).toBe("Vex");
+  });
+
+  it("keeps only the most recent RETAINED_BACKUPS files for a database", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+
+    for (let i = 0; i < RETAINED_BACKUPS + 3; i++) {
+      backupDatabase(sqlite, backupDir, "characters");
+      vi.setSystemTime(new Date(Date.now() + 1000));
+    }
+
+    const backups = readdirSync(backupDir).filter((f) => f.startsWith("characters-"));
+    expect(backups).toHaveLength(RETAINED_BACKUPS);
+  });
+
+  it("never prunes a different database's backups sharing the same directory", () => {
+    const homebrew = new Database(join(workspace, "homebrew.db"));
+    homebrew.exec("CREATE TABLE homebrew_items (id TEXT PRIMARY KEY)");
+
+    backupDatabase(sqlite, backupDir, "characters");
+    backupDatabase(homebrew, backupDir, "homebrew");
+    homebrew.close();
+
+    const backups = readdirSync(backupDir);
+    expect(backups.some((f) => f.startsWith("characters-"))).toBe(true);
+    expect(backups.some((f) => f.startsWith("homebrew-"))).toBe(true);
+  });
+});

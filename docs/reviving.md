@@ -53,6 +53,18 @@ current without starting anything else:
 pnpm db:migrate
 ```
 
+Both also back up each database before migrating it, to `data/backups/` as
+`<characters|homebrew>-<timestamp>.db`, keeping the ten most recent per database. Restore
+one by copying it back over the live file with the API stopped:
+
+```bash
+cp data/backups/characters-2026-09-18T12-00-00-000Z.db data/characters.db
+rm -f data/characters.db-wal data/characters.db-shm
+```
+
+The `-wal` and `-shm` sidecars belong to the file you just replaced, not the backup, so
+delete rather than keep them — SQLite recreates them from the restored file on next open.
+
 ## Run it
 
 ```bash

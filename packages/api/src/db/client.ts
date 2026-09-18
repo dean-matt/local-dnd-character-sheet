@@ -1,5 +1,5 @@
 /**
- * Opens the two user databases and brings each to its latest migration.
+ * Opens the two user databases, backs each up, and brings it to its latest migration.
  *
  * Everything that reads or writes `characters.db` or `homebrew.db` goes through
  * `openDatabases`, because SQLite leaves `PRAGMA foreign_keys` OFF by default:
@@ -7,16 +7,19 @@
  * inert and deleting a character orphans its state, overrides and logs.
  *
  * Migrating on open means an API start can never skip a pending schema change,
- * unlike a documented manual step. `openDatabases` takes the directory rather
- * than reading one from module scope, so a test brings up its own pair at a
- * path it controls instead of touching the user's real data — this module has
- * no top-level side effect, so importing it for the function alone opens
- * nothing. `./singleton.ts` is the one place that opens the user's own.
+ * unlike a documented manual step. The backup runs first and unconditionally: a
+ * failed backup throws before `migrate*` runs, so a migration never proceeds
+ * without a way back. `openDatabases` takes the directory rather than reading one
+ * from module scope, so a test brings up its own pair at a path it controls
+ * instead of touching the user's real data — this module has no top-level side
+ * effect, so importing it for the function alone opens nothing. `./singleton.ts`
+ * is the one place that opens the user's own.
  */
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { backupDatabase } from "./backup.ts";
 import * as charactersSchema from "./characters.ts";
 import * as homebrewSchema from "./homebrew.ts";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
@@ -31,10 +34,16 @@ function open(dataDir: string, fileName: string) {
 }
 
 export function openDatabases(dataDir: string) {
-  const charactersDb = drizzle(open(dataDir, "characters.db"), { schema: charactersSchema });
+  const backupDir = join(dataDir, "backups");
+
+  const charactersSqlite = open(dataDir, "characters.db");
+  backupDatabase(charactersSqlite, backupDir, "characters");
+  const charactersDb = drizzle(charactersSqlite, { schema: charactersSchema });
   migrateCharacters(charactersDb);
 
-  const homebrewDb = drizzle(open(dataDir, "homebrew.db"), { schema: homebrewSchema });
+  const homebrewSqlite = open(dataDir, "homebrew.db");
+  backupDatabase(homebrewSqlite, backupDir, "homebrew");
+  const homebrewDb = drizzle(homebrewSqlite, { schema: homebrewSchema });
   migrateHomebrew(homebrewDb);
 
   return { charactersDb, homebrewDb };
