@@ -33,10 +33,6 @@ function open(dataDir: string, fileName: string) {
   return sqlite;
 }
 
-/**
- * Closes the handle it just opened before rethrowing a backup or migration failure —
- * `openDatabases` never returns it on that path, so nothing else can.
- */
 function openMigrated<Schema extends Record<string, unknown>>(
   dataDir: string,
   backupDir: string,
@@ -44,38 +40,48 @@ function openMigrated<Schema extends Record<string, unknown>>(
   name: string,
   schema: Schema,
   migrate: (db: BetterSQLite3Database<Schema>) => void,
+  opened: Database.Database[],
 ) {
   const sqlite = open(dataDir, fileName);
-  try {
-    backupDatabase(sqlite, backupDir, name);
-    const db = drizzle(sqlite, { schema });
-    migrate(db);
-    return db;
-  } catch (error) {
-    sqlite.close();
-    throw error;
-  }
+  opened.push(sqlite);
+  backupDatabase(sqlite, backupDir, name);
+  const db = drizzle(sqlite, { schema });
+  migrate(db);
+  return db;
 }
 
+/**
+ * Closes every handle `openMigrated` opened so far before rethrowing a backup or
+ * migration failure, including one from an earlier call that itself succeeded —
+ * neither this function nor its caller returns them on that path, so nothing else can.
+ */
 export function openDatabases(dataDir: string) {
   const backupDir = join(dataDir, "backups");
+  const opened: Database.Database[] = [];
 
-  const charactersDb = openMigrated(
-    dataDir,
-    backupDir,
-    "characters.db",
-    "characters",
-    charactersSchema,
-    migrateCharacters,
-  );
-  const homebrewDb = openMigrated(
-    dataDir,
-    backupDir,
-    "homebrew.db",
-    "homebrew",
-    homebrewSchema,
-    migrateHomebrew,
-  );
+  try {
+    const charactersDb = openMigrated(
+      dataDir,
+      backupDir,
+      "characters.db",
+      "characters",
+      charactersSchema,
+      migrateCharacters,
+      opened,
+    );
+    const homebrewDb = openMigrated(
+      dataDir,
+      backupDir,
+      "homebrew.db",
+      "homebrew",
+      homebrewSchema,
+      migrateHomebrew,
+      opened,
+    );
 
-  return { charactersDb, homebrewDb };
+    return { charactersDb, homebrewDb };
+  } catch (error) {
+    for (const sqlite of opened) sqlite.close();
+    throw error;
+  }
 }

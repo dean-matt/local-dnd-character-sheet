@@ -42,12 +42,24 @@ describe("backupDatabase", () => {
     vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
 
     for (let i = 0; i < RETAINED_BACKUPS + 3; i++) {
+      sqlite.prepare("INSERT INTO characters (id, name) VALUES (?, ?)").run(`gen-${i}`, "Vex");
       backupDatabase(sqlite, backupDir, "characters");
       vi.setSystemTime(new Date(Date.now() + 1000));
     }
 
     const backups = readdirSync(backupDir).filter((f) => f.startsWith("characters-"));
     expect(backups).toHaveLength(RETAINED_BACKUPS);
+  });
+
+  it("does not spend a retention slot backing up a database unchanged since the last backup", () => {
+    backupDatabase(sqlite, backupDir, "characters");
+
+    for (let i = 0; i < 3; i++) {
+      backupDatabase(sqlite, backupDir, "characters");
+    }
+
+    const backups = readdirSync(backupDir).filter((f) => f.startsWith("characters-"));
+    expect(backups).toHaveLength(1);
   });
 
   it("never prunes a different database's backups sharing the same directory", () => {

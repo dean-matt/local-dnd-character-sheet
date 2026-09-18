@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
@@ -82,5 +82,16 @@ describe("openDatabases backup", () => {
     sqlite.close();
 
     expect(tables).toEqual([]);
+  });
+
+  it("closes an earlier database's handle when a later one fails, so nothing dangles", () => {
+    // A directory in place of homebrew.db makes better-sqlite3 fail to open it, after
+    // characters.db has already opened, backed up and migrated successfully.
+    mkdirSync(join(dataDir, "homebrew.db"));
+
+    expect(() => openDatabases(dataDir)).toThrow();
+
+    // Windows keeps a still-open handle locked; an unclosed characters.db handle fails this.
+    rmSync(join(dataDir, "characters.db"));
   });
 });
