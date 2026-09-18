@@ -29,7 +29,6 @@ export function byNameSource(entry: Entry, context: string): string {
   return fluffKey(text(entry, "name", context), text(entry, "source", context));
 }
 
-/** Whether a vendor-relative path is a `fluff-*.json` file rather than an entry it describes. */
 export function isFluffPath(path: string): boolean {
   return path.slice(path.lastIndexOf("/") + 1).startsWith("fluff-");
 }

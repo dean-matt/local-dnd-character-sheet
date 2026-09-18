@@ -123,7 +123,7 @@ const NEEDS_ITEMS = new Set([
 /**
  * Compares by value, because the lists this is asked about hold strings — a
  * language, a damage type — and two equal ones are the same entry. An element
- * that is an object compares by its serialization, which is exact rather than
+ * that is an object compares by its serialization, exact rather than
  * clever: a differently ordered twin counts as new.
  */
 function appendMissing(list: unknown[], items: unknown[]): unknown[] {
@@ -170,7 +170,7 @@ const BY_VALUE = {
  * stays an error, so a typo is still caught.
  *
  * `names` matches an element by its `name` and `items` matches the element
- * itself, which is what a list of plain strings needs — the `Snow Maiden` (CoS)
+ * itself — what a list of plain strings needs — the `Snow Maiden` (CoS)
  * drops "cold" from her parent's resistances. Upstream writes one or the other.
  *
  * `force` waives the check, for a removal written against many entries rather
@@ -195,7 +195,7 @@ function removeFrom(
   const match = op.names !== undefined ? BY_NAME : BY_VALUE;
   const held = new Set(list.map(match.held));
   // Each one, not the total removed: two elements sharing a name would otherwise
-  // cover for a third that matches nothing, which is the typo.
+  // cover for a third that matches nothing, the typo.
   const absent = wanted.filter((value) => !held.has(match.wanted(value)));
   if (absent.length > 0 && op.force !== true) {
     throw new Error(
@@ -246,7 +246,7 @@ function rewrite(
 }
 
 /**
- * Shifts every `{@hit}` or `{@dc}` under one property, which is where a creature's
+ * Shifts every `{@hit}` or `{@dc}` under one property, where a creature's
  * arithmetic actually sits: a −2 to attack rolls is not a field on the stat block
  * but a number inside each attack's prose.
  *
@@ -427,8 +427,8 @@ function applyShorthand(entry: Entry, property: string, shorthand: string, conte
 }
 
 /**
- * An operation that takes the entry rather than one of its properties, which is
- * what the `_` property means. Each of these reads something the entry holds
+ * An operation that takes the entry rather than one of its properties — what
+ * the `_` property means. Each of these reads something the entry holds
  * elsewhere: a spell list nested in `spellcasting`, a skill bonus derived from an
  * ability score, or a field named by the op instead of by the property above it.
  */
@@ -504,7 +504,7 @@ function applyOne(entry: Entry, property: string, op: unknown, context: string):
  * rewriting prose must not rewrite a link — is the one that decides it.
  *
  * The ceiling is that this is a hand-kept list, so a section upstream adds is
- * skipped in silence, which is the failure it fixes running the other way. The
+ * skipped in silence, the failure it fixes running the other way. The
  * header and note keys are here for that reason rather than because a `*` reaches
  * them: `reactionNote` reads "Charmayne can take up to three reactions per round",
  * a creature's name in free text, and leaving a sibling out is how the gap starts.
@@ -545,7 +545,7 @@ function applyToEvery(entry: Entry, op: Entry, context: string): void {
  * and upstream writes the `*` first. Rewriting first renames that element to
  * "Longdagger", so the replacement matches nothing and the build fails on data
  * upstream renders correctly. A wildcard is a sweep over whatever the named
- * operations have left, which is the only order that reads both as written.
+ * operations have left, the only order that reads both as written.
  */
 export function applyMod(entry: Entry, mod: Entry, context: string): void {
   const operations = Object.entries(mod);

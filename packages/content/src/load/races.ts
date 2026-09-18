@@ -7,7 +7,7 @@
  * unresolvable and leaves `overwrite`, the subrace's own flag for "replace this
  * inherited field rather than add to it", with nothing to act on. The merge
  * runs in `prepare` rather than here because those three state the revision as
- * a `_versions` `_mod`, which is applied before a loader sees an entry.
+ * a `_versions` `_mod`, applied before a loader sees an entry.
  *
  * What a subrace inherits is the race's traits, never its identity or its
  * printing history: a nameless subrace would otherwise answer to its parent's
@@ -64,7 +64,6 @@ function mergeAbility(
 const traitName = (entry: unknown): string =>
   isRecord(entry) && typeof entry.name === "string" ? entry.name.trim().toLowerCase() : "";
 
-/** The trait a subrace's entry stands in for, where it names one. */
 function standsInFor(trait: unknown): string | undefined {
   const replaces = isRecord(trait) && isRecord(trait.data) ? trait.data.overwrite : undefined;
   return typeof replaces === "string" ? replaces.trim().toLowerCase() : undefined;
@@ -88,8 +87,8 @@ function mergeEntries(mine: unknown, theirs: unknown[]): unknown {
 }
 
 /**
- * One proficiency map with the other's entries over it, which is a union: the
- * Sea Elf speaks Common, Elvish and Aquan.
+ * One proficiency map with the other's entries over it, a union: the Sea Elf
+ * speaks Common, Elvish and Aquan.
  *
  * A proficiency list of more than one element is a choice between sets, not a
  * longer set, so appending the subrace's would read as "the race's languages or
@@ -166,7 +165,7 @@ function overwriteOf(sub: Entry, where: string): Set<string> {
  *
  * Only languages are spelled out twice. A trait standing in for `Darkvision`
  * or `Size` names a field the subrace replaces outright anyway, and no trait
- * is the prose half of `traitTags`, which is filter metadata upstream renders
+ * is the prose half of `traitTags`, filter metadata upstream renders
  * nowhere.
  */
 const SPELLED_OUT_BY: Record<string, string> = { languageProficiencies: "languages" };
@@ -208,7 +207,6 @@ function merge(race: Entry, sub: Entry, where: string): Entry {
   return merged;
 }
 
-/** Every subrace merged with the race it names, in place of the subrace alone. */
 function adopt(parsed: unknown, path: string): unknown {
   if (!isRecord(parsed)) throw new Error(`${path} is not an object`);
   const byKey = new Map<string, Entry>();

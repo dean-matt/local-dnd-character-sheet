@@ -137,7 +137,7 @@ function dice(cell: Entry, context: string): string {
     .join(" + ");
 }
 
-/** A monk's level 1 movement is a bonus of zero, which is no bonus at all. */
+/** A monk's level 1 movement is a bonus of zero, no bonus at all. */
 function signed(cell: Entry, context: string, unit: string): string | null {
   const { value: bonus } = cell;
   if (typeof bonus !== "number" || !Number.isFinite(bonus)) {
@@ -474,7 +474,7 @@ function countedColumns(groups: unknown, context: string): { code: string; key: 
  * A column counting a type the entry never offers is refused rather than passed
  * over: a skip is how this check would stop running without saying so.
  *
- * The pairing is entry-local, which is the ceiling: a class states the column and
+ * The pairing is entry-local, the ceiling: a class states the column and
  * a class states the progression, in all three pairs the corpus has. The two do
  * split across entries already — `Fighter|XPHB` carries no progression while
  * `Battle Master|XPHB` carries `MV:B` — so a tag that put a maneuver column on
@@ -609,7 +609,7 @@ function addClasses(
 ): void {
   for (const [index, entry] of entriesOf(source, "class", path).entries()) {
     // The three sidekicks are stat-block companions rather than player classes:
-    // they carry no hit die, proficiencies or table groups, which is upstream
+    // they carry no hit die, proficiencies or table groups, upstream
     // saying the same thing three ways.
     if (entry.isSidekick === true) continue;
     const context = `${path} class[${index}]`;

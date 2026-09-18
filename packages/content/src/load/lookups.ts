@@ -2,7 +2,7 @@
  * The ten Tier B files into the one `lookups` table.
  *
  * `kind` is the array key the entry sits under upstream — `condition`,
- * `variantrule`, `deity` — which is also the `{@tag}` that links to it for every
+ * `variantrule`, `deity` — also the `{@tag}` that links to it for every
  * kind that has one. Nothing here is queried by column, only resolved by key or
  * listed in a picker, so a row is its identity and the whole entry as `json`.
  *
@@ -15,7 +15,7 @@ import { byNameSource, collectFluff, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, kindedRows, text } from "./json.ts";
 
-/** The array keys each file carries, which are the kinds it contributes. */
+/** The array keys each file carries, the kinds it contributes. */
 const KINDS: Record<string, string[]> = {
   "data/variantrules.json": ["variantrule"],
   "data/conditionsdiseases.json": ["condition", "disease", "status"],
@@ -44,7 +44,7 @@ const KINDS: Record<string, string[]> = {
  * `special`, the lowercase word an item's line renders, not a title, so taking
  * `name` where it exists would key one of the 26 differently from the rest.
  *
- * The human label an `itemType` also carries stays in `json`, which is where a
+ * The human label an `itemType` also carries stays in `json`, where a
  * picker listing types reads it.
  */
 const NAMED_BY: Record<string, string> = {
@@ -52,7 +52,6 @@ const NAMED_BY: Record<string, string> = {
   itemType: "abbreviation",
 };
 
-/** The fluff file a kind's own file pairs with, and the array key it reads. */
 const FLUFF_FILES: Record<string, { file: string; key: string }> = {
   "data/conditionsdiseases.json": {
     file: "data/fluff-conditionsdiseases.json",

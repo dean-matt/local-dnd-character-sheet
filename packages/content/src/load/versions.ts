@@ -21,7 +21,6 @@ import { applyMod } from "./mod.ts";
 
 const PLACEHOLDER = /\{\{(\w+)\}\}/g;
 
-/** Every `{{name}}` the template asks for. */
 function placeholdersIn(template: Entry): Set<string> {
   const asked = new Set<string>();
   for (const [, name] of JSON.stringify(template).matchAll(PLACEHOLDER)) asked.add(name as string);
@@ -59,7 +58,7 @@ function fill(node: unknown, variables: Record<string, string>): unknown {
  * takes the whole entry with it, and the five colours are the entry.
  *
  * An unasked member that *is* text stays refused. That one could have been
- * substituted and was not, which is upstream saying something this does not act
+ * substituted and was not, upstream saying something this does not act
  * on — dropping it would file all five colours under a base's "choose one".
  */
 function variablesOf(

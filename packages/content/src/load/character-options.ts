@@ -29,7 +29,6 @@ const FILES: Record<string, { key: string; table: string }> = {
   [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
 
-/** The fluff file each of `FILES`' own files pairs with, and the array key it reads. */
 const FLUFF: Record<string, { file: string; key: string }> = {
   "data/backgrounds.json": { file: "data/fluff-backgrounds.json", key: "backgroundFluff" },
   "data/feats.json": { file: "data/fluff-feats.json", key: "featFluff" },
@@ -64,7 +63,6 @@ function featureTypes(entry: Entry, context: string): string[] {
   return strings(entry, "featureType", context);
 }
 
-/** Every type a feature is offered under, as one row each. */
 function typeRows(entry: Entry, row: Row, context: string): Row[] {
   return featureTypes(entry, context).map((type) => ({
     name: row.name,
@@ -78,7 +76,6 @@ function poolKey(edition: Edition, featureType: string): string {
   return `${edition}|${featureType}`;
 }
 
-/** Whether any of the editions named offers an option of this type. */
 function carriedBy(featureType: string, editions: readonly Edition[], pool: Set<string>): boolean {
   return editions.some((edition) => pool.has(poolKey(edition, featureType)));
 }
@@ -91,7 +88,7 @@ function carriedBy(featureType: string, editions: readonly Edition[], pool: Set<
  * and nothing else reports it.
  *
  * Edition is half the key because the pick is edition-scoped — a sheet offers
- * the options of the edition the counting row itself belongs to, which is the
+ * the options of the edition the counting row itself belongs to — the
  * subclass's own where a subclass counts — so an entry counting a code only the
  * other edition's features carry has the same empty join. All 15 pairs the
  * corpus states resolve, the thinnest of them by 2 options.
@@ -130,7 +127,7 @@ export function optionCount(cell: unknown, context: string): number {
  * A grant reaches whatever pool its holder may pick from, and that is both
  * rulesets: a 2024 character may hold a 2014 feat, so the total the sheet asks
  * for joins the options unfiltered by edition. Only a code nothing carries at
- * all is a count over an empty join, which is the half a rebuild can refuse.
+ * all is a count over an empty join, the half a rebuild can refuse.
  *
  * The class side scopes its own check by edition, because a class row's pick is
  * scoped — a sheet offers the options of the counting row's own ruleset.

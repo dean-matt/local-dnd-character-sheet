@@ -140,7 +140,7 @@ export function buildContent({
 }: BuildOptions): Record<string, number> {
   // Per-process, so two builds cannot unlink each other's staging file and
   // rename the survivor's half-written inode into place. Concurrent runs then
-  // just race to rename a complete catalog, which is harmless either way.
+  // just race to rename a complete catalog, harmless either way.
   const staging = `${dbPath}.${process.pid}.incoming`;
   mkdirSync(dirname(dbPath), { recursive: true });
   reapStaging(dbPath);
