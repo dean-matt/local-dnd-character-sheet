@@ -275,6 +275,30 @@ describe("buildContent", () => {
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
     });
+
+    it("does not carry an aborted build's pool into the next one", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const orphaning: Loader = {
+        name: "broken",
+        files: ["data/*.json"],
+        rows: () => {
+          collectFluff(
+            [["data/fluff-things.json", { thingFluff: [{ name: "Orphan", source: "PHB" }] }]],
+            "thingFluff",
+            byNameSource,
+          );
+          throw new Error("bad row");
+        },
+      };
+
+      expect(() => buildContent({ vendorDir, dbPath, loaders: [orphaning], meta: {} })).toThrow(
+        /Loader "broken" failed/,
+      );
+      buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
   });
 
   describe("_copy resolution", () => {

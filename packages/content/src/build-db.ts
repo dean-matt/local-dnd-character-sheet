@@ -192,6 +192,10 @@ export function buildContent({
     for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
     renameSync(staging, dbPath);
   } catch (error) {
+    // A pool a failed loader registered would otherwise sit in fluff.ts's
+    // module scope and get swept into whatever call runs next, misattributing
+    // an aborted build's unmatched fluff to one that never touched it.
+    drainUnmatchedFluff();
     try {
       db.close();
     } catch {
