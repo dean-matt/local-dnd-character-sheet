@@ -31,8 +31,9 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
 3. **Label, apply, reply.** Swap `review:changes-requested` on first, in one `gh pr edit
    <n> --add-label <one> --remove-label <other>`, so the mark and the findings stand
    together. Then apply what survives, `pnpm check`, prose pass what the fixes touched,
-   commit, push, and bring the pull request body back in line — fixes left in the working
-   tree leave the pull request holding the code the review rejected.
+   commit, push, and bring the pull request body back in line with the format
+   [`open-pr`](../open-pr/SKILL.md) writes it in — fixes left in the working tree leave the
+   pull request holding the code the review rejected.
 
    Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
    every finding carries a verdict. Each reply lands as its own empty review. A fix that

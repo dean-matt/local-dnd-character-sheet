@@ -59,8 +59,8 @@ it took none — stop there.
 9. **`pnpm check`, then commit and push**, once per concern the issue carries. Run it after
    steps 6 and 7 — pre-commit runs neither the tests nor the caps. Never push past a
    failure with a note about it.
-10. **Open the pull request** with `gh pr create`, body linking the issue and prose passed.
-   This starts CI; the pushes before it started nothing.
+10. **Invoke [`open-pr`](../open-pr/SKILL.md)**. It opens the pull request and writes its
+    body in the format it defines.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
@@ -72,13 +72,6 @@ it took none — stop there.
 
     Report what `converge-review` returned. A run still in flight is reported in flight
     rather than waited on; a red run is the user's to weigh.
-
-## The pull request body
-
-`Closes #<issue>` on the first line. Then what the change does and, for anything a reviewer
-would otherwise derive, the entry in the data that decided it as `Name` (SOURCE). Close
-with the verification: "`pnpm check` is green" is the floor, so say what ran against the
-real corpus and what came out.
 
 ## What this skill will not do
 
