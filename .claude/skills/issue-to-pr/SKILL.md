@@ -7,6 +7,11 @@ description: Take one local-dnd-character-sheet issue from open to a reviewed pu
 
 Read `CONTRIBUTING.md` first.
 
+Resuming after any gap — a compaction, a hand-off — run `ListAgents` and check it against
+what this session already dispatched before doing anything else. A fork inherits this
+whole conversation, siblings included, and can mistake a dispatch message for its own plan;
+this session can just as easily lose track of what it already sent and repeat itself.
+
 ## Choosing, when no issue is named
 
 Invoke [`pick-issue`](../pick-issue/SKILL.md). It returns the issue to take, or the reason
@@ -25,12 +30,8 @@ it took none — stop there.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
-   Work the worktree alone: never fan a multi-file task out across parallel subagents. A
-   `fork` inherits this whole conversation, siblings included, and can mistake it for its
-   own plan; this session can just as easily lose track of what it already dispatched after
-   a compaction and send a second wave. Read files in parallel if that helps, but write them
-   one at a time — and on any resume, run `ListAgents` against what was actually dispatched
-   before sending more.
+   Work the worktree alone: never fan a multi-file task out across parallel subagents. Read
+   files in parallel if that helps, but write them one at a time.
 7. **Correct the docs the change made stale**, in the same commit. Past a `docs/` or
    `CLAUDE.md` cap, replace a sentence rather than append; a new `docs/` file needs a
    README row.
