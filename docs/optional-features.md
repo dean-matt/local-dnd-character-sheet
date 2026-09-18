@@ -5,10 +5,9 @@ knows, and what the ETL takes from it. The tables themselves are in
 `packages/content/src/schema.ts` and the loader is `packages/content/src/load/classes.ts`.
 
 `optionalfeatureProgression` — 9 blocks over 8 class entries, the `PHB` warlock carrying
-two, and 13 over 13 subclass entries — says how many options of a `featureType` a level
-knows. It is the count half of the join whose pool half is a feature's own `featureType`
-list. On a class or subclass it arrives in two shapes that mean different things at a
-level they skip:
+two, and 13 over 13 subclass entries — is the count half of the join whose pool half is a
+feature's own `featureType` list. On a class or subclass it arrives in two shapes that
+mean different things at a level they skip:
 
 ```
 Warlock   progression [1,3,3,3,5,5,6,...]   20 cells, one per level
