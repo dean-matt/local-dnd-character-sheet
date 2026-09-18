@@ -27,7 +27,7 @@ describe("the races loader", () => {
     return rows;
   };
 
-  /** One subrace's merged entry, what the sheet reads. */
+  /** One subrace's merged entry — what the sheet reads. */
   const merged = (name: string, source: string): Entry => {
     const db = open();
     const json = db

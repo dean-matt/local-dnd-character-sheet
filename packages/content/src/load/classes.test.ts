@@ -844,7 +844,7 @@ describe("the classes loader", () => {
 
     // Pact of the Chain is PHB, and a sheet offers a character the options of
     // its own edition, so a 2024 warlock counting PB picks from nothing. The
-    // pool is not empty, what makes this the quiet case.
+    // pool is not empty — what makes this the quiet case.
     expect(refusal(vendorHolding("class-warlock.json", contents))).toMatch(
       /class\[0\]: Warlock\|XPHB counts PB, which no optional feature of the one edition carries/,
     );

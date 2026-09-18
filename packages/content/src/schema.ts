@@ -336,7 +336,7 @@ CREATE TABLE lookups (
 CREATE INDEX lookups_by_kind ON lookups (kind, name);
 
 -- qualifier is the identity a type needs beyond (name, source), the column lookups
--- carries for a deity's pantheon. A card is named inside its deck, what
+-- carries for a deity's pantheon. A card is named inside its deck — what
 -- {@card Balance|Deck of Many Things|BMT} spells out: Balance from BMT alone names two.
 -- Every other type stores the empty string, because a STRICT primary key column cannot
 -- be NULL.
