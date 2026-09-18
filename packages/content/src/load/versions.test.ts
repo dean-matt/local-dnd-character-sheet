@@ -69,6 +69,7 @@ describe("resolveVersions", () => {
         "Dragonborn (Chromatic)|FTD",
         "Dragonborn (Chromatic; Black)|FTD",
         "Dragonborn (Chromatic; Blue)|FTD",
+        "Elf (Kaladesh)|PSK",
       ]);
     });
 

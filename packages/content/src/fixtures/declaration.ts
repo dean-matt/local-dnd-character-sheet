@@ -1065,6 +1065,13 @@ export const FIXTURES: Fixture[] = [
                 },
               },
             },
+            {
+              // A race that is itself a named variant, whose subrace fluff
+              // reopens its closing paren rather than nesting a second — see
+              // `races.ts`'s `fluffSubraceName`.
+              id: "Elf (Kaladesh)|PSK",
+              fields: ["name", "source", "page", "size", "speed", "entries"],
+            },
           ],
         },
         subrace: {
@@ -1163,6 +1170,10 @@ export const FIXTURES: Fixture[] = [
                 },
               },
             },
+            {
+              id: "Bishatar and Tirahar|PSK|Elf (Kaladesh)|PSK",
+              fields: ["name", "source", "raceName", "raceSource", "page", "speed", "entries"],
+            },
           ],
         },
       },
@@ -1195,6 +1206,8 @@ export const FIXTURES: Fixture[] = [
             "Dragonborn (Base)|PHB",
             "Dragonborn (Draconblood)|EGW",
             "Human (Amonkhet)|PSA",
+            "Elf (Kaladesh)|PSK",
+            "Elf (Kaladesh; Bishatar and Tirahar)|PSK",
           ],
         },
       },

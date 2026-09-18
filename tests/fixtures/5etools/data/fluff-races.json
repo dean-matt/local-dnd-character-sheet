@@ -743,6 +743,66 @@
           "height": 556
         }
       ]
+    },
+    {
+      "name": "Elf (Kaladesh)",
+      "source": "PSK",
+      "entries": [
+        {
+          "type": "quote",
+          "entries": ["Elided."]
+        },
+        "Elided.",
+        "Elided.",
+        "Elided."
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PSK/Elf.webp"
+          },
+          "title": "Wild Wanderer",
+          "credit": "Sidharth Chaturvedi",
+          "width": 807,
+          "height": 595
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PSK/Elf2.webp"
+          },
+          "title": "Cultivator's Caravan",
+          "credit": "Mark Zug",
+          "width": 1276,
+          "height": 700
+        }
+      ]
+    },
+    {
+      "name": "Elf (Kaladesh; Bishatar and Tirahar)",
+      "source": "PSK",
+      "_copy": {
+        "name": "Elf (Kaladesh)",
+        "source": "PSK",
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": {
+              "type": "entries",
+              "entries": [
+                {
+                  "type": "entries",
+                  "name": "Bishtahar and Tirahar",
+                  "entries": ["Elided.", "Elided.", "Elided."]
+                }
+              ]
+            }
+          }
+        }
+      }
     }
   ],
   "raceFluffMeta": {

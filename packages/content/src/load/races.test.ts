@@ -72,6 +72,7 @@ describe("the races loader", () => {
         { name: "Dragonborn (Chromatic)", source: "FTD", edition: "classic" },
         { name: "Dragonborn (Chromatic; Black)", source: "FTD", edition: "classic" },
         { name: "Dragonborn (Chromatic; Blue)", source: "FTD", edition: "classic" },
+        { name: "Elf (Kaladesh)", source: "PSK", edition: "classic" },
       ]);
     });
 
@@ -131,6 +132,13 @@ describe("the races loader", () => {
           source: "PSA",
           race_name: "Human",
           race_source: "PHB",
+          edition: "classic",
+        },
+        {
+          name: "Bishatar and Tirahar",
+          source: "PSK",
+          race_name: "Elf (Kaladesh)",
+          race_source: "PSK",
           edition: "classic",
         },
       ]);
@@ -253,6 +261,13 @@ describe("the races loader", () => {
       // the Draconblood, both promised fluff that the plain race name would miss.
       expect(merged("", "PHB")).toHaveProperty("fluff.entries");
       expect(merged("Draconblood", "EGW")).toHaveProperty("fluff.entries");
+    });
+
+    it("reopens a variant race's own closing paren rather than nesting a second", () => {
+      // "Elf (Kaladesh)" is itself a named variant race; its "Bishatar and
+      // Tirahar" subrace's fluff is named "Elf (Kaladesh; Bishatar and
+      // Tirahar)", not "Elf (Kaladesh) (Bishatar and Tirahar)".
+      expect(merged("Bishatar and Tirahar", "PSK")).toHaveProperty("fluff");
     });
   });
 
