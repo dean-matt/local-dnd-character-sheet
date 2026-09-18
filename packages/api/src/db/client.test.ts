@@ -8,24 +8,29 @@ import { openDatabases } from "./client.ts";
 
 describe("openDatabases", () => {
   let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
 
   beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "db-client-"));
+    opened = openDatabases(dataDir);
   });
 
   afterEach(() => {
+    // Windows keeps the file locked until the handle closes, and rmSync then fails.
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("opens both databases at the given directory, migrated and ready to query", () => {
-    const { charactersDb, homebrewDb } = openDatabases(dataDir);
+    const { charactersDb, homebrewDb } = opened;
 
     expect(charactersDb.select().from(characters).all()).toEqual([]);
     expect(homebrewDb.$client.name).toContain(dataDir);
   });
 
   it("enforces the cascade from character to character_state, which foreign_keys off would leave orphaned", () => {
-    const { charactersDb } = openDatabases(dataDir);
+    const { charactersDb } = opened;
 
     charactersDb
       .insert(characters)
