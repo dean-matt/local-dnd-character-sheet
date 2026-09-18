@@ -62,7 +62,6 @@ function isEdition(value: unknown): value is Edition {
   return EDITIONS.some((edition) => edition === value);
 }
 
-/** An entry's own `edition` where it declares one, and its source's otherwise. */
 export function editionOf(
   entry: Entry,
   source: string,
