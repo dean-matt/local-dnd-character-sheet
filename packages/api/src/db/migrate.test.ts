@@ -1,10 +1,15 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { defaultCharacterState } from "@dnd/character";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
+
+const CHARACTERS_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/characters");
+const TABLES_MIGRATION = join(CHARACTERS_MIGRATIONS, "0000_far_forge.sql");
+const BACKFILL_MIGRATION = join(CHARACTERS_MIGRATIONS, "0001_backfill_character_state.sql");
 
 function tableNames(sqlite: Database.Database) {
   return sqlite
@@ -59,5 +64,22 @@ describe("migrations", () => {
 
     expect(() => migrateCharacters(db)).not.toThrow();
     expect(tableNames(sqlite)).toEqual(tables);
+  });
+
+  it("backfills a default state for a character left over from before character_state existed", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    sqlite.exec(readFileSync(TABLES_MIGRATION, "utf8"));
+    sqlite
+      .prepare(
+        "INSERT INTO characters (id, name, edition, level, definition) VALUES (?, ?, ?, ?, ?)",
+      )
+      .run("1", "Vex", "one", 1, "{}");
+
+    sqlite.exec(readFileSync(BACKFILL_MIGRATION, "utf8"));
+
+    const row = sqlite
+      .prepare("SELECT state FROM character_state WHERE character_id = ?")
+      .get("1") as { state: string } | undefined;
+    expect(row && JSON.parse(row.state)).toEqual(defaultCharacterState());
   });
 });
