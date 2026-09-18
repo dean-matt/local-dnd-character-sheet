@@ -40,7 +40,7 @@ export function checksBlocked(checks) {
   return red.length === 0 ? null : red.join(", ");
 }
 
-/** The line `issue-to-pr` step 11 opens a pass body with. It renders as nothing on GitHub. */
+/** The line `converge-review` step 2 opens a pass body with. It renders as nothing on GitHub. */
 export const PASS_MARKER = "<!-- audit-pass -->";
 
 /**
@@ -65,7 +65,7 @@ export function blockingFindings(comments) {
 
 /**
  * The passes a run spends before this condition stops asking for a clean one.
- * `issue-to-pr` step 13 loops against this number rather than carrying one of its own.
+ * `converge-review` step 4 loops against this number rather than carrying one of its own.
  */
 export const PASS_CAP = 3;
 
