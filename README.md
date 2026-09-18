@@ -88,6 +88,7 @@ packages/rules      5e rules arithmetic
 packages/dice       Dice notation parsing and rolling
 packages/tags       {@tag} markup parser
 packages/character  Zod schemas for a character's definition and state
+packages/catalog    Zod schemas for a catalog row in the 5etools entry shape
 packages/content    ETL that turns 5etools JSON into content.db
 packages/api        Hono API, Drizzle schemas, OpenAPI spec
 packages/web        React app

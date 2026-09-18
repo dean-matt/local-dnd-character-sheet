@@ -1,0 +1,35 @@
+{
+  "name": "@dnd/catalog",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod schemas for a catalog row in the 5etools entry shape, shared by homebrew and content reads",
+  "keywords": [
+    "5etools",
+    "dnd",
+    "catalog",
+    "homebrew",
+    "zod"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dean-matt/local-dnd-character-sheet.git",
+    "directory": "packages/catalog"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@dnd/tags": "workspace:*"
+  }
+}

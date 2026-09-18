@@ -21,6 +21,7 @@ const TEST_ONLY_PACKAGES = [
   "packages/character",
   "packages/dice",
   "packages/tags",
+  "packages/catalog",
   "packages/content",
 ];
 
