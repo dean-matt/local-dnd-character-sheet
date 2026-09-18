@@ -170,7 +170,7 @@ const BY_VALUE = {
  * stays an error, so a typo is still caught.
  *
  * `names` matches an element by its `name` and `items` matches the element
- * itself, what a list of plain strings needs — the `Snow Maiden` (CoS)
+ * itself — what a list of plain strings needs — the `Snow Maiden` (CoS)
  * drops "cold" from her parent's resistances. Upstream writes one or the other.
  *
  * `force` waives the check, for a removal written against many entries rather
@@ -427,7 +427,7 @@ function applyShorthand(entry: Entry, property: string, shorthand: string, conte
 }
 
 /**
- * An operation that takes the entry rather than one of its properties, what
+ * An operation that takes the entry rather than one of its properties — what
  * the `_` property means. Each of these reads something the entry holds
  * elsewhere: a spell list nested in `spellcasting`, a skill bonus derived from an
  * ability score, or a field named by the op instead of by the property above it.

@@ -167,7 +167,7 @@ describe("the spells loader", () => {
   /**
    * The reason, not the wrapper. `buildContent` reports every loader failure as
    * `Loader "spells" failed` — including a vendor directory missing a file the
-   * loader declared, what a broken `vendorHolding` looks like. Asserting
+   * loader declared — what a broken `vendorHolding` looks like. Asserting
    * the wrapper passes whether or not the entry was refused for the stated reason.
    */
   const refusal = (vendorDir: string): string => {

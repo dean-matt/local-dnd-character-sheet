@@ -103,7 +103,7 @@ function checkScore(entry: Entry, ability: string, want: Entry, context: string)
  * it anyway. Every pairing in the data clears both conditions, so this raises
  * only where upstream moves one side of a pairing and not the other.
  *
- * Read before `apply._root`, what makes an intelligence prerequisite
+ * Read before `apply._root` — what makes an intelligence prerequisite
  * checkable at all — the Awakened template wants an intelligence under 3 and then
  * writes 10 over it.
  */

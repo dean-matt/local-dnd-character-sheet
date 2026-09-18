@@ -225,7 +225,7 @@ function toRow(
  * Whether a declared path or glob covers this source. `readSources` expands the glob and
  * keeps no record of which pattern matched, so the kinds are matched back to it.
  *
- * One `*`, matching within a directory, every declaration above. A pattern with
+ * One `*`, matching within a directory, appears in every declaration above. A pattern with
  * a second one matches nothing here while `readSources` still reads its files, so they
  * reach `kindedRows` belonging to no kind and the build stops there.
  */
