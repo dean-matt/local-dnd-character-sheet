@@ -70,9 +70,11 @@ describe("withFluff", () => {
     );
   });
 
-  it("refuses on hasFluffImages just as it does on hasFluff", () => {
+  it("refuses on hasFluffImages just as it does on hasFluff, naming which one", () => {
     const entry = { name: "Foo", source: "PHB", hasFluffImages: true };
-    expect(() => withFluff(entry, undefined, context)).toThrow(/hasFluff promises/);
+    expect(() => withFluff(entry, undefined, context)).toThrow(
+      "ctx: hasFluffImages promises a fluff entry no file carries",
+    );
   });
 
   it("merges a match under a `fluff` field, stripping the fields that only named it", () => {

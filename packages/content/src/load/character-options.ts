@@ -267,8 +267,13 @@ export const characterOptions: Loader = {
     for (const [path, parsed] of ownFiles(sources).filter(([p]) => !isFluffPath(p))) {
       const file = FILES[path];
       if (file === undefined) throw new Error(`${path} belongs to no table`);
-      const { file: fluffFile, key: fluffKind } = FLUFF[path] as { file: string; key: string };
-      const fluff = collectFluff([[fluffFile, sources.get(fluffFile)]], fluffKind, byNameSource);
+      const fluffed = FLUFF[path];
+      if (fluffed === undefined) throw new Error(`${path} belongs to no fluff file`);
+      const fluff = collectFluff(
+        [[fluffed.file, sources.get(fluffed.file)]],
+        fluffed.key,
+        byNameSource,
+      );
       for (const [index, entry] of entriesOf(parsed, file.key, path).entries()) {
         const context = `${path} ${file.key}[${index}]`;
         const source = text(entry, "source", context);

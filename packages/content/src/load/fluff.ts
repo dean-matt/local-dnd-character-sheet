@@ -77,8 +77,9 @@ const FLUFF_IDENTITY = new Set(["name", "source", "className", "classSource", "s
  */
 export function withFluff(entry: Entry, found: Entry | undefined, context: string): Entry {
   if (found === undefined) {
-    if (entry.hasFluff === true || entry.hasFluffImages === true) {
-      throw new Error(`${context}: hasFluff promises a fluff entry no file carries`);
+    const promise = ["hasFluff", "hasFluffImages"].find((flag) => entry[flag] === true);
+    if (promise !== undefined) {
+      throw new Error(`${context}: ${promise} promises a fluff entry no file carries`);
     }
     return entry;
   }
