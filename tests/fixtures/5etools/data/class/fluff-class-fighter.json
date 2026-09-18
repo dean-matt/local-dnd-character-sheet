@@ -1,0 +1,102 @@
+{
+  "_meta": {
+    "internalCopies": ["subclassFluff"]
+  },
+  "classFluff": [
+    {
+      "name": "Fighter",
+      "source": "XPHB",
+      "entries": [
+        {
+          "type": "section",
+          "name": "Fighter",
+          "source": "XPHB",
+          "page": 90,
+          "entries": ["Elided.", "Elided."]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Fighter.webp"
+          },
+          "credit": "Nèstor Ossandón Leal",
+          "width": 1700,
+          "height": 2242
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/064-03-040.fighter-v-black-dragon.webp"
+          },
+          "title": "A Fighter stands between an ally and the onslaught of a black dragon",
+          "credit": "Campbell White",
+          "width": 2184,
+          "height": 1440
+        }
+      ]
+    }
+  ],
+  "subclassFluff": [
+    {
+      "name": "Psi Warrior",
+      "shortName": "Psi Warrior",
+      "source": "XPHB",
+      "className": "Fighter",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Psi Warrior Fighter.webp"
+          },
+          "credit": "Javier Charro",
+          "width": 850,
+          "height": 2204
+        }
+      ]
+    },
+    {
+      "name": "Eldritch Knight",
+      "shortName": "Eldritch Knight",
+      "source": "XPHB",
+      "className": "Fighter",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Eldritch Knight Fighter.webp"
+          },
+          "credit": "Hocheol Ryu",
+          "width": 850,
+          "height": 999
+        }
+      ]
+    },
+    {
+      "name": "Battle Master",
+      "shortName": "Battle Master",
+      "source": "XPHB",
+      "className": "Fighter",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Battle Master Fighter.webp"
+          },
+          "credit": "Ignarius Budi",
+          "width": 850,
+          "height": 2015
+        }
+      ]
+    }
+  ]
+}

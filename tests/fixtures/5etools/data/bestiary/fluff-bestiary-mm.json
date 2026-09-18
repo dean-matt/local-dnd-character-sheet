@@ -1,0 +1,106 @@
+{
+  "_meta": {
+    "internalCopies": ["monsterFluff"]
+  },
+  "monsterFluff": [
+    {
+      "name": "Archmage",
+      "source": "MM",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided.", "Elided."]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "bestiary/MM/Archmage.webp"
+          },
+          "width": 499,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "Goblin",
+      "source": "MM",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": [
+                "Elided.",
+                {
+                  "name": "Goblinoids",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                },
+                {
+                  "name": "Malicious Glee",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                },
+                {
+                  "name": "Leaders and Followers",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                },
+                {
+                  "name": "Challenging Lairs",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                },
+                {
+                  "name": "Worshipers of Maglubiyet",
+                  "type": "entries",
+                  "entries": ["Elided."]
+                }
+              ]
+            },
+            {
+              "type": "insetReadaloud",
+              "entries": [
+                {
+                  "type": "quote",
+                  "entries": ["Elided."],
+                  "by": "Elided."
+                }
+              ]
+            },
+            {
+              "type": "insetReadaloud",
+              "entries": [
+                {
+                  "type": "quote",
+                  "entries": ["Elided. {@style Bree-Yark!|small-caps} Elided."],
+                  "by": "Elided."
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "bestiary/MM/Goblin.webp"
+          },
+          "width": 722,
+          "height": 1000
+        }
+      ]
+    }
+  ]
+}

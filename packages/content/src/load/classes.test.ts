@@ -76,6 +76,36 @@ describe("the classes loader", () => {
     ]);
   });
 
+  it("folds a class's own fluff into its json", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const json = db
+      .prepare("SELECT json FROM classes WHERE name = ? AND source = ?")
+      .pluck()
+      .get("Cleric", "PHB") as string;
+    db.close();
+
+    expect(JSON.parse(json)).toHaveProperty("fluff.entries");
+  });
+
+  it("keys a subclass's fluff without classSource, since one subclass reaches both", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT class_source, json FROM subclasses WHERE name = ? AND source = ? ORDER BY class_source",
+      )
+      .all("Death Domain", "DMG") as { class_source: string; json: string }[];
+    db.close();
+
+    expect(rows.map((row) => row.class_source)).toEqual(["PHB", "XPHB"]);
+    for (const row of rows) {
+      expect(JSON.parse(row.json)).toHaveProperty("fluff.images");
+    }
+  });
+
   it("skips the sidekicks, which carry no hit die to store", () => {
     build(FIXTURE_VENDOR);
 
@@ -407,6 +437,10 @@ describe("the classes loader", () => {
     const vendorDir = join(workspace, "vendor");
     mkdirSync(join(vendorDir, "data", "class"), { recursive: true });
     writeFileSync(join(vendorDir, "data", "class", file), JSON.stringify(contents));
+    writeFileSync(
+      join(vendorDir, "data", "class", "fluff-class-test.json"),
+      JSON.stringify({ classFluff: [], subclassFluff: [] }),
+    );
     for (const path of [...EDITION_FILES, OPTIONAL_FEATURES_FILE]) {
       const destination = join(vendorDir, path);
       mkdirSync(dirname(destination), { recursive: true });

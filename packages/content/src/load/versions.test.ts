@@ -76,6 +76,16 @@ describe("resolveVersions", () => {
       expect(races.filter((race) => "_versions" in race)).toEqual([]);
     });
 
+    it("keeps the base's own hasFluff but does not hand it to a version", () => {
+      // Aasimar|MPMM promises a fluff entry; the versions this expands it into
+      // inherit its fields but not that promise, since no fluff entry names
+      // "Aasimar; Necrotic Shroud" and the fixture would refuse the build if it did.
+      expect(find(races, "Aasimar")).toMatchObject({ hasFluff: true, hasFluffImages: true });
+      const version = find(races, "Aasimar; Necrotic Shroud");
+      expect(version).not.toHaveProperty("hasFluff");
+      expect(version).not.toHaveProperty("hasFluffImages");
+    });
+
     it("applies a version's own _mod to a clone, leaving the base untouched", () => {
       expect(names(find(races, "Aasimar"))).toEqual(["Celestial Revelation", "Healing Hands"]);
       expect(names(find(races, "Aasimar; Necrotic Shroud"))).toEqual([

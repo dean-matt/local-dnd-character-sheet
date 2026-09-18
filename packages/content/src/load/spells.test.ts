@@ -144,6 +144,10 @@ describe("the spells loader", () => {
       join(vendorDir, "data", "spells", "spells-phb.json"),
       JSON.stringify({ spell: spellEntries }),
     );
+    writeFileSync(
+      join(vendorDir, "data", "spells", "fluff-spells-phb.json"),
+      JSON.stringify({ spellFluff: [] }),
+    );
     writeFileSync(join(vendorDir, "data", "spells", "sources.json"), JSON.stringify(sourcesJson));
     mkdirSync(join(vendorDir, "data", "class"), { recursive: true });
     writeFileSync(

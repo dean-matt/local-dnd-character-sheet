@@ -8,6 +8,7 @@
  * of which are lists upstream and so land in tables of their own.
  */
 import { EDITION_FILES, EDITIONS, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
+import { byNameSource, collectFluff, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, entriesOf, isRecord, strings, text } from "./json.ts";
 
@@ -28,12 +29,28 @@ const FILES: Record<string, { key: string; table: string }> = {
   [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
 
-function toRow(entry: Entry, source: string, edition: Edition, context: string): Row {
+/** The fluff file each of `FILES`' own files pairs with, and the array key it reads. */
+const FLUFF: Record<string, { file: string; key: string }> = {
+  "data/backgrounds.json": { file: "data/fluff-backgrounds.json", key: "backgroundFluff" },
+  "data/feats.json": { file: "data/fluff-feats.json", key: "featFluff" },
+  [OPTIONAL_FEATURES_FILE]: {
+    file: "data/fluff-optionalfeatures.json",
+    key: "optionalfeatureFluff",
+  },
+};
+
+function toRow(
+  entry: Entry,
+  source: string,
+  edition: Edition,
+  context: string,
+  fluff: (key: string) => Entry | undefined,
+): Row {
   return {
     name: text(entry, "name", context),
     source,
     edition,
-    json: JSON.stringify(entry),
+    json: JSON.stringify(withFluff(entry, fluff(byNameSource(entry, context)), context)),
   };
 }
 
@@ -235,7 +252,7 @@ export function featureTypePool(
 
 export const characterOptions: Loader = {
   name: "character-options",
-  files: [...Object.keys(FILES), ...EDITION_FILES],
+  files: [...Object.keys(FILES), ...Object.values(FLUFF).map((f) => f.file), ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
     // Seeded from FILES, not by hand: a table named there and missed here would
@@ -247,14 +264,16 @@ export const characterOptions: Loader = {
     for (const { table } of Object.values(FILES)) out[table] = [];
     const pool = featureTypePool(sources, fromSource);
 
-    for (const [path, parsed] of ownFiles(sources)) {
+    for (const [path, parsed] of ownFiles(sources).filter(([p]) => !isFluffPath(p))) {
       const file = FILES[path];
       if (file === undefined) throw new Error(`${path} belongs to no table`);
+      const { file: fluffFile, key: fluffKind } = FLUFF[path] as { file: string; key: string };
+      const fluff = collectFluff([[fluffFile, sources.get(fluffFile)]], fluffKind, byNameSource);
       for (const [index, entry] of entriesOf(parsed, file.key, path).entries()) {
         const context = `${path} ${file.key}[${index}]`;
         const source = text(entry, "source", context);
         const edition = editionOf(entry, source, fromSource);
-        const row = toRow(entry, source, edition, context);
+        const row = toRow(entry, source, edition, context, fluff);
         out[file.table]?.push(row);
         if (file.table === "optional_features") {
           out.optional_feature_types?.push(...typeRows(entry, row, context));

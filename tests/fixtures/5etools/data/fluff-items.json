@@ -1,0 +1,130 @@
+{
+  "_meta": {
+    "internalCopies": ["itemFluff"]
+  },
+  "itemFluff": [
+    {
+      "name": "Wand of Magic Missiles",
+      "source": "DMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/DMG/Wand of Magic Missiles.webp"
+          },
+          "credit": "Conceptopolis",
+          "width": 800,
+          "height": 450
+        }
+      ]
+    },
+    {
+      "name": "Bag of Holding",
+      "source": "DMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/DMG/Bag of Holding.webp"
+          },
+          "width": 560,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "Cloak of Billowing",
+      "source": "XDMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/XDMG/Cloak of Billowing.webp"
+          },
+          "width": 567,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "Cloak of Billowing",
+      "source": "WttHC",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/WttHC/Cloak of Billowing (Stranger Things).webp"
+          },
+          "width": 797,
+          "height": 999
+        }
+      ]
+    },
+    {
+      "name": "Longsword",
+      "source": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/XPHB/Longsword.webp"
+          },
+          "credit": "Polar Engine",
+          "width": 665,
+          "height": 135
+        }
+      ]
+    },
+    {
+      "name": "Arrow of Slaying (*)",
+      "source": "DMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/DMG/Arrow of Slaying.webp"
+          },
+          "width": 1000,
+          "height": 986
+        }
+      ]
+    },
+    {
+      "name": "Ammunition of Slaying",
+      "source": "XDMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/XDMG/Ammunition of Slaying.webp"
+          },
+          "title": "Ammunition of Slaying (Arrow)",
+          "width": 1000,
+          "height": 986
+        }
+      ]
+    },
+    {
+      "name": "Armblade",
+      "source": "ERLW",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/ERLW/Armblade.webp"
+          },
+          "width": 801,
+          "height": 594
+        }
+      ]
+    }
+  ]
+}

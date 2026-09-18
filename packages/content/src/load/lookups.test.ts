@@ -84,6 +84,25 @@ describe("the lookups loader", () => {
     ]);
   });
 
+  it("folds a matching fluff entry into json, leaving an unpromised kind untouched", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const json = (kind: string, name: string, source: string) =>
+      JSON.parse(
+        db
+          .prepare("SELECT json FROM lookups WHERE kind = ? AND name = ? AND source = ?")
+          .pluck()
+          .get(kind, name, source) as string,
+      ) as { fluff?: unknown };
+    const draconic = json("language", "Draconic", "PHB");
+    const common = json("language", "Common", "PHB");
+    db.close();
+
+    expect(draconic).toHaveProperty("fluff.images");
+    expect(common.fluff).toBeUndefined();
+  });
+
   it("keeps the entry in json, tag markup untouched", () => {
     build(FIXTURE_VENDOR);
 

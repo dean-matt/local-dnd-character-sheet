@@ -181,17 +181,12 @@ way to check that a tag's display argument is the right one, because reading the
 argument yields text that looks fine. Three tags rendered machine text as prose until
 the registry was diffed against it.
 
-## Items
+## Documents of their own
 
-Three files and four array keys land in the one `items` table, and the two decisions
-they force — what to do with a magic variant and with an item group — have a document
-of their own: [`items.md`](items.md).
-
-## Class tables
-
-`classTableGroups`, `subclassTableGroups` and `optionalfeatureProgression` state what a
-class gets at each level, and have a document of their own:
-[`class-tables.md`](class-tables.md).
+Three subjects here outgrew a section: what a magic variant and an item group need in
+[`items.md`](items.md), what `classTableGroups` and `optionalfeatureProgression` state in
+[`class-tables.md`](class-tables.md), and what a `fluff-*.json` file carries in
+[`fluff.md`](fluff.md).
 
 ## Useful generated files
 

@@ -1,0 +1,19 @@
+{
+  "conditionFluff": [
+    {
+      "name": "Blinded",
+      "source": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "conditionsdiseases/PHB/blinded.webp"
+          },
+          "width": 250,
+          "height": 250
+        }
+      ]
+    }
+  ]
+}

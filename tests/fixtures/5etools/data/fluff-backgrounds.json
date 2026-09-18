@@ -1,0 +1,99 @@
+{
+  "_meta": {
+    "internalCopies": ["backgroundFluff"]
+  },
+  "backgroundFluff": [
+    {
+      "name": "Acolyte",
+      "source": "PHB",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided.", "Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Baldur's Gate Acolyte",
+      "source": "BGDIA",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Criminal",
+      "source": "PHB",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Variant Criminal (Spy)",
+      "source": "PHB",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Augen Trust (Spy)",
+      "source": "EGW",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided.", "Elided.", "Elided.", "Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Acolyte",
+      "source": "XPHB",
+      "entries": ["Elided."],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "backgrounds/XPHB/Acolyte.webp"
+          },
+          "credit": "Titus Lunter",
+          "width": 2513,
+          "height": 952
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import {
   reachesPool,
 } from "./character-options.ts";
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
+import { collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, strings, text } from "./json.ts";
 
@@ -604,6 +605,7 @@ function addClasses(
   path: string,
   fromSource: FromSource,
   pool: Set<string>,
+  fluff: (key: string) => Entry | undefined,
 ): void {
   for (const [index, entry] of entriesOf(source, "class", path).entries()) {
     // The three sidekicks are stat-block companions rather than player classes:
@@ -617,12 +619,13 @@ function addClasses(
     const name = text(entry, "name", context);
     const classSource = text(entry, "source", context);
     const edition = editionOf(entry, classSource, fromSource);
+    const merged = withFluff(entry, fluff(fluffKey(name, classSource)), context);
     out.classes.push({
       name,
       source: classSource,
       edition,
       hit_die: hitDie(entry, context),
-      json: JSON.stringify(entry),
+      json: JSON.stringify(merged),
     });
     const owner = { class_name: name, class_source: classSource };
     const { resources, slots } = tableGroups(entry.classTableGroups, owner, context);
@@ -641,6 +644,7 @@ function addSubclasses(
   path: string,
   fromSource: FromSource,
   pool: Set<string>,
+  fluff: (key: string) => Entry | undefined,
 ): void {
   for (const [index, entry] of entriesOf(source, "subclass", path).entries()) {
     const context = `${path} subclass[${index}]`;
@@ -654,6 +658,12 @@ function addSubclasses(
     };
     ownsGroups(entry, name, subclassSource, context);
     const edition = editionOf(entry, subclassSource, fromSource);
+    // Keyed without `classSource`: one subclass reaches both a class's classic
+    // and remade printings, and upstream writes its lore once. Path of the
+    // Totem Warrior's fluff names no `classSource`, so a key that included one
+    // would miss both rows.
+    const found = fluff(fluffKey(name, subclassSource, owner.class_name));
+    const merged = withFluff(entry, found, context);
     out.subclasses.push({
       name,
       source: subclassSource,
@@ -661,7 +671,7 @@ function addSubclasses(
       class_name: owner.class_name,
       class_source: owner.class_source,
       edition,
-      json: JSON.stringify(entry),
+      json: JSON.stringify(merged),
     });
     const { resources, slots } = tableGroups(entry.subclassTableGroups, owner, context);
     const typed = optionalFeatures(entry.optionalfeatureProgression, owner, context);
@@ -774,9 +784,31 @@ export function classIdentities(sources: Map<string, unknown>): Set<string> {
 /** Shared with `spells.ts`, which needs a class's identity but not its tables. */
 export const CLASS_FILES = "data/class/class-*.json";
 
+const CLASS_FLUFF = "data/class/fluff-class-*.json";
+
+/** Every class's and every subclass's fluff, pooled across the one file per class. */
+function fluffPools(files: [string, unknown][]): {
+  classes: (key: string) => Entry | undefined;
+  subclasses: (key: string) => Entry | undefined;
+} {
+  const fluffFiles = files.filter(([path]) => isFluffPath(path));
+  return {
+    classes: collectFluff(fluffFiles, "classFluff", (entry, context) =>
+      fluffKey(text(entry, "name", context), text(entry, "source", context)),
+    ),
+    subclasses: collectFluff(fluffFiles, "subclassFluff", (entry, context) =>
+      fluffKey(
+        text(entry, "name", context),
+        text(entry, "source", context),
+        text(entry, "className", context),
+      ),
+    ),
+  };
+}
+
 export const classes: Loader = {
   name: "classes",
-  files: [CLASS_FILES, OPTIONAL_FEATURES_FILE, ...EDITION_FILES],
+  files: [CLASS_FILES, CLASS_FLUFF, OPTIONAL_FEATURES_FILE, ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
     const out: Tables = {
@@ -792,13 +824,15 @@ export const classes: Loader = {
       subclass_features: [],
     };
 
-    const files = ownFiles(sources).filter(([path]) => path !== OPTIONAL_FEATURES_FILE);
+    const all = ownFiles(sources).filter(([path]) => path !== OPTIONAL_FEATURES_FILE);
+    const fluff = fluffPools(all);
+    const files = all.filter(([path]) => !isFluffPath(path));
     const sidekicks = sidekickClasses(files);
     const pool = featureTypePool(sources, fromSource);
     const claims = new Map<Row, string>();
     for (const [path, source] of files) {
-      addClasses(out, source, path, fromSource, pool);
-      addSubclasses(out, source, path, fromSource, pool);
+      addClasses(out, source, path, fromSource, pool, fluff.classes);
+      addSubclasses(out, source, path, fromSource, pool, fluff.subclasses);
       addFeatures(out, claims, source, path, fromSource, sidekicks);
     }
     checkFeatureOwners(out, claims);

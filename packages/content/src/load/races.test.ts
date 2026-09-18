@@ -226,6 +226,34 @@ describe("the races loader", () => {
         ),
       ).toEqual([{ resist: '["lightning"]' }]);
     });
+
+    it("folds a race's own fluff into its json", () => {
+      const json = query<{ json: string }>(
+        "SELECT json FROM races WHERE name = ? AND source = ?",
+        "Human",
+        "PHB",
+      )[0]?.json as string;
+      expect(JSON.parse(json)).toHaveProperty("fluff.entries");
+    });
+
+    it("does not hand a version its base's fluff promise", () => {
+      // `Aasimar` (MPMM) has its own fluff match; its version, expanded with
+      // the base's fields, would inherit `hasFluff` too if versions.ts did not
+      // strip it, and no fluff entry names the version itself.
+      const json = query<{ json: string }>(
+        "SELECT json FROM races WHERE name = ? AND source = ?",
+        "Aasimar; Necrotic Shroud",
+        "MPMM",
+      )[0]?.json as string;
+      expect(JSON.parse(json)).not.toHaveProperty("fluff");
+    });
+
+    it("keys a subrace's fluff by the race and subrace names in parens", () => {
+      // Dragonborn's own base subrace, empty-named — "Dragonborn (Base)" — and
+      // the Draconblood, both promised fluff that the plain race name would miss.
+      expect(merged("", "PHB")).toHaveProperty("fluff.entries");
+      expect(merged("Draconblood", "EGW")).toHaveProperty("fluff.entries");
+    });
   });
 
   describe("merging a subrace into its race", () => {
@@ -244,6 +272,7 @@ describe("the races loader", () => {
       const vendorDir = join(workspace, "vendor");
       mkdirSync(join(vendorDir, "data"), { recursive: true });
       writeFileSync(join(vendorDir, "data", "races.json"), JSON.stringify({ race, subrace }));
+      writeFileSync(join(vendorDir, "data", "fluff-races.json"), JSON.stringify({ raceFluff: [] }));
       for (const file of EDITION_FILES) {
         const destination = join(vendorDir, file);
         mkdirSync(dirname(destination), { recursive: true });

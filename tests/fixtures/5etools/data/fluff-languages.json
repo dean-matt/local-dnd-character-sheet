@@ -1,0 +1,19 @@
+{
+  "languageFluff": [
+    {
+      "name": "Draconic",
+      "source": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "languages/PHB/Draconic.webp"
+          },
+          "width": 1000,
+          "height": 336
+        }
+      ]
+    }
+  ]
+}

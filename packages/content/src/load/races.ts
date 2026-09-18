@@ -14,10 +14,12 @@
  * name, and every row would claim the parent's page and reprints as its own.
  */
 import { EDITION_FILES, editionOf, editions } from "./edition.ts";
+import { collectFluff, fluffKey, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, entriesOf, isRecord, text } from "./json.ts";
 
 const RACES_FILE = "data/races.json";
+const RACES_FLUFF_FILE = "data/fluff-races.json";
 
 /** The race's own, which a subrace does not inherit. */
 const RACE_ONLY = new Set([
@@ -236,34 +238,59 @@ function subraceName(entry: Entry, where: string): string {
   return entry.name === undefined ? "" : text(entry, "name", where);
 }
 
+/**
+ * The compound name upstream's own race fluff writes for a subrace: the race's
+ * name with the subrace's appended in parens, `Base` where it carries none. A
+ * race that is itself a named variant reopens its own closing paren rather
+ * than nesting a second — `Elf (Kaladesh)` fluff-names `Elf (Kaladesh;
+ * Bishatar and Tirahar)`.
+ */
+function fluffSubraceName(raceName: string, subraceName: string): string {
+  const label = subraceName === "" ? "Base" : subraceName;
+  return raceName.endsWith(")") ? `${raceName.slice(0, -1)}; ${label})` : `${raceName} (${label})`;
+}
+
 export const races: Loader = {
   name: "races",
-  files: [RACES_FILE, ...EDITION_FILES],
+  files: [RACES_FILE, RACES_FLUFF_FILE, ...EDITION_FILES],
   prepare: (parsed, path) => (path === RACES_FILE ? adopt(parsed, path) : parsed),
   rows: (sources) => {
     const fromSource = editions(sources);
     const parsed = sources.get(RACES_FILE);
+    const fluff = collectFluff(
+      [[RACES_FLUFF_FILE, sources.get(RACES_FLUFF_FILE)]],
+      "raceFluff",
+      (entry, context) => fluffKey(text(entry, "name", context), text(entry, "source", context)),
+    );
     return {
       races: entriesOf(parsed, "race", RACES_FILE).map((entry, index): Row => {
         const context = `${RACES_FILE} race[${index}]`;
         const source = text(entry, "source", context);
+        const merged = withFluff(
+          entry,
+          fluff(fluffKey(text(entry, "name", context), source)),
+          context,
+        );
         return {
           name: text(entry, "name", context),
           source,
           edition: editionOf(entry, source, fromSource),
-          json: JSON.stringify(entry),
+          json: JSON.stringify(merged),
         };
       }),
       subraces: entriesOf(parsed, "subrace", RACES_FILE).map((entry, index): Row => {
         const context = `${RACES_FILE} subrace[${index}]`;
         const source = text(entry, "source", context);
+        const raceName = text(entry, "raceName", context);
+        const key = fluffKey(fluffSubraceName(raceName, subraceName(entry, context)), source);
+        const merged = withFluff(entry, fluff(key), context);
         return {
           name: subraceName(entry, context),
           source,
-          race_name: text(entry, "raceName", context),
+          race_name: raceName,
           race_source: text(entry, "raceSource", context),
           edition: editionOf(entry, source, fromSource),
-          json: JSON.stringify(entry),
+          json: JSON.stringify(merged),
         };
       }),
     };
