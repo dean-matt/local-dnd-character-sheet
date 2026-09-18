@@ -78,7 +78,7 @@ describe("charactersRoutes", () => {
   it("404s reading, updating or deleting an id that does not exist", async () => {
     const getRes = await routes.request("/characters/missing");
     expect(getRes.status).toBe(404);
-    expect(await getRes.json()).toEqual({ error: "no character with that id" });
+    expect(await getRes.json()).toEqual({ error: "No character with that id" });
 
     const putRes = await routes.request("/characters/missing", {
       ...json(baseDefinition()),

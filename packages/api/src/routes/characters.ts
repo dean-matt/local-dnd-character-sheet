@@ -37,7 +37,7 @@ function toRecord(row: CharacterRow): CharacterRecord {
 
 const idParam = z.object({ id: z.string() });
 
-const NOT_FOUND = "no character with that id";
+const NOT_FOUND = "No character with that id";
 
 const list = createRoute({
   method: "get",
