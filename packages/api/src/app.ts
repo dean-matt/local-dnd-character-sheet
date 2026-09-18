@@ -1,5 +1,5 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { charactersDb } from "./db/client.ts";
+import { charactersDb } from "./db/singleton.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 
 export const app = new OpenAPIHono();

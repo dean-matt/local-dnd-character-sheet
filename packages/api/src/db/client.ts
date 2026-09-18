@@ -9,10 +9,12 @@
  * Migrating on open means an API start can never skip a pending schema change,
  * unlike a documented manual step. `openDatabases` takes the directory rather
  * than reading one from module scope, so a test brings up its own pair at a
- * path it controls instead of touching the user's real data.
+ * path it controls instead of touching the user's real data — this module has
+ * no top-level side effect, so importing it for the function alone opens
+ * nothing. `./singleton.ts` is the one place that opens the user's own.
  */
 import { mkdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as charactersSchema from "./characters.ts";
@@ -37,7 +39,3 @@ export function openDatabases(dataDir: string) {
 
   return { charactersDb, homebrewDb };
 }
-
-const DATA_DIR = resolve(import.meta.dirname, "../../../../data");
-
-export const { charactersDb, homebrewDb } = openDatabases(DATA_DIR);
