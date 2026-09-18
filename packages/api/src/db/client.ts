@@ -37,14 +37,13 @@ function openMigrated<Schema extends Record<string, unknown>>(
   dataDir: string,
   backupDir: string,
   fileName: string,
-  name: string,
   schema: Schema,
   migrate: (db: BetterSQLite3Database<Schema>) => void,
   opened: Database.Database[],
 ) {
   const sqlite = open(dataDir, fileName);
   opened.push(sqlite);
-  backupDatabase(sqlite, backupDir, name);
+  backupDatabase(sqlite, backupDir, fileName.replace(/\.db$/, ""));
   const db = drizzle(sqlite, { schema });
   migrate(db);
   return db;
@@ -64,7 +63,6 @@ export function openDatabases(dataDir: string) {
       dataDir,
       backupDir,
       "characters.db",
-      "characters",
       charactersSchema,
       migrateCharacters,
       opened,
@@ -73,7 +71,6 @@ export function openDatabases(dataDir: string) {
       dataDir,
       backupDir,
       "homebrew.db",
-      "homebrew",
       homebrewSchema,
       migrateHomebrew,
       opened,
