@@ -49,8 +49,7 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
    decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.
 
    Return the label left, what each pass found, and what `gh pr checks` says, to whatever
-   called this skill. Check once, right after the push — a run against the new commit is
-   reported in flight rather than waited on, the same as `audit-pr`'s own check.
+   called this skill.
 
 ## What this skill will not do
 
