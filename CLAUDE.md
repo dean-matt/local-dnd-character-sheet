@@ -73,12 +73,17 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 
 | Skill | Use when |
 |---|---|
-| `issue-to-pr` | Taking any issue from open to a reviewed pull request |
-| `audit-pr` | Reviewing a pull request in this repository |
-| `merge-pr` | Carrying a reviewed pull request to main |
-| `auto-dev` | Working the board issue after issue, from open to merged |
-| `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `add-endpoint` | Adding an API route, end to end |
+| `audit-pr` | Reviewing a pull request in this repository |
+| `auto-dev` | Working the board issue after issue, from open to merged |
+| `board-status` | Moving an issue's card to a named status on the project board |
+| `content-import` | Adding or changing an entity type in the 5etools ETL |
+| `converge-review` | Running the review-and-fix loop on an open pull request |
+| `issue-to-pr` | Taking any issue from open to a reviewed pull request |
+| `issue-worktree` | Opening or closing the git worktree an issue is built in |
+| `merge-pr` | Carrying a reviewed pull request to main |
+| `open-pr` | Opening a pull request and writing its body |
+| `pick-issue` | Choosing which issue to take, when `issue-to-pr` names none |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
 
 Skills are indexed here so they compete for this file's budget. There is no cap on how

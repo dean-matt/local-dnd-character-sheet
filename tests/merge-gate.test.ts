@@ -193,9 +193,9 @@ describe("the distance from the last pass", () => {
 const NUMBER = "one|two|three|four|five|six|seven|eight|nine|ten|\\d+";
 
 /**
- * A number beside "passes", either way round, in `issue-to-pr` — where the loop lives. Both
- * patterns keep the word, because a ceiling named without it matches ordinary prose: a
- * skill dense with step numbers reads "most of step 14" as a cap. Both keep it plural,
+ * A number beside "passes", either way round, in `converge-review` — where the loop lives.
+ * Both patterns keep the word, because a ceiling named without it matches ordinary prose: a
+ * skill dense with step numbers reads "most of step 4" as a cap. Both keep it plural,
  * because the singular sits beside a small number innocently — "post the pass as one
  * review" counts reviews and caps nothing — while a cap is a count and reads plural.
  */
@@ -218,15 +218,15 @@ describe("the cap and the condition the skills cite", () => {
     expect(caught("a pass returning nothing ends the loop earlier")).toBe(false);
   });
 
-  it("is cited by issue-to-pr rather than restated", () => {
-    const skill = read(".claude/skills/issue-to-pr/SKILL.md");
-    expect(skill, "issue-to-pr names no cap, so a run cannot tell when to stop").toContain(
+  it("is cited by converge-review rather than restated", () => {
+    const skill = read(".claude/skills/converge-review/SKILL.md");
+    expect(skill, "converge-review names no cap, so a run cannot tell when to stop").toContain(
       "PASS_CAP",
     );
     for (const second of SECOND_CAP)
       expect(
         second.test(skill),
-        `issue-to-pr spells a pass count out (${second}), which is a second cap the gate cannot read`,
+        `converge-review spells a pass count out (${second}), which is a second cap the gate cannot read`,
       ).toBe(false);
   });
 
