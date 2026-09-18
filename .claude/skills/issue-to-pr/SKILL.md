@@ -32,11 +32,21 @@ holds, stop and name it; reranking is the user's call.
 
 ## The sequence
 
-1. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of scope
+1. Set the board to `In Progress`; its own workflow waits for the pull request.
+   `item-add` returns the item an issue already has, and the other three ids hold still, so
+   read them once a session.
+
+   ```bash
+   gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
+   gh project view 1 --owner dean-matt --format json --jq .id
+   gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")'
+   gh project item-edit --id <item> --project-id <project> --field-id <field> --single-select-option-id <option>
+   ```
+2. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of scope
    is a fence.
-2. **Verify every count and shape the issue states against `vendor/`** before designing
+3. **Verify every count and shape the issue states against `vendor/`** before designing
    against it. Say which are wrong, or that `vendor/` was not there to ask.
-3. **Branch into a worktree.** Enter it with `cd`, not the harness's worktree tool, which
+4. **Branch into a worktree.** Enter it with `cd`, not the harness's worktree tool, which
    refuses every `git` call a shell wrapper rewrites.
 
    ```bash
@@ -54,37 +64,26 @@ holds, stop and name it; reranking is the user's call.
    The add fails where a directory is already there — another agent on this issue, or a
    crash. Clear it by hand once no agent holds it. Never link `characters.db`: two agents
    writing it collide. Run every later step from the worktree; step 14 removes it.
-
-   Then set the board to `In Progress`; its own workflow waits for the pull request.
-   `item-add` returns the item an issue already has, and the other three ids hold still, so
-   read them once a session.
-
-   ```bash
-   gh project item-add 1 --owner dean-matt --url <issue-url> --format json --jq .id
-   gh project view 1 --owner dean-matt --format json --jq .id
-   gh project field-list 1 --owner dean-matt --format json --jq '.fields[] | select(.name == "Status")'
-   gh project item-edit --id <item> --project-id <project> --field-id <field> --single-select-option-id <option>
-   ```
-4. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
-5. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
+5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
+6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
-6. **Correct the docs the change made stale**, in the same commit. Past a `docs/` or
+7. **Correct the docs the change made stale**, in the same commit. Past a `docs/` or
    `CLAUDE.md` cap, replace a sentence rather than append; a new `docs/` file needs a
    README row.
-7. **Prose pass** with `writing-clearly-and-concisely` over every piece of prose the change
+8. **Prose pass** with `writing-clearly-and-concisely` over every piece of prose the change
    wrote — commit message, comments, `docs/`, a skill, `CLAUDE.md`. A skill says what to
    do; keep a reason only where losing it lets the next agent delete a fence or walk into a
    failure that passes silently.
-8. **`pnpm check`, then commit and push**, once per concern the issue carries. Run it after
+9. **`pnpm check`, then commit and push**, once per concern the issue carries. Run it after
    steps 6 and 7 — pre-commit runs neither the tests nor the caps. Never push past a
    failure with a note about it.
-9. **Open the pull request** with `gh pr create`, body linking the issue and prose passed.
+10. **Open the pull request** with `gh pr create`, body linking the issue and prose passed.
    This starts CI; the pushes before it started nothing.
-10. **Dispatch the review to a subagent** whose prompt carries the pull request number and
+11. **Dispatch the review to a subagent** whose prompt carries the pull request number and
     nothing else — no rationale, no account of what you wrote, no defense of a choice. It
     invokes [`audit-pr`](../audit-pr/SKILL.md), which reviews from its own worktree. Its
     findings reach step 11 unchanged.
-11. **Post the pass as one review, before applying** — a run that dies mid-apply then
+12. **Post the pass as one review, before applying** — a run that dies mid-apply then
     leaves the findings standing rather than a label pointing at nothing. One call sends
     `commit_id`, `event`, a `body` and each line comment as `{path, line, side, body}`;
     posted one at a time they arrive as a review each. The `body` opens with `PASS_MARKER`
@@ -103,7 +102,7 @@ holds, stop and name it; reranking is the user's call.
     step 14 — that review is the only record the gate has that the code was read again, and
     "the review converged" reads the findings of the last pass to post. A later pass adds,
     leaving earlier threads alone.
-12. **Label, apply, reply.** Swap `review:changes-requested` on first, in one `gh pr edit
+13. **Label, apply, reply.** Swap `review:changes-requested` on first, in one `gh pr edit
     <n> --add-label <one> --remove-label <other>`, so the mark and the findings stand
     together. Then apply what survives, `pnpm check`, prose pass what the fixes touched,
     commit, push, and bring the pull request body back in line — fixes left in the working
@@ -112,13 +111,13 @@ holds, stop and name it; reranking is the user's call.
     Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
     every finding carries a verdict. Each reply lands as its own empty review. A fix that
     moves a line outdates its thread, and the reply still posts.
-13. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, a fresh
+14. **Repeat 10 to 12 while a pass returns a `critical` or `warning` finding**, a fresh
     subagent each so none inherits the last one's conclusions. `PASS_CAP` in
     `scripts/merge-gate.mjs` caps the loop and the gate's "the review converged" reads it:
     a pass returning nothing ends the loop earlier, and at the cap you apply what the pass
     found and let the verdict reply carry it. A finding you declined comes back and takes
     the same reply.
-14. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a pass
+15. **Label, then stop.** `review:approved` where `pnpm check` is green and nothing a pass
     returned still waits on the user; `review:changes-requested` where something does — a
     decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.
 
