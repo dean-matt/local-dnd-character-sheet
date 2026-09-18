@@ -50,4 +50,14 @@ describe("migrations", () => {
       expect.arrayContaining(["homebrew_items", "homebrew_spells"]),
     );
   });
+
+  it("migrating twice is a no-op", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    migrateCharacters(db);
+    const tables = tableNames(sqlite);
+
+    expect(() => migrateCharacters(db)).not.toThrow();
+    expect(tableNames(sqlite)).toEqual(tables);
+  });
 });
