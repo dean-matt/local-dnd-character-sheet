@@ -34,15 +34,19 @@ const baseDefinition = (overrides: Partial<CharacterDefinition> = {}): Character
 
 describe("insertCharacter and updateCharacterDefinition", () => {
   let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
   let db: ReturnType<typeof openDatabases>["charactersDb"];
 
   beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "characters-queries-"));
-    db = openDatabases(dataDir).charactersDb;
+    opened = openDatabases(dataDir);
+    db = opened.charactersDb;
   });
 
   afterEach(() => {
-    db.$client.close();
+    // Windows keeps the file locked until the handle closes, and rmSync then fails.
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
     rmSync(dataDir, { recursive: true, force: true });
   });
 
