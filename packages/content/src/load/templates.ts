@@ -16,7 +16,7 @@ import { type Entry, isRecord } from "./json.ts";
 import { applyMod } from "./mod.ts";
 import { challengeRating } from "./stat-block.ts";
 
-/** The property holding the templates, which is also the pool a reference resolves against. */
+/** The property holding the templates, also the pool a reference resolves against. */
 export const TEMPLATE_PROPERTY = "monsterTemplate";
 
 const fold = (value: unknown): unknown => (typeof value === "string" ? value.toLowerCase() : value);
@@ -103,7 +103,7 @@ function checkScore(entry: Entry, ability: string, want: Entry, context: string)
  * it anyway. Every pairing in the data clears both conditions, so this raises
  * only where upstream moves one side of a pairing and not the other.
  *
- * Read before `apply._root`, which is what makes an intelligence prerequisite
+ * Read before `apply._root`, what makes an intelligence prerequisite
  * checkable at all — the Awakened template wants an intelligence under 3 and then
  * writes 10 over it.
  */
@@ -174,7 +174,7 @@ function runMod(merged: Entry, template: Entry, context: string): void {
 
 /**
  * Applies every template a block names, in the order it names them — each one
- * checked, rooted and modded before the next is read, which is the order upstream
+ * checked, rooted and modded before the next is read, the order upstream
  * applies them in and the only one where a second template's prerequisite sees
  * what the first did.
  *

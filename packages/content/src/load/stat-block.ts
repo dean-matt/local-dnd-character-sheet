@@ -6,7 +6,7 @@
  * creature's own ability scores and challenge rating, a spell sits three levels
  * inside a `spellcasting` block under a key naming how often it recharges, a
  * sense is a sentence rather than a number, and experience comes from a table the
- * creature does not carry. They arrive under the `_` property, which is upstream
+ * creature does not carry. They arrive under the `_` property, upstream
  * saying the operation takes the whole entry.
  */
 import { abilityModifier } from "@dnd/rules";
@@ -67,7 +67,7 @@ function creatureProficiencyBonus(entry: Entry, context: string): number {
   return 2 + Math.floor((Math.max(challengeRating(entry, context), 1) - 1) / 4);
 }
 
-/** A bonus as a stat block prints it, which is signed even when it is zero. */
+/** A bonus as a stat block prints it, signed even when it is zero. */
 export const signed = (value: number): string => (value < 0 ? String(value) : `+${value}`);
 
 /**
@@ -137,7 +137,7 @@ export function addSenses(entry: Entry, op: Entry, context: string): void {
   entry.senses = senses;
 }
 
-/** The sizes upstream uses, smallest first, which is the order `maxSize` caps against. */
+/** The sizes upstream uses, smallest first, the order `maxSize` caps against. */
 const SIZES = ["T", "S", "M", "L", "H", "G"];
 
 /** Caps every size the creature can be, so a gargantuan one reduced to large is large. */

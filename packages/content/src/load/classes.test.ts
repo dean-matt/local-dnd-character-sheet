@@ -303,7 +303,7 @@ describe("the classes loader", () => {
     // warlock's own edition — the XPHB Agonizing Blast is a different row and a
     // 2014 warlock may not take it. The one pact boon at 3 is a second type the
     // same class counts, so the join answers per type rather than per class.
-    // Level 1 is entitled to none, which is an absent row rather than a zero.
+    // Level 1 is entitled to none, an absent row rather than a zero.
     expect(atFive).toEqual([
       { known: 3, name: "Agonizing Blast", source: "PHB" },
       { known: 1, name: "Pact of the Chain", source: "PHB" },
@@ -707,7 +707,7 @@ describe("the classes loader", () => {
     // The pairing is only as discoverable as the `feature type=ei` in the label,
     // and the plain wording is pinned in RESOURCE_KEYS, so a label rewritten as
     // prose would keep loading the resource row and pair nothing. This fails if
-    // that happens to the fixture, which is the half of the exposure a test can
+    // that happens to the fixture, the half of the exposure a test can
     // reach; upstream doing it to a real class cannot be caught without the map
     // reading the tag exists to avoid.
     expect(paired.length).toBe(19);
@@ -822,7 +822,7 @@ describe("the classes loader", () => {
   it("refuses a class progression counting a type no optional feature carries", () => {
     // The pool is another loader's table, so this reads optionalfeatures.json
     // itself: a rename upstream would otherwise leave the count over an empty
-    // join, which is two well formed halves and no query that reports it.
+    // join, two well formed halves and no query that reports it.
     expect(refusal(vendorHolding("class-sorcerer.json", progressing({ 3: 2 }, ["XI"])))).toMatch(
       /class\[0\]: Sorcerer\|PHB counts XI, which no optional feature of the classic edition carries/,
     );
@@ -844,7 +844,7 @@ describe("the classes loader", () => {
 
     // Pact of the Chain is PHB, and a sheet offers a character the options of
     // its own edition, so a 2024 warlock counting PB picks from nothing. The
-    // pool is not empty, which is what makes this the quiet case.
+    // pool is not empty, what makes this the quiet case.
     expect(refusal(vendorHolding("class-warlock.json", contents))).toMatch(
       /class\[0\]: Warlock\|XPHB counts PB, which no optional feature of the one edition carries/,
     );

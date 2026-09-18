@@ -58,7 +58,7 @@ function fill(node: unknown, variables: Record<string, string>): unknown {
  * takes the whole entry with it, and the five colours are the entry.
  *
  * An unasked member that *is* text stays refused. That one could have been
- * substituted and was not, which is upstream saying something this does not act
+ * substituted and was not, upstream saying something this does not act
  * on — dropping it would file all five colours under a base's "choose one".
  */
 function variablesOf(

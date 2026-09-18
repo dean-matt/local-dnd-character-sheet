@@ -8,7 +8,7 @@ const TEMPLATES = "data/bestiary/template.json";
 
 /**
  * A creature and the templates it may name, through the resolver a loader gets.
- * Templates sit in their own file, which is the arrangement upstream ships and
+ * Templates sit in their own file, the arrangement upstream ships and
  * the reason the pool has to span every source rather than one document.
  */
 function resolve(monsters: Entry[], templates: Entry[]): Entry[] {
@@ -38,7 +38,7 @@ function underTemplate(base: Entry, copy: Entry, ...templates: Entry[]): Entry {
   return resolved[1] as Entry;
 }
 
-/** A template applying one whole-entry operation, which is where most of the modes live. */
+/** A template applying one whole-entry operation, where most of the modes live. */
 const whole = (name: string, op: Entry): Entry => ({
   name,
   source: "MM",
@@ -99,7 +99,7 @@ describe("_copy._templates", () => {
   /**
    * A splicing mode puts the op's own `items` into the creature's list, so the
    * eight NPCs naming the Vistana template held one `Curse` action. `modifySpells`
-   * writes through the block it is handed, which is the path that turned that
+   * writes through the block it is handed, the path that turned that
    * into a wrong row: one creature's added spell reached every other creature
    * naming the template, and `template.json` for the rest of the build.
    */

@@ -108,7 +108,7 @@ CREATE TABLE subclass_spell_slots (
 -- both editions of a subclass: Fighter|XPHB holds Battle Master|PHB and
 -- Battle Master|XPHB, each 5 maneuvers at level 7. Fixing class, level and type
 -- there returns two rows, so a query filters subclass_source or joins subclasses
--- for the subclass's own edition, which is the row's edition and not the class's.
+-- for the subclass's own edition, the row's edition and not the class's.
 --
 -- known counts one block, not one character. A class and its subclass can offer
 -- the same type, and the character gets both: a level 10 PHB Champion knows two
@@ -205,7 +205,7 @@ CREATE INDEX spell_classes_by_class ON spell_classes (class_name, class_source);
 --
 -- requires_attunement answers the yes-or-no an attunement slot count needs.
 -- The condition — reqAttune is a string such as "by a wizard" 248 times over —
--- stays in json, which is where a sheet reads why a character cannot attune.
+-- stays in json, where a sheet reads why a character cannot attune.
 CREATE TABLE items (
   name     TEXT NOT NULL,
   source   TEXT NOT NULL,
@@ -336,7 +336,7 @@ CREATE TABLE lookups (
 CREATE INDEX lookups_by_kind ON lookups (kind, name);
 
 -- qualifier is the identity a type needs beyond (name, source), the column lookups
--- carries for a deity's pantheon. A card is named inside its deck, which is what
+-- carries for a deity's pantheon. A card is named inside its deck, what
 -- {@card Balance|Deck of Many Things|BMT} spells out: Balance from BMT alone names two.
 -- Every other type stores the empty string, because a STRICT primary key column cannot
 -- be NULL.

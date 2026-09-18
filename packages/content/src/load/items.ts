@@ -19,7 +19,7 @@ import { type Entry, isRecord, kindedRows, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
-/** The array keys each file carries, which are the kinds it contributes. */
+/** The array keys each file carries, the kinds it contributes. */
 const KINDS: Record<string, string[]> = {
   "data/items.json": ["item", "itemGroup"],
   "data/items-base.json": ["baseitem"],

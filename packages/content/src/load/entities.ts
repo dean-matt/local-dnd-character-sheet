@@ -2,7 +2,7 @@
  * Tier C: every entity with no bespoke table of its own, into `entities`.
  *
  * A row is its identity, the whole entry as `json`, and `rendered_text` — the entry's
- * own strings with `{@tag}` markup reduced to the words it displays, which is what
+ * own strings with `{@tag}` markup reduced to the words it displays — what
  * `entities_fts` searches. No column beyond identity, because nothing queries one. A
  * type promoted to Tier A leaves by deleting its line from `KINDS`, and a file declared
  * with no kinds contributes nothing but its entries to the `_copy` pool.
@@ -23,7 +23,7 @@ import { byNameSource, collectFluff, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, entriesOf, kindedRows, text } from "./json.ts";
 
-/** The array keys each file contributes, which are the types its rows carry. */
+/** The array keys each file contributes, the types its rows carry. */
 const KINDS: Record<string, string[]> = {
   "data/bastions.json": ["facility"],
   "data/charcreationoptions.json": ["charoption"],
@@ -100,7 +100,7 @@ function fluffPools(
 }
 
 /**
- * An adventure and a book are one row each: the index entry, which is where the name and
+ * An adventure and a book are one row each: the index entry, where the name and
  * the source are, with the volume's whole prose as the text to search. The body file
  * carries neither, and its structure is not modelled — a search returns the volume.
  */
@@ -181,7 +181,7 @@ function collect(node: unknown, into: string[]): string[] {
  *
  * `NOT_TEXT` is a list and every list is behind upstream, so a key it has yet to learn
  * is refused rather than indexed. No string in the declared files survives this today,
- * which is what makes the refusal affordable: a build that stops names the field to add.
+ * keeping the refusal affordable: a build that stops names the field to add.
  */
 function rendered(node: unknown, context: string): string {
   return collect(node, [])
@@ -225,7 +225,7 @@ function toRow(
  * Whether a declared path or glob covers this source. `readSources` expands the glob and
  * keeps no record of which pattern matched, so the kinds are matched back to it.
  *
- * One `*`, matching within a directory, which is every declaration above. A pattern with
+ * One `*`, matching within a directory, every declaration above. A pattern with
  * a second one matches nothing here while `readSources` still reads its files, so they
  * reach `kindedRows` belonging to no kind and the build stops there.
  */

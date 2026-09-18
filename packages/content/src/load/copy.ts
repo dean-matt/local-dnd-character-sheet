@@ -10,8 +10,8 @@
  * A parent may sit in another file — 1,060 blocks copy that way, all of them
  * under `data/bestiary/` — so resolution spans every source a loader declared
  * rather than one file at a time. The pool is that declared set and nothing
- * wider, which is what keeps a mapping file such as `class/foundry.json` from
- * shadowing a real entry with a second match.
+ * wider — keeping a mapping file such as `class/foundry.json` from shadowing a
+ * real entry with a second match.
  *
  * Anything unresolvable throws, rather than reaching a loader half-inherited.
  * `_copy._templates` names a `monsterTemplate` rather than a parent, so
