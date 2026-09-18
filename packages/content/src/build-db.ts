@@ -20,6 +20,7 @@ import {
 import { basename, dirname, join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { resolveCopies } from "./load/copy.ts";
+import { drainUnmatchedFluff } from "./load/fluff.ts";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
 import { resolveVersions } from "./load/versions.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
@@ -96,6 +97,20 @@ function insert(db: Database.Database, table: string, rows: Row[]): void {
 
 function discard(path: string): void {
   for (const file of [path, `${path}-wal`, `${path}-shm`]) rmSync(file, { force: true });
+}
+
+/**
+ * Warns on a fluff entry no row's `json` claimed — see `drainUnmatchedFluff`.
+ * The count includes the known-benign shapes `fluff.ts` documents, which is
+ * why this warns rather than fails.
+ */
+function warnUnmatchedFluff(): void {
+  const unmatched = drainUnmatchedFluff();
+  if (unmatched.length === 0) return;
+  const byFile = new Map<string, number>();
+  for (const [path] of unmatched) byFile.set(path, (byFile.get(path) ?? 0) + 1);
+  console.warn(`${unmatched.length} fluff entries matched no row:`);
+  for (const [path, count] of [...byFile].sort()) console.warn(`  ${path}: ${count}`);
 }
 
 function isRunning(pid: number): boolean {
@@ -175,7 +190,12 @@ export function buildContent({
     // Only a stale WAL has to go first, or SQLite would apply it to the new file.
     for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
     renameSync(staging, dbPath);
+    warnUnmatchedFluff();
   } catch (error) {
+    // A pool a failed loader registered would otherwise sit in fluff.ts's
+    // module scope and get swept into whatever call runs next, misattributing
+    // an aborted build's unmatched fluff to one that never touched it.
+    drainUnmatchedFluff();
     try {
       db.close();
     } catch {

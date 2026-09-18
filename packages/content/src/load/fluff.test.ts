@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { byNameSource, collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
+import {
+  byNameSource,
+  collectFluff,
+  drainUnmatchedFluff,
+  fluffKey,
+  isFluffPath,
+  withFluff,
+} from "./fluff.ts";
 
 describe("fluffKey", () => {
   it("folds every part to lowercase and joins them", () => {
@@ -52,6 +59,49 @@ describe("collectFluff", () => {
       byNameSource,
     );
     expect(pool("foo|phb")).toBeUndefined();
+  });
+});
+
+describe("drainUnmatchedFluff", () => {
+  const fileA: [string, unknown] = [
+    "data/fluff-a.json",
+    { thingFluff: [{ name: "Foo", source: "PHB" }] },
+  ];
+  const fileB: [string, unknown] = [
+    "data/fluff-b.json",
+    { thingFluff: [{ name: "Bar", source: "PHB" }] },
+  ];
+
+  it("carries an entry no lookup ever claimed, alongside the file it came from", () => {
+    const pool = collectFluff([fileA, fileB], "thingFluff", byNameSource);
+    pool("foo|phb");
+
+    expect(drainUnmatchedFluff()).toEqual([["data/fluff-b.json", { name: "Bar", source: "PHB" }]]);
+  });
+
+  it("leaves out an entry a lookup claimed", () => {
+    const pool = collectFluff([fileA, fileB], "thingFluff", byNameSource);
+    pool("foo|phb");
+    pool("bar|phb");
+
+    expect(drainUnmatchedFluff()).toEqual([]);
+  });
+
+  it("pools every collectFluff call since the last drain, not just the latest", () => {
+    collectFluff([fileA], "thingFluff", byNameSource);
+    collectFluff([fileB], "thingFluff", byNameSource);
+
+    expect(drainUnmatchedFluff()).toEqual([
+      ["data/fluff-a.json", { name: "Foo", source: "PHB" }],
+      ["data/fluff-b.json", { name: "Bar", source: "PHB" }],
+    ]);
+  });
+
+  it("empties on drain, so a later build does not re-report what this one returned", () => {
+    collectFluff([fileA, fileB], "thingFluff", byNameSource);
+    drainUnmatchedFluff();
+
+    expect(drainUnmatchedFluff()).toEqual([]);
   });
 });
 

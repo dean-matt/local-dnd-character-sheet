@@ -3,8 +3,9 @@ import { existsSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import Database from "better-sqlite3";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildContent } from "./build-db.ts";
+import { byNameSource, collectFluff } from "./load/fluff.ts";
 import type { Loader } from "./load/index.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
 
@@ -225,6 +226,79 @@ describe("buildContent", () => {
     expect(() => buildContent({ vendorDir, dbPath, loaders: [absent], meta: {} })).toThrow(
       /Loader "spells" failed/,
     );
+  });
+
+  describe("unmatched fluff", () => {
+    const fluffy: Loader = {
+      name: "fluffy",
+      files: ["data/*.json"],
+      rows: () => {
+        const pool = collectFluff(
+          [["data/fluff-things.json", { thingFluff: [{ name: "Orphan", source: "PHB" }] }]],
+          "thingFluff",
+          byNameSource,
+        );
+        pool("someone-else|phb");
+        return { lookups: [] };
+      },
+    };
+
+    it("warns on the count and the file, without failing the build", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      expect(() => buildContent({ vendorDir, dbPath, loaders: [fluffy], meta: {} })).not.toThrow();
+      expect(warn.mock.calls).toEqual([
+        ["1 fluff entries matched no row:"],
+        ["  data/fluff-things.json: 1"],
+      ]);
+
+      warn.mockRestore();
+    });
+
+    it("stays silent where every fluff entry was claimed", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const claiming: Loader = {
+        ...fluffy,
+        rows: () => {
+          const pool = collectFluff(
+            [["data/fluff-things.json", { thingFluff: [{ name: "Orphan", source: "PHB" }] }]],
+            "thingFluff",
+            byNameSource,
+          );
+          pool("orphan|phb");
+          return { lookups: [] };
+        },
+      };
+
+      buildContent({ vendorDir, dbPath, loaders: [claiming], meta: {} });
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it("does not carry an aborted build's pool into the next one", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const orphaning: Loader = {
+        name: "broken",
+        files: ["data/*.json"],
+        rows: () => {
+          collectFluff(
+            [["data/fluff-things.json", { thingFluff: [{ name: "Orphan", source: "PHB" }] }]],
+            "thingFluff",
+            byNameSource,
+          );
+          throw new Error("bad row");
+        },
+      };
+
+      expect(() => buildContent({ vendorDir, dbPath, loaders: [orphaning], meta: {} })).toThrow(
+        /Loader "broken" failed/,
+      );
+      buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
   });
 
   describe("_copy resolution", () => {
