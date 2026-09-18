@@ -25,6 +25,10 @@ it took none — stop there.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
+   Work the worktree alone. A `fork` inherits this whole conversation, siblings included, so
+   dispatching several to split a multi-file task hands each one a plan it can mistake for
+   its own to run — read the files in parallel if that helps, but write them one at a time,
+   yourself.
 7. **Correct the docs the change made stale**, in the same commit. Past a `docs/` or
    `CLAUDE.md` cap, replace a sentence rather than append; a new `docs/` file needs a
    README row.
