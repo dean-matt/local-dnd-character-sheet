@@ -42,6 +42,7 @@ function toRecord(row: CharacterRow): CharacterRecord {
   });
 }
 
+/** Validates a row read back from SQLite against the same schema its write went through. */
 function toStateRecord(row: CharacterStateRow): CharacterStateRecord {
   return characterStateRecordSchema.parse({
     characterId: row.characterId,

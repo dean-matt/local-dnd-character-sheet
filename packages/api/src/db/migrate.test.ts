@@ -1,15 +1,40 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { defaultCharacterState } from "@dnd/character";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
 
 const CHARACTERS_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/characters");
-const TABLES_MIGRATION = join(CHARACTERS_MIGRATIONS, "0000_far_forge.sql");
-const BACKFILL_MIGRATION = join(CHARACTERS_MIGRATIONS, "0001_backfill_character_state.sql");
+
+/**
+ * A `characters` migrations folder holding only `0000_far_forge.sql`, so a test can put a
+ * database through it alone and then hand the same database to `migrateCharacters` — the
+ * way a real upgrade reaches `0001_backfill_character_state.sql` with existing rows
+ * already in place, rather than on a database empty enough for the backfill to be a no-op.
+ */
+function stageMigration0000(): string {
+  const staged = mkdtempSync(join(tmpdir(), "characters-migrations-0000-"));
+  mkdirSync(join(staged, "meta"));
+  writeFileSync(
+    join(staged, "0000_far_forge.sql"),
+    readFileSync(join(CHARACTERS_MIGRATIONS, "0000_far_forge.sql")),
+  );
+  const journal = JSON.parse(
+    readFileSync(join(CHARACTERS_MIGRATIONS, "meta/_journal.json"), "utf8"),
+  );
+  writeFileSync(
+    join(staged, "meta/_journal.json"),
+    JSON.stringify({
+      ...journal,
+      entries: journal.entries.filter((e: { tag: string }) => e.tag === "0000_far_forge"),
+    }),
+  );
+  return staged;
+}
 
 function tableNames(sqlite: Database.Database) {
   return sqlite
@@ -68,14 +93,18 @@ describe("migrations", () => {
 
   it("backfills a default state for a character left over from before character_state existed", () => {
     sqlite = new Database(join(workspace, "characters.db"));
-    sqlite.exec(readFileSync(TABLES_MIGRATION, "utf8"));
+    const db = drizzle(sqlite);
+    const staged = stageMigration0000();
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
     sqlite
       .prepare(
         "INSERT INTO characters (id, name, edition, level, definition) VALUES (?, ?, ?, ?, ?)",
       )
       .run("1", "Vex", "one", 1, "{}");
 
-    sqlite.exec(readFileSync(BACKFILL_MIGRATION, "utf8"));
+    migrateCharacters(db);
 
     const row = sqlite
       .prepare("SELECT state FROM character_state WHERE character_id = ?")
