@@ -25,10 +25,13 @@ it took none — stop there.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
-   Work the worktree alone. A `fork` inherits this whole conversation, siblings included, so
-   dispatching several to split a multi-file task hands each one a plan it can mistake for
-   its own to run — read the files in parallel if that helps, but write them one at a time,
-   yourself.
+   Work the worktree alone: never fan a multi-file task out across parallel subagents
+   editing it at once. A `fork` inherits this whole conversation, siblings included, and can
+   mistake that for a plan to run; this session itself, resuming after a compaction, can
+   just as easily lose track of what it already dispatched and send a second wave. Read
+   files in parallel if that helps, but write them one at a time, yourself — and resuming
+   after any gap, run `ListAgents` and check it against what this session actually
+   dispatched before sending anything else.
 7. **Correct the docs the change made stale**, in the same commit. Past a `docs/` or
    `CLAUDE.md` cap, replace a sentence rather than append; a new `docs/` file needs a
    README row.
@@ -60,3 +63,9 @@ in the report, and leave it out of this branch. `gh issue create` leaves that is
 board, so put it there with [`board-status`](../board-status/SKILL.md). It lands unranked
 and without a milestone, which [`pick-issue`](../pick-issue/SKILL.md) reads as backlog
 until the user ranks it under a milestone.
+
+**Compete with a second driver.** A commit this run did not make, or an edit it cannot
+account for, means something else — a duplicate dispatch, or the user resuming this same
+agent by hand from its own transcript — now holds the same worktree. Stop, name exactly
+what changed and who could have written it, and report to the user rather than reconciling
+it alone.
