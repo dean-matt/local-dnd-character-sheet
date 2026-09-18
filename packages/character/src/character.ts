@@ -430,6 +430,23 @@ export const characterDefinitionSchema = z.strictObject({
 
 export const totalLevel = (definition: CharacterDefinition): number => definition.levels.length;
 
+/**
+ * A stored character, as an endpoint returns it. `name`, `edition` and `level` are
+ * denormalized projections of `definition`, kept here so a caller never re-derives what
+ * the database already computed on write.
+ */
+export const characterRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: editionSchema,
+  level: z.int().min(1),
+  definition: characterDefinitionSchema,
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
+export type CharacterRecord = z.infer<typeof characterRecordSchema>;
+
 // State ----------------------------------------------------------------------
 
 const hitPointsSchema = z.strictObject({

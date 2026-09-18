@@ -129,11 +129,11 @@ own class carries the other two parts, and the short name keys the features inst
 value". Writing an override never changes the computed side, and clearing one restores
 the computed value rather than a remembered old number.
 
-**`edition` and `level` are recomputed, never accepted.** Both columns summarize
-`characters.definition` so the character list can be queried without parsing every
-blob. Every write that touches `definition` derives them from it in the same
-statement — `edition` from the definition's own field, `level` from `totalLevel()` —
-and neither is a settable column on the request body that writes it.
+**`name`, `edition` and `level` are recomputed, never accepted.** All three columns
+summarize `characters.definition` so the character list can be queried without parsing
+every blob. Every write that touches `definition` derives them from it in the same
+statement — `name` and `edition` from the definition's own fields, `level` from
+`totalLevel()` — and none is a settable column on the request body that writes it.
 
 **Logs are pruned on insert**, in the same statement that writes the new row. A cron job
 or a manual cleanup would be one more thing to forget.
