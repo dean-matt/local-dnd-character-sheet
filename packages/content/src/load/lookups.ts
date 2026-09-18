@@ -52,7 +52,6 @@ const NAMED_BY: Record<string, string> = {
   itemType: "abbreviation",
 };
 
-/** The fluff file a kind's own file pairs with, and the array key it reads. */
 const FLUFF_FILES: Record<string, { file: string; key: string }> = {
   "data/conditionsdiseases.json": {
     file: "data/fluff-conditionsdiseases.json",

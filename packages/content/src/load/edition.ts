@@ -34,7 +34,6 @@ const CONTENTS = [
 /** The files `editions` reads. A loader writing an `edition` declares them too. */
 export const EDITION_FILES: string[] = CONTENTS.map(([path]) => path);
 
-/** A loader's own sources, with the files it declared only for `editions` removed. */
 export function ownFiles(sources: Map<string, unknown>): [string, unknown][] {
   return [...sources].filter(([path]) => !EDITION_FILES.includes(path));
 }

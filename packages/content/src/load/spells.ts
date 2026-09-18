@@ -73,7 +73,6 @@ function grantsOf(grants: Entry, kind: "class" | "classVariant", context: string
   });
 }
 
-/** Every row one spell's grants contribute, `class` and `classVariant` alike. */
 function grantRows(
   spellName: string,
   spellSource: string,

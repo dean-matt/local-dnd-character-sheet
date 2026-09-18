@@ -313,7 +313,6 @@ function groupTargets(
   });
 }
 
-/** Where in the block each part of the op lands. */
 function targets(block: Entry, op: Entry, mode: string, context: string): Target[] {
   const found: Target[] = [];
   for (const [key, value] of Object.entries(op)) {

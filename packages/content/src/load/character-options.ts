@@ -29,7 +29,6 @@ const FILES: Record<string, { key: string; table: string }> = {
   [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
 
-/** The fluff file each of `FILES`' own files pairs with, and the array key it reads. */
 const FLUFF: Record<string, { file: string; key: string }> = {
   "data/backgrounds.json": { file: "data/fluff-backgrounds.json", key: "backgroundFluff" },
   "data/feats.json": { file: "data/fluff-feats.json", key: "featFluff" },
@@ -64,7 +63,6 @@ function featureTypes(entry: Entry, context: string): string[] {
   return strings(entry, "featureType", context);
 }
 
-/** Every type a feature is offered under, as one row each. */
 function typeRows(entry: Entry, row: Row, context: string): Row[] {
   return featureTypes(entry, context).map((type) => ({
     name: row.name,
@@ -78,7 +76,6 @@ function poolKey(edition: Edition, featureType: string): string {
   return `${edition}|${featureType}`;
 }
 
-/** Whether any of the editions named offers an option of this type. */
 function carriedBy(featureType: string, editions: readonly Edition[], pool: Set<string>): boolean {
   return editions.some((edition) => pool.has(poolKey(edition, featureType)));
 }

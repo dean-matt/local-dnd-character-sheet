@@ -155,7 +155,6 @@ const FORMATTING_TAGS = new Set([
  */
 const REFERENCE_CEILING = 200;
 
-/** A tag whose body is prose, reduced to the tag. */
 function elideTag(markup: string): string {
   const name = markup.slice(2).split(/[\s|}]/, 1)[0] ?? "";
   if (FORMATTING_TAGS.has(name)) return `{@${name} ${MARKER}}`;

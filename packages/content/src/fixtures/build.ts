@@ -27,7 +27,6 @@ import { select } from "./select.ts";
 const ROOT = resolve(import.meta.dirname, "../../../..");
 export const FIXTURE_DIR = join(ROOT, "tests/fixtures/5etools");
 
-/** Every fixture, as the parsed document it should hold. */
 export function generate(vendorDir: string): Map<string, unknown> {
   return new Map(
     FIXTURES.map(({ file, keep }) => {
@@ -45,7 +44,6 @@ function format(paths: string[]): void {
   });
 }
 
-/** Everything committed under the fixture tree, as paths relative to it. */
 function committedFixtures(): string[] {
   if (!existsSync(FIXTURE_DIR)) return [];
   return readdirSync(FIXTURE_DIR, { recursive: true, withFileTypes: true })

@@ -64,7 +64,6 @@ function mergeAbility(
 const traitName = (entry: unknown): string =>
   isRecord(entry) && typeof entry.name === "string" ? entry.name.trim().toLowerCase() : "";
 
-/** The trait a subrace's entry stands in for, where it names one. */
 function standsInFor(trait: unknown): string | undefined {
   const replaces = isRecord(trait) && isRecord(trait.data) ? trait.data.overwrite : undefined;
   return typeof replaces === "string" ? replaces.trim().toLowerCase() : undefined;
@@ -208,7 +207,6 @@ function merge(race: Entry, sub: Entry, where: string): Entry {
   return merged;
 }
 
-/** Every subrace merged with the race it names, in place of the subrace alone. */
 function adopt(parsed: unknown, path: string): unknown {
   if (!isRecord(parsed)) throw new Error(`${path} is not an object`);
   const byKey = new Map<string, Entry>();

@@ -21,8 +21,6 @@ CREATE TABLE meta (
   value TEXT NOT NULL
 ) STRICT;
 
--- Tier A ---------------------------------------------------------------------
-
 CREATE TABLE classes (
   name        TEXT NOT NULL,
   source      TEXT NOT NULL,
@@ -315,8 +313,6 @@ CREATE TABLE granted_optional_features (
 
 CREATE INDEX granted_optional_features_by_type ON granted_optional_features (feature_type);
 
--- Tier B ---------------------------------------------------------------------
-
 -- qualifier is the identity a kind needs beyond (name, source): the pantheon a
 -- deity tag names, which five PHB gods need to tell them from a god of another
 -- pantheon, and which nothing else in the catalog does. A kind without one
@@ -338,8 +334,6 @@ CREATE TABLE lookups (
 ) STRICT;
 
 CREATE INDEX lookups_by_kind ON lookups (kind, name);
-
--- Tier C ---------------------------------------------------------------------
 
 -- qualifier is the identity a type needs beyond (name, source), the column lookups
 -- carries for a deity's pantheon. A card is named inside its deck, which is what

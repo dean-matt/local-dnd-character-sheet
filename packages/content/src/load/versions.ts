@@ -21,7 +21,6 @@ import { applyMod } from "./mod.ts";
 
 const PLACEHOLDER = /\{\{(\w+)\}\}/g;
 
-/** Every `{{name}}` the template asks for. */
 function placeholdersIn(template: Entry): Set<string> {
   const asked = new Set<string>();
   for (const [, name] of JSON.stringify(template).matchAll(PLACEHOLDER)) asked.add(name as string);
