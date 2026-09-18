@@ -25,7 +25,7 @@
       "includeEntryExports": true
     },
     "packages/api": {
-      "entry": ["src/db/client.ts", "src/db/homebrew.ts", "drizzle.homebrew.config.ts"]
+      "entry": ["src/db/singleton.ts", "src/db/homebrew.ts", "drizzle.homebrew.config.ts"]
     },
     "packages/web": {}
   },

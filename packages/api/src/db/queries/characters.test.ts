@@ -6,7 +6,13 @@ import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { characters } from "../characters.ts";
 import { openDatabases } from "../client.ts";
-import { insertCharacter, updateCharacterDefinition } from "./characters.ts";
+import {
+  deleteCharacter,
+  getCharacter,
+  insertCharacter,
+  listCharacters,
+  updateCharacterDefinition,
+} from "./characters.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const ROGUE = { name: "Rogue", source: "XPHB" };
@@ -32,7 +38,7 @@ const baseDefinition = (overrides: Partial<CharacterDefinition> = {}): Character
     ...overrides,
   });
 
-describe("insertCharacter and updateCharacterDefinition", () => {
+describe("characters queries", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openDatabases>;
   let db: ReturnType<typeof openDatabases>["charactersDb"];
@@ -50,23 +56,59 @@ describe("insertCharacter and updateCharacterDefinition", () => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
-  it("derives level and edition from the definition on insert", () => {
-    insertCharacter(db, { id: "1", name: "Vex", definition: baseDefinition() });
+  describe("insertCharacter and updateCharacterDefinition", () => {
+    it("derives name, level and edition from the definition on insert", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
 
-    const [row] = db.select().from(characters).where(eq(characters.id, "1")).all();
-    expect(row).toMatchObject({ level: 1, edition: "one" });
+      const [row] = db.select().from(characters).where(eq(characters.id, "1")).all();
+      expect(row).toMatchObject({ name: "Vex", level: 1, edition: "one" });
+    });
+
+    it("follows a definition whose name and class levels changed on update", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+
+      const grown = baseDefinition({
+        name: "Vex the Bold",
+        edition: "classic",
+        levels: [{ class: WARLOCK }, { class: WARLOCK }, { class: ROGUE }],
+      });
+      updateCharacterDefinition(db, "1", grown);
+
+      const [row] = db.select().from(characters).where(eq(characters.id, "1")).all();
+      expect(row).toMatchObject({ name: "Vex the Bold", level: 3, edition: "classic" });
+    });
   });
 
-  it("follows a definition whose class levels changed on update", () => {
-    insertCharacter(db, { id: "1", name: "Vex", definition: baseDefinition() });
+  describe("listCharacters and getCharacter", () => {
+    it("lists every character", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+      insertCharacter(db, { id: "2", definition: baseDefinition({ name: "Rian" }) });
 
-    const grown = baseDefinition({
-      edition: "classic",
-      levels: [{ class: WARLOCK }, { class: WARLOCK }, { class: ROGUE }],
+      expect(
+        listCharacters(db)
+          .map((row) => row.name)
+          .sort(),
+      ).toEqual(["Rian", "Vex"]);
     });
-    updateCharacterDefinition(db, "1", grown);
 
-    const [row] = db.select().from(characters).where(eq(characters.id, "1")).all();
-    expect(row).toMatchObject({ level: 3, edition: "classic" });
+    it("reads one character by id, or nothing for an id that does not exist", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+
+      expect(getCharacter(db, "1")).toMatchObject({ id: "1", name: "Vex" });
+      expect(getCharacter(db, "missing")).toBeUndefined();
+    });
+  });
+
+  describe("deleteCharacter", () => {
+    it("removes the row and reports it existed", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+
+      expect(deleteCharacter(db, "1")).toBe(true);
+      expect(getCharacter(db, "1")).toBeUndefined();
+    });
+
+    it("reports false for an id that does not exist", () => {
+      expect(deleteCharacter(db, "missing")).toBe(false);
+    });
   });
 });

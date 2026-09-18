@@ -1,0 +1,127 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { openDatabases } from "../db/client.ts";
+import { charactersRoutes } from "./characters.ts";
+
+const WARLOCK = { name: "Warlock", source: "XPHB" };
+
+const baseDefinition = (overrides: Partial<CharacterDefinition> = {}): CharacterDefinition =>
+  characterDefinitionSchema.parse({
+    name: "Vex",
+    edition: "one",
+    levels: [{ class: WARLOCK }],
+    race: { name: "Half-Elf", source: "XPHB" },
+    background: { name: "Charlatan", source: "XPHB" },
+    abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
+    proficiencies: {
+      savingThrows: [],
+      skills: [],
+      armor: [],
+      weapons: [],
+      tools: [],
+      languages: [],
+    },
+    inventory: [],
+    spells: [],
+    ...overrides,
+  });
+
+const json = (body: unknown) => ({
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
+
+describe("charactersRoutes", () => {
+  let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
+  let routes: ReturnType<typeof charactersRoutes>;
+
+  beforeEach(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "characters-routes-"));
+    opened = openDatabases(dataDir);
+    routes = charactersRoutes(opened.charactersDb);
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("lists no characters before any are created", async () => {
+    const res = await routes.request("/characters");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([]);
+  });
+
+  it("creates a character, deriving name, level and edition from the definition", async () => {
+    const res = await routes.request("/characters", json(baseDefinition()));
+    expect(res.status).toBe(201);
+
+    const body = await res.json();
+    expect(body).toMatchObject({ name: "Vex", level: 1, edition: "one" });
+    expect(typeof body.id).toBe("string");
+  });
+
+  it("reads a character it just created", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+
+    const res = await routes.request(`/characters/${created.id}`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(created);
+  });
+
+  it("404s reading, updating or deleting an id that does not exist", async () => {
+    const getRes = await routes.request("/characters/missing");
+    expect(getRes.status).toBe(404);
+    expect(await getRes.json()).toEqual({ error: "No character with that id" });
+
+    const putRes = await routes.request("/characters/missing", {
+      ...json(baseDefinition()),
+      method: "PUT",
+    });
+    expect(putRes.status).toBe(404);
+
+    const deleteRes = await routes.request("/characters/missing", { method: "DELETE" });
+    expect(deleteRes.status).toBe(404);
+  });
+
+  it("lists every created character", async () => {
+    await routes.request("/characters", json(baseDefinition()));
+    await routes.request("/characters", json(baseDefinition({ name: "Rian" })));
+
+    const res = await routes.request("/characters");
+    const body = await res.json();
+    expect(body.map((row: { name: string }) => row.name).sort()).toEqual(["Rian", "Vex"]);
+  });
+
+  it("replaces a character's definition, following its class levels and name", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+
+    const grown = baseDefinition({
+      name: "Vex the Bold",
+      levels: [{ class: WARLOCK }, { class: WARLOCK }],
+    });
+    const res = await routes.request(`/characters/${created.id}`, {
+      ...json(grown),
+      method: "PUT",
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({ id: created.id, name: "Vex the Bold", level: 2 });
+  });
+
+  it("deletes a character, after which it 404s", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+
+    const res = await routes.request(`/characters/${created.id}`, { method: "DELETE" });
+    expect(res.status).toBe(204);
+
+    expect((await routes.request(`/characters/${created.id}`)).status).toBe(404);
+  });
+});

@@ -16,6 +16,7 @@ import {
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
+  characterRecordSchema,
   characterStateSchema,
   derivedSchema,
   derivedValue,
@@ -152,6 +153,19 @@ describe("round trips", () => {
 
   it("survives a JSON round trip, as the database column does", () => {
     expect(characterStateSchema.parse(JSON.parse(JSON.stringify(state)))).toEqual(state);
+  });
+
+  it("preserves a stored record through parse", () => {
+    const record = {
+      id: "1",
+      name: definition.name,
+      edition: definition.edition,
+      level: definition.levels.length,
+      definition,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    expect(characterRecordSchema.parse(structuredClone(record))).toEqual(record);
   });
 });
 
