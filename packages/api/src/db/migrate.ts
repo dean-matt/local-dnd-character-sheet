@@ -11,10 +11,14 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 const CHARACTERS_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/characters");
 const HOMEBREW_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/homebrew");
 
-export function migrateCharacters(db: BetterSQLite3Database<Record<string, unknown>>) {
+export function migrateCharacters<Schema extends Record<string, unknown>>(
+  db: BetterSQLite3Database<Schema>,
+) {
   migrate(db, { migrationsFolder: CHARACTERS_MIGRATIONS });
 }
 
-export function migrateHomebrew(db: BetterSQLite3Database<Record<string, unknown>>) {
+export function migrateHomebrew<Schema extends Record<string, unknown>>(
+  db: BetterSQLite3Database<Schema>,
+) {
   migrate(db, { migrationsFolder: HOMEBREW_MIGRATIONS });
 }

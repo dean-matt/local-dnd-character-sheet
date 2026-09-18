@@ -18,7 +18,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import { backupDatabase } from "./backup.ts";
 import * as charactersSchema from "./characters.ts";
 import * as homebrewSchema from "./homebrew.ts";
@@ -33,18 +33,49 @@ function open(dataDir: string, fileName: string) {
   return sqlite;
 }
 
+/**
+ * Closes the handle it just opened before rethrowing a backup or migration failure —
+ * `openDatabases` never returns it on that path, so nothing else can.
+ */
+function openMigrated<Schema extends Record<string, unknown>>(
+  dataDir: string,
+  backupDir: string,
+  fileName: string,
+  name: string,
+  schema: Schema,
+  migrate: (db: BetterSQLite3Database<Schema>) => void,
+) {
+  const sqlite = open(dataDir, fileName);
+  try {
+    backupDatabase(sqlite, backupDir, name);
+    const db = drizzle(sqlite, { schema });
+    migrate(db);
+    return db;
+  } catch (error) {
+    sqlite.close();
+    throw error;
+  }
+}
+
 export function openDatabases(dataDir: string) {
   const backupDir = join(dataDir, "backups");
 
-  const charactersSqlite = open(dataDir, "characters.db");
-  backupDatabase(charactersSqlite, backupDir, "characters");
-  const charactersDb = drizzle(charactersSqlite, { schema: charactersSchema });
-  migrateCharacters(charactersDb);
-
-  const homebrewSqlite = open(dataDir, "homebrew.db");
-  backupDatabase(homebrewSqlite, backupDir, "homebrew");
-  const homebrewDb = drizzle(homebrewSqlite, { schema: homebrewSchema });
-  migrateHomebrew(homebrewDb);
+  const charactersDb = openMigrated(
+    dataDir,
+    backupDir,
+    "characters.db",
+    "characters",
+    charactersSchema,
+    migrateCharacters,
+  );
+  const homebrewDb = openMigrated(
+    dataDir,
+    backupDir,
+    "homebrew.db",
+    "homebrew",
+    homebrewSchema,
+    migrateHomebrew,
+  );
 
   return { charactersDb, homebrewDb };
 }
