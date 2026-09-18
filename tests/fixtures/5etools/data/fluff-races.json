@@ -1,0 +1,887 @@
+{
+  "_meta": {
+    "internalCopies": ["raceFluff"]
+  },
+  "raceFluff": [
+    {
+      "name": "Goblin",
+      "source": "MPMM",
+      "entries": ["Elided."],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/MPMM/Goblin.webp"
+          },
+          "credit": "Mike Jordana",
+          "width": 1700,
+          "height": 1404
+        }
+      ]
+    },
+    {
+      "name": "Boggart",
+      "source": "LFL",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "In Lorwyn",
+          "entries": [
+            "Elided.",
+            "Elided. {@class Ranger|XPHB|Fey Wanderer|Fey Wanderer} Elided. {@class Wizard|XPHB|Diviner|Diviner} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "In Shadowmoor",
+          "entries": [
+            "Elided.",
+            "Elided. {@class Warlock|XPHB|Archfey Patron|Archfey} Elided. {@class Sorcerer|XPHB|Wild Magic Sorcery|Wild Magic} Elided."
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/LFL/Boggart.webp"
+          },
+          "title": "A boggart in Lorwyn uses a frog as a dowsing pendulum",
+          "credit": "Ioannis Fiore",
+          "width": 1700,
+          "height": 1249
+        }
+      ]
+    },
+    {
+      "name": "Goblin",
+      "source": "VGM",
+      "monstrous": true,
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/VGM/Goblin.webp"
+          },
+          "width": 420,
+          "height": 582
+        }
+      ]
+    },
+    {
+      "name": "Goblin (Dankwood)",
+      "source": "AWM",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": [
+                {
+                  "type": "quote",
+                  "entries": ["Elided."],
+                  "by": "Elided."
+                },
+                "Elided.",
+                "Elided."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Aasimar",
+      "source": "MPMM",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        {
+          "type": "table",
+          "caption": "Aasimar Celestial Features",
+          "colLabels": ["d6", "Celestial Feature"],
+          "colStyles": ["col-1 text-center", "col-11"],
+          "rows": [
+            ["Elided.", "Elided."],
+            ["Elided.", "Elided."],
+            ["Elided.", "Elided."],
+            ["Elided.", "Elided."],
+            ["Elided.", "Elided."],
+            ["Elided.", "Elided."]
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/MPMM/Aasimar.webp"
+          },
+          "credit": "Mike Bierek",
+          "width": 689,
+          "height": 850
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn",
+      "source": "XPHB",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": ["Elided.", "Elided."]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/XPHB/Dragonborn.webp"
+          },
+          "credit": "David Auden Nash",
+          "width": 2100,
+          "height": 1359
+        }
+      ]
+    },
+    {
+      "name": "Elf",
+      "source": "XPHB",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            {
+              "type": "entries",
+              "name": "Drow",
+              "entries": ["Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "High Elves",
+              "entries": ["Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Wood Elves",
+              "entries": ["Elided."]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/XPHB/Elf.webp"
+          },
+          "credit": "Mike Pape",
+          "width": 1700,
+          "height": 1109
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/XPHB/148-05-022.elf-city.webp"
+          },
+          "title": "A ship departs from a city built by high elves",
+          "credit": "Jedd Chevrier",
+          "width": 2560,
+          "height": 1440
+        }
+      ]
+    },
+    {
+      "name": "Elf",
+      "source": "LFL",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "In Lorwyn",
+          "entries": [
+            "Elided.",
+            "Elided.",
+            "Elided. {@book \"Lorwyn-Shadowmoor's History\"|LFL|0|Lorwyn-Shadowmoor's History} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "In Shadowmoor",
+          "entries": ["Elided.", "Elided.", "Elided. {@item Reliquary of Twilight|LFL} Elided."]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/LFL/Elf (Lorwyn).webp"
+          },
+          "title": "An Elf from Lorwyn",
+          "credit": "Lorenzo Mastroianni",
+          "width": 1700,
+          "height": 1301
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/LFL/Elf (Shadowmoor).webp"
+          },
+          "title": "An Elf from Shadowmoor",
+          "credit": "Evyn Fong",
+          "width": 1700,
+          "height": 1301
+        }
+      ]
+    },
+    {
+      "name": "Human",
+      "source": "PHB",
+      "entries": [
+        {
+          "type": "section",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "entries",
+                  "name": "A Broad Spectrum",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "Variety in All Things",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "Lasting Institutions",
+                  "entries": ["Elided.", "Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "Exemplars of Ambition",
+                  "entries": ["Elided."]
+                },
+                {
+                  "type": "inset",
+                  "name": "Everyone's Second-Best Friends",
+                  "entries": [
+                    "Elided.",
+                    {
+                      "type": "entries",
+                      "name": "Dwarves",
+                      "entries": ["Elided."]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Elves",
+                      "entries": ["Elided."]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Halflings",
+                      "entries": ["Elided."]
+                    }
+                  ]
+                },
+                {
+                  "type": "entries",
+                  "name": "Human Names and Ethnicities",
+                  "entries": [
+                    "Elided.",
+                    "Elided.",
+                    "Elided.",
+                    {
+                      "type": "entries",
+                      "name": "Calishite",
+                      "entries": [
+                        "Elided.",
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Calishite Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Chondathan",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Chondathan Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Damaran",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Damaran Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Illuskan",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Illuskan Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Mulan",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Mulan Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Rashemi",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Rashemi Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Shou",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Shou Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Tethyrian",
+                      "entries": ["Elided."]
+                    },
+                    {
+                      "type": "entries",
+                      "name": "Turami",
+                      "entries": [
+                        "Elided.",
+                        {
+                          "type": "list",
+                          "style": "list-hang-notitle",
+                          "items": [
+                            {
+                              "type": "item",
+                              "name": "Turami Names:",
+                              "entry": "Elided."
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PHB/Human.webp"
+          },
+          "width": 365,
+          "height": 618
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn",
+      "source": "PHB",
+      "uncommon": true,
+      "entries": [
+        {
+          "type": "section",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "entries",
+                  "name": "Proud Dragon Kin",
+                  "entries": ["Elided.", "Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "Self-Sufficient Clans",
+                  "entries": ["Elided.", "Elided.", "Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "Dragonborn Names",
+                  "entries": [
+                    "Elided.",
+                    {
+                      "type": "list",
+                      "style": "list-hang-notitle",
+                      "items": [
+                        {
+                          "type": "item",
+                          "name": "Male Names:",
+                          "entry": "Elided."
+                        },
+                        {
+                          "type": "item",
+                          "name": "Female Names:",
+                          "entry": "Elided."
+                        },
+                        {
+                          "type": "item",
+                          "name": "Childhood Names:",
+                          "entry": "Elided."
+                        },
+                        {
+                          "type": "item",
+                          "name": "Clan Names:",
+                          "entry": "Elided."
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "inset",
+                  "name": "Draconians",
+                  "entries": ["Elided."]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PHB/Dragonborn.webp"
+          },
+          "width": 420,
+          "height": 602
+        }
+      ]
+    },
+    {
+      "name": "Half-Orc",
+      "source": "PHB",
+      "uncommon": true,
+      "entries": [
+        {
+          "type": "section",
+          "entries": [
+            {
+              "type": "entries",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "entries",
+                  "name": "Scarred and Strong",
+                  "entries": ["Elided.", "Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "The Mark of Gruumsh",
+                  "entries": ["Elided.", "Elided."]
+                },
+                {
+                  "type": "entries",
+                  "name": "Half-Orc Names",
+                  "entries": [
+                    "Elided.",
+                    {
+                      "type": "list",
+                      "style": "list-hang-notitle",
+                      "items": [
+                        {
+                          "type": "item",
+                          "name": "Male Orc Names:",
+                          "entry": "Elided."
+                        },
+                        {
+                          "type": "item",
+                          "name": "Female Orc Names:",
+                          "entry": "Elided."
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "inset",
+                  "name": "Grudging Acceptance",
+                  "entries": ["Elided."]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PHB/Half-Orc.webp"
+          },
+          "width": 420,
+          "height": 554
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn (Chromatic)",
+      "source": "FTD",
+      "entries": ["Elided."],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/FTD/Chromatic Dragonborn.webp"
+          },
+          "title": "A red dragonborn sell-sword waits for a client",
+          "credit": "Randy Vargas",
+          "width": 1700,
+          "height": 1111
+        }
+      ]
+    },
+    {
+      "name": "Dragonborn (Base)",
+      "source": "PHB",
+      "_copy": {
+        "name": "Dragonborn",
+        "source": "PHB"
+      }
+    },
+    {
+      "name": "Dragonborn (Draconblood)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Dragonborn",
+        "source": "PHB",
+        "_mod": {
+          "entries": {
+            "mode": "prependArr",
+            "items": "Elided."
+          }
+        }
+      },
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/EGW/Dragonborn (Draconblood).webp"
+          },
+          "credit": "Axel Defois",
+          "width": 583,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "Human (Amonkhet)",
+      "source": "PSA",
+      "entries": [
+        {
+          "type": "entries",
+          "entries": [
+            "Elided. {@background vizier|PSA|viziers} Elided. {@background initiate|PSA|initiates} Elided.",
+            "Elided.",
+            {
+              "type": "entries",
+              "name": "Two Roads to Perfection",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "entries",
+                  "name": "Perfection through Specialization",
+                  "entries": [
+                    "Elided. {@background vizier|PSA} Elided. {@background initiate|PSA|initiates} Elided. {@background initiate|PSA} Elided. {@background initiate|PSA} Elided."
+                  ]
+                },
+                {
+                  "type": "entries",
+                  "name": "Perfection through Balance",
+                  "entries": ["Elided.", "Elided."]
+                }
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Combat Classes",
+              "entries": [
+                "Elided. {@item longsword|phb} Elided.",
+                "Elided. {@background initiate|PSA} Elided. {@background initiate|PSA|initiates} Elided."
+              ]
+            },
+            "Elided. {@race Human (Variant)|PHB|variant human} Elided. {@book Player's Handbook|PHB} Elided."
+          ]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PSA/Human (Amonkhet).webp"
+          },
+          "title": "Soul-Scar Mage",
+          "credit": "Steve Argyle",
+          "width": 1174,
+          "height": 883
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PSA/Human (Amonkhet)2.webp"
+          },
+          "title": "Victory",
+          "credit": "Grzegorz Rutkowski",
+          "width": 1276,
+          "height": 556
+        }
+      ]
+    },
+    {
+      "name": "Elf (Kaladesh)",
+      "source": "PSK",
+      "entries": [
+        {
+          "type": "quote",
+          "entries": ["Elided."]
+        },
+        "Elided.",
+        "Elided.",
+        "Elided."
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PSK/Elf.webp"
+          },
+          "title": "Wild Wanderer",
+          "credit": "Sidharth Chaturvedi",
+          "width": 807,
+          "height": 595
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "races/PSK/Elf2.webp"
+          },
+          "title": "Cultivator's Caravan",
+          "credit": "Mark Zug",
+          "width": 1276,
+          "height": 700
+        }
+      ]
+    },
+    {
+      "name": "Elf (Kaladesh; Bishatar and Tirahar)",
+      "source": "PSK",
+      "_copy": {
+        "name": "Elf (Kaladesh)",
+        "source": "PSK",
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": {
+              "type": "entries",
+              "entries": [
+                {
+                  "type": "entries",
+                  "name": "Bishtahar and Tirahar",
+                  "entries": ["Elided.", "Elided.", "Elided."]
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "raceFluffMeta": {
+    "uncommon": {
+      "name": "Uncommon Races",
+      "type": "inset",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Dragonborn",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Gnome",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Half-Elf",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Half-Orc",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Tiefling",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    "monstrous": {
+      "name": "Monstrous Adventurers",
+      "type": "section",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Why a Monstrous Character?",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Rare or Mundane?",
+          "entries": ["Elided.", "Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Outcast or Ambassador?",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Friends or Enemies?",
+          "entries": [
+            "Elided.",
+            "Elided.",
+            {
+              "type": "table",
+              "colLabels": ["d8", "Origin"],
+              "colStyles": ["col-2 text-center", "col-10"],
+              "rows": [
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."],
+                ["Elided.", "Elided."]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

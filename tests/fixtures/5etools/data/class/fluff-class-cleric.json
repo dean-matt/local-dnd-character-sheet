@@ -1,0 +1,346 @@
+{
+  "classFluff": [
+    {
+      "name": "Cleric",
+      "source": "PHB",
+      "entries": [
+        {
+          "name": "Cleric",
+          "type": "section",
+          "entries": [
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            {
+              "type": "entries",
+              "name": "Healers and Warriors",
+              "entries": ["Elided.", "Elided.", "Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Divine Agents",
+              "entries": ["Elided.", "Elided.", "Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Creating a Cleric",
+              "entries": [
+                "Elided.",
+                "Elided.",
+                {
+                  "type": "entries",
+                  "name": "Quick Build",
+                  "entries": ["Elided. {@background acolyte} Elided."]
+                }
+              ]
+            }
+          ],
+          "source": "PHB",
+          "page": 56
+        },
+        {
+          "type": "section",
+          "entries": [
+            {
+              "type": "quote",
+              "entries": ["Elided."],
+              "by": "Elided."
+            },
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            {
+              "type": "quote",
+              "entries": ["Elided."],
+              "by": "Elided."
+            },
+            {
+              "type": "entries",
+              "name": "Temple",
+              "entries": [
+                "Elided.",
+                "Elided.",
+                {
+                  "type": "table",
+                  "caption": "Temple",
+                  "colLabels": ["{@dice d6}", "Temple"],
+                  "colStyles": ["col-1 text-center", "col-11"],
+                  "rows": [
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 1
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 2
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 3
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 4
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 5
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 6
+                        }
+                      },
+                      "Elided."
+                    ]
+                  ]
+                },
+                {
+                  "type": "entries",
+                  "name": "Keepsake",
+                  "entries": [
+                    "Elided.",
+                    {
+                      "type": "table",
+                      "caption": "Keepsake",
+                      "colLabels": ["{@dice d6}", "Keepsake"],
+                      "colStyles": ["col-1 text-center", "col-11"],
+                      "rows": [
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 1
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 2
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 3
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 4
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 5
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 6
+                            }
+                          },
+                          "Elided."
+                        ]
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "entries",
+                  "name": "Secret",
+                  "entries": [
+                    "Elided.",
+                    "Elided.",
+                    {
+                      "type": "table",
+                      "caption": "Secret",
+                      "colLabels": ["{@dice d6}", "Secret"],
+                      "colStyles": ["col-1 text-center", "col-11"],
+                      "rows": [
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 1
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 2
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 3
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 4
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 5
+                            }
+                          },
+                          "Elided."
+                        ],
+                        [
+                          {
+                            "type": "cell",
+                            "roll": {
+                              "exact": 6
+                            }
+                          },
+                          "Elided."
+                        ]
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "inset",
+                  "name": "Serving a Pantheon, Philosophy, or Force",
+                  "entries": ["Elided.", "Elided.", "Elided.", "Elided."]
+                }
+              ]
+            }
+          ],
+          "source": "XGE",
+          "page": 17
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/PHB/Cleric.webp"
+          },
+          "width": 868,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "Cleric",
+      "source": "XPHB",
+      "entries": [
+        {
+          "type": "section",
+          "name": "Cleric",
+          "source": "XPHB",
+          "page": 68,
+          "entries": ["Elided.", "Elided.", "Elided."]
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Cleric.webp"
+          },
+          "credit": "Michael Broussard",
+          "width": 1700,
+          "height": 2177
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/051-03-027.cleric-praying.webp"
+          },
+          "title": "A Cleric prays for the day's spells",
+          "credit": "Irina Nordsol",
+          "width": 1855,
+          "height": 1200
+        }
+      ]
+    }
+  ],
+  "subclassFluff": [
+    {
+      "name": "Death Domain",
+      "shortName": "Death",
+      "source": "DMG",
+      "className": "Cleric",
+      "classSource": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/DMG/Death Cleric.webp"
+          },
+          "width": 506,
+          "height": 1000
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "monsterFluff": [
+    {
+      "name": "Feonor",
+      "source": "BGDIA",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "bestiary/BGDIA/058-gyhxw-03-10.webp"
+          },
+          "width": 445,
+          "height": 1000
+        }
+      ]
+    }
+  ]
+}

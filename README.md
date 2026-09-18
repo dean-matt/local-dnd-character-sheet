@@ -120,6 +120,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/5etools-data.md`](docs/5etools-data.md) | Editions, `_copy` inheritance, tag markup |
 | [`docs/class-tables.md`](docs/class-tables.md) | Level-indexed class tables, and what the ETL takes from them |
 | [`docs/items.md`](docs/items.md) | The four item arrays, magic variants, and attunement |
+| [`docs/fluff.md`](docs/fluff.md) | `fluff-*.json`, the `hasFluff` promise, and how a subrace or a subclass is keyed |
 | [`docs/reviving.md`](docs/reviving.md) | Getting back to a running app after a long gap |
 
 ## Contributing

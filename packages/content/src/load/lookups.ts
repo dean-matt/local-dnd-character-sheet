@@ -11,6 +11,7 @@
  * shows each entry twice.
  */
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
+import { byNameSource, collectFluff, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, kindedRows, text } from "./json.ts";
 
@@ -51,31 +52,55 @@ const NAMED_BY: Record<string, string> = {
   itemType: "abbreviation",
 };
 
+/** The fluff file a kind's own file pairs with, and the array key it reads. */
+const FLUFF_FILES: Record<string, { file: string; key: string }> = {
+  "data/conditionsdiseases.json": {
+    file: "data/fluff-conditionsdiseases.json",
+    key: "conditionFluff",
+  },
+  "data/languages.json": { file: "data/fluff-languages.json", key: "languageFluff" },
+};
+
 function toRow(
   kind: string,
   entry: Entry,
   context: string,
   fromSource: (source: string) => Edition,
+  fluff: ((key: string) => Entry | undefined) | undefined,
 ): Row {
   const source = text(entry, "source", context);
+  const merged = withFluff(entry, fluff?.(byNameSource(entry, context)), context);
   return {
     kind,
     name: text(entry, NAMED_BY[kind] ?? "name", context),
     source,
     qualifier: kind === "deity" ? text(entry, "pantheon", context) : "",
     edition: editionOf(entry, source, fromSource),
-    json: JSON.stringify(entry),
+    json: JSON.stringify(merged),
   };
 }
 
 export const lookups: Loader = {
   name: "lookups",
-  files: [...Object.keys(KINDS), ...EDITION_FILES],
+  files: [
+    ...Object.keys(KINDS),
+    ...Object.values(FLUFF_FILES).map((f) => f.file),
+    ...EDITION_FILES,
+  ],
   rows: (sources) => {
     const fromSource = editions(sources);
+    const files = ownFiles(sources).filter(([path]) => !isFluffPath(path));
+    const pools = new Map(
+      Object.entries(KINDS).flatMap(([path, kinds]) => {
+        const fluff = FLUFF_FILES[path];
+        if (fluff === undefined) return [];
+        const pool = collectFluff([[fluff.file, sources.get(fluff.file)]], fluff.key, byNameSource);
+        return kinds.map((kind) => [kind, pool] as const);
+      }),
+    );
     return {
-      lookups: kindedRows(ownFiles(sources), KINDS, (entry, kind, context) =>
-        toRow(kind, entry, context, fromSource),
+      lookups: kindedRows(files, KINDS, (entry, kind, context) =>
+        toRow(kind, entry, context, fromSource, pools.get(kind)),
       ),
     };
   },

@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "internalCopies": ["recipeFluff"]
+  },
+  "recipeFluff": [
+    {
+      "name": "Almond Brandy",
+      "source": "PaF",
+      "entries": ["Elided.", "Elided."]
+    }
+  ]
+}

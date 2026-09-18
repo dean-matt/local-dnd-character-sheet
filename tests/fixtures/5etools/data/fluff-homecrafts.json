@@ -1,0 +1,76 @@
+{
+  "crochetPatternFluff": [
+    {
+      "name": "Bag of Holding",
+      "source": "CaBoMP",
+      "entries": [
+        "Elided. {@item dungeoneer's pack|XPHB} Elided. {@item rope|XPHB} Elided. {@item Caltrops|XPHB} Elided. {@item rope|XPHB} Elided. {@creature owlbear} Elided.",
+        "Elided. {@item bag of holding} Elided.",
+        "Elided. {@item bag of holding} Elided. {@item bag of devouring} Elided."
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "crochetpatterns/CaBoMP/089.webp"
+          },
+          "credit": "Mithy Evans",
+          "width": 1780,
+          "height": 2244
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "crochetpatterns/CaBoMP/090.webp"
+          },
+          "credit": "Lydia Viatoris",
+          "width": 2312,
+          "height": 1727
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "crochetpatterns/CaBoMP/091.webp"
+          },
+          "credit": "Mithy Evans",
+          "width": 1994,
+          "height": 1771
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "crochetpatterns/CaBoMP/092.webp"
+          },
+          "credit": "Lydia Viatoris",
+          "width": 2189,
+          "height": 1825
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "crochetpatterns/CaBoMP/093.webp"
+          },
+          "title": "Side Strip with ring attached.",
+          "credit": "Lydia Viatoris",
+          "width": 1076,
+          "height": 1328
+        },
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "crochetpatterns/CaBoMP/094.webp"
+          },
+          "credit": "Mithy Evans",
+          "width": 1780,
+          "height": 2244
+        }
+      ]
+    }
+  ]
+}

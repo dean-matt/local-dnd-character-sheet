@@ -25,14 +25,22 @@
  */
 import { CLASS_FILES, classIdentities } from "./classes.ts";
 import { EDITION_FILES, type Edition, editions, ownFiles } from "./edition.ts";
+import { collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, text } from "./json.ts";
 
 const SOURCES_FILE = "data/spells/sources.json";
+const SPELLS_FLUFF = "data/spells/fluff-spells-*.json";
 
-function toRow(entry: unknown, context: string, editionOf: (source: string) => Edition): Row {
+function toRow(
+  entry: unknown,
+  context: string,
+  editionOf: (source: string) => Edition,
+  fluff: (key: string) => Entry | undefined,
+): Row {
   if (!isRecord(entry)) throw new Error(`${context} is not an object`);
   const source = text(entry, "source", context);
+  const merged = withFluff(entry, fluff(fluffKey(text(entry, "name", context), source)), context);
   const level = entry.level;
   if (typeof level !== "number" || !Number.isInteger(level) || level < 0 || level > 9) {
     throw new Error(`${context}: level ${String(level)} is not a whole number from 0 to 9`);
@@ -51,7 +59,7 @@ function toRow(entry: unknown, context: string, editionOf: (source: string) => E
     school: text(entry, "school", context),
     concentration: duration.some((span) => isRecord(span) && span.concentration === true) ? 1 : 0,
     ritual: isRecord(meta) && meta.ritual === true ? 1 : 0,
-    json: JSON.stringify(entry),
+    json: JSON.stringify(merged),
   };
 }
 
@@ -121,17 +129,23 @@ function spellClassRows(
 
 export const spells: Loader = {
   name: "spells",
-  files: ["data/spells/spells-*.json", SOURCES_FILE, CLASS_FILES, ...EDITION_FILES],
+  files: ["data/spells/spells-*.json", SPELLS_FLUFF, SOURCES_FILE, CLASS_FILES, ...EDITION_FILES],
   rows: (sources) => {
     const editionOf = editions(sources);
+    const fluffFiles = [...sources].filter(([path]) => isFluffPath(path));
+    const fluff = collectFluff(fluffFiles, "spellFluff", (entry, ctx) =>
+      fluffKey(text(entry, "name", ctx), text(entry, "source", ctx)),
+    );
     const spellFiles = ownFiles(sources).filter(
-      ([path]) => path !== SOURCES_FILE && !path.startsWith("data/class/"),
+      ([path]) => path !== SOURCES_FILE && !path.startsWith("data/class/") && !isFluffPath(path),
     );
     const spellRows = spellFiles.flatMap(([path, source]) => {
       if (!isRecord(source) || !Array.isArray(source.spell)) {
         throw new Error(`${path} carries no spell array`);
       }
-      return source.spell.map((entry, index) => toRow(entry, `${path}[${index}]`, editionOf));
+      return source.spell.map((entry, index) =>
+        toRow(entry, `${path}[${index}]`, editionOf, fluff),
+      );
     });
     const knownSpells = new Set(
       spellRows.map((row) => `${String(row.name)}|${String(row.source)}`),

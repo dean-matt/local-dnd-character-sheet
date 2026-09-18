@@ -129,10 +129,33 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/fluff-backgrounds.json",
+    keep: {
+      within: {
+        backgroundFluff: {
+          items: [
+            "Acolyte|PHB",
+            "Baldur's Gate Acolyte|BGDIA",
+            "Criminal|PHB",
+            "Variant Criminal (Spy)|PHB",
+            "Augen Trust (Spy)|EGW",
+            "Acolyte|XPHB",
+          ],
+        },
+      },
+    },
+  },
+  {
     file: "data/bastions.json",
     keep: {
       within: { facility: { items: ["Ancient Altar|RHW|9", "Arcane Study|XDMG|5"] } },
     },
+  },
+  {
+    // Neither kept facility carries `hasFluff`. The file still has to exist:
+    // the loader declares it whether or not a row promises a match.
+    file: "data/fluff-bastions.json",
+    keep: { within: { facilityFluff: { items: [] } } },
   },
   {
     file: "data/bestiary/bestiary-bgdia.json",
@@ -141,6 +164,10 @@ export const FIXTURES: Fixture[] = [
         monster: { items: [{ id: "Feonor|BGDIA", fields: ["name", "source", "page", "_copy"] }] },
       },
     },
+  },
+  {
+    file: "data/bestiary/fluff-bestiary-bgdia.json",
+    keep: { within: { monsterFluff: { items: ["Feonor|BGDIA"] } } },
   },
   {
     file: "data/bestiary/bestiary-mm.json",
@@ -159,9 +186,23 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/bestiary/fluff-bestiary-mm.json",
+    keep: { within: { monsterFluff: { items: ["Archmage|MM", "Goblin|MM"] } } },
+  },
+  {
     file: "data/bestiary/bestiary-xmm.json",
     keep: {
       within: { monster: { items: [{ id: "Goblin Warrior|XMM", fields: MONSTER_FIELDS }] } },
+    },
+  },
+  {
+    // Fields narrowed to drop `_copy`: upstream's own entry copies a `Goblins`
+    // fluff this fixture does not carry, and identity is all a match needs.
+    file: "data/bestiary/fluff-bestiary-xmm.json",
+    keep: {
+      within: {
+        monsterFluff: { items: [{ id: "Goblin Warrior|XMM", fields: ["name", "source"] }] },
+      },
     },
   },
   {
@@ -213,6 +254,11 @@ export const FIXTURES: Fixture[] = [
     keep: { within: { charoption: { items: ["Anvilwrought|MOT"] } } },
   },
   {
+    // Anvilwrought carries no `hasFluff`, so nothing here has to match it.
+    file: "data/fluff-charcreationoptions.json",
+    keep: { within: { charoptionFluff: { items: [] } } },
+  },
+  {
     file: "data/class/class-artificer.json",
     keep: {
       fields: ["class"],
@@ -241,6 +287,10 @@ export const FIXTURES: Fixture[] = [
         },
       },
     },
+  },
+  {
+    file: "data/class/fluff-class-artificer.json",
+    keep: { within: { classFluff: { items: ["Artificer|TCE"] } } },
   },
   {
     file: "data/class/class-cleric.json",
@@ -358,6 +408,17 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/class/fluff-class-cleric.json",
+    keep: {
+      within: {
+        classFluff: { items: ["Cleric|PHB", "Cleric|XPHB"] },
+        // Keyed without `classSource`: the one subclass is offered under both
+        // Cleric printings, and its fluff names only the classic one.
+        subclassFluff: { items: ["Death Domain|DMG|Cleric|PHB"] },
+      },
+    },
+  },
+  {
     file: "data/class/class-fighter.json",
     keep: {
       fields: ["class", "subclass", "classFeature"],
@@ -451,6 +512,21 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/class/fluff-class-fighter.json",
+    keep: {
+      within: {
+        classFluff: { items: ["Fighter|XPHB"] },
+        subclassFluff: {
+          items: [
+            "Psi Warrior|XPHB|Fighter|XPHB",
+            "Eldritch Knight|XPHB|Fighter|XPHB",
+            "Battle Master|XPHB|Fighter|XPHB",
+          ],
+        },
+      },
+    },
+  },
+  {
     file: "data/class/class-sidekick.json",
     keep: {
       within: {
@@ -518,6 +594,10 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/class/fluff-class-warlock.json",
+    keep: { within: { classFluff: { items: ["Warlock|PHB"] } } },
+  },
+  {
     file: "data/conditionsdiseases.json",
     keep: {
       within: {
@@ -526,6 +606,13 @@ export const FIXTURES: Fixture[] = [
         status: { items: ["Bloodied|XPHB"] },
       },
     },
+  },
+  {
+    // `Blinded|XPHB`, the disease and the status carry no `hasFluff`, so only
+    // `Blinded|PHB` needs a match — `disease` and `status` share this file's
+    // one `conditionFluff` array with `condition` but carry none in the corpus.
+    file: "data/fluff-conditionsdiseases.json",
+    keep: { within: { conditionFluff: { items: ["Blinded|PHB"] } } },
   },
   {
     file: "data/cultsboons.json",
@@ -596,6 +683,11 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    // None of the four kept feats carries `hasFluff`.
+    file: "data/fluff-feats.json",
+    keep: { within: { featFluff: { items: [] } } },
+  },
+  {
     file: "data/generated/gendata-tag-redirects.json",
     keep: {
       fields: ["actions.html", "skill"],
@@ -619,6 +711,10 @@ export const FIXTURES: Fixture[] = [
         },
       },
     },
+  },
+  {
+    file: "data/fluff-homecrafts.json",
+    keep: { within: { crochetPatternFluff: { items: ["Bag of Holding|CaBoMP"] } } },
   },
   {
     file: "data/items.json",
@@ -688,6 +784,28 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    // One `itemFluff` array serves all three item files above: `Arcane Focus`
+    // carries no `hasFluff` and needs no entry, and a magic variant's fluff is
+    // keyed by the name and source it displays, not its `inherits` template's.
+    file: "data/fluff-items.json",
+    keep: {
+      within: {
+        itemFluff: {
+          items: [
+            "Wand of Magic Missiles|DMG",
+            "Bag of Holding|DMG",
+            "Cloak of Billowing|XDMG",
+            "Cloak of Billowing|WttHC",
+            "Longsword|XPHB",
+            "Arrow of Slaying (*)|DMG",
+            "Ammunition of Slaying|XDMG",
+            "Armblade|ERLW",
+          ],
+        },
+      },
+    },
+  },
+  {
     file: "data/languages.json",
     keep: {
       within: {
@@ -695,6 +813,12 @@ export const FIXTURES: Fixture[] = [
         languageScript: { items: ["Draconic|PHB"] },
       },
     },
+  },
+  {
+    // Neither `Common` nor the kept `languageScript` carries `hasFluff`; only
+    // `Draconic|PHB` needs a match.
+    file: "data/fluff-languages.json",
+    keep: { within: { languageFluff: { items: ["Draconic|PHB"] } } },
   },
   {
     file: "data/names.json",
@@ -705,6 +829,11 @@ export const FIXTURES: Fixture[] = [
   {
     file: "data/objects.json",
     keep: { within: { object: { items: ["Ballista|DMG"] } } },
+  },
+  {
+    // Ballista carries no `hasFluff`.
+    file: "data/fluff-objects.json",
+    keep: { within: { objectFluff: { items: [] } } },
   },
   {
     file: "data/optionalfeatures.json",
@@ -736,6 +865,11 @@ export const FIXTURES: Fixture[] = [
         },
       },
     },
+  },
+  {
+    // None of the kept optional features carries `hasFluff`.
+    file: "data/fluff-optionalfeatures.json",
+    keep: { within: { optionalfeatureFluff: { items: [] } } },
   },
   {
     file: "data/psionics.json",
@@ -931,6 +1065,13 @@ export const FIXTURES: Fixture[] = [
                 },
               },
             },
+            {
+              // A race that is itself a named variant, whose subrace fluff
+              // reopens its closing paren rather than nesting a second — see
+              // `races.ts`'s `fluffSubraceName`.
+              id: "Elf (Kaladesh)|PSK",
+              fields: ["name", "source", "page", "size", "speed", "entries"],
+            },
           ],
         },
         subrace: {
@@ -1029,6 +1170,44 @@ export const FIXTURES: Fixture[] = [
                 },
               },
             },
+            {
+              id: "Bishatar and Tirahar|PSK|Elf (Kaladesh)|PSK",
+              fields: ["name", "source", "raceName", "raceSource", "page", "speed", "entries"],
+            },
+          ],
+        },
+      },
+    },
+  },
+  {
+    // Every kept race carries `hasFluff`; the base entry of one that also
+    // carries `_versions` needs its own match, since `versions.ts` does not
+    // hand a colour or a lineage the base's promise along with its prose. A
+    // subrace's key is the compound name upstream's own race fluff writes for
+    // one: the race with the subrace appended in parens, `Base` for the
+    // nameless PHB Dragonborn.
+    file: "data/fluff-races.json",
+    keep: {
+      within: {
+        raceFluff: {
+          items: [
+            "Goblin|MPMM",
+            "Boggart|LFL",
+            "Goblin|VGM",
+            "Goblin (Dankwood)|AWM",
+            "Aasimar|MPMM",
+            "Dragonborn|XPHB",
+            "Elf|XPHB",
+            "Elf|LFL",
+            "Human|PHB",
+            "Dragonborn|PHB",
+            "Half-Orc|PHB",
+            "Dragonborn (Chromatic)|FTD",
+            "Dragonborn (Base)|PHB",
+            "Dragonborn (Draconblood)|EGW",
+            "Human (Amonkhet)|PSA",
+            "Elf (Kaladesh)|PSK",
+            "Elf (Kaladesh; Bishatar and Tirahar)|PSK",
           ],
         },
       },
@@ -1039,8 +1218,17 @@ export const FIXTURES: Fixture[] = [
     keep: { within: { recipe: { items: ["Almond Brandy|PaF"] } } },
   },
   {
+    file: "data/fluff-recipes.json",
+    keep: { within: { recipeFluff: { items: ["Almond Brandy|PaF"] } } },
+  },
+  {
     file: "data/rewards.json",
     keep: { within: { reward: { items: ["Ancient Seal|VRGR", "Arcane Study Charm|XDMG"] } } },
+  },
+  {
+    // The corpus carries no reward fluff at all at the pinned tag.
+    file: "data/fluff-rewards.json",
+    keep: { within: { rewardFluff: { items: [] } } },
   },
   {
     file: "data/senses.json",
@@ -1088,6 +1276,11 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    // Neither kept spell carries `hasFluff`; only the file has to exist.
+    file: "data/spells/fluff-spells-phb.json",
+    keep: { within: { spellFluff: { items: [] } } },
+  },
+  {
     file: "data/spells/spells-xphb.json",
     keep: {
       within: {
@@ -1110,6 +1303,10 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    file: "data/spells/fluff-spells-xphb.json",
+    keep: { within: { spellFluff: { items: [] } } },
+  },
+  {
     file: "data/tables.json",
     // A standalone table holds its prose in `rows`, where no field name says so.
     keep: { within: { table: { items: [{ id: "Damage Types|PHB", prose: ["rows"] }] } } },
@@ -1124,6 +1321,11 @@ export const FIXTURES: Fixture[] = [
     },
   },
   {
+    // Neither the kept trap nor the kept hazard carries `hasFluff`.
+    file: "data/fluff-trapshazards.json",
+    keep: { within: { trapFluff: { items: [] }, hazardFluff: { items: [] } } },
+  },
+  {
     file: "data/variantrules.json",
     keep: { within: { variantrule: { items: ["Cover|XPHB", "Customizing Ability Scores|PHB"] } } },
   },
@@ -1133,6 +1335,18 @@ export const FIXTURES: Fixture[] = [
       within: {
         vehicle: { items: ["Apparatus of Kwalish|DMG", "Apparatus of Kwalish|XDMG"] },
         vehicleUpgrade: { items: ["Arcane Artillery|GoS"] },
+      },
+    },
+  },
+  {
+    // The vehicle upgrade carries no `hasFluff`; the vehicle fluff file has no
+    // array of its own for that kind at all.
+    file: "data/fluff-vehicles.json",
+    keep: {
+      within: {
+        vehicleFluff: {
+          items: ["Apparatus of Kwalish|DMG", "Apparatus of Kwalish|XDMG"],
+        },
       },
     },
   },

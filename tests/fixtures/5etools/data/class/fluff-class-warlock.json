@@ -1,0 +1,437 @@
+{
+  "classFluff": [
+    {
+      "name": "Warlock",
+      "source": "PHB",
+      "entries": [
+        {
+          "name": "Warlock",
+          "type": "section",
+          "entries": [
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            {
+              "type": "entries",
+              "name": "Sworn and Beholden",
+              "entries": ["Elided.", "Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Delvers into Secrets",
+              "entries": ["Elided.", "Elided.", "Elided."]
+            },
+            {
+              "type": "entries",
+              "name": "Creating a Warlock",
+              "entries": [
+                "Elided.",
+                "Elided.",
+                "Elided.",
+                "Elided.",
+                {
+                  "type": "entries",
+                  "name": "Quick Build",
+                  "entries": [
+                    "Elided. {@background charlatan} Elided. {@spell eldritch blast} Elided. {@spell chill touch} Elided. {@spell charm person} Elided. {@spell witch bolt} Elided."
+                  ]
+                }
+              ]
+            }
+          ],
+          "page": 105,
+          "source": "PHB"
+        },
+        {
+          "type": "section",
+          "entries": [
+            {
+              "type": "quote",
+              "entries": ["Elided."],
+              "by": "Elided."
+            },
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            {
+              "type": "quote",
+              "entries": ["Elided."],
+              "by": "Elided."
+            },
+            {
+              "type": "entries",
+              "name": "Patron's Attitude",
+              "entries": [
+                "Elided.",
+                "Elided.",
+                {
+                  "type": "table",
+                  "caption": "Patron Attitudes",
+                  "colLabels": ["{@dice d6}", "Attitude"],
+                  "colStyles": ["col-1 text-center", "col-11"],
+                  "rows": [
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 1
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 2
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 3
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 4
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 5
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 6
+                        }
+                      },
+                      "Elided."
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Special Terms of the Pact",
+              "entries": [
+                "Elided.",
+                "Elided.",
+                {
+                  "type": "table",
+                  "caption": "Special Terms",
+                  "colLabels": ["{@dice d6}", "Term"],
+                  "colStyles": ["col-1 text-center", "col-11"],
+                  "rows": [
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 1
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 2
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 3
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 4
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 5
+                        }
+                      },
+                      "Elided."
+                    ],
+                    [
+                      {
+                        "type": "cell",
+                        "roll": {
+                          "exact": 6
+                        }
+                      },
+                      "Elided."
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Binding Mark",
+              "entries": [
+                "Elided.",
+                "Elided.",
+                {
+                  "type": "table",
+                  "caption": "Binding Marks",
+                  "colLabels": ["d6", "Mark"],
+                  "colStyles": ["col-1 text-center", "col-11"],
+                  "rows": [
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."],
+                    ["Elided.", "Elided."]
+                  ]
+                }
+              ]
+            }
+          ],
+          "page": 53,
+          "source": "XGE"
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/PHB/Warlock.webp"
+          },
+          "width": 780,
+          "height": 1000
+        }
+      ]
+    }
+  ],
+  "subclassFluff": [
+    {
+      "name": "The Celestial",
+      "shortName": "Celestial",
+      "source": "XGE",
+      "className": "Warlock",
+      "classSource": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XGE/Celestial Warlock.webp"
+          },
+          "width": 658,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "The Hexblade",
+      "shortName": "Hexblade",
+      "source": "XGE",
+      "className": "Warlock",
+      "classSource": "PHB",
+      "entries": [
+        {
+          "type": "quote",
+          "entries": ["Elided."],
+          "by": "Elided."
+        }
+      ],
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XGE/Hexblade Warlock.webp"
+          },
+          "width": 743,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "The Fathomless",
+      "shortName": "Fathomless",
+      "source": "TCE",
+      "className": "Warlock",
+      "classSource": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/TCE/Fathomless Warlock.webp"
+          },
+          "width": 800,
+          "height": 1290
+        }
+      ]
+    },
+    {
+      "name": "The Genie",
+      "shortName": "Genie",
+      "source": "TCE",
+      "className": "Warlock",
+      "classSource": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/TCE/Genie Warlock.webp"
+          },
+          "width": 1200,
+          "height": 802
+        }
+      ]
+    },
+    {
+      "name": "The Undead",
+      "shortName": "Undead",
+      "source": "VRGR",
+      "className": "Warlock",
+      "classSource": "PHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/VRGR/Undead Warlock.webp"
+          },
+          "width": 800,
+          "height": 1470
+        }
+      ]
+    },
+    {
+      "name": "Archfey Patron",
+      "shortName": "Archfey",
+      "source": "XPHB",
+      "className": "Warlock",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Archfey Warlock.webp"
+          },
+          "credit": "Erion Makuo",
+          "width": 850,
+          "height": 2300
+        }
+      ]
+    },
+    {
+      "name": "Celestial Patron",
+      "shortName": "Celestial",
+      "source": "XPHB",
+      "className": "Warlock",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Celestial Warlock.webp"
+          },
+          "credit": "Ekaterina Burmak",
+          "width": 850,
+          "height": 2470
+        }
+      ]
+    },
+    {
+      "name": "Fiend Patron",
+      "shortName": "Fiend",
+      "source": "XPHB",
+      "className": "Warlock",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Fiend Warlock.webp"
+          },
+          "credit": "Jodie Muir",
+          "width": 850,
+          "height": 2486
+        }
+      ]
+    },
+    {
+      "name": "Great Old One Patron",
+      "shortName": "Great Old One",
+      "source": "XPHB",
+      "className": "Warlock",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/XPHB/Great Old One Warlock.webp"
+          },
+          "credit": "Magali Villeneuve",
+          "width": 850,
+          "height": 1995
+        }
+      ]
+    },
+    {
+      "name": "Undead Patron",
+      "shortName": "Undead",
+      "source": "RHW",
+      "className": "Warlock",
+      "classSource": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "classes/RHW/Undead Patron Warlock.webp"
+          },
+          "title": "Undead Patron Warlock",
+          "credit": "Ignatius Budi",
+          "width": 850,
+          "height": 1806
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "vehicleFluff": [
+    {
+      "name": "Apparatus of Kwalish",
+      "source": "DMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/DMG/Apparatus of Kwalish.webp"
+          },
+          "credit": "Aaron Hübrich",
+          "width": 1000,
+          "height": 631
+        }
+      ]
+    },
+    {
+      "name": "Apparatus of Kwalish",
+      "source": "XDMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/XDMG/Apparatus of Kwalish.webp"
+          },
+          "credit": "Conceptopolis",
+          "width": 1000,
+          "height": 631
+        }
+      ]
+    }
+  ]
+}

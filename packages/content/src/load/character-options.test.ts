@@ -46,6 +46,19 @@ describe("the character options loader", () => {
     ]);
   });
 
+  it("folds a background's own fluff into its json", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const json = db
+      .prepare("SELECT json FROM backgrounds WHERE name = ? AND source = ?")
+      .pluck()
+      .get("Acolyte", "PHB") as string;
+    db.close();
+
+    expect(JSON.parse(json)).toHaveProperty("fluff.entries");
+  });
+
   it("loads feats, with a _versions variant standing beside the entry it came from", () => {
     build(FIXTURE_VENDOR);
 

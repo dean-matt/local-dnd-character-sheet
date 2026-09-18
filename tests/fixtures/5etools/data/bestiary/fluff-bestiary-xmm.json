@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "internalCopies": ["monsterFluff"]
+  },
+  "monsterFluff": [
+    {
+      "name": "Goblin Warrior",
+      "source": "XMM"
+    }
+  ]
+}

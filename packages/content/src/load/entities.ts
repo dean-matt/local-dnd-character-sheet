@@ -14,12 +14,12 @@
  * `loot.json`, `makebrew-creature.json`, `makecards.json`, `monsterfeatures.json` and
  * `msbcr.json` are tables a tool rolls on rather than entries anything references, and
  * `monsterfeatures` carries no source at all. `fluff-*.json` is lore keyed to an entry
- * that already has a row, so a row of its own answers every search twice; folding it
- * into the entry it describes is how it belongs here, and `{@creatureFluff}` is 2 tags
- * in the whole corpus.
+ * that already has a row, folded into it by `fluff.ts` rather than loaded as a row of
+ * its own, and `{@creatureFluff}` is 2 tags in the whole corpus.
  */
 import { parseTags, renderText } from "@dnd/tags";
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
+import { byNameSource, collectFluff, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, entriesOf, kindedRows, text } from "./json.ts";
 
@@ -49,6 +49,55 @@ const BESTIARY_KINDS: Record<string, string[]> = {
   "data/bestiary/legendarygroups.json": ["legendaryGroup"],
   "data/bestiary/template.json": [],
 };
+
+const BESTIARY_FLUFF = "data/bestiary/fluff-bestiary-*.json";
+
+/** The fluff file a `KINDS` data file pairs with, where upstream ships one. */
+const FLUFF_FILES: Record<string, string> = {
+  "data/bastions.json": "data/fluff-bastions.json",
+  "data/charcreationoptions.json": "data/fluff-charcreationoptions.json",
+  "data/homecrafts.json": "data/fluff-homecrafts.json",
+  "data/objects.json": "data/fluff-objects.json",
+  "data/recipes.json": "data/fluff-recipes.json",
+  "data/rewards.json": "data/fluff-rewards.json",
+  "data/trapshazards.json": "data/fluff-trapshazards.json",
+  "data/vehicles.json": "data/fluff-vehicles.json",
+};
+
+/** The array key a kind's fluff sits under, where upstream ships one for it. */
+const FLUFF_KIND: Record<string, string> = {
+  facility: "facilityFluff",
+  charoption: "charoptionFluff",
+  crochetPattern: "crochetPatternFluff",
+  object: "objectFluff",
+  recipe: "recipeFluff",
+  reward: "rewardFluff",
+  trap: "trapFluff",
+  hazard: "hazardFluff",
+  vehicle: "vehicleFluff",
+  monster: "monsterFluff",
+};
+
+/** Every kind's fluff pool the given `KINDS`-shaped declaration carries. */
+function fluffPools(
+  sources: Map<string, unknown>,
+  kinds: Record<string, string[]>,
+): Map<string, (key: string) => Entry | undefined> {
+  const pools = new Map<string, (key: string) => Entry | undefined>();
+  for (const [dataFile, kindList] of Object.entries(kinds)) {
+    const fluffFile = FLUFF_FILES[dataFile];
+    for (const kind of kindList) {
+      const arrayKey = FLUFF_KIND[kind];
+      if (arrayKey === undefined) continue;
+      const files: [string, unknown][] =
+        fluffFile === undefined
+          ? [...sources].filter(([path]) => isFluffPath(path))
+          : [[fluffFile, sources.get(fluffFile)]];
+      pools.set(kind, collectFluff(files, arrayKey, byNameSource));
+    }
+  }
+  return pools;
+}
 
 /**
  * An adventure and a book are one row each: the index entry, which is where the name and
@@ -99,6 +148,9 @@ const NOT_TEXT = new Set([
   "href",
   "hrefThumbnail",
   "path",
+  // A credit line and a pixel size are not prose either, so the whole array is
+  // skipped rather than each of its fields beside `href` and `path` above.
+  "images",
 ]);
 
 /**
@@ -153,17 +205,19 @@ function toRow(
   type: string,
   context: string,
   fromSource: (source: string) => Edition,
+  fluff: ((key: string) => Entry | undefined) | undefined,
 ): Row {
   const source = text(entry, "source", context);
   const qualifier = QUALIFIED_BY[type];
+  const merged = withFluff(entry, fluff?.(byNameSource(entry, context)), context);
   return {
     type,
     name: text(entry, "name", context),
     source,
     qualifier: qualifier === undefined ? "" : text(entry, qualifier, context),
     edition: editionOf(entry, source, fromSource),
-    json: JSON.stringify(entry),
-    rendered_text: rendered(entry, context),
+    json: JSON.stringify(merged),
+    rendered_text: rendered(merged, context),
   };
 }
 
@@ -207,13 +261,14 @@ function expand(kinds: Record<string, string[]>, paths: string[]): Record<string
   );
 }
 
-function loader(name: string, kinds: Record<string, string[]>): Loader {
+function loader(name: string, kinds: Record<string, string[]>, fluffFiles: string[]): Loader {
   return {
     name,
-    files: [...Object.keys(kinds), ...EDITION_FILES],
+    files: [...Object.keys(kinds), ...fluffFiles, ...EDITION_FILES],
     rows: (sources) => {
       const fromSource = editions(sources);
-      const files = ownFiles(sources);
+      const files = ownFiles(sources).filter(([path]) => !isFluffPath(path));
+      const pools = fluffPools(sources, kinds);
       return {
         entities: kindedRows(
           files,
@@ -221,7 +276,7 @@ function loader(name: string, kinds: Record<string, string[]>): Loader {
             kinds,
             files.map(([path]) => path),
           ),
-          (entry, kind, context) => toRow(entry, kind, context, fromSource),
+          (entry, kind, context) => toRow(entry, kind, context, fromSource, pools.get(kind)),
         ),
       };
     },
@@ -261,7 +316,7 @@ function volume({ type, bodies }: { type: string; bodies: string }): Loader {
 }
 
 export const entityLoaders: Loader[] = [
-  loader("entities", KINDS),
-  loader("entities-bestiary", BESTIARY_KINDS),
+  loader("entities", KINDS, Object.values(FLUFF_FILES)),
+  loader("entities-bestiary", BESTIARY_KINDS, [BESTIARY_FLUFF]),
   ...VOLUMES.map(volume),
 ];

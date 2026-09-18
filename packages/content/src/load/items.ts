@@ -13,6 +13,7 @@
  * template to a base item are not written here; see docs/items.md.
  */
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
+import { collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, kindedRows, text } from "./json.ts";
 
@@ -24,6 +25,8 @@ const KINDS: Record<string, string[]> = {
   "data/items-base.json": ["baseitem"],
   "data/magicvariants.json": ["magicvariant"],
 };
+
+const ITEMS_FLUFF_FILE = "data/fluff-items.json";
 
 const VARIANT = "magicvariant";
 
@@ -73,9 +76,16 @@ function requiresAttunement(fields: Entry, context: string): number {
   );
 }
 
-function toRow(entry: Entry, kind: string, context: string, fromSource: FromSource): Row {
+function toRow(
+  entry: Entry,
+  kind: string,
+  context: string,
+  fromSource: FromSource,
+  fluff: (key: string) => Entry | undefined,
+): Row {
   const fields = itemFields(entry, kind, context);
   const source = text(fields, "source", context);
+  const merged = withFluff(entry, fluff(fluffKey(text(entry, "name", context), source)), context);
   return {
     name: text(entry, "name", context),
     source,
@@ -84,18 +94,24 @@ function toRow(entry: Entry, kind: string, context: string, fromSource: FromSour
     type: optionalText(fields, "type", context),
     rarity: optionalText(fields, "rarity", context),
     requires_attunement: requiresAttunement(fields, context),
-    json: JSON.stringify(entry),
+    json: JSON.stringify(merged),
   };
 }
 
 export const items: Loader = {
   name: "items",
-  files: [...Object.keys(KINDS), ...EDITION_FILES],
+  files: [...Object.keys(KINDS), ITEMS_FLUFF_FILE, ...EDITION_FILES],
   rows: (sources) => {
     const fromSource = editions(sources);
+    const fluff = collectFluff(
+      [[ITEMS_FLUFF_FILE, sources.get(ITEMS_FLUFF_FILE)]],
+      "itemFluff",
+      (entry, ctx) => fluffKey(text(entry, "name", ctx), text(entry, "source", ctx)),
+    );
+    const files = ownFiles(sources).filter(([path]) => !isFluffPath(path));
     return {
-      items: kindedRows(ownFiles(sources), KINDS, (entry, kind, context) =>
-        toRow(entry, kind, context, fromSource),
+      items: kindedRows(files, KINDS, (entry, kind, context) =>
+        toRow(entry, kind, context, fromSource, fluff),
       ),
     };
   },

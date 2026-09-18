@@ -60,6 +60,31 @@ describe("the items loader", () => {
     ]);
   });
 
+  it("folds a matching fluff entry into json by (name, source), across kinds", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const fluffOf = (name: string, source: string) =>
+      JSON.parse(
+        db
+          .prepare("SELECT json FROM items WHERE name = ? AND source = ?")
+          .pluck()
+          .get(name, source) as string,
+      ) as { fluff?: unknown };
+
+    // An item, a base item and a magic variant, one fluff pool for all three.
+    const wand = fluffOf("Wand of Magic Missiles", "DMG");
+    const longswordPHB = fluffOf("Longsword", "PHB");
+    const longswordXPHB = fluffOf("Longsword", "XPHB");
+    const armblade = fluffOf("Armblade", "ERLW");
+    db.close();
+
+    expect(wand).toHaveProperty("fluff.images");
+    expect(longswordPHB.fluff).toBeUndefined();
+    expect(longswordXPHB).toHaveProperty("fluff.images");
+    expect(armblade).toHaveProperty("fluff.images");
+  });
+
   /**
    * The two mechanisms the table above cannot tell apart. A base item is the
    * first Tier A entry to declare an `edition` of its own, and the adventures
@@ -129,6 +154,7 @@ describe("the items loader", () => {
       "data/items.json": { item: [], itemGroup: [] },
       "data/items-base.json": { baseitem: [] },
       "data/magicvariants.json": { magicvariant: [] },
+      "data/fluff-items.json": { itemFluff: [] },
       ...files,
     })) {
       const destination = join(vendorDir, path);

@@ -127,6 +127,26 @@ describe("the Tier C entity loaders", () => {
     expect(goblin.rendered_text).toContain("Scimitar");
   });
 
+  it("folds a matching fluff entry into json and rendered_text, images excluded", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const row = db
+      .prepare(
+        "SELECT json, rendered_text FROM entities WHERE type = 'monster' AND name = 'Goblin'",
+      )
+      .get() as { json: string; rendered_text: string };
+    db.close();
+
+    const entry = JSON.parse(row.json) as { fluff?: { entries: unknown; images: unknown } };
+    expect(entry.fluff?.entries).toBeDefined();
+    expect(entry.fluff?.images).toBeDefined();
+    // A subheading from the fluff's own entries, not from the stat block.
+    expect(row.rendered_text).toContain("Goblinoids");
+    expect(row.rendered_text).not.toContain("Goblin.webp");
+    expect(row.rendered_text).not.toContain("bestiary/MM");
+  });
+
   it("answers a plain-word query against the index over both columns", () => {
     build(FIXTURE_VENDOR);
 
@@ -211,6 +231,16 @@ describe("the Tier C entity loaders", () => {
         }),
       ),
     ).toMatch(/"longsword\|phb" is a catalog key rather than text/);
+  });
+
+  it("refuses an entry whose hasFluff promises a fluff entry no file carries", () => {
+    expect(
+      refusal(
+        vendorHolding("data/objects.json", {
+          object: [{ name: "Ballista", source: "DMG", hasFluff: true }],
+        }),
+      ),
+    ).toMatch(/hasFluff promises a fluff entry no file carries/);
   });
 
   it("refuses an index entry whose volume has no body file", () => {

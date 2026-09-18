@@ -769,6 +769,67 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Elf (Kaladesh)",
+      "source": "PSK",
+      "page": 20,
+      "size": ["M"],
+      "speed": 30,
+      "entries": [
+        {
+          "name": "Age",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Alignment",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Size",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Darkvision",
+          "entries": ["Elided."],
+          "type": "entries"
+        },
+        {
+          "name": "Keen Senses",
+          "entries": ["Elided. {@skill Perception} Elided."],
+          "type": "entries"
+        },
+        {
+          "name": "Elf Weapon Training",
+          "entries": [
+            "Elided. {@item longsword|phb} Elided. {@item shortsword|phb} Elided. {@item shortbow|phb} Elided. {@item longbow|phb} Elided."
+          ],
+          "type": "entries"
+        },
+        {
+          "name": "Fey Ancestry",
+          "entries": ["Elided. {@condition charmed} Elided."],
+          "type": "entries"
+        },
+        {
+          "name": "Trance",
+          "entries": ["Elided.", "{@note Elided.}"],
+          "type": "entries"
+        },
+        {
+          "name": "Languages",
+          "entries": ["Elided."],
+          "type": "entries"
+        },
+        {
+          "name": "Elf Culture",
+          "entries": ["Elided."],
+          "type": "entries"
+        }
+      ]
     }
   ],
   "subrace": [
@@ -1019,6 +1080,29 @@
           ]
         }
       }
+    },
+    {
+      "name": "Bishatar and Tirahar",
+      "source": "PSK",
+      "raceName": "Elf (Kaladesh)",
+      "raceSource": "PSK",
+      "page": 21,
+      "speed": 35,
+      "entries": [
+        {
+          "name": "Fleet of Foot",
+          "entries": ["Elided."],
+          "type": "entries",
+          "data": {
+            "overwrite": "Elf Culture"
+          }
+        },
+        {
+          "name": "Mask of the Wild",
+          "entries": ["Elided."],
+          "type": "entries"
+        }
+      ]
     }
   ]
 }

@@ -117,7 +117,10 @@ function expand(base: Entry, spec: Entry, context: string): Entry {
   // A version's own `_versions` is dropped with the base's: nothing revisits an
   // entry this emits, so leaving one would hand a loader an unresolved block.
   const { _mod: mod, _versions: _nested, ...own } = spec;
-  const { _versions: _dropped, ...inherited } = base;
+  // `hasFluff` and `hasFluffImages` are the base's own promise, not the version's:
+  // ten Dragonborn colours inherit `Dragonborn`'s flags with no fluff of their own
+  // to match, the same reason `copy.ts` excludes them from a `_copy`.
+  const { _versions: _dropped, hasFluff: _hf, hasFluffImages: _hfi, ...inherited } = base;
   const version: Entry = structuredClone({ ...inherited, ...own });
   if (mod !== undefined) {
     if (!isRecord(mod)) throw new Error(`${context}: _mod is not an object`);
