@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Widget — Top Bar Search</title>
+<title>Widget — Top Bar Navigation</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -18,10 +18,46 @@
 </helmet>
 
 <div style="width: 1440px; height: 120px; box-sizing: border-box; padding: 24px; display: flex; align-items: flex-start; background: #f4f5f7;">
-  <div style="width: 100%; height: 64px; display: flex; align-items: center; gap: 20px; padding: 0 24px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px;">
-    <div style="font-weight: 700; font-size: 18px; color: {{accent}}; flex-shrink: 0;">Local D&amp;D</div>
+  <div style="width: 100%; height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 24px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px;">
+    <div style="font-weight: 700; font-size: 18px; color: {{accent}}; flex-shrink: 0; margin-right: 14px;">Local D&amp;D</div>
 
-    <div style="position: relative; flex-grow: 1; max-width: 520px; margin: 0 auto;">
+    <div style="position: relative; flex-shrink: 0;">
+      <button onClick="{{toggleCharacterMenu}}" aria-expanded="{{characterMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; border: none; background: {{characterMenuBg}}; font-size: 14px; font-weight: 600; color: #1f2430;">
+        Character
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transform: {{characterCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{characterMenuOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 240px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 8px; z-index: 50;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 6px 10px 4px 10px;">Your Characters</div>
+          <sc-for list="{{characters}}" as="c" hint-placeholder-count="4">
+            <button onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font: inherit;">
+              <div style="width: 26px; height: 26px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; flex-shrink: 0;">{{c.initial}}</div>
+              <div style="min-width: 0;">
+                <div style="font-size: 13px; color: #1f2430; font-weight: 500;">{{c.name}}</div>
+                <div style="font-size: 11px; color: #6b7280;">{{c.sub}}</div>
+              </div>
+            </button>
+          </sc-for>
+          <button onClick="{{newCharacter}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: {{accent}};">+ New Character</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="position: relative; flex-shrink: 0;">
+      <button onClick="{{toggleMechanicsMenu}}" aria-expanded="{{mechanicsMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; border: none; background: {{mechanicsMenuBg}}; font-size: 14px; font-weight: 600; color: #1f2430;">
+        Mechanics
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transform: {{mechanicsCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <sc-if value="{{mechanicsMenuOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 420px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 10px; z-index: 50; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px;">
+          <sc-for list="{{mechanicsTypes}}" as="m" hint-placeholder-count="19">
+            <button onClick="{{m.go}}" style="display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.label}}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="position: relative; flex-grow: 1; max-width: 420px; margin: 0 16px;">
       <div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid #dde1e6; background: #eef0f3;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <label for="globalSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search characters and the compendium</label>
@@ -33,7 +69,7 @@
         </sc-if>
       </div>
 
-      <sc-if value="{{showDropdown}}" hint-placeholder-val="{{false}}">
+      <sc-if value="{{showSearchDropdown}}" hint-placeholder-val="{{false}}">
       <div style="position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 8px; max-height: 260px; overflow-y: auto; z-index: 50;">
         <sc-if value="{{hasCharResults}}" hint-placeholder-val="{{true}}">
           <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 8px 10px 4px 10px;">Characters</div>
@@ -66,14 +102,22 @@
       </sc-if>
     </div>
 
-    <button aria-label="{{darkModeLabel}}" onClick="{{toggleDarkMode}}" style="width: 34px; height: 34px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-      <sc-if value="{{isDark}}" hint-placeholder-val="{{false}}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f2430" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    <div style="position: relative; flex-shrink: 0; margin-left: auto;">
+      <button aria-label="Settings" aria-expanded="{{settingsOpen}}" onClick="{{toggleSettings}}" style="width: 34px; height: 34px; border-radius: 8px; border: 1px solid #dde1e6; background: {{settingsBg}}; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f2430" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+      </button>
+      <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 12px; z-index: 50; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 13px; color: #1f2430;">Dark mode</span>
+            <button aria-label="{{darkModeLabel}}" onClick="{{toggleDarkMode}}" style="width: 38px; height: 22px; border-radius: 999px; border: 1px solid #dde1e6; background: {{darkTrackBg}}; position: relative; padding: 0;">
+              <span style="position: absolute; top: 2px; left: {{darkThumbLeft}}; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; transition: left 0.15s;"></span>
+            </button>
+          </div>
+          <button onClick="{{openFullSettings}}" style="text-align: left; padding: 0; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}};">All settings…</button>
+        </div>
       </sc-if>
-      <sc-if value="{{isLight}}" hint-placeholder-val="{{true}}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f2430" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
-      </sc-if>
-    </button>
+    </div>
   </div>
 </div>
 </x-dc>
@@ -81,39 +125,87 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { query: '', isDark: false };
+    this.state = { query: '', isDark: false, openMenu: null };
   }
   renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
     const CHARACTERS = [
-      { name: 'Elara Nightshade', color: '#3f5d44', sub: 'Half-Elf Ranger • Lvl 7' },
-      { name: 'Thorin Ironfist', color: '#7a3b2e', sub: 'Mountain Dwarf Fighter • Lvl 6' }
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', sub: 'Half-Elf Ranger • Lvl 7' },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', sub: 'Mountain Dwarf Fighter • Lvl 6' },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', sub: 'Human Wizard • Lvl 5' },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', sub: 'Tiefling Warlock • Lvl 4' }
+    ];
+    const MECHANICS_TYPES = [
+      'Actions', 'Backgrounds', 'Classes', 'Conditions', 'Deities', 'Diseases', 'Feats',
+      'Items', 'Languages', 'Monsters', 'Optional Features', 'Races', 'Senses', 'Skills',
+      'Spells', 'Subclasses', 'Tables', 'Variant Rules', 'Vehicles'
     ];
     const COMPENDIUM = [
       { type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', tagColor: '#3a4f7a' },
       { type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', tagColor: '#8a6a2e' },
       { type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', tagColor: '#4f6b6b' }
     ];
+
+    const openMenu = this.state.openMenu;
+    const setMenu = (name) => this.setState({ openMenu: openMenu === name ? null : name });
+
+    const characterMenuOpen = openMenu === 'character';
+    const mechanicsMenuOpen = openMenu === 'mechanics';
+    const settingsOpen = openMenu === 'settings';
+
+    const characters = CHARACTERS.map((c) => ({
+      id: c.id,
+      name: c.name,
+      color: c.color,
+      initial: c.name.charAt(0),
+      sub: c.sub,
+      pick: () => this.setState({ openMenu: null })
+    }));
+    const mechanicsTypes = MECHANICS_TYPES.map((label) => ({ label, go: () => this.setState({ openMenu: null }) }));
+
     const query = this.state.query;
     const q = query.trim().toLowerCase();
     const hasQuery = !!q;
     const charResults = hasQuery ? CHARACTERS.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => this.setState({ query: '' }) })) : [];
     const compendiumResults = hasQuery ? COMPENDIUM.filter((c) => c.name.toLowerCase().indexOf(q) !== -1) : [];
+
+    const isDark = this.state.isDark;
+
     return {
-      accent: this.props.accent ?? '#c1272d',
+      accent,
+      characterMenuOpen,
+      characterMenuBg: characterMenuOpen ? '#eef0f3' : 'none',
+      characterCaretRotation: characterMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleCharacterMenu: () => setMenu('character'),
+      characters,
+      newCharacter: () => this.setState({ openMenu: null }),
+
+      mechanicsMenuOpen,
+      mechanicsMenuBg: mechanicsMenuOpen ? '#eef0f3' : 'none',
+      mechanicsCaretRotation: mechanicsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleMechanicsMenu: () => setMenu('mechanics'),
+      mechanicsTypes,
+
       query,
       onQueryChange: (e) => this.setState({ query: e.target.value }),
       hasQuery,
       clearQuery: () => this.setState({ query: '' }),
-      showDropdown: hasQuery,
+      showSearchDropdown: hasQuery,
       hasCharResults: charResults.length > 0,
       charResults,
       hasCompendiumResults: compendiumResults.length > 0,
       compendiumResults,
       noResults: hasQuery && charResults.length === 0 && compendiumResults.length === 0,
-      isDark: this.state.isDark,
-      isLight: !this.state.isDark,
-      darkModeLabel: this.state.isDark ? 'Switch to light mode' : 'Switch to dark mode',
-      toggleDarkMode: () => this.setState({ isDark: !this.state.isDark })
+
+      settingsOpen,
+      settingsBg: settingsOpen ? '#eef0f3' : '#ffffff',
+      toggleSettings: () => setMenu('settings'),
+      isDark,
+      darkModeLabel: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+      toggleDarkMode: () => this.setState({ isDark: !isDark }),
+      darkTrackBg: isDark ? accent : '#dde1e6',
+      darkThumbLeft: isDark ? '18px' : '2px',
+      openFullSettings: () => this.setState({ openMenu: null })
     };
   }
 }
