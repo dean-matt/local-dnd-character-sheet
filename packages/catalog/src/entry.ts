@@ -17,4 +17,11 @@ const entryNodeSchema: z.ZodType<EntryNode> = z.looseObject({
   entries: z.lazy(() => entriesSchema).optional(),
 });
 
-export const entriesSchema: z.ZodType<Entries> = z.array(z.union([z.string(), entryNodeSchema]));
+/**
+ * `id: "Entries"` gives `zod-to-openapi` a name to `$ref` back to. The lazy `entries`
+ * field above resolves to this same schema, and without a name the generator cannot tell
+ * it is already generating this one, so it expands the cycle forever.
+ */
+export const entriesSchema: z.ZodType<Entries> = z
+  .array(z.union([z.string(), entryNodeSchema]))
+  .meta({ id: "Entries" });

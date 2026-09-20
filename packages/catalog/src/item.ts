@@ -12,6 +12,7 @@
  * instead reject an item pasted straight out of a 5etools-shaped source for carrying a
  * field this schema has not modeled yet.
  */
+import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
@@ -31,3 +32,29 @@ export const homebrewItemSchema = z.looseObject({
 });
 
 export type HomebrewItem = z.infer<typeof homebrewItemSchema>;
+
+/**
+ * What a caller submits to create or rename a homebrew item. `source` is never here — the
+ * server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry rather
+ * than inside it, since it is a `homebrew_items` column, not a field the 5etools shape
+ * carries.
+ */
+export const homebrewItemInputSchema = homebrewItemSchema.omit({ source: true }).extend({
+  edition: z.enum(EDITIONS),
+});
+
+export type HomebrewItemInput = z.infer<typeof homebrewItemInputSchema>;
+
+/** A stored homebrew item, as an endpoint returns it. */
+export const homebrewItemRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: z.enum(EDITIONS),
+  type: z.string().nullable(),
+  rarity: z.string().nullable(),
+  requiresAttunement: z.boolean(),
+  json: homebrewItemSchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type HomebrewItemRecord = z.infer<typeof homebrewItemRecordSchema>;

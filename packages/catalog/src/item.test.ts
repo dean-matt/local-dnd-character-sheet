@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type HomebrewItem, homebrewItemSchema } from "./index.ts";
+import {
+  type HomebrewItem,
+  homebrewItemInputSchema,
+  homebrewItemRecordSchema,
+  homebrewItemSchema,
+} from "./index.ts";
 
 const minimal = { name: "Sunblade", source: "Homebrew" };
 
@@ -39,5 +44,34 @@ describe("homebrewItemSchema", () => {
     const result = homebrewItemSchema.safeParse({ ...minimal, reqAttune: 1 });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["reqAttune"]);
+  });
+});
+
+describe("homebrewItemInputSchema", () => {
+  it("accepts a name and an edition without a source", () => {
+    const parsed = homebrewItemInputSchema.parse({ name: "Sunblade", edition: "one" });
+    expect(parsed).toEqual({ name: "Sunblade", edition: "one" });
+  });
+
+  it("rejects an edition outside the two rulesets", () => {
+    const result = homebrewItemInputSchema.safeParse({ name: "Sunblade", edition: "3.5" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["edition"]);
+  });
+});
+
+describe("homebrewItemRecordSchema", () => {
+  it("accepts a stored row", () => {
+    const record = {
+      id: "1",
+      name: "Sunblade",
+      edition: "one",
+      type: null,
+      rarity: null,
+      requiresAttunement: false,
+      json: { name: "Sunblade", source: "HB" },
+      createdAt: new Date(0).toISOString(),
+    };
+    expect(homebrewItemRecordSchema.parse(record)).toEqual(record);
   });
 });

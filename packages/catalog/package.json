@@ -27,6 +27,7 @@
     "build": "tsc --build"
   },
   "dependencies": {
+    "@dnd/rules": "workspace:*",
     "zod": "^4.5.4"
   },
   "devDependencies": {

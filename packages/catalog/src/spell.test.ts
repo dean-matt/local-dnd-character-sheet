@@ -1,6 +1,11 @@
 import { parseTags, type Token } from "@dnd/tags";
 import { describe, expect, it } from "vitest";
-import { type HomebrewSpell, homebrewSpellSchema } from "./index.ts";
+import {
+  type HomebrewSpell,
+  homebrewSpellInputSchema,
+  homebrewSpellRecordSchema,
+  homebrewSpellSchema,
+} from "./index.ts";
 
 const acidSplash = {
   name: "Acid Splash",
@@ -52,5 +57,37 @@ describe("homebrewSpellSchema", () => {
       (token): token is Extract<Token, { kind: "roll" }> => token.kind === "roll",
     );
     expect(roll).toEqual({ kind: "roll", notation: "2d6", display: "2d6", rollable: true });
+  });
+});
+
+describe("homebrewSpellInputSchema", () => {
+  it("accepts the shape without a source", () => {
+    const { source: _source, ...withoutSource } = acidSplash;
+    const parsed = homebrewSpellInputSchema.parse({ ...withoutSource, edition: "one" });
+    expect(parsed).toMatchObject(withoutSource);
+  });
+
+  it("rejects an edition outside the two rulesets", () => {
+    const { source: _source, ...withoutSource } = acidSplash;
+    const result = homebrewSpellInputSchema.safeParse({ ...withoutSource, edition: "3.5" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["edition"]);
+  });
+});
+
+describe("homebrewSpellRecordSchema", () => {
+  it("accepts a stored row", () => {
+    const record = {
+      id: "1",
+      name: "Acid Splash",
+      edition: "one",
+      level: 0,
+      school: "C",
+      concentration: false,
+      ritual: false,
+      json: { ...acidSplash, source: "HB" },
+      createdAt: new Date(0).toISOString(),
+    };
+    expect(homebrewSpellRecordSchema.parse(record)).toEqual(record);
   });
 });

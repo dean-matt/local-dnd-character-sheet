@@ -34,4 +34,12 @@ describe("entriesSchema", () => {
   it("rejects a number in place of a string or a node", () => {
     expect(entriesSchema.safeParse([1]).success).toBe(false);
   });
+
+  /**
+   * Without this id, `zod-to-openapi` has nothing to `$ref` back to when it meets this
+   * same schema again through the lazy `entries` field, and expands the cycle forever.
+   */
+  it("carries an id a doc generator can $ref back to, breaking its own recursion", () => {
+    expect(entriesSchema.meta()?.id).toBe("Entries");
+  });
 });
