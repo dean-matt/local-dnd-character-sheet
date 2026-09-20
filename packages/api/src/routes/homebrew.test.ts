@@ -1,8 +1,11 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../db/client.ts";
+import { insertCharacter } from "../db/queries/characters.ts";
+import { charactersRoutes } from "./characters.ts";
 import { homebrewRoutes } from "./homebrew.ts";
 
 const sunblade = (overrides: Record<string, unknown> = {}) => ({
@@ -22,6 +25,29 @@ const acidSplash = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const WARLOCK = { name: "Warlock", source: "XPHB" };
+
+const baseDefinition = (overrides: Partial<CharacterDefinition> = {}): CharacterDefinition =>
+  characterDefinitionSchema.parse({
+    name: "Vex",
+    edition: "one",
+    levels: [{ class: WARLOCK }],
+    race: { name: "Half-Elf", source: "XPHB" },
+    background: { name: "Charlatan", source: "XPHB" },
+    abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
+    proficiencies: {
+      savingThrows: [],
+      skills: [],
+      armor: [],
+      weapons: [],
+      tools: [],
+      languages: [],
+    },
+    inventory: [],
+    spells: [],
+    ...overrides,
+  });
+
 const json = (body: unknown) => ({
   method: "POST",
   headers: { "Content-Type": "application/json" },
@@ -36,7 +62,7 @@ describe("homebrewRoutes", () => {
   beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "homebrew-routes-"));
     opened = openDatabases(dataDir);
-    routes = homebrewRoutes(opened.homebrewDb);
+    routes = homebrewRoutes(opened.homebrewDb, opened.charactersDb);
   });
 
   afterEach(() => {
@@ -112,6 +138,34 @@ describe("homebrewRoutes", () => {
       ).toBe(204);
       expect((await routes.request(`/homebrew/items/${created.id}`)).status).toBe(404);
     });
+
+    it("refuses to delete an item a character references, naming the character", async () => {
+      const created = await (await routes.request("/homebrew/items", json(sunblade()))).json();
+      const character = insertCharacter(opened.charactersDb, {
+        id: "1",
+        definition: baseDefinition({
+          inventory: [
+            {
+              ref: { homebrewId: created.id },
+              quantity: 1,
+              carried: true,
+              equipped: false,
+              attuned: false,
+            },
+          ],
+        }),
+      });
+
+      const res = await routes.request(`/homebrew/items/${created.id}`, { method: "DELETE" });
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.characters).toEqual([{ id: character.id, name: character.name }]);
+
+      expect((await routes.request(`/homebrew/items/${created.id}`)).status).toBe(200);
+
+      const sheet = charactersRoutes(opened.charactersDb);
+      expect((await sheet.request(`/characters/${character.id}`)).status).toBe(200);
+    });
   });
 
   describe("spells", () => {
@@ -157,6 +211,23 @@ describe("homebrewRoutes", () => {
         (await routes.request(`/homebrew/spells/${created.id}`, { method: "DELETE" })).status,
       ).toBe(204);
       expect((await routes.request(`/homebrew/spells/${created.id}`)).status).toBe(404);
+    });
+
+    it("refuses to delete a spell a character references, naming the character", async () => {
+      const created = await (await routes.request("/homebrew/spells", json(acidSplash()))).json();
+      const character = insertCharacter(opened.charactersDb, {
+        id: "1",
+        definition: baseDefinition({
+          spells: [{ ref: { homebrewId: created.id }, prepared: false }],
+        }),
+      });
+
+      const res = await routes.request(`/homebrew/spells/${created.id}`, { method: "DELETE" });
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.characters).toEqual([{ id: character.id, name: character.name }]);
+
+      expect((await routes.request(`/homebrew/spells/${created.id}`)).status).toBe(200);
     });
   });
 });
