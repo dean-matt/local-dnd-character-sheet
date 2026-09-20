@@ -35,6 +35,11 @@ extend-exclude = [
   "pnpm-lock.yaml",
   "*.db",
   "data/",
+  # A published claude.ai artifact's own source, kept for reference alongside
+  # docs/mockup/README.md. Minified inline styles and ordinal-suffix logic ("nd",
+  # "rd") read as prose typos with nothing here to fix.
+  "docs/mockup/*.dc.html",
+  "docs/mockup/canvas.json",
 ]
 
 [default.extend-words]
