@@ -71,6 +71,16 @@ describe("homebrew queries", () => {
       });
     });
 
+    it('reads reqAttune: "optional" as attunable, not required', () => {
+      const row = insertHomebrewItem(db, "1", sunblade({ reqAttune: "optional" }));
+      expect(row.requiresAttunement).toBe(false);
+    });
+
+    it('requires attunement for a condition string, such as "by a spellcaster"', () => {
+      const row = insertHomebrewItem(db, "1", sunblade({ reqAttune: "by a spellcaster" }));
+      expect(row.requiresAttunement).toBe(true);
+    });
+
     it("lists and reads items by id", () => {
       insertHomebrewItem(db, "1", sunblade());
       insertHomebrewItem(db, "2", sunblade({ name: "Moonblade" }));
@@ -89,6 +99,16 @@ describe("homebrew queries", () => {
 
       const renamed = updateHomebrewItem(db, "1", sunblade({ name: "Sunblade+1" }));
       expect(renamed).toMatchObject({ id: "1", name: "Sunblade+1" });
+    });
+
+    it("stamps HOMEBREW_SOURCE on a rename regardless of what a caller sends", () => {
+      insertHomebrewItem(db, "1", sunblade());
+
+      const renamed = updateHomebrewItem(db, "1", {
+        ...sunblade({ name: "Sunblade+1" }),
+        source: "PHB",
+      } as HomebrewItemInput);
+      expect(renamed?.json.source).toBe("HB");
     });
 
     it("reports nothing updating or deleting an id that does not exist", () => {
@@ -152,6 +172,16 @@ describe("homebrew queries", () => {
 
       const renamed = updateHomebrewSpell(db, "1", acidSplash({ name: "Acid Splash II" }));
       expect(renamed).toMatchObject({ id: "1", name: "Acid Splash II" });
+    });
+
+    it("stamps HOMEBREW_SOURCE on a rename regardless of what a caller sends", () => {
+      insertHomebrewSpell(db, "1", acidSplash());
+
+      const renamed = updateHomebrewSpell(db, "1", {
+        ...acidSplash({ name: "Acid Splash II" }),
+        source: "PHB",
+      } as HomebrewSpellInput);
+      expect(renamed?.json.source).toBe("HB");
     });
 
     it("reports nothing updating or deleting an id that does not exist", () => {

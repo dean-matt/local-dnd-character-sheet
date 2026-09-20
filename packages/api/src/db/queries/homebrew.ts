@@ -5,7 +5,7 @@
  * the caller once at creation and never reassigned, so a rename keeps the id a character
  * already references.
  */
-import type { HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
+import type { HomebrewItem, HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
 import { homebrewItemSchema, homebrewSpellSchema } from "@dnd/catalog";
 import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
@@ -27,19 +27,26 @@ function itemJson(input: HomebrewItemInput) {
   return homebrewItemSchema.parse({ ...entry, source: HOMEBREW_SOURCE });
 }
 
+/** `"optional"` means attunable, not required — the same reading `packages/content/src/load/items.ts`'s `requiresAttunement` gives it. */
+function requiresAttunement(reqAttune: HomebrewItem["reqAttune"]): boolean {
+  return reqAttune === true || (typeof reqAttune === "string" && reqAttune !== "optional");
+}
+
+function itemColumns(json: ReturnType<typeof itemJson>) {
+  return {
+    name: json.name,
+    type: json.type ?? null,
+    rarity: json.rarity ?? null,
+    requiresAttunement: requiresAttunement(json.reqAttune),
+    json,
+  };
+}
+
 export function insertHomebrewItem(db: HomebrewDb, id: string, input: HomebrewItemInput) {
   const json = itemJson(input);
   return db
     .insert(homebrewItems)
-    .values({
-      id,
-      name: json.name,
-      edition: input.edition,
-      type: json.type ?? null,
-      rarity: json.rarity ?? null,
-      requiresAttunement: Boolean(json.reqAttune),
-      json,
-    })
+    .values({ id, edition: input.edition, ...itemColumns(json) })
     .returning()
     .get();
 }
@@ -49,14 +56,7 @@ export function updateHomebrewItem(db: HomebrewDb, id: string, input: HomebrewIt
   const json = itemJson(input);
   return db
     .update(homebrewItems)
-    .set({
-      name: json.name,
-      edition: input.edition,
-      type: json.type ?? null,
-      rarity: json.rarity ?? null,
-      requiresAttunement: Boolean(json.reqAttune),
-      json,
-    })
+    .set({ edition: input.edition, ...itemColumns(json) })
     .where(eq(homebrewItems.id, id))
     .returning()
     .get();
