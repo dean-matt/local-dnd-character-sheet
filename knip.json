@@ -29,7 +29,7 @@
       "includeEntryExports": true
     },
     "packages/api": {
-      "entry": ["src/db/homebrew.ts", "drizzle.homebrew.config.ts"]
+      "entry": ["drizzle.homebrew.config.ts"]
     },
     "packages/web": {}
   },

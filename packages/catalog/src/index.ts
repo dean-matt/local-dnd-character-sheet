@@ -1,6 +1,10 @@
 export type { Entries } from "./entry.ts";
 export { entriesSchema } from "./entry.ts";
-export type { HomebrewItem } from "./item.ts";
-export { homebrewItemSchema } from "./item.ts";
-export type { HomebrewSpell } from "./spell.ts";
-export { homebrewSpellSchema } from "./spell.ts";
+export type { HomebrewItem, HomebrewItemInput, HomebrewItemRecord } from "./item.ts";
+export { homebrewItemInputSchema, homebrewItemRecordSchema, homebrewItemSchema } from "./item.ts";
+export type { HomebrewSpell, HomebrewSpellInput, HomebrewSpellRecord } from "./spell.ts";
+export {
+  homebrewSpellInputSchema,
+  homebrewSpellRecordSchema,
+  homebrewSpellSchema,
+} from "./spell.ts";
