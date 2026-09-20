@@ -6,7 +6,7 @@ import { homebrewRoutes } from "./routes/homebrew.ts";
 export const app = new OpenAPIHono();
 
 app.route("/", charactersRoutes(charactersDb));
-app.route("/", homebrewRoutes(homebrewDb));
+app.route("/", homebrewRoutes(homebrewDb, charactersDb));
 
 const HealthResponse = z
   .object({ status: z.literal("ok"), version: z.string() })

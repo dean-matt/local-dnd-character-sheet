@@ -30,7 +30,7 @@ describe("/openapi.json", () => {
   it("documents every character and homebrew route", async () => {
     const app = new OpenAPIHono();
     app.route("/", charactersRoutes(opened.charactersDb));
-    app.route("/", homebrewRoutes(opened.homebrewDb));
+    app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
 
     const res = await app.request("/openapi.json");
@@ -55,7 +55,7 @@ describe("/openapi.json", () => {
    */
   it("resolves the recursive entries field to a $ref instead of expanding it forever", async () => {
     const app = new OpenAPIHono();
-    app.route("/", homebrewRoutes(opened.homebrewDb));
+    app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
 
     const res = await app.request("/openapi.json");
