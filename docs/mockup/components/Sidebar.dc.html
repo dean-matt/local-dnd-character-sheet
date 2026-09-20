@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Widget — Character Sidebar</title>
+<title>Widget — Tab Sidebar</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -13,29 +13,46 @@
   body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
   * { box-sizing: border-box; }
   button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
 </style>
 </helmet>
 
 <div style="width: 300px; height: 1180px; box-sizing: border-box; padding: 20px; display: flex; background: #f4f5f7;">
   <div style="width: {{width}}; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; transition: width 0.15s ease;">
-    <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto;">
-      <sc-for list="{{charList}}" as="char" hint-placeholder-count="4">
-        <button onClick="{{char.pick}}" aria-label="{{char.name}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; text-align: left; padding: 8px; border-radius: 10px; border: none; background: {{char.itemBg}}; flex-shrink: 0;">
-          <div style="width: 36px; height: 36px; border-radius: 50%; background: {{char.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; box-shadow: 0 0 0 2px {{char.ring}};">{{char.initial}}</div>
-          <div style="display: {{textDisplay}}; flex-direction: column; gap: 1px; min-width: 0;">
-            <div style="font-size: 14px; font-weight: {{char.nameWeight}}; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{char.name}}</div>
-            <div style="font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{char.sub}}</div>
-          </div>
-        </button>
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="7">
+        <div style="display: flex; align-items: center; gap: 2px;">
+          <sc-if value="{{tab.editing}}" hint-placeholder-val="{{false}}">
+            <label for="tabRenameInput-{{tab.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Rename {{tab.label}} tab</label>
+            <input id="tabRenameInput-{{tab.id}}" type="text" value="{{tab.label}}" onChange="{{tab.onRename}}" style="flex-grow: 1; min-width: 0; padding: 9px 10px; font-size: 14px; font-weight: 600; color: #1f2430; border: 1px solid {{accent}}; border-radius: 8px; background: #ffffff;">
+          </sc-if>
+          <sc-if value="{{tab.showButton}}" hint-placeholder-val="{{true}}">
+            <button onClick="{{tab.go}}" aria-label="{{tab.label}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; flex-grow: 1; min-width: 0; text-align: left; padding: 9px 10px; border-radius: 8px; border: none; background: {{tab.rowBg}};">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{tab.iconColor}}" stroke-width="2" style="flex-shrink: 0;">
+                <sc-if value="{{tab.isOverview}}" hint-placeholder-val="{{true}}"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></sc-if>
+                <sc-if value="{{tab.isInventory}}" hint-placeholder-val="{{false}}"><path d="M6 7h12l1 13a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M9 7a3 3 0 016 0"/></sc-if>
+                <sc-if value="{{tab.isSpells}}" hint-placeholder-val="{{false}}"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></sc-if>
+                <sc-if value="{{tab.isFeatures}}" hint-placeholder-val="{{false}}"><path d="M12 2.5l2.9 6.3 6.9.8-5.1 4.8 1.4 6.9L12 17.6l-6.1 3.7 1.4-6.9-5.1-4.8 6.9-.8z"/></sc-if>
+                <sc-if value="{{tab.isIdentity}}" hint-placeholder-val="{{false}}"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3M14 9h5M14 13h5"/></sc-if>
+                <sc-if value="{{tab.isBackstory}}" hint-placeholder-val="{{false}}"><path d="M4 5.5A2.5 2.5 0 016.5 3H19v16.5H6.5A2.5 2.5 0 004 22z"/><path d="M4 19.5A2.5 2.5 0 016.5 17H19"/></sc-if>
+                <sc-if value="{{tab.isNotes}}" hint-placeholder-val="{{false}}"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></sc-if>
+              </svg>
+              <span style="display: {{textDisplay}}; font-size: 14px; font-weight: {{tab.textWeight}}; color: {{tab.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{tab.label}}</span>
+            </button>
+          </sc-if>
+          <sc-if value="{{tab.showEdit}}" hint-placeholder-val="{{false}}">
+            <button aria-label="{{tab.editLabel}}" title="{{tab.editLabel}}" onClick="{{tab.toggleEdit}}" style="width: 22px; height: 22px; border-radius: 6px; border: none; background: {{tab.editIconBg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{tab.editIconColor}}" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+            </button>
+          </sc-if>
+        </div>
       </sc-for>
-      <button style="flex-shrink: 0; width: 100%; padding: 9px 0; border-radius: 8px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-weight: 600; font-size: 14px;">{{newCharLabel}}</button>
     </div>
+
     <div style="flex-grow: 1;"></div>
-    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px; display: flex; flex-direction: column; gap: 2px;">
-      <button aria-label="Settings" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: none; background: none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
-        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Settings</span>
-      </button>
+
+    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
       <button aria-label="{{toggleLabel}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: none; background: none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
         <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
@@ -48,44 +65,59 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = {
-      selected: 'elara',
-      collapsed: false,
-      characters: [
-        { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', race: 'Half-Elf', cls: 'Ranger', level: 7 },
-        { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', race: 'Mountain Dwarf', cls: 'Fighter', level: 6 },
-        { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', race: 'Human', cls: 'Wizard', level: 5 },
-        { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', race: 'Tiefling', cls: 'Warlock', level: 4 }
-      ]
-    };
+    this.state = { active: 'overview', collapsed: false, labels: {}, editingId: null };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const { selected, collapsed, characters } = this.state;
+    const TABS = [
+      { id: 'overview', label: 'Overview' },
+      { id: 'inventory', label: 'Inventory' },
+      { id: 'spells', label: 'Spells' },
+      { id: 'features', label: 'Features' },
+      { id: 'identity', label: 'Identity' },
+      { id: 'backstory', label: 'Backstory' },
+      { id: 'notes', label: 'Notes' }
+    ];
+    const { active, collapsed, labels, editingId } = this.state;
     const textDisplay = collapsed ? 'none' : 'flex';
     const rowJustify = collapsed ? 'center' : 'flex-start';
-    const charList = characters.map((c) => {
-      const isSelected = c.id === selected;
+
+    const tabs = TABS.map((t) => {
+      const isActive = t.id === active;
+      const editing = isActive && editingId === t.id && !collapsed;
       return {
-        id: c.id,
-        name: c.name,
-        color: c.color,
-        initial: c.name.charAt(0),
-        sub: c.race + ' ' + c.cls + ' • Lvl ' + c.level,
-        itemBg: isSelected && !collapsed ? '#eceef1' : 'transparent',
-        ring: isSelected ? accent : 'transparent',
-        nameWeight: isSelected ? '600' : '500',
-        pick: () => this.setState({ selected: c.id })
+        id: t.id,
+        label: labels[t.id] ?? t.label,
+        editing,
+        showButton: !editing,
+        showEdit: isActive && !collapsed,
+        rowBg: isActive ? '#f3e3e0' : 'none',
+        textWeight: isActive ? '600' : '500',
+        textColor: isActive ? '#1f2430' : '#6b7280',
+        iconColor: isActive ? accent : '#6b7280',
+        isOverview: t.id === 'overview',
+        isInventory: t.id === 'inventory',
+        isSpells: t.id === 'spells',
+        isFeatures: t.id === 'features',
+        isIdentity: t.id === 'identity',
+        isBackstory: t.id === 'backstory',
+        isNotes: t.id === 'notes',
+        go: () => this.setState({ active: t.id, editingId: null }),
+        editLabel: editingId === t.id ? 'Done editing tab' : 'Edit tab',
+        editIconBg: editingId === t.id ? '#eceef1' : 'none',
+        editIconColor: editingId === t.id ? accent : '#6b7280',
+        toggleEdit: () => this.setState({ editingId: editingId === t.id ? null : t.id }),
+        onRename: (e) => this.setState({ labels: { ...labels, [t.id]: e.target.value } })
       };
     });
+
     return {
       accent,
-      width: collapsed ? '72px' : '228px',
-      charList,
+      width: collapsed ? '72px' : '260px',
+      tabs,
       textDisplay,
       rowJustify,
-      newCharLabel: collapsed ? '+' : '+ New Character',
-      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
+      toggleSidebar: () => this.setState({ collapsed: !collapsed, editingId: null }),
       toggleLabel: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
       toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)'
     };

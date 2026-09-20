@@ -30,16 +30,15 @@
     "Proficiencies.dc.html": { "x": 1140, "y": 2840, "w": 380, "h": 260, "title": "Proficiencies", "is_interactive": true },
     "RollToast.dc.html": { "x": 1600, "y": 2840, "w": 380, "h": 90, "title": "Roll Toast", "is_interactive": true },
 
-    "Sidebar.dc.html": { "x": 0, "y": 3260, "w": 300, "h": 1180, "title": "Character Sidebar", "is_interactive": true },
-    "TopBar.dc.html": { "x": 380, "y": 3260, "w": 1440, "h": 120, "title": "Top Bar Search", "is_interactive": true },
+    "Sidebar.dc.html": { "x": 0, "y": 3260, "w": 300, "h": 1180, "title": "Tab Sidebar", "is_interactive": true },
+    "TopBar.dc.html": { "x": 380, "y": 3260, "w": 1440, "h": 120, "title": "Top Bar Navigation", "is_interactive": true },
     "CharacterHeader.dc.html": { "x": 380, "y": 3420, "w": 1200, "h": 160, "title": "Character Header", "is_interactive": true },
-    "TabBar.dc.html": { "x": 380, "y": 3620, "w": 1200, "h": 110, "title": "Tab Bar", "is_interactive": true },
     "Layout.dc.html": { "x": 1900, "y": 3260, "w": 1440, "h": 1140, "title": "Page Layout — Structure", "is_interactive": true },
 
     "SettingsPanel.dc.html": { "x": 0, "y": 4560, "w": 520, "h": 560, "title": "Settings Panel", "is_interactive": true },
     "WidgetPicker.dc.html": { "x": 600, "y": 4560, "w": 420, "h": 460, "title": "Add Widget Picker", "is_interactive": true }
   },
-  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "Defenses.dc.html", "Currency.dc.html", "Weapons.dc.html", "Armor.dc.html", "Gear.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "Features.dc.html", "Backstory.dc.html", "Notes.dc.html", "ConfirmDialog.dc.html", "Identity.dc.html", "Languages.dc.html", "Proficiencies.dc.html", "RollToast.dc.html", "Sidebar.dc.html", "TopBar.dc.html", "CharacterHeader.dc.html", "TabBar.dc.html", "SettingsPanel.dc.html", "WidgetPicker.dc.html"],
+  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "Defenses.dc.html", "Currency.dc.html", "Weapons.dc.html", "Armor.dc.html", "Gear.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "Features.dc.html", "Backstory.dc.html", "Notes.dc.html", "ConfirmDialog.dc.html", "Identity.dc.html", "Languages.dc.html", "Proficiencies.dc.html", "RollToast.dc.html", "Sidebar.dc.html", "TopBar.dc.html", "CharacterHeader.dc.html", "SettingsPanel.dc.html", "WidgetPicker.dc.html"],
   "notes": {},
   "designSystems": []
 }
