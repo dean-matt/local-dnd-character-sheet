@@ -74,14 +74,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":440}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":440}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { resistances: [], immunities: [], resistanceQuery: '', immunityQuery: '' };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const DAMAGE_TYPES = ['Fire', 'Cold', 'Lightning', 'Acid', 'Poison', 'Necrotic', 'Radiant', 'Force', 'Psychic', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
     const { resistances, immunities, resistanceQuery, immunityQuery } = this.state;
 

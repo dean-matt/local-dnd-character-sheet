@@ -53,14 +53,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":340}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":340}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { hpCur: 54, hpMax: 58, tempHp: 0, hitDice: '7d10', conScore: 14, dmgInput: '', lastRoll: null };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const mod = (s) => Math.floor((s - 10) / 2);
     const { hpCur, hpMax, tempHp, hitDice, conScore, dmgInput } = this.state;
     const amount = parseInt(dmgInput, 10) || 0;

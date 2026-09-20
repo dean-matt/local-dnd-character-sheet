@@ -66,7 +66,7 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":420}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":420}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -81,7 +81,7 @@ class Component extends DCLogic {
     };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const levelLabel = (n) => (n === 0 ? 'Cantrips' : n === 1 ? '1st Level' : n === 2 ? '2nd Level' : n === 3 ? '3rd Level' : n + 'th Level');
     const CATALOG = [
       { name: 'Fireball', level: 3, meta: 'Evocation • 3rd level' },

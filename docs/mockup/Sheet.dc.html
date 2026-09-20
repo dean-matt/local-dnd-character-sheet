@@ -952,7 +952,7 @@
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d","options":["#d9730d","#c1272d","#3f5d44","#3a4f7a","#7a3b53"]},"$preview":{"width":1440,"height":1140}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d","options":["#c1272d","#d9730d","#3f5d44","#3a4f7a","#7a3b53"]},"$preview":{"width":1440,"height":1140}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -1199,7 +1199,7 @@ class Component extends DCLogic {
   }
 
   renderVals() {
-    const accent = this.state.accentOverride || this.props.accent || "#d9730d";
+    const accent = this.state.accentOverride || this.props.accent || "#c1272d";
     const mod = (s) => Math.floor((s - 10) / 2);
     const fmt = (n) => (n >= 0 ? "+" + n : String(n));
     const rollCheck = (label, modNumber) => {

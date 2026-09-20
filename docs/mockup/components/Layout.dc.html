@@ -60,14 +60,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":1440,"height":1140}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":1140}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { collapsed: false, tab: 'overview' };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const TABS = [
       { id: 'overview', label: 'Overview', detail: 'Widget grid — Ability Scores, Saving Throws, Skills, Combat Stats, Hit Points, Attacks, Status Effects, Resistances & Immunities.' },
       { id: 'inventory', label: 'Inventory', detail: 'Currency, Weapons, Armor, Gear — see Currency.dc.html, Weapons.dc.html, Armor.dc.html, Gear.dc.html.' },

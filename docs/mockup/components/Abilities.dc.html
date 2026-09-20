@@ -37,14 +37,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":460,"height":260}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":260}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 }, lastRoll: null };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const mod = (s) => Math.floor((s - 10) / 2);
     const fmt = (n) => (n >= 0 ? '+' + n : String(n));
     const abilities = this.state.abilities;

@@ -36,14 +36,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":460}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":460}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { query: '', added: ['abilities', 'saves', 'skills', 'combat', 'hp', 'attacks', 'status', 'defenses'] };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const ALL_WIDGETS = [
       { id: 'abilities', title: 'Ability Scores' },
       { id: 'saves', title: 'Saving Throws' },

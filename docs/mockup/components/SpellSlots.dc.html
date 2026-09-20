@@ -35,14 +35,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":260,"height":260}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":260,"height":260}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = { slots: { '1': { total: 4, used: 2 }, '2': { total: 3, used: 1 }, '3': { total: 2, used: 0 } } };
   }
   renderVals() {
-    const accent = this.props.accent ?? '#d9730d';
+    const accent = this.props.accent ?? '#c1272d';
     const levelLabel = (n) => (n === 0 ? 'Cantrips' : n === 1 ? '1st Level' : n === 2 ? '2nd Level' : n === 3 ? '3rd Level' : n + 'th Level');
     const slots = this.state.slots;
     const setLevel = (lvlKey, updater) => this.setState({ slots: { ...slots, [lvlKey]: updater(slots[lvlKey]) } });
