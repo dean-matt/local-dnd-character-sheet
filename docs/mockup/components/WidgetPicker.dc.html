@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Add Widget Picker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 460px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; justify-content: center; background: #f4f5f7;">
+  <div style="width: 100%; max-height: 396px; overflow-y: auto; background: #ffffff; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 15px; font-weight: 700; color: #1f2430;">Add a Widget</div>
+      <button aria-label="Close" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1;">&times;</button>
+    </div>
+    <label for="widgetModalSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search widgets</label>
+    <input id="widgetModalSearch" type="text" placeholder="Search widgets…" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #eef0f3; color: #1f2430;">
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <sc-for list="{{checklist}}" as="wc" hint-placeholder-count="6">
+        <button onClick="{{wc.toggle}}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: {{wc.rowBg}}; font-size: 13px; color: #1f2430; text-align: left;">
+          {{wc.title}}
+          <span style="font-size: 11px; font-weight: 600; color: {{wc.statusColor}};">{{wc.statusLabel}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":460}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { query: '', added: ['abilities', 'saves', 'skills', 'combat', 'hp', 'attacks', 'status', 'defenses'] };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const ALL_WIDGETS = [
+      { id: 'abilities', title: 'Ability Scores' },
+      { id: 'saves', title: 'Saving Throws' },
+      { id: 'skills', title: 'Skills' },
+      { id: 'combat', title: 'Combat Stats' },
+      { id: 'hp', title: 'Hit Points' },
+      { id: 'attacks', title: 'Attacks & Spellcasting' },
+      { id: 'status', title: 'Status Effects' },
+      { id: 'defenses', title: 'Resistances & Immunities' }
+    ];
+    const { query, added } = this.state;
+    const q = query.trim().toLowerCase();
+    const checklist = ALL_WIDGETS.filter((d) => d.title.toLowerCase().indexOf(q) !== -1).map((d) => {
+      const checked = added.indexOf(d.id) !== -1;
+      return {
+        id: d.id,
+        title: d.title,
+        checked,
+        rowBg: checked ? '#eceef1' : 'none',
+        statusLabel: checked ? 'Added' : '+ Add',
+        statusColor: checked ? accent : '#6b7280',
+        toggle: () => this.setState({ added: checked ? added.filter((x) => x !== d.id) : [...added, d.id] })
+      };
+    });
+    return { accent, query, onQueryChange: (e) => this.setState({ query: e.target.value }), checklist };
+  }
+}
+</script>
+</body>
+</html>

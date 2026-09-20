@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Languages</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 380px; height: 220px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Languages</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+      <sc-for list="{{languages}}" as="lang" hint-placeholder-count="2">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{lang.label}}
+          <button aria-label="Remove {{lang.label}}" onClick="{{lang.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position: relative; max-width: 320px;">
+      <label for="languageSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search languages</label>
+      <input id="languageSearch" type="text" placeholder="Search languages…" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+          <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":380,"height":220}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { languages: ['Common', 'Elvish', 'Sylvan'], query: '' };
+  }
+  renderVals() {
+    const LANGS = ['Common', 'Elvish', 'Dwarvish', 'Draconic', 'Celestial', 'Infernal', 'Abyssal', 'Sylvan', 'Giant', 'Orc'];
+    const { languages, query } = this.state;
+    const rows = languages.map((label, idx) => ({ label, remove: () => this.setState({ languages: languages.filter((_, i) => i !== idx) }) }));
+    const q = query.trim().toLowerCase();
+    const matches = q
+      ? LANGS.filter((l) => l.toLowerCase().indexOf(q) !== -1 && languages.indexOf(l) === -1).map((name) => ({ name, add: () => this.setState({ languages: [...languages, name], query: '' }) }))
+      : [];
+    return { languages: rows, query, onQueryChange: (e) => this.setState({ query: e.target.value }), showResults: !!query, matches };
+  }
+}
+</script>
+</body>
+</html>

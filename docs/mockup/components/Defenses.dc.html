@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Resistances &amp; Immunities</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 440px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Resistances &amp; Immunities</div>
+
+    <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Resistances</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+      <sc-if value="{{noResistances}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #6b7280; font-style: italic;">None.</div>
+      </sc-if>
+      <sc-for list="{{resistances}}" as="r" hint-placeholder-count="1">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{r.label}}
+          <button aria-label="Remove {{r.label}}" onClick="{{r.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position: relative; margin-bottom: 12px;">
+      <label for="resistanceSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search damage types for resistance</label>
+      <input id="resistanceSearch" type="text" placeholder="Add a resistance…" value="{{resistanceQuery}}" onChange="{{onResistanceQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <sc-if value="{{showResistanceResults}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+          <sc-for list="{{resistanceMatches}}" as="m" hint-placeholder-count="2">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+          </sc-for>
+          <button onClick="{{addCustomResistance}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{resistanceQuery}}"</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Immunities</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+      <sc-if value="{{noImmunities}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #6b7280; font-style: italic;">None.</div>
+      </sc-if>
+      <sc-for list="{{immunities}}" as="im" hint-placeholder-count="1">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{im.label}}
+          <button aria-label="Remove {{im.label}}" onClick="{{im.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position: relative;">
+      <label for="immunitySearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search damage types for immunity</label>
+      <input id="immunitySearch" type="text" placeholder="Add an immunity…" value="{{immunityQuery}}" onChange="{{onImmunityQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <sc-if value="{{showImmunityResults}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+          <sc-for list="{{immunityMatches}}" as="m" hint-placeholder-count="2">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+          </sc-for>
+          <button onClick="{{addCustomImmunity}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{immunityQuery}}"</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":440}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { resistances: [], immunities: [], resistanceQuery: '', immunityQuery: '' };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const DAMAGE_TYPES = ['Fire', 'Cold', 'Lightning', 'Acid', 'Poison', 'Necrotic', 'Radiant', 'Force', 'Psychic', 'Thunder', 'Bludgeoning', 'Piercing', 'Slashing'];
+    const { resistances, immunities, resistanceQuery, immunityQuery } = this.state;
+
+    const resistanceRows = resistances.map((label, idx) => ({
+      label,
+      remove: () => this.setState({ resistances: resistances.filter((_, i) => i !== idx) })
+    }));
+    const immunityRows = immunities.map((label, idx) => ({
+      label,
+      remove: () => this.setState({ immunities: immunities.filter((_, i) => i !== idx) })
+    }));
+
+    const rq = resistanceQuery.trim().toLowerCase();
+    const resistanceMatches = rq
+      ? DAMAGE_TYPES.filter((d) => d.toLowerCase().indexOf(rq) !== -1).map((name) => ({
+          name,
+          add: () => this.setState({ resistances: [...resistances, name], resistanceQuery: '' })
+        }))
+      : [];
+    const iq = immunityQuery.trim().toLowerCase();
+    const immunityMatches = iq
+      ? DAMAGE_TYPES.filter((d) => d.toLowerCase().indexOf(iq) !== -1).map((name) => ({
+          name,
+          add: () => this.setState({ immunities: [...immunities, name], immunityQuery: '' })
+        }))
+      : [];
+
+    return {
+      accent,
+      noResistances: resistances.length === 0,
+      resistances: resistanceRows,
+      resistanceQuery,
+      onResistanceQueryChange: (e) => this.setState({ resistanceQuery: e.target.value }),
+      showResistanceResults: !!resistanceQuery,
+      resistanceMatches,
+      addCustomResistance: () => this.setState({ resistances: [...resistances, resistanceQuery], resistanceQuery: '' }),
+      noImmunities: immunities.length === 0,
+      immunities: immunityRows,
+      immunityQuery,
+      onImmunityQueryChange: (e) => this.setState({ immunityQuery: e.target.value }),
+      showImmunityResults: !!immunityQuery,
+      immunityMatches,
+      addCustomImmunity: () => this.setState({ immunities: [...immunities, immunityQuery], immunityQuery: '' })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Confirm Dialog</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 340px; height: 200px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; justify-content: center; background: #f4f5f7;">
+  <sc-if value="{{open}}" hint-placeholder-val="{{true}}">
+    <div style="width: 100%; background: #ffffff; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);">
+      <div style="font-size: 14px; color: #1f2430; line-height: 1.5;">{{message}}</div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button onClick="{{cancel}}" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 13px; font-weight: 600;">Cancel</button>
+        <button onClick="{{confirm}}" style="padding: 8px 14px; border-radius: 8px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">Delete</button>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{closed}}" hint-placeholder-val="{{false}}">
+    <button onClick="{{reopen}}" style="padding: 10px 16px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">Reopen dialog</button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"message":{"editor":"text","default":"Delete \"Elara Nightshade\"? This cannot be undone."},"$preview":{"width":340,"height":200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { open: true };
+  }
+  renderVals() {
+    const open = this.state.open;
+    return {
+      accent: this.props.accent ?? '#d9730d',
+      message: this.props.message ?? 'Delete this character? This cannot be undone.',
+      open,
+      closed: !open,
+      cancel: () => this.setState({ open: false }),
+      confirm: () => this.setState({ open: false }),
+      reopen: () => this.setState({ open: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

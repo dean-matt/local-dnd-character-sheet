@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Weapons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 460px; height: 300px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Weapons</div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{weapons}}" as="item" hint-placeholder-count="2">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px; font-size: 14px; color: #1f2430;">
+          <div style="flex-grow: 1;">{{item.label}}</div>
+          <div style="font-size: 12px; color: #6b7280; flex-shrink: 0;">{{item.value}}</div>
+          <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
+          <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position: relative;">
+      <label for="weaponSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search weapons</label>
+      <input id="weaponSearch" type="text" placeholder="Search weapons…" value="{{itemQuery}}" onChange="{{onItemQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+          <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none;">
+              <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
+              <span style="font-size: 11px; color: #6b7280;"> — {{m.meta}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":460,"height":300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      proficiencies: ['Light armor', 'Simple weapons'],
+      equipment: [
+        { label: 'Longbow +1', weaponClass: 'Martial', value: '150 gp', equipped: false },
+        { label: 'Handaxe', weaponClass: 'Simple', value: '5 gp', equipped: true }
+      ],
+      itemQuery: ''
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const CATALOG = [
+      { name: 'Longbow +1', weaponClass: 'Martial', value: '150 gp', meta: 'Weapon • Martial ranged' },
+      { name: 'Heavy Crossbow', weaponClass: 'Martial', value: '50 gp', meta: 'Weapon • Martial ranged' },
+      { name: 'Handaxe', weaponClass: 'Simple', value: '5 gp', meta: 'Weapon • Simple melee' },
+      { name: 'Shortsword', weaponClass: 'Martial', value: '10 gp', meta: 'Weapon • Martial melee' },
+      { name: 'Dagger', weaponClass: 'Simple', value: '2 gp', meta: 'Weapon • Simple melee' }
+    ];
+    const { proficiencies, equipment, itemQuery } = this.state;
+    const canEquip = (item) => proficiencies.some((p) => p.toLowerCase().indexOf(item.weaponClass.toLowerCase() + ' weapon') !== -1);
+    const weapons = equipment.map((item, idx) => {
+      const allowed = canEquip(item);
+      const equipped = allowed && item.equipped;
+      let equipLabel = 'Equip', equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTitle = 'Click to equip';
+      if (!allowed) { equipLabel = "Can't equip"; equipTitle = 'Requires a matching proficiency'; }
+      else if (equipped) { equipLabel = 'Equipped'; equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTitle = 'Click to unequip'; }
+      return {
+        label: item.label,
+        value: item.value,
+        equipLabel, equipBorder, equipBg, equipColor, equipTitle,
+        equipAria: (equipped ? 'Unequip ' : 'Equip ') + item.label,
+        toggleEquip: () => {
+          if (!allowed) return;
+          this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped } : x)) });
+        },
+        remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) })
+      };
+    });
+    const q = itemQuery.trim().toLowerCase();
+    const matches = q
+      ? CATALOG.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({
+          name: c.name,
+          meta: c.meta,
+          add: () => {
+            this.setState({ equipment: [...equipment, { label: c.name, weaponClass: c.weaponClass, value: c.value, equipped: false }], itemQuery: '' });
+          }
+        }))
+      : [];
+    return {
+      accent,
+      weapons,
+      itemQuery,
+      onItemQueryChange: (e) => this.setState({ itemQuery: e.target.value }),
+      showResults: !!itemQuery,
+      matches
+    };
+  }
+}
+</script>
+</body>
+</html>

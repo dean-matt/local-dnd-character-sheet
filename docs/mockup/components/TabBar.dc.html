@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Tab Bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 1200px; height: 110px; box-sizing: border-box; padding: 24px 40px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; display: flex; align-items: center; gap: 22px; border-bottom: 1px solid #dde1e6; background: #ffffff; padding: 14px 16px 0 16px; border-radius: 10px 10px 0 0;">
+    <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="7">
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <sc-if value="{{tab.editing}}" hint-placeholder-val="{{false}}">
+          <label for="tabRenameInput-{{tab.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Rename {{tab.label}} tab</label>
+          <input id="tabRenameInput-{{tab.id}}" type="text" value="{{tab.label}}" onChange="{{tab.onRename}}" style="padding: 4px 6px 8px 6px; font-size: 14px; font-weight: 600; color: #1f2430; border: none; border-bottom: 2px solid {{accent}}; background: none; width: 90px;">
+        </sc-if>
+        <sc-if value="{{tab.showButton}}" hint-placeholder-val="{{true}}">
+          <button onClick="{{tab.go}}" style="padding: 4px 2px 12px 2px; background: none; border: none; border-bottom: {{tab.borderStyle}}; font-size: 14px; font-weight: {{tab.textWeight}}; color: {{tab.textColor}}; white-space: nowrap;">{{tab.label}}</button>
+        </sc-if>
+        <sc-if value="{{tab.active}}" hint-placeholder-val="{{false}}">
+          <button aria-label="{{editLabel}}" title="{{editLabel}}" onClick="{{toggleEdit}}" style="width: 20px; height: 20px; margin-bottom: 8px; border-radius: 5px; border: none; background: {{editIconBg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="{{editIconColor}}" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+          </button>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":1200,"height":110}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: 'overview', labels: {}, editOpen: false };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const TABS = [
+      { id: 'overview', label: 'Overview' },
+      { id: 'inventory', label: 'Inventory' },
+      { id: 'spells', label: 'Spells' },
+      { id: 'features', label: 'Features' },
+      { id: 'identity', label: 'Identity' },
+      { id: 'backstory', label: 'Backstory' },
+      { id: 'notes', label: 'Notes' }
+    ];
+    const { active, labels, editOpen } = this.state;
+    const tabs = TABS.map((t) => {
+      const isActive = t.id === active;
+      const label = labels[t.id] ?? t.label;
+      const editing = isActive && editOpen;
+      return {
+        id: t.id,
+        label,
+        editing,
+        showButton: !editing,
+        active: isActive,
+        borderStyle: isActive ? '2px solid ' + accent : '2px solid transparent',
+        textWeight: isActive ? '600' : '500',
+        textColor: isActive ? '#1f2430' : '#6b7280',
+        go: () => this.setState({ active: t.id, editOpen: false }),
+        onRename: (e) => this.setState({ labels: { ...labels, [t.id]: e.target.value } })
+      };
+    });
+    return {
+      accent,
+      tabs,
+      editLabel: editOpen ? 'Done editing tab' : 'Edit tab',
+      editIconBg: editOpen ? '#eceef1' : 'none',
+      editIconColor: editOpen ? accent : '#6b7280',
+      toggleEdit: () => this.setState({ editOpen: !editOpen })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Status Effects</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 260px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Status Effects</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+      <sc-if value="{{noStatusEffects}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #6b7280; font-style: italic;">No active conditions.</div>
+      </sc-if>
+      <sc-for list="{{statusEffects}}" as="st" hint-placeholder-count="1">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{st.label}}
+          <button aria-label="Remove {{st.label}}" onClick="{{st.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="position: relative;">
+      <label for="statusSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search conditions</label>
+      <input id="statusSearch" type="text" placeholder="Add a condition…" value="{{statusQuery}}" onChange="{{onStatusQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+          <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+          </sc-for>
+          <button onClick="{{addCustom}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{statusQuery}}"</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":420,"height":260}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { statusEffects: [], statusQuery: '' };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const CONDITIONS = ['Blinded', 'Charmed', 'Frightened', 'Grappled', 'Incapacitated', 'Invisible', 'Paralyzed', 'Poisoned', 'Prone', 'Restrained', 'Stunned', 'Unconscious', 'Concentration'];
+    const { statusEffects, statusQuery } = this.state;
+    const statusRows = statusEffects.map((label, idx) => ({
+      label,
+      remove: () => this.setState({ statusEffects: statusEffects.filter((_, i) => i !== idx) })
+    }));
+    const q = statusQuery.trim().toLowerCase();
+    const matches = q
+      ? CONDITIONS.filter((c) => c.toLowerCase().indexOf(q) !== -1).map((name) => ({
+          name,
+          add: () => this.setState({ statusEffects: [...statusEffects, name], statusQuery: '' })
+        }))
+      : [];
+    return {
+      accent,
+      noStatusEffects: statusEffects.length === 0,
+      statusEffects: statusRows,
+      statusQuery,
+      onStatusQueryChange: (e) => this.setState({ statusQuery: e.target.value }),
+      showResults: !!statusQuery,
+      matches,
+      addCustom: () => this.setState({ statusEffects: [...statusEffects, statusQuery], statusQuery: '' })
+    };
+  }
+}
+</script>
+</body>
+</html>

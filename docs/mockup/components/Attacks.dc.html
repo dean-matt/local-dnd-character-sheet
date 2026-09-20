@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Attacks &amp; Spellcasting</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 460px; height: 240px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Attacks &amp; Spellcasting</div>
+    <div style="display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; padding: 0 2px;">
+      <div>Name</div><div>Bonus</div><div>Damage / Type</div>
+    </div>
+    <sc-for list="{{attacks}}" as="atk" hint-placeholder-count="2">
+      <div style="display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; font-size: 13px; padding: 6px 2px; border-top: 1px solid #eceef1;">
+        <div style="color: #1f2430;">{{atk.name}}</div>
+        <button aria-label="Roll {{atk.name}} attack" title="Click to roll an attack" onClick="{{atk.roll}}" style="font-weight: 600; color: #1f2430; background: none; border: none; padding: 0; text-align: left;">{{atk.bonus}}</button>
+        <div style="color: #6b7280;">{{atk.dmg}}</div>
+      </div>
+    </sc-for>
+    <sc-if value="{{hasRoll}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 6px;">{{rollText}}</div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      attacks: [
+        { name: 'Longbow +1', bonus: 8, dmg: '1d8+5 piercing' },
+        { name: 'Shortsword', bonus: 7, dmg: '1d6+4 piercing' }
+      ],
+      lastRoll: null
+    };
+  }
+  renderVals() {
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const attacks = this.state.attacks.map((a) => ({
+      name: a.name,
+      bonus: fmt(a.bonus),
+      dmg: a.dmg,
+      roll: () => {
+        const natural = 1 + Math.floor(Math.random() * 20);
+        this.setState({ lastRoll: { text: a.name + ': d20 (' + natural + ') + ' + a.bonus + ' = ' + (natural + a.bonus) } });
+      }
+    }));
+    return { attacks, hasRoll: !!this.state.lastRoll, rollText: this.state.lastRoll ? this.state.lastRoll.text : '' };
+  }
+}
+</script>
+</body>
+</html>

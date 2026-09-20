@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Saving Throws</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 340px; height: 300px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Saving Throws</div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{saveRows}}" as="sv" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+          <button aria-label="Toggle {{sv.label}} save proficiency" onClick="{{sv.toggle}}" style="width: 13px; height: 13px; padding: 0; border-radius: 50%; border: 1.5px solid {{sv.dotBorder}}; background: {{sv.dotFill}}; flex-shrink: 0;"></button>
+          <div style="color: #1f2430; flex-grow: 1;">{{sv.label}}</div>
+          <button aria-label="Roll {{sv.label}} save" title="{{sv.bonusTitle}}" onClick="{{sv.roll}}" style="font-weight: 600; color: #1f2430; background: none; border: none; padding: 0;">{{sv.bonus}}</button>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{hasRoll}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 6px;">{{rollText}}</div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":340,"height":300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 },
+      prof: 4,
+      saves: ['str', 'dex'],
+      lastRoll: null
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const mod = (s) => Math.floor((s - 10) / 2);
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const { abilities, prof, saves } = this.state;
+    const keys = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    const saveRows = keys.map((k) => {
+      const proficient = saves.indexOf(k) !== -1;
+      const bonus = mod(abilities[k]) + (proficient ? prof : 0);
+      return {
+        key: k,
+        label: k.toUpperCase(),
+        bonus: fmt(bonus),
+        bonusTitle: k.toUpperCase() + ' modifier ' + fmt(mod(abilities[k])) + (proficient ? ' + proficiency bonus ' + fmt(prof) : ' (not proficient)'),
+        dotFill: proficient ? accent : 'transparent',
+        dotBorder: proficient ? accent : '#c7ccd3',
+        roll: () => {
+          const natural = 1 + Math.floor(Math.random() * 20);
+          this.setState({ lastRoll: { label: k.toUpperCase() + ' Save', natural, total: natural + bonus } });
+        },
+        toggle: () => this.setState({ saves: saves.indexOf(k) !== -1 ? saves.filter((x) => x !== k) : [...saves, k] })
+      };
+    });
+    const lastRoll = this.state.lastRoll;
+    return {
+      accent,
+      saveRows,
+      hasRoll: !!lastRoll,
+      rollText: lastRoll ? lastRoll.label + ': d20 (' + lastRoll.natural + ') → ' + lastRoll.total : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

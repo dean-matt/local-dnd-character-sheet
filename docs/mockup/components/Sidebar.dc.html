@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Character Sidebar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 300px; height: 1180px; box-sizing: border-box; padding: 20px; display: flex; background: #f4f5f7;">
+  <div style="width: {{width}}; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; transition: width 0.15s ease;">
+    <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto;">
+      <sc-for list="{{charList}}" as="char" hint-placeholder-count="4">
+        <button onClick="{{char.pick}}" aria-label="{{char.name}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; text-align: left; padding: 8px; border-radius: 10px; border: none; background: {{char.itemBg}}; flex-shrink: 0;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: {{char.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; flex-shrink: 0; box-shadow: 0 0 0 2px {{char.ring}};">{{char.initial}}</div>
+          <div style="display: {{textDisplay}}; flex-direction: column; gap: 1px; min-width: 0;">
+            <div style="font-size: 14px; font-weight: {{char.nameWeight}}; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{char.name}}</div>
+            <div style="font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{char.sub}}</div>
+          </div>
+        </button>
+      </sc-for>
+      <button style="flex-shrink: 0; width: 100%; padding: 9px 0; border-radius: 8px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-weight: 600; font-size: 14px;">{{newCharLabel}}</button>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px; display: flex; flex-direction: column; gap: 2px;">
+      <button aria-label="Settings" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: none; background: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Settings</span>
+      </button>
+      <button aria-label="{{toggleLabel}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: none; background: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":300,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selected: 'elara',
+      collapsed: false,
+      characters: [
+        { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', race: 'Half-Elf', cls: 'Ranger', level: 7 },
+        { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', race: 'Mountain Dwarf', cls: 'Fighter', level: 6 },
+        { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', race: 'Human', cls: 'Wizard', level: 5 },
+        { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', race: 'Tiefling', cls: 'Warlock', level: 4 }
+      ]
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const { selected, collapsed, characters } = this.state;
+    const textDisplay = collapsed ? 'none' : 'flex';
+    const rowJustify = collapsed ? 'center' : 'flex-start';
+    const charList = characters.map((c) => {
+      const isSelected = c.id === selected;
+      return {
+        id: c.id,
+        name: c.name,
+        color: c.color,
+        initial: c.name.charAt(0),
+        sub: c.race + ' ' + c.cls + ' • Lvl ' + c.level,
+        itemBg: isSelected && !collapsed ? '#eceef1' : 'transparent',
+        ring: isSelected ? accent : 'transparent',
+        nameWeight: isSelected ? '600' : '500',
+        pick: () => this.setState({ selected: c.id })
+      };
+    });
+    return {
+      accent,
+      width: collapsed ? '72px' : '228px',
+      charList,
+      textDisplay,
+      rowJustify,
+      newCharLabel: collapsed ? '+' : '+ New Character',
+      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
+      toggleLabel: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+    };
+  }
+}
+</script>
+</body>
+</html>

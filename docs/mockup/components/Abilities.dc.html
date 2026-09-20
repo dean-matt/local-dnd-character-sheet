@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Ability Scores</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 460px; height: 260px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Ability Scores</div>
+    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+      <sc-for list="{{abilityRows}}" as="ab" hint-placeholder-count="6">
+        <div style="background: #eef0f3; border-radius: 8px; padding: 8px 0 6px 0; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280;">{{ab.label}}</div>
+          <input type="number" min="1" max="30" value="{{ab.score}}" onChange="{{ab.setScore}}" aria-label="{{ab.label}} score" style="width: 44px; text-align: center; border: none; background: none; outline: none; font-size: 20px; font-weight: 700; color: #1f2430;">
+          <button aria-label="Roll {{ab.label}} check" title="{{ab.modTitle}}" onClick="{{ab.roll}}" style="font-size: 11px; font-weight: 600; color: #ffffff; background: {{accent}}; border: none; border-radius: 999px; padding: 0px 8px;">{{ab.mod}}</button>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{hasRoll}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 6px;">{{rollText}}</div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#d9730d"},"$preview":{"width":460,"height":260}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 }, lastRoll: null };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#d9730d';
+    const mod = (s) => Math.floor((s - 10) / 2);
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const abilities = this.state.abilities;
+    const keys = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    const abilityRows = keys.map((k) => ({
+      key: k,
+      label: k.toUpperCase(),
+      score: abilities[k],
+      mod: fmt(mod(abilities[k])),
+      modTitle: 'Modifier: (' + abilities[k] + ' − 10) ÷ 2, rounded down — click to roll',
+      roll: () => {
+        const natural = 1 + Math.floor(Math.random() * 20);
+        this.setState({ lastRoll: { label: k.toUpperCase() + ' Check', natural, total: natural + mod(abilities[k]) } });
+      },
+      setScore: (e) => {
+        const n = Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 0));
+        this.setState({ abilities: { ...abilities, [k]: n } });
+      }
+    }));
+    const lastRoll = this.state.lastRoll;
+    return {
+      accent,
+      abilityRows,
+      hasRoll: !!lastRoll,
+      rollText: lastRoll ? lastRoll.label + ': d20 (' + lastRoll.natural + ') → ' + lastRoll.total : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

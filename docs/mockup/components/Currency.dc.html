@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Currency</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  input { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 340px; height: 160px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; gap: 20px; align-items: end;">
+    <div>
+      <label for="gpInput" style="display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Gold (gp)</label>
+      <input id="gpInput" type="number" min="0" value="{{gp}}" onChange="{{onGpChange}}" style="width: 70px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #eef0f3; color: #1f2430;">
+    </div>
+    <div>
+      <label for="spInput" style="display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Silver (sp)</label>
+      <input id="spInput" type="number" min="0" value="{{sp}}" onChange="{{onSpChange}}" style="width: 70px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #eef0f3; color: #1f2430;">
+    </div>
+    <div>
+      <label for="cpInput" style="display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Copper (cp)</label>
+      <input id="cpInput" type="number" min="0" value="{{cp}}" onChange="{{onCpChange}}" style="width: 70px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #eef0f3; color: #1f2430;">
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":340,"height":160}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { gp: 42, sp: 5, cp: 0 };
+  }
+  renderVals() {
+    const clamp = (n) => Math.max(0, parseInt(n, 10) || 0);
+    return {
+      gp: this.state.gp,
+      sp: this.state.sp,
+      cp: this.state.cp,
+      onGpChange: (e) => this.setState({ gp: clamp(e.target.value) }),
+      onSpChange: (e) => this.setState({ sp: clamp(e.target.value) }),
+      onCpChange: (e) => this.setState({ cp: clamp(e.target.value) })
+    };
+  }
+}
+</script>
+</body>
+</html>
