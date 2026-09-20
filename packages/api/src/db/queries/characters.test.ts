@@ -149,6 +149,49 @@ describe("characters queries", () => {
       expect(charactersReferencingHomebrew(db, "hb-2")).toEqual([{ id: "1", name: "Vex" }]);
     });
 
+    it("finds a character referencing a homebrew feat with no grantedBy or level", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({ feats: [{ ref: { homebrewId: "hb-3" } }] }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-3")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds a character referencing a homebrew optional feature", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({
+          optionalFeatures: [
+            {
+              ref: { homebrewId: "hb-4" },
+              featureType: "FS",
+              grantedBy: { kind: "class", ref: WARLOCK },
+            },
+          ],
+        }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-4")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds a character referencing a homebrew grantor of an optional feature", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({
+          optionalFeatures: [
+            {
+              ref: ROGUE,
+              featureType: "FS",
+              grantedBy: { kind: "feat", ref: { homebrewId: "hb-5" } },
+            },
+          ],
+        }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-5")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
     it("finds nothing for a homebrew id no character references", () => {
       insertCharacter(db, { id: "1", definition: baseDefinition() });
 

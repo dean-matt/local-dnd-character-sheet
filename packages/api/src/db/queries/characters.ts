@@ -83,7 +83,7 @@ function referencesHomebrewId(value: unknown, homebrewId: string): boolean {
   if (Array.isArray(value)) return value.some((item) => referencesHomebrewId(item, homebrewId));
   if (value === null || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
-  if (Object.keys(record).length === 1) return record.homebrewId === homebrewId;
+  if ("homebrewId" in record) return record.homebrewId === homebrewId;
   return Object.values(record).some((item) => referencesHomebrewId(item, homebrewId));
 }
 
