@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings Layout — Structure</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+</style>
+</helmet>
+
+<div style="position: relative; width: 1440px; height: 1140px; display: flex; flex-direction: column; background: #f4f5f7; border: 1px solid #dde1e6; overflow: hidden;">
+
+  <div style="flex-shrink: 0; height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 24px; background: #fdf3ea; border-bottom: 2px dashed {{accent}};">
+    <span style="font-size: 13px; font-weight: 700; color: {{accent}};">Top Bar</span>
+    <span style="font-size: 12px; color: #6b7280;">— same global nav as the character sheet · see TopBar.dc.html</span>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; min-height: 0;">
+
+    <div style="width: 220px; flex-shrink: 0; height: 100%; background: #eaf0ec; border-right: 2px dashed #3f5d44; display: flex; flex-direction: column; align-items: center; padding: 16px 8px;">
+      <span style="font-size: 13px; font-weight: 700; color: #3f5d44; text-align: center;">Settings Sidebar</span>
+      <span style="font-size: 11px; color: #6b7280; text-align: center; margin-top: 2px;">Display, Homebrew Items, Homebrew Spells, Sources · see SettingsSidebar.dc.html</span>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="font-size: 13px; font-weight: 700; color: #6b7280;">Active section content</div>
+      <div style="flex-grow: 1; border: 2px dashed #dde1e6; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 24px;">
+        <span style="font-size: 13px; color: #6b7280; text-align: center; max-width: 480px;">Renders whichever section is selected in the settings sidebar — Display (theme, accent), Homebrew Items, Homebrew Spells, or Sources. See each section's own widget.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#c1272d' };
+  }
+}
+</script>
+</body>
+</html>

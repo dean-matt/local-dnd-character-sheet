@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Display Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 260px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 18px;">
+    <div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Theme</div>
+      <div style="display: flex; gap: 6px; background: #eef0f3; border-radius: 8px; padding: 4px;">
+        <sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+          <button onClick="{{t.select}}" aria-pressed="{{t.selected}}" style="flex-grow: 1; padding: 7px 0; border-radius: 6px; border: none; background: {{t.bg}}; color: {{t.color}}; font-size: 13px; font-weight: 600;">{{t.label}}</button>
+        </sc-for>
+      </div>
+      <div style="font-size: 11px; color: #6b7280; margin-top: 6px;">{{themeHint}}</div>
+    </div>
+
+    <div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Accent Color</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <sc-for list="{{accentPresets}}" as="ap" hint-placeholder-count="5">
+          <button aria-label="{{ap.name}} accent" title="{{ap.name}}" onClick="{{ap.select}}" style="width: 26px; height: 26px; border-radius: 50%; background: {{ap.color}}; border: 2px solid {{ap.ring}}; padding: 0;"></button>
+        </sc-for>
+        <label for="customAccentInput" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Custom accent color</label>
+        <input id="customAccentInput" type="color" value="{{accent}}" onChange="{{onCustomAccent}}" title="Custom color" style="width: 26px; height: 26px; border: 1px solid #dde1e6; border-radius: 50%; padding: 0; background: none;">
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":420,"height":260}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { theme: 'system', accent: '#c1272d' };
+  }
+  renderVals() {
+    const accent = this.state.accent;
+    const theme = this.state.theme;
+    const THEMES = [
+      { id: 'light', label: 'Light' },
+      { id: 'dark', label: 'Dark' },
+      { id: 'system', label: 'System' }
+    ];
+    const themes = THEMES.map((t) => {
+      const selected = t.id === theme;
+      return { id: t.id, label: t.label, selected, bg: selected ? '#ffffff' : 'none', color: selected ? '#1f2430' : '#6b7280', select: () => this.setState({ theme: t.id }) };
+    });
+    const PRESETS = [
+      { name: 'Red', color: '#c1272d' },
+      { name: 'Orange', color: '#d9730d' },
+      { name: 'Green', color: '#3f5d44' },
+      { name: 'Blue', color: '#3a4f7a' },
+      { name: 'Plum', color: '#7a3b53' }
+    ];
+    const accentPresets = PRESETS.map((p) => ({ name: p.name, color: p.color, ring: accent === p.color ? p.color : '#dde1e6', select: () => this.setState({ accent: p.color }) }));
+    return {
+      accent,
+      themes,
+      themeHint: theme === 'system' ? 'Follows your device’s light/dark setting.' : 'Overrides your device setting.',
+      accentPresets,
+      onCustomAccent: (e) => this.setState({ accent: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

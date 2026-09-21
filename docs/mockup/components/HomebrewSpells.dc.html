@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Homebrew Spells</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  textarea, input { font-family: inherit; }
+  textarea::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 460px; height: 420px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; max-height: 372px; overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Homebrew Spells</div>
+      <button onClick="{{openAdd}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 12px; font-weight: 600;">+ Add Spell</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-if value="{{noSpells}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 13px; color: #6b7280; font-style: italic;">No homebrew spells yet.</div>
+      </sc-if>
+      <sc-for list="{{spells}}" as="sp" hint-placeholder-count="1">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
+          <div style="flex-grow: 1; min-width: 0;">
+            <div style="font-size: 14px; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.name}}</div>
+            <div style="font-size: 11px; color: #6b7280;">{{sp.category}}</div>
+          </div>
+          <button onClick="{{sp.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
+          <button aria-label="Delete {{sp.name}}" onClick="{{sp.remove}}" style="width: 22px; height: 22px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        </div>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+      <div style="border-top: 1px solid #dde1e6; padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 12px; font-weight: 600; color: #1f2430;">{{formTitle}}</div>
+        <div style="font-size: 11px; color: #6b7280;">Paste the spell's 5etools-shaped entry — name, source, level, school, entries, and so on. Saving replaces the whole entry; there's no field-by-field editing.</div>
+        <label for="spellJson" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Spell JSON</label>
+        <textarea id="spellJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Coastal Ward", "source": "HB", "level": 2, "school": "A", "entries": ["A wave of brine hardens into a temporary barrier."]}' style="width: 100%; min-height: 100px; padding: 8px; border: 1px solid {{accent}}; border-radius: 6px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button onClick="{{closeForm}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 12px; font-weight: 600;">Cancel</button>
+          <button onClick="{{saveForm}}" style="padding: 6px 12px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Save</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":420}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      spells: [
+        { id: 's1', name: 'Coastal Ward', category: '2nd-level abjuration', json: '{"name": "Coastal Ward", "source": "HB", "level": 2, "school": "A", "entries": ["A wave of brine hardens into a temporary barrier."]}' }
+      ],
+      editingId: null,
+      addOpen: false,
+      formJson: ''
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const { spells, editingId, addOpen, formJson } = this.state;
+    const spellRows = spells.map((sp) => ({
+      id: sp.id,
+      name: sp.name,
+      category: sp.category,
+      edit: () => this.setState({ editingId: sp.id, addOpen: false, formJson: sp.json }),
+      remove: () => this.setState({ spells: spells.filter((x) => x.id !== sp.id), editingId: editingId === sp.id ? null : editingId })
+    }));
+    const editing = spells.find((sp) => sp.id === editingId);
+    return {
+      accent,
+      spells: spellRows,
+      noSpells: spells.length === 0,
+      formOpen: addOpen || !!editing,
+      formTitle: editing ? 'Edit ' + editing.name : 'New homebrew spell',
+      formJson,
+      onFormJsonChange: (e) => this.setState({ formJson: e.target.value }),
+      openAdd: () => this.setState({ addOpen: true, editingId: null, formJson: '' }),
+      closeForm: () => this.setState({ addOpen: false, editingId: null, formJson: '' }),
+      saveForm: () => {
+        let parsedName = 'Untitled Spell';
+        try {
+          const parsed = JSON.parse(formJson);
+          if (parsed && parsed.name) parsedName = parsed.name;
+        } catch {}
+        if (editing) {
+          this.setState({ spells: spells.map((x) => (x.id === editing.id ? { ...x, name: parsedName, json: formJson } : x)), editingId: null, formJson: '' });
+        } else {
+          this.setState({ spells: [...spells, { id: 's' + Date.now(), name: parsedName, category: 'Homebrew spell', json: formJson }], addOpen: false, formJson: '' });
+        }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

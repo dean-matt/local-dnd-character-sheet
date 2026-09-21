@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Settings Sidebar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 300px; height: 460px; box-sizing: border-box; padding: 20px; display: flex; background: #f4f5f7;">
+  <div style="width: {{width}}; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; transition: width 0.15s ease;">
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{sections}}" as="sec" hint-placeholder-count="4">
+        <button onClick="{{sec.go}}" aria-label="{{sec.label}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 8px; border: none; background: {{sec.rowBg}};">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{sec.iconColor}}" stroke-width="2" style="flex-shrink: 0;">
+            <sc-if value="{{sec.isDisplay}}" hint-placeholder-val="{{true}}"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></sc-if>
+            <sc-if value="{{sec.isHomebrewItems}}" hint-placeholder-val="{{false}}"><path d="M9 3h6M10 3v5l-5 9a2 2 0 001.7 3h10.6a2 2 0 001.7-3l-5-9V3"/></sc-if>
+            <sc-if value="{{sec.isHomebrewSpells}}" hint-placeholder-val="{{false}}"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></sc-if>
+            <sc-if value="{{sec.isSources}}" hint-placeholder-val="{{false}}"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></sc-if>
+          </svg>
+          <span style="display: {{textDisplay}}; font-size: 14px; font-weight: {{sec.textWeight}}; color: {{sec.textColor}}; white-space: nowrap;">{{sec.label}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
+      <button aria-label="{{toggleLabel}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: none; background: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":300,"height":460}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: 'display', collapsed: false };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const SECTIONS = [
+      { id: 'display', label: 'Display' },
+      { id: 'homebrew-items', label: 'Homebrew Items' },
+      { id: 'homebrew-spells', label: 'Homebrew Spells' },
+      { id: 'sources', label: 'Sources' }
+    ];
+    const { active, collapsed } = this.state;
+    const textDisplay = collapsed ? 'none' : 'flex';
+    const rowJustify = collapsed ? 'center' : 'flex-start';
+
+    const sections = SECTIONS.map((s) => {
+      const isActive = s.id === active;
+      return {
+        id: s.id,
+        label: s.label,
+        rowBg: isActive ? '#f3e3e0' : 'none',
+        textWeight: isActive ? '600' : '500',
+        textColor: isActive ? '#1f2430' : '#6b7280',
+        iconColor: isActive ? accent : '#6b7280',
+        isDisplay: s.id === 'display',
+        isHomebrewItems: s.id === 'homebrew-items',
+        isHomebrewSpells: s.id === 'homebrew-spells',
+        isSources: s.id === 'sources',
+        go: () => this.setState({ active: s.id })
+      };
+    });
+
+    return {
+      accent,
+      width: collapsed ? '72px' : '240px',
+      sections,
+      textDisplay,
+      rowJustify,
+      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
+      toggleLabel: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+    };
+  }
+}
+</script>
+</body>
+</html>

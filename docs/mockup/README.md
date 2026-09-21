@@ -52,16 +52,33 @@ piece here before folding a change back into the full sheet.
 
 Live, editable version: <https://claude.ai/artifact/LCpPbSnvJ7J8hesrvYJhpM>
 
-`Layout.dc.html` is a labeled wireframe of the page structure (top bar, sidebar, header,
-tab bar, content region) at the full sheet's dimensions — read it first to see how the
-pieces fit together. Every other file matches a widget or panel from `Sheet.dc.html`:
-the eight Overview widgets, Inventory (Currency, Weapons, Armor, Gear), Spells (Spell
-Slots, Known Spells), Features, Identity, Languages, Proficiencies, Backstory, Notes,
-the page chrome (Sidebar, Top Bar Search, Character Header, Tab Bar), and the three
-overlays (Roll Toast, Confirm Dialog, Settings Panel, Add Widget Picker).
+`Layout.dc.html` is a labeled wireframe of the character sheet's page structure (top
+bar, sidebar, header, content region) at the full sheet's dimensions — read it first to
+see how the pieces fit together. `SettingsLayout.dc.html` is the same kind of wireframe
+for the settings page. Every other file matches a widget, panel, or nav element:
+
+- Overview: the eight widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status,
+  Defenses).
+- Inventory: Currency, Weapons, Armor, Gear.
+- Spells: Spell Slots, Known Spells.
+- Features, Backstory, Notes.
+- Identity: Name, Race, Class, Background, Languages, Proficiencies — each its own
+  widget. Level (level, leveling mode, experience) and Alignment are their own sidebar
+  tabs, not part of Identity.
+- Page chrome: Sidebar (now the tab rail — the character list moved to the top bar's
+  Character menu), Top Bar Navigation (Character menu, Mechanics menu, search,
+  Settings), Character Header.
+- Settings page: Settings Sidebar, Display Settings (theme — light/dark/system — and
+  accent), Homebrew Items, Homebrew Spells, Sources. Replaces the old Settings modal.
+- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 
 Simplifications specific to the split-out versions:
 - AC is a flat editable stat, not derived from equipped armor — that computation lives
   with Inventory in the full sheet.
 - Weapons and Armor use a narrower sample proficiency list than Elara's, so both the
   allowed and the proficiency-blocked equip states show up.
+- Race and Background pick from a small fixed sample list, not the real catalog; Class
+  is multi-select (chips, each with its own level) to cover multiclassing.
+- Homebrew Items and Homebrew Spells edit by replacing the whole pasted entry, per
+  `docs/data-model.md`'s rule that homebrew rows are written once and never edited field
+  by field — there's no per-field form.
