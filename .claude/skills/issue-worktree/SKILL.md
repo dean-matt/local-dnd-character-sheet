@@ -17,7 +17,7 @@ git fetch --quiet origin "$b"
 git worktree prune
 git worktree add --quiet "$d" "$b"
 cd "$d" && pnpm install --frozen-lockfile && mkdir -p vendor
-for p in vendor/5etools data/content.db .claude/settings.local.json; do
+for p in vendor/5etools data/content .claude/settings.local.json; do
   [ -e "$main/$p" ] && ln -sfn "$main/$p" "$p"
 done
 ```
