@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "./db/client.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { homebrewRoutes } from "./routes/homebrew.ts";
+import { spellsRoutes } from "./routes/spells.ts";
 
 describe("/openapi.json", () => {
   let dataDir: string;
@@ -27,10 +28,11 @@ describe("/openapi.json", () => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
-  it("documents every character and homebrew route", async () => {
+  it("documents every character, homebrew and spell route", async () => {
     const app = new OpenAPIHono();
     app.route("/", charactersRoutes(opened.charactersDb));
     app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
+    app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
 
     const res = await app.request("/openapi.json");
@@ -45,6 +47,8 @@ describe("/openapi.json", () => {
       "/homebrew/items/{id}",
       "/homebrew/spells",
       "/homebrew/spells/{id}",
+      "/spells",
+      "/spells/{name}/{source}",
     ]);
   });
 

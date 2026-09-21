@@ -1,12 +1,14 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { charactersDb, homebrewDb } from "./db/singleton.ts";
+import { charactersDb, DATA_DIR, homebrewDb } from "./db/singleton.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { homebrewRoutes } from "./routes/homebrew.ts";
+import { spellsRoutes } from "./routes/spells.ts";
 
 export const app = new OpenAPIHono();
 
 app.route("/", charactersRoutes(charactersDb));
 app.route("/", homebrewRoutes(homebrewDb, charactersDb));
+app.route("/", spellsRoutes(DATA_DIR, homebrewDb));
 
 const HealthResponse = z
   .object({ status: z.literal("ok"), version: z.string() })

@@ -1,10 +1,11 @@
 import { parseTags, type Token } from "@dnd/tags";
 import { describe, expect, it } from "vitest";
 import {
-  type HomebrewSpell,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
-  homebrewSpellSchema,
+  type SpellEntry,
+  spellEntrySchema,
+  spellRecordSchema,
 } from "./index.ts";
 
 const acidSplash = {
@@ -16,20 +17,20 @@ const acidSplash = {
   entries: ["A target must succeed on a Dexterity saving throw or take {@damage 2d6} acid damage."],
 };
 
-describe("homebrewSpellSchema", () => {
+describe("spellEntrySchema", () => {
   it("accepts a spell shaped like the upstream corpus", () => {
-    const parsed: HomebrewSpell = homebrewSpellSchema.parse(acidSplash);
+    const parsed: SpellEntry = spellEntrySchema.parse(acidSplash);
     expect(parsed).toEqual(acidSplash);
   });
 
   it("rejects a level outside 0-9, naming the field", () => {
-    const result = homebrewSpellSchema.safeParse({ ...acidSplash, level: 10 });
+    const result = spellEntrySchema.safeParse({ ...acidSplash, level: 10 });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["level"]);
   });
 
   it("rejects a spell with no duration span", () => {
-    const result = homebrewSpellSchema.safeParse({ ...acidSplash, duration: [] });
+    const result = spellEntrySchema.safeParse({ ...acidSplash, duration: [] });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["duration"]);
   });
@@ -40,7 +41,7 @@ describe("homebrewSpellSchema", () => {
       range: { type: "point", distance: { type: "feet", amount: 60 } },
       components: { v: true, s: true },
     };
-    expect(homebrewSpellSchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
+    expect(spellEntrySchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
   });
 
   /**
@@ -49,7 +50,7 @@ describe("homebrewSpellSchema", () => {
    * string came from.
    */
   it("tokenizes {@damage} inside a parsed spell's entries through the existing tag parser", () => {
-    const parsed = homebrewSpellSchema.parse(acidSplash);
+    const parsed = spellEntrySchema.parse(acidSplash);
     const prose = parsed.entries?.[0];
     if (typeof prose !== "string") throw new Error("unreachable");
     const tokens = parseTags(prose);
@@ -89,5 +90,21 @@ describe("homebrewSpellRecordSchema", () => {
       createdAt: new Date(0).toISOString(),
     };
     expect(homebrewSpellRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("spellRecordSchema", () => {
+  it("accepts a catalog row, keyed by name and source rather than id", () => {
+    const record = {
+      name: "Acid Splash",
+      source: "PHB",
+      edition: "one",
+      level: 0,
+      school: "C",
+      concentration: false,
+      ritual: false,
+      json: acidSplash,
+    };
+    expect(spellRecordSchema.parse(record)).toEqual(record);
   });
 });

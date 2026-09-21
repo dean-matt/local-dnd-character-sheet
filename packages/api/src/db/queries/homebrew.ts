@@ -6,7 +6,7 @@
  * already references.
  */
 import type { HomebrewItem, HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
-import { homebrewItemSchema, homebrewSpellSchema } from "@dnd/catalog";
+import { homebrewItemSchema, spellEntrySchema } from "@dnd/catalog";
 import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as homebrewSchema from "../homebrew.ts";
@@ -76,7 +76,7 @@ export function getHomebrewSpell(db: HomebrewDb, id: string) {
 
 function spellJson(input: HomebrewSpellInput) {
   const { edition: _edition, ...entry } = input;
-  return homebrewSpellSchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+  return spellEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
 }
 
 function spellColumns(json: ReturnType<typeof spellJson>) {
