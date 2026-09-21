@@ -39,18 +39,16 @@
     "Sidebar.dc.html": { "x": 0, "y": 3580, "w": 300, "h": 1180, "title": "Tab Sidebar", "is_interactive": true },
     "TopBar.dc.html": { "x": 380, "y": 3580, "w": 1440, "h": 120, "title": "Top Bar Navigation", "is_interactive": true },
     "CharacterHeader.dc.html": { "x": 380, "y": 3740, "w": 1200, "h": 160, "title": "Character Header", "is_interactive": true },
-    "Layout.dc.html": { "x": 1900, "y": 3580, "w": 1440, "h": 1140, "title": "Page Layout — Structure" },
+    "Layout.dc.html": { "x": 1900, "y": 3580, "w": 1440, "h": 1140, "title": "Page Layout — Shared Structure" },
 
     "SettingsSidebar.dc.html": { "x": 0, "y": 4880, "w": 300, "h": 1180, "title": "Settings Sidebar", "is_interactive": true },
     "DisplaySettings.dc.html": { "x": 380, "y": 4880, "w": 420, "h": 260, "title": "Display Settings", "is_interactive": true },
-    "HomebrewItems.dc.html": { "x": 880, "y": 4880, "w": 460, "h": 420, "title": "Homebrew Items", "is_interactive": true },
-    "HomebrewSpells.dc.html": { "x": 1420, "y": 4880, "w": 460, "h": 420, "title": "Homebrew Spells", "is_interactive": true },
-    "Sources.dc.html": { "x": 1960, "y": 4880, "w": 420, "h": 460, "title": "Sources", "is_interactive": true },
-    "SettingsLayout.dc.html": { "x": 2460, "y": 4880, "w": 1440, "h": 1140, "title": "Settings Layout — Structure" },
+    "Homebrew.dc.html": { "x": 880, "y": 4880, "w": 480, "h": 620, "title": "Homebrew Content", "is_interactive": true },
+    "Sources.dc.html": { "x": 1440, "y": 4880, "w": 420, "h": 460, "title": "Sources", "is_interactive": true },
 
     "WidgetPicker.dc.html": { "x": 0, "y": 6180, "w": 420, "h": 460, "title": "Add Widget Picker", "is_interactive": true }
   },
-  "order": ["Layout.dc.html", "SettingsLayout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "Defenses.dc.html", "Currency.dc.html", "Weapons.dc.html", "Armor.dc.html", "Gear.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "Features.dc.html", "Backstory.dc.html", "Notes.dc.html", "ConfirmDialog.dc.html", "Name.dc.html", "Race.dc.html", "Class.dc.html", "Background.dc.html", "Level.dc.html", "Alignment.dc.html", "Languages.dc.html", "Proficiencies.dc.html", "RollToast.dc.html", "Sidebar.dc.html", "TopBar.dc.html", "CharacterHeader.dc.html", "SettingsSidebar.dc.html", "DisplaySettings.dc.html", "HomebrewItems.dc.html", "HomebrewSpells.dc.html", "Sources.dc.html", "WidgetPicker.dc.html"],
+  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "Defenses.dc.html", "Currency.dc.html", "Weapons.dc.html", "Armor.dc.html", "Gear.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "Features.dc.html", "Backstory.dc.html", "Notes.dc.html", "ConfirmDialog.dc.html", "Name.dc.html", "Race.dc.html", "Class.dc.html", "Background.dc.html", "Level.dc.html", "Alignment.dc.html", "Languages.dc.html", "Proficiencies.dc.html", "RollToast.dc.html", "Sidebar.dc.html", "TopBar.dc.html", "CharacterHeader.dc.html", "SettingsSidebar.dc.html", "DisplaySettings.dc.html", "Homebrew.dc.html", "Sources.dc.html", "WidgetPicker.dc.html"],
   "notes": {},
   "designSystems": []
 }
