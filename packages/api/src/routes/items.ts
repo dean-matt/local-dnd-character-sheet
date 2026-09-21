@@ -27,7 +27,7 @@ import { getItem, type ItemRow, listItems } from "../db/queries/content.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { listHomebrewItems } from "../db/queries/homebrew.ts";
 import { getExpandedItem } from "../db/queries/item-variant.ts";
-import { notFound } from "./errors.ts";
+import { errorSchema, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -104,8 +104,6 @@ const variantParam = z.object({
   variantSource: z.string(),
 });
 
-const refusedSchema = z.object({ error: z.string() });
-
 const expand = createRoute({
   method: "get",
   path: "/items/{name}/{source}/variants/{variantName}/{variantSource}",
@@ -120,7 +118,7 @@ const expand = createRoute({
     404: notFound("base item or magic variant", "name and source"),
     409: {
       description: "The base item does not meet the variant's requirements",
-      content: { "application/json": { schema: refusedSchema } },
+      content: { "application/json": { schema: errorSchema } },
     },
   },
 });

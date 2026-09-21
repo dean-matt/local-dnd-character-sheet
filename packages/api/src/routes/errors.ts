@@ -1,7 +1,7 @@
-/** The 404 body every route that looks up a resource by a key returns. */
+/** The `{ error: string }` body every route that fails with a message returns. */
 import { z } from "@hono/zod-openapi";
 
-const errorSchema = z.object({ error: z.string() });
+export const errorSchema = z.object({ error: z.string() });
 
 export const notFound = (resource: string, identifiedBy = "id") => ({
   description: `No ${resource} with that ${identifiedBy}`,
