@@ -26,11 +26,11 @@
     "ConfirmDialog.dc.html": { "x": 1760, "y": 2260, "w": 340, "h": 200, "title": "Confirm Dialog", "is_interactive": true },
 
     "Name.dc.html": { "x": 0, "y": 2840, "w": 300, "h": 120, "title": "Name", "is_interactive": true },
-    "Race.dc.html": { "x": 380, "y": 2840, "w": 300, "h": 120, "title": "Race", "is_interactive": true },
-    "Class.dc.html": { "x": 760, "y": 2840, "w": 300, "h": 120, "title": "Class", "is_interactive": true },
-    "Background.dc.html": { "x": 1140, "y": 2840, "w": 300, "h": 120, "title": "Background", "is_interactive": true },
-    "Level.dc.html": { "x": 1520, "y": 2840, "w": 380, "h": 240, "title": "Level & Experience", "is_interactive": true },
-    "Alignment.dc.html": { "x": 1980, "y": 2840, "w": 340, "h": 120, "title": "Alignment", "is_interactive": true },
+    "Race.dc.html": { "x": 380, "y": 2840, "w": 300, "h": 160, "title": "Race", "is_interactive": true },
+    "Class.dc.html": { "x": 760, "y": 2840, "w": 320, "h": 220, "title": "Class", "is_interactive": true },
+    "Background.dc.html": { "x": 1160, "y": 2840, "w": 300, "h": 160, "title": "Background", "is_interactive": true },
+    "Level.dc.html": { "x": 1540, "y": 2840, "w": 380, "h": 240, "title": "Level & Experience", "is_interactive": true },
+    "Alignment.dc.html": { "x": 2000, "y": 2840, "w": 340, "h": 120, "title": "Alignment", "is_interactive": true },
 
     "Languages.dc.html": { "x": 0, "y": 3200, "w": 380, "h": 220, "title": "Languages", "is_interactive": true },
     "Proficiencies.dc.html": { "x": 460, "y": 3200, "w": 380, "h": 260, "title": "Proficiencies", "is_interactive": true },
