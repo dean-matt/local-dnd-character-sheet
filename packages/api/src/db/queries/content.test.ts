@@ -8,6 +8,7 @@ import {
   getClassGrants,
   getFeat,
   getItem,
+  getPreparedSpellCount,
   getRace,
   getSpell,
   getSubclass,
@@ -523,6 +524,78 @@ describe("class grants at a level", () => {
         asFeature(CLERIC_CHANNEL_DIVINITY),
       ],
     });
+  });
+});
+
+describe("prepared spell count", () => {
+  let dataDir: string;
+
+  const BARD_XPHB = {
+    name: "Bard",
+    source: "XPHB",
+    edition: "one",
+    hit_die: 8,
+    json: JSON.stringify({ name: "Bard", source: "XPHB" }),
+  };
+
+  afterEach(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("reads the printed count for a class that never prepared under classic", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-prepared-spells-"));
+    publishClasses(dataDir, {
+      classes: [BARD_XPHB],
+      classResources: [
+        {
+          class_name: "Bard",
+          class_source: "XPHB",
+          level: 1,
+          resource_key: "prepared_spells",
+          value: "4",
+        },
+        {
+          class_name: "Bard",
+          class_source: "XPHB",
+          level: 2,
+          resource_key: "prepared_spells",
+          value: "5",
+        },
+      ],
+    });
+
+    expect(getPreparedSpellCount(dataDir, "Bard", "XPHB", 2)).toEqual({
+      prepares: true,
+      count: 5,
+    });
+  });
+
+  it("reads zero for a level the class has not reached the column yet", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-prepared-spells-"));
+    publishClasses(dataDir, {
+      classes: [BARD_XPHB],
+      classResources: [
+        {
+          class_name: "Bard",
+          class_source: "XPHB",
+          level: 3,
+          resource_key: "prepared_spells",
+          value: "6",
+        },
+      ],
+    });
+
+    expect(getPreparedSpellCount(dataDir, "Bard", "XPHB", 1)).toEqual({
+      prepares: true,
+      count: 0,
+    });
+  });
+
+  it("says a class does not prepare at all, distinct from reading zero", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-prepared-spells-"));
+    publishClasses(dataDir, { classes: [FIGHTER_PHB] });
+
+    expect(getPreparedSpellCount(dataDir, "Fighter", "PHB", 5)).toEqual({ prepares: false });
   });
 });
 

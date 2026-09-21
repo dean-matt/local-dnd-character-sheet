@@ -3,6 +3,7 @@
  * and subclasses. Every query opens and closes its own connection through `openContentDb`
  * instead of holding one — the staleness that module exists to avoid.
  */
+import type { PreparedSpellCount } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 
@@ -375,6 +376,51 @@ export function getClassGrants(
       )
       .all(className, classSource, level) as ClassFeatureRow[];
     return { resources, spellSlots, optionalFeatures, features };
+  } finally {
+    db.close();
+  }
+}
+
+const PREPARED_SPELLS_KEY = "prepared_spells";
+
+/**
+ * The `one`-edition Prepared Spells column for a class at a level. `prepares: false`
+ * where the class carries no such column at any level, distinct from `count: 0` where
+ * it carries the column but has not reached it yet.
+ * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
+ * reached, so telling the two apart needs a second query across every level, not just
+ * this one.
+ */
+export function getPreparedSpellCount(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+): PreparedSpellCount {
+  const db = openContentDb(dataDir);
+  try {
+    const prepares = db
+      .prepare(
+        `SELECT 1 FROM class_resources
+         WHERE class_name = ? AND class_source = ? AND resource_key = ?
+         LIMIT 1`,
+      )
+      .get(className, classSource, PREPARED_SPELLS_KEY);
+    if (!prepares) return { prepares: false };
+    const row = db
+      .prepare(
+        `SELECT value FROM class_resources
+         WHERE class_name = ? AND class_source = ? AND level = ? AND resource_key = ?`,
+      )
+      .get(className, classSource, level, PREPARED_SPELLS_KEY) as { value: string } | undefined;
+    if (!row) return { prepares: true, count: 0 };
+    const count = Number(row.value);
+    if (!Number.isInteger(count) || count < 0) {
+      throw new Error(
+        `${className}|${classSource} level ${level}: prepared_spells value ${row.value} is not a count`,
+      );
+    }
+    return { prepares: true, count };
   } finally {
     db.close();
   }

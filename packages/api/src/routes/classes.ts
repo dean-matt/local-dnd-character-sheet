@@ -10,6 +10,7 @@ import {
   classFeatureRecordSchema,
   classGrantsSchema,
   classRecordSchema,
+  preparedSpellCountSchema,
   type SubclassRecord,
   subclassRecordSchema,
 } from "@dnd/catalog";
@@ -21,6 +22,7 @@ import {
   type ClassRow,
   getClass,
   getClassGrants,
+  getPreparedSpellCount,
   getSubclass,
   getSubclassGrants,
   listClasses,
@@ -142,6 +144,21 @@ const readClassGrantsRoute = createRoute({
   },
 });
 
+const readPreparedSpellCountRoute = createRoute({
+  method: "get",
+  path: "/classes/{name}/{source}/at/{level}/prepared-spells",
+  tags: ["classes"],
+  summary: "Read a `one` class's Prepared Spells column at one level",
+  request: { params: levelParam },
+  responses: {
+    200: {
+      description: "The printed count, or prepares: false where the class carries no such column",
+      content: { "application/json": { schema: preparedSpellCountSchema } },
+    },
+    404: notFound("class", "name and source"),
+  },
+});
+
 const classParam = z.object({ className: z.string(), classSource: z.string() });
 
 const subclassListResponseSchema = z.object({
@@ -239,6 +256,12 @@ export function classesRoutes(dataDir: string) {
     const { name, source, level } = c.req.valid("param");
     if (!getClass(dataDir, name, source)) return c.json({ error: CLASS_NOT_FOUND }, 404);
     return c.json(toGrants(level, getClassGrants(dataDir, name, source, level)), 200);
+  });
+
+  routes.openapi(readPreparedSpellCountRoute, (c) => {
+    const { name, source, level } = c.req.valid("param");
+    if (!getClass(dataDir, name, source)) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    return c.json(getPreparedSpellCount(dataDir, name, source, level), 200);
   });
 
   routes.openapi(listSubclassesRoute, (c) => {
