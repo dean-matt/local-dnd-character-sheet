@@ -1,21 +1,26 @@
 /**
  * Opens `content.db` for one query.
  *
- * `pnpm content:build` publishes a new catalog by renaming a finished file over the old
- * one, so a handle held across that rename would otherwise keep the old file's inode —
- * serving a stale catalog until the process restarts, with no signal that it had gone
- * stale. Opening fresh per query sidesteps that: the query in flight keeps whatever file
- * it opened, and the next query picks up whatever is at the path now — at the cost of
- * one open per query, cheap for local SQLite.
+ * `pnpm content:build` publishes a new catalog under a content-addressed filename in
+ * `<dataDir>/content/` and makes it live by rewriting the small `current` pointer file to
+ * name it — never by renaming onto a database file itself, which Windows refuses when any
+ * process holds it open. Opening fresh per query sidesteps staleness the same way a held
+ * handle would: this reads `current` and opens whatever it names right now, so a query
+ * already in flight keeps the version it opened and the next query picks up whatever
+ * `current` names by then — at the cost of one open (and one tiny pointer read) per query,
+ * cheap for local SQLite.
  *
- * That is only safe because `build-db.ts` never publishes a catalog in WAL mode: a
- * published `content.db` is one self-contained file with no `-wal`/`-shm` sidecars, so a
- * query already reading the old file when a rebuild renames a new one into place is
- * unaffected either way — nothing it depends on gets deleted out from under it.
+ * That is only safe because `build-db.ts` never deletes a versioned database the same
+ * build that stops it being current — a version survives one extra build after `current`
+ * moves past it, so a query already reading the old file when a rebuild flips the pointer
+ * keeps reading a file that is still there.
  */
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 
 export function openContentDb(dataDir: string): Database.Database {
-  return new Database(join(dataDir, "content.db"), { readonly: true });
+  const contentDir = join(dataDir, "content");
+  const current = readFileSync(join(contentDir, "current"), "utf8").trim();
+  return new Database(join(contentDir, current), { readonly: true });
 }

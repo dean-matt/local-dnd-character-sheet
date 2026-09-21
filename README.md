@@ -29,7 +29,7 @@ no compiler toolchain is needed on any of them.
 corepack enable
 pnpm install
 pnpm content:sync    # fetches ~109 MB of 5etools data — takes a few minutes
-pnpm content:build   # builds data/content.db
+pnpm content:build   # builds data/content/
 
 # Every time
 pnpm dev             # api on 127.0.0.1:8787, web on 127.0.0.1:5173
@@ -58,7 +58,7 @@ pnpm build           # production build of every package
 pnpm content:sync            # fetch the pinned upstream tag
 pnpm content:sync --verify   # check vendor/ against content.lock.json
 pnpm content:sync --tag v2.40.0   # move to a different upstream tag
-pnpm content:build           # rebuild data/content.db from vendor/
+pnpm content:build           # rebuild data/content/ from vendor/
 
 # Database
 pnpm db:studio       # visual editor for characters.db
@@ -110,7 +110,7 @@ data/               the three SQLite databases, gitignored
 | `pnpm check` fails with `typos not installed` | The spellchecker is a separate binary. | `brew install typos-cli` |
 | `Error: Could not locate the bindings file` | `better-sqlite3` was built for a different Node major. | `pnpm rebuild better-sqlite3` |
 | Port 5173 or 8787 already in use | An earlier dev server is still running. | macOS/Linux `lsof -ti tcp:8787 \| xargs kill`; Windows `npx kill-port 8787` |
-| Empty search results after a rebuild | The catalog was rebuilt but never populated. | Check `SELECT * FROM meta` in `data/content.db` |
+| Empty search results after a rebuild | The catalog was rebuilt but never populated. | Check `SELECT * FROM meta` in `data/content/$(cat data/content/current)` |
 
 ## Further reading
 

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildContent } from "../build-db.ts";
+import { buildContent, resolveContentDb } from "../build-db.ts";
 import { tagRedirects } from "./tag-redirects.ts";
 
 const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5etools");
@@ -11,14 +11,14 @@ const FILE = "data/generated/gendata-tag-redirects.json";
 
 describe("the tag redirects loader", () => {
   let workspace: string;
-  let dbPath: string;
+  let contentDir: string;
 
   const build = (vendorDir: string) =>
-    buildContent({ vendorDir, dbPath, loaders: [tagRedirects], meta: {} });
+    buildContent({ vendorDir, contentDir, loaders: [tagRedirects], meta: {} });
 
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "content-redirects-"));
-    dbPath = join(workspace, "data", "content.db");
+    contentDir = join(workspace, "data", "content");
   });
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));
@@ -26,7 +26,7 @@ describe("the tag redirects loader", () => {
   it("repeats the namespace for a local target and names the other one for a jump", () => {
     build(FIXTURE_VENDOR);
 
-    const db = new Database(dbPath, { readonly: true });
+    const db = new Database(resolveContentDb(contentDir), { readonly: true });
     const rows = db.prepare("SELECT * FROM tag_redirects ORDER BY tag, from_key").all();
     db.close();
 

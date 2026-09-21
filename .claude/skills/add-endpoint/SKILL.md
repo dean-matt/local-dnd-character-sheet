@@ -59,8 +59,9 @@ const getCharacter = createRoute({
 | `characters.db`, `homebrew.db` | Drizzle |
 
 `openContentDb` opens one connection per query rather than a handle held for the
-process's lifetime — a rebuild replaces `content.db` by rename; see its own comment for
-why that is safe.
+process's lifetime — a rebuild publishes a new versioned file under `data/content/` and
+repoints the `current` pointer file rather than renaming onto a database that might be
+open; see its own comment for why that is safe on Windows too.
 
 A search endpoint that spans the catalog and homebrew queries both and merges. Homebrew
 rows carry source `HB` so the client can badge them.

@@ -39,7 +39,7 @@ Every build stamps `upstream_tag`, `built_at`, `built_by_commit`, and `node_vers
 into the `meta` table, so you can always tell what produced a given database:
 
 ```bash
-sqlite3 data/content.db "SELECT key, value FROM meta;"
+sqlite3 "data/content/$(cat data/content/current)" "SELECT key, value FROM meta;"
 ```
 
 ## Check your data survived

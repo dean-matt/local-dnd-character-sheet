@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildContent } from "../build-db.ts";
+import { buildContent, resolveContentDb } from "../build-db.ts";
 import { lookups } from "./lookups.ts";
 
 const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5etools");
@@ -18,16 +18,16 @@ type Identity = {
 
 describe("the lookups loader", () => {
   let workspace: string;
-  let dbPath: string;
+  let contentDir: string;
 
   const build = (vendorDir: string) =>
-    buildContent({ vendorDir, dbPath, loaders: [lookups], meta: {} });
+    buildContent({ vendorDir, contentDir, loaders: [lookups], meta: {} });
 
-  const open = () => new Database(dbPath, { readonly: true });
+  const open = () => new Database(resolveContentDb(contentDir), { readonly: true });
 
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "content-lookups-"));
-    dbPath = join(workspace, "data", "content.db");
+    contentDir = join(workspace, "data", "content");
   });
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));
