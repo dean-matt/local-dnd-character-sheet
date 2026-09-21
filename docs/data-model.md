@@ -67,6 +67,13 @@ unvalidated. A homebrew item or spell is written once and displayed, never edite
 by field, so it needs none of the round-trip guarantee `characterDefinitionSchema`'s
 strict objects give a character.
 
+**A merged list tells a homebrew row from a catalog row by shape, not by reading
+`source`.** A catalog record carries `source` and no `id`; a homebrew record carries `id`
+and `createdAt` and no top-level `source`. `GET /spells` returns a union of the two record
+schemas, so a caller tells them apart by which fields are present, not by comparing a
+string. The list is bounded, and the response carries the bound as `limit`, `offset` and
+`total` rather than leaving the client to assume one.
+
 **Four entities need more than `(name, source)` to identify them.** A feature is keyed
 by the class that grants it and the level it arrives at — `(name, source, class_name,
 class_source, level)`, and a subclass feature by the subclass as well. Without the class

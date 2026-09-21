@@ -63,11 +63,15 @@ process's lifetime — a rebuild publishes a new versioned file under `data/cont
 repoints the `current` pointer file rather than renaming onto a database that might be
 open; see its own comment for why that is safe on Windows too.
 
-A search endpoint that spans the catalog and homebrew queries both and merges. Homebrew
-rows carry source `HB` so the client can badge them.
+A list endpoint that spans the catalog and homebrew queries both and merges. A caller
+tells the two apart by shape, not by reading `source`: a catalog record carries `source`
+and a homebrew record carries `id` and `createdAt` instead — see `docs/data-model.md`.
 
 **Filter on edition.** Any content query without an edition filter returns both
 rulesets and shows duplicates.
+
+**Bound a catalog list**, since a Tier A table runs to thousands of rows — `limit`,
+`offset` and `total` ride in the response rather than leaving the client to assume one.
 
 ## Checking it
 
