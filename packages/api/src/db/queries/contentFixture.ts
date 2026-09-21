@@ -45,19 +45,25 @@ export type ItemFixtureRow = {
 
 let publishCount = 0;
 
+type Insertion = { insert: string; rows: object[] };
+
 /**
- * Publishes a fresh `content.db` holding one table, mirroring `build-db.ts`'s publish
- * step: a content-addressed file under `<dataDir>/content/`, made live by rewriting the
- * `current` pointer rather than a rename `openContentDb`'s docs say Windows refuses.
+ * Publishes a fresh `content.db` holding one or more tables, mirroring `build-db.ts`'s
+ * publish step: a content-addressed file under `<dataDir>/content/`, made live by
+ * rewriting the `current` pointer rather than a rename `openContentDb`'s docs say
+ * Windows refuses. One `ddl` and several `insertions` where a read spans tables in one
+ * connection, such as a class's resources, slots and features at a level.
  */
-function publishTable(dataDir: string, ddl: string, insert: string, rows: object[]): void {
+function publishTable(dataDir: string, ddl: string, insertions: Insertion[]): void {
   const contentDir = join(dataDir, "content");
   mkdirSync(contentDir, { recursive: true });
   const name = `content-test-${publishCount++}.db`;
   const db = new Database(join(contentDir, name));
   db.exec(ddl);
-  const stmt = db.prepare(insert);
-  for (const row of rows) stmt.run(row);
+  for (const { insert, rows } of insertions) {
+    const stmt = db.prepare(insert);
+    for (const row of rows) stmt.run(row);
+  }
   db.close();
   writeFileSync(join(contentDir, "current.tmp"), name);
   renameSync(join(contentDir, "current.tmp"), join(contentDir, "current"));
@@ -80,8 +86,13 @@ export function publishSpells(dataDir: string, rows: SpellFixtureRow[]): void {
         PRIMARY KEY (name, source)
       ) STRICT;
     `,
-    "INSERT INTO spells (name, source, edition, level, school, concentration, ritual, json) VALUES (@name, @source, @edition, @level, @school, @concentration, @ritual, @json)",
-    rows,
+    [
+      {
+        insert:
+          "INSERT INTO spells (name, source, edition, level, school, concentration, ritual, json) VALUES (@name, @source, @edition, @level, @school, @concentration, @ritual, @json)",
+        rows,
+      },
+    ],
   );
 }
 
@@ -98,8 +109,13 @@ export function publishRaces(dataDir: string, rows: RaceFixtureRow[]): void {
         PRIMARY KEY (name, source)
       ) STRICT;
     `,
-    "INSERT INTO races (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
-    rows,
+    [
+      {
+        insert:
+          "INSERT INTO races (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows,
+      },
+    ],
   );
 }
 
@@ -118,8 +134,13 @@ export function publishSubraces(dataDir: string, rows: SubraceFixtureRow[]): voi
         PRIMARY KEY (name, source, race_name, race_source)
       ) STRICT;
     `,
-    "INSERT INTO subraces (name, source, race_name, race_source, edition, json) VALUES (@name, @source, @race_name, @race_source, @edition, @json)",
-    rows,
+    [
+      {
+        insert:
+          "INSERT INTO subraces (name, source, race_name, race_source, edition, json) VALUES (@name, @source, @race_name, @race_source, @edition, @json)",
+        rows,
+      },
+    ],
   );
 }
 
@@ -136,8 +157,13 @@ export function publishBackgrounds(dataDir: string, rows: BackgroundFixtureRow[]
         PRIMARY KEY (name, source)
       ) STRICT;
     `,
-    "INSERT INTO backgrounds (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
-    rows,
+    [
+      {
+        insert:
+          "INSERT INTO backgrounds (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows,
+      },
+    ],
   );
 }
 
@@ -154,8 +180,13 @@ export function publishFeats(dataDir: string, rows: FeatFixtureRow[]): void {
         PRIMARY KEY (name, source)
       ) STRICT;
     `,
-    "INSERT INTO feats (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
-    rows,
+    [
+      {
+        insert:
+          "INSERT INTO feats (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows,
+      },
+    ],
   );
 }
 
@@ -176,7 +207,272 @@ export function publishItems(dataDir: string, rows: ItemFixtureRow[]): void {
         PRIMARY KEY (name, source)
       ) STRICT;
     `,
-    "INSERT INTO items (name, source, edition, kind, type, rarity, requires_attunement, json) VALUES (@name, @source, @edition, @kind, @type, @rarity, @requires_attunement, @json)",
-    rows,
+    [
+      {
+        insert:
+          "INSERT INTO items (name, source, edition, kind, type, rarity, requires_attunement, json) VALUES (@name, @source, @edition, @kind, @type, @rarity, @requires_attunement, @json)",
+        rows,
+      },
+    ],
+  );
+}
+
+type ClassFixtureRow = {
+  name: string;
+  source: string;
+  edition: string;
+  hit_die: number;
+  json: string;
+};
+
+type SubclassFixtureRow = {
+  name: string;
+  source: string;
+  short_name: string;
+  class_name: string;
+  class_source: string;
+  edition: string;
+  json: string;
+};
+
+type ClassResourceFixtureRow = {
+  class_name: string;
+  class_source: string;
+  level: number;
+  resource_key: string;
+  value: string;
+};
+
+type SpellSlotFixtureRow = {
+  class_name: string;
+  class_source: string;
+  level: number;
+  slot_level: number;
+  slots: number;
+};
+
+type ClassOptionalFeatureFixtureRow = {
+  class_name: string;
+  class_source: string;
+  level: number;
+  feature_type: string;
+  known: number;
+};
+
+type ClassFeatureFixtureRow = {
+  name: string;
+  source: string;
+  class_name: string;
+  class_source: string;
+  level: number;
+  edition: string;
+  json: string;
+};
+
+type SubclassResourceFixtureRow = ClassResourceFixtureRow & {
+  subclass_name: string;
+  subclass_source: string;
+};
+
+type SubclassSpellSlotFixtureRow = SpellSlotFixtureRow & {
+  subclass_name: string;
+  subclass_source: string;
+};
+
+type SubclassOptionalFeatureFixtureRow = ClassOptionalFeatureFixtureRow & {
+  subclass_name: string;
+  subclass_source: string;
+};
+
+type SubclassFeatureFixtureRow = {
+  name: string;
+  source: string;
+  class_name: string;
+  class_source: string;
+  subclass_short_name: string;
+  subclass_source: string;
+  level: number;
+  edition: string;
+  json: string;
+};
+
+export type ClassFixture = {
+  classes?: ClassFixtureRow[];
+  subclasses?: SubclassFixtureRow[];
+  classResources?: ClassResourceFixtureRow[];
+  spellSlots?: SpellSlotFixtureRow[];
+  classOptionalFeatures?: ClassOptionalFeatureFixtureRow[];
+  classFeatures?: ClassFeatureFixtureRow[];
+  subclassResources?: SubclassResourceFixtureRow[];
+  subclassSpellSlots?: SubclassSpellSlotFixtureRow[];
+  subclassOptionalFeatures?: SubclassOptionalFeatureFixtureRow[];
+  subclassFeatures?: SubclassFeatureFixtureRow[];
+};
+
+/**
+ * Mirrors `build-db.ts`'s publish step against the ten class tables together — a
+ * class-at-a-level read spans several of them in one connection, so the fixture has to
+ * hold them all at once rather than one `publishTable` call per table.
+ */
+export function publishClasses(dataDir: string, fixture: ClassFixture): void {
+  publishTable(
+    dataDir,
+    `
+      CREATE TABLE classes (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        hit_die INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE subclasses (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        short_name TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source)
+      ) STRICT;
+
+      CREATE TABLE class_resources (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        resource_key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        PRIMARY KEY (class_name, class_source, level, resource_key)
+      ) STRICT;
+
+      CREATE TABLE spell_slots (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        slot_level INTEGER NOT NULL,
+        slots INTEGER NOT NULL,
+        PRIMARY KEY (class_name, class_source, level, slot_level)
+      ) STRICT;
+
+      CREATE TABLE class_optional_features (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        feature_type TEXT NOT NULL,
+        known INTEGER NOT NULL,
+        PRIMARY KEY (class_name, class_source, level, feature_type)
+      ) STRICT;
+
+      CREATE TABLE class_features (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source, level)
+      ) STRICT;
+
+      CREATE TABLE subclass_resources (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        resource_key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, resource_key)
+      ) STRICT;
+
+      CREATE TABLE subclass_spell_slots (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        slot_level INTEGER NOT NULL,
+        slots INTEGER NOT NULL,
+        PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
+      ) STRICT;
+
+      CREATE TABLE subclass_optional_features (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        feature_type TEXT NOT NULL,
+        known INTEGER NOT NULL,
+        PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, feature_type)
+      ) STRICT;
+
+      CREATE TABLE subclass_features (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_short_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
+      ) STRICT;
+    `,
+    [
+      {
+        insert:
+          "INSERT INTO classes (name, source, edition, hit_die, json) VALUES (@name, @source, @edition, @hit_die, @json)",
+        rows: fixture.classes ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclasses (name, source, short_name, class_name, class_source, edition, json) VALUES (@name, @source, @short_name, @class_name, @class_source, @edition, @json)",
+        rows: fixture.subclasses ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO class_resources (class_name, class_source, level, resource_key, value) VALUES (@class_name, @class_source, @level, @resource_key, @value)",
+        rows: fixture.classResources ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO spell_slots (class_name, class_source, level, slot_level, slots) VALUES (@class_name, @class_source, @level, @slot_level, @slots)",
+        rows: fixture.spellSlots ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO class_optional_features (class_name, class_source, level, feature_type, known) VALUES (@class_name, @class_source, @level, @feature_type, @known)",
+        rows: fixture.classOptionalFeatures ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (@name, @source, @class_name, @class_source, @level, @edition, @json)",
+        rows: fixture.classFeatures ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_resources (class_name, class_source, subclass_name, subclass_source, level, resource_key, value) VALUES (@class_name, @class_source, @subclass_name, @subclass_source, @level, @resource_key, @value)",
+        rows: fixture.subclassResources ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_spell_slots (class_name, class_source, subclass_name, subclass_source, level, slot_level, slots) VALUES (@class_name, @class_source, @subclass_name, @subclass_source, @level, @slot_level, @slots)",
+        rows: fixture.subclassSpellSlots ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_optional_features (class_name, class_source, subclass_name, subclass_source, level, feature_type, known) VALUES (@class_name, @class_source, @subclass_name, @subclass_source, @level, @feature_type, @known)",
+        rows: fixture.subclassOptionalFeatures ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_features (name, source, class_name, class_source, subclass_short_name, subclass_source, level, edition, json) VALUES (@name, @source, @class_name, @class_source, @subclass_short_name, @subclass_source, @level, @edition, @json)",
+        rows: fixture.subclassFeatures ?? [],
+      },
+    ],
   );
 }

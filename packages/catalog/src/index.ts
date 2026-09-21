@@ -1,5 +1,12 @@
 export type { BackgroundRecord, FeatRecord } from "./character-options.ts";
 export { backgroundRecordSchema, featRecordSchema } from "./character-options.ts";
+export type { ClassFeatureRecord, ClassGrants, ClassRecord, SubclassRecord } from "./class.ts";
+export {
+  classFeatureRecordSchema,
+  classGrantsSchema,
+  classRecordSchema,
+  subclassRecordSchema,
+} from "./class.ts";
 export type { Entries } from "./entry.ts";
 export { entriesSchema } from "./entry.ts";
 export type {
