@@ -25,22 +25,11 @@
 
   <div style="flex-grow: 1; display: flex; min-height: 0;">
 
-    <div style="width: {{sidebarWidth}}; flex-shrink: 0; height: 100%; background: #eaf0ec; border-right: 2px dashed #3f5d44; display: flex; flex-direction: column; padding: 16px 8px; transition: width 0.15s ease;">
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 10px;">
+    <div style="width: {{sidebarWidth}}; flex-shrink: 0; height: 100%; background: #eaf0ec; border-right: 2px dashed #3f5d44; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 8px; transition: width 0.15s ease;">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
         <span style="font-size: 13px; font-weight: 700; color: #3f5d44; writing-mode: {{sidebarLabelMode}}; text-align: center;">Sidebar</span>
         <span style="display: {{sidebarHintDisplay}}; font-size: 11px; color: #6b7280; text-align: center;">tabs, collapsible · see Sidebar.dc.html</span>
       </div>
-
-      <div style="display: flex; flex-direction: column; gap: 2px;">
-        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
-          <button onClick="{{t.go}}" style="display: flex; align-items: center; justify-content: {{sidebarRowJustify}}; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: {{t.bg}}; color: {{t.color}}; font-size: 13px; font-weight: {{t.weight}};">
-            <span style="display: {{sidebarHintDisplay}};">{{t.label}}</span>
-            <span style="display: {{sidebarCollapsedLabelDisplay}};">{{t.short}}</span>
-          </button>
-        </sc-for>
-      </div>
-
-      <div style="flex-grow: 1;"></div>
       <button onClick="{{toggleSidebar}}" style="font-size: 11px; font-weight: 600; color: #3f5d44; border: 1px solid #3f5d44; background: #ffffff; border-radius: 6px; padding: 6px 10px;">{{sidebarToggleLabel}}</button>
     </div>
 
@@ -51,10 +40,10 @@
         <span style="font-size: 12px; color: #6b7280; margin-left: 10px;">— avatar, name, inspiration, character menu · see CharacterHeader.dc.html</span>
       </div>
 
-      <div style="flex-grow: 1; min-height: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
-        <div style="font-size: 13px; font-weight: 700; color: #6b7280;">Active tab content — {{activeTabLabel}}</div>
+      <div style="flex-grow: 1; min-height: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="font-size: 13px; font-weight: 700; color: #6b7280;">Active tab content</div>
         <div style="flex-grow: 1; border: 2px dashed #dde1e6; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 24px;">
-          <span style="font-size: 13px; color: #6b7280; text-align: center; max-width: 480px;">{{activeTabDetail}}</span>
+          <span style="font-size: 13px; color: #6b7280; text-align: center; max-width: 480px;">Renders whichever tab is selected in the sidebar — Overview, Inventory, Spells, Features, Identity, Backstory, or Notes. See each tab's own widgets.</span>
         </div>
       </div>
     </div>
@@ -65,46 +54,18 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { collapsed: false, tab: 'overview' };
+    this.state = { collapsed: false };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const TABS = [
-      { id: 'overview', label: 'Overview', short: 'Ov', detail: 'Widget grid — Ability Scores, Saving Throws, Skills, Combat Stats, Hit Points, Attacks, Status Effects, Resistances & Immunities.' },
-      { id: 'inventory', label: 'Inventory', short: 'In', detail: 'Currency, Weapons, Armor, Gear — see Currency.dc.html, Weapons.dc.html, Armor.dc.html, Gear.dc.html.' },
-      { id: 'spells', label: 'Spells', short: 'Sp', detail: 'Spell Slots and Known Spells — see SpellSlots.dc.html, SpellList.dc.html.' },
-      { id: 'features', label: 'Features', short: 'Fe', detail: 'Class, race, and chosen features — see Features.dc.html.' },
-      { id: 'identity', label: 'Identity', short: 'Id', detail: 'Name/race/class/background, level/alignment/leveling, languages, proficiencies — see Identity.dc.html, Languages.dc.html, Proficiencies.dc.html.' },
-      { id: 'backstory', label: 'Backstory', short: 'Bs', detail: 'Personality, ideals, bonds, flaws, and the full backstory text — see Backstory.dc.html.' },
-      { id: 'notes', label: 'Notes', short: 'No', detail: 'Freeform note sections with optional images — see Notes.dc.html.' }
-    ];
     const collapsed = this.state.collapsed;
-    const tab = this.state.tab;
-    const tabs = TABS.map((t) => {
-      const active = t.id === tab;
-      return {
-        id: t.id,
-        label: t.label,
-        short: t.short,
-        bg: active ? accent : 'none',
-        color: active ? '#ffffff' : '#1f2430',
-        weight: active ? '600' : '500',
-        go: () => this.setState({ tab: t.id })
-      };
-    });
-    const current = TABS.find((t) => t.id === tab);
     return {
       accent,
       sidebarWidth: collapsed ? '72px' : '220px',
       sidebarLabelMode: collapsed ? 'vertical-rl' : 'horizontal-tb',
       sidebarHintDisplay: collapsed ? 'none' : 'block',
-      sidebarCollapsedLabelDisplay: collapsed ? 'block' : 'none',
-      sidebarRowJustify: collapsed ? 'center' : 'flex-start',
       sidebarToggleLabel: collapsed ? 'Expand' : 'Collapse',
-      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
-      tabs,
-      activeTabLabel: current.label,
-      activeTabDetail: current.detail
+      toggleSidebar: () => this.setState({ collapsed: !collapsed })
     };
   }
 }
