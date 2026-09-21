@@ -7,6 +7,7 @@ build/
 vendor/5etools*
 
 # Generated catalog — rebuilt by `pnpm content:build`
+data/content/
 data/content.db*
 
 # Your data — not committed, but back these up

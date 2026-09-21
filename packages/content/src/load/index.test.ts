@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildContent } from "../build-db.ts";
+import { buildContent, resolveContentDb } from "../build-db.ts";
 import { LOADERS } from "./index.ts";
 
 const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5etools");
@@ -16,11 +16,11 @@ const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5et
  */
 describe("LOADERS", () => {
   let workspace: string;
-  let dbPath: string;
+  let contentDir: string;
 
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "content-registry-"));
-    dbPath = join(workspace, "data", "content.db");
+    contentDir = join(workspace, "data", "content");
   });
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));
@@ -28,7 +28,7 @@ describe("LOADERS", () => {
   it("builds from tests/fixtures with rows in every table it writes", () => {
     const counts = buildContent({
       vendorDir: FIXTURE_VENDOR,
-      dbPath,
+      contentDir,
       loaders: LOADERS,
       meta: { upstream_tag: "fixtures" },
     });
@@ -50,9 +50,9 @@ describe("LOADERS", () => {
    * question for the picker rather than for the ETL.
    */
   it("totals a character's options across the class, the subclass and every grant held", () => {
-    buildContent({ vendorDir: FIXTURE_VENDOR, dbPath, loaders: LOADERS, meta: {} });
+    buildContent({ vendorDir: FIXTURE_VENDOR, contentDir, loaders: LOADERS, meta: {} });
 
-    const db = new Database(dbPath, { readonly: true });
+    const db = new Database(resolveContentDb(contentDir), { readonly: true });
     const maneuvers = (grantors: [string, string, string][]): number =>
       db
         .prepare(

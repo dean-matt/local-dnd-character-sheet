@@ -1,10 +1,18 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  globSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildContent } from "./build-db.ts";
+import { buildContent, resolveContentDb } from "./build-db.ts";
 import { byNameSource, collectFluff } from "./load/fluff.ts";
 import type { Loader } from "./load/index.ts";
 import { CONTENT_SCHEMA } from "./schema.ts";
@@ -16,7 +24,9 @@ import { CONTENT_SCHEMA } from "./schema.ts";
 describe("buildContent", () => {
   let workspace: string;
   let vendorDir: string;
-  let dbPath: string;
+  let contentDir: string;
+
+  const open = () => new Database(resolveContentDb(contentDir), { readonly: true });
 
   const lookup = (name: string): Loader => ({
     name,
@@ -38,7 +48,7 @@ describe("buildContent", () => {
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "content-build-"));
     vendorDir = join(workspace, "vendor");
-    dbPath = join(workspace, "data", "content.db");
+    contentDir = join(workspace, "data", "content");
     mkdirSync(join(vendorDir, "data"), { recursive: true });
     writeFileSync(join(vendorDir, "data", "conditions.json"), '{"entries":["Blinded","Prone"]}');
   });
@@ -48,13 +58,13 @@ describe("buildContent", () => {
   it("stamps meta, inserts loader rows and returns a count per table", () => {
     const counts = buildContent({
       vendorDir,
-      dbPath,
+      contentDir,
       loaders: [lookup("condition"), lookup("status")],
       meta: { upstream_tag: "v2.34.1" },
     });
 
     expect(counts).toEqual({ lookups: 4 });
-    const db = new Database(dbPath, { readonly: true });
+    const db = open();
     expect(db.prepare("SELECT value FROM meta WHERE key = 'upstream_tag'").pluck().get()).toBe(
       "v2.34.1",
     );
@@ -65,6 +75,14 @@ describe("buildContent", () => {
       { kind: "status", name: "Prone" },
     ]);
     db.close();
+  });
+
+  it("names the published database after its content hash and points current at it", () => {
+    buildContent({ vendorDir, contentDir, loaders: [lookup("condition")], meta: {} });
+
+    const current = readFileSync(join(contentDir, "current"), "utf8").trim();
+    expect(current).toMatch(/^content-[0-9a-f]{16}\.db$/);
+    expect(existsSync(join(contentDir, current))).toBe(true);
   });
 
   it("spans the union of a batch's keys, so an optional column is never dropped", () => {
@@ -94,9 +112,9 @@ describe("buildContent", () => {
       }),
     };
 
-    buildContent({ vendorDir, dbPath, loaders: [partial], meta: {} });
+    buildContent({ vendorDir, contentDir, loaders: [partial], meta: {} });
 
-    const db = new Database(dbPath, { readonly: true });
+    const db = open();
     expect(db.prepare("SELECT name, rarity FROM items ORDER BY rowid").all()).toEqual([
       { name: "Club", rarity: null },
       { name: "Wand of Magic Missiles", rarity: "uncommon" },
@@ -111,10 +129,11 @@ describe("buildContent", () => {
       rows: () => ({ lookups: [{ kind: "condition", name: "Blinded", source: "PHB" }] }),
     };
 
-    expect(() => buildContent({ vendorDir, dbPath, loaders: [invalid], meta: {} })).toThrow(
+    expect(() => buildContent({ vendorDir, contentDir, loaders: [invalid], meta: {} })).toThrow(
       /Loader "conditions" failed/,
     );
-    expect(existsSync(dbPath)).toBe(false);
+    expect(existsSync(join(contentDir, "current"))).toBe(false);
+    expect(globSync("content-*.db", { cwd: contentDir })).toEqual([]);
   });
 
   it("has no column DEFAULT for the union insert to apply inconsistently", () => {
@@ -137,7 +156,12 @@ describe("buildContent", () => {
       },
     });
 
-    buildContent({ vendorDir, dbPath, loaders: [record("first"), record("second")], meta: {} });
+    buildContent({
+      vendorDir,
+      contentDir,
+      loaders: [record("first"), record("second")],
+      meta: {},
+    });
 
     expect(order).toEqual(["first", "second"]);
   });
@@ -152,24 +176,25 @@ describe("buildContent", () => {
     };
 
     expect(() =>
-      buildContent({ vendorDir, dbPath, loaders: [lookup("condition"), exploding], meta: {} }),
+      buildContent({ vendorDir, contentDir, loaders: [lookup("condition"), exploding], meta: {} }),
     ).toThrow(/Loader "broken" failed/);
-    expect(existsSync(dbPath)).toBe(false);
-    expect(globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dirname(dbPath) })).toEqual([]);
+    expect(existsSync(join(contentDir, "current"))).toBe(false);
+    expect(globSync("content-*.db", { cwd: contentDir })).toEqual([]);
+    expect(globSync("build.*.incoming*", { cwd: contentDir })).toEqual([]);
   });
 
   it("reaps a staging file left behind by a build that is gone", () => {
     // A child that has already exited, rather than a pid picked out of the air:
     // Linux's pid_max makes a large literal a live process often enough to flake.
     const dead = spawnSync(process.execPath, ["-e", ""]).pid;
-    const orphan = join(dirname(dbPath), `${basename(dbPath)}.${dead}.incoming`);
-    mkdirSync(dirname(dbPath), { recursive: true });
+    mkdirSync(contentDir, { recursive: true });
+    const orphan = join(contentDir, `build.${dead}.incoming`);
     writeFileSync(orphan, "stale");
     writeFileSync(`${orphan}-wal`, "stale");
 
-    buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+    buildContent({ vendorDir, contentDir, loaders: [lookup("condition")], meta: {} });
 
-    expect(globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dirname(dbPath) })).toEqual([]);
+    expect(globSync("build.*.incoming*", { cwd: contentDir })).toEqual([]);
   });
 
   it("reads only files, so a recursive glob spanning directories still loads", () => {
@@ -177,7 +202,9 @@ describe("buildContent", () => {
     writeFileSync(join(vendorDir, "data", "spells", "phb.json"), '{"entries":["Fireball"]}');
     const wide: Loader = { ...lookup("condition"), files: ["data/**/*"] };
 
-    expect(buildContent({ vendorDir, dbPath, loaders: [wide], meta: {} })).toEqual({ lookups: 3 });
+    expect(buildContent({ vendorDir, contentDir, loaders: [wide], meta: {} })).toEqual({
+      lookups: 3,
+    });
   });
 
   it("names the file a loader could not parse, not just the loader", () => {
@@ -185,7 +212,7 @@ describe("buildContent", () => {
 
     let thrown: Error | undefined;
     try {
-      buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+      buildContent({ vendorDir, contentDir, loaders: [lookup("condition")], meta: {} });
     } catch (error) {
       thrown = error as Error;
     }
@@ -198,10 +225,11 @@ describe("buildContent", () => {
   it("leaves the previous catalog in place when a rebuild fails", () => {
     buildContent({
       vendorDir,
-      dbPath,
+      contentDir,
       loaders: [lookup("condition")],
       meta: { upstream_tag: "a" },
     });
+    const published = resolveContentDb(contentDir);
     const exploding: Loader = {
       name: "broken",
       files: ["data/*.json"],
@@ -211,19 +239,45 @@ describe("buildContent", () => {
     };
 
     expect(() =>
-      buildContent({ vendorDir, dbPath, loaders: [exploding], meta: { upstream_tag: "b" } }),
+      buildContent({ vendorDir, contentDir, loaders: [exploding], meta: { upstream_tag: "b" } }),
     ).toThrow();
 
-    const db = new Database(dbPath, { readonly: true });
+    expect(resolveContentDb(contentDir)).toBe(published);
+    const db = open();
     expect(db.prepare("SELECT value FROM meta WHERE key = 'upstream_tag'").pluck().get()).toBe("a");
     expect(db.prepare("SELECT COUNT(*) FROM lookups").pluck().get()).toBe(2);
     db.close();
   });
 
+  it("keeps the previous version file readable until the next build reaps it", () => {
+    buildContent({ vendorDir, contentDir, loaders: [lookup("condition")], meta: {} });
+    const first = resolveContentDb(contentDir);
+    const reader = new Database(first, { readonly: true });
+
+    buildContent({
+      vendorDir,
+      contentDir,
+      loaders: [lookup("condition"), lookup("status")],
+      meta: {},
+    });
+
+    expect(existsSync(first)).toBe(true);
+    expect(reader.prepare("SELECT COUNT(*) FROM lookups").pluck().get()).toBe(2);
+    reader.close();
+
+    buildContent({
+      vendorDir,
+      contentDir,
+      loaders: [lookup("condition"), lookup("status"), lookup("sense")],
+      meta: {},
+    });
+    expect(existsSync(first)).toBe(false);
+  });
+
   it("names the loader when a source file is missing", () => {
     const absent: Loader = { name: "spells", files: ["data/spells/*.json"], rows: () => ({}) };
 
-    expect(() => buildContent({ vendorDir, dbPath, loaders: [absent], meta: {} })).toThrow(
+    expect(() => buildContent({ vendorDir, contentDir, loaders: [absent], meta: {} })).toThrow(
       /Loader "spells" failed/,
     );
   });
@@ -246,7 +300,9 @@ describe("buildContent", () => {
     it("warns on the count and the file, without failing the build", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      expect(() => buildContent({ vendorDir, dbPath, loaders: [fluffy], meta: {} })).not.toThrow();
+      expect(() =>
+        buildContent({ vendorDir, contentDir, loaders: [fluffy], meta: {} }),
+      ).not.toThrow();
       expect(warn.mock.calls).toEqual([
         ["1 fluff entries matched no row:"],
         ["  data/fluff-things.json: 1"],
@@ -270,7 +326,7 @@ describe("buildContent", () => {
         },
       };
 
-      buildContent({ vendorDir, dbPath, loaders: [claiming], meta: {} });
+      buildContent({ vendorDir, contentDir, loaders: [claiming], meta: {} });
 
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
@@ -291,10 +347,10 @@ describe("buildContent", () => {
         },
       };
 
-      expect(() => buildContent({ vendorDir, dbPath, loaders: [orphaning], meta: {} })).toThrow(
+      expect(() => buildContent({ vendorDir, contentDir, loaders: [orphaning], meta: {} })).toThrow(
         /Loader "broken" failed/,
       );
-      buildContent({ vendorDir, dbPath, loaders: [lookup("condition")], meta: {} });
+      buildContent({ vendorDir, contentDir, loaders: [lookup("condition")], meta: {} });
 
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
@@ -335,9 +391,9 @@ describe("buildContent", () => {
         },
       );
 
-      buildContent({ vendorDir, dbPath, loaders: [backgrounds], meta: {} });
+      buildContent({ vendorDir, contentDir, loaders: [backgrounds], meta: {} });
 
-      const db = new Database(dbPath, { readonly: true });
+      const db = open();
       const rows = db.prepare("SELECT json FROM lookups ORDER BY rowid").pluck().all() as string[];
       db.close();
       const entries = rows.map((row) => JSON.parse(row));
@@ -353,7 +409,7 @@ describe("buildContent", () => {
 
       let thrown: Error | undefined;
       try {
-        buildContent({ vendorDir, dbPath, loaders: [backgrounds], meta: {} });
+        buildContent({ vendorDir, contentDir, loaders: [backgrounds], meta: {} });
       } catch (error) {
         thrown = error as Error;
       }
@@ -362,7 +418,7 @@ describe("buildContent", () => {
       expect((thrown?.cause as Error)?.message).toMatch(
         /data\/copies\.json background: "Augen Trust" \(EGW\) copies "Spy" \(PHB\)/,
       );
-      expect(existsSync(dbPath)).toBe(false);
+      expect(existsSync(join(contentDir, "current"))).toBe(false);
     });
   });
 });

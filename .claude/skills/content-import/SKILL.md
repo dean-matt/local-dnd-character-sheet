@@ -84,8 +84,8 @@ migrated. If you need to store something durable, it belongs in `characters.db` 
 ```bash
 pnpm content:sync --verify   # vendor/ still matches content.lock.json
 pnpm content:build
-sqlite3 data/content.db "SELECT key, value FROM meta;"
-sqlite3 data/content.db "SELECT edition, COUNT(*) FROM <table> GROUP BY edition;"
+sqlite3 "data/content/$(cat data/content/current)" "SELECT key, value FROM meta;"
+sqlite3 "data/content/$(cat data/content/current)" "SELECT edition, COUNT(*) FROM <table> GROUP BY edition;"
 ```
 
 Both editions should be present. A single-edition result usually means the edition
