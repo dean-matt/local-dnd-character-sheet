@@ -22,9 +22,15 @@ matches. Storing them means 6,155 synthesized rows, 3,634 distinct — the same 
 name arrives from a `PHB` and an `XPHB` base item, so 2,521 collide on `(name, source)`
 and the key would have to widen to carry the base item. Templates alone resolve 173 of
 the 361 `{@item}` targets that would otherwise dangle, and the expansions another 185
-— 1,374 of 1,382 occurrences between them. The way out, when a character can hold one:
-expand at query time from the template and the base item a character's inventory row
-names, which is also how a character references a catalog row rather than copying it.
+— 1,374 of 1,382 occurrences between them.
+
+A character holds one by naming both: an inventory entry's `ref` is the base item and its
+`variant` the `magicvariant`, the same way a reference names a catalog row rather than
+copying it. `GET /items/{name}/{source}/variants/{variantName}/{variantSource}`
+(`packages/api/src/db/queries/item-variant.ts`) expands the pair at read time — the
+variant's `inherits` fields over the base item's own — rather than storing the result, so
+a `content.db` rebuild still updates every character. A base item the variant's `requires`
+or `excludes` refuses is a 409, not an expanded item the rules do not allow.
 
 Four dangling targets survive both, all of them barding: `{@item leather barding|phb}`
 and its three fellows are written as one `Barding` variant upstream renders per animal.

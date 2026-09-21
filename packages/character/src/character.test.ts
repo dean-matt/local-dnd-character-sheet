@@ -1000,6 +1000,28 @@ describe("inventory", () => {
     };
     expect(characterDefinitionSchema.safeParse(wielded).success).toBe(false);
   });
+
+  it("names a magic variant beside the base item it expands, rather than storing it expanded", () => {
+    const enchanted = {
+      ...structuredClone(definition),
+      inventory: [
+        {
+          ref: { name: "Longsword", source: "XPHB" },
+          variant: { name: "+1 Weapon", source: "XDMG" },
+        },
+      ],
+    };
+    const stored = characterDefinitionSchema.parse(enchanted);
+    expect(stored.inventory[0]?.variant).toEqual({ name: "+1 Weapon", source: "XDMG" });
+  });
+
+  it("rejects a variant paired with a homebrew ref, which carries no field for inherits to read", () => {
+    const homebrewVariant = {
+      ...structuredClone(definition),
+      inventory: [{ ref: { homebrewId: "hb_01" }, variant: { name: "+1 Weapon", source: "XDMG" } }],
+    };
+    expect(characterDefinitionSchema.safeParse(homebrewVariant).success).toBe(false);
+  });
 });
 
 describe("size and speed", () => {
