@@ -96,11 +96,10 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       .filter((row) => row.edition === edition)
       .map(toHomebrewSpellRecord);
     const merged = [...catalog, ...homebrew].sort((a, b) => a.name.localeCompare(b.name));
-    const boundedLimit = Math.min(limit, MAX_LIMIT);
     return c.json({
-      items: merged.slice(offset, offset + boundedLimit),
+      items: merged.slice(offset, offset + limit),
       total: merged.length,
-      limit: boundedLimit,
+      limit,
       offset,
     });
   });

@@ -1,10 +1,10 @@
-import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HomebrewSpellInput } from "@dnd/catalog";
-import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../db/client.ts";
+import { publishSpells } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell } from "../db/queries/homebrew.ts";
 import { spellsRoutes } from "./spells.ts";
 
@@ -12,10 +12,10 @@ const FIREBALL = {
   name: "Fireball",
   source: "PHB",
   edition: "classic",
-  level: 3,
+  level: 3 as const,
   school: "V",
-  concentration: 0,
-  ritual: 0,
+  concentration: 0 as const,
+  ritual: 0 as const,
   json: JSON.stringify({
     name: "Fireball",
     source: "PHB",
@@ -31,8 +31,8 @@ const GOODBERRY_ONE = {
   edition: "one",
   level: 1,
   school: "C",
-  concentration: 0,
-  ritual: 0,
+  concentration: 0 as const,
+  ritual: 0 as const,
   json: JSON.stringify({
     name: "Goodberry",
     source: "XPHB",
@@ -41,36 +41,6 @@ const GOODBERRY_ONE = {
     duration: [{ type: "instant" }],
   }),
 };
-
-let publishCount = 0;
-
-/** Mirrors `build-db.ts`'s publish step against a minimal `spells` table. */
-function publishSpells(dataDir: string, rows: (typeof FIREBALL)[]): void {
-  const contentDir = join(dataDir, "content");
-  mkdirSync(contentDir, { recursive: true });
-  const target = join(contentDir, `content-test-${publishCount++}.db`);
-  const db = new Database(target);
-  db.exec(`
-    CREATE TABLE spells (
-      name TEXT NOT NULL,
-      source TEXT NOT NULL,
-      edition TEXT NOT NULL,
-      level INTEGER NOT NULL,
-      school TEXT NOT NULL,
-      concentration INTEGER NOT NULL,
-      ritual INTEGER NOT NULL,
-      json TEXT NOT NULL,
-      PRIMARY KEY (name, source)
-    ) STRICT;
-  `);
-  const insert = db.prepare(
-    "INSERT INTO spells (name, source, edition, level, school, concentration, ritual, json) VALUES (@name, @source, @edition, @level, @school, @concentration, @ritual, @json)",
-  );
-  for (const row of rows) insert.run(row);
-  db.close();
-  writeFileSync(join(contentDir, "current.tmp"), `content-test-${publishCount - 1}.db`);
-  renameSync(join(contentDir, "current.tmp"), join(contentDir, "current"));
-}
 
 const acidSplash = (overrides: Partial<HomebrewSpellInput> = {}): HomebrewSpellInput => ({
   name: "Acid Splash",
