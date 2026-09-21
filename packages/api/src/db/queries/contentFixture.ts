@@ -217,6 +217,190 @@ export function publishItems(dataDir: string, rows: ItemFixtureRow[]): void {
   );
 }
 
+type EntityFixtureRow = {
+  type: string;
+  name: string;
+  source: string;
+  qualifier: string;
+  edition: string | null;
+  json: string;
+  rendered_text: string;
+};
+
+/**
+ * `entities`, its FTS5 index and the triggers `schema.ts` documents an external-content
+ * table needs to stay current — an insert with no trigger leaves `entities_fts` searching
+ * nothing.
+ */
+const ENTITIES_DDL = `
+  CREATE TABLE entities (
+    type          TEXT NOT NULL,
+    name          TEXT NOT NULL,
+    source        TEXT NOT NULL,
+    qualifier     TEXT NOT NULL,
+    edition       TEXT,
+    json          TEXT NOT NULL,
+    rendered_text TEXT NOT NULL,
+    PRIMARY KEY (type, name, source, qualifier)
+  ) STRICT;
+
+  CREATE VIRTUAL TABLE entities_fts USING fts5 (
+    name,
+    rendered_text,
+    content = 'entities',
+    content_rowid = 'rowid',
+    tokenize = 'porter unicode61'
+  );
+
+  CREATE TRIGGER entities_fts_insert AFTER INSERT ON entities BEGIN
+    INSERT INTO entities_fts (rowid, name, rendered_text)
+    VALUES (new.rowid, new.name, new.rendered_text);
+  END;
+
+  CREATE TRIGGER entities_fts_delete AFTER DELETE ON entities BEGIN
+    INSERT INTO entities_fts (entities_fts, rowid, name, rendered_text)
+    VALUES ('delete', old.rowid, old.name, old.rendered_text);
+  END;
+
+  CREATE TRIGGER entities_fts_update AFTER UPDATE ON entities BEGIN
+    INSERT INTO entities_fts (entities_fts, rowid, name, rendered_text)
+    VALUES ('delete', old.rowid, old.name, old.rendered_text);
+    INSERT INTO entities_fts (rowid, name, rendered_text)
+    VALUES (new.rowid, new.name, new.rendered_text);
+  END;
+`;
+
+const ENTITIES_INSERT =
+  "INSERT INTO entities (type, name, source, qualifier, edition, json, rendered_text) VALUES (@type, @name, @source, @qualifier, @edition, @json, @rendered_text)";
+
+export type SearchFixture = {
+  spells?: SpellFixtureRow[];
+  items?: ItemFixtureRow[];
+  races?: RaceFixtureRow[];
+  backgrounds?: BackgroundFixtureRow[];
+  feats?: FeatFixtureRow[];
+  classes?: ClassFixtureRow[];
+  optionalFeatures?: RaceFixtureRow[];
+  entities?: EntityFixtureRow[];
+};
+
+/**
+ * Mirrors `build-db.ts`'s publish step against every table `searchCatalog` reads — the
+ * seven Tier A tables `CATALOG_SEARCH_TABLES` names, plus `entities` — since a search
+ * spans them all in one connection.
+ */
+export function publishSearchFixture(dataDir: string, fixture: SearchFixture): void {
+  publishTable(
+    dataDir,
+    `
+      CREATE TABLE spells (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        school TEXT NOT NULL,
+        concentration INTEGER NOT NULL,
+        ritual INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE items (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        type TEXT,
+        rarity TEXT,
+        requires_attunement INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE races (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE backgrounds (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE feats (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE classes (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        hit_die INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE optional_features (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      ${ENTITIES_DDL}
+    `,
+    [
+      {
+        insert:
+          "INSERT INTO spells (name, source, edition, level, school, concentration, ritual, json) VALUES (@name, @source, @edition, @level, @school, @concentration, @ritual, @json)",
+        rows: fixture.spells ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO items (name, source, edition, kind, type, rarity, requires_attunement, json) VALUES (@name, @source, @edition, @kind, @type, @rarity, @requires_attunement, @json)",
+        rows: fixture.items ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO races (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows: fixture.races ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO backgrounds (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows: fixture.backgrounds ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO feats (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows: fixture.feats ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO classes (name, source, edition, hit_die, json) VALUES (@name, @source, @edition, @hit_die, @json)",
+        rows: fixture.classes ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO optional_features (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows: fixture.optionalFeatures ?? [],
+      },
+      { insert: ENTITIES_INSERT, rows: fixture.entities ?? [] },
+    ],
+  );
+}
+
 type ClassFixtureRow = {
   name: string;
   source: string;
