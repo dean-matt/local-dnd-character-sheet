@@ -7,8 +7,6 @@
       "!**/dist",
       "!**/*.gen.ts",
       "!vendor",
-      "!docs/mockup/*.dc.html",
-      "!docs/mockup/canvas.json",
       "!docs/mockup/components/*.dc.html",
       "!docs/mockup/components/canvas.json"
     ]
