@@ -12,7 +12,6 @@
 <style>
   body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
   * { box-sizing: border-box; }
-  button { font-family: inherit; cursor: pointer; }
 </style>
 </helmet>
 
@@ -25,12 +24,9 @@
 
   <div style="flex-grow: 1; display: flex; min-height: 0;">
 
-    <div style="width: {{sidebarWidth}}; flex-shrink: 0; height: 100%; background: #eaf0ec; border-right: 2px dashed #3f5d44; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 8px; transition: width 0.15s ease;">
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-        <span style="font-size: 13px; font-weight: 700; color: #3f5d44; writing-mode: {{sidebarLabelMode}}; text-align: center;">Sidebar</span>
-        <span style="display: {{sidebarHintDisplay}}; font-size: 11px; color: #6b7280; text-align: center;">tabs, collapsible · see Sidebar.dc.html</span>
-      </div>
-      <button onClick="{{toggleSidebar}}" style="font-size: 11px; font-weight: 600; color: #3f5d44; border: 1px solid #3f5d44; background: #ffffff; border-radius: 6px; padding: 6px 10px;">{{sidebarToggleLabel}}</button>
+    <div style="width: 220px; flex-shrink: 0; height: 100%; background: #eaf0ec; border-right: 2px dashed #3f5d44; display: flex; flex-direction: column; align-items: center; padding: 16px 8px;">
+      <span style="font-size: 13px; font-weight: 700; color: #3f5d44; text-align: center;">Sidebar</span>
+      <span style="font-size: 11px; color: #6b7280; text-align: center; margin-top: 2px;">tabs, collapsible · see Sidebar.dc.html</span>
     </div>
 
     <div style="flex-grow: 1; display: flex; flex-direction: column; min-width: 0;">
@@ -52,21 +48,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":1140}}'>
 class Component extends DCLogic {
-  constructor(props) {
-    super(props);
-    this.state = { collapsed: false };
-  }
   renderVals() {
-    const accent = this.props.accent ?? '#c1272d';
-    const collapsed = this.state.collapsed;
-    return {
-      accent,
-      sidebarWidth: collapsed ? '72px' : '220px',
-      sidebarLabelMode: collapsed ? 'vertical-rl' : 'horizontal-tb',
-      sidebarHintDisplay: collapsed ? 'none' : 'block',
-      sidebarToggleLabel: collapsed ? 'Expand' : 'Collapse',
-      toggleSidebar: () => this.setState({ collapsed: !collapsed })
-    };
+    return { accent: this.props.accent ?? '#c1272d' };
   }
 }
 </script>
