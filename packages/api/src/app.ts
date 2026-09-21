@@ -7,6 +7,7 @@ import { featsRoutes } from "./routes/feats.ts";
 import { homebrewRoutes } from "./routes/homebrew.ts";
 import { itemsRoutes } from "./routes/items.ts";
 import { racesRoutes } from "./routes/races.ts";
+import { searchRoutes } from "./routes/search.ts";
 import { spellsRoutes } from "./routes/spells.ts";
 
 export const app = new OpenAPIHono();
@@ -19,6 +20,7 @@ app.route("/", racesRoutes(DATA_DIR));
 app.route("/", backgroundsRoutes(DATA_DIR));
 app.route("/", featsRoutes(DATA_DIR));
 app.route("/", classesRoutes(DATA_DIR));
+app.route("/", searchRoutes(DATA_DIR, homebrewDb));
 
 const HealthResponse = z
   .object({ status: z.literal("ok"), version: z.string() })

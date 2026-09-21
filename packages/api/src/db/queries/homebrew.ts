@@ -1,5 +1,5 @@
 /**
- * List, read, create, update and delete for `homebrew.db`'s `homebrew_items` and
+ * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items` and
  * `homebrew_spells` tables. `source` never arrives as an argument — every write stamps
  * `HOMEBREW_SOURCE` into `json` here, the one place that builds it, and `id` is chosen by
  * the caller once at creation and never reassigned, so a rename keeps the id a character
@@ -7,15 +7,31 @@
  */
 import type { HomebrewItem, HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
 import { homebrewItemSchema, spellEntrySchema } from "@dnd/catalog";
-import { eq } from "drizzle-orm";
+import type { Edition } from "@dnd/rules";
+import { and, eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as homebrewSchema from "../homebrew.ts";
 import { HOMEBREW_SOURCE, homebrewItems, homebrewSpells } from "../homebrew.ts";
+import { escapeLikeTerm } from "./content.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;
 
 export function listHomebrewItems(db: HomebrewDb) {
   return db.select().from(homebrewItems).all();
+}
+
+/** Homebrew items of one edition whose name holds `term`, for `/search`. */
+export function searchHomebrewItems(db: HomebrewDb, edition: Edition, term: string) {
+  return db
+    .select()
+    .from(homebrewItems)
+    .where(
+      and(
+        eq(homebrewItems.edition, edition),
+        sql`${homebrewItems.name} LIKE ${`%${escapeLikeTerm(term)}%`} ESCAPE '!'`,
+      ),
+    )
+    .all();
 }
 
 export function getHomebrewItem(db: HomebrewDb, id: string) {
@@ -68,6 +84,20 @@ export function deleteHomebrewItem(db: HomebrewDb, id: string): boolean {
 
 export function listHomebrewSpells(db: HomebrewDb) {
   return db.select().from(homebrewSpells).all();
+}
+
+/** Homebrew spells of one edition whose name holds `term`, for `/search`. */
+export function searchHomebrewSpells(db: HomebrewDb, edition: Edition, term: string) {
+  return db
+    .select()
+    .from(homebrewSpells)
+    .where(
+      and(
+        eq(homebrewSpells.edition, edition),
+        sql`${homebrewSpells.name} LIKE ${`%${escapeLikeTerm(term)}%`} ESCAPE '!'`,
+      ),
+    )
+    .all();
 }
 
 export function getHomebrewSpell(db: HomebrewDb, id: string) {

@@ -30,6 +30,8 @@ export {
 } from "./item.ts";
 export type { RaceRecord, SubraceRecord } from "./race.ts";
 export { raceRecordSchema, subraceRecordSchema } from "./race.ts";
+export type { CatalogSearchType, SearchHit } from "./search.ts";
+export { catalogSearchHitSchema, homebrewSearchHitSchema, searchHitSchema } from "./search.ts";
 export type {
   HomebrewSpellInput,
   HomebrewSpellRecord,
