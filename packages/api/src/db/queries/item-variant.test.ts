@@ -169,6 +169,12 @@ describe("expandItemFields", () => {
     expect(merged.value).toBe(51500);
   });
 
+  it("leaves value unset rather than throwing where the base item carries none", () => {
+    const { value: _value, ...noValue } = LONGSWORD_FIELDS;
+    const merged = expandItemFields(noValue, ADAMANTINE_WEAPON_FIELDS.inherits);
+    expect(merged.value).toBeUndefined();
+  });
+
   it("drops the base item's page and srd flag, which the variant restates rather than inherits", () => {
     const merged = expandItemFields(LONGSWORD_FIELDS, PLUS_ONE_WEAPON_FIELDS.inherits);
     expect(merged.page).toBe(348);
@@ -226,6 +232,15 @@ describe("getExpandedItem", () => {
       dataDir,
       { name: "Longsword", source: "XPHB" },
       { name: "Nonexistent", source: "XDMG" },
+    );
+    expect(row).toBeUndefined();
+  });
+
+  it("returns undefined, not a throw, where the base and variant path segments are swapped", () => {
+    const row = getExpandedItem(
+      dataDir,
+      { name: "+1 Weapon", source: "XDMG" },
+      { name: "Longsword", source: "XPHB" },
     );
     expect(row).toBeUndefined();
   });

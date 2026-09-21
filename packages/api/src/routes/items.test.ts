@@ -46,6 +46,38 @@ const PLUS_ONE_WEAPON = {
   }),
 };
 
+const ADAMANTINE_WEAPON = {
+  name: "Adamantine Weapon",
+  source: "DMG",
+  edition: "classic",
+  kind: "magicvariant",
+  type: null,
+  rarity: "uncommon",
+  requires_attunement: 0 as const,
+  json: JSON.stringify({
+    name: "Adamantine Weapon",
+    requires: [{ weapon: true }],
+    excludes: { net: true },
+    inherits: {
+      namePrefix: "Adamantine ",
+      source: "DMG",
+      rarity: "uncommon",
+      valueExpression: "[[baseItem.value]] + 50000",
+    },
+  }),
+};
+
+const REVOLVER = {
+  name: "Revolver",
+  source: "DMG",
+  edition: "classic",
+  kind: "baseitem",
+  type: "FIRE",
+  rarity: null,
+  requires_attunement: 0 as const,
+  json: JSON.stringify({ name: "Revolver", source: "DMG", weapon: true }),
+};
+
 const DEMON_ARMOR_ONE = {
   name: "Demon Armor",
   source: "XDMG",
@@ -155,7 +187,7 @@ describe("itemsRoutes", () => {
 
     beforeEach(() => {
       variantDataDir = mkdtempSync(join(tmpdir(), "items-routes-variants-"));
-      publishItems(variantDataDir, [LONGSWORD, NET, PLUS_ONE_WEAPON]);
+      publishItems(variantDataDir, [LONGSWORD, NET, PLUS_ONE_WEAPON, ADAMANTINE_WEAPON, REVOLVER]);
       variantOpened = openDatabases(variantDataDir);
       variantRoutes = itemsRoutes(variantDataDir, variantOpened.homebrewDb);
     });
@@ -190,6 +222,24 @@ describe("itemsRoutes", () => {
       expect(res.status).toBe(409);
       expect(await res.json()).toEqual({
         error: "This base item does not meet the variant's requirements",
+      });
+    });
+
+    it("expands a base item with no value into an item with none, rather than crashing", async () => {
+      const res = await variantRoutes.request(
+        "/items/Revolver/DMG/variants/Adamantine%20Weapon/DMG",
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.name).toBe("Adamantine Revolver");
+      expect(body.json.value).toBeUndefined();
+    });
+
+    it("404s, not 500s, where the base and variant path segments are swapped", async () => {
+      const res = await variantRoutes.request("/items/%2B1%20Weapon/DMG/variants/Longsword/PHB");
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({
+        error: "No base item or magic variant with that name and source",
       });
     });
   });

@@ -74,8 +74,18 @@ function sortNameOpsFirst(entries: [string, unknown][]): [string, unknown][] {
  * The arithmetic upstream evaluates for `valueExpression`/`weightExpression` —
  * `[[baseItem.value]] + 50000` and its like. Left-to-right with no precedence: every
  * expression upstream writes today is one operator between two operands.
+ *
+ * `undefined` where an operand the expression names is absent from the base item, such
+ * as a firearm with no `value` — that field stays unset on the merged item rather than
+ * pricing it as `NaN`, the same way `expandItemFields` already leaves `type`/`rarity`
+ * unset where the source data does not carry them.
  */
-function evaluateExpression(expression: string, baseFields: Entry, mergedSoFar: Entry): number {
+function evaluateExpression(
+  expression: string,
+  baseFields: Entry,
+  mergedSoFar: Entry,
+): number | undefined {
+  let unresolved = false;
   const substituted = expression.replace(
     /\[\[(baseItem|item)\.([a-zA-Z0-9_.]+)]]/g,
     (_all, scope: string, path: string) => {
@@ -84,11 +94,13 @@ function evaluateExpression(expression: string, baseFields: Entry, mergedSoFar: 
         .split(".")
         .reduce<unknown>((node, key) => (isRecord(node) ? node[key] : undefined), source);
       if (typeof value !== "number") {
-        throw new Error(`${expression}: ${scope}.${path} is not a number`);
+        unresolved = true;
+        return "0";
       }
       return String(value);
     },
   );
+  if (unresolved) return undefined;
   const tokens = substituted.match(/-?\d+(?:\.\d+)?|[+\-*/]/g);
   if (!tokens || tokens.length === 0)
     throw new Error(`${expression}: not an arithmetic expression`);
@@ -113,6 +125,17 @@ function evaluateExpression(expression: string, baseFields: Entry, mergedSoFar: 
     }
   }
   return result;
+}
+
+/** Sets `merged[field]` from an expression, leaving it unset where the expression can't resolve. */
+function setExpressionField(
+  merged: Entry,
+  field: string,
+  expression: string,
+  baseFields: Entry,
+): void {
+  const value = evaluateExpression(expression, baseFields, merged);
+  if (value !== undefined) merged[field] = value;
 }
 
 /**
@@ -143,10 +166,10 @@ export function expandItemFields(baseFields: Entry, inherits: Entry): Entry {
         break;
       }
       case "valueExpression":
-        merged.value = evaluateExpression(String(val), baseFields, merged);
+        setExpressionField(merged, "value", String(val), baseFields);
         break;
       case "weightExpression":
-        merged.weight = evaluateExpression(String(val), baseFields, merged);
+        setExpressionField(merged, "weight", String(val), baseFields);
         break;
       default:
         merged[key] = val;
@@ -165,7 +188,9 @@ function requiresAttunement(fields: Entry): 0 | 1 {
 /**
  * The specific item a base item and a magic variant expand into.
  *
- * `undefined` where either `(name, source)` names no row; `null` where the variant's
+ * `undefined` where either `(name, source)` names no row, or names one that is not the
+ * kind it must be — a caller who swaps the base and variant path segments gets the same
+ * "not found" a genuinely absent row would, not a crash. `null` where the variant's
  * `requires`/`excludes` refuses this base item — a variant is not expanded into an item
  * the rules do not allow.
  */
@@ -177,12 +202,7 @@ export function getExpandedItem(
   const baseRow = getItem(dataDir, base.name, base.source);
   const variantRow = getItem(dataDir, variant.name, variant.source);
   if (!baseRow || !variantRow) return undefined;
-  if (baseRow.kind !== "baseitem") {
-    throw new Error(`${base.name}|${base.source} is not a baseitem`);
-  }
-  if (variantRow.kind !== "magicvariant") {
-    throw new Error(`${variant.name}|${variant.source} is not a magicvariant`);
-  }
+  if (baseRow.kind !== "baseitem" || variantRow.kind !== "magicvariant") return undefined;
 
   const variantFields: Entry = JSON.parse(variantRow.json);
   const baseFields: Entry = JSON.parse(baseRow.json);
