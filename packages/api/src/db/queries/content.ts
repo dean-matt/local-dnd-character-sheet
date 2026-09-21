@@ -1,7 +1,7 @@
 /**
- * Reads `content.db`'s `spells` table. Every query opens and closes its own connection
- * through `openContentDb` instead of holding one — the staleness that module exists to
- * avoid.
+ * Reads `content.db`'s Tier A tables — spells, races, backgrounds, feats, items, classes
+ * and subclasses. Every query opens and closes its own connection through `openContentDb`
+ * instead of holding one — the staleness that module exists to avoid.
  */
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
@@ -231,6 +231,210 @@ export function getItem(dataDir: string, name: string, source: string): ItemRow 
     return db
       .prepare(`SELECT ${ITEM_COLUMNS} FROM items WHERE name = ? AND source = ?`)
       .get(name, source) as ItemRow | undefined;
+  } finally {
+    db.close();
+  }
+}
+
+export type ClassRow = {
+  name: string;
+  source: string;
+  edition: Edition;
+  hit_die: number;
+  json: string;
+};
+
+const CLASS_COLUMNS = "name, source, edition, hit_die, json";
+
+export function listClasses(dataDir: string, edition: Edition): ClassRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(`SELECT ${CLASS_COLUMNS} FROM classes WHERE edition = ? ORDER BY name, source`)
+      .all(edition) as ClassRow[];
+  } finally {
+    db.close();
+  }
+}
+
+export function getClass(dataDir: string, name: string, source: string): ClassRow | undefined {
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(`SELECT ${CLASS_COLUMNS} FROM classes WHERE name = ? AND source = ?`)
+      .get(name, source) as ClassRow | undefined;
+  } finally {
+    db.close();
+  }
+}
+
+export type SubclassRow = {
+  name: string;
+  source: string;
+  short_name: string;
+  class_name: string;
+  class_source: string;
+  edition: Edition;
+  json: string;
+};
+
+const SUBCLASS_COLUMNS = "name, source, short_name, class_name, class_source, edition, json";
+
+export function listSubclasses(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  edition: Edition,
+): SubclassRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(
+        `SELECT ${SUBCLASS_COLUMNS} FROM subclasses
+         WHERE class_name = ? AND class_source = ? AND edition = ?
+         ORDER BY name, source`,
+      )
+      .all(className, classSource, edition) as SubclassRow[];
+  } finally {
+    db.close();
+  }
+}
+
+export function getSubclass(
+  dataDir: string,
+  name: string,
+  source: string,
+  className: string,
+  classSource: string,
+): SubclassRow | undefined {
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(
+        `SELECT ${SUBCLASS_COLUMNS} FROM subclasses
+         WHERE name = ? AND source = ? AND class_name = ? AND class_source = ?`,
+      )
+      .get(name, source, className, classSource) as SubclassRow | undefined;
+  } finally {
+    db.close();
+  }
+}
+
+type ClassResourceRow = { resource_key: string; value: string };
+type SpellSlotRow = { slot_level: number; slots: number };
+type ClassOptionalFeatureRow = { feature_type: string; known: number };
+export type ClassFeatureRow = { name: string; source: string; level: number; json: string };
+
+export type ClassGrantsRow = {
+  resources: ClassResourceRow[];
+  spellSlots: SpellSlotRow[];
+  optionalFeatures: ClassOptionalFeatureRow[];
+  features: ClassFeatureRow[];
+};
+
+/**
+ * What a class grants by one level, assembled in a single connection: the resources and
+ * slots printed at that level (a level with no row grants none, per
+ * `packages/content/src/load/classes.ts`), the options known by then, and every feature
+ * gained up to and including it.
+ */
+export function getClassGrants(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+): ClassGrantsRow {
+  const db = openContentDb(dataDir);
+  try {
+    const resources = db
+      .prepare(
+        `SELECT resource_key, value FROM class_resources
+         WHERE class_name = ? AND class_source = ? AND level = ?
+         ORDER BY resource_key`,
+      )
+      .all(className, classSource, level) as ClassResourceRow[];
+    const spellSlots = db
+      .prepare(
+        `SELECT slot_level, slots FROM spell_slots
+         WHERE class_name = ? AND class_source = ? AND level = ?
+         ORDER BY slot_level`,
+      )
+      .all(className, classSource, level) as SpellSlotRow[];
+    const optionalFeatures = db
+      .prepare(
+        `SELECT feature_type, known FROM class_optional_features
+         WHERE class_name = ? AND class_source = ? AND level = ?
+         ORDER BY feature_type`,
+      )
+      .all(className, classSource, level) as ClassOptionalFeatureRow[];
+    const features = db
+      .prepare(
+        `SELECT name, source, level, json FROM class_features
+         WHERE class_name = ? AND class_source = ? AND level <= ?
+         ORDER BY level, name`,
+      )
+      .all(className, classSource, level) as ClassFeatureRow[];
+    return { resources, spellSlots, optionalFeatures, features };
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * What a subclass grants by one level. `subclassName` addresses the resource, slot and
+ * optional-feature tables and `subclassShortName` addresses the feature table — the two
+ * spellings `docs/data-model.md` and `packages/content/src/schema.ts` document.
+ */
+export function getSubclassGrants(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassShortName: string,
+  subclassSource: string,
+  level: number,
+): ClassGrantsRow {
+  const db = openContentDb(dataDir);
+  try {
+    const resources = db
+      .prepare(
+        `SELECT resource_key, value FROM subclass_resources
+         WHERE class_name = ? AND class_source = ?
+           AND subclass_name = ? AND subclass_source = ? AND level = ?
+         ORDER BY resource_key`,
+      )
+      .all(className, classSource, subclassName, subclassSource, level) as ClassResourceRow[];
+    const spellSlots = db
+      .prepare(
+        `SELECT slot_level, slots FROM subclass_spell_slots
+         WHERE class_name = ? AND class_source = ?
+           AND subclass_name = ? AND subclass_source = ? AND level = ?
+         ORDER BY slot_level`,
+      )
+      .all(className, classSource, subclassName, subclassSource, level) as SpellSlotRow[];
+    const optionalFeatures = db
+      .prepare(
+        `SELECT feature_type, known FROM subclass_optional_features
+         WHERE class_name = ? AND class_source = ?
+           AND subclass_name = ? AND subclass_source = ? AND level = ?
+         ORDER BY feature_type`,
+      )
+      .all(
+        className,
+        classSource,
+        subclassName,
+        subclassSource,
+        level,
+      ) as ClassOptionalFeatureRow[];
+    const features = db
+      .prepare(
+        `SELECT name, source, level, json FROM subclass_features
+         WHERE class_name = ? AND class_source = ?
+           AND subclass_short_name = ? AND subclass_source = ? AND level <= ?
+         ORDER BY level, name`,
+      )
+      .all(className, classSource, subclassShortName, subclassSource, level) as ClassFeatureRow[];
+    return { resources, spellSlots, optionalFeatures, features };
   } finally {
     db.close();
   }
