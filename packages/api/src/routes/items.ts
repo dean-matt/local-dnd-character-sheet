@@ -1,9 +1,12 @@
 /**
- * Reads the item catalog: `content.db`'s `items` table, `item` and `baseitem` kinds only
- * — see docs/items.md — merged at query time with `homebrew.db`'s homebrew items of the
- * same edition. A homebrew row carries no `source` at the top level and a catalog row
- * carries no `id` — that structural difference is how a caller tells the two apart,
- * without inspecting `source`.
+ * Reads the item catalog: `content.db`'s `items` table merged at query time with
+ * `homebrew.db`'s homebrew items of the same edition. A homebrew row carries no `source`
+ * at the top level and a catalog row carries no `id` — that structural difference is how
+ * a caller tells the two apart, without inspecting `source`.
+ *
+ * The list filters to `item` and `baseitem` kinds — the equipment a character can own,
+ * per docs/items.md. The read does not: `(name, source)` resolves any kind, which a
+ * `{@item}` reference or a magic-variant expansion needs.
  *
  * Creating, renaming or deleting a homebrew item stays with `/homebrew/items`; this only
  * reads.
