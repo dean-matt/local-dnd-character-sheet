@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Class</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  input { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 300px; height: 120px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px;">
+    <label for="classInput" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Class</label>
+    <input id="classInput" type="text" value="{{cls}}" onChange="{{onCls}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":300,"height":120}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cls: 'Ranger' };
+  }
+  renderVals() {
+    return { cls: this.state.cls, onCls: (e) => this.setState({ cls: e.target.value }) };
+  }
+}
+</script>
+</body>
+</html>

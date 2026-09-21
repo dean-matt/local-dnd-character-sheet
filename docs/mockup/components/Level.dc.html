@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Level &amp; Experience</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  input, select { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 380px; height: 240px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px; display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: end;">
+    <div>
+      <label for="levelInput" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Level</label>
+      <input id="levelInput" type="number" min="1" max="20" value="{{level}}" onChange="{{onLevel}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+    </div>
+    <div>
+      <label for="levelingModeSelect" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Leveling</label>
+      <select id="levelingModeSelect" value="{{levelingMode}}" onChange="{{onLevelingMode}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+        <option value="xp">Experience</option>
+        <option value="milestone">Milestone</option>
+      </select>
+    </div>
+    <sc-if value="{{isXpMode}}" hint-placeholder-val="{{true}}">
+      <div style="grid-column: 1 / -1;">
+        <label for="xpInput" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Experience Points</label>
+        <input id="xpInput" type="number" min="0" value="{{xp}}" onChange="{{onXp}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+      </div>
+    </sc-if>
+    <sc-if value="{{isMilestoneMode}}" hint-placeholder-val="{{false}}">
+      <div style="grid-column: 1 / -1; font-size: 13px; font-style: italic; color: #6b7280;">Milestone leveling — the DM sets Level directly; no experience points tracked.</div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":380,"height":240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { level: 7, levelingMode: 'xp', xp: 23000 };
+  }
+  renderVals() {
+    const s = this.state;
+    return {
+      level: s.level,
+      onLevel: (e) => this.setState({ level: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)) }),
+      levelingMode: s.levelingMode,
+      onLevelingMode: (e) => this.setState({ levelingMode: e.target.value }),
+      isXpMode: s.levelingMode === 'xp',
+      isMilestoneMode: s.levelingMode === 'milestone',
+      xp: s.xp,
+      onXp: (e) => this.setState({ xp: Math.max(0, parseInt(e.target.value, 10) || 0) })
+    };
+  }
+}
+</script>
+</body>
+</html>
