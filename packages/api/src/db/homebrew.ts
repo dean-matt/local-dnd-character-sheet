@@ -8,7 +8,7 @@
  * `json` holds the 5etools entry shape `@dnd/catalog` defines, not a shape of our own —
  * see `docs/data-model.md` for why.
  */
-import type { HomebrewItem, HomebrewSpell } from "@dnd/catalog";
+import type { HomebrewItem, SpellEntry } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -42,7 +42,7 @@ export const homebrewSpells = sqliteTable(
     school: text("school").notNull(),
     concentration: integer("concentration", { mode: "boolean" }).notNull().default(false),
     ritual: integer("ritual", { mode: "boolean" }).notNull().default(false),
-    json: text("json", { mode: "json" }).$type<HomebrewSpell>().notNull(),
+    json: text("json", { mode: "json" }).$type<SpellEntry>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [index("homebrew_spells_by_name").on(t.name)],
