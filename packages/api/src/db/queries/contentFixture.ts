@@ -31,6 +31,7 @@ export type SubraceFixtureRow = {
 
 export type BackgroundFixtureRow = RaceFixtureRow;
 export type FeatFixtureRow = RaceFixtureRow;
+export type MetaFixtureRow = { key: string; value: string };
 
 export type ItemFixtureRow = {
   name: string;
@@ -67,6 +68,25 @@ function publishTable(dataDir: string, ddl: string, insertions: Insertion[]): vo
   db.close();
   writeFileSync(join(contentDir, "current.tmp"), name);
   renameSync(join(contentDir, "current.tmp"), join(contentDir, "current"));
+}
+
+/** Mirrors `build-db.ts`'s publish step against a minimal `meta` table. */
+export function publishMeta(dataDir: string, rows: MetaFixtureRow[]): void {
+  publishTable(
+    dataDir,
+    `
+      CREATE TABLE meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      ) STRICT;
+    `,
+    [
+      {
+        insert: "INSERT INTO meta (key, value) VALUES (@key, @value)",
+        rows,
+      },
+    ],
+  );
 }
 
 /** Mirrors `build-db.ts`'s publish step against a minimal `spells` table. */

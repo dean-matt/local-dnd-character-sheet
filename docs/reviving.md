@@ -36,10 +36,10 @@ pnpm content:build
 ```
 
 Every build stamps `upstream_tag`, `built_at`, `built_by_commit`, and `node_version`
-into the `meta` table, so you can always tell what produced a given database:
+into the `meta` table. `GET /catalog/meta` reads them back once the API is running:
 
 ```bash
-sqlite3 "data/content/$(cat data/content/current)" "SELECT key, value FROM meta;"
+curl -s http://127.0.0.1:8787/catalog/meta | jq
 ```
 
 ## Check your data survived
