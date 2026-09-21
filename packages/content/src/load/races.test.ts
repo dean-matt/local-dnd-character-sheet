@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildContent } from "../build-db.ts";
+import { buildContent, resolveContentDb } from "../build-db.ts";
 import { EDITION_FILES } from "./edition.ts";
 import { races } from "./races.ts";
 
@@ -13,12 +13,12 @@ type Entry = Record<string, unknown>;
 
 describe("the races loader", () => {
   let workspace: string;
-  let dbPath: string;
+  let contentDir: string;
 
   const build = (vendorDir: string) =>
-    buildContent({ vendorDir, dbPath, loaders: [races], meta: {} });
+    buildContent({ vendorDir, contentDir, loaders: [races], meta: {} });
 
-  const open = () => new Database(dbPath, { readonly: true });
+  const open = () => new Database(resolveContentDb(contentDir), { readonly: true });
 
   const query = <T>(sql: string, ...parameters: unknown[]): T[] => {
     const db = open();
@@ -42,7 +42,7 @@ describe("the races loader", () => {
 
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "content-races-"));
-    dbPath = join(workspace, "data", "content.db");
+    contentDir = join(workspace, "data", "content");
   });
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));

@@ -51,6 +51,12 @@ freeze each character at the moment it was created.
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
 
+**The API enforces a homebrew reference, since the schema cannot.** `characters.db` and
+`homebrew.db` are separate files opened as separate connections, so SQLite's foreign keys
+never see across them. `routes/homebrew.ts` scans every character's `definition` for the
+id a delete names and refuses it, naming the characters holding the reference, rather
+than let it resolve to nothing.
+
 **A `homebrew_items` or `homebrew_spells` row's `json` holds the 5etools entry shape**,
 not a shape of our own — `packages/catalog` defines it. One renderer then serves the
 catalog and homebrew alike, `{@tag}` markup in homebrew text works by construction, and

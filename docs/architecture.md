@@ -45,8 +45,17 @@ Splitting these is the central design decision.
 | `characters.db` | the user | yes, Drizzle | yes |
 | `homebrew.db` | the user | yes, Drizzle | yes |
 
-Because the catalog is disposable, `rm data/content.db && pnpm content:build` is always
-safe. Mixing user data into it would make that false.
+Because the catalog is disposable, `rm -rf data/content && pnpm content:build` is always
+safe — including with the API running. Rebuilding never renames onto a database file
+that may be open, which Windows refuses; instead `build-db.ts` publishes each build under
+a content-addressed name in `data/content/` (`content-<hash>.db`) and makes it live by
+rewriting the small `current` pointer file to name it. `packages/api/src/db/content.ts`
+reads `current` and opens one connection fresh per query rather than holding a handle for
+its lifetime: a query already reading the version it opened keeps reading it even after
+a rebuild moves `current` on, and the next query opens whatever `current` names by then.
+A version stays on disk for one build after it stops being current, so an in-flight query
+never loses the file out from under it. Mixing user data into it would make all of this
+false.
 
 Characters store *references* to catalog rows — `{name, source}` — never copies. A
 rebuilt catalog therefore updates every character automatically. Only homebrew is stored

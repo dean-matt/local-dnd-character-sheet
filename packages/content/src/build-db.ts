@@ -1,12 +1,17 @@
 /**
- * Builds `data/content.db` from the vendored 5etools data.
+ * Builds `data/content/` from the vendored 5etools data.
  *
  * The database is created from scratch every run and is never migrated — if the
  * schema changes, you rebuild. Every loader runs inside one transaction against
- * a staging file that is renamed into place only once all of them succeed, so a
- * failure leaves the previous catalog untouched rather than a half-built one.
+ * a staging file. A finished build is published under a content-addressed name
+ * (`content-<hash>.db`) and made live by rewriting the small `current` pointer
+ * file to name it — never by renaming onto the live database itself, which
+ * Windows refuses when any process holds it open. `current` is read fresh and
+ * fully on every open, never held open, so rewriting it is safe on both
+ * platforms even while a reader has an old version open.
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   globSync,
@@ -16,8 +21,9 @@ import {
   renameSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { resolveCopies } from "./load/copy.ts";
 import { drainUnmatchedFluff } from "./load/fluff.ts";
@@ -27,14 +33,20 @@ import { CONTENT_SCHEMA } from "./schema.ts";
 import { posix, verifyVendor } from "./sync.ts";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
-const DB_PATH = join(ROOT, "data", "content.db");
+const CONTENT_DIR = join(ROOT, "data", "content");
+const CURRENT_FILE = "current";
 
 export type BuildOptions = {
   vendorDir: string;
-  dbPath: string;
+  contentDir: string;
   loaders: Loader[];
   meta: Record<string, string>;
 };
+
+/** Resolves the live database in `contentDir` by way of its `current` pointer. */
+export function resolveContentDb(contentDir: string): string {
+  return join(contentDir, readFileSync(join(contentDir, CURRENT_FILE), "utf8").trim());
+}
 
 function repoCommit(): string {
   try {
@@ -122,21 +134,24 @@ function isRunning(pid: number): boolean {
   }
 }
 
+function stagingName(pid: number): string {
+  return `build.${pid}.incoming`;
+}
+
 /**
  * Removes staging files whose build is gone. A per-process name means no run
  * cleans up after another, so a killed build would otherwise leave a catalog's
- * worth of bytes in `data/` that no later run ever reaps.
+ * worth of bytes in `data/content/` that no later run ever reaps.
  *
  * A pid outlives the build that held it and is eventually handed to something
  * else, so age is the backstop: no build runs for a day.
  */
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
-function reapStaging(dbPath: string): void {
-  const dir = dirname(dbPath);
-  for (const file of globSync(`${basename(dbPath)}.*.incoming*`, { cwd: dir })) {
-    const path = join(dir, file);
-    const pid = Number(/\.(\d+)\.incoming(?:-wal|-shm)?$/.exec(file)?.[1]);
+function reapStaging(contentDir: string): void {
+  for (const file of globSync("build.*.incoming*", { cwd: contentDir })) {
+    const path = join(contentDir, file);
+    const pid = Number(/^build\.(\d+)\.incoming(?:-wal|-shm)?$/.exec(file)?.[1]);
     if (!pid) continue;
     const mtimeMs = statSync(path, { throwIfNoEntry: false })?.mtimeMs;
     if (mtimeMs === undefined) continue;
@@ -146,20 +161,51 @@ function reapStaging(dbPath: string): void {
   }
 }
 
+function contentHash(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 16);
+}
+
+/** Points `current` at `name`, replacing whatever it named before. */
+function publishCurrent(contentDir: string, name: string): void {
+  const tmp = join(contentDir, `current.${process.pid}.tmp`);
+  writeFileSync(tmp, name);
+  renameSync(tmp, join(contentDir, CURRENT_FILE));
+}
+
+function readCurrentName(contentDir: string): string | undefined {
+  try {
+    return readFileSync(join(contentDir, CURRENT_FILE), "utf8").trim();
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Removes every versioned database but the one just published and the one that
+ * was current right before it. A version therefore survives one full build
+ * after it stops being current, which gives any per-query reader that resolved
+ * `current` to it — before this build's flip — the whole next build's duration
+ * to finish before its file can disappear out from under it.
+ */
+function reapVersions(contentDir: string, keep: ReadonlySet<string>): void {
+  for (const file of globSync("content-*.db", { cwd: contentDir })) {
+    if (!keep.has(file)) rmSync(join(contentDir, file), { force: true });
+  }
+}
+
 /** Returns the row count per table written. */
 export function buildContent({
   vendorDir,
-  dbPath,
+  contentDir,
   loaders,
   meta,
 }: BuildOptions): Record<string, number> {
-  // Per-process, so two builds cannot unlink each other's staging file and
-  // rename the survivor's half-written inode into place. Concurrent runs then
-  // just race to rename a complete catalog, harmless either way.
-  const staging = `${dbPath}.${process.pid}.incoming`;
-  mkdirSync(dirname(dbPath), { recursive: true });
-  reapStaging(dbPath);
+  mkdirSync(contentDir, { recursive: true });
+  reapStaging(contentDir);
 
+  // Per-process, so two builds cannot unlink each other's staging file and
+  // publish the survivor's half-written database.
+  const staging = join(contentDir, stagingName(process.pid));
   const db = new Database(staging);
   const counts: Record<string, number> = {};
   try {
@@ -178,18 +224,28 @@ export function buildContent({
         }
       }
     })();
-    // The rename moves the main file alone, so a WAL that neither the checkpoint
-    // nor the close drains would be left behind holding committed rows — a short
-    // catalog reported as a successful build. Refuse to publish one instead.
-    db.pragma("wal_checkpoint(TRUNCATE)");
+    // A published version is never left in WAL mode, so it never carries `-wal`/`-shm`
+    // sidecars for another build's cleanup to disturb. Switching back to a rollback
+    // journal here checkpoints every committed row into the main file first.
+    db.pragma("journal_mode = DELETE");
     db.close();
     if (existsSync(`${staging}-wal`)) {
       throw new Error(`${staging}-wal survived the close; refusing to publish a partial catalog`);
     }
-    // renameSync replaces the target atomically, so the catalog is never missing.
-    // Only a stale WAL has to go first, or SQLite would apply it to the new file.
-    for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
-    renameSync(staging, dbPath);
+
+    const name = `content-${contentHash(staging)}.db`;
+    const target = join(contentDir, name);
+    const previous = readCurrentName(contentDir);
+    // Identical content hashes to the same name — nothing to publish, and renaming
+    // onto it would risk the very rename-over-open-handle problem this scheme
+    // exists to avoid.
+    if (existsSync(target)) {
+      discard(staging);
+    } else {
+      renameSync(staging, target);
+    }
+    publishCurrent(contentDir, name);
+    reapVersions(contentDir, new Set(previous ? [name, previous] : [name]));
     warnUnmatchedFluff();
   } catch (error) {
     // A pool a failed loader registered would otherwise sit in fluff.ts's
@@ -216,7 +272,7 @@ if (
   const { dir, tag } = await verifyVendor();
   const counts = buildContent({
     vendorDir: dir,
-    dbPath: DB_PATH,
+    contentDir: CONTENT_DIR,
     loaders: LOADERS,
     meta: {
       upstream_tag: tag,
@@ -226,7 +282,7 @@ if (
     },
   });
 
-  console.log(`Built ${DB_PATH}`);
+  console.log(`Built ${CONTENT_DIR}`);
   console.log(`  upstream ${tag}, node ${process.version}`);
   if (LOADERS.length === 0) console.log("  no loaders registered — schema and meta only");
   for (const table of Object.keys(counts).sort()) console.log(`  ${table} ${counts[table]}`);

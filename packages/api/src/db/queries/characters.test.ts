@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters } from "../characters.ts";
 import { openDatabases } from "../client.ts";
 import {
+  charactersReferencingHomebrew,
   deleteCharacter,
   getCharacter,
   getCharacterState,
@@ -115,6 +116,86 @@ describe("characters queries", () => {
 
     it("reports false for an id that does not exist", () => {
       expect(deleteCharacter(db, "missing")).toBe(false);
+    });
+  });
+
+  describe("charactersReferencingHomebrew", () => {
+    it("finds a character referencing a homebrew item in its inventory", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({
+          inventory: [
+            {
+              ref: { homebrewId: "hb-1" },
+              quantity: 1,
+              carried: true,
+              equipped: false,
+              attuned: false,
+            },
+          ],
+        }),
+      });
+      insertCharacter(db, { id: "2", definition: baseDefinition({ name: "Rian" }) });
+
+      expect(charactersReferencingHomebrew(db, "hb-1")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds a character referencing a homebrew spell", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({ spells: [{ ref: { homebrewId: "hb-2" }, prepared: false }] }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-2")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds a character referencing a homebrew feat with no grantedBy or level", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({ feats: [{ ref: { homebrewId: "hb-3" } }] }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-3")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds a character referencing a homebrew optional feature", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({
+          optionalFeatures: [
+            {
+              ref: { homebrewId: "hb-4" },
+              featureType: "FS",
+              grantedBy: { kind: "class", ref: WARLOCK },
+            },
+          ],
+        }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-4")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds a character referencing a homebrew grantor of an optional feature", () => {
+      insertCharacter(db, {
+        id: "1",
+        definition: baseDefinition({
+          optionalFeatures: [
+            {
+              ref: ROGUE,
+              featureType: "FS",
+              grantedBy: { kind: "feat", ref: { homebrewId: "hb-5" } },
+            },
+          ],
+        }),
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-5")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
+    it("finds nothing for a homebrew id no character references", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+
+      expect(charactersReferencingHomebrew(db, "hb-1")).toEqual([]);
     });
   });
 

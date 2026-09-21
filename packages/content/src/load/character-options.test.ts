@@ -3,19 +3,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildContent } from "../build-db.ts";
+import { buildContent, resolveContentDb } from "../build-db.ts";
 import { characterOptions } from "./character-options.ts";
 
 const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5etools");
 
 describe("the character options loader", () => {
   let workspace: string;
-  let dbPath: string;
+  let contentDir: string;
 
   const build = (vendorDir: string) =>
-    buildContent({ vendorDir, dbPath, loaders: [characterOptions], meta: {} });
+    buildContent({ vendorDir, contentDir, loaders: [characterOptions], meta: {} });
 
-  const open = () => new Database(dbPath, { readonly: true });
+  const open = () => new Database(resolveContentDb(contentDir), { readonly: true });
 
   const identities = (table: string): string[] => {
     const db = open();
@@ -28,7 +28,7 @@ describe("the character options loader", () => {
 
   beforeEach(() => {
     workspace = mkdtempSync(join(tmpdir(), "content-options-"));
-    dbPath = join(workspace, "data", "content.db");
+    contentDir = join(workspace, "data", "content");
   });
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));
