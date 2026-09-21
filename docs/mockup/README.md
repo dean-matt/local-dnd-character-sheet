@@ -7,6 +7,12 @@ a prototype of the real app.
 
 Live, editable version: <https://claude.ai/artifact/RkebCoeH7kYaMb8XZAAhSS>
 
+**Frozen as of the initial pass — not current.** Design has since moved on in
+`docs/mockup/components/` (new top bar nav, the sidebar as a tab rail, a full Settings
+page) without being folded back here. Treat this canvas as a historical snapshot of
+where the mockup started, not what the app should look like today; `components/` below
+is the current source of truth.
+
 ## What is here
 
 The three files this artifact publishes:
@@ -47,8 +53,9 @@ Carried over from the mockup's own review notes — not done, not started:
 
 Refining one piece of `Sheet.dc.html` meant reloading the whole 1440×1140 page, so
 `docs/mockup/components/` breaks it apart: one artboard per component, each running its
-own sample data and state instead of a shared "current character". Iterate on a single
-piece here before folding a change back into the full sheet.
+own sample data and state instead of a shared "current character". Design has continued
+here since the split — see the note above — so this, not `Sheet.dc.html`, is what
+reflects current decisions.
 
 Live, editable version: <https://claude.ai/artifact/LCpPbSnvJ7J8hesrvYJhpM>
 
