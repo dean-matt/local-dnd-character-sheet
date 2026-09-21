@@ -4,6 +4,7 @@ import {
   homebrewItemInputSchema,
   homebrewItemRecordSchema,
   homebrewItemSchema,
+  itemRecordSchema,
 } from "./index.ts";
 
 const minimal = { name: "Sunblade", source: "Homebrew" };
@@ -73,5 +74,21 @@ describe("homebrewItemRecordSchema", () => {
       createdAt: new Date(0).toISOString(),
     };
     expect(homebrewItemRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("itemRecordSchema", () => {
+  it("accepts a catalog row, keyed by name and source rather than id", () => {
+    const record = {
+      name: "Longsword",
+      source: "PHB",
+      edition: "classic",
+      kind: "baseitem",
+      type: "M",
+      rarity: null,
+      requiresAttunement: false,
+      json: { name: "Longsword", source: "PHB" },
+    };
+    expect(itemRecordSchema.parse(record)).toEqual(record);
   });
 });

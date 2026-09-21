@@ -58,3 +58,21 @@ export const homebrewItemRecordSchema = z.strictObject({
 });
 
 export type HomebrewItemRecord = z.infer<typeof homebrewItemRecordSchema>;
+
+/**
+ * An item row from `content.db`'s `items` table, addressed by `(name, source)`. `json`
+ * carries the same entry shape a homebrew item does — see the module docs above — so
+ * `homebrewItemSchema` validates either.
+ */
+export const itemRecordSchema = z.strictObject({
+  name: z.string().min(1),
+  source: z.string().min(1),
+  edition: z.enum(EDITIONS),
+  kind: z.enum(["item", "itemGroup", "baseitem", "magicvariant"]),
+  type: z.string().nullable(),
+  rarity: z.string().nullable(),
+  requiresAttunement: z.boolean(),
+  json: homebrewItemSchema,
+});
+
+export type ItemRecord = z.infer<typeof itemRecordSchema>;
