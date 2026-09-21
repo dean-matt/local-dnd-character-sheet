@@ -22,13 +22,13 @@
 
     <div style="display: flex; flex-direction: column; gap: 2px;">
       <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="7">
-        <div style="display: flex; align-items: center; gap: 2px;">
+        <div style="position: relative;">
           <sc-if value="{{tab.editing}}" hint-placeholder-val="{{false}}">
             <label for="tabRenameInput-{{tab.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Rename {{tab.label}} tab</label>
-            <input id="tabRenameInput-{{tab.id}}" type="text" value="{{tab.label}}" onChange="{{tab.onRename}}" style="flex-grow: 1; min-width: 0; padding: 9px 10px; font-size: 14px; font-weight: 600; color: #1f2430; border: 1px solid {{accent}}; border-radius: 8px; background: #ffffff;">
+            <input id="tabRenameInput-{{tab.id}}" type="text" value="{{tab.label}}" onChange="{{tab.onRename}}" style="width: 100%; padding: 9px 10px; font-size: 14px; font-weight: 600; color: #1f2430; border: 1px solid {{accent}}; border-radius: 8px; background: #ffffff;">
           </sc-if>
           <sc-if value="{{tab.showButton}}" hint-placeholder-val="{{true}}">
-            <button onClick="{{tab.go}}" aria-label="{{tab.label}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; flex-grow: 1; min-width: 0; text-align: left; padding: 9px 10px; border-radius: 8px; border: none; background: {{tab.rowBg}};">
+            <button onClick="{{tab.go}}" aria-label="{{tab.label}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; text-align: left; padding: 9px {{tab.rowPaddingRight}} 9px 10px; border-radius: 8px; border: none; background: {{tab.rowBg}};">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{tab.iconColor}}" stroke-width="2" style="flex-shrink: 0;">
                 <sc-if value="{{tab.isOverview}}" hint-placeholder-val="{{true}}"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></sc-if>
                 <sc-if value="{{tab.isInventory}}" hint-placeholder-val="{{false}}"><path d="M6 7h12l1 13a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M9 7a3 3 0 016 0"/></sc-if>
@@ -42,7 +42,7 @@
             </button>
           </sc-if>
           <sc-if value="{{tab.showEdit}}" hint-placeholder-val="{{false}}">
-            <button aria-label="{{tab.editLabel}}" title="{{tab.editLabel}}" onClick="{{tab.toggleEdit}}" style="width: 22px; height: 22px; border-radius: 6px; border: none; background: {{tab.editIconBg}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <button aria-label="{{tab.editLabel}}" title="{{tab.editLabel}}" onClick="{{tab.toggleEdit}}" style="position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 6px; border: none; background: {{tab.editIconBg}}; display: flex; align-items: center; justify-content: center;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{tab.editIconColor}}" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
             </button>
           </sc-if>
@@ -91,6 +91,7 @@ class Component extends DCLogic {
         editing,
         showButton: !editing,
         showEdit: isActive && !collapsed,
+        rowPaddingRight: isActive && !collapsed ? '32px' : '10px',
         rowBg: isActive ? '#f3e3e0' : 'none',
         textWeight: isActive ? '600' : '500',
         textColor: isActive ? '#1f2430' : '#6b7280',
