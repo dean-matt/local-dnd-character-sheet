@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Tab Sidebar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 300px; height: 1180px; box-sizing: border-box; padding: 20px; display: flex; background: #f4f5f7;">
+  <div style="width: {{width}}; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; transition: width 0.15s ease;">
+
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="7">
+        <button onClick="{{tab.go}}" aria-label="{{tab.label}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 8px; border: none; background: {{tab.rowBg}};">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{tab.iconColor}}" stroke-width="2" style="flex-shrink: 0;">
+            <sc-if value="{{tab.isOverview}}" hint-placeholder-val="{{true}}"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></sc-if>
+            <sc-if value="{{tab.isInventory}}" hint-placeholder-val="{{false}}"><path d="M6 7h12l1 13a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M9 7a3 3 0 016 0"/></sc-if>
+            <sc-if value="{{tab.isSpells}}" hint-placeholder-val="{{false}}"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></sc-if>
+            <sc-if value="{{tab.isFeatures}}" hint-placeholder-val="{{false}}"><path d="M12 2.5l2.9 6.3 6.9.8-5.1 4.8 1.4 6.9L12 17.6l-6.1 3.7 1.4-6.9-5.1-4.8 6.9-.8z"/></sc-if>
+            <sc-if value="{{tab.isIdentity}}" hint-placeholder-val="{{false}}"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3M14 9h5M14 13h5"/></sc-if>
+            <sc-if value="{{tab.isLevel}}" hint-placeholder-val="{{false}}"><rect x="4" y="14" width="4" height="6" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></sc-if>
+            <sc-if value="{{tab.isAlignment}}" hint-placeholder-val="{{false}}"><path d="M12 3v3M5 21h14M12 6v12"/><path d="M4 8l3-2 3 2-3 6a3 3 0 01-3-6z"/><path d="M14 8l3-2 3 2-3 6a3 3 0 01-3-6z"/></sc-if>
+            <sc-if value="{{tab.isBackstory}}" hint-placeholder-val="{{false}}"><path d="M4 5.5A2.5 2.5 0 016.5 3H19v16.5H6.5A2.5 2.5 0 004 22z"/><path d="M4 19.5A2.5 2.5 0 016.5 17H19"/></sc-if>
+            <sc-if value="{{tab.isNotes}}" hint-placeholder-val="{{false}}"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></sc-if>
+            <sc-if value="{{tab.isCustom}}" hint-placeholder-val="{{false}}"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></sc-if>
+          </svg>
+          <span style="display: {{textDisplay}}; font-size: 14px; font-weight: {{tab.textWeight}}; color: {{tab.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{tab.label}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="position: relative; flex-shrink: 0;">
+      <button aria-label="Manage tabs" aria-expanded="{{manageOpen}}" onClick="{{toggleManage}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; border: none; background: {{manageBg}};">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Manage Tabs</span>
+      </button>
+      <sc-if value="{{manageOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; bottom: 0; left: calc(100% + 8px); width: 260px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 10px; z-index: 60;">
+          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 2px 4px 8px 4px;">Rename, reorder, show/hide, or delete</div>
+          <div style="display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto;">
+            <sc-for list="{{manageRows}}" as="row" hint-placeholder-count="7">
+              <div draggable="true" onDragStart="{{row.onDragStart}}" onDragOver="{{row.onDragOver}}" onDrop="{{row.onDrop}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 4px; border-radius: 6px; border: 1px solid {{row.borderColor}};">
+                <span title="Drag to reorder" style="cursor: grab; flex-shrink: 0; display: flex; color: #9aa1ab;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="8" cy="6" r="1.4"/><circle cx="8" cy="12" r="1.4"/><circle cx="8" cy="18" r="1.4"/><circle cx="16" cy="6" r="1.4"/><circle cx="16" cy="12" r="1.4"/><circle cx="16" cy="18" r="1.4"/></svg>
+                </span>
+                <label for="tabRename-{{row.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Rename {{row.label}}</label>
+                <input id="tabRename-{{row.id}}" type="text" value="{{row.label}}" onChange="{{row.onRename}}" style="flex-grow: 1; min-width: 0; padding: 4px 6px; border: 1px solid transparent; border-radius: 4px; font-size: 13px; color: {{row.textColor}}; background: none;">
+                <button aria-label="{{row.visibilityLabel}}" title="{{row.visibilityLabel}}" onClick="{{row.toggleHidden}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <sc-if value="{{row.hidden}}" hint-placeholder-val="{{false}}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.6 10.6 0 0112 5c6 0 10 6 10 6a17.5 17.5 0 01-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 6 10 6a9.8 9.8 0 004.4-1"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>
+                  </sc-if>
+                  <sc-if value="{{row.visible}}" hint-placeholder-val="{{true}}">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </sc-if>
+                </button>
+                <sc-if value="{{row.custom}}" hint-placeholder-val="{{false}}">
+                  <button aria-label="Delete {{row.label}}" onClick="{{row.remove}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; flex-shrink: 0;">&times;</button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <button onClick="{{addTab}}" style="display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 6px; padding: 8px; border-radius: 8px; border: 1px dashed {{accent}}; background: none; color: {{accent}}; font-size: 13px; font-weight: 600;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5" style="flex-shrink: 0;"><path d="M12 5v14M5 12h14"/></svg>
+            Add Tab
+          </button>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
+      <button aria-label="{{toggleLabel}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: none; background: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":300,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      active: 'overview',
+      collapsed: false,
+      manageOpen: false,
+      dragTabId: null,
+      tabsData: [
+        { id: 'overview', label: 'Overview', custom: false, hidden: false },
+        { id: 'inventory', label: 'Inventory', custom: false, hidden: false },
+        { id: 'spells', label: 'Spells', custom: false, hidden: false },
+        { id: 'features', label: 'Features', custom: false, hidden: false },
+        { id: 'identity', label: 'Identity', custom: false, hidden: false },
+        { id: 'level', label: 'Level', custom: false, hidden: false },
+        { id: 'alignment', label: 'Alignment', custom: false, hidden: false },
+        { id: 'backstory', label: 'Backstory', custom: false, hidden: false },
+        { id: 'notes', label: 'Notes', custom: false, hidden: false }
+      ]
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const { active, collapsed, manageOpen, dragTabId } = this.state;
+    const tabsData = this.state.tabsData;
+    const setTabs = (next) => this.setState({ tabsData: next });
+    const textDisplay = collapsed ? 'none' : 'flex';
+    const rowJustify = collapsed ? 'center' : 'flex-start';
+
+    const visibleTabs = tabsData.filter((t) => !t.hidden);
+
+    const tabs = visibleTabs.map((t) => {
+      const isActive = t.id === active;
+      return {
+        id: t.id,
+        label: t.label,
+        rowBg: isActive ? '#f3e3e0' : 'none',
+        textWeight: isActive ? '600' : '500',
+        textColor: isActive ? '#1f2430' : '#6b7280',
+        iconColor: isActive ? accent : '#6b7280',
+        isOverview: t.id === 'overview',
+        isInventory: t.id === 'inventory',
+        isSpells: t.id === 'spells',
+        isFeatures: t.id === 'features',
+        isIdentity: t.id === 'identity',
+        isLevel: t.id === 'level',
+        isAlignment: t.id === 'alignment',
+        isBackstory: t.id === 'backstory',
+        isNotes: t.id === 'notes',
+        isCustom: t.custom,
+        go: () => this.setState({ active: t.id })
+      };
+    });
+
+    const addTab = () => {
+      const id = 'tab-' + Date.now();
+      this.setState({
+        tabsData: [...tabsData, { id, label: 'New Tab', custom: true, hidden: false }],
+        active: id
+      });
+    };
+
+    const reorder = (dragId, dropId) => {
+      const i1 = tabsData.findIndex((t) => t.id === dragId);
+      const i2 = tabsData.findIndex((t) => t.id === dropId);
+      if (i1 === -1 || i2 === -1 || i1 === i2) return;
+      const next = tabsData.slice();
+      const [moved] = next.splice(i1, 1);
+      next.splice(i2, 0, moved);
+      this.setState({ tabsData: next, dragTabId: null });
+    };
+
+    const toggleHidden = (id) => {
+      const next = tabsData.map((t) => (t.id === id ? { ...t, hidden: !t.hidden } : t));
+      const stillVisible = next.filter((t) => !t.hidden);
+      const nextActive = id === active && !stillVisible.some((t) => t.id === active) ? (stillVisible[0] ? stillVisible[0].id : active) : active;
+      this.setState({ tabsData: next, active: nextActive });
+    };
+
+    const removeTab = (id) => {
+      const next = tabsData.filter((t) => t.id !== id);
+      const stillVisible = next.filter((t) => !t.hidden);
+      const nextActive = active === id ? (stillVisible[0] ? stillVisible[0].id : active) : active;
+      this.setState({ tabsData: next, active: nextActive });
+    };
+
+    const manageRows = tabsData.map((t) => ({
+      id: t.id,
+      label: t.label,
+      custom: t.custom,
+      hidden: t.hidden,
+      visible: !t.hidden,
+      textColor: t.hidden ? '#9aa1ab' : '#1f2430',
+      borderColor: dragTabId && dragTabId !== t.id ? accent : '#eceef1',
+      visibilityLabel: t.hidden ? 'Show ' + t.label : 'Hide ' + t.label,
+      onRename: (e) => setTabs(tabsData.map((x) => (x.id === t.id ? { ...x, label: e.target.value } : x))),
+      toggleHidden: () => toggleHidden(t.id),
+      remove: () => removeTab(t.id),
+      onDragStart: () => this.setState({ dragTabId: t.id }),
+      onDragOver: (e) => e.preventDefault(),
+      onDrop: (e) => {
+        e.preventDefault();
+        if (dragTabId) reorder(dragTabId, t.id);
+      }
+    }));
+
+    return {
+      accent,
+      width: collapsed ? '72px' : '260px',
+      tabs,
+      textDisplay,
+      rowJustify,
+      addTab,
+      manageOpen,
+      manageBg: manageOpen ? '#eceef1' : 'none',
+      toggleManage: () => this.setState({ manageOpen: !manageOpen }),
+      manageRows,
+      toggleSidebar: () => this.setState({ collapsed: !collapsed, manageOpen: false }),
+      toggleLabel: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+    };
+  }
+}
+</script>
+</body>
+</html>

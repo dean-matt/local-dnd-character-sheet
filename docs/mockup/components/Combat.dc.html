@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Combat Stats</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  input { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 460px; height: 200px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Combat Stats</div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Prof.</div>
+        <div style="font-size: 20px; font-weight: 700; color: #1f2430;">{{profLabel}}</div>
+      </div>
+      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">AC</div>
+        <input type="number" min="0" value="{{ac}}" onChange="{{onAcChange}}" aria-label="Armor class" style="width: 40px; text-align: center; border: none; background: none; outline: none; font-size: 20px; font-weight: 700; color: #1f2430;">
+      </div>
+      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Init.</div>
+        <div title="Dexterity modifier" style="font-size: 20px; font-weight: 700; color: #1f2430;">{{initiative}}</div>
+      </div>
+      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Speed</div>
+        <input type="number" min="0" step="5" value="{{speed}}" onChange="{{onSpeedChange}}" aria-label="Speed" style="width: 40px; text-align: center; border: none; background: none; outline: none; font-size: 20px; font-weight: 700; color: #1f2430;">
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":200}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dexScore: 18, prof: 4, ac: 15, speed: 35 };
+  }
+  renderVals() {
+    const mod = (s) => Math.floor((s - 10) / 2);
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    return {
+      profLabel: fmt(this.state.prof),
+      ac: this.state.ac,
+      onAcChange: (e) => this.setState({ ac: Math.max(0, parseInt(e.target.value, 10) || 0) }),
+      initiative: fmt(mod(this.state.dexScore)),
+      speed: this.state.speed,
+      onSpeedChange: (e) => this.setState({ speed: Math.max(0, parseInt(e.target.value, 10) || 0) })
+    };
+  }
+}
+</script>
+</body>
+</html>

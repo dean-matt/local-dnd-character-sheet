@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Known Spells</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 420px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Known Spells</div>
+    <div style="display: flex; flex-direction: column; gap: 12px; max-height: 260px; overflow-y: auto;">
+      <sc-for list="{{spellGroups}}" as="grp" hint-placeholder-count="2">
+        <div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">{{grp.label}}</div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <sc-for list="{{grp.spells}}" as="sp" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #eef0f3; border: 1px solid #dde1e6; border-radius: 8px;">
+                <button aria-label="Toggle prepared for {{sp.name}}" onClick="{{sp.togglePrepared}}" style="display: flex; align-items: center; gap: 6px; border: none; background: none; padding: 0;">
+                  <span style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid {{sp.dotBorder}}; background: {{sp.dotFill}}; display: inline-block; flex-shrink: 0;"></span>
+                  <span style="font-size: 11px; color: {{sp.preparedTextColor}}; width: 76px; text-align: left;">{{sp.preparedLabel}}</span>
+                </button>
+                <div style="flex-grow: 1; font-size: 13px; color: #1f2430;">{{sp.name}}</div>
+                <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="width: 18px; height: 18px; border: none; background: none; color: #6b7280; font-size: 14px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: flex-end;">
+      <div style="position: relative; flex-grow: 1;">
+        <label for="spellSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search the spell catalog</label>
+        <input id="spellSearch" type="text" placeholder="Search spells…" value="{{spellQuery}}" onChange="{{onSpellQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+        <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+            <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
+              <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none;">
+                <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
+                <span style="font-size: 11px; color: #6b7280;"> — {{m.meta}}</span>
+              </button>
+            </sc-for>
+            <button onClick="{{addCustom}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{spellQuery}}"</button>
+          </div>
+        </sc-if>
+      </div>
+      <div style="flex-shrink: 0;">
+        <label for="newSpellLevel" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Level</label>
+        <input id="newSpellLevel" type="number" min="0" max="9" value="{{newSpellLevel}}" onChange="{{onNewSpellLevelChange}}" title="Spell level: 0 for a cantrip, 1–9 otherwise" style="width: 56px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":420}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      spellsKnown: [
+        { name: "Hunter's Mark", level: 1, prepared: true },
+        { name: 'Cure Wounds', level: 1, prepared: true },
+        { name: 'Pass Without Trace', level: 2, prepared: false }
+      ],
+      spellQuery: '',
+      newSpellLevel: 1
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const levelLabel = (n) => (n === 0 ? 'Cantrips' : n === 1 ? '1st Level' : n === 2 ? '2nd Level' : n === 3 ? '3rd Level' : n + 'th Level');
+    const CATALOG = [
+      { name: 'Fireball', level: 3, meta: 'Evocation • 3rd level' },
+      { name: "Hunter's Mark", level: 1, meta: 'Divination • 1st level' },
+      { name: 'Eldritch Blast', level: 0, meta: 'Evocation • Cantrip' },
+      { name: 'Misty Step', level: 2, meta: 'Conjuration • 2nd level' },
+      { name: 'Cure Wounds', level: 1, meta: 'Evocation • 1st level' },
+      { name: 'Mage Armor', level: 1, meta: 'Abjuration • 1st level' }
+    ];
+    const { spellsKnown, spellQuery } = this.state;
+    const spellRowsFlat = spellsKnown.map((sp, idx) => ({
+      idx,
+      name: sp.name,
+      level: sp.level,
+      dotFill: sp.prepared ? accent : 'transparent',
+      dotBorder: sp.prepared ? accent : '#c7ccd3',
+      preparedLabel: sp.prepared ? 'Prepared' : 'Not prepared',
+      preparedTextColor: sp.prepared ? '#1f2430' : '#6b7280',
+      togglePrepared: () => this.setState({ spellsKnown: spellsKnown.map((x, i) => (i === idx ? { ...x, prepared: !x.prepared } : x)) }),
+      remove: () => this.setState({ spellsKnown: spellsKnown.filter((_, i) => i !== idx) })
+    }));
+    const levels = Array.from(new Set(spellRowsFlat.map((s) => s.level))).sort((a, b) => a - b);
+    const spellGroups = levels.map((lvl) => ({ level: lvl, label: levelLabel(lvl), spells: spellRowsFlat.filter((s) => s.level === lvl) }));
+
+    const newSpellLevel = Math.max(0, Math.min(9, parseInt(this.state.newSpellLevel, 10) || 0));
+    const q = spellQuery.trim().toLowerCase();
+    const matches = q
+      ? CATALOG.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({
+          name: c.name,
+          meta: c.meta,
+          add: () => this.setState({ spellsKnown: [...spellsKnown, { name: c.name, level: c.level, prepared: false }], spellQuery: '' })
+        }))
+      : [];
+    return {
+      accent,
+      spellGroups,
+      spellQuery,
+      onSpellQueryChange: (e) => this.setState({ spellQuery: e.target.value }),
+      showResults: !!spellQuery,
+      matches,
+      addCustom: () => this.setState({ spellsKnown: [...spellsKnown, { name: spellQuery, level: newSpellLevel, prepared: false }], spellQuery: '' }),
+      newSpellLevel,
+      onNewSpellLevelChange: (e) => this.setState({ newSpellLevel: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

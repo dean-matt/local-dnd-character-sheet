@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Roll Toast</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 380px; height: 90px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; justify-content: center; background: #f4f5f7;">
+  <sc-if value="{{hasRoll}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);">
+      <span style="font-size: 14px; font-weight: 600; color: {{rollColor}};">{{rollSummary}}</span>
+      <button aria-label="Dismiss roll" onClick="{{dismiss}}" style="width: 18px; height: 18px; border: none; background: none; color: #6b7280; font-size: 14px; line-height: 1; padding: 0;">&times;</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{noRoll}}" hint-placeholder-val="{{false}}">
+    <button onClick="{{roll}}" style="padding: 10px 16px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">Roll a d20</button>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":380,"height":90}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { lastRoll: { label: 'Stealth Check', natural: 17, mod: '+7', total: 24 } };
+  }
+  renderVals() {
+    const r = this.state.lastRoll;
+    return {
+      hasRoll: !!r,
+      noRoll: !r,
+      rollSummary: r ? r.label + ':  d20 (' + r.natural + ')  ' + r.mod + '  =  ' + r.total : '',
+      rollColor: r && r.natural === 20 ? '#2f6b4f' : r && r.natural === 1 ? '#c1272d' : '#1f2430',
+      dismiss: () => this.setState({ lastRoll: null }),
+      roll: () => {
+        const natural = 1 + Math.floor(Math.random() * 20);
+        this.setState({ lastRoll: { label: 'Stealth Check', natural, mod: '+7', total: natural + 7 } });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

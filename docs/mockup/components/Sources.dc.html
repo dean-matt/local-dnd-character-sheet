@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Sources</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 460px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; max-height: 412px; overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+    <div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Sources</div>
+      <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">Which sourcebooks show up in Mechanics search and pickers. Synced from 5etools at a pinned tag — turning one off hides it here, it doesn't re-fetch.</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{sources}}" as="src" hint-placeholder-count="9">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
+          <div style="min-width: 0;">
+            <div style="font-size: 13px; color: #1f2430; font-weight: 600;">{{src.abbr}}</div>
+            <div style="font-size: 11px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{src.name}}</div>
+          </div>
+          <button aria-label="Toggle {{src.name}}" onClick="{{src.toggle}}" style="width: 36px; height: 20px; border-radius: 999px; border: 1px solid #dde1e6; background: {{src.trackBg}}; position: relative; padding: 0; flex-shrink: 0;">
+            <span style="position: absolute; top: 1px; left: {{src.thumbLeft}}; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; transition: left 0.15s;"></span>
+          </button>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":460}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      sources: [
+        { abbr: 'PHB', name: "Player's Handbook", enabled: true },
+        { abbr: 'XPHB', name: "Player's Handbook (2024)", enabled: true },
+        { abbr: 'DMG', name: "Dungeon Master's Guide", enabled: true },
+        { abbr: 'XDMG', name: "Dungeon Master's Guide (2024)", enabled: true },
+        { abbr: 'MM', name: 'Monster Manual', enabled: true },
+        { abbr: 'XMM', name: 'Monster Manual (2024)', enabled: true },
+        { abbr: 'TCE', name: "Tasha's Cauldron of Everything", enabled: true },
+        { abbr: 'VGM', name: "Volo's Guide to Monsters", enabled: false },
+        { abbr: 'SCAG', name: "Sword Coast Adventurer's Guide", enabled: false }
+      ]
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const sources = this.state.sources;
+    const rows = sources.map((s, idx) => ({
+      abbr: s.abbr,
+      name: s.name,
+      trackBg: s.enabled ? accent : '#dde1e6',
+      thumbLeft: s.enabled ? '18px' : '1px',
+      toggle: () => this.setState({ sources: sources.map((x, i) => (i === idx ? { ...x, enabled: !x.enabled } : x)) })
+    }));
+    return { accent, sources: rows };
+  }
+}
+</script>
+</body>
+</html>

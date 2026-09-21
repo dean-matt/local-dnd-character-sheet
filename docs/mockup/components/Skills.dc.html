@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Skills</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 480px; height: 560px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Skills</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 20px;">
+      <sc-for list="{{skillRows}}" as="sk" hint-placeholder-count="18">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 2px 0;">
+          <button aria-label="Toggle {{sk.label}} proficiency" onClick="{{sk.toggle}}" style="width: 13px; height: 13px; padding: 0; border-radius: 50%; border: 1.5px solid {{sk.dotBorder}}; background: {{sk.dotFill}}; flex-shrink: 0;"></button>
+          <div style="color: #1f2430; flex-grow: 1;">{{sk.label}}</div>
+          <div style="color: #6b7280; font-size: 11px; width: 26px;">{{sk.abilityLabel}}</div>
+          <button aria-label="Roll {{sk.label}} check" title="{{sk.bonusTitle}}" onClick="{{sk.roll}}" style="font-weight: 600; color: #1f2430; width: 28px; text-align: right; background: none; border: none; padding: 0;">{{sk.bonus}}</button>
+          <sc-if value="{{sk.removable}}" hint-placeholder-val="{{false}}">
+            <button aria-label="Remove {{sk.label}}" onClick="{{sk.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 14px; line-height: 1; padding: 0;">&times;</button>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 6px;">
+      <input type="text" placeholder="Custom skill" value="{{newSkillName}}" onChange="{{onNewSkillNameChange}}" style="flex-grow: 1; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+      <select value="{{newSkillAbility}}" onChange="{{onNewSkillAbilityChange}}" aria-label="New skill ability" style="padding: 6px 4px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="str">STR</option>
+        <option value="dex">DEX</option>
+        <option value="con">CON</option>
+        <option value="int">INT</option>
+        <option value="wis">WIS</option>
+        <option value="cha">CHA</option>
+        <option value="flat">Flat bonus</option>
+      </select>
+      <button onClick="{{addCustomSkill}}" style="padding: 6px 12px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600; flex-shrink: 0;">Add</button>
+    </div>
+    <div title="10 + Perception skill bonus" style="font-size: 12px; color: #6b7280; padding-top: 6px; border-top: 1px solid #dde1e6;">Passive Perception: <span style="font-weight: 600; color: #1f2430;">{{passivePerception}}</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":480,"height":560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 },
+      prof: 4,
+      skillsProf: ['stealth', 'survival', 'perception', 'animalHandling', 'nature'],
+      customSkills: [],
+      newSkillName: '',
+      newSkillAbility: 'str'
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const mod = (s) => Math.floor((s - 10) / 2);
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const { abilities, prof, skillsProf, customSkills } = this.state;
+    const skillDefs = [
+      { key: 'acrobatics', label: 'Acrobatics', ability: 'dex' },
+      { key: 'animalHandling', label: 'Animal Handling', ability: 'wis' },
+      { key: 'arcana', label: 'Arcana', ability: 'int' },
+      { key: 'athletics', label: 'Athletics', ability: 'str' },
+      { key: 'deception', label: 'Deception', ability: 'cha' },
+      { key: 'history', label: 'History', ability: 'int' },
+      { key: 'insight', label: 'Insight', ability: 'wis' },
+      { key: 'intimidation', label: 'Intimidation', ability: 'cha' },
+      { key: 'investigation', label: 'Investigation', ability: 'int' },
+      { key: 'medicine', label: 'Medicine', ability: 'wis' },
+      { key: 'nature', label: 'Nature', ability: 'int' },
+      { key: 'perception', label: 'Perception', ability: 'wis' },
+      { key: 'performance', label: 'Performance', ability: 'cha' },
+      { key: 'persuasion', label: 'Persuasion', ability: 'cha' },
+      { key: 'religion', label: 'Religion', ability: 'int' },
+      { key: 'sleightOfHand', label: 'Sleight of Hand', ability: 'dex' },
+      { key: 'stealth', label: 'Stealth', ability: 'dex' },
+      { key: 'survival', label: 'Survival', ability: 'wis' }
+    ];
+    const standardSkillRows = skillDefs.map((sd) => {
+      const proficient = skillsProf.indexOf(sd.key) !== -1;
+      const bonus = mod(abilities[sd.ability]) + (proficient ? prof : 0);
+      return {
+        key: sd.key,
+        label: sd.label,
+        abilityLabel: sd.ability.toUpperCase(),
+        bonus: fmt(bonus),
+        bonusTitle: sd.ability.toUpperCase() + ' modifier ' + fmt(mod(abilities[sd.ability])) + (proficient ? ' + proficiency bonus ' + fmt(prof) : ' (not proficient)'),
+        dotFill: proficient ? accent : 'transparent',
+        dotBorder: proficient ? accent : '#c7ccd3',
+        roll: () => {},
+        removable: false,
+        remove: () => {},
+        toggle: () => this.setState({ skillsProf: skillsProf.indexOf(sd.key) !== -1 ? skillsProf.filter((x) => x !== sd.key) : [...skillsProf, sd.key] })
+      };
+    });
+    const customSkillRows = customSkills.map((cs) => {
+      const isFlat = cs.ability === 'flat';
+      const bonus = isFlat ? (cs.flatBonus || 0) + (cs.proficient ? prof : 0) : mod(abilities[cs.ability]) + (cs.proficient ? prof : 0);
+      return {
+        key: cs.id,
+        label: cs.label,
+        abilityLabel: isFlat ? 'FLAT' : cs.ability.toUpperCase(),
+        bonus: fmt(bonus),
+        bonusTitle: '',
+        dotFill: cs.proficient ? accent : 'transparent',
+        dotBorder: cs.proficient ? accent : '#c7ccd3',
+        roll: () => {},
+        removable: true,
+        remove: () => this.setState({ customSkills: customSkills.filter((x) => x.id !== cs.id) }),
+        toggle: () => this.setState({ customSkills: customSkills.map((x) => (x.id === cs.id ? { ...x, proficient: !x.proficient } : x)) })
+      };
+    });
+    const skillRows = standardSkillRows.concat(customSkillRows);
+    const perceptionRow = skillRows.filter((s) => s.key === 'perception')[0];
+    const passivePerception = 10 + (perceptionRow ? parseInt(perceptionRow.bonus, 10) : 0);
+    return {
+      accent,
+      skillRows,
+      passivePerception,
+      newSkillName: this.state.newSkillName,
+      newSkillAbility: this.state.newSkillAbility,
+      onNewSkillNameChange: (e) => this.setState({ newSkillName: e.target.value }),
+      onNewSkillAbilityChange: (e) => this.setState({ newSkillAbility: e.target.value }),
+      addCustomSkill: () => {
+        const name = this.state.newSkillName.trim();
+        if (!name) return;
+        this.setState({
+          customSkills: [...customSkills, { id: 'cs-' + Date.now(), label: name, ability: this.state.newSkillAbility, proficient: false, flatBonus: 0 }],
+          newSkillName: ''
+        });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

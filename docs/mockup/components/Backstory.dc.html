@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Backstory</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  textarea { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 560px; height: 460px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+      <div>
+        <label for="bsPersonality" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Personality Traits</label>
+        <textarea id="bsPersonality" value="{{personality}}" onChange="{{onPersonality}}" style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+      </div>
+      <div>
+        <label for="bsIdeals" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Ideals</label>
+        <textarea id="bsIdeals" value="{{ideals}}" onChange="{{onIdeals}}" style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+      </div>
+      <div>
+        <label for="bsBonds" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Bonds</label>
+        <textarea id="bsBonds" value="{{bonds}}" onChange="{{onBonds}}" style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+      </div>
+      <div>
+        <label for="bsFlaws" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Flaws</label>
+        <textarea id="bsFlaws" value="{{flaws}}" onChange="{{onFlaws}}" style="width: 100%; min-height: 60px; padding: 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+      </div>
+    </div>
+    <label for="bsStory" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Backstory</label>
+    <textarea id="bsStory" value="{{story}}" onChange="{{onStory}}" style="width: 100%; min-height: 140px; padding: 14px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; line-height: 1.6; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":560,"height":460}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      personality: 'Quiet until she trusts you; talks to her hawk more than to people.',
+      ideals: 'The wild places deserve as much protection as any city.',
+      bonds: 'Owes her life to the ranger who trained her after her village burned.',
+      flaws: 'Holds a grudge longer than is healthy.',
+      story: 'Raised at the edge of the Thornwood after raiders destroyed her village, Elara was taken in by a reclusive ranger who taught her to track, hunt, and disappear into the trees.'
+    };
+  }
+  renderVals() {
+    return {
+      personality: this.state.personality,
+      onPersonality: (e) => this.setState({ personality: e.target.value }),
+      ideals: this.state.ideals,
+      onIdeals: (e) => this.setState({ ideals: e.target.value }),
+      bonds: this.state.bonds,
+      onBonds: (e) => this.setState({ bonds: e.target.value }),
+      flaws: this.state.flaws,
+      onFlaws: (e) => this.setState({ flaws: e.target.value }),
+      story: this.state.story,
+      onStory: (e) => this.setState({ story: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>

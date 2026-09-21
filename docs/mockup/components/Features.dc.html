@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Features</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 480px; height: 460px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; max-height: 396px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;">
+
+    <div style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Class Features</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-if value="{{noClassFeatures}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 13px; color: #6b7280; font-style: italic;">None yet.</div>
+        </sc-if>
+        <sc-for list="{{classFeatures}}" as="feat" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
+            <div style="flex-grow: 1; font-size: 14px; font-weight: 600; color: #1f2430;">{{feat.label}}</div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
+            <sc-if value="{{feat.hasUses}}" hint-placeholder-val="{{false}}">
+              <div title="Uses remaining" style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                <sc-for list="{{feat.pips}}" as="pip" hint-placeholder-count="2">
+                  <button aria-label="{{pip.aria}}" onClick="{{pip.toggle}}" style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid {{accent}}; background: {{pip.fill}}; padding: 0;"></button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Race Features</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-if value="{{noRaceFeatures}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 13px; color: #6b7280; font-style: italic;">None yet.</div>
+        </sc-if>
+        <sc-for list="{{raceFeatures}}" as="feat" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
+            <div style="flex-grow: 1; font-size: 14px; font-weight: 600; color: #1f2430;">{{feat.label}}</div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
+            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; margin-bottom: 10px;">Chosen Features &amp; Feats</div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <sc-if value="{{noChosenFeatures}}" hint-placeholder-val="{{true}}">
+          <div style="font-size: 13px; color: #6b7280; font-style: italic;">None yet.</div>
+        </sc-if>
+        <sc-for list="{{chosenFeatures}}" as="feat" hint-placeholder-count="1">
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
+            <div style="flex-grow: 1; font-size: 14px; font-weight: 600; color: #1f2430;">{{feat.label}}</div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
+            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 8px; align-items: flex-end;">
+      <div style="position: relative; flex-grow: 1;">
+        <label for="featureSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search features and feats</label>
+        <input id="featureSearch" type="text" placeholder="Search features or feats…" value="{{featureQuery}}" onChange="{{onFeatureQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+        <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+            <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
+              <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none;">
+                <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
+                <span style="font-size: 11px; color: #6b7280;"> — {{m.meta}}</span>
+              </button>
+            </sc-for>
+            <button onClick="{{addCustom}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{featureQuery}}"</button>
+          </div>
+        </sc-if>
+      </div>
+      <select value="{{newFeatureSource}}" onChange="{{onNewFeatureSourceChange}}" aria-label="Feature source" style="padding: 9px 8px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; flex-shrink: 0;">
+        <option value="class">Class</option>
+        <option value="race">Race</option>
+        <option value="chosen">Chosen</option>
+      </select>
+      <div style="flex-shrink: 0;">
+        <label for="newFeatureLevel" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Level</label>
+        <input id="newFeatureLevel" type="number" min="1" max="20" value="{{newFeatureLevel}}" onChange="{{onNewFeatureLevelChange}}" style="width: 48px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+      <div style="flex-shrink: 0;">
+        <label for="newFeatureUses" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Uses</label>
+        <input id="newFeatureUses" type="number" min="0" max="20" value="{{newFeatureUses}}" onChange="{{onNewFeatureUsesChange}}" style="width: 48px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":480,"height":460}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      features: [
+        { label: 'Favored Enemy: Fiends', level: 1, source: 'class', uses: null },
+        { label: 'Extra Attack', level: 5, source: 'class', uses: null },
+        { label: 'Darkvision', level: 1, source: 'race', uses: null },
+        { label: 'Fey Ancestry', level: 1, source: 'race', uses: null },
+        { label: 'Alert', level: 4, source: 'chosen', uses: null }
+      ],
+      featureQuery: '',
+      newFeatureLevel: 1,
+      newFeatureUses: 0,
+      newFeatureSource: 'class'
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const CATALOG = [
+      { name: 'Extra Attack', meta: 'Martial class feature' },
+      { name: 'Action Surge', meta: 'Fighter feature' },
+      { name: 'Arcane Recovery', meta: 'Wizard feature' },
+      { name: 'Darkvision', meta: 'Racial trait' },
+      { name: 'Fey Ancestry', meta: 'Racial trait' },
+      { name: 'Alert', meta: 'Feat' },
+      { name: 'Tough', meta: 'Feat' }
+    ];
+    const { features, featureQuery } = this.state;
+    const featureRows = features.map((f, idx) => {
+      const hasUses = !!f.uses && f.uses.total > 0;
+      const pips = hasUses
+        ? Array.from({ length: f.uses.total }, (_, i) => ({
+            fill: i < f.uses.used ? accent : 'transparent',
+            aria: (i < f.uses.used ? 'Restore' : 'Expend') + ' a use of ' + f.label,
+            toggle: () => this.setState({ features: features.map((x, j) => (j === idx ? { ...x, uses: { ...x.uses, used: i + 1 === x.uses.used ? i : i + 1 } } : x)) })
+          }))
+        : [];
+      return {
+        idx, label: f.label, level: f.level, source: f.source, hasUses, pips,
+        remove: () => this.setState({ features: features.filter((_, i) => i !== idx) })
+      };
+    });
+    const classFeatures = featureRows.filter((f) => f.source === 'class');
+    const raceFeatures = featureRows.filter((f) => f.source === 'race');
+    const chosenFeatures = featureRows.filter((f) => f.source === 'chosen');
+
+    const newFeatureLevel = Math.max(1, Math.min(20, parseInt(this.state.newFeatureLevel, 10) || 1));
+    const newFeatureUses = Math.max(0, Math.min(20, parseInt(this.state.newFeatureUses, 10) || 0));
+    const newFeatureSource = this.state.newFeatureSource;
+    const q = featureQuery.trim().toLowerCase();
+    const matches = q
+      ? CATALOG.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({
+          name: c.name,
+          meta: c.meta,
+          add: () => {
+            const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
+            this.setState({ features: [...features, { label: c.name, level: newFeatureLevel, source: newFeatureSource, uses }], featureQuery: '' });
+          }
+        }))
+      : [];
+    return {
+      accent,
+      classFeatures, noClassFeatures: classFeatures.length === 0,
+      raceFeatures, noRaceFeatures: raceFeatures.length === 0,
+      chosenFeatures, noChosenFeatures: chosenFeatures.length === 0,
+      featureQuery,
+      onFeatureQueryChange: (e) => this.setState({ featureQuery: e.target.value }),
+      showResults: !!featureQuery,
+      matches,
+      addCustom: () => {
+        const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
+        this.setState({ features: [...features, { label: featureQuery, level: newFeatureLevel, source: newFeatureSource, uses }], featureQuery: '' });
+      },
+      newFeatureSource,
+      onNewFeatureSourceChange: (e) => this.setState({ newFeatureSource: e.target.value }),
+      newFeatureLevel,
+      onNewFeatureLevelChange: (e) => this.setState({ newFeatureLevel: e.target.value }),
+      newFeatureUses,
+      onNewFeatureUsesChange: (e) => this.setState({ newFeatureUses: e.target.value })
+    };
+  }
+}
+</script>
+</body>
+</html>
