@@ -177,10 +177,17 @@ const proficienciesSchema = z.strictObject({
  *
  * It defaults true where the other flags default false: an entry naming no container is
  * a thing the character has on them.
+ *
+ * `variant` names a `magicvariant` the API expands against `ref` at read time — `+1
+ * Chain Mail` is stored as a `Chain Mail` ref and a `+1 Weapon` variant, never as the
+ * expanded item, so a catalog rebuild still updates it. It pairs only with a catalog
+ * `ref`: expansion reads the base item's own fields in the shape `inherits` expects, and
+ * a homebrew row does not carry them.
  */
 const inventoryEntrySchema = z
   .strictObject({
     ref: entryRefSchema,
+    variant: contentRefSchema.optional(),
     quantity: z.int().min(1).default(1),
     carried: z.boolean().default(true),
     equipped: z.boolean().default(false),
@@ -188,6 +195,9 @@ const inventoryEntrySchema = z
   })
   .refine((entry) => entry.carried || !entry.equipped, {
     error: "an item is equipped but not carried",
+  })
+  .refine((entry) => entry.variant === undefined || !("homebrewId" in entry.ref), {
+    error: "a magic variant expands a catalog base item, not a homebrew one",
   });
 
 const spellEntrySchema = z.strictObject({
