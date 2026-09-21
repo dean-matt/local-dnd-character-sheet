@@ -36,6 +36,8 @@ together. Every other file matches a widget, panel, or nav element:
   Settings (theme — light/dark/system — and accent), Homebrew (items and spells, one
   tab), Sources.
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
+- Reference: Popover and Modal show the two interaction patterns below in isolation,
+  always open, so they can be reviewed without hovering or clicking inside a live widget.
 
 ## Covered
 
@@ -45,6 +47,11 @@ gear, gated by proficiency to equip; spell slots as a per-level, clickable pip t
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium; light, dark, and system theme; a
 user-customizable accent color; and a settings page for homebrew content and sources.
+Hovering a calculated value (an ability modifier, a save or skill bonus, AC, initiative,
+max HP, an attack bonus) opens a popover with its formula; clicking a widget's item
+(an ability, a skill, a weapon, a spell, a feature, and so on) opens a modal with that
+item's fuller detail. Both share one card style: white background, `#dde1e6` border, a
+bold label line over a muted body line.
 
 Simplifications specific to these widgets:
 - AC is a flat editable stat, not derived from equipped armor — that computation belongs
