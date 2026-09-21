@@ -1,7 +1,7 @@
 /**
- * Reads `content.db`'s `spells` table. Every query opens and closes its own connection
- * through `openContentDb` instead of holding one — the staleness that module exists to
- * avoid.
+ * Reads `content.db`'s Tier A tables — spells, races, backgrounds, feats, items, classes
+ * and subclasses. Every query opens and closes its own connection through `openContentDb`
+ * instead of holding one — the staleness that module exists to avoid.
  */
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
