@@ -591,6 +591,26 @@ describe("prepared spell count", () => {
     });
   });
 
+  it("throws on a stored value that is not a non-negative integer", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-prepared-spells-"));
+    publishClasses(dataDir, {
+      classes: [BARD_XPHB],
+      classResources: [
+        {
+          class_name: "Bard",
+          class_source: "XPHB",
+          level: 1,
+          resource_key: "prepared_spells",
+          value: "many",
+        },
+      ],
+    });
+
+    expect(() => getPreparedSpellCount(dataDir, "Bard", "XPHB", 1)).toThrow(
+      /prepared_spells value many is not a count/,
+    );
+  });
+
   it("says a class does not prepare at all, distinct from reading zero", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-prepared-spells-"));
     publishClasses(dataDir, { classes: [FIGHTER_PHB] });
