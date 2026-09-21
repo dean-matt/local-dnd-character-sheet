@@ -87,3 +87,15 @@ export const classGrantsSchema = z.strictObject({
 });
 
 export type ClassGrants = z.infer<typeof classGrantsSchema>;
+
+/**
+ * The `one`-edition Prepared Spells column at a level: the printed count where the
+ * class carries it, distinct from a class that never does — `classic`'s equivalent is
+ * `preparedSpellCount` in `@dnd/rules`, arithmetic rather than a printed column.
+ */
+export const preparedSpellCountSchema = z.discriminatedUnion("prepares", [
+  z.strictObject({ prepares: z.literal(true), count: z.int().min(0) }),
+  z.strictObject({ prepares: z.literal(false) }),
+]);
+
+export type PreparedSpellCount = z.infer<typeof preparedSpellCountSchema>;

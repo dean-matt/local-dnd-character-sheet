@@ -3,6 +3,7 @@
  * and subclasses. Every query opens and closes its own connection through `openContentDb`
  * instead of holding one — the staleness that module exists to avoid.
  */
+import type { PreparedSpellCount } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 
@@ -375,6 +376,45 @@ export function getClassGrants(
       )
       .all(className, classSource, level) as ClassFeatureRow[];
     return { resources, spellSlots, optionalFeatures, features };
+  } finally {
+    db.close();
+  }
+}
+
+const PREPARED_SPELLS_KEY = "prepared_spells";
+
+/**
+ * The `one`-edition Prepared Spells column for a class at a level. `prepares: false`
+ * where the class carries no such column at any level, distinct from `count: 0` where
+ * it carries the column but has not reached it yet.
+ * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
+ * reached, so telling the two apart needs every one of the class's rows for this
+ * resource key, not just the one at this level — at most 20, one query reads them all.
+ */
+export function getPreparedSpellCount(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+): PreparedSpellCount {
+  const db = openContentDb(dataDir);
+  try {
+    const rows = db
+      .prepare(
+        `SELECT level, value FROM class_resources
+         WHERE class_name = ? AND class_source = ? AND resource_key = ?`,
+      )
+      .all(className, classSource, PREPARED_SPELLS_KEY) as { level: number; value: string }[];
+    if (rows.length === 0) return { prepares: false };
+    const atLevel = rows.find((r) => r.level === level);
+    if (!atLevel) return { prepares: true, count: 0 };
+    const count = Number(atLevel.value);
+    if (!Number.isInteger(count) || count < 0) {
+      throw new Error(
+        `${className}|${classSource} level ${level}: prepared_spells value ${atLevel.value} is not a count`,
+      );
+    }
+    return { prepares: true, count };
   } finally {
     db.close();
   }

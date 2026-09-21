@@ -63,6 +63,13 @@ describe("classesRoutes", () => {
           resource_key: "second_wind",
           value: "1",
         },
+        {
+          class_name: "Cleric",
+          class_source: "XPHB",
+          level: 1,
+          resource_key: "prepared_spells",
+          value: "4",
+        },
       ],
       spellSlots: [
         { class_name: "Cleric", class_source: "PHB", level: 1, slot_level: 1, slots: 2 },
@@ -207,6 +214,25 @@ describe("classesRoutes", () => {
 
       const below = await routes.request("/classes/Cleric/PHB/at/0");
       expect(below.status).toBe(400);
+    });
+  });
+
+  describe("prepared spell count", () => {
+    it("reads the printed count for a one class that carries the column", async () => {
+      const res = await routes.request("/classes/Cleric/XPHB/at/1/prepared-spells");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ prepares: true, count: 4 });
+    });
+
+    it("says a class carries no such column, distinct from reading zero", async () => {
+      const res = await routes.request("/classes/Fighter/PHB/at/1/prepared-spells");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ prepares: false });
+    });
+
+    it("404s a class no row holds", async () => {
+      const res = await routes.request("/classes/Nonexistent/PHB/at/1/prepared-spells");
+      expect(res.status).toBe(404);
     });
   });
 

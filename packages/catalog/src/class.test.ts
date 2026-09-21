@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { classGrantsSchema, classRecordSchema, subclassRecordSchema } from "./index.ts";
+import {
+  classGrantsSchema,
+  classRecordSchema,
+  preparedSpellCountSchema,
+  subclassRecordSchema,
+} from "./index.ts";
 
 describe("classRecordSchema", () => {
   it("accepts a catalog row", () => {
@@ -46,5 +51,21 @@ describe("classGrantsSchema", () => {
       ],
     };
     expect(classGrantsSchema.parse(grants)).toEqual(grants);
+  });
+});
+
+describe("preparedSpellCountSchema", () => {
+  it("accepts the printed count for a class that prepares", () => {
+    const count = { prepares: true, count: 6 };
+    expect(preparedSpellCountSchema.parse(count)).toEqual(count);
+  });
+
+  it("accepts a class that carries no such column, with no count alongside", () => {
+    const count = { prepares: false };
+    expect(preparedSpellCountSchema.parse(count)).toEqual(count);
+  });
+
+  it("rejects a count on a class that does not prepare", () => {
+    expect(() => preparedSpellCountSchema.parse({ prepares: false, count: 0 })).toThrow();
   });
 });
