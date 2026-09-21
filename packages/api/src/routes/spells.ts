@@ -80,7 +80,7 @@ const read = createRoute({
       description: "The spell",
       content: { "application/json": { schema: spellRecordSchema } },
     },
-    404: notFound("spell"),
+    404: notFound("spell", "name and source"),
   },
 });
 

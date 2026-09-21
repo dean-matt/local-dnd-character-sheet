@@ -153,6 +153,7 @@ describe("spellsRoutes", () => {
     it("404s a name and source no row holds", async () => {
       const res = await routes.request("/spells/Nonexistent/PHB");
       expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: "No spell with that name and source" });
     });
 
     it("round-trips a name containing a literal slash", async () => {

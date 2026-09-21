@@ -50,6 +50,9 @@ describe("/openapi.json", () => {
       "/spells",
       "/spells/{name}/{source}",
     ]);
+
+    const description = body.paths["/spells/{name}/{source}"].get.responses["404"].description;
+    expect(description).toBe("No spell with that name and source");
   });
 
   /**
