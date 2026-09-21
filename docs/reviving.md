@@ -36,11 +36,8 @@ pnpm content:build
 ```
 
 Every build stamps `upstream_tag`, `built_at`, `built_by_commit`, and `node_version`
-into the `meta` table. `GET /catalog/meta` reads them back once the API is running:
-
-```bash
-curl -s http://127.0.0.1:8787/catalog/meta | jq
-```
+into the `meta` table. `GET /catalog/meta` reads them back once the API is running —
+see "Run it" below.
 
 ## Check your data survived
 
@@ -70,6 +67,10 @@ delete rather than keep them — SQLite recreates them from the restored file on
 ```bash
 pnpm dev          # api on 8787, web on 5173
 pnpm check        # confirm the fences still pass
+```
+
+```bash
+curl -s http://127.0.0.1:8787/catalog/meta | jq
 ```
 
 ## Re-enable the content workflow

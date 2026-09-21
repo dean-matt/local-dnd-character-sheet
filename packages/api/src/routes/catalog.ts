@@ -11,7 +11,7 @@ const meta = createRoute({
   method: "get",
   path: "/catalog/meta",
   tags: ["catalog"],
-  summary: "The build stamp of the catalog currently live",
+  summary: "The build stamp of the currently live catalog",
   responses: {
     200: {
       description: "The catalog's meta rows",
