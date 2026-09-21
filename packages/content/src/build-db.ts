@@ -178,16 +178,19 @@ export function buildContent({
         }
       }
     })();
-    // The rename moves the main file alone, so a WAL that neither the checkpoint
-    // nor the close drains would be left behind holding committed rows — a short
-    // catalog reported as a successful build. Refuse to publish one instead.
-    db.pragma("wal_checkpoint(TRUNCATE)");
+    // A published catalog is never left in WAL mode, so it never carries `-wal`/`-shm`
+    // sidecars for the rename below to disturb. Switching back to a rollback journal here
+    // checkpoints every committed row into the main file first — left in WAL mode, an
+    // already-open reader's sidecars belong to whichever inode is at `dbPath`, and the
+    // next rebuild's cleanup would delete them out from under it.
+    db.pragma("journal_mode = DELETE");
     db.close();
     if (existsSync(`${staging}-wal`)) {
       throw new Error(`${staging}-wal survived the close; refusing to publish a partial catalog`);
     }
-    // renameSync replaces the target atomically, so the catalog is never missing.
-    // Only a stale WAL has to go first, or SQLite would apply it to the new file.
+    // renameSync replaces the target atomically, so the catalog is never missing. The
+    // sidecar removal below only clears a stale build's leftovers — this build's own
+    // sidecars are already gone, from the mode switch above.
     for (const sidecar of ["-wal", "-shm"]) rmSync(`${dbPath}${sidecar}`, { force: true });
     renameSync(staging, dbPath);
     warnUnmatchedFluff();

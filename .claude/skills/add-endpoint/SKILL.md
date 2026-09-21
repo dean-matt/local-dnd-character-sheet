@@ -55,8 +55,12 @@ const getCharacter = createRoute({
 
 | Reading | Use |
 |---|---|
-| `content.db` | raw SQL through `better-sqlite3` — no Drizzle, FTS5 queries live here |
+| `content.db` | `openContentDb` in `packages/api/src/db/content.ts`, raw SQL — no Drizzle, FTS5 queries live here |
 | `characters.db`, `homebrew.db` | Drizzle |
+
+`openContentDb` opens one connection per query rather than a handle held for the
+process's lifetime — a rebuild replaces `content.db` by rename; see its own comment for
+why that is safe.
 
 A search endpoint that spans the catalog and homebrew queries both and merges. Homebrew
 rows carry source `HB` so the client can badge them.

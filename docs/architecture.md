@@ -46,7 +46,11 @@ Splitting these is the central design decision.
 | `homebrew.db` | the user | yes, Drizzle | yes |
 
 Because the catalog is disposable, `rm data/content.db && pnpm content:build` is always
-safe. Mixing user data into it would make that false.
+safe — including with the API running. `build-db.ts` publishes a catalog with no
+`-wal`/`-shm` sidecars, so `packages/api/src/db/content.ts` opens one fresh per query
+rather than holding a handle for its lifetime: a query already reading the old file when
+a rebuild renames a new one into place keeps reading what it opened, and the next query
+opens whatever is at the path now. Mixing user data into it would make that false.
 
 Characters store *references* to catalog rows — `{name, source}` — never copies. A
 rebuilt catalog therefore updates every character automatically. Only homebrew is stored
