@@ -1,7 +1,7 @@
 /**
- * Reads `content.db`'s class and subclass tables. `docs/class-tables.md` describes what
- * a resource key means and the traps in the upstream shape it came from; this file does
- * not restate them.
+ * Reads `content.db`'s class and subclass tables. No homebrew class exists to merge in.
+ * `docs/class-tables.md` describes what a resource key means and the traps in the
+ * upstream shape it came from; this file does not restate them.
  */
 import {
   type ClassFeatureRecord,

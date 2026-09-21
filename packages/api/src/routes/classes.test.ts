@@ -202,8 +202,11 @@ describe("classesRoutes", () => {
     });
 
     it("rejects a level outside 1-20", async () => {
-      const res = await routes.request("/classes/Cleric/PHB/at/21");
-      expect(res.status).toBe(400);
+      const above = await routes.request("/classes/Cleric/PHB/at/21");
+      expect(above.status).toBe(400);
+
+      const below = await routes.request("/classes/Cleric/PHB/at/0");
+      expect(below.status).toBe(400);
     });
   });
 
