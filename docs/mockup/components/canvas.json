@@ -33,8 +33,8 @@
     "ClassFeaturesFilter.dc.html": { "x": 560, "y": 3445, "w": 260, "h": 250, "title": "Filter — Class Features", "is_interactive": true },
     "RaceFeatures.dc.html": { "x": 920, "y": 3445, "w": 460, "h": 380, "title": "Race Features", "is_interactive": true },
     "RaceFeaturesFilter.dc.html": { "x": 1480, "y": 3445, "w": 260, "h": 250, "title": "Filter — Race Features", "is_interactive": true },
-    "ChosenFeatures.dc.html": { "x": 1840, "y": 3445, "w": 460, "h": 360, "title": "Chosen Features & Feats", "is_interactive": true },
-    "ChosenFeaturesFilter.dc.html": { "x": 2400, "y": 3445, "w": 260, "h": 250, "title": "Filter — Chosen Features & Feats", "is_interactive": true },
+    "ChosenFeatures.dc.html": { "x": 1840, "y": 3445, "w": 460, "h": 360, "title": "Chosen Features", "is_interactive": true },
+    "ChosenFeaturesFilter.dc.html": { "x": 2400, "y": 3445, "w": 260, "h": 250, "title": "Filter — Chosen Features", "is_interactive": true },
     "Backstory.dc.html": { "x": 2760, "y": 3445, "w": 560, "h": 460, "title": "Backstory", "is_interactive": true },
     "Notes.dc.html": { "x": 3420, "y": 3445, "w": 480, "h": 420, "title": "Notes", "is_interactive": true },
 
