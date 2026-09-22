@@ -1,9 +1,11 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { charactersDb, DATA_DIR, homebrewDb } from "./db/singleton.ts";
 import { backgroundsRoutes } from "./routes/backgrounds.ts";
+import { catalogRoutes } from "./routes/catalog.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { classesRoutes } from "./routes/classes.ts";
 import { featsRoutes } from "./routes/feats.ts";
+import { healthRoutes } from "./routes/health.ts";
 import { homebrewRoutes } from "./routes/homebrew.ts";
 import { itemsRoutes } from "./routes/items.ts";
 import { racesRoutes } from "./routes/races.ts";
@@ -21,26 +23,8 @@ app.route("/", backgroundsRoutes(DATA_DIR));
 app.route("/", featsRoutes(DATA_DIR));
 app.route("/", classesRoutes(DATA_DIR));
 app.route("/", searchRoutes(DATA_DIR, homebrewDb));
-
-const HealthResponse = z
-  .object({ status: z.literal("ok"), version: z.string() })
-  .openapi("HealthResponse");
-
-app.openapi(
-  createRoute({
-    method: "get",
-    path: "/health",
-    tags: ["meta"],
-    summary: "Liveness probe",
-    responses: {
-      200: {
-        description: "The API is running",
-        content: { "application/json": { schema: HealthResponse } },
-      },
-    },
-  }),
-  (c) => c.json({ status: "ok" as const, version: "0.0.0" }),
-);
+app.route("/", catalogRoutes(DATA_DIR));
+app.route("/", healthRoutes(DATA_DIR));
 
 app.doc("/openapi.json", {
   openapi: "3.1.0",
