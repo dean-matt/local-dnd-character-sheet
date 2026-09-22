@@ -31,7 +31,11 @@ together. Every other file matches a widget, panel, or nav element:
 - Backstory, Notes.
 - Identity: Name, Race, Class, Background, Languages, Proficiencies — each its own
   widget. Level (level, leveling mode, experience) and Alignment are their own sidebar
-  tabs, not part of Identity.
+  tabs, not part of Identity. Level Up is the modal a level-up button on Level opens —
+  pick an existing class or multiclass into a new one, Hit Points by average, roll, or
+  a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
+  and new spells for a class that gains them, all gating Apply until every open choice
+  the level actually offers is made.
 - Page chrome: Sidebar (the tab rail), Top Bar Navigation (Character menu, Mechanics
   menu, search, Settings), Character Header. Manage Tabs is the modal Sidebar's "Manage
   Tabs" button opens: every tab reorders (drag) and hides here, but only a tab a user
