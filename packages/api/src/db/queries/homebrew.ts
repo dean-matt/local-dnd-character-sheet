@@ -1,17 +1,27 @@
 /**
- * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items` and
- * `homebrew_spells` tables. `source` never arrives as an argument — every write stamps
- * `HOMEBREW_SOURCE` into `json` here, the one place that builds it, and `id` is chosen by
- * the caller once at creation and never reassigned, so a rename keeps the id a character
- * already references.
+ * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
+ * `homebrew_spells` and `homebrew_backgrounds` tables. `source` never arrives as an
+ * argument — every write stamps `HOMEBREW_SOURCE` into `json` here, the one place that
+ * builds it, and `id` is chosen by the caller once at creation and never reassigned, so
+ * a rename keeps the id a character already references.
  */
-import type { HomebrewItem, HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
-import { homebrewItemSchema, spellEntrySchema } from "@dnd/catalog";
+import type {
+  HomebrewBackgroundInput,
+  HomebrewItem,
+  HomebrewItemInput,
+  HomebrewSpellInput,
+} from "@dnd/catalog";
+import { characterOptionEntrySchema, homebrewItemSchema, spellEntrySchema } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { and, eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as homebrewSchema from "../homebrew.ts";
-import { HOMEBREW_SOURCE, homebrewItems, homebrewSpells } from "../homebrew.ts";
+import {
+  HOMEBREW_SOURCE,
+  homebrewBackgrounds,
+  homebrewItems,
+  homebrewSpells,
+} from "../homebrew.ts";
 import { escapeLikeTerm } from "./content.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;
@@ -142,4 +152,49 @@ export function updateHomebrewSpell(db: HomebrewDb, id: string, input: HomebrewS
 
 export function deleteHomebrewSpell(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewSpells).where(eq(homebrewSpells.id, id)).run().changes > 0;
+}
+
+export function listHomebrewBackgrounds(db: HomebrewDb) {
+  return db.select().from(homebrewBackgrounds).all();
+}
+
+export function getHomebrewBackground(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewBackgrounds).where(eq(homebrewBackgrounds.id, id)).get();
+}
+
+function backgroundJson(input: HomebrewBackgroundInput) {
+  const { edition: _edition, ...entry } = input;
+  return characterOptionEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+export function insertHomebrewBackground(
+  db: HomebrewDb,
+  id: string,
+  input: HomebrewBackgroundInput,
+) {
+  const json = backgroundJson(input);
+  return db
+    .insert(homebrewBackgrounds)
+    .values({ id, edition: input.edition, name: json.name, json })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewBackground` reads a miss. */
+export function updateHomebrewBackground(
+  db: HomebrewDb,
+  id: string,
+  input: HomebrewBackgroundInput,
+) {
+  const json = backgroundJson(input);
+  return db
+    .update(homebrewBackgrounds)
+    .set({ edition: input.edition, name: json.name, json })
+    .where(eq(homebrewBackgrounds.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewBackground(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewBackgrounds).where(eq(homebrewBackgrounds.id, id)).run().changes > 0;
 }

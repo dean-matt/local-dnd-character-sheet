@@ -1,20 +1,25 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
+import type { HomebrewBackgroundInput, HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../client.ts";
 import {
+  deleteHomebrewBackground,
   deleteHomebrewItem,
   deleteHomebrewSpell,
+  getHomebrewBackground,
   getHomebrewItem,
   getHomebrewSpell,
+  insertHomebrewBackground,
   insertHomebrewItem,
   insertHomebrewSpell,
+  listHomebrewBackgrounds,
   listHomebrewItems,
   listHomebrewSpells,
   searchHomebrewItems,
   searchHomebrewSpells,
+  updateHomebrewBackground,
   updateHomebrewItem,
   updateHomebrewSpell,
 } from "./homebrew.ts";
@@ -24,6 +29,12 @@ const sunblade = (overrides: Partial<HomebrewItemInput> = {}): HomebrewItemInput
   edition: "one",
   type: "M",
   rarity: "rare",
+  ...overrides,
+});
+
+const wanderer = (overrides: Partial<HomebrewBackgroundInput> = {}): HomebrewBackgroundInput => ({
+  name: "Wanderer",
+  edition: "one",
   ...overrides,
 });
 
@@ -196,6 +207,63 @@ describe("homebrew queries", () => {
 
       expect(deleteHomebrewSpell(db, "1")).toBe(true);
       expect(getHomebrewSpell(db, "1")).toBeUndefined();
+    });
+  });
+
+  describe("backgrounds", () => {
+    it("stamps HOMEBREW_SOURCE into json regardless of what a caller sends", () => {
+      const row = insertHomebrewBackground(db, "1", {
+        ...wanderer(),
+        source: "PHB",
+      } as HomebrewBackgroundInput);
+      expect(row.json.source).toBe("HB");
+    });
+
+    it("derives name from the entry on insert", () => {
+      const row = insertHomebrewBackground(db, "1", wanderer());
+      expect(row).toMatchObject({ name: "Wanderer", edition: "one" });
+    });
+
+    it("lists and reads backgrounds by id", () => {
+      insertHomebrewBackground(db, "1", wanderer());
+      insertHomebrewBackground(db, "2", wanderer({ name: "Drifter" }));
+
+      expect(
+        listHomebrewBackgrounds(db)
+          .map((row) => row.name)
+          .sort(),
+      ).toEqual(["Drifter", "Wanderer"]);
+      expect(getHomebrewBackground(db, "1")).toMatchObject({ id: "1", name: "Wanderer" });
+      expect(getHomebrewBackground(db, "missing")).toBeUndefined();
+    });
+
+    it("renames a background without changing its id", () => {
+      insertHomebrewBackground(db, "1", wanderer());
+
+      const renamed = updateHomebrewBackground(db, "1", wanderer({ name: "Wanderer II" }));
+      expect(renamed).toMatchObject({ id: "1", name: "Wanderer II" });
+    });
+
+    it("stamps HOMEBREW_SOURCE on a rename regardless of what a caller sends", () => {
+      insertHomebrewBackground(db, "1", wanderer());
+
+      const renamed = updateHomebrewBackground(db, "1", {
+        ...wanderer({ name: "Wanderer II" }),
+        source: "PHB",
+      } as HomebrewBackgroundInput);
+      expect(renamed?.json.source).toBe("HB");
+    });
+
+    it("reports nothing updating or deleting an id that does not exist", () => {
+      expect(updateHomebrewBackground(db, "missing", wanderer())).toBeUndefined();
+      expect(deleteHomebrewBackground(db, "missing")).toBe(false);
+    });
+
+    it("deletes a background, after which it reads nothing", () => {
+      insertHomebrewBackground(db, "1", wanderer());
+
+      expect(deleteHomebrewBackground(db, "1")).toBe(true);
+      expect(getHomebrewBackground(db, "1")).toBeUndefined();
     });
   });
 

@@ -51,6 +51,12 @@ freeze each character at the moment it was created.
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
 
+**A homebrew background's `json` reuses `backgroundRecordSchema`'s entry shape** from
+`packages/catalog/src/character-options.ts` — `name`, `source` and `entries`, with skill
+proficiencies and everything else passthrough. The catalog and homebrew sides read the
+same fields either way, and a background is written once and displayed, never edited
+field by field — the same reasoning `homebrewItemSchema` and `spellEntrySchema` give.
+
 **The API enforces a homebrew reference, since the schema cannot.** `characters.db` and
 `homebrew.db` are separate files opened as separate connections, so SQLite's foreign keys
 never see across them. `routes/homebrew.ts` scans every character's `definition` for the

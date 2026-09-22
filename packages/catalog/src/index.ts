@@ -1,5 +1,17 @@
-export type { BackgroundRecord, FeatRecord } from "./character-options.ts";
-export { backgroundRecordSchema, featRecordSchema } from "./character-options.ts";
+export type {
+  BackgroundRecord,
+  CharacterOptionEntry,
+  FeatRecord,
+  HomebrewBackgroundInput,
+  HomebrewBackgroundRecord,
+} from "./character-options.ts";
+export {
+  backgroundRecordSchema,
+  characterOptionEntrySchema,
+  featRecordSchema,
+  homebrewBackgroundInputSchema,
+  homebrewBackgroundRecordSchema,
+} from "./character-options.ts";
 export type {
   ClassFeatureRecord,
   ClassGrants,

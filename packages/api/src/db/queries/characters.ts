@@ -75,9 +75,9 @@ export function deleteCharacter(db: CharactersDb, id: string): boolean {
 
 /**
  * Whether a parsed `definition` holds `{homebrewId}` anywhere `entryRefSchema` allows
- * one — inventory, spells, feats, optional features and what granted them. Walks the
- * JSON rather than naming each field, so a reference added anywhere in that shape is
- * still found without a matching edit here.
+ * one — background, inventory, spells, feats, optional features and what granted them.
+ * Walks the JSON rather than naming each field, so a reference added anywhere in that
+ * shape is still found without a matching edit here.
  */
 function referencesHomebrewId(value: unknown, homebrewId: string): boolean {
   if (Array.isArray(value)) return value.some((item) => referencesHomebrewId(item, homebrewId));
