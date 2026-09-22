@@ -32,7 +32,7 @@
           </span>
           <sc-if value="{{row.custom}}" hint-placeholder-val="{{false}}">
             <label for="tabRename-{{row.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Rename {{row.label}}</label>
-            <input id="tabRename-{{row.id}}" type="text" value="{{row.label}}" onChange="{{row.onRename}}" style="flex-grow: 1; min-width: 0; padding: 4px 6px; border: 1px solid transparent; border-radius: 3px; font-size: 13px; color: {{row.textColor}}; background: none;">
+            <input id="tabRename-{{row.id}}" type="text" value="{{row.label}}" onChange="{{row.onRename}}" style="flex-grow: 1; min-width: 0; padding: 4px 6px; border: 1px solid #dde1e6; border-radius: 3px; font-size: 13px; color: {{row.textColor}}; background: #ffffff;">
           </sc-if>
           <sc-if value="{{row.builtIn}}" hint-placeholder-val="{{true}}">
             <span title="Built-in tab — reorder or hide, but not rename" style="flex-grow: 1; min-width: 0; padding: 4px 6px; font-size: 13px; color: {{row.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{row.label}}</span>
