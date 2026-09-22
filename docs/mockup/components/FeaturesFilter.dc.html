@@ -13,7 +13,7 @@
   body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
   * { box-sizing: border-box; }
   button { font-family: inherit; cursor: pointer; }
-  label { font-family: inherit; }
+  label, select { font-family: inherit; }
 </style>
 </helmet>
 
@@ -22,25 +22,37 @@
     <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Features</div>
     <button aria-label="Close filter" onClick="{{close}}" style="border: none; background: none; font-size: 16px; line-height: 1; color: #6b7280; padding: 0;">&times;</button>
   </div>
+
   <div>
     <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Source</div>
-    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
-      <input type="checkbox" checked="{{classChecked}}" onChange="{{toggleClass}}"> Class
-    </label>
-    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
-      <input type="checkbox" checked="{{raceChecked}}" onChange="{{toggleRace}}"> Race
-    </label>
-    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
-      <input type="checkbox" checked="{{chosenChecked}}" onChange="{{toggleChosen}}"> Chosen &amp; Feats
-    </label>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+      <sc-for list="{{sourceChips}}" as="chip" hint-placeholder-count="2">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{chip.label}}
+          <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{sourceEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">None selected</div>
+      </sc-if>
+    </div>
+    <sc-if value="{{sourceHasHidden}}" hint-placeholder-val="{{false}}">
+      <select onChange="{{onSourceAdd}}" value="" aria-label="Add a source to the filter" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="" disabled>+ Add source…</option>
+        <sc-for list="{{sourceHiddenOptions}}" as="opt" hint-placeholder-count="1">
+          <option value="{{opt.value}}">{{opt.label}}</option>
+        </sc-for>
+      </select>
+    </sc-if>
   </div>
+
   <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; border-top: 1px solid #dde1e6; padding-top: 8px;">
     <input type="checkbox" checked="{{hasUsesOnly}}" onChange="{{toggleHasUsesOnly}}"> Has limited uses only
   </label>
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":200}}'>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":250}}'>
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -49,16 +61,28 @@ class Component extends DCLogic {
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
     const set = (next) => onChange({ ...filters, ...next });
-    const flip = (key) => () => set({ sources: { ...filters.sources, [key]: !filters.sources[key] } });
+    const SOURCE_LABEL = { class: 'Class', race: 'Race', chosen: 'Chosen & Feats' };
+    const makeFacet = (map, keys, apply, labelFn) => {
+      const label = labelFn || ((k) => k);
+      const selected = keys.filter((k) => map[k] !== false);
+      const hidden = keys.filter((k) => map[k] === false);
+      return {
+        chips: selected.map((k) => ({ label: label(k), remove: () => apply({ ...map, [k]: false }) })),
+        isEmpty: selected.length === 0,
+        hasHidden: hidden.length > 0,
+        hiddenOptions: hidden.map((k) => ({ value: k, label: label(k) })),
+        onAdd: (e) => { const k = e.target.value; if (k) apply({ ...map, [k]: true }); }
+      };
+    };
+    const sourceFacet = makeFacet(filters.sources, ['class', 'race', 'chosen'], (next) => set({ sources: next }), (k) => SOURCE_LABEL[k]);
     return {
       accent,
-      classChecked: filters.sources.class,
-      raceChecked: filters.sources.race,
-      chosenChecked: filters.sources.chosen,
+      sourceChips: sourceFacet.chips,
+      sourceEmpty: sourceFacet.isEmpty,
+      sourceHasHidden: sourceFacet.hasHidden,
+      sourceHiddenOptions: sourceFacet.hiddenOptions,
+      onSourceAdd: sourceFacet.onAdd,
       hasUsesOnly: filters.hasUsesOnly,
-      toggleClass: flip('class'),
-      toggleRace: flip('race'),
-      toggleChosen: flip('chosen'),
       toggleHasUsesOnly: () => set({ hasUsesOnly: !filters.hasUsesOnly }),
       reset: () => onChange(DEFAULT),
       close: () => onClose()
