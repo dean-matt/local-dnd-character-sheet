@@ -37,7 +37,12 @@ together. Every other file matches a widget, panel, or nav element:
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
   Settings (theme — light/dark/system — and accent), Homebrew (items and spells, one
   tab), Sources.
-- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
+- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker (the full catalog of
+  addable widgets, used only by Custom Tab).
+- Custom Tab shows the widget canvas a user-created tab gets: an Edit button gates
+  drag-to-move and drag-a-corner-to-resize, and a ghost "Add Widget" button opens the
+  picker. Built-in tabs (Overview, Inventory, Spells, Features, Identity, Level,
+  Alignment, Backstory, Notes) never get this — their widgets are fixed.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
   List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, and the
@@ -48,8 +53,9 @@ together. Every other file matches a widget, panel, or nav element:
 
 ## Covered
 
-Ability scores, saves, and skills (with custom, non-ability-based skills); a widget-based
-Overview a user can resize, reorder, and add to; inventory split into weapons, armor, and
+Ability scores, saves, and skills (with custom, non-ability-based skills); a tab rail
+where any tab reorders and hides, but only a user-created tab renames, deletes, or has
+its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium; light, dark, and system theme; a
@@ -80,4 +86,5 @@ Simplifications specific to these widgets:
   version of this mockup had one; a phone-width layout still needs redoing here.
 - No keyboard navigation through the search dropdowns.
 - Clicking a compendium search result adds it directly; there is no detail view first.
-- Widget resize is click-to-cycle between three sizes, not a continuous drag.
+- On Custom Tab, dragging a widget's corner cycles it through four preset sizes
+  (S/M/L/XL) rather than resizing to an arbitrary pixel size.
