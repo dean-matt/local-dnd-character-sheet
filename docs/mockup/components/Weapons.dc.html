@@ -132,7 +132,7 @@ class Component extends DCLogic {
       hoverDmgKey: null,
       modalItem: null,
       filterOpen: false,
-      weaponFilters: { classes: [], damageTypes: [], equipped: null, priceMin: null, priceMax: null }
+      weaponFilters: { classes: [], damageTypes: [], equipped: [], priceMin: null, priceMax: null }
     };
   }
   renderVals() {
@@ -152,7 +152,7 @@ class Component extends DCLogic {
     const filteredEquipment = equipment.filter((item) => {
       if (wf.classes.length && wf.classes.indexOf(item.weaponClass) === -1) return false;
       if (wf.damageTypes.length && wf.damageTypes.indexOf(item.damageType) === -1) return false;
-      if (wf.equipped != null && !!item.equipped !== wf.equipped) return false;
+      if (wf.equipped.length && wf.equipped.indexOf(item.equipped ? 'equipped' : 'unequipped') === -1) return false;
       const price = priceOf(item);
       if (wf.priceMin != null && price < wf.priceMin) return false;
       if (wf.priceMax != null && price > wf.priceMax) return false;
@@ -213,7 +213,7 @@ class Component extends DCLogic {
         }))
       : [];
     const modalItem = this.state.modalItem;
-    const filterActive = wf.classes.length > 0 || wf.damageTypes.length > 0 || wf.equipped != null || wf.priceMin != null || wf.priceMax != null;
+    const filterActive = wf.classes.length > 0 || wf.damageTypes.length > 0 || wf.equipped.length > 0 || wf.priceMin != null || wf.priceMax != null;
     return {
       accent,
       weapons,

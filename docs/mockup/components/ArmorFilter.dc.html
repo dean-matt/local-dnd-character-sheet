@@ -57,10 +57,10 @@
   </div>
   <div style="border-top: 1px solid #dde1e6; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;">
     <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
-      <input type="checkbox" checked="{{equippedOnly}}" onChange="{{toggleEquippedOnly}}"> Equipped only
+      <input type="checkbox" checked="{{equippedChecked}}" onChange="{{toggleEquipped}}"> Equipped
     </label>
     <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
-      <input type="checkbox" checked="{{unequippedOnly}}" onChange="{{toggleUnequippedOnly}}"> Unequipped only
+      <input type="checkbox" checked="{{unequippedChecked}}" onChange="{{toggleUnequipped}}"> Unequipped
     </label>
   </div>
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
@@ -70,7 +70,7 @@
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const DEFAULT = { classes: [], equipped: null, priceMin: null, priceMax: null };
+    const DEFAULT = { classes: [], equipped: [], priceMin: null, priceMax: null };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
@@ -94,10 +94,10 @@ class Component extends DCLogic {
       classHasHidden: classFacet.hasHidden,
       classHiddenOptions: classFacet.hiddenOptions,
       onClassAdd: classFacet.onAdd,
-      equippedOnly: filters.equipped === true,
-      unequippedOnly: filters.equipped === false,
-      toggleEquippedOnly: () => set({ equipped: filters.equipped === true ? null : true }),
-      toggleUnequippedOnly: () => set({ equipped: filters.equipped === false ? null : false }),
+      equippedChecked: filters.equipped.indexOf('equipped') !== -1,
+      unequippedChecked: filters.equipped.indexOf('unequipped') !== -1,
+      toggleEquipped: () => set({ equipped: filters.equipped.indexOf('equipped') !== -1 ? filters.equipped.filter((v) => v !== 'equipped') : [...filters.equipped, 'equipped'] }),
+      toggleUnequipped: () => set({ equipped: filters.equipped.indexOf('unequipped') !== -1 ? filters.equipped.filter((v) => v !== 'unequipped') : [...filters.equipped, 'unequipped'] }),
       priceMin: filters.priceMin ?? '',
       priceMax: filters.priceMax ?? '',
       onPriceMin: (e) => set({ priceMin: toNum(e.target.value) }),
