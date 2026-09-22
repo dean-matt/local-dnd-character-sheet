@@ -37,8 +37,10 @@ together. Every other file matches a widget, panel, or nav element:
   Tabs" button opens: every tab reorders (drag) and hides here, but only a tab a user
   added renames or deletes — delete asks Confirm Dialog first.
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
-  Settings (theme — light/dark/system — and accent), Homebrew (items and spells, one
-  tab), Sources.
+  Settings (theme — light/dark/system — and accent), Homebrew (a Weapons/Armor/Gear/
+  Spells tab strip, one category shown at a time), Sources. Homebrew Weapons, Homebrew
+  Armor, Homebrew Gear, and Homebrew Spells are that same tab content broken out into
+  their own artboards, one per category, for reviewing each in isolation.
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 - Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
   with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own
@@ -57,8 +59,8 @@ together. Every other file matches a widget, panel, or nav element:
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
   List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, the
-  Features widgets, and Homebrew's items and spells — design it here first, then carry
-  a change into each widget's rows.
+  Features widgets, and Homebrew's own weapons, armor, gear, and spells — design it
+  here first, then carry a change into each widget's rows.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its list widget from a
   Filter button in that widget's header, and sits next to that widget on the canvas.
