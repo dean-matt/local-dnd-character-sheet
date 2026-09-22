@@ -41,10 +41,11 @@ together. Every other file matches a widget, panel, or nav element:
   Sidebar's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
   only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
-  listing the character's rolls newest first, each tagged with what it was rolled for
-  (a weapon, a spell, an ability check…), with a Clear button. Character sheet only, not
-  Settings. Forward design for #282, which only specified the list; the dock, the
-  collapse, the per-roll source tag, and Clear are this mockup's own call.
+  listing rolls newest first, each tagged with what it was rolled for (a weapon, a
+  spell, an ability check…) and which character made it, with a Clear button. Character
+  sheet only, not Settings. Forward design for #282, which only specified the list; the
+  dock, the collapse, the per-roll source and character tags, and Clear are this
+  mockup's own call.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, each with its own
   slim header (brand mark, and a Cancel link back to the list on every creation step)

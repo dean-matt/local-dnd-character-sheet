@@ -43,6 +43,7 @@
             <div style="flex-grow: 1;"></div>
             <span style="font-size: 10px; color: #9aa1ab; flex-shrink: 0;">{{item.time}}</span>
           </div>
+          <div style="font-size: 11px; color: #6b7280; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.character}}</div>
           <div style="display: flex; align-items: baseline; gap: 6px;">
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.type}}</span>
             <div style="flex-grow: 1;"></div>
@@ -68,12 +69,12 @@ class Component extends DCLogic {
     this.state = {
       collapsed: false,
       rolls: [
-        { source: 'Fire Bolt', type: 'Spell Atk', notation: 'd20+6', natural: 20, mod: '+6', time: 'just now' },
-        { source: 'Fire Bolt', type: 'Spell Dmg', notation: '2d10', natural: null, mod: null, time: 'just now', flat: 14 },
-        { source: 'Longsword', type: 'Attack', notation: 'd20+5', natural: 13, mod: '+5', time: '2m ago' },
-        { source: 'Longsword', type: 'Damage', notation: '1d8+3', natural: null, mod: null, time: '2m ago', flat: 9 },
-        { source: 'Dexterity', type: 'Save', notation: 'd20+3', natural: 1, mod: '+3', time: '4m ago' },
-        { source: 'Stealth', type: 'Check', notation: 'd20+7', natural: 16, mod: '+7', time: '6m ago' }
+        { source: 'Fire Bolt', character: 'Mira Stormwind', type: 'Spell Atk', notation: 'd20+6', natural: 20, mod: '+6', time: 'just now' },
+        { source: 'Fire Bolt', character: 'Mira Stormwind', type: 'Spell Dmg', notation: '2d10', natural: null, mod: null, time: 'just now', flat: 14 },
+        { source: 'Longsword', character: 'Kaelen Ashwood', type: 'Attack', notation: 'd20+5', natural: 13, mod: '+5', time: '2m ago' },
+        { source: 'Longsword', character: 'Kaelen Ashwood', type: 'Damage', notation: '1d8+3', natural: null, mod: null, time: '2m ago', flat: 9 },
+        { source: 'Dexterity', character: 'Kaelen Ashwood', type: 'Save', notation: 'd20+3', natural: 1, mod: '+3', time: '4m ago' },
+        { source: 'Stealth', character: 'Mira Stormwind', type: 'Check', notation: 'd20+7', natural: 16, mod: '+7', time: '6m ago' }
       ]
     };
   }
@@ -88,7 +89,7 @@ class Component extends DCLogic {
       const summary = r.natural != null
         ? 'd20 (' + r.natural + ') ' + r.mod + ' = ' + total
         : r.notation + ' = ' + total;
-      return { source: r.source, type: r.type, time: r.time, summary, color };
+      return { source: r.source, character: r.character, type: r.type, time: r.time, summary, color };
     });
 
     return {
