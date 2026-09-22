@@ -32,7 +32,7 @@
           </button>
           <sc-if value="{{filterOpen}}" hint-placeholder-val="{{false}}">
             <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;">
-              <dc-import name="RollsPanelFilter" filters="{{rollFilters}}" characters="{{characterOptions}}" on-change="{{setRollFilters}}" on-close="{{closeFilter}}" accent="{{accent}}" hint-size="220px,320px"></dc-import>
+              <dc-import name="RollsPanelFilter" filters="{{rollFilters}}" on-change="{{setRollFilters}}" on-close="{{closeFilter}}" accent="{{accent}}" hint-size="220px,320px"></dc-import>
             </div>
           </sc-if>
         </div>
@@ -105,7 +105,6 @@ class Component extends DCLogic {
     const textDisplay = collapsed ? 'none' : 'flex';
     const rowJustify = collapsed ? 'center' : 'flex-start';
 
-    const characterOptions = [...new Set(rolls.map((r) => r.character))];
     const filtered = rolls.filter((r) => {
       if (rf.characters.length && rf.characters.indexOf(r.character) === -1) return false;
       if (rf.types.length && rf.types.indexOf(r.type) === -1) return false;
@@ -142,7 +141,6 @@ class Component extends DCLogic {
       closeFilter: () => this.setState({ filterOpen: false }),
       rollFilters: rf,
       setRollFilters: (next) => this.setState({ rollFilters: next }),
-      characterOptions,
       filterActive,
       filterBorder: filterActive ? accent : '#dde1e6',
       filterBg: filterActive ? '#fdf3ea' : '#ffffff',

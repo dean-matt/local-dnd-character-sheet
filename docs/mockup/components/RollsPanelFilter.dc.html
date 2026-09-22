@@ -72,11 +72,11 @@
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"characters":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":320}}'>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":320}}'>
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const characters = this.props.characters || [];
+    const CHARACTERS = ['Mira Stormwind', 'Kaelen Ashwood'];
     const TYPES = ['Attack', 'Damage', 'Check', 'Save', 'Spell Atk', 'Spell Dmg'];
     const DEFAULT = { characters: [], types: [] };
     const filters = this.props.filters || DEFAULT;
@@ -93,7 +93,7 @@ class Component extends DCLogic {
         onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
       };
     };
-    const characterFacet = makeFacet(filters.characters, characters, (next) => set({ characters: next }));
+    const characterFacet = makeFacet(filters.characters, CHARACTERS, (next) => set({ characters: next }));
     const typeFacet = makeFacet(filters.types, TYPES, (next) => set({ types: next }));
     return {
       accent,
