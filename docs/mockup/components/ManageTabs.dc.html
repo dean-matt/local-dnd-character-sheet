@@ -45,9 +45,7 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
             </sc-if>
           </button>
-          <sc-if value="{{row.custom}}" hint-placeholder-val="{{false}}">
-            <button aria-label="Delete {{row.label}}" onClick="{{row.confirmRemove}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; flex-shrink: 0;">&times;</button>
-          </sc-if>
+          <button aria-label="Delete {{row.label}}" onClick="{{row.confirmRemove}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; flex-shrink: 0; visibility: {{row.deleteVisibility}};">&times;</button>
         </div>
       </sc-for>
     </div>
@@ -114,9 +112,10 @@ class Component extends DCLogic {
       textColor: t.hidden ? '#9aa1ab' : '#1f2430',
       borderColor: dragTabId && dragTabId !== t.id ? accent : '#eceef1',
       visibilityLabel: t.hidden ? 'Show ' + t.label : 'Hide ' + t.label,
+      deleteVisibility: t.custom ? 'visible' : 'hidden',
       onRename: (e) => onChange(tabs.map((x) => (x.id === t.id ? { ...x, label: e.target.value } : x))),
       toggleHidden: () => onChange(tabs.map((x) => (x.id === t.id ? { ...x, hidden: !x.hidden } : x))),
-      confirmRemove: () => this.setState({ confirmDeleteId: t.id }),
+      confirmRemove: () => t.custom && this.setState({ confirmDeleteId: t.id }),
       onDragStart: () => this.setState({ dragTabId: t.id }),
       onDragOver: (e) => e.preventDefault(),
       onDrop: (e) => {
