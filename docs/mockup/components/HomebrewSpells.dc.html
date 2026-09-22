@@ -21,11 +21,11 @@
 <div style="width: 480px; height: 400px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
   <div style="width: 100%; max-height: 352px; overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Homebrew Spells</div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Spells</div>
       <button onClick="{{openAdd}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 12px; font-weight: 600;">+ Add Spell</button>
     </div>
     <sc-if value="{{noSpells}}" hint-placeholder-val="{{false}}">
-      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No homebrew spells yet.</div>
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No spells yet.</div>
     </sc-if>
     <sc-for list="{{spells}}" as="sp" hint-placeholder-count="1">
       <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
@@ -52,7 +52,7 @@
         <div style="font-size: 12px; font-weight: 600; color: #1f2430;">{{formTitle}}</div>
         <div style="font-size: 11px; color: #6b7280;">Paste the spell's 5etools-shaped entry. Saving replaces the whole entry; there's no field-by-field editing.</div>
         <label for="spellJson" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Spell JSON</label>
-        <textarea id="spellJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Coastal Ward", "source": "HB", "level": 2, "school": "A", "dice": "2d6", "entries": ["..."]}' style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+        <textarea id="spellJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Coastal Ward", "source": "HB", "level": 2, "school": "A", "dice": "2d6", "entries": ["..."]}' style="width: 100%; min-height: 160px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
           <button onClick="{{closeForm}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 12px; font-weight: 600;">Cancel</button>
           <button onClick="{{saveForm}}" style="padding: 6px 12px; border-radius: 4px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Save</button>
@@ -85,6 +85,13 @@ class Component extends DCLogic {
       } catch {}
       return '';
     };
+    const pretty = (json) => {
+      try {
+        return JSON.stringify(JSON.parse(json), null, 2);
+      } catch {
+        return json;
+      }
+    };
     const rows = spells.map((sp) => ({
       id: sp.id,
       name: sp.name,
@@ -92,7 +99,7 @@ class Component extends DCLogic {
       dice: sp.dice,
       hasDice: !!sp.dice,
       descShort: descOf(sp.json),
-      edit: () => this.setState({ editingId: sp.id, addOpen: false, formJson: sp.json }),
+      edit: () => this.setState({ editingId: sp.id, addOpen: false, formJson: pretty(sp.json) }),
       remove: () => this.setState({ spells: spells.filter((x) => x.id !== sp.id), editingId: editingId === sp.id ? null : editingId })
     }));
     const editing = spells.find((sp) => sp.id === editingId);
@@ -101,13 +108,13 @@ class Component extends DCLogic {
       spells: rows,
       noSpells: spells.length === 0,
       formOpen: addOpen || !!editing,
-      formTitle: editing ? 'Edit ' + editing.name : 'New homebrew spell',
+      formTitle: editing ? 'Edit ' + editing.name : 'New spell',
       formJson,
       onFormJsonChange: (e) => this.setState({ formJson: e.target.value }),
       openAdd: () => this.setState({ addOpen: true, editingId: null, formJson: '' }),
       closeForm: () => this.setState({ addOpen: false, editingId: null, formJson: '' }),
       saveForm: () => {
-        let parsedName = 'Untitled Spell', category = 'Homebrew spell', dice = null;
+        let parsedName = 'Untitled Spell', category = 'Spell', dice = null;
         try {
           const parsed = JSON.parse(formJson);
           if (parsed && parsed.name) parsedName = parsed.name;

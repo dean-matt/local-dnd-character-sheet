@@ -21,11 +21,11 @@
 <div style="width: 480px; height: 440px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
   <div style="width: 100%; max-height: 392px; overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Homebrew Weapons</div>
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Weapons</div>
       <button onClick="{{openAdd}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 12px; font-weight: 600;">+ Add Weapon</button>
     </div>
     <sc-if value="{{noItems}}" hint-placeholder-val="{{false}}">
-      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No homebrew weapons yet.</div>
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No weapons yet.</div>
     </sc-if>
     <sc-for list="{{items}}" as="item" hint-placeholder-count="1">
       <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
@@ -53,7 +53,7 @@
         <div style="font-size: 12px; font-weight: 600; color: #1f2430;">{{formTitle}}</div>
         <div style="font-size: 11px; color: #6b7280;">Paste the weapon's 5etools-shaped entry. Saving replaces the whole entry; there's no field-by-field editing.</div>
         <label for="weaponJson" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Weapon JSON</label>
-        <textarea id="weaponJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Sunfire Blade", "source": "HB", "type": "M", "weaponCategory": "martial", "dmgType": "S", "dmg1": "1d8", "value": "15 gp", "entries": ["..."]}' style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+        <textarea id="weaponJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Sunfire Blade", "source": "HB", "type": "M", "weaponCategory": "martial", "dmgType": "S", "dmg1": "1d8", "value": "15 gp", "entries": ["..."]}' style="width: 100%; min-height: 160px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
           <button onClick="{{closeForm}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 12px; font-weight: 600;">Cancel</button>
           <button onClick="{{saveForm}}" style="padding: 6px 12px; border-radius: 4px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Save</button>
@@ -86,6 +86,13 @@ class Component extends DCLogic {
       } catch {}
       return '';
     };
+    const pretty = (json) => {
+      try {
+        return JSON.stringify(JSON.parse(json), null, 2);
+      } catch {
+        return json;
+      }
+    };
     const rows = items.map((it) => ({
       id: it.id,
       name: it.name,
@@ -94,7 +101,7 @@ class Component extends DCLogic {
       dice: it.dice,
       value: it.value,
       descShort: descOf(it.json),
-      edit: () => this.setState({ editingId: it.id, addOpen: false, formJson: it.json }),
+      edit: () => this.setState({ editingId: it.id, addOpen: false, formJson: pretty(it.json) }),
       remove: () => this.setState({ items: items.filter((x) => x.id !== it.id), editingId: editingId === it.id ? null : editingId })
     }));
     const editing = items.find((it) => it.id === editingId);
@@ -103,7 +110,7 @@ class Component extends DCLogic {
       items: rows,
       noItems: items.length === 0,
       formOpen: addOpen || !!editing,
-      formTitle: editing ? 'Edit ' + editing.name : 'New homebrew weapon',
+      formTitle: editing ? 'Edit ' + editing.name : 'New weapon',
       formJson,
       onFormJsonChange: (e) => this.setState({ formJson: e.target.value }),
       openAdd: () => this.setState({ addOpen: true, editingId: null, formJson: '' }),
