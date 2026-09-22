@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Filter — Known Spells</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  label, input { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 24px rgba(0,0,0,0.18);">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Spells</div>
+    <button aria-label="Close filter" onClick="{{close}}" style="border: none; background: none; font-size: 16px; line-height: 1; color: #6b7280; padding: 0;">&times;</button>
+  </div>
+  <div>
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Level range</div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <label for="filterMinLevel" style="font-size: 12px; color: #6b7280;">Min</label>
+      <input id="filterMinLevel" type="number" min="0" max="9" value="{{minLevel}}" onChange="{{onMinLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+      <label for="filterMaxLevel" style="font-size: 12px; color: #6b7280;">Max</label>
+      <input id="filterMaxLevel" type="number" min="0" max="9" value="{{maxLevel}}" onChange="{{onMaxLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+    </div>
+  </div>
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">School</div>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{abjurationChecked}}" onChange="{{toggleAbjuration}}"> Abjuration
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{conjurationChecked}}" onChange="{{toggleConjuration}}"> Conjuration
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{divinationChecked}}" onChange="{{toggleDivination}}"> Divination
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{evocationChecked}}" onChange="{{toggleEvocation}}"> Evocation
+    </label>
+  </div>
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Damage Type</div>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{fireChecked}}" onChange="{{toggleFire}}"> Fire
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{forceChecked}}" onChange="{{toggleForce}}"> Force
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{noneChecked}}" onChange="{{toggleNone}}"> Non-damaging
+    </label>
+  </div>
+  <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <input type="checkbox" checked="{{preparedOnly}}" onChange="{{togglePreparedOnly}}"> Prepared only
+  </label>
+  <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":420}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const DEFAULT = {
+      preparedOnly: false,
+      minLevel: 0,
+      maxLevel: 9,
+      schools: { Abjuration: true, Conjuration: true, Divination: true, Evocation: true },
+      damageTypes: { fire: true, force: true, none: true }
+    };
+    const filters = this.props.filters || DEFAULT;
+    const onChange = this.props.onChange || (() => {});
+    const onClose = this.props.onClose || (() => {});
+    const set = (next) => onChange({ ...filters, ...next });
+    const clamp = (n) => Math.max(0, Math.min(9, n));
+    const flipSchool = (key) => () => set({ schools: { ...filters.schools, [key]: !filters.schools[key] } });
+    const flipDamageType = (key) => () => set({ damageTypes: { ...filters.damageTypes, [key]: !filters.damageTypes[key] } });
+    return {
+      accent,
+      minLevel: filters.minLevel,
+      maxLevel: filters.maxLevel,
+      preparedOnly: filters.preparedOnly,
+      onMinLevel: (e) => {
+        const n = clamp(parseInt(e.target.value, 10) || 0);
+        set({ minLevel: n, maxLevel: Math.max(n, filters.maxLevel) });
+      },
+      onMaxLevel: (e) => {
+        const n = clamp(parseInt(e.target.value, 10) || 0);
+        set({ maxLevel: n, minLevel: Math.min(n, filters.minLevel) });
+      },
+      abjurationChecked: filters.schools.Abjuration,
+      conjurationChecked: filters.schools.Conjuration,
+      divinationChecked: filters.schools.Divination,
+      evocationChecked: filters.schools.Evocation,
+      toggleAbjuration: flipSchool('Abjuration'),
+      toggleConjuration: flipSchool('Conjuration'),
+      toggleDivination: flipSchool('Divination'),
+      toggleEvocation: flipSchool('Evocation'),
+      fireChecked: filters.damageTypes.fire,
+      forceChecked: filters.damageTypes.force,
+      noneChecked: filters.damageTypes.none,
+      toggleFire: flipDamageType('fire'),
+      toggleForce: flipDamageType('force'),
+      toggleNone: flipDamageType('none'),
+      togglePreparedOnly: () => set({ preparedOnly: !filters.preparedOnly }),
+      reset: () => onChange(DEFAULT),
+      close: () => onClose()
+    };
+  }
+}
+</script>
+</body>
+</html>

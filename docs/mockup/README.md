@@ -38,6 +38,9 @@ together. Every other file matches a widget, panel, or nav element:
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
+- Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, FeaturesFilter — each
+  is mounted into its list widget from a Filter button in that widget's header, and sits
+  next to that widget on the canvas.
 
 ## Covered
 
@@ -46,7 +49,9 @@ Overview a user can resize, reorder, and add to; inventory split into weapons, a
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium; light, dark, and system theme; a
-user-customizable accent color; and a settings page for homebrew content and sources.
+user-customizable accent color; a settings page for homebrew content and sources; a way
+to add or remove experience points in XP leveling mode; and a filter on Weapons, Armor,
+Gear, Known Spells, and Features to narrow what the widget shows.
 Hovering a calculated value (an ability modifier, a save or skill bonus, AC, initiative,
 max HP, an attack bonus) opens a popover with its formula; clicking a widget's item
 (an ability, a skill, a weapon, a spell, a feature, and so on) opens a modal with that

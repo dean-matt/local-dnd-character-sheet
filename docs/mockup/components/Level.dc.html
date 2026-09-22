@@ -12,54 +12,438 @@
 <style>
   body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
   * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
   input, select { font-family: inherit; }
-  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type="number"] { -moz-appearance: textfield; }
+  input::placeholder { color: #9aa1ab; }
 </style>
 </helmet>
 
-<div style="width: 380px; height: 240px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 16px; display: grid; grid-template-columns: 100px 1fr; gap: 16px; align-items: end;">
-    <div>
-      <label for="levelInput" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Level</label>
-      <input id="levelInput" type="number" min="1" max="20" value="{{level}}" onChange="{{onLevel}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+<div style="width: 380px; height: 360px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Level &amp; Experience</div>
+
+    <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+      <div style="font-size: 32px; font-weight: 700; color: #1f2430;">{{totalLevel}}</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <sc-for list="{{classChips}}" as="c" hint-placeholder-count="1">
+          <div style="font-size: 12px; padding: 3px 8px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">{{c.label}}</div>
+        </sc-for>
+      </div>
     </div>
+
     <div>
       <label for="levelingModeSelect" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Leveling</label>
-      <select id="levelingModeSelect" value="{{levelingMode}}" onChange="{{onLevelingMode}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+      <select id="levelingModeSelect" value="{{levelingMode}}" onChange="{{onLevelingMode}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 14px; background: #ffffff; color: #1f2430;">
         <option value="xp">Experience</option>
         <option value="milestone">Milestone</option>
       </select>
     </div>
+
     <sc-if value="{{isXpMode}}" hint-placeholder-val="{{true}}">
-      <div style="grid-column: 1 / -1;">
-        <label for="xpInput" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Experience Points</label>
-        <input id="xpInput" type="number" min="0" value="{{xp}}" onChange="{{onXp}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+      <div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 4px;">
+          <span>{{xp}} XP</span>
+          <span>{{xpNextLabel}}</span>
+        </div>
+        <div style="width: 100%; height: 8px; border-radius: 999px; background: #eceef1; overflow: hidden;">
+          <div style="width: {{xpPct}}%; height: 100%; background: {{accent}};"></div>
+        </div>
+        <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">{{xpCaption}}</div>
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+          <label for="xpAddInput" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Adjust experience points, negative to remove</label>
+          <input id="xpAddInput" type="number" placeholder="&plusmn; XP" value="{{xpAdd}}" onChange="{{onXpAdd}}" style="flex-grow: 1; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+          <button onClick="{{applyXp}}" disabled="{{xpAdjustDisabled}}" style="padding: 6px 12px; border-radius: 6px; border: none; background: {{addXpBg}}; color: {{addXpColor}}; font-size: 12px; font-weight: 600;">Apply</button>
+        </div>
       </div>
     </sc-if>
     <sc-if value="{{isMilestoneMode}}" hint-placeholder-val="{{false}}">
-      <div style="grid-column: 1 / -1; font-size: 13px; font-style: italic; color: #6b7280;">Milestone leveling — the DM sets Level directly; no experience points tracked.</div>
+      <div style="font-size: 13px; font-style: italic; color: #6b7280;">Milestone leveling — the DM says when you level; no experience points tracked.</div>
     </sc-if>
+
+    <div>
+      <button onClick="{{openLevelUp}}" disabled="{{levelUpDisabled}}" style="width: 100%; padding: 10px; border-radius: 6px; border: none; background: {{levelUpBg}}; color: {{levelUpColor}}; font-size: 13px; font-weight: 600;">Level Up</button>
+      <sc-if value="{{showXpGate}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 11px; color: #6b7280; margin-top: 4px; text-align: center;">{{xpToGoText}}</div>
+      </sc-if>
+    </div>
   </div>
+
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="Level Up" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(440px, 90%); max-height: 85%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">Level Up</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Class</div>
+          <sc-for list="{{classOptions}}" as="c" hint-placeholder-count="1">
+            <button onClick="{{c.pick}}" style="display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 10px 12px; border-radius: 6px; border: 1px solid {{c.border}}; background: {{c.bg}};">
+              <span style="font-size: 13px; color: #1f2430;">{{c.name}}</span>
+              <span style="font-size: 12px; font-weight: 600; color: {{c.arrowColor}};">{{c.oldLevel}} → {{c.newLevel}}</span>
+            </button>
+          </sc-for>
+          <div style="position: relative;">
+            <label for="multiclassSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Multiclass into a new class</label>
+            <input id="multiclassSearch" type="text" placeholder="Multiclass into a new class…" value="{{newClassQuery}}" onChange="{{onNewClassQuery}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <sc-if value="{{showNewClassResults}}" hint-placeholder-val="{{false}}">
+              <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 180px; overflow-y: auto; z-index: 60;">
+                <sc-for list="{{newClassMatches}}" as="m" hint-placeholder-count="3">
+                  <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+                </sc-for>
+                <sc-if value="{{noNewClassMatches}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 12px; color: #6b7280; padding: 8px 10px;">No matching class.</div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{hasSelection}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #dde1e6; padding-top: 12px;">
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Hit Points — {{selectedHitDie}}</div>
+            <div style="display: flex; gap: 8px;">
+              <button onClick="{{pickAverage}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{averageBorder}}; background: {{averageBg}}; color: {{averageColor}}; font-size: 12px; font-weight: 600;">Average ({{hitDieAverage}})</button>
+              <button onClick="{{rollHitDie}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{rollBorder}}; background: {{rollBg}}; color: {{rollColor}}; font-size: 12px; font-weight: 600;">Roll ({{selectedHitDie}})</button>
+              <button onClick="{{pickCustom}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{customBorder}}; background: {{customBg}}; color: {{customColor}}; font-size: 12px; font-weight: 600;">Custom</button>
+            </div>
+            <sc-if value="{{isCustomHp}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="customHpInput" style="font-size: 12px; color: #6b7280;">Rolled value</label>
+                <input id="customHpInput" type="number" min="1" max="{{selectedHitDieFaces}}" placeholder="{{selectedHitDie}}" value="{{hpCustom}}" onChange="{{onHpCustomChange}}" style="width: 64px; padding: 6px 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 13px; background: #ffffff; color: #1f2430;">
+              </div>
+            </sc-if>
+            <div style="font-size: 12px; color: #6b7280;">{{hpGainText}}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{asiAvailable}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #dde1e6; padding-top: 12px;">
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Ability Score Improvement — {{selectedClassName}} {{selectedNewLevel}}</div>
+            <div style="display: flex; gap: 6px; background: #eef0f3; border-radius: 6px; padding: 4px;">
+              <button onClick="{{pickAsiTab}}" style="flex-grow: 1; padding: 7px 0; border-radius: 4px; border: none; background: {{asiTabBg}}; color: {{asiTabColor}}; font-size: 12px; font-weight: 600;">Ability Scores</button>
+              <button onClick="{{pickFeatTab}}" style="flex-grow: 1; padding: 7px 0; border-radius: 4px; border: none; background: {{featTabBg}}; color: {{featTabColor}}; font-size: 12px; font-weight: 600;">Feat</button>
+            </div>
+
+            <sc-if value="{{isAsiTab}}" hint-placeholder-val="{{true}}">
+              <div style="font-size: 11px; color: #6b7280;">{{asiPointsText}}</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                <sc-for list="{{abilityRows}}" as="ab" hint-placeholder-count="6">
+                  <div style="background: #eef0f3; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                    <div style="font-size: 10px; font-weight: 600; color: #6b7280;">{{ab.label}}</div>
+                    <div style="font-size: 15px; font-weight: 700; color: #1f2430;">{{ab.display}}</div>
+                    <div style="display: flex; gap: 4px;">
+                      <button aria-label="Decrease planned {{ab.label}} increase" onClick="{{ab.dec}}" disabled="{{ab.decDisabled}}" style="width: 20px; height: 20px; border-radius: 4px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; line-height: 1; padding: 0;">&minus;</button>
+                      <button aria-label="Increase planned {{ab.label}} increase" onClick="{{ab.inc}}" disabled="{{ab.incDisabled}}" style="width: 20px; height: 20px; border-radius: 4px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; line-height: 1; padding: 0;">+</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{isFeatTab}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{hasFeat}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
+                  {{featChosen}}
+                  <button aria-label="Change feat" onClick="{{clearFeat}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{noFeat}}" hint-placeholder-val="{{true}}">
+                <div style="position: relative;">
+                  <label for="featSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search feats</label>
+                  <input id="featSearch" type="text" placeholder="Choose a feat…" value="{{featQuery}}" onChange="{{onFeatQuery}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+                  <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 160px; overflow-y: auto; z-index: 60;">
+                    <sc-for list="{{featMatches}}" as="m" hint-placeholder-count="4">
+                      <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{showSpellSection}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #dde1e6; padding-top: 12px;">
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">{{spellSectionTitle}}</div>
+            <sc-if value="{{hasChosenSpells}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <sc-for list="{{spellsChosenChips}}" as="sp" hint-placeholder-count="1">
+                  <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                    {{sp.name}}
+                    <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{spellPickerOpen}}" hint-placeholder-val="{{true}}">
+              <div style="position: relative;">
+                <label for="spellSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search spells</label>
+                <input id="spellSearch" type="text" placeholder="Search spells…" value="{{spellQuery}}" onChange="{{onSpellQuery}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+                <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 160px; overflow-y: auto; z-index: 60;">
+                  <sc-for list="{{spellMatches}}" as="m" hint-placeholder-count="4">
+                    <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{hasSelection}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 12px;">New class features and spell slots for {{selectedClassName}} {{selectedNewLevel}} apply once you finish.</div>
+        </sc-if>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #dde1e6; padding-top: 12px;">
+          <button onClick="{{closeModal}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 13px; font-weight: 600;">Cancel</button>
+          <button onClick="{{applyLevelUp}}" disabled="{{applyDisabled}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{applyBg}}; color: {{applyColor}}; font-size: 13px; font-weight: 600;">Apply Level Up</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":380,"height":240}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":380,"height":360}}'>
+const HIT_DICE = { Barbarian: 12, Bard: 8, Cleric: 8, Druid: 8, Fighter: 10, Monk: 8, Paladin: 10, Ranger: 10, Rogue: 8, Sorcerer: 6, Warlock: 8, Wizard: 6 };
+const ALL_CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard'];
+const XP_THRESHOLDS = [0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
+const FEATS = ['Alert', 'Lucky', 'Tough', 'War Caster', 'Sharpshooter', 'Mobile', 'Resilient', 'Sentinel'];
+const ASI_LEVELS = [4, 8, 12, 16, 19];
+const SPELL_GAIN = { Bard: 1, Ranger: 1, Sorcerer: 1, Warlock: 1, Wizard: 2 };
+const SPELL_LIST = ["Cure Wounds", "Hunter's Mark", 'Zephyr Strike', 'Pass Without Trace', 'Spike Growth', 'Lightning Arrow', 'Conjure Barrage', 'Swift Quiver', 'Fog Cloud', 'Longstrider'];
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { level: 7, levelingMode: 'xp', xp: 23000 };
+    this.state = {
+      classes: [{ id: 'ranger', name: 'Ranger', level: 7 }],
+      levelingMode: 'xp',
+      xp: 28500,
+      abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 },
+      modalOpen: false,
+      selectedClassId: null,
+      newClassQuery: '',
+      newClassName: null,
+      hpMethod: null,
+      hpRoll: null,
+      hpCustom: '',
+      asiTab: 'asi',
+      asiBonuses: {},
+      featQuery: '',
+      featChosen: null,
+      spellsChosen: [],
+      spellQuery: '',
+      xpAdd: ''
+    };
   }
   renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
     const s = this.state;
+    const { classes, levelingMode, xp, abilities } = s;
+    const totalLevel = classes.reduce((sum, c) => sum + c.level, 0);
+    const classChips = classes.map((c) => ({ label: c.name + ' ' + c.level }));
+
+    const isMaxLevel = totalLevel >= 20;
+    const nextThreshold = isMaxLevel ? null : XP_THRESHOLDS[totalLevel + 1];
+    const curThreshold = XP_THRESHOLDS[totalLevel] ?? 0;
+    const xpPct = isMaxLevel ? 100 : Math.max(0, Math.min(100, Math.round(((xp - curThreshold) / (nextThreshold - curThreshold)) * 100)));
+    const xpReady = !isMaxLevel && xp >= nextThreshold;
+    const xpAddAmount = parseInt(s.xpAdd, 10);
+    const xpAddValid = Number.isInteger(xpAddAmount) && xpAddAmount !== 0;
+
+    const isXpMode = levelingMode === 'xp';
+    const isMilestoneMode = levelingMode === 'milestone';
+    const levelUpDisabled = isMaxLevel || (isXpMode && !xpReady);
+
+    const selectedClassId = s.selectedClassId;
+    const selectedExisting = classes.find((c) => c.id === selectedClassId);
+    const selectedClassName = selectedExisting ? selectedExisting.name : selectedClassId === 'new' ? s.newClassName : null;
+    const selectedOldLevel = selectedExisting ? selectedExisting.level : 0;
+    const selectedNewLevel = selectedClassName ? selectedOldLevel + 1 : null;
+    const hasSelection = !!selectedClassName;
+
+    const classOptions = classes.map((c) => {
+      const selected = selectedClassId === c.id;
+      return {
+        id: c.id,
+        name: c.name,
+        oldLevel: c.level,
+        newLevel: c.level + 1,
+        border: selected ? accent : '#dde1e6',
+        bg: selected ? '#fdf3ea' : '#ffffff',
+        arrowColor: selected ? accent : '#6b7280',
+        pick: () => this.setState({ selectedClassId: c.id, newClassName: null, newClassQuery: '', hpMethod: null, hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
+      };
+    });
+
+    const taken = classes.map((c) => c.name);
+    const availableNew = ALL_CLASSES.filter((name) => taken.indexOf(name) === -1);
+    const nq = s.newClassQuery.trim().toLowerCase();
+    const newClassMatches = (nq ? availableNew.filter((name) => name.toLowerCase().indexOf(nq) !== -1) : availableNew).map((name) => ({
+      name,
+      pick: () => this.setState({ selectedClassId: 'new', newClassName: name, newClassQuery: name, hpMethod: null, hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
+    }));
+
+    const selectedHitDieFaces = selectedClassName ? HIT_DICE[selectedClassName] : null;
+    const hitDieAverage = selectedHitDieFaces ? Math.floor(selectedHitDieFaces / 2) + 1 : 0;
+    const conMod = Math.floor((abilities.con - 10) / 2);
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const customValue = parseInt(s.hpCustom, 10);
+    const customValid = s.hpMethod === 'custom' && customValue >= 1 && customValue <= (selectedHitDieFaces || 0);
+    const hpFromMethod = s.hpMethod === 'roll' ? s.hpRoll : s.hpMethod === 'average' ? hitDieAverage : customValid ? customValue : null;
+    const hpMethodLabel = s.hpMethod === 'roll' ? 'Rolled ' + s.hpRoll : s.hpMethod === 'average' ? 'Average ' + hitDieAverage : 'Rolled ' + customValue;
+    const hpGainText = hpFromMethod == null
+      ? 'Choose how to roll Hit Points for this level.'
+      : hpMethodLabel + ' ' + fmt(conMod) + ' CON = +' + Math.max(1, hpFromMethod + conMod) + ' max HP';
+
+    const asiAvailable = hasSelection && ASI_LEVELS.indexOf(selectedNewLevel) !== -1;
+    const bonuses = s.asiBonuses;
+    const pointsUsed = Object.keys(bonuses).reduce((sum, k) => sum + bonuses[k], 0);
+    const pointsLeft = 2 - pointsUsed;
+    const abilityRows = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map((key) => {
+      const base = abilities[key];
+      const bonus = bonuses[key] || 0;
+      return {
+        key,
+        label: key.toUpperCase(),
+        display: (bonus > 0 ? base + bonus + ' (+' + bonus + ')' : String(base)),
+        decDisabled: bonus === 0,
+        incDisabled: pointsLeft === 0 || bonus >= 2,
+        dec: () => this.setState({ asiBonuses: { ...bonuses, [key]: bonus - 1 } }),
+        inc: () => this.setState({ asiBonuses: { ...bonuses, [key]: bonus + 1 } })
+      };
+    });
+
+    const fq = s.featQuery.trim().toLowerCase();
+    const featMatches = (fq ? FEATS.filter((f) => f.toLowerCase().indexOf(fq) !== -1) : FEATS).map((name) => ({
+      name,
+      pick: () => this.setState({ featChosen: name, featQuery: '' })
+    }));
+
+    const spellGainCount = selectedClassName ? (SPELL_GAIN[selectedClassName] || 0) : 0;
+    const showSpellSection = hasSelection && spellGainCount > 0;
+    const spellsChosen = s.spellsChosen;
+    const spellsChosenChips = spellsChosen.map((name) => ({ name, remove: () => this.setState({ spellsChosen: spellsChosen.filter((n) => n !== name) }) }));
+    const sq = s.spellQuery.trim().toLowerCase();
+    const spellMatches = (sq ? SPELL_LIST.filter((n) => n.toLowerCase().indexOf(sq) !== -1) : SPELL_LIST)
+      .filter((n) => spellsChosen.indexOf(n) === -1)
+      .map((name) => ({ name, pick: () => this.setState({ spellsChosen: [...spellsChosen, name], spellQuery: '' }) }));
+
+    const hpReady = s.hpMethod === 'custom' ? customValid : hpFromMethod != null;
+    const asiReady = !asiAvailable || (s.asiTab === 'asi' ? pointsLeft === 0 : !!s.featChosen);
+    const spellsReady = !showSpellSection || spellsChosen.length === spellGainCount;
+    const applyDisabled = !hasSelection || !hpReady || !asiReady || !spellsReady;
+
     return {
-      level: s.level,
-      onLevel: (e) => this.setState({ level: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)) }),
-      levelingMode: s.levelingMode,
+      accent,
+      totalLevel,
+      classChips,
+      levelingMode,
       onLevelingMode: (e) => this.setState({ levelingMode: e.target.value }),
-      isXpMode: s.levelingMode === 'xp',
-      isMilestoneMode: s.levelingMode === 'milestone',
-      xp: s.xp,
-      onXp: (e) => this.setState({ xp: Math.max(0, parseInt(e.target.value, 10) || 0) })
+      isXpMode,
+      isMilestoneMode,
+      xp,
+      xpPct,
+      xpNextLabel: isMaxLevel ? 'Max level' : nextThreshold + ' XP',
+      xpCaption: isMaxLevel ? 'Level 20 — no further experience needed.' : xpReady ? 'Enough XP to level up.' : (nextThreshold - xp) + ' XP to Level ' + (totalLevel + 1),
+      levelUpDisabled,
+      levelUpBg: levelUpDisabled ? '#eceef1' : accent,
+      levelUpColor: levelUpDisabled ? '#9aa1ab' : '#ffffff',
+      showXpGate: isXpMode && !isMaxLevel && !xpReady,
+      xpToGoText: isMaxLevel ? '' : (nextThreshold - xp) + ' XP to go',
+      xpAdd: s.xpAdd,
+      onXpAdd: (e) => this.setState({ xpAdd: e.target.value }),
+      xpAdjustDisabled: !xpAddValid,
+      addXpBg: xpAddValid ? accent : '#eceef1',
+      addXpColor: xpAddValid ? '#ffffff' : '#9aa1ab',
+      applyXp: () => {
+        if (!xpAddValid) return;
+        this.setState({ xp: Math.max(0, xp + xpAddAmount), xpAdd: '' });
+      },
+      openLevelUp: () => this.setState({ modalOpen: true, selectedClassId: null, newClassName: null, newClassQuery: '', hpMethod: null, hpRoll: null, hpCustom: '', asiBonuses: {}, asiTab: 'asi', featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' }),
+
+      modalOpen: s.modalOpen,
+      closeModal: () => this.setState({ modalOpen: false }),
+      stopPropagation: (e) => e.stopPropagation(),
+
+      classOptions,
+      newClassQuery: s.newClassQuery,
+      onNewClassQuery: (e) => this.setState({ newClassQuery: e.target.value, selectedClassId: null, newClassName: null }),
+      showNewClassResults: s.newClassQuery.trim().length > 0 && selectedClassId !== 'new',
+      newClassMatches,
+      noNewClassMatches: newClassMatches.length === 0,
+
+      hasSelection,
+      selectedClassName,
+      selectedNewLevel,
+      selectedHitDie: selectedHitDieFaces ? 'd' + selectedHitDieFaces : '',
+      selectedHitDieFaces,
+      hitDieAverage,
+      averageBorder: s.hpMethod === 'average' ? accent : '#dde1e6',
+      averageBg: s.hpMethod === 'average' ? '#fdf3ea' : '#ffffff',
+      averageColor: s.hpMethod === 'average' ? accent : '#1f2430',
+      rollBorder: s.hpMethod === 'roll' ? accent : '#dde1e6',
+      rollBg: s.hpMethod === 'roll' ? '#fdf3ea' : '#ffffff',
+      rollColor: s.hpMethod === 'roll' ? accent : '#1f2430',
+      customBorder: s.hpMethod === 'custom' ? accent : '#dde1e6',
+      customBg: s.hpMethod === 'custom' ? '#fdf3ea' : '#ffffff',
+      customColor: s.hpMethod === 'custom' ? accent : '#1f2430',
+      isCustomHp: s.hpMethod === 'custom',
+      hpCustom: s.hpCustom,
+      onHpCustomChange: (e) => this.setState({ hpCustom: e.target.value }),
+      pickAverage: () => this.setState({ hpMethod: 'average' }),
+      rollHitDie: () => this.setState({ hpMethod: 'roll', hpRoll: 1 + Math.floor(Math.random() * selectedHitDieFaces) }),
+      pickCustom: () => this.setState({ hpMethod: 'custom' }),
+      hpGainText,
+
+      asiAvailable,
+      asiPointsText: pointsLeft + ' of 2 points left — raise one score by 2, or two scores by 1 each.',
+      asiTabBg: s.asiTab === 'asi' ? '#ffffff' : 'none',
+      asiTabColor: s.asiTab === 'asi' ? '#1f2430' : '#6b7280',
+      featTabBg: s.asiTab === 'feat' ? '#ffffff' : 'none',
+      featTabColor: s.asiTab === 'feat' ? '#1f2430' : '#6b7280',
+      pickAsiTab: () => this.setState({ asiTab: 'asi' }),
+      pickFeatTab: () => this.setState({ asiTab: 'feat' }),
+      isAsiTab: s.asiTab === 'asi',
+      isFeatTab: s.asiTab === 'feat',
+      abilityRows,
+      featQuery: s.featQuery,
+      onFeatQuery: (e) => this.setState({ featQuery: e.target.value }),
+      featMatches,
+      featChosen: s.featChosen,
+      hasFeat: !!s.featChosen,
+      noFeat: !s.featChosen,
+      clearFeat: () => this.setState({ featChosen: null }),
+
+      showSpellSection,
+      spellSectionTitle: selectedClassName === 'Wizard' ? 'Add ' + spellGainCount + ' Spells to Your Spellbook' : 'New Spells — choose ' + spellGainCount,
+      spellsChosenChips,
+      hasChosenSpells: spellsChosen.length > 0,
+      spellPickerOpen: spellsChosen.length < spellGainCount,
+      spellQuery: s.spellQuery,
+      onSpellQuery: (e) => this.setState({ spellQuery: e.target.value }),
+      spellMatches,
+
+      applyDisabled,
+      applyBg: applyDisabled ? '#eceef1' : accent,
+      applyColor: applyDisabled ? '#9aa1ab' : '#ffffff',
+      applyLevelUp: () => {
+        if (applyDisabled) return;
+        let nextClasses;
+        if (selectedClassId === 'new') {
+          nextClasses = [...classes, { id: selectedClassName.toLowerCase(), name: selectedClassName, level: 1 }];
+        } else {
+          nextClasses = classes.map((c) => (c.id === selectedClassId ? { ...c, level: c.level + 1 } : c));
+        }
+        let nextAbilities = abilities;
+        if (asiAvailable && s.asiTab === 'asi') {
+          nextAbilities = { ...abilities };
+          Object.keys(bonuses).forEach((k) => { nextAbilities[k] = nextAbilities[k] + bonuses[k]; });
+        }
+        this.setState({ classes: nextClasses, abilities: nextAbilities, modalOpen: false });
+      }
     };
   }
 }

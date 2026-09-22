@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Filter — Features</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  label { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 24px rgba(0,0,0,0.18);">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Features</div>
+    <button aria-label="Close filter" onClick="{{close}}" style="border: none; background: none; font-size: 16px; line-height: 1; color: #6b7280; padding: 0;">&times;</button>
+  </div>
+  <div>
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Source</div>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{classChecked}}" onChange="{{toggleClass}}"> Class
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{raceChecked}}" onChange="{{toggleRace}}"> Race
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{chosenChecked}}" onChange="{{toggleChosen}}"> Chosen &amp; Feats
+    </label>
+  </div>
+  <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <input type="checkbox" checked="{{hasUsesOnly}}" onChange="{{toggleHasUsesOnly}}"> Has limited uses only
+  </label>
+  <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const DEFAULT = { sources: { class: true, race: true, chosen: true }, hasUsesOnly: false };
+    const filters = this.props.filters || DEFAULT;
+    const onChange = this.props.onChange || (() => {});
+    const onClose = this.props.onClose || (() => {});
+    const set = (next) => onChange({ ...filters, ...next });
+    const flip = (key) => () => set({ sources: { ...filters.sources, [key]: !filters.sources[key] } });
+    return {
+      accent,
+      classChecked: filters.sources.class,
+      raceChecked: filters.sources.race,
+      chosenChecked: filters.sources.chosen,
+      hasUsesOnly: filters.hasUsesOnly,
+      toggleClass: flip('class'),
+      toggleRace: flip('race'),
+      toggleChosen: flip('chosen'),
+      toggleHasUsesOnly: () => set({ hasUsesOnly: !filters.hasUsesOnly }),
+      reset: () => onChange(DEFAULT),
+      close: () => onClose()
+    };
+  }
+}
+</script>
+</body>
+</html>

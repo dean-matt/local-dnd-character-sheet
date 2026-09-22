@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Filter — Armor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  label { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 24px rgba(0,0,0,0.18);">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Armor</div>
+    <button aria-label="Close filter" onClick="{{close}}" style="border: none; background: none; font-size: 16px; line-height: 1; color: #6b7280; padding: 0;">&times;</button>
+  </div>
+  <div>
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Class</div>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{lightChecked}}" onChange="{{toggleLight}}"> Light
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{mediumChecked}}" onChange="{{toggleMedium}}"> Medium
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; margin-bottom: 4px;">
+      <input type="checkbox" checked="{{heavyChecked}}" onChange="{{toggleHeavy}}"> Heavy
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{shieldChecked}}" onChange="{{toggleShield}}"> Shield
+    </label>
+  </div>
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Price (gp)</div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <label for="filterMinPrice" style="font-size: 12px; color: #6b7280;">Min</label>
+      <input id="filterMinPrice" type="number" min="0" placeholder="0" value="{{priceMin}}" onChange="{{onPriceMin}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+      <label for="filterMaxPrice" style="font-size: 12px; color: #6b7280;">Max</label>
+      <input id="filterMaxPrice" type="number" min="0" placeholder="Any" value="{{priceMax}}" onChange="{{onPriceMax}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+    </div>
+  </div>
+  <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <input type="checkbox" checked="{{equippedOnly}}" onChange="{{toggleEquippedOnly}}"> Equipped only
+  </label>
+  <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":330}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const DEFAULT = { classes: { Light: true, Medium: true, Heavy: true, Shield: true }, equippedOnly: false, priceMin: null, priceMax: null };
+    const filters = this.props.filters || DEFAULT;
+    const onChange = this.props.onChange || (() => {});
+    const onClose = this.props.onClose || (() => {});
+    const set = (next) => onChange({ ...filters, ...next });
+    const flip = (key) => () => set({ classes: { ...filters.classes, [key]: !filters.classes[key] } });
+    const toNum = (v) => (v === '' ? null : Math.max(0, parseFloat(v) || 0));
+    return {
+      accent,
+      lightChecked: filters.classes.Light,
+      mediumChecked: filters.classes.Medium,
+      heavyChecked: filters.classes.Heavy,
+      shieldChecked: filters.classes.Shield,
+      equippedOnly: filters.equippedOnly,
+      priceMin: filters.priceMin ?? '',
+      priceMax: filters.priceMax ?? '',
+      toggleLight: flip('Light'),
+      toggleMedium: flip('Medium'),
+      toggleHeavy: flip('Heavy'),
+      toggleShield: flip('Shield'),
+      onPriceMin: (e) => set({ priceMin: toNum(e.target.value) }),
+      onPriceMax: (e) => set({ priceMax: toNum(e.target.value) }),
+      toggleEquippedOnly: () => set({ equippedOnly: !filters.equippedOnly }),
+      reset: () => onChange(DEFAULT),
+      close: () => onClose()
+    };
+  }
+}
+</script>
+</body>
+</html>
