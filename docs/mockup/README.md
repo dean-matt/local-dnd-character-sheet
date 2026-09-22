@@ -37,10 +37,10 @@ together. Every other file matches a widget, panel, or nav element:
   Tabs" button opens: every tab reorders (drag) and hides here, but only a tab a user
   added renames or deletes — delete asks Confirm Dialog first.
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
-  Settings (theme — light/dark/system — and accent), Homebrew (a Weapons/Armor/Gear/
-  Spells tab strip, one category shown at a time), Sources. Homebrew Weapons, Homebrew
-  Armor, Homebrew Gear, and Homebrew Spells are that same tab content broken out into
-  their own artboards, one per category, for reviewing each in isolation.
+  Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
+  Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
+  5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
+  level/school — its real counterpart widget does), Sources.
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 - Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
   with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own

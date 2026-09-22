@@ -37,6 +37,8 @@
         </div>
         <div style="display: flex; align-items: center; gap: 6px;">
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.category}}</span>
+          <div style="flex-grow: 1;"></div>
+          <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
         </div>
         <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
       </div>
@@ -46,7 +48,7 @@
         <div style="font-size: 12px; font-weight: 600; color: #1f2430;">{{formTitle}}</div>
         <div style="font-size: 11px; color: #6b7280;">Paste the item's 5etools-shaped entry. Saving replaces the whole entry; there's no field-by-field editing.</div>
         <label for="gearJson" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Gear JSON</label>
-        <textarea id="gearJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Ashfall Relic", "source": "HB", "type": "W", "entries": ["..."]}' style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+        <textarea id="gearJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Ashfall Relic", "source": "HB", "type": "W", "value": "500 gp", "entries": ["..."]}' style="width: 100%; min-height: 90px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
           <button onClick="{{closeForm}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 12px; font-weight: 600;">Cancel</button>
           <button onClick="{{saveForm}}" style="padding: 6px 12px; border-radius: 4px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Save</button>
@@ -62,7 +64,7 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       items: [
-        { id: 'g1', name: 'Ashfall Relic', category: 'Wondrous item', json: '{"name": "Ashfall Relic", "source": "HB", "type": "W", "entries": ["Warm to the touch; hums near dragons."]}' }
+        { id: 'g1', name: 'Ashfall Relic', category: 'Wondrous item', value: '500 gp', json: '{"name": "Ashfall Relic", "source": "HB", "type": "W", "value": "500 gp", "entries": ["Warm to the touch; hums near dragons."]}' }
       ],
       editingId: null,
       addOpen: false,
@@ -83,6 +85,7 @@ class Component extends DCLogic {
       id: it.id,
       name: it.name,
       category: it.category,
+      value: it.value,
       descShort: descOf(it.json),
       edit: () => this.setState({ editingId: it.id, addOpen: false, formJson: it.json }),
       remove: () => this.setState({ items: items.filter((x) => x.id !== it.id), editingId: editingId === it.id ? null : editingId })
@@ -99,17 +102,18 @@ class Component extends DCLogic {
       openAdd: () => this.setState({ addOpen: true, editingId: null, formJson: '' }),
       closeForm: () => this.setState({ addOpen: false, editingId: null, formJson: '' }),
       saveForm: () => {
-        let parsedName = 'Untitled Gear', category = 'Adventuring';
+        let parsedName = 'Untitled Gear', category = 'Adventuring', value = '';
         try {
           const parsed = JSON.parse(formJson);
           if (parsed && parsed.name) parsedName = parsed.name;
           const typeMap = { W: 'Wondrous item', P: 'Consumable', GS: 'Pack' };
           if (parsed && typeMap[parsed.type]) category = typeMap[parsed.type];
+          if (parsed && parsed.value) value = String(parsed.value);
         } catch {}
         if (editing) {
-          this.setState({ items: items.map((x) => (x.id === editing.id ? { ...x, name: parsedName, category, json: formJson } : x)), editingId: null, formJson: '' });
+          this.setState({ items: items.map((x) => (x.id === editing.id ? { ...x, name: parsedName, category, value, json: formJson } : x)), editingId: null, formJson: '' });
         } else {
-          this.setState({ items: [...items, { id: 'g' + Date.now(), name: parsedName, category, json: formJson }], addOpen: false, formJson: '' });
+          this.setState({ items: [...items, { id: 'g' + Date.now(), name: parsedName, category, value, json: formJson }], addOpen: false, formJson: '' });
         }
       }
     };
