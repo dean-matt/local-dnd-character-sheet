@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Rolls Panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 320px; height: 900px; box-sizing: border-box; padding: 20px; display: flex; background: #f4f5f7;">
+  <div style="width: {{width}}; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; transition: width 0.15s ease;">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;">
+      <span style="display: {{textDisplay}}; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; white-space: nowrap;">Rolls</span>
+      <sc-if value="{{showClear}}" hint-placeholder-val="{{true}}">
+        <button aria-label="Clear roll history" onClick="{{clear}}" style="display: {{textDisplay}}; padding: 4px 8px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #6b7280; font-size: 11px; font-weight: 600; flex-shrink: 0;">Clear</button>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{collapsed}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; align-items: center; justify-content: center; padding: 6px 0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 2v20M3 7l9 5 9-5M3 17l9-5 9 5"/></svg>
+      </div>
+    </sc-if>
+
+    <div style="display: {{textDisplay}}; flex-direction: column; flex-grow: 1; min-height: 0; overflow-y: auto; gap: 8px;">
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 12px; color: #6b7280; text-align: center; padding: 28px 8px; line-height: 1.5;">No rolls yet. Rolls you make appear here.</div>
+      </sc-if>
+      <sc-for list="{{rolls}}" as="item" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; min-width: 0; flex-shrink: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 600; color: #1f2430; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.source}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 10px; color: #9aa1ab; flex-shrink: 0;">{{item.time}}</span>
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 6px;">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.type}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 13px; font-weight: 700; color: {{item.color}}; flex-shrink: 0;">{{item.summary}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 10px;">
+      <button aria-label="{{toggleLabel}}" onClick="{{toggleCollapse}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 6px; border: none; background: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; transform: {{toggleRotation}};" aria-hidden="true"><path d="M15 5l7 7-7 7"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":320,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      collapsed: false,
+      rolls: [
+        { source: 'Fire Bolt', type: 'Spell Atk', notation: 'd20+6', natural: 20, mod: '+6', time: 'just now' },
+        { source: 'Fire Bolt', type: 'Spell Dmg', notation: '2d10', natural: null, mod: null, time: 'just now', flat: 14 },
+        { source: 'Longsword', type: 'Attack', notation: 'd20+5', natural: 13, mod: '+5', time: '2m ago' },
+        { source: 'Longsword', type: 'Damage', notation: '1d8+3', natural: null, mod: null, time: '2m ago', flat: 9 },
+        { source: 'Dexterity', type: 'Save', notation: 'd20+3', natural: 1, mod: '+3', time: '4m ago' },
+        { source: 'Stealth', type: 'Check', notation: 'd20+7', natural: 16, mod: '+7', time: '6m ago' }
+      ]
+    };
+  }
+  renderVals() {
+    const { collapsed, rolls } = this.state;
+    const textDisplay = collapsed ? 'none' : 'flex';
+    const rowJustify = collapsed ? 'center' : 'flex-start';
+
+    const items = rolls.map((r) => {
+      const total = r.flat != null ? r.flat : r.natural + parseInt(r.mod, 10);
+      const color = r.natural === 20 ? '#2f6b4f' : r.natural === 1 ? '#c1272d' : '#1f2430';
+      const summary = r.natural != null
+        ? 'd20 (' + r.natural + ') ' + r.mod + ' = ' + total
+        : r.notation + ' = ' + total;
+      return { source: r.source, type: r.type, time: r.time, summary, color };
+    });
+
+    return {
+      width: collapsed ? '64px' : '320px',
+      textDisplay,
+      rowJustify,
+      collapsed,
+      rolls: items,
+      isEmpty: items.length === 0,
+      showClear: items.length > 0,
+      clear: () => this.setState({ rolls: [] }),
+      toggleCollapse: () => this.setState({ collapsed: !collapsed }),
+      toggleLabel: collapsed ? 'Expand rolls panel' : 'Collapse rolls panel',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+    };
+  }
+}
+</script>
+</body>
+</html>

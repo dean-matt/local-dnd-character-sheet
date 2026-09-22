@@ -37,9 +37,14 @@ together. Every other file matches a widget, panel, or nav element:
   and new spells for a class that gains them, all gating Apply until every open choice
   the level actually offers is made.
 - Page chrome: Sidebar (the tab rail), Top Bar Navigation (Character menu, Mechanics
-  menu, search, Settings), Character Header. Manage Tabs is the modal Sidebar's "Manage
-  Tabs" button opens: every tab reorders (drag) and hides here, but only a tab a user
-  added renames or deletes — delete asks Confirm Dialog first.
+  menu, search, Settings), Character Header, Rolls Panel. Manage Tabs is the modal
+  Sidebar's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
+  only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
+  Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
+  listing the character's rolls newest first, each tagged with what it was rolled for
+  (a weapon, a spell, an ability check…), with a Clear button. Character sheet only, not
+  Settings. Forward design for #282, which only specified the list; the dock, the
+  collapse, the per-roll source tag, and Clear are this mockup's own call.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, each with its own
   slim header (brand mark, and a Cancel link back to the list on every creation step)
@@ -87,7 +92,7 @@ together. Every other file matches a widget, panel, or nav element:
   paste-and-parse shape as the four shipped Homebrew artboards above, but nothing behind
   them exists yet — `homebrew.db` only reaches items and spells today. They're forward
   design for #306, #307, #308, and #309, not a page a build currently renders.
-- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
+- Overlays: Confirm Dialog, Add Widget Picker.
 - Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
   with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own
   always-open demo state when those are left unset.
