@@ -23,7 +23,7 @@
     <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
   </div>
 
-  <div style="width: 100%; max-width: 580px; height: 680px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
     <div>
       <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
       <div style="font-size: 17px; font-weight: 700;">Proficiencies &amp; Equipment</div>
@@ -34,7 +34,8 @@
       </sc-for>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex-grow: 1;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; overflow-y: auto; flex-grow: 1; padding-top: 4px;">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
       <div>
         <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Granted by Background</div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
@@ -59,7 +60,9 @@
           </sc-for>
         </div>
       </div>
+      </div>
 
+      <div style="display: flex; flex-direction: column; gap: 16px;">
       <div>
         <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Starting Equipment</div>
         <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #1f2430; margin-bottom: 10px;">
@@ -83,6 +86,7 @@
             </sc-for>
           </div>
         </sc-if>
+      </div>
       </div>
     </div>
 

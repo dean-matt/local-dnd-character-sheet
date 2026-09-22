@@ -24,7 +24,7 @@
     <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
   </div>
 
-  <div style="width: 100%; max-width: 580px; height: 680px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 14px;">
     <div>
       <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
       <div style="font-size: 17px; font-weight: 700;">Identity</div>
@@ -35,7 +35,8 @@
       </sc-for>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; overflow-y: auto; flex-grow: 1; padding-top: 4px;">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
       <div>
         <label for="charName" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Name</label>
         <input id="charName" type="text" placeholder="Character name…" value="{{name}}" onChange="{{onName}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
@@ -77,7 +78,9 @@
           </div>
         </sc-if>
       </div>
+      </div>
 
+      <div style="display: flex; flex-direction: column; gap: 16px;">
       <div>
         <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Background</div>
         <sc-if value="{{hasBackground}}" hint-placeholder-val="{{true}}">
@@ -116,6 +119,7 @@
           <option value="Neutral Evil">Neutral Evil</option>
           <option value="Chaotic Evil">Chaotic Evil</option>
         </select>
+      </div>
       </div>
     </div>
 

@@ -26,7 +26,7 @@
     <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
   </div>
 
-  <div style="width: 100%; max-width: 580px; height: 680px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 14px;">
     <div>
       <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
       <div style="font-size: 17px; font-weight: 700;">Class</div>
@@ -37,65 +37,76 @@
       </sc-for>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1;">
-      <div>
-        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Class</div>
-        <sc-if value="{{hasClass}}" hint-placeholder-val="{{true}}">
-          <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
-            {{className}}
-            <button aria-label="Change class" onClick="{{clearClass}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; overflow-y: auto; flex-grow: 1; padding-top: 4px;">
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Classes <span style="text-transform: none; font-weight: 400; color: #6b7280;">— add more than one to start multiclassed</span></div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+            <sc-for list="{{classRows}}" as="row" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="font-size: 14px; font-weight: 600; flex-grow: 1;">{{row.name}}</div>
+                  <label for="classLevel-{{row.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{row.name}} level</label>
+                  <input id="classLevel-{{row.id}}" type="number" min="1" max="20" value="{{row.level}}" onChange="{{row.onLevel}}" title="Level in {{row.name}}" style="width: 56px; padding: 4px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; text-align: center; font-size: 13px; font-weight: 600; color: {{accent}};">
+                  <button aria-label="Remove {{row.name}}" onClick="{{row.remove}}" style="width: 22px; height: 22px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0;">&times;</button>
+                </div>
+                <sc-if value="{{row.needsSubclass}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 11px; color: {{accent}}; font-weight: 600;">Chooses a subclass at level {{row.subclassLevel}}</div>
+                  <sc-if value="{{row.hasSubclass}}" hint-placeholder-val="{{true}}">
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 4px 4px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
+                      {{row.subclass}}
+                      <button aria-label="Change {{row.name}} subclass" onClick="{{row.clearSubclass}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{row.noSubclass}}" hint-placeholder-val="{{false}}">
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                      <sc-for list="{{row.subclassOptions}}" as="sc" hint-placeholder-count="3">
+                        <button onClick="{{sc.pick}}" style="padding: 5px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600;">{{sc.name}}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </sc-if>
+              </div>
+            </sc-for>
           </div>
-        </sc-if>
-        <sc-if value="{{noClass}}" hint-placeholder-val="{{false}}">
           <div style="position: relative;">
-            <label for="classSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search classes</label>
-            <input id="classSearch" type="text" placeholder="Choose a class…" value="{{classQuery}}" onChange="{{onClassQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
-            <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 220px; overflow-y: auto; z-index: 30;">
-              <sc-for list="{{classMatches}}" as="m" hint-placeholder-count="4">
-                <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
-              </sc-for>
+            <label for="classSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Add a class</label>
+            <input id="classSearch" type="text" placeholder="Add a class…" value="{{classQuery}}" onChange="{{onClassQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <sc-if value="{{showClassResults}}" hint-placeholder-val="{{false}}">
+              <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 220px; overflow-y: auto; z-index: 30;">
+                <sc-for list="{{classMatches}}" as="m" hint-placeholder-count="4">
+                  <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{noOptions}}" hint-placeholder-val="{{false}}">
+            <div style="font-size: 12px; color: #6b7280; font-style: italic; margin-top: 6px;">Every class has been added.</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="padding: 14px 16px; background: #eef0f3; border-radius: 8px;">
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Total Level</div>
+          <div style="font-size: 24px; font-weight: 700;">{{totalLevel}}</div>
+        </div>
+
+        <sc-if value="{{hasAnyClass}}" hint-placeholder-val="{{true}}">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Hit Points</div>
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <button onClick="{{useAverage}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{averageBorder}}; background: {{averageBg}}; color: {{averageColor}}; font-size: 13px; font-weight: 600;">Average ({{averageHp}})</button>
+              <button onClick="{{useRoll}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{rollBorder}}; background: {{rollBg}}; color: {{rollColor}}; font-size: 13px; font-weight: 600;">Roll</button>
             </div>
+            <sc-if value="{{showRollButton}}" hint-placeholder-val="{{false}}">
+              <button onClick="{{rollHp}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 13px; font-weight: 600;">Reroll every level's die</button>
+            </sc-if>
+            <div style="font-size: 13px; color: #1f2430; margin-top: 8px;">Total HP: <strong>{{totalHp}}</strong></div>
+            <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">{{hpBreakdown}}</div>
           </div>
         </sc-if>
       </div>
-
-      <div>
-        <label for="startLevel" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Starting level</label>
-        <input id="startLevel" type="number" min="1" max="20" value="{{level}}" onChange="{{onLevel}}" style="width: 72px; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430; text-align: center;">
-      </div>
-
-      <sc-if value="{{needsSubclass}}" hint-placeholder-val="{{false}}">
-        <div>
-          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Subclass <span style="text-transform: none; font-weight: 400; color: {{accent}};">— {{className}} chooses at level {{subclassLevel}}</span></div>
-          <sc-if value="{{hasSubclass}}" hint-placeholder-val="{{true}}">
-            <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
-              {{subclass}}
-              <button aria-label="Change subclass" onClick="{{clearSubclass}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
-            </div>
-          </sc-if>
-          <sc-if value="{{noSubclass}}" hint-placeholder-val="{{false}}">
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-              <sc-for list="{{subclassOptions}}" as="sc" hint-placeholder-count="3">
-                <button onClick="{{sc.pick}}" style="padding: 6px 12px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 12px; font-weight: 600;">{{sc.name}}</button>
-              </sc-for>
-            </div>
-          </sc-if>
-        </div>
-      </sc-if>
-
-      <sc-if value="{{hasClass}}" hint-placeholder-val="{{true}}">
-        <div>
-          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Hit points <span style="text-transform: none; font-weight: 400; color: #6b7280;">— Hit Die {{hitDie}}</span></div>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <button onClick="{{useAverage}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{averageBorder}}; background: {{averageBg}}; color: {{averageColor}}; font-size: 13px; font-weight: 600;">Average ({{averageHp}})</button>
-            <button onClick="{{useRoll}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{rollBorder}}; background: {{rollBg}}; color: {{rollColor}}; font-size: 13px; font-weight: 600;">Roll</button>
-          </div>
-          <sc-if value="{{showRollButton}}" hint-placeholder-val="{{false}}">
-            <button onClick="{{rollHp}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 13px; font-weight: 600;">Roll {{hitDie}} per level</button>
-          </sc-if>
-          <div style="font-size: 13px; color: #1f2430; margin-top: 6px;">Total HP at level {{level}}: <strong>{{totalHp}}</strong></div>
-        </div>
-      </sc-if>
     </div>
 
     <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
@@ -110,12 +121,13 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
-      className: 'Wizard',
-      subclass: '',
-      level: 3,
+      classes: [
+        { id: 'fighter', name: 'Fighter', level: 3, subclass: 'Battle Master' },
+        { id: 'wizard', name: 'Wizard', level: 2, subclass: '' }
+      ],
       classQuery: '',
       hpMethod: 'average',
-      rolls: [4, 3]
+      rolls: {}
     };
   }
   renderVals() {
@@ -134,39 +146,60 @@ class Component extends DCLogic {
       Warlock: { hd: 8, subclassLevel: 1, subclasses: ['Fiend', 'Archfey', 'Great Old One'] },
       Wizard: { hd: 6, subclassLevel: 2, subclasses: ['Evocation', 'Abjuration', 'Divination'] }
     };
-    const { className, subclass, level, classQuery, hpMethod, rolls } = this.state;
+    const { classes, classQuery, hpMethod, rolls } = this.state;
+    const taken = classes.map((c) => c.name);
+    const available = Object.keys(CLASSES).filter((n) => taken.indexOf(n) === -1);
     const cq = classQuery.trim().toLowerCase();
-    const classMatches = (cq ? Object.keys(CLASSES).filter((c) => c.toLowerCase().indexOf(cq) !== -1) : Object.keys(CLASSES))
-      .map((n) => ({ name: n, pick: () => this.setState({ className: n, subclass: '' }) }));
-    const info = CLASSES[className];
-    const needsSubclass = !!info && level >= info.subclassLevel;
-    const hd = info ? info.hd : 8;
-    const avgPerLevel = Math.floor(hd / 2) + 1;
-    const averageHp = hd + avgPerLevel * (level - 1);
-    const rollTotal = hd + rolls.slice(0, level - 1).reduce((sum, r) => sum + r, 0);
-    const totalHp = hpMethod === 'roll' ? rollTotal : averageHp;
-    const nextDisabled = !className || (needsSubclass && !subclass);
+    const classMatches = (cq ? available.filter((n) => n.toLowerCase().indexOf(cq) !== -1) : available)
+      .map((n) => ({ name: n, pick: () => this.setState({ classes: [...classes, { id: n.toLowerCase() + '-' + Date.now(), name: n, level: 1, subclass: '' }], classQuery: '' }) }));
+
+    // First class's level 1 rolls max HP; every other level (its own 2+, or any level in
+    // a later class) rolls or averages that level's own hit die — 5e's multiclass HP rule.
+    const slots = [];
+    classes.forEach((c, idx) => {
+      const hd = (CLASSES[c.name] || { hd: 8 }).hd;
+      const startLevel = idx === 0 ? 2 : 1;
+      for (let lvl = startLevel; lvl <= c.level; lvl++) slots.push({ classId: c.id, hd });
+    });
+    const firstHd = classes[0] ? (CLASSES[classes[0].name] || { hd: 8 }).hd : 8;
+    const averageHp = firstHd + slots.reduce((sum, s) => sum + Math.floor(s.hd / 2) + 1, 0);
+    const rollHp2 = firstHd + slots.reduce((sum, s, i) => sum + (rolls[i] ?? Math.floor(s.hd / 2) + 1), 0);
+    const totalHp = hpMethod === 'roll' ? rollHp2 : averageHp;
+
+    const classRows = classes.map((c, idx) => {
+      const info = CLASSES[c.name] || { hd: 8, subclassLevel: 3, subclasses: [] };
+      const needsSubclass = c.level >= info.subclassLevel;
+      return {
+        id: c.id,
+        name: c.name,
+        level: c.level,
+        onLevel: (e) => this.setState({ classes: classes.map((x, i) => (i === idx ? { ...x, level: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)) } : x)) }),
+        remove: () => this.setState({ classes: classes.filter((x, i) => i !== idx) }),
+        needsSubclass,
+        subclassLevel: info.subclassLevel,
+        hasSubclass: !!c.subclass,
+        noSubclass: !c.subclass,
+        subclass: c.subclass,
+        clearSubclass: () => this.setState({ classes: classes.map((x, i) => (i === idx ? { ...x, subclass: '' } : x)) }),
+        subclassOptions: info.subclasses.map((n) => ({ name: n, pick: () => this.setState({ classes: classes.map((x, i) => (i === idx ? { ...x, subclass: n } : x)) }) }))
+      };
+    });
+    const nextDisabled = classes.length === 0 || classRows.some((r) => r.needsSubclass && !r.hasSubclass);
+    const hpBreakdown = classes.length > 1
+      ? classes.map((c) => c.name + ' ' + c.level).join(' / ') + ' — first level is always max, every other level ' + (hpMethod === 'roll' ? 'rolled' : 'averaged') + ' on its own class\'s die'
+      : 'First level is always max; every level after is ' + (hpMethod === 'roll' ? 'rolled' : 'averaged');
     return {
       accent,
       stepNum: 2,
       steps: [1, 2, 3, 4, 5].map((n) => ({ label: 'Step ' + n, color: n <= 2 ? accent : '#dde1e6' })),
-      hasClass: !!className,
-      noClass: !className,
-      className,
-      clearClass: () => this.setState({ className: '', subclass: '' }),
+      classRows,
+      hasAnyClass: classes.length > 0,
+      totalLevel: classes.reduce((sum, c) => sum + c.level, 0),
       classQuery,
       onClassQueryChange: (e) => this.setState({ classQuery: e.target.value }),
+      showClassResults: !!classQuery,
       classMatches,
-      level,
-      onLevel: (e) => this.setState({ level: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)) }),
-      needsSubclass,
-      subclassLevel: info ? info.subclassLevel : 1,
-      hasSubclass: !!subclass,
-      noSubclass: !subclass,
-      subclass,
-      clearSubclass: () => this.setState({ subclass: '' }),
-      subclassOptions: (info ? info.subclasses : []).map((n) => ({ name: n, pick: () => this.setState({ subclass: n }) })),
-      hitDie: 'd' + hd,
+      noOptions: available.length === 0,
       averageHp,
       averageBorder: hpMethod === 'average' ? accent : '#dde1e6',
       averageBg: hpMethod === 'average' ? accent : '#ffffff',
@@ -177,8 +210,9 @@ class Component extends DCLogic {
       rollColor: hpMethod === 'roll' ? '#ffffff' : '#1f2430',
       useRoll: () => this.setState({ hpMethod: 'roll' }),
       showRollButton: hpMethod === 'roll',
-      rollHp: () => this.setState({ rolls: Array.from({ length: 19 }, () => Math.floor(Math.random() * hd) + 1) }),
+      rollHp: () => this.setState({ rolls: slots.reduce((acc, s, i) => { acc[i] = Math.floor(Math.random() * s.hd) + 1; return acc; }, {}) }),
       totalHp,
+      hpBreakdown,
       nextDisabled,
       nextBg: nextDisabled ? '#dde1e6' : accent,
       back: () => {},

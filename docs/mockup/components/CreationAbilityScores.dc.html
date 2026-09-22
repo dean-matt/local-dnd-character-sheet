@@ -25,7 +25,7 @@
     <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
   </div>
 
-  <div style="width: 100%; max-width: 580px; height: 680px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
     <div>
       <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
       <div style="font-size: 17px; font-weight: 700;">Ability Scores</div>
@@ -52,9 +52,10 @@
       <button onClick="{{rerollAll}}" style="align-self: flex-start; padding: 6px 12px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 12px; font-weight: 600;">Reroll all (4d6 drop lowest)</button>
     </sc-if>
 
-    <div style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex-grow: 1;">
-      <sc-for list="{{rows}}" as="row" hint-placeholder-count="6">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #eef0f3; border-radius: 6px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; overflow-y: auto; flex-grow: 1;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{rowsLeft}}" as="row" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 6px;">
           <div style="width: 36px; font-size: 12px; font-weight: 700; color: #6b7280;">{{row.label}}</div>
           <sc-if value="{{row.isSelect}}" hint-placeholder-val="{{true}}">
             <select value="{{row.base}}" onChange="{{row.onBase}}" style="width: 70px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
@@ -75,6 +76,31 @@
           <div style="font-size: 11px; color: {{accent}}; font-weight: 700; width: 34px; text-align: right;">{{row.modifier}}</div>
         </div>
       </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{rowsRight}}" as="row" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 6px;">
+          <div style="width: 36px; font-size: 12px; font-weight: 700; color: #6b7280;">{{row.label}}</div>
+          <sc-if value="{{row.isSelect}}" hint-placeholder-val="{{true}}">
+            <select value="{{row.base}}" onChange="{{row.onBase}}" style="width: 70px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+              <sc-for list="{{row.options}}" as="opt" hint-placeholder-count="6">
+                <option value="{{opt}}">{{opt}}</option>
+              </sc-for>
+            </select>
+          </sc-if>
+          <sc-if value="{{row.isNumber}}" hint-placeholder-val="{{false}}">
+            <input type="number" min="1" max="20" value="{{row.base}}" onChange="{{row.onBase}}" style="width: 60px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+          </sc-if>
+          <sc-if value="{{row.isFixed}}" hint-placeholder-val="{{false}}">
+            <div style="width: 60px; text-align: center; font-size: 13px; font-weight: 600;">{{row.base}}</div>
+          </sc-if>
+          <div style="font-size: 11px; color: #6b7280; width: 60px;">{{row.racialTerm}}</div>
+          <div style="flex-grow: 1;"></div>
+          <div style="font-size: 15px; font-weight: 700; color: #1f2430; width: 30px; text-align: right;">{{row.total}}</div>
+          <div style="font-size: 11px; color: {{accent}}; font-weight: 700; width: 34px; text-align: right;">{{row.modifier}}</div>
+        </div>
+      </sc-for>
+      </div>
     </div>
 
     <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
@@ -155,7 +181,8 @@ class Component extends DCLogic {
           return acc;
         }, {})
       }),
-      rows,
+      rowsLeft: rows.slice(0, 3),
+      rowsRight: rows.slice(3, 6),
       back: () => {},
       next: () => {},
       cancel: () => {}

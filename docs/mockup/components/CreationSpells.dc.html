@@ -24,7 +24,7 @@
     <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
   </div>
 
-  <div style="width: 100%; max-width: 580px; height: 680px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
     <div>
       <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
       <div style="font-size: 17px; font-weight: 700;">Spells</div>
@@ -36,7 +36,8 @@
     </div>
 
     <sc-if value="{{isCaster}}" hint-placeholder-val="{{true}}">
-      <div style="display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; overflow-y: auto; flex-grow: 1; padding-top: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
           <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Cantrips</div>
           <div style="font-size: 12px; color: {{cantripColor}}; margin-bottom: 6px;">Choose {{cantripCount}} — {{cantripsChosen}} selected</div>
@@ -61,6 +62,19 @@
           </div>
         </div>
 
+        <sc-if value="{{hasGranted}}" hint-placeholder-val="{{true}}">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Granted by {{grantedSource}}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{granted}}" as="g" hint-placeholder-count="1">
+                <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #fdf3ea; border: 1px solid {{accent}}; color: {{accent}};">{{g}}</span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
         <div>
           <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">{{spellsLabel}}</div>
           <div style="font-size: 12px; color: {{spellColor}}; margin-bottom: 6px;">Choose {{spellCount}} — {{spellsChosen}} selected</div>
@@ -84,17 +98,7 @@
             </sc-if>
           </div>
         </div>
-
-        <sc-if value="{{hasGranted}}" hint-placeholder-val="{{true}}">
-          <div>
-            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Granted by {{grantedSource}}</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-              <sc-for list="{{granted}}" as="g" hint-placeholder-count="1">
-                <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #fdf3ea; border: 1px solid {{accent}}; color: {{accent}};">{{g}}</span>
-              </sc-for>
-            </div>
-          </div>
-        </sc-if>
+        </div>
       </div>
     </sc-if>
 

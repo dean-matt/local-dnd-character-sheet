@@ -39,10 +39,11 @@ together. Every other file matches a widget, panel, or nav element:
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, each with its own
   slim header (brand mark, and a Cancel link back to the list on every creation step)
-  rather than the character sheet's Sidebar and Character Header. Top Bar Navigation's
-  Character menu is how both are reached: "See all characters →" opens the list, and
-  "+ New Character" opens creation — a menu that jumps straight to one character is a
-  different action from either.
+  rather than the character sheet's Sidebar and Character Header. Each creation step's
+  own card fills most of that page (1200px, two columns) rather than reading as a
+  narrow dialog. Top Bar Navigation's Character menu is how both are reached: "See all
+  characters →" opens the list, and "+ New Character" opens creation — a menu that
+  jumps straight to one character is a different action from either.
 - Character List is the entry point before any of the above — every character's name,
   level and edition, an empty state offering Import or New Character, forward design for
   #206. Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
@@ -53,9 +54,14 @@ together. Every other file matches a widget, panel, or nav element:
   refusing it, a non-caster skips the spells step. Nothing behind any of these six
   exists yet, and #224 (whether the flow validates as it goes or all at once) is still
   undecided — these are the step content and the interaction shape, not that answer.
-  Creation 2/5 seeds exactly one class on purpose: #235 puts a second class out of scope
-  as its own issue (#240), and Class.dc.html on the sheet already covers adding one —
-  multiclassing is a level-up action, not a creation one.
+  Creation 2/5 supports starting multiclassed — add more than one class, each with its
+  own level and subclass — even though #235's own "out of scope" line names a second
+  class as #240's job. Real tables commonly build a multiclass character in one pass
+  when starting above level 1, which #235 doesn't rule out, so this widens that step
+  rather than matching the letter of the issue. HP follows 5e's own multiclass rule:
+  the character's very first level is always the first class's hit die at max, and
+  every level after — in that class or a later one — rolls or averages against
+  whichever class it belongs to.
   Every picker in these six pages searches a small in-file array, the same convention
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search; Top Bar Navigation's global search is the one place that already spans both
