@@ -62,8 +62,8 @@
     "Homebrew.dc.html": { "x": 2080, "y": 7525, "w": 480, "h": 1000, "title": "Homebrew — Settings Page", "is_interactive": true },
     "Sources.dc.html": { "x": 2660, "y": 7525, "w": 420, "h": 460, "title": "Sources", "is_interactive": true },
 
-    "WidgetPicker.dc.html": { "x": 0, "y": 9025, "w": 420, "h": 460, "title": "Add Widget Picker", "is_interactive": true },
-    "CustomTab.dc.html": { "x": 520, "y": 9025, "w": 640, "h": 360, "title": "Custom Tab — Widget Canvas", "is_interactive": true },
+    "WidgetPicker.dc.html": { "x": 0, "y": 9025, "w": 560, "h": 600, "title": "Add Widget Picker", "is_interactive": true },
+    "CustomTab.dc.html": { "x": 660, "y": 9025, "w": 1200, "h": 860, "title": "Custom Tab — Widget Canvas", "is_interactive": true },
 
     "Popover.dc.html": { "x": 2360, "y": 0, "w": 360, "h": 240, "title": "Popover — Style Reference", "is_interactive": true },
     "Modal.dc.html": { "x": 2820, "y": 0, "w": 460, "h": 420, "title": "Modal — Style Reference", "is_interactive": true },

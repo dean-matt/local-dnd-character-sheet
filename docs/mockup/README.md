@@ -37,11 +37,14 @@ together. Every other file matches a widget, panel, or nav element:
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
   Settings (theme — light/dark/system — and accent), Homebrew (items and spells, one
   tab), Sources.
-- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker (the full catalog of
-  addable widgets, used only by Custom Tab).
-- Custom Tab shows the widget canvas a user-created tab gets: an Edit button gates
-  drag-to-move and drag-a-corner-to-resize, and a ghost "Add Widget" button opens the
-  picker. Built-in tabs (Overview, Inventory, Spells, Features, Identity, Level,
+- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker — a grid of preview cards
+  (a category icon, name, and category) for the full catalog of addable widgets,
+  filterable by category chip and by search; used only by Custom Tab.
+- Custom Tab is sized like the real "active section content" area from Layout.dc.html
+  and shows the widget canvas a user-created tab gets: an Edit button gates
+  drag-to-move and drag-a-corner-to-resize (each card previews as a title over a few
+  skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
+  the picker. Built-in tabs (Overview, Inventory, Spells, Features, Identity, Level,
   Alignment, Backstory, Notes) never get this — their widgets are fixed.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
