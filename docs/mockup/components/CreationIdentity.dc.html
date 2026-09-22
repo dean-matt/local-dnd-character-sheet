@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Creation: Identity</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 580px; height: 680px; box-sizing: border-box; padding: 28px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; height: 100%; max-height: 624px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+    <div>
+      <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
+      <div style="font-size: 17px; font-weight: 700;">Identity</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+        <div title="{{s.label}}" style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{s.color}};"></div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex-grow: 1;">
+      <div>
+        <label for="charName" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Name</label>
+        <input id="charName" type="text" placeholder="Character name…" value="{{name}}" onChange="{{onName}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+      </div>
+
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Race</div>
+        <sc-if value="{{hasRace}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
+            {{race}}
+            <button aria-label="Change race" onClick="{{clearRace}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{noRace}}" hint-placeholder-val="{{false}}">
+          <div style="position: relative;">
+            <label for="raceSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search races</label>
+            <input id="raceSearch" type="text" placeholder="Choose a race…" value="{{raceQuery}}" onChange="{{onRaceQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 200px; overflow-y: auto; z-index: 30;">
+              <sc-for list="{{raceMatches}}" as="m" hint-placeholder-count="4">
+                <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{needsSubrace}}" hint-placeholder-val="{{false}}">
+          <div style="margin-top: 8px;">
+            <div style="font-size: 11px; color: {{accent}}; font-weight: 600; margin-bottom: 6px;">{{race}} has subraces — choose one to continue</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{subraceOptions}}" as="sr" hint-placeholder-count="3">
+                <button onClick="{{sr.pick}}" style="padding: 6px 12px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 12px; font-weight: 600;">{{sr.name}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{hasSubrace}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 5px 5px 5px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content; margin-top: 6px;">
+            {{subrace}}
+            <button aria-label="Change subrace" onClick="{{clearSubrace}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Background</div>
+        <sc-if value="{{hasBackground}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
+            {{background}}
+            <button aria-label="Change background" onClick="{{clearBackground}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 6px;">Grants: {{backgroundGrants}}</div>
+        </sc-if>
+        <sc-if value="{{noBackground}}" hint-placeholder-val="{{false}}">
+          <div style="position: relative;">
+            <label for="backgroundSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search backgrounds</label>
+            <input id="backgroundSearch" type="text" placeholder="Choose a background…" value="{{backgroundQuery}}" onChange="{{onBackgroundQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 220px; overflow-y: auto; z-index: 30;">
+              <sc-for list="{{backgroundMatches}}" as="m" hint-placeholder-count="4">
+                <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none;">
+                  <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
+                  <span style="font-size: 11px; color: #6b7280; display: block;">Grants {{m.grants}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div>
+        <label for="alignmentSelect" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Alignment</label>
+        <select id="alignmentSelect" value="{{alignment}}" onChange="{{onAlignment}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430;">
+          <option value="Lawful Good">Lawful Good</option>
+          <option value="Neutral Good">Neutral Good</option>
+          <option value="Chaotic Good">Chaotic Good</option>
+          <option value="Lawful Neutral">Lawful Neutral</option>
+          <option value="True Neutral">True Neutral</option>
+          <option value="Chaotic Neutral">Chaotic Neutral</option>
+          <option value="Lawful Evil">Lawful Evil</option>
+          <option value="Neutral Evil">Neutral Evil</option>
+          <option value="Chaotic Evil">Chaotic Evil</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
+      <button disabled style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: #f4f5f7; color: #9aa1ab; font-size: 13px; font-weight: 600;">Back</button>
+      <button onClick="{{next}}" disabled="{{nextDisabled}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{nextBg}}; color: #ffffff; font-size: 13px; font-weight: 600;">Next: Class →</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":580,"height":680}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: 'Elara Nightshade',
+      race: 'Elf',
+      subrace: 'High Elf',
+      background: 'Sage',
+      alignment: 'Chaotic Good',
+      raceQuery: '',
+      backgroundQuery: ''
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const RACES = {
+      Dragonborn: [], Dwarf: ['Hill Dwarf', 'Mountain Dwarf'], Elf: ['High Elf', 'Wood Elf', 'Drow'],
+      Gnome: ['Forest Gnome', 'Rock Gnome'], 'Half-Elf': [], 'Half-Orc': [],
+      Halfling: ['Lightfoot Halfling', 'Stout Halfling'], Human: [], Tiefling: []
+    };
+    const BACKGROUNDS = {
+      Acolyte: 'Insight, Religion', Charlatan: 'Deception, Sleight of Hand', Criminal: 'Deception, Stealth',
+      Entertainer: 'Acrobatics, Performance', 'Folk Hero': 'Animal Handling, Survival',
+      'Guild Artisan': 'Insight, Persuasion', Hermit: 'Medicine, Religion', Noble: 'History, Persuasion',
+      Outlander: 'Athletics, Survival', Sage: 'Arcana, History', Sailor: 'Athletics, Perception',
+      Soldier: 'Athletics, Intimidation', Urchin: 'Sleight of Hand, Stealth'
+    };
+    const { name, race, subrace, background, alignment, raceQuery, backgroundQuery } = this.state;
+    const rq = raceQuery.trim().toLowerCase();
+    const raceMatches = (rq ? Object.keys(RACES).filter((r) => r.toLowerCase().indexOf(rq) !== -1) : Object.keys(RACES))
+      .map((n) => ({ name: n, pick: () => this.setState({ race: n, subrace: '', raceQuery: '' }) }));
+    const bq = backgroundQuery.trim().toLowerCase();
+    const backgroundMatches = (bq ? Object.keys(BACKGROUNDS).filter((b) => b.toLowerCase().indexOf(bq) !== -1) : Object.keys(BACKGROUNDS))
+      .map((n) => ({ name: n, grants: BACKGROUNDS[n], pick: () => this.setState({ background: n, backgroundQuery: '' }) }));
+    const subraceList = RACES[race] || [];
+    const needsSubrace = !!race && subraceList.length > 0 && !subrace;
+    const subraceOptions = subraceList.map((n) => ({ name: n, pick: () => this.setState({ subrace: n }) }));
+    const nextDisabled = !name || !race || (subraceList.length > 0 && !subrace) || !background;
+    return {
+      accent,
+      stepNum: 1,
+      steps: [1, 2, 3, 4, 5].map((n) => ({ label: 'Step ' + n, color: n === 1 ? accent : '#dde1e6' })),
+      name,
+      onName: (e) => this.setState({ name: e.target.value }),
+      hasRace: !!race,
+      noRace: !race,
+      race,
+      clearRace: () => this.setState({ race: '', subrace: '' }),
+      raceQuery,
+      onRaceQueryChange: (e) => this.setState({ raceQuery: e.target.value }),
+      raceMatches,
+      needsSubrace,
+      subraceOptions,
+      hasSubrace: !!subrace,
+      subrace,
+      clearSubrace: () => this.setState({ subrace: '' }),
+      hasBackground: !!background,
+      noBackground: !background,
+      background,
+      backgroundGrants: BACKGROUNDS[background] || '',
+      clearBackground: () => this.setState({ background: '' }),
+      backgroundQuery,
+      onBackgroundQueryChange: (e) => this.setState({ backgroundQuery: e.target.value }),
+      backgroundMatches,
+      alignment,
+      onAlignment: (e) => this.setState({ alignment: e.target.value }),
+      nextDisabled,
+      nextBg: nextDisabled ? '#dde1e6' : accent,
+      next: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

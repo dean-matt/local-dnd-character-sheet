@@ -36,6 +36,16 @@ together. Every other file matches a widget, panel, or nav element:
   menu, search, Settings), Character Header. Manage Tabs is the modal Sidebar's "Manage
   Tabs" button opens: every tab reorders (drag) and hides here, but only a tab a user
   added renames or deletes — delete asks Confirm Dialog first.
+- Character List is the entry point before any of the above — every character's name,
+  level and edition, an empty state offering Import or New Character, forward design for
+  #206. Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
+  Equipment, Spells) are the wizard "+ New Character" opens: a step indicator, Back/Next
+  (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
+  race with subraces blocks progress until one is picked, a proficiency granted twice is
+  flagged rather than silently dropped, point buy shows an overspend rather than
+  refusing it, a non-caster skips the spells step. Nothing behind any of these six
+  exists yet, and #224 (whether the flow validates as it goes or all at once) is still
+  undecided — these are the step content and the interaction shape, not that answer.
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
   Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
   Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's

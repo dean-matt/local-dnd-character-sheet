@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Creation: Class</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 580px; height: 680px; box-sizing: border-box; padding: 28px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; height: 100%; max-height: 624px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+    <div>
+      <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
+      <div style="font-size: 17px; font-weight: 700;">Class</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+        <div title="{{s.label}}" style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{s.color}};"></div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1;">
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Class</div>
+        <sc-if value="{{hasClass}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
+            {{className}}
+            <button aria-label="Change class" onClick="{{clearClass}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{noClass}}" hint-placeholder-val="{{false}}">
+          <div style="position: relative;">
+            <label for="classSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search classes</label>
+            <input id="classSearch" type="text" placeholder="Choose a class…" value="{{classQuery}}" onChange="{{onClassQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 220px; overflow-y: auto; z-index: 30;">
+              <sc-for list="{{classMatches}}" as="m" hint-placeholder-count="4">
+                <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div>
+        <label for="startLevel" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Starting level</label>
+        <input id="startLevel" type="number" min="1" max="20" value="{{level}}" onChange="{{onLevel}}" style="width: 72px; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 14px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+
+      <sc-if value="{{needsSubclass}}" hint-placeholder-val="{{false}}">
+        <div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Subclass <span style="text-transform: none; font-weight: 400; color: {{accent}};">— {{className}} chooses at level {{subclassLevel}}</span></div>
+          <sc-if value="{{hasSubclass}}" hint-placeholder-val="{{true}}">
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
+              {{subclass}}
+              <button aria-label="Change subclass" onClick="{{clearSubclass}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{noSubclass}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{subclassOptions}}" as="sc" hint-placeholder-count="3">
+                <button onClick="{{sc.pick}}" style="padding: 6px 12px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 12px; font-weight: 600;">{{sc.name}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{hasClass}}" hint-placeholder-val="{{true}}">
+        <div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Hit points <span style="text-transform: none; font-weight: 400; color: #6b7280;">— Hit Die {{hitDie}}</span></div>
+          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <button onClick="{{useAverage}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{averageBorder}}; background: {{averageBg}}; color: {{averageColor}}; font-size: 13px; font-weight: 600;">Average ({{averageHp}})</button>
+            <button onClick="{{useRoll}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{rollBorder}}; background: {{rollBg}}; color: {{rollColor}}; font-size: 13px; font-weight: 600;">Roll</button>
+          </div>
+          <sc-if value="{{showRollButton}}" hint-placeholder-val="{{false}}">
+            <button onClick="{{rollHp}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 13px; font-weight: 600;">Roll {{hitDie}} per level</button>
+          </sc-if>
+          <div style="font-size: 13px; color: #1f2430; margin-top: 6px;">Total HP at level {{level}}: <strong>{{totalHp}}</strong></div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
+      <button onClick="{{back}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">← Back</button>
+      <button onClick="{{next}}" disabled="{{nextDisabled}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{nextBg}}; color: #ffffff; font-size: 13px; font-weight: 600;">Next: Ability Scores →</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":580,"height":680}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      className: 'Wizard',
+      subclass: '',
+      level: 3,
+      classQuery: '',
+      hpMethod: 'average',
+      rolls: [4, 3]
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const CLASSES = {
+      Barbarian: { hd: 12, subclassLevel: 3, subclasses: ['Berserker', 'Totem Warrior', 'Wild Heart'] },
+      Bard: { hd: 8, subclassLevel: 3, subclasses: ['Lore', 'Valor', 'Glamour'] },
+      Cleric: { hd: 8, subclassLevel: 1, subclasses: ['Life', 'Light', 'War'] },
+      Druid: { hd: 8, subclassLevel: 2, subclasses: ['Land', 'Moon', 'Stars'] },
+      Fighter: { hd: 10, subclassLevel: 3, subclasses: ['Champion', 'Battle Master', 'Eldritch Knight'] },
+      Monk: { hd: 8, subclassLevel: 3, subclasses: ['Open Hand', 'Shadow', 'Mercy'] },
+      Paladin: { hd: 10, subclassLevel: 3, subclasses: ['Devotion', 'Ancients', 'Vengeance'] },
+      Ranger: { hd: 10, subclassLevel: 3, subclasses: ['Hunter', 'Beast Master', 'Fey Wanderer'] },
+      Rogue: { hd: 8, subclassLevel: 3, subclasses: ['Thief', 'Assassin', 'Arcane Trickster'] },
+      Sorcerer: { hd: 6, subclassLevel: 1, subclasses: ['Draconic', 'Wild Magic', 'Aberrant Mind'] },
+      Warlock: { hd: 8, subclassLevel: 1, subclasses: ['Fiend', 'Archfey', 'Great Old One'] },
+      Wizard: { hd: 6, subclassLevel: 2, subclasses: ['Evocation', 'Abjuration', 'Divination'] }
+    };
+    const { className, subclass, level, classQuery, hpMethod, rolls } = this.state;
+    const cq = classQuery.trim().toLowerCase();
+    const classMatches = (cq ? Object.keys(CLASSES).filter((c) => c.toLowerCase().indexOf(cq) !== -1) : Object.keys(CLASSES))
+      .map((n) => ({ name: n, pick: () => this.setState({ className: n, subclass: '' }) }));
+    const info = CLASSES[className];
+    const needsSubclass = !!info && level >= info.subclassLevel;
+    const hd = info ? info.hd : 8;
+    const avgPerLevel = Math.floor(hd / 2) + 1;
+    const averageHp = hd + avgPerLevel * (level - 1);
+    const rollTotal = hd + rolls.slice(0, level - 1).reduce((sum, r) => sum + r, 0);
+    const totalHp = hpMethod === 'roll' ? rollTotal : averageHp;
+    const nextDisabled = !className || (needsSubclass && !subclass);
+    return {
+      accent,
+      stepNum: 2,
+      steps: [1, 2, 3, 4, 5].map((n) => ({ label: 'Step ' + n, color: n <= 2 ? accent : '#dde1e6' })),
+      hasClass: !!className,
+      noClass: !className,
+      className,
+      clearClass: () => this.setState({ className: '', subclass: '' }),
+      classQuery,
+      onClassQueryChange: (e) => this.setState({ classQuery: e.target.value }),
+      classMatches,
+      level,
+      onLevel: (e) => this.setState({ level: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 1)) }),
+      needsSubclass,
+      subclassLevel: info ? info.subclassLevel : 1,
+      hasSubclass: !!subclass,
+      noSubclass: !subclass,
+      subclass,
+      clearSubclass: () => this.setState({ subclass: '' }),
+      subclassOptions: (info ? info.subclasses : []).map((n) => ({ name: n, pick: () => this.setState({ subclass: n }) })),
+      hitDie: 'd' + hd,
+      averageHp,
+      averageBorder: hpMethod === 'average' ? accent : '#dde1e6',
+      averageBg: hpMethod === 'average' ? accent : '#ffffff',
+      averageColor: hpMethod === 'average' ? '#ffffff' : '#1f2430',
+      useAverage: () => this.setState({ hpMethod: 'average' }),
+      rollBorder: hpMethod === 'roll' ? accent : '#dde1e6',
+      rollBg: hpMethod === 'roll' ? accent : '#ffffff',
+      rollColor: hpMethod === 'roll' ? '#ffffff' : '#1f2430',
+      useRoll: () => this.setState({ hpMethod: 'roll' }),
+      showRollButton: hpMethod === 'roll',
+      rollHp: () => this.setState({ rolls: Array.from({ length: 19 }, () => Math.floor(Math.random() * hd) + 1) }),
+      totalHp,
+      nextDisabled,
+      nextBg: nextDisabled ? '#dde1e6' : accent,
+      back: () => {},
+      next: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

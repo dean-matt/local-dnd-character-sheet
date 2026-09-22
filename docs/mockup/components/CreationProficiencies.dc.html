@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Creation: Proficiencies</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+</style>
+</helmet>
+
+<div style="width: 580px; height: 680px; box-sizing: border-box; padding: 28px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; height: 100%; max-height: 624px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+    <div>
+      <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
+      <div style="font-size: 17px; font-weight: 700;">Proficiencies &amp; Equipment</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+        <div title="{{s.label}}" style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{s.color}};"></div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex-grow: 1;">
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Granted by Background</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <sc-for list="{{grantedSkills}}" as="g" hint-placeholder-count="2">
+            <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">{{g}}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">From Class</div>
+        <div style="font-size: 12px; color: {{classCountColor}}; margin-bottom: 8px;">{{classCountLabel}}</div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <sc-for list="{{classSkills}}" as="sk" hint-placeholder-count="6">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{sk.color}}; padding: 4px 2px;">
+              <input type="checkbox" checked="{{sk.checked}}" onChange="{{sk.toggle}}">
+              {{sk.name}}
+              <sc-if value="{{sk.duplicate}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 11px; color: {{accent}};">— already granted by Background, choose another</span>
+              </sc-if>
+            </label>
+          </sc-for>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Starting Equipment</div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #1f2430; margin-bottom: 10px;">
+          <input type="checkbox" checked="{{useGold}}" onChange="{{toggleGold}}">
+          Take {{goldAlternative}} instead of the equipment below
+        </label>
+        <sc-if value="{{showEquipmentChoices}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <sc-for list="{{equipmentChoices}}" as="grp" hint-placeholder-count="2">
+              <div>
+                <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">{{grp.label}}</div>
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                  <sc-for list="{{grp.options}}" as="opt" hint-placeholder-count="2">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #1f2430; padding: 3px 2px;">
+                      <input type="radio" name="{{grp.name}}" checked="{{opt.checked}}" onChange="{{opt.pick}}">
+                      {{opt.label}}
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
+      <button onClick="{{back}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">← Back</button>
+      <button onClick="{{next}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">Next: Spells →</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":580,"height":680}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      checkedSkills: { Arcana: true, Religion: true },
+      useGold: false,
+      equipmentPicks: { weapon: 'a quarterstaff', focus: 'a component pouch' }
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const grantedSkills = ['Arcana', 'History'];
+    const CLASS_SKILL_OPTIONS = ['Arcana', 'History', 'Insight', 'Investigation', 'Medicine', 'Religion'];
+    const CLASS_SKILL_COUNT = 2;
+    const { checkedSkills, useGold, equipmentPicks } = this.state;
+    const checkedCount = Object.values(checkedSkills).filter(Boolean).length;
+    const classSkills = CLASS_SKILL_OPTIONS.map((name) => ({
+      name,
+      checked: !!checkedSkills[name],
+      duplicate: !!checkedSkills[name] && grantedSkills.indexOf(name) !== -1,
+      color: grantedSkills.indexOf(name) !== -1 && checkedSkills[name] ? accent : '#1f2430',
+      toggle: () => this.setState({ checkedSkills: { ...checkedSkills, [name]: !checkedSkills[name] } })
+    }));
+    const EQUIPMENT_CHOICES = [
+      { name: 'weapon', label: 'Choose a weapon', options: ['a quarterstaff', 'a dagger'] },
+      { name: 'focus', label: 'Choose a spellcasting focus', options: ['a component pouch', 'an arcane focus'] }
+    ];
+    const equipmentChoices = EQUIPMENT_CHOICES.map((grp) => ({
+      name: grp.name,
+      label: grp.label,
+      options: grp.options.map((label) => ({
+        label,
+        checked: equipmentPicks[grp.name] === label,
+        pick: () => this.setState({ equipmentPicks: { ...equipmentPicks, [grp.name]: label } })
+      }))
+    }));
+    return {
+      accent,
+      stepNum: 4,
+      steps: [1, 2, 3, 4, 5].map((n) => ({ label: 'Step ' + n, color: n <= 4 ? accent : '#dde1e6' })),
+      grantedSkills,
+      classSkills,
+      classCountLabel: 'Choose ' + CLASS_SKILL_COUNT + ' — ' + checkedCount + ' selected',
+      classCountColor: checkedCount === CLASS_SKILL_COUNT ? '#6b7280' : accent,
+      useGold,
+      goldAlternative: '5d4 × 10 gp',
+      toggleGold: () => this.setState({ useGold: !useGold }),
+      showEquipmentChoices: !useGold,
+      equipmentChoices,
+      back: () => {},
+      next: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

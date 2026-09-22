@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Character List</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 520px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 18px; font-weight: 700;">Characters</div>
+      <button onClick="{{newCharacter}}" style="padding: 8px 14px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">+ New Character</button>
+    </div>
+
+    <sc-if value="{{hasCharacters}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <sc-for list="{{characters}}" as="c" hint-placeholder-count="4">
+          <button aria-label="Open {{c.name}}" onClick="{{c.open}}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 12px 14px; border-radius: 8px; border: 1px solid #dde1e6; background: #f9fafb;">
+            <div style="flex-grow: 1; min-width: 0;">
+              <div style="font-size: 14px; font-weight: 600; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.name}}</div>
+              <div style="font-size: 12px; color: #6b7280;">{{c.subtitle}}</div>
+            </div>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 3px 6px; flex-shrink: 0;">{{c.edition}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{noCharacters}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px 12px; text-align: center;">
+        <div style="font-size: 14px; color: #1f2430; font-weight: 600;">No characters yet</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">Start one from scratch, or import a character you already have.</div>
+        <div style="display: flex; gap: 8px; margin-top: 4px;">
+          <button onClick="{{importCharacter}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">Import</button>
+          <button onClick="{{newCharacter}}" style="padding: 8px 14px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">+ New Character</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":520}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      characters: [
+        { id: 'k1', name: 'Elara Nightshade', level: 7, edition: 'one' },
+        { id: 'k2', name: 'Borin Ashfall', level: 3, edition: 'classic' }
+      ]
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const { characters } = this.state;
+    const rows = characters.map((c) => ({
+      id: c.id,
+      name: c.name,
+      subtitle: 'Level ' + c.level,
+      edition: c.edition === 'one' ? '2024' : '2014',
+      open: () => {}
+    }));
+    return {
+      accent,
+      characters: rows,
+      hasCharacters: characters.length > 0,
+      noCharacters: characters.length === 0,
+      newCharacter: () => {},
+      importCharacter: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>
