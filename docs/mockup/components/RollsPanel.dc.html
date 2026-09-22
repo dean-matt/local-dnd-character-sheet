@@ -39,11 +39,11 @@
       <sc-for list="{{rolls}}" as="item" hint-placeholder-count="4">
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; min-width: 0; flex-shrink: 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 13px; font-weight: 600; color: #1f2430; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.source}}</span>
+            <span style="font-size: 13px; font-weight: 600; color: #1f2430; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.character}}</span>
             <div style="flex-grow: 1;"></div>
             <span style="font-size: 10px; color: #9aa1ab; flex-shrink: 0;">{{item.time}}</span>
           </div>
-          <div style="font-size: 11px; color: #6b7280; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.character}}</div>
+          <div style="font-size: 11px; color: #6b7280; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.source}}</div>
           <div style="display: flex; align-items: baseline; gap: 6px;">
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.type}}</span>
             <div style="flex-grow: 1;"></div>
