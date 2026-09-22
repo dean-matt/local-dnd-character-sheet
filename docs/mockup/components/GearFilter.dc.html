@@ -32,13 +32,13 @@
           <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
         </div>
       </sc-for>
-      <sc-if value="{{categoryEmpty}}" hint-placeholder-val="{{false}}">
-        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">None selected</div>
+      <sc-if value="{{categoryEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
       </sc-if>
     </div>
-    <sc-if value="{{categoryHasHidden}}" hint-placeholder-val="{{false}}">
-      <select onChange="{{onCategoryAdd}}" value="" aria-label="Add a category to the filter" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-        <option value="" disabled>+ Add category…</option>
+    <sc-if value="{{categoryHasHidden}}" hint-placeholder-val="{{true}}">
+      <select onChange="{{onCategoryAdd}}" value="" aria-label="Narrow by category" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="" disabled>+ Narrow to category…</option>
         <sc-for list="{{categoryHiddenOptions}}" as="opt" hint-placeholder-count="1">
           <option value="{{opt.value}}">{{opt.label}}</option>
         </sc-for>
@@ -62,21 +62,20 @@
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const DEFAULT = { categories: { Pack: true, Adventuring: true, Consumable: true, 'Wondrous item': true, Other: true }, priceMin: null, priceMax: null };
+    const DEFAULT = { categories: [], priceMin: null, priceMax: null };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
     const set = (next) => onChange({ ...filters, ...next });
     const toNum = (v) => (v === '' ? null : Math.max(0, parseFloat(v) || 0));
-    const makeFacet = (map, keys, apply) => {
-      const selected = keys.filter((k) => map[k] !== false);
-      const hidden = keys.filter((k) => map[k] === false);
+    const makeFacet = (selected, allKeys, apply) => {
+      const hidden = allKeys.filter((k) => selected.indexOf(k) === -1);
       return {
-        chips: selected.map((k) => ({ label: k, remove: () => apply({ ...map, [k]: false }) })),
+        chips: selected.map((k) => ({ label: k, remove: () => apply(selected.filter((x) => x !== k)) })),
         isEmpty: selected.length === 0,
         hasHidden: hidden.length > 0,
         hiddenOptions: hidden.map((k) => ({ value: k, label: k })),
-        onAdd: (e) => { const k = e.target.value; if (k) apply({ ...map, [k]: true }); }
+        onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
       };
     };
     const categoryFacet = makeFacet(filters.categories, ['Pack', 'Adventuring', 'Consumable', 'Wondrous item', 'Other'], (next) => set({ categories: next }));

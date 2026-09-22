@@ -132,7 +132,7 @@ class Component extends DCLogic {
       hoverDmgKey: null,
       modalItem: null,
       filterOpen: false,
-      weaponFilters: { classes: { Simple: true, Martial: true }, damageTypes: { piercing: true, slashing: true }, equippedOnly: false, priceMin: null, priceMax: null }
+      weaponFilters: { classes: [], damageTypes: [], equippedOnly: false, priceMin: null, priceMax: null }
     };
   }
   renderVals() {
@@ -150,8 +150,8 @@ class Component extends DCLogic {
     const canEquip = (item) => proficiencies.some((p) => p.toLowerCase().indexOf(item.weaponClass.toLowerCase() + ' weapon') !== -1);
     const priceOf = (item) => parseFloat(item.value) || 0;
     const filteredEquipment = equipment.filter((item) => {
-      if (wf.classes[item.weaponClass] === false) return false;
-      if (wf.damageTypes[item.damageType] === false) return false;
+      if (wf.classes.length && wf.classes.indexOf(item.weaponClass) === -1) return false;
+      if (wf.damageTypes.length && wf.damageTypes.indexOf(item.damageType) === -1) return false;
       if (wf.equippedOnly && !item.equipped) return false;
       const price = priceOf(item);
       if (wf.priceMin != null && price < wf.priceMin) return false;
@@ -213,7 +213,7 @@ class Component extends DCLogic {
         }))
       : [];
     const modalItem = this.state.modalItem;
-    const filterActive = !wf.classes.Simple || !wf.classes.Martial || !wf.damageTypes.piercing || !wf.damageTypes.slashing || wf.equippedOnly || wf.priceMin != null || wf.priceMax != null;
+    const filterActive = wf.classes.length > 0 || wf.damageTypes.length > 0 || wf.equippedOnly || wf.priceMin != null || wf.priceMax != null;
     return {
       accent,
       weapons,

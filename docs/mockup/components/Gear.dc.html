@@ -95,7 +95,7 @@ class Component extends DCLogic {
       itemQuery: '',
       modalItem: null,
       filterOpen: false,
-      gearFilters: { categories: { Pack: true, Adventuring: true, Consumable: true, 'Wondrous item': true, Other: true }, priceMin: null, priceMax: null }
+      gearFilters: { categories: [], priceMin: null, priceMax: null }
     };
   }
   renderVals() {
@@ -111,7 +111,7 @@ class Component extends DCLogic {
     const bucketOf = (item) => (KNOWN_CATEGORIES.indexOf(item.category) !== -1 ? item.category : 'Other');
     const priceOf = (item) => parseFloat(item.value) || 0;
     const filteredEquipment = equipment.filter((item) => {
-      if (wf.categories[bucketOf(item)] === false) return false;
+      if (wf.categories.length && wf.categories.indexOf(bucketOf(item)) === -1) return false;
       const price = priceOf(item);
       if (wf.priceMin != null && price < wf.priceMin) return false;
       if (wf.priceMax != null && price > wf.priceMax) return false;
@@ -137,7 +137,7 @@ class Component extends DCLogic {
         }))
       : [];
     const modalItem = this.state.modalItem;
-    const filterActive = Object.values(wf.categories).some((v) => !v) || wf.priceMin != null || wf.priceMax != null;
+    const filterActive = wf.categories.length > 0 || wf.priceMin != null || wf.priceMax != null;
     return {
       accent,
       gear,

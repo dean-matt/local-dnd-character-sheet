@@ -166,7 +166,7 @@ class Component extends DCLogic {
       newFeatureSource: 'class',
       modalItem: null,
       filterOpen: false,
-      featureFilters: { sources: { class: true, race: true, chosen: true }, hasUsesOnly: false }
+      featureFilters: { sources: [], hasUsesOnly: false }
     };
   }
   renderVals() {
@@ -211,9 +211,9 @@ class Component extends DCLogic {
     });
     const wf = this.state.featureFilters;
     const passesUses = (f) => !wf.hasUsesOnly || f.hasUses;
-    const showClassSection = wf.sources.class;
-    const showRaceSection = wf.sources.race;
-    const showChosenSection = wf.sources.chosen;
+    const showClassSection = wf.sources.length === 0 || wf.sources.indexOf('class') !== -1;
+    const showRaceSection = wf.sources.length === 0 || wf.sources.indexOf('race') !== -1;
+    const showChosenSection = wf.sources.length === 0 || wf.sources.indexOf('chosen') !== -1;
     const classFeatures = showClassSection ? featureRows.filter((f) => f.source === 'class' && passesUses(f)) : [];
     const raceFeatures = showRaceSection ? featureRows.filter((f) => f.source === 'race' && passesUses(f)) : [];
     const chosenFeatures = showChosenSection ? featureRows.filter((f) => f.source === 'chosen' && passesUses(f)) : [];
@@ -233,7 +233,7 @@ class Component extends DCLogic {
         }))
       : [];
     const modalItem = this.state.modalItem;
-    const filterActive = !wf.sources.class || !wf.sources.race || !wf.sources.chosen || wf.hasUsesOnly;
+    const filterActive = wf.sources.length > 0 || wf.hasUsesOnly;
     return {
       accent,
       classFeatures, noClassFeatures: classFeatures.length === 0,

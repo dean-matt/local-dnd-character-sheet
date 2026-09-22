@@ -32,13 +32,13 @@
           <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
         </div>
       </sc-for>
-      <sc-if value="{{classEmpty}}" hint-placeholder-val="{{false}}">
-        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">None selected</div>
+      <sc-if value="{{classEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
       </sc-if>
     </div>
-    <sc-if value="{{classHasHidden}}" hint-placeholder-val="{{false}}">
-      <select onChange="{{onClassAdd}}" value="" aria-label="Add a weapon class to the filter" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-        <option value="" disabled>+ Add class…</option>
+    <sc-if value="{{classHasHidden}}" hint-placeholder-val="{{true}}">
+      <select onChange="{{onClassAdd}}" value="" aria-label="Narrow by weapon class" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="" disabled>+ Narrow to class…</option>
         <sc-for list="{{classHiddenOptions}}" as="opt" hint-placeholder-count="1">
           <option value="{{opt.value}}">{{opt.label}}</option>
         </sc-for>
@@ -55,13 +55,13 @@
           <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
         </div>
       </sc-for>
-      <sc-if value="{{damageEmpty}}" hint-placeholder-val="{{false}}">
-        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">None selected</div>
+      <sc-if value="{{damageEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
       </sc-if>
     </div>
-    <sc-if value="{{damageHasHidden}}" hint-placeholder-val="{{false}}">
-      <select onChange="{{onDamageAdd}}" value="" aria-label="Add a damage type to the filter" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-        <option value="" disabled>+ Add damage type…</option>
+    <sc-if value="{{damageHasHidden}}" hint-placeholder-val="{{true}}">
+      <select onChange="{{onDamageAdd}}" value="" aria-label="Narrow by damage type" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="" disabled>+ Narrow to damage type…</option>
         <sc-for list="{{damageHiddenOptions}}" as="opt" hint-placeholder-count="1">
           <option value="{{opt.value}}">{{opt.label}}</option>
         </sc-for>
@@ -88,23 +88,22 @@
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const DEFAULT = { classes: { Simple: true, Martial: true }, damageTypes: { piercing: true, slashing: true }, equippedOnly: false, priceMin: null, priceMax: null };
+    const DEFAULT = { classes: [], damageTypes: [], equippedOnly: false, priceMin: null, priceMax: null };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
     const set = (next) => onChange({ ...filters, ...next });
     const toNum = (v) => (v === '' ? null : Math.max(0, parseFloat(v) || 0));
     const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-    const makeFacet = (map, keys, apply, labelFn) => {
+    const makeFacet = (selected, allKeys, apply, labelFn) => {
       const label = labelFn || ((k) => k);
-      const selected = keys.filter((k) => map[k] !== false);
-      const hidden = keys.filter((k) => map[k] === false);
+      const hidden = allKeys.filter((k) => selected.indexOf(k) === -1);
       return {
-        chips: selected.map((k) => ({ label: label(k), remove: () => apply({ ...map, [k]: false }) })),
+        chips: selected.map((k) => ({ label: label(k), remove: () => apply(selected.filter((x) => x !== k)) })),
         isEmpty: selected.length === 0,
         hasHidden: hidden.length > 0,
         hiddenOptions: hidden.map((k) => ({ value: k, label: label(k) })),
-        onAdd: (e) => { const k = e.target.value; if (k) apply({ ...map, [k]: true }); }
+        onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
       };
     };
     const classFacet = makeFacet(filters.classes, ['Simple', 'Martial'], (next) => set({ classes: next }));

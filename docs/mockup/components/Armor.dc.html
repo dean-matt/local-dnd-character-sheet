@@ -119,7 +119,7 @@ class Component extends DCLogic {
       hoverKey: null,
       modalItem: null,
       filterOpen: false,
-      armorFilters: { classes: { Light: true, Medium: true, Heavy: true, Shield: true }, equippedOnly: false, priceMin: null, priceMax: null }
+      armorFilters: { classes: [], equippedOnly: false, priceMin: null, priceMax: null }
     };
   }
   renderVals() {
@@ -141,7 +141,7 @@ class Component extends DCLogic {
     };
     const priceOf = (item) => parseFloat(item.value) || 0;
     const filteredEquipment = equipment.filter((item) => {
-      if (wf.classes[item.armorClass] === false) return false;
+      if (wf.classes.length && wf.classes.indexOf(item.armorClass) === -1) return false;
       if (wf.equippedOnly && !item.equipped) return false;
       const price = priceOf(item);
       if (wf.priceMin != null && price < wf.priceMin) return false;
@@ -198,7 +198,7 @@ class Component extends DCLogic {
         }))
       : [];
     const modalItem = this.state.modalItem;
-    const filterActive = !wf.classes.Light || !wf.classes.Medium || !wf.classes.Heavy || !wf.classes.Shield || wf.equippedOnly || wf.priceMin != null || wf.priceMax != null;
+    const filterActive = wf.classes.length > 0 || wf.equippedOnly || wf.priceMin != null || wf.priceMax != null;
     return {
       accent,
       armor,

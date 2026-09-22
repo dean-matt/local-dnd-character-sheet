@@ -128,13 +128,7 @@ class Component extends DCLogic {
       hoverDmgKey: null,
       modalItem: null,
       filterOpen: false,
-      spellFilters: {
-        preparedOnly: false,
-        minLevel: 0,
-        maxLevel: 9,
-        schools: { Abjuration: true, Conjuration: true, Divination: true, Evocation: true },
-        damageTypes: { fire: true, force: true, none: true }
-      }
+      spellFilters: { preparedOnly: false, minLevel: 0, maxLevel: 9, schools: [], damageTypes: [] }
     };
   }
   renderVals() {
@@ -155,8 +149,8 @@ class Component extends DCLogic {
       if (sp.level < wf.minLevel || sp.level > wf.maxLevel) return false;
       if (wf.preparedOnly && !sp.prepared) return false;
       const info = SPELL_INFO[sp.name] || FALLBACK;
-      if (wf.schools[info.school] === false) return false;
-      if (wf.damageTypes[info.dmgType || 'none'] === false) return false;
+      if (wf.schools.length && wf.schools.indexOf(info.school) === -1) return false;
+      if (wf.damageTypes.length && wf.damageTypes.indexOf(info.dmgType || 'none') === -1) return false;
       return true;
     });
     const spellRowsFlat = filteredSpells.map((sp) => {
@@ -206,7 +200,7 @@ class Component extends DCLogic {
         }))
       : [];
     const modalItem = this.state.modalItem;
-    const filterActive = wf.preparedOnly || wf.minLevel > 0 || wf.maxLevel < 9 || Object.values(wf.schools).some((v) => v === false) || Object.values(wf.damageTypes).some((v) => v === false);
+    const filterActive = wf.preparedOnly || wf.minLevel > 0 || wf.maxLevel < 9 || wf.schools.length > 0 || wf.damageTypes.length > 0;
     return {
       accent,
       spellGroups,
