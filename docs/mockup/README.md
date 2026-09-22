@@ -40,6 +40,8 @@ together. Every other file matches a widget, panel, or nav element:
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
+  List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, and the
+  Features widgets — design it here first, then carry a change into each widget's rows.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its list widget from a
   Filter button in that widget's header, and sits next to that widget on the canvas.
