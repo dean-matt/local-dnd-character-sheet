@@ -20,7 +20,7 @@
 </style>
 </helmet>
 
-<div style="width: 420px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+<div style="width: 420px; height: 380px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
   <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
       <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Race Features</div>
@@ -42,17 +42,23 @@
     </sc-if>
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <sc-for list="{{features}}" as="feat" hint-placeholder-count="2">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 6px;">
-          <button aria-label="View {{feat.label}} details" onClick="{{feat.openDetail}}" style="all: unset; cursor: pointer; flex-grow: 1; font-size: 14px; font-weight: 600; color: #1f2430;">{{feat.label}}</button>
-          <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
-          <sc-if value="{{feat.hasUses}}" hint-placeholder-val="{{false}}">
-            <div title="Uses remaining" style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
-              <sc-for list="{{feat.pips}}" as="pip" hint-placeholder-count="2">
-                <button aria-label="{{pip.aria}}" onClick="{{pip.toggle}}" style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid {{accent}}; background: {{pip.fill}}; padding: 0;"></button>
-              </sc-for>
-            </div>
-          </sc-if>
-          <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button aria-label="View {{feat.label}} details" onClick="{{feat.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{feat.label}}</button>
+            <sc-if value="{{feat.hasUses}}" hint-placeholder-val="{{false}}">
+              <div title="Uses remaining" style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                <sc-for list="{{feat.pips}}" as="pip" hint-placeholder-count="2">
+                  <button aria-label="{{pip.aria}}" onClick="{{pip.toggle}}" style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid {{accent}}; background: {{pip.fill}}; padding: 0;"></button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{feat.descShort}}</div>
         </div>
       </sc-for>
     </div>
@@ -96,7 +102,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":340}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":380}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -136,7 +142,7 @@ class Component extends DCLogic {
       const desc = FEATURE_DESC[f.label] || 'No further detail recorded for this feature.';
       const usesText = hasUses ? f.uses.total - f.uses.used + ' of ' + f.uses.total + ' uses remaining.' : '';
       return {
-        idx, label: f.label, level: f.level, hasUses, pips,
+        idx, label: f.label, level: f.level, hasUses, pips, descShort: desc,
         remove: () => this.setState({ features: features.filter((_, i) => i !== idx) }),
         openDetail: () => this.setState({ modalItem: { label: f.label, meta: 'Racial trait • gained at level ' + f.level + (usesText ? ' • ' + usesText : ''), desc } })
       };
