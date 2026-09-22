@@ -98,9 +98,14 @@
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
               <button onClick="{{useAverage}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{averageBorder}}; background: {{averageBg}}; color: {{averageColor}}; font-size: 13px; font-weight: 600;">Average ({{averageHp}})</button>
               <button onClick="{{useRoll}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{rollBorder}}; background: {{rollBg}}; color: {{rollColor}}; font-size: 13px; font-weight: 600;">Roll</button>
+              <button onClick="{{useCustom}}" style="flex-grow: 1; padding: 8px; border-radius: 6px; border: 1px solid {{customBorder}}; background: {{customBg}}; color: {{customColor}}; font-size: 13px; font-weight: 600;">Custom</button>
             </div>
             <sc-if value="{{showRollButton}}" hint-placeholder-val="{{false}}">
               <button onClick="{{rollHp}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 13px; font-weight: 600;">Reroll every level's die</button>
+            </sc-if>
+            <sc-if value="{{showCustomInput}}" hint-placeholder-val="{{false}}">
+              <label for="customHp" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Custom total HP</label>
+              <input id="customHp" type="number" min="1" value="{{customHp}}" onChange="{{onCustomHp}}" style="width: 100px; padding: 6px 10px; border: 1px solid {{accent}}; border-radius: 6px; font-size: 14px; font-weight: 600; background: #ffffff; color: #1f2430; text-align: center;">
             </sc-if>
             <div style="font-size: 13px; color: #1f2430; margin-top: 8px;">Total HP: <strong>{{totalHp}}</strong></div>
             <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">{{hpBreakdown}}</div>
@@ -127,7 +132,8 @@ class Component extends DCLogic {
       ],
       classQuery: '',
       hpMethod: 'average',
-      rolls: {}
+      rolls: {},
+      customHp: 20
     };
   }
   renderVals() {
@@ -146,7 +152,7 @@ class Component extends DCLogic {
       Warlock: { hd: 8, subclassLevel: 1, subclasses: ['Fiend', 'Archfey', 'Great Old One'] },
       Wizard: { hd: 6, subclassLevel: 2, subclasses: ['Evocation', 'Abjuration', 'Divination'] }
     };
-    const { classes, classQuery, hpMethod, rolls } = this.state;
+    const { classes, classQuery, hpMethod, rolls, customHp } = this.state;
     const taken = classes.map((c) => c.name);
     const available = Object.keys(CLASSES).filter((n) => taken.indexOf(n) === -1);
     const cq = classQuery.trim().toLowerCase();
@@ -164,7 +170,7 @@ class Component extends DCLogic {
     const firstHd = classes[0] ? (CLASSES[classes[0].name] || { hd: 8 }).hd : 8;
     const averageHp = firstHd + slots.reduce((sum, s) => sum + Math.floor(s.hd / 2) + 1, 0);
     const rollHp2 = firstHd + slots.reduce((sum, s, i) => sum + (rolls[i] ?? Math.floor(s.hd / 2) + 1), 0);
-    const totalHp = hpMethod === 'roll' ? rollHp2 : averageHp;
+    const totalHp = hpMethod === 'custom' ? customHp : hpMethod === 'roll' ? rollHp2 : averageHp;
 
     const classRows = classes.map((c, idx) => {
       const info = CLASSES[c.name] || { hd: 8, subclassLevel: 3, subclasses: [] };
@@ -185,9 +191,12 @@ class Component extends DCLogic {
       };
     });
     const nextDisabled = classes.length === 0 || classRows.some((r) => r.needsSubclass && !r.hasSubclass);
-    const hpBreakdown = classes.length > 1
-      ? classes.map((c) => c.name + ' ' + c.level).join(' / ') + ' — first level is always max, every other level ' + (hpMethod === 'roll' ? 'rolled' : 'averaged') + ' on its own class\'s die'
-      : 'First level is always max; every level after is ' + (hpMethod === 'roll' ? 'rolled' : 'averaged');
+    const methodWord = hpMethod === 'roll' ? 'rolled' : 'averaged';
+    const hpBreakdown = hpMethod === 'custom'
+      ? 'Set by hand — overrides the average and roll this class/level combination would give'
+      : classes.length > 1
+        ? classes.map((c) => c.name + ' ' + c.level).join(' / ') + ' — first level is always max, every other level ' + methodWord + ' on its own class\'s die'
+        : 'First level is always max; every level after is ' + methodWord;
     return {
       accent,
       stepNum: 2,
@@ -211,6 +220,13 @@ class Component extends DCLogic {
       useRoll: () => this.setState({ hpMethod: 'roll' }),
       showRollButton: hpMethod === 'roll',
       rollHp: () => this.setState({ rolls: slots.reduce((acc, s, i) => { acc[i] = Math.floor(Math.random() * s.hd) + 1; return acc; }, {}) }),
+      customBorder: hpMethod === 'custom' ? accent : '#dde1e6',
+      customBg: hpMethod === 'custom' ? accent : '#ffffff',
+      customColor: hpMethod === 'custom' ? '#ffffff' : '#1f2430',
+      useCustom: () => this.setState({ hpMethod: 'custom' }),
+      showCustomInput: hpMethod === 'custom',
+      customHp,
+      onCustomHp: (e) => this.setState({ customHp: Math.max(1, parseInt(e.target.value, 10) || 1) }),
       totalHp,
       hpBreakdown,
       nextDisabled,
