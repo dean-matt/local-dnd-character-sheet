@@ -42,7 +42,9 @@ together. Every other file matches a widget, panel, or nav element:
   only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
   listing rolls newest first, each tagged with what it was rolled for (a weapon, a
-  spell, an ability check…) and which character made it, with a Clear button. Character
+  spell, an ability check…) and which character made it, with a Clear button and a
+  Filter button (by character, by roll type) in the same shape as the other list
+  widgets' filters. Character
   sheet only, not Settings. Forward design for #282, which only specified the list; the
   dock, the collapse, the per-roll source and character tags, and Clear are this
   mockup's own call.
@@ -114,8 +116,9 @@ together. Every other file matches a widget, panel, or nav element:
   Features widgets, and Homebrew's own weapons, armor, gear, and spells — design it
   here first, then carry a change into each widget's rows.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
-  RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its list widget from a
-  Filter button in that widget's header, and sits next to that widget on the canvas.
+  RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
+  list widget from a Filter button in that widget's header, and sits next to that
+  widget on the canvas.
 
 ## Covered
 

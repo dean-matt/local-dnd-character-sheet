@@ -21,9 +21,25 @@
 
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;">
       <span style="display: {{textDisplay}}; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; white-space: nowrap;">Rolls</span>
-      <sc-if value="{{showClear}}" hint-placeholder-val="{{true}}">
-        <button aria-label="Clear roll history" onClick="{{clear}}" style="display: {{textDisplay}}; padding: 4px 8px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #6b7280; font-size: 11px; font-weight: 600; flex-shrink: 0;">Clear</button>
-      </sc-if>
+      <div style="display: {{textDisplay}}; align-items: center; gap: 6px;">
+        <div style="position: relative;">
+          <button aria-label="Filter rolls" onClick="{{toggleFilter}}" style="position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid {{filterBorder}}; background: {{filterBg}}; color: {{filterColor}}; font-size: 11px; font-weight: 600;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            Filter
+            <sc-if value="{{filterActive}}" hint-placeholder-val="{{false}}">
+              <span aria-hidden="true" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: {{accent}}; border: 1.5px solid #ffffff;"></span>
+            </sc-if>
+          </button>
+          <sc-if value="{{filterOpen}}" hint-placeholder-val="{{false}}">
+            <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;">
+              <dc-import name="RollsPanelFilter" filters="{{rollFilters}}" characters="{{characterOptions}}" on-change="{{setRollFilters}}" on-close="{{closeFilter}}" accent="{{accent}}" hint-size="220px,320px"></dc-import>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{showClear}}" hint-placeholder-val="{{true}}">
+          <button aria-label="Clear roll history" onClick="{{clear}}" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #6b7280; font-size: 11px; font-weight: 600; flex-shrink: 0;">Clear</button>
+        </sc-if>
+      </div>
     </div>
 
     <sc-if value="{{collapsed}}" hint-placeholder-val="{{false}}">
@@ -35,6 +51,9 @@
     <div style="display: {{textDisplay}}; flex-direction: column; flex-grow: 1; min-height: 0; overflow-y: auto; gap: 8px;">
       <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
         <div style="font-size: 12px; color: #6b7280; text-align: center; padding: 28px 8px; line-height: 1.5;">No rolls yet. Rolls you make appear here.</div>
+      </sc-if>
+      <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 12px; color: #6b7280; font-style: italic; text-align: center; padding: 28px 8px; line-height: 1.5;">No rolls match the filter.</div>
       </sc-if>
       <sc-for list="{{rolls}}" as="item" hint-placeholder-count="4">
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; min-width: 0; flex-shrink: 0;">
@@ -62,12 +81,14 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":320,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":320,"height":900}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
       collapsed: false,
+      filterOpen: false,
+      rollFilters: { characters: [], types: [] },
       rolls: [
         { source: 'Fire Bolt', character: 'Mira Stormwind', type: 'Spell Atk', notation: 'd20+6', natural: 20, mod: '+6', time: 'just now' },
         { source: 'Fire Bolt', character: 'Mira Stormwind', type: 'Spell Dmg', notation: '2d10', natural: null, mod: null, time: 'just now', flat: 14 },
@@ -79,11 +100,19 @@ class Component extends DCLogic {
     };
   }
   renderVals() {
-    const { collapsed, rolls } = this.state;
+    const accent = this.props.accent ?? '#c1272d';
+    const { collapsed, filterOpen, rollFilters: rf, rolls } = this.state;
     const textDisplay = collapsed ? 'none' : 'flex';
     const rowJustify = collapsed ? 'center' : 'flex-start';
 
-    const items = rolls.map((r) => {
+    const characterOptions = [...new Set(rolls.map((r) => r.character))];
+    const filtered = rolls.filter((r) => {
+      if (rf.characters.length && rf.characters.indexOf(r.character) === -1) return false;
+      if (rf.types.length && rf.types.indexOf(r.type) === -1) return false;
+      return true;
+    });
+
+    const items = filtered.map((r) => {
       const total = r.flat != null ? r.flat : r.natural + parseInt(r.mod, 10);
       const color = r.natural === 20 ? '#2f6b4f' : r.natural === 1 ? '#c1272d' : '#1f2430';
       const summary = r.natural != null
@@ -92,18 +121,32 @@ class Component extends DCLogic {
       return { source: r.source, character: r.character, type: r.type, time: r.time, summary, color };
     });
 
+    const filterActive = rf.characters.length > 0 || rf.types.length > 0;
+
     return {
+      accent,
       width: collapsed ? '64px' : '320px',
       textDisplay,
       rowJustify,
       collapsed,
       rolls: items,
-      isEmpty: items.length === 0,
-      showClear: items.length > 0,
+      isEmpty: rolls.length === 0,
+      noMatches: rolls.length > 0 && items.length === 0,
+      showClear: rolls.length > 0,
       clear: () => this.setState({ rolls: [] }),
       toggleCollapse: () => this.setState({ collapsed: !collapsed }),
       toggleLabel: collapsed ? 'Expand rolls panel' : 'Collapse rolls panel',
-      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)'
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+      filterOpen,
+      toggleFilter: () => this.setState({ filterOpen: !filterOpen }),
+      closeFilter: () => this.setState({ filterOpen: false }),
+      rollFilters: rf,
+      setRollFilters: (next) => this.setState({ rollFilters: next }),
+      characterOptions,
+      filterActive,
+      filterBorder: filterActive ? accent : '#dde1e6',
+      filterBg: filterActive ? '#fdf3ea' : '#ffffff',
+      filterColor: filterActive ? accent : '#6b7280'
     };
   }
 }
