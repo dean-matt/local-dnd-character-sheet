@@ -97,9 +97,10 @@ not for the history.
 Nothing mechanizes this: no lint can tell one concern from two, and a commit-count
 ceiling would punish a branch that genuinely is one change.
 
-AI attribution is kept. A `Co-Authored-By` trailer naming Claude is accurate provenance
-for how this repository is built, and this is a personal project with no employer policy
-that says otherwise.
+AI attribution is off. `.claude/settings.json` sets `includeCoAuthoredBy` to false, so no
+`Co-Authored-By` trailer naming Claude reaches a commit or a pull request body. The
+setting is committed because `.claude/settings.local.json` is gitignored, and an agent
+working in a worktree reads the same repository settings a checkout does.
 
 ## Picking up work
 
