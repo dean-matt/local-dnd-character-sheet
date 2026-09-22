@@ -18,26 +18,76 @@
 </style>
 </helmet>
 
-<div style="width: 460px; height: 300px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Weapons</div>
+<div style="width: 460px; height: 390px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Weapons</div>
+      <button aria-label="Filter weapons" onClick="{{toggleFilter}}" style="position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid {{filterBorder}}; background: {{filterBg}}; color: {{filterColor}}; font-size: 11px; font-weight: 600;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        Filter
+        <sc-if value="{{filterActive}}" hint-placeholder-val="{{false}}">
+          <span aria-hidden="true" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: {{accent}}; border: 1.5px solid #ffffff;"></span>
+        </sc-if>
+      </button>
+      <sc-if value="{{filterOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;">
+          <dc-import name="WeaponsFilter" filters="{{weaponFilters}}" on-change="{{setWeaponFilters}}" on-close="{{closeFilter}}" accent="{{accent}}" hint-size="220px,410px"></dc-import>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No weapons match the filter.</div>
+    </sc-if>
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <sc-for list="{{weapons}}" as="item" hint-placeholder-count="2">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px; font-size: 14px; color: #1f2430;">
-          <div style="flex-grow: 1;">{{item.label}}</div>
-          <div style="font-size: 12px; color: #6b7280; flex-shrink: 0;">{{item.value}}</div>
-          <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
-          <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button aria-label="View {{item.label}} details" onClick="{{item.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.label}}</button>
+            <div style="position: relative; flex-shrink: 0;">
+              <button aria-label="{{item.atkAria}}" onMouseEnter="{{item.showCalc}}" onMouseLeave="{{item.hideCalc}}" onFocus="{{item.showCalc}}" onBlur="{{item.hideCalc}}" aria-describedby="{{item.calcId}}" style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px;">
+                <span style="font-weight: 400; color: #6b7280;">Attack</span>
+                d20 {{item.atkBonus}}
+              </button>
+              <sc-if value="{{item.calcOpen}}" hint-placeholder-val="{{false}}">
+                <div role="tooltip" id="{{item.calcId}}" style="position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+                  <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{item.calcLabel}}</div>
+                  <div style="font-size: 11px; color: #6b7280;">{{item.calcText}}</div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="position: relative; flex-shrink: 0;">
+              <button aria-label="{{item.label}} damage" onMouseEnter="{{item.showDmgCalc}}" onMouseLeave="{{item.hideDmgCalc}}" onFocus="{{item.showDmgCalc}}" onBlur="{{item.hideDmgCalc}}" aria-describedby="{{item.dmgCalcId}}" style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px;">
+                <span style="font-weight: 400; color: #6b7280;">Damage</span>
+                {{item.dice}}
+              </button>
+              <sc-if value="{{item.dmgCalcOpen}}" hint-placeholder-val="{{false}}">
+                <div role="tooltip" id="{{item.dmgCalcId}}" style="position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+                  <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{item.dmgCalcLabel}}</div>
+                  <div style="font-size: 11px; color: #6b7280;">{{item.dmgCalcText}}</div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex-grow: 1;"></div>
+            <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
+            <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.weaponClass}}</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.damageType}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
         </div>
       </sc-for>
     </div>
     <div style="position: relative;">
       <label for="weaponSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search weapons</label>
-      <input id="weaponSearch" type="text" placeholder="Search weapons…" value="{{itemQuery}}" onChange="{{onItemQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <input id="weaponSearch" type="text" placeholder="Search weapons…" value="{{itemQuery}}" onChange="{{onItemQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
       <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
-        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
           <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
-            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none;">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none;">
               <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
               <span style="font-size: 11px; color: #6b7280;"> — {{m.meta}}</span>
             </button>
@@ -46,48 +96,110 @@
       </sc-if>
     </div>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">{{modalMeta}}</div>
+        <div style="font-size: 20px; font-weight: 700; color: {{accent}}; margin-bottom: 2px;">{{modalAtk}} to hit</div>
+        <div style="font-size: 11px; color: #6b7280; margin-bottom: 10px;">{{modalCalcText}}</div>
+        <div style="font-size: 14px; color: #1f2430; margin-bottom: 2px;">{{modalDmg}}</div>
+        <div style="font-size: 11px; color: #6b7280; margin-bottom: 10px;">{{modalDmgCalcText}}</div>
+        <div style="font-size: 13px; color: #1f2430; margin-bottom: 10px;">Value: {{modalValue}}</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">{{modalDesc}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":300}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":390}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
       proficiencies: ['Light armor', 'Simple weapons'],
+      abilities: { str: 3, dex: 4 },
+      prof: 4,
       equipment: [
-        { label: 'Longbow +1', weaponClass: 'Martial', value: '150 gp', equipped: false },
-        { label: 'Handaxe', weaponClass: 'Simple', value: '5 gp', equipped: true }
+        { label: 'Longbow +1', weaponClass: 'Martial', ability: 'dex', magic: 1, value: '150 gp', diceBase: '1d8', damageType: 'piercing', range: '150/600 ft.', desc: 'A magic longbow that grants a +1 bonus to attack and damage rolls.', equipped: false },
+        { label: 'Handaxe', weaponClass: 'Simple', ability: 'str', magic: 0, value: '5 gp', diceBase: '1d6', damageType: 'slashing', range: 'thrown 20/60 ft.', desc: 'A light axe balanced for melee or a quick throw.', equipped: true }
       ],
-      itemQuery: ''
+      itemQuery: '',
+      hoverKey: null,
+      hoverDmgKey: null,
+      modalItem: null,
+      filterOpen: false,
+      weaponFilters: { classes: [], damageTypes: [], equipped: [], priceMin: null, priceMax: null }
     };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const { abilities, prof } = this.state;
     const CATALOG = [
-      { name: 'Longbow +1', weaponClass: 'Martial', value: '150 gp', meta: 'Weapon • Martial ranged' },
-      { name: 'Heavy Crossbow', weaponClass: 'Martial', value: '50 gp', meta: 'Weapon • Martial ranged' },
-      { name: 'Handaxe', weaponClass: 'Simple', value: '5 gp', meta: 'Weapon • Simple melee' },
-      { name: 'Shortsword', weaponClass: 'Martial', value: '10 gp', meta: 'Weapon • Martial melee' },
-      { name: 'Dagger', weaponClass: 'Simple', value: '2 gp', meta: 'Weapon • Simple melee' }
+      { name: 'Longbow +1', weaponClass: 'Martial', ability: 'dex', magic: 1, value: '150 gp', diceBase: '1d8', damageType: 'piercing', range: '150/600 ft.', desc: 'A magic longbow that grants a +1 bonus to attack and damage rolls.', meta: 'Weapon • Martial ranged' },
+      { name: 'Heavy Crossbow', weaponClass: 'Martial', ability: 'dex', magic: 0, value: '50 gp', diceBase: '1d10', damageType: 'piercing', range: '100/400 ft.', desc: 'A slow-loading but hard-hitting ranged weapon.', meta: 'Weapon • Martial ranged' },
+      { name: 'Handaxe', weaponClass: 'Simple', ability: 'str', magic: 0, value: '5 gp', diceBase: '1d6', damageType: 'slashing', range: 'thrown 20/60 ft.', desc: 'A light axe balanced for melee or a quick throw.', meta: 'Weapon • Simple melee' },
+      { name: 'Shortsword', weaponClass: 'Martial', ability: 'dex', magic: 0, value: '10 gp', diceBase: '1d6', damageType: 'piercing', range: 'finesse, light', desc: 'A quick, light blade that favors precision over force.', meta: 'Weapon • Martial melee' },
+      { name: 'Dagger', weaponClass: 'Simple', ability: 'dex', magic: 0, value: '2 gp', diceBase: '1d4', damageType: 'piercing', range: 'finesse, light, thrown 20/60 ft.', desc: 'A small, easily concealed blade.', meta: 'Weapon • Simple melee' }
     ];
-    const { proficiencies, equipment, itemQuery } = this.state;
+    const { proficiencies, equipment, itemQuery, weaponFilters: wf } = this.state;
     const canEquip = (item) => proficiencies.some((p) => p.toLowerCase().indexOf(item.weaponClass.toLowerCase() + ' weapon') !== -1);
-    const weapons = equipment.map((item, idx) => {
+    const priceOf = (item) => parseFloat(item.value) || 0;
+    const filteredEquipment = equipment.filter((item) => {
+      if (wf.classes.length && wf.classes.indexOf(item.weaponClass) === -1) return false;
+      if (wf.damageTypes.length && wf.damageTypes.indexOf(item.damageType) === -1) return false;
+      if (wf.equipped.length && wf.equipped.indexOf(item.equipped ? 'equipped' : 'unequipped') === -1) return false;
+      const price = priceOf(item);
+      if (wf.priceMin != null && price < wf.priceMin) return false;
+      if (wf.priceMax != null && price > wf.priceMax) return false;
+      return true;
+    });
+    const weapons = filteredEquipment.map((item) => {
+      const idx = equipment.indexOf(item);
       const allowed = canEquip(item);
       const equipped = allowed && item.equipped;
+      const abilityMod = abilities[item.ability] ?? 0;
+      const atkBonus = abilityMod + (allowed ? prof : 0) + (item.magic || 0);
+      const calcText = item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (allowed ? ' + proficiency ' + fmt(prof) : ' (not proficient)') + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + fmt(atkBonus);
+      const dmgMod = abilityMod + (item.magic || 0);
+      const dmgCalcText = item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + fmt(dmgMod);
+      const dmgFull = item.diceBase + (dmgMod ? fmt(dmgMod) : '') + ' ' + item.damageType;
       let equipLabel = 'Equip', equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTitle = 'Click to equip';
       if (!allowed) { equipLabel = "Can't equip"; equipTitle = 'Requires a matching proficiency'; }
       else if (equipped) { equipLabel = 'Equipped'; equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTitle = 'Click to unequip'; }
       return {
         label: item.label,
         value: item.value,
+        weaponClass: item.weaponClass,
+        dice: item.diceBase + (dmgMod ? fmt(dmgMod) : ''),
+        damageType: item.damageType,
+        descShort: item.desc,
+        atkBonus: fmt(atkBonus),
+        atkAria: item.label + ' attack bonus ' + fmt(atkBonus),
+        calcId: 'wpn-calc-' + idx,
+        calcOpen: this.state.hoverKey === idx,
+        calcLabel: item.label + ' Attack Bonus',
+        calcText,
+        showCalc: () => this.setState({ hoverKey: idx }),
+        hideCalc: () => this.setState({ hoverKey: null }),
+        dmgCalcId: 'wpn-dmgcalc-' + idx,
+        dmgCalcOpen: this.state.hoverDmgKey === idx,
+        dmgCalcLabel: item.label + ' Damage',
+        dmgCalcText,
+        showDmgCalc: () => this.setState({ hoverDmgKey: idx }),
+        hideDmgCalc: () => this.setState({ hoverDmgKey: null }),
         equipLabel, equipBorder, equipBg, equipColor, equipTitle,
         equipAria: (equipped ? 'Unequip ' : 'Equip ') + item.label,
         toggleEquip: () => {
           if (!allowed) return;
           this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped } : x)) });
         },
-        remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) })
+        remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) }),
+        openDetail: () => this.setState({ modalItem: { name: item.label, meta: item.weaponClass + ' weapon', atk: fmt(atkBonus), calcText, dmg: dmgFull + ', ' + item.range, dmgCalcText, value: item.value, desc: item.desc } })
       };
     });
     const q = itemQuery.trim().toLowerCase();
@@ -96,17 +208,40 @@ class Component extends DCLogic {
           name: c.name,
           meta: c.meta,
           add: () => {
-            this.setState({ equipment: [...equipment, { label: c.name, weaponClass: c.weaponClass, value: c.value, equipped: false }], itemQuery: '' });
+            this.setState({ equipment: [...equipment, { label: c.name, weaponClass: c.weaponClass, ability: c.ability, magic: c.magic, value: c.value, diceBase: c.diceBase, damageType: c.damageType, range: c.range, desc: c.desc, equipped: false }], itemQuery: '' });
           }
         }))
       : [];
+    const modalItem = this.state.modalItem;
+    const filterActive = wf.classes.length > 0 || wf.damageTypes.length > 0 || wf.equipped.length > 0 || wf.priceMin != null || wf.priceMax != null;
     return {
       accent,
       weapons,
+      noMatches: filteredEquipment.length === 0 && equipment.length > 0,
+      filterOpen: this.state.filterOpen,
+      toggleFilter: () => this.setState({ filterOpen: !this.state.filterOpen }),
+      closeFilter: () => this.setState({ filterOpen: false }),
+      weaponFilters: wf,
+      setWeaponFilters: (next) => this.setState({ weaponFilters: next }),
+      filterActive,
+      filterBorder: filterActive ? accent : '#dde1e6',
+      filterBg: filterActive ? '#fdf3ea' : '#ffffff',
+      filterColor: filterActive ? accent : '#6b7280',
       itemQuery,
       onItemQueryChange: (e) => this.setState({ itemQuery: e.target.value }),
       showResults: !!itemQuery,
-      matches
+      matches,
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.name : '',
+      modalMeta: modalItem ? modalItem.meta : '',
+      modalAtk: modalItem ? modalItem.atk : '',
+      modalCalcText: modalItem ? modalItem.calcText : '',
+      modalDmg: modalItem ? modalItem.dmg : '',
+      modalDmgCalcText: modalItem ? modalItem.dmgCalcText : '',
+      modalValue: modalItem ? modalItem.value : '',
+      modalDesc: modalItem ? modalItem.desc : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
     };
   }
 }

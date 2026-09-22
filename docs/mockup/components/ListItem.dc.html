@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reference — List Item</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 380px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">List item — the shared row shape for Weapons, Armor, Gear, Known Spells, and Features</div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">Longsword</button>
+        <sc-if value="{{showCalc}}" hint-placeholder-val="{{true}}">
+          <span style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">
+            <span style="font-weight: 400; color: #6b7280;">Attack</span>
+            d20 +5
+          </span>
+        </sc-if>
+        <div style="flex-grow: 1;"></div>
+        <sc-if value="{{showAction}}" hint-placeholder-val="{{true}}">
+          <button style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #6b7280; font-size: 11px; font-weight: 600; flex-shrink: 0;">Equip</button>
+        </sc-if>
+        <button aria-label="Remove Longsword" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <sc-if value="{{showChip}}" hint-placeholder-val="{{true}}">
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">Martial</span>
+        </sc-if>
+        <sc-if value="{{showChip2}}" hint-placeholder-val="{{true}}">
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">Slashing</span>
+        </sc-if>
+        <div style="flex-grow: 1;"></div>
+        <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">15 gp</span>
+      </div>
+      <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">A versatile blade balanced for one or two hands, dealing slashing damage.</div>
+    </div>
+
+    <div style="font-size: 11px; color: #6b7280; line-height: 1.5;">
+      Row 1: name (ellipsis), an optional hover-calc chip (see Popover for the tooltip
+      itself), a flex spacer, then an optional pill and remove (&times;) together at the
+      far right.<br>
+      Row 2: zero, one, or two left chips for the item's category, a flex spacer, then a
+      right-aligned value or level.<br>
+      Row 3: a truncated one-line description.
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"$preview":{"width":380,"height":340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#c1272d',
+      showCalc: this.props.showCalc ?? true,
+      showAction: this.props.showAction ?? true,
+      showChip: this.props.showChip ?? true,
+      showChip2: this.props.showChip2 ?? true
+    };
+  }
+}
+</script>
+</body>
+</html>

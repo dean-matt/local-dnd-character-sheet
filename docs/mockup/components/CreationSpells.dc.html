@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Creation: Spells</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 1440px; height: 800px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; background: #f4f5f7;">
+  <div style="width: 100%; max-width: 1392px; height: 64px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; flex-shrink: 0;">
+    <div style="font-weight: 700; font-size: 18px; color: {{accent}};">Local D&amp;D</div>
+    <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
+  </div>
+
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+    <div>
+      <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
+      <div style="font-size: 17px; font-weight: 700;">Spells</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+        <div title="{{s.label}}" style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{s.color}};"></div>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{isCaster}}" hint-placeholder-val="{{true}}">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px; overflow-y: auto; flex-grow: 1; padding-top: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Cantrips</div>
+          <div style="font-size: 12px; color: {{cantripColor}}; margin-bottom: 6px;">Choose {{cantripCount}} — {{cantripsChosen}} selected</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+            <sc-for list="{{cantrips}}" as="c" hint-placeholder-count="3">
+              <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 4px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                {{c.name}}
+                <button aria-label="Remove {{c.name}}" onClick="{{c.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+              </span>
+            </sc-for>
+          </div>
+          <div style="position: relative;">
+            <label for="cantripSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search cantrips</label>
+            <input id="cantripSearch" type="text" placeholder="Search cantrips…" value="{{cantripQuery}}" onChange="{{onCantripQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <sc-if value="{{showCantripResults}}" hint-placeholder-val="{{false}}">
+              <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+                <sc-for list="{{cantripMatches}}" as="m" hint-placeholder-count="2">
+                  <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{hasGranted}}" hint-placeholder-val="{{true}}">
+          <div>
+            <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Granted by {{grantedSource}}</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{granted}}" as="g" hint-placeholder-count="1">
+                <span style="font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #fdf3ea; border: 1px solid {{accent}}; color: {{accent}};">{{g}}</span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">{{spellsLabel}}</div>
+          <div style="font-size: 12px; color: {{spellColor}}; margin-bottom: 6px;">Choose {{spellCount}} — {{spellsChosen}} selected</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+            <sc-for list="{{spells}}" as="sp" hint-placeholder-count="3">
+              <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 4px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                {{sp.name}}
+                <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+              </span>
+            </sc-for>
+          </div>
+          <div style="position: relative;">
+            <label for="spellSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search spells</label>
+            <input id="spellSearch" type="text" placeholder="Search 1st-level spells…" value="{{spellQuery}}" onChange="{{onSpellQueryChange}}" style="width: 100%; padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <sc-if value="{{showSpellResults}}" hint-placeholder-val="{{false}}">
+              <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+                <sc-for list="{{spellMatches}}" as="m" hint-placeholder-count="2">
+                  <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{noCaster}}" hint-placeholder-val="{{false}}">
+      <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.6;">{{className}} doesn't cast spells at level {{level}}.<br>Nothing to choose here — select Finish to create the character.</div>
+      </div>
+    </sc-if>
+
+    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
+      <button onClick="{{back}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">← Back</button>
+      <button onClick="{{finish}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">Finish →</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      className: 'Wizard',
+      level: 3,
+      preparesSpells: true,
+      cantrips: ['Fire Bolt', 'Mage Hand'],
+      spells: ['Magic Missile', 'Shield', 'Detect Magic'],
+      granted: ['Identify'],
+      cantripQuery: '',
+      spellQuery: ''
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const CANTRIP_CATALOG = ['Fire Bolt', 'Mage Hand', 'Prestidigitation', 'Ray of Frost', 'Minor Illusion'];
+    const SPELL_CATALOG = ['Magic Missile', 'Shield', 'Detect Magic', 'Burning Hands', 'Sleep', 'Mage Armor'];
+    const { className, level, preparesSpells, cantrips, spells, granted, cantripQuery, spellQuery } = this.state;
+    const isCaster = className === 'Wizard' || className === 'Sorcerer' || className === 'Cleric' || className === 'Druid' || className === 'Bard';
+    const cantripCount = 3;
+    const spellCount = 4;
+    const cq = cantripQuery.trim().toLowerCase();
+    const cantripMatches = cq
+      ? CANTRIP_CATALOG.filter((c) => cantrips.indexOf(c) === -1 && c.toLowerCase().indexOf(cq) !== -1).map((name) => ({ name, add: () => this.setState({ cantrips: [...cantrips, name], cantripQuery: '' }) }))
+      : [];
+    const sq = spellQuery.trim().toLowerCase();
+    const spellMatches = sq
+      ? SPELL_CATALOG.filter((s) => spells.indexOf(s) === -1 && s.toLowerCase().indexOf(sq) !== -1).map((name) => ({ name, add: () => this.setState({ spells: [...spells, name], spellQuery: '' }) }))
+      : [];
+    return {
+      accent,
+      stepNum: 5,
+      steps: [1, 2, 3, 4, 5].map((n) => ({ label: 'Step ' + n, color: accent })),
+      isCaster,
+      noCaster: !isCaster,
+      className,
+      level,
+      cantripCount,
+      cantripsChosen: cantrips.length,
+      cantripColor: cantrips.length === cantripCount ? '#6b7280' : accent,
+      cantrips: cantrips.map((name) => ({ name, remove: () => this.setState({ cantrips: cantrips.filter((c) => c !== name) }) })),
+      cantripQuery,
+      onCantripQueryChange: (e) => this.setState({ cantripQuery: e.target.value }),
+      showCantripResults: !!cantripQuery,
+      cantripMatches,
+      spellsLabel: preparesSpells ? 'Spells Prepared' : 'Spells Known',
+      spellCount,
+      spellsChosen: spells.length,
+      spellColor: spells.length === spellCount ? '#6b7280' : accent,
+      spells: spells.map((name) => ({ name, remove: () => this.setState({ spells: spells.filter((s) => s !== name) }) })),
+      spellQuery,
+      onSpellQueryChange: (e) => this.setState({ spellQuery: e.target.value }),
+      showSpellResults: !!spellQuery,
+      spellMatches,
+      hasGranted: granted.length > 0,
+      grantedSource: 'Subclass',
+      granted,
+      back: () => {},
+      finish: () => {},
+      cancel: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

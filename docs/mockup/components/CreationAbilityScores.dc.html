@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Creation: Ability Scores</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 1440px; height: 800px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; background: #f4f5f7;">
+  <div style="width: 100%; max-width: 1392px; height: 64px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; flex-shrink: 0;">
+    <div style="font-weight: 700; font-size: 18px; color: {{accent}};">Local D&amp;D</div>
+    <button onClick="{{cancel}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #6b7280; font-size: 13px; font-weight: 600;">Cancel</button>
+  </div>
+
+  <div style="width: 100%; max-width: 1200px; height: 700px; box-sizing: border-box; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 24px; display: flex; flex-direction: column; gap: 12px;">
+    <div>
+      <div style="font-size: 11px; color: #6b7280; margin-bottom: 2px;">Step {{stepNum}} of 5</div>
+      <div style="font-size: 17px; font-weight: 700;">Ability Scores</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+        <div title="{{s.label}}" style="flex-grow: 1; height: 4px; border-radius: 2px; background: {{s.color}};"></div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; gap: 4px; border-bottom: 1px solid #dde1e6; padding-bottom: 2px;">
+      <sc-for list="{{methods}}" as="m" hint-placeholder-count="4">
+        <button onClick="{{m.select}}" style="padding: 6px 10px; border: none; border-bottom: 2px solid {{m.borderColor}}; background: none; color: {{m.color}}; font-size: 12px; font-weight: 600; margin-bottom: -1px;">{{m.label}}</button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{isStandard}}" hint-placeholder-val="{{true}}">
+      <div style="font-size: 11px; color: #6b7280;">Assign each value once: 15, 14, 13, 12, 10, 8.</div>
+    </sc-if>
+    <sc-if value="{{isPointBuy}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 12px; color: {{pointsColor}}; font-weight: 600;">{{pointsLabel}}</div>
+    </sc-if>
+    <sc-if value="{{isRoll}}" hint-placeholder-val="{{false}}">
+      <button onClick="{{rerollAll}}" style="align-self: flex-start; padding: 6px 12px; border-radius: 6px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 12px; font-weight: 600;">Reroll all (4d6 drop lowest)</button>
+    </sc-if>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; overflow-y: auto; flex-grow: 1;">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{rowsLeft}}" as="row" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 6px;">
+          <div style="width: 36px; font-size: 12px; font-weight: 700; color: #6b7280;">{{row.label}}</div>
+          <sc-if value="{{row.isSelect}}" hint-placeholder-val="{{true}}">
+            <select value="{{row.base}}" onChange="{{row.onBase}}" style="width: 70px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+              <sc-for list="{{row.options}}" as="opt" hint-placeholder-count="6">
+                <option value="{{opt}}">{{opt}}</option>
+              </sc-for>
+            </select>
+          </sc-if>
+          <sc-if value="{{row.isNumber}}" hint-placeholder-val="{{false}}">
+            <input type="number" min="1" max="20" value="{{row.base}}" onChange="{{row.onBase}}" style="width: 60px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+          </sc-if>
+          <sc-if value="{{row.isFixed}}" hint-placeholder-val="{{false}}">
+            <div style="width: 60px; text-align: center; font-size: 13px; font-weight: 600;">{{row.base}}</div>
+          </sc-if>
+          <div style="font-size: 11px; color: #6b7280; width: 60px;">{{row.racialTerm}}</div>
+          <div style="flex-grow: 1;"></div>
+          <div style="font-size: 15px; font-weight: 700; color: #1f2430; width: 30px; text-align: right;">{{row.total}}</div>
+          <div style="font-size: 11px; color: {{accent}}; font-weight: 700; width: 34px; text-align: right;">{{row.modifier}}</div>
+        </div>
+      </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{rowsRight}}" as="row" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 6px;">
+          <div style="width: 36px; font-size: 12px; font-weight: 700; color: #6b7280;">{{row.label}}</div>
+          <sc-if value="{{row.isSelect}}" hint-placeholder-val="{{true}}">
+            <select value="{{row.base}}" onChange="{{row.onBase}}" style="width: 70px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+              <sc-for list="{{row.options}}" as="opt" hint-placeholder-count="6">
+                <option value="{{opt}}">{{opt}}</option>
+              </sc-for>
+            </select>
+          </sc-if>
+          <sc-if value="{{row.isNumber}}" hint-placeholder-val="{{false}}">
+            <input type="number" min="1" max="20" value="{{row.base}}" onChange="{{row.onBase}}" style="width: 60px; padding: 5px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+          </sc-if>
+          <sc-if value="{{row.isFixed}}" hint-placeholder-val="{{false}}">
+            <div style="width: 60px; text-align: center; font-size: 13px; font-weight: 600;">{{row.base}}</div>
+          </sc-if>
+          <div style="font-size: 11px; color: #6b7280; width: 60px;">{{row.racialTerm}}</div>
+          <div style="flex-grow: 1;"></div>
+          <div style="font-size: 15px; font-weight: 700; color: #1f2430; width: 30px; text-align: right;">{{row.total}}</div>
+          <div style="font-size: 11px; color: {{accent}}; font-weight: 700; width: 34px; text-align: right;">{{row.modifier}}</div>
+        </div>
+      </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
+      <button onClick="{{back}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">← Back</button>
+      <button onClick="{{next}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">Next: Proficiencies →</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      method: 'standard',
+      scores: { str: 8, dex: 15, con: 13, int: 14, wis: 12, cha: 10 },
+      rolled: { str: 13, dex: 15, con: 12, int: 16, wis: 10, cha: 8 }
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const ABILITIES = [
+      { key: 'str', label: 'STR' }, { key: 'dex', label: 'DEX' }, { key: 'con', label: 'CON' },
+      { key: 'int', label: 'INT' }, { key: 'wis', label: 'WIS' }, { key: 'cha', label: 'CHA' }
+    ];
+    const RACIAL_BONUS = { dex: 2, int: 1 };
+    const POINT_COST = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
+    const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const { method, scores, rolled } = this.state;
+    const source = method === 'roll' ? rolled : scores;
+    const rows = ABILITIES.map((a) => {
+      const base = source[a.key];
+      const racial = RACIAL_BONUS[a.key] || 0;
+      const total = base + racial;
+      return {
+        key: a.key,
+        label: a.label,
+        base,
+        options: STANDARD_ARRAY,
+        isSelect: method === 'standard',
+        isNumber: method === 'custom' || method === 'pointbuy',
+        isFixed: method === 'roll',
+        onBase: (e) => this.setState({ scores: { ...scores, [a.key]: parseInt(e.target.value, 10) || 8 } }),
+        racialTerm: racial ? '+' + racial + ' racial' : '',
+        total,
+        modifier: fmt(Math.floor((total - 10) / 2))
+      };
+    });
+    const pointsSpent = ABILITIES.reduce((sum, a) => sum + (POINT_COST[scores[a.key]] ?? 0), 0);
+    const pointsRemaining = 27 - pointsSpent;
+    const methods = [
+      { key: 'standard', label: 'Standard Array' },
+      { key: 'pointbuy', label: 'Point Buy' },
+      { key: 'roll', label: 'Roll' },
+      { key: 'custom', label: 'Custom' }
+    ].map((m) => ({
+      key: m.key,
+      label: m.label,
+      color: m.key === method ? accent : '#6b7280',
+      borderColor: m.key === method ? accent : 'transparent',
+      select: () => this.setState({ method: m.key })
+    }));
+    return {
+      accent,
+      stepNum: 3,
+      steps: [1, 2, 3, 4, 5].map((n) => ({ label: 'Step ' + n, color: n <= 3 ? accent : '#dde1e6' })),
+      methods,
+      isStandard: method === 'standard',
+      isPointBuy: method === 'pointbuy',
+      isRoll: method === 'roll',
+      pointsLabel: pointsRemaining >= 0 ? pointsRemaining + ' of 27 points remaining' : 'Over budget by ' + -pointsRemaining + ' points',
+      pointsColor: pointsRemaining >= 0 ? '#6b7280' : accent,
+      rerollAll: () => this.setState({
+        rolled: ABILITIES.reduce((acc, a) => {
+          const dice = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1).sort((x, y) => y - x);
+          acc[a.key] = dice[0] + dice[1] + dice[2];
+          return acc;
+        }, {})
+      }),
+      rowsLeft: rows.slice(0, 3),
+      rowsRight: rows.slice(3, 6),
+      back: () => {},
+      next: () => {},
+      cancel: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

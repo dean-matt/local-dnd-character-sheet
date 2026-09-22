@@ -18,25 +18,49 @@
 </style>
 </helmet>
 
-<div style="width: 420px; height: 280px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Gear</div>
+<div style="width: 420px; height: 350px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Gear</div>
+      <button aria-label="Filter gear" onClick="{{toggleFilter}}" style="position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid {{filterBorder}}; background: {{filterBg}}; color: {{filterColor}}; font-size: 11px; font-weight: 600;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        Filter
+        <sc-if value="{{filterActive}}" hint-placeholder-val="{{false}}">
+          <span aria-hidden="true" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: {{accent}}; border: 1.5px solid #ffffff;"></span>
+        </sc-if>
+      </button>
+      <sc-if value="{{filterOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;">
+          <dc-import name="GearFilter" filters="{{gearFilters}}" on-change="{{setGearFilters}}" on-close="{{closeFilter}}" hint-size="220px,360px"></dc-import>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No gear matches the filter.</div>
+    </sc-if>
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <sc-for list="{{gear}}" as="item" hint-placeholder-count="2">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px; font-size: 14px; color: #1f2430;">
-          <div style="flex-grow: 1;">{{item.label}}</div>
-          <div style="font-size: 12px; color: #6b7280; flex-shrink: 0;">{{item.value}}</div>
-          <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button aria-label="View {{item.label}} details" onClick="{{item.openDetail}}" style="all: unset; cursor: pointer; flex-grow: 1; min-width: 0;">{{item.label}}</button>
+            <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.category}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
         </div>
       </sc-for>
     </div>
     <div style="position: relative;">
       <label for="gearSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search gear</label>
-      <input id="gearSearch" type="text" placeholder="Search gear…" value="{{itemQuery}}" onChange="{{onItemQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 8px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <input id="gearSearch" type="text" placeholder="Search gear…" value="{{itemQuery}}" onChange="{{onItemQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
       <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
-        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+        <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
           <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
-            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none;">
+            <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none;">
               <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
               <span style="font-size: 11px; color: #6b7280;"> — {{m.meta}}</span>
             </button>
@@ -45,47 +69,98 @@
       </sc-if>
     </div>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 13px; color: #1f2430; margin-bottom: 10px;">Value: {{modalValue}}</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">{{modalDesc}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":420,"height":280}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":420,"height":350}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
       equipment: [
-        { label: "Explorer's Pack", value: '10 gp' },
-        { label: 'Quiver, 20 arrows', value: '1 gp' }
+        { label: "Explorer's Pack", value: '10 gp', category: 'Pack', desc: 'A backpack holding a bedroll, mess kit, tinderbox, rations and rope — the standard kit for life on the road.' },
+        { label: 'Quiver, 20 arrows', value: '1 gp', category: 'Adventuring', desc: 'A leather quiver holding twenty arrows for a bow.' }
       ],
-      itemQuery: ''
+      itemQuery: '',
+      modalItem: null,
+      filterOpen: false,
+      gearFilters: { categories: [], priceMin: null, priceMax: null }
     };
   }
   renderVals() {
+    const accent = '#c1272d';
+    const KNOWN_CATEGORIES = ['Pack', 'Adventuring', 'Consumable', 'Wondrous item'];
     const CATALOG = [
-      { name: 'Potion of Healing', value: '50 gp', meta: 'Potion • Consumable' },
-      { name: 'Bag of Holding', value: '5000 gp', meta: 'Wondrous item' },
-      { name: "Explorer's Pack", value: '10 gp', meta: 'Gear • Pack' },
-      { name: 'Rope, 50 ft', value: '1 gp', meta: 'Gear • Adventuring' }
+      { name: 'Potion of Healing', value: '50 gp', category: 'Consumable', meta: 'Potion • Consumable', desc: 'A crimson elixir that restores 2d4+2 hit points when drunk.' },
+      { name: 'Bag of Holding', value: '5000 gp', category: 'Wondrous item', meta: 'Wondrous item', desc: 'A bag whose inside is larger than its outside, holding up to 500 pounds without adding weight.' },
+      { name: "Explorer's Pack", value: '10 gp', category: 'Pack', meta: 'Gear • Pack', desc: 'A backpack holding a bedroll, mess kit, tinderbox, rations and rope — the standard kit for life on the road.' },
+      { name: 'Rope, 50 ft', value: '1 gp', category: 'Adventuring', meta: 'Gear • Adventuring', desc: 'Hempen rope, useful for climbing, hauling or binding.' }
     ];
-    const { equipment, itemQuery } = this.state;
-    const gear = equipment.map((item, idx) => ({
-      label: item.label,
-      value: item.value,
-      remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) })
-    }));
+    const { equipment, itemQuery, gearFilters: wf } = this.state;
+    const bucketOf = (item) => (KNOWN_CATEGORIES.indexOf(item.category) !== -1 ? item.category : 'Other');
+    const priceOf = (item) => parseFloat(item.value) || 0;
+    const filteredEquipment = equipment.filter((item) => {
+      if (wf.categories.length && wf.categories.indexOf(bucketOf(item)) === -1) return false;
+      const price = priceOf(item);
+      if (wf.priceMin != null && price < wf.priceMin) return false;
+      if (wf.priceMax != null && price > wf.priceMax) return false;
+      return true;
+    });
+    const gear = filteredEquipment.map((item) => {
+      const idx = equipment.indexOf(item);
+      return {
+        label: item.label,
+        value: item.value,
+        category: item.category || 'Gear',
+        descShort: item.desc,
+        remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) }),
+        openDetail: () => this.setState({ modalItem: { label: item.label, value: item.value, desc: item.desc || 'No further detail recorded for this item.' } })
+      };
+    });
     const q = itemQuery.trim().toLowerCase();
     const matches = q
       ? CATALOG.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({
           name: c.name,
           meta: c.meta,
-          add: () => this.setState({ equipment: [...equipment, { label: c.name, value: c.value }], itemQuery: '' })
+          add: () => this.setState({ equipment: [...equipment, { label: c.name, value: c.value, category: c.category, desc: c.desc }], itemQuery: '' })
         }))
       : [];
+    const modalItem = this.state.modalItem;
+    const filterActive = wf.categories.length > 0 || wf.priceMin != null || wf.priceMax != null;
     return {
+      accent,
       gear,
+      noMatches: filteredEquipment.length === 0 && equipment.length > 0,
+      filterOpen: this.state.filterOpen,
+      toggleFilter: () => this.setState({ filterOpen: !this.state.filterOpen }),
+      closeFilter: () => this.setState({ filterOpen: false }),
+      gearFilters: wf,
+      setGearFilters: (next) => this.setState({ gearFilters: next }),
+      filterActive,
+      filterBorder: filterActive ? accent : '#dde1e6',
+      filterBg: filterActive ? '#fdf3ea' : '#ffffff',
+      filterColor: filterActive ? accent : '#6b7280',
       itemQuery,
       onItemQueryChange: (e) => this.setState({ itemQuery: e.target.value }),
       showResults: !!itemQuery,
-      matches
+      matches,
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.label : '',
+      modalValue: modalItem ? modalItem.value : '',
+      modalDesc: modalItem ? modalItem.desc : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
     };
   }
 }

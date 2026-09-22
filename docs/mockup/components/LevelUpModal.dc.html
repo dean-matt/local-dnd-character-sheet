@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Widget — Level &amp; Experience</title>
+<title>Modal — Level Up</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -14,67 +14,22 @@
   * { box-sizing: border-box; }
   button { font-family: inherit; cursor: pointer; }
   button:disabled { cursor: not-allowed; }
-  input, select { font-family: inherit; }
+  input { font-family: inherit; }
   input::placeholder { color: #9aa1ab; }
 </style>
 </helmet>
 
-<div style="width: 380px; height: 360px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Level &amp; Experience</div>
-
-    <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-      <div style="font-size: 32px; font-weight: 700; color: #1f2430;">{{totalLevel}}</div>
-      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-        <sc-for list="{{classChips}}" as="c" hint-placeholder-count="1">
-          <div style="font-size: 12px; padding: 3px 8px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">{{c.label}}</div>
-        </sc-for>
-      </div>
-    </div>
-
-    <div>
-      <label for="levelingModeSelect" style="display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 6px;">Leveling</label>
-      <select id="levelingModeSelect" value="{{levelingMode}}" onChange="{{onLevelingMode}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 14px; background: #ffffff; color: #1f2430;">
-        <option value="xp">Experience</option>
-        <option value="milestone">Milestone</option>
-      </select>
-    </div>
-
-    <sc-if value="{{isXpMode}}" hint-placeholder-val="{{true}}">
-      <div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-bottom: 4px;">
-          <span>{{xp}} XP</span>
-          <span>{{xpNextLabel}}</span>
-        </div>
-        <div style="width: 100%; height: 8px; border-radius: 999px; background: #eceef1; overflow: hidden;">
-          <div style="width: {{xpPct}}%; height: 100%; background: {{accent}};"></div>
-        </div>
-        <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">{{xpCaption}}</div>
-        <div style="display: flex; gap: 6px; margin-top: 8px;">
-          <label for="xpAddInput" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Adjust experience points, negative to remove</label>
-          <input id="xpAddInput" type="number" placeholder="&plusmn; XP" value="{{xpAdd}}" onChange="{{onXpAdd}}" style="flex-grow: 1; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-          <button onClick="{{applyXp}}" disabled="{{xpAdjustDisabled}}" style="padding: 6px 12px; border-radius: 6px; border: none; background: {{addXpBg}}; color: {{addXpColor}}; font-size: 12px; font-weight: 600;">Apply</button>
-        </div>
-      </div>
-    </sc-if>
-    <sc-if value="{{isMilestoneMode}}" hint-placeholder-val="{{false}}">
-      <div style="font-size: 13px; font-style: italic; color: #6b7280;">Milestone leveling — the DM says when you level; no experience points tracked.</div>
-    </sc-if>
-
-    <div>
-      <button onClick="{{openLevelUp}}" disabled="{{levelUpDisabled}}" style="width: 100%; padding: 10px; border-radius: 6px; border: none; background: {{levelUpBg}}; color: {{levelUpColor}}; font-size: 13px; font-weight: 600;">Level Up</button>
-      <sc-if value="{{showXpGate}}" hint-placeholder-val="{{false}}">
-        <div style="font-size: 11px; color: #6b7280; margin-top: 4px; text-align: center;">{{xpToGoText}}</div>
-      </sc-if>
-    </div>
+<div style="width: 460px; height: 900px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Modal — shown open for review, Ranger 7 → 8 pre-selected so every step is visible. Switch the Feat tab to see that picker too.</div>
+    <button onClick="{{reopen}}" style="padding: 6px 14px; border-radius: 4px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Reopen</button>
   </div>
-
-  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
-    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+  <sc-if value="{{open}}" hint-placeholder-val="{{true}}">
+    <div role="presentation" onClick="{{close}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
       <div role="dialog" aria-modal="true" aria-label="Level Up" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(440px, 90%); max-height: 85%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
           <div style="font-size: 15px; font-weight: 700;">Level Up</div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+          <button aria-label="Close" onClick="{{close}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -101,7 +56,7 @@
           </div>
         </div>
 
-        <sc-if value="{{hasSelection}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{hasSelection}}" hint-placeholder-val="{{true}}">
           <div style="display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #dde1e6; padding-top: 12px;">
             <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Hit Points — {{selectedHitDie}}</div>
             <div style="display: flex; gap: 8px;">
@@ -119,7 +74,7 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{asiAvailable}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{asiAvailable}}" hint-placeholder-val="{{true}}">
           <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #dde1e6; padding-top: 12px;">
             <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Ability Score Improvement — {{selectedClassName}} {{selectedNewLevel}}</div>
             <div style="display: flex; gap: 6px; background: #eef0f3; border-radius: 6px; padding: 4px;">
@@ -165,7 +120,7 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{showSpellSection}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{showSpellSection}}" hint-placeholder-val="{{true}}">
           <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #dde1e6; padding-top: 12px;">
             <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">{{spellSectionTitle}}</div>
             <sc-if value="{{hasChosenSpells}}" hint-placeholder-val="{{false}}">
@@ -192,12 +147,12 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{hasSelection}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{hasSelection}}" hint-placeholder-val="{{true}}">
           <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 12px;">New class features and spell slots for {{selectedClassName}} {{selectedNewLevel}} apply once you finish.</div>
         </sc-if>
 
         <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #dde1e6; padding-top: 12px;">
-          <button onClick="{{closeModal}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 13px; font-weight: 600;">Cancel</button>
+          <button onClick="{{close}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 13px; font-weight: 600;">Cancel</button>
           <button onClick="{{applyLevelUp}}" disabled="{{applyDisabled}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{applyBg}}; color: {{applyColor}}; font-size: 13px; font-weight: 600;">Apply Level Up</button>
         </div>
       </div>
@@ -205,10 +160,9 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":380,"height":360}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":900}}'>
 const HIT_DICE = { Barbarian: 12, Bard: 8, Cleric: 8, Druid: 8, Fighter: 10, Monk: 8, Paladin: 10, Ranger: 10, Rogue: 8, Sorcerer: 6, Warlock: 8, Wizard: 6 };
 const ALL_CLASSES = ['Barbarian', 'Bard', 'Cleric', 'Druid', 'Fighter', 'Monk', 'Paladin', 'Ranger', 'Rogue', 'Sorcerer', 'Warlock', 'Wizard'];
-const XP_THRESHOLDS = [0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
 const FEATS = ['Alert', 'Lucky', 'Tough', 'War Caster', 'Sharpshooter', 'Mobile', 'Resilient', 'Sentinel'];
 const ASI_LEVELS = [4, 8, 12, 16, 19];
 const SPELL_GAIN = { Bard: 1, Ranger: 1, Sorcerer: 1, Warlock: 1, Wizard: 2 };
@@ -218,15 +172,13 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
+      open: true,
       classes: [{ id: 'ranger', name: 'Ranger', level: 7 }],
-      levelingMode: 'xp',
-      xp: 28500,
       abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 },
-      modalOpen: false,
-      selectedClassId: null,
+      selectedClassId: 'ranger',
       newClassQuery: '',
       newClassName: null,
-      hpMethod: null,
+      hpMethod: 'average',
       hpRoll: null,
       hpCustom: '',
       asiTab: 'asi',
@@ -234,28 +186,13 @@ class Component extends DCLogic {
       featQuery: '',
       featChosen: null,
       spellsChosen: [],
-      spellQuery: '',
-      xpAdd: ''
+      spellQuery: ''
     };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
     const s = this.state;
-    const { classes, levelingMode, xp, abilities } = s;
-    const totalLevel = classes.reduce((sum, c) => sum + c.level, 0);
-    const classChips = classes.map((c) => ({ label: c.name + ' ' + c.level }));
-
-    const isMaxLevel = totalLevel >= 20;
-    const nextThreshold = isMaxLevel ? null : XP_THRESHOLDS[totalLevel + 1];
-    const curThreshold = XP_THRESHOLDS[totalLevel] ?? 0;
-    const xpPct = isMaxLevel ? 100 : Math.max(0, Math.min(100, Math.round(((xp - curThreshold) / (nextThreshold - curThreshold)) * 100)));
-    const xpReady = !isMaxLevel && xp >= nextThreshold;
-    const xpAddAmount = parseInt(s.xpAdd, 10);
-    const xpAddValid = Number.isInteger(xpAddAmount) && xpAddAmount !== 0;
-
-    const isXpMode = levelingMode === 'xp';
-    const isMilestoneMode = levelingMode === 'milestone';
-    const levelUpDisabled = isMaxLevel || (isXpMode && !xpReady);
+    const { classes, abilities } = s;
 
     const selectedClassId = s.selectedClassId;
     const selectedExisting = classes.find((c) => c.id === selectedClassId);
@@ -274,7 +211,7 @@ class Component extends DCLogic {
         border: selected ? accent : '#dde1e6',
         bg: selected ? '#fdf3ea' : '#ffffff',
         arrowColor: selected ? accent : '#6b7280',
-        pick: () => this.setState({ selectedClassId: c.id, newClassName: null, newClassQuery: '', hpMethod: null, hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
+        pick: () => this.setState({ selectedClassId: c.id, newClassName: null, newClassQuery: '', hpMethod: 'average', hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
       };
     });
 
@@ -283,7 +220,7 @@ class Component extends DCLogic {
     const nq = s.newClassQuery.trim().toLowerCase();
     const newClassMatches = (nq ? availableNew.filter((name) => name.toLowerCase().indexOf(nq) !== -1) : availableNew).map((name) => ({
       name,
-      pick: () => this.setState({ selectedClassId: 'new', newClassName: name, newClassQuery: name, hpMethod: null, hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
+      pick: () => this.setState({ selectedClassId: 'new', newClassName: name, newClassQuery: name, hpMethod: 'average', hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
     }));
 
     const selectedHitDieFaces = selectedClassName ? HIT_DICE[selectedClassName] : null;
@@ -338,34 +275,9 @@ class Component extends DCLogic {
 
     return {
       accent,
-      totalLevel,
-      classChips,
-      levelingMode,
-      onLevelingMode: (e) => this.setState({ levelingMode: e.target.value }),
-      isXpMode,
-      isMilestoneMode,
-      xp,
-      xpPct,
-      xpNextLabel: isMaxLevel ? 'Max level' : nextThreshold + ' XP',
-      xpCaption: isMaxLevel ? 'Level 20 — no further experience needed.' : xpReady ? 'Enough XP to level up.' : (nextThreshold - xp) + ' XP to Level ' + (totalLevel + 1),
-      levelUpDisabled,
-      levelUpBg: levelUpDisabled ? '#eceef1' : accent,
-      levelUpColor: levelUpDisabled ? '#9aa1ab' : '#ffffff',
-      showXpGate: isXpMode && !isMaxLevel && !xpReady,
-      xpToGoText: isMaxLevel ? '' : (nextThreshold - xp) + ' XP to go',
-      xpAdd: s.xpAdd,
-      onXpAdd: (e) => this.setState({ xpAdd: e.target.value }),
-      xpAdjustDisabled: !xpAddValid,
-      addXpBg: xpAddValid ? accent : '#eceef1',
-      addXpColor: xpAddValid ? '#ffffff' : '#9aa1ab',
-      applyXp: () => {
-        if (!xpAddValid) return;
-        this.setState({ xp: Math.max(0, xp + xpAddAmount), xpAdd: '' });
-      },
-      openLevelUp: () => this.setState({ modalOpen: true, selectedClassId: null, newClassName: null, newClassQuery: '', hpMethod: null, hpRoll: null, hpCustom: '', asiBonuses: {}, asiTab: 'asi', featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' }),
-
-      modalOpen: s.modalOpen,
-      closeModal: () => this.setState({ modalOpen: false }),
+      open: s.open,
+      close: () => this.setState({ open: false }),
+      reopen: () => this.setState({ open: true }),
       stopPropagation: (e) => e.stopPropagation(),
 
       classOptions,
@@ -442,7 +354,7 @@ class Component extends DCLogic {
           nextAbilities = { ...abilities };
           Object.keys(bonuses).forEach((k) => { nextAbilities[k] = nextAbilities[k] + bonuses[k]; });
         }
-        this.setState({ classes: nextClasses, abilities: nextAbilities, modalOpen: false });
+        this.setState({ classes: nextClasses, abilities: nextAbilities, open: false });
       }
     };
   }

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Rolls Panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 320px; height: 900px; box-sizing: border-box; padding: 20px; display: flex; background: #f4f5f7;">
+  <div style="width: {{width}}; height: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; transition: width 0.15s ease;">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;">
+      <span style="display: {{textDisplay}}; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; white-space: nowrap;">Rolls</span>
+      <div style="display: {{textDisplay}}; align-items: center; gap: 6px;">
+        <div style="position: relative;">
+          <button aria-label="Filter rolls" onClick="{{toggleFilter}}" style="position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid {{filterBorder}}; background: {{filterBg}}; color: {{filterColor}}; font-size: 11px; font-weight: 600;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            Filter
+            <sc-if value="{{filterActive}}" hint-placeholder-val="{{false}}">
+              <span aria-hidden="true" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: {{accent}}; border: 1.5px solid #ffffff;"></span>
+            </sc-if>
+          </button>
+          <sc-if value="{{filterOpen}}" hint-placeholder-val="{{false}}">
+            <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;">
+              <dc-import name="RollsPanelFilter" filters="{{rollFilters}}" on-change="{{setRollFilters}}" on-close="{{closeFilter}}" accent="{{accent}}" hint-size="220px,320px"></dc-import>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{showClear}}" hint-placeholder-val="{{true}}">
+          <button aria-label="Clear roll history" onClick="{{clear}}" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #6b7280; font-size: 11px; font-weight: 600; flex-shrink: 0;">Clear</button>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{collapsed}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; align-items: center; justify-content: center; padding: 6px 0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M12 2v20M3 7l9 5 9-5M3 17l9-5 9 5"/></svg>
+      </div>
+    </sc-if>
+
+    <div style="display: {{textDisplay}}; flex-direction: column; flex-grow: 1; min-height: 0; overflow-y: auto; gap: 8px;">
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 12px; color: #6b7280; text-align: center; padding: 28px 8px; line-height: 1.5;">No rolls yet. Rolls you make appear here.</div>
+      </sc-if>
+      <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: 12px; color: #6b7280; font-style: italic; text-align: center; padding: 28px 8px; line-height: 1.5;">No rolls match the filter.</div>
+      </sc-if>
+      <sc-for list="{{rolls}}" as="item" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; min-width: 0; flex-shrink: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 600; color: #1f2430; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.character}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 10px; color: #9aa1ab; flex-shrink: 0;">{{item.time}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.source}}</div>
+          <div style="display: flex; align-items: baseline; gap: 6px;">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.type}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 13px; font-weight: 700; color: {{item.color}}; flex-shrink: 0;">{{item.summary}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 10px;">
+      <button aria-label="{{toggleLabel}}" onClick="{{toggleCollapse}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 10px; width: 100%; padding: 8px; border-radius: 6px; border: none; background: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; transform: {{toggleRotation}};" aria-hidden="true"><path d="M15 5l7 7-7 7"/></svg>
+        <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":320,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      collapsed: false,
+      filterOpen: false,
+      rollFilters: { characters: [], types: [] },
+      rolls: [
+        { source: 'Fire Bolt', character: 'Mira Stormwind', type: 'Spell Atk', notation: 'd20+6', natural: 20, mod: '+6', time: 'just now' },
+        { source: 'Fire Bolt', character: 'Mira Stormwind', type: 'Spell Dmg', notation: '2d10', natural: null, mod: null, time: 'just now', flat: 14 },
+        { source: 'Longsword', character: 'Kaelen Ashwood', type: 'Attack', notation: 'd20+5', natural: 13, mod: '+5', time: '2m ago' },
+        { source: 'Longsword', character: 'Kaelen Ashwood', type: 'Damage', notation: '1d8+3', natural: null, mod: null, time: '2m ago', flat: 9 },
+        { source: 'Dexterity', character: 'Kaelen Ashwood', type: 'Save', notation: 'd20+3', natural: 1, mod: '+3', time: '4m ago' },
+        { source: 'Stealth', character: 'Mira Stormwind', type: 'Check', notation: 'd20+7', natural: 16, mod: '+7', time: '6m ago' }
+      ]
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const { collapsed, filterOpen, rollFilters: rf, rolls } = this.state;
+    const textDisplay = collapsed ? 'none' : 'flex';
+    const rowJustify = collapsed ? 'center' : 'flex-start';
+
+    const filtered = rolls.filter((r) => {
+      if (rf.characters.length && rf.characters.indexOf(r.character) === -1) return false;
+      if (rf.types.length && rf.types.indexOf(r.type) === -1) return false;
+      return true;
+    });
+
+    const items = filtered.map((r) => {
+      const total = r.flat != null ? r.flat : r.natural + parseInt(r.mod, 10);
+      const color = r.natural === 20 ? '#2f6b4f' : r.natural === 1 ? '#c1272d' : '#1f2430';
+      const summary = r.natural != null
+        ? 'd20 (' + r.natural + ') ' + r.mod + ' = ' + total
+        : r.notation + ' = ' + total;
+      return { source: r.source, character: r.character, type: r.type, time: r.time, summary, color };
+    });
+
+    const filterActive = rf.characters.length > 0 || rf.types.length > 0;
+
+    return {
+      accent,
+      width: collapsed ? '64px' : '320px',
+      textDisplay,
+      rowJustify,
+      collapsed,
+      rolls: items,
+      isEmpty: rolls.length === 0,
+      noMatches: rolls.length > 0 && items.length === 0,
+      showClear: rolls.length > 0,
+      clear: () => this.setState({ rolls: [] }),
+      toggleCollapse: () => this.setState({ collapsed: !collapsed }),
+      toggleLabel: collapsed ? 'Expand rolls panel' : 'Collapse rolls panel',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+      filterOpen,
+      toggleFilter: () => this.setState({ filterOpen: !filterOpen }),
+      closeFilter: () => this.setState({ filterOpen: false }),
+      rollFilters: rf,
+      setRollFilters: (next) => this.setState({ rollFilters: next }),
+      filterActive,
+      filterBorder: filterActive ? accent : '#dde1e6',
+      filterBg: filterActive ? '#fdf3ea' : '#ffffff',
+      filterColor: filterActive ? accent : '#6b7280'
+    };
+  }
+}
+</script>
+</body>
+</html>

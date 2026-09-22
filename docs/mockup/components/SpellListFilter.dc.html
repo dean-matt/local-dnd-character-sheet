@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Filter — Known Spells</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  label, input, select { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 24px rgba(0,0,0,0.18);">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Spells</div>
+    <button aria-label="Close filter" onClick="{{close}}" style="border: none; background: none; font-size: 16px; line-height: 1; color: #6b7280; padding: 0;">&times;</button>
+  </div>
+
+  <div>
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Level range</div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <label for="filterMinLevel" style="font-size: 12px; color: #6b7280;">Min</label>
+      <input id="filterMinLevel" type="number" min="0" max="9" value="{{minLevel}}" onChange="{{onMinLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+      <label for="filterMaxLevel" style="font-size: 12px; color: #6b7280;">Max</label>
+      <input id="filterMaxLevel" type="number" min="0" max="9" value="{{maxLevel}}" onChange="{{onMaxLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+    </div>
+  </div>
+
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">School</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+      <sc-for list="{{schoolChips}}" as="chip" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{chip.label}}
+          <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{schoolEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+      </sc-if>
+    </div>
+    <sc-if value="{{schoolHasHidden}}" hint-placeholder-val="{{true}}">
+      <select onChange="{{onSchoolAdd}}" value="" aria-label="Narrow by school" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="" disabled>+ Narrow to school…</option>
+        <sc-for list="{{schoolHiddenOptions}}" as="opt" hint-placeholder-count="1">
+          <option value="{{opt.value}}">{{opt.label}}</option>
+        </sc-for>
+      </select>
+    </sc-if>
+  </div>
+
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Damage Type</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+      <sc-for list="{{damageChips}}" as="chip" hint-placeholder-count="2">
+        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+          {{chip.label}}
+          <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{damageEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+      </sc-if>
+    </div>
+    <sc-if value="{{damageHasHidden}}" hint-placeholder-val="{{true}}">
+      <select onChange="{{onDamageAdd}}" value="" aria-label="Narrow by damage type" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+        <option value="" disabled>+ Narrow to damage type…</option>
+        <sc-for list="{{damageHiddenOptions}}" as="opt" hint-placeholder-count="1">
+          <option value="{{opt.value}}">{{opt.label}}</option>
+        </sc-for>
+      </select>
+    </sc-if>
+  </div>
+
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;">
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{preparedChecked}}" onChange="{{togglePrepared}}"> Prepared
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{unpreparedChecked}}" onChange="{{toggleUnprepared}}"> Unprepared
+    </label>
+  </div>
+  <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const DEFAULT = { prepared: [], minLevel: 0, maxLevel: 9, schools: [], damageTypes: [] };
+    const filters = this.props.filters || DEFAULT;
+    const onChange = this.props.onChange || (() => {});
+    const onClose = this.props.onClose || (() => {});
+    const set = (next) => onChange({ ...filters, ...next });
+    const clamp = (n) => Math.max(0, Math.min(9, n));
+    const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+    const makeFacet = (selected, allKeys, apply, labelFn) => {
+      const label = labelFn || ((k) => k);
+      const hidden = allKeys.filter((k) => selected.indexOf(k) === -1);
+      return {
+        chips: selected.map((k) => ({ label: label(k), remove: () => apply(selected.filter((x) => x !== k)) })),
+        isEmpty: selected.length === 0,
+        hasHidden: hidden.length > 0,
+        hiddenOptions: hidden.map((k) => ({ value: k, label: label(k) })),
+        onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
+      };
+    };
+    const schoolFacet = makeFacet(filters.schools, ['Abjuration', 'Conjuration', 'Divination', 'Evocation'], (next) => set({ schools: next }));
+    const damageFacet = makeFacet(filters.damageTypes, ['fire', 'force', 'none'], (next) => set({ damageTypes: next }), (k) => (k === 'none' ? 'Non-damaging' : cap(k)));
+    return {
+      accent,
+      minLevel: filters.minLevel,
+      maxLevel: filters.maxLevel,
+      preparedChecked: filters.prepared.indexOf('prepared') !== -1,
+      unpreparedChecked: filters.prepared.indexOf('unprepared') !== -1,
+      togglePrepared: () => set({ prepared: filters.prepared.indexOf('prepared') !== -1 ? filters.prepared.filter((v) => v !== 'prepared') : [...filters.prepared, 'prepared'] }),
+      toggleUnprepared: () => set({ prepared: filters.prepared.indexOf('unprepared') !== -1 ? filters.prepared.filter((v) => v !== 'unprepared') : [...filters.prepared, 'unprepared'] }),
+      onMinLevel: (e) => {
+        const n = clamp(parseInt(e.target.value, 10) || 0);
+        set({ minLevel: n, maxLevel: Math.max(n, filters.maxLevel) });
+      },
+      onMaxLevel: (e) => {
+        const n = clamp(parseInt(e.target.value, 10) || 0);
+        set({ maxLevel: n, minLevel: Math.min(n, filters.minLevel) });
+      },
+      schoolChips: schoolFacet.chips,
+      schoolEmpty: schoolFacet.isEmpty,
+      schoolHasHidden: schoolFacet.hasHidden,
+      schoolHiddenOptions: schoolFacet.hiddenOptions,
+      onSchoolAdd: schoolFacet.onAdd,
+      damageChips: damageFacet.chips,
+      damageEmpty: damageFacet.isEmpty,
+      damageHasHidden: damageFacet.hasHidden,
+      damageHiddenOptions: damageFacet.hiddenOptions,
+      onDamageAdd: damageFacet.onAdd,
+      reset: () => onChange(DEFAULT),
+      close: () => onClose()
+    };
+  }
+}
+</script>
+</body>
+</html>

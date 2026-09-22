@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Class Features</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  input::placeholder { color: #9aa1ab; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 460px; height: 420px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Class Features</div>
+      <button aria-label="Filter class features" onClick="{{toggleFilter}}" style="position: relative; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid {{filterBorder}}; background: {{filterBg}}; color: {{filterColor}}; font-size: 11px; font-weight: 600;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        Filter
+        <sc-if value="{{filterActive}}" hint-placeholder-val="{{false}}">
+          <span aria-hidden="true" style="position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: {{accent}}; border: 1.5px solid #ffffff;"></span>
+        </sc-if>
+      </button>
+      <sc-if value="{{filterOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; top: calc(100% + 6px); right: 0; z-index: 40;">
+          <dc-import name="ClassFeaturesFilter" filters="{{featureFilters}}" on-change="{{setFeatureFilters}}" on-close="{{closeFilter}}" accent="{{accent}}" hint-size="220px,250px"></dc-import>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No class features match the filter.</div>
+    </sc-if>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{features}}" as="feat" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button aria-label="View {{feat.label}} details" onClick="{{feat.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{feat.label}}</button>
+            <sc-if value="{{feat.hasUses}}" hint-placeholder-val="{{false}}">
+              <div title="Uses remaining" style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                <sc-for list="{{feat.pips}}" as="pip" hint-placeholder-count="2">
+                  <button aria-label="{{pip.aria}}" onClick="{{pip.toggle}}" style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid {{accent}}; background: {{pip.fill}}; padding: 0;"></button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="flex-grow: 1;"></div>
+            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <sc-if value="{{feat.hasClass}}" hint-placeholder-val="{{true}}">
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{feat.class}}</span>
+            </sc-if>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{feat.descShort}}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: flex-end;">
+      <div style="position: relative; flex-grow: 1;">
+        <label for="classFeatureSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search class features</label>
+        <input id="classFeatureSearch" type="text" placeholder="Search class features…" value="{{featureQuery}}" onChange="{{onFeatureQueryChange}}" style="width: 100%; padding: 9px 12px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+        <sc-if value="{{showResults}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 30;">
+            <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
+              <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none;">
+                <span style="font-size: 13px; color: #1f2430;">{{m.name}}</span>
+                <span style="font-size: 11px; color: #6b7280;"> — {{m.meta}}</span>
+              </button>
+            </sc-for>
+            <button onClick="{{addCustom}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{featureQuery}}"</button>
+          </div>
+        </sc-if>
+      </div>
+      <div style="flex-shrink: 0;">
+        <label for="newClassFeatureClass" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Class</label>
+        <input id="newClassFeatureClass" type="text" placeholder="Class" value="{{newFeatureClass}}" onChange="{{onNewFeatureClassChange}}" style="width: 76px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+      <div style="flex-shrink: 0;">
+        <label for="newClassFeatureLevel" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Level</label>
+        <input id="newClassFeatureLevel" type="number" min="1" max="20" value="{{newFeatureLevel}}" onChange="{{onNewFeatureLevelChange}}" style="width: 48px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+      <div style="flex-shrink: 0;">
+        <label for="newClassFeatureUses" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Uses</label>
+        <input id="newClassFeatureUses" type="number" min="0" max="20" value="{{newFeatureUses}}" onChange="{{onNewFeatureUsesChange}}" style="width: 48px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalMeta}}</div>
+        <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalDesc}}</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":420}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      features: [
+        { label: 'Favored Enemy: Fiends', level: 1, uses: null, class: 'Ranger' },
+        { label: 'Extra Attack', level: 5, uses: null, class: 'Fighter' }
+      ],
+      featureQuery: '',
+      newFeatureClass: '',
+      newFeatureLevel: 1,
+      newFeatureUses: 0,
+      modalItem: null,
+      filterOpen: false,
+      featureFilters: { minLevel: 1, maxLevel: 20, uses: [] }
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const FEATURE_DESC = {
+      'Favored Enemy: Fiends': 'You have significant experience studying, tracking and talking to fiends. You have advantage on Survival checks to track fiends and on Intelligence checks to recall information about them.',
+      'Extra Attack': 'You can attack twice, instead of once, whenever you take the Attack action on your turn.',
+      'Action Surge': 'Once per short or long rest, you can take one additional action on your turn.',
+      'Arcane Recovery': 'Once per day when you finish a short rest, you can recover expended spell slots.'
+    };
+    const CATALOG = [
+      { name: 'Extra Attack', meta: 'Martial class feature', class: 'Fighter' },
+      { name: 'Action Surge', meta: 'Fighter feature', class: 'Fighter' },
+      { name: 'Arcane Recovery', meta: 'Wizard feature', class: 'Wizard' }
+    ];
+    const { features, featureQuery, featureFilters: wf } = this.state;
+    const featureRows = features.map((f, idx) => {
+      const hasUses = !!f.uses && f.uses.total > 0;
+      const pips = hasUses
+        ? Array.from({ length: f.uses.total }, (_, i) => ({
+            fill: i < f.uses.used ? accent : 'transparent',
+            aria: (i < f.uses.used ? 'Restore' : 'Expend') + ' a use of ' + f.label,
+            toggle: () => this.setState({ features: features.map((x, j) => (j === idx ? { ...x, uses: { ...x.uses, used: i + 1 === x.uses.used ? i : i + 1 } } : x)) })
+          }))
+        : [];
+      const desc = FEATURE_DESC[f.label] || 'No further detail recorded for this feature.';
+      const usesText = hasUses ? f.uses.total - f.uses.used + ' of ' + f.uses.total + ' uses remaining.' : '';
+      return {
+        idx, label: f.label, level: f.level, hasUses, pips, descShort: desc,
+        class: f.class || '', hasClass: !!f.class,
+        remove: () => this.setState({ features: features.filter((_, i) => i !== idx) }),
+        openDetail: () => this.setState({ modalItem: { label: f.label, meta: (f.class ? f.class + ' class feature' : 'Class feature') + ' • gained at level ' + f.level + (usesText ? ' • ' + usesText : ''), desc } })
+      };
+    });
+    const filteredRows = featureRows.filter((f) => {
+      if (f.level < wf.minLevel || f.level > wf.maxLevel) return false;
+      if (wf.uses.length && wf.uses.indexOf(f.hasUses ? 'has' : 'none') === -1) return false;
+      return true;
+    });
+
+    const newFeatureLevel = Math.max(1, Math.min(20, parseInt(this.state.newFeatureLevel, 10) || 1));
+    const newFeatureUses = Math.max(0, Math.min(20, parseInt(this.state.newFeatureUses, 10) || 0));
+    const q = featureQuery.trim().toLowerCase();
+    const matches = q
+      ? CATALOG.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({
+          name: c.name,
+          meta: c.meta,
+          add: () => {
+            const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
+            this.setState({ features: [...features, { label: c.name, level: newFeatureLevel, uses, class: c.class }], featureQuery: '' });
+          }
+        }))
+      : [];
+    const modalItem = this.state.modalItem;
+    const filterActive = wf.minLevel > 1 || wf.maxLevel < 20 || wf.uses.length > 0;
+    return {
+      accent,
+      features: filteredRows,
+      noMatches: filteredRows.length === 0 && featureRows.length > 0,
+      filterOpen: this.state.filterOpen,
+      toggleFilter: () => this.setState({ filterOpen: !this.state.filterOpen }),
+      closeFilter: () => this.setState({ filterOpen: false }),
+      featureFilters: wf,
+      setFeatureFilters: (next) => this.setState({ featureFilters: next }),
+      filterActive,
+      filterBorder: filterActive ? accent : '#dde1e6',
+      filterBg: filterActive ? '#fdf3ea' : '#ffffff',
+      filterColor: filterActive ? accent : '#6b7280',
+      featureQuery,
+      onFeatureQueryChange: (e) => this.setState({ featureQuery: e.target.value }),
+      showResults: !!featureQuery,
+      matches,
+      addCustom: () => {
+        const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
+        this.setState({ features: [...features, { label: featureQuery, level: newFeatureLevel, uses, class: this.state.newFeatureClass.trim() }], featureQuery: '' });
+      },
+      newFeatureClass: this.state.newFeatureClass,
+      onNewFeatureClassChange: (e) => this.setState({ newFeatureClass: e.target.value }),
+      newFeatureLevel,
+      onNewFeatureLevelChange: (e) => this.setState({ newFeatureLevel: e.target.value }),
+      newFeatureUses,
+      onNewFeatureUsesChange: (e) => this.setState({ newFeatureUses: e.target.value }),
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.label : '',
+      modalMeta: modalItem ? modalItem.meta : '',
+      modalDesc: modalItem ? modalItem.desc : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
+    };
+  }
+}
+</script>
+</body>
+</html>
