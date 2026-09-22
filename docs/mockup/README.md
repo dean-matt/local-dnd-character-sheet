@@ -41,6 +41,10 @@ together. Every other file matches a widget, panel, or nav element:
   Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
   5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
   level/school — its real counterpart widget does), Sources.
+- Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats follow the same
+  paste-and-parse shape as the four shipped Homebrew artboards above, but nothing behind
+  them exists yet — `homebrew.db` only reaches items and spells today. They're forward
+  design for #306, #307, #308, and #309, not a page a build currently renders.
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 - Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
   with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own

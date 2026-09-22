@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Homebrew Classes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  textarea, input { font-family: inherit; }
+  textarea::placeholder { color: #9aa1ab; }
+</style>
+</helmet>
+
+<div style="width: 480px; height: 440px; box-sizing: border-box; padding: 24px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; max-height: 392px; overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Classes</div>
+      <button onClick="{{openAdd}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid {{accent}}; background: #fdf3ea; color: {{accent}}; font-size: 12px; font-weight: 600;">+ Add Class</button>
+    </div>
+    <sc-if value="{{noItems}}" hint-placeholder-val="{{false}}">
+      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No classes yet.</div>
+    </sc-if>
+    <sc-for list="{{items}}" as="item" hint-placeholder-count="1">
+      <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button aria-label="Edit {{item.name}}" onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
+          <span style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">
+            <span style="font-weight: 400; color: #6b7280;">Hit Die</span>
+            {{item.hitDie}}
+          </span>
+          <div style="flex-grow: 1;"></div>
+          <button onClick="{{item.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
+          <button aria-label="Delete {{item.name}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.primaryAbility}}</span>
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.saves}}</span>
+        </div>
+        <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
+      </div>
+    </sc-for>
+    <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+      <div style="border-top: 1px solid #dde1e6; padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 12px; font-weight: 600; color: #1f2430;">{{formTitle}}</div>
+        <div style="font-size: 11px; color: #6b7280;">Paste the class's 5etools-shaped entry. Saving replaces the whole entry; there's no field-by-field editing.</div>
+        <label for="classJson" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Class JSON</label>
+        <textarea id="classJson" value="{{formJson}}" onChange="{{onFormJsonChange}}" placeholder='{"name": "Warden", "source": "HB", "hd": {"faces": 10}, "proficiency": ["str", "con"], "primaryAbility": {"str": true}, "entries": ["..."]}' style="width: 100%; min-height: 160px; padding: 8px; border: 1px solid {{accent}}; border-radius: 4px; font-size: 12px; font-family: monospace; background: #ffffff; color: #1f2430; resize: vertical;"></textarea>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button onClick="{{closeForm}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 12px; font-weight: 600;">Cancel</button>
+          <button onClick="{{saveForm}}" style="padding: 6px 12px; border-radius: 4px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Save</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":480,"height":440}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      items: [
+        { id: 'c1', name: 'Warden', hitDie: 'd10', primaryAbility: 'STR', saves: 'STR/CON', json: '{"name": "Warden", "source": "HB", "hd": {"faces": 10}, "proficiency": ["str", "con"], "primaryAbility": {"str": true}, "entries": ["A grove-bound defender who channels the forest into martial strength."]}' }
+      ],
+      editingId: null,
+      addOpen: false,
+      formJson: ''
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const { items, editingId, addOpen, formJson } = this.state;
+    const ABILITY_MAP = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
+    const descOf = (json) => {
+      try {
+        const parsed = JSON.parse(json);
+        if (parsed && Array.isArray(parsed.entries) && parsed.entries.length) return String(parsed.entries[0]);
+      } catch {}
+      return '';
+    };
+    const pretty = (json) => {
+      try {
+        return JSON.stringify(JSON.parse(json), null, 2);
+      } catch {
+        return json;
+      }
+    };
+    const hitDieOf = (hd) => 'd' + (hd && hd.faces ? hd.faces : 8);
+    const primaryAbilityOf = (primaryAbility) => {
+      if (!primaryAbility) return 'Any';
+      const keys = Object.keys(ABILITY_MAP).filter((k) => primaryAbility[k]);
+      return keys.length ? keys.map((k) => ABILITY_MAP[k]).join('/') : 'Any';
+    };
+    const savesOf = (proficiency) => (Array.isArray(proficiency) ? proficiency.map((k) => ABILITY_MAP[k] || k.toUpperCase()).join('/') : '');
+    const rows = items.map((it) => ({
+      id: it.id,
+      name: it.name,
+      hitDie: it.hitDie,
+      primaryAbility: it.primaryAbility,
+      saves: it.saves,
+      descShort: descOf(it.json),
+      edit: () => this.setState({ editingId: it.id, addOpen: false, formJson: pretty(it.json) }),
+      remove: () => this.setState({ items: items.filter((x) => x.id !== it.id), editingId: editingId === it.id ? null : editingId })
+    }));
+    const editing = items.find((it) => it.id === editingId);
+    return {
+      accent,
+      items: rows,
+      noItems: items.length === 0,
+      formOpen: addOpen || !!editing,
+      formTitle: editing ? 'Edit ' + editing.name : 'New class',
+      formJson,
+      onFormJsonChange: (e) => this.setState({ formJson: e.target.value }),
+      openAdd: () => this.setState({ addOpen: true, editingId: null, formJson: '' }),
+      closeForm: () => this.setState({ addOpen: false, editingId: null, formJson: '' }),
+      saveForm: () => {
+        let parsedName = 'Untitled Class', hitDie = 'd8', primaryAbility = 'Any', saves = '';
+        try {
+          const parsed = JSON.parse(formJson);
+          if (parsed && parsed.name) parsedName = parsed.name;
+          hitDie = hitDieOf(parsed.hd);
+          primaryAbility = primaryAbilityOf(parsed.primaryAbility);
+          saves = savesOf(parsed.proficiency);
+        } catch {}
+        if (editing) {
+          this.setState({ items: items.map((x) => (x.id === editing.id ? { ...x, name: parsedName, hitDie, primaryAbility, saves, json: formJson } : x)), editingId: null, formJson: '' });
+        } else {
+          this.setState({ items: [...items, { id: 'c' + Date.now(), name: parsedName, hitDie, primaryAbility, saves, json: formJson }], addOpen: false, formJson: '' });
+        }
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
