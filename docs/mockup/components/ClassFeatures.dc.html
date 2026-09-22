@@ -20,7 +20,7 @@
 </style>
 </helmet>
 
-<div style="width: 420px; height: 420px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+<div style="width: 460px; height: 420px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
   <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
       <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Class Features</div>
@@ -52,9 +52,13 @@
                 </sc-for>
               </div>
             </sc-if>
+            <div style="flex-grow: 1;"></div>
             <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
+            <sc-if value="{{feat.hasClass}}" hint-placeholder-val="{{true}}">
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{feat.class}}</span>
+            </sc-if>
             <div style="flex-grow: 1;"></div>
             <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">Lvl {{feat.level}}</span>
           </div>
@@ -77,6 +81,10 @@
             <button onClick="{{addCustom}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{featureQuery}}"</button>
           </div>
         </sc-if>
+      </div>
+      <div style="flex-shrink: 0;">
+        <label for="newClassFeatureClass" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Class</label>
+        <input id="newClassFeatureClass" type="text" placeholder="Class" value="{{newFeatureClass}}" onChange="{{onNewFeatureClassChange}}" style="width: 76px; padding: 9px 6px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430; text-align: center;">
       </div>
       <div style="flex-shrink: 0;">
         <label for="newClassFeatureLevel" style="display: block; font-size: 10px; color: #6b7280; margin-bottom: 4px; text-align: center;">Level</label>
@@ -102,16 +110,17 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":420}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":420}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
       features: [
-        { label: 'Favored Enemy: Fiends', level: 1, uses: null },
-        { label: 'Extra Attack', level: 5, uses: null }
+        { label: 'Favored Enemy: Fiends', level: 1, uses: null, class: 'Ranger' },
+        { label: 'Extra Attack', level: 5, uses: null, class: 'Fighter' }
       ],
       featureQuery: '',
+      newFeatureClass: '',
       newFeatureLevel: 1,
       newFeatureUses: 0,
       modalItem: null,
@@ -128,9 +137,9 @@ class Component extends DCLogic {
       'Arcane Recovery': 'Once per day when you finish a short rest, you can recover expended spell slots.'
     };
     const CATALOG = [
-      { name: 'Extra Attack', meta: 'Martial class feature' },
-      { name: 'Action Surge', meta: 'Fighter feature' },
-      { name: 'Arcane Recovery', meta: 'Wizard feature' }
+      { name: 'Extra Attack', meta: 'Martial class feature', class: 'Fighter' },
+      { name: 'Action Surge', meta: 'Fighter feature', class: 'Fighter' },
+      { name: 'Arcane Recovery', meta: 'Wizard feature', class: 'Wizard' }
     ];
     const { features, featureQuery, featureFilters: wf } = this.state;
     const featureRows = features.map((f, idx) => {
@@ -146,8 +155,9 @@ class Component extends DCLogic {
       const usesText = hasUses ? f.uses.total - f.uses.used + ' of ' + f.uses.total + ' uses remaining.' : '';
       return {
         idx, label: f.label, level: f.level, hasUses, pips, descShort: desc,
+        class: f.class || '', hasClass: !!f.class,
         remove: () => this.setState({ features: features.filter((_, i) => i !== idx) }),
-        openDetail: () => this.setState({ modalItem: { label: f.label, meta: 'Class feature • gained at level ' + f.level + (usesText ? ' • ' + usesText : ''), desc } })
+        openDetail: () => this.setState({ modalItem: { label: f.label, meta: (f.class ? f.class + ' class feature' : 'Class feature') + ' • gained at level ' + f.level + (usesText ? ' • ' + usesText : ''), desc } })
       };
     });
     const filteredRows = featureRows.filter((f) => {
@@ -165,7 +175,7 @@ class Component extends DCLogic {
           meta: c.meta,
           add: () => {
             const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
-            this.setState({ features: [...features, { label: c.name, level: newFeatureLevel, uses }], featureQuery: '' });
+            this.setState({ features: [...features, { label: c.name, level: newFeatureLevel, uses, class: c.class }], featureQuery: '' });
           }
         }))
       : [];
@@ -190,8 +200,10 @@ class Component extends DCLogic {
       matches,
       addCustom: () => {
         const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
-        this.setState({ features: [...features, { label: featureQuery, level: newFeatureLevel, uses }], featureQuery: '' });
+        this.setState({ features: [...features, { label: featureQuery, level: newFeatureLevel, uses, class: this.state.newFeatureClass.trim() }], featureQuery: '' });
       },
+      newFeatureClass: this.state.newFeatureClass,
+      onNewFeatureClassChange: (e) => this.setState({ newFeatureClass: e.target.value }),
       newFeatureLevel,
       onNewFeatureLevelChange: (e) => this.setState({ newFeatureLevel: e.target.value }),
       newFeatureUses,
