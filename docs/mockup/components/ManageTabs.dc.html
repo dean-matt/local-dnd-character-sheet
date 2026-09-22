@@ -70,13 +70,26 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { dragTabId: null, confirmDeleteId: null };
+    this.state = {
+      dragTabId: null,
+      confirmDeleteId: null,
+      demoTabs: [
+        { id: 'overview', label: 'Overview', custom: false, hidden: false },
+        { id: 'inventory', label: 'Inventory', custom: false, hidden: false },
+        { id: 'spells', label: 'Spells', custom: false, hidden: true },
+        { id: 'tab-1', label: 'Homebrew Build', custom: true, hidden: false },
+        { id: 'tab-2', label: 'Session Notes', custom: true, hidden: false }
+      ]
+    };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const tabs = this.props.tabs || [];
-    const onChange = this.props.onChange || (() => {});
-    const onAddTab = this.props.onAddTab || (() => {});
+    const controlled = this.props.tabs !== undefined;
+    const tabs = controlled ? this.props.tabs : this.state.demoTabs;
+    const onChange = controlled ? (this.props.onChange || (() => {})) : (next) => this.setState({ demoTabs: next });
+    const onAddTab = controlled
+      ? (this.props.onAddTab || (() => {}))
+      : () => this.setState({ demoTabs: [...this.state.demoTabs, { id: 'tab-' + Date.now(), label: 'New Tab', custom: true, hidden: false }] });
     const onClose = this.props.onClose || (() => {});
     const { dragTabId, confirmDeleteId } = this.state;
 
