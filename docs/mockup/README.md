@@ -26,7 +26,9 @@ together. Every other file matches a widget, panel, or nav element:
   Defenses).
 - Inventory: Currency, Weapons, Armor, Gear.
 - Spells: Spell Slots, Known Spells.
-- Features, Backstory, Notes.
+- Features: Class Features, Race Features, Chosen Features & Feats — each its own widget,
+  the same list-plus-search-and-filter shape as Inventory and Spells.
+- Backstory, Notes.
 - Identity: Name, Race, Class, Background, Languages, Proficiencies — each its own
   widget. Level (level, leveling mode, experience) and Alignment are their own sidebar
   tabs, not part of Identity.
@@ -38,9 +40,9 @@ together. Every other file matches a widget, panel, or nav element:
 - Overlays: Roll Toast, Confirm Dialog, Add Widget Picker.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
-- Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, FeaturesFilter — each
-  is mounted into its list widget from a Filter button in that widget's header, and sits
-  next to that widget on the canvas.
+- Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
+  RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its list widget from a
+  Filter button in that widget's header, and sits next to that widget on the canvas.
 
 ## Covered
 
@@ -51,7 +53,8 @@ short and long rest; temporary HP; status effects and resistances/immunities; a 
 search across characters and a sample compendium; light, dark, and system theme; a
 user-customizable accent color; a settings page for homebrew content and sources; a way
 to add or remove experience points in XP leveling mode; and a filter on Weapons, Armor,
-Gear, Known Spells, and Features to narrow what the widget shows.
+Gear, Known Spells, Class Features, Race Features, and Chosen Features & Feats to narrow
+what the widget shows.
 Hovering a calculated value (an ability modifier, a save or skill bonus, AC, initiative,
 max HP, an attack bonus) opens a popover with its formula; clicking a widget's item
 (an ability, a skill, a weapon, a spell, a feature, and so on) opens a modal with that
