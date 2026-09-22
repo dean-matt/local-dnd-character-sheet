@@ -55,13 +55,13 @@
       <input id="filterMaxPrice" type="number" min="0" placeholder="Any" value="{{priceMax}}" onChange="{{onPriceMax}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
     </div>
   </div>
-  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
-    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Equipped</div>
-    <select onChange="{{onEquippedChange}}" value="{{equippedValue}}" aria-label="Filter by equipped state" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-      <option value="">All</option>
-      <option value="equipped">Equipped only</option>
-      <option value="unequipped">Unequipped only</option>
-    </select>
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px; display: flex; flex-direction: column; gap: 4px;">
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{equippedOnly}}" onChange="{{toggleEquippedOnly}}"> Equipped only
+    </label>
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+      <input type="checkbox" checked="{{unequippedOnly}}" onChange="{{toggleUnequippedOnly}}"> Unequipped only
+    </label>
   </div>
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
 </div>
@@ -94,8 +94,10 @@ class Component extends DCLogic {
       classHasHidden: classFacet.hasHidden,
       classHiddenOptions: classFacet.hiddenOptions,
       onClassAdd: classFacet.onAdd,
-      equippedValue: filters.equipped === true ? 'equipped' : filters.equipped === false ? 'unequipped' : '',
-      onEquippedChange: (e) => set({ equipped: e.target.value === 'equipped' ? true : e.target.value === 'unequipped' ? false : null }),
+      equippedOnly: filters.equipped === true,
+      unequippedOnly: filters.equipped === false,
+      toggleEquippedOnly: () => set({ equipped: filters.equipped === true ? null : true }),
+      toggleUnequippedOnly: () => set({ equipped: filters.equipped === false ? null : false }),
       priceMin: filters.priceMin ?? '',
       priceMax: filters.priceMax ?? '',
       onPriceMin: (e) => set({ priceMin: toNum(e.target.value) }),
