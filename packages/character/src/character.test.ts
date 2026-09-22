@@ -220,6 +220,22 @@ describe("references", () => {
   });
 });
 
+describe("background", () => {
+  it("references the catalog and homebrew alike, as inventory and spells do", () => {
+    const homebrew = { ...definition, background: { homebrewId: "hb_06" } };
+    expect(characterDefinitionSchema.parse(structuredClone(homebrew))).toEqual(homebrew);
+  });
+
+  it("records a homebrew background as a feat's grantor", () => {
+    const granted = {
+      ...definition,
+      background: { homebrewId: "hb_06" },
+      feats: [{ ref: SKILLED, grantedBy: { kind: "background", ref: { homebrewId: "hb_06" } } }],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(granted))).toEqual(granted);
+  });
+});
+
 describe("subrace", () => {
   /** Classic throughout, because upstream ships no subrace in the 2024 ruleset. */
   const elf = {

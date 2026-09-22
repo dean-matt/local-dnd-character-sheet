@@ -1,16 +1,19 @@
 /**
- * List, read, create, update and delete for homebrew items and spells. `source` and `id`
- * are never accepted from a request body — the query layer stamps `source` and this
- * module generates `id` once, on create, the same rule `characters.ts` sets for
- * `name`/`level`/`edition`.
+ * List, read, create, update and delete for homebrew items, spells and backgrounds.
+ * `source` and `id` are never accepted from a request body — the query layer stamps
+ * `source` and this module generates `id` once, on create, the same rule `characters.ts`
+ * sets for `name`/`level`/`edition`.
  *
  * A delete needs `characters.db` as well as `homebrew.db`: no foreign key spans the two
  * files, so this route enforces the reference instead.
  */
 import { randomUUID } from "node:crypto";
 import {
+  type HomebrewBackgroundRecord,
   type HomebrewItemRecord,
   type HomebrewSpellRecord,
+  homebrewBackgroundInputSchema,
+  homebrewBackgroundRecordSchema,
   homebrewItemInputSchema,
   homebrewItemRecordSchema,
   homebrewSpellInputSchema,
@@ -20,14 +23,19 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import {
+  deleteHomebrewBackground,
   deleteHomebrewItem,
   deleteHomebrewSpell,
+  getHomebrewBackground,
   getHomebrewItem,
   getHomebrewSpell,
+  insertHomebrewBackground,
   insertHomebrewItem,
   insertHomebrewSpell,
+  listHomebrewBackgrounds,
   listHomebrewItems,
   listHomebrewSpells,
+  updateHomebrewBackground,
   updateHomebrewItem,
   updateHomebrewSpell,
 } from "../db/queries/homebrew.ts";
@@ -35,6 +43,7 @@ import { notFound } from "./errors.ts";
 
 type ItemRow = NonNullable<ReturnType<typeof getHomebrewItem>>;
 type SpellRow = NonNullable<ReturnType<typeof getHomebrewSpell>>;
+type BackgroundRow = NonNullable<ReturnType<typeof getHomebrewBackground>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
 function toItemRecord(row: ItemRow): HomebrewItemRecord {
@@ -46,10 +55,16 @@ function toSpellRecord(row: SpellRow): HomebrewSpellRecord {
   return homebrewSpellRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
+/** Validates a row read back from SQLite against the same schema its write went through. */
+function toBackgroundRecord(row: BackgroundRow): HomebrewBackgroundRecord {
+  return homebrewBackgroundRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+}
+
 const idParam = z.object({ id: z.string() });
 
 const ITEM_NOT_FOUND = "No homebrew item with that id";
 const SPELL_NOT_FOUND = "No homebrew spell with that id";
+const BACKGROUND_NOT_FOUND = "No homebrew background with that id";
 
 const referencingCharacterSchema = z.object({ id: z.string(), name: z.string() });
 
@@ -217,6 +232,81 @@ const removeSpell = createRoute({
   },
 });
 
+const listBackgrounds = createRoute({
+  method: "get",
+  path: "/homebrew/backgrounds",
+  tags: ["homebrew"],
+  summary: "List every homebrew background",
+  responses: {
+    200: {
+      description: "Every homebrew background",
+      content: { "application/json": { schema: z.array(homebrewBackgroundRecordSchema) } },
+    },
+  },
+});
+
+const readBackground = createRoute({
+  method: "get",
+  path: "/homebrew/backgrounds/{id}",
+  tags: ["homebrew"],
+  summary: "Read one homebrew background",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The homebrew background",
+      content: { "application/json": { schema: homebrewBackgroundRecordSchema } },
+    },
+    404: notFound("homebrew background"),
+  },
+});
+
+const createBackground = createRoute({
+  method: "post",
+  path: "/homebrew/backgrounds",
+  tags: ["homebrew"],
+  summary: "Create a homebrew background",
+  request: {
+    body: { content: { "application/json": { schema: homebrewBackgroundInputSchema } } },
+  },
+  responses: {
+    201: {
+      description: "The created homebrew background",
+      content: { "application/json": { schema: homebrewBackgroundRecordSchema } },
+    },
+  },
+});
+
+const updateBackground = createRoute({
+  method: "put",
+  path: "/homebrew/backgrounds/{id}",
+  tags: ["homebrew"],
+  summary: "Replace a homebrew background",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: homebrewBackgroundInputSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The updated homebrew background",
+      content: { "application/json": { schema: homebrewBackgroundRecordSchema } },
+    },
+    404: notFound("homebrew background"),
+  },
+});
+
+const removeBackground = createRoute({
+  method: "delete",
+  path: "/homebrew/backgrounds/{id}",
+  tags: ["homebrew"],
+  summary: "Delete a homebrew background",
+  request: { params: idParam },
+  responses: {
+    204: { description: "The homebrew background was deleted" },
+    404: notFound("homebrew background"),
+    409: referenced("homebrew background"),
+  },
+});
+
 export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -273,6 +363,36 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     const characters = charactersReferencingHomebrew(charactersDb, id);
     if (characters.length > 0) return c.json(referencedError("This spell", characters), 409);
     if (!deleteHomebrewSpell(db, id)) return c.json({ error: SPELL_NOT_FOUND }, 404);
+    return c.body(null, 204);
+  });
+
+  routes.openapi(listBackgrounds, (c) =>
+    c.json(listHomebrewBackgrounds(db).map(toBackgroundRecord)),
+  );
+
+  routes.openapi(readBackground, (c) => {
+    const row = getHomebrewBackground(db, c.req.valid("param").id);
+    if (!row) return c.json({ error: BACKGROUND_NOT_FOUND }, 404);
+    return c.json(toBackgroundRecord(row), 200);
+  });
+
+  routes.openapi(createBackground, (c) => {
+    const row = insertHomebrewBackground(db, randomUUID(), c.req.valid("json"));
+    return c.json(toBackgroundRecord(row), 201);
+  });
+
+  routes.openapi(updateBackground, (c) => {
+    const { id } = c.req.valid("param");
+    const row = updateHomebrewBackground(db, id, c.req.valid("json"));
+    if (!row) return c.json({ error: BACKGROUND_NOT_FOUND }, 404);
+    return c.json(toBackgroundRecord(row), 200);
+  });
+
+  routes.openapi(removeBackground, (c) => {
+    const { id } = c.req.valid("param");
+    const characters = charactersReferencingHomebrew(charactersDb, id);
+    if (characters.length > 0) return c.json(referencedError("This background", characters), 409);
+    if (!deleteHomebrewBackground(db, id)) return c.json({ error: BACKGROUND_NOT_FOUND }, 404);
     return c.body(null, 204);
   });
 

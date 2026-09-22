@@ -8,12 +8,24 @@
  * `json` holds the 5etools entry shape `@dnd/catalog` defines, not a shape of our own —
  * see `docs/data-model.md` for why.
  */
-import type { HomebrewItem, SpellEntry } from "@dnd/catalog";
+import type { CharacterOptionEntry, HomebrewItem, SpellEntry } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const HOMEBREW_SOURCE = "HB";
+
+export const homebrewBackgrounds = sqliteTable(
+  "homebrew_backgrounds",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+    json: text("json", { mode: "json" }).$type<CharacterOptionEntry>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("homebrew_backgrounds_by_name").on(t.name)],
+);
 
 export const homebrewItems = sqliteTable(
   "homebrew_items",

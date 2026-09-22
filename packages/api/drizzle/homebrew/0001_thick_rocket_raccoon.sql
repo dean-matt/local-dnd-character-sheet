@@ -1,0 +1,9 @@
+CREATE TABLE `homebrew_backgrounds` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`edition` text NOT NULL,
+	`json` text NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX `homebrew_backgrounds_by_name` ON `homebrew_backgrounds` (`name`);

@@ -8,6 +8,13 @@
       "when": 1789756762461,
       "tag": "0000_sharp_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790109557115,
+      "tag": "0001_thick_rocket_raccoon",
+      "breakpoints": true
     }
   ]
 }

@@ -259,7 +259,7 @@ const grantorSchema = z.discriminatedUnion("kind", [
 const featGrantorSchema = z.discriminatedUnion("kind", [
   classGrantor,
   subclassGrantor,
-  z.strictObject({ kind: z.literal("background"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("background"), ref: entryRefSchema }),
   z.strictObject({ kind: z.literal("race"), ref: contentRefSchema }),
   z.strictObject({
     kind: z.literal("subrace"),
@@ -408,7 +408,7 @@ export const characterDefinitionSchema = z.strictObject({
    * on the empty string, and a reader reaches it from the race.
    */
   subrace: contentRefSchema.optional(),
-  background: contentRefSchema,
+  background: entryRefSchema,
   abilityScores: abilityScoresSchema,
   proficiencies: proficienciesSchema,
   inventory: z.array(inventoryEntrySchema),
