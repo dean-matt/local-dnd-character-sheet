@@ -1,0 +1,6 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": ["Bash(gh:*)", "Bash(gh pr merge:*)"]
+  }
+}
