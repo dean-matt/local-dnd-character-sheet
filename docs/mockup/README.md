@@ -37,9 +37,12 @@ together. Every other file matches a widget, panel, or nav element:
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
   Settings (theme — light/dark/system — and accent), Homebrew (items and spells, one
   tab), Sources.
-- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker — a grid of preview cards
-  (a category icon, name, and category) for the full catalog of addable widgets,
-  filterable by category chip and by search; used only by Custom Tab.
+- Overlays: Roll Toast, Confirm Dialog, Add Widget Picker — a category sidebar (a tab
+  list, same pattern as Sidebar.dc.html) plus search narrow a grid of preview cards
+  (a category icon, name, and category) for the full catalog of addable widgets.
+  Clicking a card always adds another copy — nothing caps a widget to one instance —
+  and the card's "+ Add" label picks up a running count once one is on the tab.
+  Used only by Custom Tab.
 - Custom Tab is sized like the real "active section content" area from Layout.dc.html
   and shows the widget canvas a user-created tab gets: an Edit button gates
   drag-to-move and drag-a-corner-to-resize (each card previews as a title over a few

@@ -63,7 +63,7 @@
   <sc-if value="{{pickerOpen}}" hint-placeholder-val="{{false}}">
     <div role="presentation" onClick="{{closePicker}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
       <div onClick="{{stopPropagation}}">
-        <dc-import name="WidgetPicker" added="{{addedIds}}" on-change="{{onPickerChange}}" on-close="{{closePicker}}" accent="{{accent}}" hint-size="560px,600px"></dc-import>
+        <dc-import name="WidgetPicker" counts="{{addedCounts}}" on-add="{{onPickerAdd}}" on-close="{{closePicker}}" accent="{{accent}}" hint-size="680px,620px"></dc-import>
       </div>
     </div>
   </sc-if>
@@ -82,70 +82,74 @@ class Component extends DCLogic {
     this.state = {
       editing: false,
       pickerOpen: false,
-      dragWidgetId: null,
-      resizeWidgetId: null,
+      dragWidgetKey: null,
+      resizeWidgetKey: null,
+      nextSeq: 1,
       widgets: [
-        { id: 'weapons', title: 'Weapons', sizeIndex: 2 },
-        { id: 'notes', title: 'Notes', sizeIndex: 1 },
-        { id: 'level', title: 'Level & Experience', sizeIndex: 0 }
+        { key: 'seed-weapons', catalogId: 'weapons', title: 'Weapons', sizeIndex: 2 },
+        { key: 'seed-notes', catalogId: 'notes', title: 'Notes', sizeIndex: 1 },
+        { key: 'seed-level', catalogId: 'level', title: 'Level & Experience', sizeIndex: 0 }
       ]
     };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const { editing, pickerOpen, dragWidgetId, resizeWidgetId, widgets } = this.state;
+    const { editing, pickerOpen, dragWidgetKey, resizeWidgetKey, nextSeq, widgets } = this.state;
 
-    const reorder = (dragId, dropId) => {
-      const i1 = widgets.findIndex((w) => w.id === dragId);
-      const i2 = widgets.findIndex((w) => w.id === dropId);
+    const reorder = (dragKey, dropKey) => {
+      const i1 = widgets.findIndex((w) => w.key === dragKey);
+      const i2 = widgets.findIndex((w) => w.key === dropKey);
       if (i1 === -1 || i2 === -1 || i1 === i2) return;
       const next = widgets.slice();
       const [moved] = next.splice(i1, 1);
       next.splice(i2, 0, moved);
-      this.setState({ widgets: next, dragWidgetId: null });
+      this.setState({ widgets: next, dragWidgetKey: null });
     };
 
-    const cycleSize = (id) => {
+    const cycleSize = (key) => {
       this.setState({
-        widgets: widgets.map((w) => (w.id === id ? { ...w, sizeIndex: (w.sizeIndex + 1) % SIZE_PRESETS.length } : w)),
-        resizeWidgetId: null
+        widgets: widgets.map((w) => (w.key === key ? { ...w, sizeIndex: (w.sizeIndex + 1) % SIZE_PRESETS.length } : w)),
+        resizeWidgetKey: null
       });
     };
 
     const widgetRows = widgets.map((w) => {
       const preset = SIZE_PRESETS[w.sizeIndex] || SIZE_PRESETS[0];
       return {
-        id: w.id,
+        key: w.key,
         title: w.title,
         colSpan: preset.colSpan,
         rowSpan: preset.rowSpan,
         tall: preset.rowSpan > 1,
         sizeLabel: preset.label,
         borderStyle: editing ? 'dashed' : 'solid',
-        borderColor: editing ? (dragWidgetId && dragWidgetId !== w.id ? accent : '#c7cbd1') : '#dde1e6',
+        borderColor: editing ? (dragWidgetKey && dragWidgetKey !== w.key ? accent : '#c7cbd1') : '#dde1e6',
         moveCursor: editing ? 'grab' : 'default',
-        remove: () => this.setState({ widgets: widgets.filter((x) => x.id !== w.id) }),
-        onDragStart: () => editing && this.setState({ dragWidgetId: w.id }),
+        remove: () => this.setState({ widgets: widgets.filter((x) => x.key !== w.key) }),
+        onDragStart: () => editing && this.setState({ dragWidgetKey: w.key }),
         onDragOver: (e) => editing && e.preventDefault(),
         onDrop: (e) => {
           if (!editing) return;
           e.preventDefault();
-          if (dragWidgetId) reorder(dragWidgetId, w.id);
+          if (dragWidgetKey) reorder(dragWidgetKey, w.key);
         },
         onResizeDragStart: (e) => {
           e.stopPropagation();
-          this.setState({ resizeWidgetId: w.id });
+          this.setState({ resizeWidgetKey: w.key });
         },
         onResizeDragOver: (e) => e.preventDefault(),
         onResizeDrop: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (resizeWidgetId) cycleSize(resizeWidgetId);
+          if (resizeWidgetKey) cycleSize(resizeWidgetKey);
         }
       };
     });
 
-    const addedIds = widgets.map((w) => w.id);
+    const addedCounts = widgets.reduce((acc, w) => {
+      acc[w.catalogId] = (acc[w.catalogId] || 0) + 1;
+      return acc;
+    }, {});
 
     return {
       accent,
@@ -158,16 +162,14 @@ class Component extends DCLogic {
       widgets: widgetRows,
       noWidgets: widgets.length === 0,
       pickerOpen,
-      addedIds,
+      addedCounts,
       openPicker: () => this.setState({ pickerOpen: true }),
       closePicker: () => this.setState({ pickerOpen: false }),
-      onPickerChange: (nextIds, d) => {
-        const wasAdded = addedIds.indexOf(d.id) === -1 && nextIds.indexOf(d.id) !== -1;
-        if (wasAdded) {
-          this.setState({ widgets: [...widgets, { id: d.id, title: d.title, sizeIndex: 0 }] });
-        } else {
-          this.setState({ widgets: widgets.filter((w) => w.id !== d.id) });
-        }
+      onPickerAdd: (d) => {
+        this.setState({
+          widgets: [...widgets, { key: 'w' + nextSeq, catalogId: d.id, title: d.title, sizeIndex: 0 }],
+          nextSeq: nextSeq + 1
+        });
       },
       stopPropagation: (e) => e.stopPropagation()
     };

@@ -17,59 +17,78 @@
 </style>
 </helmet>
 
-<div style="width: 560px; height: 600px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; justify-content: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);">
-    <div style="display: flex; align-items: center; justify-content: space-between;">
+<div style="width: 680px; height: 620px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; justify-content: center; background: #f4f5f7;">
+  <div style="width: 100%; height: 100%; background: #ffffff; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);">
+    <div style="flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0 20px;">
       <div style="font-size: 15px; font-weight: 700; color: #1f2430;">Add a Widget</div>
       <button aria-label="Close" onClick="{{close}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1;">&times;</button>
     </div>
-    <label for="widgetModalSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search widgets</label>
-    <input id="widgetModalSearch" type="text" placeholder="Search widgets…" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #eef0f3; color: #1f2430;">
-    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-      <button onClick="{{clearCategories}}" style="padding: 5px 12px; border-radius: 999px; border: 1px solid {{allBorder}}; background: {{allBg}}; color: {{allColor}}; font-size: 12px; font-weight: 600;">All</button>
-      <sc-for list="{{categoryChips}}" as="c" hint-placeholder-count="6">
-        <button onClick="{{c.toggle}}" style="padding: 5px 12px; border-radius: 999px; border: 1px solid {{c.border}}; background: {{c.bg}}; color: {{c.color}}; font-size: 12px; font-weight: 600;">{{c.label}}</button>
-      </sc-for>
-    </div>
-    <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
-      <div style="font-size: 13px; color: #6b7280; font-style: italic;">No widgets match.</div>
-    </sc-if>
-    <div style="max-height: 320px; overflow-y: auto;">
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-        <sc-for list="{{checklist}}" as="wc" hint-placeholder-count="9">
-          <button onClick="{{wc.toggle}}" aria-label="{{wc.ariaLabel}}" style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 8px; border: 1px solid {{wc.borderColor}}; background: {{wc.cardBg}}; text-align: left;">
-            <div style="width: 100%; height: 56px; border-radius: 6px; background: #eef0f3; display: flex; align-items: center; justify-content: center;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{wc.iconColor}}" stroke-width="2">
-                <sc-if value="{{wc.isOverview}}" hint-placeholder-val="{{true}}"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></sc-if>
-                <sc-if value="{{wc.isInventory}}" hint-placeholder-val="{{false}}"><path d="M6 7h12l1 13a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M9 7a3 3 0 016 0"/></sc-if>
-                <sc-if value="{{wc.isSpells}}" hint-placeholder-val="{{false}}"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></sc-if>
-                <sc-if value="{{wc.isFeatures}}" hint-placeholder-val="{{false}}"><path d="M12 2.5l2.9 6.3 6.9.8-5.1 4.8 1.4 6.9L12 17.6l-6.1 3.7 1.4-6.9-5.1-4.8 6.9-.8z"/></sc-if>
-                <sc-if value="{{wc.isIdentity}}" hint-placeholder-val="{{false}}"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3M14 9h5M14 13h5"/></sc-if>
-                <sc-if value="{{wc.isOther}}" hint-placeholder-val="{{false}}"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></sc-if>
-              </svg>
-            </div>
-            <div style="font-size: 12px; font-weight: 600; color: #1f2430; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{wc.title}}</div>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-              <span style="font-size: 10px; color: #6b7280; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{wc.category}}</span>
-              <span style="font-size: 10px; font-weight: 700; color: {{wc.statusColor}}; flex-shrink: 0;">{{wc.statusLabel}}</span>
-            </div>
+
+    <div style="flex-grow: 1; min-height: 0; display: flex; gap: 16px; padding: 16px 20px 20px 20px;">
+      <div style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; overflow-y: auto;">
+        <button onClick="{{selectAll}}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: {{allBg}}; color: {{allColor}}; font-size: 13px; font-weight: {{allWeight}};">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{allIconColor}}" stroke-width="2" style="flex-shrink: 0;"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>
+          All Widgets
+        </button>
+        <sc-for list="{{categoryTabs}}" as="c" hint-placeholder-count="6">
+          <button onClick="{{c.select}}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: {{c.rowBg}}; color: {{c.textColor}}; font-size: 13px; font-weight: {{c.textWeight}};">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{c.iconColor}}" stroke-width="2" style="flex-shrink: 0;">
+              <sc-if value="{{c.isOverview}}" hint-placeholder-val="{{true}}"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></sc-if>
+              <sc-if value="{{c.isInventory}}" hint-placeholder-val="{{false}}"><path d="M6 7h12l1 13a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M9 7a3 3 0 016 0"/></sc-if>
+              <sc-if value="{{c.isSpells}}" hint-placeholder-val="{{false}}"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></sc-if>
+              <sc-if value="{{c.isFeatures}}" hint-placeholder-val="{{false}}"><path d="M12 2.5l2.9 6.3 6.9.8-5.1 4.8 1.4 6.9L12 17.6l-6.1 3.7 1.4-6.9-5.1-4.8 6.9-.8z"/></sc-if>
+              <sc-if value="{{c.isIdentity}}" hint-placeholder-val="{{false}}"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3M14 9h5M14 13h5"/></sc-if>
+              <sc-if value="{{c.isOther}}" hint-placeholder-val="{{false}}"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></sc-if>
+            </svg>
+            {{c.label}}
           </button>
         </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+        <label for="widgetModalSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search widgets</label>
+        <input id="widgetModalSearch" type="text" placeholder="Search widgets…" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; flex-shrink: 0; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #eef0f3; color: #1f2430;">
+        <sc-if value="{{noMatches}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 13px; color: #6b7280; font-style: italic;">No widgets match.</div>
+        </sc-if>
+        <div style="flex-grow: 1; min-height: 0; overflow-y: auto;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+            <sc-for list="{{checklist}}" as="wc" hint-placeholder-count="9">
+              <button onClick="{{wc.toggle}}" aria-label="{{wc.ariaLabel}}" style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 8px; border: 1px solid {{wc.borderColor}}; background: {{wc.cardBg}}; text-align: left;">
+                <div style="width: 100%; height: 56px; border-radius: 6px; background: #eef0f3; display: flex; align-items: center; justify-content: center;">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{wc.iconColor}}" stroke-width="2">
+                    <sc-if value="{{wc.isOverview}}" hint-placeholder-val="{{true}}"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></sc-if>
+                    <sc-if value="{{wc.isInventory}}" hint-placeholder-val="{{false}}"><path d="M6 7h12l1 13a1 1 0 01-1 1H6a1 1 0 01-1-1z"/><path d="M9 7a3 3 0 016 0"/></sc-if>
+                    <sc-if value="{{wc.isSpells}}" hint-placeholder-val="{{false}}"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></sc-if>
+                    <sc-if value="{{wc.isFeatures}}" hint-placeholder-val="{{false}}"><path d="M12 2.5l2.9 6.3 6.9.8-5.1 4.8 1.4 6.9L12 17.6l-6.1 3.7 1.4-6.9-5.1-4.8 6.9-.8z"/></sc-if>
+                    <sc-if value="{{wc.isIdentity}}" hint-placeholder-val="{{false}}"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c0-1.7 1.3-3 3-3s3 1.3 3 3M14 9h5M14 13h5"/></sc-if>
+                    <sc-if value="{{wc.isOther}}" hint-placeholder-val="{{false}}"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></sc-if>
+                  </svg>
+                </div>
+                <div style="font-size: 12px; font-weight: 600; color: #1f2430; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{wc.title}}</div>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                  <span style="font-size: 10px; color: #6b7280; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{wc.category}}</span>
+                  <span style="font-size: 10px; font-weight: 700; color: {{wc.statusColor}}; flex-shrink: 0;">+ Add<sc-if value="{{wc.hasCount}}" hint-placeholder-val="{{false}}"> ({{wc.count}})</sc-if></span>
+                </div>
+              </button>
+            </sc-for>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"added":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":560,"height":600}}'>
+<script type="text/x-dc" data-dc-script data-props='{"counts":{"editor":null},"onAdd":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":680,"height":620}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { query: '', categories: [] };
+    this.state = { query: '', category: 'All' };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const added = this.props.added || [];
-    const onChange = this.props.onChange || (() => {});
+    const counts = this.props.counts || {};
+    const onAdd = this.props.onAdd || (() => {});
     const onClose = this.props.onClose || (() => {});
     const ALL_WIDGETS = [
       { id: 'abilities', title: 'Ability Scores', category: 'Overview' },
@@ -101,56 +120,64 @@ class Component extends DCLogic {
       { id: 'notes', title: 'Notes', category: 'Other' }
     ];
     const CATEGORIES = ['Overview', 'Inventory', 'Spells', 'Features', 'Identity', 'Other'];
-    const { query, categories } = this.state;
-    const toggleCategory = (cat) => this.setState({ categories: categories.indexOf(cat) !== -1 ? categories.filter((c) => c !== cat) : [...categories, cat] });
-    const categoryChips = CATEGORIES.map((cat) => {
-      const active = categories.indexOf(cat) !== -1;
+    const { query, category } = this.state;
+
+    const categoryTabs = CATEGORIES.map((cat) => {
+      const active = category === cat;
       return {
         label: cat,
-        border: active ? accent : '#dde1e6',
-        bg: active ? '#fdf3ea' : '#ffffff',
-        color: active ? accent : '#6b7280',
-        toggle: () => toggleCategory(cat)
+        rowBg: active ? '#fdf3ea' : 'none',
+        textColor: active ? accent : '#1f2430',
+        textWeight: active ? '600' : '500',
+        iconColor: active ? accent : '#6b7280',
+        isOverview: cat === 'Overview',
+        isInventory: cat === 'Inventory',
+        isSpells: cat === 'Spells',
+        isFeatures: cat === 'Features',
+        isIdentity: cat === 'Identity',
+        isOther: cat === 'Other',
+        select: () => this.setState({ category: cat })
       };
     });
 
     const q = query.trim().toLowerCase();
     const matches = ALL_WIDGETS.filter((d) => {
-      if (categories.length && categories.indexOf(d.category) === -1) return false;
+      if (category !== 'All' && d.category !== category) return false;
       if (q && d.title.toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
     const checklist = matches.map((d) => {
-      const checked = added.indexOf(d.id) !== -1;
+      const count = counts[d.id] || 0;
       return {
         id: d.id,
         title: d.title,
         category: d.category,
-        ariaLabel: (checked ? 'Remove ' : 'Add ') + d.title,
-        checked,
-        borderColor: checked ? accent : '#dde1e6',
-        cardBg: checked ? '#fdf3ea' : '#ffffff',
-        iconColor: checked ? accent : '#9aa1ab',
+        ariaLabel: 'Add ' + d.title + (count ? ' (' + count + ' already on this tab)' : ''),
+        count,
+        hasCount: count > 0,
+        borderColor: count > 0 ? accent : '#dde1e6',
+        cardBg: count > 0 ? '#fdf3ea' : '#ffffff',
+        iconColor: count > 0 ? accent : '#9aa1ab',
         isOverview: d.category === 'Overview',
         isInventory: d.category === 'Inventory',
         isSpells: d.category === 'Spells',
         isFeatures: d.category === 'Features',
         isIdentity: d.category === 'Identity',
         isOther: d.category === 'Other',
-        statusLabel: checked ? 'Added' : '+ Add',
-        statusColor: checked ? accent : '#6b7280',
-        toggle: () => onChange(checked ? added.filter((x) => x !== d.id) : [...added, d.id], d)
+        statusColor: count > 0 ? accent : '#6b7280',
+        toggle: () => onAdd(d)
       };
     });
     return {
       accent,
       query,
       onQueryChange: (e) => this.setState({ query: e.target.value }),
-      allBorder: categories.length === 0 ? accent : '#dde1e6',
-      allBg: categories.length === 0 ? '#fdf3ea' : '#ffffff',
-      allColor: categories.length === 0 ? accent : '#6b7280',
-      clearCategories: () => this.setState({ categories: [] }),
-      categoryChips,
+      allBg: category === 'All' ? '#fdf3ea' : 'none',
+      allColor: category === 'All' ? accent : '#1f2430',
+      allWeight: category === 'All' ? '600' : '500',
+      allIconColor: category === 'All' ? accent : '#6b7280',
+      selectAll: () => this.setState({ category: 'All' }),
+      categoryTabs,
       noMatches: matches.length === 0,
       checklist,
       close: () => onClose()
