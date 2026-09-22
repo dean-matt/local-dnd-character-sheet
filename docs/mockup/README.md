@@ -44,10 +44,12 @@ together. Every other file matches a widget, panel, or nav element:
   listing rolls newest first, each tagged with what it was rolled for (a weapon, a
   spell, an ability check…) and which character made it, with a Clear button and a
   Filter button (by character, by roll type) in the same shape as the other list
-  widgets' filters. Character
-  sheet only, not Settings. Forward design for #282, which only specified the list; the
-  dock, the collapse, the per-roll source and character tags, and Clear are this
-  mockup's own call.
+  widgets' filters. Character sheet only, not Settings. Forward design for #282, which
+  only specified the list; the dock, the collapse, and Clear are this mockup's own call.
+  The Filter button and the per-roll character tag widen past #282's own "out of scope"
+  line ("Filtering or searching the log") and its single-character framing the same way
+  the character list's avatar widens past #206's — #311 and #312 are the new issues that
+  settle those two, same as #310 settled the character list's own widening.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, each with its own
   slim header (brand mark, and a Cancel link back to the list on every creation step)
@@ -90,7 +92,8 @@ together. Every other file matches a widget, panel, or nav element:
   Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
   Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
   5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
-  level/school — its real counterpart widget does), Sources.
+  level/school — its real counterpart widget does), Sources — a per-source toggle for
+  Mechanics search and catalog pickers, forward design for #313.
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats follow the same
   paste-and-parse shape as the four shipped Homebrew artboards above, but nothing behind
   them exists yet — `homebrew.db` only reaches items and spells today. They're forward
@@ -118,7 +121,8 @@ together. Every other file matches a widget, panel, or nav element:
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that
-  widget on the canvas.
+  widget on the canvas. Forward design for #311, since none of these widgets' own
+  issues had settled a filter yet.
 
 ## Covered
 
