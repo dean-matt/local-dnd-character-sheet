@@ -78,17 +78,22 @@
       <input id="filterMaxPrice" type="number" min="0" placeholder="Any" value="{{priceMax}}" onChange="{{onPriceMax}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
     </div>
   </div>
-  <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430; border-top: 1px solid #dde1e6; padding-top: 8px;">
-    <input type="checkbox" checked="{{equippedOnly}}" onChange="{{toggleEquippedOnly}}"> Equipped only
-  </label>
+  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Equipped</div>
+    <select onChange="{{onEquippedChange}}" value="{{equippedValue}}" aria-label="Filter by equipped state" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+      <option value="">All</option>
+      <option value="equipped">Equipped only</option>
+      <option value="unequipped">Unequipped only</option>
+    </select>
+  </div>
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":390}}'>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":410}}'>
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const DEFAULT = { classes: [], damageTypes: [], equippedOnly: false, priceMin: null, priceMax: null };
+    const DEFAULT = { classes: [], damageTypes: [], equipped: null, priceMin: null, priceMax: null };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
@@ -120,12 +125,12 @@ class Component extends DCLogic {
       damageHasHidden: damageFacet.hasHidden,
       damageHiddenOptions: damageFacet.hiddenOptions,
       onDamageAdd: damageFacet.onAdd,
-      equippedOnly: filters.equippedOnly,
+      equippedValue: filters.equipped === true ? 'equipped' : filters.equipped === false ? 'unequipped' : '',
+      onEquippedChange: (e) => set({ equipped: e.target.value === 'equipped' ? true : e.target.value === 'unequipped' ? false : null }),
       priceMin: filters.priceMin ?? '',
       priceMax: filters.priceMax ?? '',
       onPriceMin: (e) => set({ priceMin: toNum(e.target.value) }),
       onPriceMax: (e) => set({ priceMax: toNum(e.target.value) }),
-      toggleEquippedOnly: () => set({ equippedOnly: !filters.equippedOnly }),
       reset: () => onChange(DEFAULT),
       close: () => onClose()
     };
