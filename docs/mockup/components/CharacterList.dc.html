@@ -30,8 +30,16 @@
     <sc-if value="{{hasCharacters}}" hint-placeholder-val="{{true}}">
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
         <sc-for list="{{characters}}" as="c" hint-placeholder-count="4">
-          <button aria-label="Open {{c.name}}" onClick="{{c.open}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left; padding: 18px; border-radius: 10px; border: 1px solid #dde1e6; background: #f9fafb;">
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 3px 6px;">{{c.edition}}</span>
+          <button aria-label="Open {{c.name}}" onClick="{{c.open}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; text-align: left; padding: 18px; border-radius: 10px; border: 1px solid #dde1e6; background: #f9fafb;">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+              <sc-if value="{{c.hasAvatar}}" hint-placeholder-val="{{true}}">
+                <img src="{{c.avatar}}" alt="" width="48" height="48" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+              </sc-if>
+              <sc-if value="{{c.noAvatar}}" hint-placeholder-val="{{false}}">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 17px; flex-shrink: 0;">{{c.initial}}</div>
+              </sc-if>
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 3px 6px; flex-shrink: 0;">{{c.edition}}</span>
+            </div>
             <div style="font-size: 15px; font-weight: 600; color: #1f2430; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.name}}</div>
             <div style="font-size: 12px; color: #6b7280;">{{c.subtitle}}</div>
           </button>
@@ -58,10 +66,10 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       characters: [
-        { id: 'k1', name: 'Elara Nightshade', level: 7, edition: 'one' },
-        { id: 'k2', name: 'Borin Ashfall', level: 3, edition: 'classic' },
-        { id: 'k3', name: 'Mira Sundown', level: 5, edition: 'one' },
-        { id: 'k4', name: 'Vex Larimore', level: 4, edition: 'classic' }
+        { id: 'k1', name: 'Elara Nightshade', level: 7, edition: 'one', avatar: 'https://i.pravatar.cc/96?img=47', color: '#3f5d44' },
+        { id: 'k2', name: 'Borin Ashfall', level: 3, edition: 'classic', avatar: 'https://i.pravatar.cc/96?img=13', color: '#7a3b2e' },
+        { id: 'k3', name: 'Mira Sundown', level: 5, edition: 'one', avatar: '', color: '#3a4f7a' },
+        { id: 'k4', name: 'Vex Larimore', level: 4, edition: 'classic', avatar: 'https://i.pravatar.cc/96?img=32', color: '#7a3b53' }
       ]
     };
   }
@@ -73,6 +81,11 @@ class Component extends DCLogic {
       name: c.name,
       subtitle: 'Level ' + c.level,
       edition: c.edition === 'one' ? '2024' : '2014',
+      hasAvatar: !!c.avatar,
+      noAvatar: !c.avatar,
+      avatar: c.avatar,
+      color: c.color,
+      initial: c.name.charAt(0),
       open: () => {}
     }));
     return {

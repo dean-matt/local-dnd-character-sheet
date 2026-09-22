@@ -45,8 +45,11 @@ together. Every other file matches a widget, panel, or nav element:
   characters →" opens the list, and "+ New Character" opens creation — a menu that
   jumps straight to one character is a different action from either.
 - Character List is the entry point before any of the above — every character's name,
-  level and edition, an empty state offering Import or New Character, forward design for
-  #206. Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
+  level, edition, and an avatar (a colored initial circle when a character has none),
+  an empty state offering Import or New Character, forward design for #206. The avatar
+  widens past #206's own "out of scope" line the same way creation's Class step widens
+  past #235's — a deliberate call, not an oversight the issue's text missed.
+  Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
   Equipment, Spells) are the wizard "+ New Character" opens: a step indicator, Back/Next
   (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
   race with subraces blocks progress until one is picked, a proficiency granted twice is
