@@ -16,8 +16,12 @@
 </style>
 </helmet>
 
-<div style="width: 420px; height: 520px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+<div style="width: 1440px; height: 640px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; background: #f4f5f7;">
+  <div style="width: 100%; max-width: 1392px; height: 64px; box-sizing: border-box; display: flex; align-items: center; padding: 0 24px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; flex-shrink: 0;">
+    <div style="font-weight: 700; font-size: 18px; color: {{accent}};">Local D&amp;D</div>
+  </div>
+
+  <div style="width: 100%; max-width: 480px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <div style="font-size: 18px; font-weight: 700;">Characters</div>
       <button onClick="{{newCharacter}}" style="padding: 8px 14px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">+ New Character</button>
@@ -50,7 +54,7 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":520}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":640}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);

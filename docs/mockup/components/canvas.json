@@ -71,12 +71,12 @@
     "WidgetPicker.dc.html": { "x": 0, "y": 9025, "w": 680, "h": 620, "title": "Add Widget Picker — Custom Tab", "is_interactive": true },
     "CustomTab.dc.html": { "x": 780, "y": 9025, "w": 1200, "h": 860, "title": "Custom Tab — Widget Canvas", "is_interactive": true },
 
-    "CharacterList.dc.html": { "x": 0, "y": 10205, "w": 420, "h": 520, "title": "Character List — pending #206", "is_interactive": true },
-    "CreationIdentity.dc.html": { "x": 520, "y": 10205, "w": 580, "h": 680, "title": "Creation 1/5 — Identity — pending #234", "is_interactive": true },
-    "CreationClass.dc.html": { "x": 1200, "y": 10205, "w": 580, "h": 680, "title": "Creation 2/5 — Class — pending #235", "is_interactive": true },
-    "CreationAbilityScores.dc.html": { "x": 1880, "y": 10205, "w": 580, "h": 680, "title": "Creation 3/5 — Ability Scores — pending #236", "is_interactive": true },
-    "CreationProficiencies.dc.html": { "x": 2560, "y": 10205, "w": 580, "h": 680, "title": "Creation 4/5 — Proficiencies — pending #237", "is_interactive": true },
-    "CreationSpells.dc.html": { "x": 3240, "y": 10205, "w": 580, "h": 680, "title": "Creation 5/5 — Spells — pending #238", "is_interactive": true },
+    "CharacterList.dc.html": { "x": 0, "y": 10205, "w": 1440, "h": 640, "title": "Character List — pending #206", "is_interactive": true },
+    "CreationIdentity.dc.html": { "x": 1540, "y": 10205, "w": 1440, "h": 800, "title": "Creation 1/5 — Identity — pending #234", "is_interactive": true },
+    "CreationClass.dc.html": { "x": 3080, "y": 10205, "w": 1440, "h": 800, "title": "Creation 2/5 — Class — pending #235", "is_interactive": true },
+    "CreationAbilityScores.dc.html": { "x": 4620, "y": 10205, "w": 1440, "h": 800, "title": "Creation 3/5 — Ability Scores — pending #236", "is_interactive": true },
+    "CreationProficiencies.dc.html": { "x": 6160, "y": 10205, "w": 1440, "h": 800, "title": "Creation 4/5 — Proficiencies — pending #237", "is_interactive": true },
+    "CreationSpells.dc.html": { "x": 7700, "y": 10205, "w": 1440, "h": 800, "title": "Creation 5/5 — Spells — pending #238", "is_interactive": true },
 
     "Popover.dc.html": { "x": 2360, "y": 0, "w": 360, "h": 240, "title": "Popover — Style Reference", "is_interactive": true },
     "Modal.dc.html": { "x": 2820, "y": 0, "w": 460, "h": 420, "title": "Modal — Style Reference", "is_interactive": true },

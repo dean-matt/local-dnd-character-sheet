@@ -38,7 +38,8 @@
               </div>
             </button>
           </sc-for>
-          <button onClick="{{newCharacter}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: {{accent}};">+ New Character</button>
+          <button onClick="{{viewAllCharacters}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: #1f2430;">See all characters →</button>
+          <button onClick="{{newCharacter}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}};">+ New Character</button>
         </div>
       </sc-if>
     </div>
@@ -179,6 +180,7 @@ class Component extends DCLogic {
       characterCaretRotation: characterMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
       toggleCharacterMenu: () => setMenu('character'),
       characters,
+      viewAllCharacters: () => this.setState({ openMenu: null }),
       newCharacter: () => this.setState({ openMenu: null }),
 
       mechanicsMenuOpen,

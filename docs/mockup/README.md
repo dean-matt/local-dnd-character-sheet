@@ -36,6 +36,13 @@ together. Every other file matches a widget, panel, or nav element:
   menu, search, Settings), Character Header. Manage Tabs is the modal Sidebar's "Manage
   Tabs" button opens: every tab reorders (drag) and hides here, but only a tab a user
   added renames or deletes — delete asks Confirm Dialog first.
+- Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
+  — sized to the same 1440px width as Layout and Top Bar Navigation, each with its own
+  slim header (brand mark, and a Cancel link back to the list on every creation step)
+  rather than the character sheet's Sidebar and Character Header. Top Bar Navigation's
+  Character menu is how both are reached: "See all characters →" opens the list, and
+  "+ New Character" opens creation — a menu that jumps straight to one character is a
+  different action from either.
 - Character List is the entry point before any of the above — every character's name,
   level and edition, an empty state offering Import or New Character, forward design for
   #206. Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
@@ -46,6 +53,13 @@ together. Every other file matches a widget, panel, or nav element:
   refusing it, a non-caster skips the spells step. Nothing behind any of these six
   exists yet, and #224 (whether the flow validates as it goes or all at once) is still
   undecided — these are the step content and the interaction shape, not that answer.
+  Creation 2/5 seeds exactly one class on purpose: #235 puts a second class out of scope
+  as its own issue (#240), and Class.dc.html on the sheet already covers adding one —
+  multiclassing is a level-up action, not a creation one.
+  Every picker in these six pages searches a small in-file array, the same convention
+  every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
+  search; Top Bar Navigation's global search is the one place that already spans both
+  characters and a sample compendium.
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
   Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
   Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
