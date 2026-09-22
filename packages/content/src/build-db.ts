@@ -43,7 +43,6 @@ export type BuildOptions = {
   meta: Record<string, string>;
 };
 
-/** Resolves the live database in `contentDir` by way of its `current` pointer. */
 export function resolveContentDb(contentDir: string): string {
   return join(contentDir, readFileSync(join(contentDir, CURRENT_FILE), "utf8").trim());
 }
@@ -165,7 +164,6 @@ function contentHash(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 16);
 }
 
-/** Points `current` at `name`, replacing whatever it named before. */
 function publishCurrent(contentDir: string, name: string): void {
   const tmp = join(contentDir, `current.${process.pid}.tmp`);
   writeFileSync(tmp, name);

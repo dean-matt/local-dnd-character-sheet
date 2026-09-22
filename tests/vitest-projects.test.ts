@@ -21,7 +21,6 @@ const posixPaths = (patterns: string[]): string[] =>
     }).map((path) => path.replaceAll("\\", "/")),
   );
 
-/** The files a project runs: what its globs match, less what it excludes. */
 function claimed(include: string[], exclude: string[]): Set<string> {
   const files = new Set(posixPaths(include));
   for (const file of posixPaths(exclude)) files.delete(file);
