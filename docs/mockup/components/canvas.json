@@ -64,20 +64,20 @@
     "HomebrewSpells.dc.html": { "x": 2660, "y": 7525, "w": 480, "h": 400, "title": "Homebrew Spells", "is_interactive": true },
     "Sources.dc.html": { "x": 3240, "y": 7525, "w": 420, "h": 460, "title": "Sources", "is_interactive": true },
 
-    "HomebrewRaces.dc.html": { "x": 0, "y": 8085, "w": 480, "h": 440, "title": "Homebrew Races — pending #306", "is_interactive": true },
-    "HomebrewClasses.dc.html": { "x": 580, "y": 8085, "w": 480, "h": 440, "title": "Homebrew Classes — pending #307", "is_interactive": true },
-    "HomebrewBackgrounds.dc.html": { "x": 1160, "y": 8085, "w": 480, "h": 440, "title": "Homebrew Backgrounds — pending #308", "is_interactive": true },
-    "HomebrewFeats.dc.html": { "x": 1740, "y": 8085, "w": 480, "h": 440, "title": "Homebrew Feats — pending #309", "is_interactive": true },
-
     "WidgetPicker.dc.html": { "x": 0, "y": 9025, "w": 680, "h": 620, "title": "Add Widget Picker — Custom Tab", "is_interactive": true },
     "CustomTab.dc.html": { "x": 780, "y": 9025, "w": 1200, "h": 860, "title": "Custom Tab — Widget Canvas", "is_interactive": true },
+
+    "HomebrewRaces.dc.html": { "x": 0, "y": 10205, "w": 480, "h": 440, "title": "Homebrew Races — pending #306", "is_interactive": true },
+    "HomebrewClasses.dc.html": { "x": 580, "y": 10205, "w": 480, "h": 440, "title": "Homebrew Classes — pending #307", "is_interactive": true },
+    "HomebrewBackgrounds.dc.html": { "x": 1160, "y": 10205, "w": 480, "h": 440, "title": "Homebrew Backgrounds — pending #308", "is_interactive": true },
+    "HomebrewFeats.dc.html": { "x": 1740, "y": 10205, "w": 480, "h": 440, "title": "Homebrew Feats — pending #309", "is_interactive": true },
 
     "Popover.dc.html": { "x": 2360, "y": 0, "w": 360, "h": 240, "title": "Popover — Style Reference", "is_interactive": true },
     "Modal.dc.html": { "x": 2820, "y": 0, "w": 460, "h": 420, "title": "Modal — Style Reference", "is_interactive": true },
     "ConfirmDialog.dc.html": { "x": 3380, "y": 0, "w": 340, "h": 200, "title": "Confirm Dialog — Style Reference", "is_interactive": true },
     "ListItem.dc.html": { "x": 3800, "y": 0, "w": 380, "h": 340, "title": "List Item — Style Reference", "is_interactive": true }
   },
-  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "Defenses.dc.html", "ShortRestModal.dc.html", "LongRestModal.dc.html", "Currency.dc.html", "Weapons.dc.html", "WeaponsFilter.dc.html", "Armor.dc.html", "ArmorFilter.dc.html", "Gear.dc.html", "GearFilter.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "SpellListFilter.dc.html", "ClassFeatures.dc.html", "ClassFeaturesFilter.dc.html", "RaceFeatures.dc.html", "RaceFeaturesFilter.dc.html", "ChosenFeatures.dc.html", "ChosenFeaturesFilter.dc.html", "Backstory.dc.html", "Notes.dc.html", "Name.dc.html", "Race.dc.html", "Class.dc.html", "Background.dc.html", "Level.dc.html", "LevelUpModal.dc.html", "Alignment.dc.html", "Languages.dc.html", "Proficiencies.dc.html", "RollToast.dc.html", "Sidebar.dc.html", "ManageTabs.dc.html", "TopBar.dc.html", "CharacterHeader.dc.html", "SettingsSidebar.dc.html", "DisplaySettings.dc.html", "HomebrewWeapons.dc.html", "HomebrewArmor.dc.html", "HomebrewGear.dc.html", "HomebrewSpells.dc.html", "Sources.dc.html", "HomebrewRaces.dc.html", "HomebrewClasses.dc.html", "HomebrewBackgrounds.dc.html", "HomebrewFeats.dc.html", "WidgetPicker.dc.html", "CustomTab.dc.html", "Popover.dc.html", "Modal.dc.html", "ConfirmDialog.dc.html", "ListItem.dc.html"],
+  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "Defenses.dc.html", "ShortRestModal.dc.html", "LongRestModal.dc.html", "Currency.dc.html", "Weapons.dc.html", "WeaponsFilter.dc.html", "Armor.dc.html", "ArmorFilter.dc.html", "Gear.dc.html", "GearFilter.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "SpellListFilter.dc.html", "ClassFeatures.dc.html", "ClassFeaturesFilter.dc.html", "RaceFeatures.dc.html", "RaceFeaturesFilter.dc.html", "ChosenFeatures.dc.html", "ChosenFeaturesFilter.dc.html", "Backstory.dc.html", "Notes.dc.html", "Name.dc.html", "Race.dc.html", "Class.dc.html", "Background.dc.html", "Level.dc.html", "LevelUpModal.dc.html", "Alignment.dc.html", "Languages.dc.html", "Proficiencies.dc.html", "RollToast.dc.html", "Sidebar.dc.html", "ManageTabs.dc.html", "TopBar.dc.html", "CharacterHeader.dc.html", "SettingsSidebar.dc.html", "DisplaySettings.dc.html", "HomebrewWeapons.dc.html", "HomebrewArmor.dc.html", "HomebrewGear.dc.html", "HomebrewSpells.dc.html", "Sources.dc.html", "WidgetPicker.dc.html", "CustomTab.dc.html", "HomebrewRaces.dc.html", "HomebrewClasses.dc.html", "HomebrewBackgrounds.dc.html", "HomebrewFeats.dc.html", "Popover.dc.html", "Modal.dc.html", "ConfirmDialog.dc.html", "ListItem.dc.html"],
   "notes": {},
   "designSystems": []
 }
