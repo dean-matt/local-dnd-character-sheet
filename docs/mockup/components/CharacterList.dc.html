@@ -41,7 +41,7 @@
               <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 3px 6px; flex-shrink: 0;">{{c.edition}}</span>
             </div>
             <div style="font-size: 15px; font-weight: 600; color: #1f2430; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.name}}</div>
-            <div style="font-size: 12px; color: #6b7280;">{{c.subtitle}}</div>
+            <div style="font-size: 12px; color: #6b7280; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.subtitle}}</div>
           </button>
         </sc-for>
       </div>
@@ -66,10 +66,10 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       characters: [
-        { id: 'k1', name: 'Elara Nightshade', level: 7, edition: 'one', avatar: 'https://i.pravatar.cc/96?img=47', color: '#3f5d44' },
-        { id: 'k2', name: 'Borin Ashfall', level: 3, edition: 'classic', avatar: 'https://i.pravatar.cc/96?img=13', color: '#7a3b2e' },
-        { id: 'k3', name: 'Mira Sundown', level: 5, edition: 'one', avatar: '', color: '#3a4f7a' },
-        { id: 'k4', name: 'Vex Larimore', level: 4, edition: 'classic', avatar: 'https://i.pravatar.cc/96?img=32', color: '#7a3b53' }
+        { id: 'k1', name: 'Elara Nightshade', level: 7, edition: 'one', race: 'High Elf', classSummary: 'Ranger', avatar: 'https://i.pravatar.cc/96?img=47', color: '#3f5d44' },
+        { id: 'k2', name: 'Borin Ashfall', level: 5, edition: 'classic', race: 'Mountain Dwarf', classSummary: 'Fighter 3 / Wizard 2', avatar: 'https://i.pravatar.cc/96?img=13', color: '#7a3b2e' },
+        { id: 'k3', name: 'Mira Sundown', level: 5, edition: 'one', race: 'Human', classSummary: 'Wizard', avatar: '', color: '#3a4f7a' },
+        { id: 'k4', name: 'Vex Larimore', level: 4, edition: 'classic', race: 'Tiefling', classSummary: 'Warlock', avatar: 'https://i.pravatar.cc/96?img=32', color: '#7a3b53' }
       ]
     };
   }
@@ -79,7 +79,7 @@ class Component extends DCLogic {
     const rows = characters.map((c) => ({
       id: c.id,
       name: c.name,
-      subtitle: 'Level ' + c.level,
+      subtitle: c.race + ' ' + c.classSummary + ' • Lvl ' + c.level,
       edition: c.edition === 'one' ? '2024' : '2014',
       hasAvatar: !!c.avatar,
       noAvatar: !c.avatar,
