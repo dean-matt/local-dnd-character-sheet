@@ -56,8 +56,9 @@ together. Every other file matches a widget, panel, or nav element:
   Alignment, Backstory, Notes) never get this — their widgets are fixed.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
-  List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, and the
-  Features widgets — design it here first, then carry a change into each widget's rows.
+  List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, the
+  Features widgets, and Homebrew's items and spells — design it here first, then carry
+  a change into each widget's rows.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its list widget from a
   Filter button in that widget's header, and sits next to that widget on the canvas.

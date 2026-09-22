@@ -30,13 +30,17 @@
         <div style="font-size: 13px; color: #6b7280; font-style: italic;">No homebrew items yet.</div>
       </sc-if>
       <sc-for list="{{items}}" as="item" hint-placeholder-count="2">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
-          <div style="flex-grow: 1; min-width: 0;">
-            <div style="font-size: 14px; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.name}}</div>
-            <div style="font-size: 11px; color: #6b7280;">{{item.category}}</div>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button aria-label="Edit {{item.name}}" onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
+            <div style="flex-grow: 1;"></div>
+            <button onClick="{{item.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
+            <button aria-label="Delete {{item.name}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
           </div>
-          <button onClick="{{item.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
-          <button aria-label="Delete {{item.name}}" onClick="{{item.remove}}" style="width: 22px; height: 22px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.category}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
         </div>
       </sc-for>
       <sc-if value="{{itemFormOpen}}" hint-placeholder-val="{{false}}">
@@ -62,13 +66,17 @@
         <div style="font-size: 13px; color: #6b7280; font-style: italic;">No homebrew spells yet.</div>
       </sc-if>
       <sc-for list="{{spells}}" as="sp" hint-placeholder-count="1">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef0f3; border-radius: 8px;">
-          <div style="flex-grow: 1; min-width: 0;">
-            <div style="font-size: 14px; color: #1f2430; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.name}}</div>
-            <div style="font-size: 11px; color: #6b7280;">{{sp.category}}</div>
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button aria-label="Edit {{sp.name}}" onClick="{{sp.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{sp.name}}</button>
+            <div style="flex-grow: 1;"></div>
+            <button onClick="{{sp.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
+            <button aria-label="Delete {{sp.name}}" onClick="{{sp.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
           </div>
-          <button onClick="{{sp.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
-          <button aria-label="Delete {{sp.name}}" onClick="{{sp.remove}}" style="width: 22px; height: 22px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{sp.category}}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.descShort}}</div>
         </div>
       </sc-for>
       <sc-if value="{{spellFormOpen}}" hint-placeholder-val="{{false}}">
@@ -110,11 +118,19 @@ class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
     const { items, editingItemId, addItemOpen, itemFormJson, spells, editingSpellId, addSpellOpen, spellFormJson } = this.state;
+    const descOf = (json) => {
+      try {
+        const parsed = JSON.parse(json);
+        if (parsed && Array.isArray(parsed.entries) && parsed.entries.length) return String(parsed.entries[0]);
+      } catch {}
+      return '';
+    };
 
     const itemRows = items.map((it) => ({
       id: it.id,
       name: it.name,
       category: it.category,
+      descShort: descOf(it.json),
       edit: () => this.setState({ editingItemId: it.id, addItemOpen: false, itemFormJson: it.json }),
       remove: () => this.setState({ items: items.filter((x) => x.id !== it.id), editingItemId: editingItemId === it.id ? null : editingItemId })
     }));
@@ -124,6 +140,7 @@ class Component extends DCLogic {
       id: sp.id,
       name: sp.name,
       category: sp.category,
+      descShort: descOf(sp.json),
       edit: () => this.setState({ editingSpellId: sp.id, addSpellOpen: false, spellFormJson: sp.json }),
       remove: () => this.setState({ spells: spells.filter((x) => x.id !== sp.id), editingSpellId: editingSpellId === sp.id ? null : editingSpellId })
     }));
