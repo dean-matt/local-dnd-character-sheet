@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>D&amp;D Character Sheet</title>
+    <script>
+      // Blocking and non-module so the override lands before first paint —
+      // src/theme.ts loads too late to prevent the flash, hence the
+      // duplicated storage key.
+      (() => {
+        try {
+          const stored = localStorage.getItem("theme");
+          if (stored === "light" || stored === "dark") {
+            document.documentElement.dataset.theme = stored;
+          }
+        } catch {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

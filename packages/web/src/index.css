@@ -21,6 +21,38 @@
   --radius-card: var(--radius-lg);
 }
 
+:root {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: var(--color-gray-900);
+    --color-surface: var(--color-gray-800);
+    --color-border: var(--color-gray-700);
+    --color-ink: var(--color-gray-100);
+    --color-muted: var(--color-gray-400);
+
+    /*
+     * Lightened from the light theme's value: at full strength the
+     * :focus-visible outline (a non-text indicator, 3:1 minimum) falls to
+     * 2.51:1 against --color-surface. --color-accent-hover and -active
+     * pick this up too, since they're a color-mix() of var(--color-accent).
+     */
+    --color-accent: color-mix(in oklab, #c1272d 90%, white);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: var(--color-gray-900);
+  --color-surface: var(--color-gray-800);
+  --color-border: var(--color-gray-700);
+  --color-ink: var(--color-gray-100);
+  --color-muted: var(--color-gray-400);
+
+  --color-accent: color-mix(in oklab, #c1272d 90%, white);
+}
+
 body {
   background-color: var(--color-canvas);
   color: var(--color-ink);
