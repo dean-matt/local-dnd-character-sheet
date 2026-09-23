@@ -33,10 +33,13 @@
     --color-ink: var(--color-gray-100);
     --color-muted: var(--color-gray-400);
 
-    /* Passes AA in both themes (checked), so the dark value equals the light one. */
-    --color-accent: #c1272d;
-    --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
-    --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
+    /*
+     * Lightened from the light theme's value: at full strength the
+     * :focus-visible outline (a non-text indicator, 3:1 minimum) falls to
+     * 2.51:1 against --color-surface. --color-accent-hover and -active
+     * pick this up too, since they're a color-mix() of var(--color-accent).
+     */
+    --color-accent: color-mix(in oklab, #c1272d 90%, white);
   }
 }
 
@@ -47,9 +50,7 @@
   --color-ink: var(--color-gray-100);
   --color-muted: var(--color-gray-400);
 
-  --color-accent: #c1272d;
-  --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
-  --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
+  --color-accent: color-mix(in oklab, #c1272d 90%, white);
 }
 
 body {
