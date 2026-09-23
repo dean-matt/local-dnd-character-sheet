@@ -67,6 +67,7 @@ function EditableField<T>({
   current,
 }: EditFieldProps<T> & { current: T }) {
   const id = useId();
+  const errorId = `${id}-error`;
   const initial = format(current);
   // Read once: `text` never resyncs to a later `value` prop change. No caller
   // remounts a mounted edit field with a new value yet, so there is no live case
@@ -158,6 +159,8 @@ function EditableField<T>({
         value={text}
         onChange={(event) => handleChange(event.target.value)}
         onBlur={handleBlur}
+        aria-invalid={status === "failed"}
+        aria-describedby={status === "failed" ? errorId : undefined}
         className="rounded-card border border-border bg-surface px-2 py-1"
       />
       {status === "saving" && (
@@ -171,7 +174,7 @@ function EditableField<T>({
         </span>
       )}
       {status === "failed" && (
-        <span role="alert" className="flex items-center gap-2 text-row">
+        <span id={errorId} role="alert" className="flex items-center gap-2 text-row">
           {error ?? "Save failed."}
           <button type="button" onClick={retry} className="underline">
             Retry

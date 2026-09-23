@@ -6,10 +6,12 @@ import { EmptyState, ErrorState, LoadingState } from "../states.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
 /**
- * The read state of the field contract's worked example: `data.name` has no
- * `field_overrides` row of its own yet, so `manual` is always `null` here. The
- * edit half of the contract is exercised by `components/Field.test.tsx` — no view
- * turns it on until editing ships in M5.
+ * The read state of the field contract's worked example. `data.name` is a plain
+ * field with no `field_overrides` row — it never routes through `rules`, so it
+ * has no computed half to override — but `Field` only takes a `Derived<T>`, so
+ * `manual` is hardcoded `null` here to demonstrate the read contract on the
+ * simplest value available. The edit half is exercised by
+ * `components/Field.test.tsx` — no view turns it on until editing ships in M5.
  */
 export function CharacterPage() {
   const { id = "", slug = "" } = useParams();

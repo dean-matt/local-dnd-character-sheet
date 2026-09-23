@@ -218,6 +218,8 @@ describe("Field, edit mode", () => {
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("network down"));
     expect(input).toHaveValue("12");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-describedby", screen.getByRole("alert").id);
 
     onSave.mockResolvedValueOnce(undefined);
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
@@ -225,6 +227,8 @@ describe("Field, edit mode", () => {
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
     expect(onSave).toHaveBeenCalledTimes(2);
     expect(onSave).toHaveBeenLastCalledWith(12);
+    expect(input).toHaveAttribute("aria-invalid", "false");
+    expect(input).not.toHaveAttribute("aria-describedby");
   });
 
   it("surfaces a schema validation failure without calling onSave", async () => {
