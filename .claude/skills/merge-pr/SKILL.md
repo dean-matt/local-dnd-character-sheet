@@ -78,16 +78,16 @@ means `main` moves faster than the checks run, and sequencing that is the user's
 
 ## A fenced path, with the user's direct sign-off
 
-"the diff reaches no fenced path" never gets easier to fail — nothing in
-`scripts/merge-gate.mjs` changes, and it prints `FAIL` for every caller, same as today. The
-one sanctioned path past it: having heard the sign-off directly rather than read a relayed
-report of it, the session holding the conversation with the user may run *Merge, then clean
-up* for that pull request itself, once every other condition holds. A subagent dispatched
-to merge — including the one `auto-dev`'s step 4 sends — takes no such latitude: on this
-condition it reports `FAIL` and stops, same as on any other failing condition. Every `gh`
-call here authenticates as the same account whether a human or an agent drove it; being the
-session that held the conversation is the only thing this path checks, because it is the
-only thing that distinguishes a witnessed sign-off from a claimed one.
+"the diff reaches no fenced path" never gets easier to fail — `scripts/merge-gate.mjs`
+prints `FAIL` for every caller, unchanged. The one sanctioned path past it: having heard
+the sign-off directly rather than read a relayed report of it, the session holding the
+conversation with the user may run *Merge, then clean up* for that pull request itself,
+once every other condition holds. A subagent dispatched to merge — including the one
+`auto-dev`'s step 4 sends — takes no such latitude: on this condition it reports `FAIL`
+and stops, same as on any other failing condition. Every `gh` call here authenticates as
+the same account whether a human or an agent drove it; being the session that held the
+conversation is the only thing this path checks — it's what distinguishes a witnessed
+sign-off from a claimed one.
 
 Where taken, name the sign-off in the report this skill closes with: what was approved,
 and that it was heard directly rather than relayed.
