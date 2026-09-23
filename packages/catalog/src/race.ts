@@ -3,16 +3,21 @@
  * only what a renderer needs to walk — `name`, `source` and `entries` — since neither
  * table derives a column from anything deeper; everything else upstream carries, such as
  * size, speed and ability score increases, passes through unparsed.
+ *
+ * A homebrew race's `json` reuses this same shape rather than one of its own — see
+ * `homebrewRaceInputSchema` below.
  */
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
-const raceEntrySchema = z.looseObject({
+export const raceEntrySchema = z.looseObject({
   name: z.string().min(1),
   source: z.string().min(1),
   entries: entriesSchema.optional(),
 });
+
+export type RaceEntry = z.infer<typeof raceEntrySchema>;
 
 /** A race row from `content.db`'s `races` table, addressed by `(name, source)`. */
 export const raceRecordSchema = z.strictObject({
@@ -40,3 +45,27 @@ export const subraceRecordSchema = z.strictObject({
 });
 
 export type SubraceRecord = z.infer<typeof subraceRecordSchema>;
+
+/**
+ * What a caller submits to create or rename a homebrew race. `source` is never here —
+ * the server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry
+ * rather than inside it, since it is a `homebrew_races` column, not a field the 5etools
+ * shape carries. A homebrew race is always full and self-contained: it has no subrace of
+ * its own.
+ */
+export const homebrewRaceInputSchema = raceEntrySchema.omit({ source: true }).extend({
+  edition: z.enum(EDITIONS),
+});
+
+export type HomebrewRaceInput = z.infer<typeof homebrewRaceInputSchema>;
+
+/** A stored homebrew race, as an endpoint returns it. */
+export const homebrewRaceRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: z.enum(EDITIONS),
+  json: raceEntrySchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type HomebrewRaceRecord = z.infer<typeof homebrewRaceRecordSchema>;

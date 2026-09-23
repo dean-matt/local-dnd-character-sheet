@@ -397,7 +397,7 @@ export const characterDefinitionSchema = z.strictObject({
         ),
       { error: "a class names a subclass on more than one level" },
     ),
-  race: contentRefSchema,
+  race: entryRefSchema,
   /**
    * The subrace's own name — `High`, not `Elf (High)`. The race supplies the other two
    * parts of the `subraces` key, because `(name, source)` alone collides three times

@@ -3,6 +3,10 @@
  * — `/races/{raceName}/{raceSource}/subraces` — because its identity is `(name, source,
  * race_name, race_source)`, not `(name, source)` alone; see docs/data-model.md. Its row
  * is already the race merged with the subrace, not a delta this route applies.
+ *
+ * Homebrew races live in `homebrew.db` but are not merged in here — that merge is
+ * separate work, the way it was for items, spells, backgrounds and feats. Creating,
+ * renaming or deleting one stays with `/homebrew/races`.
  */
 import {
   type RaceRecord,

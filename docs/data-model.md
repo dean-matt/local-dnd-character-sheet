@@ -58,6 +58,15 @@ else passthrough. The catalog and homebrew sides read the same fields either way
 row is written once and displayed, never edited field by field — the same reasoning
 `homebrewItemSchema` and `spellEntrySchema` give.
 
+**A homebrew race's `json` reuses `raceRecordSchema`'s entry shape** from
+`packages/catalog/src/race.ts` — `name`, `source` and `entries`, with size, speed and
+ability score increases passthrough, the same reasoning backgrounds and feats give. It
+has no subrace of its own: a subrace's identity leans on its parent's, and a homebrew
+parent has no ETL merge step to produce one, so `homebrew_races` stays full and
+self-contained until a subrace proves common enough to need one. A character's `race`
+field accepts a homebrew reference the way `background` and `feats` already do, so
+deleting a referenced race still refuses and names the character.
+
 **A homebrew feat cannot be a `granted_optional_features` grantor.** That table lives in
 `content.db`, generated wholesale by the ETL and never migrated, so it has no way to
 reference a `homebrew.db` row — separate files, no cross-database foreign key, and the

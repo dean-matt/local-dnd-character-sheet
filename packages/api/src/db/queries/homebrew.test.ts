@@ -5,6 +5,7 @@ import type {
   HomebrewBackgroundInput,
   HomebrewFeatInput,
   HomebrewItemInput,
+  HomebrewRaceInput,
   HomebrewSpellInput,
 } from "@dnd/catalog";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -13,24 +14,29 @@ import {
   deleteHomebrewBackground,
   deleteHomebrewFeat,
   deleteHomebrewItem,
+  deleteHomebrewRace,
   deleteHomebrewSpell,
   getHomebrewBackground,
   getHomebrewFeat,
   getHomebrewItem,
+  getHomebrewRace,
   getHomebrewSpell,
   insertHomebrewBackground,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewRace,
   insertHomebrewSpell,
   listHomebrewBackgrounds,
   listHomebrewFeats,
   listHomebrewItems,
+  listHomebrewRaces,
   listHomebrewSpells,
   searchHomebrewItems,
   searchHomebrewSpells,
   updateHomebrewBackground,
   updateHomebrewFeat,
   updateHomebrewItem,
+  updateHomebrewRace,
   updateHomebrewSpell,
 } from "./homebrew.ts";
 
@@ -59,6 +65,12 @@ const acidSplash = (overrides: Partial<HomebrewSpellInput> = {}): HomebrewSpellI
 
 const ironbound = (overrides: Partial<HomebrewFeatInput> = {}): HomebrewFeatInput => ({
   name: "Ironbound",
+  edition: "one",
+  ...overrides,
+});
+
+const duskling = (overrides: Partial<HomebrewRaceInput> = {}): HomebrewRaceInput => ({
+  name: "Duskling",
   edition: "one",
   ...overrides,
 });
@@ -337,6 +349,63 @@ describe("homebrew queries", () => {
 
       expect(deleteHomebrewFeat(db, "1")).toBe(true);
       expect(getHomebrewFeat(db, "1")).toBeUndefined();
+    });
+  });
+
+  describe("races", () => {
+    it("stamps HOMEBREW_SOURCE into json regardless of what a caller sends", () => {
+      const row = insertHomebrewRace(db, "1", {
+        ...duskling(),
+        source: "PHB",
+      } as HomebrewRaceInput);
+      expect(row.json.source).toBe("HB");
+    });
+
+    it("derives name from the entry on insert", () => {
+      const row = insertHomebrewRace(db, "1", duskling());
+      expect(row).toMatchObject({ name: "Duskling", edition: "one" });
+    });
+
+    it("lists and reads races by id", () => {
+      insertHomebrewRace(db, "1", duskling());
+      insertHomebrewRace(db, "2", duskling({ name: "Stonekin" }));
+
+      expect(
+        listHomebrewRaces(db)
+          .map((row) => row.name)
+          .sort(),
+      ).toEqual(["Duskling", "Stonekin"]);
+      expect(getHomebrewRace(db, "1")).toMatchObject({ id: "1", name: "Duskling" });
+      expect(getHomebrewRace(db, "missing")).toBeUndefined();
+    });
+
+    it("renames a race without changing its id", () => {
+      insertHomebrewRace(db, "1", duskling());
+
+      const renamed = updateHomebrewRace(db, "1", duskling({ name: "Duskling II" }));
+      expect(renamed).toMatchObject({ id: "1", name: "Duskling II" });
+    });
+
+    it("stamps HOMEBREW_SOURCE on a rename regardless of what a caller sends", () => {
+      insertHomebrewRace(db, "1", duskling());
+
+      const renamed = updateHomebrewRace(db, "1", {
+        ...duskling({ name: "Duskling II" }),
+        source: "PHB",
+      } as HomebrewRaceInput);
+      expect(renamed?.json.source).toBe("HB");
+    });
+
+    it("reports nothing updating or deleting an id that does not exist", () => {
+      expect(updateHomebrewRace(db, "missing", duskling())).toBeUndefined();
+      expect(deleteHomebrewRace(db, "missing")).toBe(false);
+    });
+
+    it("deletes a race, after which it reads nothing", () => {
+      insertHomebrewRace(db, "1", duskling());
+
+      expect(deleteHomebrewRace(db, "1")).toBe(true);
+      expect(getHomebrewRace(db, "1")).toBeUndefined();
     });
   });
 

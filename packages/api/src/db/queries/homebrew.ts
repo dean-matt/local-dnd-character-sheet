@@ -10,9 +10,15 @@ import type {
   HomebrewFeatInput,
   HomebrewItem,
   HomebrewItemInput,
+  HomebrewRaceInput,
   HomebrewSpellInput,
 } from "@dnd/catalog";
-import { characterOptionEntrySchema, homebrewItemSchema, spellEntrySchema } from "@dnd/catalog";
+import {
+  characterOptionEntrySchema,
+  homebrewItemSchema,
+  raceEntrySchema,
+  spellEntrySchema,
+} from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { and, eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
@@ -22,6 +28,7 @@ import {
   homebrewBackgrounds,
   homebrewFeats,
   homebrewItems,
+  homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
 import { escapeLikeTerm } from "./content.ts";
@@ -236,4 +243,41 @@ export function updateHomebrewFeat(db: HomebrewDb, id: string, input: HomebrewFe
 
 export function deleteHomebrewFeat(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewFeats).where(eq(homebrewFeats.id, id)).run().changes > 0;
+}
+
+export function listHomebrewRaces(db: HomebrewDb) {
+  return db.select().from(homebrewRaces).all();
+}
+
+export function getHomebrewRace(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewRaces).where(eq(homebrewRaces.id, id)).get();
+}
+
+function raceJson(input: HomebrewRaceInput) {
+  const { edition: _edition, ...entry } = input;
+  return raceEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+export function insertHomebrewRace(db: HomebrewDb, id: string, input: HomebrewRaceInput) {
+  const json = raceJson(input);
+  return db
+    .insert(homebrewRaces)
+    .values({ id, edition: input.edition, name: json.name, json })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewRace` reads a miss. */
+export function updateHomebrewRace(db: HomebrewDb, id: string, input: HomebrewRaceInput) {
+  const json = raceJson(input);
+  return db
+    .update(homebrewRaces)
+    .set({ edition: input.edition, name: json.name, json })
+    .where(eq(homebrewRaces.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewRace(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewRaces).where(eq(homebrewRaces.id, id)).run().changes > 0;
 }

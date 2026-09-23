@@ -236,6 +236,13 @@ describe("background", () => {
   });
 });
 
+describe("race", () => {
+  it("references the catalog and homebrew alike, as background does", () => {
+    const homebrew = { ...definition, race: { homebrewId: "hb_07" } };
+    expect(characterDefinitionSchema.parse(structuredClone(homebrew))).toEqual(homebrew);
+  });
+});
+
 describe("subrace", () => {
   /** Classic throughout, because upstream ships no subrace in the 2024 ruleset. */
   const elf = {

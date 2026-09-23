@@ -1,6 +1,6 @@
 /**
- * List, read, create, update and delete for homebrew items, spells, backgrounds and
- * feats. `source` and `id` are never accepted from a request body — the query layer
+ * List, read, create, update and delete for homebrew items, spells, backgrounds, feats
+ * and races. `source` and `id` are never accepted from a request body — the query layer
  * stamps `source` and this module generates `id` once, on create, the same rule
  * `characters.ts` sets for `name`/`level`/`edition`.
  *
@@ -12,6 +12,7 @@ import {
   type HomebrewBackgroundRecord,
   type HomebrewFeatRecord,
   type HomebrewItemRecord,
+  type HomebrewRaceRecord,
   type HomebrewSpellRecord,
   homebrewBackgroundInputSchema,
   homebrewBackgroundRecordSchema,
@@ -19,6 +20,8 @@ import {
   homebrewFeatRecordSchema,
   homebrewItemInputSchema,
   homebrewItemRecordSchema,
+  homebrewRaceInputSchema,
+  homebrewRaceRecordSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
 } from "@dnd/catalog";
@@ -29,22 +32,27 @@ import {
   deleteHomebrewBackground,
   deleteHomebrewFeat,
   deleteHomebrewItem,
+  deleteHomebrewRace,
   deleteHomebrewSpell,
   getHomebrewBackground,
   getHomebrewFeat,
   getHomebrewItem,
+  getHomebrewRace,
   getHomebrewSpell,
   insertHomebrewBackground,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewRace,
   insertHomebrewSpell,
   listHomebrewBackgrounds,
   listHomebrewFeats,
   listHomebrewItems,
+  listHomebrewRaces,
   listHomebrewSpells,
   updateHomebrewBackground,
   updateHomebrewFeat,
   updateHomebrewItem,
+  updateHomebrewRace,
   updateHomebrewSpell,
 } from "../db/queries/homebrew.ts";
 import { notFound } from "./errors.ts";
@@ -53,6 +61,7 @@ type ItemRow = NonNullable<ReturnType<typeof getHomebrewItem>>;
 type SpellRow = NonNullable<ReturnType<typeof getHomebrewSpell>>;
 type BackgroundRow = NonNullable<ReturnType<typeof getHomebrewBackground>>;
 type FeatRow = NonNullable<ReturnType<typeof getHomebrewFeat>>;
+type RaceRow = NonNullable<ReturnType<typeof getHomebrewRace>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
 function toItemRecord(row: ItemRow): HomebrewItemRecord {
@@ -74,12 +83,18 @@ function toFeatRecord(row: FeatRow): HomebrewFeatRecord {
   return homebrewFeatRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
+/** Validates a row read back from SQLite against the same schema its write went through. */
+function toRaceRecord(row: RaceRow): HomebrewRaceRecord {
+  return homebrewRaceRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+}
+
 const idParam = z.object({ id: z.string() });
 
 const ITEM_NOT_FOUND = "No homebrew item with that id";
 const SPELL_NOT_FOUND = "No homebrew spell with that id";
 const BACKGROUND_NOT_FOUND = "No homebrew background with that id";
 const FEAT_NOT_FOUND = "No homebrew feat with that id";
+const RACE_NOT_FOUND = "No homebrew race with that id";
 
 const referencingCharacterSchema = z.object({ id: z.string(), name: z.string() });
 
@@ -397,6 +412,81 @@ const removeFeat = createRoute({
   },
 });
 
+const listRaces = createRoute({
+  method: "get",
+  path: "/homebrew/races",
+  tags: ["homebrew"],
+  summary: "List every homebrew race",
+  responses: {
+    200: {
+      description: "Every homebrew race",
+      content: { "application/json": { schema: z.array(homebrewRaceRecordSchema) } },
+    },
+  },
+});
+
+const readRace = createRoute({
+  method: "get",
+  path: "/homebrew/races/{id}",
+  tags: ["homebrew"],
+  summary: "Read one homebrew race",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The homebrew race",
+      content: { "application/json": { schema: homebrewRaceRecordSchema } },
+    },
+    404: notFound("homebrew race"),
+  },
+});
+
+const createRace = createRoute({
+  method: "post",
+  path: "/homebrew/races",
+  tags: ["homebrew"],
+  summary: "Create a homebrew race",
+  request: {
+    body: { content: { "application/json": { schema: homebrewRaceInputSchema } } },
+  },
+  responses: {
+    201: {
+      description: "The created homebrew race",
+      content: { "application/json": { schema: homebrewRaceRecordSchema } },
+    },
+  },
+});
+
+const updateRace = createRoute({
+  method: "put",
+  path: "/homebrew/races/{id}",
+  tags: ["homebrew"],
+  summary: "Replace a homebrew race",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: homebrewRaceInputSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The updated homebrew race",
+      content: { "application/json": { schema: homebrewRaceRecordSchema } },
+    },
+    404: notFound("homebrew race"),
+  },
+});
+
+const removeRace = createRoute({
+  method: "delete",
+  path: "/homebrew/races/{id}",
+  tags: ["homebrew"],
+  summary: "Delete a homebrew race",
+  request: { params: idParam },
+  responses: {
+    204: { description: "The homebrew race was deleted" },
+    404: notFound("homebrew race"),
+    409: referenced("homebrew race"),
+  },
+});
+
 export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -511,6 +601,34 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     const characters = charactersReferencingHomebrew(charactersDb, id);
     if (characters.length > 0) return c.json(referencedError("This feat", characters), 409);
     if (!deleteHomebrewFeat(db, id)) return c.json({ error: FEAT_NOT_FOUND }, 404);
+    return c.body(null, 204);
+  });
+
+  routes.openapi(listRaces, (c) => c.json(listHomebrewRaces(db).map(toRaceRecord)));
+
+  routes.openapi(readRace, (c) => {
+    const row = getHomebrewRace(db, c.req.valid("param").id);
+    if (!row) return c.json({ error: RACE_NOT_FOUND }, 404);
+    return c.json(toRaceRecord(row), 200);
+  });
+
+  routes.openapi(createRace, (c) => {
+    const row = insertHomebrewRace(db, randomUUID(), c.req.valid("json"));
+    return c.json(toRaceRecord(row), 201);
+  });
+
+  routes.openapi(updateRace, (c) => {
+    const { id } = c.req.valid("param");
+    const row = updateHomebrewRace(db, id, c.req.valid("json"));
+    if (!row) return c.json({ error: RACE_NOT_FOUND }, 404);
+    return c.json(toRaceRecord(row), 200);
+  });
+
+  routes.openapi(removeRace, (c) => {
+    const { id } = c.req.valid("param");
+    const characters = charactersReferencingHomebrew(charactersDb, id);
+    if (characters.length > 0) return c.json(referencedError("This race", characters), 409);
+    if (!deleteHomebrewRace(db, id)) return c.json({ error: RACE_NOT_FOUND }, 404);
     return c.body(null, 204);
   });
 

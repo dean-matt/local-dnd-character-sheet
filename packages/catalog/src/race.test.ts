@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { raceRecordSchema, subraceRecordSchema } from "./index.ts";
+import {
+  homebrewRaceInputSchema,
+  homebrewRaceRecordSchema,
+  raceRecordSchema,
+  subraceRecordSchema,
+} from "./index.ts";
 
 describe("raceRecordSchema", () => {
   it("accepts a catalog row", () => {
@@ -36,5 +41,47 @@ describe("subraceRecordSchema", () => {
       json: { name: "Human", source: "PHB" },
     };
     expect(subraceRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("homebrewRaceInputSchema", () => {
+  it("accepts a name and an edition without a source", () => {
+    const parsed = homebrewRaceInputSchema.parse({ name: "Duskling", edition: "one" });
+    expect(parsed).toEqual({ name: "Duskling", edition: "one" });
+  });
+
+  it("keeps a field this schema does not model, such as size or speed", () => {
+    const withUnmodeledFields = {
+      name: "Duskling",
+      edition: "one",
+      size: ["M"],
+      speed: 30,
+    };
+    expect(homebrewRaceInputSchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
+  });
+
+  it("rejects a missing name, naming the failed field", () => {
+    const result = homebrewRaceInputSchema.safeParse({ edition: "one" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["name"]);
+  });
+
+  it("rejects an edition outside the two rulesets", () => {
+    const result = homebrewRaceInputSchema.safeParse({ name: "Duskling", edition: "3.5" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["edition"]);
+  });
+});
+
+describe("homebrewRaceRecordSchema", () => {
+  it("accepts a stored row", () => {
+    const record = {
+      id: "1",
+      name: "Duskling",
+      edition: "one",
+      json: { name: "Duskling", source: "HB" },
+      createdAt: new Date(0).toISOString(),
+    };
+    expect(homebrewRaceRecordSchema.parse(record)).toEqual(record);
   });
 });
