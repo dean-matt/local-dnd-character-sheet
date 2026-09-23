@@ -85,7 +85,7 @@ describe("useCharacter", () => {
 });
 
 describe("useUpdateCharacterDefinition", () => {
-  it("writes the response into the detail and list caches on success", async () => {
+  it("writes the response into the detail cache and invalidates the list on success", async () => {
     const updated = baseRecord("1");
     stubFetch(new Response(JSON.stringify(updated), { status: 200 }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
