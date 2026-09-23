@@ -1,9 +1,10 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
- * `homebrew_spells`, `homebrew_backgrounds` and `homebrew_feats` tables. `source` never
- * arrives as an argument — every write stamps `HOMEBREW_SOURCE` into `json` here, the one
- * place that builds it, and `id` is chosen by the caller once at creation and never
- * reassigned, so a rename keeps the id a character already references.
+ * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats` and `homebrew_races`
+ * tables. `source` never arrives as an argument — every write stamps `HOMEBREW_SOURCE`
+ * into `json` here, the one place that builds it, and `id` is chosen by the caller once
+ * at creation and never reassigned, so a rename keeps the id a character already
+ * references.
  */
 import type {
   HomebrewBackgroundInput,

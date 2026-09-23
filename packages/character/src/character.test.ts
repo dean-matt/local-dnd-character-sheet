@@ -241,6 +241,15 @@ describe("race", () => {
     const homebrew = { ...definition, race: { homebrewId: "hb_07" } };
     expect(characterDefinitionSchema.parse(structuredClone(homebrew))).toEqual(homebrew);
   });
+
+  it("records a homebrew race as a feat's grantor, the way Human (XPHB) does for a catalog one", () => {
+    const granted = {
+      ...definition,
+      race: { homebrewId: "hb_07" },
+      feats: [{ ref: SKILLED, grantedBy: { kind: "race", ref: { homebrewId: "hb_07" } } }],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(granted))).toEqual(granted);
+  });
 });
 
 describe("subrace", () => {

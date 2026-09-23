@@ -59,13 +59,13 @@ row is written once and displayed, never edited field by field — the same reas
 `homebrewItemSchema` and `spellEntrySchema` give.
 
 **A homebrew race's `json` reuses `raceRecordSchema`'s entry shape** from
-`packages/catalog/src/race.ts` — `name`, `source` and `entries`, with size, speed and
-ability score increases passthrough, the same reasoning backgrounds and feats give. It
-has no subrace of its own: a subrace's identity leans on its parent's, and a homebrew
-parent has no ETL merge step to produce one, so `homebrew_races` stays full and
-self-contained until a subrace proves common enough to need one. A character's `race`
-field accepts a homebrew reference the way `background` and `feats` already do, so
-deleting a referenced race still refuses and names the character.
+`packages/catalog/src/race.ts`, the same reasoning backgrounds and feats give. It has no
+subrace of its own: a subrace's identity leans on its parent's, and a homebrew parent has
+no ETL merge step to produce one, so `homebrew_races` stays full and self-contained until
+a subrace proves common enough to need one. A character's `race` field and its
+feat-grantor branch both accept a homebrew reference, the way `background` already does,
+so a homebrew race that grants a feat records its provenance and a delete still refuses
+where a character holds it.
 
 **A homebrew feat cannot be a `granted_optional_features` grantor.** That table lives in
 `content.db`, generated wholesale by the ETL and never migrated, so it has no way to

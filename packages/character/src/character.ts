@@ -260,7 +260,7 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
   classGrantor,
   subclassGrantor,
   z.strictObject({ kind: z.literal("background"), ref: entryRefSchema }),
-  z.strictObject({ kind: z.literal("race"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("race"), ref: entryRefSchema }),
   z.strictObject({
     kind: z.literal("subrace"),
     ref: contentRefSchema,
