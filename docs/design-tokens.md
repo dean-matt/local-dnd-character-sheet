@@ -71,9 +71,10 @@ reader gets the same policy without a component opting in.
 
 ## Worked example
 
-`packages/web/src/App.tsx` renders a card against these tokens — surface, border,
-`radius-card`, `text-row` labels, a `text-number` stat, and the accent on its one
-interactive control. The next view to land copies its shape rather than reinventing one.
+`packages/web/src/states.tsx` renders its loading, error and empty cards against these
+tokens — surface, border, `radius-card` and `text-row` — and every route reuses them
+rather than inventing its own. The next view with a number to show is the first to reach
+for `text-number`.
 
 ## Out of scope here
 
