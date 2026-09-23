@@ -21,6 +21,28 @@
   --radius-card: var(--radius-lg);
 }
 
+:root {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: var(--color-gray-900);
+    --color-surface: var(--color-gray-800);
+    --color-border: var(--color-gray-700);
+    --color-ink: var(--color-gray-100);
+    --color-muted: var(--color-gray-400);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: var(--color-gray-900);
+  --color-surface: var(--color-gray-800);
+  --color-border: var(--color-gray-700);
+  --color-ink: var(--color-gray-100);
+  --color-muted: var(--color-gray-400);
+}
+
 body {
   background-color: var(--color-canvas);
   color: var(--color-ink);
