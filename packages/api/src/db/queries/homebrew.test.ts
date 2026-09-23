@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
   HomebrewBackgroundInput,
+  HomebrewClassInput,
   HomebrewFeatInput,
   HomebrewItemInput,
   HomebrewRaceInput,
@@ -12,21 +13,25 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../client.ts";
 import {
   deleteHomebrewBackground,
+  deleteHomebrewClass,
   deleteHomebrewFeat,
   deleteHomebrewItem,
   deleteHomebrewRace,
   deleteHomebrewSpell,
   getHomebrewBackground,
+  getHomebrewClass,
   getHomebrewFeat,
   getHomebrewItem,
   getHomebrewRace,
   getHomebrewSpell,
   insertHomebrewBackground,
+  insertHomebrewClass,
   insertHomebrewFeat,
   insertHomebrewItem,
   insertHomebrewRace,
   insertHomebrewSpell,
   listHomebrewBackgrounds,
+  listHomebrewClasses,
   listHomebrewFeats,
   listHomebrewItems,
   listHomebrewRaces,
@@ -34,6 +39,7 @@ import {
   searchHomebrewItems,
   searchHomebrewSpells,
   updateHomebrewBackground,
+  updateHomebrewClass,
   updateHomebrewFeat,
   updateHomebrewItem,
   updateHomebrewRace,
@@ -72,6 +78,13 @@ const ironbound = (overrides: Partial<HomebrewFeatInput> = {}): HomebrewFeatInpu
 const duskling = (overrides: Partial<HomebrewRaceInput> = {}): HomebrewRaceInput => ({
   name: "Duskling",
   edition: "one",
+  ...overrides,
+});
+
+const warden = (overrides: Partial<HomebrewClassInput> = {}): HomebrewClassInput => ({
+  name: "Warden",
+  edition: "one",
+  hd: { number: 1, faces: 10 },
   ...overrides,
 });
 
@@ -406,6 +419,60 @@ describe("homebrew queries", () => {
 
       expect(deleteHomebrewRace(db, "1")).toBe(true);
       expect(getHomebrewRace(db, "1")).toBeUndefined();
+    });
+  });
+
+  describe("classes", () => {
+    it("stamps HOMEBREW_SOURCE into json regardless of what a caller sends", () => {
+      const row = insertHomebrewClass(db, "1", {
+        ...warden(),
+        source: "PHB",
+      } as HomebrewClassInput);
+      expect(row.json.source).toBe("HB");
+    });
+
+    it("derives hitDie from hd.faces on insert", () => {
+      const row = insertHomebrewClass(db, "1", warden({ hd: { number: 1, faces: 12 } }));
+      expect(row).toMatchObject({ name: "Warden", edition: "one", hitDie: 12 });
+    });
+
+    it("lists and reads classes by id", () => {
+      insertHomebrewClass(db, "1", warden());
+      insertHomebrewClass(db, "2", warden({ name: "Ranger of the Deep" }));
+
+      expect(
+        listHomebrewClasses(db)
+          .map((row) => row.name)
+          .sort(),
+      ).toEqual(["Ranger of the Deep", "Warden"]);
+      expect(getHomebrewClass(db, "1")).toMatchObject({ id: "1", name: "Warden", hitDie: 10 });
+      expect(getHomebrewClass(db, "missing")).toBeUndefined();
+    });
+
+    it("renames a class without changing its id", () => {
+      insertHomebrewClass(db, "1", warden());
+
+      const renamed = updateHomebrewClass(db, "1", warden({ name: "Warden II" }));
+      expect(renamed).toMatchObject({ id: "1", name: "Warden II" });
+    });
+
+    it("re-derives hitDie on update", () => {
+      insertHomebrewClass(db, "1", warden());
+
+      const updated = updateHomebrewClass(db, "1", warden({ hd: { number: 1, faces: 8 } }));
+      expect(updated).toMatchObject({ hitDie: 8 });
+    });
+
+    it("reports nothing updating or deleting an id that does not exist", () => {
+      expect(updateHomebrewClass(db, "missing", warden())).toBeUndefined();
+      expect(deleteHomebrewClass(db, "missing")).toBe(false);
+    });
+
+    it("deletes a class, after which it reads nothing", () => {
+      insertHomebrewClass(db, "1", warden());
+
+      expect(deleteHomebrewClass(db, "1")).toBe(true);
+      expect(getHomebrewClass(db, "1")).toBeUndefined();
     });
   });
 

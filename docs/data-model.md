@@ -58,14 +58,13 @@ else passthrough. The catalog and homebrew sides read the same fields either way
 row is written once and displayed, never edited field by field — the same reasoning
 `homebrewItemSchema` and `spellEntrySchema` give.
 
-**A homebrew race's `json` reuses `raceRecordSchema`'s entry shape** from
-`packages/catalog/src/race.ts`, the same reasoning backgrounds and feats give. It has no
-subrace of its own: a subrace's identity leans on its parent's, and a homebrew parent has
-no ETL merge step to produce one, so `homebrew_races` stays full and self-contained until
-a subrace proves common enough to need one. A character's `race` field and its
-feat-grantor branch both accept a homebrew reference, the way `background` already does,
-so a homebrew race that grants a feat records its provenance and a delete still refuses
-where a character holds it.
+**A homebrew race or class's `json` reuses its catalog record's entry shape**, from
+`packages/catalog/src/race.ts` and `class.ts` — a class adds one required field, `hd`, so
+`homebrew_classes.hit_die` always has a roll to derive from. Neither carries a child row
+of its own: no subrace until one proves common enough to need it, no feature rows and no
+subclass until its own issue adds one — a homebrew parent has no ETL merge step to build
+either from. `race`, `levels[].class` and both feat-grantor branches accept a homebrew
+reference, so a delete still refuses where a character holds one.
 
 **A homebrew feat cannot be a `granted_optional_features` grantor.** That table lives in
 `content.db`, generated wholesale by the ETL and never migrated, so it has no way to

@@ -29,7 +29,6 @@ import {
   hitPointMaximum,
   houseRule,
   passiveSkill,
-  refKey,
   resourceSchema,
   spellSlotSchema,
   totalLevel,
@@ -65,8 +64,8 @@ const derivedInput = (traits: object = {}) => ({
 
 /** Both d8 upstream, in both editions. */
 const hitDice = new Map<string, HitDie>([
-  [refKey(WARLOCK), 8],
-  [refKey(ROGUE), 8],
+  [entryKey(WARLOCK), 8],
+  [entryKey(ROGUE), 8],
 ]);
 
 const definition: CharacterDefinition = {
@@ -247,6 +246,22 @@ describe("race", () => {
       ...definition,
       race: { homebrewId: "hb_07" },
       feats: [{ ref: SKILLED, grantedBy: { kind: "race", ref: { homebrewId: "hb_07" } } }],
+    };
+    expect(characterDefinitionSchema.parse(structuredClone(granted))).toEqual(granted);
+  });
+});
+
+describe("class", () => {
+  it("references the catalog and homebrew alike, as background does", () => {
+    const homebrew = { ...definition, levels: [{ class: { homebrewId: "hb_08" } }] };
+    expect(characterDefinitionSchema.parse(structuredClone(homebrew))).toEqual(homebrew);
+  });
+
+  it("records a homebrew class as a pick's grantor, the way a catalog class does", () => {
+    const granted = {
+      ...definition,
+      levels: [{ class: { homebrewId: "hb_08" } }],
+      feats: [{ ref: SKILLED, grantedBy: { kind: "class", ref: { homebrewId: "hb_08" } } }],
     };
     expect(characterDefinitionSchema.parse(structuredClone(granted))).toEqual(granted);
   });
@@ -728,12 +743,12 @@ describe("class levels", () => {
 
   it("keeps the order the levels were taken", () => {
     const parsed = characterDefinitionSchema.parse(structuredClone(definition));
-    expect(parsed.levels.map((level) => level.class.name)).toEqual([
-      "Warlock",
-      "Warlock",
-      "Warlock",
-      "Rogue",
-      "Rogue",
+    expect(parsed.levels.map((level) => entryKey(level.class))).toEqual([
+      entryKey(WARLOCK),
+      entryKey(WARLOCK),
+      entryKey(WARLOCK),
+      entryKey(ROGUE),
+      entryKey(ROGUE),
     ]);
   });
 });
@@ -886,8 +901,8 @@ describe("hit point maximum", () => {
     const fighter = { name: "Fighter", source: "XPHB" };
     const wizard = { name: "Wizard", source: "XPHB" };
     const dice = new Map<string, HitDie>([
-      [refKey(fighter), 10],
-      [refKey(wizard), 6],
+      [entryKey(fighter), 10],
+      [entryKey(wizard), 6],
     ]);
     const fighterFirst = { ...definition, levels: [{ class: fighter }, { class: wizard }] };
     const wizardFirst = { ...definition, levels: [{ class: wizard }, { class: fighter }] };
@@ -897,9 +912,16 @@ describe("hit point maximum", () => {
   });
 
   it("rejects a class whose die the catalog did not supply", () => {
-    expect(() => hitPointMaximum(definition, new Map([[refKey(ROGUE), 8]]))).toThrow(
-      "No hit die for Warlock (XPHB)",
+    expect(() => hitPointMaximum(definition, new Map([[entryKey(ROGUE), 8]]))).toThrow(
+      "No hit die for catalog|Warlock|XPHB",
     );
+  });
+
+  it("takes the die for a homebrew class, keyed by its id rather than a name and source", () => {
+    const homebrewLevels = { ...definition, levels: [{ class: { homebrewId: "hb_warden" } }] };
+    const dice = new Map<string, HitDie>([[entryKey({ homebrewId: "hb_warden" }), 10]]);
+
+    expect(hitPointMaximum(homebrewLevels, dice)).toBe(10 + 2);
   });
 
   it("has somewhere to live, overridable like any derived field", () => {

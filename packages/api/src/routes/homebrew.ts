@@ -1,8 +1,8 @@
 /**
- * List, read, create, update and delete for homebrew items, spells, backgrounds, feats
- * and races. `source` and `id` are never accepted from a request body — the query layer
- * stamps `source` and this module generates `id` once, on create, the same rule
- * `characters.ts` sets for `name`/`level`/`edition`.
+ * List, read, create, update and delete for homebrew items, spells, backgrounds, feats,
+ * races and classes. `source` and `id` are never accepted from a request body — the
+ * query layer stamps `source` and this module generates `id` once, on create, the same
+ * rule `characters.ts` sets for `name`/`level`/`edition`.
  *
  * A delete needs `characters.db` as well as `homebrew.db`: no foreign key spans the two
  * files, so this route enforces the reference instead.
@@ -10,12 +10,15 @@
 import { randomUUID } from "node:crypto";
 import {
   type HomebrewBackgroundRecord,
+  type HomebrewClassRecord,
   type HomebrewFeatRecord,
   type HomebrewItemRecord,
   type HomebrewRaceRecord,
   type HomebrewSpellRecord,
   homebrewBackgroundInputSchema,
   homebrewBackgroundRecordSchema,
+  homebrewClassInputSchema,
+  homebrewClassRecordSchema,
   homebrewFeatInputSchema,
   homebrewFeatRecordSchema,
   homebrewItemInputSchema,
@@ -30,26 +33,31 @@ import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import {
   deleteHomebrewBackground,
+  deleteHomebrewClass,
   deleteHomebrewFeat,
   deleteHomebrewItem,
   deleteHomebrewRace,
   deleteHomebrewSpell,
   getHomebrewBackground,
+  getHomebrewClass,
   getHomebrewFeat,
   getHomebrewItem,
   getHomebrewRace,
   getHomebrewSpell,
   insertHomebrewBackground,
+  insertHomebrewClass,
   insertHomebrewFeat,
   insertHomebrewItem,
   insertHomebrewRace,
   insertHomebrewSpell,
   listHomebrewBackgrounds,
+  listHomebrewClasses,
   listHomebrewFeats,
   listHomebrewItems,
   listHomebrewRaces,
   listHomebrewSpells,
   updateHomebrewBackground,
+  updateHomebrewClass,
   updateHomebrewFeat,
   updateHomebrewItem,
   updateHomebrewRace,
@@ -62,6 +70,7 @@ type SpellRow = NonNullable<ReturnType<typeof getHomebrewSpell>>;
 type BackgroundRow = NonNullable<ReturnType<typeof getHomebrewBackground>>;
 type FeatRow = NonNullable<ReturnType<typeof getHomebrewFeat>>;
 type RaceRow = NonNullable<ReturnType<typeof getHomebrewRace>>;
+type ClassRow = NonNullable<ReturnType<typeof getHomebrewClass>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
 function toItemRecord(row: ItemRow): HomebrewItemRecord {
@@ -88,6 +97,11 @@ function toRaceRecord(row: RaceRow): HomebrewRaceRecord {
   return homebrewRaceRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
+/** Validates a row read back from SQLite against the same schema its write went through. */
+function toClassRecord(row: ClassRow): HomebrewClassRecord {
+  return homebrewClassRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+}
+
 const idParam = z.object({ id: z.string() });
 
 const ITEM_NOT_FOUND = "No homebrew item with that id";
@@ -95,6 +109,7 @@ const SPELL_NOT_FOUND = "No homebrew spell with that id";
 const BACKGROUND_NOT_FOUND = "No homebrew background with that id";
 const FEAT_NOT_FOUND = "No homebrew feat with that id";
 const RACE_NOT_FOUND = "No homebrew race with that id";
+const CLASS_NOT_FOUND = "No homebrew class with that id";
 
 const referencingCharacterSchema = z.object({ id: z.string(), name: z.string() });
 
@@ -487,6 +502,81 @@ const removeRace = createRoute({
   },
 });
 
+const listClasses = createRoute({
+  method: "get",
+  path: "/homebrew/classes",
+  tags: ["homebrew"],
+  summary: "List every homebrew class",
+  responses: {
+    200: {
+      description: "Every homebrew class",
+      content: { "application/json": { schema: z.array(homebrewClassRecordSchema) } },
+    },
+  },
+});
+
+const readClass = createRoute({
+  method: "get",
+  path: "/homebrew/classes/{id}",
+  tags: ["homebrew"],
+  summary: "Read one homebrew class",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The homebrew class",
+      content: { "application/json": { schema: homebrewClassRecordSchema } },
+    },
+    404: notFound("homebrew class"),
+  },
+});
+
+const createClass = createRoute({
+  method: "post",
+  path: "/homebrew/classes",
+  tags: ["homebrew"],
+  summary: "Create a homebrew class",
+  request: {
+    body: { content: { "application/json": { schema: homebrewClassInputSchema } } },
+  },
+  responses: {
+    201: {
+      description: "The created homebrew class",
+      content: { "application/json": { schema: homebrewClassRecordSchema } },
+    },
+  },
+});
+
+const updateClass = createRoute({
+  method: "put",
+  path: "/homebrew/classes/{id}",
+  tags: ["homebrew"],
+  summary: "Replace a homebrew class",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: homebrewClassInputSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The updated homebrew class",
+      content: { "application/json": { schema: homebrewClassRecordSchema } },
+    },
+    404: notFound("homebrew class"),
+  },
+});
+
+const removeClass = createRoute({
+  method: "delete",
+  path: "/homebrew/classes/{id}",
+  tags: ["homebrew"],
+  summary: "Delete a homebrew class",
+  request: { params: idParam },
+  responses: {
+    204: { description: "The homebrew class was deleted" },
+    404: notFound("homebrew class"),
+    409: referenced("homebrew class"),
+  },
+});
+
 export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -629,6 +719,34 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     const characters = charactersReferencingHomebrew(charactersDb, id);
     if (characters.length > 0) return c.json(referencedError("This race", characters), 409);
     if (!deleteHomebrewRace(db, id)) return c.json({ error: RACE_NOT_FOUND }, 404);
+    return c.body(null, 204);
+  });
+
+  routes.openapi(listClasses, (c) => c.json(listHomebrewClasses(db).map(toClassRecord)));
+
+  routes.openapi(readClass, (c) => {
+    const row = getHomebrewClass(db, c.req.valid("param").id);
+    if (!row) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    return c.json(toClassRecord(row), 200);
+  });
+
+  routes.openapi(createClass, (c) => {
+    const row = insertHomebrewClass(db, randomUUID(), c.req.valid("json"));
+    return c.json(toClassRecord(row), 201);
+  });
+
+  routes.openapi(updateClass, (c) => {
+    const { id } = c.req.valid("param");
+    const row = updateHomebrewClass(db, id, c.req.valid("json"));
+    if (!row) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    return c.json(toClassRecord(row), 200);
+  });
+
+  routes.openapi(removeClass, (c) => {
+    const { id } = c.req.valid("param");
+    const characters = charactersReferencingHomebrew(charactersDb, id);
+    if (characters.length > 0) return c.json(referencedError("This class", characters), 409);
+    if (!deleteHomebrewClass(db, id)) return c.json({ error: CLASS_NOT_FOUND }, 404);
     return c.body(null, 204);
   });
 

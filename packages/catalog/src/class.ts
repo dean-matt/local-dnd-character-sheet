@@ -55,6 +55,44 @@ export const classFeatureRecordSchema = z.strictObject({
 
 export type ClassFeatureRecord = z.infer<typeof classFeatureRecordSchema>;
 
+/** The `hd` roll a class table prints — one die, the shape `hitDie` below derives from. */
+const hitDieRollSchema = z.strictObject({ number: z.literal(1), faces: z.int().positive() });
+
+/**
+ * A homebrew class's `json`: `classEntrySchema`'s shape plus a required `hd`, since a
+ * homebrew class has no `packages/content/src/load/classes.ts` load step to reject a
+ * missing or malformed roll first — the schema is the only gate a caller's paste meets
+ * before `homebrewClassRecordSchema.hitDie` reads `hd.faces` off it. It carries no
+ * feature or subclass rows of its own — see `docs/data-model.md`.
+ */
+export const homebrewClassSchema = classEntrySchema.extend({ hd: hitDieRollSchema });
+
+export type HomebrewClass = z.infer<typeof homebrewClassSchema>;
+
+/**
+ * What a caller submits to create or rename a homebrew class. `source` is never here —
+ * the server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry
+ * rather than inside it, since it is a `homebrew_classes` column, not a field the 5etools
+ * shape carries.
+ */
+export const homebrewClassInputSchema = homebrewClassSchema.omit({ source: true }).extend({
+  edition: z.enum(EDITIONS),
+});
+
+export type HomebrewClassInput = z.infer<typeof homebrewClassInputSchema>;
+
+/** A stored homebrew class, as an endpoint returns it. */
+export const homebrewClassRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: z.enum(EDITIONS),
+  hitDie: z.int().positive(),
+  json: homebrewClassSchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type HomebrewClassRecord = z.infer<typeof homebrewClassRecordSchema>;
+
 /** A printed table value at one level — a count, a die, a bonus — stored as text. */
 const classResourceSchema = z.strictObject({
   resourceKey: z.string().min(1),
