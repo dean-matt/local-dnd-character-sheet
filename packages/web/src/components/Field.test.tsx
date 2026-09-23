@@ -231,6 +231,39 @@ describe("Field, edit mode", () => {
     expect(input).not.toHaveAttribute("aria-describedby");
   });
 
+  it("retries a failed save when the user edits back to the same value, without clicking retry", async () => {
+    const onSave = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce(undefined);
+    render(
+      <Field
+        mode="edit"
+        label="Hit points"
+        value={{ computed: 8, manual: null }}
+        format={format}
+        schema={schema}
+        parse={parse}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Hit points" });
+    fireEvent.change(input, { target: { value: "12" } });
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+
+    // A detour through another value, landing back on the one that failed —
+    // never a click on Retry.
+    fireEvent.change(input, { target: { value: "13" } });
+    fireEvent.change(input, { target: { value: "12" } });
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+    expect(onSave).toHaveBeenLastCalledWith(12);
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+  });
+
   it("surfaces a schema validation failure without calling onSave", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(

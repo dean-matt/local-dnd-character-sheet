@@ -76,9 +76,11 @@ function EditableField<T>({
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | undefined>();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  // Seeded with the field's own starting text, not undefined, so a blur that never
-  // touched the input reads as unchanged rather than as an edit to save.
-  const attempted = useRef<string>(initial);
+  // The text behind the last write that actually landed, seeded with the field's
+  // own starting text. `commit` skips only a raw value equal to this — never a
+  // check against `status`, which a keystroke resets on every change and so
+  // cannot reliably say whether the current text was ever saved.
+  const savedText = useRef<string>(initial);
   const queue = useRef(Promise.resolve());
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -90,11 +92,10 @@ function EditableField<T>({
 
   async function commit(raw: string) {
     clearTimeout(timer.current);
-    if (raw === attempted.current && status !== "failed") return;
-    attempted.current = raw;
+    if (raw === savedText.current) return;
 
     if (raw.trim() === "") {
-      await save(null);
+      await save(raw, null);
       return;
     }
 
@@ -112,18 +113,19 @@ function EditableField<T>({
       setError(result.error.issues[0]?.message ?? "Invalid value.");
       return;
     }
-    await save(result.data);
+    await save(raw, result.data);
   }
 
   // Chained on `queue` rather than fired directly: a commit that lands while a
   // prior save is still in flight waits for it, so the status shown always
   // reflects the most recently attempted write rather than whichever settles first.
-  async function save(next: T | null) {
+  async function save(raw: string, next: T | null) {
     const run = async () => {
       setStatus("saving");
       setError(undefined);
       try {
         await onSave(next);
+        savedText.current = raw;
         setStatus("saved");
       } catch (err) {
         setStatus("failed");
