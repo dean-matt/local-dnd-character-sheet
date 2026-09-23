@@ -19,6 +19,9 @@
   --spacing-row: 2rem;
 
   --radius-card: var(--radius-lg);
+
+  --duration-standard: 150ms;
+  --ease-standard: var(--ease-out);
 }
 
 :root {
@@ -61,4 +64,27 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /*
+   * One rule for every element rather than a motion-safe variant per
+   * component, so a transition or animation added later is covered without
+   * opting in — which is also why it needs !important, to outrank whatever
+   * duration the component authored. 0.01ms rather than 0 keeps a
+   * `transitionend` or `animationend` listener firing instead of never
+   * seeing the event.
+   */
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: must outrank a component's own duration */
+    animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must outrank a component's own duration */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must outrank a component's own duration */
+    transition-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must outrank a component's own duration */
+    scroll-behavior: auto !important;
+  }
 }

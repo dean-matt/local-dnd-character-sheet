@@ -51,6 +51,24 @@ checked once against these tokens rather than per view:
 - `color-muted` on `color-surface`: 4.83:1 — passes WCAG AA for normal text
 - `color-ink` on `color-surface` or `color-canvas`: >15:1
 
+## Motion
+
+The sheet is read for its numbers, not its transitions. Most of it does not move at all:
+
+| Token | Value | Used for |
+|---|---|---|
+| `duration-standard` | `150ms` | A popover opening or closing, a tab changing — content changing state in place |
+| `ease-standard` | Tailwind's `ease-out` | Paired with `duration-standard` |
+
+A page change is a route change and gets nothing beyond what the router does for free —
+no crossfade, no slide. Everything else gets nothing: no hover transition, no entrance
+animation, and never a transition or animation on a `text-number` element, where
+movement would fight the read.
+
+`index.css` also carries a global `prefers-reduced-motion: reduce` rule that collapses
+every `animation-duration` and `transition-duration` to near zero, so a reduced-motion
+reader gets the same policy without a component opting in.
+
 ## Worked example
 
 `packages/web/src/App.tsx` renders a card against these tokens — surface, border,
@@ -59,5 +77,5 @@ interactive control. The next view to land copies its shape rather than reinvent
 
 ## Out of scope here
 
-Dark mode, print, motion, and a component library as a dependency. Components are
-shadcn/ui, copied in one at a time when a view first needs one, per `CLAUDE.md`.
+Print and a component library as a dependency. Components are shadcn/ui, copied in one
+at a time when a view first needs one, per `CLAUDE.md`.
