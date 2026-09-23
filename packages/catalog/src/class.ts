@@ -65,12 +65,7 @@ const hitDieRollSchema = z.strictObject({ number: z.literal(1), faces: z.int().p
  * before `homebrewClassRecordSchema.hitDie` reads `hd.faces` off it. It carries no
  * feature or subclass rows of its own — see `docs/data-model.md`.
  */
-export const homebrewClassSchema = z.looseObject({
-  name: z.string().min(1),
-  source: z.string().min(1),
-  hd: hitDieRollSchema,
-  entries: entriesSchema.optional(),
-});
+export const homebrewClassSchema = classEntrySchema.extend({ hd: hitDieRollSchema });
 
 export type HomebrewClass = z.infer<typeof homebrewClassSchema>;
 
