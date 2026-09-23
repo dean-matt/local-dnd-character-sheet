@@ -1,5 +1,5 @@
 /**
- * Schema for `homebrew.db` — your custom items and spells.
+ * Schema for `homebrew.db` — your custom items, spells, backgrounds and feats.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
