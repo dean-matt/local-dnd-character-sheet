@@ -93,6 +93,67 @@ describe("Field, edit mode", () => {
     expect(onSave).toHaveBeenCalledTimes(1);
   });
 
+  it("does not save on blur when the field was never edited", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Field
+        mode="edit"
+        label="Hit points"
+        value={{ computed: 8, manual: null }}
+        format={format}
+        schema={schema}
+        parse={parse}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+
+    fireEvent.blur(screen.getByRole("textbox", { name: "Hit points" }));
+
+    await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS * 3));
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("keeps a queued save behind one already in flight, in order", async () => {
+    let resolveFirst = () => {};
+    const first = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const onSave = vi
+      .fn()
+      .mockImplementationOnce(() => first)
+      .mockResolvedValueOnce(undefined);
+
+    render(
+      <Field
+        mode="edit"
+        label="Hit points"
+        value={{ computed: 8, manual: null }}
+        format={format}
+        schema={schema}
+        parse={parse}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+
+    const input = screen.getByRole("textbox", { name: "Hit points" });
+    fireEvent.change(input, { target: { value: "9" } });
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(input, { target: { value: "12" } });
+    fireEvent.blur(input);
+
+    await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS * 3));
+    expect(onSave).toHaveBeenCalledTimes(1);
+
+    resolveFirst();
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+    expect(onSave).toHaveBeenNthCalledWith(1, 9);
+    expect(onSave).toHaveBeenNthCalledWith(2, 12);
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+  });
+
   it("clears the override by writing null rather than a parsed empty value", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(

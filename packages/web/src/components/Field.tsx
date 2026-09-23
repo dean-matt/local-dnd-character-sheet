@@ -67,11 +67,15 @@ function EditableField<T>({
   current,
 }: EditFieldProps<T> & { current: T }) {
   const id = useId();
-  const [text, setText] = useState(format(current));
+  const initial = format(current);
+  const [text, setText] = useState(initial);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | undefined>();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const attempted = useRef<string | undefined>(undefined);
+  // Seeded with the field's own starting text, not undefined, so a blur that never
+  // touched the input reads as unchanged rather than as an edit to save.
+  const attempted = useRef<string>(initial);
+  const queue = useRef(Promise.resolve());
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -107,16 +111,23 @@ function EditableField<T>({
     await save(result.data);
   }
 
+  // Chained on `queue` rather than fired directly: a commit that lands while a
+  // prior save is still in flight waits for it, so the status shown always
+  // reflects the most recently attempted write rather than whichever settles first.
   async function save(next: T | null) {
-    setStatus("saving");
-    setError(undefined);
-    try {
-      await onSave(next);
-      setStatus("saved");
-    } catch (err) {
-      setStatus("failed");
-      setError(err instanceof Error ? err.message : "Save failed.");
-    }
+    const run = async () => {
+      setStatus("saving");
+      setError(undefined);
+      try {
+        await onSave(next);
+        setStatus("saved");
+      } catch (err) {
+        setStatus("failed");
+        setError(err instanceof Error ? err.message : "Save failed.");
+      }
+    };
+    queue.current = queue.current.then(run);
+    await queue.current;
   }
 
   function handleChange(next: string) {
