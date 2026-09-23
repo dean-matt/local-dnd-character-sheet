@@ -49,6 +49,8 @@ describe("/openapi.json", () => {
       "/homebrew/feats/{id}",
       "/homebrew/items",
       "/homebrew/items/{id}",
+      "/homebrew/races",
+      "/homebrew/races/{id}",
       "/homebrew/spells",
       "/homebrew/spells/{id}",
       "/spells",

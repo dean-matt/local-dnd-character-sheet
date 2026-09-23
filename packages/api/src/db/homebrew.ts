@@ -1,5 +1,5 @@
 /**
- * Schema for `homebrew.db` — your custom items, spells, backgrounds and feats.
+ * Schema for `homebrew.db` — your custom items, spells, backgrounds, feats and races.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
@@ -8,7 +8,7 @@
  * `json` holds the 5etools entry shape `@dnd/catalog` defines, not a shape of our own —
  * see `docs/data-model.md` for why.
  */
-import type { CharacterOptionEntry, HomebrewItem, SpellEntry } from "@dnd/catalog";
+import type { CharacterOptionEntry, HomebrewItem, RaceEntry, SpellEntry } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
@@ -54,6 +54,18 @@ export const homebrewItems = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [index("homebrew_items_by_name").on(t.name)],
+);
+
+export const homebrewRaces = sqliteTable(
+  "homebrew_races",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+    json: text("json", { mode: "json" }).$type<RaceEntry>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("homebrew_races_by_name").on(t.name)],
 );
 
 export const homebrewSpells = sqliteTable(
