@@ -68,6 +68,9 @@ function EditableField<T>({
 }: EditFieldProps<T> & { current: T }) {
   const id = useId();
   const initial = format(current);
+  // Read once: `text` never resyncs to a later `value` prop change. No caller
+  // remounts a mounted edit field with a new value yet, so there is no live case
+  // to settle a resync policy against — M5's first edit caller decides it.
   const [text, setText] = useState(initial);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | undefined>();
