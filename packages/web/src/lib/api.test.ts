@@ -1,14 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { stubFetch } from "../test/stubFetch.ts";
 import { ApiError, apiDelete, apiGet, apiMutate } from "./api.ts";
 
 const widgetSchema = z.object({ name: z.string() });
-
-function stubFetch(response: Response) {
-  const fetchMock = vi.fn().mockResolvedValue(response);
-  vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
-}
 
 afterEach(() => {
   vi.unstubAllGlobals();

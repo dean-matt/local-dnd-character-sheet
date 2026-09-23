@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubFetch } from "../test/stubFetch.ts";
 import {
   characterKey,
   charactersKey,
@@ -43,12 +44,6 @@ const baseRecord = (id: string) => ({
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",
 });
-
-function stubFetch(response: Response) {
-  const fetchMock = vi.fn().mockResolvedValue(response);
-  vi.stubGlobal("fetch", fetchMock);
-  return fetchMock;
-}
 
 function wrapper(queryClient: QueryClient) {
   return function Wrapper({ children }: { children: ReactNode }) {

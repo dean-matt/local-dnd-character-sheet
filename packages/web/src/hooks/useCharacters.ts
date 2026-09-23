@@ -32,11 +32,11 @@ export function useCharacter(id: string) {
 }
 
 /**
- * Replaces a character's definition. On success the mutation writes the detail and list
- * caches from the response rather than merely invalidating them, so a reader sees the
- * write without a second round trip. On failure the caches stay untouched and the
- * mutation's own `error` is what a view renders — TanStack Query never resolves a
- * failed write as data.
+ * Replaces a character's definition. On success the mutation writes the response
+ * straight into the detail cache and invalidates the list, so a reader sees the write
+ * on the character's own page without waiting on a refetch. On failure both caches stay
+ * untouched and the mutation's own `error` is what a view renders — TanStack Query
+ * never resolves a failed write as data.
  */
 export function useUpdateCharacterDefinition(id: string) {
   const queryClient = useQueryClient();

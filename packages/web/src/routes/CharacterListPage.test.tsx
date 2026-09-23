@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubFetch } from "../test/stubFetch.ts";
 import { CharacterListPage } from "./CharacterListPage.tsx";
 
 function characterRecord(id: string, name: string) {
@@ -58,25 +59,24 @@ describe("CharacterListPage", () => {
   });
 
   it("shows an error state when the request fails", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(new Response(JSON.stringify({ error: "no data dir" }), { status: 500 })),
-    );
+    stubFetch(new Response(JSON.stringify({ error: "no data dir" }), { status: 500 }));
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("no data dir");
   });
 
+  it("shows the empty state when the list resolves with no characters", async () => {
+    stubFetch(new Response(JSON.stringify([]), { status: 200 }));
+    renderPage();
+
+    expect(await screen.findByText("No characters yet.")).toBeInTheDocument();
+  });
+
   it("lists each character as a link to its page", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify([characterRecord("1", "Vex"), characterRecord("2", "Nyx")]), {
-          status: 200,
-        }),
-      ),
+    stubFetch(
+      new Response(JSON.stringify([characterRecord("1", "Vex"), characterRecord("2", "Nyx")]), {
+        status: 200,
+      }),
     );
     renderPage();
 
