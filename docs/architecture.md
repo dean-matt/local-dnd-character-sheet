@@ -17,6 +17,13 @@ browser :5173  ──/api/*──>  Vite dev proxy  ──>  Hono :8787
 Schemas, rules arithmetic and dice all need to run on both sides of the wire, so `api`
 and `web` import all three. They are the main reason the backend is TypeScript.
 
+`packages/web/src/lib/api.ts` is the one place that builds a request and recognizes a
+failure. A hook parses the response against the same Zod schema the route declares,
+rather than a type generated from `/openapi.json`: one definition on both sides of the
+wire, at the cost of parsing again what the route already validated. This rules out a
+hand-written interface per endpoint outright — it is the drift the generated spec
+exists to prevent.
+
 ```
 rules      character   dice
   ▲            │
