@@ -16,16 +16,21 @@ export function getStoredTheme(): ThemePreference {
 }
 
 export function setStoredTheme(theme: ThemePreference): void {
+  if (theme === "system") {
+    delete document.documentElement.dataset.theme;
+  } else {
+    document.documentElement.dataset.theme = theme;
+  }
+
   try {
     if (theme === "system") {
       localStorage.removeItem(STORAGE_KEY);
-      delete document.documentElement.dataset.theme;
     } else {
       localStorage.setItem(STORAGE_KEY, theme);
-      document.documentElement.dataset.theme = theme;
     }
   } catch {
-    // Storage can throw in private mode or with blocked site data; the
-    // preference then doesn't persist across reloads.
+    // Storage can throw in private mode or with blocked site data. The
+    // document attribute is set above regardless, so the theme still
+    // applies for this session — it just doesn't survive a reload.
   }
 }
