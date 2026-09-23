@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+@theme {
+  --color-canvas: var(--color-gray-100);
+  --color-surface: var(--color-white);
+  --color-border: var(--color-gray-200);
+  --color-ink: var(--color-gray-900);
+  --color-muted: var(--color-gray-500);
+
+  --color-accent: #c1272d;
+  --color-accent-hover: #a42126;
+  --color-accent-active: #8a1c20;
+
+  --text-row: var(--text-xs);
+  --text-row--line-height: var(--text-xs--line-height);
+  --text-number: var(--text-xl);
+  --text-number--line-height: var(--text-xl--line-height);
+
+  --spacing-row: 2rem;
+
+  --radius-card: var(--radius-lg);
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

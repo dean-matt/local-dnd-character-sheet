@@ -42,5 +42,8 @@
   },
   "javascript": {
     "formatter": { "quoteStyle": "double", "trailingCommas": "all", "semicolons": "always" }
+  },
+  "css": {
+    "parser": { "tailwindDirectives": true }
   }
 }

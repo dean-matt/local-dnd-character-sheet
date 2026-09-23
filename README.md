@@ -128,6 +128,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/fluff.md`](docs/fluff.md) | `fluff-*.json`, the `hasFluff` promise, and how a subrace or a subclass is keyed |
 | [`docs/reviving.md`](docs/reviving.md) | Getting back to a running app after a long gap |
 | [`docs/mockup/README.md`](docs/mockup/README.md) | The interactive UI mockup explored ahead of `packages/web`, and its live link |
+| [`docs/design-tokens.md`](docs/design-tokens.md) | The Tailwind theme tokens for color, type, spacing and radius, and the dense register they encode |
 
 ## Contributing
 
