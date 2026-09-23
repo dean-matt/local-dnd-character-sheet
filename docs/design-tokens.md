@@ -35,7 +35,7 @@ accent, aliased so a view names the role rather than the shade:
 | `color-ink` | `gray-900` | Primary text |
 | `color-muted` | `gray-500` | Secondary text — labels, captions |
 | `color-accent` | `#c1272d` | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
-| `color-accent-hover` / `color-accent-active` | derived | Pressed states for the accent |
+| `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | Pressed states for the accent, mixed from it so a future accent change carries through |
 
 `color-accent` reuses the default `docs/mockup/` already settled on — every widget's
 accent prop there defaults to the same value. Picking a different one here would leave

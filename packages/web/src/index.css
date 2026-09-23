@@ -8,8 +8,8 @@
   --color-muted: var(--color-gray-500);
 
   --color-accent: #c1272d;
-  --color-accent-hover: #a42126;
-  --color-accent-active: #8a1c20;
+  --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
+  --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
 
   --text-row: var(--text-xs);
   --text-row--line-height: var(--text-xs--line-height);
