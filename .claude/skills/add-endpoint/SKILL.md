@@ -15,9 +15,16 @@ schema. That is the failure this order prevents.
 1  the package that owns the domain          Zod schema — the single definition
 2  packages/api/src/routes/<domain>.ts       createRoute() using that schema
 3  packages/api/src/db/queries/<domain>.ts   Drizzle query (or raw SQL for content.db)
-4  packages/web/src/hooks/use<Domain>.ts     TanStack Query hook
+4  packages/web/src/hooks/use<Domain>.ts     TanStack Query hook, calling apiGet or
+                                             apiMutate from packages/web/src/lib/api.ts
+                                             with the same schema from step 1
 5  verify http://127.0.0.1:8787/openapi.json shows the route
 ```
+
+A hook never calls `fetch` directly. `apiGet` and `apiMutate` hold the base URL and turn
+a non-2xx response into a thrown `ApiError`, and both parse the response against the
+schema the route declares — see `packages/web/src/hooks/useCharacters.ts` for the shape
+a read, a parameterized read and a write take.
 
 Never skip step 1. A schema defined inline in a route cannot be reused by the web
 client, which is how a hand-written duplicate type appears and then drifts.
