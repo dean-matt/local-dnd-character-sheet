@@ -1,12 +1,13 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
- * `homebrew_spells` and `homebrew_backgrounds` tables. `source` never arrives as an
- * argument — every write stamps `HOMEBREW_SOURCE` into `json` here, the one place that
- * builds it, and `id` is chosen by the caller once at creation and never reassigned, so
- * a rename keeps the id a character already references.
+ * `homebrew_spells`, `homebrew_backgrounds` and `homebrew_feats` tables. `source` never
+ * arrives as an argument — every write stamps `HOMEBREW_SOURCE` into `json` here, the one
+ * place that builds it, and `id` is chosen by the caller once at creation and never
+ * reassigned, so a rename keeps the id a character already references.
  */
 import type {
   HomebrewBackgroundInput,
+  HomebrewFeatInput,
   HomebrewItem,
   HomebrewItemInput,
   HomebrewSpellInput,
@@ -19,6 +20,7 @@ import type * as homebrewSchema from "../homebrew.ts";
 import {
   HOMEBREW_SOURCE,
   homebrewBackgrounds,
+  homebrewFeats,
   homebrewItems,
   homebrewSpells,
 } from "../homebrew.ts";
@@ -197,4 +199,41 @@ export function updateHomebrewBackground(
 
 export function deleteHomebrewBackground(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewBackgrounds).where(eq(homebrewBackgrounds.id, id)).run().changes > 0;
+}
+
+export function listHomebrewFeats(db: HomebrewDb) {
+  return db.select().from(homebrewFeats).all();
+}
+
+export function getHomebrewFeat(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewFeats).where(eq(homebrewFeats.id, id)).get();
+}
+
+function featJson(input: HomebrewFeatInput) {
+  const { edition: _edition, ...entry } = input;
+  return characterOptionEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+export function insertHomebrewFeat(db: HomebrewDb, id: string, input: HomebrewFeatInput) {
+  const json = featJson(input);
+  return db
+    .insert(homebrewFeats)
+    .values({ id, edition: input.edition, name: json.name, json })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewFeat` reads a miss. */
+export function updateHomebrewFeat(db: HomebrewDb, id: string, input: HomebrewFeatInput) {
+  const json = featJson(input);
+  return db
+    .update(homebrewFeats)
+    .set({ edition: input.edition, name: json.name, json })
+    .where(eq(homebrewFeats.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewFeat(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewFeats).where(eq(homebrewFeats.id, id)).run().changes > 0;
 }

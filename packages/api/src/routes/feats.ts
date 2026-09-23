@@ -1,4 +1,8 @@
-/** Reads `content.db`'s `feats` table. No homebrew feat exists to merge in. */
+/**
+ * Reads `content.db`'s `feats` table. Homebrew feats live in `homebrew.db` but are not
+ * merged in here — that merge is separate work, the way it was for items, spells and
+ * backgrounds. Creating, renaming or deleting one stays with `/homebrew/feats`.
+ */
 import { type FeatRecord, featRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";

@@ -1,25 +1,35 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { HomebrewBackgroundInput, HomebrewItemInput, HomebrewSpellInput } from "@dnd/catalog";
+import type {
+  HomebrewBackgroundInput,
+  HomebrewFeatInput,
+  HomebrewItemInput,
+  HomebrewSpellInput,
+} from "@dnd/catalog";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../client.ts";
 import {
   deleteHomebrewBackground,
+  deleteHomebrewFeat,
   deleteHomebrewItem,
   deleteHomebrewSpell,
   getHomebrewBackground,
+  getHomebrewFeat,
   getHomebrewItem,
   getHomebrewSpell,
   insertHomebrewBackground,
+  insertHomebrewFeat,
   insertHomebrewItem,
   insertHomebrewSpell,
   listHomebrewBackgrounds,
+  listHomebrewFeats,
   listHomebrewItems,
   listHomebrewSpells,
   searchHomebrewItems,
   searchHomebrewSpells,
   updateHomebrewBackground,
+  updateHomebrewFeat,
   updateHomebrewItem,
   updateHomebrewSpell,
 } from "./homebrew.ts";
@@ -44,6 +54,12 @@ const acidSplash = (overrides: Partial<HomebrewSpellInput> = {}): HomebrewSpellI
   level: 0,
   school: "C",
   duration: [{ type: "instant" }],
+  ...overrides,
+});
+
+const ironbound = (overrides: Partial<HomebrewFeatInput> = {}): HomebrewFeatInput => ({
+  name: "Ironbound",
+  edition: "one",
   ...overrides,
 });
 
@@ -264,6 +280,63 @@ describe("homebrew queries", () => {
 
       expect(deleteHomebrewBackground(db, "1")).toBe(true);
       expect(getHomebrewBackground(db, "1")).toBeUndefined();
+    });
+  });
+
+  describe("feats", () => {
+    it("stamps HOMEBREW_SOURCE into json regardless of what a caller sends", () => {
+      const row = insertHomebrewFeat(db, "1", {
+        ...ironbound(),
+        source: "PHB",
+      } as HomebrewFeatInput);
+      expect(row.json.source).toBe("HB");
+    });
+
+    it("derives name from the entry on insert", () => {
+      const row = insertHomebrewFeat(db, "1", ironbound());
+      expect(row).toMatchObject({ name: "Ironbound", edition: "one" });
+    });
+
+    it("lists and reads feats by id", () => {
+      insertHomebrewFeat(db, "1", ironbound());
+      insertHomebrewFeat(db, "2", ironbound({ name: "Stoneheart" }));
+
+      expect(
+        listHomebrewFeats(db)
+          .map((row) => row.name)
+          .sort(),
+      ).toEqual(["Ironbound", "Stoneheart"]);
+      expect(getHomebrewFeat(db, "1")).toMatchObject({ id: "1", name: "Ironbound" });
+      expect(getHomebrewFeat(db, "missing")).toBeUndefined();
+    });
+
+    it("renames a feat without changing its id", () => {
+      insertHomebrewFeat(db, "1", ironbound());
+
+      const renamed = updateHomebrewFeat(db, "1", ironbound({ name: "Ironbound II" }));
+      expect(renamed).toMatchObject({ id: "1", name: "Ironbound II" });
+    });
+
+    it("stamps HOMEBREW_SOURCE on a rename regardless of what a caller sends", () => {
+      insertHomebrewFeat(db, "1", ironbound());
+
+      const renamed = updateHomebrewFeat(db, "1", {
+        ...ironbound({ name: "Ironbound II" }),
+        source: "PHB",
+      } as HomebrewFeatInput);
+      expect(renamed?.json.source).toBe("HB");
+    });
+
+    it("reports nothing updating or deleting an id that does not exist", () => {
+      expect(updateHomebrewFeat(db, "missing", ironbound())).toBeUndefined();
+      expect(deleteHomebrewFeat(db, "missing")).toBe(false);
+    });
+
+    it("deletes a feat, after which it reads nothing", () => {
+      insertHomebrewFeat(db, "1", ironbound());
+
+      expect(deleteHomebrewFeat(db, "1")).toBe(true);
+      expect(getHomebrewFeat(db, "1")).toBeUndefined();
     });
   });
 

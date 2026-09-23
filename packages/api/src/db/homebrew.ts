@@ -1,5 +1,5 @@
 /**
- * Schema for `homebrew.db` — your custom items and spells.
+ * Schema for `homebrew.db` — your custom items, spells, backgrounds and feats.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
@@ -25,6 +25,18 @@ export const homebrewBackgrounds = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [index("homebrew_backgrounds_by_name").on(t.name)],
+);
+
+export const homebrewFeats = sqliteTable(
+  "homebrew_feats",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+    json: text("json", { mode: "json" }).$type<CharacterOptionEntry>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("homebrew_feats_by_name").on(t.name)],
 );
 
 export const homebrewItems = sqliteTable(

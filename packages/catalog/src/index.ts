@@ -4,6 +4,8 @@ export type {
   FeatRecord,
   HomebrewBackgroundInput,
   HomebrewBackgroundRecord,
+  HomebrewFeatInput,
+  HomebrewFeatRecord,
 } from "./character-options.ts";
 export {
   backgroundRecordSchema,
@@ -11,6 +13,8 @@ export {
   featRecordSchema,
   homebrewBackgroundInputSchema,
   homebrewBackgroundRecordSchema,
+  homebrewFeatInputSchema,
+  homebrewFeatRecordSchema,
 } from "./character-options.ts";
 export type {
   ClassFeatureRecord,
