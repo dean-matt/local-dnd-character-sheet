@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   classGrantsSchema,
   classRecordSchema,
+  homebrewClassInputSchema,
+  homebrewClassRecordSchema,
   preparedSpellCountSchema,
   subclassRecordSchema,
 } from "./index.ts";
@@ -51,6 +53,67 @@ describe("classGrantsSchema", () => {
       ],
     };
     expect(classGrantsSchema.parse(grants)).toEqual(grants);
+  });
+});
+
+describe("homebrewClassInputSchema", () => {
+  it("accepts a name, hd and an edition without a source", () => {
+    const parsed = homebrewClassInputSchema.parse({
+      name: "Warden",
+      hd: { number: 1, faces: 10 },
+      edition: "one",
+    });
+    expect(parsed).toEqual({ name: "Warden", hd: { number: 1, faces: 10 }, edition: "one" });
+  });
+
+  it("keeps a field this schema does not model, such as proficiency", () => {
+    const withUnmodeledFields = {
+      name: "Warden",
+      hd: { number: 1, faces: 10 },
+      edition: "one",
+      proficiency: ["str", "con"],
+    };
+    expect(homebrewClassInputSchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
+  });
+
+  it("rejects a missing hd, naming the failed field", () => {
+    const result = homebrewClassInputSchema.safeParse({ name: "Warden", edition: "one" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["hd"]);
+  });
+
+  it("rejects an hd rolling more than one die", () => {
+    const result = homebrewClassInputSchema.safeParse({
+      name: "Warden",
+      hd: { number: 2, faces: 10 },
+      edition: "one",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["hd", "number"]);
+  });
+
+  it("rejects an edition outside the two rulesets", () => {
+    const result = homebrewClassInputSchema.safeParse({
+      name: "Warden",
+      hd: { number: 1, faces: 10 },
+      edition: "3.5",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["edition"]);
+  });
+});
+
+describe("homebrewClassRecordSchema", () => {
+  it("accepts a stored row", () => {
+    const record = {
+      id: "1",
+      name: "Warden",
+      edition: "one",
+      hitDie: 10,
+      json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
+      createdAt: new Date(0).toISOString(),
+    };
+    expect(homebrewClassRecordSchema.parse(record)).toEqual(record);
   });
 });
 

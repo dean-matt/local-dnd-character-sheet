@@ -1,13 +1,14 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
- * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats` and `homebrew_races`
- * tables. `source` never arrives as an argument — every write stamps `HOMEBREW_SOURCE`
- * into `json` here, the one place that builds it, and `id` is chosen by the caller once
- * at creation and never reassigned, so a rename keeps the id a character already
- * references.
+ * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races` and
+ * `homebrew_classes` tables. `source` never arrives as an argument — every write stamps
+ * `HOMEBREW_SOURCE` into `json` here, the one place that builds it, and `id` is chosen by
+ * the caller once at creation and never reassigned, so a rename keeps the id a character
+ * already references.
  */
 import type {
   HomebrewBackgroundInput,
+  HomebrewClassInput,
   HomebrewFeatInput,
   HomebrewItem,
   HomebrewItemInput,
@@ -16,6 +17,7 @@ import type {
 } from "@dnd/catalog";
 import {
   characterOptionEntrySchema,
+  homebrewClassSchema,
   homebrewItemSchema,
   raceEntrySchema,
   spellEntrySchema,
@@ -27,6 +29,7 @@ import type * as homebrewSchema from "../homebrew.ts";
 import {
   HOMEBREW_SOURCE,
   homebrewBackgrounds,
+  homebrewClasses,
   homebrewFeats,
   homebrewItems,
   homebrewRaces,
@@ -281,4 +284,45 @@ export function updateHomebrewRace(db: HomebrewDb, id: string, input: HomebrewRa
 
 export function deleteHomebrewRace(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewRaces).where(eq(homebrewRaces.id, id)).run().changes > 0;
+}
+
+export function listHomebrewClasses(db: HomebrewDb) {
+  return db.select().from(homebrewClasses).all();
+}
+
+export function getHomebrewClass(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewClasses).where(eq(homebrewClasses.id, id)).get();
+}
+
+function classJson(input: HomebrewClassInput) {
+  const { edition: _edition, ...entry } = input;
+  return homebrewClassSchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+function classColumns(json: ReturnType<typeof classJson>) {
+  return { name: json.name, hitDie: json.hd.faces, json };
+}
+
+export function insertHomebrewClass(db: HomebrewDb, id: string, input: HomebrewClassInput) {
+  const json = classJson(input);
+  return db
+    .insert(homebrewClasses)
+    .values({ id, edition: input.edition, ...classColumns(json) })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewClass` reads a miss. */
+export function updateHomebrewClass(db: HomebrewDb, id: string, input: HomebrewClassInput) {
+  const json = classJson(input);
+  return db
+    .update(homebrewClasses)
+    .set({ edition: input.edition, ...classColumns(json) })
+    .where(eq(homebrewClasses.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewClass(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewClasses).where(eq(homebrewClasses.id, id)).run().changes > 0;
 }

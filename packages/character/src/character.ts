@@ -93,7 +93,7 @@ const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
  * `subclass` sits on the level it was chosen at, so a class names it once.
  */
 const levelEntrySchema = z.strictObject({
-  class: contentRefSchema,
+  class: entryRefSchema,
   /**
    * The `subclasses` row's own name — `Fiend Patron`, not the `Fiend` its features and
    * tags spell. A character names a row by that row's key, and the short name keys no
@@ -222,7 +222,7 @@ export const entryKey = (ref: EntryRef): string =>
  * of the 198 upstream subclass rows answer to more than one class — `Path of the
  * Berserker` (PHB) to `Barbarian` (PHB) and `Barbarian` (XPHB) alike.
  */
-const classGrantor = z.strictObject({ kind: z.literal("class"), ref: contentRefSchema });
+const classGrantor = z.strictObject({ kind: z.literal("class"), ref: entryRefSchema });
 
 const subclassGrantor = z.strictObject({
   kind: z.literal("subclass"),
@@ -393,7 +393,7 @@ export const characterDefinitionSchema = z.strictObject({
       (levels) =>
         isUnique(
           levels.filter((level) => level.subclass !== undefined),
-          (level) => refKey(level.class),
+          (level) => entryKey(level.class),
         ),
       { error: "a class names a subclass on more than one level" },
     ),
@@ -599,19 +599,19 @@ export const characterDerivedSchema = z.strictObject({
 /**
  * The hit point maximum for a stored character.
  *
- * `hitDice` maps a class to its die, keyed by `refKey`, because the die is catalog
- * data a character references rather than copies. A class the map does not name is
- * rejected rather than defaulted, since a guessed die invents hit points.
+ * `hitDice` maps a class to its die, keyed by `entryKey`, the same as `carriedWeight`'s
+ * `weights` — a class is catalog or homebrew data a character references rather than
+ * copies. A class the map does not name is rejected rather than defaulted, since a
+ * guessed die invents hit points.
  */
 export function hitPointMaximum(
   definition: CharacterDefinition,
   hitDice: ReadonlyMap<string, HitDie>,
 ): number {
   const levels = definition.levels.map((level) => {
-    const die = hitDice.get(refKey(level.class));
-    if (die === undefined) {
-      throw new RangeError(`No hit die for ${level.class.name} (${level.class.source})`);
-    }
+    const key = entryKey(level.class);
+    const die = hitDice.get(key);
+    if (die === undefined) throw new RangeError(`No hit die for ${key}`);
     return { die, rolled: level.rolled };
   });
   return maxHitPoints(levels, abilityModifier(definition.abilityScores.con));

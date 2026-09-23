@@ -20,6 +20,9 @@ export type {
   ClassFeatureRecord,
   ClassGrants,
   ClassRecord,
+  HomebrewClass,
+  HomebrewClassInput,
+  HomebrewClassRecord,
   PreparedSpellCount,
   SubclassRecord,
 } from "./class.ts";
@@ -27,6 +30,9 @@ export {
   classFeatureRecordSchema,
   classGrantsSchema,
   classRecordSchema,
+  homebrewClassInputSchema,
+  homebrewClassRecordSchema,
+  homebrewClassSchema,
   preparedSpellCountSchema,
   subclassRecordSchema,
 } from "./class.ts";
