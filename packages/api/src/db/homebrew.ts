@@ -27,6 +27,18 @@ export const homebrewBackgrounds = sqliteTable(
   (t) => [index("homebrew_backgrounds_by_name").on(t.name)],
 );
 
+export const homebrewFeats = sqliteTable(
+  "homebrew_feats",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+    json: text("json", { mode: "json" }).$type<CharacterOptionEntry>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("homebrew_feats_by_name").on(t.name)],
+);
+
 export const homebrewItems = sqliteTable(
   "homebrew_items",
   {

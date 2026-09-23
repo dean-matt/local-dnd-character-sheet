@@ -6,8 +6,8 @@
  * derives a column from anything deeper; everything else upstream carries, such as skill
  * proficiencies or a feat's prerequisites, passes through unparsed.
  *
- * A homebrew background's `json` reuses this same shape rather than one of its own — see
- * `homebrewBackgroundInputSchema` below.
+ * A homebrew background or feat's `json` reuses this same shape rather than one of its
+ * own — see `homebrewBackgroundInputSchema` and `homebrewFeatInputSchema` below.
  */
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
@@ -63,3 +63,24 @@ export const featRecordSchema = z.strictObject({
 });
 
 export type FeatRecord = z.infer<typeof featRecordSchema>;
+
+/**
+ * What a caller submits to create or rename a homebrew feat — the same shape and
+ * reasoning `homebrewBackgroundInputSchema` gives backgrounds.
+ */
+export const homebrewFeatInputSchema = characterOptionEntrySchema
+  .omit({ source: true })
+  .extend({ edition: z.enum(EDITIONS) });
+
+export type HomebrewFeatInput = z.infer<typeof homebrewFeatInputSchema>;
+
+/** A stored homebrew feat, as an endpoint returns it. */
+export const homebrewFeatRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: z.enum(EDITIONS),
+  json: characterOptionEntrySchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type HomebrewFeatRecord = z.infer<typeof homebrewFeatRecordSchema>;

@@ -4,6 +4,8 @@ import {
   featRecordSchema,
   homebrewBackgroundInputSchema,
   homebrewBackgroundRecordSchema,
+  homebrewFeatInputSchema,
+  homebrewFeatRecordSchema,
 } from "./index.ts";
 
 describe("backgroundRecordSchema", () => {
@@ -64,5 +66,46 @@ describe("featRecordSchema", () => {
       json: { name: "Alert", source: "PHB", entries: ["Always on the lookout for danger."] },
     };
     expect(featRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("homebrewFeatInputSchema", () => {
+  it("accepts a name and an edition without a source", () => {
+    const parsed = homebrewFeatInputSchema.parse({ name: "Ironbound", edition: "one" });
+    expect(parsed).toEqual({ name: "Ironbound", edition: "one" });
+  });
+
+  it("keeps a field this schema does not model, such as a prerequisite", () => {
+    const withUnmodeledFields = {
+      name: "Ironbound",
+      edition: "one",
+      prerequisite: [{ ability: [{ str: 13 }] }],
+    };
+    expect(homebrewFeatInputSchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
+  });
+
+  it("rejects a missing name, naming the failed field", () => {
+    const result = homebrewFeatInputSchema.safeParse({ edition: "one" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["name"]);
+  });
+
+  it("rejects an edition outside the two rulesets", () => {
+    const result = homebrewFeatInputSchema.safeParse({ name: "Ironbound", edition: "3.5" });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["edition"]);
+  });
+});
+
+describe("homebrewFeatRecordSchema", () => {
+  it("accepts a stored row", () => {
+    const record = {
+      id: "1",
+      name: "Ironbound",
+      edition: "one",
+      json: { name: "Ironbound", source: "HB" },
+      createdAt: new Date(0).toISOString(),
+    };
+    expect(homebrewFeatRecordSchema.parse(record)).toEqual(record);
   });
 });
