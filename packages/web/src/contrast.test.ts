@@ -78,20 +78,43 @@ const gray400 = oklch(0.707, 0.022, 261.325);
 const gray500 = oklch(0.551, 0.027, 264.364);
 const gray800 = oklch(0.278, 0.033, 256.848);
 const gray900 = oklch(0.21, 0.034, 264.665);
+
+const inkLight = gray900;
+const mutedLight = mixOklab(gray500, inkLight, 0.9);
 const accentLight = hex("#c1272d");
+const accentHoverLight = mixOklab(accentLight, [0, 0, 0], 0.85);
+const accentActiveLight = mixOklab(accentLight, [0, 0, 0], 0.7);
+
+const inkDark = gray100;
+const mutedDark = gray400;
 const accentDark = mixOklab(accentLight, white, 0.9);
 
 const AA_TEXT = 4.5;
 const AA_NON_TEXT = 3;
 
 const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
-  { name: "ink on canvas, light", fg: gray900, bg: gray100, minimum: AA_TEXT },
-  { name: "muted on surface, light", fg: gray500, bg: white, minimum: AA_TEXT },
-  { name: "ink on canvas, dark", fg: gray100, bg: gray900, minimum: AA_TEXT },
-  { name: "ink on surface, dark", fg: gray100, bg: gray800, minimum: AA_TEXT },
-  { name: "muted on canvas, dark", fg: gray400, bg: gray900, minimum: AA_TEXT },
-  { name: "muted on surface, dark", fg: gray400, bg: gray800, minimum: AA_TEXT },
+  { name: "ink on canvas, light", fg: inkLight, bg: gray100, minimum: AA_TEXT },
+  { name: "ink on surface, light", fg: inkLight, bg: white, minimum: AA_TEXT },
+  { name: "muted on canvas, light", fg: mutedLight, bg: gray100, minimum: AA_TEXT },
+  { name: "muted on surface, light", fg: mutedLight, bg: white, minimum: AA_TEXT },
   { name: "white text on accent, light", fg: white, bg: accentLight, minimum: AA_TEXT },
+  { name: "focus ring on canvas, light", fg: accentLight, bg: gray100, minimum: AA_NON_TEXT },
+  {
+    name: "accent-hover focus ring on canvas, light",
+    fg: accentHoverLight,
+    bg: gray100,
+    minimum: AA_NON_TEXT,
+  },
+  {
+    name: "accent-active focus ring on canvas, light",
+    fg: accentActiveLight,
+    bg: gray100,
+    minimum: AA_NON_TEXT,
+  },
+  { name: "ink on canvas, dark", fg: inkDark, bg: gray900, minimum: AA_TEXT },
+  { name: "ink on surface, dark", fg: inkDark, bg: gray800, minimum: AA_TEXT },
+  { name: "muted on canvas, dark", fg: mutedDark, bg: gray900, minimum: AA_TEXT },
+  { name: "muted on surface, dark", fg: mutedDark, bg: gray800, minimum: AA_TEXT },
   { name: "white text on accent, dark", fg: white, bg: accentDark, minimum: AA_TEXT },
   { name: "focus ring on canvas, dark", fg: accentDark, bg: gray900, minimum: AA_NON_TEXT },
   { name: "focus ring on surface, dark", fg: accentDark, bg: gray800, minimum: AA_NON_TEXT },
