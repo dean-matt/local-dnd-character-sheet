@@ -55,11 +55,12 @@ Six conditions, each named where it fails:
 
 Merge where it exits 0; otherwise hand the user the condition it named and stop — except
 "the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
-verdict GitHub has not computed yet, and "the diff reaches no fenced path", named in *A
-fenced path, with the user's direct sign-off* below. A behind branch goes to the next
-section rather than to the user. Read the pass body the script points at too: a finding no
-line anchors is written there, not on a comment. Two lines print beside *the review
-converged* and stop nothing. The distance line, every run: how far behind the tip the last
+verdict GitHub has not computed yet, and the two conditions with a sign-off path below: "the
+diff reaches no fenced path" and "no declined finding is critical or warning". A behind
+branch goes to the next section rather than to the user. Read the pass body the script
+points at too: a finding no line anchors is written there, not on a comment. Two lines
+print beside *the review converged* and stop nothing. The distance line, every run: how
+far behind the tip the last
 pass sits, and the `git log` range that counted it. A pass short of the tip may be a fix
 answering it or code nobody read, so run that range, weigh what it lists, and say which in
 the report. The cap line, at or past the cap: a waiver at it, an overage past it.
@@ -92,6 +93,26 @@ sign-off from a claimed one.
 Where taken, name the sign-off in the report this skill closes with: what was approved,
 and that it was heard directly rather than relayed.
 
+## A declined critical or warning, with the user's direct sign-off
+
+"no declined finding is critical or warning" reads every declined thread, not just the
+last pass, and a verdict reply can't be withdrawn — so a `critical` or `warning` finding
+the user decides to accept anyway needs a record distinct from the decline itself. The one
+sanctioned path past it: having heard the acceptance directly rather than read a relayed
+report of it, the session holding the conversation posts an `**Accepted**` reply into that
+finding's own thread, naming what was approved, then runs the gate again:
+
+```bash
+gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted** — <what was approved>'
+```
+
+`blockingDeclines` in `scripts/merge-gate.mjs` reads that reply and drops the finding from
+the block. A subagent takes no such latitude: on this condition it reports `FAIL` and
+stops, same as on any other failing condition.
+
+Where taken, name the acceptance in the report this skill closes with: what was approved,
+and that it was heard directly rather than relayed.
+
 ## Merge, then clean up
 
 Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree for `$issue`
@@ -118,10 +139,11 @@ closed, which issues it unblocked, and that the checkout is on `main`.
 **Resolve a conflict.** It stops and hands the branch back.
 
 **Waive a condition from inside a dispatched run.** A gate that argues itself open on the
-merge it is judging is not a gate — see *A fenced path, with the user's direct sign-off*
-for the one exception, and it belongs to the session holding the conversation, never to a
-subagent. Widening `scripts/merge-gate.mjs`'s fence rule itself is a separate, reviewed
-change against that file, not something a single run decides for itself.
+merge it is judging is not a gate — see *A fenced path* and *A declined critical or
+warning*, both with the user's direct sign-off, for the two exceptions, and both belong to
+the session holding the conversation, never to a subagent. Widening
+`scripts/merge-gate.mjs`'s fence rule itself is a separate, reviewed change against that
+file, not something a single run decides for itself.
 
 **Review.** [`audit-pr`](../audit-pr/SKILL.md) does that; this skill reads what that pass
 left behind rather than forming an opinion of its own.
