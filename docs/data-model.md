@@ -30,10 +30,11 @@ erDiagram
         text character_id PK
         json state "hp, slots, conditions, resources"
     }
-    character_pages {
-        text slug PK "what the URL carries"
-        bool preset "seeded, never deleted"
-        json blocks
+    spells {
+        text name PK
+        text source PK
+        text edition
+        int  level
     }
 ```
 
@@ -175,10 +176,9 @@ statement — `name` and `edition` from the definition's own fields, `level` fro
 `totalLevel()` — and none is a settable column on the request body that writes it.
 
 **A preset page is hidden, never deleted.** Every character is seeded with Stats, Spells,
-Inventory and Features, on import as on creation. A write that leaves a preset out is
-refused, and restoring the defaults rewrites each preset as seeded at the head of the
-order, with the user's own pages after them unchanged. The server alone sets `preset`, so
-a page the user wrote is never mistaken for one.
+Inventory and Features. A write leaving a preset out is refused; restoring the defaults
+rewrites each preset as seeded, ahead of the user's own pages. Only the server sets
+`preset`, and a URL carries the `slug`, so a link survives a reorder and a retitle.
 
 **Logs are pruned on insert**, in the same statement that writes the new row. A cron job
 or a manual cleanup would be one more thing to forget.

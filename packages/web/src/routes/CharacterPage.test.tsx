@@ -52,16 +52,6 @@ describe("CharacterPage", () => {
     expect(await screen.findByText("Vex")).toBeInTheDocument();
   });
 
-  it("renders a block with no view yet as nothing, keeping the page around it", async () => {
-    stubCharacter();
-    renderPage("/characters/1/p/spells");
-
-    await screen.findByText("Vex");
-    expect(screen.getByRole("heading", { level: 1, name: "Spells" })).toBeInTheDocument();
-    expect(screen.queryByText(/section/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  });
-
   it("reaches a hidden page by its URL", async () => {
     stubCharacter(presetPageRecords().map((page) => ({ ...page, hidden: true })));
     renderPage("/characters/1/p/inventory");

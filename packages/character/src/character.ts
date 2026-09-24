@@ -565,8 +565,7 @@ const SHEET_SECTIONS = ["abilities", "spells", "inventory", "features"] as const
 /**
  * One unit of a page's content. A whole sheet section is the only kind so far, since it
  * is all a preset holds. Strict like the rest of the file: a write naming a kind this
- * build does not know is refused, so no stored page holds one. A kind that parses but
- * has no view yet renders as nothing, leaving the page around it intact.
+ * build does not know is refused, so no stored page holds one.
  */
 const pageBlockSchema = z.strictObject({
   kind: z.literal("section"),
@@ -602,7 +601,12 @@ export const characterPageRecordSchema = characterPageSchema.extend({ preset: z.
 export type CharacterPage = z.infer<typeof characterPageSchema>;
 export type CharacterPageRecord = z.infer<typeof characterPageRecordSchema>;
 
-/** Seeded on every character, in this order. A preset's blocks are whole sheet sections. */
+/**
+ * Seeded on every character, in this order. A preset's blocks are whole sheet sections.
+ * A new entry reaches existing characters only through a backfill migration, as these
+ * four did. That migration must settle any user page already under the new slug, since
+ * restoring the defaults fails on one.
+ */
 export const PRESET_PAGES: readonly CharacterPage[] = [
   {
     slug: "stats",
