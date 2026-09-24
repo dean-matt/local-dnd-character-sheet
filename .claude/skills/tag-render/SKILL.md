@@ -39,6 +39,11 @@ argument produces plausible text, so nothing else catches it.
 `pnpm tags:audit` runs the parser over every tag in the vendored data and lists the tags
 that fall through to plain text. It cannot judge whether a display is the right one.
 
+Dice notation carries a second grammar: `#$prompt_number:title=…,default=…,min=…,
+max=…$#` asks the reader to supply a value. It shares no syntax with `{@tag}`, so
+`packages/tags/src/prompt-template.ts` expands it wherever an argument is flattened to
+plain text, instead of the tag parser treating it as a tag.
+
 ## Token contract
 
 ```ts
