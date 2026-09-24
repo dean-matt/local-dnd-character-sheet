@@ -21,6 +21,7 @@ import {
   characterStateRecordSchema,
   characterStateSchema,
   defaultCharacterState,
+  deriveCharacter,
   derivedSchema,
   derivedValue,
   encumberedSpeed,
@@ -57,9 +58,23 @@ const raceTraits = {
   speed: { computed: { walk: 30 } },
 } as const;
 
+/** Every ability at no proficiency, for a test that cares about something else entirely. */
+const noSavingThrows = Object.fromEntries(
+  (["str", "dex", "con", "int", "wis", "cha"] as const).map((ability) => [
+    ability,
+    { computed: 0 },
+  ]),
+);
+
 /** The derived tree as the endpoint assembles it, with the traits under test swapped in. */
 const derivedInput = (traits: object = {}) => ({
   hitPointMaximum: { computed: 37 },
+  proficiencyBonus: { computed: 2 },
+  savingThrows: noSavingThrows,
+  skills: [],
+  armorClass: { computed: 10 },
+  initiative: { computed: 0 },
+  spellcasting: [],
   ...raceTraits,
   ...traits,
 });
@@ -945,6 +960,128 @@ describe("hit point maximum", () => {
     const derived = characterDerivedSchema.parse(derivedInput({ hitPointMaximum: { computed } }));
     expect(derivedValue(derived.hitPointMaximum)).toBe(37);
     expect(derivedValue({ ...derived.hitPointMaximum, manual: 45 })).toBe(45);
+  });
+});
+
+describe("deriveCharacter", () => {
+  const STUDDED_LEATHER = { name: "Studded Leather Armor", source: "XPHB" };
+  const SHIELD = { name: "Shield", source: "XPHB" };
+
+  /** The Warlock/Rogue fixture, with armor and a shield equipped. */
+  const equipped: CharacterDefinition = {
+    ...definition,
+    inventory: [
+      ...definition.inventory,
+      { ref: STUDDED_LEATHER, quantity: 1, carried: true, equipped: true, attuned: false },
+      { ref: SHIELD, quantity: 1, carried: true, equipped: true, attuned: false },
+    ],
+  };
+
+  const catalog = {
+    hitDice,
+    spellcastingAbilities: new Map([[entryKey(WARLOCK), "cha" as const]]),
+    skills: [
+      { ref: DECEPTION, ability: "cha" as const },
+      { ref: STEALTH, ability: "dex" as const },
+      { ref: PERCEPTION, ability: "wis" as const },
+    ],
+    size: "medium" as const,
+    speed: { walk: 30 },
+    armor: new Map([
+      [entryKey(STUDDED_LEATHER), { category: "light" as const, armorClass: 12 }],
+      [entryKey(SHIELD), { category: "shield" as const, armorClass: 2 }],
+    ]),
+  };
+
+  const derived = deriveCharacter(equipped, catalog);
+
+  it("parses as a derived block", () => {
+    expect(characterDerivedSchema.safeParse(derived).success).toBe(true);
+  });
+
+  it("assembles hit points, size and speed the way the existing fields already do", () => {
+    expect(derived.hitPointMaximum.computed).toBe(hitPointMaximum(equipped, hitDice));
+    expect(derived.size.computed).toBe("medium");
+    expect(derived.speed.computed).toEqual({ walk: 30 });
+  });
+
+  it("reads the proficiency bonus off total level", () => {
+    expect(derived.proficiencyBonus.computed).toBe(3);
+  });
+
+  it("grants a saving throw only where the character is proficient", () => {
+    expect(derived.savingThrows.wis).toEqual({
+      computed: 4,
+      manual: null,
+      terms: [
+        { label: "Wisdom", value: 1 },
+        { label: "Proficiency", value: 3 },
+      ],
+    });
+    expect(derived.savingThrows.cha.computed).toBe(6);
+    expect(derived.savingThrows.str).toEqual({
+      computed: -1,
+      manual: null,
+      terms: [{ label: "Strength", value: -1 }],
+    });
+  });
+
+  it("scores every catalog skill, proficient or not, and attaches the skill it came from", () => {
+    const deception = derived.skills.find((skill) => skill.ref.name === "Deception");
+    const stealth = derived.skills.find((skill) => skill.ref.name === "Stealth");
+    const perception = derived.skills.find((skill) => skill.ref.name === "Perception");
+
+    expect(deception?.modifier).toEqual({
+      computed: 6,
+      manual: null,
+      terms: [
+        { label: "Charisma", value: 3, reference: DECEPTION },
+        { label: "Proficiency", value: 3 },
+      ],
+    });
+    expect(deception?.passive.computed).toBe(16);
+
+    expect(stealth?.modifier.computed).toBe(9);
+    expect(stealth?.passive.computed).toBe(19);
+
+    expect(perception?.modifier).toEqual({
+      computed: 1,
+      manual: null,
+      terms: [{ label: "Wisdom", value: 1, reference: PERCEPTION }],
+    });
+    expect(perception?.passive.computed).toBe(11);
+  });
+
+  it("sums worn armor, Dexterity and a shield, referencing the item each term came from", () => {
+    expect(derived.armorClass).toEqual({
+      computed: 17,
+      manual: null,
+      terms: [
+        { label: "Armor", value: 12, reference: STUDDED_LEATHER },
+        { label: "Dexterity", value: 3 },
+        { label: "Shield", value: 2, reference: SHIELD },
+      ],
+    });
+  });
+
+  it("falls back to the unarmored base rather than throwing when nothing resolves", () => {
+    const unarmored = deriveCharacter(definition, { ...catalog, armor: new Map() });
+    expect(unarmored.armorClass.computed).toBe(13);
+  });
+
+  it("reads initiative off Dexterity alone", () => {
+    expect(derived.initiative).toEqual({ computed: 3, manual: null, terms: [] });
+  });
+
+  it("sets a save DC and attack bonus per caster class, and skips a class that does not cast", () => {
+    expect(derived.spellcasting).toEqual([
+      {
+        class: WARLOCK,
+        ability: "cha",
+        saveDc: { computed: 14, manual: null, terms: [] },
+        attackBonus: { computed: 6, manual: null, terms: [] },
+      },
+    ]);
   });
 });
 
