@@ -717,6 +717,15 @@ describe("derived fields", () => {
     const terms = [{ label: "Base", value: 38, reference: { name: "Fighter", source: "PHB" } }];
     expect(schema.parse({ computed: 38, terms })).toEqual({ computed: 38, manual: null, terms });
   });
+
+  it.each([
+    ["a catalog row", { name: "Fighter", source: "PHB" }],
+    ["another derived field", { derivedField: "hitPointMaximum" }],
+    ["a house-rule option", { houseRuleOption: "encumbrance" }],
+  ])("accepts a term referencing %s", (_label, reference) => {
+    const terms = [{ label: "Base", value: 38, reference }];
+    expect(schema.parse({ computed: 38, terms }).terms).toEqual(terms);
+  });
 });
 
 describe("counters cannot exceed their pool", () => {
