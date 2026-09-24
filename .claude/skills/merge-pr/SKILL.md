@@ -53,19 +53,18 @@ Six conditions, each named where it fails:
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0; otherwise hand the user the condition it named and stop — except
-"the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
-verdict GitHub has not computed yet, and the two conditions with a sign-off path below: "the
-diff reaches no fenced path" and "no declined finding is critical or warning". A behind
-branch goes to the next section rather than to the user. Read the pass body the script
-points at too: a finding no line anchors is written there, not on a comment. Two lines
-print beside *the review converged* and stop nothing. The distance line, every run: how
-far behind the tip the last pass sits, and the `git log` range that counted it. A pass
-short of the tip may be a fix answering it or code nobody read, so run that range, weigh
-what it lists, and say which in the report. The cap line, at or past the cap: a waiver at
-it, an overage past it.
-`scripts/merge-gate.mjs` holds the six and what each costs when wrong;
-`tests/merge-gate.test.ts` calls them.
+Merge where it exits 0; otherwise hand the user the condition it named and stop. Three
+conditions route elsewhere first: "the branch merges cleanly" goes to *Where the branch is
+behind* when its detail line says behind; "the diff reaches no fenced path" and "no
+declined finding is critical or warning" go to their sign-off sections below. Read the
+pass body the script points at too — a finding no line anchors lives there, not on a
+comment.
+
+Two lines print beside *the review converged* and stop nothing: the distance line (how far
+behind the tip the last pass sits, and the `git log` range that counted it — run that range
+and weigh what it lists, since a pass short of the tip may be a fix answering it or code
+nobody read) and the cap line (a waiver at the cap, an overage past it).
+`scripts/merge-gate.mjs` holds the six conditions; `tests/merge-gate.test.ts` calls them.
 
 ## Where the branch is behind
 
@@ -90,9 +89,6 @@ the same account whether a human or an agent drove it; being the session that he
 conversation is the only thing this path checks — it's what distinguishes a witnessed
 sign-off from a claimed one.
 
-Where taken, name the sign-off in the report this skill closes with: what was approved,
-and that it was heard directly rather than relayed.
-
 ## A declined critical or warning, with the user's direct sign-off
 
 "no declined finding is critical or warning" reads every declined thread, not just the
@@ -109,9 +105,6 @@ gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted
 `blockingDeclines` in `scripts/merge-gate.mjs` reads that reply and drops the finding from
 the block. A subagent takes no such latitude: on this condition it reports `FAIL` and
 stops, same as on any other failing condition.
-
-Where taken, name the acceptance in the report this skill closes with: what was approved,
-and that it was heard directly rather than relayed.
 
 ## Merge, then clean up
 
@@ -132,7 +125,8 @@ from, one per line.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. Then report the merge commit, the issue it
-closed, which issues it unblocked, and that the checkout is on `main`.
+closed, which issues it unblocked, that the checkout is on `main`, and any sign-off taken
+along the way — what was approved, heard directly rather than relayed.
 
 ## What this skill will not do
 
