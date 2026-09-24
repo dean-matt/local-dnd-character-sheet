@@ -116,6 +116,37 @@ describe("RulesEntries", () => {
     expect(screen.queryByText(/"type":\s*"table"/)).not.toBeInTheDocument();
   });
 
+  it("renders a rollable table's plain, exact and ranged cells", () => {
+    const entries: Entries = [
+      {
+        type: "table",
+        colLabels: ["{@dice d6}", "Result"],
+        rows: [
+          [1, "Single number"],
+          ["2-3", "Shorthand range"],
+          [{ type: "cell", roll: { exact: 4, pad: true } }, "Padded number"],
+          [{ type: "cell", roll: { min: 5, max: 6 } }, "Long-hand range"],
+        ],
+      },
+    ];
+    render(<RulesEntries entries={entries} />);
+    expect(screen.getByRole("cell", { name: "1" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "2-3" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "04" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "5-6" })).toBeInTheDocument();
+  });
+
+  it("prefers a cell's own entry text over its roll when both are present", () => {
+    const entries: Entries = [
+      {
+        type: "table",
+        rows: [[{ type: "cell", entry: "4 or lower", roll: { min: 1, max: 4 } }, "Miss"]],
+      },
+    ];
+    render(<RulesEntries entries={entries} />);
+    expect(screen.getByRole("cell", { name: "4 or lower" })).toBeInTheDocument();
+  });
+
   it("never throws on a node type it does not know", () => {
     const entries: Entries = [{ type: "gallery", images: ["nope"] }];
     expect(() => render(<RulesEntries entries={entries} />)).not.toThrow();

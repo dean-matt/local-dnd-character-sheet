@@ -113,10 +113,29 @@ function renderList(entry: EntryNode, keyPrefix: string): ReactNode {
   );
 }
 
+/**
+ * `{ exact }` or `{ min, max }`, `pad` widening a single digit to two — a rollable
+ * table's numeric column, `renderdemo.json`'s own grammar for one.
+ */
+function rollLabel(roll: unknown): string | undefined {
+  if (!isRecord(roll)) return undefined;
+  const pad = (value: number) => (roll.pad === true ? String(value).padStart(2, "0") : `${value}`);
+  if (typeof roll.exact === "number") return pad(roll.exact);
+  if (typeof roll.min === "number" && typeof roll.max === "number") {
+    return `${pad(roll.min)}-${pad(roll.max)}`;
+  }
+  return undefined;
+}
+
 function renderCell(cell: unknown, keyPrefix: string): ReactNode {
   if (typeof cell === "string") return <RulesText text={cell} />;
-  if (isRecord(cell)) return renderEntry(cell as EntryNode, keyPrefix);
-  return null;
+  if (typeof cell === "number") return `${cell}`;
+  if (!isRecord(cell)) return null;
+  if (str(cell.type) === "cell") {
+    const label = str(cell.entry) ?? rollLabel(cell.roll);
+    return label === undefined ? null : <RulesText text={label} />;
+  }
+  return renderEntry(cell as EntryNode, keyPrefix);
 }
 
 function renderTable(entry: EntryNode, keyPrefix: string): ReactNode {
