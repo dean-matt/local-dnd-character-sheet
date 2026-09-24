@@ -44,6 +44,22 @@ describe("Field, read mode", () => {
 
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
+
+  it("keeps the label for a screen reader when labelHidden hides it visually", () => {
+    render(
+      <Field
+        mode="read"
+        label="Name"
+        value={{ computed: "Vex", manual: null }}
+        format={(value: string) => value}
+        labelHidden
+      />,
+    );
+
+    const label = screen.getByText("Name");
+    expect(label).toHaveClass("sr-only");
+    expect(screen.getByText("Vex")).toBeInTheDocument();
+  });
 });
 
 describe("Field, edit mode", () => {

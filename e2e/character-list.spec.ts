@@ -23,7 +23,12 @@ test("importing a character shows it in the list", async ({ page, request }) => 
     },
   });
   expect(response.ok()).toBe(true);
+  const { id } = await response.json();
 
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  try {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  } finally {
+    await request.delete(`/api/characters/${id}`);
+  }
 });

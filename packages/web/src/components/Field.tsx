@@ -24,6 +24,9 @@ interface ReadFieldProps<T> {
   label: string;
   value: Derived<T>;
   format: (value: T) => string;
+  /** Keeps `label` for a screen reader while dropping it from the layout — a list row
+   * whose surrounding context already says what the value is. */
+  labelHidden?: boolean;
 }
 
 interface EditFieldProps<T> {
@@ -46,6 +49,14 @@ export function Field<T>(props: FieldProps<T>) {
   const current = derivedValue(props.value);
 
   if (props.mode === "read") {
+    if (props.labelHidden) {
+      return (
+        <span className="font-medium">
+          <span className="sr-only">{props.label}</span>
+          {props.format(current)}
+        </span>
+      );
+    }
     return (
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-muted text-row">{props.label}</span>

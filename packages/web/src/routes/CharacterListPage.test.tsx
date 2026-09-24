@@ -72,7 +72,9 @@ describe("CharacterListPage", () => {
     renderPage();
 
     expect(
-      await screen.findByText("No characters yet. POST a definition to /characters to add one."),
+      await screen.findByText(
+        "No characters yet. POST a definition to http://127.0.0.1:8787/characters to add one.",
+      ),
     ).toBeInTheDocument();
   });
 
