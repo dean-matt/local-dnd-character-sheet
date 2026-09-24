@@ -82,12 +82,11 @@ means `main` moves faster than the checks run, and sequencing that is the user's
 prints `FAIL` for every caller, unchanged. The one sanctioned path past it: having heard
 the sign-off directly rather than read a relayed report of it, the session holding the
 conversation with the user may run *Merge, then clean up* for that pull request itself,
-once every other condition holds. A subagent dispatched to merge — including the one
-`auto-dev`'s step 4 sends — takes no such latitude: on this condition it reports `FAIL`
-and stops, same as on any other failing condition. Every `gh` call here authenticates as
-the same account whether a human or an agent drove it; being the session that held the
-conversation is the only thing this path checks — it's what distinguishes a witnessed
-sign-off from a claimed one.
+once every other condition holds. A subagent — including the one `auto-dev` dispatches —
+takes no such latitude: it reports `FAIL` and stops, same as any other failing condition.
+Every `gh` call authenticates as the same account regardless of driver; session identity
+is the only thing this path checks, which is what distinguishes a witnessed sign-off from
+a claimed one.
 
 ## A declined critical or warning, with the user's direct sign-off
 
@@ -118,10 +117,9 @@ git checkout main && git pull --ff-only
 node scripts/unblock-issues.mjs "$issue"
 ```
 
-`unblock-issues.mjs` finds every open issue whose `## Blocked by` section names `$issue`
-and clears that name from the section. Where none of the issues it still names is open, it
-drops the section and the `blocked` label too. It prints the issue it clears the label
-from, one per line.
+`unblock-issues.mjs` clears `$issue` from every open issue's `## Blocked by` section naming
+it, dropping the section and the `blocked` label too where nothing else it names is still
+open, and prints each issue it clears the label from.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. Then report the merge commit, the issue it
