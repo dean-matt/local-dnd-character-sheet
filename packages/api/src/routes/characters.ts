@@ -1,8 +1,9 @@
 /**
  * List, read, create, update and delete for `characters.db`'s `characters` table, plus
- * read and replace for the `character_state` row each one owns. `name`, `level` and
- * `edition` are never accepted from a request body — the query layer derives all three
- * from `definition` on every write, and a state write never reaches that table.
+ * read and replace for the `character_state` row each one owns. `name`, `level`,
+ * `edition`, `raceSummary` and `classSummary` are never accepted from a request body —
+ * the query layer derives all five from `definition` on every write, and a state write
+ * never reaches that table.
  */
 import { randomUUID } from "node:crypto";
 import {
@@ -36,6 +37,8 @@ function toRecord(row: CharacterRow): CharacterRecord {
     name: row.name,
     edition: row.edition,
     level: row.level,
+    raceSummary: row.raceSummary,
+    classSummary: row.classSummary,
     definition: row.definition,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

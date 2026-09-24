@@ -40,6 +40,8 @@ const baseRecord = (id: string) => ({
   name: "Vex",
   edition: "one" as const,
   level: 1,
+  raceSummary: "Half-Elf",
+  classSummary: "Warlock",
   definition: baseDefinition(),
   createdAt: "2024-01-01T00:00:00.000Z",
   updatedAt: "2024-01-01T00:00:00.000Z",

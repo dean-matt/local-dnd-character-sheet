@@ -12,6 +12,8 @@ function characterRecord(id: string, name: string) {
     name,
     edition: "one" as const,
     level: 1,
+    raceSummary: "Half-Elf",
+    classSummary: "Warlock",
     definition: characterDefinitionSchema.parse({
       name,
       edition: "one",

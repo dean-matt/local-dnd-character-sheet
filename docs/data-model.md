@@ -24,6 +24,8 @@ erDiagram
         text name
         text edition "classic | one"
         int  level
+        text race_summary
+        text class_summary
         json definition
     }
     character_state {
@@ -167,10 +169,9 @@ own class carries the other two parts, and the short name keys the features inst
 **Overrides are sparse.** An absent `field_overrides` row means the computed value applies.
 Writing one leaves it untouched; clearing it restores that value, not a remembered old number.
 
-**`name`, `edition` and `level` are recomputed, never accepted.** All three summarize
-`characters.definition`, so the list is queryable without parsing every blob. Every write
-touching `definition` derives them in the same statement — `name` and `edition` from its own
-fields, `level` from `totalLevel()` — never a settable column on the request body.
+**`name`, `edition`, `level`, `race_summary` and `class_summary` are recomputed, never
+accepted.** All five derive from `characters.definition` — `race_summary` and `class_summary`
+from `raceSummary()` and `classSummary()`, reading `Homebrew` for an unresolvable `homebrewId`.
 
 **A preset page is hidden, never deleted.** Every character seeds with Stats, Spells, Inventory
 and Features. A write leaving one out is refused; restoring the defaults resets each, keeping
@@ -180,8 +181,7 @@ its position. Only the server sets `preset`; a `slug` survives a reorder or reti
 breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup). An unknown
 kind is refused on write; on read it degrades to an `unknown` block a save still keeps.
 
-**Logs are pruned on insert**, in the same statement that writes the new row — no cron job or
-manual cleanup to forget.
+**Logs are pruned on insert**, in the same statement that writes the new row — nothing to schedule.
 
 ## Resource counters
 
