@@ -12,9 +12,10 @@
  *
  * That reading matches every `## Blocked by` section this repository has written, but it
  * is a heuristic: a bare appositive with no subordinating word ("#239, the level-up
- * flow.") reads as two terms, not one description of #239. The cost only shows where the
- * section also names a second, open issue — the one case `removeBlockerTerm` runs — and
- * there it keeps the extra text rather than risk deleting a real blocker.
+ * flow.") reads as two terms, not one description of #239. `stillBlocked` treats a term
+ * with no issue number as blocking by default, since it has nothing to check against
+ * `open` — so a misread appositive can leave a fully resolved issue's `blocked` label
+ * standing, never a real blocker silently cleared.
  */
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
@@ -63,12 +64,15 @@ function joinTerms(terms) {
   return `${terms.slice(0, -1).join(", ")} and ${terms.at(-1)}.`;
 }
 
+function remainingTerms(section, closed) {
+  return splitTerms(section).filter((t) => !new RegExp(`#${closed}\\b`).test(t));
+}
+
 /** Removes only `closed`'s term, keeping every other term the section names. */
 export function removeBlockerTerm(body, closed) {
   const section = blockedBySection(body);
   if (section === null) return body;
-  const remaining = splitTerms(section).filter((t) => !new RegExp(`#${closed}\\b`).test(t));
-  const rebuilt = joinTerms(remaining) ?? "";
+  const rebuilt = joinTerms(remainingTerms(section, closed)) ?? "";
   return sections(body)
     .map((s) =>
       s.heading === "Blocked by" ? `## Blocked by\n\n${rebuilt}${rebuilt ? "\n" : ""}` : s.chunk,
@@ -87,6 +91,21 @@ export function removeSection(body) {
 /** `keepSection` is whether another issue this section names is still open. */
 export function clearBlocker(body, closed, keepSection) {
   return keepSection ? removeBlockerTerm(body, closed) : removeSection(body);
+}
+
+/**
+ * Whether the section still has something blocking once `closed`'s term is gone. A
+ * remaining term with no issue number can't be checked against `open`, so it counts as
+ * still blocking by default — the section is prose the script cannot resolve, not a
+ * blocker it can clear.
+ */
+export function stillBlocked(body, closed, open) {
+  const section = blockedBySection(body);
+  if (section === null) return false;
+  return remainingTerms(section, closed).some((term) => {
+    const refs = referencedIssues(term);
+    return refs.length === 0 || refs.some((n) => open.has(n));
+  });
 }
 
 const gh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8" }));
@@ -117,7 +136,7 @@ function run(closed) {
   for (const issue of candidates) {
     const refs = referencedIssues(blockedBySection(issue.body));
     if (!refs.includes(closed)) continue;
-    const keepSection = refs.filter((n) => n !== closed).some((n) => open.has(n));
+    const keepSection = stillBlocked(issue.body, closed, open);
     const body = clearBlocker(issue.body, closed, keepSection);
     const args = ["issue", "edit", String(issue.number), "--body", body];
     if (!keepSection) args.push("--remove-label", "blocked");

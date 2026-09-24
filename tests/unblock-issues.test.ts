@@ -5,6 +5,7 @@ import {
   referencedIssues,
   removeBlockerTerm,
   removeSection,
+  stillBlocked,
 } from "../scripts/unblock-issues.mjs";
 
 /**
@@ -210,5 +211,27 @@ describe("removeBlockerTerm", () => {
   it("is a no-op on a body with no Blocked by section", () => {
     const body = "## What\n\nNo blockers here.\n";
     expect(removeBlockerTerm(body, 1)).toBe(body);
+  });
+});
+
+describe("stillBlocked", () => {
+  it("stays true for a prose blocker with no issue number, even where nothing is open", () => {
+    expect(stillBlocked(APPOSITIVE_LIST, 223, new Set())).toBe(true);
+  });
+
+  it("is false where the closed issue was the section's only blocker", () => {
+    expect(stillBlocked(SINGLE_BLOCKER, 276, new Set())).toBe(false);
+  });
+
+  it("is true where a sibling issue number is still open", () => {
+    expect(stillBlocked(BARE_PAIR, 214, new Set([215]))).toBe(true);
+  });
+
+  it("is false where the only other named issue is also closed", () => {
+    expect(stillBlocked(BARE_PAIR, 214, new Set())).toBe(false);
+  });
+
+  it("stays true for an unnumbered blocker sitting beside a numbered one", () => {
+    expect(stillBlocked(BARE_TAIL, 222, new Set())).toBe(true);
   });
 });
