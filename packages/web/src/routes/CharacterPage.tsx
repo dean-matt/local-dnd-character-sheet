@@ -1,7 +1,7 @@
 import { useParams } from "react-router";
 import { Field } from "../components/Field.tsx";
+import { useCharacterPages } from "../hooks/useCharacterPages.ts";
 import { useCharacter } from "../hooks/useCharacters.ts";
-import { findCharacterPage } from "../pages.ts";
 import { EmptyState, ErrorState, LoadingState } from "../states.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
@@ -15,9 +15,13 @@ import { NotFoundPanel } from "./NotFoundPanel.tsx";
  */
 export function CharacterPage() {
   const { id = "", slug = "" } = useParams();
-  const page = findCharacterPage(id, slug);
+  const pages = useCharacterPages(id);
   const { data, isPending, isError, error } = useCharacter(id);
 
+  if (pages.isPending) return <LoadingState label="Loading pages…" />;
+  if (pages.isError) return <ErrorState message={pages.error.message} />;
+
+  const page = pages.data.find((candidate) => candidate.slug === slug);
   if (!page) return <NotFoundPanel />;
 
   return (

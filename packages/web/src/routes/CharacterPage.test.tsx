@@ -1,39 +1,10 @@
-import { characterDefinitionSchema } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { stubFetch } from "../test/stubFetch.ts";
+import { characterRecord, presetPageRecords } from "../test/records.ts";
+import { stubFetch, stubFetchByUrl } from "../test/stubFetch.ts";
 import { CharacterPage } from "./CharacterPage.tsx";
-
-function characterRecord(id: string, name: string) {
-  return {
-    id,
-    name,
-    edition: "one" as const,
-    level: 1,
-    definition: characterDefinitionSchema.parse({
-      name,
-      edition: "one",
-      levels: [{ class: { name: "Warlock", source: "XPHB" } }],
-      race: { name: "Half-Elf", source: "XPHB" },
-      background: { name: "Charlatan", source: "XPHB" },
-      abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    }),
-    createdAt: "2024-01-01T00:00:00.000Z",
-    updatedAt: "2024-01-01T00:00:00.000Z",
-  };
-}
 
 function renderPage(path = "/characters/1/p/stats") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -48,16 +19,22 @@ function renderPage(path = "/characters/1/p/stats") {
   );
 }
 
+const stubCharacter = (pages = presetPageRecords()) =>
+  stubFetchByUrl({
+    "/api/characters/1": characterRecord("1", "Vex"),
+    "/api/characters/1/pages": pages,
+  });
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("CharacterPage", () => {
-  it("shows a loading state while the character is in flight", () => {
+  it("shows a loading state while the pages are in flight", () => {
     vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
     renderPage();
 
-    expect(screen.getByRole("status")).toHaveTextContent("Loading character…");
+    expect(screen.getByRole("status")).toHaveTextContent("Loading pages…");
   });
 
   it("shows an error state when the request fails", async () => {
@@ -67,10 +44,35 @@ describe("CharacterPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("no such character");
   });
 
-  it("renders the character's name once it resolves", async () => {
-    stubFetch(new Response(JSON.stringify(characterRecord("1", "Vex")), { status: 200 }));
+  it("renders the page's title and the character's name once both resolve", async () => {
+    stubCharacter();
     renderPage();
 
+    expect(await screen.findByRole("heading", { level: 1, name: "Stats" })).toBeInTheDocument();
     expect(await screen.findByText("Vex")).toBeInTheDocument();
+  });
+
+  it("renders a block with no view yet as nothing, keeping the page around it", async () => {
+    stubCharacter();
+    renderPage("/characters/1/p/spells");
+
+    await screen.findByText("Vex");
+    expect(screen.getByRole("heading", { level: 1, name: "Spells" })).toBeInTheDocument();
+    expect(screen.queryByText(/section/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("reaches a hidden page by its URL", async () => {
+    stubCharacter(presetPageRecords().map((page) => ({ ...page, hidden: true })));
+    renderPage("/characters/1/p/inventory");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Inventory" })).toBeInTheDocument();
+  });
+
+  it("shows the not-found state for a slug that names no page of this character", async () => {
+    stubCharacter();
+    renderPage("/characters/1/p/grapple");
+
+    await screen.findByRole("heading", { level: 1, name: "Page not found" });
   });
 });
