@@ -1069,6 +1069,25 @@ describe("deriveCharacter", () => {
     expect(unarmored.armorClass.computed).toBe(13);
   });
 
+  it("omits the reference when the equipped armor is homebrew", () => {
+    const homebrewArmor = { homebrewId: "hb_leather" };
+    const withHomebrew: CharacterDefinition = {
+      ...definition,
+      inventory: [
+        ...definition.inventory,
+        { ref: homebrewArmor, quantity: 1, carried: true, equipped: true, attuned: false },
+      ],
+    };
+    const homebrewCatalog = {
+      ...catalog,
+      armor: new Map([[entryKey(homebrewArmor), { category: "light" as const, armorClass: 11 }]]),
+    };
+
+    const result = deriveCharacter(withHomebrew, homebrewCatalog);
+
+    expect(result.armorClass.terms).toContainEqual({ label: "Armor", value: 11 });
+  });
+
   it("reads initiative off Dexterity alone", () => {
     expect(derived.initiative).toEqual({ computed: 3, manual: null, terms: [] });
   });
