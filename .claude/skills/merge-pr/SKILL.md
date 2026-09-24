@@ -101,11 +101,17 @@ uncommitted; stop on that refusal.
 ```bash
 gh pr merge "$n" --squash --delete-branch
 git checkout main && git pull --ff-only
+node scripts/unblock-issues.mjs "$issue"
 ```
+
+`unblock-issues.mjs` finds every open issue whose `## Blocked by` section names `$issue`
+and clears that name from the section. Where none of the issues it still names is open, it
+drops the section and the `blocked` label too. It prints the issue it clears the label
+from, one per line.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. Then report the merge commit, the issue it
-closed, and that the checkout is on `main`.
+closed, which issues it unblocked, and that the checkout is on `main`.
 
 ## What this skill will not do
 
