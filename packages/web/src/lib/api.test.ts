@@ -46,6 +46,15 @@ describe("apiGet", () => {
     stubFetch(new Response(JSON.stringify({ error: "nope" }), { status: 400 }));
     await expect(apiGet("/widgets/1", widgetSchema)).rejects.toBeInstanceOf(ApiError);
   });
+
+  it("wraps a network-level fetch failure in an ApiError with status 0", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    await expect(apiGet("/widgets/1", widgetSchema)).rejects.toBeInstanceOf(ApiError);
+    await expect(apiGet("/widgets/1", widgetSchema)).rejects.toMatchObject({
+      message: "Failed to fetch",
+      status: 0,
+    });
+  });
 });
 
 describe("apiMutate", () => {
