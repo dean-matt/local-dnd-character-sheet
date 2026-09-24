@@ -7,7 +7,8 @@ build/
 vendor/5etools*
 
 # Generated catalog — rebuilt by `pnpm content:build`
-data/content/
+# No trailing slash: a worktree links this path, and `dir/` never matches a symlink
+data/content
 data/content.db*
 
 # Your data — not committed, but back these up
