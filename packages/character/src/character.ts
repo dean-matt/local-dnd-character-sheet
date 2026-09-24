@@ -579,7 +579,7 @@ const pageSlugSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
 
 const characterPageSchema = z.strictObject({
   slug: pageSlugSchema,
-  title: z.string().min(1),
+  title: z.string().trim().min(1),
   hidden: z.boolean().default(false),
   blocks: z.array(pageBlockSchema),
 });

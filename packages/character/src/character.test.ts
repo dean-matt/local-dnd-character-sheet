@@ -1424,6 +1424,10 @@ describe("pages", () => {
     expect(characterPagesSchema.parse([page])[0]?.hidden).toBe(false);
   });
 
+  it("refuses a title of only whitespace, which would leave a link with no name", () => {
+    expect(characterPagesSchema.safeParse([{ ...page, title: "  " }]).success).toBe(false);
+  });
+
   it("refuses two pages under one slug", () => {
     expect(characterPagesSchema.safeParse([page, { ...page, title: "Again" }]).success).toBe(false);
   });
