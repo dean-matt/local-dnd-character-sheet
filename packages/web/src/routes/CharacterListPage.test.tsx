@@ -67,14 +67,16 @@ describe("CharacterListPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("no data dir");
   });
 
-  it("shows the empty state when the list resolves with no characters", async () => {
+  it("shows the empty state when the list resolves with no characters, saying how to add one", async () => {
     stubFetch(new Response(JSON.stringify([]), { status: 200 }));
     renderPage();
 
-    expect(await screen.findByText("No characters yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No characters yet. POST a definition to /characters to add one."),
+    ).toBeInTheDocument();
   });
 
-  it("lists each character as a link to its page", async () => {
+  it("lists each character as a link to its page, with its name, level, edition and summaries", async () => {
     stubFetch(
       new Response(JSON.stringify([characterRecord("1", "Vex"), characterRecord("2", "Nyx")]), {
         status: 200,
@@ -82,10 +84,13 @@ describe("CharacterListPage", () => {
     );
     renderPage();
 
-    expect(await screen.findByRole("link", { name: "Vex" })).toHaveAttribute(
-      "href",
-      "/characters/1",
-    );
-    expect(screen.getByRole("link", { name: "Nyx" })).toHaveAttribute("href", "/characters/2");
+    const links = await screen.findAllByRole("link");
+    expect(links[0]).toHaveAttribute("href", "/characters/1");
+    expect(links[0]).toHaveTextContent("Vex");
+    expect(links[0]).toHaveTextContent("Half-Elf Warlock");
+    expect(links[0]).toHaveTextContent("Level 1");
+    expect(links[0]).toHaveTextContent("One");
+    expect(links[1]).toHaveAttribute("href", "/characters/2");
+    expect(links[1]).toHaveTextContent("Nyx");
   });
 });
