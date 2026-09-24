@@ -7,6 +7,7 @@ describe("PageBlocks", () => {
   it("renders every block kind, in order", () => {
     const blocks: PageBlock[] = [
       { kind: "text", text: "First." },
+      { kind: "value", field: "armorClass" },
       { kind: "section", section: "spells" },
       { kind: "list", source: "inventory", filter: {} },
       { kind: "unknown", raw: { kind: "x" } },
@@ -18,6 +19,7 @@ describe("PageBlocks", () => {
     );
     expect(order.map((el) => el.textContent)).toEqual([
       "First.",
+      "Armor Class isn't available yet.",
       "Spells isn't built yet.",
       "Inventory isn't available yet.",
       "This block isn't recognized by this build.",

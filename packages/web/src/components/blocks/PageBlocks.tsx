@@ -5,7 +5,7 @@
  * `pageBlockSchema`, never a switch here.
  */
 import type { CharacterDerived, PageBlock } from "@dnd/character";
-import type { ReactNode } from "react";
+import type { FunctionComponent } from "react";
 import { ListBlockView } from "./ListBlock.tsx";
 import { SectionBlockView } from "./SectionBlock.tsx";
 import { TextBlockView } from "./TextBlock.tsx";
@@ -13,7 +13,7 @@ import type { BlockViewProps } from "./types.ts";
 import { UnknownBlockView } from "./UnknownBlock.tsx";
 import { ValueBlockView } from "./ValueBlock.tsx";
 
-const REGISTRY: Record<PageBlock["kind"], (props: BlockViewProps) => ReactNode> = {
+const REGISTRY: Record<PageBlock["kind"], FunctionComponent<BlockViewProps>> = {
   section: SectionBlockView,
   value: ValueBlockView,
   list: ListBlockView,
@@ -30,10 +30,11 @@ export function PageBlocks({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      {blocks.map((block, index) => (
+      {blocks.map((block, index) => {
+        const View = REGISTRY[block.kind];
         // biome-ignore lint/suspicious/noArrayIndexKey: a page's blocks carry no id of their own.
-        <div key={index}>{REGISTRY[block.kind]({ block, derived })}</div>
-      ))}
+        return <View key={index} block={block} derived={derived} />;
+      })}
     </div>
   );
 }
