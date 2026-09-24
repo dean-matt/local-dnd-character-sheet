@@ -7,12 +7,14 @@ import type { z } from "zod";
 
 const BASE_URL = "/api";
 
+/** `status` is `0` for a network-level failure, where no HTTP response ever arrived. */
 export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "ApiError";
   }
 }
@@ -26,7 +28,13 @@ function readErrorMessage(body: unknown): string | undefined {
 }
 
 async function request(path: string, init?: RequestInit): Promise<Response> {
-  const response = await fetch(`${BASE_URL}${path}`, init);
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, init);
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : "network request failed";
+    throw new ApiError(message, 0, { cause });
+  }
   if (!response.ok) {
     const message = readErrorMessage(await response.json().catch(() => undefined));
     throw new ApiError(message ?? response.statusText, response.status);
