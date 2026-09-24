@@ -1,12 +1,15 @@
 /**
- * The only path that writes `characters.definition`. `name`, `level` and `edition` are
- * denormalized projections of it, so all three recompute here in the same statement
- * rather than arrive as arguments a caller could set adrift.
+ * The only path that writes `characters.definition`. `name`, `level`, `edition`,
+ * `raceSummary` and `classSummary` are denormalized projections of it, so all five
+ * recompute here in the same statement rather than arrive as arguments a caller could
+ * set adrift.
  */
 import {
   type CharacterDefinition,
   type CharacterState,
+  classSummary,
   defaultCharacterState,
+  raceSummary,
   totalLevel,
 } from "@dnd/character";
 import { eq } from "drizzle-orm";
@@ -41,6 +44,8 @@ export function insertCharacter(
         name: input.definition.name,
         edition: input.definition.edition,
         level: totalLevel(input.definition),
+        raceSummary: raceSummary(input.definition),
+        classSummary: classSummary(input.definition),
         definition: input.definition,
       })
       .returning()
@@ -66,6 +71,8 @@ export function updateCharacterDefinition(
       name: definition.name,
       edition: definition.edition,
       level: totalLevel(definition),
+      raceSummary: raceSummary(definition),
+      classSummary: classSummary(definition),
       updatedAt: new Date(),
     })
     .where(eq(characters.id, id))

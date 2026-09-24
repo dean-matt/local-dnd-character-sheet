@@ -20,6 +20,7 @@ import {
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
+  classSummary,
   defaultCharacterState,
   degradePageBlock,
   deriveCharacter,
@@ -33,6 +34,7 @@ import {
   houseRule,
   PRESET_PAGES,
   passiveSkill,
+  raceSummary,
   resourceSchema,
   spellSlotSchema,
   totalLevel,
@@ -180,6 +182,8 @@ describe("round trips", () => {
       name: definition.name,
       edition: definition.edition,
       level: definition.levels.length,
+      raceSummary: raceSummary(definition),
+      classSummary: classSummary(definition),
       definition,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -267,6 +271,14 @@ describe("race", () => {
     };
     expect(characterDefinitionSchema.parse(structuredClone(granted))).toEqual(granted);
   });
+
+  it("summarizes a race with no subrace by the race's own name", () => {
+    expect(raceSummary(definition)).toBe("Half-Elf");
+  });
+
+  it("shows a homebrew race as Homebrew, with no catalog to resolve its name", () => {
+    expect(raceSummary({ ...definition, race: { homebrewId: "hb_07" } })).toBe("Homebrew");
+  });
 });
 
 describe("class", () => {
@@ -287,7 +299,7 @@ describe("class", () => {
 
 describe("subrace", () => {
   /** Classic throughout, because upstream ships no subrace in the 2024 ruleset. */
-  const elf = {
+  const elf: CharacterDefinition = {
     ...definition,
     edition: "classic",
     levels: [{ class: { name: "Wizard", source: "PHB" } }],
@@ -313,6 +325,10 @@ describe("subrace", () => {
   it("rejects the empty name a base variant's row is keyed on", () => {
     const base = { ...elf, subrace: { name: "", source: "PHB" } };
     expect(characterDefinitionSchema.safeParse(base).success).toBe(false);
+  });
+
+  it("summarizes by the subrace's own name, not the race's", () => {
+    expect(raceSummary(elf)).toBe("High");
   });
 });
 
@@ -782,6 +798,19 @@ describe("class levels", () => {
       entryKey(ROGUE),
       entryKey(ROGUE),
     ]);
+  });
+
+  it("summarizes a multiclass character with a count per class, in the order each was first taken", () => {
+    expect(classSummary(definition)).toBe("Warlock 3 / Rogue 2");
+  });
+
+  it("summarizes a single class with no count", () => {
+    expect(classSummary({ ...definition, levels: [{ class: ROGUE }] })).toBe("Rogue");
+  });
+
+  it("shows a homebrew class as Homebrew, with no catalog to resolve its name", () => {
+    const homebrew = { ...definition, levels: [{ class: { homebrewId: "hb_08" } }] };
+    expect(classSummary(homebrew)).toBe("Homebrew");
   });
 });
 

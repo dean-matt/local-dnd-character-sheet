@@ -476,15 +476,48 @@ export const characterDefinitionSchema = z.strictObject({
 export const totalLevel = (definition: CharacterDefinition): number => definition.levels.length;
 
 /**
- * A stored character, as an endpoint returns it. `name`, `edition` and `level` are
- * denormalized projections of `definition`, kept here so a caller never re-derives what
- * the database already computed on write.
+ * `race` and `levels[].class` carry only a `homebrewId` for a homebrew choice, and no
+ * catalog reaches `packages/character` to resolve it to a name — the ceiling both
+ * summaries below share.
+ */
+const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
+
+/** The subrace's own name where one is chosen, the race's otherwise — `High`, not `Elf (High)`. */
+export function raceSummary(definition: CharacterDefinition): string {
+  return displayName(definition.subrace ?? definition.race);
+}
+
+/**
+ * `levels` grouped by class, in the order each class was first taken, and joined the way
+ * `levelEntrySchema`'s own comment already writes a multiclass character — `Wizard 1 /
+ * Fighter 1`. A single class carries no count.
+ */
+export function classSummary(definition: CharacterDefinition): string {
+  const groups = new Map<string, { ref: EntryRef; count: number }>();
+  for (const level of definition.levels) {
+    const key = entryKey(level.class);
+    const group = groups.get(key);
+    if (group) group.count += 1;
+    else groups.set(key, { ref: level.class, count: 1 });
+  }
+  const labels = [...groups.values()].map((group) =>
+    groups.size === 1 ? displayName(group.ref) : `${displayName(group.ref)} ${group.count}`,
+  );
+  return labels.join(" / ");
+}
+
+/**
+ * A stored character, as an endpoint returns it. `name`, `edition`, `level`,
+ * `raceSummary` and `classSummary` are denormalized projections of `definition`, kept
+ * here so a caller never re-derives what the database already computed on write.
  */
 export const characterRecordSchema = z.strictObject({
   id: z.string(),
   name: z.string(),
   edition: editionSchema,
   level: z.int().min(1),
+  raceSummary: z.string(),
+  classSummary: z.string(),
   definition: characterDefinitionSchema,
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
