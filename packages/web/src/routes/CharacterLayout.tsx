@@ -1,9 +1,9 @@
 import { NavLink, Outlet, useParams } from "react-router";
-import { getCharacterPages, visiblePages } from "../pages.ts";
+import { useCharacterPages } from "../hooks/useCharacterPages.ts";
 
 export function CharacterLayout() {
   const { id = "" } = useParams();
-  const pages = visiblePages(getCharacterPages(id));
+  const pages = useCharacterPages(id).data?.filter((page) => !page.hidden) ?? [];
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row">

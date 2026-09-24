@@ -12,6 +12,7 @@ hold. This describes the shape and the rules that are not visible in a table def
 erDiagram
     characters ||--|| character_state : "current values"
     characters ||--o{ field_overrides : "manual edits"
+    characters ||--o{ character_pages : "by position"
     characters ||--o{ roll_log : "last 200"
     characters ||--o{ undo_log : "last 50"
     characters }o--o{ spells : "by (name, source)"
@@ -28,11 +29,6 @@ erDiagram
     character_state {
         text character_id PK
         json state "hp, slots, conditions, resources"
-    }
-    field_overrides {
-        text character_id FK
-        text field
-        text value
     }
     spells {
         text name PK
@@ -178,6 +174,11 @@ summarize `characters.definition` so the character list can be queried without p
 every blob. Every write that touches `definition` derives them from it in the same
 statement — `name` and `edition` from the definition's own fields, `level` from
 `totalLevel()` — and none is a settable column on the request body that writes it.
+
+**A preset page is hidden, never deleted.** Every character is seeded with Stats, Spells,
+Inventory and Features. A write leaving a preset out is refused; restoring the defaults
+rewrites each preset as seeded, ahead of the user's own pages. Only the server sets
+`preset`, and a URL carries the `slug`, so a link survives a reorder and a retitle.
 
 **Logs are pruned on insert**, in the same statement that writes the new row. A cron job
 or a manual cleanup would be one more thing to forget.

@@ -15,6 +15,20 @@
       "when": 1789763241564,
       "tag": "0001_backfill_character_state",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790254728318,
+      "tag": "0002_optimal_naoko",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790254728725,
+      "tag": "0003_backfill_character_pages",
+      "breakpoints": true
     }
   ]
 }

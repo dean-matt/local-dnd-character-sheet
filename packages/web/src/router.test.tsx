@@ -3,6 +3,8 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
+import { characterRecord, presetPageRecords } from "./test/records.ts";
+import { stubFetchByUrl } from "./test/stubFetch.ts";
 
 function renderAt(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -17,10 +19,11 @@ function renderAt(path: string) {
 
 describe("routing", () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response(JSON.stringify([]), { status: 200 })),
-    );
+    stubFetchByUrl({
+      "/api/characters": [],
+      "/api/characters/abc": characterRecord("abc", "Vex"),
+      "/api/characters/abc/pages": presetPageRecords(),
+    });
   });
 
   afterEach(() => {

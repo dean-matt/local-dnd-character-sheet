@@ -16,7 +16,14 @@
  */
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const characters = sqliteTable("characters", {
   id: text("id").primaryKey(),
@@ -47,6 +54,29 @@ export const fieldOverrides = sqliteTable(
     value: text("value").notNull(),
   },
   (t) => [primaryKey({ columns: [t.characterId, t.field] })],
+);
+
+/**
+ * A character's pages, in `position` order. `preset` marks the pages seeded on insert,
+ * which a write may hide or edit but never delete. `slug` is the key a URL carries.
+ */
+export const characterPages = sqliteTable(
+  "character_pages",
+  {
+    characterId: text("character_id")
+      .notNull()
+      .references(() => characters.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    position: integer("position").notNull(),
+    hidden: integer("hidden", { mode: "boolean" }).notNull().default(false),
+    preset: integer("preset", { mode: "boolean" }).notNull().default(false),
+    blocks: text("blocks", { mode: "json" }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.characterId, t.slug] }),
+    uniqueIndex("character_pages_by_position").on(t.characterId, t.position),
+  ],
 );
 
 /** Bounded: the newest 200 rows per character are kept, older ones pruned on insert. */

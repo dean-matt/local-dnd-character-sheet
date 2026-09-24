@@ -16,6 +16,7 @@ import {
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
+  characterPagesSchema,
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
@@ -28,6 +29,7 @@ import {
   hitDicePoolSchema,
   hitPointMaximum,
   houseRule,
+  PRESET_PAGES,
   passiveSkill,
   resourceSchema,
   spellSlotSchema,
@@ -1400,4 +1402,40 @@ describe("exhaustion", () => {
     const prone = { ...state, conditions: [{ name: "Prone", source: "XPHB" }] };
     expect(characterStateSchema.safeParse(prone).success).toBe(true);
   });
+});
+
+describe("pages", () => {
+  const page = { slug: "grapple", title: "Grapple", blocks: [] };
+
+  it("seeds presets that parse as a character's pages", () => {
+    expect(characterPagesSchema.parse(PRESET_PAGES)).toEqual(PRESET_PAGES);
+  });
+
+  it.each([
+    { kind: "tarot", deck: "Many Things" },
+    { kind: "section", section: "grappling" },
+    { kind: "section", section: "spells", filter: "concentration" },
+    {},
+  ])("refuses the block %j, so no stored page holds one", (block) => {
+    expect(characterPagesSchema.safeParse([{ ...page, blocks: [block] }]).success).toBe(false);
+  });
+
+  it("defaults a page to shown", () => {
+    expect(characterPagesSchema.parse([page])[0]?.hidden).toBe(false);
+  });
+
+  it("refuses a title of only whitespace, which would leave a link with no name", () => {
+    expect(characterPagesSchema.safeParse([{ ...page, title: "  " }]).success).toBe(false);
+  });
+
+  it("refuses two pages under one slug", () => {
+    expect(characterPagesSchema.safeParse([page, { ...page, title: "Again" }]).success).toBe(false);
+  });
+
+  it.each(["", "Grapple", "grapple rules", "grapple--rules", "-grapple", "grapple/rules"])(
+    "refuses the slug %j, which a URL would not carry as written",
+    (slug) => {
+      expect(characterPagesSchema.safeParse([{ ...page, slug }]).success).toBe(false);
+    },
+  );
 });

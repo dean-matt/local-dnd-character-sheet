@@ -558,6 +558,82 @@ export function defaultCharacterState(): CharacterState {
   });
 }
 
+// Pages ----------------------------------------------------------------------
+
+const SHEET_SECTIONS = ["abilities", "spells", "inventory", "features"] as const;
+
+/**
+ * One unit of a page's content. A whole sheet section is the only kind so far, since it
+ * is all a preset holds. Strict like the rest of the file: a write naming a kind this
+ * build does not know is refused, so no stored page holds one.
+ */
+const pageBlockSchema = z.strictObject({
+  kind: z.literal("section"),
+  section: z.enum(SHEET_SECTIONS),
+});
+
+/** What a URL carries, so it survives a reorder and a retitle and needs no escaping. */
+const pageSlugSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
+  error: "a slug is lowercase letters and digits, joined by single hyphens",
+});
+
+const characterPageSchema = z.strictObject({
+  slug: pageSlugSchema,
+  title: z.string().trim().min(1),
+  hidden: z.boolean().default(false),
+  blocks: z.array(pageBlockSchema),
+});
+
+/** A character's pages in display order: the list a write replaces whole. */
+export const characterPagesSchema = z
+  .array(characterPageSchema)
+  .refine((pages) => isUnique(pages, (page) => page.slug), {
+    error: "the same slug is listed twice",
+  });
+
+/**
+ * A stored page, as an endpoint returns it. The server sets `preset` and never accepts
+ * it: a preset can be hidden or edited but not deleted, and restoring the defaults
+ * resets the presets alone.
+ */
+export const characterPageRecordSchema = characterPageSchema.extend({ preset: z.boolean() });
+
+export type CharacterPage = z.infer<typeof characterPageSchema>;
+export type CharacterPageRecord = z.infer<typeof characterPageRecordSchema>;
+
+/**
+ * Seeded on every character, in this order. A preset's blocks are whole sheet sections.
+ * A new entry reaches existing characters only through a backfill migration, as these
+ * four did. That migration must settle any user page already under the new slug, since
+ * restoring the defaults fails on one.
+ */
+export const PRESET_PAGES: readonly CharacterPage[] = [
+  {
+    slug: "stats",
+    title: "Stats",
+    hidden: false,
+    blocks: [{ kind: "section", section: "abilities" }],
+  },
+  {
+    slug: "spells",
+    title: "Spells",
+    hidden: false,
+    blocks: [{ kind: "section", section: "spells" }],
+  },
+  {
+    slug: "inventory",
+    title: "Inventory",
+    hidden: false,
+    blocks: [{ kind: "section", section: "inventory" }],
+  },
+  {
+    slug: "features",
+    title: "Features",
+    hidden: false,
+    blocks: [{ kind: "section", section: "features" }],
+  },
+];
+
 // Derived --------------------------------------------------------------------
 
 /**
