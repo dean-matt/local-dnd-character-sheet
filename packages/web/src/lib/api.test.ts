@@ -47,9 +47,13 @@ describe("apiGet", () => {
     await expect(apiGet("/widgets/1", widgetSchema)).rejects.toBeInstanceOf(ApiError);
   });
 
-  it("wraps a network-level fetch failure in an ApiError with status 0", async () => {
+  it("wraps a network-level fetch failure in an ApiError", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     await expect(apiGet("/widgets/1", widgetSchema)).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("gives a network-level fetch failure status 0 and its message", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     await expect(apiGet("/widgets/1", widgetSchema)).rejects.toMatchObject({
       message: "Failed to fetch",
       status: 0,
