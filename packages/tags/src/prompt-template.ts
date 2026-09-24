@@ -12,7 +12,8 @@ const TEMPLATE = /#\$(\w+)(?::([^$]*))?\$#/g;
 
 /**
  * `key=value` pairs, comma-separated. A title holding its own comma has no escape and
- * splits early; the corpus has none today.
+ * splits early; the corpus has none today. Widen this the day `pnpm tags:audit` finds
+ * one.
  */
 function params(raw: string | undefined): Map<string, string> {
   const parsed = new Map<string, string>();

@@ -391,6 +391,12 @@ describe("prompt templates nested in dice notation", () => {
       display: "1d6 + [prompt_amount]",
     });
   });
+
+  it("falls back to a generic title for a bare, paramless prompt_number", () => {
+    expect(only("{@dice 1d6 + #$prompt_number$#}")).toMatchObject({
+      display: "1d6 + [a number]",
+    });
+  });
 });
 
 describe("tags whose display is derived", () => {
