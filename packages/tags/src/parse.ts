@@ -13,6 +13,7 @@
  */
 
 import { isRollable } from "@dnd/dice";
+import { expandPromptTemplates } from "./prompt-template.ts";
 import { SPECS } from "./registry.ts";
 import { arg, type RefToken, type Token, text } from "./token.ts";
 
@@ -25,7 +26,8 @@ const MAX_DEPTH = 32;
 
 /** Flattens nesting inside an argument, because a display is a string and not a tree. */
 function plain(value: string, depth: number): string {
-  return value.includes("{@") ? renderText(walk(value, depth + 1)) : value;
+  const expanded = value.includes("#$") ? expandPromptTemplates(value) : value;
+  return expanded.includes("{@") ? renderText(walk(expanded, depth + 1)) : expanded;
 }
 
 /**

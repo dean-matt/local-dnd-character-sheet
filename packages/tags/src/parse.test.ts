@@ -353,6 +353,52 @@ describe("rolls", () => {
   });
 });
 
+describe("prompt templates nested in dice notation", () => {
+  it("keeps a bare title and drops the template", () => {
+    expect(only("{@dice 1d6 + #$prompt_number:title=Enter a Modifier$#}")).toEqual({
+      kind: "roll",
+      notation: "1d6 + #$prompt_number:title=Enter a Modifier$#",
+      display: "1d6 + [Enter a Modifier]",
+      rollable: false,
+    });
+  });
+
+  it("carries the default and the range alongside the title", () => {
+    expect(
+      only(
+        "{@dice d12 + #$prompt_number:default=0,min=0,max=2,title=Enter +2 if the characters provide a bribe$#}",
+      ),
+    ).toMatchObject({
+      display: "d12 + [Enter +2 if the characters provide a bribe: 0–2, default 0]",
+      rollable: false,
+    });
+  });
+
+  it("leaves an explicit display alone, template and all", () => {
+    expect(
+      only("{@dice #$prompt_number:title=Enter Strength Score$# × 120|Str. × 120}"),
+    ).toMatchObject({ display: "Str. × 120", rollable: false });
+  });
+
+  it("degrades an unknown variable to its title, the same way an unknown tag would", () => {
+    expect(only("{@dice 1d6 + #$prompt_amount:title=Enter an Amount$#}")).toMatchObject({
+      display: "1d6 + [Enter an Amount]",
+    });
+  });
+
+  it("degrades an unknown variable with no title to its own name", () => {
+    expect(only("{@dice 1d6 + #$prompt_amount$#}")).toMatchObject({
+      display: "1d6 + [prompt_amount]",
+    });
+  });
+
+  it("falls back to a generic title for a bare, paramless prompt_number", () => {
+    expect(only("{@dice 1d6 + #$prompt_number$#}")).toMatchObject({
+      display: "1d6 + [a number]",
+    });
+  });
+});
+
 describe("tags whose display is derived", () => {
   it.each([
     ["{@atk mw}", "Melee Weapon Attack:"],
@@ -682,6 +728,14 @@ describe("real strings from the corpus", () => {
     [
       "Horn of Valhalla ({@item Horn of Valhalla, Silver||Silver|} or {@item Horn of Valhalla, Brass||Brass|})",
       "Horn of Valhalla (Silver or Brass)",
+    ],
+    [
+      "{@dice 3d6 + #$prompt_number:title=Enter Charisma Modifier$#}",
+      "3d6 + [Enter Charisma Modifier]",
+    ],
+    [
+      "{@dice 1d6 + #$prompt_number:min=1,title=Enter a Number!,default=123$#} for input prompts",
+      "1d6 + [Enter a Number!: min 1, default 123] for input prompts",
     ],
   ])("renders to plain text: %s", (input, expected) => {
     expect(shown(input)).toBe(expected);
