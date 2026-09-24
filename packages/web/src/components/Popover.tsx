@@ -39,7 +39,15 @@ export interface PopoverProps {
 
 export function Popover({ trigger, label, children }: PopoverProps) {
   const depth = useContext(DepthContext);
-  const [open, setOpen] = useState(false);
+  // Hover and focus drive one flag, a click or tap the other, because a real
+  // pointer always fires `mouseenter` before `click` — including the tap that
+  // opens it on a touchscreen. A shared flag toggled on click would read as
+  // already open and instantly close what the same tap had just opened, so a
+  // click instead *pins* the popover open on top of whatever hover or focus
+  // already did, rather than racing it.
+  const [transientOpen, setTransientOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const open = transientOpen || pinned;
   const id = useId();
   const contentId = `${id}-content`;
   const wrapperRef = useRef<HTMLSpanElement>(null);
@@ -57,7 +65,11 @@ export function Popover({ trigger, label, children }: PopoverProps) {
   useEffect(() => {
     if (!open) return;
     function handlePointerDown(event: PointerEvent) {
-      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        clearTimeout(hoverTimer.current);
+        setTransientOpen(false);
+        setPinned(false);
+      }
     }
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
@@ -67,18 +79,19 @@ export function Popover({ trigger, label, children }: PopoverProps) {
 
   function show() {
     clearTimeout(hoverTimer.current);
-    setOpen(true);
+    setTransientOpen(true);
   }
 
   // Delayed rather than immediate, so a pointer crossing the gap between the
   // trigger and the content it opened does not close it mid-crossing.
   function scheduleHide() {
-    hoverTimer.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY_MS);
+    hoverTimer.current = setTimeout(() => setTransientOpen(false), HOVER_CLOSE_DELAY_MS);
   }
 
   function hideNow() {
     clearTimeout(hoverTimer.current);
-    setOpen(false);
+    setTransientOpen(false);
+    setPinned(false);
   }
 
   function close() {
@@ -123,7 +136,7 @@ export function Popover({ trigger, label, children }: PopoverProps) {
         aria-expanded={open}
         aria-controls={open ? contentId : undefined}
         onFocus={handleTriggerFocus}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => setPinned((current) => !current)}
         className="underline decoration-dotted underline-offset-2"
       >
         {trigger}

@@ -53,6 +53,20 @@ describe("Popover", () => {
     expect(screen.queryByText("Base 16, modifier +3")).not.toBeInTheDocument();
   });
 
+  it("stays open through the mouseenter a real tap fires just before its click", () => {
+    render(
+      <Popover trigger="+3" label="Strength modifier">
+        Base 16, modifier +3
+      </Popover>,
+    );
+    const trigger = screen.getByRole("button", { name: "+3" });
+
+    fireEvent.mouseEnter(trigger.parentElement as HTMLElement);
+    fireEvent.click(trigger);
+
+    expect(screen.getByText("Base 16, modifier +3")).toBeInTheDocument();
+  });
+
   it("marks the trigger expanded only while open", () => {
     render(
       <Popover trigger="+3" label="Strength modifier">
