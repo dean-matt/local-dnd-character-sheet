@@ -163,6 +163,20 @@ describe("pagesRoutes", () => {
     expect(await list(id)).toEqual(PRESETS);
   });
 
+  it("fails the read on a stored block it refuses, rather than dropping it for a save to delete", async () => {
+    const id = await create();
+    const stored = '[{"kind":"x"}]';
+    opened.charactersDb.$client
+      .prepare("UPDATE character_pages SET blocks = ? WHERE character_id = ? AND slug = 'stats'")
+      .run(stored, id);
+
+    expect((await pages.request(`/characters/${id}/pages`)).status).toBe(500);
+    const row = opened.charactersDb.$client
+      .prepare("SELECT blocks FROM character_pages WHERE character_id = ? AND slug = 'stats'")
+      .get(id) as { blocks: string };
+    expect(row.blocks).toBe(stored);
+  });
+
   it("restores every preset the user hid, edited or moved, and keeps the pages they wrote", async () => {
     const id = await create();
     const [stats, spells, ...rest] = PRESET_PAGES as CharacterPage[];
