@@ -163,18 +163,36 @@ describe("pagesRoutes", () => {
     expect(await list(id)).toEqual(PRESETS);
   });
 
-  it("fails the read on a stored block it refuses, rather than dropping it for a save to delete", async () => {
+  it("degrades a stored block it refuses to unknown, rather than failing the whole read", async () => {
     const id = await create();
     const stored = '[{"kind":"x"}]';
     opened.charactersDb.$client
       .prepare("UPDATE character_pages SET blocks = ? WHERE character_id = ? AND slug = 'stats'")
       .run(stored, id);
 
-    expect((await pages.request(`/characters/${id}/pages`)).status).toBe(500);
+    const res = await pages.request(`/characters/${id}/pages`);
+    expect(res.status).toBe(200);
+    const stats = (await res.json()).find((page: CharacterPageRecord) => page.slug === "stats");
+    expect(stats.blocks).toEqual([{ kind: "unknown", raw: { kind: "x" } }]);
+
     const row = opened.charactersDb.$client
       .prepare("SELECT blocks FROM character_pages WHERE character_id = ? AND slug = 'stats'")
       .get(id) as { blocks: string };
     expect(row.blocks).toBe(stored);
+  });
+
+  it("keeps a degraded block through a save of the whole list, rather than deleting it", async () => {
+    const id = await create();
+    opened.charactersDb.$client
+      .prepare("UPDATE character_pages SET blocks = ? WHERE character_id = ? AND slug = 'stats'")
+      .run('[{"kind":"x"}]', id);
+
+    const before = await list(id);
+    const body = before.map(({ preset, ...page }) => page);
+    expect((await replace(id, body)).status).toBe(200);
+
+    const stats = (await list(id)).find((page) => page.slug === "stats");
+    expect(stats?.blocks).toEqual([{ kind: "unknown", raw: { kind: "x" } }]);
   });
 
   it("restores every preset the user hid or edited, and keeps the pages they wrote", async () => {
