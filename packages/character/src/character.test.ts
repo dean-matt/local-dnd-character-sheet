@@ -699,7 +699,7 @@ describe("derived fields", () => {
   const schema = derivedSchema(z.int());
 
   it("defaults to no override, matching an absent field_overrides row", () => {
-    expect(schema.parse({ computed: 38 })).toEqual({ computed: 38, manual: null });
+    expect(schema.parse({ computed: 38 })).toEqual({ computed: 38, manual: null, terms: [] });
     expect(derivedValue({ computed: 38, manual: null })).toBe(38);
   });
 
@@ -711,6 +711,20 @@ describe("derived fields", () => {
 
   it("restores the computed value when the override is cleared", () => {
     expect(derivedValue({ computed: 38, manual: null })).toBe(38);
+  });
+
+  it("carries the terms behind the computed value, beside it rather than reconstructed later", () => {
+    const terms = [{ label: "Base", value: 38, reference: { name: "Fighter", source: "PHB" } }];
+    expect(schema.parse({ computed: 38, terms })).toEqual({ computed: 38, manual: null, terms });
+  });
+
+  it.each([
+    ["a catalog row", { name: "Fighter", source: "PHB" }],
+    ["another derived field", { derivedField: "hitPointMaximum" }],
+    ["a house-rule option", { houseRuleOption: "encumbrance" }],
+  ])("accepts a term referencing %s", (_label, reference) => {
+    const terms = [{ label: "Base", value: 38, reference }];
+    expect(schema.parse({ computed: 38, terms }).terms).toEqual(terms);
   });
 });
 
@@ -1155,6 +1169,7 @@ describe("encumbered speed", () => {
       speed: { walk: 30, fly: 30, swim: 10 },
       speedReduction: 0,
       disadvantage: false,
+      reductionBreakdown: { total: 0, terms: [] },
     });
   });
 
@@ -1173,6 +1188,7 @@ describe("encumbered speed", () => {
         speed: { walk: 30, fly: 30, swim: 10 },
         speedReduction: 0,
         disadvantage: false,
+        reductionBreakdown: { total: 0, terms: [] },
       });
     },
   );
@@ -1184,6 +1200,12 @@ describe("encumbered speed", () => {
         speed: { walk: 20, fly: 20, swim: 0 },
         speedReduction: 10,
         disadvantage: false,
+        reductionBreakdown: {
+          total: 10,
+          terms: [
+            { label: "Encumbrance", value: 10, reference: { houseRuleOption: "encumbrance" } },
+          ],
+        },
       });
     },
   );
@@ -1193,7 +1215,23 @@ describe("encumbered speed", () => {
       speed: { walk: 10, fly: 10, swim: 0 },
       speedReduction: 20,
       disadvantage: true,
+      reductionBreakdown: {
+        total: 20,
+        terms: [{ label: "Encumbrance", value: 20, reference: { houseRuleOption: "encumbrance" } }],
+      },
     });
+  });
+
+  it("names the house rule behind a nonzero reduction rather than a bare number", () => {
+    const laden = speeds(ENCUMBERED_AT + 1);
+    expect(laden.reductionBreakdown.total).toBe(laden.speedReduction);
+    expect(laden.reductionBreakdown.terms).toEqual([
+      {
+        label: "Encumbrance",
+        value: laden.speedReduction,
+        reference: { houseRuleOption: "encumbrance" },
+      },
+    ]);
   });
 
   it("reduces the speed a user typed over, not the one the race granted", () => {
@@ -1213,6 +1251,10 @@ describe("encumbered speed", () => {
       speed: { walk: 10 },
       speedReduction: 20,
       disadvantage: true,
+      reductionBreakdown: {
+        total: 20,
+        terms: [{ label: "Encumbrance", value: 20, reference: { houseRuleOption: "encumbrance" } }],
+      },
     });
   });
 

@@ -9,9 +9,15 @@
  * Which armor a character wears, whether they are proficient with it, and which
  * unarmored formula their class grants each need the whole character, so they stay in
  * the projection over the definition and arrive here as numbers.
+ *
+ * The arithmetic knows what a base, a Dexterity modifier and a shield mean, so it
+ * labels those terms itself; only the caller knows which catalog row supplied one, so
+ * it attaches that as a reference and gets it back unexamined. A flat bonus can come
+ * from more than one source at once, so its label is the caller's to give.
  */
 
 import { assertInteger } from "./integer.ts";
+import { type Breakdown, breakdown, type Term, type TermInput } from "./term.ts";
 
 /**
  * How much of the Dexterity modifier the base admits. A number is a ceiling rather than
@@ -25,18 +31,18 @@ import { assertInteger } from "./integer.ts";
  */
 type DexterityCap = number | "none" | "all";
 
-type ArmorClassParts = {
+type ArmorClassParts<Ref = unknown> = {
   /** The armor's own number, or the base an unarmored formula names. */
-  base: number;
-  dexterityModifier: number;
+  base: TermInput<Ref>;
+  dexterityModifier: TermInput<Ref>;
   dexterityCap: DexterityCap;
   /** A shield's own number, which stacks with every base. */
-  shield?: number;
+  shield?: TermInput<Ref>;
   /**
-   * Every flat addition, summed by the caller: a magic item, a fighting style, and the
+   * Every flat addition, one term per source: a magic item, a fighting style, and the
    * second ability modifier an unarmored formula adds.
    */
-  bonus?: number;
+  bonus?: Term<Ref>[];
 };
 
 function admittedDexterity(modifier: number, cap: DexterityCap): number {
@@ -53,16 +59,33 @@ function admittedDexterity(modifier: number, cap: DexterityCap): number {
   return Math.min(modifier, cap);
 }
 
-export function armorClass({
+export function armorClass<Ref = unknown>({
   base,
   dexterityModifier,
   dexterityCap,
-  shield = 0,
-  bonus = 0,
-}: ArmorClassParts): number {
-  assertInteger("A base armor class", base);
-  assertInteger("A Dexterity modifier", dexterityModifier);
-  assertInteger("A shield's armor class", shield);
-  assertInteger("An armor class bonus", bonus);
-  return base + admittedDexterity(dexterityModifier, dexterityCap) + shield + bonus;
+  shield,
+  bonus = [],
+}: ArmorClassParts<Ref>): Breakdown<Ref> {
+  assertInteger("A base armor class", base.value);
+  assertInteger("A Dexterity modifier", dexterityModifier.value);
+  if (shield !== undefined) {
+    assertInteger("A shield's armor class", shield.value);
+  }
+  for (const term of bonus) {
+    assertInteger(`A bonus of ${term.value} (${term.label})`, term.value);
+  }
+
+  const terms: Term<Ref>[] = [
+    { label: "Armor", value: base.value, reference: base.reference },
+    {
+      label: "Dexterity",
+      value: admittedDexterity(dexterityModifier.value, dexterityCap),
+      reference: dexterityModifier.reference,
+    },
+  ];
+  if (shield !== undefined) {
+    terms.push({ label: "Shield", value: shield.value, reference: shield.reference });
+  }
+  terms.push(...bonus);
+  return breakdown(terms);
 }

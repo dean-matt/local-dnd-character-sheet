@@ -52,8 +52,9 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   subraces, deities and cards need more; `docs/data-model.md` has the keys. Tier A rows carry
   an `edition` of `classic` or `one`; Tier B and C allow NULL. Both editions ship for
   every class but the Mystic, which is playtest and classic only.
-- **Derived character fields store the computed value beside the manual one.** A null
-  `manual` is no override, so a level-up recomputes without stomping a user's edit.
+- **Derived character fields store the computed value and its terms beside the manual
+  override.** A null `manual` is no override, so a level-up recomputes without stomping a
+  user's edit; the terms come from the rules function itself, never rebuilt beside it.
 - **A rule a table bends ships its house-rule option in the same commit as the rule.**
   `character` owns the vocabulary and an absent option means the rule as printed;
   `rules` takes a parameter and never learns what a house rule is.

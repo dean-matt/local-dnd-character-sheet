@@ -18,6 +18,8 @@
  */
 import {
   abilityModifier,
+  type Breakdown,
+  breakdown,
   EDITIONS,
   encumbranceAt,
   HIT_DICE,
@@ -30,6 +32,7 @@ import {
   RESET_TRIGGERS,
   reducedSpeed,
   SIZES,
+  type Term,
 } from "@dnd/rules";
 import { z } from "zod";
 
@@ -65,15 +68,20 @@ export const refKey = (ref: ContentRef): string => `${ref.name}|${ref.source}`;
  *
  * Writing `manual` never touches `computed`, so a level-up recomputes without
  * stomping the edit.
+ *
+ * `terms` is the breakdown behind `computed`, empty where the field is not yet
+ * assembled from one. An override needs no explanation beyond itself, so nothing
+ * here recomputes `terms` against `manual`.
  */
 export function derivedSchema<T extends z.ZodType>(value: T) {
   return z.strictObject({
     computed: value,
     manual: value.nullable().default(null),
+    terms: z.array(termSchema).default([]),
   });
 }
 
-export type Derived<T> = { computed: T; manual: T | null };
+export type Derived<T> = { computed: T; manual: T | null; terms?: Term<TermReference>[] };
 
 export function derivedValue<T>(field: Derived<T>): T {
   return field.manual ?? field.computed;
@@ -381,6 +389,28 @@ export function houseRule<K extends HouseRule>(
   const set: Partial<Required<HouseRules>> = definition.houseRules;
   return set[rule] ?? PRINTED_RULE[rule];
 }
+
+/**
+ * What a `Term` traces to, the vocabulary `rules` never sees: a catalog row a
+ * character references by `(name, source)`, another derived field on the same
+ * character, or the house-rule option that changed the arithmetic instead of the
+ * printed rule. `character` owns this union because it owns all three vocabularies.
+ */
+export type TermReference = ContentRef | { derivedField: string } | { houseRuleOption: HouseRule };
+
+const termReferenceSchema = z.union([
+  contentRefSchema,
+  z.strictObject({ derivedField: z.string() }),
+  z.strictObject({
+    houseRuleOption: z.enum(Object.keys(PRINTED_RULE) as [HouseRule, ...HouseRule[]]),
+  }),
+]);
+
+const termSchema = z.strictObject({
+  label: z.string(),
+  value: z.number(),
+  reference: termReferenceSchema.optional(),
+});
 
 export const characterDefinitionSchema = z.strictObject({
   name: z.string().min(1),
@@ -788,7 +818,12 @@ export function encumberedSpeed(
 ): EncumberedSpeed {
   const modes = presentModes(derivedValue(derived.speed));
   if (!houseRule(definition, "encumbrance")) {
-    return { speed: Object.fromEntries(modes) as Speed, speedReduction: 0, disadvantage: false };
+    return {
+      speed: Object.fromEntries(modes) as Speed,
+      speedReduction: 0,
+      disadvantage: false,
+      reductionBreakdown: breakdown([]),
+    };
   }
   const { speedReduction, disadvantage } = encumbranceAt(
     definition.abilityScores.str,
@@ -798,7 +833,22 @@ export function encumberedSpeed(
   const reduced = Object.fromEntries(
     modes.map(([mode, base]) => [mode, reducedSpeed({ base, reduction: speedReduction })]),
   ) as Speed;
-  return { speed: reduced, speedReduction, disadvantage };
+  const reductionTerms: Term<TermReference>[] =
+    speedReduction === 0
+      ? []
+      : [
+          {
+            label: "Encumbrance",
+            value: speedReduction,
+            reference: { houseRuleOption: "encumbrance" },
+          },
+        ];
+  return {
+    speed: reduced,
+    speedReduction,
+    disadvantage,
+    reductionBreakdown: breakdown(reductionTerms),
+  };
 }
 
 export type EntryRef = z.infer<typeof entryRefSchema>;
@@ -822,4 +872,6 @@ export type EncumberedSpeed = {
   speedReduction: number;
   /** From `encumbranceAt`, which names the rolls the rule covers. */
   disadvantage: boolean;
+  /** Why `speedReduction` is what it is — the encumbrance house rule, or no term at all. */
+  reductionBreakdown: Breakdown<TermReference>;
 };

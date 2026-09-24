@@ -123,6 +123,12 @@ override, null where the user has typed nothing. Recomputing on level-up updates
 computed side and leaves overrides intact. No rule ever hard-blocks a value the user
 insists on, which is what makes the builder usable at a table with house rules.
 
+A computed value carries its terms beside it — a rules function such as `armorClass`
+returns them labeled, alongside a total defined as their sum, so the two can never say
+different things. `character` attaches whatever reference explains a term — a catalog
+`(name, source)`, another derived field, or the house-rule option that moved the
+arithmetic — since `rules` knows a term's meaning but never what supplied its input.
+
 Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per
 character. They are session affordances, not audit trails.
 
