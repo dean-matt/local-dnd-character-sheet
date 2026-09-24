@@ -84,18 +84,20 @@ export function replaceCharacterPages(
 }
 
 /**
- * Puts every preset back as seeded, at the head of the order, and moves the pages the
- * user wrote after them untouched and in their existing order.
+ * Resets each preset's title, visibility and blocks to the seeded page, leaving its
+ * position untouched, and leaves every page the user wrote alone, wherever it sits
+ * relative to the presets.
  */
 export function restoreDefaultPages(db: CharactersDb, characterId: string) {
   return db.transaction((tx) => {
     if (!exists(tx, characterId)) return undefined;
 
-    const presets = presetPageRows(characterId);
-    const written = pageRows(tx, characterId)
-      .filter((row) => !row.preset)
-      .map((row, index) => ({ ...row, position: presets.length + index }));
-    rewrite(tx, characterId, [...presets, ...written]);
+    const seeded = new Map(PRESET_PAGES.map((page) => [page.slug, page]));
+    const rows = pageRows(tx, characterId).map((row) => {
+      const seed = row.preset ? seeded.get(row.slug) : undefined;
+      return seed ? { ...row, title: seed.title, hidden: seed.hidden, blocks: seed.blocks } : row;
+    });
+    rewrite(tx, characterId, rows);
     return pageRows(tx, characterId);
   });
 }
