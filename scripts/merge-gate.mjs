@@ -143,15 +143,23 @@ export function unanswered(comments) {
 
 /**
  * A declined `comment` is a taste call refused and ends a healthy review; anything else is
- * a judgment the user has not seen.
+ * a judgment the user has not seen — unless an `**Accepted**` reply in the same thread
+ * records that they have. That reply is a second comment, never the decline's own wording,
+ * because `merge-pr`'s sign-off path is the only sanctioned way to write one: an agent
+ * declining a finding for itself cannot also mark it seen.
  */
 const DECLINED = /^\*\*Declined\*\*/;
+const ACCEPTED = /^\*\*Accepted\*\*/;
 
 export function blockingDeclines(comments) {
   const findings = new Map(comments.map((c) => [String(c.id), c.body]));
+  const accepted = new Set(
+    comments.filter((c) => ACCEPTED.test(c.body)).map((c) => String(c.in_reply_to_id)),
+  );
   return comments
     .filter((c) => DECLINED.test(c.body))
     .filter((c) => severity(findings.get(String(c.in_reply_to_id))) !== "comment")
+    .filter((c) => !accepted.has(String(c.in_reply_to_id)))
     .map((c) => c.html_url);
 }
 

@@ -275,6 +275,34 @@ describe("thread verdicts", () => {
     const orphan = [finding(30, BACKTICKED), reply(31, DECLINED, 30)];
     expect(blockingDeclines(orphan)).toHaveLength(1);
   });
+
+  /**
+   * `**Accepted**` is the sign-off `merge-pr` describes, posted as its own reply into the
+   * finding's thread — distinct from the decline it answers, which an agent writes for
+   * itself and so cannot also carry the user's acceptance.
+   */
+  it("clears a declined critical the user accepted, and leaves an unaccepted one blocking", () => {
+    const seen = [
+      critical,
+      reply(40, DECLINED, 10),
+      reply(41, "**Accepted** — the trade stands as described", 10),
+    ];
+    expect(blockingDeclines(seen)).toEqual([]);
+    expect(blockingDeclines([critical, reply(40, DECLINED, 10)])).toHaveLength(1);
+  });
+
+  it("only clears the thread the acceptance answers, not every decline", () => {
+    const other = finding(50, "**warning** — a second finding");
+    const otherDecline = reply(51, DECLINED, 50);
+    const mixed = [
+      critical,
+      reply(40, DECLINED, 10),
+      reply(41, "**Accepted** — the trade stands as described", 10),
+      other,
+      otherDecline,
+    ];
+    expect(blockingDeclines(mixed)).toEqual([otherDecline.html_url]);
+  });
 });
 
 describe("the other three conditions", () => {

@@ -53,18 +53,18 @@ Six conditions, each named where it fails:
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0; otherwise hand the user the condition it named and stop — except
-"the branch merges cleanly", whose detail line separates a conflict, a behind branch, and a
-verdict GitHub has not computed yet, and "the diff reaches no fenced path", named in *A
-fenced path, with the user's direct sign-off* below. A behind branch goes to the next
-section rather than to the user. Read the pass body the script points at too: a finding no
-line anchors is written there, not on a comment. Two lines print beside *the review
-converged* and stop nothing. The distance line, every run: how far behind the tip the last
-pass sits, and the `git log` range that counted it. A pass short of the tip may be a fix
-answering it or code nobody read, so run that range, weigh what it lists, and say which in
-the report. The cap line, at or past the cap: a waiver at it, an overage past it.
-`scripts/merge-gate.mjs` holds the six and what each costs when wrong;
-`tests/merge-gate.test.ts` calls them.
+Merge where it exits 0; otherwise hand the user the condition it named and stop. Three
+conditions route elsewhere first: "the branch merges cleanly" goes to *Where the branch is
+behind* when its detail line says behind; "the diff reaches no fenced path" and "no
+declined finding is critical or warning" go to their sign-off sections below. Read the
+pass body the script points at too — a finding no line anchors lives there, not on a
+comment.
+
+Two lines print beside *the review converged* and stop nothing: the distance line (how far
+behind the tip the last pass sits, and the `git log` range that counted it — run that range
+and weigh what it lists, since a pass short of the tip may be a fix answering it or code
+nobody read) and the cap line (a waiver at the cap, an overage past it).
+`scripts/merge-gate.mjs` holds the six conditions; `tests/merge-gate.test.ts` calls them.
 
 ## Where the branch is behind
 
@@ -82,15 +82,28 @@ means `main` moves faster than the checks run, and sequencing that is the user's
 prints `FAIL` for every caller, unchanged. The one sanctioned path past it: having heard
 the sign-off directly rather than read a relayed report of it, the session holding the
 conversation with the user may run *Merge, then clean up* for that pull request itself,
-once every other condition holds. A subagent dispatched to merge — including the one
-`auto-dev`'s step 4 sends — takes no such latitude: on this condition it reports `FAIL`
-and stops, same as on any other failing condition. Every `gh` call here authenticates as
-the same account whether a human or an agent drove it; being the session that held the
-conversation is the only thing this path checks — it's what distinguishes a witnessed
-sign-off from a claimed one.
+once every other condition holds. A subagent — including the one `auto-dev` dispatches —
+takes no such latitude: it reports `FAIL` and stops, same as any other failing condition.
+Every `gh` call authenticates as the same account regardless of driver; session identity
+is the only thing this path checks, which is what distinguishes a witnessed sign-off from
+a claimed one.
 
-Where taken, name the sign-off in the report this skill closes with: what was approved,
-and that it was heard directly rather than relayed.
+## A declined critical or warning, with the user's direct sign-off
+
+"no declined finding is critical or warning" reads every declined thread, not just the
+last pass, and a verdict reply can't be withdrawn — so a `critical` or `warning` finding
+the user decides to accept anyway needs a record distinct from the decline itself. The one
+sanctioned path past it: having heard the acceptance directly rather than read a relayed
+report of it, the session holding the conversation posts an `**Accepted**` reply into that
+finding's own thread, naming what was approved, then runs the gate again:
+
+```bash
+gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted** — <what was approved>'
+```
+
+`blockingDeclines` in `scripts/merge-gate.mjs` reads that reply and drops the finding from
+the block. A subagent takes no such latitude: on this condition it reports `FAIL` and
+stops, same as on any other failing condition.
 
 ## Merge, then clean up
 
@@ -104,24 +117,25 @@ git checkout main && git pull --ff-only
 node scripts/unblock-issues.mjs "$issue"
 ```
 
-`unblock-issues.mjs` finds every open issue whose `## Blocked by` section names `$issue`
-and clears that name from the section. Where none of the issues it still names is open, it
-drops the section and the `blocked` label too. It prints the issue it clears the label
-from, one per line.
+`unblock-issues.mjs` clears `$issue` from every open issue's `## Blocked by` section naming
+it, dropping the section and the `blocked` label too where nothing else it names is still
+open, and prints each issue it clears the label from.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. Then report the merge commit, the issue it
-closed, which issues it unblocked, and that the checkout is on `main`.
+closed, which issues it unblocked, that the checkout is on `main`, and any sign-off taken
+along the way — what was approved, heard directly rather than relayed.
 
 ## What this skill will not do
 
 **Resolve a conflict.** It stops and hands the branch back.
 
 **Waive a condition from inside a dispatched run.** A gate that argues itself open on the
-merge it is judging is not a gate — see *A fenced path, with the user's direct sign-off*
-for the one exception, and it belongs to the session holding the conversation, never to a
-subagent. Widening `scripts/merge-gate.mjs`'s fence rule itself is a separate, reviewed
-change against that file, not something a single run decides for itself.
+merge it is judging is not a gate — see *A fenced path* and *A declined critical or
+warning*, both with the user's direct sign-off, for the two exceptions, and both belong to
+the session holding the conversation, never to a subagent. Widening
+`scripts/merge-gate.mjs`'s fence rule itself is a separate, reviewed change against that
+file, not something a single run decides for itself.
 
 **Review.** [`audit-pr`](../audit-pr/SKILL.md) does that; this skill reads what that pass
 left behind rather than forming an opinion of its own.
