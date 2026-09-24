@@ -18,6 +18,7 @@
  */
 import {
   abilityModifier,
+  armorClass,
   type Breakdown,
   breakdown,
   EDITIONS,
@@ -28,10 +29,14 @@ import {
   POUNDS_PER_COIN,
   PROFICIENCY_LEVELS,
   passiveScore,
+  proficiencyBonus,
   proficiencyContribution,
   RESET_TRIGGERS,
   reducedSpeed,
   SIZES,
+  type Size,
+  spellAttackBonus,
+  spellSaveDc,
   type Term,
 } from "@dnd/rules";
 import { z } from "zod";
@@ -700,6 +705,36 @@ export const characterDerivedSchema = z.strictObject({
    * feet, not the Elf's 30 and 5 more.
    */
   speed: derivedSchema(speedSchema),
+  proficiencyBonus: derivedSchema(z.int().min(2).max(6)),
+  /** Every ability, since an unproficient save is still a number the sheet shows. */
+  savingThrows: z.record(abilitySchema, derivedSchema(z.int())),
+  /**
+   * One entry per catalog skill row the caller hands in — every skill of the
+   * character's edition, proficient or not, so the sheet has a full list to render
+   * rather than only the ones a player picked.
+   */
+  skills: z.array(
+    z.strictObject({
+      ref: contentRefSchema,
+      modifier: derivedSchema(z.int()),
+      passive: derivedSchema(z.int()),
+    }),
+  ),
+  armorClass: derivedSchema(z.int()),
+  initiative: derivedSchema(z.int()),
+  /**
+   * One entry per class that casts, since a multiclassed caster sets a different DC
+   * and attack bonus per class rather than one figure for the whole character. Empty
+   * for a character with no caster class.
+   */
+  spellcasting: z.array(
+    z.strictObject({
+      class: entryRefSchema,
+      ability: abilitySchema,
+      saveDc: derivedSchema(z.int()),
+      attackBonus: derivedSchema(z.int()),
+    }),
+  ),
 });
 
 /**
@@ -743,6 +778,236 @@ export function passiveSkill(
     abilityModifier(definition.abilityScores[ability]),
     proficiencyContribution(totalLevel(definition), entry?.level ?? "none"),
   );
+}
+
+const ABILITY_LABEL: Record<Ability, string> = {
+  str: "Strength",
+  dex: "Dexterity",
+  con: "Constitution",
+  int: "Intelligence",
+  wis: "Wisdom",
+  cha: "Charisma",
+};
+
+/**
+ * The check modifier for one skill: the ability modifier and whatever the character's
+ * proficiency in that skill is worth. Companion to `passiveSkill`, which takes the same
+ * inputs to the passive score instead.
+ */
+export function skillModifier(
+  definition: CharacterDefinition,
+  skill: ContentRef,
+  ability: Ability,
+): Breakdown<TermReference> {
+  const key = refKey(skill);
+  const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
+  const contribution = proficiencyContribution(totalLevel(definition), entry?.level ?? "none");
+  const terms: Term<TermReference>[] = [
+    {
+      label: ABILITY_LABEL[ability],
+      value: abilityModifier(definition.abilityScores[ability]),
+      reference: skill,
+    },
+  ];
+  if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
+  return breakdown(terms);
+}
+
+/**
+ * The saving throw modifier for one ability: its modifier, and proficiency where
+ * `proficiencies.savingThrows` names it. Only the character's first class grants a
+ * saving throw proficiency in 5e, so that choice is already resolved into this list
+ * rather than read again from a class row here.
+ */
+export function savingThrowModifier(
+  definition: CharacterDefinition,
+  ability: Ability,
+): Breakdown<TermReference> {
+  const proficient = definition.proficiencies.savingThrows.includes(ability);
+  const contribution = proficiencyContribution(
+    totalLevel(definition),
+    proficient ? "proficient" : "none",
+  );
+  const terms: Term<TermReference>[] = [
+    { label: ABILITY_LABEL[ability], value: abilityModifier(definition.abilityScores[ability]) },
+  ];
+  if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
+  return breakdown(terms);
+}
+
+/** One catalog skill row a derived block iterates: its ability, since a character stores none. */
+export type SkillTrait = { ref: ContentRef; ability: Ability };
+
+/**
+ * What one equipped item contributes to armor class: its own number, and which
+ * Dexterity rule it grants. `"shield"` stacks with worn armor rather than replacing it.
+ */
+export type ArmorTrait = { category: "light" | "medium" | "heavy" | "shield"; armorClass: number };
+
+/**
+ * The catalog facts a derived block needs, each already resolved by the caller from
+ * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
+ * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
+ * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
+ * `entryKey` of an inventory entry's reference.
+ */
+export type CharacterCatalog = {
+  hitDice: ReadonlyMap<string, HitDie>;
+  /** Absent for a class that grants no spellcasting, such as a Fighter with no casting subclass. */
+  spellcastingAbilities: ReadonlyMap<string, Ability>;
+  skills: readonly SkillTrait[];
+  size: Size;
+  speed: Speed;
+  armor: ReadonlyMap<string, ArmorTrait>;
+};
+
+/** A freshly computed derived field, always with its terms — never read back from storage. */
+type ComputedField<T> = { computed: T; manual: null; terms: Term<TermReference>[] };
+
+const DEXTERITY_CAP: Record<Exclude<ArmorTrait["category"], "shield">, number | "none" | "all"> = {
+  light: "all",
+  medium: 2,
+  heavy: "none",
+};
+
+/** `undefined` for a homebrew ref: `TermReference` names only a catalog `(name, source)`. */
+function catalogReference(ref: EntryRef): ContentRef | undefined {
+  return "homebrewId" in ref ? undefined : ref;
+}
+
+type WornArmor = {
+  category: Exclude<ArmorTrait["category"], "shield">;
+  armorClass: number;
+  ref: EntryRef;
+};
+type WornShield = { armorClass: number; ref: EntryRef };
+
+/** The worn armor and the shield a character has equipped, last one of each wins. */
+function equippedArmor(
+  definition: CharacterDefinition,
+  armor: ReadonlyMap<string, ArmorTrait>,
+): { worn?: WornArmor; shield?: WornShield } {
+  let worn: WornArmor | undefined;
+  let shield: WornShield | undefined;
+  for (const entry of definition.inventory) {
+    if (!entry.equipped) continue;
+    const trait = armor.get(entryKey(entry.ref));
+    if (trait === undefined) continue;
+    if (trait.category === "shield") {
+      shield = { armorClass: trait.armorClass, ref: entry.ref };
+    } else {
+      worn = { category: trait.category, armorClass: trait.armorClass, ref: entry.ref };
+    }
+  }
+  return { worn, shield };
+}
+
+/**
+ * Armor class from whatever the character has equipped. An item `armor` does not name —
+ * the reference no longer resolves, or nothing is equipped — degrades to the unarmored
+ * base of 10 rather than throwing, since one missing suit of armor is not a reason to
+ * refuse the rest of the sheet.
+ *
+ * Unarmored Defense, the formula a Barbarian or a Monk uses in place of 10, is not
+ * modeled: no catalog field states one yet. The gap closes the day a class's own row
+ * carries it; until then this reads the base as if no such feature exists.
+ */
+function derivedArmorClass(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): ComputedField<number> {
+  const { worn, shield } = equippedArmor(definition, catalog.armor);
+  const result = armorClass<TermReference>({
+    base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
+    dexterityModifier: { value: abilityModifier(definition.abilityScores.dex) },
+    dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
+    shield: shield
+      ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
+      : undefined,
+  });
+  return { computed: result.total, manual: null, terms: result.terms };
+}
+
+/** One entry per class that casts, in the order its levels were taken. */
+function spellcastingEntries(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  characterLevel: number,
+): CharacterDerived["spellcasting"] {
+  const seen = new Set<string>();
+  const entries: CharacterDerived["spellcasting"] = [];
+  for (const level of definition.levels) {
+    const key = entryKey(level.class);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const ability = catalog.spellcastingAbilities.get(key);
+    if (ability === undefined) continue;
+    const modifier = abilityModifier(definition.abilityScores[ability]);
+    entries.push({
+      class: level.class,
+      ability,
+      saveDc: { computed: spellSaveDc(modifier, characterLevel), manual: null, terms: [] },
+      attackBonus: {
+        computed: spellAttackBonus(modifier, characterLevel),
+        manual: null,
+        terms: [],
+      },
+    });
+  }
+  return entries;
+}
+
+/**
+ * The whole derived block for one character: every value `characterDerivedSchema`
+ * holds, assembled from the definition and the catalog facts the caller resolved for
+ * it. `manual` is always null here — an override lives in `field_overrides` and is a
+ * later layer's job to fold in, never this one's to invent.
+ */
+export function deriveCharacter(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): CharacterDerived {
+  const level = totalLevel(definition);
+
+  const savingThrows = Object.fromEntries(
+    ABILITIES.map((ability) => {
+      const { total, terms } = savingThrowModifier(definition, ability);
+      return [ability, { computed: total, manual: null, terms }];
+    }),
+  ) as Record<Ability, ComputedField<number>>;
+
+  const skills = catalog.skills.map((skill) => {
+    const { total, terms } = skillModifier(definition, skill.ref, skill.ability);
+    return {
+      ref: skill.ref,
+      modifier: { computed: total, manual: null, terms },
+      passive: {
+        computed: passiveSkill(definition, skill.ref, skill.ability),
+        manual: null,
+        terms: [],
+      },
+    };
+  });
+
+  return {
+    hitPointMaximum: {
+      computed: hitPointMaximum(definition, catalog.hitDice),
+      manual: null,
+      terms: [],
+    },
+    size: { computed: catalog.size, manual: null, terms: [] },
+    speed: { computed: catalog.speed, manual: null, terms: [] },
+    proficiencyBonus: { computed: proficiencyBonus(level), manual: null, terms: [] },
+    savingThrows,
+    skills,
+    armorClass: derivedArmorClass(definition, catalog),
+    initiative: {
+      computed: abilityModifier(definition.abilityScores.dex),
+      manual: null,
+      terms: [],
+    },
+    spellcasting: spellcastingEntries(definition, catalog, level),
+  };
 }
 
 /**
