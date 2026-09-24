@@ -43,8 +43,10 @@ export function Popover({ trigger, label, children }: PopoverProps) {
   // pointer always fires `mouseenter` before `click` — including the tap that
   // opens it on a touchscreen. A shared flag toggled on click would read as
   // already open and instantly close what the same tap had just opened, so a
-  // click instead *pins* the popover open on top of whatever hover or focus
-  // already did, rather than racing it.
+  // click that finds the popover open only through hover or focus pins it
+  // instead of closing it; a click that finds it already pinned is the
+  // deliberate second activation, and closes it outright even if the pointer
+  // is still hovering.
   const [transientOpen, setTransientOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const open = transientOpen || pinned;
@@ -120,6 +122,11 @@ export function Popover({ trigger, label, children }: PopoverProps) {
     if (!next || !wrapperRef.current?.contains(next)) hideNow();
   }
 
+  function handleActivate() {
+    if (pinned) hideNow();
+    else setPinned(true);
+  }
+
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: an anchor for the real controls inside it, not a widget itself.
     <span
@@ -136,7 +143,7 @@ export function Popover({ trigger, label, children }: PopoverProps) {
         aria-expanded={open}
         aria-controls={open ? contentId : undefined}
         onFocus={handleTriggerFocus}
-        onClick={() => setPinned((current) => !current)}
+        onClick={handleActivate}
         className="underline decoration-dotted underline-offset-2"
       >
         {trigger}

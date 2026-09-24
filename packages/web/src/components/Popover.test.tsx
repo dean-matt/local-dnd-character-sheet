@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Popover } from "./Popover.tsx";
 
 describe("Popover", () => {
@@ -65,6 +65,65 @@ describe("Popover", () => {
     fireEvent.click(trigger);
 
     expect(screen.getByText("Base 16, modifier +3")).toBeInTheDocument();
+  });
+
+  it("closes on a second tap even while the pointer is still hovering it", () => {
+    render(
+      <Popover trigger="+3" label="Strength modifier">
+        Base 16, modifier +3
+      </Popover>,
+    );
+    const trigger = screen.getByRole("button", { name: "+3" });
+
+    fireEvent.mouseEnter(trigger.parentElement as HTMLElement);
+    fireEvent.click(trigger);
+    fireEvent.click(trigger);
+
+    expect(screen.queryByText("Base 16, modifier +3")).not.toBeInTheDocument();
+  });
+
+  describe("the hover-close delay", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("closes once the delay elapses after the pointer leaves", () => {
+      render(
+        <Popover trigger="+3" label="Strength modifier">
+          Base 16, modifier +3
+        </Popover>,
+      );
+      const wrapper = screen.getByRole("button", { name: "+3" }).parentElement as HTMLElement;
+
+      fireEvent.mouseEnter(wrapper);
+      fireEvent.mouseLeave(wrapper);
+      expect(screen.getByText("Base 16, modifier +3")).toBeInTheDocument();
+
+      act(() => vi.advanceTimersByTime(150));
+
+      expect(screen.queryByText("Base 16, modifier +3")).not.toBeInTheDocument();
+    });
+
+    it("cancels the pending close when the pointer re-enters during the delay", () => {
+      render(
+        <Popover trigger="+3" label="Strength modifier">
+          Base 16, modifier +3
+        </Popover>,
+      );
+      const wrapper = screen.getByRole("button", { name: "+3" }).parentElement as HTMLElement;
+
+      fireEvent.mouseEnter(wrapper);
+      fireEvent.mouseLeave(wrapper);
+      act(() => vi.advanceTimersByTime(100));
+      fireEvent.mouseEnter(wrapper);
+      act(() => vi.advanceTimersByTime(100));
+
+      expect(screen.getByText("Base 16, modifier +3")).toBeInTheDocument();
+    });
   });
 
   it("marks the trigger expanded only while open", () => {
