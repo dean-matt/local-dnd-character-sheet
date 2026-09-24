@@ -4,8 +4,9 @@
  * lists, tables and named subsections — down to the strings `RulesText` renders.
  *
  * A reference or a roll token renders as its display text alone, unlinked and
- * unclickable. Resolving a reference and making a roll clickable are later tiers;
- * this file does not change when they land.
+ * unclickable, its other fields carried on the span as data attributes. Resolving
+ * a reference and making a roll clickable are later tiers that read those rather
+ * than change how this file renders them.
  */
 import type { Entries } from "@dnd/catalog";
 import { parseTags, type Token } from "@dnd/tags";
@@ -38,11 +39,18 @@ function renderToken(token: Token, key: string): ReactNode {
   switch (token.kind) {
     case "text":
       return token.value;
-    // A later tier resolves a reference or makes a roll clickable; the span is
-    // what that tier will hook into.
     case "ref":
+      return (
+        <span key={key} data-tag={token.tag} data-name={token.name} data-source={token.source}>
+          {token.display}
+        </span>
+      );
     case "roll":
-      return <span key={key}>{token.display}</span>;
+      return (
+        <span key={key} data-notation={token.notation} data-rollable={token.rollable}>
+          {token.display}
+        </span>
+      );
     case "style":
       return <StyleSpan key={key} token={token} keyPrefix={key} />;
   }
@@ -149,8 +157,12 @@ function renderTable(entry: EntryNode, keyPrefix: string): ReactNode {
         <thead>
           <tr>
             {colLabels.map((label, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: a catalog table's columns never reorder.
-              <th key={`${keyPrefix}-h${index}`} className="border-border border-b px-2 py-1">
+              <th
+                // biome-ignore lint/suspicious/noArrayIndexKey: a catalog table's columns never reorder.
+                key={`${keyPrefix}-h${index}`}
+                scope="col"
+                className="border-border border-b px-2 py-1"
+              >
                 {typeof label === "string" ? <RulesText text={label} /> : null}
               </th>
             ))}

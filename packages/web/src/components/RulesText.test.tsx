@@ -18,9 +18,16 @@ describe("RulesText", () => {
     expect(screen.getByText("Bold").tagName).toBe("STRONG");
     // a computed text token
     expect(container).toHaveTextContent("DC 15");
-    // ref and roll: unlinked display text, each its own element
-    expect(screen.getByText("fireball").tagName).toBe("SPAN");
-    expect(screen.getByText("8d6").tagName).toBe("SPAN");
+    // ref: unlinked display text, its name and source carried for a later tier
+    const ref = screen.getByText("fireball");
+    expect(ref.tagName).toBe("SPAN");
+    expect(ref).toHaveAttribute("data-tag", "spell");
+    expect(ref).toHaveAttribute("data-name", "fireball");
+    // roll: unlinked display text, its notation carried the same way
+    const roll = screen.getByText("8d6");
+    expect(roll.tagName).toBe("SPAN");
+    expect(roll).toHaveAttribute("data-notation", "8d6");
+    expect(roll).toHaveAttribute("data-rollable", "true");
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
@@ -111,7 +118,9 @@ describe("RulesEntries", () => {
     render(<RulesEntries entries={entries} />);
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByText("Goblins by Type").tagName).toBe("CAPTION");
-    expect(screen.getByRole("columnheader", { name: "Goblin" })).toBeInTheDocument();
+    const header = screen.getByRole("columnheader", { name: "Goblin" });
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveAttribute("scope", "col");
     expect(screen.getByRole("cell", { name: "Nimble Escape" })).toBeInTheDocument();
     expect(screen.queryByText(/"type":\s*"table"/)).not.toBeInTheDocument();
   });
