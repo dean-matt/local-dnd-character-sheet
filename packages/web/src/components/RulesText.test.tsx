@@ -32,15 +32,23 @@ describe("RulesText", () => {
 
   it("maps every formatting tag to the element it means", () => {
     render(
-      <RulesText text="{@i italic} {@u underline} {@s strike} {@sup sup} {@sub sub} {@kbd key} {@highlight hi}" />,
+      <RulesText
+        text="{@i italic} {@u underline} {@u2 dblunder} {@s strike} {@s2 dblstrike}
+          {@sup sup} {@sub sub} {@kbd key} {@highlight hi} {@code mono}"
+      />,
     );
     expect(screen.getByText("italic").tagName).toBe("EM");
     expect(screen.getByText("underline").tagName).toBe("U");
+    expect(screen.getByText("dblunder").tagName).toBe("U");
+    expect(screen.getByText("dblunder")).toHaveClass("decoration-double");
     expect(screen.getByText("strike").tagName).toBe("S");
+    expect(screen.getByText("dblstrike").tagName).toBe("S");
+    expect(screen.getByText("dblstrike")).toHaveClass("decoration-double");
     expect(screen.getByText("sup").tagName).toBe("SUP");
     expect(screen.getByText("sub").tagName).toBe("SUB");
     expect(screen.getByText("key").tagName).toBe("KBD");
     expect(screen.getByText("hi").tagName).toBe("MARK");
+    expect(screen.getByText("mono").tagName).toBe("CODE");
   });
 });
 
@@ -72,6 +80,23 @@ describe("RulesEntries", () => {
     expect(items[0]).toHaveTextContent("Plain item");
     expect(items[1]).toHaveTextContent("Languages:");
     expect(items[1]).toHaveTextContent("One of your choice.");
+  });
+
+  it("renders a list item that is itself a nested list, rather than dropping it", () => {
+    const entries: Entries = [
+      {
+        type: "list",
+        items: [
+          {
+            type: "list",
+            items: ["Nested one", "Nested two"],
+          },
+        ],
+      },
+    ];
+    render(<RulesEntries entries={entries} />);
+    expect(screen.getByText("Nested one")).toBeInTheDocument();
+    expect(screen.getByText("Nested two")).toBeInTheDocument();
   });
 
   it("renders a table as a structured table, not its JSON", () => {

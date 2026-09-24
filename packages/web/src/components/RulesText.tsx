@@ -80,11 +80,17 @@ function renderSection(entry: EntryNode, keyPrefix: string): ReactNode {
   );
 }
 
-function renderListItem(item: unknown): ReactNode {
+function renderListItem(item: unknown, keyPrefix: string): ReactNode {
   if (typeof item === "string") return <RulesText text={item} />;
   if (!isRecord(item)) return null;
   const name = str(item.name);
   const single = str(item.entry);
+  // Neither the item leaf's own fields: this is a nested structural node — a
+  // list or a table sitting where an item usually does — so the general
+  // dispatch renders it rather than the fixed label-and-body shape below.
+  if (name === undefined && single === undefined) {
+    return renderEntry(item as EntryNode, keyPrefix);
+  }
   const nested = isEntries(item.entries) ? item.entries : undefined;
   return (
     <>
@@ -101,7 +107,7 @@ function renderList(entry: EntryNode, keyPrefix: string): ReactNode {
     <ul key={keyPrefix} className="list-disc pl-5">
       {items.map((item, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: a catalog row's items never reorder.
-        <li key={`${keyPrefix}-${index}`}>{renderListItem(item)}</li>
+        <li key={`${keyPrefix}-${index}`}>{renderListItem(item, `${keyPrefix}-${index}`)}</li>
       ))}
     </ul>
   );
