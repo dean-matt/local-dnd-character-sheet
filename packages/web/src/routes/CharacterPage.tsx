@@ -1,22 +1,20 @@
 import { useParams } from "react-router";
-import { Field } from "../components/Field.tsx";
+import { PageBlocks } from "../components/blocks/PageBlocks.tsx";
 import { useCharacterPages } from "../hooks/useCharacterPages.ts";
 import { useCharacter } from "../hooks/useCharacters.ts";
-import { EmptyState, ErrorState, LoadingState } from "../states.tsx";
+import { ErrorState, LoadingState } from "../states.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
 /**
- * The read state of the field contract's worked example. `data.name` is a plain
- * field with no `field_overrides` row — it never routes through `rules`, so it
- * has no computed half to override — but `Field` only takes a `Derived<T>`, so
- * `manual` is hardcoded `null` here to demonstrate the read contract on the
- * simplest value available. The edit half is exercised by
- * `components/Field.test.tsx` — no view turns it on until editing ships in M5.
+ * A page renders its blocks whether or not the character has loaded yet — a `value`
+ * block degrades exactly like a missing field. Nothing yet resolves a real
+ * `CharacterDerived` for a stored character, so every `value` block reads as
+ * unavailable until the section that computes it ships.
  */
 export function CharacterPage() {
   const { id = "", slug = "" } = useParams();
   const pages = useCharacterPages(id);
-  const { data, isPending, isError, error } = useCharacter(id);
+  const { isPending, isError, error } = useCharacter(id);
 
   if (pages.isPending) return <LoadingState label="Loading pages…" />;
   if (pages.isError) return <ErrorState message={pages.error.message} />;
@@ -30,15 +28,7 @@ export function CharacterPage() {
       <div className="mt-4 flex flex-col gap-4">
         {isPending && <LoadingState label="Loading character…" />}
         {isError && <ErrorState message={error.message} />}
-        {data && (
-          <Field
-            mode="read"
-            label="Name"
-            value={{ computed: data.name, manual: null }}
-            format={(name) => name}
-          />
-        )}
-        <EmptyState>This page doesn't have content yet.</EmptyState>
+        <PageBlocks blocks={page.blocks} derived={undefined} />
       </div>
     </section>
   );

@@ -7,6 +7,7 @@ import {
   type CharacterPageRecord,
   characterPageRecordSchema,
   characterPagesSchema,
+  degradePageBlock,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
@@ -19,6 +20,14 @@ import { errorSchema, notFound } from "./errors.ts";
 
 type PageRow = NonNullable<ReturnType<typeof listCharacterPages>>[number];
 
+/**
+ * Each stored block degrades on its own, so a block a hand edit or an older build wrote
+ * wrong takes down only itself, not the whole page list.
+ */
+function degradeBlocks(blocks: unknown): unknown[] {
+  return (Array.isArray(blocks) ? blocks : [blocks]).map(degradePageBlock);
+}
+
 /** Validates rows read back from SQLite against the same schema their write went through. */
 function toRecords(rows: PageRow[]): CharacterPageRecord[] {
   return rows.map((row) =>
@@ -27,7 +36,7 @@ function toRecords(rows: PageRow[]): CharacterPageRecord[] {
       title: row.title,
       hidden: row.hidden,
       preset: row.preset,
-      blocks: row.blocks,
+      blocks: degradeBlocks(row.blocks),
     }),
   );
 }

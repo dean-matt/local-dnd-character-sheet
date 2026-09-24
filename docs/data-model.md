@@ -40,9 +40,8 @@ erDiagram
 
 ## Rules that are not in the schema
 
-**Reference, never copy.** A character stores `{name: "Fireball", source: "PHB"}`. It
-does not store the spell. Rebuilding the catalog updates every character; copying would
-freeze each character at the moment it was created.
+**Reference, never copy.** A character stores `{name: "Fireball", source: "PHB"}`, not the
+spell. Rebuilding the catalog updates every character; copying would freeze it at creation.
 
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
 records. Rows carry source `HB` and are merged with catalog rows at query time.
@@ -165,23 +164,24 @@ the same four parts the `subclasses` key uses, with the short name in place of t
 A character stores the full name, because it names a row rather than a join — the level's
 own class carries the other two parts, and the short name keys the features instead.
 
-**Overrides are sparse.** An absent `field_overrides` row means "use the computed
-value". Writing an override never changes the computed side, and clearing one restores
-the computed value rather than a remembered old number.
+**Overrides are sparse.** An absent `field_overrides` row means the computed value applies.
+Writing one leaves it untouched; clearing it restores that value, not a remembered old number.
 
-**`name`, `edition` and `level` are recomputed, never accepted.** All three columns
-summarize `characters.definition` so the character list can be queried without parsing
-every blob. Every write that touches `definition` derives them from it in the same
-statement — `name` and `edition` from the definition's own fields, `level` from
-`totalLevel()` — and none is a settable column on the request body that writes it.
+**`name`, `edition` and `level` are recomputed, never accepted.** All three summarize
+`characters.definition`, so the list is queryable without parsing every blob. Every write
+touching `definition` derives them in the same statement — `name` and `edition` from its own
+fields, `level` from `totalLevel()` — never a settable column on the request body.
 
-**A preset page is hidden, never deleted.** Every character is seeded with Stats, Spells,
-Inventory and Features. A write leaving a preset out is refused; restoring the defaults
-resets each preset as seeded but leaves every page's position untouched. Only the server
-sets `preset`, and a URL carries the `slug`, so a link survives a reorder and a retitle.
+**A preset page is hidden, never deleted.** Every character seeds with Stats, Spells, Inventory
+and Features. A write leaving one out is refused; restoring the defaults resets each, keeping
+its position. Only the server sets `preset`; a `slug` survives a reorder or retitle.
 
-**Logs are pruned on insert**, in the same statement that writes the new row. A cron job
-or a manual cleanup would be one more thing to forget.
+**A page is an ordered list of blocks** — `section`, `value` (a derived field and its
+breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup). An unknown
+kind is refused on write; on read it degrades to an `unknown` block a save still keeps.
+
+**Logs are pruned on insert**, in the same statement that writes the new row — no cron job or
+manual cleanup to forget.
 
 ## Resource counters
 

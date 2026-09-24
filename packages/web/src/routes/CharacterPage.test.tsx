@@ -44,12 +44,12 @@ describe("CharacterPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("no such character");
   });
 
-  it("renders the page's title and the character's name once both resolve", async () => {
+  it("renders the page's title and its blocks once both resolve", async () => {
     stubCharacter();
     renderPage();
 
     expect(await screen.findByRole("heading", { level: 1, name: "Stats" })).toBeInTheDocument();
-    expect(await screen.findByText("Vex")).toBeInTheDocument();
+    expect(await screen.findByText("Abilities isn't built yet.")).toBeInTheDocument();
   });
 
   it("reaches a hidden page by its URL", async () => {
