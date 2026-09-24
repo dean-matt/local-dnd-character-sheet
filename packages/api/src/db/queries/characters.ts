@@ -12,7 +12,8 @@ import {
 import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as charactersSchema from "../characters.ts";
-import { characterState, characters } from "../characters.ts";
+import { characterPages, characterState, characters } from "../characters.ts";
+import { presetPageRows } from "./pages.ts";
 
 export type CharactersDb = BetterSQLite3Database<typeof charactersSchema>;
 
@@ -24,7 +25,10 @@ export function getCharacter(db: CharactersDb, id: string) {
   return db.select().from(characters).where(eq(characters.id, id)).get();
 }
 
-/** Creates the character's `character_state` row alongside it, so every read finds one. */
+/**
+ * Creates the character's `character_state` row and its preset pages alongside it, so
+ * every read finds both. Import and creation are the same route, so both seed here.
+ */
 export function insertCharacter(
   db: CharactersDb,
   input: { id: string; definition: CharacterDefinition },
@@ -44,6 +48,7 @@ export function insertCharacter(
     tx.insert(characterState)
       .values({ characterId: input.id, state: defaultCharacterState() })
       .run();
+    tx.insert(characterPages).values(presetPageRows(input.id)).run();
     return row;
   });
 }
