@@ -177,7 +177,7 @@ describe("pagesRoutes", () => {
     expect(row.blocks).toBe(stored);
   });
 
-  it("restores every preset the user hid, edited or moved, and keeps the pages they wrote", async () => {
+  it("restores every preset the user hid or edited, and keeps the pages they wrote", async () => {
     const id = await create();
     const [stats, spells, ...rest] = PRESET_PAGES as CharacterPage[];
     const notes: CharacterPage = { ...GRAPPLE, slug: "notes", title: "Notes", hidden: true };
@@ -191,7 +191,24 @@ describe("pagesRoutes", () => {
 
     const res = await restore(id);
     expect(res.status).toBe(200);
-    const expected = [...PRESETS, { ...GRAPPLE, preset: false }, { ...notes, preset: false }];
+    const expected = [
+      { ...GRAPPLE, preset: false },
+      { ...spells, preset: true },
+      { ...notes, preset: false },
+      { ...stats, preset: true },
+      ...rest.map((page) => ({ ...page, preset: true })),
+    ];
+    expect(await res.json()).toEqual(expected);
+    expect(await list(id)).toEqual(expected);
+  });
+
+  it("keeps a written page ahead of the presets when restoring", async () => {
+    const id = await create();
+    await replace(id, [GRAPPLE, ...PRESET_PAGES]);
+
+    const res = await restore(id);
+    expect(res.status).toBe(200);
+    const expected = [{ ...GRAPPLE, preset: false }, ...PRESETS];
     expect(await res.json()).toEqual(expected);
     expect(await list(id)).toEqual(expected);
   });

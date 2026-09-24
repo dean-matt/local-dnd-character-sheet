@@ -177,8 +177,8 @@ statement — `name` and `edition` from the definition's own fields, `level` fro
 
 **A preset page is hidden, never deleted.** Every character is seeded with Stats, Spells,
 Inventory and Features. A write leaving a preset out is refused; restoring the defaults
-rewrites each preset as seeded, ahead of the user's own pages. Only the server sets
-`preset`, and a URL carries the `slug`, so a link survives a reorder and a retitle.
+resets each preset as seeded but leaves every page's position untouched. Only the server
+sets `preset`, and a URL carries the `slug`, so a link survives a reorder and a retitle.
 
 **Logs are pruned on insert**, in the same statement that writes the new row. A cron job
 or a manual cleanup would be one more thing to forget.
