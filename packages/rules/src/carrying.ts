@@ -55,8 +55,13 @@ export function pushDragLiftCapacity(strengthScore: number, size: Size): number 
   return carryingCapacity(strengthScore, size) * 2;
 }
 
+export const ENCUMBRANCE_TIERS = ["unencumbered", "encumbered", "heavilyEncumbered"] as const;
+
+type EncumbranceTier = (typeof ENCUMBRANCE_TIERS)[number];
+
 /** What a level of encumbrance costs a creature. */
 type EncumbrancePenalty = {
+  tier: EncumbranceTier;
   /** Feet of speed lost. */
   speedReduction: number;
   /**
@@ -77,9 +82,21 @@ type EncumbranceThresholds = {
   heavilyEncumbered: EncumbranceThreshold;
 };
 
-const UNENCUMBERED: EncumbrancePenalty = { speedReduction: 0, disadvantage: false };
-const ENCUMBERED: EncumbrancePenalty = { speedReduction: 10, disadvantage: false };
-const HEAVILY_ENCUMBERED: EncumbrancePenalty = { speedReduction: 20, disadvantage: true };
+const UNENCUMBERED: EncumbrancePenalty = {
+  tier: "unencumbered",
+  speedReduction: 0,
+  disadvantage: false,
+};
+const ENCUMBERED: EncumbrancePenalty = {
+  tier: "encumbered",
+  speedReduction: 10,
+  disadvantage: false,
+};
+const HEAVILY_ENCUMBERED: EncumbrancePenalty = {
+  tier: "heavilyEncumbered",
+  speedReduction: 20,
+  disadvantage: true,
+};
 
 /**
  * The weights at which the 2014 variant slows a creature, and what each costs.

@@ -36,6 +36,7 @@ import {
   hitDicePoolSchema,
   hitPointMaximum,
   houseRule,
+  itemKey,
   PRESET_PAGES,
   passiveSkill,
   raceSummary,
@@ -86,6 +87,10 @@ const derivedInput = (traits: object = {}) => ({
   spellcasting: [],
   spellSlots: [],
   pactSlots: null,
+  carryingCapacity: { computed: 120 },
+  carriedWeight: 0,
+  encumbrance: null,
+  attunementSlots: { computed: 3 },
   ...raceTraits,
   ...traits,
 });
@@ -1047,6 +1052,12 @@ describe("deriveCharacter", () => {
       [entryKey(STUDDED_LEATHER), { category: "light" as const, armorClass: 12 }],
       [entryKey(SHIELD), { category: "shield" as const, armorClass: 2 }],
     ]),
+    weights: new Map<string, number | null>([
+      [entryKey({ name: "Dagger", source: "XPHB" }), 1],
+      [entryKey({ homebrewId: "hb_01" }), null],
+      [entryKey(STUDDED_LEATHER), 13],
+      [entryKey(SHIELD), 6],
+    ]),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -1137,6 +1148,7 @@ describe("deriveCharacter", () => {
     const homebrewCatalog = {
       ...catalog,
       armor: new Map([[entryKey(homebrewArmor), { category: "light" as const, armorClass: 11 }]]),
+      weights: new Map([...catalog.weights, [entryKey(homebrewArmor), 10]]),
     };
 
     const result = deriveCharacter(withHomebrew, homebrewCatalog);
@@ -1167,6 +1179,32 @@ describe("deriveCharacter", () => {
 
   it("rejects a class with no hit die rather than guessing one", () => {
     expect(() => deriveCharacter(equipped, { ...catalog, hitDice: new Map() })).toThrow(RangeError);
+  });
+
+  it("weighs the load, coins included, against what Strength 8 carries", () => {
+    expect(derived.carryingCapacity).toEqual({ computed: 120, manual: null, terms: [] });
+    expect(derived.carriedWeight).toBe(carriedWeight(equipped, catalog.weights));
+    expect(derived.carriedWeight).toBe(2 + 13 + 6 + 1);
+  });
+
+  it("names the encumbrance tier where the table plays the variant, and none where it does not", () => {
+    expect(derived.encumbrance).toBe("unencumbered");
+    const laden = deriveCharacter(equipped, {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(SHIELD), 90]]),
+    });
+    expect(laden.encumbrance).toBe("heavilyEncumbered");
+    expect(deriveCharacter({ ...equipped, houseRules: {} }, catalog).encumbrance).toBeNull();
+  });
+
+  it("gives three attunement slots, and more to a high-level Artificer", () => {
+    expect(derived.attunementSlots).toEqual({ computed: 3, manual: null, terms: [] });
+    const artificer = { name: "Artificer", source: "TCE" };
+    const tinkerer = deriveCharacter(
+      { ...equipped, levels: Array.from({ length: 14 }, () => ({ class: artificer })) },
+      { ...catalog, hitDice: new Map([[entryKey(artificer), 8 as const]]) },
+    );
+    expect(tinkerer.attunementSlots.computed).toBe(5);
   });
 
   it("reads initiative off Dexterity alone", () => {
@@ -1369,6 +1407,17 @@ describe("carried weight", () => {
     expect(drifting).not.toBe(17.24);
   });
 
+  it("weighs a magic variant apart from the base item it expands", () => {
+    const CHAIN_MAIL = { name: "Chain Mail", source: "PHB" };
+    const BARDING = { name: "Barding", source: "PHB" };
+    const weights = new Map([
+      [itemKey({ ref: CHAIN_MAIL }), 55],
+      [itemKey({ ref: CHAIN_MAIL, variant: BARDING }), 110],
+    ]);
+    const packed = packing([{ ref: CHAIN_MAIL }, { ref: CHAIN_MAIL, variant: BARDING }], {});
+    expect(carriedWeight(packed, weights)).toBe(165);
+  });
+
   it("counts every denomination the same, because every coin weighs the same", () => {
     const purse = { copper: 10, silver: 10, electrum: 10, gold: 10, platinum: 10 };
     expect(carriedWeight(packing([], purse), catalog)).toBe(1);
@@ -1446,8 +1495,13 @@ describe("size and speed", () => {
 
     expect(carryingCapacity(stored.abilityScores.str, size)).toBe(120);
     expect(encumbranceThresholds(stored.abilityScores.str, size)).toEqual({
-      encumbered: { atWeight: 40, speedReduction: 10, disadvantage: false },
-      heavilyEncumbered: { atWeight: 80, speedReduction: 20, disadvantage: true },
+      encumbered: { tier: "encumbered", atWeight: 40, speedReduction: 10, disadvantage: false },
+      heavilyEncumbered: {
+        tier: "heavilyEncumbered",
+        atWeight: 80,
+        speedReduction: 20,
+        disadvantage: true,
+      },
     });
   });
 

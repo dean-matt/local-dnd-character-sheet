@@ -283,6 +283,21 @@ export function getItem(dataDir: string, name: string, source: string): ItemRow 
   }
 }
 
+/** Every row read over one connection, since a pack can list dozens. */
+export function getItems(
+  dataDir: string,
+  refs: readonly { name: string; source: string }[],
+): (ItemRow | undefined)[] {
+  if (refs.length === 0) return [];
+  const db = openContentDb(dataDir);
+  try {
+    const select = db.prepare(`SELECT ${ITEM_COLUMNS} FROM items WHERE name = ? AND source = ?`);
+    return refs.map((ref) => select.get(ref.name, ref.source) as ItemRow | undefined);
+  } finally {
+    db.close();
+  }
+}
+
 export type ClassRow = {
   name: string;
   source: string;
