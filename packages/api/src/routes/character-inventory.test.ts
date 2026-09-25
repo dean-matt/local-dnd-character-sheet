@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "../db/client.ts";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishItems } from "../db/queries/contentFixture.ts";
-import { insertHomebrewItem } from "../db/queries/homebrew.ts";
+import { insertHomebrewItem, updateHomebrewItem } from "../db/queries/homebrew.ts";
 import { characterInventoryRoutes } from "./character-inventory.ts";
 
 const LONGSWORD = { name: "Longsword", source: "PHB" };
@@ -171,5 +171,16 @@ describe("characterInventoryRoutes", () => {
     expect(lost).toEqual(
       expect.objectContaining({ resolved: false, name: "Lost", source: "PHB", carried: false }),
     );
+  });
+
+  it("keeps holding a homebrew item through a rename, since it holds the id", async () => {
+    insertHomebrewItem(opened.homebrewDb, "i", { name: "Lucky Coin", edition: "classic" });
+    store(withInventory([{ ref: { homebrewId: "i" } }]));
+
+    updateHomebrewItem(opened.homebrewDb, "i", { name: "Cursed Coin", edition: "classic" });
+
+    expect(await items()).toEqual([
+      expect.objectContaining({ resolved: true, name: "Cursed Coin" }),
+    ]);
   });
 });

@@ -23,7 +23,7 @@ import {
   spellEntrySchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, type SQL, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as homebrewSchema from "../homebrew.ts";
 import {
@@ -55,6 +55,29 @@ export function searchHomebrewItems(db: HomebrewDb, edition: Edition, term: stri
       ),
     )
     .all();
+}
+
+/** `name` compared as the unique index compares it, ignoring case: one match per edition at most. */
+function namedIn(
+  column: typeof homebrewItems.name | typeof homebrewSpells.name,
+  name: string,
+): SQL {
+  return sql`${column} = ${name} COLLATE NOCASE`;
+}
+
+/** The homebrew item named `name`, in `edition`, or with none the classic row before the 2024 one. */
+export function homebrewItemNamed(db: HomebrewDb, name: string, edition?: Edition) {
+  return db
+    .select()
+    .from(homebrewItems)
+    .where(
+      and(
+        namedIn(homebrewItems.name, name),
+        edition === undefined ? undefined : eq(homebrewItems.edition, edition),
+      ),
+    )
+    .orderBy(homebrewItems.edition)
+    .get();
 }
 
 export function getHomebrewItem(db: HomebrewDb, id: string) {
@@ -121,6 +144,21 @@ export function searchHomebrewSpells(db: HomebrewDb, edition: Edition, term: str
       ),
     )
     .all();
+}
+
+/** The homebrew spell named `name`, in `edition`, or with none the classic row before the 2024 one. */
+export function homebrewSpellNamed(db: HomebrewDb, name: string, edition?: Edition) {
+  return db
+    .select()
+    .from(homebrewSpells)
+    .where(
+      and(
+        namedIn(homebrewSpells.name, name),
+        edition === undefined ? undefined : eq(homebrewSpells.edition, edition),
+      ),
+    )
+    .orderBy(homebrewSpells.edition)
+    .get();
 }
 
 export function getHomebrewSpell(db: HomebrewDb, id: string) {

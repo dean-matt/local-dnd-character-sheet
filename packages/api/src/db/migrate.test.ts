@@ -10,26 +10,22 @@ import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
 import { presetPageRows } from "./queries/pages.ts";
 
 const CHARACTERS_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/characters");
+const HOMEBREW_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/homebrew");
 
 /**
- * A `characters` migrations folder holding the migrations up to and including `last`, so
- * a test can put a database through them alone and then hand the same database to
- * `migrateCharacters` — the way a real upgrade reaches a backfill with existing rows
+ * A copy of `folder` holding the migrations up to and including `last`, so a test can put
+ * a database through them alone and then hand the same database to `migrateCharacters`
+ * or `migrateHomebrew` — the way a real upgrade reaches a backfill with existing rows
  * already in place, rather than on a database empty enough for it to be a no-op.
  */
-function stageMigrationsThrough(last: string): string {
-  const staged = mkdtempSync(join(tmpdir(), `characters-migrations-${last}-`));
+function stageMigrationsThrough(last: string, folder = CHARACTERS_MIGRATIONS): string {
+  const staged = mkdtempSync(join(tmpdir(), `migrations-${last}-`));
   mkdirSync(join(staged, "meta"));
-  const journal = JSON.parse(
-    readFileSync(join(CHARACTERS_MIGRATIONS, "meta/_journal.json"), "utf8"),
-  );
+  const journal = JSON.parse(readFileSync(join(folder, "meta/_journal.json"), "utf8"));
   const cut = journal.entries.findIndex((e: { tag: string }) => e.tag === last);
   const entries = journal.entries.slice(0, cut + 1);
   for (const { tag } of entries) {
-    writeFileSync(
-      join(staged, `${tag}.sql`),
-      readFileSync(join(CHARACTERS_MIGRATIONS, `${tag}.sql`)),
-    );
+    writeFileSync(join(staged, `${tag}.sql`), readFileSync(join(folder, `${tag}.sql`)));
   }
   writeFileSync(join(staged, "meta/_journal.json"), JSON.stringify({ ...journal, entries }));
   return staged;
@@ -139,5 +135,46 @@ describe("migrations", () => {
         blocks: JSON.parse(row.blocks),
       })),
     ).toEqual(presetPageRows("1"));
+  });
+
+  it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {
+    sqlite = new Database(join(workspace, "homebrew.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0004_motionless_vin_gonzales", HOMEBREW_MIGRATIONS);
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insert = sqlite.prepare(
+      "INSERT INTO homebrew_items (id, name, edition, json, created_at) VALUES (?, ?, ?, ?, ?)",
+    );
+    const item = (id: string, name: string, edition: string, createdAt: number) =>
+      insert.run(id, name, edition, JSON.stringify({ name, source: "HB" }), createdAt);
+    item("b", "Sunblade", "one", 1);
+    item("a", "sunblade", "one", 2);
+    item("c", "Sunblade", "one", 2);
+    item("d", "Sunblade", "classic", 3);
+    const spell = sqlite.prepare(
+      "INSERT INTO homebrew_spells (id, name, edition, level, school, json, created_at) VALUES (?, ?, ?, 0, 'V', '{}', ?)",
+    );
+    spell.run("s", "Zap", "one", 1);
+    spell.run("t", "Zap", "one", 2);
+
+    migrateHomebrew(db);
+
+    const rows = sqlite.prepare("SELECT id, name, json FROM homebrew_items ORDER BY id").all() as {
+      id: string;
+      name: string;
+      json: string;
+    }[];
+    expect(rows.map(({ id, name, json }) => ({ id, name, json: JSON.parse(json).name }))).toEqual([
+      { id: "a", name: "sunblade (a)", json: "sunblade (a)" },
+      { id: "b", name: "Sunblade", json: "Sunblade" },
+      { id: "c", name: "Sunblade (c)", json: "Sunblade (c)" },
+      { id: "d", name: "Sunblade", json: "Sunblade" },
+    ]);
+    expect(sqlite.prepare("SELECT name FROM homebrew_spells ORDER BY id").all()).toEqual([
+      { name: "Zap" },
+      { name: "Zap (t)" },
+    ]);
   });
 });

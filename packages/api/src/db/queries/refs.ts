@@ -7,10 +7,17 @@
  * upstream writes `{@spell fireball}` for the row `Fireball`. Where that misses,
  * upstream's own redirect map names the row a renamed entry became. What neither finds
  * resolves to `undefined`, and the renderer shows the display text unlinked.
+ *
+ * Source `HB` names a row of `homebrew.db` instead, by name, so a homebrew row answers
+ * the same tag syntax a catalog row does. A character holds a homebrew row by id and
+ * survives a rename; a tag holds the name, so a renamed or deleted row leaves it
+ * unresolved.
  */
 import type { RefQuery } from "@dnd/catalog";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
+import { HOMEBREW_SOURCE } from "../homebrew.ts";
+import { type HomebrewDb, homebrewItemNamed, homebrewSpellNamed } from "./homebrew.ts";
 
 /** A table row: `name`, `source` and `json`, plus any key column `path` reads. */
 type Row = { name: string; source: string; json: string } & Record<string, string>;
@@ -119,7 +126,10 @@ function unhash(key: string): { name: string; source: string } | undefined {
   }
 }
 
-export type ResolvedRow = { name: string; source: string; json: string; path?: string };
+/** `json` is the row's entry, parsed: `rowEntries` reads its prose from it. */
+type RowJson = { entries?: unknown; entriesHigherLevel?: unknown };
+
+export type ResolvedRow = { name: string; source: string; json: RowJson; path?: string };
 
 type Find = (tag: string, name: string, source: string) => ResolvedRow | undefined;
 
@@ -136,7 +146,12 @@ function finder(db: Database.Database): Find {
     }
     const row = statement.get(name, source) as Row | undefined;
     if (row === undefined) return undefined;
-    return { name: row.name, source: row.source, json: row.json, path: target.path?.(row) };
+    return {
+      name: row.name,
+      source: row.source,
+      json: JSON.parse(row.json),
+      path: target.path?.(row),
+    };
   };
 }
 
@@ -162,9 +177,35 @@ function redirector(db: Database.Database, find: Find) {
   };
 }
 
+/**
+ * The tags a homebrew row answers. A tag names no edition, so where both editions hold
+ * the name the classic row answers, the way a sourceless catalog reference defaults to a
+ * classic source. An edition on the request is the way out once a block knows its own.
+ */
+const HOMEBREW: Record<
+  string,
+  { collection: string; named: typeof homebrewItemNamed | typeof homebrewSpellNamed }
+> = {
+  item: { collection: "items", named: homebrewItemNamed },
+  spell: { collection: "spells", named: homebrewSpellNamed },
+};
+
+function homebrewRow(db: HomebrewDb, tag: string, name: string): ResolvedRow | undefined {
+  const target = HOMEBREW[tag];
+  const row = target?.named(db, name);
+  if (target === undefined || row === undefined) return undefined;
+  return {
+    name: row.name,
+    source: HOMEBREW_SOURCE,
+    json: row.json,
+    path: `/homebrew/${target.collection}/${segments(row.id)}`,
+  };
+}
+
 /** Every reference over one connection, answered in order. */
 export function resolveRefs(
   dataDir: string,
+  homebrewDb: HomebrewDb,
   refs: readonly RefQuery[],
 ): (ResolvedRow | undefined)[] {
   if (refs.length === 0) return [];
@@ -176,6 +217,7 @@ export function resolveRefs(
       const target = TARGETS[tag];
       if (target === undefined) return undefined;
       const wanted = source ?? target.source;
+      if (wanted.toUpperCase() === HOMEBREW_SOURCE) return homebrewRow(homebrewDb, tag, name);
       return find(tag, name, wanted) ?? follow(target.page, name, wanted);
     });
   } finally {

@@ -35,7 +35,7 @@ app.route("/", featsRoutes(DATA_DIR));
 app.route("/", classesRoutes(DATA_DIR));
 app.route("/", searchRoutes(DATA_DIR, homebrewDb));
 app.route("/", catalogRoutes(DATA_DIR));
-app.route("/", refsRoutes(DATA_DIR));
+app.route("/", refsRoutes(DATA_DIR, homebrewDb));
 app.route("/", healthRoutes(DATA_DIR));
 
 app.doc("/openapi.json", {

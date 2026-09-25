@@ -45,8 +45,12 @@ erDiagram
 **Reference, never copy.** A character stores `{name: "Fireball", source: "PHB"}`, not the
 spell. Rebuilding the catalog updates every character; copying would freeze it at creation.
 
-**Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full
-records. Rows carry source `HB` and are merged with catalog rows at query time.
+**Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full records
+carrying source `HB`, merged with catalog rows at query time. A character holds one by
+`id` and survives a rename. A `{@item My Sword|HB}` tag holds its `(name, source)`, `HB`
+being a source like any other, and degrades to its display text after one: a character is
+data, a tag is prose. So an item or spell name is unique within its edition, ignoring
+case, and a tag, which names no edition, gets the classic row where both editions hold it.
 
 **A homebrew background or feat's `json` reuses `backgroundRecordSchema`'s and
 `featRecordSchema`'s entry shape** from `packages/catalog/src/character-options.ts` —
@@ -64,16 +68,14 @@ parent has no ETL merge step to build either from. `race`, `levels[].class` and 
 feat-grantor branches accept a homebrew reference, so a delete refuses while one is held.
 
 **A homebrew feat cannot be a `granted_optional_features` grantor.** That table lives in
-`content.db`, generated wholesale by the ETL and never migrated, so it has no way to
-reference a `homebrew.db` row — separate files, no cross-database foreign key, and the
-`granted_by` CHECK is fixed at generation time. A homebrew feat's `json` may describe an
-outright grant in its prose the same as any other field; it is not read structurally.
+`content.db`, generated wholesale and never migrated: no foreign key reaches a `homebrew.db`
+row, and the `granted_by` CHECK is fixed at generation time. A homebrew feat's prose may
+describe an outright grant, but nothing reads it structurally.
 
-**The API enforces a homebrew reference, since the schema cannot.** `characters.db` and
-`homebrew.db` are separate files opened as separate connections, so SQLite's foreign keys
-never see across them. `routes/homebrew.ts` scans every character's `definition` for the
-id a delete names and refuses it, naming the characters holding the reference, rather
-than let it resolve to nothing.
+**The API enforces a homebrew reference, since the schema cannot.** SQLite's foreign keys
+never see across `characters.db` and `homebrew.db`, separate files on separate connections.
+`routes/homebrew.ts` scans every character's `definition` for the id a delete names and
+refuses it, naming the characters holding it, rather than let it resolve to nothing.
 
 **A `homebrew_items` or `homebrew_spells` row's `json` holds the 5etools entry shape**,
 not a shape of our own — `packages/catalog` defines it. One renderer then serves the
@@ -88,9 +90,7 @@ strict objects give a character.
 **A merged list tells a homebrew row from a catalog row by shape, not by reading
 `source`.** A catalog record carries `source` and no `id`; a homebrew record carries `id`
 and `createdAt` and no top-level `source`. `GET /spells` returns a union of the two record
-schemas, so a caller tells them apart by which fields are present, not by comparing a
-string. The list is bounded, and the response carries the bound as `limit`, `offset` and
-`total` rather than leaving the client to assume one.
+schemas, bounded by the `limit`, `offset` and `total` it carries.
 
 **Four entities need more than `(name, source)` to identify them.** A feature is keyed
 by the class that grants it and the level it arrives at — `(name, source, class_name,

@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { apiMutate, retryUnlessClientError } from "../lib/api.ts";
 
 /**
- * The catalog row each of one block's references names, `null` where there is none, in
- * the order `refs` lists them. A `POST` that reads nothing but the catalog, so it is a
- * query and caches like one.
+ * The catalog or homebrew row each of one block's references names, `null` where there
+ * is none, in the order `refs` lists them. A `POST` that writes nothing, so it is a query
+ * and caches like one.
  */
 export function useResolvedRefs(refs: RefQuery[]) {
   return useQuery({

@@ -10,13 +10,14 @@ import {
   rowEntries,
 } from "@dnd/catalog";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { type ResolvedRow, resolveRefs } from "../db/queries/refs.ts";
 
 function toResolvedRef(row: ResolvedRow): ResolvedRef {
   return {
     name: row.name,
     source: row.source,
-    entries: rowEntries(JSON.parse(row.json)),
+    entries: rowEntries(row.json),
     ...(row.path === undefined ? {} : { path: row.path }),
   };
 }
@@ -25,24 +26,25 @@ const resolve = createRoute({
   method: "post",
   path: "/refs/resolve",
   tags: ["catalog"],
-  summary: "Resolve a block's {@tag} references to catalog rows, in order",
+  summary: "Resolve a block's {@tag} references to catalog and homebrew rows, in order",
   request: {
     body: { required: true, content: { "application/json": { schema: refResolveRequestSchema } } },
   },
   responses: {
     200: {
-      description: "The row each reference names, or null where the catalog has none",
+      description:
+        "The row each reference names, or null where neither the catalog nor homebrew has one",
       content: { "application/json": { schema: refResolveResponseSchema } },
     },
   },
 });
 
-export function refsRoutes(dataDir: string) {
+export function refsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   const routes = new OpenAPIHono();
 
   routes.openapi(resolve, (c) => {
     const { refs } = c.req.valid("json");
-    const rows = resolveRefs(dataDir, refs);
+    const rows = resolveRefs(dataDir, homebrewDb, refs);
     return c.json(
       { refs: rows.map((row) => (row === undefined ? null : toResolvedRef(row))) },
       200,
