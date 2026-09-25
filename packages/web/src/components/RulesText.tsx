@@ -3,16 +3,21 @@
  * and `RulesEntries` walks the recursive `entries` structure around it — prose,
  * lists, tables and named subsections — down to the strings `RulesText` renders.
  *
- * A reference or a roll token renders as its display text alone, unlinked and
- * unclickable, its other fields carried on the span as data attributes. Resolving
- * a reference and making a roll clickable are later tiers that read those rather
- * than change how this file renders them.
+ * The outermost `RulesText` or `RulesEntries` is a block: it resolves every reference
+ * inside it in one request, and a reference the catalog answers opens a popover of
+ * that row's text. One it does not answer — or has not yet — renders as its display
+ * text alone, its fields carried on the span as data attributes, and so does a roll
+ * until a later tier makes it clickable.
  */
-import type { Entries } from "@dnd/catalog";
-import { parseTags, type Token } from "@dnd/tags";
-import { createContext, type ElementType, type ReactNode, useContext } from "react";
+import type { Entries, RefQuery, ResolvedRef } from "@dnd/catalog";
+import { parseTags, renderText, type Token } from "@dnd/tags";
+import { createContext, type ElementType, type ReactNode, useContext, useMemo } from "react";
+import { Link } from "react-router";
+import { useResolvedRefs } from "../hooks/useResolvedRefs.ts";
+import { Popover } from "./Popover.tsx";
 
 type StyleToken = Extract<Token, { kind: "style" }>;
+type RefToken = Extract<Token, { kind: "ref" }>;
 type Emphasis = StyleToken["style"];
 type EntryNode = Exclude<Entries[number], string>;
 
@@ -40,11 +45,7 @@ function renderToken(token: Token, key: string): ReactNode {
     case "text":
       return token.value;
     case "ref":
-      return (
-        <span key={key} data-tag={token.tag} data-name={token.name} data-source={token.source}>
-          {token.display}
-        </span>
-      );
+      return <Ref key={key} token={token} />;
     case "roll":
       return (
         <span key={key} data-notation={token.notation} data-rollable={token.rollable}>
@@ -60,9 +61,99 @@ function renderTokens(tokens: Token[], keyPrefix: string): ReactNode[] {
   return tokens.map((token, index) => renderToken(token, `${keyPrefix}-${index}`));
 }
 
+const refKey = (ref: RefQuery) => JSON.stringify([ref.tag, ref.name, ref.source ?? null]);
+
+/** `null` outside a block. Inside one, the rows its references have resolved to so far. */
+const ResolvedRefs = createContext<ReadonlyMap<string, ResolvedRef> | null>(null);
+
+function collectRefs(tokens: Token[], into: Map<string, RefQuery>) {
+  for (const token of tokens) {
+    if (token.kind === "style") collectRefs(token.children, into);
+    if (token.kind !== "ref") continue;
+    const ref: RefQuery = { tag: token.tag, name: token.name };
+    if (token.source !== undefined) ref.source = token.source;
+    into.set(refKey(ref), ref);
+  }
+}
+
+/** Every string anywhere in `content`, a superset of what renders: a `type` parses to no ref. */
+function refsIn(content: unknown, into = new Map<string, RefQuery>()): Map<string, RefQuery> {
+  if (typeof content === "string") collectRefs(parseTags(content), into);
+  else if (Array.isArray(content)) for (const item of content) refsIn(item, into);
+  else if (isRecord(content)) for (const value of Object.values(content)) refsIn(value, into);
+  return into;
+}
+
+function ResolveBlock({ content, children }: { content: unknown; children: ReactNode }) {
+  const refs = useMemo(() => [...refsIn(content).values()], [content]);
+  const { data } = useResolvedRefs(refs);
+  const resolved = useMemo(
+    () =>
+      new Map(
+        refs.flatMap((ref, index) => {
+          const row = data?.[index];
+          return row ? [[refKey(ref), row] as const] : [];
+        }),
+      ),
+    [refs, data],
+  );
+  return <ResolvedRefs value={resolved}>{children}</ResolvedRefs>;
+}
+
+/** Resolves `content`'s references unless a block around it already does. */
+function Block({ content, children }: { content: unknown; children: ReactNode }) {
+  const outer = useContext(ResolvedRefs);
+  return outer === null ? <ResolveBlock content={content}>{children}</ResolveBlock> : children;
+}
+
+/**
+ * A row's prose as plain paragraphs: a popover sits inside the sentence that cites it,
+ * where a block element is invalid markup, and a link inside it would resolve a block of
+ * its own. A table is left to the row's own page.
+ */
+function paragraphs(entries: unknown, into: string[] = []): string[] {
+  if (typeof entries === "string") into.push(renderText(parseTags(entries)));
+  else if (Array.isArray(entries)) for (const entry of entries) paragraphs(entry, into);
+  else if (isRecord(entries)) {
+    for (const key of ["name", "entry", "entries", "items"]) paragraphs(entries[key], into);
+  }
+  return into;
+}
+
+function Ref({ token }: { token: RefToken }) {
+  const row = useContext(ResolvedRefs)?.get(
+    refKey({ tag: token.tag, name: token.name, source: token.source }),
+  );
+  if (row === undefined) {
+    return (
+      <span data-tag={token.tag} data-name={token.name} data-source={token.source}>
+        {token.display}
+      </span>
+    );
+  }
+  return (
+    <Popover trigger={token.display} label={`${row.name} (${row.source})`}>
+      <span className="block font-semibold">
+        {row.name} <span className="font-normal text-muted">{row.source}</span>
+      </span>
+      {paragraphs(row.entries).map((text, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: a catalog row's prose never reorders.
+        <span key={index} className="mt-1 block">
+          {text}
+        </span>
+      ))}
+      {row.path && (
+        <Link to={`/catalog${row.path}`} className="mt-1 block underline">
+          Open {row.name}
+        </Link>
+      )}
+    </Popover>
+  );
+}
+
 /** One string of upstream `{@tag}` markup, rendered as the elements its tokens mean. */
 export function RulesText({ text }: { text: string }) {
-  return <>{renderTokens(parseTags(text), "t")}</>;
+  return <Block content={text}>{renderTokens(parseTags(text), "t")}</Block>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -242,7 +333,11 @@ export function RulesEntries({
   entries: Entries;
   headingLevel?: number;
 }) {
-  const rendered = <>{entries.map((entry, index) => renderEntry(entry, `e${index}`))}</>;
+  const rendered = (
+    <Block content={entries}>
+      {entries.map((entry, index) => renderEntry(entry, `e${index}`))}
+    </Block>
+  );
   return headingLevel === undefined ? (
     rendered
   ) : (

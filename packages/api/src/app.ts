@@ -14,6 +14,7 @@ import { homebrewRoutes } from "./routes/homebrew.ts";
 import { itemsRoutes } from "./routes/items.ts";
 import { pagesRoutes } from "./routes/pages.ts";
 import { racesRoutes } from "./routes/races.ts";
+import { refsRoutes } from "./routes/refs.ts";
 import { searchRoutes } from "./routes/search.ts";
 import { spellsRoutes } from "./routes/spells.ts";
 
@@ -34,6 +35,7 @@ app.route("/", featsRoutes(DATA_DIR));
 app.route("/", classesRoutes(DATA_DIR));
 app.route("/", searchRoutes(DATA_DIR, homebrewDb));
 app.route("/", catalogRoutes(DATA_DIR));
+app.route("/", refsRoutes(DATA_DIR));
 app.route("/", healthRoutes(DATA_DIR));
 
 app.doc("/openapi.json", {

@@ -107,8 +107,8 @@ re-fetch.
 
 `type` is the array key the entry sits under upstream, as `lookups.kind` is, and that is
 not always what a `{@tag}` spells: `{@creature}` names a `monster` row and `{@legroup}` a
-`legendaryGroup`. Mapping the one to the other belongs to the renderer that resolves a
-tag, and until it exists a tag of those types finds nothing rather than erroring.
+`legendaryGroup`. The resolver in `packages/api/src/db/queries/refs.ts` maps the one to
+the other, and a tag it does not map renders unlinked rather than erroring.
 
 ## Character state
 

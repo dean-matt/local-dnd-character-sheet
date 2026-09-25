@@ -75,12 +75,20 @@ does not exist here. 727 occurrences — do not special-case them one at a time.
 The catalog may legitimately not have the target.
 
 **A `ref` names what its tag means, not always a row's `name`.** `{@subclass}` carries
-the `shortName` — `Berserker`, where the row reads `Path of the Berserker` — which is
-unique across every class, so a resolver matches on `shortName` for that tag. Class
-features need more than the token holds; see #29.
+the `shortName` — `Berserker`, where the row reads `Path of the Berserker` — so the
+resolver matches `short_name` for that tag. A class feature's token drops the class and
+level its key needs, so feature references stay unresolved.
 
-Feed `generated/gendata-tag-redirects.json` to the resolver so renamed upstream entries
-still resolve.
+## Resolving
+
+`TARGETS` in `packages/api/src/db/queries/refs.ts` maps each resolvable tag to its table,
+its `tag_redirects` page and the source a sourceless reference means. Resolving a new tag
+is a line there. Take the default source from the corpus — the source every sourceless
+reference of that tag resolves to — never from memory. A miss follows one redirect hop.
+
+`RulesText` and `RulesEntries` batch a block's references into one `POST /refs/resolve`.
+A popover shows the row as plain text, because it sits inside a sentence where a block
+element is invalid markup.
 
 ## Tiers
 

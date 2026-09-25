@@ -80,6 +80,12 @@ export {
   raceTraitsSchema,
   subraceRecordSchema,
 } from "./race.ts";
+export type { RefQuery, ResolvedRef } from "./ref.ts";
+export {
+  MAX_REFS_PER_REQUEST,
+  refResolveRequestSchema,
+  refResolveResponseSchema,
+} from "./ref.ts";
 export type { CatalogSearchType, SearchHit } from "./search.ts";
 export { catalogSearchHitSchema, homebrewSearchHitSchema, searchHitSchema } from "./search.ts";
 export type {
