@@ -1187,6 +1187,7 @@ describe("deriveCharacter", () => {
 
   describe("spell slots", () => {
     const WIZARD = { name: "Wizard", source: "PHB" };
+    const SORCERER = { name: "Sorcerer", source: "PHB" };
     const CLERIC = { name: "Cleric", source: "PHB" };
     const PALADIN = { name: "Paladin", source: "PHB" };
     const FIGHTER = { name: "Fighter", source: "PHB" };
@@ -1284,8 +1285,8 @@ describe("deriveCharacter", () => {
 
     it("gives a class that knows its spells no prepared count", () => {
       const block = deriveCharacter(
-        caster(WIZARD),
-        tables([[WIZARD, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
+        caster(SORCERER),
+        tables([[SORCERER, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
       );
       expect(block.spellcasting[0]).not.toHaveProperty("preparedSpells");
     });

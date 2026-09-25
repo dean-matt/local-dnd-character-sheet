@@ -1020,7 +1020,10 @@ export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
   /** Absent for a class that grants no spellcasting, such as a Fighter with no casting subclass. */
   spellcastingAbilities: ReadonlyMap<string, Ability>;
-  /** Keyed like `spellcastingAbilities`, and absent for a class with no table to read. */
+  /**
+   * Keyed like `spellcastingAbilities`, and absent for a class with no slot table, such
+   * as Way of the Four Elements, which casts with neither slots nor a prepared list.
+   */
   casterTables: ReadonlyMap<string, CasterTable>;
   skills: readonly SkillTrait[];
   size: Size;
@@ -1035,12 +1038,11 @@ export type CharacterCatalog = {
 export type Preparation = { rule: PreparationRule } | { printed: number };
 
 /**
- * One casting class's table, read at the character's level in that class. `slots` is
- * its own table's row, or its subclass's for an Eldritch Knight. A class that casts
- * with no slot table, such as Way of the Four Elements, has no `progression`.
+ * One casting class's slot table, read at the character's level in that class. `slots`
+ * is its own table's row, or its subclass's for an Eldritch Knight.
  */
 export type CasterTable = {
-  progression?: CasterProgression;
+  progression: CasterProgression;
   slots: readonly SpellSlotTotal[];
   preparation?: Preparation;
 };
@@ -1182,7 +1184,7 @@ function castingClasses(
   return classLevels(definition).flatMap((group) => {
     const key = entryKey(group.class);
     const table = catalog.casterTables.get(key);
-    if (!catalog.spellcastingAbilities.has(key) || table?.progression === undefined) return [];
+    if (!catalog.spellcastingAbilities.has(key) || !table) return [];
     return [{ level: group.level, progression: table.progression, slots: table.slots }];
   });
 }

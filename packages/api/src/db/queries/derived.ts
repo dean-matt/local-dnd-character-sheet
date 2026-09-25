@@ -143,7 +143,7 @@ function casterTable(
       prepares ?? printedPreparation(rows.subclass.prepared),
     );
   }
-  return prepares ? { slots: [], preparation: prepares } : undefined;
+  return undefined;
 }
 
 export function raceJson(
