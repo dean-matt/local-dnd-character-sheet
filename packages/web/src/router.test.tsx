@@ -115,8 +115,7 @@ describe("routing", () => {
     const stubbed = fetch;
     let returning = false;
     vi.stubGlobal("fetch", (input: RequestInfo | URL) => {
-      // The sheet's loading state is short, so the browser clamps the position it is handed
-      // while the sheet refetches.
+      // The browser clamps the position to the short loading state the refetching sheet shows.
       if (returning && String(input).endsWith("/pages")) scroll(0);
       return stubbed(input);
     });
