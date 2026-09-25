@@ -40,6 +40,8 @@ const ironbound = (overrides: Record<string, unknown> = {}) => ({
 const duskling = (overrides: Record<string, unknown> = {}) => ({
   name: "Duskling",
   edition: "one",
+  size: ["M"],
+  speed: 30,
   ...overrides,
 });
 

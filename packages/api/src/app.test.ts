@@ -10,6 +10,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "./db/client.ts";
 import { charactersRoutes } from "./routes/characters.ts";
+import { derivedRoutes } from "./routes/derived.ts";
 import { homebrewRoutes } from "./routes/homebrew.ts";
 import { pagesRoutes } from "./routes/pages.ts";
 import { spellsRoutes } from "./routes/spells.ts";
@@ -33,6 +34,7 @@ describe("/openapi.json", () => {
     const app = new OpenAPIHono();
     app.route("/", charactersRoutes(opened.charactersDb));
     app.route("/", pagesRoutes(opened.charactersDb));
+    app.route("/", derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
     app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
     app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
@@ -44,6 +46,7 @@ describe("/openapi.json", () => {
     expect(Object.keys(body.paths).sort()).toEqual([
       "/characters",
       "/characters/{id}",
+      "/characters/{id}/derived",
       "/characters/{id}/pages",
       "/characters/{id}/pages/restore-defaults",
       "/characters/{id}/state",

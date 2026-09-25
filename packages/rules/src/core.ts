@@ -7,6 +7,9 @@
  * of them.
  */
 
+/** The six abilities, in the order a sheet prints them. */
+export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
+
 /** Ability scores below 1 or above 30 are outside the rules; callers clamp before display. */
 export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);

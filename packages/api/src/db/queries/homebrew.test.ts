@@ -78,6 +78,8 @@ const ironbound = (overrides: Partial<HomebrewFeatInput> = {}): HomebrewFeatInpu
 const duskling = (overrides: Partial<HomebrewRaceInput> = {}): HomebrewRaceInput => ({
   name: "Duskling",
   edition: "one",
+  size: ["M"],
+  speed: 30,
   ...overrides,
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  armorTraitSchema,
   type HomebrewItem,
   homebrewItemInputSchema,
   homebrewItemRecordSchema,
@@ -90,5 +91,34 @@ describe("itemRecordSchema", () => {
       json: { name: "Longsword", source: "PHB" },
     };
     expect(itemRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("armorTraitSchema", () => {
+  it("reads a 2024 row's category from the code before the source suffix", () => {
+    expect(armorTraitSchema.parse({ type: "HA|XPHB", ac: 18 })).toEqual({
+      category: "heavy",
+      armorClass: 18,
+    });
+  });
+
+  it("adds a magic item's own bonus to its printed armor class", () => {
+    expect(armorTraitSchema.parse({ type: "HA", ac: 18, bonusAc: "+2" })).toEqual({
+      category: "heavy",
+      armorClass: 20,
+    });
+  });
+
+  it("reads a shield", () => {
+    expect(armorTraitSchema.parse({ type: "S", ac: 2 })).toEqual({
+      category: "shield",
+      armorClass: 2,
+    });
+  });
+
+  it("is undefined for an item that is not armor, or armor stating no ac", () => {
+    expect(armorTraitSchema.parse({ type: "M", ac: 3 })).toBeUndefined();
+    expect(armorTraitSchema.parse({ type: "HA" })).toBeUndefined();
+    expect(armorTraitSchema.parse({})).toBeUndefined();
   });
 });
