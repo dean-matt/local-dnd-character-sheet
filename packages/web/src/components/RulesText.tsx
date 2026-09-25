@@ -124,7 +124,10 @@ function Ref({ token }: { token: RefToken }) {
   const row = useContext(ResolvedRefs)?.get(
     refKey({ tag: token.tag, name: token.name, source: token.source }),
   );
-  if (row === undefined) {
+  const prose = row === undefined ? [] : paragraphs(row.entries);
+  // A row with no prose and no page — every monster, whose stat block is not `entries` —
+  // would open onto its name alone, so it stays text.
+  if (row === undefined || (prose.length === 0 && row.path === undefined)) {
     return (
       <span data-tag={token.tag} data-name={token.name} data-source={token.source}>
         {token.display}
@@ -136,7 +139,7 @@ function Ref({ token }: { token: RefToken }) {
       <span className="block font-semibold">
         {row.name} <span className="font-normal text-muted">{row.source}</span>
       </span>
-      {paragraphs(row.entries).map((text, index) => (
+      {prose.map((text, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: a catalog row's prose never reorders.
         <span key={index} className="mt-1 block">
           {text}

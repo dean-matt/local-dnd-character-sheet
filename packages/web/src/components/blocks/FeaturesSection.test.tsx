@@ -1,6 +1,6 @@
 import type { CharacterFeatures } from "@dnd/catalog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
@@ -101,8 +101,18 @@ describe("FeaturesSection", () => {
     fireEvent.click(summary);
     const details = summary.closest("details") as HTMLElement;
     expect(details).toHaveAttribute("open");
-    expect(details).toHaveTextContent("Regain 1d10 hit points.");
+    await waitFor(() => expect(details).toHaveTextContent("Regain 1d10 hit points."));
     expect(details).not.toHaveTextContent("{@dice");
+  });
+
+  it("mounts a feature's text only once it is opened, so a closed one resolves nothing", async () => {
+    renderSection();
+
+    const summary = await screen.findByText("Second Wind");
+    const details = summary.closest("details") as HTMLElement;
+    expect(details).not.toHaveTextContent("Regain");
+    fireEvent.click(summary);
+    await waitFor(() => expect(details).toHaveTextContent("Regain 1d10 hit points."));
   });
 
   it("shows a reference that resolves to nothing by its stored name, marked", async () => {

@@ -253,6 +253,17 @@ describe("reference resolution", () => {
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
+  it("keeps a row with neither prose nor a page as text, rather than a popover of its name", async () => {
+    const fetchMock = stubFetchByUrl({
+      "/api/refs/resolve": { refs: [{ name: "Goblin", source: "MM", entries: [] }] },
+    });
+    renderWithClient(<RulesText text="A {@creature goblin} attacks." />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText("goblin")).toHaveAttribute("data-tag", "creature"));
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
   it("leaves every reference as its display text when resolution fails", async () => {
     const fetchMock = stubFetch(new Response(JSON.stringify({ error: "bad" }), { status: 400 }));
     renderWithClient(<RulesText text="Cast {@spell fireball}." />);

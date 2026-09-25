@@ -63,9 +63,21 @@ function FeatureRow({ feature }: { feature: SheetFeature }) {
       </li>
     );
   }
+  return <ResolvedFeatureRow feature={feature} />;
+}
+
+/**
+ * The text mounts on first open, because each feature's rules text is a block that
+ * resolves its references in a request of its own.
+ */
+function ResolvedFeatureRow({ feature }: { feature: Extract<SheetFeature, { resolved: true }> }) {
+  const [opened, setOpened] = useState(false);
   return (
     <li>
-      <details className="group py-1">
+      <details
+        className="group py-1"
+        onToggle={(event) => event.currentTarget.open && setOpened(true)}
+      >
         <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2">
           <span aria-hidden="true" className="text-muted group-open:rotate-90 print:hidden">
             ▸
@@ -74,7 +86,7 @@ function FeatureRow({ feature }: { feature: SheetFeature }) {
           <Placement feature={feature} />
         </summary>
         <div className="mt-2 flex flex-col gap-2 pl-4">
-          <RulesEntries entries={feature.entries} />
+          {opened && <RulesEntries entries={feature.entries} />}
         </div>
       </details>
     </li>

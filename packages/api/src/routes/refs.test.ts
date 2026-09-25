@@ -84,6 +84,20 @@ describe("refsRoutes", () => {
     ]);
   });
 
+  it("carries a spell's upcast rule after its entries", async () => {
+    publishRefsFixture(dataDir, {
+      spells: [
+        {
+          name: "Fireball",
+          source: "PHB",
+          json: JSON.stringify({ entries: ["Boom."], entriesHigherLevel: ["Bigger boom."] }),
+        },
+      ],
+    });
+    const [spell] = await resolveOk([{ tag: "spell", name: "Fireball" }]);
+    expect(spell.entries).toEqual(["Boom.", "Bigger boom."]);
+  });
+
   it("falls back to the tag's default source where the reference names none", async () => {
     const [spell, creature] = await resolveOk([
       { tag: "spell", name: "Fireball" },
