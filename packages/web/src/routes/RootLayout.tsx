@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet, ScrollRestoration, useLocation } from "react-router";
 import { ThemeToggle } from "../ThemeToggle.tsx";
 
 /**
@@ -7,7 +7,8 @@ import { ThemeToggle } from "../ThemeToggle.tsx";
  * reading whatever the previous page left focused. Moving focus to `main` on every
  * navigation after the first restores the landmark a full page load would have given
  * for free; the first is skipped so mounting the app doesn't steal focus from the
- * browser chrome.
+ * browser chrome. `preventScroll` leaves the position `ScrollRestoration` put back on a
+ * return to the sheet where it was.
  */
 export function RootLayout() {
   const location = useLocation();
@@ -16,7 +17,7 @@ export function RootLayout() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs on the path alone, not on every render
   useEffect(() => {
-    if (mounted.current) mainRef.current?.focus();
+    if (mounted.current) mainRef.current?.focus({ preventScroll: true });
     mounted.current = true;
   }, [location.pathname]);
 
@@ -37,6 +38,7 @@ export function RootLayout() {
       <main id="main-content" ref={mainRef} tabIndex={-1} className="p-4 sm:p-8 print:p-0">
         <Outlet />
       </main>
+      <ScrollRestoration />
     </div>
   );
 }

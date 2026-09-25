@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { createBrowserRouter } from "react-router";
+import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage.tsx";
@@ -21,7 +22,10 @@ export const routeConfig: RouteObject[] = [
           { path: "p/:slug", element: <CharacterPage /> },
         ],
       },
-      { path: "catalog/*", element: <CatalogPage /> },
+      ...CATALOG_TARGETS.map((target) => ({
+        path: `catalog/${target.path}`,
+        element: <CatalogPage target={target} />,
+      })),
       { path: "*", element: <NotFoundPanel /> },
     ],
   },

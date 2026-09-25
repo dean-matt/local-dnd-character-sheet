@@ -97,9 +97,30 @@ describe("routing", () => {
     await screen.findByRole("heading", { level: 1, name: "Page not found" });
   });
 
-  it("renders the catalog route", async () => {
-    renderAt("/catalog/spells/fireball/phb");
-    await screen.findByRole("heading", { level: 1, name: "Catalog" });
+  it("puts the sheet back where the reader left it on returning from a catalog row", async () => {
+    stubFetchByUrl({
+      "/api/characters/abc": characterRecord("abc", "Vex"),
+      "/api/characters/abc/pages": presetPageRecords(),
+      "/api/feats/Alert/PHB": {
+        name: "Alert",
+        source: "PHB",
+        edition: "classic",
+        json: { name: "Alert", source: "PHB" },
+      },
+    });
+    const scrollTo = vi.fn();
+    vi.stubGlobal("scrollTo", scrollTo);
+    const router = renderAt("/characters/abc/p/stats");
+    await screen.findByRole("heading", { level: 1, name: "Stats" });
+
+    vi.stubGlobal("scrollY", 480);
+    await router.navigate("/catalog/feats/Alert/PHB");
+    await screen.findByRole("heading", { level: 1, name: "Alert" });
+    vi.stubGlobal("scrollY", 0);
+    await router.navigate(-1);
+    await screen.findByRole("heading", { level: 1, name: "Stats" });
+
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 480);
   });
 
   it("wraps every route in one landmark layout", async () => {
