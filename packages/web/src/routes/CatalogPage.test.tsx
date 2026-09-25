@@ -32,10 +32,11 @@ const fireball = {
       "A {@b bright} streak.",
       {
         type: "entries",
-        name: "At Higher Levels",
-        entries: [{ type: "entries", name: "Nested", entries: ["deeper"] }],
+        name: "Blast",
+        entries: [{ type: "entries", name: "Nested", entries: [] }],
       },
     ],
+    entriesHigherLevel: [{ type: "entries", name: "At Higher Levels", entries: ["More dice."] }],
   },
 };
 
@@ -77,8 +78,10 @@ describe("CatalogPage", () => {
     await screen.findByRole("heading", { level: 1, name: "Fireball" });
     expect(screen.getByText("PHB")).toBeInTheDocument();
     expect(screen.getByText("bright").tagName).toBe("STRONG");
-    expect(screen.getByRole("heading", { level: 2, name: "At Higher Levels" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Blast" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "Nested" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "At Higher Levels" })).toBeInTheDocument();
+    expect(screen.getByText("More dice.")).toBeInTheDocument();
   });
 
   it("reads a class feature from its class's grants at the level its address names", async () => {

@@ -9,6 +9,7 @@ import {
   classGrantsSchema,
   classRecordSchema,
   type Entries,
+  entriesSchema,
   featRecordSchema,
   homebrewBackgroundRecordSchema,
   homebrewClassRecordSchema,
@@ -39,12 +40,16 @@ export interface CatalogTarget {
   load: (key: Params) => Promise<CatalogRow>;
 }
 
-type Row = { name: string; json: { entries?: Entries } };
+type Row = { name: string; json: { entries?: Entries; entriesHigherLevel?: unknown } };
 
+/** A spell keeps its upcast rule apart from `entries`, and the text reads complete only with it. */
 const toRow = (record: Row & { source?: string }): CatalogRow => ({
   name: record.name,
   source: record.source,
-  entries: record.json.entries ?? [],
+  entries: [
+    ...(record.json.entries ?? []),
+    ...(entriesSchema.safeParse(record.json.entriesHigherLevel).data ?? []),
+  ],
 });
 
 const segments = (...parts: (string | undefined)[]) =>
