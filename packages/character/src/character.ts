@@ -40,6 +40,9 @@ import {
   spellSaveDc,
   type Term,
 } from "@dnd/rules";
+
+export { ABILITIES };
+
 import { z } from "zod";
 
 const editionSchema = z.enum(EDITIONS);

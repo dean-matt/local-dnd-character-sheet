@@ -4,8 +4,8 @@
  * chose — the scores, the names, and which saves and skills they are proficient in.
  */
 import {
+  ABILITIES,
   ABILITY_LABEL,
-  type Ability,
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterRecord,
@@ -21,8 +21,6 @@ import { Field } from "../Field.tsx";
 
 type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
 
-const ABILITIES = Object.keys(ABILITY_LABEL) as Ability[];
-
 /** The three passive scores a table asks for, looked up by the skill's name in either edition. */
 const PASSIVE_SKILLS = ["Perception", "Insight", "Investigation"];
 
@@ -34,7 +32,6 @@ const PROFICIENCY_MARK: Record<ProficiencyLevel, { symbol: string; text: string 
 };
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
-const plain = (value: number) => `${value}`;
 
 function formatSpeed(speed: Speed): string {
   const { walk, ...others } = speed;
@@ -86,6 +83,16 @@ function ProficiencyRow({
       </span>
       <Field mode="read" label="modifier" labelHidden value={modifier} format={signed} />
     </li>
+  );
+}
+
+/** Spells out the marks a title tooltip alone would hide from a keyboard or touch reader. */
+function Legend() {
+  const marks = Object.values(PROFICIENCY_MARK).map((mark) => `${mark.symbol} ${mark.text}`);
+  return (
+    <p aria-hidden="true" className="text-muted text-row">
+      {[...marks, "* Overridden"].join(" · ")}
+    </p>
   );
 }
 
@@ -158,7 +165,7 @@ function Combat({ derived }: { derived: CharacterDerived }) {
   return (
     <Card title="Combat">
       <div className="flex flex-col gap-1">
-        <Field mode="read" label="Armor Class" value={derived.armorClass} format={plain} />
+        <Field mode="read" label="Armor Class" value={derived.armorClass} format={String} />
         <Field mode="read" label="Initiative" value={derived.initiative} format={signed} />
         <Field mode="read" label="Speed" value={derived.speed} format={formatSpeed} />
         <Field
@@ -171,7 +178,7 @@ function Combat({ derived }: { derived: CharacterDerived }) {
           mode="read"
           label="Hit Point Maximum"
           value={derived.hitPointMaximum}
-          format={plain}
+          format={String}
         />
         {derived.hitDice.map((pool) => (
           <Field
@@ -179,7 +186,7 @@ function Combat({ derived }: { derived: CharacterDerived }) {
             mode="read"
             label={`Hit Dice (d${pool.die})`}
             value={pool.total}
-            format={plain}
+            format={String}
           />
         ))}
       </div>
@@ -240,7 +247,7 @@ export function AbilitiesSection({
             const skill = derived.skills.find((candidate) => candidate.ref.name === name);
             const label = `Passive ${name}`;
             return skill ? (
-              <Field key={name} mode="read" label={label} value={skill.passive} format={plain} />
+              <Field key={name} mode="read" label={label} value={skill.passive} format={String} />
             ) : (
               <div key={name} className="flex items-baseline justify-between gap-2">
                 <span className="text-muted text-row">{label}</span>
@@ -250,6 +257,7 @@ export function AbilitiesSection({
           })}
         </div>
       </Card>
+      <Legend />
     </div>
   );
 }

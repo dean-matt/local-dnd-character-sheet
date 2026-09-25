@@ -182,6 +182,15 @@ describe("AbilitiesSection", () => {
     expect(spoken(armorClass)).toBe("18, overridden from 13");
   });
 
+  it("spells out every mark on the page, since a tooltip never reaches a touch reader", () => {
+    renderSection();
+    expect(
+      screen.getByText(
+        "○ Not proficient · ◐ Half proficiency · ● Proficient · ◆ Expertise · * Overridden",
+      ),
+    ).toBeVisible();
+  });
+
   it("renders every overridable value read-only", () => {
     renderSection();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
