@@ -66,6 +66,58 @@ body {
   outline-offset: 2px;
 }
 
+@media print {
+  /*
+   * The light palette whatever the screen theme, since a dark ground floods the page with
+   * ink. Both selectors match the specificity of the dark-theme rules above, and win by
+   * coming after them.
+   */
+  :root[data-theme],
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --color-canvas: var(--color-white);
+    --color-surface: var(--color-white);
+    --color-border: var(--color-gray-300);
+    --color-ink: var(--color-gray-900);
+    --color-muted: color-mix(in oklab, var(--color-gray-500) 90%, var(--color-ink));
+    --color-accent: #c1272d;
+
+    --text-row: 12pt;
+  }
+
+  /* `main` takes focus on every navigation, and its ring would print around every sheet. */
+  :focus-visible {
+    outline: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  li,
+  tr,
+  dl > div {
+    break-inside: avoid;
+  }
+}
+
+@layer base {
+  @media print {
+    /*
+     * Preflight hides `[hidden]` with `!important` in this layer, and an important
+     * declaration in a layer outranks one outside every layer, so the override has to
+     * sit in the same layer.
+     */
+    [data-print-sheet][hidden] {
+      /* biome-ignore lint/complexity/noImportantStyles: must outrank preflight's own !important */
+      display: block !important;
+    }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /*
    * One rule for every element rather than a motion-safe variant per

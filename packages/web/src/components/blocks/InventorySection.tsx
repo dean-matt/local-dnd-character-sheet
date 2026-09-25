@@ -151,7 +151,7 @@ function ResolvedRow({ item }: { item: Extract<SheetItem, { resolved: true }> })
           onClick={() => setOpen(!open)}
           className="flex cursor-pointer items-baseline gap-2 font-medium"
         >
-          <span aria-hidden="true" className={`text-muted ${open ? "rotate-90" : ""}`}>
+          <span aria-hidden="true" className={`text-muted print:hidden ${open ? "rotate-90" : ""}`}>
             ▸
           </span>
           {item.name}
