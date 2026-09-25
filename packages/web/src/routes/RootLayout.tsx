@@ -32,6 +32,7 @@ function ScrollMemory() {
   const fetching = useIsFetching();
   const restored = useRef<string | undefined>(undefined);
   const positions = useRef<Record<string, number>>(readPositions());
+  const target = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     history.scrollRestoration = "manual";
@@ -47,9 +48,14 @@ function ScrollMemory() {
   // A layout effect, so the listener moves to the new entry inside the commit that swaps
   // the page: the scroll the browser fires when a shorter page clamps `scrollY` then
   // lands on the new entry rather than overwriting the one being left.
+  //
+  // The position to restore is read once, before `save` listens, and `save` waits until the
+  // entry is restored or the reader claims it: the clamp on a return lands on this entry,
+  // and it would otherwise replace the position being returned to.
   useLayoutEffect(() => {
+    target.current = navigationType === "POP" ? positions.current[key] : undefined;
     const save = () => {
-      positions.current[key] = window.scrollY;
+      if (restored.current === key) positions.current[key] = window.scrollY;
     };
     const claim = () => {
       restored.current = key;
@@ -63,7 +69,7 @@ function ScrollMemory() {
         sessionStorage.setItem(POSITIONS_KEY, JSON.stringify(positions.current));
       } catch {}
     };
-  }, [key]);
+  }, [key, navigationType]);
 
   // A new entry goes to the top at once. A page mounts its next query a commit after the
   // last settles, so a return waits for a quiet spell rather than the first zero, and a
@@ -73,7 +79,7 @@ function ScrollMemory() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: `fetching` only re-runs this, cancelling a restore a new fetch overtakes
   useEffect(() => {
     if (restored.current === key) return;
-    const saved = navigationType === "POP" ? positions.current[key] : undefined;
+    const saved = target.current;
     if (saved === undefined) {
       restored.current = key;
       window.scrollTo(0, 0);

@@ -107,6 +107,8 @@ const subclassListSchema = z.object({ items: z.array(subclassRecordSchema) });
 /**
  * `{@subclassFeature}` names its subclass by short name, and the API reads a subclass by
  * its full one, so the short name resolves against the class's subclasses of each edition.
+ * One page of 200, the API's cap, is read per edition: a class past 200 subclasses in one
+ * edition would miss the rest, and following `total` is the way out.
  */
 async function subclassPath(key: Params): Promise<string> {
   const lists = await Promise.all(
