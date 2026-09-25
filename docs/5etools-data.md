@@ -165,7 +165,8 @@ links dangle. `{@filter}` points at a 5etools filtered list page, which means no
 here, so it must degrade to its display text rather than erroring.
 
 `generated/gendata-tag-redirects.json` is upstream's own map of renamed tags — 2,948 of
-them. Feed it to the resolver so renames do not break links. It is grouped by the
+them. The resolver follows one hop of it where a reference misses, so renames do not
+break links. It is grouped by the
 namespace a link lands in, which is a page filename such as `variantrules.html` where the
 type has a page and a bare tag name such as `skill` where it does not. A page is coarser
 than a tag — `{@trap}` and `{@hazard}` share `trapshazards.html` — so the resolver maps

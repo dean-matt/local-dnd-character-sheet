@@ -25,3 +25,14 @@ const entryNodeSchema: z.ZodType<EntryNode> = z.looseObject({
 export const entriesSchema: z.ZodType<Entries> = z
   .array(z.union([z.string(), entryNodeSchema]))
   .meta({ id: "Entries" });
+
+/**
+ * A row's whole rules text: `entries`, then the upcast rule a spell keeps apart from them,
+ * without which its text reads incomplete. A field that is not entries reads as none.
+ */
+export function rowEntries(json: { entries?: unknown; entriesHigherLevel?: unknown }): Entries {
+  return [
+    ...(entriesSchema.safeParse(json.entries).data ?? []),
+    ...(entriesSchema.safeParse(json.entriesHigherLevel).data ?? []),
+  ];
+}

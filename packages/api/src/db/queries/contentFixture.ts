@@ -986,3 +986,67 @@ export function publishFeaturesFixture(dataDir: string, fixture: FeaturesFixture
     ],
   );
 }
+
+/** The rows `resolveRefs` reads, each table carrying only the columns it selects. */
+export type RefsFixture = {
+  spells?: { name: string; source: string; json: string }[];
+  subclasses?: {
+    name: string;
+    source: string;
+    short_name: string;
+    class_name: string;
+    class_source: string;
+    json: string;
+  }[];
+  lookups?: { kind: string; name: string; source: string; qualifier: string; json: string }[];
+  entities?: { type: string; name: string; source: string; qualifier: string; json: string }[];
+  tagRedirects?: { tag: string; from_key: string; to_tag: string; to_key: string }[];
+};
+
+/** Mirrors `build-db.ts`'s publish step against the tables a reference resolves in. */
+export function publishRefsFixture(dataDir: string, fixture: RefsFixture): void {
+  publishTable(
+    dataDir,
+    `
+      CREATE TABLE spells (name TEXT, source TEXT, json TEXT, PRIMARY KEY (name, source));
+      CREATE TABLE subclasses (
+        name TEXT, source TEXT, short_name TEXT, class_name TEXT, class_source TEXT, json TEXT,
+        PRIMARY KEY (name, source, class_name, class_source)
+      );
+      CREATE TABLE lookups (
+        kind TEXT, name TEXT, source TEXT, qualifier TEXT, json TEXT,
+        PRIMARY KEY (kind, name, source, qualifier)
+      );
+      CREATE TABLE entities (
+        type TEXT, name TEXT, source TEXT, qualifier TEXT, json TEXT,
+        PRIMARY KEY (type, name, source, qualifier)
+      );
+      CREATE TABLE tag_redirects (
+        tag TEXT, from_key TEXT, to_tag TEXT, to_key TEXT, PRIMARY KEY (tag, from_key)
+      );
+    `,
+    [
+      {
+        insert: "INSERT INTO spells VALUES (@name, @source, @json)",
+        rows: fixture.spells ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclasses VALUES (@name, @source, @short_name, @class_name, @class_source, @json)",
+        rows: fixture.subclasses ?? [],
+      },
+      {
+        insert: "INSERT INTO lookups VALUES (@kind, @name, @source, @qualifier, @json)",
+        rows: fixture.lookups ?? [],
+      },
+      {
+        insert: "INSERT INTO entities VALUES (@type, @name, @source, @qualifier, @json)",
+        rows: fixture.entities ?? [],
+      },
+      {
+        insert: "INSERT INTO tag_redirects VALUES (@tag, @from_key, @to_tag, @to_key)",
+        rows: fixture.tagRedirects ?? [],
+      },
+    ],
+  );
+}

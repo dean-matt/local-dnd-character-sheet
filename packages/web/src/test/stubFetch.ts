@@ -12,7 +12,7 @@ export function stubFetch(response: Response) {
  * other URL with a 404, for a view that makes more than one request.
  */
 export function stubFetchByUrl(bodies: Record<string, unknown>) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = String(input);
     return url in bodies
       ? new Response(JSON.stringify(bodies[url]), { status: 200 })

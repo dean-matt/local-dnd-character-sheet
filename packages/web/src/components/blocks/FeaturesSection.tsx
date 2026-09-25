@@ -8,7 +8,7 @@ import type { CharacterRecord } from "@dnd/character";
 import { useId, useState } from "react";
 import { useCharacterFeatures } from "../../hooks/useCharacterFeatures.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
-import { RulesEntries } from "../RulesText.tsx";
+import { RulesBlock, RulesEntries } from "../RulesText.tsx";
 
 const ORIGIN_LABEL: Record<FeatureOrigin, string> = {
   class: "Class",
@@ -149,9 +149,13 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
       <p role="status" aria-live="polite" className="sr-only">
         {groups.length === 0 ? emptyMessage : ""}
       </p>
-      {groups.map((group) => (
-        <Group key={`${group.origin}|${group.name ?? ""}`} group={group} />
-      ))}
+      {/* One block for every feature, filtered out or not, so the section resolves its
+          references in one request and a filter keystroke sends none. */}
+      <RulesBlock content={features.data.groups}>
+        {groups.map((group) => (
+          <Group key={`${group.origin}|${group.name ?? ""}`} group={group} />
+        ))}
+      </RulesBlock>
     </div>
   );
 }
