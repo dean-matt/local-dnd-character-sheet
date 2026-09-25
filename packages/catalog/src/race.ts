@@ -40,28 +40,31 @@ const SPEED_MODES = ["burrow", "climb", "fly", "swim"] as const;
 
 type RaceSpeed = { walk: number } & Partial<Record<(typeof SPEED_MODES)[number], number>>;
 
-const speedSchema = z.union([
-  z
-    .int()
-    .min(0)
-    .transform((walk) => ({ walk })),
-  z
-    .looseObject({
-      walk: z.int().min(0),
-      burrow: speedModeSchema.optional(),
-      climb: speedModeSchema.optional(),
-      fly: speedModeSchema.optional(),
-      swim: speedModeSchema.optional(),
-    })
-    .transform((stated) => {
-      const speed: RaceSpeed = { walk: stated.walk };
-      for (const mode of SPEED_MODES) {
-        const feet = stated[mode];
-        if (feet !== undefined) speed[mode] = feet === true ? stated.walk : feet;
-      }
-      return speed;
-    }),
+/** A row's `speed` as upstream writes it: a walking speed alone, or one per mode. */
+const statedSpeedSchema = z.union([
+  z.int().min(0),
+  z.looseObject({
+    walk: z.int().min(0),
+    burrow: speedModeSchema.optional(),
+    climb: speedModeSchema.optional(),
+    fly: speedModeSchema.optional(),
+    swim: speedModeSchema.optional(),
+  }),
 ]);
+
+const sizeCodesSchema = z
+  .array(z.enum(Object.keys(SIZE_CODES) as [SizeCode, ...SizeCode[]]))
+  .min(1);
+
+function speedOf(stated: z.infer<typeof statedSpeedSchema>): RaceSpeed {
+  if (typeof stated === "number") return { walk: stated };
+  const speed: RaceSpeed = { walk: stated.walk };
+  for (const mode of SPEED_MODES) {
+    const feet = stated[mode];
+    if (feet !== undefined) speed[mode] = feet === true ? stated.walk : feet;
+  }
+  return speed;
+}
 
 /**
  * The size and speeds a race or subrace row states, read off the same `json` a renderer
@@ -71,15 +74,12 @@ const speedSchema = z.union([
  * largest one. The fix is a `size` on the character definition.
  */
 export const raceTraitsSchema = z
-  .looseObject({
-    size: z.array(z.enum(Object.keys(SIZE_CODES) as [SizeCode, ...SizeCode[]])).min(1),
-    speed: speedSchema,
-  })
+  .looseObject({ size: sizeCodesSchema, speed: statedSpeedSchema })
   .transform(({ size, speed }) => ({
     size: size
       .map((code): Size => SIZE_CODES[code])
       .reduce((largest, next) => (SIZES.indexOf(next) > SIZES.indexOf(largest) ? next : largest)),
-    speed,
+    speed: speedOf(speed),
   }));
 
 /** A race row from `content.db`'s `races` table, addressed by `(name, source)`. */
@@ -114,10 +114,13 @@ export type SubraceRecord = z.infer<typeof subraceRecordSchema>;
  * the server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry
  * rather than inside it, since it is a `homebrew_races` column, not a field the 5etools
  * shape carries. A homebrew race is always full and self-contained: it has no subrace of
- * its own.
+ * its own. `size` and `speed` are required because no load step checks a paste before
+ * `raceTraitsSchema` reads them for a derived block.
  */
 export const homebrewRaceInputSchema = raceEntrySchema.omit({ source: true }).extend({
   edition: z.enum(EDITIONS),
+  size: sizeCodesSchema,
+  speed: statedSpeedSchema,
 });
 
 export type HomebrewRaceInput = z.infer<typeof homebrewRaceInputSchema>;

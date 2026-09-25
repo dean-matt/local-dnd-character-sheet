@@ -264,8 +264,10 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "Class homebrew c has a d20 hit die" });
   });
 
-  it("422s a race row that states no size or speed, naming that row", async () => {
-    insertHomebrewRace(opened.homebrewDb, "r", { name: "Wisp", edition: "classic" });
+  it("422s a stored race row that states no size or speed, naming that row", async () => {
+    opened.homebrewDb.$client
+      .prepare("INSERT INTO homebrew_races (id, edition, name, json) VALUES (?, ?, ?, ?)")
+      .run("r", "classic", "Wisp", JSON.stringify({ name: "Wisp", source: "HB" }));
     store(definitionWith({ race: { homebrewId: "r" }, subrace: undefined }));
     const res = await routes.request("/characters/1/derived");
 

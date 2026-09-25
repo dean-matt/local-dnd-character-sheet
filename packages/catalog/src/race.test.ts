@@ -46,29 +46,31 @@ describe("subraceRecordSchema", () => {
 });
 
 describe("homebrewRaceInputSchema", () => {
-  it("accepts a name and an edition without a source", () => {
-    const parsed = homebrewRaceInputSchema.parse({ name: "Duskling", edition: "one" });
-    expect(parsed).toEqual({ name: "Duskling", edition: "one" });
+  const duskling = { name: "Duskling", edition: "one", size: ["M"], speed: 30 };
+
+  it("accepts a name, an edition, a size and a speed without a source", () => {
+    expect(homebrewRaceInputSchema.parse(duskling)).toEqual(duskling);
   });
 
-  it("keeps a field this schema does not model, such as size or speed", () => {
-    const withUnmodeledFields = {
-      name: "Duskling",
-      edition: "one",
-      size: ["M"],
-      speed: 30,
-    };
-    expect(homebrewRaceInputSchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
+  it("keeps a field this schema does not model, such as an ability score increase", () => {
+    const withUnmodeledField = { ...duskling, ability: [{ dex: 2 }] };
+    expect(homebrewRaceInputSchema.parse(withUnmodeledField)).toEqual(withUnmodeledField);
+  });
+
+  it("rejects a race that states no size, since a derived block reads one", () => {
+    const { size: _, ...sizeless } = duskling;
+    const result = homebrewRaceInputSchema.safeParse(sizeless);
+    expect(result.error?.issues[0]?.path).toEqual(["size"]);
   });
 
   it("rejects a missing name, naming the failed field", () => {
-    const result = homebrewRaceInputSchema.safeParse({ edition: "one" });
+    const result = homebrewRaceInputSchema.safeParse({ ...duskling, name: undefined });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["name"]);
   });
 
   it("rejects an edition outside the two rulesets", () => {
-    const result = homebrewRaceInputSchema.safeParse({ name: "Duskling", edition: "3.5" });
+    const result = homebrewRaceInputSchema.safeParse({ ...duskling, edition: "3.5" });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["edition"]);
   });
