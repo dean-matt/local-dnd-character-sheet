@@ -39,8 +39,14 @@ const count = (amount: number, unit: string): string => {
   return `${amount} ${amount === 1 ? singular : plural}`;
 };
 
+/** A reaction keeps its trigger, the part a caster checks first; it may carry `{@tag}` markup. */
 export function castingTime(time: Resolved["time"]): string | undefined {
-  return time?.map((span) => count(span.number, span.unit)).join(" or ");
+  return time
+    ?.map((span) => {
+      const length = count(span.number, span.unit);
+      return span.condition ? `${length}, ${span.condition}` : length;
+    })
+    .join(" or ");
 }
 
 const NAMED_DISTANCE: Record<string, string> = {

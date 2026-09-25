@@ -23,6 +23,8 @@ const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const PALADIN = { name: "Paladin", source: "PHB" };
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const ELDRITCH_KNIGHT = { name: "Eldritch Knight", source: "PHB" };
+const FIGHTER_ONE = { name: "Fighter", source: "XPHB" };
+const ELDRITCH_KNIGHT_ONE = { name: "Eldritch Knight", source: "XPHB" };
 const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
@@ -94,6 +96,7 @@ describe("derivedRoutes", () => {
     publishDerivedFixture(dataDir, {
       classes: [
         { ...FIGHTER, edition: "classic", hit_die: 10, json: JSON.stringify(FIGHTER) },
+        { ...FIGHTER_ONE, edition: "one", hit_die: 10, json: JSON.stringify(FIGHTER_ONE) },
         { ...BARBARIAN, edition: "classic", hit_die: 12, json: JSON.stringify(BARBARIAN) },
         {
           ...PALADIN,
@@ -130,6 +133,17 @@ describe("derivedRoutes", () => {
         { class_name: "Paladin", class_source: "PHB", level: 2, slot_level: 1, slots: 2 },
         { class_name: "Warlock", class_source: "XPHB", level: 1, slot_level: 1, slots: 1 },
       ],
+      subclassResources: [
+        {
+          class_name: "Fighter",
+          class_source: "XPHB",
+          subclass_name: "Eldritch Knight",
+          subclass_source: "XPHB",
+          level: 3,
+          resource_key: "prepared_spells",
+          value: "3",
+        },
+      ],
       subclassSpellSlots: [
         {
           class_name: "Fighter",
@@ -151,6 +165,18 @@ describe("derivedRoutes", () => {
           edition: "classic",
           json: JSON.stringify({
             name: "Eldritch Knight",
+            spellcastingAbility: "int",
+            casterProgression: "1/3",
+          }),
+        },
+        {
+          ...ELDRITCH_KNIGHT_ONE,
+          short_name: "Eldritch Knight",
+          class_name: "Fighter",
+          class_source: "XPHB",
+          edition: "one",
+          json: JSON.stringify({
+            ...ELDRITCH_KNIGHT_ONE,
             spellcastingAbility: "int",
             casterProgression: "1/3",
           }),
@@ -263,6 +289,20 @@ describe("derivedRoutes", () => {
       { level: 1, total: { computed: 2, manual: null, terms: [] } },
     ]);
     expect(block.spellcasting[0]).not.toHaveProperty("preparedSpells");
+  });
+
+  it("reads a third caster's printed prepared count off its subclass's table", async () => {
+    store(
+      definitionWith({
+        edition: "one",
+        levels: [
+          { class: FIGHTER_ONE },
+          { class: FIGHTER_ONE },
+          { class: FIGHTER_ONE, subclass: ELDRITCH_KNIGHT_ONE },
+        ],
+      }),
+    );
+    expect((await derived()).spellcasting[0]?.preparedSpells?.computed).toBe(3);
   });
 
   it("counts a classic prepared list from the formula the class row prints", async () => {

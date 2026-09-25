@@ -18,7 +18,14 @@ const SPELLS: CharacterSpells = {
       school: "E",
       concentration: true,
       ritual: false,
-      time: [{ number: 1, unit: "bonus" }],
+      time: [
+        { number: 1, unit: "bonus" },
+        {
+          number: 1,
+          unit: "reaction",
+          condition: "which you take when {@spell magic missile} hits",
+        },
+      ],
       range: { type: "point", distance: { type: "feet", amount: 90 } },
       components: { v: true, s: true, m: "the petrified eye of a newt" },
       duration: [{ type: "timed", duration: { type: "hour", amount: 1 }, concentration: true }],
@@ -133,7 +140,9 @@ describe("SpellsSection", () => {
     expect(hex).toHaveTextContent("Prepared");
     expect(hex).toHaveTextContent("Concentration");
     expect(hex).not.toHaveTextContent("Ritual");
-    expect(hex).toHaveTextContent("Casting time: 1 bonus action.");
+    expect(hex).toHaveTextContent(
+      "Casting time: 1 bonus action or 1 reaction, which you take when magic missile hits.",
+    );
     expect(hex).toHaveTextContent("Range: 90 feet.");
     expect(hex).toHaveTextContent("Components: V, S, M (the petrified eye of a newt).");
     expect(hex).toHaveTextContent("Duration: Up to 1 hour.");

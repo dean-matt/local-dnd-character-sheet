@@ -15,7 +15,8 @@ const read = createRoute({
   summary: "List a character's spells, each resolved against its catalog or homebrew row",
   description:
     "In the order the definition lists them. A reference that resolves to nothing is " +
-    "listed with `resolved: false` and the stored name and source, never dropped and never a 4xx.",
+    "listed with `resolved: false`, never dropped and never a 4xx: a catalog reference keeps " +
+    'its stored name and source, and a homebrew one, which stores neither, reads "Homebrew".',
   request: { params: z.object({ id: z.string() }) },
   responses: {
     200: {

@@ -12,6 +12,7 @@ import {
   armorTraitSchema,
   casterProgressionSchema,
   castingStartLevelSchema,
+  type PreparedSpellCount,
   preparationRuleSchema,
   raceTraitsSchema,
   spellcastingAbilitySchema,
@@ -38,6 +39,7 @@ import {
   getPreparedSpellCount,
   getRace,
   getSubclass,
+  getSubclassPreparedSpellCount,
   getSubclassSpellSlots,
   getSubrace,
   listSkills,
@@ -117,9 +119,11 @@ function preparation(
 ): Preparation | undefined {
   const rule = parseJson(preparationRuleSchema, classJson);
   if (rule) return { rule };
-  const printed = getPreparedSpellCount(dataDir, ref.name, ref.source, level);
-  return printed.prepares ? { printed: printed.count } : undefined;
+  return printedPreparation(getPreparedSpellCount(dataDir, ref.name, ref.source, level));
 }
+
+const printedPreparation = (count: PreparedSpellCount): Preparation | undefined =>
+  count.prepares ? { printed: count.count } : undefined;
 
 const slotTotals = (rows: { slot_level: number; slots: number }[]) =>
   rows.map((row) => ({ level: row.slot_level, total: row.slots }));
@@ -140,8 +144,8 @@ function casterTable(
   const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
   const level = classLevels.length;
   const prepares = preparation(dataDir, ref, level, classJson);
-  const withPreparation = (table: CasterTable): CasterTable =>
-    prepares ? { ...table, preparation: prepares } : table;
+  const withPreparation = (table: CasterTable, preparation = prepares): CasterTable =>
+    preparation ? { ...table, preparation } : table;
 
   const own = parseJson(casterProgressionSchema, classJson);
   if (own) {
@@ -153,10 +157,12 @@ function casterTable(
     subclass && getSubclass(dataDir, subclass.name, subclass.source, ref.name, ref.source);
   const progression = row ? parseJson(casterProgressionSchema, row.json) : undefined;
   if (subclass && progression) {
-    const slots = slotTotals(
-      getSubclassSpellSlots(dataDir, ref.name, ref.source, subclass.name, subclass.source, level),
+    const owner = [ref.name, ref.source, subclass.name, subclass.source] as const;
+    const slots = slotTotals(getSubclassSpellSlots(dataDir, ...owner, level));
+    const subclassPrepares = printedPreparation(
+      getSubclassPreparedSpellCount(dataDir, ...owner, level),
     );
-    return withPreparation({ progression, slots });
+    return withPreparation({ progression, slots }, prepares ?? subclassPrepares);
   }
   return prepares ? { slots: [], preparation: prepares } : undefined;
 }

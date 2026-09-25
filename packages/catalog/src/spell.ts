@@ -74,7 +74,12 @@ export const spellRecordSchema = z.strictObject({
 
 export type SpellRecord = z.infer<typeof spellRecordSchema>;
 
-const spellTimeSchema = z.looseObject({ number: z.number(), unit: z.string().min(1) });
+/** `condition` is a reaction's trigger, and may carry `{@tag}` markup. */
+const spellTimeSchema = z.looseObject({
+  number: z.number(),
+  unit: z.string().min(1),
+  condition: z.string().min(1).optional(),
+});
 
 const spellRangeSchema = z.looseObject({
   type: z.string().min(1),

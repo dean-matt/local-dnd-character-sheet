@@ -694,6 +694,7 @@ export type DerivedFixture = {
   classResources?: ClassResourceFixtureRow[];
   spellSlots?: SpellSlotFixtureRow[];
   subclasses?: SubclassFixtureRow[];
+  subclassResources?: SubclassResourceFixtureRow[];
   subclassSpellSlots?: SubclassSpellSlotFixtureRow[];
   races?: RaceFixtureRow[];
   subraces?: SubraceFixtureRow[];
@@ -703,7 +704,7 @@ export type DerivedFixture = {
 
 /**
  * Mirrors `build-db.ts`'s publish step against every table a derived block reads — the
- * character's classes, their prepared counts, spell slots and subclasses, its race or
+ * character's classes and subclasses, their prepared counts and spell slots, its race or
  * subrace, its equipped items, and the edition's skills from `lookups`.
  */
 export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture): void {
@@ -735,6 +736,17 @@ export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture):
         slot_level INTEGER NOT NULL,
         slots INTEGER NOT NULL,
         PRIMARY KEY (class_name, class_source, level, slot_level)
+      ) STRICT;
+
+      CREATE TABLE subclass_resources (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        resource_key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, resource_key)
       ) STRICT;
 
       CREATE TABLE subclass_spell_slots (
@@ -814,6 +826,11 @@ export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture):
         insert:
           "INSERT INTO spell_slots (class_name, class_source, level, slot_level, slots) VALUES (@class_name, @class_source, @level, @slot_level, @slots)",
         rows: fixture.spellSlots ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_resources (class_name, class_source, subclass_name, subclass_source, level, resource_key, value) VALUES (@class_name, @class_source, @subclass_name, @subclass_source, @level, @resource_key, @value)",
+        rows: fixture.subclassResources ?? [],
       },
       {
         insert:

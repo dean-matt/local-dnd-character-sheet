@@ -56,6 +56,21 @@ export function getSpell(dataDir: string, name: string, source: string): SpellRo
   }
 }
 
+/** Several spells by `(name, source)` over one connection, each `undefined` where no row answers. */
+export function getSpells(
+  dataDir: string,
+  refs: readonly { name: string; source: string }[],
+): (SpellRow | undefined)[] {
+  if (refs.length === 0) return [];
+  const db = openContentDb(dataDir);
+  try {
+    const select = db.prepare(`SELECT ${SPELL_COLUMNS} FROM spells WHERE name = ? AND source = ?`);
+    return refs.map((ref) => select.get(ref.name, ref.source) as SpellRow | undefined);
+  } finally {
+    db.close();
+  }
+}
+
 export type RaceRow = {
   name: string;
   source: string;
@@ -565,13 +580,30 @@ export function getFirstSpellSlotLevel(
 
 const PREPARED_SPELLS_KEY = "prepared_spells";
 
+type PreparedRow = { level: number; value: string };
+
+/**
+ * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
+ * reached, so telling "no such column" from "not reached yet" needs every row for the
+ * key, not just the one at this level — at most 20, one query reads them all.
+ */
+function preparedCount(rows: PreparedRow[], level: number, owner: string): PreparedSpellCount {
+  if (rows.length === 0) return { prepares: false };
+  const atLevel = rows.find((r) => r.level === level);
+  if (!atLevel) return { prepares: true, count: 0 };
+  const count = Number(atLevel.value);
+  if (!Number.isInteger(count) || count < 0) {
+    throw new Error(
+      `${owner} level ${level}: prepared_spells value ${atLevel.value} is not a count`,
+    );
+  }
+  return { prepares: true, count };
+}
+
 /**
  * The `one`-edition Prepared Spells column for a class at a level. `prepares: false`
  * where the class carries no such column at any level, distinct from `count: 0` where
  * it carries the column but has not reached it yet.
- * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
- * reached, so telling the two apart needs every one of the class's rows for this
- * resource key, not just the one at this level — at most 20, one query reads them all.
  */
 export function getPreparedSpellCount(
   dataDir: string,
@@ -586,17 +618,41 @@ export function getPreparedSpellCount(
         `SELECT level, value FROM class_resources
          WHERE class_name = ? AND class_source = ? AND resource_key = ?`,
       )
-      .all(className, classSource, PREPARED_SPELLS_KEY) as { level: number; value: string }[];
-    if (rows.length === 0) return { prepares: false };
-    const atLevel = rows.find((r) => r.level === level);
-    if (!atLevel) return { prepares: true, count: 0 };
-    const count = Number(atLevel.value);
-    if (!Number.isInteger(count) || count < 0) {
-      throw new Error(
-        `${className}|${classSource} level ${level}: prepared_spells value ${atLevel.value} is not a count`,
-      );
-    }
-    return { prepares: true, count };
+      .all(className, classSource, PREPARED_SPELLS_KEY) as PreparedRow[];
+    return preparedCount(rows, level, `${className}|${classSource}`);
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * The same column on a subclass's own table, where a `one` third caster prints it:
+ * `Eldritch Knight` (XPHB) and `Arcane Trickster` (XPHB), under a class that prints none.
+ */
+export function getSubclassPreparedSpellCount(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassSource: string,
+  level: number,
+): PreparedSpellCount {
+  const db = openContentDb(dataDir);
+  try {
+    const rows = db
+      .prepare(
+        `SELECT level, value FROM subclass_resources
+         WHERE class_name = ? AND class_source = ?
+           AND subclass_name = ? AND subclass_source = ? AND resource_key = ?`,
+      )
+      .all(
+        className,
+        classSource,
+        subclassName,
+        subclassSource,
+        PREPARED_SPELLS_KEY,
+      ) as PreparedRow[];
+    return preparedCount(rows, level, `${subclassName}|${subclassSource}`);
   } finally {
     db.close();
   }

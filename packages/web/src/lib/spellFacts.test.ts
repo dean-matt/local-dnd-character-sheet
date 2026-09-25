@@ -19,13 +19,19 @@ describe("castingTime", () => {
     ).toBe("1 action or 8 hours");
   });
 
+  it("keeps a reaction's trigger", () => {
+    expect(
+      castingTime([{ number: 1, unit: "reaction", condition: "which you take when you are hit" }]),
+    ).toBe("1 reaction, which you take when you are hit");
+  });
+
   it("leaves an unstated time unstated", () => {
     expect(castingTime(undefined)).toBeUndefined();
   });
 });
 
 describe("spellRange", () => {
-  it("prints a distance, a named range, and an area centred on the caster", () => {
+  it("prints a distance, a named range, and an area centered on the caster", () => {
     expect(spellRange({ type: "point", distance: { type: "feet", amount: 90 } })).toBe("90 feet");
     expect(spellRange({ type: "point", distance: { type: "miles", amount: 1 } })).toBe("1 mile");
     expect(spellRange({ type: "point", distance: { type: "touch" } })).toBe("Touch");

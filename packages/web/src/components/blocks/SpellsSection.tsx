@@ -24,7 +24,7 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
-import { RulesEntries } from "../RulesText.tsx";
+import { RulesEntries, RulesText } from "../RulesText.tsx";
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
 
@@ -98,12 +98,14 @@ function Slots({ derived }: { derived: CharacterDerived }) {
   );
 }
 
-/** A fact the spell leaves out shows as a dash, spoken as "none". */
+/** A fact the spell leaves out shows as a dash, spoken as "none". A trigger can carry markup. */
 function Fact({ label, value }: { label: string; value: string | undefined }) {
   return (
     <span>
       <span className="sr-only">{label}: </span>
-      {value ?? (
+      {value !== undefined ? (
+        <RulesText text={value} />
+      ) : (
         <>
           <span aria-hidden="true">—</span>
           <span className="sr-only">none</span>

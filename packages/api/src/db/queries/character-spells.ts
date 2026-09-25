@@ -11,7 +11,7 @@ import {
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName } from "@dnd/character";
 import type { ZodType } from "zod";
-import { getSpell } from "./content.ts";
+import { getSpells } from "./content.ts";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 
 type SpellEntry = CharacterDefinition["spells"][number];
@@ -40,24 +40,36 @@ function castingFacts(json: Record<string, unknown>) {
   };
 }
 
-function rowFacts(dataDir: string, homebrewDb: HomebrewDb, entry: SpellEntry) {
-  const { ref } = entry;
-  if ("homebrewId" in ref) {
-    const row = getHomebrewSpell(homebrewDb, ref.homebrewId);
-    return row && { ...row, json: row.json as Record<string, unknown> };
-  }
-  const row = getSpell(dataDir, ref.name, ref.source);
-  return (
-    row && {
-      ...row,
-      concentration: row.concentration === 1,
-      ritual: row.ritual === 1,
-      json: JSON.parse(row.json) as Record<string, unknown>,
-    }
-  );
+type SpellRow = SpellRowFacts & { name: string };
+
+function homebrewFacts(homebrewDb: HomebrewDb, id: string): SpellRow | undefined {
+  const row = getHomebrewSpell(homebrewDb, id);
+  return row && { ...row, json: row.json as Record<string, unknown> };
 }
 
-function sheetSpell(entry: SpellEntry, row: (SpellRowFacts & { name: string }) | undefined) {
+/** Every catalog row read over one connection, since a caster can list dozens. */
+function rowFacts(
+  dataDir: string,
+  homebrewDb: HomebrewDb,
+  entries: readonly SpellEntry[],
+): (SpellRow | undefined)[] {
+  const catalogRefs = entries.flatMap(({ ref }) => ("homebrewId" in ref ? [] : [ref]));
+  const catalogRows = getSpells(dataDir, catalogRefs).values();
+  return entries.map(({ ref }) => {
+    if ("homebrewId" in ref) return homebrewFacts(homebrewDb, ref.homebrewId);
+    const row = catalogRows.next().value;
+    return (
+      row && {
+        ...row,
+        concentration: row.concentration === 1,
+        ritual: row.ritual === 1,
+        json: JSON.parse(row.json) as Record<string, unknown>,
+      }
+    );
+  });
+}
+
+function sheetSpell(entry: SpellEntry, row: SpellRow | undefined) {
   const { ref, prepared, origin } = entry;
   const fields = {
     name: row?.name ?? displayName(ref),
@@ -83,8 +95,9 @@ export function resolveCharacterSpells(
   homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
 ): CharacterSpells {
-  const spells: SheetSpell[] = definition.spells.map((entry) =>
-    sheetSpell(entry, rowFacts(dataDir, homebrewDb, entry)),
+  const rows = rowFacts(dataDir, homebrewDb, definition.spells);
+  const spells: SheetSpell[] = definition.spells.map((entry, index) =>
+    sheetSpell(entry, rows[index]),
   );
   return { spells };
 }
