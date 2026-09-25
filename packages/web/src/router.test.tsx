@@ -74,6 +74,18 @@ describe("routing", () => {
     expect(titles).not.toContain("Spells");
   });
 
+  it("prints why the pages could not load", async () => {
+    stubFetchByUrl({ "/api/characters/abc": characterRecord("abc", "Vex") });
+    renderAt("/characters/abc/p/stats");
+    await screen.findByRole("alert");
+
+    const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
+    const alerts = within(sheet as HTMLElement)
+      .getAllByRole("alert", { hidden: true })
+      .map((alert) => alert.textContent);
+    expect(alerts).toContain("nothing at /api/characters/abc/pages");
+  });
+
   it("shows the not-found state for a slug that names no page", async () => {
     renderAt("/characters/abc/p/nonsense");
     await screen.findByRole("heading", { level: 1, name: "Page not found" });

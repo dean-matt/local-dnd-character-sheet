@@ -10,7 +10,8 @@ import { ManagePages } from "./ManagePages.tsx";
 
 export function CharacterLayout() {
   const { id = "" } = useParams();
-  const pages = useCharacterPages(id).data?.filter((page) => !page.hidden) ?? [];
+  const pagesQuery = useCharacterPages(id);
+  const pages = pagesQuery.data?.filter((page) => !page.hidden) ?? [];
   const [managing, setManaging] = useState(false);
   const panelId = useId();
 
@@ -50,7 +51,7 @@ export function CharacterLayout() {
           <Outlet />
         </div>
       </div>
-      <PrintSheet id={id} pages={pages} />
+      <PrintSheet id={id} pages={pages} pagesError={pagesQuery.error} />
     </>
   );
 }
@@ -64,11 +65,20 @@ export function CharacterLayout() {
  * character route, growing with the pages a character keeps; past what a local sheet
  * shrugs off, mount it on the first `beforeprint` and keep it mounted.
  */
-function PrintSheet({ id, pages }: { id: string; pages: CharacterPageRecord[] }) {
+function PrintSheet({
+  id,
+  pages,
+  pagesError,
+}: {
+  id: string;
+  pages: CharacterPageRecord[];
+  pagesError: Error | null;
+}) {
   const character = useCharacter(id);
   const derived = useCharacterDerived(id);
   return (
     <div hidden data-print-sheet>
+      {pagesError && <ErrorState message={pagesError.message} />}
       {character.isError && <ErrorState message={character.error.message} />}
       {derived.isError && <ErrorState message={derived.error.message} />}
       {pages.map((page) => (
