@@ -174,8 +174,9 @@ accepted.** All five derive from `characters.definition` — `race_summary` and 
 from `raceSummary()` and `classSummary()`, reading `Homebrew` for an unresolvable `homebrewId`.
 
 **A preset page is hidden, never deleted.** Every character seeds with Stats, Spells, Inventory
-and Features. A write leaving one out is refused; restoring the defaults resets each, keeping
-its position. Only the server sets `preset`; a `slug` survives a reorder or retitle.
+and Features. A write leaving one out is refused. Restoring the defaults resets each preset and
+puts the presets back in seeded order across their own slots; a written page keeps its place.
+Only the server sets `preset`; a `slug` survives a reorder or retitle.
 
 **A page is an ordered list of blocks** — `section`, `value` (a derived field and its
 breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup). An unknown

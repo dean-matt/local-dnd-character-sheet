@@ -195,7 +195,7 @@ describe("pagesRoutes", () => {
     expect(stats?.blocks).toEqual([{ kind: "unknown", raw: { kind: "x" } }]);
   });
 
-  it("restores every preset the user hid or edited, and keeps the pages they wrote", async () => {
+  it("restores every preset the user hid, edited or moved, and keeps the pages they wrote", async () => {
     const id = await create();
     const [stats, spells, ...rest] = PRESET_PAGES as CharacterPage[];
     const notes: CharacterPage = { ...GRAPPLE, slug: "notes", title: "Notes", hidden: true };
@@ -211,9 +211,9 @@ describe("pagesRoutes", () => {
     expect(res.status).toBe(200);
     const expected = [
       { ...GRAPPLE, preset: false },
-      { ...spells, preset: true },
-      { ...notes, preset: false },
       { ...stats, preset: true },
+      { ...notes, preset: false },
+      { ...spells, preset: true },
       ...rest.map((page) => ({ ...page, preset: true })),
     ];
     expect(await res.json()).toEqual(expected);
