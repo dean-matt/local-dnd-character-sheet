@@ -186,6 +186,16 @@ function renderTable(entry: EntryNode, keyPrefix: string): ReactNode {
   );
 }
 
+/**
+ * The node types that point at another catalog row — `"Frenzy|Barbarian||Berserker||3"` —
+ * each under a field named for its type. The pointer's first segment is the row's name.
+ */
+const REF_FIELDS: Record<string, string> = {
+  refClassFeature: "classFeature",
+  refSubclassFeature: "subclassFeature",
+  refOptionalfeature: "optionalfeature",
+};
+
 function renderEntry(entry: string | EntryNode, keyPrefix: string): ReactNode {
   if (typeof entry === "string") {
     return (
@@ -197,6 +207,11 @@ function renderEntry(entry: string | EntryNode, keyPrefix: string): ReactNode {
   const type = str(entry.type);
   if (type === "list") return renderList(entry, keyPrefix);
   if (type === "table") return renderTable(entry, keyPrefix);
+  const refField = type === undefined ? undefined : REF_FIELDS[type];
+  if (refField !== undefined) {
+    const name = str(entry[refField])?.split("|")[0];
+    return name ? <p key={keyPrefix}>{name}</p> : null;
+  }
   return renderSection(entry, keyPrefix);
 }
 

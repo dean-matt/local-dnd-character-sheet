@@ -1,7 +1,8 @@
 /**
- * Reads `content.db`'s Tier A tables — spells, races, backgrounds, feats, items, classes
- * and subclasses. Every query opens and closes its own connection through `openContentDb`
- * instead of holding one — the staleness that module exists to avoid.
+ * Reads `content.db`'s Tier A tables — spells, races, backgrounds, feats, optional
+ * features, items, classes and subclasses. Every query opens and closes its own
+ * connection through `openContentDb` instead of holding one — the staleness that module
+ * exists to avoid.
  */
 import type { CatalogSearchType, PreparedSpellCount } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
@@ -206,6 +207,23 @@ export function getFeat(dataDir: string, name: string, source: string): FeatRow 
   }
 }
 
+type OptionalFeatureRow = FeatRow;
+
+export function getOptionalFeature(
+  dataDir: string,
+  name: string,
+  source: string,
+): OptionalFeatureRow | undefined {
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(`SELECT ${FEAT_COLUMNS} FROM optional_features WHERE name = ? AND source = ?`)
+      .get(name, source) as OptionalFeatureRow | undefined;
+  } finally {
+    db.close();
+  }
+}
+
 export type ItemRow = {
   name: string;
   source: string;
@@ -346,6 +364,78 @@ export type ClassGrantsRow = {
   features: ClassFeatureRow[];
 };
 
+function selectClassFeatures(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  level: number,
+): ClassFeatureRow[] {
+  return db
+    .prepare(
+      `SELECT name, source, level, json FROM class_features
+       WHERE class_name = ? AND class_source = ? AND level <= ?
+       ORDER BY level, name`,
+    )
+    .all(className, classSource, level) as ClassFeatureRow[];
+}
+
+function selectSubclassFeatures(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  subclassShortName: string,
+  subclassSource: string,
+  level: number,
+): ClassFeatureRow[] {
+  return db
+    .prepare(
+      `SELECT name, source, level, json FROM subclass_features
+       WHERE class_name = ? AND class_source = ?
+         AND subclass_short_name = ? AND subclass_source = ? AND level <= ?
+       ORDER BY level, name`,
+    )
+    .all(className, classSource, subclassShortName, subclassSource, level) as ClassFeatureRow[];
+}
+
+/** Every feature a class grants up to and including `level`. */
+export function getClassFeatures(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+): ClassFeatureRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return selectClassFeatures(db, className, classSource, level);
+  } finally {
+    db.close();
+  }
+}
+
+/** Every feature a subclass grants up to and including `level`, keyed by its short name. */
+export function getSubclassFeatures(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  subclassShortName: string,
+  subclassSource: string,
+  level: number,
+): ClassFeatureRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return selectSubclassFeatures(
+      db,
+      className,
+      classSource,
+      subclassShortName,
+      subclassSource,
+      level,
+    );
+  } finally {
+    db.close();
+  }
+}
+
 /**
  * What a class grants by one level, assembled in a single connection: the resources and
  * slots printed at that level (a level with no row grants none, per
@@ -381,13 +471,7 @@ export function getClassGrants(
          ORDER BY feature_type`,
       )
       .all(className, classSource, level) as ClassOptionalFeatureRow[];
-    const features = db
-      .prepare(
-        `SELECT name, source, level, json FROM class_features
-         WHERE class_name = ? AND class_source = ? AND level <= ?
-         ORDER BY level, name`,
-      )
-      .all(className, classSource, level) as ClassFeatureRow[];
+    const features = selectClassFeatures(db, className, classSource, level);
     return { resources, spellSlots, optionalFeatures, features };
   } finally {
     db.close();
@@ -498,14 +582,14 @@ export function getSubclassGrants(
         subclassSource,
         level,
       ) as ClassOptionalFeatureRow[];
-    const features = db
-      .prepare(
-        `SELECT name, source, level, json FROM subclass_features
-         WHERE class_name = ? AND class_source = ?
-           AND subclass_short_name = ? AND subclass_source = ? AND level <= ?
-         ORDER BY level, name`,
-      )
-      .all(className, classSource, subclassShortName, subclassSource, level) as ClassFeatureRow[];
+    const features = selectSubclassFeatures(
+      db,
+      className,
+      classSource,
+      subclassShortName,
+      subclassSource,
+      level,
+    );
     return { resources, spellSlots, optionalFeatures, features };
   } finally {
     db.close();

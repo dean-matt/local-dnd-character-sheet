@@ -156,6 +156,25 @@ describe("RulesEntries", () => {
     expect(screen.getByRole("cell", { name: "4 or lower" })).toBeInTheDocument();
   });
 
+  it("names the row a reference node points at, rather than rendering nothing", () => {
+    const entries: Entries = [
+      { type: "refSubclassFeature", subclassFeature: "Frenzy|Barbarian||Berserker||3" },
+      {
+        type: "options",
+        entries: [
+          { type: "refOptionalfeature", optionalfeature: "Archery" },
+          { type: "refClassFeature", classFeature: "Rage|Barbarian||1" },
+        ],
+      },
+    ];
+    const { container } = render(<RulesEntries entries={entries} />);
+    expect([...container.querySelectorAll("p")].map((p) => p.textContent)).toEqual([
+      "Frenzy",
+      "Archery",
+      "Rage",
+    ]);
+  });
+
   it("never throws on a node type it does not know", () => {
     const entries: Entries = [{ type: "gallery", images: ["nope"] }];
     expect(() => render(<RulesEntries entries={entries} />)).not.toThrow();

@@ -46,7 +46,7 @@ const describe = (ref: EntryRef): string =>
   "homebrewId" in ref ? `homebrew ${ref.homebrewId}` : `${ref.name} (${ref.source})`;
 
 /** A `json` column parsed against `schema`, `undefined` where either step fails. */
-function parseJson<T>(schema: ZodType<T>, json: unknown): T | undefined {
+export function parseJson<T>(schema: ZodType<T>, json: unknown): T | undefined {
   const value = typeof json === "string" ? JSON.parse(json) : json;
   const parsed = schema.safeParse(value);
   return parsed.success ? parsed.data : undefined;
@@ -101,7 +101,7 @@ function castingAbility(
   return parseJson(spellcastingAbilitySchema, row.json);
 }
 
-function raceJson(
+export function raceJson(
   dataDir: string,
   homebrewDb: HomebrewDb,
   definition: CharacterDefinition,

@@ -26,6 +26,14 @@ export const spellcastingAbilitySchema = z
   .looseObject({ spellcastingAbility: z.enum(ABILITIES).optional() })
   .transform((entry) => entry.spellcastingAbility);
 
+/**
+ * Whether a class or subclass feature row is one of Tasha's optional class features,
+ * which a table opts into rather than a class granting outright.
+ */
+export const classFeatureVariantSchema = z
+  .looseObject({ isClassFeatureVariant: z.boolean().optional() })
+  .transform((entry) => entry.isClassFeatureVariant === true);
+
 const spellsByLevelSchema = z.record(z.string(), z.unknown()).optional();
 
 /**

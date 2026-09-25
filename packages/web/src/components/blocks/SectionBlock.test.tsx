@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { characterRecord, derivedRecord } from "../../test/records.ts";
@@ -24,6 +25,19 @@ describe("SectionBlockView", () => {
       />,
     );
     expect(screen.getByRole("heading", { level: 2, name: "Vex" })).toBeInTheDocument();
+  });
+
+  it("renders the features section, which waits on the character", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <SectionBlockView
+          block={{ kind: "section", section: "features" }}
+          character={undefined}
+          derived={undefined}
+        />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("Features isn't available yet.")).toBeInTheDocument();
   });
 
   it("renders nothing for a block of another kind", () => {

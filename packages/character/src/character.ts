@@ -364,6 +364,16 @@ const houseRulesSchema = z
      * carrying capacity alone limits what it holds.
      */
     encumbrance: z.boolean().optional(),
+    /**
+     * Tasha's optional class features apply: the class and subclass feature rows the
+     * catalog flags `isClassFeatureVariant`, such as `Martial Versatility` (TCE) on the
+     * `Fighter` (PHB). Upstream prints them as a variant the table opts into, so absent,
+     * a class grants only its own table's features. All or nothing, where a table picks
+     * them one at a time and some replace a printed feature — `Deft Explorer` (TCE) for
+     * `Natural Explorer` (PHB) — so turning it on lists both. The way out is a per-feature
+     * pick on the definition.
+     */
+    optionalClassFeatures: z.boolean().optional(),
   })
   .prefault({});
 
@@ -377,6 +387,7 @@ export type HouseRule = keyof HouseRules;
  */
 const PRINTED_RULE: Required<HouseRules> = {
   encumbrance: false,
+  optionalClassFeatures: false,
 };
 
 /**
