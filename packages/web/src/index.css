@@ -28,7 +28,11 @@
   color-scheme: light dark;
 }
 
-@media (prefers-color-scheme: dark) {
+/*
+ * The dark theme is screen only, so print keeps the light palette whatever the theme —
+ * a dark ground floods the page with ink.
+ */
+@media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --color-canvas: var(--color-gray-900);
     --color-surface: var(--color-gray-800);
@@ -46,14 +50,16 @@
   }
 }
 
-:root[data-theme="dark"] {
-  --color-canvas: var(--color-gray-900);
-  --color-surface: var(--color-gray-800);
-  --color-border: var(--color-gray-700);
-  --color-ink: var(--color-gray-100);
-  --color-muted: var(--color-gray-400);
+@media screen {
+  :root[data-theme="dark"] {
+    --color-canvas: var(--color-gray-900);
+    --color-surface: var(--color-gray-800);
+    --color-border: var(--color-gray-700);
+    --color-ink: var(--color-gray-100);
+    --color-muted: var(--color-gray-400);
 
-  --color-accent: color-mix(in oklab, #c1272d 90%, white);
+    --color-accent: color-mix(in oklab, #c1272d 90%, white);
+  }
 }
 
 body {
@@ -67,20 +73,10 @@ body {
 }
 
 @media print {
-  /*
-   * The light palette whatever the screen theme, since a dark ground floods the page with
-   * ink. Both selectors match the specificity of the dark-theme rules above, and win by
-   * coming after them.
-   */
-  :root[data-theme],
-  :root:not([data-theme]) {
+  :root {
     color-scheme: light;
     --color-canvas: var(--color-white);
-    --color-surface: var(--color-white);
     --color-border: var(--color-gray-300);
-    --color-ink: var(--color-gray-900);
-    --color-muted: color-mix(in oklab, var(--color-gray-500) 90%, var(--color-ink));
-    --color-accent: #c1272d;
 
     --text-row: 12pt;
   }

@@ -38,8 +38,11 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     expect(hidden.ok()).toBe(true);
 
     await page.addInitScript(() => localStorage.setItem("theme", "dark"));
-    await page.emulateMedia({ media: "print" });
     await page.goto(`/characters/${id}/p/stats`);
+    // A keyboard navigation moves focus to `main`, where `:focus-visible` would ring it.
+    await page.getByRole("link", { name: "Spells" }).press("Enter");
+    await expect(page.locator("main")).toBeFocused();
+    await page.emulateMedia({ media: "print" });
 
     const sheet = page.locator("[data-print-sheet]");
     await expect(sheet.getByRole("heading", { level: 1 })).toHaveText([
