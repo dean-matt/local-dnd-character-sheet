@@ -124,6 +124,17 @@ describe("featuresRoutes", () => {
           edition: "classic",
           json: json({ name: "Improved Critical", source: "PHB" }),
         },
+        {
+          name: "Tactical Variant",
+          source: "TCE",
+          class_name: "Fighter",
+          class_source: "PHB",
+          subclass_short_name: "Champion",
+          subclass_source: "PHB",
+          level: 3,
+          edition: "classic",
+          json: json({ name: "Tactical Variant", source: "TCE" }, { isClassFeatureVariant: true }),
+        },
       ],
       races: [{ ...ELF, edition: "classic", json: json(ELF) }],
       subraces: [
@@ -256,12 +267,16 @@ describe("featuresRoutes", () => {
 
   it("adds Tasha's optional class features only where the table opted into them", async () => {
     store(definitionWith({ houseRules: { optionalClassFeatures: true } }));
-    const [fighter] = (await features()).groups;
+    const [fighter, champion] = (await features()).groups;
 
     expect(fighter?.features.map(({ name }) => name)).toEqual([
       "Second Wind",
       "Ability Score Improvement",
       "Martial Versatility",
+    ]);
+    expect(champion?.features.map(({ name }) => name)).toEqual([
+      "Improved Critical",
+      "Tactical Variant",
     ]);
   });
 
