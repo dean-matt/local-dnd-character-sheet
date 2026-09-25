@@ -136,6 +136,46 @@ describe("routing", () => {
     expect(pageShownAtScroll.at(-1)).toBe(true);
   });
 
+  it("leaves a reader who scrolls first where they scrolled to", async () => {
+    stubFetchByUrl({
+      "/api/characters/abc": characterRecord("abc", "Vex"),
+      "/api/characters/abc/pages": presetPageRecords(),
+      "/api/feats/Alert/PHB": {
+        name: "Alert",
+        source: "PHB",
+        edition: "classic",
+        json: { name: "Alert", source: "PHB" },
+      },
+    });
+    sessionStorage.clear();
+    const pageShownAtScroll: boolean[] = [];
+    const scrollTo = vi.fn(() => {
+      pageShownAtScroll.push(screen.queryByRole("heading", { level: 1, name: "Stats" }) !== null);
+    });
+    vi.stubGlobal("scrollTo", scrollTo);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = createMemoryRouter(routeConfig, { initialEntries: ["/characters/abc/p/stats"] });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+    await screen.findByRole("heading", { level: 1, name: "Stats" });
+
+    vi.stubGlobal("scrollY", 480);
+    window.dispatchEvent(new Event("scroll"));
+    await router.navigate("/catalog/feats/Alert/PHB");
+    await screen.findByRole("heading", { level: 1, name: "Alert" });
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+
+    queryClient.clear();
+    await router.navigate(-1);
+    await screen.findByRole("heading", { level: 1, name: "Stats" });
+    window.dispatchEvent(new Event("wheel"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(scrollTo).not.toHaveBeenCalledWith(0, 480);
+  });
+
   it("wraps every route in one landmark layout", async () => {
     renderAt("/");
     expect(screen.getByRole("banner")).toBeInTheDocument();

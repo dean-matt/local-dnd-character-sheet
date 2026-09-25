@@ -131,6 +131,36 @@ describe("CatalogPage", () => {
     );
   });
 
+  it("says a subclass short name the class does not have is not found", async () => {
+    stubFetchByUrl({
+      "/api/classes/Barbarian/PHB/subclasses?edition=classic&limit=200": { items: [] },
+      "/api/classes/Barbarian/PHB/subclasses?edition=one&limit=200": { items: [] },
+    });
+    renderAt("/catalog/classes/Barbarian/PHB/subclasses/Nope/PHB/features/Frenzy/PHB/3");
+
+    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    expect(
+      screen.getByText(/the subclass feature Frenzy \(PHB\) of Nope \(PHB\)/),
+    ).toBeInTheDocument();
+  });
+
+  it("reads a subrace under its race's pair", async () => {
+    const fetchMock = stubFetchByUrl({
+      "/api/races/Elf/PHB/subraces/High/PHB": {
+        name: "High",
+        source: "PHB",
+        raceName: "Elf",
+        raceSource: "PHB",
+        edition: "classic",
+        json: { name: "High", source: "PHB", entries: ["A keen mind."] },
+      },
+    });
+    renderAt("/catalog/races/Elf/PHB/subraces/High/PHB");
+
+    await screen.findByText("A keen mind.");
+    expect(fetchMock).toHaveBeenCalledWith("/api/races/Elf/PHB/subraces/High/PHB", undefined);
+  });
+
   it("says a feature level no class reaches is not found, without asking the API", async () => {
     const fetchMock = stubFetchByUrl({});
     renderAt("/catalog/classes/Barbarian/PHB/features/Rage/PHB/21");
