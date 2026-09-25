@@ -84,20 +84,30 @@ export function replaceCharacterPages(
 }
 
 /**
- * Resets each preset's title, visibility and blocks to the seeded page, leaving its
- * position untouched, and leaves every page the user wrote alone, wherever it sits
- * relative to the presets.
+ * Resets each preset's title, visibility and blocks to the seeded page, and puts the
+ * presets back in seeded order across the positions presets already hold. Every page the
+ * user wrote keeps its position, so one placed ahead of or between presets stays there.
  */
 export function restoreDefaultPages(db: CharactersDb, characterId: string) {
   return db.transaction((tx) => {
     if (!exists(tx, characterId)) return undefined;
 
-    const seeded = new Map(PRESET_PAGES.map((page) => [page.slug, page]));
-    const rows = pageRows(tx, characterId).map((row) => {
-      const seed = row.preset ? seeded.get(row.slug) : undefined;
-      return seed ? { ...row, title: seed.title, hidden: seed.hidden, blocks: seed.blocks } : row;
-    });
-    rewrite(tx, characterId, rows);
+    const seeded = new Map(PRESET_PAGES.map((page, order) => [page.slug, { page, order }]));
+    const order = (slug: string) => seeded.get(slug)?.order ?? PRESET_PAGES.length;
+    const rows = pageRows(tx, characterId);
+    const presets = rows
+      .filter((row) => row.preset)
+      .sort((a, b) => order(a.slug) - order(b.slug))
+      .map((row) => {
+        const seed = seeded.get(row.slug)?.page;
+        return seed ? { ...row, title: seed.title, hidden: seed.hidden, blocks: seed.blocks } : row;
+      });
+    let next = 0;
+    const restored = rows.map((row, position) => ({
+      ...(row.preset ? (presets[next++] as PageRecordRow) : row),
+      position,
+    }));
+    rewrite(tx, characterId, restored);
     return pageRows(tx, characterId);
   });
 }
