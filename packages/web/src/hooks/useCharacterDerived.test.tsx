@@ -24,4 +24,16 @@ describe("useCharacterDerived", () => {
     expect(result.current.data).toEqual(derivedRecord());
     expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/derived", undefined);
   });
+
+  it("reports a 4xx without retrying it", async () => {
+    const fetchMock = stubFetch(
+      new Response(JSON.stringify({ error: "No class Wizard (PHB)" }), { status: 422 }),
+    );
+
+    const { result } = renderHook(() => useCharacterDerived("1"), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toBe("No class Wizard (PHB)");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

@@ -24,7 +24,7 @@ export function CharacterPage() {
     <section>
       <h1 className="font-semibold text-2xl">{page.title}</h1>
       <div className="mt-4 flex flex-col gap-4">
-        {derived.isPending && <LoadingState label="Loading character…" />}
+        {derived.isPending && <LoadingState label="Loading derived values…" />}
         {derived.isError && <ErrorState message={derived.error.message} />}
         <PageBlocks blocks={page.blocks} derived={derived.data} />
       </div>
