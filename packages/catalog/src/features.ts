@@ -18,7 +18,11 @@ import { entriesSchema } from "./entry.ts";
  */
 const featureFields = {
   name: z.string().min(1),
-  source: z.string().min(1).optional(),
+  source: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Absent only on an unresolved homebrew reference, which stores an id and no source"),
   level: z.int().min(1).max(20).optional(),
   featureType: z.string().min(1).optional(),
 };

@@ -234,6 +234,26 @@ describe("featuresRoutes", () => {
     ]);
   });
 
+  it("stops each class of a multiclass character at that class's own level", async () => {
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER },
+          { class: BARBARIAN },
+          { class: BARBARIAN },
+          { class: BARBARIAN },
+          { class: BARBARIAN },
+        ],
+      }),
+    );
+    const groups = (await features()).groups.filter(({ origin }) => origin === "class");
+
+    expect(groups.map(({ name, features }) => [name, features.map((f) => f.name)])).toEqual([
+      ["Fighter", ["Second Wind"]],
+      ["Barbarian", ["Ability Score Improvement"]],
+    ]);
+  });
+
   it("adds Tasha's optional class features only where the table opted into them", async () => {
     store(definitionWith({ houseRules: { optionalClassFeatures: true } }));
     const [fighter] = (await features()).groups;

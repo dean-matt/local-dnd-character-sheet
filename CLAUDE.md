@@ -16,7 +16,7 @@ packages/rules      5e arithmetic — depends on nothing
 packages/dice       Dice notation parsing and rolling — depends on nothing
 packages/tags       {@tag} parser — depends on dice and rules
 packages/character  Zod schemas for definition and state -> rules
-packages/catalog    Zod schemas for a catalog row in the 5etools entry shape -> rules
+packages/catalog    Zod schemas for a catalog row in the 5etools entry shape, or a projection carrying one -> rules
 packages/content    ETL: sync + build -> content.db
 packages/api        Hono + zod-openapi + Drizzle, 127.0.0.1:8787
 packages/web        React + Vite + React Router + TanStack Query, 127.0.0.1:5173
