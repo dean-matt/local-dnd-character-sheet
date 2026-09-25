@@ -212,13 +212,14 @@ function placeholderValues(baseFields: Entry, merged: Entry): Entry {
 }
 
 /**
- * Upstream's placeholder modifiers: `l` lowercases, `u` uppercases, `t` title-cases, and
- * `a` replaces the value with the indefinite article it takes — so `/at` reads "A" or "An".
+ * The placeholder modifiers the pinned corpus uses: `l` lowercases, `a` replaces the value
+ * with the indefinite article it takes, and `t` capitalizes — so `/at` reads "A" or "An".
+ * `t` capitalizes only the first letter, where upstream title-cases every word: the two
+ * agree on "a" and "an", the only values `t` receives today. An unknown modifier is ignored.
  */
 const MODIFIERS: Record<string, (text: string) => string> = {
   l: (text) => text.toLowerCase(),
-  u: (text) => text.toUpperCase(),
-  t: (text) => text.replace(/\b\w/g, (c) => c.toUpperCase()),
+  t: (text) => text.charAt(0).toUpperCase() + text.slice(1),
   a: (text) => (/^[aeiou]/i.test(text) ? "an" : "a"),
 };
 
