@@ -24,7 +24,7 @@ const FEATURES: CharacterFeatures = {
           name: "Ability Score Improvement",
           source: "PHB",
           level: 4,
-          entries: ["Raise a score."],
+          entries: ["Raise a score, or take {@feat Alert}."],
         },
       ],
     },
@@ -32,7 +32,12 @@ const FEATURES: CharacterFeatures = {
       origin: "race",
       name: "Elf (High)",
       features: [
-        { resolved: true, name: "Darkvision", source: "PHB", entries: ["You see in the dark."] },
+        {
+          resolved: true,
+          name: "Darkvision",
+          source: "PHB",
+          entries: ["You see in the dark, unlike the {@condition blinded}."],
+        },
       ],
     },
     {
@@ -101,18 +106,31 @@ describe("FeaturesSection", () => {
     fireEvent.click(summary);
     const details = summary.closest("details") as HTMLElement;
     expect(details).toHaveAttribute("open");
-    await waitFor(() => expect(details).toHaveTextContent("Regain 1d10 hit points."));
+    expect(details).toHaveTextContent("Regain 1d10 hit points.");
     expect(details).not.toHaveTextContent("{@dice");
   });
 
-  it("mounts a feature's text only once it is opened, so a closed one resolves nothing", async () => {
-    renderSection();
+  it("resolves every feature's references in one request for the section", async () => {
+    const fetchMock = stubFetchByUrl({
+      "/api/characters/1/features": FEATURES,
+      "/api/refs/resolve": { refs: [] },
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <FeaturesSection character={characterRecord("1", "Vex")} />
+      </QueryClientProvider>,
+    );
 
-    const summary = await screen.findByText("Second Wind");
-    const details = summary.closest("details") as HTMLElement;
-    expect(details).not.toHaveTextContent("Regain");
-    fireEvent.click(summary);
-    await waitFor(() => expect(details).toHaveTextContent("Regain 1d10 hit points."));
+    await screen.findByText("Second Wind");
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.filter(([url]) => url === "/api/refs/resolve")).toHaveLength(1),
+    );
+    const [, init] = fetchMock.mock.calls.find(([url]) => url === "/api/refs/resolve") ?? [];
+    expect(JSON.parse(String(init?.body)).refs).toEqual([
+      { tag: "feat", name: "Alert" },
+      { tag: "condition", name: "blinded" },
+    ]);
   });
 
   it("shows a reference that resolves to nothing by its stored name, marked", async () => {

@@ -3,7 +3,7 @@
  * and `RulesEntries` walks the recursive `entries` structure around it — prose,
  * lists, tables and named subsections — down to the strings `RulesText` renders.
  *
- * The outermost `RulesText` or `RulesEntries` is a block: it resolves every reference
+ * The outermost `RulesText`, `RulesEntries` or `RulesBlock` is a block: it resolves every reference
  * inside it in one request, and a reference the catalog answers opens a popover of
  * that row's text. One it does not answer — or has not yet — renders as its display
  * text alone, its fields carried on the span as data attributes, and so does a roll
@@ -100,16 +100,18 @@ function ResolveBlock({ content, children }: { content: unknown; children: React
   return <ResolvedRefs value={resolved}>{children}</ResolvedRefs>;
 }
 
-/** Resolves `content`'s references unless a block around it already does. */
-function Block({ content, children }: { content: unknown; children: ReactNode }) {
+/**
+ * Resolves `content`'s references unless a block around it already does. A caller
+ * rendering many `RulesEntries` wraps them in one to resolve them in one request.
+ */
+export function RulesBlock({ content, children }: { content: unknown; children: ReactNode }) {
   const outer = useContext(ResolvedRefs);
   return outer === null ? <ResolveBlock content={content}>{children}</ResolveBlock> : children;
 }
 
 /**
- * A row's prose as plain paragraphs: a popover sits inside the sentence that cites it,
- * where a block element is invalid markup, and a link inside it would resolve a block of
- * its own. A table is left to the row's own page.
+ * A row's prose as plain paragraphs, because a popover sits inside the sentence that
+ * cites it, where a block element is invalid markup. A table is left to the row's own page.
  */
 function paragraphs(entries: unknown, into: string[] = []): string[] {
   if (typeof entries === "string") into.push(renderText(parseTags(entries)));
@@ -156,7 +158,7 @@ function Ref({ token }: { token: RefToken }) {
 
 /** One string of upstream `{@tag}` markup, rendered as the elements its tokens mean. */
 export function RulesText({ text }: { text: string }) {
-  return <Block content={text}>{renderTokens(parseTags(text), "t")}</Block>;
+  return <RulesBlock content={text}>{renderTokens(parseTags(text), "t")}</RulesBlock>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -337,9 +339,9 @@ export function RulesEntries({
   headingLevel?: number;
 }) {
   const rendered = (
-    <Block content={entries}>
+    <RulesBlock content={entries}>
       {entries.map((entry, index) => renderEntry(entry, `e${index}`))}
-    </Block>
+    </RulesBlock>
   );
   return headingLevel === undefined ? (
     rendered

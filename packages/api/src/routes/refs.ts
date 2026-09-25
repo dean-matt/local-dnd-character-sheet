@@ -4,24 +4,19 @@
  * encode; it reads and writes nothing.
  */
 import {
-  entriesSchema,
   type ResolvedRef,
   refResolveRequestSchema,
   refResolveResponseSchema,
+  rowEntries,
 } from "@dnd/catalog";
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import { type ResolvedRow, resolveRefs } from "../db/queries/refs.ts";
 
-const entriesAt = (json: Record<string, unknown>, key: string) =>
-  entriesSchema.safeParse(json[key]).data ?? [];
-
-/** A spell's upcast rule sits beside `entries`, and its text reads complete only with it. */
 function toResolvedRef(row: ResolvedRow): ResolvedRef {
-  const json = JSON.parse(row.json) as Record<string, unknown>;
   return {
     name: row.name,
     source: row.source,
-    entries: [...entriesAt(json, "entries"), ...entriesAt(json, "entriesHigherLevel")],
+    entries: rowEntries(JSON.parse(row.json)),
     ...(row.path === undefined ? {} : { path: row.path }),
   };
 }

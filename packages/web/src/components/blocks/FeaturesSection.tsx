@@ -8,7 +8,7 @@ import type { CharacterRecord } from "@dnd/character";
 import { useId, useState } from "react";
 import { useCharacterFeatures } from "../../hooks/useCharacterFeatures.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
-import { RulesEntries } from "../RulesText.tsx";
+import { RulesBlock, RulesEntries } from "../RulesText.tsx";
 
 const ORIGIN_LABEL: Record<FeatureOrigin, string> = {
   class: "Class",
@@ -63,21 +63,9 @@ function FeatureRow({ feature }: { feature: SheetFeature }) {
       </li>
     );
   }
-  return <ResolvedFeatureRow feature={feature} />;
-}
-
-/**
- * The text mounts on first open, because each feature's rules text is a block that
- * resolves its references in a request of its own.
- */
-function ResolvedFeatureRow({ feature }: { feature: Extract<SheetFeature, { resolved: true }> }) {
-  const [opened, setOpened] = useState(false);
   return (
     <li>
-      <details
-        className="group py-1"
-        onToggle={(event) => event.currentTarget.open && setOpened(true)}
-      >
+      <details className="group py-1">
         <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2">
           <span aria-hidden="true" className="text-muted group-open:rotate-90 print:hidden">
             ▸
@@ -86,7 +74,7 @@ function ResolvedFeatureRow({ feature }: { feature: Extract<SheetFeature, { reso
           <Placement feature={feature} />
         </summary>
         <div className="mt-2 flex flex-col gap-2 pl-4">
-          {opened && <RulesEntries entries={feature.entries} />}
+          <RulesEntries entries={feature.entries} />
         </div>
       </details>
     </li>
@@ -161,9 +149,13 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
       <p role="status" aria-live="polite" className="sr-only">
         {groups.length === 0 ? emptyMessage : ""}
       </p>
-      {groups.map((group) => (
-        <Group key={`${group.origin}|${group.name ?? ""}`} group={group} />
-      ))}
+      {/* One block for every feature, filtered out or not, so the section resolves its
+          references in one request and a filter keystroke sends none. */}
+      <RulesBlock content={features.data.groups}>
+        {groups.map((group) => (
+          <Group key={`${group.origin}|${group.name ?? ""}`} group={group} />
+        ))}
+      </RulesBlock>
     </div>
   );
 }
