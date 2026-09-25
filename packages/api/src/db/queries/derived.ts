@@ -2,9 +2,9 @@
  * Resolves the `CharacterCatalog` `deriveCharacter` takes for one definition, reading
  * `content.db` for a catalog reference and `homebrew.db` for a homebrew one.
  *
- * An item or a casting ability that resolves to nothing is left out, which
- * `deriveCharacter` already reads as unarmored, weightless or as no spellcasting. A class or a race
- * has no such reading — a guessed hit die invents hit points, and a guessed size moves
+ * A casting ability that resolves to nothing is left out, which `deriveCharacter` reads as
+ * no spellcasting; an item that resolves to nothing adds no armor and weighs nothing. A
+ * class or a race has no such reading — a guessed hit die invents hit points, and a guessed size moves
  * carrying capacity — so either one missing throws `UnresolvedReference`.
  */
 

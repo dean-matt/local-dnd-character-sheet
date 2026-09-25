@@ -137,7 +137,10 @@ function UnresolvedRow({ item }: { item: Extract<SheetItem, { resolved: false }>
 function ResolvedRow({ item }: { item: Extract<SheetItem, { resolved: true }> }) {
   const [open, setOpen] = useState(false);
   const textId = useId();
-  const rarity = item.rarity && item.rarity !== "none" ? item.rarity : undefined;
+  const rarity =
+    item.rarity && item.rarity !== "none"
+      ? item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)
+      : undefined;
   return (
     <li className="py-1">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">

@@ -39,7 +39,7 @@ const INVENTORY: CharacterInventory = {
       source: "DMG",
       ...flags,
       carried: false,
-      rarity: "uncommon",
+      rarity: "unknown (magic)",
       requiresAttunement: true,
       weight: null,
       entries: [],
@@ -121,12 +121,13 @@ describe("InventorySection", () => {
 
     await screen.findByText("+1 Longsword");
     expect(row("+1 Longsword")).toHaveTextContent("Equipped");
-    expect(row("+1 Longsword")).toHaveTextContent("uncommon");
+    expect(row("+1 Longsword")).toHaveTextContent("Uncommon");
     expect(row("+1 Longsword")).not.toHaveTextContent("Attuned");
     expect(row("Cloak of Protection")).toHaveTextContent("Attuned");
     expect(row("Cloak of Protection")).not.toHaveTextContent("Requires attunement");
     expect(row("Ring of Warmth")).toHaveTextContent("Requires attunement");
     expect(row("Ring of Warmth")).toHaveTextContent("Not carried");
+    expect(row("Ring of Warmth")).toHaveTextContent("Unknown (magic)");
     expect(row("Arrow")).toHaveTextContent("×20");
     expect(row("Arrow")).toHaveTextContent("Weight: 1 lb");
     expect(row("Arrow")).not.toHaveTextContent("none");

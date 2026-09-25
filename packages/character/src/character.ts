@@ -1292,11 +1292,7 @@ export function deriveCharacter(
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
     ...load(definition, catalog),
-    attunementSlots: {
-      computed: attunementSlots(artificerLevel(definition)),
-      manual: null,
-      terms: [],
-    },
+    attunementSlots: computed(attunementSlots(artificerLevel(definition))),
   };
 }
 
@@ -1304,12 +1300,11 @@ function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
   const strength = definition.abilityScores.str;
   const weight = carriedWeight(definition, catalog.weights);
   return {
-    carryingCapacity: {
-      computed: carryingCapacity(strength, catalog.size),
-      manual: null,
-      terms: [],
-    },
+    carryingCapacity: computed(carryingCapacity(strength, catalog.size)),
     carriedWeight: weight,
+    // The tier reads Strength and size rather than `carryingCapacity`, so an override of
+    // the capacity leaves it standing. The way out is thresholds scaled by the overridden
+    // capacity, once overrides fold into the block.
     encumbrance: houseRule(definition, "encumbrance")
       ? encumbranceAt(strength, catalog.size, weight).tier
       : null,
@@ -1344,7 +1339,9 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
  * `weights` maps `itemKey` to an item's weight in pounds, from the catalog and from
  * homebrew, which the caller merges into one map and expands a magic variant into first.
  * A `null` is a row that states no weight and adds nothing; a reference the map does not
- * name is refused, because a silent zero would hide it.
+ * name is refused, because a silent zero would hide it. The API names every entry and
+ * gives an unresolved one `null`, so there the refusal guards a caller that forgot one,
+ * and the sheet's Carrying card discloses the zero instead.
  *
  * Coins count regardless of `carried`, because `money` is a purse the definition has
  * nowhere to put down: a character who banked 1,000 gp in town carries 20 pounds they
