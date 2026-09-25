@@ -188,6 +188,47 @@ describe("expandItemFields", () => {
     );
     expect(merged.name).toBe("Very Rare Poisonous Reagent");
   });
+
+  it("fills a {=property} placeholder from the field inherits sets", () => {
+    const merged = expandItemFields(
+      { name: "Plate Armor", armor: true },
+      { bonusAc: "+1", entries: ["You have a {=bonusAc} bonus to AC while wearing this armor."] },
+    );
+    expect(merged.entries).toEqual(["You have a +1 bonus to AC while wearing this armor."]);
+  });
+
+  it("applies the l, a and at modifiers to the base item's name, inside nested entries", () => {
+    const merged = expandItemFields(
+      { name: "Arrow" },
+      {
+        entries: [
+          {
+            type: "entries",
+            entries: [
+              "{=baseName/at} {=baseName/l} of slaying; {=baseName/a} {=baseName/l} of slaying.",
+            ],
+          },
+        ],
+      },
+    );
+    expect(merged.entries).toEqual([
+      { type: "entries", entries: ["An arrow of slaying; an arrow of slaying."] },
+    ]);
+  });
+
+  it("spells out the base item's damage type code", () => {
+    const merged = expandItemFields(LONGSWORD_FIELDS, {
+      entries: ["The target takes an extra 7 {=dmgType} damage."],
+    });
+    expect(merged.entries).toEqual(["The target takes an extra 7 slashing damage."]);
+  });
+
+  it("leaves a placeholder naming a field the item lacks as written, rather than throwing", () => {
+    const merged = expandItemFields(LONGSWORD_FIELDS, {
+      entries: ["A {=bonusSavingThrow} bonus to saving throws."],
+    });
+    expect(merged.entries).toEqual(["A {=bonusSavingThrow} bonus to saving throws."]);
+  });
 });
 
 describe("getExpandedItem", () => {

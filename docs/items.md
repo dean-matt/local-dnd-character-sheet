@@ -30,7 +30,9 @@ copying it. `GET /items/{name}/{source}/variants/{variantName}/{variantSource}`
 (`packages/api/src/db/queries/item-variant.ts`) expands the pair at read time — the
 variant's `inherits` fields over the base item's own — rather than storing the result, so
 a `content.db` rebuild still updates every character. A base item the variant's `requires`
-or `excludes` refuses is a 409, not an expanded item the rules do not allow.
+or `excludes` refuses is a 409, not an expanded item the rules do not allow. The expansion
+also fills the 77 `{=bonusAc}`-style placeholders in the templates' `entries`: they are
+not `{@tag}` markup, so the renderer would print them as written.
 
 Four dangling targets survive both, all of them barding: `{@item leather barding|phb}`
 and its three fellows are written as one `Barding` variant upstream renders per animal.

@@ -176,7 +176,75 @@ export function expandItemFields(baseFields: Entry, inherits: Entry): Entry {
     }
   }
   merged.name = name;
+  if (merged.entries !== undefined) {
+    merged.entries = injectProperties(merged.entries, placeholderValues(baseFields, merged));
+  }
   return merged;
+}
+
+const DAMAGE_TYPES: Record<string, string> = {
+  A: "acid",
+  B: "bludgeoning",
+  C: "cold",
+  F: "fire",
+  I: "poison",
+  L: "lightning",
+  N: "necrotic",
+  O: "force",
+  P: "piercing",
+  R: "radiant",
+  S: "slashing",
+  T: "thunder",
+  Y: "psychic",
+};
+
+/**
+ * What a `{=property}` placeholder reads: the expanded item's own fields, except
+ * `baseName`, the base item's name, and `dmgType`, spelled out from its one-letter code.
+ */
+function placeholderValues(baseFields: Entry, merged: Entry): Entry {
+  const code = baseFields.dmgType;
+  return {
+    ...merged,
+    baseName: baseFields.name,
+    dmgType: typeof code === "string" ? (DAMAGE_TYPES[code] ?? code) : undefined,
+  };
+}
+
+/**
+ * Upstream's placeholder modifiers: `l` lowercases, `u` uppercases, `t` title-cases, and
+ * `a` replaces the value with the indefinite article it takes — so `/at` reads "A" or "An".
+ */
+const MODIFIERS: Record<string, (text: string) => string> = {
+  l: (text) => text.toLowerCase(),
+  u: (text) => text.toUpperCase(),
+  t: (text) => text.replace(/\b\w/g, (c) => c.toUpperCase()),
+  a: (text) => (/^[aeiou]/i.test(text) ? "an" : "a"),
+};
+
+function fillPlaceholder(all: string, value: unknown, modifiers: string): string {
+  if (typeof value !== "string" && typeof value !== "number") return all;
+  return [...modifiers].reduce((text, m) => MODIFIERS[m]?.(text) ?? text, String(value));
+}
+
+/**
+ * Upstream's `{=property/modifiers}` substitution over every string in `entries`. A
+ * placeholder naming a field the item lacks stays as written rather than reading
+ * "undefined".
+ */
+function injectProperties(node: unknown, values: Entry): unknown {
+  if (typeof node === "string") {
+    return node.replace(/\{=([^}/]+)(?:\/([^}]*))?}/g, (all, field: string, modifiers = "") =>
+      fillPlaceholder(all, values[field], modifiers),
+    );
+  }
+  if (Array.isArray(node)) return node.map((child) => injectProperties(child, values));
+  if (isRecord(node)) {
+    return Object.fromEntries(
+      Object.entries(node).map(([key, child]) => [key, injectProperties(child, values)]),
+    );
+  }
+  return node;
 }
 
 /** `true` and a condition such as `"by a spellcaster"` both require it; `optional` does not. */
