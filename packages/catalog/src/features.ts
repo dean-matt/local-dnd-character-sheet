@@ -4,6 +4,9 @@
  * catalog row's own `entries` for the token renderer. A reference that resolves to
  * nothing carries the stored name and source instead, so the sheet can show what went
  * missing rather than drop it.
+ *
+ * A projection of a character rather than a catalog row, it lives here because it
+ * carries `entriesSchema` and `packages/character` depends on `rules` alone.
  */
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
