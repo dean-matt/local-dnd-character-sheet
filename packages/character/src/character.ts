@@ -480,7 +480,7 @@ export const totalLevel = (definition: CharacterDefinition): number => definitio
  * catalog reaches `packages/character` to resolve it to a name — the ceiling both
  * summaries below share.
  */
-const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
+export const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
 
 /** The subrace's own name where one is chosen, the race's otherwise — `High`, not `Elf (High)`. */
 export function raceSummary(definition: CharacterDefinition): string {
@@ -915,7 +915,7 @@ export function passiveSkill(
   );
 }
 
-const ABILITY_LABEL: Record<Ability, string> = {
+export const ABILITY_LABEL: Record<Ability, string> = {
   str: "Strength",
   dex: "Dexterity",
   con: "Constitution",

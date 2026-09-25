@@ -3,7 +3,7 @@
  * editing on later means passing `mode="edit"` rather than rewriting the view.
  *
  * A value is `manual ?? computed` — `packages/character`'s `Derived<T>` shape.
- * Read mode only shows that value. Edit mode commits on a debounce and on blur,
+ * Read mode shows that value, marked where `manual` is set. Edit mode commits on a debounce and on blur,
  * writes `manual` only, and clearing the input reverts to `computed` rather than
  * a parsed empty value: `onSave` receives `null`, never a zero or an empty
  * string. A save's `saving`, `saved` and `failed` status renders beside the
@@ -49,23 +49,43 @@ export function Field<T>(props: FieldProps<T>) {
   const current = derivedValue(props.value);
 
   if (props.mode === "read") {
+    const override =
+      props.value.manual === null ? null : (
+        <OverrideMark computed={props.format(props.value.computed)} />
+      );
     if (props.labelHidden) {
       return (
         <span className="font-medium">
           <span className="sr-only">{props.label}</span>
           {props.format(current)}
+          {override}
         </span>
       );
     }
     return (
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-muted text-row">{props.label}</span>
-        <span className="font-medium">{props.format(current)}</span>
+        <span className="font-medium">
+          {props.format(current)}
+          {override}
+        </span>
       </div>
     );
   }
 
   return <EditableField {...props} current={current} />;
+}
+
+/** Marks a value the user typed over, and says what the sheet would have shown instead. */
+function OverrideMark({ computed }: { computed: string }) {
+  return (
+    <span title={`Overridden; computed ${computed}`}>
+      <span aria-hidden="true" className="text-accent">
+        *
+      </span>
+      <span className="sr-only">, overridden from {computed}</span>
+    </span>
+  );
 }
 
 function EditableField<T>({

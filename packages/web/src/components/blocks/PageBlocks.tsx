@@ -4,7 +4,7 @@
  * by adding one entry to `REGISTRY` and one branch to `@dnd/character`'s
  * `pageBlockSchema`, never a switch here.
  */
-import type { CharacterDerived, PageBlock } from "@dnd/character";
+import type { CharacterDerived, CharacterRecord, PageBlock } from "@dnd/character";
 import type { FunctionComponent } from "react";
 import { ListBlockView } from "./ListBlock.tsx";
 import { SectionBlockView } from "./SectionBlock.tsx";
@@ -23,9 +23,11 @@ const REGISTRY: Record<PageBlock["kind"], FunctionComponent<BlockViewProps>> = {
 
 export function PageBlocks({
   blocks,
+  character,
   derived,
 }: {
   blocks: PageBlock[];
+  character: CharacterRecord | undefined;
   derived: CharacterDerived | undefined;
 }) {
   return (
@@ -33,7 +35,7 @@ export function PageBlocks({
       {blocks.map((block, index) => {
         const View = REGISTRY[block.kind];
         // biome-ignore lint/suspicious/noArrayIndexKey: a page's blocks carry no id of their own.
-        return <View key={index} block={block} derived={derived} />;
+        return <View key={index} block={block} character={character} derived={derived} />;
       })}
     </div>
   );

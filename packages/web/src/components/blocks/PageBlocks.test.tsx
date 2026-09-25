@@ -12,7 +12,7 @@ describe("PageBlocks", () => {
       { kind: "list", source: "inventory", filter: {} },
       { kind: "unknown", raw: { kind: "x" } },
     ];
-    render(<PageBlocks blocks={blocks} derived={undefined} />);
+    render(<PageBlocks blocks={blocks} character={undefined} derived={undefined} />);
 
     const order = screen.getAllByText(
       /First\.|isn't built yet\.|isn't available yet\.|isn't recognized/,
@@ -32,7 +32,7 @@ describe("PageBlocks", () => {
       { kind: "unknown", raw: { kind: "x" } },
       { kind: "text", text: "After." },
     ];
-    render(<PageBlocks blocks={blocks} derived={undefined} />);
+    render(<PageBlocks blocks={blocks} character={undefined} derived={undefined} />);
 
     expect(screen.getByText("Before.")).toBeInTheDocument();
     expect(screen.getByText("After.")).toBeInTheDocument();
