@@ -56,12 +56,12 @@ row is written once and displayed, never edited field by field — the same reas
 `homebrewItemSchema` and `spellEntrySchema` give.
 
 **A homebrew race or class's `json` reuses its catalog record's entry shape**, from
-`packages/catalog/src/race.ts` and `class.ts` — a class adds one required field, `hd`, so
-`homebrew_classes.hit_die` always has a roll to derive from. Neither carries a child row
-of its own: no subrace until one proves common enough to need it, no feature rows and no
-subclass until its own issue adds one — a homebrew parent has no ETL merge step to build
-either from. `race`, `levels[].class` and both feat-grantor branches accept a homebrew
-reference, so a delete still refuses where a character holds one.
+`packages/catalog/src/race.ts` and `class.ts`, and requires what a derived block reads: a
+class's `hd`, which `homebrew_classes.hit_die` derives from, and a race's `size` and
+`speed`. Neither carries a child row of its own: no subrace until one proves common enough
+to need it, no feature rows and no subclass until its own issue adds one — a homebrew
+parent has no ETL merge step to build either from. `race`, `levels[].class` and both
+feat-grantor branches accept a homebrew reference, so a delete refuses while one is held.
 
 **A homebrew feat cannot be a `granted_optional_features` grantor.** That table lives in
 `content.db`, generated wholesale by the ETL and never migrated, so it has no way to
