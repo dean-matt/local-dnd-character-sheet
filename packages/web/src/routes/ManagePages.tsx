@@ -5,7 +5,7 @@
  * through one polite live region, since a row that moves makes no sound on its own.
  */
 import type { CharacterPageRecord } from "@dnd/character";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
   useCharacterPages,
@@ -33,6 +33,7 @@ export function ManagePages({ id }: { id: string }) {
   const [announcement, setAnnouncement] = useState("");
   const visible = pages.filter((page) => !page.hidden);
   const busy = restore.isPending;
+  const lastVisibleId = useId();
 
   function write(next: CharacterPageRecord[], message: string) {
     replace.write(next);
@@ -115,7 +116,7 @@ export function ManagePages({ id }: { id: string }) {
                 className={control}
                 aria-label={`${page.hidden ? "Show" : "Hide"} ${page.title}`}
                 aria-disabled={lastVisible || busy}
-                title={lastVisible ? "The last visible page cannot be hidden" : undefined}
+                aria-describedby={lastVisible ? lastVisibleId : undefined}
                 onClick={() => toggle(page.slug)}
               >
                 {page.hidden ? "Show" : "Hide"}
@@ -132,6 +133,9 @@ export function ManagePages({ id }: { id: string }) {
       >
         Restore defaults
       </button>
+      <p id={lastVisibleId} hidden={visible.length !== 1} className="text-muted text-row">
+        The last visible page cannot be hidden.
+      </p>
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>

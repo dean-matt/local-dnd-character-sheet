@@ -23,7 +23,8 @@ export function useCharacterPages(id: string) {
  * tick would build on the list before the first — and the requests go out one at a time
  * in press order, since two in flight at once could land out of order and keep the older
  * list. A response lands in the cache only when no later write is waiting, since it would
- * otherwise undo that write's list; a failure refetches what the server holds.
+ * otherwise undo that write's list. A failure refetches what the server holds, which can
+ * show an older list until a write still queued behind it replies — a flicker, not a loss.
  */
 export function useReplaceCharacterPages(id: string) {
   const queryClient = useQueryClient();

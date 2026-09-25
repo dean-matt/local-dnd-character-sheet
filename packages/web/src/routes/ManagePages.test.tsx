@@ -178,6 +178,7 @@ describe("ManagePages", () => {
 
     const hide = screen.getByRole("button", { name: "Hide Stats" });
     expect(hide).toHaveAttribute("aria-disabled", "true");
+    expect(hide).toHaveAccessibleDescription("The last visible page cannot be hidden.");
     fireEvent.click(hide);
 
     expect(server.puts).toHaveLength(0);
