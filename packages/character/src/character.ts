@@ -20,10 +20,13 @@ import {
   ABILITIES,
   abilityModifier,
   armorClass,
+  attunementSlots,
   type Breakdown,
   breakdown,
   type CasterProgression,
+  carryingCapacity,
   EDITIONS,
+  ENCUMBRANCE_TIERS,
   encumbranceAt,
   HIT_DICE,
   type HitDie,
@@ -231,11 +234,17 @@ const spellEntrySchema = z.strictObject({
 
 /**
  * A reference flattened for comparison, tagged so a homebrew id cannot spell a catalog
- * pair. Exported because a caller building a catalog lookup for `carriedWeight` keys it
- * the same way.
+ * pair. Exported because a caller building a catalog lookup keys it the same way.
  */
 export const entryKey = (ref: EntryRef): string =>
   "homebrewId" in ref ? `homebrew|${ref.homebrewId}` : `catalog|${refKey(ref)}`;
+
+/**
+ * An inventory entry's item, which is its `ref` expanded by any `variant`: `Barding`
+ * weighs twice the armor it expands, so a base item alone cannot key a weight.
+ */
+export const itemKey = (entry: { ref: EntryRef; variant?: ContentRef | undefined }): string =>
+  entry.variant ? `${entryKey(entry.ref)}|variant|${refKey(entry.variant)}` : entryKey(entry.ref);
 
 /**
  * What entitled a pick, in the shape the table holding that entitlement is keyed on.
@@ -900,14 +909,23 @@ export const characterDerivedSchema = z.strictObject({
   pactSlots: z
     .strictObject({ level: z.int().min(1).max(9), total: derivedSchema(z.int().min(1)) })
     .nullable(),
+  /** Pounds, from the Strength score and `size`. */
+  carryingCapacity: derivedSchema(z.number().min(0)),
+  /**
+   * `carriedWeight`'s pounds. A plain number rather than a `Derived`, because the
+   * inventory it sums is where a player changes it.
+   */
+  carriedWeight: z.number().min(0),
+  /** Null where the table plays without the encumbrance variant. */
+  encumbrance: z.enum(ENCUMBRANCE_TIERS).nullable(),
+  attunementSlots: derivedSchema(z.int().min(0)),
 });
 
 /**
  * The hit point maximum for a stored character.
  *
- * `hitDice` maps a class to its die, keyed by `entryKey`, the same as `carriedWeight`'s
- * `weights` — a class is catalog or homebrew data a character references rather than
- * copies. A class the map does not name is rejected rather than defaulted, since a
+ * `hitDice` maps a class to its die, keyed by `entryKey` — a class is catalog or
+ * homebrew data a character references rather than copies. A class the map does not name is rejected rather than defaulted, since a
  * guessed die invents hit points.
  */
 export function hitPointMaximum(
@@ -1014,7 +1032,8 @@ export type ArmorTrait = { category: "light" | "medium" | "heavy" | "shield"; ar
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference.
+ * `entryKey` of an inventory entry's reference, `weights` by `itemKey` of the entry, the
+ * way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
@@ -1029,6 +1048,7 @@ export type CharacterCatalog = {
   size: Size;
   speed: Speed;
   armor: ReadonlyMap<string, ArmorTrait>;
+  weights: ReadonlyMap<string, number | null>;
 };
 
 /**
@@ -1271,8 +1291,34 @@ export function deriveCharacter(
     spellcasting: spellcastingEntries(definition, catalog, level),
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
+    ...load(definition, catalog),
+    attunementSlots: computed(attunementSlots(artificerLevel(definition))),
   };
 }
+
+function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
+  const strength = definition.abilityScores.str;
+  const weight = carriedWeight(definition, catalog.weights);
+  return {
+    carryingCapacity: computed(carryingCapacity(strength, catalog.size)),
+    carriedWeight: weight,
+    // The tier reads Strength and size rather than `carryingCapacity`, so an override of
+    // the capacity leaves it standing. The way out is thresholds scaled by the overridden
+    // capacity, once overrides fold into the block.
+    encumbrance: houseRule(definition, "encumbrance")
+      ? encumbranceAt(strength, catalog.size, weight).tier
+      : null,
+  };
+}
+
+/**
+ * Levels in a catalog class named `Artificer`, the name both editions' rows carry. A
+ * homebrew class carries only an id here, so a homebrew artificer counts no levels and
+ * keeps three slots until a user overrides them.
+ */
+const artificerLevel = (definition: CharacterDefinition): number =>
+  definition.levels.filter(({ class: ref }) => !("homebrewId" in ref) && ref.name === "Artificer")
+    .length;
 
 /**
  * Ten-thousandths of a pound, the grid the sum counts on. Upstream prints nothing finer
@@ -1290,10 +1336,12 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
  * The pounds a character is carrying: every inventory entry flagged `carried`, times its
  * quantity, plus the coins.
  *
- * `weights` maps `entryKey` to an item's weight in pounds, from the catalog and from
+ * `weights` maps `itemKey` to an item's weight in pounds, from the catalog and from
  * homebrew, which the caller merges into one map and expands a magic variant into first.
  * A `null` is a row that states no weight and adds nothing; a reference the map does not
- * name is refused, because a silent zero would hide it.
+ * name is refused, because a silent zero would hide it. The API names every entry and
+ * gives an unresolved one `null`, so there the refusal guards a caller that forgot one,
+ * and the sheet's Carrying card discloses the zero instead.
  *
  * Coins count regardless of `carried`, because `money` is a purse the definition has
  * nowhere to put down: a character who banked 1,000 gp in town carries 20 pounds they
@@ -1307,7 +1355,7 @@ export function carriedWeight(
   let total = 0;
   for (const entry of definition.inventory) {
     if (!entry.carried) continue;
-    const key = entryKey(entry.ref);
+    const key = itemKey(entry);
     const weight = weights.get(key);
     if (weight === undefined) throw new RangeError(`No item row for ${key}`);
     total += scaled(weight ?? 0) * entry.quantity;

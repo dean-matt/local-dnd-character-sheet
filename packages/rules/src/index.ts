@@ -1,7 +1,9 @@
 export { armorClass } from "./armorclass.ts";
+export { attunementSlots } from "./attunement.ts";
 export type { Size } from "./carrying.ts";
 export {
   carryingCapacity,
+  ENCUMBRANCE_TIERS,
   encumbranceAt,
   encumbranceThresholds,
   POUNDS_PER_COIN,

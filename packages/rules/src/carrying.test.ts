@@ -49,15 +49,26 @@ describe("encumbranceThresholds", () => {
     [1, 5, 10],
   ])("a Strength of %i is encumbered at %i and heavily at %i", (score, encumbered, heavy) => {
     expect(encumbranceThresholds(score, "medium")).toEqual({
-      encumbered: { atWeight: encumbered, speedReduction: 10, disadvantage: false },
-      heavilyEncumbered: { atWeight: heavy, speedReduction: 20, disadvantage: true },
+      encumbered: {
+        tier: "encumbered",
+        atWeight: encumbered,
+        speedReduction: 10,
+        disadvantage: false,
+      },
+      heavilyEncumbered: {
+        tier: "heavilyEncumbered",
+        atWeight: heavy,
+        speedReduction: 20,
+        disadvantage: true,
+      },
     });
   });
 
   it("stops a Tiny creature at the weight it can carry", () => {
     expect(encumbranceThresholds(14, "tiny")).toEqual({
-      encumbered: { atWeight: 70, speedReduction: 10, disadvantage: false },
+      encumbered: { tier: "encumbered", atWeight: 70, speedReduction: 10, disadvantage: false },
       heavilyEncumbered: {
+        tier: "heavilyEncumbered",
         atWeight: carryingCapacity(14, "tiny"),
         speedReduction: 20,
         disadvantage: true,
@@ -76,14 +87,15 @@ describe("encumbranceThresholds", () => {
 
 describe("encumbranceAt", () => {
   it.each([
-    [0, 0, false],
-    [70, 0, false],
-    [70.5, 10, false],
-    [140, 10, false],
-    [140.5, 20, true],
-    [1000, 20, true],
-  ])("carrying %d costs a Strength 14 Medium creature %i feet", (weight, speed, disadvantage) => {
+    [0, "unencumbered", 0, false],
+    [70, "unencumbered", 0, false],
+    [70.5, "encumbered", 10, false],
+    [140, "encumbered", 10, false],
+    [140.5, "heavilyEncumbered", 20, true],
+    [1000, "heavilyEncumbered", 20, true],
+  ])("carrying %d leaves a Strength 14 Medium creature %s", (weight, tier, speed, disadvantage) => {
     expect(encumbranceAt(14, "medium", weight)).toEqual({
+      tier,
       speedReduction: speed,
       disadvantage,
     });
@@ -100,6 +112,7 @@ describe("encumbranceAt", () => {
     expect(encumbranceAt(14, size, encumbered.atWeight).speedReduction).toBe(0);
     expect(encumbranceAt(14, size, heavilyEncumbered.atWeight).speedReduction).toBe(10);
     expect(encumbranceAt(14, size, heavilyEncumbered.atWeight + 1)).toEqual({
+      tier: "heavilyEncumbered",
       speedReduction: 20,
       disadvantage: true,
     });

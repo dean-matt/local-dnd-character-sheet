@@ -25,18 +25,13 @@ import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
 import { RulesEntries, RulesText } from "../RulesText.tsx";
+import { Tag } from "../Tag.tsx";
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
 
 const ORDINAL = ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"];
 
 const levelLabel = (level: number) => (level === 0 ? "Cantrips" : `${ORDINAL[level]} level`);
-
-function Tag({ children }: { children: ReactNode }) {
-  return (
-    <span className="rounded-card border border-border px-1 text-muted text-row">{children}</span>
-  );
-}
 
 /** One card per casting class, since a multiclassed caster has a DC and a bonus per class. */
 function CasterNumbers({ derived }: { derived: CharacterDerived }) {

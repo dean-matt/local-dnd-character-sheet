@@ -2,9 +2,9 @@
  * Resolves the `CharacterCatalog` `deriveCharacter` takes for one definition, reading
  * `content.db` for a catalog reference and `homebrew.db` for a homebrew one.
  *
- * An item or a casting ability that resolves to nothing is left out, which
- * `deriveCharacter` already reads as unarmored or as no spellcasting. A class or a race
- * has no such reading — a guessed hit die invents hit points, and a guessed size moves
+ * A casting ability that resolves to nothing is left out, which `deriveCharacter` reads as
+ * no spellcasting; an item that resolves to nothing adds no armor and weighs nothing. A
+ * class or a race has no such reading — a guessed hit die invents hit points, and a guessed size moves
  * carrying capacity — so either one missing throws `UnresolvedReference`.
  */
 
@@ -34,14 +34,13 @@ import {
   getCasterRows,
   getClass,
   getFirstSpellSlotLevel,
-  getItem,
   getRace,
   getSubclass,
   getSubrace,
   listSkills,
 } from "./content.ts";
-import { getHomebrewClass, getHomebrewItem, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
-import { getExpandedItem } from "./item-variant.ts";
+import { getHomebrewClass, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
+import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
 
 /** A class or race reference no catalog row or homebrew row answers. */
 export class UnresolvedReference extends Error {
@@ -165,21 +164,16 @@ export function raceJson(
  * two suits of armor. The way out is keying armor by the inventory entry.
  */
 function armorTraits(
-  dataDir: string,
-  homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
 ): Map<string, ArmorTrait> {
   const armor = new Map<string, ArmorTrait>();
-  for (const entry of definition.inventory) {
-    if (!entry.equipped) continue;
-    const { ref, variant } = entry;
-    let json: unknown;
-    if ("homebrewId" in ref) json = getHomebrewItem(homebrewDb, ref.homebrewId)?.json;
-    else if (variant) json = getExpandedItem(dataDir, ref, variant)?.json;
-    else json = getItem(dataDir, ref.name, ref.source)?.json;
-    const trait = json === undefined ? undefined : parseJson(armorTraitSchema, json);
-    if (trait) armor.set(entryKey(ref), trait);
-  }
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    if (!entry.equipped || !row) return;
+    const trait = parseJson(armorTraitSchema, row.json);
+    if (trait) armor.set(entryKey(entry.ref), trait);
+  });
   return armor;
 }
 
@@ -222,6 +216,7 @@ export function resolveCharacterCatalog(
       : [],
   );
 
+  const items = resolveItemRows(dataDir, homebrewDb, definition.inventory);
   return {
     hitDice,
     spellcastingAbilities,
@@ -229,6 +224,7 @@ export function resolveCharacterCatalog(
     skills,
     size: race.size,
     speed: race.speed,
-    armor: armorTraits(dataDir, homebrewDb, definition),
+    armor: armorTraits(definition, items),
+    weights: itemWeights(definition.inventory, items),
   };
 }

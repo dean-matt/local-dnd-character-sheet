@@ -29,6 +29,7 @@ const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
 const PLUS_ONE = { name: "+1 Armor", source: "DMG" };
+const BARDING = { name: "Barding", source: "PHB" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -207,12 +208,21 @@ describe("derivedRoutes", () => {
         },
       ],
       items: [
-        item(PLATE, "baseitem", { type: "HA", ac: 18, armor: true }),
-        item(SHIELD, "baseitem", { type: "S", ac: 2 }),
+        item(PLATE, "baseitem", { type: "HA", ac: 18, armor: true, weight: 65 }),
+        item(SHIELD, "baseitem", { type: "S", ac: 2, weight: 6 }),
         item(PLUS_ONE, "magicvariant", {
           type: "GV",
           requires: [{ armor: true }],
           inherits: { namePrefix: "+1 ", source: "DMG", bonusAc: "+1" },
+        }),
+        item(BARDING, "magicvariant", {
+          type: "GV",
+          requires: [{ armor: true }],
+          inherits: {
+            nameSuffix: " Barding",
+            source: "PHB",
+            weightExpression: "[[baseItem.weight]] * 2",
+          },
         }),
       ],
       lookups: [
@@ -339,6 +349,27 @@ describe("derivedRoutes", () => {
   it("adds an equipped magic variant's bonus to its base item's armor class", async () => {
     store(definitionWith({ inventory: [{ ref: PLATE, variant: PLUS_ONE, equipped: true }] }));
     expect((await derived()).armorClass.computed).toBe(19);
+  });
+
+  it("weighs the load, a variant's own weight and an item that resolves to nothing included", async () => {
+    store(
+      definitionWith({
+        inventory: [
+          { ref: PLATE, equipped: true },
+          { ref: PLATE, variant: BARDING, carried: true },
+          { ref: SHIELD, quantity: 2 },
+          { ref: { name: "Lost", source: "PHB" } },
+        ],
+        money: { gold: 50 },
+        houseRules: { encumbrance: true },
+      }),
+    );
+    const block = await derived();
+
+    expect(block.carriedWeight).toBe(65 + 130 + 12 + 1);
+    expect(block.carryingCapacity.computed).toBe(16 * 15);
+    expect(block.encumbrance).toBe("heavilyEncumbered");
+    expect(block.attunementSlots.computed).toBe(3);
   });
 
   it("reads an equipped item that resolves to nothing as unarmored", async () => {

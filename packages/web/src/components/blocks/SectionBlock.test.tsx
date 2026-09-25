@@ -5,7 +5,7 @@ import { characterRecord, derivedRecord } from "../../test/records.ts";
 import { SectionBlockView } from "./SectionBlock.tsx";
 
 describe("SectionBlockView", () => {
-  it("names a section it stands in for, where nothing renders one yet", () => {
+  it("renders the inventory section, which waits on the character", () => {
     render(
       <SectionBlockView
         block={{ kind: "section", section: "inventory" }}
@@ -13,7 +13,7 @@ describe("SectionBlockView", () => {
         derived={undefined}
       />,
     );
-    expect(screen.getByText("Inventory isn't built yet.")).toBeInTheDocument();
+    expect(screen.getByText("Inventory isn't available yet.")).toBeInTheDocument();
   });
 
   it("renders the spells section, which waits on the character and its derived block", () => {

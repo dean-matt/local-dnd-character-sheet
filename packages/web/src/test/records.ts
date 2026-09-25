@@ -58,5 +58,6 @@ export function derivedRecord(): CharacterDerived {
     size: "medium",
     speed: { walk: 30 },
     armor: new Map(),
+    weights: new Map(),
   });
 }
