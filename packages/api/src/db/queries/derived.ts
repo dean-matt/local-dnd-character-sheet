@@ -10,22 +10,28 @@
 
 import {
   armorTraitSchema,
+  casterProgressionSchema,
   castingStartLevelSchema,
+  type PreparedSpellCount,
+  preparationRuleSchema,
   raceTraitsSchema,
   spellcastingAbilitySchema,
 } from "@dnd/catalog";
 import {
   type Ability,
   type ArmorTrait,
+  type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
   type EntryRef,
   entryKey,
+  type Preparation,
   type SkillTrait,
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import type { ZodType } from "zod";
 import {
+  getCasterRows,
   getClass,
   getFirstSpellSlotLevel,
   getItem,
@@ -101,6 +107,45 @@ function castingAbility(
   return parseJson(spellcastingAbilitySchema, row.json);
 }
 
+const printedPreparation = (count: PreparedSpellCount): Preparation | undefined =>
+  count.prepares ? { printed: count.count } : undefined;
+
+const slotTotals = (rows: { slot_level: number; slots: number }[]) =>
+  rows.map((row) => ({ level: row.slot_level, total: row.slots }));
+
+/**
+ * The table a catalog class casts from at the character's level in it: its own, else its
+ * subclass's where a third caster such as the Eldritch Knight states one. A homebrew
+ * class has no table to read, so it gets a save DC and no slots.
+ */
+function casterTable(
+  dataDir: string,
+  definition: CharacterDefinition,
+  ref: EntryRef,
+  classJson: unknown,
+): CasterTable | undefined {
+  if ("homebrewId" in ref) return undefined;
+  const key = entryKey(ref);
+  const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
+  const subclass = classLevels.find((entry) => entry.subclass)?.subclass;
+  const rows = getCasterRows(dataDir, ref, subclass, classLevels.length);
+  const rule = parseJson(preparationRuleSchema, classJson);
+  const prepares = rule ? { rule } : printedPreparation(rows.prepared);
+  const withPreparation = (table: CasterTable, preparation = prepares): CasterTable =>
+    preparation ? { ...table, preparation } : table;
+
+  const own = parseJson(casterProgressionSchema, classJson);
+  if (own) return withPreparation({ progression: own, slots: slotTotals(rows.slots) });
+  const progression = rows.subclass && parseJson(casterProgressionSchema, rows.subclass.json);
+  if (rows.subclass && progression) {
+    return withPreparation(
+      { progression, slots: slotTotals(rows.subclass.slots) },
+      prepares ?? printedPreparation(rows.subclass.prepared),
+    );
+  }
+  return undefined;
+}
+
 export function raceJson(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -145,6 +190,7 @@ export function resolveCharacterCatalog(
 ): CharacterCatalog {
   const hitDice = new Map<string, HitDie>();
   const spellcastingAbilities = new Map<string, Ability>();
+  const casterTables = new Map<string, CasterTable>();
   for (const { class: ref } of definition.levels) {
     const key = entryKey(ref);
     if (hitDice.has(key)) continue;
@@ -155,7 +201,10 @@ export function resolveCharacterCatalog(
     }
     hitDice.set(key, facts.hitDie);
     const ability = castingAbility(dataDir, definition, ref, facts.json);
-    if (ability) spellcastingAbilities.set(key, ability);
+    if (!ability) continue;
+    spellcastingAbilities.set(key, ability);
+    const table = casterTable(dataDir, definition, ref, facts.json);
+    if (table) casterTables.set(key, table);
   }
 
   const json = raceJson(dataDir, homebrewDb, definition);
@@ -176,6 +225,7 @@ export function resolveCharacterCatalog(
   return {
     hitDice,
     spellcastingAbilities,
+    casterTables,
     skills,
     size: race.size,
     speed: race.speed,

@@ -41,6 +41,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
   return deriveCharacter(record.definition, {
     hitDice: new Map([[entryKey(WARLOCK), 8]]),
     spellcastingAbilities: new Map([[entryKey(WARLOCK), "cha"]]),
+    casterTables: new Map(),
     skills: [
       { ref: STEALTH, ability: "dex" },
       { ref: DECEPTION, ability: "cha" },

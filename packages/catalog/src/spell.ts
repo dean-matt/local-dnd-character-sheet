@@ -73,3 +73,86 @@ export const spellRecordSchema = z.strictObject({
 });
 
 export type SpellRecord = z.infer<typeof spellRecordSchema>;
+
+/** `condition` is a reaction's trigger, and may carry `{@tag}` markup. */
+const spellTimeSchema = z.looseObject({
+  number: z.number(),
+  unit: z.string().min(1),
+  condition: z.string().min(1).optional(),
+});
+
+const spellRangeSchema = z.looseObject({
+  type: z.string().min(1),
+  distance: z.looseObject({ type: z.string().min(1), amount: z.number().optional() }).optional(),
+});
+
+const spellComponentsSchema = z.looseObject({
+  v: z.boolean().optional(),
+  s: z.boolean().optional(),
+  r: z.boolean().optional(),
+  m: z.union([z.string(), z.boolean(), z.looseObject({ text: z.string() })]).optional(),
+});
+
+const spellDurationSchema = z.looseObject({
+  type: z.string().min(1),
+  duration: z
+    .looseObject({
+      type: z.string().min(1),
+      amount: z.number().optional(),
+      upTo: z.boolean().optional(),
+    })
+    .optional(),
+  concentration: z.boolean().optional(),
+  ends: z.array(z.string()).optional(),
+});
+
+/**
+ * The four facts a caster checks before casting, in upstream's own shapes. Each is
+ * optional, since a homebrew spell need not state it, and a value that does not match
+ * is dropped rather than failing the whole list.
+ */
+export const spellCastingFactsSchema = z.strictObject({
+  time: z.array(spellTimeSchema).min(1).optional(),
+  range: spellRangeSchema.optional(),
+  components: spellComponentsSchema.optional(),
+  duration: z.array(spellDurationSchema).min(1).optional(),
+});
+
+/**
+ * `source` is absent on a homebrew spell, which stores an id and no source — the same
+ * shape difference that tells a homebrew row from a catalog one everywhere else.
+ * `origin` is the class the character learned it through.
+ */
+const sheetSpellFields = {
+  name: z.string().min(1),
+  source: z.string().min(1).optional(),
+  prepared: z.boolean(),
+  origin: z.strictObject({ name: z.string().min(1), source: z.string().min(1) }).optional(),
+};
+
+const sheetSpellSchema = z.discriminatedUnion("resolved", [
+  z.strictObject({
+    resolved: z.literal(true),
+    ...sheetSpellFields,
+    level: z.int().min(0).max(9),
+    school: z.string().min(1),
+    concentration: z.boolean(),
+    ritual: z.boolean(),
+    ...spellCastingFactsSchema.shape,
+    entries: entriesSchema,
+  }),
+  z.strictObject({ resolved: z.literal(false), ...sheetSpellFields }),
+]);
+
+/**
+ * A character's spells in the order the definition lists them, each resolved against
+ * its catalog or homebrew row. A reference nothing answers keeps its stored name,
+ * marked unresolved, so the sheet shows what went missing rather than dropping it.
+ *
+ * A projection of a character rather than a catalog row, it lives here for the reason
+ * `features.ts` gives.
+ */
+export const characterSpellsSchema = z.strictObject({ spells: z.array(sheetSpellSchema) });
+
+export type SheetSpell = z.infer<typeof sheetSpellSchema>;
+export type CharacterSpells = z.infer<typeof characterSpellsSchema>;

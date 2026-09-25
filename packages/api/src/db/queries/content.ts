@@ -56,6 +56,21 @@ export function getSpell(dataDir: string, name: string, source: string): SpellRo
   }
 }
 
+/** Several spells by `(name, source)` over one connection, each `undefined` where no row answers. */
+export function getSpells(
+  dataDir: string,
+  refs: readonly { name: string; source: string }[],
+): (SpellRow | undefined)[] {
+  if (refs.length === 0) return [];
+  const db = openContentDb(dataDir);
+  try {
+    const select = db.prepare(`SELECT ${SPELL_COLUMNS} FROM spells WHERE name = ? AND source = ?`);
+    return refs.map((ref) => select.get(ref.name, ref.source) as SpellRow | undefined);
+  } finally {
+    db.close();
+  }
+}
+
 export type RaceRow = {
   name: string;
   source: string;
@@ -364,6 +379,39 @@ export type ClassGrantsRow = {
   features: ClassFeatureRow[];
 };
 
+function selectClassSpellSlots(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  level: number,
+): SpellSlotRow[] {
+  return db
+    .prepare(
+      `SELECT slot_level, slots FROM spell_slots
+       WHERE class_name = ? AND class_source = ? AND level = ?
+       ORDER BY slot_level`,
+    )
+    .all(className, classSource, level) as SpellSlotRow[];
+}
+
+function selectSubclassSpellSlots(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassSource: string,
+  level: number,
+): SpellSlotRow[] {
+  return db
+    .prepare(
+      `SELECT slot_level, slots FROM subclass_spell_slots
+       WHERE class_name = ? AND class_source = ?
+         AND subclass_name = ? AND subclass_source = ? AND level = ?
+       ORDER BY slot_level`,
+    )
+    .all(className, classSource, subclassName, subclassSource, level) as SpellSlotRow[];
+}
+
 function selectClassFeatures(
   db: Database.Database,
   className: string,
@@ -457,13 +505,7 @@ export function getClassGrants(
          ORDER BY resource_key`,
       )
       .all(className, classSource, level) as ClassResourceRow[];
-    const spellSlots = db
-      .prepare(
-        `SELECT slot_level, slots FROM spell_slots
-         WHERE class_name = ? AND class_source = ? AND level = ?
-         ORDER BY slot_level`,
-      )
-      .all(className, classSource, level) as SpellSlotRow[];
+    const spellSlots = selectClassSpellSlots(db, className, classSource, level);
     const optionalFeatures = db
       .prepare(
         `SELECT feature_type, known FROM class_optional_features
@@ -499,13 +541,69 @@ export function getFirstSpellSlotLevel(
 
 const PREPARED_SPELLS_KEY = "prepared_spells";
 
+type PreparedRow = { level: number; value: string };
+
+/**
+ * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
+ * reached, so telling "no such column" from "not reached yet" needs every row for the
+ * key, not just the one at this level — at most 20, one query reads them all.
+ */
+function preparedCount(rows: PreparedRow[], level: number, owner: string): PreparedSpellCount {
+  if (rows.length === 0) return { prepares: false };
+  const atLevel = rows.find((r) => r.level === level);
+  if (!atLevel) return { prepares: true, count: 0 };
+  const count = Number(atLevel.value);
+  if (!Number.isInteger(count) || count < 0) {
+    throw new Error(
+      `${owner} level ${level}: prepared_spells value ${atLevel.value} is not a count`,
+    );
+  }
+  return { prepares: true, count };
+}
+
+function selectClassPrepared(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  level: number,
+): PreparedSpellCount {
+  const rows = db
+    .prepare(
+      `SELECT level, value FROM class_resources
+       WHERE class_name = ? AND class_source = ? AND resource_key = ?`,
+    )
+    .all(className, classSource, PREPARED_SPELLS_KEY) as PreparedRow[];
+  return preparedCount(rows, level, `${className}|${classSource}`);
+}
+
+function selectSubclassPrepared(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassSource: string,
+  level: number,
+): PreparedSpellCount {
+  const rows = db
+    .prepare(
+      `SELECT level, value FROM subclass_resources
+       WHERE class_name = ? AND class_source = ?
+         AND subclass_name = ? AND subclass_source = ? AND resource_key = ?`,
+    )
+    .all(
+      className,
+      classSource,
+      subclassName,
+      subclassSource,
+      PREPARED_SPELLS_KEY,
+    ) as PreparedRow[];
+  return preparedCount(rows, level, `${subclassName}|${subclassSource}`);
+}
+
 /**
  * The `one`-edition Prepared Spells column for a class at a level. `prepares: false`
  * where the class carries no such column at any level, distinct from `count: 0` where
  * it carries the column but has not reached it yet.
- * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
- * reached, so telling the two apart needs every one of the class's rows for this
- * resource key, not just the one at this level — at most 20, one query reads them all.
  */
 export function getPreparedSpellCount(
   dataDir: string,
@@ -515,22 +613,52 @@ export function getPreparedSpellCount(
 ): PreparedSpellCount {
   const db = openContentDb(dataDir);
   try {
-    const rows = db
+    return selectClassPrepared(db, className, classSource, level);
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * What a casting class's tables print at the character's level in it, read in one
+ * connection: its slots and Prepared Spells column, and its subclass's. A `one` third
+ * caster prints both on the subclass — `Eldritch Knight` (XPHB) under a Fighter that
+ * prints neither. `subclass` is absent where none was taken or its row is missing.
+ */
+export type CasterRows = {
+  slots: SpellSlotRow[];
+  prepared: PreparedSpellCount;
+  subclass?: { json: string; slots: SpellSlotRow[]; prepared: PreparedSpellCount };
+};
+
+export function getCasterRows(
+  dataDir: string,
+  classRef: { name: string; source: string },
+  subclassRef: { name: string; source: string } | undefined,
+  level: number,
+): CasterRows {
+  const db = openContentDb(dataDir);
+  try {
+    const { name, source } = classRef;
+    const rows: CasterRows = {
+      slots: selectClassSpellSlots(db, name, source, level),
+      prepared: selectClassPrepared(db, name, source, level),
+    };
+    if (!subclassRef) return rows;
+    const row = db
       .prepare(
-        `SELECT level, value FROM class_resources
-         WHERE class_name = ? AND class_source = ? AND resource_key = ?`,
+        `SELECT json FROM subclasses
+         WHERE name = ? AND source = ? AND class_name = ? AND class_source = ?`,
       )
-      .all(className, classSource, PREPARED_SPELLS_KEY) as { level: number; value: string }[];
-    if (rows.length === 0) return { prepares: false };
-    const atLevel = rows.find((r) => r.level === level);
-    if (!atLevel) return { prepares: true, count: 0 };
-    const count = Number(atLevel.value);
-    if (!Number.isInteger(count) || count < 0) {
-      throw new Error(
-        `${className}|${classSource} level ${level}: prepared_spells value ${atLevel.value} is not a count`,
-      );
-    }
-    return { prepares: true, count };
+      .get(subclassRef.name, subclassRef.source, name, source) as { json: string } | undefined;
+    if (!row) return rows;
+    const owner = [name, source, subclassRef.name, subclassRef.source] as const;
+    rows.subclass = {
+      json: row.json,
+      slots: selectSubclassSpellSlots(db, ...owner, level),
+      prepared: selectSubclassPrepared(db, ...owner, level),
+    };
+    return rows;
   } finally {
     db.close();
   }
@@ -560,14 +688,14 @@ export function getSubclassGrants(
          ORDER BY resource_key`,
       )
       .all(className, classSource, subclassName, subclassSource, level) as ClassResourceRow[];
-    const spellSlots = db
-      .prepare(
-        `SELECT slot_level, slots FROM subclass_spell_slots
-         WHERE class_name = ? AND class_source = ?
-           AND subclass_name = ? AND subclass_source = ? AND level = ?
-         ORDER BY slot_level`,
-      )
-      .all(className, classSource, subclassName, subclassSource, level) as SpellSlotRow[];
+    const spellSlots = selectSubclassSpellSlots(
+      db,
+      className,
+      classSource,
+      subclassName,
+      subclassSource,
+      level,
+    );
     const optionalFeatures = db
       .prepare(
         `SELECT feature_type, known FROM subclass_optional_features

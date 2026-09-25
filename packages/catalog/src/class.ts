@@ -8,7 +8,7 @@
  * a resource's printed value, a caster's slots, an optional feature's running count,
  * and the features gained by that level.
  */
-import { ABILITIES, EDITIONS } from "@dnd/rules";
+import { ABILITIES, CASTER_PROGRESSIONS, EDITIONS, type PreparationRule } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
@@ -25,6 +25,28 @@ const classEntrySchema = z.looseObject({
 export const spellcastingAbilitySchema = z
   .looseObject({ spellcastingAbility: z.enum(ABILITIES).optional() })
   .transform((entry) => entry.spellcastingAbility);
+
+/**
+ * The slot table a class or subclass row casts from, `undefined` where it has none. A
+ * third caster states it on the subclass — Eldritch Knight, Arcane Trickster.
+ */
+export const casterProgressionSchema = z
+  .looseObject({ casterProgression: z.enum(CASTER_PROGRESSIONS).optional() })
+  .transform((entry) => entry.casterProgression);
+
+/**
+ * How a `classic` class counts its prepared list, read off the formula its row prints:
+ * `<$level$> + <$wis_mod$>` counts the class level, `<$level$> / 2 + <$cha_mod$>` half
+ * of it. `undefined` for a row with no formula — a class that knows its spells, or a
+ * `one` class, which prints a Prepared Spells column instead.
+ */
+export const preparationRuleSchema = z
+  .looseObject({ preparedSpells: z.string().optional() })
+  .transform((entry): PreparationRule | undefined => {
+    const formula = entry.preparedSpells;
+    if (formula === undefined || !formula.includes("<$level$>")) return undefined;
+    return /<\$level\$>\s*\/\s*2/.test(formula) ? "half-level" : "level";
+  });
 
 /**
  * Whether a class or subclass feature row is one of Tasha's optional class features,

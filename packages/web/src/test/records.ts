@@ -48,6 +48,12 @@ export function derivedRecord(): CharacterDerived {
   return deriveCharacter(characterRecord("1", "Vex").definition, {
     hitDice: new Map([[warlock, 8]]),
     spellcastingAbilities: new Map([[warlock, "cha"]]),
+    casterTables: new Map([
+      [
+        warlock,
+        { progression: "pact", slots: [{ level: 1, total: 1 }], preparation: { printed: 2 } },
+      ],
+    ]),
     skills: [],
     size: "medium",
     speed: { walk: 30 },

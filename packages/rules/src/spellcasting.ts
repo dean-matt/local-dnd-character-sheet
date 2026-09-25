@@ -59,9 +59,9 @@ export function concentrationSaveDc(damage: number, edition: Edition): number {
  * down)" in one passage, so the asymmetry is the rules', not an oversight here.
  * `pact` contributes nothing.
  */
-const CASTER_PROGRESSIONS = ["full", "1/2", "1/3", "artificer", "pact"] as const;
+export const CASTER_PROGRESSIONS = ["full", "1/2", "1/3", "artificer", "pact"] as const;
 
-type CasterProgression = (typeof CASTER_PROGRESSIONS)[number];
+export type CasterProgression = (typeof CASTER_PROGRESSIONS)[number];
 
 /** A class or subclass that casts, and the character's level in it. */
 export type CasterClassLevel = {
@@ -69,7 +69,7 @@ export type CasterClassLevel = {
   level: number;
 };
 
-type SpellSlotTotal = {
+export type SpellSlotTotal = {
   level: number;
   total: number;
 };

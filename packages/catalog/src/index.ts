@@ -27,6 +27,7 @@ export type {
   SubclassRecord,
 } from "./class.ts";
 export {
+  casterProgressionSchema,
   castingStartLevelSchema,
   classFeatureRecordSchema,
   classFeatureVariantSchema,
@@ -35,6 +36,7 @@ export {
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
   homebrewClassSchema,
+  preparationRuleSchema,
   preparedSpellCountSchema,
   spellcastingAbilitySchema,
   subclassRecordSchema,
@@ -79,14 +81,18 @@ export {
 export type { CatalogSearchType, SearchHit } from "./search.ts";
 export { catalogSearchHitSchema, homebrewSearchHitSchema, searchHitSchema } from "./search.ts";
 export type {
+  CharacterSpells,
   HomebrewSpellInput,
   HomebrewSpellRecord,
+  SheetSpell,
   SpellEntry,
   SpellRecord,
 } from "./spell.ts";
 export {
+  characterSpellsSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
+  spellCastingFactsSchema,
   spellEntrySchema,
   spellRecordSchema,
 } from "./spell.ts";
