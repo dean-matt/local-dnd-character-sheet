@@ -22,20 +22,26 @@ import {
   armorClass,
   type Breakdown,
   breakdown,
+  type CasterProgression,
   EDITIONS,
   encumbranceAt,
   HIT_DICE,
   type HitDie,
   maxHitPoints,
+  multiclassCasterLevel,
+  multiclassSlots,
   POUNDS_PER_COIN,
   PROFICIENCY_LEVELS,
+  type PreparationRule,
   passiveScore,
+  preparedSpellCount,
   proficiencyBonus,
   proficiencyContribution,
   RESET_TRIGGERS,
   reducedSpeed,
   SIZES,
   type Size,
+  type SpellSlotTotal,
   spellAttackBonus,
   spellSaveDc,
   type Term,
@@ -882,8 +888,18 @@ export const characterDerivedSchema = z.strictObject({
       ability: abilitySchema,
       saveDc: derivedSchema(z.int()),
       attackBonus: derivedSchema(z.int()),
+      /** How many spells the class may prepare, absent for a class that knows its spells instead. */
+      preparedSpells: derivedSchema(z.int().min(0)).optional(),
     }),
   ),
+  /** Slots by slot level, lowest first, omitting a level with none. */
+  spellSlots: z.array(
+    z.strictObject({ level: z.int().min(1).max(9), total: derivedSchema(z.int().min(1)) }),
+  ),
+  /** Pact magic's slots, all one level and recharged on a short rest, kept apart from `spellSlots`. */
+  pactSlots: z
+    .strictObject({ level: z.int().min(1).max(9), total: derivedSchema(z.int().min(1)) })
+    .nullable(),
 });
 
 /**
@@ -1004,10 +1020,29 @@ export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
   /** Absent for a class that grants no spellcasting, such as a Fighter with no casting subclass. */
   spellcastingAbilities: ReadonlyMap<string, Ability>;
+  /** Keyed like `spellcastingAbilities`, and absent for a class with no table to read. */
+  casterTables: ReadonlyMap<string, CasterTable>;
   skills: readonly SkillTrait[];
   size: Size;
   speed: Speed;
   armor: ReadonlyMap<string, ArmorTrait>;
+};
+
+/**
+ * How a class counts the spells it may prepare: the `classic` arithmetic `rule`, or the
+ * `one` count its table prints at the character's level in it.
+ */
+export type Preparation = { rule: PreparationRule } | { printed: number };
+
+/**
+ * One casting class's table, read at the character's level in that class. `slots` is
+ * its own table's row, or its subclass's for an Eldritch Knight. A class that casts
+ * with no slot table, such as Way of the Four Elements, has no `progression`.
+ */
+export type CasterTable = {
+  progression?: CasterProgression;
+  slots: readonly SpellSlotTotal[];
+  preparation?: Preparation;
 };
 
 /** A freshly computed derived field, always with its terms — never read back from storage. */
@@ -1095,33 +1130,81 @@ function hitDicePools(
   }));
 }
 
+const computed = <T>(value: T): ComputedField<T> => ({ computed: value, manual: null, terms: [] });
+
+function preparedCount(
+  preparation: Preparation,
+  modifier: number,
+  classLevel: number,
+): ComputedField<number> {
+  return computed(
+    "printed" in preparation
+      ? preparation.printed
+      : preparedSpellCount(modifier, classLevel, preparation.rule),
+  );
+}
+
 /** One entry per class that casts, in the order its levels were taken. */
 function spellcastingEntries(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   characterLevel: number,
 ): CharacterDerived["spellcasting"] {
-  const seen = new Set<string>();
-  const entries: CharacterDerived["spellcasting"] = [];
-  for (const level of definition.levels) {
-    const key = entryKey(level.class);
-    if (seen.has(key)) continue;
-    seen.add(key);
+  return classLevels(definition).flatMap((group) => {
+    const key = entryKey(group.class);
     const ability = catalog.spellcastingAbilities.get(key);
-    if (ability === undefined) continue;
+    if (ability === undefined) return [];
     const modifier = abilityModifier(definition.abilityScores[ability]);
-    entries.push({
-      class: level.class,
-      ability,
-      saveDc: { computed: spellSaveDc(modifier, characterLevel), manual: null, terms: [] },
-      attackBonus: {
-        computed: spellAttackBonus(modifier, characterLevel),
-        manual: null,
-        terms: [],
+    const preparation = catalog.casterTables.get(key)?.preparation;
+    return [
+      {
+        class: group.class,
+        ability,
+        saveDc: computed(spellSaveDc(modifier, characterLevel)),
+        attackBonus: computed(spellAttackBonus(modifier, characterLevel)),
+        ...(preparation && { preparedSpells: preparedCount(preparation, modifier, group.level) }),
       },
-    });
-  }
-  return entries;
+    ];
+  });
+}
+
+type CastingClass = {
+  level: number;
+  progression: CasterProgression;
+  slots: readonly SpellSlotTotal[];
+};
+
+/** Every class that casts now and has a slot table, with its level in that class. */
+function castingClasses(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): CastingClass[] {
+  return classLevels(definition).flatMap((group) => {
+    const key = entryKey(group.class);
+    const table = catalog.casterTables.get(key);
+    if (!catalog.spellcastingAbilities.has(key) || table?.progression === undefined) return [];
+    return [{ level: group.level, progression: table.progression, slots: table.slots }];
+  });
+}
+
+/**
+ * A class casting alone keeps its own table; two or more read the multiclass table.
+ * Both editions state the rule, and it matters: a level 5 paladin's own table gives four
+ * 1st-level slots and two 2nd, where the multiclass table at caster level 2 gives three.
+ */
+function slotTotals(casters: readonly CastingClass[]): CharacterDerived["spellSlots"] {
+  const slotted = casters.filter((caster) => caster.progression !== "pact");
+  const slots =
+    slotted.length === 1
+      ? (slotted[0]?.slots ?? [])
+      : multiclassSlots(multiclassCasterLevel(slotted));
+  return slots.map((slot) => ({ level: slot.level, total: computed(slot.total) }));
+}
+
+/** A pact table prints one slot level per class level, so its row is a single entry. */
+function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlots"] {
+  const slot = casters.find((caster) => caster.progression === "pact")?.slots[0];
+  return slot ? { level: slot.level, total: computed(slot.total) } : null;
 }
 
 /**
@@ -1135,6 +1218,7 @@ export function deriveCharacter(
   catalog: CharacterCatalog,
 ): CharacterDerived {
   const level = totalLevel(definition);
+  const casters = castingClasses(definition, catalog);
 
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
@@ -1183,6 +1267,8 @@ export function deriveCharacter(
       terms: [],
     },
     spellcasting: spellcastingEntries(definition, catalog, level),
+    spellSlots: slotTotals(casters),
+    pactSlots: pactSlots(casters),
   };
 }
 

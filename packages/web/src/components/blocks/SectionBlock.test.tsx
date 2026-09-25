@@ -8,12 +8,23 @@ describe("SectionBlockView", () => {
   it("names a section it stands in for, where nothing renders one yet", () => {
     render(
       <SectionBlockView
-        block={{ kind: "section", section: "spells" }}
+        block={{ kind: "section", section: "inventory" }}
         character={undefined}
         derived={undefined}
       />,
     );
-    expect(screen.getByText("Spells isn't built yet.")).toBeInTheDocument();
+    expect(screen.getByText("Inventory isn't built yet.")).toBeInTheDocument();
+  });
+
+  it("renders the spells section, which waits on the character and its derived block", () => {
+    render(
+      <SectionBlockView
+        block={{ kind: "section", section: "spells" }}
+        character={characterRecord("1", "Vex")}
+        derived={undefined}
+      />,
+    );
+    expect(screen.getByText("Spells isn't available yet.")).toBeInTheDocument();
   });
 
   it("renders the abilities section from the character and its derived block", () => {

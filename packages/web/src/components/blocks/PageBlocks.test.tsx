@@ -20,7 +20,7 @@ describe("PageBlocks", () => {
     expect(order.map((el) => el.textContent)).toEqual([
       "First.",
       "Armor Class isn't available yet.",
-      "Spells isn't built yet.",
+      "Spells isn't available yet.",
       "Inventory isn't available yet.",
       "This block isn't recognized by this build.",
     ]);

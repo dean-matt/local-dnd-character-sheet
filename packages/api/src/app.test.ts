@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openDatabases } from "./db/client.ts";
+import { characterSpellsRoutes } from "./routes/character-spells.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { derivedRoutes } from "./routes/derived.ts";
 import { featuresRoutes } from "./routes/features.ts";
@@ -37,6 +38,7 @@ describe("/openapi.json", () => {
     app.route("/", pagesRoutes(opened.charactersDb));
     app.route("/", derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
     app.route("/", featuresRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
+    app.route("/", characterSpellsRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
     app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
     app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
@@ -52,6 +54,7 @@ describe("/openapi.json", () => {
       "/characters/{id}/features",
       "/characters/{id}/pages",
       "/characters/{id}/pages/restore-defaults",
+      "/characters/{id}/spells",
       "/characters/{id}/state",
       "/homebrew/backgrounds",
       "/homebrew/backgrounds/{id}",

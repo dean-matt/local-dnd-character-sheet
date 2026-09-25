@@ -15,8 +15,9 @@ import {
   refKey,
   type Speed,
 } from "@dnd/character";
-import { type ReactNode, useId } from "react";
+import type { ReactNode } from "react";
 import { EmptyState } from "../../states.tsx";
+import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
 
 type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
@@ -46,18 +47,6 @@ function Absent() {
       <span aria-hidden="true">—</span>
       <span className="sr-only">None</span>
     </span>
-  );
-}
-
-function Card({ title, children }: { title: string; children: ReactNode }) {
-  const id = useId();
-  return (
-    <section aria-labelledby={id} className="rounded-card border border-border bg-surface p-4">
-      <h3 id={id} className="font-semibold text-muted text-row uppercase tracking-wide">
-        {title}
-      </h3>
-      <div className="mt-2">{children}</div>
-    </section>
   );
 }
 

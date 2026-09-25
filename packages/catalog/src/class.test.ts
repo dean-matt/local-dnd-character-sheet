@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  casterProgressionSchema,
   castingStartLevelSchema,
   classGrantsSchema,
   classRecordSchema,
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
+  preparationRuleSchema,
   preparedSpellCountSchema,
   spellcastingAbilitySchema,
   subclassRecordSchema,
@@ -163,5 +165,32 @@ describe("spellcastingAbilitySchema", () => {
 
   it("is undefined for a class that casts none", () => {
     expect(spellcastingAbilitySchema.parse({ name: "Fighter" })).toBeUndefined();
+  });
+});
+
+describe("casterProgressionSchema", () => {
+  it("reads the progression a row states, and none where it states none", () => {
+    expect(casterProgressionSchema.parse({ casterProgression: "1/3" })).toBe("1/3");
+    expect(casterProgressionSchema.parse({ name: "Fighter" })).toBeUndefined();
+  });
+
+  it("rejects a progression the multiclass rule has no contribution for", () => {
+    expect(casterProgressionSchema.safeParse({ casterProgression: "1/4" }).success).toBe(false);
+  });
+});
+
+describe("preparationRuleSchema", () => {
+  it("reads the level a classic formula counts", () => {
+    expect(preparationRuleSchema.parse({ preparedSpells: "<$level$> + <$wis_mod$>" })).toBe(
+      "level",
+    );
+    expect(preparationRuleSchema.parse({ preparedSpells: "<$level$> / 2 + <$cha_mod$>" })).toBe(
+      "half-level",
+    );
+  });
+
+  it("reads no rule off a row that prints no formula, or one that counts no level", () => {
+    expect(preparationRuleSchema.parse({ name: "Wizard" })).toBeUndefined();
+    expect(preparationRuleSchema.parse({ preparedSpells: "<$int_mod$>" })).toBeUndefined();
   });
 });

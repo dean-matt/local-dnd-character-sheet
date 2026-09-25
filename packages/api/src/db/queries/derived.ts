@@ -10,27 +10,35 @@
 
 import {
   armorTraitSchema,
+  casterProgressionSchema,
   castingStartLevelSchema,
+  preparationRuleSchema,
   raceTraitsSchema,
   spellcastingAbilitySchema,
 } from "@dnd/catalog";
 import {
   type Ability,
   type ArmorTrait,
+  type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
+  type ContentRef,
   type EntryRef,
   entryKey,
+  type Preparation,
   type SkillTrait,
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import type { ZodType } from "zod";
 import {
   getClass,
+  getClassSpellSlots,
   getFirstSpellSlotLevel,
   getItem,
+  getPreparedSpellCount,
   getRace,
   getSubclass,
+  getSubclassSpellSlots,
   getSubrace,
   listSkills,
 } from "./content.ts";
@@ -101,6 +109,58 @@ function castingAbility(
   return parseJson(spellcastingAbilitySchema, row.json);
 }
 
+function preparation(
+  dataDir: string,
+  ref: ContentRef,
+  level: number,
+  classJson: unknown,
+): Preparation | undefined {
+  const rule = parseJson(preparationRuleSchema, classJson);
+  if (rule) return { rule };
+  const printed = getPreparedSpellCount(dataDir, ref.name, ref.source, level);
+  return printed.prepares ? { printed: printed.count } : undefined;
+}
+
+const slotTotals = (rows: { slot_level: number; slots: number }[]) =>
+  rows.map((row) => ({ level: row.slot_level, total: row.slots }));
+
+/**
+ * The table a catalog class casts from at the character's level in it: its own, else its
+ * subclass's where a third caster such as the Eldritch Knight states one. A homebrew
+ * class has no table to read, so it gets a save DC and no slots.
+ */
+function casterTable(
+  dataDir: string,
+  definition: CharacterDefinition,
+  ref: EntryRef,
+  classJson: unknown,
+): CasterTable | undefined {
+  if ("homebrewId" in ref) return undefined;
+  const key = entryKey(ref);
+  const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
+  const level = classLevels.length;
+  const prepares = preparation(dataDir, ref, level, classJson);
+  const withPreparation = (table: CasterTable): CasterTable =>
+    prepares ? { ...table, preparation: prepares } : table;
+
+  const own = parseJson(casterProgressionSchema, classJson);
+  if (own) {
+    const slots = slotTotals(getClassSpellSlots(dataDir, ref.name, ref.source, level));
+    return withPreparation({ progression: own, slots });
+  }
+  const subclass = classLevels.find((entry) => entry.subclass)?.subclass;
+  const row =
+    subclass && getSubclass(dataDir, subclass.name, subclass.source, ref.name, ref.source);
+  const progression = row ? parseJson(casterProgressionSchema, row.json) : undefined;
+  if (subclass && progression) {
+    const slots = slotTotals(
+      getSubclassSpellSlots(dataDir, ref.name, ref.source, subclass.name, subclass.source, level),
+    );
+    return withPreparation({ progression, slots });
+  }
+  return prepares ? { slots: [], preparation: prepares } : undefined;
+}
+
 export function raceJson(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -145,6 +205,7 @@ export function resolveCharacterCatalog(
 ): CharacterCatalog {
   const hitDice = new Map<string, HitDie>();
   const spellcastingAbilities = new Map<string, Ability>();
+  const casterTables = new Map<string, CasterTable>();
   for (const { class: ref } of definition.levels) {
     const key = entryKey(ref);
     if (hitDice.has(key)) continue;
@@ -155,7 +216,10 @@ export function resolveCharacterCatalog(
     }
     hitDice.set(key, facts.hitDie);
     const ability = castingAbility(dataDir, definition, ref, facts.json);
-    if (ability) spellcastingAbilities.set(key, ability);
+    if (!ability) continue;
+    spellcastingAbilities.set(key, ability);
+    const table = casterTable(dataDir, definition, ref, facts.json);
+    if (table) casterTables.set(key, table);
   }
 
   const json = raceJson(dataDir, homebrewDb, definition);
@@ -176,6 +240,7 @@ export function resolveCharacterCatalog(
   return {
     hitDice,
     spellcastingAbilities,
+    casterTables,
     skills,
     size: race.size,
     speed: race.speed,

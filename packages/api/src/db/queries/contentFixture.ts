@@ -691,8 +691,10 @@ type LookupFixtureRow = {
 
 export type DerivedFixture = {
   classes?: ClassFixtureRow[];
+  classResources?: ClassResourceFixtureRow[];
   spellSlots?: SpellSlotFixtureRow[];
   subclasses?: SubclassFixtureRow[];
+  subclassSpellSlots?: SubclassSpellSlotFixtureRow[];
   races?: RaceFixtureRow[];
   subraces?: SubraceFixtureRow[];
   items?: ItemFixtureRow[];
@@ -701,8 +703,8 @@ export type DerivedFixture = {
 
 /**
  * Mirrors `build-db.ts`'s publish step against every table a derived block reads — the
- * character's classes, their spell slots and subclasses, its race or subrace, its
- * equipped items, and the edition's skills from `lookups`.
+ * character's classes, their prepared counts, spell slots and subclasses, its race or
+ * subrace, its equipped items, and the edition's skills from `lookups`.
  */
 export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture): void {
   publishTable(
@@ -717,6 +719,15 @@ export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture):
         PRIMARY KEY (name, source)
       ) STRICT;
 
+      CREATE TABLE class_resources (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        resource_key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        PRIMARY KEY (class_name, class_source, level, resource_key)
+      ) STRICT;
+
       CREATE TABLE spell_slots (
         class_name TEXT NOT NULL,
         class_source TEXT NOT NULL,
@@ -724,6 +735,17 @@ export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture):
         slot_level INTEGER NOT NULL,
         slots INTEGER NOT NULL,
         PRIMARY KEY (class_name, class_source, level, slot_level)
+      ) STRICT;
+
+      CREATE TABLE subclass_spell_slots (
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        slot_level INTEGER NOT NULL,
+        slots INTEGER NOT NULL,
+        PRIMARY KEY (class_name, class_source, subclass_name, subclass_source, level, slot_level)
       ) STRICT;
 
       CREATE TABLE subclasses (
@@ -785,8 +807,18 @@ export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture):
       },
       {
         insert:
+          "INSERT INTO class_resources (class_name, class_source, level, resource_key, value) VALUES (@class_name, @class_source, @level, @resource_key, @value)",
+        rows: fixture.classResources ?? [],
+      },
+      {
+        insert:
           "INSERT INTO spell_slots (class_name, class_source, level, slot_level, slots) VALUES (@class_name, @class_source, @level, @slot_level, @slots)",
         rows: fixture.spellSlots ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_spell_slots (class_name, class_source, subclass_name, subclass_source, level, slot_level, slots) VALUES (@class_name, @class_source, @subclass_name, @subclass_source, @level, @slot_level, @slots)",
+        rows: fixture.subclassSpellSlots ?? [],
       },
       {
         insert:

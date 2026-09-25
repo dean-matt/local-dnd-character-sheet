@@ -24,8 +24,14 @@ export type { HitDie, HitPointLevel } from "./hitpoints.ts";
 export { averageHitPoints, HIT_DICE, hitDiceRecovered, maxHitPoints } from "./hitpoints.ts";
 export { RESET_TRIGGERS, resetsOn } from "./rest.ts";
 export { reducedSpeed } from "./speed.ts";
-export type { CasterClassLevel, PreparationRule } from "./spellcasting.ts";
+export type {
+  CasterClassLevel,
+  CasterProgression,
+  PreparationRule,
+  SpellSlotTotal,
+} from "./spellcasting.ts";
 export {
+  CASTER_PROGRESSIONS,
   concentrationSaveDc,
   multiclassCasterLevel,
   multiclassSlots,

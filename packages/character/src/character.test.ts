@@ -11,7 +11,9 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   abilityScoresSchema,
+  type CasterTable,
   type CharacterDefinition,
+  type CharacterDerived,
   type CharacterState,
   carriedWeight,
   characterDefinitionSchema,
@@ -27,6 +29,7 @@ import {
   deriveCharacter,
   derivedSchema,
   derivedValue,
+  type EntryRef,
   encumberedSpeed,
   entryKey,
   entryRefSchema,
@@ -81,6 +84,8 @@ const derivedInput = (traits: object = {}) => ({
   armorClass: { computed: 10 },
   initiative: { computed: 0 },
   spellcasting: [],
+  spellSlots: [],
+  pactSlots: null,
   ...raceTraits,
   ...traits,
 });
@@ -1021,6 +1026,16 @@ describe("deriveCharacter", () => {
   const catalog = {
     hitDice,
     spellcastingAbilities: new Map([[entryKey(WARLOCK), "cha" as const]]),
+    casterTables: new Map([
+      [
+        entryKey(WARLOCK),
+        {
+          progression: "pact" as const,
+          slots: [{ level: 2, total: 2 }],
+          preparation: { printed: 4 },
+        },
+      ],
+    ]),
     skills: [
       { ref: DECEPTION, ability: "cha" as const },
       { ref: STEALTH, ability: "dex" as const },
@@ -1165,8 +1180,115 @@ describe("deriveCharacter", () => {
         ability: "cha",
         saveDc: { computed: 14, manual: null, terms: [] },
         attackBonus: { computed: 6, manual: null, terms: [] },
+        preparedSpells: { computed: 4, manual: null, terms: [] },
       },
     ]);
+  });
+
+  describe("spell slots", () => {
+    const WIZARD = { name: "Wizard", source: "PHB" };
+    const CLERIC = { name: "Cleric", source: "PHB" };
+    const PALADIN = { name: "Paladin", source: "PHB" };
+    const FIGHTER = { name: "Fighter", source: "PHB" };
+
+    const caster = (...levels: { name: string; source: string }[]): CharacterDefinition => ({
+      ...definition,
+      levels: levels.map((ref) => ({ class: ref })),
+    });
+    const of = (count: number, ref: { name: string; source: string }) =>
+      Array.from({ length: count }, () => ref);
+
+    /** Each class's own table row at the level the test takes it to, as `content.db` holds it. */
+    const tables = (entries: [EntryRef, CasterTable][]) => ({
+      ...catalog,
+      hitDice: new Map(entries.map(([ref]) => [entryKey(ref), 8 as const])),
+      spellcastingAbilities: new Map(entries.map(([ref]) => [entryKey(ref), "int" as const])),
+      casterTables: new Map(entries.map(([ref, table]) => [entryKey(ref), table])),
+    });
+    const totals = (block: CharacterDerived) =>
+      block.spellSlots.map((slot) => [slot.level, slot.total.computed]);
+
+    it("counts pact slots apart from the rest", () => {
+      expect(derived.pactSlots).toEqual({
+        level: 2,
+        total: { computed: 2, manual: null, terms: [] },
+      });
+      expect(derived.spellSlots).toEqual([]);
+    });
+
+    it("reads a lone caster's own table, which the multiclass table would get wrong", () => {
+      const paladin = tables([
+        [
+          PALADIN,
+          {
+            progression: "1/2",
+            slots: [
+              { level: 1, total: 4 },
+              { level: 2, total: 2 },
+            ],
+          },
+        ],
+      ]);
+      expect(totals(deriveCharacter(caster(...of(5, PALADIN)), paladin))).toEqual([
+        [1, 4],
+        [2, 2],
+      ]);
+    });
+
+    it("reads the multiclass table at the combined caster level for two casters", () => {
+      const block = deriveCharacter(
+        caster(...of(3, WIZARD), ...of(2, CLERIC), ...of(3, FIGHTER)),
+        tables([
+          [WIZARD, { progression: "full", slots: [{ level: 1, total: 4 }] }],
+          [CLERIC, { progression: "full", slots: [{ level: 1, total: 3 }] }],
+          [FIGHTER, { progression: "1/3", slots: [{ level: 1, total: 2 }] }],
+        ]),
+      );
+      expect(totals(block)).toEqual([
+        [1, 4],
+        [2, 3],
+        [3, 3],
+      ]);
+    });
+
+    it("leaves out a class that has a table but does not cast yet", () => {
+      const catalogWith = tables([
+        [WIZARD, { progression: "full", slots: [{ level: 1, total: 2 }] }],
+        [PALADIN, { progression: "1/2", slots: [] }],
+      ]);
+      catalogWith.spellcastingAbilities.delete(entryKey(PALADIN));
+      expect(totals(deriveCharacter(caster(WIZARD, PALADIN), catalogWith))).toEqual([[1, 2]]);
+    });
+
+    it("gives a character with no casting class no slots at all", () => {
+      const block = deriveCharacter(caster(FIGHTER), {
+        ...tables([]),
+        hitDice: new Map([[entryKey(FIGHTER), 10 as const]]),
+      });
+      expect(block.spellSlots).toEqual([]);
+      expect(block.pactSlots).toBeNull();
+      expect(block.spellcasting).toEqual([]);
+    });
+
+    it("counts a classic prepared list from the class's own level and modifier", () => {
+      const block = deriveCharacter(
+        caster(...of(5, PALADIN), ...of(3, CLERIC)),
+        tables([
+          [PALADIN, { progression: "1/2", slots: [], preparation: { rule: "half-level" } }],
+          [CLERIC, { progression: "full", slots: [], preparation: { rule: "level" } }],
+        ]),
+      );
+      // int 10 is a +0 modifier, the ability `tables` gives every class.
+      expect(block.spellcasting.map((entry) => entry.preparedSpells?.computed)).toEqual([2, 3]);
+    });
+
+    it("gives a class that knows its spells no prepared count", () => {
+      const block = deriveCharacter(
+        caster(WIZARD),
+        tables([[WIZARD, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
+      );
+      expect(block.spellcasting[0]).not.toHaveProperty("preparedSpells");
+    });
   });
 });
 

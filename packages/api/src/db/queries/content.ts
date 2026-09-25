@@ -364,6 +364,78 @@ export type ClassGrantsRow = {
   features: ClassFeatureRow[];
 };
 
+function selectClassSpellSlots(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  level: number,
+): SpellSlotRow[] {
+  return db
+    .prepare(
+      `SELECT slot_level, slots FROM spell_slots
+       WHERE class_name = ? AND class_source = ? AND level = ?
+       ORDER BY slot_level`,
+    )
+    .all(className, classSource, level) as SpellSlotRow[];
+}
+
+function selectSubclassSpellSlots(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassSource: string,
+  level: number,
+): SpellSlotRow[] {
+  return db
+    .prepare(
+      `SELECT slot_level, slots FROM subclass_spell_slots
+       WHERE class_name = ? AND class_source = ?
+         AND subclass_name = ? AND subclass_source = ? AND level = ?
+       ORDER BY slot_level`,
+    )
+    .all(className, classSource, subclassName, subclassSource, level) as SpellSlotRow[];
+}
+
+/** The slots a class's own table prints at one level — pact magic's too, which shares the table. */
+export function getClassSpellSlots(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+): SpellSlotRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return selectClassSpellSlots(db, className, classSource, level);
+  } finally {
+    db.close();
+  }
+}
+
+/** The slots a subclass's own table prints at one class level, keyed by its full name. */
+export function getSubclassSpellSlots(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassSource: string,
+  level: number,
+): SpellSlotRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return selectSubclassSpellSlots(
+      db,
+      className,
+      classSource,
+      subclassName,
+      subclassSource,
+      level,
+    );
+  } finally {
+    db.close();
+  }
+}
+
 function selectClassFeatures(
   db: Database.Database,
   className: string,
@@ -457,13 +529,7 @@ export function getClassGrants(
          ORDER BY resource_key`,
       )
       .all(className, classSource, level) as ClassResourceRow[];
-    const spellSlots = db
-      .prepare(
-        `SELECT slot_level, slots FROM spell_slots
-         WHERE class_name = ? AND class_source = ? AND level = ?
-         ORDER BY slot_level`,
-      )
-      .all(className, classSource, level) as SpellSlotRow[];
+    const spellSlots = selectClassSpellSlots(db, className, classSource, level);
     const optionalFeatures = db
       .prepare(
         `SELECT feature_type, known FROM class_optional_features
@@ -560,14 +626,14 @@ export function getSubclassGrants(
          ORDER BY resource_key`,
       )
       .all(className, classSource, subclassName, subclassSource, level) as ClassResourceRow[];
-    const spellSlots = db
-      .prepare(
-        `SELECT slot_level, slots FROM subclass_spell_slots
-         WHERE class_name = ? AND class_source = ?
-           AND subclass_name = ? AND subclass_source = ? AND level = ?
-         ORDER BY slot_level`,
-      )
-      .all(className, classSource, subclassName, subclassSource, level) as SpellSlotRow[];
+    const spellSlots = selectSubclassSpellSlots(
+      db,
+      className,
+      classSource,
+      subclassName,
+      subclassSource,
+      level,
+    );
     const optionalFeatures = db
       .prepare(
         `SELECT feature_type, known FROM subclass_optional_features

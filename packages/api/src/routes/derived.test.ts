@@ -21,6 +21,8 @@ import { derivedRoutes } from "./derived.ts";
 const FIGHTER = { name: "Fighter", source: "PHB" };
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const PALADIN = { name: "Paladin", source: "PHB" };
+const WARLOCK = { name: "Warlock", source: "XPHB" };
+const ELDRITCH_KNIGHT = { name: "Eldritch Knight", source: "PHB" };
 const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
@@ -50,11 +52,7 @@ const definitionWith = (
   characterDefinitionSchema.parse({
     name: "Vex",
     edition: "classic",
-    levels: [
-      { class: FIGHTER },
-      { class: FIGHTER },
-      { class: FIGHTER, subclass: { name: "Eldritch Knight", source: "PHB" } },
-    ],
+    levels: [{ class: FIGHTER }, { class: FIGHTER }, { class: FIGHTER, subclass: ELDRITCH_KNIGHT }],
     race: ELF,
     subrace: { name: "Wood", source: "PHB" },
     background: { name: "Soldier", source: "PHB" },
@@ -101,11 +99,47 @@ describe("derivedRoutes", () => {
           ...PALADIN,
           edition: "classic",
           hit_die: 10,
-          json: JSON.stringify({ ...PALADIN, spellcastingAbility: "cha" }),
+          json: JSON.stringify({
+            ...PALADIN,
+            spellcastingAbility: "cha",
+            casterProgression: "1/2",
+            preparedSpells: "<$level$> / 2 + <$cha_mod$>",
+          }),
+        },
+        {
+          ...WARLOCK,
+          edition: "one",
+          hit_die: 8,
+          json: JSON.stringify({
+            ...WARLOCK,
+            spellcastingAbility: "cha",
+            casterProgression: "pact",
+          }),
+        },
+      ],
+      classResources: [
+        {
+          class_name: "Warlock",
+          class_source: "XPHB",
+          level: 1,
+          resource_key: "prepared_spells",
+          value: "2",
         },
       ],
       spellSlots: [
         { class_name: "Paladin", class_source: "PHB", level: 2, slot_level: 1, slots: 2 },
+        { class_name: "Warlock", class_source: "XPHB", level: 1, slot_level: 1, slots: 1 },
+      ],
+      subclassSpellSlots: [
+        {
+          class_name: "Fighter",
+          class_source: "PHB",
+          subclass_name: "Eldritch Knight",
+          subclass_source: "PHB",
+          level: 3,
+          slot_level: 1,
+          slots: 2,
+        },
       ],
       subclasses: [
         {
@@ -115,7 +149,11 @@ describe("derivedRoutes", () => {
           class_name: "Fighter",
           class_source: "PHB",
           edition: "classic",
-          json: JSON.stringify({ name: "Eldritch Knight", spellcastingAbility: "int" }),
+          json: JSON.stringify({
+            name: "Eldritch Knight",
+            spellcastingAbility: "int",
+            casterProgression: "1/3",
+          }),
         },
         {
           name: "Path of the Ancestral Guardian",
@@ -216,6 +254,46 @@ describe("derivedRoutes", () => {
     expect((await derived()).spellcasting).toEqual([
       expect.objectContaining({ class: BARBARIAN, ability: "wis" }),
     ]);
+  });
+
+  it("reads a third caster's slots off its subclass's table", async () => {
+    store(definitionWith());
+    const block = await derived();
+    expect(block.spellSlots).toEqual([
+      { level: 1, total: { computed: 2, manual: null, terms: [] } },
+    ]);
+    expect(block.spellcasting[0]).not.toHaveProperty("preparedSpells");
+  });
+
+  it("counts a classic prepared list from the formula the class row prints", async () => {
+    store(definitionWith({ levels: [{ class: PALADIN }, { class: PALADIN }] }));
+    const [paladin] = (await derived()).spellcasting;
+    // Half of level 2, and Charisma 8's -1, floored at one.
+    expect(paladin?.preparedSpells?.computed).toBe(1);
+  });
+
+  it("reads a printed prepared count and pact slots off the class table", async () => {
+    store(definitionWith({ levels: [{ class: WARLOCK }] }));
+    const block = await derived();
+    expect(block.spellcasting[0]?.preparedSpells?.computed).toBe(2);
+    expect(block.pactSlots).toEqual({ level: 1, total: { computed: 1, manual: null, terms: [] } });
+    expect(block.spellSlots).toEqual([]);
+  });
+
+  it("reads the multiclass table once two classes cast", async () => {
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER },
+          { class: FIGHTER },
+          { class: FIGHTER, subclass: ELDRITCH_KNIGHT },
+          { class: PALADIN },
+          { class: PALADIN },
+        ],
+      }),
+    );
+    // Caster level 1 + 1 = 2, where the two tables summed would give four slots.
+    expect((await derived()).spellSlots.map((slot) => slot.total.computed)).toEqual([3]);
   });
 
   it("adds an equipped magic variant's bonus to its base item's armor class", async () => {
