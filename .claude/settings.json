@@ -1,6 +1,6 @@
 {
   "includeCoAuthoredBy": false,
   "permissions": {
-    "allow": ["Bash(gh:*)", "Bash(gh pr merge:*)"]
+    "allow": ["Agent(general-purpose)", "Bash(gh:*)", "Bash(gh pr merge:*)"]
   }
 }
