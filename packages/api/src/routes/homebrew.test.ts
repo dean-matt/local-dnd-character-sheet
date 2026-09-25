@@ -157,6 +157,44 @@ describe("homebrewRoutes", () => {
       expect(body).toMatchObject({ id: created.id, name: "Sunblade+1" });
     });
 
+    it("refuses a create or rename onto a name its edition holds, naming the holder", async () => {
+      const held = await (await routes.request("/homebrew/items", json(sunblade()))).json();
+      const other = await (
+        await routes.request("/homebrew/items", json(sunblade({ name: "Moonblade" })))
+      ).json();
+      const conflict = { id: held.id, name: "Sunblade", edition: "one" };
+
+      const create = await routes.request("/homebrew/items", json(sunblade({ name: "SUNBLADE" })));
+      expect(create.status).toBe(409);
+      expect((await create.json()).conflict).toEqual(conflict);
+
+      const rename = await routes.request(`/homebrew/items/${other.id}`, {
+        ...json(sunblade()),
+        method: "PUT",
+      });
+      expect(rename.status).toBe(409);
+      expect((await rename.json()).conflict).toEqual(conflict);
+      expect((await (await routes.request(`/homebrew/items/${other.id}`)).json()).name).toBe(
+        "Moonblade",
+      );
+    });
+
+    it("lets each edition hold a name once, and a row keep its own", async () => {
+      const held = await (await routes.request("/homebrew/items", json(sunblade()))).json();
+
+      const classic = await routes.request(
+        "/homebrew/items",
+        json(sunblade({ edition: "classic" })),
+      );
+      expect(classic.status).toBe(201);
+
+      const recased = await routes.request(`/homebrew/items/${held.id}`, {
+        ...json(sunblade({ name: "SunBlade" })),
+        method: "PUT",
+      });
+      expect(recased.status).toBe(200);
+    });
+
     it("deletes an item, after which it 404s", async () => {
       const created = await (await routes.request("/homebrew/items", json(sunblade()))).json();
 
@@ -229,6 +267,34 @@ describe("homebrewRoutes", () => {
       expect((await routes.request("/homebrew/spells/missing", { method: "DELETE" })).status).toBe(
         404,
       );
+    });
+
+    it("refuses a create or rename onto a name its edition holds, naming the holder", async () => {
+      const held = await (await routes.request("/homebrew/spells", json(acidSplash()))).json();
+      const other = await (
+        await routes.request("/homebrew/spells", json(acidSplash({ name: "Frost Splash" })))
+      ).json();
+      const conflict = { id: held.id, name: "Acid Splash", edition: "one" };
+
+      const create = await routes.request(
+        "/homebrew/spells",
+        json(acidSplash({ name: "acid splash" })),
+      );
+      expect(create.status).toBe(409);
+      expect((await create.json()).conflict).toEqual(conflict);
+
+      const rename = await routes.request(`/homebrew/spells/${other.id}`, {
+        ...json(acidSplash()),
+        method: "PUT",
+      });
+      expect(rename.status).toBe(409);
+      expect((await rename.json()).conflict).toEqual(conflict);
+
+      const classic = await routes.request(
+        "/homebrew/spells",
+        json(acidSplash({ edition: "classic" })),
+      );
+      expect(classic.status).toBe(201);
     });
 
     it("deletes a spell, after which it 404s", async () => {

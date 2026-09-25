@@ -18,7 +18,7 @@ import type {
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const HOMEBREW_SOURCE = "HB";
 
@@ -73,7 +73,7 @@ export const homebrewItems = sqliteTable(
     json: text("json", { mode: "json" }).$type<HomebrewItem>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (t) => [index("homebrew_items_by_name").on(t.name)],
+  (t) => [uniqueIndex("homebrew_items_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );
 
 export const homebrewRaces = sqliteTable(
@@ -101,5 +101,5 @@ export const homebrewSpells = sqliteTable(
     json: text("json", { mode: "json" }).$type<SpellEntry>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (t) => [index("homebrew_spells_by_name").on(t.name)],
+  (t) => [uniqueIndex("homebrew_spells_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );

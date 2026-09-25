@@ -6,6 +6,9 @@
  *
  * A delete needs `characters.db` as well as `homebrew.db`: no foreign key spans the two
  * files, so this route enforces the reference instead.
+ *
+ * An item or spell name is unique within its edition, because a `{@tag}` names the row by
+ * it. A create or rename onto a name another row holds answers 409 with that row.
  */
 import { randomUUID } from "node:crypto";
 import {
@@ -28,7 +31,9 @@ import {
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
 } from "@dnd/catalog";
+import { EDITIONS, type Edition } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { SqliteError } from "better-sqlite3";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import {
@@ -44,6 +49,8 @@ import {
   getHomebrewItem,
   getHomebrewRace,
   getHomebrewSpell,
+  homebrewItemNamed,
+  homebrewSpellNamed,
   insertHomebrewBackground,
   insertHomebrewClass,
   insertHomebrewFeat,
@@ -127,6 +134,42 @@ const referencedError = (resource: string, characters: { id: string; name: strin
   characters,
 });
 
+const nameHolderSchema = z.object({ id: z.string(), name: z.string(), edition: z.enum(EDITIONS) });
+
+type NameHolder = z.infer<typeof nameHolderSchema>;
+
+const nameTaken = (resource: string) => ({
+  description: `Another ${resource} of that edition already has this name`,
+  content: {
+    "application/json": { schema: z.object({ error: z.string(), conflict: nameHolderSchema }) },
+  },
+});
+
+const nameTakenError = (resource: string, { id, name, edition }: NameHolder) => ({
+  error: `The ${resource} ${id} is already named "${name}" in the ${edition} edition`,
+  conflict: { id, name, edition },
+});
+
+/**
+ * Runs `write`, answering a collision on the unique name index with the row holding the
+ * name. The index decides, so a write that collides with nothing never pays the lookup.
+ */
+function claimName<T>(
+  write: () => T,
+  holder: () => NameHolder | undefined,
+): { row: T } | { taken: NameHolder } {
+  try {
+    return { row: write() };
+  } catch (error) {
+    const taken =
+      error instanceof SqliteError && error.code === "SQLITE_CONSTRAINT_UNIQUE"
+        ? holder()
+        : undefined;
+    if (taken === undefined) throw error;
+    return { taken };
+  }
+}
+
 const listItems = createRoute({
   method: "get",
   path: "/homebrew/items",
@@ -168,6 +211,7 @@ const createItem = createRoute({
       description: "The created homebrew item",
       content: { "application/json": { schema: homebrewItemRecordSchema } },
     },
+    409: nameTaken("homebrew item"),
   },
 });
 
@@ -186,6 +230,7 @@ const updateItem = createRoute({
       content: { "application/json": { schema: homebrewItemRecordSchema } },
     },
     404: notFound("homebrew item"),
+    409: nameTaken("homebrew item"),
   },
 });
 
@@ -243,6 +288,7 @@ const createSpell = createRoute({
       description: "The created homebrew spell",
       content: { "application/json": { schema: homebrewSpellRecordSchema } },
     },
+    409: nameTaken("homebrew spell"),
   },
 });
 
@@ -261,6 +307,7 @@ const updateSpell = createRoute({
       content: { "application/json": { schema: homebrewSpellRecordSchema } },
     },
     404: notFound("homebrew spell"),
+    409: nameTaken("homebrew spell"),
   },
 });
 
@@ -588,16 +635,28 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     return c.json(toItemRecord(row), 200);
   });
 
+  const itemHolder = (name: string, edition: Edition) => () => homebrewItemNamed(db, name, edition);
+
   routes.openapi(createItem, (c) => {
-    const row = insertHomebrewItem(db, randomUUID(), c.req.valid("json"));
-    return c.json(toItemRecord(row), 201);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => insertHomebrewItem(db, randomUUID(), input),
+      itemHolder(input.name, input.edition),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew item", result.taken), 409);
+    return c.json(toItemRecord(result.row), 201);
   });
 
   routes.openapi(updateItem, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateHomebrewItem(db, id, c.req.valid("json"));
-    if (!row) return c.json({ error: ITEM_NOT_FOUND }, 404);
-    return c.json(toItemRecord(row), 200);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => updateHomebrewItem(db, id, input),
+      itemHolder(input.name, input.edition),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew item", result.taken), 409);
+    if (!result.row) return c.json({ error: ITEM_NOT_FOUND }, 404);
+    return c.json(toItemRecord(result.row), 200);
   });
 
   routes.openapi(removeItem, (c) => {
@@ -616,16 +675,29 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     return c.json(toSpellRecord(row), 200);
   });
 
+  const spellHolder = (name: string, edition: Edition) => () =>
+    homebrewSpellNamed(db, name, edition);
+
   routes.openapi(createSpell, (c) => {
-    const row = insertHomebrewSpell(db, randomUUID(), c.req.valid("json"));
-    return c.json(toSpellRecord(row), 201);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => insertHomebrewSpell(db, randomUUID(), input),
+      spellHolder(input.name, input.edition),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew spell", result.taken), 409);
+    return c.json(toSpellRecord(result.row), 201);
   });
 
   routes.openapi(updateSpell, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateHomebrewSpell(db, id, c.req.valid("json"));
-    if (!row) return c.json({ error: SPELL_NOT_FOUND }, 404);
-    return c.json(toSpellRecord(row), 200);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => updateHomebrewSpell(db, id, input),
+      spellHolder(input.name, input.edition),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew spell", result.taken), 409);
+    if (!result.row) return c.json({ error: SPELL_NOT_FOUND }, 404);
+    return c.json(toSpellRecord(result.row), 200);
   });
 
   routes.openapi(removeSpell, (c) => {

@@ -1,7 +1,7 @@
 /**
  * `POST /refs/resolve`: the `ref` tokens one rendered block of rules text carries, sent
- * together, and the catalog row each one names. The answer is positional — the row for
- * the reference at index `i`, or `null` where the catalog has none.
+ * together, and the catalog or homebrew row each one names. The answer is positional —
+ * the row for the reference at index `i`, or `null` where neither has one.
  */
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
