@@ -1,18 +1,38 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { characterRecord, derivedRecord } from "../../test/records.ts";
 import { SectionBlockView } from "./SectionBlock.tsx";
 
 describe("SectionBlockView", () => {
-  it("names the section it stands in for, since nothing renders one yet", () => {
+  it("names a section it stands in for, where nothing renders one yet", () => {
     render(
-      <SectionBlockView block={{ kind: "section", section: "abilities" }} derived={undefined} />,
+      <SectionBlockView
+        block={{ kind: "section", section: "spells" }}
+        character={undefined}
+        derived={undefined}
+      />,
     );
-    expect(screen.getByText("Abilities isn't built yet.")).toBeInTheDocument();
+    expect(screen.getByText("Spells isn't built yet.")).toBeInTheDocument();
+  });
+
+  it("renders the abilities section from the character and its derived block", () => {
+    render(
+      <SectionBlockView
+        block={{ kind: "section", section: "abilities" }}
+        character={characterRecord("1", "Vex")}
+        derived={derivedRecord()}
+      />,
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Vex" })).toBeInTheDocument();
   });
 
   it("renders nothing for a block of another kind", () => {
     const { container } = render(
-      <SectionBlockView block={{ kind: "text", text: "note" }} derived={undefined} />,
+      <SectionBlockView
+        block={{ kind: "text", text: "note" }}
+        character={undefined}
+        derived={undefined}
+      />,
     );
     expect(container).toBeEmptyDOMElement();
   });

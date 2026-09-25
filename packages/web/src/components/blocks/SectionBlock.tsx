@@ -1,5 +1,6 @@
 import type { SheetSection } from "@dnd/character";
 import { EmptyState } from "../../states.tsx";
+import { AbilitiesSection } from "./AbilitiesSection.tsx";
 import type { BlockViewProps } from "./types.ts";
 
 const SECTION_LABELS: Record<SheetSection, string> = {
@@ -10,7 +11,10 @@ const SECTION_LABELS: Record<SheetSection, string> = {
 };
 
 /** A whole sheet section. Each one renders for real once its own issue ships it. */
-export function SectionBlockView({ block }: BlockViewProps) {
+export function SectionBlockView({ block, character, derived }: BlockViewProps) {
   if (block.kind !== "section") return null;
+  if (block.section === "abilities") {
+    return <AbilitiesSection character={character} derived={derived} />;
+  }
   return <EmptyState>{SECTION_LABELS[block.section]} isn't built yet.</EmptyState>;
 }

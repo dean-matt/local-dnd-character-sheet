@@ -20,6 +20,7 @@ import {
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
+  classLevels,
   classSummary,
   defaultCharacterState,
   degradePageBlock,
@@ -71,7 +72,9 @@ const noSavingThrows = Object.fromEntries(
 
 /** The derived tree as the endpoint assembles it, with the traits under test swapped in. */
 const derivedInput = (traits: object = {}) => ({
+  abilityModifiers: noSavingThrows,
   hitPointMaximum: { computed: 37 },
+  hitDice: [],
   proficiencyBonus: { computed: 2 },
   savingThrows: noSavingThrows,
   skills: [],
@@ -804,6 +807,13 @@ describe("class levels", () => {
     expect(classSummary(definition)).toBe("Warlock 3 / Rogue 2");
   });
 
+  it("groups levels by class and names the subclass whichever level chose it", () => {
+    expect(classLevels(definition)).toEqual([
+      { class: WARLOCK, level: 3, subclass: FIEND_PATRON },
+      { class: ROGUE, level: 2 },
+    ]);
+  });
+
   it("summarizes a single class with no count", () => {
     expect(classSummary({ ...definition, levels: [{ class: ROGUE }] })).toBe("Rogue");
   });
@@ -1116,6 +1126,31 @@ describe("deriveCharacter", () => {
     const result = deriveCharacter(withHomebrew, homebrewCatalog);
 
     expect(result.armorClass.terms).toContainEqual({ label: "Armor", value: 11 });
+  });
+
+  it("sets every ability's modifier off its score", () => {
+    expect(derived.abilityModifiers.str).toEqual({ computed: -1, manual: null, terms: [] });
+    expect(derived.abilityModifiers.cha.computed).toBe(3);
+  });
+
+  it("pools hit dice by die size, so two d8 classes share one pool", () => {
+    expect(derived.hitDice).toEqual([{ die: 8, total: { computed: 5, manual: null, terms: [] } }]);
+  });
+
+  it("keeps a pool per die size, in the order each was first taken", () => {
+    const fighter = { name: "Fighter", source: "XPHB" };
+    const multiclass = deriveCharacter(
+      { ...equipped, levels: [...equipped.levels, { class: fighter }] },
+      { ...catalog, hitDice: new Map([...hitDice, [entryKey(fighter), 10 as const]]) },
+    );
+    expect(multiclass.hitDice.map((pool) => [pool.die, pool.total.computed])).toEqual([
+      [8, 5],
+      [10, 1],
+    ]);
+  });
+
+  it("rejects a class with no hit die rather than guessing one", () => {
+    expect(() => deriveCharacter(equipped, { ...catalog, hitDice: new Map() })).toThrow(RangeError);
   });
 
   it("reads initiative off Dexterity alone", () => {

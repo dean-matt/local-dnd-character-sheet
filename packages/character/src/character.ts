@@ -40,6 +40,9 @@ import {
   spellSaveDc,
   type Term,
 } from "@dnd/rules";
+
+export { ABILITIES };
+
 import { z } from "zod";
 
 const editionSchema = z.enum(EDITIONS);
@@ -480,28 +483,37 @@ export const totalLevel = (definition: CharacterDefinition): number => definitio
  * catalog reaches `packages/character` to resolve it to a name — the ceiling both
  * summaries below share.
  */
-const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
+export const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
 
 /** The subrace's own name where one is chosen, the race's otherwise — `High`, not `Elf (High)`. */
 export function raceSummary(definition: CharacterDefinition): string {
   return displayName(definition.subrace ?? definition.race);
 }
 
-/**
- * `levels` grouped by class, in the order each class was first taken, and joined the way
- * `levelEntrySchema`'s own comment already writes a multiclass character — `Wizard 1 /
- * Fighter 1`. A single class carries no count.
- */
-export function classSummary(definition: CharacterDefinition): string {
-  const groups = new Map<string, { ref: EntryRef; count: number }>();
+/** One class a character has levels in, with the subclass named on any of those levels. */
+type ClassLevels = { class: EntryRef; level: number; subclass?: ContentRef };
+
+/** `levels` grouped by class, in the order each class was first taken. */
+export function classLevels(definition: CharacterDefinition): ClassLevels[] {
+  const groups = new Map<string, ClassLevels>();
   for (const level of definition.levels) {
     const key = entryKey(level.class);
-    const group = groups.get(key);
-    if (group) group.count += 1;
-    else groups.set(key, { ref: level.class, count: 1 });
+    const group = groups.get(key) ?? { class: level.class, level: 0 };
+    group.level += 1;
+    if (level.subclass) group.subclass = level.subclass;
+    groups.set(key, group);
   }
-  const labels = [...groups.values()].map((group) =>
-    groups.size === 1 ? displayName(group.ref) : `${displayName(group.ref)} ${group.count}`,
+  return [...groups.values()];
+}
+
+/**
+ * `classLevels` joined the way `levelEntrySchema`'s own comment already writes a
+ * multiclass character — `Wizard 1 / Fighter 1`. A single class carries no count.
+ */
+export function classSummary(definition: CharacterDefinition): string {
+  const groups = classLevels(definition);
+  const labels = groups.map((group) =>
+    groups.length === 1 ? displayName(group.class) : `${displayName(group.class)} ${group.level}`,
   );
   return labels.join(" / ");
 }
@@ -810,7 +822,15 @@ const speedSchema = z.strictObject({
  * names, `manual` from `field_overrides`.
  */
 export const characterDerivedSchema = z.strictObject({
+  abilityModifiers: z.record(abilitySchema, derivedSchema(z.int())),
   hitPointMaximum: derivedSchema(z.int().min(1)),
+  /**
+   * Grouped by die size the way `hitDicePoolSchema` groups the pool a rest spends, in the
+   * order each die was first taken. `total` is the pool's size; what remains is state.
+   */
+  hitDice: z.array(
+    z.strictObject({ die: z.literal(HIT_DICE), total: derivedSchema(z.int().min(1)) }),
+  ),
   /**
    * The race's size, in the vocabulary `carryingCapacity` reads, so the two cannot
    * drift. A subrace never states one — all 98 upstream rows leave it to the race — so
@@ -898,7 +918,7 @@ export function passiveSkill(
   );
 }
 
-const ABILITY_LABEL: Record<Ability, string> = {
+export const ABILITY_LABEL: Record<Ability, string> = {
   str: "Strength",
   dex: "Dexterity",
   con: "Constitution",
@@ -1046,6 +1066,24 @@ function derivedArmorClass(
   return { computed: result.total, manual: null, terms: result.terms };
 }
 
+/** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
+function hitDicePools(
+  definition: CharacterDefinition,
+  hitDice: ReadonlyMap<string, HitDie>,
+): CharacterDerived["hitDice"] {
+  const totals = new Map<HitDie, number>();
+  for (const level of definition.levels) {
+    const key = entryKey(level.class);
+    const die = hitDice.get(key);
+    if (die === undefined) throw new RangeError(`No hit die for ${key}`);
+    totals.set(die, (totals.get(die) ?? 0) + 1);
+  }
+  return [...totals].map(([die, total]) => ({
+    die,
+    total: { computed: total, manual: null, terms: [] },
+  }));
+}
+
 /** One entry per class that casts, in the order its levels were taken. */
 function spellcastingEntries(
   definition: CharacterDefinition,
@@ -1107,12 +1145,21 @@ export function deriveCharacter(
     };
   });
 
+  const abilityModifiers = Object.fromEntries(
+    ABILITIES.map((ability): [Ability, ComputedField<number>] => [
+      ability,
+      { computed: abilityModifier(definition.abilityScores[ability]), manual: null, terms: [] },
+    ]),
+  ) as Record<Ability, ComputedField<number>>;
+
   return {
+    abilityModifiers,
     hitPointMaximum: {
       computed: hitPointMaximum(definition, catalog.hitDice),
       manual: null,
       terms: [],
     },
+    hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: catalog.size, manual: null, terms: [] },
     speed: { computed: catalog.speed, manual: null, terms: [] },
     proficiencyBonus: { computed: proficiencyBonus(level), manual: null, terms: [] },

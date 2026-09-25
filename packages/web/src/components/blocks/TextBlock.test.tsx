@@ -7,6 +7,7 @@ describe("TextBlockView", () => {
     render(
       <TextBlockView
         block={{ kind: "text", text: "Cast {@spell fireball} first." }}
+        character={undefined}
         derived={undefined}
       />,
     );

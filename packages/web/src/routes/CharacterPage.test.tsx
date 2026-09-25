@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { derivedRecord, presetPageRecords } from "../test/records.ts";
+import { characterRecord, derivedRecord, presetPageRecords } from "../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../test/stubFetch.ts";
 import { CharacterPage } from "./CharacterPage.tsx";
 
@@ -21,6 +21,7 @@ function renderPage(path = "/characters/1/p/stats") {
 
 const stubCharacter = (pages = presetPageRecords()) =>
   stubFetchByUrl({
+    "/api/characters/1": characterRecord("1", "Vex"),
     "/api/characters/1/derived": derivedRecord(),
     "/api/characters/1/pages": pages,
   });
@@ -49,7 +50,7 @@ describe("CharacterPage", () => {
     renderPage();
 
     expect(await screen.findByRole("heading", { level: 1, name: "Stats" })).toBeInTheDocument();
-    expect(await screen.findByText("Abilities isn't built yet.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 2, name: "Vex" })).toBeInTheDocument();
   });
 
   it("renders a value block from the derived block the API computed", async () => {
@@ -68,13 +69,27 @@ describe("CharacterPage", () => {
   });
 
   it("shows why the derived block is missing, and still renders the page", async () => {
-    stubFetchByUrl({ "/api/characters/1/pages": presetPageRecords() });
+    stubFetchByUrl({
+      "/api/characters/1": characterRecord("1", "Vex"),
+      "/api/characters/1/pages": presetPageRecords(),
+    });
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "nothing at /api/characters/1/derived",
     );
-    expect(screen.getByText("Abilities isn't built yet.")).toBeInTheDocument();
+    expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
+  });
+
+  it("shows why the character is missing, and still renders the page", async () => {
+    stubFetchByUrl({
+      "/api/characters/1/derived": derivedRecord(),
+      "/api/characters/1/pages": presetPageRecords(),
+    });
+    renderPage();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("nothing at /api/characters/1");
+    expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
   });
 
   it("reaches a hidden page by its URL", async () => {

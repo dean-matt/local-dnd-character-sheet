@@ -7,6 +7,7 @@ describe("UnknownBlockView", () => {
     render(
       <UnknownBlockView
         block={{ kind: "unknown", raw: { kind: "tarot", deck: "Many Things" } }}
+        character={undefined}
         derived={undefined}
       />,
     );

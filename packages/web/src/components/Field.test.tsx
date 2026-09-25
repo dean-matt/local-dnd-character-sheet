@@ -16,7 +16,43 @@ describe("Field, read mode", () => {
     );
 
     expect(screen.getByText("Hit points")).toBeInTheDocument();
-    expect(screen.getByText("11")).toBeInTheDocument();
+    expect(screen.getByText("Hit points").nextElementSibling).toHaveTextContent(/^11/);
+  });
+
+  it("marks an overridden value and names the computed one it replaced", () => {
+    render(
+      <Field mode="read" label="Hit points" value={{ computed: 8, manual: 11 }} format={format} />,
+    );
+
+    expect(screen.getByText(", overridden from 8")).toHaveClass("sr-only");
+    expect(screen.getByTitle("Overridden; computed 8")).toBeInTheDocument();
+  });
+
+  it("marks nothing when there is no override", () => {
+    render(
+      <Field
+        mode="read"
+        label="Hit points"
+        value={{ computed: 8, manual: null }}
+        format={format}
+      />,
+    );
+
+    expect(screen.queryByText(/overridden/)).not.toBeInTheDocument();
+  });
+
+  it("marks an override on a field whose label is hidden, too", () => {
+    render(
+      <Field
+        mode="read"
+        label="Modifier"
+        value={{ computed: 1, manual: 3 }}
+        format={format}
+        labelHidden
+      />,
+    );
+
+    expect(screen.getByText(", overridden from 1")).toBeInTheDocument();
   });
 
   it("falls back to the computed value when there is no override", () => {
