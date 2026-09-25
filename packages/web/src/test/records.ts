@@ -1,4 +1,11 @@
-import { type CharacterPageRecord, characterDefinitionSchema, PRESET_PAGES } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterPageRecord,
+  characterDefinitionSchema,
+  deriveCharacter,
+  entryKey,
+  PRESET_PAGES,
+} from "@dnd/character";
 
 /** What `GET /characters/{id}/pages` returns for a character nobody has edited. */
 export const presetPageRecords = (): CharacterPageRecord[] =>
@@ -33,4 +40,17 @@ export function characterRecord(id: string, name: string) {
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   };
+}
+
+/** What `GET /characters/{id}/derived` returns for `characterRecord`'s Warlock, unarmored. */
+export function derivedRecord(): CharacterDerived {
+  const warlock = entryKey({ name: "Warlock", source: "XPHB" });
+  return deriveCharacter(characterRecord("1", "Vex").definition, {
+    hitDice: new Map([[warlock, 8]]),
+    spellcastingAbilities: new Map([[warlock, "cha"]]),
+    skills: [],
+    size: "medium",
+    speed: { walk: 30 },
+    armor: new Map(),
+  });
 }
