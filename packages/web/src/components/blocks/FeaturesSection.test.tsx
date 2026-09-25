@@ -113,10 +113,21 @@ describe("FeaturesSection", () => {
     expect(row.querySelector("details")).toBeNull();
   });
 
+  it("says a missing homebrew reference is missing from homebrew, not the catalog", async () => {
+    renderSection({
+      groups: [{ origin: "feat", features: [{ resolved: false, name: "Homebrew", level: 4 }] }],
+    });
+
+    const row = (await screen.findByText("Homebrew")).closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("Not found in homebrew");
+  });
+
   it("narrows every group to the features whose name matches the filter", async () => {
     renderSection();
 
-    fireEvent.change(await screen.findByLabelText("Find a feature"), {
+    await screen.findByText("Second Wind");
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    fireEvent.change(screen.getByLabelText("Find a feature"), {
       target: { value: "dark" },
     });
     expect(screen.getByText("Darkvision")).toBeInTheDocument();
@@ -125,6 +136,9 @@ describe("FeaturesSection", () => {
 
     fireEvent.change(screen.getByLabelText("Find a feature"), { target: { value: "zzz" } });
     expect(screen.getByRole("status")).toHaveTextContent("No feature matches “zzz”.");
+    expect(
+      screen.getByText("No feature matches “zzz”.", { selector: "[aria-hidden]" }),
+    ).toBeVisible();
   });
 
   it("says so when the character has gained nothing", async () => {

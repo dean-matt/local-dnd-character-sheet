@@ -46,6 +46,7 @@ function Placement({ feature }: { feature: SheetFeature }) {
   return <span className="text-muted text-row">{parts.join(" · ")}</span>;
 }
 
+/** An unresolved feature with no source is a homebrew reference, which names no source. */
 function FeatureRow({ feature }: { feature: SheetFeature }) {
   if (!feature.resolved) {
     const source = feature.source ? ` (${feature.source})` : "";
@@ -56,7 +57,9 @@ function FeatureRow({ feature }: { feature: SheetFeature }) {
           {source}
         </span>
         <Placement feature={feature} />
-        <span className="text-muted text-row">Not found in the catalog</span>
+        <span className="text-muted text-row">
+          {feature.source ? "Not found in the catalog" : "Not found in homebrew"}
+        </span>
       </li>
     );
   }
@@ -117,6 +120,8 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
     }))
     .filter((group) => group.features.length > 0);
 
+  const emptyMessage = `No feature matches “${query.trim()}”.`;
+
   if (features.data.groups.length === 0) {
     return <EmptyState>{character.name} has no features yet.</EmptyState>;
   }
@@ -135,8 +140,14 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
           className="rounded-card border border-border bg-surface px-2 py-1"
         />
       </div>
-      <p role="status" aria-live="polite" className="text-muted text-row empty:hidden">
-        {groups.length === 0 ? `No feature matches “${query.trim()}”.` : ""}
+      {groups.length === 0 && (
+        <p aria-hidden="true" className="text-muted text-row">
+          {emptyMessage}
+        </p>
+      )}
+      {/* Rendered even while empty: a live region added with its text is often not announced. */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {groups.length === 0 ? emptyMessage : ""}
       </p>
       {groups.map((group) => (
         <Group key={`${group.origin}|${group.name ?? ""}`} group={group} />
