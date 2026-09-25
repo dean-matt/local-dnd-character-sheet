@@ -209,7 +209,7 @@ describe("refsRoutes", () => {
   });
 
   it("answers an empty batch without opening the catalog", async () => {
-    rmSync(dataDir, { recursive: true, force: true });
+    rmSync(join(dataDir, "content"), { recursive: true, force: true });
     expect(await resolveOk([])).toEqual([]);
   });
 
