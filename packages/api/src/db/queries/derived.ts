@@ -23,7 +23,6 @@ import {
   type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
-  type ContentRef,
   type EntryRef,
   entryKey,
   type Preparation,
@@ -32,15 +31,12 @@ import {
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import type { ZodType } from "zod";
 import {
+  getCasterRows,
   getClass,
-  getClassSpellSlots,
   getFirstSpellSlotLevel,
   getItem,
-  getPreparedSpellCount,
   getRace,
   getSubclass,
-  getSubclassPreparedSpellCount,
-  getSubclassSpellSlots,
   getSubrace,
   listSkills,
 } from "./content.ts";
@@ -111,17 +107,6 @@ function castingAbility(
   return parseJson(spellcastingAbilitySchema, row.json);
 }
 
-function preparation(
-  dataDir: string,
-  ref: ContentRef,
-  level: number,
-  classJson: unknown,
-): Preparation | undefined {
-  const rule = parseJson(preparationRuleSchema, classJson);
-  if (rule) return { rule };
-  return printedPreparation(getPreparedSpellCount(dataDir, ref.name, ref.source, level));
-}
-
 const printedPreparation = (count: PreparedSpellCount): Preparation | undefined =>
   count.prepares ? { printed: count.count } : undefined;
 
@@ -142,27 +127,21 @@ function casterTable(
   if ("homebrewId" in ref) return undefined;
   const key = entryKey(ref);
   const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
-  const level = classLevels.length;
-  const prepares = preparation(dataDir, ref, level, classJson);
+  const subclass = classLevels.find((entry) => entry.subclass)?.subclass;
+  const rows = getCasterRows(dataDir, ref, subclass, classLevels.length);
+  const rule = parseJson(preparationRuleSchema, classJson);
+  const prepares = rule ? { rule } : printedPreparation(rows.prepared);
   const withPreparation = (table: CasterTable, preparation = prepares): CasterTable =>
     preparation ? { ...table, preparation } : table;
 
   const own = parseJson(casterProgressionSchema, classJson);
-  if (own) {
-    const slots = slotTotals(getClassSpellSlots(dataDir, ref.name, ref.source, level));
-    return withPreparation({ progression: own, slots });
-  }
-  const subclass = classLevels.find((entry) => entry.subclass)?.subclass;
-  const row =
-    subclass && getSubclass(dataDir, subclass.name, subclass.source, ref.name, ref.source);
-  const progression = row ? parseJson(casterProgressionSchema, row.json) : undefined;
-  if (subclass && progression) {
-    const owner = [ref.name, ref.source, subclass.name, subclass.source] as const;
-    const slots = slotTotals(getSubclassSpellSlots(dataDir, ...owner, level));
-    const subclassPrepares = printedPreparation(
-      getSubclassPreparedSpellCount(dataDir, ...owner, level),
+  if (own) return withPreparation({ progression: own, slots: slotTotals(rows.slots) });
+  const progression = rows.subclass && parseJson(casterProgressionSchema, rows.subclass.json);
+  if (rows.subclass && progression) {
+    return withPreparation(
+      { progression, slots: slotTotals(rows.subclass.slots) },
+      prepares ?? printedPreparation(rows.subclass.prepared),
     );
-    return withPreparation({ progression, slots }, prepares ?? subclassPrepares);
   }
   return prepares ? { slots: [], preparation: prepares } : undefined;
 }

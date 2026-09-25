@@ -86,7 +86,11 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined) {
     concentration: row.concentration,
     ritual: row.ritual,
     ...castingFacts(row.json),
-    entries: pick(entriesSchema, row.json.entries) ?? [],
+    // Upstream keeps the upcast rule apart, and dropping it makes the text read complete.
+    entries: [
+      ...(pick(entriesSchema, row.json.entries) ?? []),
+      ...(pick(entriesSchema, row.json.entriesHigherLevel) ?? []),
+    ],
   };
 }
 

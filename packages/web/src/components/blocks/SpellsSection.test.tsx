@@ -135,7 +135,7 @@ describe("SpellsSection", () => {
     const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     expect(headings.slice(-3)).toEqual(["Cantrips", "1st level", "Not found"]);
 
-    const hex = screen.getByText("Hex").closest("summary") as HTMLElement;
+    const hex = screen.getByText("Hex").closest("li") as HTMLElement;
     expect(hex).toHaveTextContent("Enchantment");
     expect(hex).toHaveTextContent("Prepared");
     expect(hex).toHaveTextContent("Concentration");
@@ -151,12 +151,12 @@ describe("SpellsSection", () => {
   it("tells a known spell from a prepared one and marks a homebrew spell", async () => {
     renderSection();
 
-    const blast = (await screen.findByText("Eldritch Blast")).closest("summary") as HTMLElement;
+    const blast = (await screen.findByText("Eldritch Blast")).closest("li") as HTMLElement;
     expect(blast).toHaveTextContent("Known");
     expect(blast).not.toHaveTextContent("Homebrew");
     expect(blast).toHaveTextContent("Casting time: —none.");
 
-    const glimmer = screen.getByText("Glimmer").closest("summary") as HTMLElement;
+    const glimmer = screen.getByText("Glimmer").closest("li") as HTMLElement;
     expect(glimmer).toHaveTextContent("Homebrew");
     expect(glimmer).toHaveTextContent("Ritual");
   });
@@ -164,11 +164,13 @@ describe("SpellsSection", () => {
   it("renders a spell's text through the token renderer", async () => {
     renderSection();
 
-    const summary = await screen.findByText("Hex");
-    fireEvent.click(summary);
-    const details = summary.closest("details") as HTMLElement;
-    expect(details).toHaveTextContent("Deal an extra 1d6 necrotic damage.");
-    expect(details).not.toHaveTextContent("{@damage");
+    const toggle = await screen.findByRole("button", { name: "Hex" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    const text = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    expect(text).toHaveTextContent("Deal an extra 1d6 necrotic damage.");
+    expect(text).not.toHaveTextContent("{@damage");
   });
 
   it("shows a reference that resolves to nothing by its stored name, marked", async () => {
@@ -176,7 +178,7 @@ describe("SpellsSection", () => {
 
     const row = (await screen.findByText("Lost Spell (PHB)")).closest("li") as HTMLElement;
     expect(row).toHaveTextContent("Not found in the catalog");
-    expect(row.querySelector("details")).toBeNull();
+    expect(within(row).queryByRole("button")).toBeNull();
   });
 
   it("shows no spell view for a character who does not cast", () => {

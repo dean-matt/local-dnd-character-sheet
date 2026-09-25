@@ -22,6 +22,9 @@ const SHIELD = {
   components: { v: true, s: true },
   duration: [{ type: "timed", duration: { type: "round", amount: 1 } }],
   entries: ["An invisible barrier of magical force appears."],
+  entriesHigherLevel: [
+    { type: "entries", name: "At Higher Levels", entries: ["It lasts {@b longer}."] },
+  ],
 };
 
 const withSpells = (spells: object[]): CharacterDefinition =>
@@ -123,7 +126,7 @@ describe("characterSpellsRoutes", () => {
       range: SHIELD.range,
       components: SHIELD.components,
       duration: SHIELD.duration,
-      entries: SHIELD.entries,
+      entries: [...SHIELD.entries, ...SHIELD.entriesHigherLevel],
     });
   });
 

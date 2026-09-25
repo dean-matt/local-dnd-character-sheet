@@ -12,7 +12,7 @@ import {
   displayName,
   entryKey,
 } from "@dnd/character";
-import type { ReactNode } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { useCharacterSpells } from "../../hooks/useCharacterSpells.ts";
 import {
   castingTime,
@@ -139,29 +139,52 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
       </li>
     );
   }
+  return <ResolvedSpellRow spell={spell} marks={marks} />;
+}
+
+/**
+ * A button rather than a `<details>`: a summary is the disclosure's accessible name, so
+ * one holding the facts would read them all on every focus, and a link in a trigger
+ * would sit inside a button.
+ */
+function ResolvedSpellRow({
+  spell,
+  marks,
+}: {
+  spell: Extract<SheetSpell, { resolved: true }>;
+  marks: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const textId = useId();
   return (
-    <li>
-      <details className="group py-1">
-        <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span aria-hidden="true" className="text-muted group-open:rotate-90">
+    <li className="py-1">
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={textId}
+          onClick={() => setOpen(!open)}
+          className="flex cursor-pointer items-baseline gap-2 font-medium"
+        >
+          <span aria-hidden="true" className={`text-muted ${open ? "rotate-90" : ""}`}>
             ▸
           </span>
-          <span className="font-medium">{spell.name}</span>
-          <span className="text-muted text-row">{schoolName(spell.school)}</span>
-          {marks}
-          {spell.concentration && <Tag>Concentration</Tag>}
-          {spell.ritual && <Tag>Ritual</Tag>}
-          <span className="flex basis-full flex-wrap gap-x-3 pl-4 text-muted text-row">
-            <Fact label="Casting time" value={castingTime(spell.time)} />
-            <Fact label="Range" value={spellRange(spell.range)} />
-            <Fact label="Components" value={spellComponents(spell.components)} />
-            <Fact label="Duration" value={spellDuration(spell.duration)} />
-          </span>
-        </summary>
-        <div className="mt-2 flex flex-col gap-2 pl-4">
-          <RulesEntries entries={spell.entries} />
-        </div>
-      </details>
+          {spell.name}
+        </button>
+        <span className="text-muted text-row">{schoolName(spell.school)}</span>
+        {marks}
+        {spell.concentration && <Tag>Concentration</Tag>}
+        {spell.ritual && <Tag>Ritual</Tag>}
+        <span className="flex basis-full flex-wrap gap-x-3 pl-4 text-muted text-row">
+          <Fact label="Casting time" value={castingTime(spell.time)} />
+          <Fact label="Range" value={spellRange(spell.range)} />
+          <Fact label="Components" value={spellComponents(spell.components)} />
+          <Fact label="Duration" value={spellDuration(spell.duration)} />
+        </span>
+      </div>
+      <div id={textId} hidden={!open} className="mt-2 flex flex-col gap-2 pl-4">
+        {open && <RulesEntries entries={spell.entries} />}
+      </div>
     </li>
   );
 }
