@@ -680,3 +680,124 @@ export function publishClasses(dataDir: string, fixture: ClassFixture): void {
     ],
   );
 }
+
+type LookupFixtureRow = {
+  kind: string;
+  name: string;
+  source: string;
+  edition: string | null;
+  json: string;
+};
+
+export type DerivedFixture = {
+  classes?: ClassFixtureRow[];
+  subclasses?: SubclassFixtureRow[];
+  races?: RaceFixtureRow[];
+  subraces?: SubraceFixtureRow[];
+  items?: ItemFixtureRow[];
+  lookups?: LookupFixtureRow[];
+};
+
+/**
+ * Mirrors `build-db.ts`'s publish step against every table a derived block reads — the
+ * character's classes and subclasses, its race or subrace, its equipped items, and the
+ * edition's skills from `lookups`.
+ */
+export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture): void {
+  publishTable(
+    dataDir,
+    `
+      CREATE TABLE classes (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        hit_die INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE subclasses (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        short_name TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source)
+      ) STRICT;
+
+      CREATE TABLE races (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE subraces (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        race_name TEXT NOT NULL,
+        race_source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, race_name, race_source)
+      ) STRICT;
+
+      CREATE TABLE items (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        type TEXT,
+        rarity TEXT,
+        requires_attunement INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE lookups (
+        kind TEXT NOT NULL,
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        qualifier TEXT NOT NULL DEFAULT '',
+        edition TEXT,
+        json TEXT NOT NULL,
+        PRIMARY KEY (kind, name, source, qualifier)
+      ) STRICT;
+    `,
+    [
+      {
+        insert:
+          "INSERT INTO classes (name, source, edition, hit_die, json) VALUES (@name, @source, @edition, @hit_die, @json)",
+        rows: fixture.classes ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclasses (name, source, short_name, class_name, class_source, edition, json) VALUES (@name, @source, @short_name, @class_name, @class_source, @edition, @json)",
+        rows: fixture.subclasses ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO races (name, source, edition, json) VALUES (@name, @source, @edition, @json)",
+        rows: fixture.races ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subraces (name, source, race_name, race_source, edition, json) VALUES (@name, @source, @race_name, @race_source, @edition, @json)",
+        rows: fixture.subraces ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO items (name, source, edition, kind, type, rarity, requires_attunement, json) VALUES (@name, @source, @edition, @kind, @type, @rarity, @requires_attunement, @json)",
+        rows: fixture.items ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO lookups (kind, name, source, edition, json) VALUES (@kind, @name, @source, @edition, @json)",
+        rows: fixture.lookups ?? [],
+      },
+    ],
+  );
+}

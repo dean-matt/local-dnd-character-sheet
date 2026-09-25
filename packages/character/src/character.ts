@@ -17,6 +17,7 @@
  * strict for the plainer reason: a key nothing named means the caller built it wrong.
  */
 import {
+  ABILITIES,
   abilityModifier,
   armorClass,
   type Breakdown,
@@ -43,7 +44,6 @@ import { z } from "zod";
 
 const editionSchema = z.enum(EDITIONS);
 
-const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 const abilitySchema = z.enum(ABILITIES);
 
 const contentRefSchema = z.strictObject({

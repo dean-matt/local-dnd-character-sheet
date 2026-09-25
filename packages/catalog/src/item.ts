@@ -2,7 +2,8 @@
  * An item row's `json`, in the shape `vendor/5etools/data/items.json` writes it. Models
  * the fields the content loader (`packages/content/src/load/items.ts`) and a renderer
  * read off an entry; everything else upstream carries — weight, value, damage dice, and
- * every field specific to one item `type` — passes through unparsed.
+ * every field specific to one item `type` — passes through unparsed. `armorTraitSchema`
+ * reads armor class off the same entry for a derived block.
  *
  * Passthrough rather than strict, departing from `packages/character/src/character.ts`:
  * a character definition is read, edited field by field and written back whole, so an
@@ -58,6 +59,33 @@ export const homebrewItemRecordSchema = z.strictObject({
 });
 
 export type HomebrewItemRecord = z.infer<typeof homebrewItemRecordSchema>;
+
+const ARMOR_CATEGORIES = { LA: "light", MA: "medium", HA: "heavy", S: "shield" } as const;
+
+type ArmorCode = keyof typeof ARMOR_CATEGORIES;
+
+const isArmorCode = (code: string): code is ArmorCode => Object.hasOwn(ARMOR_CATEGORIES, code);
+
+/**
+ * What an item row adds to armor class, `undefined` for one that is not armor or a
+ * shield or states no `ac`. A 2024 row suffixes its type with a source — `HA|XPHB` — so
+ * the code before the bar decides. `bonusAc` is a magic item's own bonus, such as
+ * Dwarven Plate's `+2`, and adds to the printed `ac`.
+ */
+export const armorTraitSchema = z
+  .looseObject({
+    type: z.string().optional(),
+    ac: z.int().optional(),
+    bonusAc: z
+      .string()
+      .regex(/^[+-]\d+$/)
+      .optional(),
+  })
+  .transform(({ type, ac, bonusAc }) => {
+    const code = type?.split("|")[0] ?? "";
+    if (!isArmorCode(code) || ac === undefined) return undefined;
+    return { category: ARMOR_CATEGORIES[code], armorClass: ac + Number(bonusAc ?? 0) };
+  });
 
 /**
  * An item row from `content.db`'s `items` table, addressed by `(name, source)`. `json`

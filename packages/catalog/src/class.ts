@@ -1,14 +1,14 @@
 /**
  * A class or subclass row's `json`, in the shape `data/class/class-*.json` writes an
  * entry. Models only what a renderer needs to walk — `name`, `source` and `entries` —
- * everything else upstream carries, such as proficiencies and spellcasting ability,
- * passes through unparsed.
+ * everything else upstream carries, such as proficiencies, passes through unparsed.
+ * `spellcastingAbilitySchema` reads the casting ability off the same entry.
  *
  * The grant schemas below are the level-indexed facts `docs/class-tables.md` describes:
  * a resource's printed value, a caster's slots, an optional feature's running count,
  * and the features gained by that level.
  */
-import { EDITIONS } from "@dnd/rules";
+import { ABILITIES, EDITIONS } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
@@ -17,6 +17,14 @@ const classEntrySchema = z.looseObject({
   source: z.string().min(1),
   entries: entriesSchema.optional(),
 });
+
+/**
+ * The ability a class or subclass row casts with, `undefined` where it casts none. A
+ * subclass states its own — Eldritch Knight, Arcane Trickster — under a class that does not.
+ */
+export const spellcastingAbilitySchema = z
+  .looseObject({ spellcastingAbility: z.enum(ABILITIES).optional() })
+  .transform((entry) => entry.spellcastingAbility);
 
 /** A class row from `content.db`'s `classes` table, addressed by `(name, source)`. */
 export const classRecordSchema = z.strictObject({

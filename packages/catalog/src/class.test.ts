@@ -5,6 +5,7 @@ import {
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
   preparedSpellCountSchema,
+  spellcastingAbilitySchema,
   subclassRecordSchema,
 } from "./index.ts";
 
@@ -130,5 +131,17 @@ describe("preparedSpellCountSchema", () => {
 
   it("rejects a count on a class that does not prepare", () => {
     expect(() => preparedSpellCountSchema.parse({ prepares: false, count: 0 })).toThrow();
+  });
+});
+
+describe("spellcastingAbilitySchema", () => {
+  it("reads the ability a class casts with", () => {
+    expect(spellcastingAbilitySchema.parse({ name: "Wizard", spellcastingAbility: "int" })).toBe(
+      "int",
+    );
+  });
+
+  it("is undefined for a class that casts none", () => {
+    expect(spellcastingAbilitySchema.parse({ name: "Fighter" })).toBeUndefined();
   });
 });

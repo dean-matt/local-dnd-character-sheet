@@ -3,6 +3,7 @@ import {
   homebrewRaceInputSchema,
   homebrewRaceRecordSchema,
   raceRecordSchema,
+  raceTraitsSchema,
   subraceRecordSchema,
 } from "./index.ts";
 
@@ -83,5 +84,31 @@ describe("homebrewRaceRecordSchema", () => {
       createdAt: new Date(0).toISOString(),
     };
     expect(homebrewRaceRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("raceTraitsSchema", () => {
+  it("reads a bare number as the walking speed", () => {
+    expect(raceTraitsSchema.parse({ size: ["M"], speed: 30 })).toEqual({
+      size: "medium",
+      speed: { walk: 30 },
+    });
+  });
+
+  it("reads a mode written as true as the walking speed", () => {
+    expect(
+      raceTraitsSchema.parse({ size: ["M"], speed: { walk: 30, fly: true, swim: 20 } }),
+    ).toEqual({ size: "medium", speed: { walk: 30, fly: 30, swim: 20 } });
+  });
+
+  it("takes the largest size a race offers, and reads varies as medium", () => {
+    expect(raceTraitsSchema.parse({ size: ["S", "M"], speed: 30 }).size).toBe("medium");
+    expect(raceTraitsSchema.parse({ size: ["S"], speed: 25 }).size).toBe("small");
+    expect(raceTraitsSchema.parse({ size: ["V"], speed: 30 }).size).toBe("medium");
+  });
+
+  it("rejects a race that states no size or speed", () => {
+    expect(raceTraitsSchema.safeParse({ speed: 30 }).success).toBe(false);
+    expect(raceTraitsSchema.safeParse({ size: ["M"] }).success).toBe(false);
   });
 });

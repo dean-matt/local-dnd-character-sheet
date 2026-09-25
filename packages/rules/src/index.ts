@@ -9,6 +9,7 @@ export {
   SIZES,
 } from "./carrying.ts";
 export {
+  ABILITIES,
   abilityModifier,
   PROFICIENCY_LEVELS,
   passiveScore,
