@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
@@ -97,7 +97,7 @@ describe("routing", () => {
     await screen.findByRole("heading", { level: 1, name: "Page not found" });
   });
 
-  it("puts the sheet back where the reader left it on returning from a catalog row", async () => {
+  it("puts the sheet back where the reader left it once its queries settle again", async () => {
     stubFetchByUrl({
       "/api/characters/abc": characterRecord("abc", "Vex"),
       "/api/characters/abc/pages": presetPageRecords(),
@@ -108,19 +108,32 @@ describe("routing", () => {
         json: { name: "Alert", source: "PHB" },
       },
     });
-    const scrollTo = vi.fn();
+    sessionStorage.clear();
+    const pageShownAtScroll: boolean[] = [];
+    const scrollTo = vi.fn(() => {
+      pageShownAtScroll.push(screen.queryByRole("heading", { level: 1, name: "Stats" }) !== null);
+    });
     vi.stubGlobal("scrollTo", scrollTo);
-    const router = renderAt("/characters/abc/p/stats");
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const router = createMemoryRouter(routeConfig, { initialEntries: ["/characters/abc/p/stats"] });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
     await screen.findByRole("heading", { level: 1, name: "Stats" });
 
     vi.stubGlobal("scrollY", 480);
+    window.dispatchEvent(new Event("scroll"));
     await router.navigate("/catalog/feats/Alert/PHB");
     await screen.findByRole("heading", { level: 1, name: "Alert" });
-    vi.stubGlobal("scrollY", 0);
+    expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+
+    queryClient.clear();
     await router.navigate(-1);
     await screen.findByRole("heading", { level: 1, name: "Stats" });
-
-    expect(scrollTo).toHaveBeenLastCalledWith(0, 480);
+    await waitFor(() => expect(scrollTo).toHaveBeenLastCalledWith(0, 480));
+    expect(pageShownAtScroll.at(-1)).toBe(true);
   });
 
   it("wraps every route in one landmark layout", async () => {

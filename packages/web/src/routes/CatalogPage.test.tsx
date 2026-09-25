@@ -103,6 +103,58 @@ describe("CatalogPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("reads a subclass feature under the short name its tag carries", async () => {
+    const berserker = {
+      name: "Path of the Berserker",
+      source: "PHB",
+      shortName: "Berserker",
+      className: "Barbarian",
+      classSource: "PHB",
+      edition: "classic",
+      json: { name: "Path of the Berserker", source: "PHB" },
+    };
+    const list = (items: unknown[]) => ({ items, total: items.length, limit: 200, offset: 0 });
+    const fetchMock = stubFetchByUrl({
+      "/api/classes/Barbarian/PHB/subclasses?edition=classic&limit=200": list([berserker]),
+      "/api/classes/Barbarian/PHB/subclasses?edition=one&limit=200": list([]),
+      "/api/classes/Barbarian/PHB/subclasses/Path%20of%20the%20Berserker/PHB/at/3": {
+        ...barbarianAt3,
+        features: [feature("Frenzy", 3)],
+      },
+    });
+    renderAt("/catalog/classes/Barbarian/PHB/subclasses/Berserker/PHB/features/Frenzy/PHB/3");
+
+    await screen.findByRole("heading", { level: 1, name: "Frenzy" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/classes/Barbarian/PHB/subclasses/Path%20of%20the%20Berserker/PHB/at/3",
+      undefined,
+    );
+  });
+
+  it("says a feature level no class reaches is not found, without asking the API", async () => {
+    const fetchMock = stubFetchByUrl({});
+    renderAt("/catalog/classes/Barbarian/PHB/features/Rage/PHB/21");
+
+    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("says a row with no rules text of its own has none", async () => {
+    stubFetchByUrl({
+      "/api/classes/Barbarian/PHB": {
+        name: "Barbarian",
+        source: "PHB",
+        edition: "classic",
+        hitDie: 12,
+        json: { name: "Barbarian", source: "PHB" },
+      },
+    });
+    renderAt("/catalog/classes/Barbarian/PHB");
+
+    await screen.findByRole("heading", { level: 1, name: "Barbarian" });
+    expect(screen.getByText("This row carries no rules text of its own.")).toBeInTheDocument();
+  });
+
   it("marks a homebrew row as homebrew", async () => {
     stubFetchByUrl({
       "/api/homebrew/spells/hb-1": {

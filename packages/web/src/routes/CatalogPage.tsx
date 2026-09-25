@@ -4,7 +4,7 @@ import { RulesEntries } from "../components/RulesText.tsx";
 import { Tag } from "../components/Tag.tsx";
 import { ApiError, retryUnlessClientError } from "../lib/api.ts";
 import type { CatalogTarget } from "../lib/catalogRows.ts";
-import { ErrorState, LoadingState } from "../states.tsx";
+import { EmptyState, ErrorState, LoadingState } from "../states.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
 /** One catalog or homebrew row, read by the identity key its address carries. */
@@ -31,7 +31,11 @@ export function CatalogPage({ target }: { target: CatalogTarget }) {
       <h1 className="font-semibold text-2xl">{name}</h1>
       <p className="mt-1 text-muted text-row">{source ?? <Tag>Homebrew</Tag>}</p>
       <div className="mt-4 flex flex-col gap-2">
-        <RulesEntries entries={entries} headingLevel={2} />
+        {entries.length > 0 ? (
+          <RulesEntries entries={entries} headingLevel={2} />
+        ) : (
+          <EmptyState>This row carries no rules text of its own.</EmptyState>
+        )}
       </div>
     </article>
   );
