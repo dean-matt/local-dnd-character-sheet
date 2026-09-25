@@ -57,6 +57,10 @@ export function searchHomebrewItems(db: HomebrewDb, edition: Edition, term: stri
     .all();
 }
 
+/** Classic before the 2024 edition, stated rather than left to how the two values sort. */
+const classicFirst = (column: typeof homebrewItems.edition | typeof homebrewSpells.edition) =>
+  sql`CASE ${column} WHEN 'classic' THEN 0 ELSE 1 END`;
+
 /** `name` compared as the unique index compares it, ignoring case: one match per edition at most. */
 function namedIn(
   column: typeof homebrewItems.name | typeof homebrewSpells.name,
@@ -76,7 +80,7 @@ export function homebrewItemNamed(db: HomebrewDb, name: string, edition?: Editio
         edition === undefined ? undefined : eq(homebrewItems.edition, edition),
       ),
     )
-    .orderBy(homebrewItems.edition)
+    .orderBy(classicFirst(homebrewItems.edition))
     .get();
 }
 
@@ -157,7 +161,7 @@ export function homebrewSpellNamed(db: HomebrewDb, name: string, edition?: Editi
         edition === undefined ? undefined : eq(homebrewSpells.edition, edition),
       ),
     )
-    .orderBy(homebrewSpells.edition)
+    .orderBy(classicFirst(homebrewSpells.edition))
     .get();
 }
 

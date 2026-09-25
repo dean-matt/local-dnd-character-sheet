@@ -48,9 +48,9 @@ spell. Rebuilding the catalog updates every character; copying would freeze it a
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full records
 carrying source `HB`, merged with catalog rows at query time. A character holds one by
 `id` and survives a rename. A `{@item My Sword|HB}` tag holds its `(name, source)`, `HB`
-being a source like any other, and degrades to its display text after one: a character is
-data, a tag is prose. So an item or spell name is unique within its edition, ignoring
-case, and a tag, which names no edition, gets the classic row where both editions hold it.
+being a source like any other, and degrades to its display text after a rename. Because a
+tag looks a row up by name, an item or spell name is unique within its edition, ignoring
+case; a tag names no edition, so it gets the classic row where both editions hold it.
 
 **A homebrew background or feat's `json` reuses `backgroundRecordSchema`'s and
 `featRecordSchema`'s entry shape** from `packages/catalog/src/character-options.ts` —

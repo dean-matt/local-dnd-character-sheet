@@ -4,8 +4,9 @@ import { apiMutate, retryUnlessClientError } from "../lib/api.ts";
 
 /**
  * The catalog or homebrew row each of one block's references names, `null` where there
- * is none, in the order `refs` lists them. A `POST` that writes nothing, so it is a query
- * and caches like one.
+ * is none, in the order `refs` lists them. A `POST` that writes nothing, so it is a query.
+ * It keeps TanStack's default staleness, because a homebrew row can be renamed or deleted
+ * while a sheet is open and its tag must then degrade rather than keep the old row.
  */
 export function useResolvedRefs(refs: RefQuery[]) {
   return useQuery({
@@ -13,7 +14,6 @@ export function useResolvedRefs(refs: RefQuery[]) {
     queryFn: async () =>
       (await apiMutate("POST", "/refs/resolve", refResolveResponseSchema, { refs })).refs,
     enabled: refs.length > 0,
-    staleTime: Number.POSITIVE_INFINITY,
     retry: retryUnlessClientError,
   });
 }
