@@ -144,7 +144,7 @@ export function Popover({ trigger, label, children }: PopoverProps) {
         aria-controls={open ? contentId : undefined}
         onFocus={handleTriggerFocus}
         onClick={handleActivate}
-        className="underline decoration-dotted underline-offset-2"
+        className="underline decoration-dotted underline-offset-2 print:no-underline"
       >
         {trigger}
       </button>

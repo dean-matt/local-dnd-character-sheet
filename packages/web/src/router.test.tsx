@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
@@ -51,6 +51,39 @@ describe("routing", () => {
     expect(nav.querySelectorAll("a")).toHaveLength(4);
     expect(screen.getByRole("link", { name: "Spells" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Stats" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("prints every page the nav lists, in its order, and no hidden page", async () => {
+    stubFetchByUrl({
+      "/api/characters/abc": characterRecord("abc", "Vex"),
+      "/api/characters/abc/pages": presetPageRecords().map((page) =>
+        page.slug === "spells" ? { ...page, hidden: true } : page,
+      ),
+    });
+    renderAt("/characters/abc/p/stats");
+    await screen.findByRole("heading", { level: 1, name: "Stats" });
+
+    const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
+    expect(sheet).not.toBeNull();
+    expect(sheet).not.toBeVisible();
+    const titles = within(sheet as HTMLElement)
+      .getAllByRole("heading", { level: 1, hidden: true })
+      .map((heading) => heading.textContent);
+    const nav = screen.getByRole("navigation", { name: "Character pages" });
+    expect(titles).toEqual([...nav.querySelectorAll("a")].map((link) => link.textContent));
+    expect(titles).not.toContain("Spells");
+  });
+
+  it("prints why the pages could not load", async () => {
+    stubFetchByUrl({ "/api/characters/abc": characterRecord("abc", "Vex") });
+    renderAt("/characters/abc/p/stats");
+    await screen.findByRole("alert");
+
+    const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
+    const alerts = within(sheet as HTMLElement)
+      .getAllByRole("alert", { hidden: true })
+      .map((alert) => alert.textContent);
+    expect(alerts).toContain("nothing at /api/characters/abc/pages");
   });
 
   it("shows the not-found state for a slug that names no page", async () => {

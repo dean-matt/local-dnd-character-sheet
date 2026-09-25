@@ -67,7 +67,7 @@ function FeatureRow({ feature }: { feature: SheetFeature }) {
     <li>
       <details className="group py-1">
         <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2">
-          <span aria-hidden="true" className="text-muted group-open:rotate-90">
+          <span aria-hidden="true" className="text-muted group-open:rotate-90 print:hidden">
             ▸
           </span>
           <span className="font-medium">{feature.name}</span>
@@ -128,7 +128,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 print:hidden">
         <label htmlFor={inputId} className="text-muted text-row">
           Find a feature
         </label>

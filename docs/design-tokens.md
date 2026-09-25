@@ -76,7 +76,26 @@ tokens — surface, border, `radius-card` and `text-row` — and every route reu
 rather than inventing its own. The next view with a number to show is the first to reach
 for `text-number`.
 
+## Print
+
+A character prints from the browser's own print. `CharacterLayout` renders every page
+the nav lists into a `data-print-sheet` element that is hidden on screen, and print shows
+that element in place of the screen page, each page starting a new sheet. A hidden page
+stays out of the nav, so it stays out of the print.
+
+- **Chrome:** the header, the page nav and its Manage pages control, the feature filter
+  and the disclosure arrows carry `print:hidden`. A new screen-only control takes it too.
+- **Palette:** the dark theme applies on screen alone, so print keeps the light tokens,
+  with a white canvas and `color-border` raised to `gray-300` so hairlines survive the
+  printer.
+- **Size:** `text-row` becomes `12pt`, the floor for printed body text.
+- **Breaks:** a heading stays with what follows it, and a list row, table row or
+  definition pair never splits across pages.
+- **Breakdowns and rules text are omitted.** A popover has no printed form, so the value
+  prints alone. The print copy keeps its own disclosure state, closed, so every spell,
+  item and feature prints its header without its rules text, whatever is open on screen.
+
 ## Out of scope here
 
-Print and a component library as a dependency. Components are shadcn/ui, copied in one
-at a time when a view first needs one, per `CLAUDE.md`.
+A component library as a dependency. Components are shadcn/ui, copied in one at a time
+when a view first needs one, per `CLAUDE.md`.
