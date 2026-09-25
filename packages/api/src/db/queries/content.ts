@@ -394,6 +394,25 @@ export function getClassGrants(
   }
 }
 
+/** The first class level with a spell slot, `undefined` for a class whose table has none. */
+export function getFirstSpellSlotLevel(
+  dataDir: string,
+  className: string,
+  classSource: string,
+): number | undefined {
+  const db = openContentDb(dataDir);
+  try {
+    const row = db
+      .prepare(
+        "SELECT min(level) AS level FROM spell_slots WHERE class_name = ? AND class_source = ?",
+      )
+      .get(className, classSource) as { level: number | null };
+    return row.level ?? undefined;
+  } finally {
+    db.close();
+  }
+}
+
 const PREPARED_SPELLS_KEY = "prepared_spells";
 
 /**

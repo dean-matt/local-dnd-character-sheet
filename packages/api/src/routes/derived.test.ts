@@ -20,6 +20,7 @@ import { derivedRoutes } from "./derived.ts";
 
 const FIGHTER = { name: "Fighter", source: "PHB" };
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
+const PALADIN = { name: "Paladin", source: "PHB" };
 const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
@@ -96,6 +97,15 @@ describe("derivedRoutes", () => {
       classes: [
         { ...FIGHTER, edition: "classic", hit_die: 10, json: JSON.stringify(FIGHTER) },
         { ...BARBARIAN, edition: "classic", hit_die: 12, json: JSON.stringify(BARBARIAN) },
+        {
+          ...PALADIN,
+          edition: "classic",
+          hit_die: 10,
+          json: JSON.stringify({ ...PALADIN, spellcastingAbility: "cha" }),
+        },
+      ],
+      spellSlots: [
+        { class_name: "Paladin", class_source: "PHB", level: 2, slot_level: 1, slots: 2 },
       ],
       subclasses: [
         {
@@ -174,6 +184,20 @@ describe("derivedRoutes", () => {
     expect(block.skills.map((entry) => entry.ref)).toEqual([
       { name: "Athletics", source: "PHB" },
       { name: "Stealth", source: "PHB" },
+    ]);
+  });
+
+  it("gives a class its casting ability from its first spell slot", async () => {
+    store(definitionWith({ levels: [{ class: PALADIN }] }));
+    expect((await derived()).spellcasting).toEqual([]);
+
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({ levels: [{ class: PALADIN }, { class: PALADIN }] }),
+    );
+    expect((await derived()).spellcasting).toEqual([
+      expect.objectContaining({ class: PALADIN, ability: "cha" }),
     ]);
   });
 

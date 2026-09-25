@@ -25,7 +25,15 @@ import {
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import type { ZodType } from "zod";
-import { getClass, getItem, getRace, getSubclass, getSubrace, listSkills } from "./content.ts";
+import {
+  getClass,
+  getFirstSpellSlotLevel,
+  getItem,
+  getRace,
+  getSubclass,
+  getSubrace,
+  listSkills,
+} from "./content.ts";
 import { getHomebrewClass, getHomebrewItem, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
 import { getExpandedItem } from "./item-variant.ts";
 
@@ -63,11 +71,12 @@ function classFacts(
 }
 
 /**
- * The class's own casting ability, else the subclass's once the character's level in the
- * class reaches the subclass's first `additionalSpells` level. Only a catalog class has a
- * subclass row to read. A subclass listing no spells counts from the level it is taken,
- * which holds for Way of the Four Elements but would show a save DC early for one that
- * casts later without listing its spells.
+ * The class's own casting ability from its first spell slot, else the subclass's from the
+ * lowest class level its `additionalSpells` names. Paladin (PHB) casts from 2nd level and
+ * Path of the Ancestral Guardian from 10th. Only a catalog class has a table or a subclass
+ * row to read, so a homebrew class casts from 1st. A subclass listing no spells counts
+ * from the level it is taken, which holds for Way of the Four Elements but would show a
+ * save DC early for one that casts later without listing its spells.
  */
 function castingAbility(
   dataDir: string,
@@ -76,9 +85,13 @@ function castingAbility(
   classJson: unknown,
 ): Ability | undefined {
   const own = parseJson(spellcastingAbilitySchema, classJson);
-  if (own !== undefined || "homebrewId" in ref) return own;
+  if ("homebrewId" in ref) return own;
   const key = entryKey(ref);
   const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
+  if (own !== undefined) {
+    const start = getFirstSpellSlotLevel(dataDir, ref.name, ref.source) ?? 1;
+    return classLevels.length < start ? undefined : own;
+  }
   const subclass = classLevels.find((level) => level.subclass)?.subclass;
   if (!subclass) return undefined;
   const row = getSubclass(dataDir, subclass.name, subclass.source, ref.name, ref.source);
