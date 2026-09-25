@@ -62,6 +62,26 @@ describe("backupDatabase", () => {
     expect(backups).toHaveLength(1);
   });
 
+  it("backs up twice inside one millisecond without throwing or overwriting the first", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+
+    const first = backupDatabase(sqlite, backupDir, "characters");
+    expect(backupDatabase(sqlite, backupDir, "characters")).toBe(first);
+
+    sqlite.prepare("INSERT INTO characters (id, name) VALUES (?, ?)").run("2", "Pike");
+    const second = backupDatabase(sqlite, backupDir, "characters");
+
+    const backups = readdirSync(backupDir)
+      .filter((f) => f.startsWith("characters-"))
+      .sort();
+    expect(backups.map((f) => join(backupDir, f))).toEqual([first, second]);
+    const kept = new Database(first, { readonly: true });
+    const count = kept.prepare("SELECT count(*) AS n FROM characters").get() as { n: number };
+    kept.close();
+    expect(count.n).toBe(1);
+  });
+
   it("never prunes a different database's backups sharing the same directory", () => {
     const homebrew = new Database(join(workspace, "homebrew.db"));
     homebrew.exec("CREATE TABLE homebrew_items (id TEXT PRIMARY KEY)");
