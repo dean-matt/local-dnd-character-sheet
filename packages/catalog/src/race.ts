@@ -67,9 +67,8 @@ const speedSchema = z.union([
  * The size and speeds a race or subrace row states, read off the same `json` a renderer
  * walks. A subrace row is already merged over its race, so either row answers alone.
  *
- * A character stores no size choice, so a race offering several — 43 upstream rows
- * write `["S", "M"]` — reads as the largest it offers. The way out is a `size` on the
- * character definition.
+ * A character stores no size choice, so a race offering several sizes reads as the
+ * largest one. The fix is a `size` on the character definition.
  */
 export const raceTraitsSchema = z
   .looseObject({

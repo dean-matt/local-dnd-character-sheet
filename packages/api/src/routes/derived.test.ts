@@ -188,6 +188,33 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "No race Drow (PHB)" });
   });
 
+  it("reads a race taken with no subrace from the race row", async () => {
+    store(definitionWith({ subrace: undefined }));
+    expect((await derived()).speed.computed).toEqual({ walk: 30 });
+  });
+
+  it("422s a class whose hit die no rule recognizes", async () => {
+    insertHomebrewClass(opened.homebrewDb, "c", {
+      name: "Titan",
+      edition: "classic",
+      hd: { number: 1, faces: 20 },
+    });
+    store(definitionWith({ levels: [{ class: { homebrewId: "c" } }] }));
+    const res = await routes.request("/characters/1/derived");
+
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "Class homebrew c has a d20 hit die" });
+  });
+
+  it("422s a race row that states no size or speed, naming that row", async () => {
+    insertHomebrewRace(opened.homebrewDb, "r", { name: "Wisp", edition: "classic" });
+    store(definitionWith({ race: { homebrewId: "r" }, subrace: undefined }));
+    const res = await routes.request("/characters/1/derived");
+
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "Race homebrew r states no size or speed" });
+  });
+
   it("resolves a homebrew class, race and item", async () => {
     insertHomebrewClass(opened.homebrewDb, "c", {
       name: "Hexblade",

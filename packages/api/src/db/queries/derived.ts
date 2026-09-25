@@ -60,6 +60,11 @@ function classFacts(
 /**
  * The class's own casting ability, else the subclass's. Only a catalog class has a
  * subclass row to read.
+ *
+ * A subclass's ability counts from the level the subclass is taken, because no row states
+ * the level its casting starts. Path of the Ancestral Guardian gains casting only at 10th
+ * level, so from 3rd to 9th it shows a save DC it cannot use yet. The fix is a
+ * casting-start level on the subclass row.
  */
 function castingAbility(
   dataDir: string,
@@ -140,7 +145,9 @@ export function resolveCharacterCatalog(
     throw new UnresolvedReference(`No race ${describe(definition.subrace ?? definition.race)}`);
   const race = parseJson(raceTraitsSchema, json);
   if (!race)
-    throw new UnresolvedReference(`Race ${describe(definition.race)} states no size or speed`);
+    throw new UnresolvedReference(
+      `Race ${describe(definition.subrace ?? definition.race)} states no size or speed`,
+    );
 
   const skills: SkillTrait[] = listSkills(dataDir, definition.edition).flatMap((row) =>
     isAbility(row.ability)
