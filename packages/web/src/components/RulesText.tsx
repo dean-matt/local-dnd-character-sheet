@@ -10,7 +10,7 @@
  */
 import type { Entries } from "@dnd/catalog";
 import { parseTags, type Token } from "@dnd/tags";
-import type { ElementType, ReactNode } from "react";
+import { createContext, type ElementType, type ReactNode, useContext } from "react";
 
 type StyleToken = Extract<Token, { kind: "style" }>;
 type Emphasis = StyleToken["style"];
@@ -77,13 +77,25 @@ function isEntries(value: unknown): value is Entries {
   return Array.isArray(value);
 }
 
-function renderSection(entry: EntryNode, keyPrefix: string): ReactNode {
+/**
+ * The level a named subsection's heading takes, one deeper for each section around it.
+ * 4 sits under the `h3` a sheet section opens with.
+ */
+const HeadingLevel = createContext(4);
+
+const HEADINGS = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
+
+function Section({ entry }: { entry: EntryNode }) {
+  const level = useContext(HeadingLevel);
+  const Heading = HEADINGS[level - 1] ?? "h6";
   const name = str(entry.name);
   const children = isEntries(entry.entries) ? entry.entries : [];
   return (
-    <section key={keyPrefix} className="flex flex-col gap-2">
-      {name && <h4 className="font-semibold">{name}</h4>}
-      <RulesEntries entries={children} />
+    <section className="flex flex-col gap-2">
+      {name && <Heading className="font-semibold">{name}</Heading>}
+      <HeadingLevel value={name ? level + 1 : level}>
+        <RulesEntries entries={children} />
+      </HeadingLevel>
     </section>
   );
 }
@@ -212,14 +224,28 @@ function renderEntry(entry: string | EntryNode, keyPrefix: string): ReactNode {
     const name = str(entry[refField])?.split("|")[0];
     return name ? <p key={keyPrefix}>{name}</p> : null;
   }
-  return renderSection(entry, keyPrefix);
+  return <Section key={keyPrefix} entry={entry} />;
 }
 
 /**
  * The `entries` field every catalog row carries: prose strings interleaved with lists,
  * tables and named subsections. A node type this renderer does not know yet falls back
  * to a plain wrapper around its own nested `entries`, never to its JSON.
+ *
+ * `headingLevel` is the level of the outermost subsection heading, one below the heading
+ * the entries sit under. Left out, it continues from the section around this call.
  */
-export function RulesEntries({ entries }: { entries: Entries }) {
-  return <>{entries.map((entry, index) => renderEntry(entry, `e${index}`))}</>;
+export function RulesEntries({
+  entries,
+  headingLevel,
+}: {
+  entries: Entries;
+  headingLevel?: number;
+}) {
+  const rendered = <>{entries.map((entry, index) => renderEntry(entry, `e${index}`))}</>;
+  return headingLevel === undefined ? (
+    rendered
+  ) : (
+    <HeadingLevel value={headingLevel}>{rendered}</HeadingLevel>
+  );
 }
