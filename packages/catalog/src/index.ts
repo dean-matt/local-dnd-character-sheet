@@ -29,6 +29,7 @@ export type {
 export {
   castingStartLevelSchema,
   classFeatureRecordSchema,
+  classFeatureVariantSchema,
   classGrantsSchema,
   classRecordSchema,
   homebrewClassInputSchema,
@@ -40,6 +41,13 @@ export {
 } from "./class.ts";
 export type { Entries } from "./entry.ts";
 export { entriesSchema } from "./entry.ts";
+export type {
+  CharacterFeatures,
+  FeatureGroup,
+  FeatureOrigin,
+  SheetFeature,
+} from "./features.ts";
+export { characterFeaturesSchema } from "./features.ts";
 export type {
   HomebrewItem,
   HomebrewItemInput,

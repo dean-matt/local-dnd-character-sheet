@@ -816,3 +816,124 @@ export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture):
     ],
   );
 }
+
+export type FeaturesFixture = {
+  classes?: ClassFixtureRow[];
+  subclasses?: SubclassFixtureRow[];
+  classFeatures?: ClassFeatureFixtureRow[];
+  subclassFeatures?: SubclassFeatureFixtureRow[];
+  races?: RaceFixtureRow[];
+  subraces?: SubraceFixtureRow[];
+  backgrounds?: BackgroundFixtureRow[];
+  feats?: FeatFixtureRow[];
+  optionalFeatures?: FeatFixtureRow[];
+};
+
+/** Mirrors `build-db.ts`'s publish step against every table a character's features read. */
+export function publishFeaturesFixture(dataDir: string, fixture: FeaturesFixture): void {
+  const entryTable = (table: string) => `
+      CREATE TABLE ${table} (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;`;
+  const entryInsert = (table: string, rows: object[] | undefined): Insertion => ({
+    insert: `INSERT INTO ${table} (name, source, edition, json) VALUES (@name, @source, @edition, @json)`,
+    rows: rows ?? [],
+  });
+  publishTable(
+    dataDir,
+    `
+      CREATE TABLE classes (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        hit_die INTEGER NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source)
+      ) STRICT;
+
+      CREATE TABLE subclasses (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        short_name TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source)
+      ) STRICT;
+
+      CREATE TABLE class_features (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source, level)
+      ) STRICT;
+
+      CREATE TABLE subclass_features (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        class_name TEXT NOT NULL,
+        class_source TEXT NOT NULL,
+        subclass_short_name TEXT NOT NULL,
+        subclass_source TEXT NOT NULL,
+        level INTEGER NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
+      ) STRICT;
+
+      CREATE TABLE subraces (
+        name TEXT NOT NULL,
+        source TEXT NOT NULL,
+        race_name TEXT NOT NULL,
+        race_source TEXT NOT NULL,
+        edition TEXT NOT NULL,
+        json TEXT NOT NULL,
+        PRIMARY KEY (name, source, race_name, race_source)
+      ) STRICT;
+      ${entryTable("races")}
+      ${entryTable("backgrounds")}
+      ${entryTable("feats")}
+      ${entryTable("optional_features")}
+    `,
+    [
+      {
+        insert:
+          "INSERT INTO classes (name, source, edition, hit_die, json) VALUES (@name, @source, @edition, @hit_die, @json)",
+        rows: fixture.classes ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclasses (name, source, short_name, class_name, class_source, edition, json) VALUES (@name, @source, @short_name, @class_name, @class_source, @edition, @json)",
+        rows: fixture.subclasses ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (@name, @source, @class_name, @class_source, @level, @edition, @json)",
+        rows: fixture.classFeatures ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subclass_features (name, source, class_name, class_source, subclass_short_name, subclass_source, level, edition, json) VALUES (@name, @source, @class_name, @class_source, @subclass_short_name, @subclass_source, @level, @edition, @json)",
+        rows: fixture.subclassFeatures ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO subraces (name, source, race_name, race_source, edition, json) VALUES (@name, @source, @race_name, @race_source, @edition, @json)",
+        rows: fixture.subraces ?? [],
+      },
+      entryInsert("races", fixture.races),
+      entryInsert("backgrounds", fixture.backgrounds),
+      entryInsert("feats", fixture.feats),
+      entryInsert("optional_features", fixture.optionalFeatures),
+    ],
+  );
+}

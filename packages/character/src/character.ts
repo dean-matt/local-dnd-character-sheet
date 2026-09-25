@@ -364,6 +364,13 @@ const houseRulesSchema = z
      * carrying capacity alone limits what it holds.
      */
     encumbrance: z.boolean().optional(),
+    /**
+     * Tasha's optional class features apply: 29 class and 20 subclass feature rows the
+     * catalog flags `isClassFeatureVariant`, such as `Martial Versatility` (TCE) on the
+     * `Fighter` (PHB). Upstream prints them as a variant the table opts into, so absent,
+     * a class grants only its own table's features.
+     */
+    optionalClassFeatures: z.boolean().optional(),
   })
   .prefault({});
 
@@ -377,6 +384,7 @@ export type HouseRule = keyof HouseRules;
  */
 const PRINTED_RULE: Required<HouseRules> = {
   encumbrance: false,
+  optionalClassFeatures: false,
 };
 
 /**
