@@ -27,6 +27,7 @@ export type {
   SubclassRecord,
 } from "./class.ts";
 export {
+  castingStartLevelSchema,
   classFeatureRecordSchema,
   classGrantsSchema,
   classRecordSchema,

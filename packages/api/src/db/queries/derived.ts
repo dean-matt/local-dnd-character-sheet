@@ -8,7 +8,12 @@
  * carrying capacity — so either one missing throws `UnresolvedReference`.
  */
 
-import { armorTraitSchema, raceTraitsSchema, spellcastingAbilitySchema } from "@dnd/catalog";
+import {
+  armorTraitSchema,
+  castingStartLevelSchema,
+  raceTraitsSchema,
+  spellcastingAbilitySchema,
+} from "@dnd/catalog";
 import {
   type Ability,
   type ArmorTrait,
@@ -58,13 +63,11 @@ function classFacts(
 }
 
 /**
- * The class's own casting ability, else the subclass's. Only a catalog class has a
- * subclass row to read.
- *
- * A subclass's ability counts from the level the subclass is taken, because no row states
- * the level its casting starts. Path of the Ancestral Guardian gains casting only at 10th
- * level, so from 3rd to 9th it shows a save DC it cannot use yet. The fix is a
- * casting-start level on the subclass row.
+ * The class's own casting ability, else the subclass's once the character's level in the
+ * class reaches the subclass's first `additionalSpells` level. Only a catalog class has a
+ * subclass row to read. A subclass listing no spells counts from the level it is taken,
+ * which holds for Way of the Four Elements but would show a save DC early for one that
+ * casts later without listing its spells.
  */
 function castingAbility(
   dataDir: string,
@@ -75,12 +78,14 @@ function castingAbility(
   const own = parseJson(spellcastingAbilitySchema, classJson);
   if (own !== undefined || "homebrewId" in ref) return own;
   const key = entryKey(ref);
-  const subclass = definition.levels.find(
-    (level) => entryKey(level.class) === key && level.subclass,
-  )?.subclass;
+  const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
+  const subclass = classLevels.find((level) => level.subclass)?.subclass;
   if (!subclass) return undefined;
   const row = getSubclass(dataDir, subclass.name, subclass.source, ref.name, ref.source);
-  return row && parseJson(spellcastingAbilitySchema, row.json);
+  if (!row) return undefined;
+  const start = parseJson(castingStartLevelSchema, row.json);
+  if (start !== undefined && classLevels.length < start) return undefined;
+  return parseJson(spellcastingAbilitySchema, row.json);
 }
 
 function raceJson(

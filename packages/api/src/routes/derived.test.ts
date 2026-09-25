@@ -9,7 +9,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { openDatabases } from "../db/client.ts";
-import { insertCharacter } from "../db/queries/characters.ts";
+import { insertCharacter, updateCharacterDefinition } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
   insertHomebrewClass,
@@ -19,6 +19,7 @@ import {
 import { derivedRoutes } from "./derived.ts";
 
 const FIGHTER = { name: "Fighter", source: "PHB" };
+const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
@@ -92,7 +93,10 @@ describe("derivedRoutes", () => {
     opened = openDatabases(dataDir);
     routes = derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
     publishDerivedFixture(dataDir, {
-      classes: [{ ...FIGHTER, edition: "classic", hit_die: 10, json: JSON.stringify(FIGHTER) }],
+      classes: [
+        { ...FIGHTER, edition: "classic", hit_die: 10, json: JSON.stringify(FIGHTER) },
+        { ...BARBARIAN, edition: "classic", hit_die: 12, json: JSON.stringify(BARBARIAN) },
+      ],
       subclasses: [
         {
           name: "Eldritch Knight",
@@ -102,6 +106,19 @@ describe("derivedRoutes", () => {
           class_source: "PHB",
           edition: "classic",
           json: JSON.stringify({ name: "Eldritch Knight", spellcastingAbility: "int" }),
+        },
+        {
+          name: "Path of the Ancestral Guardian",
+          source: "XGE",
+          short_name: "Ancestral Guardian",
+          class_name: "Barbarian",
+          class_source: "PHB",
+          edition: "classic",
+          json: JSON.stringify({
+            name: "Path of the Ancestral Guardian",
+            spellcastingAbility: "wis",
+            additionalSpells: [{ innate: { "10": ["augury", "clairvoyance"] } }],
+          }),
         },
       ],
       races: [{ ...ELF, edition: "classic", json: JSON.stringify({ size: ["M"], speed: 30 }) }],
@@ -157,6 +174,23 @@ describe("derivedRoutes", () => {
     expect(block.skills.map((entry) => entry.ref)).toEqual([
       { name: "Athletics", source: "PHB" },
       { name: "Stealth", source: "PHB" },
+    ]);
+  });
+
+  it("gives a subclass its casting ability from the level its first spell arrives", async () => {
+    const barbarian = (level: number) =>
+      definitionWith({
+        levels: Array.from({ length: level }, (_, i) => ({
+          class: BARBARIAN,
+          ...(i === 2 && { subclass: { name: "Path of the Ancestral Guardian", source: "XGE" } }),
+        })),
+      });
+    store(barbarian(9));
+    expect((await derived()).spellcasting).toEqual([]);
+
+    updateCharacterDefinition(opened.charactersDb, "1", barbarian(10));
+    expect((await derived()).spellcasting).toEqual([
+      expect.objectContaining({ class: BARBARIAN, ability: "wis" }),
     ]);
   });
 

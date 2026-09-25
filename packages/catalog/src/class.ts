@@ -26,6 +26,38 @@ export const spellcastingAbilitySchema = z
   .looseObject({ spellcastingAbility: z.enum(ABILITIES).optional() })
   .transform((entry) => entry.spellcastingAbility);
 
+const spellsByLevelSchema = z.record(z.string(), z.unknown()).optional();
+
+/**
+ * The lowest class level at which a row's `additionalSpells` grants a spell, `undefined`
+ * where it lists none. Path of the Ancestral Guardian states a casting ability from 3rd
+ * level and grants its first spell at 10th. A key that names no class level, such as `_`
+ * or `s1`, is skipped.
+ */
+export const castingStartLevelSchema = z
+  .looseObject({
+    additionalSpells: z
+      .array(
+        z.looseObject({
+          innate: spellsByLevelSchema,
+          known: spellsByLevelSchema,
+          prepared: spellsByLevelSchema,
+          expanded: spellsByLevelSchema,
+        }),
+      )
+      .optional(),
+  })
+  .transform((entry) => {
+    const levels = (entry.additionalSpells ?? []).flatMap(({ innate, known, prepared, expanded }) =>
+      [innate, known, prepared, expanded].flatMap((byLevel) =>
+        Object.keys(byLevel ?? {})
+          .filter((key) => /^\d+$/.test(key))
+          .map(Number),
+      ),
+    );
+    return levels.length === 0 ? undefined : Math.min(...levels);
+  });
+
 /** A class row from `content.db`'s `classes` table, addressed by `(name, source)`. */
 export const classRecordSchema = z.strictObject({
   name: z.string().min(1),

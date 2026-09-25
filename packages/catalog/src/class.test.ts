@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  castingStartLevelSchema,
   classGrantsSchema,
   classRecordSchema,
   homebrewClassInputSchema,
@@ -131,6 +132,25 @@ describe("preparedSpellCountSchema", () => {
 
   it("rejects a count on a class that does not prepare", () => {
     expect(() => preparedSpellCountSchema.parse({ prepares: false, count: 0 })).toThrow();
+  });
+});
+
+describe("castingStartLevelSchema", () => {
+  it("reads the lowest class level any additionalSpells map grants a spell at", () => {
+    const row = {
+      additionalSpells: [
+        { known: { "3": ["mage hand#c"] }, expanded: { s1: ["shield"], "7": [] } },
+        { innate: { "10": ["augury"] } },
+      ],
+    };
+    expect(castingStartLevelSchema.parse(row)).toBe(3);
+  });
+
+  it("is undefined for a row that lists no spells by class level", () => {
+    expect(castingStartLevelSchema.parse({ name: "Way of the Four Elements" })).toBeUndefined();
+    expect(
+      castingStartLevelSchema.parse({ additionalSpells: [{ expanded: { s1: [] } }] }),
+    ).toBeUndefined();
   });
 });
 
