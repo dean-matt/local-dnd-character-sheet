@@ -12,7 +12,7 @@
  * is a way back from the last few migrations, not an archive.
  */
 import { createHash } from "node:crypto";
-import { mkdirSync, readdirSync, readFileSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import type Database from "better-sqlite3";
 
@@ -29,8 +29,7 @@ export function backupDatabase(sqlite: Database.Database, backupDir: string, nam
     .filter((file) => file.startsWith(prefix) && file.endsWith(".db"))
     .sort();
 
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const dest = join(backupDir, `${name}-${stamp}.db`);
+  const dest = freshPath(backupDir, name);
   sqlite.prepare("VACUUM INTO ?").run(dest);
 
   const latest = before.at(-1);
@@ -41,6 +40,17 @@ export function backupDatabase(sqlite: Database.Database, backupDir: string, nam
 
   pruneBackups(backupDir, name);
   return dest;
+}
+
+// `VACUUM INTO` refuses an existing file, so a second backup inside one millisecond takes
+// the next free millisecond rather than a suffix that would sort before the first.
+// Another process claiming the same name between the check and the write still throws.
+function freshPath(backupDir: string, name: string) {
+  for (let time = Date.now(); ; time++) {
+    const stamp = new Date(time).toISOString().replace(/[:.]/g, "-");
+    const path = join(backupDir, `${name}-${stamp}.db`);
+    if (!existsSync(path)) return path;
+  }
 }
 
 function pruneBackups(backupDir: string, name: string) {
