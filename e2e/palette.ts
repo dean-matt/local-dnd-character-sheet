@@ -1,16 +1,16 @@
 import type { Page } from "@playwright/test";
 
 /**
- * A palette color as the browser computes it, so an assertion names the Tailwind token
- * rather than pinning that release's numbers.
+ * A CSS color as the browser computes it, so an assertion names the Tailwind token or
+ * the mix rather than pinning that release's numbers.
  */
-export function computedColor(page: Page, token: string): Promise<string> {
-  return page.evaluate((name) => {
+export function computedColor(page: Page, color: string): Promise<string> {
+  return page.evaluate((value) => {
     const probe = document.createElement("div");
-    probe.style.color = `var(${name})`;
+    probe.style.color = value;
     document.body.appendChild(probe);
-    const color = getComputedStyle(probe).color;
+    const computed = getComputedStyle(probe).color;
     probe.remove();
-    return color;
-  }, token);
+    return computed;
+  }, color);
 }

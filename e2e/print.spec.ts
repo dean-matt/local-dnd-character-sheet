@@ -60,7 +60,7 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
     await expect(page.locator("body")).toHaveCSS(
       "color",
-      await computedColor(page, "--color-gray-900"),
+      await computedColor(page, "var(--color-gray-900)"),
     );
     // 12pt is 16px at the 96dpi a browser lays print out at.
     await expect(sheet.locator(".text-row").first()).toHaveCSS("font-size", "16px");
