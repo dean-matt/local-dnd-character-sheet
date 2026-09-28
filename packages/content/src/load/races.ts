@@ -280,10 +280,11 @@ export const races: Loader = {
         const context = `${RACES_FILE} subrace[${index}]`;
         const source = text(entry, "source", context);
         const raceName = text(entry, "raceName", context);
-        const fullName = subraceFullName(raceName, subraceName(entry, context));
+        const name = subraceName(entry, context);
+        const fullName = subraceFullName(raceName, name);
         const merged = withFluff(entry, fluff(fluffKey(fullName, source)), context);
         return {
-          name: subraceName(entry, context),
+          name,
           full_name: fullName,
           source,
           race_name: raceName,
