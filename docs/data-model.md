@@ -49,8 +49,8 @@ spell. Rebuilding the catalog updates every character; copying would freeze it a
 source or drops an entry, and the stored `(name, source)` names nothing. The sheet keeps
 showing the stored name and source, marked unresolved; only the derived block, which cannot
 guess a class's hit die or a race's size, answers 422 for those two. `GET
-/characters/{id}/references` checks every catalog reference a definition holds, on demand,
-and names each miss by its field. Where `tag_redirects` sends the miss to a row of the same
+/characters/{id}/references` checks every catalog reference in a definition and its state,
+on demand, and names each miss by its field. Where `tag_redirects` sends the miss to a row of the same
 table, the report carries that row as `renamedTo`. Nothing rewrites the character: a
 redirect such as `Fighter|PHB` to `Fighter|XPHB` changes edition, and that is the user's
 call.

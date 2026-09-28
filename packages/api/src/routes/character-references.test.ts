@@ -6,11 +6,12 @@ import {
   type CharacterDefinition,
   type CharacterReferences,
   characterDefinitionSchema,
+  defaultCharacterState,
 } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { openDatabases } from "../db/client.ts";
-import { insertCharacter } from "../db/queries/characters.ts";
+import { insertCharacter, updateCharacterState } from "../db/queries/characters.ts";
 import { publishReferencesFixture, type ReferencesFixture } from "../db/queries/contentFixture.ts";
 import { characterReferencesRoutes } from "./character-references.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
@@ -226,6 +227,40 @@ describe("characterReferencesRoutes", () => {
       "spells[0].origin",
       "feats[0].grantedBy.class",
       "optionalFeatures[0].grantedBy.ref",
+    ]);
+  });
+
+  it("checks the conditions the state holds, following a redirect like any other", async () => {
+    const PRONE = { name: "Prone", source: "PHB" };
+    const BLINDED = { name: "Blinded", source: "PHB" };
+    publishReferencesFixture(dataDir, {
+      ...CATALOG,
+      lookups: [
+        ...(CATALOG.lookups ?? []),
+        { name: "Prone", source: "XPHB", kind: "condition", qualifier: "" },
+      ],
+      tagRedirects: [
+        {
+          tag: "conditionsdiseases.html",
+          from_key: "prone_phb",
+          to_tag: "conditionsdiseases.html",
+          to_key: "prone_xphb",
+        },
+      ],
+    });
+    store(definitionWith());
+    updateCharacterState(opened.charactersDb, "1", {
+      ...defaultCharacterState(),
+      conditions: [PRONE, BLINDED],
+    });
+    expect(await unresolved()).toEqual([
+      {
+        field: "conditions[0]",
+        kind: "condition",
+        ref: PRONE,
+        renamedTo: { name: "Prone", source: "XPHB" },
+      },
+      { field: "conditions[1]", kind: "condition", ref: BLINDED },
     ]);
   });
 

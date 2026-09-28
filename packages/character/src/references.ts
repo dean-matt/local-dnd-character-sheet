@@ -1,10 +1,11 @@
 /**
- * Every catalog row a definition names, and the report of those the catalog no longer
- * answers. A homebrew reference is an id rather than a `(name, source)`, so neither lists it.
+ * Every catalog row a definition and its state name, and the report of those the catalog
+ * no longer answers. A homebrew reference is an id rather than a `(name, source)`, so neither lists it.
  */
 import { z } from "zod";
 import {
   type CharacterDefinition,
+  type CharacterState,
   type ContentRef,
   contentRefSchema,
   type EntryRef,
@@ -24,13 +25,14 @@ const CATALOG_KINDS = [
   "feat",
   "optionalFeature",
   "deity",
+  "condition",
 ] as const;
 
 export type CatalogKind = (typeof CATALOG_KINDS)[number];
 
 /**
- * One `(name, source)` and where the definition holds it, as a path such as
- * `spells[2].ref`. `parent` is the rest of a subclass's or a subrace's key, and
+ * One `(name, source)` and where the character holds it, as a path into the definition
+ * such as `spells[2].ref`, or into the state for `conditions[0]`. `parent` is the rest of a subclass's or a subrace's key, and
  * `pantheon` the rest of a deity's.
  */
 export type CatalogReference = {
@@ -59,7 +61,10 @@ const GRANTOR_KIND: Record<Grantor["kind"], CatalogKind> = {
 };
 
 /** In definition order. A subclass or subrace under a homebrew parent has no catalog key. */
-export function catalogReferences(definition: CharacterDefinition): CatalogReference[] {
+export function catalogReferences(
+  definition: CharacterDefinition,
+  state: CharacterState,
+): CatalogReference[] {
   const found: CatalogReference[] = [];
   const add = (field: string, kind: CatalogKind, ref: EntryRef | undefined, parent?: EntryRef) => {
     const own = catalog(ref);
@@ -118,6 +123,9 @@ export function catalogReferences(definition: CharacterDefinition): CatalogRefer
       pantheon: deity.pantheon,
     });
   }
+  state.conditions.forEach((condition, i) => {
+    add(`conditions[${i}]`, "condition", condition);
+  });
   return found;
 }
 

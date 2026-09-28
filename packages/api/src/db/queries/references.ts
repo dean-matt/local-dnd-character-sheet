@@ -1,5 +1,5 @@
 /**
- * Checks every catalog reference one definition holds against `content.db`, on demand.
+ * Checks every catalog reference one character holds against `content.db`, on demand.
  * A reference matches its row exactly, as the sheet's own readers match it, so what this
  * reports is what the sheet shows unresolved. A miss that upstream's redirect map sends to
  * a row of the same table carries that row as `renamedTo`; nothing is written back.
@@ -9,7 +9,7 @@ import {
   type CatalogReference,
   type CharacterDefinition,
   type CharacterReferences,
-  type ContentRef,
+  type CharacterState,
   catalogReferences,
 } from "@dnd/character";
 import type Database from "better-sqlite3";
@@ -38,6 +38,11 @@ const KINDS: Record<CatalogKind, { from: string; where?: string; page?: string }
   feat: { from: "feats", page: "feats.html" },
   optionalFeature: { from: "optional_features", page: "optionalfeatures.html" },
   deity: { from: "lookups", where: "kind = 'deity' AND qualifier = ?" },
+  condition: {
+    from: "lookups",
+    where: "kind = 'condition' AND qualifier = ''",
+    page: "conditionsdiseases.html",
+  },
 };
 
 const select = (kind: CatalogKind, collate: string) => {
@@ -48,33 +53,37 @@ const select = (kind: CatalogKind, collate: string) => {
 
 type Found = { name: string; source: string } | undefined;
 
-/** The row a redirect of the same table names, as the row spells it: upstream lowercases a target. */
-function renamedTo(db: Database.Database, kind: CatalogKind, ref: ContentRef): Found {
-  const { page } = KINDS[kind];
-  const to = page === undefined ? undefined : redirects(db)(page, ref.name, ref.source);
-  if (to === undefined || to.page !== page) return undefined;
-  return db.prepare(select(kind, " COLLATE NOCASE")).get(to.name, to.source) as Found;
-}
-
 export function checkCharacterReferences(
   dataDir: string,
   definition: CharacterDefinition,
+  state: CharacterState,
 ): CharacterReferences {
-  const references = catalogReferences(definition);
+  const references = catalogReferences(definition, state);
   if (references.length === 0) return { unresolved: [] };
   const db = openContentDb(dataDir);
   try {
-    const exact = new Map<CatalogKind, Database.Statement>();
+    const statements = new Map<string, Database.Statement>();
+    const prepared = (sql: string) => {
+      const statement = statements.get(sql) ?? db.prepare(sql);
+      statements.set(sql, statement);
+      return statement;
+    };
+    const hop = redirects(db);
     const resolves = ({ kind, ref, parent, pantheon }: CatalogReference) => {
-      const statement = exact.get(kind) ?? db.prepare(select(kind, ""));
-      exact.set(kind, statement);
       const rest = parent ? [parent.name, parent.source] : pantheon ? [pantheon] : [];
-      return statement.get(ref.name, ref.source, ...rest) !== undefined;
+      return prepared(select(kind, "")).get(ref.name, ref.source, ...rest) !== undefined;
+    };
+    // Upstream lowercases a redirect's target, so only its row spells the name right.
+    const renamedTo = ({ kind, ref }: CatalogReference): Found => {
+      const { page } = KINDS[kind];
+      const to = page === undefined ? undefined : hop(page, ref.name, ref.source);
+      if (to === undefined || to.page !== page) return undefined;
+      return prepared(select(kind, " COLLATE NOCASE")).get(to.name, to.source) as Found;
     };
     const unresolved = references
       .filter((reference) => !resolves(reference))
       .map((reference) => {
-        const row = renamedTo(db, reference.kind, reference.ref);
+        const row = renamedTo(reference);
         return { ...reference, ...(row && { renamedTo: row }) };
       });
     return { unresolved };
