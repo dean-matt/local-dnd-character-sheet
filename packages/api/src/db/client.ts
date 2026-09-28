@@ -55,16 +55,6 @@ function openMigrated<Schema extends Record<string, unknown>>(
  * neither this function nor its caller returns them on that path, so nothing else can.
  */
 export function openDatabases(dataDir: string) {
-  const s = performance.now();
-  try {
-    return openDatabasesTimed(dataDir);
-  } finally {
-    const g = globalThis as unknown as { __dbTiming?: { open: number } };
-    if (g.__dbTiming) g.__dbTiming.open += performance.now() - s;
-  }
-}
-
-function openDatabasesTimed(dataDir: string) {
   const backupDir = join(dataDir, "backups");
   const opened: Database.Database[] = [];
 

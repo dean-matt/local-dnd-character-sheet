@@ -67,20 +67,10 @@ type Insertion = { insert: string; rows: object[] };
  * Windows refuses. One `ddl` and several `insertions` where a read spans tables in one
  * connection, such as a class's resources, slots and features at a level.
  *
- * Built in memory and written in one call: on disk, each autocommitted insert creates and
- * deletes a journal file, which a hosted Windows runner made seconds per fixture.
+ * Built in memory and written in one call: built on disk, each autocommitted insert
+ * creates and deletes a journal file, and a hosted Windows runner took up to 3 s a fixture.
  */
 function publishTable(dataDir: string, ddl: string, insertions: Insertion[]): void {
-  const s = performance.now();
-  try {
-    publishTableTimed(dataDir, ddl, insertions);
-  } finally {
-    const g = globalThis as unknown as { __dbTiming?: { fixture: number } };
-    if (g.__dbTiming) g.__dbTiming.fixture += performance.now() - s;
-  }
-}
-
-function publishTableTimed(dataDir: string, ddl: string, insertions: Insertion[]): void {
   const contentDir = join(dataDir, "content");
   mkdirSync(contentDir, { recursive: true });
   const name = `content-test-${publishCount++}.db`;

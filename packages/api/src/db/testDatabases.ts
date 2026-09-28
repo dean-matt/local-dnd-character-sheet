@@ -3,10 +3,10 @@
  * image migrated the first time a test file asks. Vitest isolates each test file's
  * modules, so the images are built once per file and no test sees another's writes.
  *
- * On disk, every open ran the backup and every migration and left files to delete, which
- * a hosted Windows runner made the slowest part of the suite. `openDatabases` itself keeps
- * its on-disk tests in `client.test.ts`; this skips only what those already cover, the
- * backup and WAL, and keeps its foreign keys and migrations.
+ * Opening them on disk runs the backup and every migration and leaves files to delete,
+ * which on a hosted Windows runner costs more than the tests' own work. `client.test.ts`
+ * still covers `openDatabases` on disk; this skips only what that covers, the backup and
+ * WAL, and keeps its foreign keys and migrations.
  */
 import Database from "better-sqlite3";
 import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
@@ -33,16 +33,6 @@ function migratedImage<Schema extends Record<string, unknown>>(
 let images: { characters: Buffer; homebrew: Buffer } | undefined;
 
 export function openTestDatabases() {
-  const t0 = performance.now();
-  try {
-    return openTestDatabasesTimed();
-  } finally {
-    const g = globalThis as unknown as { __dbTiming?: { open: number } };
-    if (g.__dbTiming) g.__dbTiming.open += performance.now() - t0;
-  }
-}
-
-function openTestDatabasesTimed() {
   images ??= {
     characters: migratedImage(charactersSchema, migrateCharacters),
     homebrew: migratedImage(homebrewSchema, migrateHomebrew),

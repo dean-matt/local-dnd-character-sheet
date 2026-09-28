@@ -37,14 +37,7 @@ jobs:
         run: pnpm deadcode
 
       - name: Test
-        if: ${{ !cancelled() }}
         run: pnpm test
-        env:
-          TIMING_OUT: ${{ runner.temp }}/timing.jsonl
-
-      - name: Timing report
-        if: ${{ !cancelled() }}
-        run: node scripts/timing-report.mjs "${{ runner.temp }}/timing.jsonl"
 
       - name: Build
         run: pnpm build

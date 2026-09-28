@@ -19,7 +19,6 @@ export default defineConfig({
             "tests/**/*.test.ts",
             "packages/{rules,character,dice,tags,catalog,api,content}/src/**/*.test.ts",
           ],
-          setupFiles: ["./tests/timing.setup.ts"],
         },
       },
       {
@@ -28,7 +27,7 @@ export default defineConfig({
           name: "web",
           environment: "jsdom",
           globals: true,
-          setupFiles: ["./packages/web/vitest.setup.ts", "./tests/timing.setup.ts"],
+          setupFiles: ["./packages/web/vitest.setup.ts"],
           include: ["packages/web/src/**/*.test.{ts,tsx}"],
         },
       },
