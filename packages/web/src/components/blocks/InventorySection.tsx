@@ -6,12 +6,13 @@
  */
 import type { SheetItem } from "@dnd/catalog";
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
-import { type ReactNode, useId, useState } from "react";
+import type { ReactNode } from "react";
 import { useCharacterInventory } from "../../hooks/useCharacterInventory.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
-import { RulesEntries } from "../RulesText.tsx";
+import { ListRow } from "../ListRow.tsx";
+import { firstLine, RulesEntries } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
 const pounds = (value: number) =>
@@ -112,69 +113,58 @@ function Marks({ item }: { item: SheetItem }) {
   );
 }
 
-const quantity = (item: SheetItem) => (item.quantity > 1 ? ` ×${item.quantity}` : "");
-
 function UnresolvedRow({ item }: { item: Extract<SheetItem, { resolved: false }> }) {
   const source = item.source ? ` (${item.source})` : "";
   const variant = item.variant ? `, as ${item.variant.name} (${item.variant.source})` : "";
   return (
-    <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1 py-1">
-      <span>
-        {item.name}
-        {source}
-        {variant}
-        {quantity(item)}
-      </span>
-      <Marks item={item} />
-      <span className="text-muted text-row">
-        {item.source === undefined ? "Not found in homebrew" : "Not found in the catalog"}
-      </span>
-    </li>
+    <ListRow
+      name={`${item.name}${source}${variant}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
+      chips={
+        <>
+          <Marks item={item} />
+          <Tag>
+            {item.source === undefined ? "Not found in homebrew" : "Not found in the catalog"}
+          </Tag>
+        </>
+      }
+    />
   );
 }
 
-/** A button rather than a `<details>`, for the reason `SpellsSection` gives. */
 function ResolvedRow({ item }: { item: Extract<SheetItem, { resolved: true }> }) {
-  const [open, setOpen] = useState(false);
-  const textId = useId();
   const rarity =
     item.rarity && item.rarity !== "none"
       ? item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)
       : undefined;
   return (
-    <li className="py-1">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={textId}
-          onClick={() => setOpen(!open)}
-          className="flex cursor-pointer items-baseline gap-2 font-medium"
-        >
-          <span aria-hidden="true" className={`text-muted print:hidden ${open ? "rotate-90" : ""}`}>
-            ▸
-          </span>
-          {item.name}
-        </button>
-        {item.quantity > 1 && <span className="text-muted text-row">×{item.quantity}</span>}
-        {rarity && <span className="text-muted text-row">{rarity}</span>}
-        <Marks item={item} />
-        {item.weight !== null && (
-          <span className="ml-auto text-muted text-row">
+    <ListRow
+      name={item.name}
+      chips={
+        <>
+          {item.quantity > 1 && <Tag>×{item.quantity}</Tag>}
+          {rarity && <Tag>{rarity}</Tag>}
+          <Marks item={item} />
+        </>
+      }
+      value={
+        item.weight !== null && (
+          <>
             <span className="sr-only">Weight: </span>
             {pounds(item.weight * item.quantity)}
-          </span>
-        )}
-      </div>
-      <div id={textId} hidden={!open} className="mt-2 flex flex-col gap-2 pl-4">
-        {open &&
-          (item.entries.length > 0 ? (
+          </>
+        )
+      }
+      preview={firstLine(item.entries)}
+      detail={{
+        meta: rarity ?? "Item",
+        children:
+          item.entries.length > 0 ? (
             <RulesEntries entries={item.entries} />
           ) : (
-            <p className="text-muted text-row">No description.</p>
-          ))}
-      </div>
-    </li>
+            <p className="text-muted">No description.</p>
+          ),
+      }}
+    />
   );
 }
 
@@ -187,7 +177,7 @@ function ItemList({ character }: { character: CharacterRecord }) {
   }
   return (
     <Card title="Items">
-      <ul className="divide-y divide-border">
+      <ul className="flex flex-col gap-2">
         {inventory.data.items.map((item, index) =>
           item.resolved ? (
             // biome-ignore lint/suspicious/noArrayIndexKey: two entries may hold the same item.

@@ -144,12 +144,10 @@ describe("InventorySection", () => {
   it("renders an item's text through the token renderer", async () => {
     renderSection();
 
-    const toggle = await screen.findByRole("button", { name: "+1 Longsword" });
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    const text = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
-    expect(text).toHaveTextContent("You have a +1 bonus to attack rolls.");
-    expect(text).not.toHaveTextContent("{@b");
+    fireEvent.click(await screen.findByRole("button", { name: "+1 Longsword" }));
+    const modal = screen.getByRole("dialog", { name: "+1 Longsword" });
+    expect(modal).toHaveTextContent("You have a +1 bonus to attack rolls.");
+    expect(modal).not.toHaveTextContent("{@b");
   });
 
   it("shows an unresolved magic variant by the pair it names, with nothing to open", async () => {
