@@ -10,9 +10,9 @@ decides — not the issue number, not what just merged, not how small it looks.
 
 ```bash
 # from the repo root: gh reads the account from the directory
-issues=$(gh api repos/dean-matt/local-dnd-character-sheet --jq .open_issues_count)
+issues=$(gh api 'repos/{owner}/{repo}' --jq .open_issues_count)
 items=$(gh project item-list 1 --owner dean-matt --limit 1 --format json --jq .totalCount)
-open=$(gh issue list --state open --limit "$issues" --json number --jq '[.[].number]')
+open=$(gh issue list --state open --limit "$((issues + 1))" --json number --jq '[.[].number]')
 gh project item-list 1 --owner dean-matt --limit "$items" --format json |
   jq --argjson open "$open" '
     if (.items | length) < .totalCount then error("board grew mid-read — run again") else . end
@@ -20,10 +20,8 @@ gh project item-list 1 --owner dean-matt --limit "$items" --format json |
     | sort_by(.milestone.title, .rank) | .[0]'
 ```
 
-Both limits come from counts, so the query reads the whole board and every open issue at
-any size. `open_issues_count` counts open pull requests too, so it is a ceiling rather
-than an exact count — and a ceiling is the only guard `gh issue list` gets, since it
-reports no total.
+`open_issues_count` counts open pull requests too, so it is a ceiling, not a count;
+`gh issue list` reports no total to check against, and rejects a limit of 0.
 
 Milestones sort by title, which holds while they are numbered. An unranked or
 milestone-less issue is backlog and waits for the user to name it. `null` means no
