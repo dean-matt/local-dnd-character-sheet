@@ -117,6 +117,9 @@ const TARGETS: Record<string, Target> = {
   recipe: { page: "recipes.html", source: "HF", ...entity("recipe") },
 };
 
+/** The namespace `tag_redirects` files `tag`'s redirects under. */
+export const redirectPage = (tag: string): string | undefined => TARGETS[tag]?.page;
+
 /** Upstream's link hash: each half URI-encoded, then lowercased, `%2B` included. */
 const hash = (name: string, source: string) =>
   `${encodeURIComponent(name).toLowerCase()}_${encodeURIComponent(source).toLowerCase()}`;

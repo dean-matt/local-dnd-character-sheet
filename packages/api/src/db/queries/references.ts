@@ -1,8 +1,9 @@
 /**
  * Checks every catalog reference one character holds against `content.db`, on demand.
  * A reference matches its row exactly and a variant expands with its base, as the sheet's
- * own readers do, so what this reports is what the sheet shows unresolved. A miss that upstream's redirect map sends to
- * a row of the same table carries that row as `renamedTo`; nothing is written back.
+ * own readers do, so what this reports is what the sheet shows unresolved. A miss that
+ * upstream's redirect map sends to a row of the same table carries that row as
+ * `renamedTo`; nothing is written back.
  */
 import {
   type CatalogKind,
@@ -15,35 +16,26 @@ import {
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
 import { getExpandedItem } from "./item-variant.ts";
-import { redirects } from "./refs.ts";
+import { redirectPage, redirects } from "./refs.ts";
 
 /**
- * `where` holds the key beyond `(name, source)`, bound after them. `page` is the namespace
- * `tag_redirects` files the kind under; a subclass, a subrace and a deity have no redirect
- * of their own.
+ * `where` holds the key beyond `(name, source)`, bound after them. `tag` is the `{@tag}`
+ * whose redirects the kind shares; a subclass, a subrace and a deity have none of their own.
  */
-const KINDS: Record<CatalogKind, { from: string; where?: string; page?: string }> = {
-  class: { from: "classes", page: "classes.html" },
+const KINDS: Record<CatalogKind, { from: string; where?: string; tag?: string }> = {
+  class: { from: "classes", tag: "class" },
   subclass: { from: "subclasses", where: "class_name = ? AND class_source = ?" },
-  race: { from: "races", page: "races.html" },
+  race: { from: "races", tag: "race" },
   subrace: { from: "subraces", where: "race_name = ? AND race_source = ?" },
-  background: { from: "backgrounds", page: "backgrounds.html" },
-  skill: { from: "lookups", where: "kind = 'skill' AND qualifier = ''", page: "skill" },
-  language: {
-    from: "lookups",
-    where: "kind = 'language' AND qualifier = ''",
-    page: "languages.html",
-  },
-  item: { from: "items", page: "items.html" },
-  spell: { from: "spells", page: "spells.html" },
-  feat: { from: "feats", page: "feats.html" },
-  optionalFeature: { from: "optional_features", page: "optionalfeatures.html" },
+  background: { from: "backgrounds", tag: "background" },
+  skill: { from: "lookups", where: "kind = 'skill' AND qualifier = ''", tag: "skill" },
+  language: { from: "lookups", where: "kind = 'language' AND qualifier = ''", tag: "language" },
+  item: { from: "items", tag: "item" },
+  spell: { from: "spells", tag: "spell" },
+  feat: { from: "feats", tag: "feat" },
+  optionalFeature: { from: "optional_features", tag: "optfeature" },
   deity: { from: "lookups", where: "kind = 'deity' AND qualifier = ?" },
-  condition: {
-    from: "lookups",
-    where: "kind = 'condition' AND qualifier = ''",
-    page: "conditionsdiseases.html",
-  },
+  condition: { from: "lookups", where: "kind = 'condition' AND qualifier = ''", tag: "condition" },
 };
 
 const select = (kind: CatalogKind, collate: string) => {
@@ -72,6 +64,8 @@ export function checkCharacterReferences(
     const hop = redirects(db);
     const resolves = ({ kind, ref, parent, pantheon }: CatalogReference) => {
       // The sheet shows a variant only as the item it and its base expand into.
+      // getExpandedItem opens content.db twice a call beside this handle: cheap at inventory
+      // sizes, and a getItem that takes the open handle is the way out if it ever shows.
       if (kind === "item" && parent) return Boolean(getExpandedItem(dataDir, parent, ref));
       const rest = parent ? [parent.name, parent.source] : pantheon ? [pantheon] : [];
       return prepared(select(kind, "")).get(ref.name, ref.source, ...rest) !== undefined;
@@ -81,7 +75,8 @@ export function checkCharacterReferences(
     // edition is no fix for a base item that refuses both.
     const renamedTo = (reference: CatalogReference): Found => {
       const { kind, ref } = reference;
-      const { page } = KINDS[kind];
+      const { tag } = KINDS[kind];
+      const page = tag === undefined ? undefined : redirectPage(tag);
       const to = page === undefined ? undefined : hop(page, ref.name, ref.source);
       if (to === undefined || to.page !== page) return undefined;
       const row = prepared(select(kind, " COLLATE NOCASE")).get(to.name, to.source) as Found;
