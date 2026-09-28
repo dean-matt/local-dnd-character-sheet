@@ -687,4 +687,43 @@ describe("homebrewRoutes", () => {
       expect((await sheet.request(`/characters/${character.id}`)).status).toBe(200);
     });
   });
+
+  describe.each([
+    ["backgrounds", wanderer],
+    ["feats", ironbound],
+    ["races", duskling],
+    ["classes", warden],
+  ])("%s", (collection, entry) => {
+    const path = `/homebrew/${collection}`;
+
+    it("refuses a create or rename onto a name its edition holds, naming the holder", async () => {
+      const held = await (await routes.request(path, json(entry()))).json();
+      const other = await (await routes.request(path, json(entry({ name: "Other" })))).json();
+      const conflict = { id: held.id, name: held.name, edition: "one" };
+
+      const create = await routes.request(path, json(entry({ name: held.name.toUpperCase() })));
+      expect(create.status).toBe(409);
+      expect((await create.json()).conflict).toEqual(conflict);
+
+      const rename = await routes.request(`${path}/${other.id}`, {
+        ...json(entry()),
+        method: "PUT",
+      });
+      expect(rename.status).toBe(409);
+      expect((await rename.json()).conflict).toEqual(conflict);
+      expect((await (await routes.request(`${path}/${other.id}`)).json()).name).toBe("Other");
+    });
+
+    it("lets each edition hold a name once, and a row keep its own", async () => {
+      const held = await (await routes.request(path, json(entry()))).json();
+
+      expect((await routes.request(path, json(entry({ edition: "classic" })))).status).toBe(201);
+
+      const recased = await routes.request(`${path}/${held.id}`, {
+        ...json(entry({ name: held.name.toLowerCase() })),
+        method: "PUT",
+      });
+      expect(recased.status).toBe(200);
+    });
+  });
 });

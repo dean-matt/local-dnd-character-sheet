@@ -177,4 +177,52 @@ describe("migrations", () => {
       { name: "Zap (t)" },
     ]);
   });
+
+  it("renames all but the oldest of the homebrew races, backgrounds, feats or classes one edition gives one name", () => {
+    sqlite = new Database(join(workspace, "homebrew.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0005_unique_homebrew_names", HOMEBREW_MIGRATIONS);
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const tables = ["homebrew_races", "homebrew_backgrounds", "homebrew_feats"];
+    for (const table of tables) {
+      const insert = sqlite.prepare(
+        `INSERT INTO ${table} (id, name, edition, json, created_at) VALUES (?, ?, ?, ?, ?)`,
+      );
+      for (const [id, name, edition, createdAt] of [
+        ["b", "Wanderer", "one", 1],
+        ["a", "wanderer", "one", 2],
+        ["c", "Wanderer", "classic", 3],
+      ] as const) {
+        insert.run(id, name, edition, JSON.stringify({ name, source: "HB" }), createdAt);
+      }
+    }
+    const klass = sqlite.prepare(
+      "INSERT INTO homebrew_classes (id, name, edition, hit_die, json, created_at) VALUES (?, 'Warden', 'one', 10, '{}', ?)",
+    );
+    klass.run("w", 1);
+    klass.run("x", 2);
+
+    migrateHomebrew(db);
+
+    for (const table of tables) {
+      const rows = sqlite.prepare(`SELECT id, name, json FROM ${table} ORDER BY id`).all() as {
+        id: string;
+        name: string;
+        json: string;
+      }[];
+      expect(rows.map(({ id, name, json }) => ({ id, name, json: JSON.parse(json).name }))).toEqual(
+        [
+          { id: "a", name: "wanderer (a)", json: "wanderer (a)" },
+          { id: "b", name: "Wanderer", json: "Wanderer" },
+          { id: "c", name: "Wanderer", json: "Wanderer" },
+        ],
+      );
+    }
+    expect(sqlite.prepare("SELECT name FROM homebrew_classes ORDER BY id").all()).toEqual([
+      { name: "Warden" },
+      { name: "Warden (x)" },
+    ]);
+  });
 });

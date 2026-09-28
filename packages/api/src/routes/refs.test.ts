@@ -7,7 +7,11 @@ import { openDatabases } from "../db/client.ts";
 import { publishRefsFixture } from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewItem,
+  insertHomebrewBackground,
+  insertHomebrewClass,
+  insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewRace,
   insertHomebrewSpell,
   updateHomebrewItem,
 } from "../db/queries/homebrew.ts";
@@ -181,6 +185,32 @@ describe("refsRoutes", () => {
           entries: ["Zap.", "Bigger zap."],
           path: "/homebrew/spells/s",
         },
+      ]);
+    });
+
+    it("resolves source HB to a homebrew race, background, feat or class by name", async () => {
+      const db = opened.homebrewDb;
+      insertHomebrewRace(db, "r", { name: "Duskling", edition: "one", size: ["M"], speed: 30 });
+      insertHomebrewBackground(db, "b", { name: "Wanderer", edition: "one", entries: ["Far."] });
+      insertHomebrewFeat(db, "f", { name: "Ironbound", edition: "one" });
+      insertHomebrewClass(db, "c", {
+        name: "Warden",
+        edition: "one",
+        hd: { number: 1, faces: 10 },
+      });
+
+      expect(
+        await resolveOk([
+          { tag: "race", name: "duskling", source: "HB" },
+          { tag: "background", name: "Wanderer", source: "hb" },
+          { tag: "feat", name: "IRONBOUND", source: "HB" },
+          { tag: "class", name: "Warden", source: "HB" },
+        ]),
+      ).toEqual([
+        expect.objectContaining({ name: "Duskling", source: "HB", path: "/homebrew/races/r" }),
+        { name: "Wanderer", source: "HB", entries: ["Far."], path: "/homebrew/backgrounds/b" },
+        expect.objectContaining({ name: "Ironbound", source: "HB", path: "/homebrew/feats/f" }),
+        expect.objectContaining({ name: "Warden", source: "HB", path: "/homebrew/classes/c" }),
       ]);
     });
 

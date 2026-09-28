@@ -7,8 +7,8 @@
  * A delete needs `characters.db` as well as `homebrew.db`: no foreign key spans the two
  * files, so this route enforces the reference instead.
  *
- * An item or spell name is unique within its edition, because a `{@tag}` names the row by
- * it. A create or rename onto a name another row holds answers 409 with that row.
+ * A homebrew name is unique within its kind and edition, because a `{@tag}` names the row
+ * by it. A create or rename onto a name another row holds answers 409 with that row.
  */
 import { randomUUID } from "node:crypto";
 import {
@@ -34,8 +34,16 @@ import {
 import { EDITIONS, type Edition } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { SqliteError } from "better-sqlite3";
+import {
+  homebrewBackgrounds,
+  homebrewClasses,
+  homebrewFeats,
+  homebrewItems,
+  homebrewRaces,
+  homebrewSpells,
+} from "../db/homebrew.ts";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
-import type { HomebrewDb } from "../db/queries/homebrew.ts";
+import type { HomebrewDb, NamedHomebrewTable } from "../db/queries/homebrew.ts";
 import {
   deleteHomebrewBackground,
   deleteHomebrewClass,
@@ -49,8 +57,7 @@ import {
   getHomebrewItem,
   getHomebrewRace,
   getHomebrewSpell,
-  homebrewItemNamed,
-  homebrewSpellNamed,
+  homebrewNamed,
   insertHomebrewBackground,
   insertHomebrewClass,
   insertHomebrewFeat,
@@ -365,6 +372,7 @@ const createBackground = createRoute({
       description: "The created homebrew background",
       content: { "application/json": { schema: homebrewBackgroundRecordSchema } },
     },
+    409: nameTaken("homebrew background"),
   },
 });
 
@@ -383,6 +391,7 @@ const updateBackground = createRoute({
       content: { "application/json": { schema: homebrewBackgroundRecordSchema } },
     },
     404: notFound("homebrew background"),
+    409: nameTaken("homebrew background"),
   },
 });
 
@@ -440,6 +449,7 @@ const createFeat = createRoute({
       description: "The created homebrew feat",
       content: { "application/json": { schema: homebrewFeatRecordSchema } },
     },
+    409: nameTaken("homebrew feat"),
   },
 });
 
@@ -458,6 +468,7 @@ const updateFeat = createRoute({
       content: { "application/json": { schema: homebrewFeatRecordSchema } },
     },
     404: notFound("homebrew feat"),
+    409: nameTaken("homebrew feat"),
   },
 });
 
@@ -515,6 +526,7 @@ const createRace = createRoute({
       description: "The created homebrew race",
       content: { "application/json": { schema: homebrewRaceRecordSchema } },
     },
+    409: nameTaken("homebrew race"),
   },
 });
 
@@ -533,6 +545,7 @@ const updateRace = createRoute({
       content: { "application/json": { schema: homebrewRaceRecordSchema } },
     },
     404: notFound("homebrew race"),
+    409: nameTaken("homebrew race"),
   },
 });
 
@@ -590,6 +603,7 @@ const createClass = createRoute({
       description: "The created homebrew class",
       content: { "application/json": { schema: homebrewClassRecordSchema } },
     },
+    409: nameTaken("homebrew class"),
   },
 });
 
@@ -608,6 +622,7 @@ const updateClass = createRoute({
       content: { "application/json": { schema: homebrewClassRecordSchema } },
     },
     404: notFound("homebrew class"),
+    409: nameTaken("homebrew class"),
   },
 });
 
@@ -627,6 +642,11 @@ const removeClass = createRoute({
 export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   const routes = new OpenAPIHono();
 
+  const holder =
+    (table: NamedHomebrewTable, { name, edition }: { name: string; edition: Edition }) =>
+    () =>
+      homebrewNamed(db, table, name, edition);
+
   routes.openapi(listItems, (c) => c.json(listHomebrewItems(db).map(toItemRecord)));
 
   routes.openapi(readItem, (c) => {
@@ -635,13 +655,11 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     return c.json(toItemRecord(row), 200);
   });
 
-  const itemHolder = (name: string, edition: Edition) => () => homebrewItemNamed(db, name, edition);
-
   routes.openapi(createItem, (c) => {
     const input = c.req.valid("json");
     const result = claimName(
       () => insertHomebrewItem(db, randomUUID(), input),
-      itemHolder(input.name, input.edition),
+      holder(homebrewItems, input),
     );
     if ("taken" in result) return c.json(nameTakenError("homebrew item", result.taken), 409);
     return c.json(toItemRecord(result.row), 201);
@@ -650,10 +668,7 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   routes.openapi(updateItem, (c) => {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
-    const result = claimName(
-      () => updateHomebrewItem(db, id, input),
-      itemHolder(input.name, input.edition),
-    );
+    const result = claimName(() => updateHomebrewItem(db, id, input), holder(homebrewItems, input));
     if ("taken" in result) return c.json(nameTakenError("homebrew item", result.taken), 409);
     if (!result.row) return c.json({ error: ITEM_NOT_FOUND }, 404);
     return c.json(toItemRecord(result.row), 200);
@@ -675,14 +690,11 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     return c.json(toSpellRecord(row), 200);
   });
 
-  const spellHolder = (name: string, edition: Edition) => () =>
-    homebrewSpellNamed(db, name, edition);
-
   routes.openapi(createSpell, (c) => {
     const input = c.req.valid("json");
     const result = claimName(
       () => insertHomebrewSpell(db, randomUUID(), input),
-      spellHolder(input.name, input.edition),
+      holder(homebrewSpells, input),
     );
     if ("taken" in result) return c.json(nameTakenError("homebrew spell", result.taken), 409);
     return c.json(toSpellRecord(result.row), 201);
@@ -693,7 +705,7 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
     const input = c.req.valid("json");
     const result = claimName(
       () => updateHomebrewSpell(db, id, input),
-      spellHolder(input.name, input.edition),
+      holder(homebrewSpells, input),
     );
     if ("taken" in result) return c.json(nameTakenError("homebrew spell", result.taken), 409);
     if (!result.row) return c.json({ error: SPELL_NOT_FOUND }, 404);
@@ -719,15 +731,25 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   });
 
   routes.openapi(createBackground, (c) => {
-    const row = insertHomebrewBackground(db, randomUUID(), c.req.valid("json"));
-    return c.json(toBackgroundRecord(row), 201);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => insertHomebrewBackground(db, randomUUID(), input),
+      holder(homebrewBackgrounds, input),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew background", result.taken), 409);
+    return c.json(toBackgroundRecord(result.row), 201);
   });
 
   routes.openapi(updateBackground, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateHomebrewBackground(db, id, c.req.valid("json"));
-    if (!row) return c.json({ error: BACKGROUND_NOT_FOUND }, 404);
-    return c.json(toBackgroundRecord(row), 200);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => updateHomebrewBackground(db, id, input),
+      holder(homebrewBackgrounds, input),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew background", result.taken), 409);
+    if (!result.row) return c.json({ error: BACKGROUND_NOT_FOUND }, 404);
+    return c.json(toBackgroundRecord(result.row), 200);
   });
 
   routes.openapi(removeBackground, (c) => {
@@ -747,15 +769,22 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   });
 
   routes.openapi(createFeat, (c) => {
-    const row = insertHomebrewFeat(db, randomUUID(), c.req.valid("json"));
-    return c.json(toFeatRecord(row), 201);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => insertHomebrewFeat(db, randomUUID(), input),
+      holder(homebrewFeats, input),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew feat", result.taken), 409);
+    return c.json(toFeatRecord(result.row), 201);
   });
 
   routes.openapi(updateFeat, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateHomebrewFeat(db, id, c.req.valid("json"));
-    if (!row) return c.json({ error: FEAT_NOT_FOUND }, 404);
-    return c.json(toFeatRecord(row), 200);
+    const input = c.req.valid("json");
+    const result = claimName(() => updateHomebrewFeat(db, id, input), holder(homebrewFeats, input));
+    if ("taken" in result) return c.json(nameTakenError("homebrew feat", result.taken), 409);
+    if (!result.row) return c.json({ error: FEAT_NOT_FOUND }, 404);
+    return c.json(toFeatRecord(result.row), 200);
   });
 
   routes.openapi(removeFeat, (c) => {
@@ -775,15 +804,22 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   });
 
   routes.openapi(createRace, (c) => {
-    const row = insertHomebrewRace(db, randomUUID(), c.req.valid("json"));
-    return c.json(toRaceRecord(row), 201);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => insertHomebrewRace(db, randomUUID(), input),
+      holder(homebrewRaces, input),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew race", result.taken), 409);
+    return c.json(toRaceRecord(result.row), 201);
   });
 
   routes.openapi(updateRace, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateHomebrewRace(db, id, c.req.valid("json"));
-    if (!row) return c.json({ error: RACE_NOT_FOUND }, 404);
-    return c.json(toRaceRecord(row), 200);
+    const input = c.req.valid("json");
+    const result = claimName(() => updateHomebrewRace(db, id, input), holder(homebrewRaces, input));
+    if ("taken" in result) return c.json(nameTakenError("homebrew race", result.taken), 409);
+    if (!result.row) return c.json({ error: RACE_NOT_FOUND }, 404);
+    return c.json(toRaceRecord(result.row), 200);
   });
 
   routes.openapi(removeRace, (c) => {
@@ -803,15 +839,25 @@ export function homebrewRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   });
 
   routes.openapi(createClass, (c) => {
-    const row = insertHomebrewClass(db, randomUUID(), c.req.valid("json"));
-    return c.json(toClassRecord(row), 201);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => insertHomebrewClass(db, randomUUID(), input),
+      holder(homebrewClasses, input),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew class", result.taken), 409);
+    return c.json(toClassRecord(result.row), 201);
   });
 
   routes.openapi(updateClass, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateHomebrewClass(db, id, c.req.valid("json"));
-    if (!row) return c.json({ error: CLASS_NOT_FOUND }, 404);
-    return c.json(toClassRecord(row), 200);
+    const input = c.req.valid("json");
+    const result = claimName(
+      () => updateHomebrewClass(db, id, input),
+      holder(homebrewClasses, input),
+    );
+    if ("taken" in result) return c.json(nameTakenError("homebrew class", result.taken), 409);
+    if (!result.row) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    return c.json(toClassRecord(result.row), 200);
   });
 
   routes.openapi(removeClass, (c) => {

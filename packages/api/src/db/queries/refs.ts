@@ -16,8 +16,16 @@
 import type { RefQuery } from "@dnd/catalog";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
-import { HOMEBREW_SOURCE } from "../homebrew.ts";
-import { type HomebrewDb, homebrewItemNamed, homebrewSpellNamed } from "./homebrew.ts";
+import {
+  HOMEBREW_SOURCE,
+  homebrewBackgrounds,
+  homebrewClasses,
+  homebrewFeats,
+  homebrewItems,
+  homebrewRaces,
+  homebrewSpells,
+} from "../homebrew.ts";
+import { type HomebrewDb, homebrewNamed, type NamedHomebrewTable } from "./homebrew.ts";
 
 /** A table row: `name`, `source` and `json`, plus any key column `path` reads. */
 type Row = { name: string; source: string; json: string } & Record<string, string>;
@@ -182,18 +190,20 @@ function redirector(db: Database.Database, find: Find) {
  * the name the classic row answers, the way a sourceless catalog reference defaults to a
  * classic source. An edition on the request is the way out once a block knows its own.
  */
-const HOMEBREW: Record<
-  string,
-  { collection: string; named: typeof homebrewItemNamed | typeof homebrewSpellNamed }
-> = {
-  item: { collection: "items", named: homebrewItemNamed },
-  spell: { collection: "spells", named: homebrewSpellNamed },
+const HOMEBREW: Record<string, { collection: string; table: NamedHomebrewTable }> = {
+  item: { collection: "items", table: homebrewItems },
+  spell: { collection: "spells", table: homebrewSpells },
+  race: { collection: "races", table: homebrewRaces },
+  background: { collection: "backgrounds", table: homebrewBackgrounds },
+  feat: { collection: "feats", table: homebrewFeats },
+  class: { collection: "classes", table: homebrewClasses },
 };
 
 function homebrewRow(db: HomebrewDb, tag: string, name: string): ResolvedRow | undefined {
   const target = HOMEBREW[tag];
-  const row = target?.named(db, name);
-  if (target === undefined || row === undefined) return undefined;
+  if (target === undefined) return undefined;
+  const row = homebrewNamed(db, target.table, name);
+  if (row === undefined) return undefined;
   return {
     name: row.name,
     source: HOMEBREW_SOURCE,

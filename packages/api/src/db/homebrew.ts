@@ -18,7 +18,7 @@ import type {
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const HOMEBREW_SOURCE = "HB";
 
@@ -31,7 +31,7 @@ export const homebrewBackgrounds = sqliteTable(
     json: text("json", { mode: "json" }).$type<CharacterOptionEntry>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (t) => [index("homebrew_backgrounds_by_name").on(t.name)],
+  (t) => [uniqueIndex("homebrew_backgrounds_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );
 
 export const homebrewClasses = sqliteTable(
@@ -44,7 +44,7 @@ export const homebrewClasses = sqliteTable(
     json: text("json", { mode: "json" }).$type<HomebrewClass>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (t) => [index("homebrew_classes_by_name").on(t.name)],
+  (t) => [uniqueIndex("homebrew_classes_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );
 
 export const homebrewFeats = sqliteTable(
@@ -56,7 +56,7 @@ export const homebrewFeats = sqliteTable(
     json: text("json", { mode: "json" }).$type<CharacterOptionEntry>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (t) => [index("homebrew_feats_by_name").on(t.name)],
+  (t) => [uniqueIndex("homebrew_feats_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );
 
 export const homebrewItems = sqliteTable(
@@ -85,7 +85,7 @@ export const homebrewRaces = sqliteTable(
     json: text("json", { mode: "json" }).$type<RaceEntry>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
-  (t) => [index("homebrew_races_by_name").on(t.name)],
+  (t) => [uniqueIndex("homebrew_races_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );
 
 export const homebrewSpells = sqliteTable(
