@@ -6,6 +6,7 @@
 import {
   ABILITIES,
   ABILITY_LABEL,
+  type Ability,
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterRecord,
@@ -80,7 +81,11 @@ function Bonus({
   const terms = value.terms ?? [];
   if (terms.length === 0) return field;
   return (
-    <Popover trigger={field} label={`${name} breakdown`}>
+    <Popover
+      trigger={field}
+      triggerLabel={`${name} ${format(derivedValue(value))}`}
+      label={`${name} breakdown`}
+    >
       <TermList terms={terms} />
     </Popover>
   );
@@ -97,7 +102,7 @@ function ProficiencyRow({
   level: ProficiencyLevel;
   name: string;
   label?: string;
-  ability?: string;
+  ability?: Ability;
   modifier: Derived<number>;
 }) {
   return (
@@ -116,7 +121,12 @@ function ProficiencyRow({
           <span className="sr-only">, {PROFICIENCY_MARK[level].text.toLowerCase()}</span>
         )}
       </span>
-      {ability && <span className="w-6.5 text-label text-muted uppercase">{ability}</span>}
+      {ability && (
+        <span className="w-6.5 text-label text-muted uppercase">
+          <span aria-hidden="true">{ability}</span>
+          <span className="sr-only">{ABILITY_LABEL[ability]}</span>
+        </span>
+      )}
       <span className="flex w-7 justify-end font-semibold">
         <Bonus named name={ability ? `${name} check` : `${name} save`} value={modifier} />
       </span>

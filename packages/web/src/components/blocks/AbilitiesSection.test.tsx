@@ -142,10 +142,10 @@ describe("AbilitiesSection", () => {
 
     const rows = card("Skills").getAllByRole("listitem");
     expect(rows.map((row) => spoken(row))).toEqual([
-      "Arcanaint+0",
-      "Deception, proficientcha+5",
-      "Perceptionwis+1",
-      "Stealth, expertisedex+7",
+      "ArcanaIntelligence+0",
+      "Deception, proficientCharisma+5",
+      "PerceptionWisdom+1",
+      "Stealth, expertiseDexterity+7",
     ]);
   });
 
