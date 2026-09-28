@@ -52,9 +52,10 @@ the shade:
 
 Two light values depart from the mockup. `#6b7280` measures 4.43:1 on canvas and 4.23:1
 on subtle, under AA, so `color-muted` takes 8% of the ink. `#9aa1ab` measures 2.61:1 on
-surface, and no gray lighter than `color-muted` clears 4.5:1 on subtle in either theme,
-so `color-placeholder` aliases `color-muted`. `color-accent-tint` mixes into canvas
-rather than surface because the dark accent measures 3.10:1 on the dark surface already.
+surface, and `color-muted` sits within 0.3 of 4.5:1 on subtle in both themes, too close
+for a visibly lighter gray, so `color-placeholder` aliases `color-muted`.
+`color-accent-tint` mixes into canvas rather than surface because the dark accent
+measures 3.10:1 on the dark surface already.
 
 `color-accent` reuses the default `docs/mockup/` already settled on — every widget's
 accent prop there defaults to the same value. Picking a different one here would leave
