@@ -1098,6 +1098,8 @@ describe("deriveCharacter", () => {
     const stealth = derived.skills.find((skill) => skill.ref.name === "Stealth");
     const perception = derived.skills.find((skill) => skill.ref.name === "Perception");
 
+    expect(deception?.ability).toBe("cha");
+    expect(stealth?.ability).toBe("dex");
     expect(deception?.modifier).toEqual({
       computed: 6,
       manual: null,

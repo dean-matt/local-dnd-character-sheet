@@ -880,6 +880,7 @@ export const characterDerivedSchema = z.strictObject({
   skills: z.array(
     z.strictObject({
       ref: contentRefSchema,
+      ability: abilitySchema,
       modifier: derivedSchema(z.int()),
       passive: derivedSchema(z.int()),
     }),
@@ -1253,6 +1254,7 @@ export function deriveCharacter(
     const { total, terms } = skillModifier(definition, skill.ref, skill.ability);
     return {
       ref: skill.ref,
+      ability: skill.ability,
       modifier: { computed: total, manual: null, terms },
       passive: {
         computed: passiveSkill(definition, skill.ref, skill.ability),

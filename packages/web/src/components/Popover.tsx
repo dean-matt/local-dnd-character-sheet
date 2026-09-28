@@ -34,10 +34,12 @@ export interface PopoverProps {
   trigger: ReactNode;
   /** The opened content's accessible name. */
   label: string;
+  /** Names the trigger where its content alone (a bare number) says too little. */
+  triggerLabel?: string;
   children: ReactNode;
 }
 
-export function Popover({ trigger, label, children }: PopoverProps) {
+export function Popover({ trigger, label, triggerLabel, children }: PopoverProps) {
   const depth = useContext(DepthContext);
   // Hover and focus drive one flag, a click or tap the other, because a real
   // pointer always fires `mouseenter` before `click` — including the tap that
@@ -140,6 +142,7 @@ export function Popover({ trigger, label, children }: PopoverProps) {
       <button
         type="button"
         ref={triggerRef}
+        aria-label={triggerLabel}
         aria-expanded={open}
         aria-controls={open ? contentId : undefined}
         onFocus={handleTriggerFocus}

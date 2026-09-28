@@ -2,6 +2,7 @@ import { derivedValue, type ValueBlockField } from "@dnd/character";
 import { EmptyState } from "../../states.tsx";
 import { Field } from "../Field.tsx";
 import { Popover } from "../Popover.tsx";
+import { TermList } from "../TermList.tsx";
 import type { BlockViewProps } from "./types.ts";
 
 const VALUE_LABELS: Record<ValueBlockField, string> = {
@@ -33,15 +34,7 @@ export function ValueBlockView({ block, derived }: BlockViewProps) {
     <div className="flex items-baseline justify-between gap-2">
       <span className="text-muted text-row">{label}</span>
       <Popover trigger={derivedValue(field)} label={`${label} breakdown`}>
-        <ul className="flex flex-col gap-1">
-          {terms.map((term, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: a breakdown's terms never reorder.
-            <li key={index} className="flex justify-between gap-4">
-              <span>{term.label}</span>
-              <span>{term.value}</span>
-            </li>
-          ))}
-        </ul>
+        <TermList terms={terms} />
       </Popover>
     </div>
   );
