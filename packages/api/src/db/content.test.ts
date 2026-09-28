@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { CONTENT_SCHEMA } from "@dnd/content/schema";
 import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
 import { openContentDb } from "./content.ts";
@@ -17,9 +18,8 @@ function publish(contentDir: string, value: string): string {
   const target = join(contentDir, name);
   const staging = `${target}.incoming`;
   const db = new Database(staging);
-  db.pragma("journal_mode = WAL");
-  db.exec("CREATE TABLE meta (value TEXT)");
-  db.prepare("INSERT INTO meta (value) VALUES (?)").run(value);
+  db.exec(CONTENT_SCHEMA);
+  db.prepare("INSERT INTO meta (key, value) VALUES ('version', ?)").run(value);
   db.pragma("journal_mode = DELETE");
   db.close();
   for (const sidecar of ["-wal", "-shm"]) rmSync(`${staging}${sidecar}`, { force: true });
