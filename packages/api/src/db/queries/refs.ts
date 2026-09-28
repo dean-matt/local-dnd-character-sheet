@@ -112,8 +112,7 @@ const OWNER_SOURCE = "PHB";
 /**
  * A feature is keyed by its class and level as well, and a subclass feature by its
  * subclass's short name and source, so the reference's owner fills the rest of the key.
- * No API route reads one feature, so `path` is the sheet's address for it, which reads it
- * from its class's grants. Upstream files no redirects for a feature.
+ * Upstream files no redirects for a feature.
  */
 const classFeature: Omit<Target, "page" | "source"> = {
   sql: `SELECT name, source, class_name, class_source, level, json FROM class_features
