@@ -11,7 +11,7 @@ export function characterSubtitle({ definition, raceSummary }: CharacterRecord):
     .join(" / ");
   const { alignment, deity } = definition;
   return [
-    `${raceSummary} ${classes}`,
+    [raceSummary, classes].filter(Boolean).join(" "),
     displayName(definition.background),
     alignment,
     deity && `${deity.name} (${deity.pantheon})`,
@@ -29,7 +29,7 @@ export function CharacterHeader({ character }: { character: CharacterRecord }) {
         className="flex h-18 w-18 shrink-0 items-center justify-center rounded-full font-semibold text-3xl text-white"
         style={{ background: avatarColor(character.id) }}
       >
-        {character.name.charAt(0)}
+        {[...character.name][0]?.toUpperCase()}
       </span>
       <div className="flex min-w-0 flex-col gap-0.5">
         <h1 className="font-bold text-[28px] leading-tight">{character.name}</h1>

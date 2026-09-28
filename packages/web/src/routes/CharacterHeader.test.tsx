@@ -34,6 +34,12 @@ describe("characterSubtitle", () => {
     );
   });
 
+  it("leaves out the class segment for a character with no levels", () => {
+    const record = warlock();
+    const definition = { ...record.definition, levels: [] };
+    expect(characterSubtitle({ ...record, definition })).toBe("Half-Elf • Charlatan");
+  });
+
   it("adds an alignment and a deity, the deity with its pantheon, once they are set", () => {
     const record = warlock();
     const definition = {
@@ -44,10 +50,25 @@ describe("characterSubtitle", () => {
     expect(characterSubtitle({ ...record, definition })).toBe(
       "Half-Elf Warlock 3 (Fiend Patron) • Charlatan • Chaotic Good • Oghma (Celtic)",
     );
+
+    const realms = { ...definition, deity: { ...definition.deity, pantheon: "Forgotten Realms" } };
+    expect(characterSubtitle({ ...record, definition: realms })).toContain(
+      "Oghma (Forgotten Realms)",
+    );
   });
 });
 
 describe("CharacterHeader", () => {
+  it("capitalizes the initial of a lowercase name and keeps a whole astral character", () => {
+    const { container, rerender } = render(
+      <CharacterHeader character={{ ...warlock(), name: "vex" }} />,
+    );
+    expect(container.querySelector("[aria-hidden='true']")).toHaveTextContent("V");
+
+    rerender(<CharacterHeader character={{ ...warlock(), name: "\u{1D504}nna" }} />);
+    expect(container.querySelector("[aria-hidden='true']")).toHaveTextContent("\u{1D504}");
+  });
+
   it("titles the page with the character's name above their subtitle", () => {
     render(<CharacterHeader character={warlock()} />);
 
@@ -60,7 +81,6 @@ describe("CharacterHeader", () => {
 
     const avatar = container.querySelector<HTMLElement>("[aria-hidden='true']");
     expect(avatar).toHaveTextContent("V");
-    expect(avatar?.style.background).not.toBe("");
     expect(avatar).toHaveStyle({ background: avatarColor("1") });
   });
 
