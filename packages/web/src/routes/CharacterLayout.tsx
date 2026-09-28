@@ -27,6 +27,7 @@ export function CharacterLayout() {
 
   return (
     <>
+      {character.data && <CharacterHeader character={character.data} />}
       <div className="flex min-h-[calc(100vh-4rem)]">
         <aside className="self-start sticky top-16 shrink-0 p-5 print:hidden">
           <Sidebar
@@ -38,7 +39,6 @@ export function CharacterLayout() {
         </aside>
 
         <div className="min-w-0 flex-1 px-10 py-6">
-          {character.data && <CharacterHeader character={character.data} />}
           <Outlet />
         </div>
       </div>
