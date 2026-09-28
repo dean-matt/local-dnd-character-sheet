@@ -1,7 +1,7 @@
 /**
  * Checks every catalog reference one character holds against `content.db`, on demand.
- * A reference matches its row exactly, as the sheet's own readers match it, so what this
- * reports is what the sheet shows unresolved. A miss that upstream's redirect map sends to
+ * A reference matches its row exactly and a variant expands with its base, as the sheet's
+ * own readers do, so what this reports is what the sheet shows unresolved. A miss that upstream's redirect map sends to
  * a row of the same table carries that row as `renamedTo`; nothing is written back.
  */
 import {
@@ -14,6 +14,7 @@ import {
 } from "@dnd/character";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
+import { getExpandedItem } from "./item-variant.ts";
 import { redirects } from "./refs.ts";
 
 /**
@@ -70,6 +71,8 @@ export function checkCharacterReferences(
     };
     const hop = redirects(db);
     const resolves = ({ kind, ref, parent, pantheon }: CatalogReference) => {
+      // The sheet shows a variant only as the item it and its base expand into.
+      if (kind === "item" && parent) return Boolean(getExpandedItem(dataDir, parent, ref));
       const rest = parent ? [parent.name, parent.source] : pantheon ? [pantheon] : [];
       return prepared(select(kind, "")).get(ref.name, ref.source, ...rest) !== undefined;
     };

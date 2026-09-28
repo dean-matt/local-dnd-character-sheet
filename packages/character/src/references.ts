@@ -32,7 +32,8 @@ export type CatalogKind = (typeof CATALOG_KINDS)[number];
 
 /**
  * One `(name, source)` and where the character holds it, as a path into the definition
- * such as `spells[2].ref`, or into the state for `conditions[0]`. `parent` is the rest of a subclass's or a subrace's key, and
+ * such as `spells[2].ref`, or into the state for `conditions[0]`. `parent` is the rest of
+ * a subclass's or a subrace's key, or the base item a magic variant expands, and
  * `pantheon` the rest of a deity's.
  */
 export type CatalogReference = {
@@ -60,7 +61,10 @@ const GRANTOR_KIND: Record<Grantor["kind"], CatalogKind> = {
   optionalFeature: "optionalFeature",
 };
 
-/** In definition order. A subclass or subrace under a homebrew parent has no catalog key. */
+/**
+ * In definition order. A subclass or subrace under a homebrew parent has no catalog key,
+ * and a variant on a homebrew item is one the sheet never expands.
+ */
 export function catalogReferences(
   definition: CharacterDefinition,
   state: CharacterState,
@@ -100,7 +104,7 @@ export function catalogReferences(
   });
   definition.inventory.forEach((entry, i) => {
     add(`inventory[${i}].ref`, "item", entry.ref);
-    add(`inventory[${i}].variant`, "item", entry.variant);
+    add(`inventory[${i}].variant`, "item", entry.variant, entry.ref);
   });
   definition.spells.forEach((entry, i) => {
     add(`spells[${i}].ref`, "spell", entry.ref);

@@ -40,6 +40,21 @@ const spellRow = (ref: { name: string; source: string }) => ({
   json: JSON.stringify({ ...ref, level: 1, school: "A" }),
 });
 
+const itemRow = (ref: { name: string; source: string }, kind: string, json: object) => ({
+  ...ref,
+  edition: "classic",
+  kind,
+  type: null,
+  rarity: null,
+  requires_attunement: 0 as const,
+  json: JSON.stringify({ ...ref, ...json }),
+});
+
+const PLUS_ONE_ROW = itemRow(PLUS_ONE, "magicvariant", {
+  requires: [{ weapon: true }],
+  inherits: { namePrefix: "+1 ", source: "DMG", rarity: "uncommon" },
+});
+
 /** Every row `definitionWith()` names, so each test removes or adds only what it asserts. */
 const CATALOG: ReferencesFixture = {
   classes: [FIGHTER],
@@ -47,7 +62,7 @@ const CATALOG: ReferencesFixture = {
   races: [ELF],
   subraces: [{ ...HIGH, race_name: "Elf", race_source: "PHB" }],
   backgrounds: [ACOLYTE],
-  items: [LONGSWORD, PLUS_ONE],
+  items: [itemRow(LONGSWORD, "baseitem", { weapon: true }), PLUS_ONE_ROW],
   spells: [spellRow(SHIELD)],
   feats: [ALERT],
   optionalFeatures: [ARCHERY],
@@ -227,6 +242,33 @@ describe("characterReferencesRoutes", () => {
       "spells[0].origin",
       "feats[0].grantedBy.class",
       "optionalFeatures[0].grantedBy.ref",
+    ]);
+  });
+
+  it("reports a variant its base item no longer takes, or that is no longer a variant", async () => {
+    const DAGGER = { name: "Dagger", source: "PHB" };
+    const CLUB = { name: "Club", source: "PHB" };
+    publishReferencesFixture(dataDir, {
+      ...CATALOG,
+      items: [
+        itemRow(LONGSWORD, "baseitem", { weapon: true }),
+        itemRow(DAGGER, "item", { weapon: true }),
+        itemRow(CLUB, "baseitem", { armor: true }),
+        PLUS_ONE_ROW,
+      ],
+    });
+    store(
+      definitionWith({
+        inventory: [
+          { ref: LONGSWORD, variant: PLUS_ONE },
+          { ref: DAGGER, variant: PLUS_ONE },
+          { ref: CLUB, variant: PLUS_ONE },
+        ],
+      }),
+    );
+    expect(await unresolved()).toEqual([
+      { field: "inventory[1].variant", kind: "item", ref: PLUS_ONE, parent: DAGGER },
+      { field: "inventory[2].variant", kind: "item", ref: PLUS_ONE, parent: CLUB },
     ]);
   });
 

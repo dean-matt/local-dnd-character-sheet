@@ -1060,7 +1060,7 @@ export type ReferencesFixture = {
   races?: KeyRow[];
   subraces?: (KeyRow & { race_name: string; race_source: string })[];
   backgrounds?: KeyRow[];
-  items?: KeyRow[];
+  items?: ItemFixtureRow[];
   spells?: SpellFixtureRow[];
   feats?: KeyRow[];
   optionalFeatures?: KeyRow[];
@@ -1070,7 +1070,8 @@ export type ReferencesFixture = {
 
 /**
  * Mirrors `build-db.ts`'s publish step against every table a catalog reference names a
- * row of. `spells` carries every column, so the spells route reads the same catalog.
+ * row of. `spells` carries every column, so the spells route reads the same catalog, and
+ * `items` does so a variant expands with its base.
  */
 export function publishReferencesFixture(dataDir: string, fixture: ReferencesFixture): void {
   const keyed = (table: string, extra: string[] = []) => {
@@ -1087,7 +1088,6 @@ export function publishReferencesFixture(dataDir: string, fixture: ReferencesFix
     races: keyed("races"),
     subraces: keyed("subraces", ["race_name", "race_source"]),
     backgrounds: keyed("backgrounds"),
-    items: keyed("items"),
     feats: keyed("feats"),
     optionalFeatures: keyed("optional_features"),
     lookups: keyed("lookups", ["kind", "qualifier"]),
@@ -1102,6 +1102,10 @@ export function publishReferencesFixture(dataDir: string, fixture: ReferencesFix
         name TEXT, source TEXT, edition TEXT, level INTEGER, school TEXT,
         concentration INTEGER, ritual INTEGER, json TEXT, PRIMARY KEY (name, source)
       );
+      CREATE TABLE items (
+        name TEXT, source TEXT, edition TEXT, kind TEXT, type TEXT, rarity TEXT,
+        requires_attunement INTEGER, json TEXT, PRIMARY KEY (name, source)
+      );
       CREATE TABLE tag_redirects (
         tag TEXT, from_key TEXT, to_tag TEXT, to_key TEXT, PRIMARY KEY (tag, from_key)
       );
@@ -1115,6 +1119,11 @@ export function publishReferencesFixture(dataDir: string, fixture: ReferencesFix
         insert:
           "INSERT INTO spells VALUES (@name, @source, @edition, @level, @school, @concentration, @ritual, @json)",
         rows: fixture.spells ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO items VALUES (@name, @source, @edition, @kind, @type, @rarity, @requires_attunement, @json)",
+        rows: fixture.items ?? [],
       },
       {
         insert: "INSERT INTO tag_redirects VALUES (@tag, @from_key, @to_tag, @to_key)",
