@@ -205,7 +205,7 @@ describe("AbilitiesSection", () => {
     rowButton("Skills", "Stealth").focus();
     expect(await screen.findByRole("group", { name: "Stealth check breakdown" })).toBeVisible();
 
-    screen.getByRole("button", { name: "13" }).focus();
+    screen.getByRole("button", { name: "Armor Class 13" }).focus();
     expect(await screen.findByRole("group", { name: "Armor Class breakdown" })).toHaveTextContent(
       "Base10Dexterity3",
     );
