@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-canvas: light-dark(var(--color-gray-100), var(--color-gray-900));
+  --font-sans: "Noto Sans Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: light-dark(#f4f5f7, var(--color-gray-900));
   --color-surface: light-dark(var(--color-white), var(--color-gray-800));
-  --color-border: light-dark(var(--color-gray-200), var(--color-gray-700));
-  --color-ink: light-dark(var(--color-gray-900), var(--color-gray-100));
+  --color-subtle: light-dark(
+    #eef0f3,
+    color-mix(in oklab, var(--color-gray-700), var(--color-gray-800))
+  );
+  --color-border: light-dark(#dde1e6, var(--color-gray-700));
+  --color-ink: light-dark(#1f2430, var(--color-gray-100));
+  /* The mockup's #6b7280 measures 4.43:1 on canvas and 4.23:1 on subtle, under AA. */
   --color-muted: light-dark(
-    color-mix(in oklab, var(--color-gray-500) 90%, var(--color-gray-900)),
+    color-mix(in oklab, #6b7280 92%, var(--color-ink)),
     var(--color-gray-400)
   );
+  --color-placeholder: light-dark(#9aa1ab, var(--color-gray-500));
+  --color-scrim: light-dark(rgb(15 17 21 / 0.5), rgb(0 0 0 / 0.6));
 
   /*
    * Lightened in dark: at full strength the :focus-visible outline (a non-text
@@ -18,15 +27,26 @@
   --color-accent: light-dark(#c1272d, color-mix(in oklab, #c1272d 90%, white));
   --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
   --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
+  /* Mixed into canvas, not surface: on the dark surface the accent tops out near 3:1. */
+  --color-accent-tint: color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas));
 
   --text-row: var(--text-xs);
   --text-row--line-height: var(--text-xs--line-height);
   --text-number: var(--text-xl);
   --text-number--line-height: var(--text-xl--line-height);
+  --text-chip: 0.5625rem;
+  --text-label: 0.6875rem;
+  --text-body: 0.8125rem;
 
   --spacing-row: 2rem;
 
+  --radius-chip: var(--radius-sm);
+  --radius-control: var(--radius-md);
   --radius-card: var(--radius-lg);
+  --radius-pill: calc(infinity * 1px);
+
+  --shadow-popover: 0 16px 32px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
+  --shadow-modal: 0 24px 48px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
 
   --duration-standard: 150ms;
   --ease-standard: var(--ease-out);
@@ -65,7 +85,9 @@ body {
   :root {
     color-scheme: light;
     --color-canvas: var(--color-white);
-    --color-border: var(--color-gray-300);
+    --color-subtle: var(--color-white);
+    --color-accent-tint: var(--color-white);
+    --color-border: color-mix(in oklab, #dde1e6 90%, var(--color-ink));
 
     --text-row: 12pt;
   }

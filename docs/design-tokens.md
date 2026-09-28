@@ -13,10 +13,19 @@ browsing it.
 
 | Token | Value | What it is |
 |---|---|---|
+| `font-sans` | `"Noto Sans Variable"`, then the system sans | The one typeface, weights 400–700, self-hosted from `@fontsource-variable/noto-sans` so the sheet renders with no network |
 | `text-row` | `0.75rem` (12px), Tailwind's `text-xs` | Body text in list rows, labels, table cells |
 | `text-number` | `1.25rem` (20px), Tailwind's `text-xl` | A stat, a modifier, an HP value — anywhere a number is the thing being read |
+| `text-chip` | `0.5625rem` (9px) | A chip's label |
+| `text-label` | `0.6875rem` (11px) | A section label |
+| `text-body` | `0.8125rem` (13px) | Body text and a control's label |
 | `spacing-row` | `2rem` (32px) | The height of one dense list row (`h-row`, `min-h-row`) |
-| `radius-card` | `0.5rem` (8px), Tailwind's `radius-lg` | The corner radius for a card or panel |
+| `radius-chip` | `0.25rem` (4px), Tailwind's `radius-sm` | A chip |
+| `radius-control` | `0.375rem` (6px), Tailwind's `radius-md` | A button, an input, a row tile |
+| `radius-card` | `0.5rem` (8px), Tailwind's `radius-lg` | A card, panel or modal. The mockup draws cards at 8px and dialogs at 10px; the sheet uses 8px for both |
+| `radius-pill` | `calc(infinity * 1px)` | A pill button |
+| `shadow-popover` | `0 16px 32px`, black at 18% (50% dark) | A popover or menu |
+| `shadow-modal` | `0 24px 48px`, black at 18% (50% dark) | A modal dialog |
 
 `text-row` and `text-number` name existing Tailwind sizes, so a view reaches for "the row
 size" or "the number size" rather than picking `text-xs` or `text-xl` by convention — a
@@ -24,18 +33,28 @@ convention drifts the first time someone reaches for `text-sm` instead.
 
 ## Color
 
-One toned neutral ground (Tailwind's `gray`, a cool rather than warm gray) plus one
-accent, aliased so a view names the role rather than the shade:
+One cool neutral ground plus one accent, aliased so a view names the role rather than
+the shade. The light values are the mockup's; the dark values come from Tailwind's `gray`:
 
-| Token | Maps to | Role |
-|---|---|---|
-| `color-canvas` | `gray-100` | Page background |
-| `color-surface` | `white` | Card and panel background |
-| `color-border` | `gray-200` | Hairline borders |
-| `color-ink` | `gray-900` | Primary text |
-| `color-muted` | `gray-500` | Secondary text — labels, captions |
-| `color-accent` | `#c1272d` | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
-| `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | Pressed states for the accent, mixed from it so a future accent change carries through |
+| Token | Light | Dark | Role |
+|---|---|---|---|
+| `color-canvas` | `#f4f5f7` | `gray-900` | Page background |
+| `color-surface` | `white` | `gray-800` | Card and panel background |
+| `color-subtle` | `#eef0f3` | `gray-700` and `gray-800`, mixed evenly | A row tile or a track inside a card. The mockup's `#eceef1` folds into it |
+| `color-border` | `#dde1e6` | `gray-700` | Hairline borders |
+| `color-ink` | `#1f2430` | `gray-100` | Primary text |
+| `color-muted` | `#6b7280` 92%, `color-ink` 8% | `gray-400` | Secondary text — labels, captions |
+| `color-placeholder` | `#9aa1ab` | `gray-500` | Placeholder text |
+| `color-scrim` | `rgb(15 17 21 / 0.5)` | black at 60% | A modal's backdrop |
+| `color-accent` | `#c1272d` | `#c1272d` 90%, white 10% | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
+| `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
+| `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
+
+`color-muted` is the one light value that departs from the mockup: `#6b7280` itself
+measures 4.43:1 on canvas and 4.23:1 on subtle, under AA, so it takes 8% of the ink.
+`color-placeholder` measures 2.61:1 on surface, as the mockup has it, so it never
+carries text a reader needs. `color-accent-tint` mixes into canvas rather than surface
+because the dark accent measures 3.10:1 on the dark surface already.
 
 `color-accent` reuses the default `docs/mockup/` already settled on — every widget's
 accent prop there defaults to the same value. Picking a different one here would leave
@@ -45,11 +64,13 @@ the sheet and the mockup it follows disagreeing on the one color meant to carry 
 
 A single `:focus-visible` rule in `index.css` outlines the accent color around whatever
 has focus, so a view inherits it instead of each one styling its own outline. Contrast,
-checked once against these tokens rather than per view:
+checked once against these tokens rather than per view. `packages/web/src/contrast.test.ts`
+holds every pair in both themes and fails a repalette that regresses one:
 
-- `color-accent` on `color-surface`: 5.84:1 — passes WCAG AA for text of any size
-- `color-muted` on `color-surface`: 4.83:1 — passes WCAG AA for normal text
-- `color-ink` on `color-surface` or `color-canvas`: >15:1
+- `color-ink` and `color-muted` on `color-canvas`, `color-surface` and `color-subtle`:
+  AA for normal text
+- `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
+- The focus ring in each accent shade on `color-canvas`: 3:1
 
 ## Motion
 
@@ -85,9 +106,9 @@ stays out of the nav, so it stays out of the print.
 
 - **Chrome:** the header, the page nav and its Manage pages control, the feature filter
   and the disclosure arrows carry `print:hidden`. A new screen-only control takes it too.
-- **Palette:** the dark theme applies on screen alone, so print keeps the light tokens,
-  with a white canvas and `color-border` raised to `gray-300` so hairlines survive the
-  printer.
+- **Palette:** the dark theme applies on screen alone, so print keeps the light tokens.
+  Canvas, subtle and the accent tint print white, and `color-border` takes 10% of the
+  ink so hairlines survive the printer.
 - **Size:** `text-row` becomes `12pt`, the floor for printed body text.
 - **Breaks:** a heading stays with what follows it, and a list row, table row or
   definition pair never splits across pages.

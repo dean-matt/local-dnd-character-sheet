@@ -3,8 +3,8 @@ import { computedColor } from "./palette";
 
 const light = {
   name: "light",
-  ground: "var(--color-gray-100)",
-  ink: "var(--color-gray-900)",
+  ground: "#f4f5f7",
+  ink: "#1f2430",
   accent: "#c1272d",
 };
 const dark = {
