@@ -25,7 +25,8 @@ export const refResolveRequestSchema = z.object({
 /**
  * `path` is the API route that reads the row, absent for a type no route serves — a
  * condition or a creature. `name` and `source` are the row's own, which differ from the
- * reference's in case, in a defaulted source, and after a redirect.
+ * reference's in case, in a defaulted source, and after a redirect. A subrace answers
+ * with its merged name, `Human (Keldon)` where the row reads `Keldon`.
  */
 const resolvedRefSchema = z.strictObject({
   name: z.string().min(1),

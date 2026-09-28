@@ -76,8 +76,10 @@ The catalog may legitimately not have the target.
 
 **A `ref` names what its tag means, not always a row's `name`.** `{@subclass}` carries
 the `shortName` — `Berserker`, where the row reads `Path of the Berserker` — so the
-resolver matches `short_name` for that tag. A class feature's token drops the class and
-level its key needs, so feature references stay unresolved.
+resolver matches `short_name` for that tag. `{@race}` may name a subrace as
+`Human (Keldon)`, so the resolver also matches a subrace row on that merged name. A class
+feature's token drops the class and level its key needs, so feature references stay
+unresolved.
 
 ## Resolving
 

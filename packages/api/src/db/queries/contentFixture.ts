@@ -994,6 +994,14 @@ export function publishFeaturesFixture(dataDir: string, fixture: FeaturesFixture
 /** The rows `resolveRefs` reads, each table carrying only the columns it selects. */
 export type RefsFixture = {
   spells?: { name: string; source: string; json: string }[];
+  races?: { name: string; source: string; json: string }[];
+  subraces?: {
+    name: string;
+    source: string;
+    race_name: string;
+    race_source: string;
+    json: string;
+  }[];
   subclasses?: {
     name: string;
     source: string;
@@ -1013,6 +1021,11 @@ export function publishRefsFixture(dataDir: string, fixture: RefsFixture): void 
     dataDir,
     `
       CREATE TABLE spells (name TEXT, source TEXT, json TEXT, PRIMARY KEY (name, source));
+      CREATE TABLE races (name TEXT, source TEXT, json TEXT, PRIMARY KEY (name, source));
+      CREATE TABLE subraces (
+        name TEXT, source TEXT, race_name TEXT, race_source TEXT, json TEXT,
+        PRIMARY KEY (name, source, race_name, race_source)
+      );
       CREATE TABLE subclasses (
         name TEXT, source TEXT, short_name TEXT, class_name TEXT, class_source TEXT, json TEXT,
         PRIMARY KEY (name, source, class_name, class_source)
@@ -1033,6 +1046,14 @@ export function publishRefsFixture(dataDir: string, fixture: RefsFixture): void 
       {
         insert: "INSERT INTO spells VALUES (@name, @source, @json)",
         rows: fixture.spells ?? [],
+      },
+      {
+        insert: "INSERT INTO races VALUES (@name, @source, @json)",
+        rows: fixture.races ?? [],
+      },
+      {
+        insert: "INSERT INTO subraces VALUES (@name, @source, @race_name, @race_source, @json)",
+        rows: fixture.subraces ?? [],
       },
       {
         insert:
