@@ -37,19 +37,22 @@ export function ListRow({
           type="button"
           aria-haspopup="dialog"
           onClick={() => setOpen(true)}
-          className="min-w-0 cursor-pointer truncate text-left font-semibold"
+          className="min-w-0 cursor-pointer truncate text-left font-semibold print:overflow-visible print:whitespace-normal"
         >
           {name}
         </button>
       ) : (
-        <span className="min-w-0 truncate font-semibold">{name}</span>
+        <span
+          title={name}
+          className="min-w-0 truncate font-semibold print:overflow-visible print:whitespace-normal"
+        >
+          {name}
+        </span>
       )}
-      {(chips || value) && (
-        <div className="flex items-center gap-1.5">
-          {chips}
-          {value && <span className="ml-auto shrink-0 text-label text-muted">{value}</span>}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-1.5 empty:hidden">
+        {chips}
+        {value && <span className="ml-auto shrink-0 text-label text-muted">{value}</span>}
+      </div>
       {preview && <div className="truncate text-label text-muted print:hidden">{preview}</div>}
       {open && detail && (
         <Modal title={name} meta={detail.meta} onClose={() => setOpen(false)}>

@@ -19,15 +19,12 @@ export function Modal({
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
-  // jsdom has no showModal, and a second call under StrictMode throws.
+  // jsdom has no showModal; a second call under StrictMode finds the dialog already open.
   useEffect(() => {
     const dialog = ref.current;
-    if (!dialog) return;
-    try {
-      dialog.showModal();
-    } catch {
-      dialog.setAttribute("open", "");
-    }
+    if (!dialog || dialog.open) return;
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
   }, []);
 
   return (
