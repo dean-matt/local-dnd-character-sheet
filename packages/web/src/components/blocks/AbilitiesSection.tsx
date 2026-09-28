@@ -83,7 +83,9 @@ function Bonus({
   return (
     <Popover
       trigger={field}
-      triggerLabel={`${name} ${format(derivedValue(value))}`}
+      triggerLabel={`${name} ${format(derivedValue(value))}${
+        value.manual === null ? "" : `, overridden from ${format(value.computed)}`
+      }`}
       label={`${name} breakdown`}
     >
       <TermList terms={terms} />

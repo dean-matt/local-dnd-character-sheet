@@ -213,6 +213,17 @@ describe("AbilitiesSection", () => {
     expect(screen.queryByRole("button", { name: /Initiative/ })).not.toBeInTheDocument();
   });
 
+  it("speaks an override on a value that also has terms", () => {
+    const record = warlock();
+    renderSection(record, {
+      ...derivedFor(record),
+      armorClass: { computed: 13, manual: 18, terms: [{ label: "Base", value: 10 }] },
+    });
+    expect(
+      screen.getByRole("button", { name: "Armor Class 18, overridden from 13" }),
+    ).toBeVisible();
+  });
+
   it("spells out every mark on the page, since a tooltip never reaches a touch reader", () => {
     renderSection();
     const legend = screen.getByText("Expertise").closest("p") as HTMLElement;
