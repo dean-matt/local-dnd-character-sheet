@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { computedColor } from "./palette";
 
 test("a character prints its visible pages in light ink, with the screen chrome left out", async ({
   page,
@@ -57,7 +58,10 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     await expect(page.locator("main")).toHaveCSS("outline-style", "none");
 
     await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-    await expect(page.locator("body")).toHaveCSS("color", "oklch(0.21 0.034 264.665)");
+    await expect(page.locator("body")).toHaveCSS(
+      "color",
+      await computedColor(page, "--color-gray-900"),
+    );
     // 12pt is 16px at the 96dpi a browser lays print out at.
     await expect(sheet.locator(".text-row").first()).toHaveCSS("font-size", "16px");
   } finally {

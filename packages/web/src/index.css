@@ -6,7 +6,7 @@
   --color-border: light-dark(var(--color-gray-200), var(--color-gray-700));
   --color-ink: light-dark(var(--color-gray-900), var(--color-gray-100));
   --color-muted: light-dark(
-    color-mix(in oklab, var(--color-gray-500) 90%, var(--color-ink)),
+    color-mix(in oklab, var(--color-gray-500) 90%, var(--color-gray-900)),
     var(--color-gray-400)
   );
 
