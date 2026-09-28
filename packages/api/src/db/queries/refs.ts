@@ -77,6 +77,38 @@ const subclass: Omit<Target, "page" | "source"> = {
 };
 
 /**
+ * A race reference names a race, or a subrace by the merged name `fluffSubraceName` in
+ * `packages/content` also builds: `Human (Keldon)`, or `Elf (Zendikar; Joraga Nation)`
+ * under a race whose name already ends in parens. An unnamed subrace, which
+ * `fluffSubraceName` calls `Base`, stays unresolved, because no route reads a subrace
+ * without a name of its own. The source is the subrace's own; where two printings of its
+ * race both hold it, the race of that source answers, as for a subclass. A race row
+ * outranks a subrace of the same name.
+ */
+const race: Omit<Target, "page" | "source"> = {
+  sql: `WITH ref (name, source) AS (SELECT ?, ?)
+        SELECT name, source, json, subrace, race_name, race_source FROM (
+          SELECT races.name, races.source, json, '' AS subrace, '' AS race_name,
+                 '' AS race_source
+          FROM races, ref
+          WHERE races.name = ref.name COLLATE NOCASE AND races.source = ref.source COLLATE NOCASE
+          UNION ALL
+          SELECT CASE WHEN race_name LIKE '%)'
+                   THEN substr(race_name, 1, length(race_name) - 1) || '; ' || subraces.name || ')'
+                   ELSE race_name || ' (' || subraces.name || ')' END,
+                 subraces.source, json, subraces.name, race_name, race_source
+          FROM subraces, ref
+          WHERE subraces.name <> '' AND subraces.source = ref.source COLLATE NOCASE
+        )
+        WHERE name = (SELECT name FROM ref) COLLATE NOCASE
+        ORDER BY race_name <> '', race_source = source DESC, race_source LIMIT 1`,
+  path: (row) =>
+    row.race_name === ""
+      ? `/races/${segments(row.name, row.source)}`
+      : `/races/${segments(row.race_name ?? "", row.race_source ?? "", "subraces", row.subrace ?? "", row.source)}`,
+};
+
+/**
  * The tags tier 2 resolves. A tag left out renders unlinked: a feature, whose token lacks
  * the class and level that identify it; a card or a deity, which lacks its deck or
  * pantheon; and a table, which upstream mostly writes inside another entry.
@@ -84,7 +116,7 @@ const subclass: Omit<Target, "page" | "source"> = {
 const TARGETS: Record<string, Target> = {
   spell: { page: "spells.html", source: "PHB", ...flat("spells", "spells") },
   item: { page: "items.html", source: "DMG", ...flat("items", "items") },
-  race: { page: "races.html", source: "PHB", ...flat("races", "races") },
+  race: { page: "races.html", source: "PHB", ...race },
   background: { page: "backgrounds.html", source: "PHB", ...flat("backgrounds", "backgrounds") },
   feat: { page: "feats.html", source: "PHB", ...flat("feats", "feats") },
   class: { page: "classes.html", source: "PHB", ...flat("classes", "classes") },
