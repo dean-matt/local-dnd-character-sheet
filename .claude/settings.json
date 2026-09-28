@@ -1,6 +1,14 @@
 {
   "includeCoAuthoredBy": false,
   "permissions": {
-    "allow": ["Agent(general-purpose)", "Bash(gh:*)", "Bash(gh pr merge:*)"]
+    "allow": [
+      "Agent(general-purpose)",
+      "Bash(gh:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh api repos/dean-matt/local-dnd-character-sheet/pulls/:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh pr review:*)",
+      "Bash(gh pr comment:*)"
+    ]
   }
 }

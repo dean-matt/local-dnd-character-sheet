@@ -45,6 +45,16 @@ erDiagram
 **Reference, never copy.** A character stores `{name: "Fireball", source: "PHB"}`, not the
 spell. Rebuilding the catalog updates every character; copying would freeze it at creation.
 
+**A reference can stop resolving when the pin moves.** Upstream renames a row, merges a
+source or drops an entry, and the stored `(name, source)` names nothing. The sheet keeps
+showing the stored name and source, marked unresolved; only the derived block answers 422,
+for a class or race that does not resolve, since it cannot guess a hit die or a size. `GET
+/characters/{id}/references` checks every catalog reference in a definition and its state,
+on demand, and names each miss by its field; a magic variant misses where its base item no
+longer takes it. Where `tag_redirects` sends a miss to a row of the same table, the report
+carries that row as `renamedTo`. Nothing rewrites the character: a redirect such as
+`Fighter|PHB` to `Fighter|XPHB` changes edition, and that is the user's call.
+
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full records
 carrying source `HB`, merged with catalog rows at query time. A character holds one by
 `id` and survives a rename. A `{@item My Sword|HB}` tag holds its `(name, source)`, `HB`
@@ -182,19 +192,3 @@ breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup).
 kind is refused on write; on read it degrades to an `unknown` block a save still keeps.
 
 **Logs are pruned on insert**, in the same statement that writes the new row — nothing to schedule.
-
-## Resource counters
-
-Class resources come from `classTableGroups` where upstream provides them, which is
-about 80% of cases — see [`class-tables.md`](class-tables.md). The rest are stored as
-generic counters:
-
-```
-name          "Superiority Dice"
-current       3
-maximum       4
-resets_on     short | long | dawn | manual
-```
-
-The same shape holds data-derived resources and user-invented ones, so Battle Master
-dice and a homebrew resource need no special casing.

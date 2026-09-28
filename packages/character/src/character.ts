@@ -58,7 +58,7 @@ const editionSchema = z.enum(EDITIONS);
 
 const abilitySchema = z.enum(ABILITIES);
 
-const contentRefSchema = z.strictObject({
+export const contentRefSchema = z.strictObject({
   name: z.string().min(1),
   source: z.string().min(1),
 });

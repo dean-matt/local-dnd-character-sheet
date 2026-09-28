@@ -42,3 +42,18 @@ Four traps in reading a group:
 - **A cell is not always a number**: `{"type": "bonus"}`, `{"type": "bonusSpeed"}` and
   `{"type": "dice"}` objects appear alongside counts, `{@dice D8}` markup, an em dash for
   a resource the level has not reached, and `Unlimited` for a level 20 barbarian's rages.
+
+## Resource counters
+
+Class resources come from `classTableGroups` where upstream provides them, which is
+about 80% of cases. The rest are stored as generic counters:
+
+```
+name          "Superiority Dice"
+current       3
+maximum       4
+resets_on     short | long | dawn | manual
+```
+
+The same shape holds data-derived resources and user-invented ones, so Battle Master
+dice and a homebrew resource need no special casing.

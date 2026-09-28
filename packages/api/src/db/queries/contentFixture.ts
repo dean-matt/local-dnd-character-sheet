@@ -1050,3 +1050,85 @@ export function publishRefsFixture(dataDir: string, fixture: RefsFixture): void 
     ],
   );
 }
+
+type KeyRow = { name: string; source: string };
+
+/** The rows `checkCharacterReferences` reads, each table carrying only its key. */
+export type ReferencesFixture = {
+  classes?: KeyRow[];
+  subclasses?: (KeyRow & { class_name: string; class_source: string })[];
+  races?: KeyRow[];
+  subraces?: (KeyRow & { race_name: string; race_source: string })[];
+  backgrounds?: KeyRow[];
+  items?: ItemFixtureRow[];
+  spells?: SpellFixtureRow[];
+  feats?: KeyRow[];
+  optionalFeatures?: KeyRow[];
+  lookups?: (KeyRow & { kind: string; qualifier: string })[];
+  tagRedirects?: { tag: string; from_key: string; to_tag: string; to_key: string }[];
+};
+
+/**
+ * Mirrors `build-db.ts`'s publish step against every table a catalog reference names a
+ * row of. `spells` carries every column, so the spells route reads the same catalog, and
+ * `items` does so a variant expands with its base.
+ */
+export function publishReferencesFixture(dataDir: string, fixture: ReferencesFixture): void {
+  const keyed = (table: string, extra: string[] = []) => {
+    const columns = ["name", "source", ...extra];
+    return {
+      ddl: `CREATE TABLE ${table} (${columns.map((c) => `${c} TEXT`).join(", ")},
+              PRIMARY KEY (${columns.join(", ")}));`,
+      insert: `INSERT INTO ${table} VALUES (${columns.map((c) => `@${c}`).join(", ")})`,
+    };
+  };
+  const tables = {
+    classes: keyed("classes"),
+    subclasses: keyed("subclasses", ["class_name", "class_source"]),
+    races: keyed("races"),
+    subraces: keyed("subraces", ["race_name", "race_source"]),
+    backgrounds: keyed("backgrounds"),
+    feats: keyed("feats"),
+    optionalFeatures: keyed("optional_features"),
+    lookups: keyed("lookups", ["kind", "qualifier"]),
+  };
+  publishTable(
+    dataDir,
+    `
+      ${Object.values(tables)
+        .map((table) => table.ddl)
+        .join("\n")}
+      CREATE TABLE spells (
+        name TEXT, source TEXT, edition TEXT, level INTEGER, school TEXT,
+        concentration INTEGER, ritual INTEGER, json TEXT, PRIMARY KEY (name, source)
+      );
+      CREATE TABLE items (
+        name TEXT, source TEXT, edition TEXT, kind TEXT, type TEXT, rarity TEXT,
+        requires_attunement INTEGER, json TEXT, PRIMARY KEY (name, source)
+      );
+      CREATE TABLE tag_redirects (
+        tag TEXT, from_key TEXT, to_tag TEXT, to_key TEXT, PRIMARY KEY (tag, from_key)
+      );
+    `,
+    [
+      ...Object.entries(tables).map(([key, table]) => ({
+        insert: table.insert,
+        rows: fixture[key as keyof typeof tables] ?? [],
+      })),
+      {
+        insert:
+          "INSERT INTO spells VALUES (@name, @source, @edition, @level, @school, @concentration, @ritual, @json)",
+        rows: fixture.spells ?? [],
+      },
+      {
+        insert:
+          "INSERT INTO items VALUES (@name, @source, @edition, @kind, @type, @rarity, @requires_attunement, @json)",
+        rows: fixture.items ?? [],
+      },
+      {
+        insert: "INSERT INTO tag_redirects VALUES (@tag, @from_key, @to_tag, @to_key)",
+        rows: fixture.tagRedirects ?? [],
+      },
+    ],
+  );
+}

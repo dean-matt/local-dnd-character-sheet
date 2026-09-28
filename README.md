@@ -120,9 +120,9 @@ data/               the three SQLite databases, gitignored
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Why every fence in this repository exists, and how to work here |
 | [`NOTICE`](NOTICE) | Licensing, and why game content is not committed |
 | [`docs/architecture.md`](docs/architecture.md) | Request flow, the three databases, content tiers, deliberate absences |
-| [`docs/data-model.md`](docs/data-model.md) | Character schema, overrides, references, resource counters |
+| [`docs/data-model.md`](docs/data-model.md) | Character schema, overrides, references |
 | [`docs/5etools-data.md`](docs/5etools-data.md) | Editions, `_copy` inheritance, tag markup |
-| [`docs/class-tables.md`](docs/class-tables.md) | Class resource tables, and what the ETL takes from them |
+| [`docs/class-tables.md`](docs/class-tables.md) | Class resource tables, what the ETL takes from them, and resource counters |
 | [`docs/optional-features.md`](docs/optional-features.md) | Optional-feature counts per level, and how the three tables sum |
 | [`docs/items.md`](docs/items.md) | The four item arrays, magic variants, and attunement |
 | [`docs/fluff.md`](docs/fluff.md) | `fluff-*.json`, the `hasFluff` promise, and how a subrace or a subclass is keyed |
