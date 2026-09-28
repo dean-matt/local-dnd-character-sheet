@@ -182,19 +182,3 @@ breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup).
 kind is refused on write; on read it degrades to an `unknown` block a save still keeps.
 
 **Logs are pruned on insert**, in the same statement that writes the new row — nothing to schedule.
-
-## Resource counters
-
-Class resources come from `classTableGroups` where upstream provides them, which is
-about 80% of cases — see [`class-tables.md`](class-tables.md). The rest are stored as
-generic counters:
-
-```
-name          "Superiority Dice"
-current       3
-maximum       4
-resets_on     short | long | dawn | manual
-```
-
-The same shape holds data-derived resources and user-invented ones, so Battle Master
-dice and a homebrew resource need no special casing.
