@@ -12,7 +12,7 @@ import { RootLayout } from "./routes/RootLayout.tsx";
 /** Adds the default content padding for routes that do not manage their own layout. */
 function ContentLayout() {
   return (
-    <div className="p-4 sm:p-8">
+    <div className="px-gutter py-6">
       <Outlet />
     </div>
   );

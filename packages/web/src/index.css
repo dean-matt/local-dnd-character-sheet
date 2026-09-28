@@ -43,6 +43,10 @@
   --tracking-label: 0.08em;
 
   --spacing-row: 2rem;
+  --spacing-topbar: 4rem;
+  --spacing-gutter: 2.5rem;
+  --spacing-sidebar: 16.25rem;
+  --spacing-sidebar-collapsed: 4.5rem;
 
   --radius-chip: var(--radius-sm);
   --radius-control: var(--radius-md);

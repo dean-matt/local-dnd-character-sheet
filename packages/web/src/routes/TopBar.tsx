@@ -76,7 +76,7 @@ export function TopBar() {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full w-full items-center gap-1.5 rounded-card border border-border bg-surface px-6"
+      className="relative flex h-full w-full items-center gap-1.5 border-b border-border bg-surface px-6"
     >
       <span className="mr-3.5 shrink-0 text-lg font-bold text-accent">Local D&D</span>
 

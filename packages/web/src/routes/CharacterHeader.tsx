@@ -23,7 +23,7 @@ export function characterSubtitle({ definition, raceSummary }: CharacterRecord):
 /** Sits above every page of a character on screen; print carries `PrintTitle` instead. */
 export function CharacterHeader({ character }: { character: CharacterRecord }) {
   return (
-    <div className="mb-6 flex items-center gap-5 print:hidden">
+    <div className="flex items-center gap-5 border-b border-border bg-surface px-gutter py-5 print:hidden">
       <span
         aria-hidden="true"
         className="flex h-18 w-18 shrink-0 items-center justify-center rounded-full font-semibold text-3xl text-white"
