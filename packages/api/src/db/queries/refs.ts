@@ -164,21 +164,33 @@ function finder(db: Database.Database): Find {
 }
 
 /**
- * A redirect is followed one hop, into whichever resolvable tag shares the page it lands
- * on — `{@action shove|PHB}` lands in `variantrules.html` as the 2024 Unarmed Strike.
+ * Where upstream's redirect map sends `(name, source)` filed under `page`, one hop. The
+ * target is lowercased, as upstream hashes it, so a caller matches it ignoring case.
  */
-function redirector(db: Database.Database, find: Find) {
+export function redirects(db: Database.Database) {
   const redirect = db.prepare(
     "SELECT to_tag, to_key FROM tag_redirects WHERE tag = ? AND from_key = ?",
   );
-  return (page: string, name: string, source: string): ResolvedRow | undefined => {
+  return (page: string, name: string, source: string) => {
     const hop = redirect.get(page, hash(name, source)) as
       | { to_tag: string; to_key: string }
       | undefined;
-    const to = hop === undefined ? undefined : unhash(hop.to_key);
-    if (hop === undefined || to === undefined) return undefined;
+    const to = hop && unhash(hop.to_key);
+    return hop && to && { page: hop.to_tag, ...to };
+  };
+}
+
+/**
+ * A redirect is followed into whichever resolvable tag shares the page it lands on —
+ * `{@action shove|PHB}` lands in `variantrules.html` as the 2024 Unarmed Strike.
+ */
+function redirector(db: Database.Database, find: Find) {
+  const hop = redirects(db);
+  return (page: string, name: string, source: string): ResolvedRow | undefined => {
+    const to = hop(page, name, source);
+    if (to === undefined) return undefined;
     for (const [candidate, target] of Object.entries(TARGETS)) {
-      const row = target.page === hop.to_tag ? find(candidate, to.name, to.source) : undefined;
+      const row = target.page === to.page ? find(candidate, to.name, to.source) : undefined;
       if (row !== undefined) return row;
     }
     return undefined;

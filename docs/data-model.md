@@ -45,6 +45,16 @@ erDiagram
 **Reference, never copy.** A character stores `{name: "Fireball", source: "PHB"}`, not the
 spell. Rebuilding the catalog updates every character; copying would freeze it at creation.
 
+**A reference can stop resolving when the pin moves.** Upstream renames a row, merges a
+source or drops an entry, and the stored `(name, source)` names nothing. The sheet keeps
+showing the stored name and source, marked unresolved; only the derived block, which cannot
+guess a class's hit die or a race's size, answers 422 for those two. `GET
+/characters/{id}/references` checks every catalog reference a definition holds, on demand,
+and names each miss by its field. Where `tag_redirects` sends the miss to a row of the same
+table, the report carries that row as `renamedTo`. Nothing rewrites the character: a
+redirect such as `Fighter|PHB` to `Fighter|XPHB` changes edition, and that is the user's
+call.
+
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full records
 carrying source `HB`, merged with catalog rows at query time. A character holds one by
 `id` and survives a rename. A `{@item My Sword|HB}` tag holds its `(name, source)`, `HB`
