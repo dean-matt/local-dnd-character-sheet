@@ -174,8 +174,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
         e.preventDefault();
         onClose();
       }}
-      className="m-auto rounded-card border-0 bg-surface p-0 shadow-modal print:hidden"
-      style={{ width: "360px" }}
+      className="m-auto w-[360px] rounded-card border-0 bg-surface p-0 shadow-modal print:hidden"
     >
       <div className="flex flex-col gap-3 p-5">
         {/* Title row */}

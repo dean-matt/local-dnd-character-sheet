@@ -61,7 +61,7 @@ export function TopBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const toggle = (menu: Menu) => setOpen((prev) => (prev === menu ? null : menu));
 
-  // Close the open menu when focus leaves the top bar entirely.
+  // Close the open menu when focus leaves the top bar or when Escape is pressed.
   useEffect(() => {
     if (!open) return;
     const onFocusIn = (e: FocusEvent) => {
@@ -69,8 +69,15 @@ export function TopBar() {
         setOpen(null);
       }
     };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
     document.addEventListener("focusin", onFocusIn);
-    return () => document.removeEventListener("focusin", onFocusIn);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [open]);
 
   return (

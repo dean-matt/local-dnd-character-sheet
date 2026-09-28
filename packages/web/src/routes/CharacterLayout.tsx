@@ -26,10 +26,7 @@ export function CharacterLayout() {
   return (
     <>
       <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside
-          className="shrink-0 p-5 print:hidden"
-          style={{ alignSelf: "flex-start", position: "sticky", top: "4rem" }}
-        >
+        <aside className="self-start sticky top-16 shrink-0 p-5 print:hidden">
           <Sidebar
             characterId={id}
             pages={pages}
