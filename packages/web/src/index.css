@@ -40,6 +40,7 @@
   --text-body: 0.8125rem;
 
   --spacing-row: 2rem;
+  --spacing-topbar: 4rem;
 
   --radius-chip: var(--radius-sm);
   --radius-control: var(--radius-md);

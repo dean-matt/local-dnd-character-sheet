@@ -122,7 +122,7 @@ export function RootLayout() {
       >
         Skip to main content
       </a>
-      <header className="h-16 shrink-0 print:hidden">
+      <header className="h-topbar shrink-0 print:hidden">
         <TopBar />
       </header>
       <main id="main-content" ref={mainRef} tabIndex={-1} className="print:p-0">

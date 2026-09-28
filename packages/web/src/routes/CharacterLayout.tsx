@@ -27,8 +27,8 @@ export function CharacterLayout() {
 
   return (
     <>
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <aside className="sticky top-16 h-[calc(100vh-4rem)] shrink-0 self-start print:hidden">
+      <div className="flex min-h-[calc(100vh-var(--spacing-topbar))]">
+        <aside className="sticky top-topbar h-[calc(100vh-var(--spacing-topbar))] shrink-0 self-start print:hidden">
           <Sidebar
             characterId={id}
             pages={pages}
