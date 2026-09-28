@@ -88,7 +88,7 @@ export function Sidebar({
 
   return (
     <div
-      className="flex h-full flex-col gap-2.5 rounded-card border border-border bg-surface px-4 py-5"
+      className="flex h-full flex-col gap-2.5 border-r border-border bg-surface px-4 py-5"
       style={{ width: collapsed ? "72px" : "260px", transition: "width var(--duration-standard)" }}
     >
       <nav aria-label="Character pages" className="flex flex-col gap-0.5">
