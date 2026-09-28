@@ -29,11 +29,13 @@ styles — one from the Fighter row at level 1, one from the Champion row at lev
 query reading either table alone is short by the other.
 
 Both tables store a row per level rather than one per plateau — 391 rows where 72 would
-carry the same information. That redundancy buys an absent row that means *none*, the
-same reading `class_resources` and `spell_slots` already have, and a primary key that
-makes two counts at one level impossible. A `(from_level, to_level)` range would be
-smaller and could not assert either: SQLite has no exclusion constraint, so an overlapping
-or gapped range loads clean and answers wrong.
+carry the same information. Storing only the levels where a count changes would make an
+absent row ambiguous; a row per level keeps it meaning *none*, the same reading
+`class_resources` and `spell_slots` already have. A `(from_level, to_level)` range keeps
+that reading too, and loses the primary key that makes two counts at one level impossible:
+SQLite has no exclusion constraint, so an overlapping or gapped range loads clean and
+answers wrong. The grants endpoints read one level by key equality, which a range would
+serve no better.
 
 A third shape sits on entries with no level to hang a count on, and
 `granted_optional_features` holds it. Four feats and one optional feature key a

@@ -100,13 +100,14 @@ CREATE TABLE subclass_spell_slots (
 -- difference from the level below, so a picker reading known as new options
 -- offers too many and the arithmetic still looks plausible.
 --
--- A row per level rather than one per plateau: the redundancy buys an absent row
--- that means none, the reading the resource and slot tables above already have,
--- and a key a second count for one level cannot fit. The class and subclass
--- grants endpoints read one level by key equality and take an empty result as
--- none. A (from_level, to_level) range serves that read as cheaply with BETWEEN,
--- but SQLite has no exclusion constraint, so an overlapping or gapped range
--- loads clean and answers wrong; the 319 rows it would save are not worth that.
+-- A row per level rather than only the levels where a count changes: the
+-- redundancy buys an absent row that means none, the reading the resource and
+-- slot tables above already have. A (from_level, to_level) range keeps that
+-- reading in a fifth of the rows, but loses the key a second count for one level
+-- cannot fit: SQLite has no exclusion constraint, so an overlapping or gapped
+-- range loads clean and answers wrong. getClassGrants and getSubclassGrants in
+-- packages/api, behind /classes/.../at/{level}, read one level by key equality,
+-- which a range would serve no better.
 --
 -- On the subclass table that key includes subclass_source, and a class offers
 -- both editions of a subclass: Fighter|XPHB holds Battle Master|PHB and
