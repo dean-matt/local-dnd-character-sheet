@@ -43,6 +43,15 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     // A keyboard navigation moves focus to `main`, where `:focus-visible` would ring it.
     await page.getByRole("link", { name: "Spells" }).press("Enter");
     await expect(page.locator("main")).toBeFocused();
+
+    // Collapse the sidebar so both widths are in the DOM before switching to print.
+    await page.getByRole("button", { name: "Collapse sidebar" }).click();
+    await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+
+    // Open the Manage modal so the dialog is in the DOM before switching to print.
+    await page.getByRole("button", { name: "Manage pages" }).click();
+    await page.getByRole("dialog", { name: "Manage pages" }).waitFor();
+
     // A dark system preference as well as the dark override: print must resist both.
     await page.emulateMedia({ media: "print", colorScheme: "dark" });
 
@@ -55,6 +64,7 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     await expect(page.getByRole("banner")).toBeHidden();
     await expect(page.getByRole("navigation", { name: "Character pages" })).toBeHidden();
     await expect(page.getByRole("button", { name: "Manage pages" })).toBeHidden();
+    await expect(page.getByRole("dialog", { name: "Manage pages" })).toBeHidden();
     await expect(page.locator("main")).toHaveCSS("outline-style", "none");
 
     await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");

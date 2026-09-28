@@ -70,14 +70,28 @@ afterEach(() => {
 });
 
 describe("ManagePages", () => {
-  it("opens from a disclosure button that reports its state", async () => {
+  it("opens from a button that declares it opens a dialog", async () => {
     stubServer(presetPageRecords());
     await renderManaging();
 
     expect(screen.getByRole("button", { name: "Manage pages" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
+      "aria-haspopup",
+      "dialog",
     );
+  });
+
+  it("returns focus to the Manage button when closed with ×", async () => {
+    stubServer(presetPageRecords());
+    await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Manage pages" })).toHaveFocus();
+    });
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Manage pages" }),
+    ).not.toBeInTheDocument();
   });
 
   it("moves a page, persists the order and announces where it went", async () => {

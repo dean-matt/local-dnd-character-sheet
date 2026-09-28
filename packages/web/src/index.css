@@ -82,6 +82,10 @@ body {
   outline-offset: 2px;
 }
 
+dialog::backdrop {
+  background-color: var(--color-scrim);
+}
+
 @media print {
   :root {
     color-scheme: light;
