@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { CharacterInventory } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { openDatabases } from "../db/client.ts";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishItems } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem, updateHomebrewItem } from "../db/queries/homebrew.ts";
-import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterInventoryRoutes } from "./character-inventory.ts";
 
 const LONGSWORD = { name: "Longsword", source: "PHB" };
@@ -52,7 +52,7 @@ const withInventory = (inventory: object[]): CharacterDefinition =>
 
 describe("characterInventoryRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
+  let opened: ReturnType<typeof openDatabases>;
   let routes: ReturnType<typeof characterInventoryRoutes>;
 
   const store = (definition: CharacterDefinition) =>
@@ -64,8 +64,10 @@ describe("characterInventoryRoutes", () => {
     return (await res.json()).items;
   };
 
-  beforeAll(() => {
+  beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "character-inventory-"));
+    opened = openDatabases(dataDir);
+    routes = characterInventoryRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
     publishItems(dataDir, [
       row(LONGSWORD, "baseitem", { weapon: true, weight: 3, entries: ["A {@b sharp} blade."] }),
       row(NET, "baseitem", { weapon: true, net: true, weight: 3 }),
@@ -88,18 +90,10 @@ describe("characterInventoryRoutes", () => {
     ]);
   });
 
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
-
-  beforeEach(() => {
-    opened = openTestDatabases();
-    routes = characterInventoryRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
-  });
-
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("404s an id that names no character", async () => {

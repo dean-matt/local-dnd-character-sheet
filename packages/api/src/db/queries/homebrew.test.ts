@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type {
   HomebrewBackgroundInput,
   HomebrewClassInput,
@@ -7,7 +10,7 @@ import type {
   HomebrewSpellInput,
 } from "@dnd/catalog";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { openTestDatabases } from "../testDatabases.ts";
+import { openDatabases } from "../client.ts";
 import {
   deleteHomebrewBackground,
   deleteHomebrewClass,
@@ -88,17 +91,20 @@ const warden = (overrides: Partial<HomebrewClassInput> = {}): HomebrewClassInput
 });
 
 describe("homebrew queries", () => {
-  let opened: ReturnType<typeof openTestDatabases>;
-  let db: ReturnType<typeof openTestDatabases>["homebrewDb"];
+  let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
+  let db: ReturnType<typeof openDatabases>["homebrewDb"];
 
   beforeEach(() => {
-    opened = openTestDatabases();
+    dataDir = mkdtempSync(join(tmpdir(), "homebrew-queries-"));
+    opened = openDatabases(dataDir);
     db = opened.homebrewDb;
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   describe("items", () => {

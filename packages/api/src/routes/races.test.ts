@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { publishRaces, publishSubraces } from "../db/queries/contentFixture.ts";
 import { racesRoutes } from "./races.ts";
 
@@ -32,13 +32,13 @@ describe("racesRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof racesRoutes>;
 
-  beforeAll(() => {
+  beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "races-routes-"));
     publishRaces(dataDir, [ELF, TIEFLING_ONE]);
     routes = racesRoutes(dataDir);
   });
 
-  afterAll(() => {
+  afterEach(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
@@ -73,17 +73,8 @@ describe("racesRoutes", () => {
   });
 
   describe("subraces", () => {
-    let subraceDataDir: string;
-
-    beforeAll(() => {
-      subraceDataDir = mkdtempSync(join(tmpdir(), "races-routes-subraces-"));
-      publishSubraces(subraceDataDir, [HIGH_ELF]);
-      routes = racesRoutes(subraceDataDir);
-    });
-
-    afterAll(() => {
-      routes = racesRoutes(dataDir);
-      rmSync(subraceDataDir, { recursive: true, force: true });
+    beforeEach(() => {
+      publishSubraces(dataDir, [HIGH_ELF]);
     });
 
     it("lists the subraces of one race, of one edition", async () => {

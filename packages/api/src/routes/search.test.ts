@@ -1,10 +1,10 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { openDatabases } from "../db/client.ts";
 import { publishSearchFixture } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem, insertHomebrewSpell } from "../db/queries/homebrew.ts";
-import { openTestDatabases } from "../db/testDatabases.ts";
 import { searchRoutes } from "./search.ts";
 
 const FIREBALL = {
@@ -30,26 +30,20 @@ const FIRE_ELEMENTAL = {
 
 describe("searchRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
+  let opened: ReturnType<typeof openDatabases>;
   let routes: ReturnType<typeof searchRoutes>;
 
-  beforeAll(() => {
+  beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "search-routes-"));
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
-  });
-
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
-
-  beforeEach(() => {
-    opened = openTestDatabases();
+    opened = openDatabases(dataDir);
     routes = searchRoutes(dataDir, opened.homebrewDb);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("requires an edition and a term", async () => {

@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
-import { afterAll, afterEach, beforeAll, beforeEach, expect } from "vitest";
+import { afterAll, beforeAll, expect } from "vitest";
 
-type Timing = { open: number; fixture: number; rm: number; mkdtemp: number; maxTest: number };
+type Timing = { open: number; fixture: number; rm: number; mkdtemp: number };
 const g = globalThis as unknown as { __dbTiming: Timing; __fsTimed?: boolean };
-g.__dbTiming = { open: 0, fixture: 0, rm: 0, mkdtemp: 0, maxTest: 0 };
+g.__dbTiming = { open: 0, fixture: 0, rm: 0, mkdtemp: 0 };
 
 if (!g.__fsTimed) {
   g.__fsTimed = true;
@@ -32,16 +32,9 @@ if (!g.__fsTimed) {
 let start = 0;
 let file = "";
 beforeAll(() => {
-  g.__dbTiming = { open: 0, fixture: 0, rm: 0, mkdtemp: 0, maxTest: 0 };
+  g.__dbTiming = { open: 0, fixture: 0, rm: 0, mkdtemp: 0 };
   file = expect.getState().testPath ?? "";
   start = performance.now();
-});
-let testStart = 0;
-beforeEach(() => {
-  testStart = performance.now();
-});
-afterEach(() => {
-  g.__dbTiming.maxTest = Math.max(g.__dbTiming.maxTest, performance.now() - testStart);
 });
 afterAll(() => {
   const out = process.env.TIMING_OUT;

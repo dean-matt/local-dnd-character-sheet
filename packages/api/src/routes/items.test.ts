@@ -2,10 +2,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HomebrewItemInput } from "@dnd/catalog";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { openDatabases } from "../db/client.ts";
 import { publishItems } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem } from "../db/queries/homebrew.ts";
-import { openTestDatabases } from "../db/testDatabases.ts";
 import { itemsRoutes } from "./items.ts";
 
 const LONGSWORD = {
@@ -108,26 +108,20 @@ const sunblade = (overrides: Partial<HomebrewItemInput> = {}): HomebrewItemInput
 
 describe("itemsRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
+  let opened: ReturnType<typeof openDatabases>;
   let routes: ReturnType<typeof itemsRoutes>;
 
-  beforeAll(() => {
+  beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "items-routes-"));
     publishItems(dataDir, [LONGSWORD, DEMON_ARMOR_ONE, BAG_OF_TRICKS]);
-  });
-
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
-
-  beforeEach(() => {
-    opened = openTestDatabases();
+    opened = openDatabases(dataDir);
     routes = itemsRoutes(dataDir, opened.homebrewDb);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   describe("list", () => {
@@ -189,18 +183,19 @@ describe("itemsRoutes", () => {
   describe("expand", () => {
     let variantDataDir: string;
     let variantRoutes: ReturnType<typeof itemsRoutes>;
-
-    beforeAll(() => {
-      variantDataDir = mkdtempSync(join(tmpdir(), "items-routes-variants-"));
-      publishItems(variantDataDir, [LONGSWORD, NET, PLUS_ONE_WEAPON, ADAMANTINE_WEAPON, REVOLVER]);
-    });
-
-    afterAll(() => {
-      rmSync(variantDataDir, { recursive: true, force: true });
-    });
+    let variantOpened: ReturnType<typeof openDatabases>;
 
     beforeEach(() => {
-      variantRoutes = itemsRoutes(variantDataDir, opened.homebrewDb);
+      variantDataDir = mkdtempSync(join(tmpdir(), "items-routes-variants-"));
+      publishItems(variantDataDir, [LONGSWORD, NET, PLUS_ONE_WEAPON, ADAMANTINE_WEAPON, REVOLVER]);
+      variantOpened = openDatabases(variantDataDir);
+      variantRoutes = itemsRoutes(variantDataDir, variantOpened.homebrewDb);
+    });
+
+    afterEach(() => {
+      variantOpened.charactersDb.$client.close();
+      variantOpened.homebrewDb.$client.close();
+      rmSync(variantDataDir, { recursive: true, force: true });
     });
 
     it("expands a base item and a magic variant into the specific item they make", async () => {

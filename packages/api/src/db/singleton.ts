@@ -1,9 +1,9 @@
 /**
  * The user's real `characters.db` and `homebrew.db`, opened once at `data/` on import.
  *
- * Only `app.ts` imports this. Everything else opens its own pair, free of that side
- * effect: `openDatabases` from `client.ts` at a directory it controls, or in a test
- * `openTestDatabases` from `testDatabases.ts` in memory. Importing this module for the
+ * Only `app.ts` imports this. Everything else — every test included — imports
+ * `openDatabases` from `client.ts` instead, which carries no such side effect, and
+ * opens its own pair at a temp directory it controls. Importing this module for the
  * real databases too would give every importer the same file handle and the same
  * real data, racing each other for the lock `client.test.ts`'s cascade test proves
  * `PRAGMA foreign_keys` turns on.

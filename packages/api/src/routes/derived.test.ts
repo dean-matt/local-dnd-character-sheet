@@ -6,8 +6,9 @@ import {
   type CharacterDerived,
   characterDefinitionSchema,
 } from "@dnd/character";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
+import { openDatabases } from "../db/client.ts";
 import { insertCharacter, updateCharacterDefinition } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
@@ -15,7 +16,6 @@ import {
   insertHomebrewItem,
   insertHomebrewRace,
 } from "../db/queries/homebrew.ts";
-import { openTestDatabases } from "../db/testDatabases.ts";
 import { derivedRoutes } from "./derived.ts";
 
 const FIGHTER = { name: "Fighter", source: "PHB" };
@@ -78,7 +78,7 @@ const definitionWith = (
 
 describe("derivedRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
+  let opened: ReturnType<typeof openDatabases>;
   let routes: ReturnType<typeof derivedRoutes>;
 
   const store = (definition: CharacterDefinition) =>
@@ -90,8 +90,10 @@ describe("derivedRoutes", () => {
     return res.json();
   };
 
-  beforeAll(() => {
+  beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "derived-routes-"));
+    opened = openDatabases(dataDir);
+    routes = derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
     publishDerivedFixture(dataDir, {
       classes: [
         { ...FIGHTER, edition: "classic", hit_die: 10, json: JSON.stringify(FIGHTER) },
@@ -231,18 +233,10 @@ describe("derivedRoutes", () => {
     });
   });
 
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
-
-  beforeEach(() => {
-    opened = openTestDatabases();
-    routes = derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
-  });
-
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("404s an id that names no character", async () => {

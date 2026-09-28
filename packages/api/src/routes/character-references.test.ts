@@ -8,11 +8,11 @@ import {
   characterDefinitionSchema,
   defaultCharacterState,
 } from "@dnd/character";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
+import { openDatabases } from "../db/client.ts";
 import { insertCharacter, updateCharacterState } from "../db/queries/characters.ts";
 import { publishReferencesFixture, type ReferencesFixture } from "../db/queries/contentFixture.ts";
-import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterReferencesRoutes } from "./character-references.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
 
@@ -110,7 +110,7 @@ const definitionWith = (
 
 describe("characterReferencesRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
+  let opened: ReturnType<typeof openDatabases>;
 
   const store = (definition: CharacterDefinition) =>
     insertCharacter(opened.charactersDb, { id: "1", definition });
@@ -122,21 +122,15 @@ describe("characterReferencesRoutes", () => {
     return (await res.json()).unresolved;
   };
 
-  beforeAll(() => {
-    dataDir = mkdtempSync(join(tmpdir(), "character-references-"));
-  });
-
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
-
   beforeEach(() => {
-    opened = openTestDatabases();
+    dataDir = mkdtempSync(join(tmpdir(), "character-references-"));
+    opened = openDatabases(dataDir);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("404s an id that names no character", async () => {

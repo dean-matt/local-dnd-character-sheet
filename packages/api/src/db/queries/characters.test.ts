@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   type CharacterDefinition,
   characterDefinitionSchema,
@@ -6,7 +9,7 @@ import {
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters } from "../characters.ts";
-import { openTestDatabases } from "../testDatabases.ts";
+import { openDatabases } from "../client.ts";
 import {
   charactersReferencingHomebrew,
   deleteCharacter,
@@ -43,17 +46,21 @@ const baseDefinition = (overrides: Partial<CharacterDefinition> = {}): Character
   });
 
 describe("characters queries", () => {
-  let opened: ReturnType<typeof openTestDatabases>;
-  let db: ReturnType<typeof openTestDatabases>["charactersDb"];
+  let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
+  let db: ReturnType<typeof openDatabases>["charactersDb"];
 
   beforeEach(() => {
-    opened = openTestDatabases();
+    dataDir = mkdtempSync(join(tmpdir(), "characters-queries-"));
+    opened = openDatabases(dataDir);
     db = opened.charactersDb;
   });
 
   afterEach(() => {
+    // Windows keeps the file locked until the handle closes, and rmSync then fails.
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   describe("insertCharacter and updateCharacterDefinition", () => {

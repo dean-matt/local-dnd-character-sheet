@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   type CharacterPage,
   type CharacterPageRecord,
@@ -5,7 +8,7 @@ import {
   PRESET_PAGES,
 } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { openTestDatabases } from "../db/testDatabases.ts";
+import { openDatabases } from "../db/client.ts";
 import { charactersRoutes } from "./characters.ts";
 import { pagesRoutes } from "./pages.ts";
 
@@ -44,7 +47,8 @@ const send = (method: string, body?: unknown) => ({
 });
 
 describe("pagesRoutes", () => {
-  let opened: ReturnType<typeof openTestDatabases>;
+  let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
   let characters: ReturnType<typeof charactersRoutes>;
   let pages: ReturnType<typeof pagesRoutes>;
 
@@ -61,7 +65,8 @@ describe("pagesRoutes", () => {
     pages.request(`/characters/${id}/pages/restore-defaults`, send("POST"));
 
   beforeEach(() => {
-    opened = openTestDatabases();
+    dataDir = mkdtempSync(join(tmpdir(), "pages-routes-"));
+    opened = openDatabases(dataDir);
     characters = charactersRoutes(opened.charactersDb);
     pages = pagesRoutes(opened.charactersDb);
   });
@@ -69,6 +74,7 @@ describe("pagesRoutes", () => {
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("seeds every created or imported character with the presets, in order", async () => {

@@ -1,14 +1,14 @@
 /**
- * Builds the same route composition `app.ts` does, against in-memory databases rather
- * than the real `data/` — `app.ts` itself opens the user's real databases on
+ * Builds the same route composition `app.ts` does, against a temp pair of databases
+ * rather than the real `data/` — `app.ts` itself opens the user's real databases on
  * import, which a test must never touch.
  */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { openTestDatabases } from "./db/testDatabases.ts";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { openDatabases } from "./db/client.ts";
 import { characterInventoryRoutes } from "./routes/character-inventory.ts";
 import { characterReferencesRoutes } from "./routes/character-references.ts";
 import { characterSpellsRoutes } from "./routes/character-spells.ts";
@@ -21,23 +21,17 @@ import { spellsRoutes } from "./routes/spells.ts";
 
 describe("/openapi.json", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
-
-  beforeAll(() => {
-    dataDir = mkdtempSync(join(tmpdir(), "app-openapi-"));
-  });
-
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
+  let opened: ReturnType<typeof openDatabases>;
 
   beforeEach(() => {
-    opened = openTestDatabases();
+    dataDir = mkdtempSync(join(tmpdir(), "app-openapi-"));
+    opened = openDatabases(dataDir);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("documents every character, page, homebrew and spell route", async () => {

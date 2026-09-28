@@ -2,10 +2,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HomebrewSpellInput } from "@dnd/catalog";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishSpells, testDataDir } from "../db/queries/contentFixture.ts";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { openDatabases } from "../db/client.ts";
+import { publishSpells } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell } from "../db/queries/homebrew.ts";
-import { openTestDatabases } from "../db/testDatabases.ts";
 import { spellsRoutes } from "./spells.ts";
 
 const FIREBALL = {
@@ -53,26 +53,20 @@ const acidSplash = (overrides: Partial<HomebrewSpellInput> = {}): HomebrewSpellI
 
 describe("spellsRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openTestDatabases>;
+  let opened: ReturnType<typeof openDatabases>;
   let routes: ReturnType<typeof spellsRoutes>;
 
-  beforeAll(() => {
+  beforeEach(() => {
     dataDir = mkdtempSync(join(tmpdir(), "spells-routes-"));
     publishSpells(dataDir, [FIREBALL, GOODBERRY_ONE]);
-  });
-
-  afterAll(() => {
-    rmSync(dataDir, { recursive: true, force: true });
-  });
-
-  beforeEach(() => {
-    opened = openTestDatabases();
+    opened = openDatabases(dataDir);
     routes = spellsRoutes(dataDir, opened.homebrewDb);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 
   describe("list", () => {
@@ -133,9 +127,7 @@ describe("spellsRoutes", () => {
     });
 
     it("round-trips a name containing a literal slash", async () => {
-      const slashDir = testDataDir("spells-routes-slash-");
-      routes = spellsRoutes(slashDir, opened.homebrewDb);
-      publishSpells(slashDir, [
+      publishSpells(dataDir, [
         FIREBALL,
         {
           ...FIREBALL,
