@@ -80,6 +80,20 @@ describe("ManagePages", () => {
     );
   });
 
+  it("returns focus to the Manage button when closed with ×", async () => {
+    stubServer(presetPageRecords());
+    await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Manage pages" })).toHaveFocus();
+    });
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Manage pages" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("moves a page, persists the order and announces where it went", async () => {
     const server = stubServer(presetPageRecords());
     await renderManaging();
