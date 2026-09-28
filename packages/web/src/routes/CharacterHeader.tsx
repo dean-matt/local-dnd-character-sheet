@@ -20,7 +20,7 @@ export function characterSubtitle({ definition, raceSummary }: CharacterRecord):
     .join(" • ");
 }
 
-/** Spans the full width above the sidebar and every page of a character on screen; print carries `PrintTitle` instead. */
+/** Fills the content column above every page of a character on screen, growing and shrinking with the side panels; print carries `PrintTitle` instead. */
 export function CharacterHeader({ character }: { character: CharacterRecord }) {
   return (
     <div className="flex items-center gap-5 border-b border-border bg-surface px-10 py-5 print:hidden">
