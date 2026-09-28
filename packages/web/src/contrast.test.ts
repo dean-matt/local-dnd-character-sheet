@@ -83,6 +83,7 @@ const canvasLight = hex("#f4f5f7");
 const subtleLight = hex("#eef0f3");
 const inkLight = hex("#1f2430");
 const mutedLight = mixOklab(hex("#6b7280"), inkLight, 0.92);
+const placeholderLight = mutedLight;
 const accentLight = hex("#c1272d");
 const accentHoverLight = mixOklab(accentLight, [0, 0, 0], 0.85);
 const accentActiveLight = mixOklab(accentLight, [0, 0, 0], 0.7);
@@ -90,6 +91,7 @@ const accentTintLight = mixOklab(accentLight, canvasLight, 0.1);
 
 const inkDark = gray100;
 const mutedDark = gray400;
+const placeholderDark = mutedDark;
 const accentDark = mixOklab(accentLight, white, 0.9);
 const subtleDark = mixOklab(gray700, gray800, 0.5);
 // Checked as non-text: the dark accent on the dark surface already sits near 3:1.
@@ -105,6 +107,9 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "muted on surface, light", fg: mutedLight, bg: white, minimum: AA_TEXT },
   { name: "ink on subtle, light", fg: inkLight, bg: subtleLight, minimum: AA_TEXT },
   { name: "muted on subtle, light", fg: mutedLight, bg: subtleLight, minimum: AA_TEXT },
+  { name: "placeholder on canvas, light", fg: placeholderLight, bg: canvasLight, minimum: AA_TEXT },
+  { name: "placeholder on surface, light", fg: placeholderLight, bg: white, minimum: AA_TEXT },
+  { name: "placeholder on subtle, light", fg: placeholderLight, bg: subtleLight, minimum: AA_TEXT },
   { name: "accent on accent-tint, light", fg: accentLight, bg: accentTintLight, minimum: AA_TEXT },
   { name: "white text on accent, light", fg: white, bg: accentLight, minimum: AA_TEXT },
   { name: "focus ring on canvas, light", fg: accentLight, bg: canvasLight, minimum: AA_NON_TEXT },
@@ -126,6 +131,9 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "muted on surface, dark", fg: mutedDark, bg: gray800, minimum: AA_TEXT },
   { name: "ink on subtle, dark", fg: inkDark, bg: subtleDark, minimum: AA_TEXT },
   { name: "muted on subtle, dark", fg: mutedDark, bg: subtleDark, minimum: AA_TEXT },
+  { name: "placeholder on canvas, dark", fg: placeholderDark, bg: gray900, minimum: AA_TEXT },
+  { name: "placeholder on surface, dark", fg: placeholderDark, bg: gray800, minimum: AA_TEXT },
+  { name: "placeholder on subtle, dark", fg: placeholderDark, bg: subtleDark, minimum: AA_TEXT },
   { name: "accent on accent-tint, dark", fg: accentDark, bg: accentTintDark, minimum: AA_NON_TEXT },
   { name: "white text on accent, dark", fg: white, bg: accentDark, minimum: AA_TEXT },
   { name: "focus ring on canvas, dark", fg: accentDark, bg: gray900, minimum: AA_NON_TEXT },

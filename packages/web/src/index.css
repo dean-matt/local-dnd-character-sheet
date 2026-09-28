@@ -16,7 +16,8 @@
     color-mix(in oklab, #6b7280 92%, var(--color-ink)),
     var(--color-gray-400)
   );
-  --color-placeholder: light-dark(#9aa1ab, var(--color-gray-500));
+  /* No gray lighter than muted clears 4.5:1 on subtle in either theme. */
+  --color-placeholder: var(--color-muted);
   --color-scrim: light-dark(rgb(15 17 21 / 0.5), rgb(0 0 0 / 0.6));
 
   /*

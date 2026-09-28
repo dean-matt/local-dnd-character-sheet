@@ -44,17 +44,17 @@ the shade:
 | `color-border` | `#dde1e6` | `gray-700` | Hairline borders |
 | `color-ink` | `#1f2430` | `gray-100` | Primary text |
 | `color-muted` | `#6b7280` 92%, `color-ink` 8% | `gray-400` | Secondary text — labels, captions |
-| `color-placeholder` | `#9aa1ab` | `gray-500` | Placeholder text |
+| `color-placeholder` | `color-muted` | `color-muted` | Placeholder text |
 | `color-scrim` | `rgb(15 17 21 / 0.5)` | black at 60% | A modal's backdrop |
 | `color-accent` | `#c1272d` | `#c1272d` 90%, white 10% | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
 
-`color-muted` is the one light value that departs from the mockup: `#6b7280` itself
-measures 4.43:1 on canvas and 4.23:1 on subtle, under AA, so it takes 8% of the ink.
-`color-placeholder` measures 2.61:1 on surface, as the mockup has it, so it never
-carries text a reader needs. `color-accent-tint` mixes into canvas rather than surface
-because the dark accent measures 3.10:1 on the dark surface already.
+Two light values depart from the mockup. `#6b7280` measures 4.43:1 on canvas and 4.23:1
+on subtle, under AA, so `color-muted` takes 8% of the ink. `#9aa1ab` measures 2.61:1 on
+surface, and no gray lighter than `color-muted` clears 4.5:1 on subtle in either theme,
+so `color-placeholder` aliases `color-muted`. `color-accent-tint` mixes into canvas
+rather than surface because the dark accent measures 3.10:1 on the dark surface already.
 
 `color-accent` reuses the default `docs/mockup/` already settled on — every widget's
 accent prop there defaults to the same value. Picking a different one here would leave
@@ -67,7 +67,7 @@ has focus, so a view inherits it instead of each one styling its own outline. Co
 checked once against these tokens rather than per view. `packages/web/src/contrast.test.ts`
 holds every pair in both themes and fails a repalette that regresses one:
 
-- `color-ink` and `color-muted` on `color-canvas`, `color-surface` and `color-subtle`:
+- `color-ink`, `color-muted` and `color-placeholder` on `color-canvas`, `color-surface` and `color-subtle`:
   AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
