@@ -2,8 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MAX_REFS_PER_REQUEST, type RefQuery } from "@dnd/catalog";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { openDatabases } from "../db/client.ts";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishRefsFixture } from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewItem,
@@ -15,6 +14,7 @@ import {
   insertHomebrewSpell,
   updateHomebrewItem,
 } from "../db/queries/homebrew.ts";
+import { openTestDatabases } from "../db/testDatabases.ts";
 import { refsRoutes } from "./refs.ts";
 
 const row = (name: string, source: string, entries: unknown[] = []) => ({
@@ -25,7 +25,7 @@ const row = (name: string, source: string, entries: unknown[] = []) => ({
 
 describe("refsRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openDatabases>;
+  let opened: ReturnType<typeof openTestDatabases>;
   let routes: ReturnType<typeof refsRoutes>;
 
   const resolve = (refs: unknown[]) =>
@@ -41,7 +41,7 @@ describe("refsRoutes", () => {
     return (await res.json()).refs;
   };
 
-  beforeEach(() => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "refs-routes-"));
     publishRefsFixture(dataDir, {
       spells: [row("Fireball", "PHB", ["A bright streak."]), row("Fireball", "XPHB")],
@@ -80,14 +80,20 @@ describe("refsRoutes", () => {
         },
       ],
     });
-    opened = openDatabases(dataDir);
+  });
+
+  afterAll(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  beforeEach(() => {
+    opened = openTestDatabases();
     routes = refsRoutes(dataDir, opened.homebrewDb);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
-    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("resolves by name and source whatever their case, with the row's own spelling and route", async () => {
@@ -102,7 +108,9 @@ describe("refsRoutes", () => {
   });
 
   it("carries a spell's upcast rule after its entries", async () => {
-    publishRefsFixture(dataDir, {
+    const upcastDir = mkdtempSync(join(dataDir, "upcast-"));
+    routes = refsRoutes(upcastDir, opened.homebrewDb);
+    publishRefsFixture(upcastDir, {
       spells: [
         {
           name: "Fireball",
@@ -239,7 +247,7 @@ describe("refsRoutes", () => {
   });
 
   it("answers an empty batch without opening the catalog", async () => {
-    rmSync(join(dataDir, "content"), { recursive: true, force: true });
+    routes = refsRoutes(mkdtempSync(join(dataDir, "empty-")), opened.homebrewDb);
     expect(await resolveOk([])).toEqual([]);
   });
 

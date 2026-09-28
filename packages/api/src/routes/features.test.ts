@@ -3,12 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { CharacterFeatures } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { openDatabases } from "../db/client.ts";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishFeaturesFixture } from "../db/queries/contentFixture.ts";
 import { insertHomebrewFeat } from "../db/queries/homebrew.ts";
+import { openTestDatabases } from "../db/testDatabases.ts";
 import { featuresRoutes } from "./features.ts";
 
 const FIGHTER = { name: "Fighter", source: "PHB" };
@@ -67,7 +67,7 @@ const definitionWith = (
 
 describe("featuresRoutes", () => {
   let dataDir: string;
-  let opened: ReturnType<typeof openDatabases>;
+  let opened: ReturnType<typeof openTestDatabases>;
   let routes: ReturnType<typeof featuresRoutes>;
 
   const store = (definition: CharacterDefinition) =>
@@ -79,10 +79,8 @@ describe("featuresRoutes", () => {
     return res.json();
   };
 
-  beforeEach(() => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "features-routes-"));
-    opened = openDatabases(dataDir);
-    routes = featuresRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
     publishFeaturesFixture(dataDir, {
       classes: [
         { ...FIGHTER, edition: "classic", hit_die: 10, json: json(FIGHTER) },
@@ -185,10 +183,18 @@ describe("featuresRoutes", () => {
     });
   });
 
+  afterAll(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  beforeEach(() => {
+    opened = openTestDatabases();
+    routes = featuresRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
+  });
+
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
-    rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("404s an id that names no character", async () => {

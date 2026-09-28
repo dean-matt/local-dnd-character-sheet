@@ -54,17 +54,21 @@ type Insertion = { insert: string; rows: object[] };
  * rewriting the `current` pointer rather than a rename `openContentDb`'s docs say
  * Windows refuses. One `ddl` and several `insertions` where a read spans tables in one
  * connection, such as a class's resources, slots and features at a level.
+ *
+ * Built in memory and written in one call: built on disk, each autocommitted insert
+ * creates and deletes a journal file, and a hosted Windows runner took up to 3 s a fixture.
  */
 function publishTable(dataDir: string, ddl: string, insertions: Insertion[]): void {
   const contentDir = join(dataDir, "content");
   mkdirSync(contentDir, { recursive: true });
   const name = `content-test-${publishCount++}.db`;
-  const db = new Database(join(contentDir, name));
+  const db = new Database(":memory:");
   db.exec(ddl);
   for (const { insert, rows } of insertions) {
     const stmt = db.prepare(insert);
     for (const row of rows) stmt.run(row);
   }
+  writeFileSync(join(contentDir, name), db.serialize());
   db.close();
   writeFileSync(join(contentDir, "current.tmp"), name);
   renameSync(join(contentDir, "current.tmp"), join(contentDir, "current"));

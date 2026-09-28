@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishBackgrounds } from "../db/queries/contentFixture.ts";
 import { backgroundsRoutes } from "./backgrounds.ts";
 
@@ -23,13 +23,13 @@ describe("backgroundsRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof backgroundsRoutes>;
 
-  beforeEach(() => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "backgrounds-routes-"));
     publishBackgrounds(dataDir, [ACOLYTE, FEYLOST_ONE]);
     routes = backgroundsRoutes(dataDir);
   });
 
-  afterEach(() => {
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
