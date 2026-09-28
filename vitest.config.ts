@@ -2,9 +2,9 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 /**
- * Two projects: node code and the repo fences run in `node`, and anything touching
- * React needs a DOM. Both keep Vitest's default timeouts: on a hosted Windows runner
- * the slowest test, hooks included, takes under 2 s.
+ * Three projects. Node code and the repo fences run in `node`; anything touching
+ * React needs a DOM; a test that builds a database on disk needs a budget the
+ * other two do not.
  *
  * End-to-end specs live in `e2e/` and are run by Playwright, not Vitest.
  */
@@ -17,8 +17,26 @@ export default defineConfig({
           environment: "node",
           include: [
             "tests/**/*.test.ts",
-            "packages/{rules,character,dice,tags,catalog,api,content}/src/**/*.test.ts",
+            "packages/{rules,character,dice,tags,catalog,api}/src/**/*.test.ts",
           ],
+          // packages/api/src/db/{client,migrate,backup}.test.ts build a database on
+          // disk, but each does a handful of inserts rather than a catalog import,
+          // so they fit the 5 s default. Every other api test opens its databases
+          // in memory through db/testDatabases.ts and shares one content fixture per
+          // file.
+        },
+      },
+      {
+        test: {
+          name: "content",
+          environment: "node",
+          include: ["packages/content/src/**/*.test.ts"],
+          // Most content tests build a database on disk, and a hosted Windows
+          // runner spends 100 s over a suite that takes 4 s here — enough for the
+          // 5 s default to fail a passing test. 30 s is 300 times the slowest test
+          // here, so a hang still fails; the hooks share it, making the same calls.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
         },
       },
       {
