@@ -1,7 +1,7 @@
 /**
- * Gives a test its own in-memory `characters.db` and `homebrew.db`, each a copy of one
- * image migrated the first time a test file asks. Vitest isolates each test file's
- * modules, so the images are built once per file and no test sees another's writes.
+ * Gives a test its own in-memory `characters.db` and `homebrew.db`, each a fresh copy of
+ * one image, so no test sees another's writes. The image is migrated the first time a
+ * test file asks; Vitest isolates each file's modules, so that happens once per file.
  *
  * Opening them on disk runs the backup and every migration and leaves files to delete,
  * which on a hosted Windows runner costs more than the tests' own work. `client.test.ts`
