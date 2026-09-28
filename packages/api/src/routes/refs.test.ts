@@ -45,8 +45,12 @@ describe("refsRoutes", () => {
     dataDir = mkdtempSync(join(tmpdir(), "refs-routes-"));
     publishRefsFixture(dataDir, {
       spells: [row("Fireball", "PHB", ["A bright streak."]), row("Fireball", "XPHB")],
-      races: [row("Human", "PHB"), row("Elf (Zendikar)", "PSZ")],
+      races: [row("Human", "PHB"), row("Elf (Zendikar)", "PSZ"), row("Gnome (Deep)", "MTF")],
       subraces: [
+        { ...row("", "PHB"), race_name: "Human", race_source: "PHB" },
+        { ...row("Deep", "MTF"), race_name: "Gnome", race_source: "PHB" },
+        { ...row("Tajuru Nation", "PSZ"), race_name: "Elf", race_source: "PHB" },
+        { ...row("Tajuru Nation", "PSZ"), race_name: "Elf", race_source: "PSZ" },
         { ...row("Keldon", "PSD", ["Tall."]), race_name: "Human", race_source: "PHB" },
         { ...row("Joraga Nation", "PSZ"), race_name: "Elf (Zendikar)", race_source: "PSZ" },
         { ...row("Variant; Mark of Finding", "ERLW"), race_name: "Human", race_source: "PHB" },
@@ -210,13 +214,26 @@ describe("refsRoutes", () => {
       ]);
     });
 
-    it("answers null for a name that is neither a race nor a subrace", async () => {
+    it("links under the race printed in the subrace's own source, where two printings hold it", async () => {
+      const [subrace] = await resolveOk([
+        { tag: "race", name: "Elf (Tajuru Nation)", source: "PSZ" },
+      ]);
+      expect(subrace.path).toBe("/races/Elf/PSZ/subraces/Tajuru%20Nation/PSZ");
+    });
+
+    it("answers the race row over a subrace of the same merged name", async () => {
+      const [race] = await resolveOk([{ tag: "race", name: "Gnome (Deep)", source: "MTF" }]);
+      expect(race.path).toBe("/races/Gnome%20(Deep)/MTF");
+    });
+
+    it("answers null for a name that is neither a race nor a named subrace", async () => {
       expect(
         await resolveOk([
           { tag: "race", name: "Human (Nowhere)", source: "PSD" },
           { tag: "race", name: "Keldon", source: "PSD" },
+          { tag: "race", name: "Human ()", source: "PHB" },
         ]),
-      ).toEqual([null, null]);
+      ).toEqual([null, null, null]);
     });
   });
 
