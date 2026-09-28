@@ -4,7 +4,7 @@ import {
   deriveCharacter,
   entryKey,
 } from "@dnd/character";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../../test/records.ts";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
@@ -111,11 +111,9 @@ describe("AbilitiesSection", () => {
       definition: { ...record.definition, deity: { name: "Oghma", source: "PHB", pantheon } },
     });
 
-    const { unmount } = render(
-      <AbilitiesSection character={withDeity("Celtic")} derived={derivedFor(record)} />,
-    );
+    renderSection(withDeity("Celtic"));
     expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent("Oghma (Celtic)");
-    unmount();
+    cleanup();
 
     renderSection(withDeity("Forgotten Realms"));
     expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent(
