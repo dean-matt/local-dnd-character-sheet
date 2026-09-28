@@ -142,22 +142,6 @@ offers a retry, because autosave has no confirm step — the only way back from 
 is undo, which is why undo ships alongside editing rather than waiting for M6's play
 state.
 
-## Page chrome
-
-`docs/mockup/components/Layout.dc.html` is the wireframe, and it is 1440px wide with no
-stretch behavior, so it fixes the arrangement and not how each piece grows.
-
-- **Top bar** (`TopBar.tsx`): full-bleed above everything, a flat bar with a bottom
-  border. Nothing beside it changes its width.
-- **Sidebar** (`Sidebar.tsx`): fills its column, sticky under the top bar, right border
-  instead of a card.
-- **Character header** (`CharacterHeader.tsx`): a full-width bar in the content column, so
-  it grows and shrinks with the side panels. Character sheet only; Settings skips it.
-- **Page content**: `px-10 py-6` inside the content column, below the header.
-
-A side panel joins the flex row in `CharacterLayout.tsx` and the content column and header
-follow it; the top bar never does.
-
 ## Deliberately absent
 
 Listed so they do not get added back by reflex:

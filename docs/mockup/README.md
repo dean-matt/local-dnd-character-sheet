@@ -20,7 +20,9 @@ them, or read the markup here for the shapes and interactions it settled on.
 `Layout.dc.html` is a labeled wireframe of the page structure — top bar, collapsible
 sidebar, content region, plus an optional character-header row — shared by the
 character sheet and the settings page alike; read it first to see how the pieces fit
-together. Every other file matches a widget, panel, or nav element:
+together. It is a fixed 1440px with no stretch behavior, so it fixes the arrangement and
+not how each piece grows; `packages/web/LAYOUT.md` says that. Every other file matches a
+widget, panel, or nav element:
 
 - Overview: the eight widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status,
   Defenses).
