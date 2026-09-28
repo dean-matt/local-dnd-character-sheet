@@ -61,7 +61,7 @@ function writeCollapsed(value: boolean) {
 }
 
 /**
- * Character sheet tab sidebar. Collapses to a 72px icon rail; the choice persists
+ * Character sheet tab sidebar. Collapses to an icon rail; the choice persists
  * across reloads via localStorage. The Manage button delegates to the caller
  * so the modal can be managed at layout level.
  */
@@ -89,7 +89,10 @@ export function Sidebar({
   return (
     <div
       className="flex h-full flex-col gap-2.5 border-r border-border bg-surface px-4 py-5"
-      style={{ width: collapsed ? "72px" : "260px", transition: "width var(--duration-standard)" }}
+      style={{
+        width: collapsed ? "var(--spacing-sidebar-collapsed)" : "var(--spacing-sidebar)",
+        transition: "width var(--duration-standard)",
+      }}
     >
       <nav aria-label="Character pages" className="flex flex-col gap-0.5">
         {pages.map((page) => (

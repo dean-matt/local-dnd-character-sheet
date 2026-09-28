@@ -39,7 +39,7 @@ export function CharacterLayout() {
 
         <div className="min-w-0 flex-1">
           {character.data && <CharacterHeader character={character.data} />}
-          <div className="px-10 py-6">
+          <div className="px-gutter py-6">
             <Outlet />
           </div>
         </div>
