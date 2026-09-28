@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { computedColor } from "./palette";
 
 test("a character prints its visible pages in light ink, with the screen chrome left out", async ({
   page,
@@ -42,7 +43,8 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     // A keyboard navigation moves focus to `main`, where `:focus-visible` would ring it.
     await page.getByRole("link", { name: "Spells" }).press("Enter");
     await expect(page.locator("main")).toBeFocused();
-    await page.emulateMedia({ media: "print" });
+    // A dark system preference as well as the dark override: print must resist both.
+    await page.emulateMedia({ media: "print", colorScheme: "dark" });
 
     const sheet = page.locator("[data-print-sheet]");
     await expect(sheet.getByRole("heading", { level: 1 })).toHaveText([
@@ -56,6 +58,10 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     await expect(page.locator("main")).toHaveCSS("outline-style", "none");
 
     await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(page.locator("body")).toHaveCSS(
+      "color",
+      await computedColor(page, "var(--color-gray-900)"),
+    );
     // 12pt is 16px at the 96dpi a browser lays print out at.
     await expect(sheet.locator(".text-row").first()).toHaveCSS("font-size", "16px");
   } finally {
