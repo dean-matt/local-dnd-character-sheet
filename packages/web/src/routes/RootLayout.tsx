@@ -1,7 +1,7 @@
 import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { Link, Outlet, useLocation, useNavigationType } from "react-router";
-import { ThemeToggle } from "../ThemeToggle.tsx";
+import { Outlet, useLocation, useNavigationType } from "react-router";
+import { TopBar } from "./TopBar.tsx";
 
 const POSITIONS_KEY = "scroll-positions";
 const SETTLE_MS = 50;
@@ -122,13 +122,10 @@ export function RootLayout() {
       >
         Skip to main content
       </a>
-      <header className="flex flex-col gap-2 border-border border-b p-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
-        <Link to="/" className="font-semibold text-row uppercase tracking-wide">
-          D&amp;D Character Sheet
-        </Link>
-        <ThemeToggle />
+      <header className="h-16 shrink-0 px-6 print:hidden">
+        <TopBar />
       </header>
-      <main id="main-content" ref={mainRef} tabIndex={-1} className="p-4 sm:p-8 print:p-0">
+      <main id="main-content" ref={mainRef} tabIndex={-1} className="print:p-0">
         <Outlet />
       </main>
       <ScrollMemory />

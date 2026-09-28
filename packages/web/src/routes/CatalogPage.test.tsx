@@ -162,11 +162,14 @@ describe("CatalogPage", () => {
   });
 
   it("says a feature level no class reaches is not found, without asking the API", async () => {
-    const fetchMock = stubFetchByUrl({});
+    const fetchMock = stubFetchByUrl({ "/api/characters": [] });
     renderAt("/catalog/classes/Barbarian/PHB/features/Rage/PHB/21");
 
     await screen.findByRole("heading", { level: 1, name: "Page not found" });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/classes/Barbarian/PHB/features/Rage/PHB/21",
+      undefined,
+    );
   });
 
   it("says a row with no rules text of its own has none", async () => {

@@ -1,5 +1,5 @@
 import type { RouteObject } from "react-router";
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Outlet } from "react-router";
 import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout.tsx";
@@ -9,11 +9,30 @@ import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout.tsx";
 
+/** Adds the default content padding for routes that do not manage their own layout. */
+function ContentLayout() {
+  return (
+    <div className="p-4 sm:p-8">
+      <Outlet />
+    </div>
+  );
+}
+
 export const routeConfig: RouteObject[] = [
   {
     element: <RootLayout />,
     children: [
-      { index: true, element: <CharacterListPage /> },
+      {
+        element: <ContentLayout />,
+        children: [
+          { index: true, element: <CharacterListPage /> },
+          ...CATALOG_TARGETS.map((target) => ({
+            path: `catalog/${target.path}`,
+            element: <CatalogPage target={target} />,
+          })),
+          { path: "*", element: <NotFoundPanel /> },
+        ],
+      },
       {
         path: "characters/:id",
         element: <CharacterLayout />,
@@ -22,11 +41,6 @@ export const routeConfig: RouteObject[] = [
           { path: "p/:slug", element: <CharacterPage /> },
         ],
       },
-      ...CATALOG_TARGETS.map((target) => ({
-        path: `catalog/${target.path}`,
-        element: <CatalogPage target={target} />,
-      })),
-      { path: "*", element: <NotFoundPanel /> },
     ],
   },
 ];
