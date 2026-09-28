@@ -242,12 +242,18 @@ CREATE TABLE races (
 -- Half-Orc, Human and Tiefling do. A STRICT primary key column cannot be NULL,
 -- the same reason lookups.qualifier writes one.
 --
+-- full_name is the name a {@race} tag and the race fluff write: Elf (High),
+-- Elf (Zendikar; Joraga Nation) under a race already in parens, and the
+-- fluff's Human (Base) for a nameless one. The build composes it once so that
+-- no reader rebuilds the rule.
+--
 -- Every row is classic at the pinned tag, because 2024 folds what a subrace did
 -- into the race itself — an empty result for the one edition is the corpus and
 -- not a missing filter. A row could still be one: a subrace takes the edition
 -- its race declares, as the rest of the race's traits do.
 CREATE TABLE subraces (
   name        TEXT NOT NULL,
+  full_name   TEXT NOT NULL,
   source      TEXT NOT NULL,
   race_name   TEXT NOT NULL,
   race_source TEXT NOT NULL,

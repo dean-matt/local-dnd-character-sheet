@@ -997,6 +997,7 @@ export type RefsFixture = {
   races?: { name: string; source: string; json: string }[];
   subraces?: {
     name: string;
+    full_name: string;
     source: string;
     race_name: string;
     race_source: string;
@@ -1023,7 +1024,7 @@ export function publishRefsFixture(dataDir: string, fixture: RefsFixture): void 
       CREATE TABLE spells (name TEXT, source TEXT, json TEXT, PRIMARY KEY (name, source));
       CREATE TABLE races (name TEXT, source TEXT, json TEXT, PRIMARY KEY (name, source));
       CREATE TABLE subraces (
-        name TEXT, source TEXT, race_name TEXT, race_source TEXT, json TEXT,
+        name TEXT, full_name TEXT, source TEXT, race_name TEXT, race_source TEXT, json TEXT,
         PRIMARY KEY (name, source, race_name, race_source)
       );
       CREATE TABLE subclasses (
@@ -1052,7 +1053,8 @@ export function publishRefsFixture(dataDir: string, fixture: RefsFixture): void 
         rows: fixture.races ?? [],
       },
       {
-        insert: "INSERT INTO subraces VALUES (@name, @source, @race_name, @race_source, @json)",
+        insert:
+          "INSERT INTO subraces VALUES (@name, @full_name, @source, @race_name, @race_source, @json)",
         rows: fixture.subraces ?? [],
       },
       {

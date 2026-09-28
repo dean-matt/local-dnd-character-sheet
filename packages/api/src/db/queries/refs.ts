@@ -77,30 +77,22 @@ const subclass: Omit<Target, "page" | "source"> = {
 };
 
 /**
- * A race reference names a race, or a subrace by the merged name `fluffSubraceName` in
- * `packages/content` also builds: `Human (Keldon)`, or `Elf (Zendikar; Joraga Nation)`
- * under a race whose name already ends in parens. An unnamed subrace, which
- * `fluffSubraceName` calls `Base`, stays unresolved, because no route reads a subrace
- * without a name of its own. The source is the subrace's own; where two printings of its
- * race both hold it, the race of that source answers, as for a subclass. A race row
- * outranks a subrace of the same name.
+ * A race reference names a race, or a subrace by its `full_name`: `Human (Keldon)`, or
+ * `Elf (Zendikar; Joraga Nation)` under a race whose name already ends in parens. An
+ * unnamed subrace, whose `full_name` reads `Human (Base)`, stays unresolved, because no
+ * route reads a subrace without a name of its own. The source is the subrace's own; where
+ * two printings of its race both hold it, the race of that source answers, as for a
+ * subclass. A race row outranks a subrace of the same name.
  */
 const race: Omit<Target, "page" | "source"> = {
-  sql: `WITH ref (name, source) AS (SELECT ?, ?)
-        SELECT name, source, json, subrace, race_name, race_source FROM (
-          SELECT races.name, races.source, json, '' AS subrace, '' AS race_name,
-                 '' AS race_source
-          FROM races, ref
-          WHERE races.name = ref.name COLLATE NOCASE AND races.source = ref.source COLLATE NOCASE
+  sql: `SELECT name, source, json, subrace, race_name, race_source FROM (
+          SELECT name, source, json, '' AS subrace, '' AS race_name, '' AS race_source
+          FROM races
           UNION ALL
-          SELECT CASE WHEN race_name LIKE '%)'
-                   THEN substr(race_name, 1, length(race_name) - 1) || '; ' || subraces.name || ')'
-                   ELSE race_name || ' (' || subraces.name || ')' END,
-                 subraces.source, json, subraces.name, race_name, race_source
-          FROM subraces, ref
-          WHERE subraces.name <> '' AND subraces.source = ref.source COLLATE NOCASE
+          SELECT full_name, source, json, name, race_name, race_source
+          FROM subraces WHERE name <> ''
         )
-        WHERE name = (SELECT name FROM ref) COLLATE NOCASE
+        WHERE name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE
         ORDER BY race_name <> '', race_source = source DESC, race_source LIMIT 1`,
   path: (row) =>
     row.race_name === ""
