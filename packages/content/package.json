@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./schema": "./src/schema.ts"
+  },
   "scripts": {
     "build": "tsc --build",
     "sync": "node --experimental-strip-types src/sync.ts",
