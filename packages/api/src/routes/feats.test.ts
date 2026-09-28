@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishFeats } from "../db/queries/contentFixture.ts";
 import { featsRoutes } from "./feats.ts";
 
@@ -23,13 +23,13 @@ describe("featsRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof featsRoutes>;
 
-  beforeEach(() => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "feats-routes-"));
     publishFeats(dataDir, [ALERT, TELEKINETIC_ONE]);
     routes = featsRoutes(dataDir);
   });
 
-  afterEach(() => {
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
