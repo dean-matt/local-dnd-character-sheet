@@ -66,6 +66,10 @@ export type NamedHomebrewTable =
   | typeof homebrewRaces
   | typeof homebrewClasses;
 
+/** Classic before the 2024 edition, stated rather than left to how the two values sort. */
+const classicFirst = (table: NamedHomebrewTable) =>
+  sql`CASE ${table.edition} WHEN 'classic' THEN 0 ELSE 1 END`;
+
 /**
  * The row of `table` named `name`, compared as the unique index compares it, ignoring case:
  * in `edition`, or with none the classic row before the 2024 one.
@@ -85,7 +89,7 @@ export function homebrewNamed(
         edition === undefined ? undefined : eq(table.edition, edition),
       ),
     )
-    .orderBy(sql`CASE ${table.edition} WHEN 'classic' THEN 0 ELSE 1 END`)
+    .orderBy(classicFirst(table))
     .get();
 }
 
