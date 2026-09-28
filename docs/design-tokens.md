@@ -34,7 +34,7 @@ convention drifts the first time someone reaches for `text-sm` instead.
 ## Color
 
 One cool neutral ground plus one accent, aliased so a view names the role rather than
-the shade. The light values are the mockup's; the dark values come from Tailwind's `gray`:
+the shade:
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
