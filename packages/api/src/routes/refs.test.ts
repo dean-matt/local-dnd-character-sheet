@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MAX_REFS_PER_REQUEST, type RefQuery } from "@dnd/catalog";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishRefsFixture, testDataDir } from "../db/queries/contentFixture.ts";
+import { publishRefsFixture } from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewItem,
   insertHomebrewBackground,
@@ -108,7 +108,7 @@ describe("refsRoutes", () => {
   });
 
   it("carries a spell's upcast rule after its entries", async () => {
-    const upcastDir = testDataDir("refs-upcast-");
+    const upcastDir = mkdtempSync(join(dataDir, "upcast-"));
     routes = refsRoutes(upcastDir, opened.homebrewDb);
     publishRefsFixture(upcastDir, {
       spells: [
@@ -247,7 +247,7 @@ describe("refsRoutes", () => {
   });
 
   it("answers an empty batch without opening the catalog", async () => {
-    routes = refsRoutes(testDataDir("refs-empty-"), opened.homebrewDb);
+    routes = refsRoutes(mkdtempSync(join(dataDir, "empty-")), opened.homebrewDb);
     expect(await resolveOk([])).toEqual([]);
   });
 

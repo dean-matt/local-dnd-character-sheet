@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HomebrewSpellInput } from "@dnd/catalog";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishSpells, testDataDir } from "../db/queries/contentFixture.ts";
+import { publishSpells } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { spellsRoutes } from "./spells.ts";
@@ -133,7 +133,7 @@ describe("spellsRoutes", () => {
     });
 
     it("round-trips a name containing a literal slash", async () => {
-      const slashDir = testDataDir("spells-routes-slash-");
+      const slashDir = mkdtempSync(join(dataDir, "slash-"));
       routes = spellsRoutes(slashDir, opened.homebrewDb);
       publishSpells(slashDir, [
         FIREBALL,
