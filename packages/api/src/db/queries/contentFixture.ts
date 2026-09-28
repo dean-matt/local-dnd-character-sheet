@@ -1,6 +1,7 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONTENT_SCHEMA } from "@dnd/content/schema";
+import { EDITIONS } from "@dnd/rules";
 import Database from "better-sqlite3";
 
 export type SpellFixtureRow = {
@@ -47,6 +48,11 @@ export type ItemFixtureRow = {
 
 let publishCount = 0;
 
+function placeholder(column: { name: string; type: string }): string | number {
+  if (column.name === "edition") return EDITIONS[0];
+  return column.type === "INTEGER" ? 1 : "";
+}
+
 /**
  * Publishes a fresh `content.db` built from `CONTENT_SCHEMA` itself, mirroring
  * `build-db.ts`'s publish step: a content-addressed file under `<dataDir>/content/`, made
@@ -54,11 +60,11 @@ let publishCount = 0;
  * Windows refuses. Each key is a table in camel case, `classResources` for
  * `class_resources`, and a read spanning tables finds them all in one connection.
  *
- * A row names only the columns its test cares about. A NOT NULL column it leaves out gets
- * an empty string or a zero, so the rows stay small while a table or column the schema no
- * longer has still fails the insert or the query that names it. CHECK constraints are off
- * for the same reason: they validate upstream data on a real build, and an empty edition
- * breaks one.
+ * A row names only the columns its test cares about. Each NOT NULL column it leaves out
+ * gets the first edition, 1 for an integer or an empty string, which the edition and
+ * range CHECK constraints accept. Rows stay small, a value no real build could hold fails
+ * its insert, and a column the schema no longer has fails the insert or the query that
+ * names it.
  *
  * Built in memory and written in one call: built on disk, each autocommitted insert
  * creates and deletes a journal file, and a hosted Windows runner took up to 3 s a fixture.
@@ -69,7 +75,6 @@ function publishContent(dataDir: string, tables: Record<string, object[] | undef
   const name = `content-test-${publishCount++}.db`;
   const db = new Database(":memory:");
   db.exec(CONTENT_SCHEMA);
-  db.pragma("ignore_check_constraints = ON");
   for (const [key, rows] of Object.entries(tables)) {
     const table = key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
     const required = db
@@ -79,7 +84,7 @@ function publishContent(dataDir: string, tables: Record<string, object[] | undef
       .all(table);
     for (const row of rows ?? []) {
       const filled: Record<string, unknown> = { ...row };
-      for (const column of required) filled[column.name] ??= column.type === "INTEGER" ? 0 : "";
+      for (const column of required) filled[column.name] ??= placeholder(column);
       const columns = Object.keys(filled);
       db.prepare(
         `INSERT INTO ${table} (${columns.join(", ")}) VALUES (${columns.map((c) => `@${c}`).join(", ")})`,
