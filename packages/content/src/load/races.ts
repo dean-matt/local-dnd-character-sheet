@@ -237,13 +237,13 @@ function subraceName(entry: Entry, where: string): string {
 }
 
 /**
- * The compound name upstream's own race fluff writes for a subrace: the race's
- * name with the subrace's appended in parens, `Base` where it carries none. A
- * race that is itself a named variant reopens its own closing paren rather
- * than nesting a second — `Elf (Kaladesh)` fluff-names `Elf (Kaladesh;
- * Bishatar and Tirahar)`.
+ * The compound name upstream writes for a subrace, in its race fluff and in a
+ * `{@race}` tag: the race's name with the subrace's appended in parens, and the
+ * fluff's `Base` where it carries none. A race that is itself a named variant reopens its own
+ * closing paren rather than nesting a second — `Elf (Kaladesh)` names `Elf
+ * (Kaladesh; Bishatar and Tirahar)`.
  */
-function fluffSubraceName(raceName: string, subraceName: string): string {
+function subraceFullName(raceName: string, subraceName: string): string {
   const label = subraceName === "" ? "Base" : subraceName;
   return raceName.endsWith(")") ? `${raceName.slice(0, -1)}; ${label})` : `${raceName} (${label})`;
 }
@@ -280,10 +280,11 @@ export const races: Loader = {
         const context = `${RACES_FILE} subrace[${index}]`;
         const source = text(entry, "source", context);
         const raceName = text(entry, "raceName", context);
-        const key = fluffKey(fluffSubraceName(raceName, subraceName(entry, context)), source);
-        const merged = withFluff(entry, fluff(key), context);
+        const fullName = subraceFullName(raceName, subraceName(entry, context));
+        const merged = withFluff(entry, fluff(fluffKey(fullName, source)), context);
         return {
           name: subraceName(entry, context),
+          full_name: fullName,
           source,
           race_name: raceName,
           race_source: text(entry, "raceSource", context),

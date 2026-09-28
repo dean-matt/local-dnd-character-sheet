@@ -1068,7 +1068,7 @@ export const FIXTURES: Fixture[] = [
             {
               // A race that is itself a named variant, whose subrace fluff
               // reopens its closing paren rather than nesting a second — see
-              // `races.ts`'s `fluffSubraceName`.
+              // `races.ts`'s `subraceFullName`.
               id: "Elf (Kaladesh)|PSK",
               fields: ["name", "source", "page", "size", "speed", "entries"],
             },

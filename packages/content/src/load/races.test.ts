@@ -256,6 +256,20 @@ describe("the races loader", () => {
       expect(JSON.parse(json)).not.toHaveProperty("fluff");
     });
 
+    it("stores the full name a tag and the fluff write for a subrace", () => {
+      const fullName = (name: string, source: string) =>
+        query<{ full_name: string }>(
+          "SELECT full_name FROM subraces WHERE name = ? AND source = ?",
+          name,
+          source,
+        ).map((row) => row.full_name);
+      expect(fullName("Draconblood", "EGW")).toEqual(["Dragonborn (Draconblood)"]);
+      expect(fullName("", "PHB")).toEqual(["Dragonborn (Base)"]);
+      expect(fullName("Bishatar and Tirahar", "PSK")).toEqual([
+        "Elf (Kaladesh; Bishatar and Tirahar)",
+      ]);
+    });
+
     it("keys a subrace's fluff by the race and subrace names in parens", () => {
       // Dragonborn's own base subrace, empty-named — "Dragonborn (Base)" — and
       // the Draconblood, both promised fluff that the plain race name would miss.

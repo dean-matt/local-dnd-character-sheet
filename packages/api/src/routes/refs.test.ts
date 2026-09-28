@@ -47,14 +47,49 @@ describe("refsRoutes", () => {
       spells: [row("Fireball", "PHB", ["A bright streak."]), row("Fireball", "XPHB")],
       races: [row("Human", "PHB"), row("Elf (Zendikar)", "PSZ"), row("Gnome (Deep)", "MTF")],
       subraces: [
-        { ...row("", "PHB"), race_name: "Human", race_source: "PHB" },
-        { ...row("Deep", "MTF"), race_name: "Gnome", race_source: "PHB" },
-        { ...row("Tajuru Nation", "PSZ"), race_name: "Elf", race_source: "PHB" },
-        { ...row("Tajuru Nation", "PSZ"), race_name: "Elf", race_source: "PSZ" },
-        { ...row("Keldon", "PSD", ["Tall."]), race_name: "Human", race_source: "PHB" },
-        { ...row("Joraga Nation", "PSZ"), race_name: "Elf (Zendikar)", race_source: "PSZ" },
-        { ...row("Variant; Mark of Finding", "ERLW"), race_name: "Human", race_source: "PHB" },
-        { ...row("Variant; Mark of Finding", "ERLW"), race_name: "Half-Orc", race_source: "PHB" },
+        { ...row("", "PHB"), full_name: "Human (Base)", race_name: "Human", race_source: "PHB" },
+        {
+          ...row("Deep", "MTF"),
+          full_name: "Gnome (Deep)",
+          race_name: "Gnome",
+          race_source: "PHB",
+        },
+        {
+          ...row("Tajuru Nation", "PSZ"),
+          full_name: "Elf (Tajuru Nation)",
+          race_name: "Elf",
+          race_source: "PHB",
+        },
+        {
+          ...row("Tajuru Nation", "PSZ"),
+          full_name: "Elf (Tajuru Nation)",
+          race_name: "Elf",
+          race_source: "PSZ",
+        },
+        {
+          ...row("Keldon", "PSD", ["Tall."]),
+          full_name: "Human (Keldon)",
+          race_name: "Human",
+          race_source: "PHB",
+        },
+        {
+          ...row("Joraga Nation", "PSZ"),
+          full_name: "Elf (Zendikar; Joraga Nation)",
+          race_name: "Elf (Zendikar)",
+          race_source: "PSZ",
+        },
+        {
+          ...row("Variant; Mark of Finding", "ERLW"),
+          full_name: "Human (Variant; Mark of Finding)",
+          race_name: "Human",
+          race_source: "PHB",
+        },
+        {
+          ...row("Variant; Mark of Finding", "ERLW"),
+          full_name: "Half-Orc (Variant; Mark of Finding)",
+          race_name: "Half-Orc",
+          race_source: "PHB",
+        },
       ],
       subclasses: [
         {
@@ -194,7 +229,7 @@ describe("refsRoutes", () => {
       ]);
     });
 
-    it("folds a subrace into a race name that already ends in parens", async () => {
+    it("resolves a subrace under a race whose name already ends in parens", async () => {
       const [subrace] = await resolveOk([
         { tag: "race", name: "Elf (Zendikar; Joraga Nation)", source: "PSZ" },
       ]);
@@ -231,7 +266,7 @@ describe("refsRoutes", () => {
         await resolveOk([
           { tag: "race", name: "Human (Nowhere)", source: "PSD" },
           { tag: "race", name: "Keldon", source: "PSD" },
-          { tag: "race", name: "Human ()", source: "PHB" },
+          { tag: "race", name: "Human (Base)", source: "PHB" },
         ]),
       ).toEqual([null, null, null]);
     });
