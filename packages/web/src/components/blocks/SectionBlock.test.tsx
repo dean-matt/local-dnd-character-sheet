@@ -35,7 +35,7 @@ describe("SectionBlockView", () => {
         derived={derivedRecord()}
       />,
     );
-    expect(screen.getByRole("heading", { level: 2, name: "Vex" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Ability Scores" })).toBeInTheDocument();
   });
 
   it("renders the features section, which waits on the character", () => {

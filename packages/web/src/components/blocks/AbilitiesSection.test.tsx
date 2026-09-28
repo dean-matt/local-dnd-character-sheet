@@ -4,7 +4,7 @@ import {
   deriveCharacter,
   entryKey,
 } from "@dnd/character";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../../test/records.ts";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
@@ -76,49 +76,6 @@ describe("AbilitiesSection", () => {
   it("degrades until both the character and its derived block have loaded", () => {
     render(<AbilitiesSection character={warlock()} derived={undefined} />);
     expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
-  });
-
-  it("names the character, their class with its subclass, race, background and level", () => {
-    renderSection();
-
-    expect(screen.getByRole("heading", { level: 2, name: "Vex" })).toBeInTheDocument();
-    expect(screen.getByText("Warlock 3 (Fiend Patron)")).toBeInTheDocument();
-    expect(screen.getByText("Half-Elf")).toBeInTheDocument();
-    expect(screen.getByText("Charlatan")).toBeInTheDocument();
-    expect(screen.getByText("Level").nextElementSibling).toHaveTextContent("3");
-  });
-
-  it("renders an unset alignment as absent rather than as an empty cell", () => {
-    renderSection();
-    expect(spoken(screen.getByText("Alignment").nextElementSibling as HTMLElement)).toBe("None");
-  });
-
-  it("shows an alignment once one is chosen", () => {
-    const record = warlock();
-    renderSection({ ...record, definition: { ...record.definition, alignment: "Chaotic Good" } });
-    expect(screen.getByText("Chaotic Good")).toBeInTheDocument();
-  });
-
-  it("leaves the deity out entirely where none is set", () => {
-    renderSection();
-    expect(screen.queryByText("Deity")).not.toBeInTheDocument();
-  });
-
-  it("names the deity with its pantheon, so two gods sharing a name and source read apart", () => {
-    const record = warlock();
-    const withDeity = (pantheon: string) => ({
-      ...record,
-      definition: { ...record.definition, deity: { name: "Oghma", source: "PHB", pantheon } },
-    });
-
-    renderSection(withDeity("Celtic"));
-    expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent("Oghma (Celtic)");
-    cleanup();
-
-    renderSection(withDeity("Forgotten Realms"));
-    expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent(
-      "Oghma (Forgotten Realms)",
-    );
   });
 
   it("reads each ability as its name, score and signed modifier", () => {

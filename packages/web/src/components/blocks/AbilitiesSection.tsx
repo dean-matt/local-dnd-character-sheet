@@ -1,7 +1,7 @@
 /**
- * The top of the sheet: who the character is, then the numbers a player reads constantly.
- * Every number comes off the derived block; the definition supplies only what a player
- * chose — the scores, the names, and which saves and skills they are proficient in.
+ * The numbers a player reads constantly. Every number comes off the derived block; the
+ * definition supplies only what a player chose — the scores and which saves and skills
+ * they are proficient in.
  */
 import {
   ABILITIES,
@@ -9,13 +9,10 @@ import {
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterRecord,
-  classLevels,
   type Derived,
-  displayName,
   refKey,
   type Speed,
 } from "@dnd/character";
-import type { ReactNode } from "react";
 import { EmptyState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
@@ -82,43 +79,6 @@ function Legend() {
     <p aria-hidden="true" className="text-muted text-row">
       {[...marks, "* Overridden"].join(" · ")}
     </p>
-  );
-}
-
-function Identity({ character }: { character: CharacterRecord }) {
-  const { definition } = character;
-  const classes = classLevels(definition)
-    .map((group) => {
-      const subclass = group.subclass ? ` (${group.subclass.name})` : "";
-      return `${displayName(group.class)} ${group.level}${subclass}`;
-    })
-    .join(" / ");
-  const facts: [string, ReactNode][] = [
-    ["Class", classes],
-    ["Level", character.level],
-    ["Race", character.raceSummary],
-    ["Background", displayName(definition.background)],
-    ["Alignment", definition.alignment ?? <Absent />],
-  ];
-  const { deity } = definition;
-  if (deity) facts.push(["Deity", `${deity.name} (${deity.pantheon})`]);
-
-  return (
-    <header>
-      <h2 className="font-semibold text-xl">{character.name}</h2>
-      <dl
-        className={`mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-row ${
-          deity ? "sm:grid-cols-6" : "sm:grid-cols-5"
-        }`}
-      >
-        {facts.map(([term, value]) => (
-          <div key={term}>
-            <dt className="text-muted">{term}</dt>
-            <dd className="font-medium">{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </header>
   );
 }
 
@@ -207,7 +167,6 @@ export function AbilitiesSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <Identity character={character} />
       <AbilityScores definition={definition} derived={derived} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Card title="Saving Throws">

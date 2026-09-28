@@ -155,7 +155,7 @@ describe("ManagePages", () => {
     await waitFor(() => expect(navTitles()).toEqual(["Stats", "Inventory", "Features"]));
     expect(status()).toHaveTextContent("Spells hidden.");
     await router.navigate("/characters/abc/p/spells");
-    expect(await screen.findByRole("heading", { level: 1, name: "Spells" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Spells" })).toBeInTheDocument();
   });
 
   it("shows a hidden page again", async () => {
