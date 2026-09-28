@@ -76,12 +76,16 @@ export function checkCharacterReferences(
       const rest = parent ? [parent.name, parent.source] : pantheon ? [pantheon] : [];
       return prepared(select(kind, "")).get(ref.name, ref.source, ...rest) !== undefined;
     };
-    // Upstream lowercases a redirect's target, so only its row spells the name right.
-    const renamedTo = ({ kind, ref }: CatalogReference): Found => {
+    // Upstream lowercases a redirect's target, so only its row spells the name right. The
+    // row must itself resolve where the reference stands: a variant's redirect to the other
+    // edition is no fix for a base item that refuses both.
+    const renamedTo = (reference: CatalogReference): Found => {
+      const { kind, ref } = reference;
       const { page } = KINDS[kind];
       const to = page === undefined ? undefined : hop(page, ref.name, ref.source);
       if (to === undefined || to.page !== page) return undefined;
-      return prepared(select(kind, " COLLATE NOCASE")).get(to.name, to.source) as Found;
+      const row = prepared(select(kind, " COLLATE NOCASE")).get(to.name, to.source) as Found;
+      return row && resolves({ ...reference, ref: row }) ? row : undefined;
     };
     const unresolved = references
       .filter((reference) => !resolves(reference))

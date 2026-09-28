@@ -272,6 +272,48 @@ describe("characterReferencesRoutes", () => {
     ]);
   });
 
+  it("reports a variant's redirect only where the row it names takes the same base", async () => {
+    const XDMG_PLUS_ONE = { name: "+1 Weapon", source: "XDMG" };
+    const CHAIN_MAIL = { name: "Chain Mail", source: "PHB" };
+    publishReferencesFixture(dataDir, {
+      ...CATALOG,
+      items: [
+        itemRow(CHAIN_MAIL, "baseitem", { armor: true }),
+        itemRow(LONGSWORD, "baseitem", { weapon: true }),
+        itemRow(XDMG_PLUS_ONE, "magicvariant", {
+          requires: [{ weapon: true }],
+          inherits: { namePrefix: "+1 ", source: "XDMG" },
+        }),
+      ],
+      tagRedirects: [
+        {
+          tag: "items.html",
+          from_key: "%2b1%20weapon_dmg",
+          to_tag: "items.html",
+          to_key: "%2b1%20weapon_xdmg",
+        },
+      ],
+    });
+    store(
+      definitionWith({
+        inventory: [
+          { ref: LONGSWORD, variant: PLUS_ONE },
+          { ref: CHAIN_MAIL, variant: PLUS_ONE },
+        ],
+      }),
+    );
+    expect(await unresolved()).toEqual([
+      {
+        field: "inventory[0].variant",
+        kind: "item",
+        ref: PLUS_ONE,
+        parent: LONGSWORD,
+        renamedTo: XDMG_PLUS_ONE,
+      },
+      { field: "inventory[1].variant", kind: "item", ref: PLUS_ONE, parent: CHAIN_MAIL },
+    ]);
+  });
+
   it("checks the conditions the state holds, following a redirect like any other", async () => {
     const PRONE = { name: "Prone", source: "PHB" };
     const BLINDED = { name: "Blinded", source: "PHB" };
