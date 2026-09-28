@@ -2,15 +2,16 @@
  * Opens the two user databases, backs each up, and brings it to its latest migration.
  *
  * Everything that reads or writes `characters.db` or `homebrew.db` goes through
- * `openDatabases`, because SQLite leaves `PRAGMA foreign_keys` OFF by default:
- * opened any other way, every `onDelete: "cascade"` in the schemas is silently
- * inert and deleting a character orphans its state, overrides and logs.
+ * `openDatabases`, or in a test through `openTestDatabases` in `./testDatabases.ts`,
+ * because SQLite leaves `PRAGMA foreign_keys` OFF by default: opened any other way,
+ * every `onDelete: "cascade"` in the schemas is silently inert and deleting a
+ * character orphans its state, overrides and logs.
  *
  * Migrating on open means an API start can never skip a pending schema change,
  * unlike a documented manual step. The backup runs first and unconditionally: a
  * failed backup throws before `migrate*` runs, so a migration never proceeds
  * without a way back. `openDatabases` takes the directory rather than reading one
- * from module scope, so a test brings up its own pair at a path it controls
+ * from module scope, so its own tests bring up a pair at a path they control
  * instead of touching the user's real data — this module has no top-level side
  * effect, so importing it for the function alone opens nothing. `./singleton.ts`
  * is the one place that opens the user's own.
