@@ -99,6 +99,30 @@ describe("AbilitiesSection", () => {
     expect(screen.getByText("Chaotic Good")).toBeInTheDocument();
   });
 
+  it("leaves the deity out entirely where none is set", () => {
+    renderSection();
+    expect(screen.queryByText("Deity")).not.toBeInTheDocument();
+  });
+
+  it("names the deity with its pantheon, so two gods sharing a name and source read apart", () => {
+    const record = warlock();
+    const withDeity = (pantheon: string) => ({
+      ...record,
+      definition: { ...record.definition, deity: { name: "Oghma", source: "PHB", pantheon } },
+    });
+
+    const { unmount } = render(
+      <AbilitiesSection character={withDeity("Celtic")} derived={derivedFor(record)} />,
+    );
+    expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent("Oghma (Celtic)");
+    unmount();
+
+    renderSection(withDeity("Forgotten Realms"));
+    expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent(
+      "Oghma (Forgotten Realms)",
+    );
+  });
+
   it("reads each ability as its name, score and signed modifier", () => {
     renderSection();
 
