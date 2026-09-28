@@ -102,12 +102,11 @@ describe("FeaturesSection", () => {
   it("renders a feature's text through the token renderer, not as raw markup", async () => {
     renderSection();
 
-    const summary = await screen.findByText("Second Wind");
-    fireEvent.click(summary);
-    const details = summary.closest("details") as HTMLElement;
-    expect(details).toHaveAttribute("open");
-    expect(details).toHaveTextContent("Regain 1d10 hit points.");
-    expect(details).not.toHaveTextContent("{@dice");
+    fireEvent.click(await screen.findByRole("button", { name: "Second Wind" }));
+    const modal = screen.getByRole("dialog", { name: "Second Wind" });
+    expect(modal).toHaveTextContent("Fighter • Level 1");
+    expect(modal).toHaveTextContent("Regain 1d10 hit points.");
+    expect(modal).not.toHaveTextContent("{@dice");
   });
 
   it("resolves every feature's references in one request for the section", async () => {
@@ -138,7 +137,7 @@ describe("FeaturesSection", () => {
 
     const row = (await screen.findByText("Lucky (PHB)")).closest("li") as HTMLElement;
     expect(row).toHaveTextContent("Not found in the catalog");
-    expect(row.querySelector("details")).toBeNull();
+    expect(within(row).queryByRole("button")).toBeNull();
   });
 
   it("says a missing homebrew reference is missing from homebrew, not the catalog", async () => {

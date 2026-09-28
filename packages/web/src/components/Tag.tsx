@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 
-/** A short mark beside a list row's name, such as Prepared or Equipped. */
+/** A chip beside a list row's name, such as Prepared or Equipped. */
 export function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="rounded-card border border-border px-1 text-muted text-row">{children}</span>
+    <span className="rounded-chip border border-border bg-surface px-1.25 py-0.5 font-bold text-chip text-muted uppercase tracking-chip">
+      {children}
+    </span>
   );
 }

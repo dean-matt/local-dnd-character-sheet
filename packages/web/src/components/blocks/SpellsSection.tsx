@@ -12,7 +12,6 @@ import {
   displayName,
   entryKey,
 } from "@dnd/character";
-import { type ReactNode, useId, useState } from "react";
 import { useCharacterSpells } from "../../hooks/useCharacterSpells.ts";
 import {
   castingTime,
@@ -24,7 +23,8 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
-import { RulesEntries, RulesText } from "../RulesText.tsx";
+import { ListRow } from "../ListRow.tsx";
+import { firstLine, RulesEntries, RulesText } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
@@ -122,65 +122,41 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
   if (!spell.resolved) {
     const source = spell.source ? ` (${spell.source})` : "";
     return (
-      <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1 py-1">
-        <span>
-          {spell.name}
-          {source}
-        </span>
-        {marks}
-        <span className="text-muted text-row">
-          {homebrew ? "Not found in homebrew" : "Not found in the catalog"}
-        </span>
-      </li>
+      <ListRow
+        name={`${spell.name}${source}`}
+        chips={
+          <>
+            {marks}
+            <Tag>{homebrew ? "Not found in homebrew" : "Not found in the catalog"}</Tag>
+          </>
+        }
+      />
     );
   }
-  return <ResolvedSpellRow spell={spell} marks={marks} />;
-}
-
-/**
- * A button rather than a `<details>`: a summary is the disclosure's accessible name, so
- * one holding the facts would read them all on every focus, and a link in a trigger
- * would sit inside a button.
- */
-function ResolvedSpellRow({
-  spell,
-  marks,
-}: {
-  spell: Extract<SheetSpell, { resolved: true }>;
-  marks: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  const textId = useId();
   return (
-    <li className="py-1">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={textId}
-          onClick={() => setOpen(!open)}
-          className="flex cursor-pointer items-baseline gap-2 font-medium"
-        >
-          <span aria-hidden="true" className={`text-muted print:hidden ${open ? "rotate-90" : ""}`}>
-            ▸
+    <ListRow
+      name={spell.name}
+      chips={
+        <>
+          {marks}
+          {spell.concentration && <Tag>Concentration</Tag>}
+          {spell.ritual && <Tag>Ritual</Tag>}
+        </>
+      }
+      value={schoolName(spell.school)}
+      preview={firstLine(spell.entries)}
+      detail={{
+        meta: (
+          <span className="flex flex-wrap gap-x-3">
+            <Fact label="Casting time" value={castingTime(spell.time)} />
+            <Fact label="Range" value={spellRange(spell.range)} />
+            <Fact label="Components" value={spellComponents(spell.components)} />
+            <Fact label="Duration" value={spellDuration(spell.duration)} />
           </span>
-          {spell.name}
-        </button>
-        <span className="text-muted text-row">{schoolName(spell.school)}</span>
-        {marks}
-        {spell.concentration && <Tag>Concentration</Tag>}
-        {spell.ritual && <Tag>Ritual</Tag>}
-        <span className="flex basis-full flex-wrap gap-x-3 pl-4 text-muted text-row">
-          <Fact label="Casting time" value={castingTime(spell.time)} />
-          <Fact label="Range" value={spellRange(spell.range)} />
-          <Fact label="Components" value={spellComponents(spell.components)} />
-          <Fact label="Duration" value={spellDuration(spell.duration)} />
-        </span>
-      </div>
-      <div id={textId} hidden={!open} className="mt-2 flex flex-col gap-2 pl-4">
-        {open && <RulesEntries entries={spell.entries} />}
-      </div>
-    </li>
+        ),
+        children: <RulesEntries entries={spell.entries} />,
+      }}
+    />
   );
 }
 
@@ -219,7 +195,7 @@ function SpellList({ character }: { character: CharacterRecord }) {
     <>
       {groupByLevel(spells.data.spells).map((group) => (
         <Card key={group.key} title={group.title}>
-          <ul className="divide-y divide-border">
+          <ul className="flex flex-col gap-2">
             {group.spells.map((spell, index) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: a spell learned through two classes is listed twice under one name.
               <SpellRow key={index} spell={spell} />

@@ -1,6 +1,6 @@
 /**
  * The Features page: what the character has gained, one group per grantor. Each feature
- * is a collapsed row that opens onto its rules text, and a filter narrows every group by
+ * is a row whose name opens its rules text in a modal, and a filter narrows every group by
  * name, so a reader looking for one feature skips the rest.
  */
 import type { FeatureGroup, FeatureOrigin, SheetFeature } from "@dnd/catalog";
@@ -8,7 +8,9 @@ import type { CharacterRecord } from "@dnd/character";
 import { useId, useState } from "react";
 import { useCharacterFeatures } from "../../hooks/useCharacterFeatures.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
-import { RulesBlock, RulesEntries } from "../RulesText.tsx";
+import { ListRow } from "../ListRow.tsx";
+import { firstLine, RulesBlock, RulesEntries } from "../RulesText.tsx";
+import { Tag } from "../Tag.tsx";
 
 const ORIGIN_LABEL: Record<FeatureOrigin, string> = {
   class: "Class",
@@ -35,68 +37,59 @@ const FEATURE_TYPE_LABEL: Record<string, string> = {
   RN: "Rune Knight Rune",
 };
 
-function Placement({ feature }: { feature: SheetFeature }) {
-  const parts = [
+const placement = (feature: SheetFeature) =>
+  [
     feature.level === undefined ? undefined : `Level ${feature.level}`,
     feature.featureType === undefined
       ? undefined
       : (FEATURE_TYPE_LABEL[feature.featureType] ?? feature.featureType),
-  ].filter((part) => part !== undefined);
-  if (parts.length === 0) return null;
-  return <span className="text-muted text-row">{parts.join(" · ")}</span>;
-}
+  ]
+    .filter((part) => part !== undefined)
+    .join(" · ");
 
 /** An unresolved feature with no source is a homebrew reference, which names no source. */
-function FeatureRow({ feature }: { feature: SheetFeature }) {
+function FeatureRow({ feature, grantor }: { feature: SheetFeature; grantor: string }) {
+  const where = placement(feature);
   if (!feature.resolved) {
     const source = feature.source ? ` (${feature.source})` : "";
     return (
-      <li className="flex flex-wrap items-baseline gap-x-2 py-1">
-        <span>
-          {feature.name}
-          {source}
-        </span>
-        <Placement feature={feature} />
-        <span className="text-muted text-row">
-          {feature.source ? "Not found in the catalog" : "Not found in homebrew"}
-        </span>
-      </li>
+      <ListRow
+        name={`${feature.name}${source}`}
+        chips={<Tag>{feature.source ? "Not found in the catalog" : "Not found in homebrew"}</Tag>}
+        value={where}
+      />
     );
   }
   return (
-    <li>
-      <details className="group py-1">
-        <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2">
-          <span aria-hidden="true" className="text-muted group-open:rotate-90 print:hidden">
-            ▸
-          </span>
-          <span className="font-medium">{feature.name}</span>
-          <Placement feature={feature} />
-        </summary>
-        <div className="mt-2 flex flex-col gap-2 pl-4">
-          <RulesEntries entries={feature.entries} />
-        </div>
-      </details>
-    </li>
+    <ListRow
+      name={feature.name}
+      value={where}
+      preview={firstLine(feature.entries)}
+      detail={{
+        meta: where ? `${grantor} • ${where}` : grantor,
+        children: <RulesEntries entries={feature.entries} />,
+      }}
+    />
   );
 }
 
 function Group({ group }: { group: FeatureGroup }) {
   const id = useId();
+  const grantor = group.name ?? ORIGIN_LABEL[group.origin];
   return (
     <section aria-labelledby={id} className="rounded-card border border-border bg-surface p-4">
       <h3 id={id} className="font-semibold">
-        {group.name ?? ORIGIN_LABEL[group.origin]}
+        {grantor}
         {group.name && (
           <span className="ml-2 font-normal text-muted text-row">
             <span className="sr-only">,</span> {ORIGIN_LABEL[group.origin]}
           </span>
         )}
       </h3>
-      <ul className="mt-2 divide-y divide-border">
+      <ul className="mt-2 flex flex-col gap-2">
         {group.features.map((feature, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: one name can recur at several levels, and nothing reorders the list.
-          <FeatureRow key={index} feature={feature} />
+          <FeatureRow key={index} feature={feature} grantor={grantor} />
         ))}
       </ul>
     </section>

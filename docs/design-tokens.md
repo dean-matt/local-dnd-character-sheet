@@ -17,8 +17,10 @@ browsing it.
 | `text-row` | `0.75rem` (12px), Tailwind's `text-xs` | Body text in list rows, labels, table cells |
 | `text-number` | `1.25rem` (20px), Tailwind's `text-xl` | A stat, a modifier, an HP value — anywhere a number is the thing being read |
 | `text-chip` | `0.5625rem` (9px) | A chip's label |
+| `tracking-chip` | `0.04em` | A chip's letter spacing |
 | `text-label` | `0.6875rem` (11px) | A section label |
 | `text-body` | `0.8125rem` (13px) | Body text and a control's label |
+| `text-title` | `0.9375rem` (15px) | A modal's title |
 | `spacing-row` | `2rem` (32px) | The height of one dense list row (`h-row`, `min-h-row`) |
 | `radius-chip` | `0.25rem` (4px), Tailwind's `radius-sm` | A chip |
 | `radius-control` | `0.375rem` (6px), Tailwind's `radius-md` | A button, an input, a row tile |

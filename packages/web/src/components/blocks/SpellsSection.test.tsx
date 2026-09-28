@@ -140,12 +140,23 @@ describe("SpellsSection", () => {
     expect(hex).toHaveTextContent("Prepared");
     expect(hex).toHaveTextContent("Concentration");
     expect(hex).not.toHaveTextContent("Ritual");
-    expect(hex).toHaveTextContent(
+    expect(hex).toHaveTextContent("Deal an extra 1d6 necrotic damage.");
+  });
+
+  it("puts a spell's casting facts in its detail modal", async () => {
+    renderSection();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hex" }));
+
+    const modal = within(screen.getByRole("dialog", { name: "Hex" }));
+    expect(modal.getByText(/Casting time:/).parentElement).toHaveTextContent(
       "Casting time: 1 bonus action or 1 reaction, which you take when magic missile hits.",
     );
-    expect(hex).toHaveTextContent("Range: 90 feet.");
-    expect(hex).toHaveTextContent("Components: V, S, M (the petrified eye of a newt).");
-    expect(hex).toHaveTextContent("Duration: Up to 1 hour.");
+    expect(modal.getByText(/Range:/).parentElement).toHaveTextContent("Range: 90 feet.");
+    expect(modal.getByText(/Components:/).parentElement).toHaveTextContent(
+      "Components: V, S, M (the petrified eye of a newt).",
+    );
+    expect(modal.getByText(/Duration:/).parentElement).toHaveTextContent("Duration: Up to 1 hour.");
   });
 
   it("tells a known spell from a prepared one and marks a homebrew spell", async () => {
@@ -154,7 +165,6 @@ describe("SpellsSection", () => {
     const blast = (await screen.findByText("Eldritch Blast")).closest("li") as HTMLElement;
     expect(blast).toHaveTextContent("Known");
     expect(blast).not.toHaveTextContent("Homebrew");
-    expect(blast).toHaveTextContent("Casting time: —none.");
 
     const glimmer = screen.getByText("Glimmer").closest("li") as HTMLElement;
     expect(glimmer).toHaveTextContent("Homebrew");
@@ -164,13 +174,11 @@ describe("SpellsSection", () => {
   it("renders a spell's text through the token renderer", async () => {
     renderSection();
 
-    const toggle = await screen.findByRole("button", { name: "Hex" });
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    const text = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
-    expect(text).toHaveTextContent("Deal an extra 1d6 necrotic damage.");
-    expect(text).not.toHaveTextContent("{@damage");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Hex" }));
+    const modal = screen.getByRole("dialog", { name: "Hex" });
+    expect(modal).toHaveTextContent("Deal an extra 1d6 necrotic damage.");
+    expect(modal).not.toHaveTextContent("{@damage");
   });
 
   it("shows a reference that resolves to nothing by its stored name, marked", async () => {
