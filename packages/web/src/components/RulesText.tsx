@@ -124,6 +124,11 @@ function paragraphs(entries: unknown, into: string[] = []): string[] {
   return into;
 }
 
+/** The first paragraph of `entries` as plain text, for a one-line preview of a row. */
+export function firstLine(entries: unknown): string | undefined {
+  return paragraphs(entries).find((text) => text.trim() !== "");
+}
+
 function Ref({ token }: { token: RefToken }) {
   const row = useContext(ResolvedRefs)?.get(refKey(token));
   const prose = row === undefined ? [] : paragraphs(row.entries);
