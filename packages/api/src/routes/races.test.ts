@@ -74,20 +74,20 @@ describe("racesRoutes", () => {
 
   describe("subraces", () => {
     let subraceDataDir: string;
+    let subraceRoutes: ReturnType<typeof racesRoutes>;
 
     beforeAll(() => {
       subraceDataDir = mkdtempSync(join(tmpdir(), "races-routes-subraces-"));
       publishSubraces(subraceDataDir, [HIGH_ELF]);
-      routes = racesRoutes(subraceDataDir);
+      subraceRoutes = racesRoutes(subraceDataDir);
     });
 
     afterAll(() => {
-      routes = racesRoutes(dataDir);
       rmSync(subraceDataDir, { recursive: true, force: true });
     });
 
     it("lists the subraces of one race, of one edition", async () => {
-      const res = await routes.request("/races/Elf/PHB/subraces?edition=classic");
+      const res = await subraceRoutes.request("/races/Elf/PHB/subraces?edition=classic");
       expect(res.status).toBe(200);
 
       const body = await res.json();
@@ -98,7 +98,7 @@ describe("racesRoutes", () => {
     });
 
     it("reads a subrace by its own name and source and its race's", async () => {
-      const res = await routes.request("/races/Elf/PHB/subraces/High/PHB");
+      const res = await subraceRoutes.request("/races/Elf/PHB/subraces/High/PHB");
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({
         name: "High",
@@ -108,7 +108,7 @@ describe("racesRoutes", () => {
     });
 
     it("404s a subrace whose race key does not match", async () => {
-      const res = await routes.request("/races/Gnome/PHB/subraces/High/PHB");
+      const res = await subraceRoutes.request("/races/Gnome/PHB/subraces/High/PHB");
       expect(res.status).toBe(404);
       expect(await res.json()).toEqual({
         error: "No subrace with that name, source, race name and race source",
