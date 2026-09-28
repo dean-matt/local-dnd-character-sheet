@@ -25,9 +25,28 @@ export type Emphasis =
   | "keyboard"
   | "code";
 
+/**
+ * The rest of a feature's key: the class that grants it, the subclass for a subclass
+ * feature, and the level it arrives at. An absent source means `PHB`, as upstream reads it.
+ */
+export interface FeatureOwner {
+  className: string;
+  classSource?: string;
+  subclassShortName?: string;
+  subclassSource?: string;
+  level: number;
+}
+
 export type Token =
   | { kind: "text"; value: string }
-  | { kind: "ref"; tag: string; name: string; source?: string; display: string }
+  | {
+      kind: "ref";
+      tag: string;
+      name: string;
+      source?: string;
+      owner?: FeatureOwner;
+      display: string;
+    }
   | { kind: "roll"; notation: string; display: string; rollable: boolean }
   | { kind: "style"; style: Emphasis; children: Token[] };
 
@@ -35,11 +54,10 @@ export type RefToken = Extract<Token, { kind: "ref" }>;
 
 /**
  * Which argument holds what, per tag. The display argument moves: `{@spell a|b|c}`
- * displays `c`, `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`. A `source`
- * is a chain because upstream defaults a feature's source to its subclass or class.
+ * displays `c`, `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`.
  */
 export type Spec =
-  | { kind: "ref"; source: number[]; display: number }
+  | { kind: "ref"; source: number; display: number }
   | { kind: "roll"; notation: number; display: number }
   | { kind: "text"; display: number }
   | { kind: "style"; style: Emphasis }

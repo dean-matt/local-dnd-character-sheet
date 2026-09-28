@@ -61,7 +61,8 @@ function renderTokens(tokens: Token[], keyPrefix: string): ReactNode[] {
   return tokens.map((token, index) => renderToken(token, `${keyPrefix}-${index}`));
 }
 
-const refKey = (ref: RefQuery) => JSON.stringify([ref.tag, ref.name, ref.source ?? null]);
+const refKey = (ref: RefQuery) =>
+  JSON.stringify([ref.tag, ref.name, ref.source ?? null, ref.owner ?? null]);
 
 /** `null` outside a block. Inside one, the rows its references have resolved to so far. */
 const ResolvedRefs = createContext<ReadonlyMap<string, ResolvedRef> | null>(null);
@@ -72,6 +73,7 @@ function collectRefs(tokens: Token[], into: Map<string, RefQuery>) {
     if (token.kind !== "ref") continue;
     const ref: RefQuery = { tag: token.tag, name: token.name };
     if (token.source !== undefined) ref.source = token.source;
+    if (token.owner !== undefined) ref.owner = token.owner;
     into.set(refKey(ref), ref);
   }
 }
@@ -123,9 +125,7 @@ function paragraphs(entries: unknown, into: string[] = []): string[] {
 }
 
 function Ref({ token }: { token: RefToken }) {
-  const row = useContext(ResolvedRefs)?.get(
-    refKey({ tag: token.tag, name: token.name, source: token.source }),
-  );
+  const row = useContext(ResolvedRefs)?.get(refKey(token));
   const prose = row === undefined ? [] : paragraphs(row.entries);
   // A row with no prose and no page — every monster, whose stat block is not `entries` —
   // would open onto its name alone, so it stays text.

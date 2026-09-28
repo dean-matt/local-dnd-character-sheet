@@ -307,6 +307,24 @@ export type RefsFixture = {
     class_source: string;
     json: string;
   }[];
+  classFeatures?: {
+    name: string;
+    source: string;
+    class_name: string;
+    class_source: string;
+    level: number;
+    json: string;
+  }[];
+  subclassFeatures?: {
+    name: string;
+    source: string;
+    class_name: string;
+    class_source: string;
+    subclass_short_name: string;
+    subclass_source: string;
+    level: number;
+    json: string;
+  }[];
   lookups?: { kind: string; name: string; source: string; qualifier: string; json: string }[];
   entities?: { type: string; name: string; source: string; qualifier: string; json: string }[];
   tagRedirects?: { tag: string; from_key: string; to_tag: string; to_key: string }[];

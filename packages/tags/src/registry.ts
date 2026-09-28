@@ -9,7 +9,16 @@
 
 import { isRollable } from "@dnd/dice";
 import { abilityModifier } from "@dnd/rules";
-import { arg, d20, type Emphasis, type RefToken, type Spec, type Token, text } from "./token.ts";
+import {
+  arg,
+  d20,
+  type Emphasis,
+  type FeatureOwner,
+  type RefToken,
+  type Spec,
+  type Token,
+  text,
+} from "./token.ts";
 
 const ABILITY_NAMES: Record<string, string> = {
   str: "Strength",
@@ -76,6 +85,41 @@ function classRef(args: string[]): Token {
   const source = subclass === undefined ? arg(args, 1) : (arg(args, 4) ?? arg(args, 1));
   if (source !== undefined) token.source = source;
   return token;
+}
+
+const LEVEL = /^([1-9]|1\d|20)$/;
+
+/**
+ * `{@classFeature name|class|classSource|level|source|display}`, and for a subclass
+ * feature the subclass's short name and source after the class source. The class, the
+ * subclass and the level are part of the row's key, so a tag missing one names no row
+ * and renders as its words. Upstream defaults the feature's source to its subclass's
+ * source, and a class feature's to its class's.
+ */
+function featureRef(tag: "classFeature" | "subclassFeature"): (args: string[]) => Token {
+  const sub = tag === "subclassFeature";
+  const at = sub ? 2 : 0;
+  return (args) => {
+    const name = arg(args, 0);
+    const className = arg(args, 1);
+    const subclassShortName = sub ? arg(args, 3) : undefined;
+    const level = arg(args, 3 + at) ?? "";
+    const display = arg(args, 5 + at) ?? name ?? "";
+    if (!name || !className || (sub && !subclassShortName) || !LEVEL.test(level)) {
+      return text(display);
+    }
+    const classSource = arg(args, 2);
+    const subclassSource = sub ? arg(args, 4) : undefined;
+    const owner: FeatureOwner = {
+      className,
+      classSource,
+      subclassShortName,
+      subclassSource,
+      level: Number(level),
+    };
+    const source = arg(args, 4 + at) ?? (sub ? subclassSource : classSource);
+    return { kind: "ref", tag, name, source, owner, display };
+  };
 }
 
 /**
@@ -249,17 +293,13 @@ const STYLE_TAGS: Record<string, Emphasis> = {
 function buildSpecs(): Map<string, Spec> {
   const specs = new Map<string, Spec>();
 
-  for (const tag of REF_TAGS) specs.set(tag, { kind: "ref", source: [1], display: 2 });
+  for (const tag of REF_TAGS) specs.set(tag, { kind: "ref", source: 1, display: 2 });
   for (const tag of OUTBOUND_TAGS) specs.set(tag, { kind: "text", display: 0 });
 
   // A deck or a pantheon sits between the name and the source.
-  specs.set("card", { kind: "ref", source: [2], display: 3 });
-  specs.set("deity", { kind: "ref", source: [2], display: 3 });
-  specs.set("subclass", { kind: "ref", source: [3], display: 4 });
-
-  // A feature source defaults to its subclass source, then to its class source.
-  specs.set("classFeature", { kind: "ref", source: [4, 2], display: 5 });
-  specs.set("subclassFeature", { kind: "ref", source: [6, 4, 2], display: 7 });
+  specs.set("card", { kind: "ref", source: 2, display: 3 });
+  specs.set("deity", { kind: "ref", source: 2, display: 3 });
+  specs.set("subclass", { kind: "ref", source: 3, display: 4 });
   specs.set("quickref", { kind: "text", display: 4 });
   // `{@unit <amount>|singular|plural}`. Every amount in the data is an unresolved
   // `{=…}` template, so the count cannot be known; recipe prose is mostly plural.
@@ -278,6 +318,8 @@ function buildSpecs(): Map<string, Spec> {
     dcYourSpellSave: (args) => text(arg(args, 0) ?? "your spell save DC"),
     ability,
     class: classRef,
+    classFeature: featureRef("classFeature"),
+    subclassFeature: featureRef("subclassFeature"),
     // A plain d20 bonus, the same shape as {@hit} without the attack.
     d20: (args) => d20Tag(args, arg(args, 0) ?? ""),
     hit: attackRoll,
