@@ -70,13 +70,13 @@ afterEach(() => {
 });
 
 describe("ManagePages", () => {
-  it("opens from a disclosure button that reports its state", async () => {
+  it("opens from a button that declares it opens a dialog", async () => {
     stubServer(presetPageRecords());
     await renderManaging();
 
     expect(screen.getByRole("button", { name: "Manage pages" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
+      "aria-haspopup",
+      "dialog",
     );
   });
 

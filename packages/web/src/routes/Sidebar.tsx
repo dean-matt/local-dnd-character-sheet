@@ -68,13 +68,11 @@ function writeCollapsed(value: boolean) {
 export function Sidebar({
   characterId,
   pages,
-  managing,
   onManage,
   manageButtonRef,
 }: {
   characterId: string;
   pages: CharacterPageRecord[];
-  managing: boolean;
   onManage: () => void;
   manageButtonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
@@ -126,7 +124,7 @@ export function Sidebar({
         ref={manageButtonRef}
         type="button"
         aria-label={collapsed ? "Manage pages" : undefined}
-        aria-expanded={managing}
+        aria-haspopup="dialog"
         onClick={onManage}
         className={`flex items-center gap-2.5 rounded-control px-2.5 py-2 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
       >

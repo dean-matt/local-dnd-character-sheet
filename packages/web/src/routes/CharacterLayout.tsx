@@ -33,7 +33,6 @@ export function CharacterLayout() {
           <Sidebar
             characterId={id}
             pages={pages}
-            managing={managing}
             onManage={openManage}
             manageButtonRef={manageButtonRef}
           />

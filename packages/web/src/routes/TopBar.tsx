@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { ThemeToggle } from "../ThemeToggle.tsx";
@@ -58,10 +58,26 @@ type Menu = "character" | "settings" | null;
 export function TopBar() {
   const characters = useCharacters();
   const [open, setOpen] = useState<Menu>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const toggle = (menu: Menu) => setOpen((prev) => (prev === menu ? null : menu));
 
+  // Close the open menu when focus leaves the top bar entirely.
+  useEffect(() => {
+    if (!open) return;
+    const onFocusIn = (e: FocusEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node | null)) {
+        setOpen(null);
+      }
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [open]);
+
   return (
-    <div className="relative flex h-full w-full items-center gap-1.5 rounded-card border border-border bg-surface px-6">
+    <div
+      ref={containerRef}
+      className="relative flex h-full w-full items-center gap-1.5 rounded-card border border-border bg-surface px-6"
+    >
       <span className="mr-3.5 shrink-0 text-lg font-bold text-accent">Local D&D</span>
 
       {/* Character menu */}
@@ -69,6 +85,9 @@ export function TopBar() {
         <button
           type="button"
           aria-expanded={open === "character"}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(null);
+          }}
           onClick={() => toggle("character")}
           className="flex items-center gap-1.5 rounded-control border-0 bg-transparent px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
         >
@@ -78,8 +97,8 @@ export function TopBar() {
 
         {open === "character" && (
           <>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: capture-only backdrop */}
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: capture-only backdrop; keyboard users dismiss with Escape or Tab */}
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
             <div className="fixed inset-0 z-40" onClick={() => setOpen(null)} />
             <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-card border border-border bg-surface p-2 shadow-popover">
               <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted">
@@ -124,6 +143,9 @@ export function TopBar() {
         <button
           type="button"
           aria-expanded={open === "settings"}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(null);
+          }}
           onClick={() => toggle("settings")}
           className="flex items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
         >
@@ -133,8 +155,8 @@ export function TopBar() {
 
         {open === "settings" && (
           <>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: capture-only backdrop */}
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: capture-only backdrop; keyboard users dismiss with Escape or Tab */}
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
             <div className="fixed inset-0 z-40" onClick={() => setOpen(null)} />
             <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-card border border-border bg-surface p-3 shadow-popover">
               <ThemeToggle />
