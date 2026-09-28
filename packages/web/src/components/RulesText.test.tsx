@@ -222,6 +222,37 @@ describe("reference resolution", () => {
     expect(screen.getByText("blinded")).toHaveAttribute("data-tag", "condition");
   });
 
+  it("asks for a feature by its whole key, and tells apart two at different levels", async () => {
+    const asi = (level: number) => ({
+      name: "Ability Score Improvement",
+      source: "PHB",
+      entries: [`Level ${level}.`],
+      path: `/classes/Fighter/PHB/features/Ability%20Score%20Improvement/PHB/${level}`,
+    });
+    const fetchMock = stubFetchByUrl({ "/api/refs/resolve": { refs: [asi(4), asi(6)] } });
+    renderWithClient(
+      <MemoryRouter>
+        <RulesText text="{@classFeature Ability Score Improvement|Fighter||4||At 4} and {@classFeature Ability Score Improvement|Fighter||6||at 6}" />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "at 6" }));
+    expect(screen.getByRole("link", { name: "Open Ability Score Improvement" })).toHaveAttribute(
+      "href",
+      "/catalog/classes/Fighter/PHB/features/Ability%20Score%20Improvement/PHB/6",
+    );
+    expect(requested(fetchMock)).toEqual([
+      [
+        "/api/refs/resolve",
+        [4, 6].map((level) => ({
+          tag: "classFeature",
+          name: "Ability Score Improvement",
+          owner: { className: "Fighter", level },
+        })),
+      ],
+    ]);
+  });
+
   it("opens a resolved reference onto the row's prose and its page", async () => {
     stubFetchByUrl({ "/api/refs/resolve": { refs: [FIREBALL] } });
     renderWithClient(

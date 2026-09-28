@@ -49,7 +49,7 @@ plain text, instead of the tag parser treating it as a tag.
 ```ts
 type Token =
   | { kind: "text"; value: string }
-  | { kind: "ref"; tag: string; name: string; source?: string; display: string }
+  | { kind: "ref"; tag: string; name: string; source?: string; owner?: FeatureOwner; display: string }
   | { kind: "roll"; notation: string; display: string; rollable: boolean }
   | { kind: "style"; style: Emphasis; children: Token[] };
 ```
@@ -77,9 +77,9 @@ The catalog may legitimately not have the target.
 **A `ref` names what its tag means, not always a row's `name`.** `{@subclass}` carries
 the `shortName` — `Berserker`, where the row reads `Path of the Berserker` — so the
 resolver matches `short_name` for that tag. `{@race}` may name a subrace as
-`Human (Keldon)`, so the resolver also matches a subrace row on that merged name. A class
-feature's token drops the class and level its key needs, so feature references stay
-unresolved.
+`Human (Keldon)`, so the resolver also matches a subrace row on that merged name. A
+feature's token carries an `owner` — its class, subclass and level — because its key
+needs them, and a feature tag missing one degrades to text.
 
 ## Resolving
 

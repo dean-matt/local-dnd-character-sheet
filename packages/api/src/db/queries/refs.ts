@@ -30,15 +30,21 @@ import { type HomebrewDb, homebrewNamed, type NamedHomebrewTable } from "./homeb
 /** A table row: `name`, `source` and `json`, plus any key column `path` reads. */
 type Row = { name: string; source: string; json: string } & Record<string, string>;
 
+/** A reference with its source defaulted. */
+type Wanted = RefQuery & { source: string };
+
 /**
  * How one tag finds its row. `page` is the namespace `tag_redirects` files the tag's
- * redirects under. `source` is what a reference naming none means: the source every
- * sourceless reference of that tag in the corpus resolves to.
+ * redirects under, absent where it files none. `source` is what a reference naming none
+ * means: the source every sourceless reference of that tag in the corpus resolves to.
+ * `bind` fills `sql`'s parameters, `(name, source)` where it is absent, and answers
+ * `undefined` for a reference missing a part of the key.
  */
 interface Target {
-  page: string;
+  page?: string;
   source: string;
   sql: string;
+  bind?: (ref: Wanted) => (string | number)[] | undefined;
   path?: (row: Row) => string;
 }
 
@@ -100,10 +106,51 @@ const race: Omit<Target, "page" | "source"> = {
       : `/races/${segments(row.race_name ?? "", row.race_source ?? "", "subraces", row.subrace ?? "", row.source)}`,
 };
 
+/** A class's or a subclass's source, where a feature reference names none. */
+const OWNER_SOURCE = "PHB";
+
 /**
- * The tags tier 2 resolves. A tag left out renders unlinked: a feature, whose token lacks
- * the class and level that identify it; a card or a deity, which lacks its deck or
- * pantheon; and a table, which upstream mostly writes inside another entry.
+ * A feature is keyed by its class and level as well, and a subclass feature by its
+ * subclass's short name and source, so the reference's owner fills the rest of the key.
+ * Upstream files no redirects for a feature.
+ */
+const classFeature: Omit<Target, "page" | "source"> = {
+  sql: `SELECT name, source, class_name, class_source, level, json FROM class_features
+        WHERE name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE
+        AND class_name = ? COLLATE NOCASE AND class_source = ? COLLATE NOCASE AND level = ?`,
+  bind: ({ name, source, owner }) =>
+    owner && [name, source, owner.className, owner.classSource ?? OWNER_SOURCE, owner.level],
+  path: (row) =>
+    `/classes/${segments(row.class_name ?? "", row.class_source ?? "", "features", row.name, row.source, String(row.level))}`,
+};
+
+const subclassFeature: Omit<Target, "page" | "source"> = {
+  sql: `SELECT name, source, class_name, class_source, subclass_short_name, subclass_source,
+          level, json FROM subclass_features
+        WHERE name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE
+        AND class_name = ? COLLATE NOCASE AND class_source = ? COLLATE NOCASE
+        AND subclass_short_name = ? COLLATE NOCASE AND subclass_source = ? COLLATE NOCASE
+        AND level = ?`,
+  bind: ({ name, source, owner }) =>
+    owner?.subclassShortName === undefined
+      ? undefined
+      : [
+          name,
+          source,
+          owner.className,
+          owner.classSource ?? OWNER_SOURCE,
+          owner.subclassShortName,
+          owner.subclassSource ?? OWNER_SOURCE,
+          owner.level,
+        ],
+  path: (row) =>
+    `/classes/${segments(row.class_name ?? "", row.class_source ?? "", "subclasses", row.subclass_short_name ?? "", row.subclass_source ?? "", "features", row.name, row.source, String(row.level))}`,
+};
+
+/**
+ * The tags tier 2 resolves. A tag left out renders unlinked: a card or a deity, whose
+ * token lacks its deck or pantheon, and a table, which upstream mostly writes inside
+ * another entry.
  */
 const TARGETS: Record<string, Target> = {
   spell: { page: "spells.html", source: "PHB", ...flat("spells", "spells") },
@@ -113,6 +160,8 @@ const TARGETS: Record<string, Target> = {
   feat: { page: "feats.html", source: "PHB", ...flat("feats", "feats") },
   class: { page: "classes.html", source: "PHB", ...flat("classes", "classes") },
   subclass: { page: "classes.html", source: "PHB", ...subclass },
+  classFeature: { source: "PHB", ...classFeature },
+  subclassFeature: { source: "PHB", ...subclassFeature },
   optfeature: { page: "optionalfeatures.html", source: "PHB", ...flat("optional_features") },
   condition: { page: "conditionsdiseases.html", source: "PHB", ...lookup("condition") },
   status: { page: "conditionsdiseases.html", source: "PHB", ...lookup("status") },
@@ -166,20 +215,21 @@ type RowJson = { entries?: unknown; entriesHigherLevel?: unknown };
 
 export type ResolvedRow = { name: string; source: string; json: RowJson; path?: string };
 
-type Find = (tag: string, name: string, source: string) => ResolvedRow | undefined;
+type Find = (tag: string, ref: Wanted) => ResolvedRow | undefined;
 
 /** One prepared statement per tag, prepared the first time a reference asks for it. */
 function finder(db: Database.Database): Find {
   const statements = new Map<string, Database.Statement>();
-  return (tag, name, source) => {
+  return (tag, ref) => {
     const target = TARGETS[tag];
-    if (target === undefined) return undefined;
+    const params = target?.bind ? target.bind(ref) : [ref.name, ref.source];
+    if (target === undefined || params === undefined) return undefined;
     let statement = statements.get(tag);
     if (statement === undefined) {
       statement = db.prepare(target.sql);
       statements.set(tag, statement);
     }
-    const row = statement.get(name, source) as Row | undefined;
+    const row = statement.get(...params) as Row | undefined;
     if (row === undefined) return undefined;
     return {
       name: row.name,
@@ -217,7 +267,10 @@ function redirector(db: Database.Database, find: Find) {
     const to = hop(page, name, source);
     if (to === undefined) return undefined;
     for (const [candidate, target] of Object.entries(TARGETS)) {
-      const row = target.page === to.page ? find(candidate, to.name, to.source) : undefined;
+      const row =
+        target.page === to.page
+          ? find(candidate, { tag: candidate, name: to.name, source: to.source })
+          : undefined;
       if (row !== undefined) return row;
     }
     return undefined;
@@ -262,12 +315,17 @@ export function resolveRefs(
   try {
     const find = finder(db);
     const follow = redirector(db, find);
-    return refs.map(({ tag, name, source }) => {
-      const target = TARGETS[tag];
+    return refs.map((ref) => {
+      const target = TARGETS[ref.tag];
       if (target === undefined) return undefined;
-      const wanted = source ?? target.source;
-      if (wanted.toUpperCase() === HOMEBREW_SOURCE) return homebrewRow(homebrewDb, tag, name);
-      return find(tag, name, wanted) ?? follow(target.page, name, wanted);
+      const wanted = { ...ref, source: ref.source ?? target.source };
+      if (wanted.source.toUpperCase() === HOMEBREW_SOURCE) {
+        return homebrewRow(homebrewDb, ref.tag, ref.name);
+      }
+      return (
+        find(ref.tag, wanted) ??
+        (target.page === undefined ? undefined : follow(target.page, ref.name, wanted.source))
+      );
     });
   } finally {
     db.close();

@@ -166,13 +166,8 @@ function expand(inner: string, depth: number): Token[] {
         name: plain(name, depth),
         display: display(args, spec.display, depth),
       };
-      for (const index of spec.source) {
-        const source = arg(args, index);
-        if (source !== undefined) {
-          token.source = source;
-          break;
-        }
-      }
+      const source = arg(args, spec.source);
+      if (source !== undefined) token.source = source;
       return [token];
     }
     case "roll": {

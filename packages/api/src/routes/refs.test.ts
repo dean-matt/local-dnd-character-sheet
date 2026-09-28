@@ -23,6 +23,15 @@ const row = (name: string, source: string, entries: unknown[] = []) => ({
   json: JSON.stringify({ name, source, entries }),
 });
 
+const fighter = { class_name: "Fighter", class_source: "PHB" };
+
+const berserker = (source: string) => ({
+  class_name: "Barbarian",
+  class_source: source,
+  subclass_short_name: "Berserker",
+  subclass_source: source,
+});
+
 describe("refsRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
@@ -104,6 +113,26 @@ describe("refsRoutes", () => {
           class_name: "Fighter",
           class_source: "PHB",
         },
+      ],
+      classFeatures: [
+        { ...row("Ability Score Improvement", "PHB", ["Fighter 4."]), ...fighter, level: 4 },
+        { ...row("Ability Score Improvement", "PHB", ["Fighter 6."]), ...fighter, level: 6 },
+        {
+          ...row("Ability Score Improvement", "PHB", ["Barbarian 4."]),
+          class_name: "Barbarian",
+          class_source: "PHB",
+          level: 4,
+        },
+        {
+          ...row("Ability Score Improvement", "XPHB", ["Fighter 2024."]),
+          class_name: "Fighter",
+          class_source: "XPHB",
+          level: 4,
+        },
+      ],
+      subclassFeatures: [
+        { ...row("Frenzy", "PHB", ["2014."]), ...berserker("PHB"), level: 3 },
+        { ...row("Frenzy", "XPHB", ["2024."]), ...berserker("XPHB"), level: 3 },
       ],
       lookups: [
         { kind: "variantrule", qualifier: "", ...row("Unarmed Strike", "XPHB", ["Punch."]) },
@@ -209,6 +238,77 @@ describe("refsRoutes", () => {
   it("links a subclass under the class printed in its own source", async () => {
     const [subclass] = await resolveOk([{ tag: "subclass", name: "battle master", source: "PHB" }]);
     expect(subclass.path).toBe("/classes/Fighter/PHB/subclasses/Battle%20Master/PHB");
+  });
+
+  describe("feature", () => {
+    const asi = (owner: RefQuery["owner"], source?: string): RefQuery => ({
+      tag: "classFeature",
+      name: "ability score improvement",
+      ...(source === undefined ? {} : { source }),
+      owner,
+    });
+
+    it("tells apart a class feature named the same at two levels and in two classes", async () => {
+      const rows = await resolveOk([
+        asi({ className: "Fighter", level: 6 }),
+        asi({ className: "barbarian", classSource: "PHB", level: 4 }),
+        asi({ className: "Fighter", classSource: "XPHB", level: 4 }, "XPHB"),
+      ]);
+      expect(rows.map((found: { entries: string[] }) => found.entries)).toEqual([
+        ["Fighter 6."],
+        ["Barbarian 4."],
+        ["Fighter 2024."],
+      ]);
+      expect(rows[0].path).toBe(
+        "/classes/Fighter/PHB/features/Ability%20Score%20Improvement/PHB/6",
+      );
+    });
+
+    it("resolves a subclass feature by its subclass's short name and source", async () => {
+      const [classic, current] = await resolveOk([
+        {
+          tag: "subclassFeature",
+          name: "Frenzy",
+          owner: { className: "Barbarian", subclassShortName: "berserker", level: 3 },
+        },
+        {
+          tag: "subclassFeature",
+          name: "Frenzy",
+          source: "XPHB",
+          owner: {
+            className: "Barbarian",
+            classSource: "XPHB",
+            subclassShortName: "Berserker",
+            subclassSource: "XPHB",
+            level: 3,
+          },
+        },
+      ]);
+      expect(classic).toMatchObject({
+        entries: ["2014."],
+        path: "/classes/Barbarian/PHB/subclasses/Berserker/PHB/features/Frenzy/PHB/3",
+      });
+      expect(current.entries).toEqual(["2024."]);
+    });
+
+    it("answers null for a feature missing part of its key, or at a level it does not arrive at", async () => {
+      expect(
+        await resolveOk([
+          { tag: "classFeature", name: "Ability Score Improvement" },
+          asi({ className: "Fighter", level: 5 }),
+          {
+            tag: "subclassFeature",
+            name: "Frenzy",
+            owner: { className: "Barbarian", level: 3 },
+          },
+        ]),
+      ).toEqual([null, null, null]);
+    });
+
+    it("refuses an owner at a level no class reaches", async () => {
+      const res = await resolve([asi({ className: "Fighter", level: 21 })]);
+      expect(res.status).toBe(400);
+    });
   });
 
   describe("race", () => {

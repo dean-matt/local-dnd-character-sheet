@@ -510,17 +510,35 @@ describe("argument positions that are not name|source|display", () => {
       tag: "classFeature",
       name: "Innate Sorcery",
       source: "XPHB",
+      owner: { className: "Sorcerer", classSource: "XPHB", level: 1 },
       display: "Innate Sorcery",
     });
   });
 
-  it("falls back to the subclass source before the class source", () => {
+  it("carries a subclass feature's class, subclass and level, and its subclass's source", () => {
     expect(only("{@subclassFeature Form of Dread|Warlock|XPHB|Undead|RHW|3}")).toEqual({
       kind: "ref",
       tag: "subclassFeature",
       name: "Form of Dread",
       source: "RHW",
+      owner: {
+        className: "Warlock",
+        classSource: "XPHB",
+        subclassShortName: "Undead",
+        subclassSource: "RHW",
+        level: 3,
+      },
       display: "Form of Dread",
+    });
+  });
+
+  it("leaves a subclass feature's source to default where its subclass names none", () => {
+    expect(only("{@subclassFeature Blessed Strikes|Cleric|XPHB|Life||8}")).toEqual({
+      kind: "ref",
+      tag: "subclassFeature",
+      name: "Blessed Strikes",
+      owner: { className: "Cleric", classSource: "XPHB", subclassShortName: "Life", level: 8 },
+      display: "Blessed Strikes",
     });
   });
 
@@ -529,6 +547,7 @@ describe("argument positions that are not name|source|display", () => {
       kind: "ref",
       tag: "classFeature",
       name: "Rage",
+      owner: { className: "Barbarian", level: 1 },
       display: "optional display text",
     });
   });
@@ -540,6 +559,7 @@ describe("argument positions that are not name|source|display", () => {
       kind: "ref",
       tag: "subclassFeature",
       name: "Path of the Berserker",
+      owner: { className: "Barbarian", subclassShortName: "Berserker", level: 3 },
       display: "display",
     });
   });
@@ -550,8 +570,20 @@ describe("argument positions that are not name|source|display", () => {
       tag: "classFeature",
       name: "Primal Knowledge",
       source: "TCE",
+      owner: { className: "Barbarian", level: 3 },
       display: "Primal Knowledge",
     });
+  });
+
+  it.each([
+    ["{@classFeature Rage|Barbarian}", "Rage"],
+    ["{@classFeature Rage||PHB|1}", "Rage"],
+    ["{@classFeature Rage|Barbarian||21}", "Rage"],
+    ["{@classFeature Rage|Barbarian||one||Raging}", "Raging"],
+    ["{@subclassFeature Frenzy|Barbarian||||3}", "Frenzy"],
+    ["{@classFeature}", ""],
+  ])("degrades a feature tag missing part of its key, %s, to its words", (input, words) => {
+    expect(parseTags(input)).toEqual(words === "" ? [] : [{ kind: "text", value: words }]);
   });
 });
 

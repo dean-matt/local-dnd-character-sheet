@@ -6,11 +6,24 @@
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
+/**
+ * The rest of a class or subclass feature's key, which `(name, source)` alone does not
+ * identify. An absent source means `PHB`, as upstream reads it.
+ */
+const featureOwnerSchema = z.strictObject({
+  className: z.string().min(1),
+  classSource: z.string().min(1).optional(),
+  subclassShortName: z.string().min(1).optional(),
+  subclassSource: z.string().min(1).optional(),
+  level: z.int().min(1).max(20),
+});
+
 /** One `ref` token's key. An absent `source` means the tag's default, never `""`. */
 const refQuerySchema = z.strictObject({
   tag: z.string().min(1),
   name: z.string().min(1),
   source: z.string().min(1).optional(),
+  owner: featureOwnerSchema.optional(),
 });
 
 export type RefQuery = z.infer<typeof refQuerySchema>;
@@ -23,10 +36,12 @@ export const refResolveRequestSchema = z.object({
 });
 
 /**
- * `path` is the API route that reads the row, absent for a type no route serves — a
- * condition or a creature. `name` and `source` are the row's own, which differ from the
- * reference's in case, in a defaulted source, and after a redirect. A subrace answers
- * with its merged name, `Human (Keldon)` where the row reads `Keldon`.
+ * `path` is the row's address under the sheet's `/catalog/`. For most rows that is the API
+ * route that reads it; the sheet reads a feature from its class's grants instead. It is
+ * absent for a type nothing serves, such as a condition or a creature. `name` and `source`
+ * are the row's own, which differ from the reference's in case, in a defaulted source, and
+ * after a redirect. A subrace answers with its merged name, `Human (Keldon)` where the row
+ * reads `Keldon`.
  */
 const resolvedRefSchema = z.strictObject({
   name: z.string().min(1),
