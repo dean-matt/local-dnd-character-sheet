@@ -66,11 +66,14 @@ function spoken(element: HTMLElement): string {
   return clone.textContent ?? "";
 }
 
-/** One ability's term and value together, found by the full name a screen reader speaks. */
-const ability = (name: string) =>
-  within(screen.getByRole("region", { name: "Ability Scores" }))
-    .getByText(name)
-    .closest("div") as HTMLElement;
+const card = (name: string) => within(screen.getByRole("region", { name }));
+
+/** One tile's term and value together, found by the full name a screen reader speaks. */
+const tile = (region: string, name: string) =>
+  card(region).getAllByText(name)[0]?.closest("div") as HTMLElement;
+
+const rowButton = (region: string, name: string) =>
+  within(card(region).getByText(name).closest("li") as HTMLElement).getByRole("button");
 
 describe("AbilitiesSection", () => {
   it("degrades until both the character and its derived block have loaded", () => {
@@ -81,8 +84,8 @@ describe("AbilitiesSection", () => {
   it("reads each ability as its name, score and signed modifier", () => {
     renderSection();
 
-    expect(spoken(ability("Strength"))).toBe("Strength8, modifier-1");
-    expect(spoken(ability("Charisma"))).toBe("Charisma17, modifier+3");
+    expect(spoken(tile("Ability Scores", "Strength"))).toBe("Strength8, modifier-1");
+    expect(spoken(tile("Ability Scores", "Charisma"))).toBe("Charisma17, modifier+3");
   });
 
   it("takes each modifier from the derived block, not from the score", () => {
@@ -96,60 +99,79 @@ describe("AbilitiesSection", () => {
       },
     });
 
-    expect(within(ability("Dexterity")).getByText("+3")).toBeVisible();
+    expect(within(tile("Ability Scores", "Dexterity")).getByText("+3")).toBeVisible();
   });
 
-  it("marks proficiency and expertise beside the total, for sight and for a screen reader", () => {
+  it("names a save by its abbreviation, and a screen reader by its full name and proficiency", () => {
     renderSection();
 
-    const saves = within(screen.getByRole("region", { name: "Saving Throws" }));
+    const saves = card("Saving Throws");
+    expect(saves.getByText("CHA")).toBeVisible();
     expect(spoken(saves.getByText("Charisma").closest("li") as HTMLElement)).toBe(
-      "Charisma, proficientmodifier+5",
+      "Charisma, proficient+5",
     );
-    expect(spoken(saves.getByText("Strength").closest("li") as HTMLElement)).toBe(
-      "Strengthmodifier-1",
-    );
-
-    const skills = within(screen.getByRole("region", { name: "Skills" }));
-    const stealth = skills.getByText("Stealth").closest("li") as HTMLElement;
-    expect(spoken(stealth)).toBe("Stealth, expertisemodifier+7");
-    expect(within(stealth).getByTitle("Expertise")).toHaveTextContent("◆");
-    expect(skills.getByText("Arcana").closest("li")).toHaveTextContent("○Arcanamodifier+0");
+    expect(spoken(saves.getByText("Strength").closest("li") as HTMLElement)).toBe("Strength-1");
   });
 
-  it("lists every skill the derived block scores, alphabetically", () => {
+  it("draws proficiency, half proficiency and expertise as distinct rings", () => {
+    const record = warlock();
+    const definition = {
+      ...record.definition,
+      proficiencies: {
+        ...record.definition.proficiencies,
+        skills: [
+          { ref: DECEPTION, level: "proficient" as const },
+          { ref: STEALTH, level: "expertise" as const },
+          { ref: ARCANA, level: "half" as const },
+        ],
+      },
+    };
+    renderSection({ ...record, definition });
+
+    const ring = (name: string) =>
+      card("Skills").getByText(name).closest("li")?.querySelector("[title]")?.className;
+    const classes = [ring("Perception"), ring("Deception"), ring("Stealth"), ring("Arcana")];
+    expect(new Set(classes).size).toBe(4);
+    expect(card("Skills").getByText("Stealth").closest("li")).toHaveTextContent(
+      "Stealth, expertise",
+    );
+  });
+
+  it("lists every skill the derived block scores, alphabetically, with its governing ability", () => {
     renderSection();
 
-    const skills = within(screen.getByRole("region", { name: "Skills" }));
-    expect(skills.getAllByRole("listitem").map((row) => row.textContent?.slice(1, 6))).toEqual([
-      "Arcan",
-      "Decep",
-      "Perce",
-      "Steal",
+    const rows = card("Skills").getAllByRole("listitem");
+    expect(rows.map((row) => spoken(row))).toEqual([
+      "Arcanaint+0",
+      "Deception, proficientcha+5",
+      "Perceptionwis+1",
+      "Stealth, expertisedex+7",
     ]);
   });
 
-  it("shows a passive score the derived block holds, and an absent one as absent", () => {
+  it("puts the passive scores in the Skills card, an absent one as absent", () => {
     renderSection();
 
-    const passive = within(screen.getByRole("region", { name: "Passive Scores" }));
-    expect(passive.getByText("Passive Perception").nextElementSibling).toHaveTextContent("11");
-    expect(spoken(passive.getByText("Passive Insight").nextElementSibling as HTMLElement)).toBe(
+    expect(screen.queryByRole("region", { name: "Passive Scores" })).not.toBeInTheDocument();
+    const skills = card("Skills");
+    expect(skills.getByText("Passive Perception").nextElementSibling).toHaveTextContent("11");
+    expect(spoken(skills.getByText("Passive Insight").nextElementSibling as HTMLElement)).toBe(
       "None",
     );
   });
 
-  it("shows the combat numbers, signing the modifiers and naming every speed", () => {
+  it("shows four combat tiles, and every speed the character has", () => {
     renderSection();
 
-    const combat = within(screen.getByRole("region", { name: "Combat" }));
-    const value = (label: string) => combat.getByText(label).nextElementSibling;
-    expect(value("Armor Class")).toHaveTextContent("13");
-    expect(value("Initiative")).toHaveTextContent("+3");
-    expect(value("Speed")).toHaveTextContent("30 ft., fly 40 ft.");
-    expect(value("Proficiency Bonus")).toHaveTextContent("+2");
-    expect(value("Hit Point Maximum")).toHaveTextContent("24");
-    expect(value("Hit Dice (d8)")).toHaveTextContent("3");
+    const combat = card("Combat");
+    const value = (name: string) => tile("Combat", name);
+    expect(spoken(value("Proficiency Bonus"))).toBe("Proficiency Bonus+2");
+    expect(spoken(value("Armor Class"))).toBe("Armor Class13");
+    expect(spoken(value("Initiative"))).toBe("Initiative+3");
+    expect(value("Speed")).toHaveTextContent("30");
+    expect(value("Speed")).toHaveTextContent("fly 40 ft.");
+    expect(combat.queryByText(/Hit Point/)).not.toBeInTheDocument();
+    expect(combat.queryByText(/Hit Dice/)).not.toBeInTheDocument();
   });
 
   it("tells an overridden value apart from a computed one", () => {
@@ -157,19 +179,46 @@ describe("AbilitiesSection", () => {
     const derived = derivedFor(record);
     renderSection(record, { ...derived, armorClass: { ...derived.armorClass, manual: 18 } });
 
-    const armorClass = within(screen.getByRole("region", { name: "Combat" })).getByText(
-      "Armor Class",
-    ).nextElementSibling as HTMLElement;
-    expect(spoken(armorClass)).toBe("18, overridden from 13");
+    expect(spoken(tile("Combat", "Armor Class"))).toBe("Armor Class18, overridden from 13");
+  });
+
+  it("opens a save's, a skill's and armor class's terms on focus, and leaves a termless value plain", async () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, {
+      ...derived,
+      armorClass: {
+        computed: 13,
+        manual: null,
+        terms: [
+          { label: "Base", value: 10 },
+          { label: "Dexterity", value: 3 },
+        ],
+      },
+    });
+
+    rowButton("Saving Throws", "Charisma").focus();
+    expect(await screen.findByRole("group", { name: "Charisma save breakdown" })).toHaveTextContent(
+      "Charisma3Proficiency2",
+    );
+
+    rowButton("Skills", "Stealth").focus();
+    expect(await screen.findByRole("group", { name: "Stealth check breakdown" })).toBeVisible();
+
+    screen.getByRole("button", { name: "13" }).focus();
+    expect(await screen.findByRole("group", { name: "Armor Class breakdown" })).toHaveTextContent(
+      "Base10Dexterity3",
+    );
+
+    expect(screen.queryByRole("button", { name: /Initiative/ })).not.toBeInTheDocument();
   });
 
   it("spells out every mark on the page, since a tooltip never reaches a touch reader", () => {
     renderSection();
-    expect(
-      screen.getByText(
-        "○ Not proficient · ◐ Half proficiency · ● Proficient · ◆ Expertise · * Overridden",
-      ),
-    ).toBeVisible();
+    const legend = screen.getByText("Expertise").closest("p") as HTMLElement;
+    expect(legend).toHaveTextContent(
+      "Not proficientHalf proficiencyProficientExpertise* Overridden",
+    );
   });
 
   it("renders every overridable value read-only", () => {
