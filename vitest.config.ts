@@ -22,8 +22,8 @@ export default defineConfig({
           // packages/api/src/db/{client,migrate,backup}.test.ts build a database on
           // disk, but each does a handful of inserts rather than a catalog import,
           // so they fit the 5 s default. Every other api test opens its databases
-          // in memory through db/testDatabases.ts and shares one content fixture per
-          // file.
+          // in memory through db/testDatabases.ts and publishes each content fixture
+          // in one write, shared across the file where its tests read one catalog.
         },
       },
       {
