@@ -4,7 +4,7 @@ import {
   deriveCharacter,
   entryKey,
 } from "@dnd/character";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../../test/records.ts";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
@@ -97,6 +97,28 @@ describe("AbilitiesSection", () => {
     const record = warlock();
     renderSection({ ...record, definition: { ...record.definition, alignment: "Chaotic Good" } });
     expect(screen.getByText("Chaotic Good")).toBeInTheDocument();
+  });
+
+  it("leaves the deity out entirely where none is set", () => {
+    renderSection();
+    expect(screen.queryByText("Deity")).not.toBeInTheDocument();
+  });
+
+  it("names the deity with its pantheon, so two gods sharing a name and source read apart", () => {
+    const record = warlock();
+    const withDeity = (pantheon: string) => ({
+      ...record,
+      definition: { ...record.definition, deity: { name: "Oghma", source: "PHB", pantheon } },
+    });
+
+    renderSection(withDeity("Celtic"));
+    expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent("Oghma (Celtic)");
+    cleanup();
+
+    renderSection(withDeity("Forgotten Realms"));
+    expect(screen.getByText("Deity").nextElementSibling).toHaveTextContent(
+      "Oghma (Forgotten Realms)",
+    );
   });
 
   it("reads each ability as its name, score and signed modifier", () => {

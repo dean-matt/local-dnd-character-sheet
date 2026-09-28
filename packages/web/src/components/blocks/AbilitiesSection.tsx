@@ -100,11 +100,17 @@ function Identity({ character }: { character: CharacterRecord }) {
     ["Background", displayName(definition.background)],
     ["Alignment", definition.alignment ?? <Absent />],
   ];
+  const { deity } = definition;
+  if (deity) facts.push(["Deity", `${deity.name} (${deity.pantheon})`]);
 
   return (
     <header>
       <h2 className="font-semibold text-xl">{character.name}</h2>
-      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-row sm:grid-cols-5">
+      <dl
+        className={`mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-row ${
+          deity ? "sm:grid-cols-6" : "sm:grid-cols-5"
+        }`}
+      >
         {facts.map(([term, value]) => (
           <div key={term}>
             <dt className="text-muted">{term}</dt>
