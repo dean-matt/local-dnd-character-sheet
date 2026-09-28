@@ -79,12 +79,11 @@ const subclass: Omit<Target, "page" | "source"> = {
 /**
  * A race reference names a race, or a subrace by the merged name `fluffSubraceName` in
  * `packages/content` also builds: `Human (Keldon)`, or `Elf (Zendikar; Joraga Nation)`
- * under a race whose name already ends in parens. The five PHB base variants, which
- * `fluffSubraceName` calls `Base`, stay unresolved: no route reads a subrace without a
- * name of its own, and no reference names one. The source is the subrace's own; where
- * two printings of its race both hold it, the race of that source answers, as for a
- * subclass. A race row outranks a subrace of the same name, though none collide at the
- * pinned tag.
+ * under a race whose name already ends in parens. An unnamed subrace, which
+ * `fluffSubraceName` calls `Base`, stays unresolved, because no route reads a subrace
+ * without a name of its own. The source is the subrace's own; where two printings of its
+ * race both hold it, the race of that source answers, as for a subclass. A race row
+ * outranks a subrace of the same name.
  */
 const race: Omit<Target, "page" | "source"> = {
   sql: `WITH ref (name, source) AS (SELECT ?, ?)
