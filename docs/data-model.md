@@ -49,7 +49,7 @@ spell. Rebuilding the catalog updates every character; copying would freeze it a
 carrying source `HB`, merged with catalog rows at query time. A character holds one by
 `id` and survives a rename. A `{@item My Sword|HB}` tag holds its `(name, source)`, `HB`
 being a source like any other, and degrades to its display text after a rename. Because a
-tag looks a row up by name, an item or spell name is unique within its edition, ignoring
+tag looks a row up by name, a homebrew name is unique within its kind and edition, ignoring
 case; a tag names no edition, so it gets the classic row where both editions hold it.
 
 **A homebrew background or feat's `json` reuses `backgroundRecordSchema`'s and

@@ -23,7 +23,7 @@ import {
   spellEntrySchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
-import { and, eq, type SQL, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as homebrewSchema from "../homebrew.ts";
 import {
@@ -57,30 +57,39 @@ export function searchHomebrewItems(db: HomebrewDb, edition: Edition, term: stri
     .all();
 }
 
+/** A homebrew table whose rows a `{@tag}` names, each name unique within its edition. */
+export type NamedHomebrewTable =
+  | typeof homebrewItems
+  | typeof homebrewSpells
+  | typeof homebrewBackgrounds
+  | typeof homebrewFeats
+  | typeof homebrewRaces
+  | typeof homebrewClasses;
+
 /** Classic before the 2024 edition, stated rather than left to how the two values sort. */
-const classicFirst = (column: typeof homebrewItems.edition | typeof homebrewSpells.edition) =>
-  sql`CASE ${column} WHEN 'classic' THEN 0 ELSE 1 END`;
+const classicFirst = (table: NamedHomebrewTable) =>
+  sql`CASE ${table.edition} WHEN 'classic' THEN 0 ELSE 1 END`;
 
-/** `name` compared as the unique index compares it, ignoring case: one match per edition at most. */
-function namedIn(
-  column: typeof homebrewItems.name | typeof homebrewSpells.name,
+/**
+ * The row of `table` named `name`, compared as the unique index compares it, ignoring case:
+ * in `edition`, or with none the classic row before the 2024 one.
+ */
+export function homebrewNamed(
+  db: HomebrewDb,
+  table: NamedHomebrewTable,
   name: string,
-): SQL {
-  return sql`${column} = ${name} COLLATE NOCASE`;
-}
-
-/** The homebrew item named `name`, in `edition`, or with none the classic row before the 2024 one. */
-export function homebrewItemNamed(db: HomebrewDb, name: string, edition?: Edition) {
+  edition?: Edition,
+) {
   return db
-    .select()
-    .from(homebrewItems)
+    .select({ id: table.id, name: table.name, edition: table.edition, json: table.json })
+    .from(table)
     .where(
       and(
-        namedIn(homebrewItems.name, name),
-        edition === undefined ? undefined : eq(homebrewItems.edition, edition),
+        sql`${table.name} = ${name} COLLATE NOCASE`,
+        edition === undefined ? undefined : eq(table.edition, edition),
       ),
     )
-    .orderBy(classicFirst(homebrewItems.edition))
+    .orderBy(classicFirst(table))
     .get();
 }
 
@@ -148,21 +157,6 @@ export function searchHomebrewSpells(db: HomebrewDb, edition: Edition, term: str
       ),
     )
     .all();
-}
-
-/** The homebrew spell named `name`, in `edition`, or with none the classic row before the 2024 one. */
-export function homebrewSpellNamed(db: HomebrewDb, name: string, edition?: Edition) {
-  return db
-    .select()
-    .from(homebrewSpells)
-    .where(
-      and(
-        namedIn(homebrewSpells.name, name),
-        edition === undefined ? undefined : eq(homebrewSpells.edition, edition),
-      ),
-    )
-    .orderBy(classicFirst(homebrewSpells.edition))
-    .get();
 }
 
 export function getHomebrewSpell(db: HomebrewDb, id: string) {
