@@ -58,10 +58,13 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     await expect(page.locator("main")).toHaveCSS("outline-style", "none");
 
     await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
-    await expect(page.locator("body")).toHaveCSS(
-      "color",
-      await computedColor(page, "var(--color-gray-900)"),
+    await expect(page.locator("body")).toHaveCSS("color", await computedColor(page, "#1f2430"));
+    await expect(page.locator("body")).toHaveCSS("font-family", /^"Noto Sans Variable"/);
+    // The declared family falls back to the system sans silently, so ask for the loaded faces.
+    const faces = await page.evaluate(
+      async () => (await document.fonts.load('16px "Noto Sans Variable"')).length,
     );
+    expect(faces).toBeGreaterThan(0);
     // 12pt is 16px at the 96dpi a browser lays print out at.
     await expect(sheet.locator(".text-row").first()).toHaveCSS("font-size", "16px");
   } finally {
