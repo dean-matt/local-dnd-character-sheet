@@ -39,6 +39,7 @@ export default defineConfig({
             "packages/{rules,character,dice,tags,catalog,api}/src/**/*.test.ts",
           ],
           exclude: [...CONTENT_FIXTURE_TESTS],
+          setupFiles: ["./tests/timing.setup.ts"],
           // packages/api/src/db/{client,migrate}.test.ts build a database on disk
           // too, but each does a handful of inserts rather than a catalog import,
           // so they still fit the 5 s default. CONTENT_FIXTURE_TESTS moves the
@@ -50,6 +51,7 @@ export default defineConfig({
           name: "content",
           environment: "node",
           include: ["packages/content/src/**/*.test.ts", ...CONTENT_FIXTURE_TESTS],
+          setupFiles: ["./tests/timing.setup.ts"],
           // Most content tests build a database on disk, and a hosted Windows
           // runner spends 100 s over a suite that takes 4 s here — enough for the
           // 5 s default to fail a passing test. 30 s is 300 times the slowest test
@@ -64,7 +66,7 @@ export default defineConfig({
           name: "web",
           environment: "jsdom",
           globals: true,
-          setupFiles: ["./packages/web/vitest.setup.ts"],
+          setupFiles: ["./packages/web/vitest.setup.ts", "./tests/timing.setup.ts"],
           include: ["packages/web/src/**/*.test.{ts,tsx}"],
         },
       },

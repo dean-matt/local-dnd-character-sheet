@@ -56,6 +56,16 @@ type Insertion = { insert: string; rows: object[] };
  * connection, such as a class's resources, slots and features at a level.
  */
 function publishTable(dataDir: string, ddl: string, insertions: Insertion[]): void {
+  const s = performance.now();
+  try {
+    publishTableTimed(dataDir, ddl, insertions);
+  } finally {
+    const g = globalThis as unknown as { __dbTiming?: { fixture: number } };
+    if (g.__dbTiming) g.__dbTiming.fixture += performance.now() - s;
+  }
+}
+
+function publishTableTimed(dataDir: string, ddl: string, insertions: Insertion[]): void {
   const contentDir = join(dataDir, "content");
   mkdirSync(contentDir, { recursive: true });
   const name = `content-test-${publishCount++}.db`;
