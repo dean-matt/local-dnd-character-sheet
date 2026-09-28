@@ -6,6 +6,7 @@ import { useCharacterDerived } from "../hooks/useCharacterDerived.ts";
 import { useCharacterPages } from "../hooks/useCharacterPages.ts";
 import { useCharacter } from "../hooks/useCharacters.ts";
 import { ErrorState } from "../states.tsx";
+import { CharacterHeader, PrintTitle } from "./CharacterHeader.tsx";
 import { ManagePages } from "./ManagePages.tsx";
 import { Sidebar } from "./Sidebar.tsx";
 
@@ -13,6 +14,7 @@ export function CharacterLayout() {
   const { id = "" } = useParams();
   const pagesQuery = useCharacterPages(id);
   const pages = pagesQuery.data?.filter((page) => !page.hidden) ?? [];
+  const character = useCharacter(id);
   const [managing, setManaging] = useState(false);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -36,6 +38,7 @@ export function CharacterLayout() {
         </aside>
 
         <div className="min-w-0 flex-1 px-10 py-6">
+          {character.data && <CharacterHeader character={character.data} />}
           <Outlet />
         </div>
       </div>
@@ -69,6 +72,7 @@ function PrintSheet({
   const derived = useCharacterDerived(id);
   return (
     <div hidden data-print-sheet>
+      {character.data && <PrintTitle character={character.data} />}
       {pagesError && <ErrorState message={pagesError.message} />}
       {character.isError && <ErrorState message={character.error.message} />}
       {derived.isError && <ErrorState message={derived.error.message} />}

@@ -49,8 +49,8 @@ describe("CharacterPage", () => {
     stubCharacter();
     renderPage();
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Stats" })).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { level: 2, name: "Vex" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Stats" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Stats" })).not.toBeInTheDocument();
   });
 
   it("renders a value block from the derived block the API computed", async () => {
@@ -96,7 +96,7 @@ describe("CharacterPage", () => {
     stubCharacter(presetPageRecords().map((page) => ({ ...page, hidden: true })));
     renderPage("/characters/1/p/inventory");
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Inventory" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Inventory" })).toBeInTheDocument();
   });
 
   it("shows the not-found state for a slug that names no page of this character", async () => {

@@ -39,13 +39,13 @@ describe("routing", () => {
 
   it("redirects a character to its first visible page", async () => {
     const router = renderAt("/characters/abc");
-    await screen.findByRole("heading", { level: 1, name: "Stats" });
+    await screen.findByRole("region", { name: "Stats" });
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
   it("lists a character's pages in the nav, with the current one marked", async () => {
     renderAt("/characters/abc/p/spells");
-    await screen.findByRole("heading", { level: 1, name: "Spells" });
+    await screen.findByRole("region", { name: "Spells" });
 
     const nav = screen.getByRole("navigation", { name: "Character pages" });
     expect(nav.querySelectorAll("a")).toHaveLength(4);
@@ -61,7 +61,7 @@ describe("routing", () => {
       ),
     });
     renderAt("/characters/abc/p/stats");
-    await screen.findByRole("heading", { level: 1, name: "Stats" });
+    await screen.findByRole("region", { name: "Stats" });
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
     expect(sheet).not.toBeNull();
@@ -72,6 +72,21 @@ describe("routing", () => {
     const nav = screen.getByRole("navigation", { name: "Character pages" });
     expect(titles).toEqual([...nav.querySelectorAll("a")].map((link) => link.textContent));
     expect(titles).not.toContain("Spells");
+  });
+
+  it("shows the character's header above every page and prints it once, ahead of them", async () => {
+    const router = renderAt("/characters/abc/p/stats");
+    await screen.findByRole("heading", { level: 1, name: "Vex" });
+    await screen.findByRole("region", { name: "Stats" });
+
+    const sheet = document.querySelector<HTMLElement>("[data-print-sheet]") as HTMLElement;
+    expect(within(sheet).getAllByText("Vex", { ignore: "[aria-hidden]" })).toHaveLength(1);
+    expect(sheet.firstElementChild).toHaveTextContent("Vex");
+    expect(sheet.firstElementChild).toHaveTextContent("Half-Elf Warlock 1 • Charlatan");
+
+    await router.navigate("/characters/abc/p/spells");
+    await screen.findByRole("region", { name: "Spells" });
+    expect(screen.getAllByRole("heading", { level: 1, name: "Vex" })).toHaveLength(1);
   });
 
   it("prints why the pages could not load", async () => {
@@ -122,7 +137,7 @@ describe("routing", () => {
     sessionStorage.clear();
     const pageShownAtScroll: boolean[] = [];
     const scrollTo = vi.fn((_x: number, y: number) => {
-      pageShownAtScroll.push(screen.queryByRole("heading", { level: 1, name: "Stats" }) !== null);
+      pageShownAtScroll.push(screen.queryByRole("region", { name: "Stats" }) !== null);
       scroll(y);
     });
     vi.stubGlobal("scrollTo", scrollTo);
@@ -137,7 +152,7 @@ describe("routing", () => {
         <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    await screen.findByRole("heading", { level: 1, name: "Stats" });
+    await screen.findByRole("region", { name: "Stats" });
 
     scroll(480);
     await router.navigate("/catalog/feats/Alert/PHB");
@@ -148,7 +163,7 @@ describe("routing", () => {
     queryClient.clear();
     returning = true;
     await router.navigate(-1);
-    await screen.findByRole("heading", { level: 1, name: "Stats" });
+    await screen.findByRole("region", { name: "Stats" });
     beforeSettle();
     await new Promise((resolve) => setTimeout(resolve, 100));
     return { scrollTo, pageShownAtScroll };

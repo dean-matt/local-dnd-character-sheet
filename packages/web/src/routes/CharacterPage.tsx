@@ -24,9 +24,8 @@ export function CharacterPage() {
   if (!page) return <NotFoundPanel />;
 
   return (
-    <section>
-      <h1 className="font-semibold text-2xl">{page.title}</h1>
-      <div className="mt-4 flex flex-col gap-4">
+    <section aria-label={page.title}>
+      <div className="flex flex-col gap-4">
         {character.isError && <ErrorState message={character.error.message} />}
         {derived.isPending && <LoadingState label="Loading derived values…" />}
         {derived.isError && <ErrorState message={derived.error.message} />}
