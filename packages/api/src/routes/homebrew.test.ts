@@ -1,10 +1,7 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { openDatabases } from "../db/client.ts";
 import { insertCharacter } from "../db/queries/characters.ts";
+import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 import { homebrewRoutes } from "./homebrew.ts";
 
@@ -82,20 +79,17 @@ const json = (body: unknown) => ({
 });
 
 describe("homebrewRoutes", () => {
-  let dataDir: string;
-  let opened: ReturnType<typeof openDatabases>;
+  let opened: ReturnType<typeof openTestDatabases>;
   let routes: ReturnType<typeof homebrewRoutes>;
 
   beforeEach(() => {
-    dataDir = mkdtempSync(join(tmpdir(), "homebrew-routes-"));
-    opened = openDatabases(dataDir);
+    opened = openTestDatabases();
     routes = homebrewRoutes(opened.homebrewDb, opened.charactersDb);
   });
 
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
-    rmSync(dataDir, { recursive: true, force: true });
   });
 
   describe("items", () => {

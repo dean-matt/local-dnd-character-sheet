@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishItems } from "./contentFixture.ts";
 import { baseItemMatchesVariant, expandItemFields, getExpandedItem } from "./item-variant.ts";
 
@@ -234,12 +234,12 @@ describe("expandItemFields", () => {
 describe("getExpandedItem", () => {
   let dataDir: string;
 
-  beforeEach(() => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "item-variant-"));
     publishItems(dataDir, [LONGSWORD_ROW, NET_ROW, PLUS_ONE_WEAPON_ROW, ADAMANTINE_WEAPON_ROW]);
   });
 
-  afterEach(() => {
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 

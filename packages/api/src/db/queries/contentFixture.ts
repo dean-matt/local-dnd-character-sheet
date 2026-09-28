@@ -1,6 +1,8 @@
-import { mkdirSync, renameSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
+import { onTestFinished } from "vitest";
 
 export type SpellFixtureRow = {
   name: string;
@@ -46,6 +48,16 @@ export type ItemFixtureRow = {
 
 let publishCount = 0;
 
+/**
+ * A temp data directory removed once the calling test finishes, for a test whose catalog
+ * differs from the one its file shares.
+ */
+export function testDataDir(prefix: string): string {
+  const dir = mkdtempSync(join(tmpdir(), prefix));
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+}
+
 type Insertion = { insert: string; rows: object[] };
 
 /**
@@ -54,6 +66,9 @@ type Insertion = { insert: string; rows: object[] };
  * rewriting the `current` pointer rather than a rename `openContentDb`'s docs say
  * Windows refuses. One `ddl` and several `insertions` where a read spans tables in one
  * connection, such as a class's resources, slots and features at a level.
+ *
+ * Built in memory and written in one call: on disk, each autocommitted insert creates and
+ * deletes a journal file, which a hosted Windows runner made seconds per fixture.
  */
 function publishTable(dataDir: string, ddl: string, insertions: Insertion[]): void {
   const s = performance.now();
@@ -69,12 +84,13 @@ function publishTableTimed(dataDir: string, ddl: string, insertions: Insertion[]
   const contentDir = join(dataDir, "content");
   mkdirSync(contentDir, { recursive: true });
   const name = `content-test-${publishCount++}.db`;
-  const db = new Database(join(contentDir, name));
+  const db = new Database(":memory:");
   db.exec(ddl);
   for (const { insert, rows } of insertions) {
     const stmt = db.prepare(insert);
     for (const row of rows) stmt.run(row);
   }
+  writeFileSync(join(contentDir, name), db.serialize());
   db.close();
   writeFileSync(join(contentDir, "current.tmp"), name);
   renameSync(join(contentDir, "current.tmp"), join(contentDir, "current"));

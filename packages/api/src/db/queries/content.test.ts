@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   escapeLikeTerm,
   getBackground,
@@ -64,22 +64,21 @@ const GOODBERRY_ONE = {
 describe("content spell queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-spells-"));
+    publishSpells(dataDir, [FIREBALL, GOODBERRY_ONE]);
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists spells filtered to one edition, sorted by name then source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-spells-"));
-    publishSpells(dataDir, [FIREBALL, GOODBERRY_ONE]);
-
     expect(listSpells(dataDir, "classic")).toEqual([FIREBALL]);
     expect(listSpells(dataDir, "one")).toEqual([GOODBERRY_ONE]);
   });
 
   it("reads one spell by name and source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-spells-"));
-    publishSpells(dataDir, [FIREBALL]);
-
     expect(getSpell(dataDir, "Fireball", "PHB")).toEqual(FIREBALL);
     expect(getSpell(dataDir, "Fireball", "XPHB")).toBeUndefined();
     expect(getSpell(dataDir, "Nonexistent", "PHB")).toBeUndefined();
@@ -103,22 +102,21 @@ const TIEFLING_ONE = {
 describe("content race queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-races-"));
+    publishRaces(dataDir, [ELF, TIEFLING_ONE]);
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists races filtered to one edition, sorted by name then source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-races-"));
-    publishRaces(dataDir, [ELF, TIEFLING_ONE]);
-
     expect(listRaces(dataDir, "classic")).toEqual([ELF]);
     expect(listRaces(dataDir, "one")).toEqual([TIEFLING_ONE]);
   });
 
   it("reads one race by name and source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-races-"));
-    publishRaces(dataDir, [ELF]);
-
     expect(getRace(dataDir, "Elf", "PHB")).toEqual(ELF);
     expect(getRace(dataDir, "Nonexistent", "PHB")).toBeUndefined();
   });
@@ -154,30 +152,26 @@ const HUMAN_BASE = {
 describe("content subrace queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-subraces-"));
+    publishSubraces(dataDir, [HIGH_ELF, WOOD_ELF, HUMAN_BASE]);
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists subraces of one race, filtered to one edition", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-subraces-"));
-    publishSubraces(dataDir, [HIGH_ELF, WOOD_ELF, HUMAN_BASE]);
-
     expect(listSubraces(dataDir, "Elf", "PHB", "classic")).toEqual([HIGH_ELF, WOOD_ELF]);
     expect(listSubraces(dataDir, "Human", "PHB", "classic")).toEqual([HUMAN_BASE]);
   });
 
   it("reads one subrace by its own key and its race's", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-subraces-"));
-    publishSubraces(dataDir, [HIGH_ELF]);
-
     expect(getSubrace(dataDir, "High", "PHB", "Elf", "PHB")).toEqual(HIGH_ELF);
     expect(getSubrace(dataDir, "High", "PHB", "Gnome", "PHB")).toBeUndefined();
   });
 
   it("allows the empty subrace name a base variant with no subrace of its own carries", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-subraces-"));
-    publishSubraces(dataDir, [HUMAN_BASE]);
-
     expect(getSubrace(dataDir, "", "PHB", "Human", "PHB")).toEqual(HUMAN_BASE);
   });
 });
@@ -192,22 +186,21 @@ const ACOLYTE = {
 describe("content background queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-backgrounds-"));
+    publishBackgrounds(dataDir, [ACOLYTE]);
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists backgrounds filtered to one edition", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-backgrounds-"));
-    publishBackgrounds(dataDir, [ACOLYTE]);
-
     expect(listBackgrounds(dataDir, "classic")).toEqual([ACOLYTE]);
     expect(listBackgrounds(dataDir, "one")).toEqual([]);
   });
 
   it("reads one background by name and source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-backgrounds-"));
-    publishBackgrounds(dataDir, [ACOLYTE]);
-
     expect(getBackground(dataDir, "Acolyte", "PHB")).toEqual(ACOLYTE);
     expect(getBackground(dataDir, "Nonexistent", "PHB")).toBeUndefined();
   });
@@ -223,22 +216,21 @@ const ALERT = {
 describe("content feat queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-feats-"));
+    publishFeats(dataDir, [ALERT]);
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists feats filtered to one edition", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-feats-"));
-    publishFeats(dataDir, [ALERT]);
-
     expect(listFeats(dataDir, "classic")).toEqual([ALERT]);
     expect(listFeats(dataDir, "one")).toEqual([]);
   });
 
   it("reads one feat by name and source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-feats-"));
-    publishFeats(dataDir, [ALERT]);
-
     expect(getFeat(dataDir, "Alert", "PHB")).toEqual(ALERT);
     expect(getFeat(dataDir, "Nonexistent", "PHB")).toBeUndefined();
   });
@@ -280,21 +272,20 @@ const BAG_OF_TRICKS = {
 describe("content item queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-items-"));
+    publishItems(dataDir, [LONGSWORD, DEMON_ARMOR, BAG_OF_TRICKS]);
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists only item and baseitem kinds, filtered to one edition", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-items-"));
-    publishItems(dataDir, [LONGSWORD, DEMON_ARMOR, BAG_OF_TRICKS]);
-
     expect(listItems(dataDir, "classic")).toEqual([DEMON_ARMOR, LONGSWORD]);
   });
 
   it("reads one item by name and source, whatever its kind", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-items-"));
-    publishItems(dataDir, [LONGSWORD, BAG_OF_TRICKS]);
-
     expect(getItem(dataDir, "Longsword", "PHB")).toEqual(LONGSWORD);
     expect(getItem(dataDir, "Bag of Tricks", "DMG")).toEqual(BAG_OF_TRICKS);
     expect(getItem(dataDir, "Nonexistent", "PHB")).toBeUndefined();
@@ -328,22 +319,21 @@ const CLERIC_XPHB = {
 describe("content class queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-classes-"));
+    publishClasses(dataDir, { classes: [CLERIC_PHB, FIGHTER_PHB, CLERIC_XPHB] });
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists classes filtered to one edition, sorted by name then source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-classes-"));
-    publishClasses(dataDir, { classes: [CLERIC_PHB, FIGHTER_PHB, CLERIC_XPHB] });
-
     expect(listClasses(dataDir, "classic")).toEqual([CLERIC_PHB, FIGHTER_PHB]);
     expect(listClasses(dataDir, "one")).toEqual([CLERIC_XPHB]);
   });
 
   it("reads one class by name and source", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-classes-"));
-    publishClasses(dataDir, { classes: [CLERIC_PHB] });
-
     expect(getClass(dataDir, "Cleric", "PHB")).toEqual(CLERIC_PHB);
     expect(getClass(dataDir, "Nonexistent", "PHB")).toBeUndefined();
   });
@@ -362,22 +352,21 @@ const LIFE_DOMAIN = {
 describe("content subclass queries", () => {
   let dataDir: string;
 
-  afterEach(() => {
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-subclasses-"));
+    publishClasses(dataDir, { classes: [CLERIC_PHB, FIGHTER_PHB], subclasses: [LIFE_DOMAIN] });
+  });
+
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("lists the subclasses of one class, filtered to one edition", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-subclasses-"));
-    publishClasses(dataDir, { classes: [CLERIC_PHB, FIGHTER_PHB], subclasses: [LIFE_DOMAIN] });
-
     expect(listSubclasses(dataDir, "Cleric", "PHB", "classic")).toEqual([LIFE_DOMAIN]);
     expect(listSubclasses(dataDir, "Fighter", "PHB", "classic")).toEqual([]);
   });
 
   it("reads one subclass by its own key and its class's", () => {
-    dataDir = mkdtempSync(join(tmpdir(), "content-subclasses-"));
-    publishClasses(dataDir, { classes: [CLERIC_PHB], subclasses: [LIFE_DOMAIN] });
-
     expect(getSubclass(dataDir, "Life Domain", "PHB", "Cleric", "PHB")).toEqual(LIFE_DOMAIN);
     expect(getSubclass(dataDir, "Life Domain", "PHB", "Fighter", "PHB")).toBeUndefined();
   });
@@ -433,7 +422,7 @@ describe("class grants at a level", () => {
     json: row.json,
   });
 
-  const setUp = () => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "content-class-grants-"));
     publishClasses(dataDir, {
       classes: [CLERIC_PHB, FIGHTER_PHB],
@@ -481,15 +470,13 @@ describe("class grants at a level", () => {
         FIGHTER_FIGHTING_STYLE,
       ],
     });
-  };
+  });
 
-  afterEach(() => {
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
   it("reads resources and slots at exactly one level, and features cumulative through it", () => {
-    setUp();
-
     expect(getClassGrants(dataDir, "Cleric", "PHB", 2)).toEqual({
       resources: [
         { resource_key: "cantrips_known", value: "3" },
@@ -507,8 +494,6 @@ describe("class grants at a level", () => {
   });
 
   it("scopes to the class asked for — a second class's rows never leak in", () => {
-    setUp();
-
     expect(getClassGrants(dataDir, "Fighter", "PHB", 1)).toEqual({
       resources: [{ resource_key: "second_wind", value: "1" }],
       spellSlots: [],
@@ -518,8 +503,6 @@ describe("class grants at a level", () => {
   });
 
   it("returns empty arrays for a level the class grants nothing new at, not undefined", () => {
-    setUp();
-
     expect(getClassGrants(dataDir, "Cleric", "PHB", 5)).toEqual({
       resources: [],
       spellSlots: [],

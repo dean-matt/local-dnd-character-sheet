@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishClasses } from "../db/queries/contentFixture.ts";
 import { classesRoutes } from "./classes.ts";
 
@@ -43,7 +43,7 @@ describe("classesRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof classesRoutes>;
 
-  beforeEach(() => {
+  beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "classes-routes-"));
     publishClasses(dataDir, {
       classes: [CLERIC, FIGHTER, CLERIC_XPHB],
@@ -122,7 +122,7 @@ describe("classesRoutes", () => {
     routes = classesRoutes(dataDir);
   });
 
-  afterEach(() => {
+  afterAll(() => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
