@@ -77,7 +77,7 @@ Only one of the 26 properties carries a `name` at all, and it writes `special` �
 lowercase word an item's line renders rather than a title — so reading `name` where it
 exists would key that one differently from the rest. The human label a type also carries
 stays in `json`, where the sheet reads it to name an inventory row's type — `Adventuring
-Gear` for `G`, which every source at the pinned tag labels alike. `load/lookups.ts` states
+Gear` for `G`. `load/lookups.ts` states
 the rule once, as `qualifier` already does for a deity's pantheon.
 
 An `itemType` `_copy` names its parent by abbreviation too, which `copy.ts` needs no

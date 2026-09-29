@@ -67,11 +67,11 @@ describe("characterInventoryRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "character-inventory-"));
-    const itemType = (name: string, label: string) => ({
+    const itemType = (name: string, label: string, source = "PHB") => ({
       kind: "itemType",
       name,
-      source: "PHB",
-      edition: "classic",
+      source,
+      edition: source === "PHB" ? "classic" : "one",
       json: JSON.stringify({ name: label, abbreviation: name }),
     });
     const items = [
@@ -106,7 +106,13 @@ describe("characterInventoryRoutes", () => {
     ];
     publishDerivedFixture(dataDir, {
       items,
-      lookups: [itemType("M", "Melee Weapon"), itemType("HA", "Heavy Armor")],
+      // Labels upstream never wrote, differing by source so a test sees which row answered.
+      lookups: [
+        itemType("M", "Melee Weapon"),
+        itemType("M", "Melee Weapon (2024)", "XPHB"),
+        itemType("HA", "Heavy Armor"),
+        itemType("HA", "Heavy Armor (2024)", "XPHB"),
+      ],
     });
   });
 
@@ -152,7 +158,7 @@ describe("characterInventoryRoutes", () => {
     ]);
   });
 
-  it("carries a weapon's and an armor's printed numbers, and names the item's type", async () => {
+  it("carries a weapon's and an armor's printed numbers, and names the item's type from its source", async () => {
     store(withInventory([{ ref: LONGSWORD }, { ref: CHAIN_MAIL }]));
     const [sword, mail] = await items();
     expect(sword).toMatchObject({
@@ -162,7 +168,7 @@ describe("characterInventoryRoutes", () => {
       armor: null,
     });
     expect(mail).toMatchObject({
-      type: { abbreviation: "HA", name: "Heavy Armor" },
+      type: { abbreviation: "HA", name: "Heavy Armor (2024)" },
       value: 7500,
       weapon: null,
       armor: { category: "heavy", armorClass: 16 },

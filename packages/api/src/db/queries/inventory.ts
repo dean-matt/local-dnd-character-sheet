@@ -83,9 +83,9 @@ export function itemWeights(
   );
 }
 
-const typeAbbreviation = (row: ItemFacts): string | undefined => {
+const typeOf = (row: ItemFacts): string | undefined => {
   const { type } = row.json;
-  return typeof type === "string" ? type.split("|")[0] || undefined : undefined;
+  return typeof type === "string" && type ? type : undefined;
 };
 
 const priceOf = (row: ItemFacts): number | null => {
@@ -111,13 +111,14 @@ function sheetItem(
   }
   const entries = entriesSchema.safeParse(row.json.entries);
   const source = row.json.source;
-  const abbreviation = typeAbbreviation(row);
+  const type = typeOf(row);
+  const abbreviation = type?.split("|")[0];
   return {
     resolved: true,
     name: row.name,
     ...("homebrewId" in ref || typeof source !== "string" ? {} : { source }),
     ...flags,
-    type: abbreviation ? { abbreviation, name: typeNames.get(abbreviation) ?? null } : null,
+    type: type && abbreviation ? { abbreviation, name: typeNames.get(type) ?? null } : null,
     rarity: row.rarity,
     requiresAttunement: row.requiresAttunement,
     weight: weightOf(row),
@@ -134,8 +135,8 @@ export function resolveCharacterInventory(
   definition: CharacterDefinition,
 ): CharacterInventory {
   const rows = resolveItemRows(dataDir, homebrewDb, definition.inventory);
-  const abbreviations = new Set(rows.flatMap((row) => (row ? (typeAbbreviation(row) ?? []) : [])));
-  const typeNames = getItemTypeNames(dataDir, [...abbreviations]);
+  const types = new Set(rows.flatMap((row) => (row ? (typeOf(row) ?? []) : [])));
+  const typeNames = getItemTypeNames(dataDir, [...types]);
   return {
     items: definition.inventory.map((entry, index) => sheetItem(entry, rows[index], typeNames)),
   };
