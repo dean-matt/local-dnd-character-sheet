@@ -28,7 +28,8 @@ widget, panel, or nav element:
   Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
   opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
   2024, switched by the artboard's Edition tweak.
-- Inventory: Currency, Weapons, Armor, Gear. A versatile weapon's row on Weapons has
+- Inventory: Currency, Weapons, Armor, Gear. Each item's price on Weapons, Armor and
+  Gear is a gold chip with a coin icon, read aloud as its cost. A versatile weapon's row on Weapons has
   a 1h/2h grip toggle beside its Equip button, a gray pill track with the chosen grip on
   an accent-red thumb; it picks the damage die the chip and formula show. 2h is unavailable while that weapon and a shield are both equipped, and
   hovering or focusing it opens a popover saying why. The artboard's `shieldEquipped`
