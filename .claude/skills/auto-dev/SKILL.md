@@ -49,11 +49,11 @@ node scripts/merge-gate.mjs <pr>
 Exit 0 continues. Any other exit stops the run: quote each `FAIL` line, or the usage line
 on exit 2. No label query stands in for the gate.
 
-**4. Merge.** Dispatch a second fresh subagent with exactly this prompt, substituting the
-number, since the agent that wrote the code is the worst reader of a gate judging its own
-work:
+**4. Merge.** Dispatch a second fresh subagent, since the agent that wrote the code is the
+worst reader of a gate judging its own work. Its prompt is exactly this, with the number
+substituted:
 
-> Invoke the `merge-pr` skill for pull request <pr>. Report the merge commit, or the
+> Invoke the `merge-pr` skill for pull request `<pr>`. Report the merge commit, or the
 > condition that stopped you.
 
 Add nothing: no review commentary, no earlier denial. The auto-mode classifier reads the
