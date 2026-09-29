@@ -31,6 +31,7 @@ describe("CharacterSidebar", () => {
 
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Stats" })).toBeInTheDocument();
     expect(localStorage.getItem("sidebar-collapsed")).toBe("true");
   });
 

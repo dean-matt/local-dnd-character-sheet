@@ -117,6 +117,7 @@ describe("routing", () => {
       screen.getByRole("group", { name: "Theme" }),
     );
     expect(screen.queryByRole("navigation", { name: "Character pages" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("aria-current", "page");
   });
 
   it("shows the not-found state for an unmatched route", async () => {

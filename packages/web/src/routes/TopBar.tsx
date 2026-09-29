@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, NavLink } from "react-router";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 
@@ -134,13 +134,13 @@ export function TopBar() {
         )}
       </div>
 
-      <Link
+      <NavLink
         to="/settings"
         className="ml-auto flex shrink-0 items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
       >
         Settings
         <GearIcon />
-      </Link>
+      </NavLink>
     </div>
   );
 }

@@ -42,6 +42,7 @@ describe("TopBar", () => {
     renderTopBar();
 
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
+    expect(screen.getByRole("link", { name: /settings/i })).not.toHaveAttribute("aria-current");
     expect(screen.queryByRole("group", { name: "Theme" })).not.toBeInTheDocument();
   });
 

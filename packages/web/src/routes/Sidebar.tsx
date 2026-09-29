@@ -98,6 +98,7 @@ export function Sidebar({
           <NavLink
             key={item.to}
             to={item.to}
+            aria-label={collapsed ? item.label : undefined}
             className={({ isActive }) =>
               `${rowBase} ${isActive ? "bg-accent-tint" : "hover:bg-subtle"}`
             }
