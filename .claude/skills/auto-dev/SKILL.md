@@ -40,14 +40,16 @@ whatever waits on the user, and where its review pass ran. Stop where the report
 - **names an issue and no pull request** — give the condition. Looping back either retakes
   a `blocked` issue forever or skips a `pnpm check` that failed
 
-**3. Run the gate.**
+**3. Run the gate and read the label.** The gate reads no label.
 
 ```bash
 node scripts/merge-gate.mjs <pr>
+gh pr view <pr> --json labels --jq '[.labels[].name | select(startswith("review:"))] | join(",")'
 ```
 
-Exit 0 continues. Any other exit stops the run: quote each `FAIL` line, or the usage line
-on exit 2.
+Continue where the gate exits 0 and the label line reads exactly `review:approved`. Stop the
+run on either failing and quote what failed: each `FAIL` line, the usage line on exit 2, or
+the label line (empty means no review label).
 
 **4. Merge.** Dispatch a second fresh subagent, since the agent that wrote the code is the
 worst reader of a gate judging its own work. Its prompt is exactly this, with the number
