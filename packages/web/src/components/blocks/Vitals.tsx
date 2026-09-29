@@ -3,7 +3,7 @@
  * hit dice spent and conditions come from the character's state; the maximum and each
  * die's total come from the derived block.
  */
-import { type CharacterDerived, type CharacterState, derivedValue, refKey } from "@dnd/character";
+import { type CharacterDerived, type CharacterState, derivedValue } from "@dnd/character";
 import { useCharacterState } from "../../hooks/useCharacterState.ts";
 import { ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
@@ -72,8 +72,9 @@ function HitPoints({ derived, state }: { derived: CharacterDerived; state: Chara
 }
 
 function StatusEffects({ state }: { state: CharacterState }) {
-  const byKey = new Map(state.conditions.map((condition) => [refKey(condition), condition.name]));
-  const labels = [...byKey].map(([key, label]) => ({ key, label }));
+  // A chip shows the name alone, so one condition held from two sources reads as one chip.
+  const names = new Set(state.conditions.map((condition) => condition.name));
+  const labels = [...names].map((name) => ({ key: name, label: name }));
   if (state.exhaustion > 0) {
     labels.push({ key: "exhaustion", label: `Exhaustion ${state.exhaustion}` });
   }

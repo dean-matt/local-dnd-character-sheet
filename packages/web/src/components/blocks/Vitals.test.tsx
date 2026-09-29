@@ -78,7 +78,7 @@ describe("Vitals", () => {
   it("lists each condition once, then exhaustion at its level", async () => {
     const poisoned = { name: "Poisoned", source: "XPHB" };
     renderVitals({
-      conditions: [poisoned, { name: "Prone", source: "XPHB" }, poisoned],
+      conditions: [poisoned, { name: "Prone", source: "XPHB" }, { ...poisoned, source: "PHB" }],
       exhaustion: 2,
     });
 
