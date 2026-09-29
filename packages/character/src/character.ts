@@ -567,7 +567,8 @@ export type CharacterRecord = z.infer<typeof characterRecordSchema>;
 // State ----------------------------------------------------------------------
 
 const hitPointsSchema = z.strictObject({
-  current: z.int(),
+  /** Null reads as the derived maximum, so an unhurt character keeps pace with a level-up. */
+  current: z.int().nullable().default(null),
   temporary: z.int().min(0).default(0),
 });
 
@@ -650,13 +651,13 @@ export type CharacterStateRecord = z.infer<typeof characterStateRecordSchema>;
 
 /**
  * The state a new character starts with: no damage taken, nothing spent, nothing
- * tracked yet. `hitPoints.current` is 0 rather than a computed maximum, because that
- * maximum needs the catalog's hit dice, which this package never reaches — the first
- * read that has the catalog in hand sets it.
+ * tracked yet. `hitPoints.current` is null rather than a number, because the maximum
+ * needs the catalog's hit dice, which this package never reaches — a reader holding the
+ * derived block resolves null to that maximum.
  */
 export function defaultCharacterState(): CharacterState {
   return characterStateSchema.parse({
-    hitPoints: { current: 0 },
+    hitPoints: {},
     hitDice: [],
     spellSlots: [],
     conditions: [],

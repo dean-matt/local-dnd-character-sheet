@@ -111,6 +111,40 @@ describe("migrations", () => {
     expect(row && JSON.parse(row.state)).toEqual(defaultCharacterState());
   });
 
+  it("reads a state row left at 0 hit points as full, and leaves a hurt one alone", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0004_shocking_the_spike");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insertState = sqlite.prepare(
+      "INSERT INTO character_state (character_id, state) VALUES (?, ?)",
+    );
+    for (const [id, current] of [
+      ["1", 0],
+      ["2", 4],
+    ] as const) {
+      insertBareCharacter(sqlite, id);
+      insertState.run(
+        id,
+        JSON.stringify({ ...defaultCharacterState(), hitPoints: { current, temporary: 0 } }),
+      );
+    }
+
+    migrateCharacters(db);
+
+    const current = sqlite
+      .prepare(
+        "SELECT character_id AS id, json_extract(state, '$.hitPoints.current') AS current FROM character_state ORDER BY id",
+      )
+      .all();
+    expect(current).toEqual([
+      { id: "1", current: null },
+      { id: "2", current: 4 },
+    ]);
+  });
+
   it("backfills the preset pages for a character left over from before character_pages existed", () => {
     sqlite = new Database(join(workspace, "characters.db"));
     const db = drizzle(sqlite);

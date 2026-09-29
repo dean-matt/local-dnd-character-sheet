@@ -227,7 +227,7 @@ describe("the example definition shipped with the repository", () => {
 describe("default state", () => {
   it("is unhurt, unspent and unconditioned", () => {
     expect(defaultCharacterState()).toEqual({
-      hitPoints: { current: 0, temporary: 0 },
+      hitPoints: { current: null, temporary: 0 },
       hitDice: [],
       spellSlots: [],
       pactSlots: null,
