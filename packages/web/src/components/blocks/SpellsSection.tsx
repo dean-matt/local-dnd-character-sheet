@@ -68,12 +68,24 @@ function CasterNumbers({ derived }: { derived: CharacterDerived }) {
 }
 
 /** Every pip draws empty: the sheet reads no expended slots yet. */
-function SlotRow({ label, total }: { label: string; total: Derived<number> }) {
+function SlotRow({
+  label,
+  spoken = label,
+  total,
+}: {
+  label: string;
+  spoken?: string;
+  total: Derived<number>;
+}) {
   const count = derivedValue(total);
   return (
     <li className="flex items-center gap-1.5">
-      <span className="w-12 shrink-0 text-xs">{label}</span>
-      <span className="sr-only">: {count === 1 ? "1 slot" : `${count} slots`}</span>
+      <span aria-hidden="true" className="w-12 shrink-0 text-xs">
+        {label}
+      </span>
+      <span className="sr-only">
+        {spoken}: {count === 1 ? "1 slot" : `${count} slots`}
+      </span>
       <span aria-hidden="true" className="flex grow flex-wrap gap-[3px]">
         {Array.from({ length: count }, (_, index) => (
           <span
@@ -98,7 +110,11 @@ function Slots({ derived }: { derived: CharacterDerived }) {
           <SlotRow key={slot.level} label={levelLabel(slot.level)} total={slot.total} />
         ))}
         {pactSlots && (
-          <SlotRow label={`Pact, ${levelLabel(pactSlots.level)}`} total={pactSlots.total} />
+          <SlotRow
+            label={`Pact ${ORDINAL[pactSlots.level]}`}
+            spoken={`Pact Magic, ${levelLabel(pactSlots.level)}`}
+            total={pactSlots.total}
+          />
         )}
       </ul>
     </Card>

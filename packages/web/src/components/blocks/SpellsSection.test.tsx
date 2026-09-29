@@ -122,16 +122,28 @@ describe("SpellsSection", () => {
     });
 
     const slots = card("Spell Slots");
-    const pips = (label: string) => {
-      const row = slots.getByText(label).closest("li") as HTMLElement;
-      return [...(row.querySelector("[aria-hidden]")?.children ?? [])];
-    };
-    expect(slots.getByText("1st Level").closest("li")).toHaveTextContent("1st Level: 4 slots");
+    const row = (spoken: string) =>
+      slots.getByText(new RegExp(`^${spoken}:`)).closest("li") as HTMLElement;
+    const pips = (spoken: string) => [
+      ...(row(spoken).querySelectorAll(":scope > [aria-hidden]")[1]?.children ?? []),
+    ];
+    expect(slots.getByText("1st Level: 4 slots")).toBeInTheDocument();
     expect(pips("1st Level")).toHaveLength(4);
     expect(pips("2nd Level")).toHaveLength(2);
-    expect(slots.getByText("2nd Level").closest("li")).toHaveTextContent("overridden from 3");
-    expect(pips("Pact, 1st Level")).toHaveLength(1);
-    for (const pip of pips("1st Level")) expect(pip.className).not.toMatch(/\bbg-/);
+    expect(row("2nd Level")).toHaveTextContent("overridden from 3");
+    expect(slots.getByText("Pact Magic, 1st Level: 1 slot")).toBeInTheDocument();
+    expect(row("Pact Magic, 1st Level")).toHaveTextContent("Pact 1st");
+    expect(pips("Pact Magic, 1st Level")).toHaveLength(1);
+    for (const pip of pips("1st Level")) {
+      expect(pip.getAttribute("style")).toBeNull();
+      expect(pip.className.split(" ")).toEqual([
+        "size-[15px]",
+        "shrink-0",
+        "rounded-full",
+        "border-[1.5px]",
+        "border-accent",
+      ]);
+    }
     await screen.findByText("Hex");
   });
 
@@ -144,9 +156,9 @@ describe("SpellsSection", () => {
     expect(headings).toEqual(["Cantrips", "1st Level", "Not found"]);
 
     const hex = screen.getByText("Hex").closest("li") as HTMLElement;
-    const chips = hex.children[1] as HTMLElement;
-    expect(chips.firstElementChild).toHaveTextContent("Enchantment");
-    expect(hex).toHaveTextContent("Prepared");
+    const school = within(hex).getByText("Enchantment");
+    const prepared = within(hex).getByText("Prepared");
+    expect(school.compareDocumentPosition(prepared)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(hex).toHaveTextContent("Concentration");
     expect(hex).not.toHaveTextContent("Ritual");
     expect(hex).not.toHaveTextContent("90 feet");
