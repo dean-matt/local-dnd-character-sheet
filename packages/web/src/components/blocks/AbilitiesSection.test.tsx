@@ -207,6 +207,7 @@ describe("AbilitiesSection", () => {
     const derived = derivedFor(record);
     renderSection(record, {
       ...derived,
+      initiative: { ...derived.initiative, terms: [] },
       armorClass: {
         computed: 13,
         manual: null,
@@ -231,6 +232,16 @@ describe("AbilitiesSection", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Initiative/ })).not.toBeInTheDocument();
+  });
+
+  it("opens initiative's and the proficiency bonus's terms on focus", async () => {
+    renderSection();
+
+    screen.getByRole("button", { name: /^Initiative/ }).focus();
+    expect(await screen.findByRole("group", { name: "Initiative breakdown" })).toBeVisible();
+
+    screen.getByRole("button", { name: /^Proficiency Bonus/ }).focus();
+    expect(await screen.findByRole("group", { name: "Proficiency Bonus breakdown" })).toBeVisible();
   });
 
   it("speaks an override on a value that also has terms", () => {

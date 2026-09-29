@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   abilityModifier,
+  abilityModifierBreakdown,
   passiveScore,
   proficiencyBonus,
+  proficiencyBonusBreakdown,
   proficiencyContribution,
 } from "./index.ts";
 
@@ -74,5 +76,27 @@ describe("proficiencyContribution", () => {
 
   it("rejects a level outside 1-20, as the bonus it reads does", () => {
     expect(() => proficiencyContribution(21, "proficient")).toThrow(RangeError);
+  });
+});
+
+describe("breakdowns", () => {
+  it("gives an ability modifier one term that carries it", () => {
+    expect(abilityModifierBreakdown(16)).toEqual({
+      total: 3,
+      terms: [{ label: "Score 16", value: 3 }],
+    });
+  });
+
+  it.each([1, 4, 5, 9, 13, 17, 20])(
+    "splits the proficiency bonus at level %i into terms that sum to it",
+    (level) => {
+      const result = proficiencyBonusBreakdown(level);
+      expect(result.total).toBe(proficiencyBonus(level));
+      expect(result.terms[0]).toEqual({ label: "Base", value: 2 });
+    },
+  );
+
+  it("adds no step term below level 5", () => {
+    expect(proficiencyBonusBreakdown(4).terms).toHaveLength(1);
   });
 });
