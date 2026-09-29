@@ -47,7 +47,7 @@ node scripts/merge-gate.mjs <pr>
 ```
 
 Exit 0 continues. Any other exit stops the run: quote each `FAIL` line, or the usage line
-on exit 2. No label query stands in for the gate.
+on exit 2.
 
 **4. Merge.** Dispatch a second fresh subagent, since the agent that wrote the code is the
 worst reader of a gate judging its own work. Its prompt is exactly this, with the number
@@ -56,9 +56,8 @@ substituted:
 > Invoke the `merge-pr` skill for pull request `<pr>`. Report the merge commit, or the
 > condition that stopped you.
 
-Add nothing: no review commentary, no earlier denial. The auto-mode classifier reads the
-prompt as context and weighs the merge against every word in it. Stop where the
-report names a condition instead of a merge commit.
+Add nothing: no review commentary, no earlier denial. Stop where the report names a condition
+instead of a merge commit.
 
 **5. Count the merge and loop.** `gh pr view <pr> --json state,mergeCommit` settles whether
 it merged; the report of the subagent that merged it does not. A `state` other than `MERGED`

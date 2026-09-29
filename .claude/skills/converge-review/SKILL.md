@@ -49,8 +49,8 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
    the user; `review:changes-requested` where something does — a decline, a second bug
    filed as its own issue. Preferences wait on nobody.
 
-   Return the label left and what each pass found. Return only when no review subagent
-   this run started is still running; a label set before it posts describes an older
+   Return the label left and what each pass found. Return only when every review subagent
+   this run started has finished; a label set before its review posts describes an older
    commit.
 
 ## What this skill will not do

@@ -47,8 +47,7 @@ it took none — stop there.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
-    that label and what each pass found. Do not hand back while a review subagent you
-    started is still running.
+    that label and what each pass found.
 12. **Wait on CI, then run the gate:**
 
     ```bash
@@ -58,8 +57,7 @@ it took none — stop there.
 
     Run `wait-checks` with a 600000 ms tool timeout. On its exit 2, name what it printed
     and hand back. On any other exit, run the gate, then hand back with its exit, each
-    `FAIL` line and any failed check. A diff touching a fenced path always fails the gate,
-    for the user to weigh.
+    `FAIL` line and any failed check.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label, the gate's exit
     and anything waiting on the user.
