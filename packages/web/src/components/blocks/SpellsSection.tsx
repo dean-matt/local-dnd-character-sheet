@@ -139,6 +139,21 @@ function Fact({ label, value }: { label: string; value: string | undefined }) {
   );
 }
 
+/**
+ * The die and the type share a chip only where the spell deals one type: the die is the
+ * first roll the text prints, so beside two types it would claim both.
+ */
+function DamageChips({ spell }: { spell: Extract<SheetSpell, { resolved: true }> }) {
+  const { damageDice: dice, damageTypes: types = [] } = spell;
+  if (dice && types.length === 1) return <Tag>{`${dice} ${types[0]}`}</Tag>;
+  return (
+    <>
+      {dice && <Tag>{dice}</Tag>}
+      {types.length > 0 && <Tag>{types.join(", ")}</Tag>}
+    </>
+  );
+}
+
 function SpellRow({ spell }: { spell: SheetSpell }) {
   const homebrew = spell.source === undefined;
   const marks = (
@@ -167,6 +182,7 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
       chips={
         <>
           <Tag>{schoolName(spell.school)}</Tag>
+          <DamageChips spell={spell} />
           {marks}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}

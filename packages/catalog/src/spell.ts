@@ -139,6 +139,10 @@ const sheetSpellSchema = z.discriminatedUnion("resolved", [
     concentration: z.boolean(),
     ritual: z.boolean(),
     ...spellCastingFactsSchema.shape,
+    /** The first `{@damage}` roll the text prints, a cantrip's at its lowest tier. */
+    damageDice: z.string().min(1).optional(),
+    /** Upstream's `damageInflict`, which names every type the spell deals. */
+    damageTypes: z.array(z.string().min(1)).min(1).optional(),
     entries: entriesSchema,
   }),
   z.strictObject({ resolved: z.literal(false), ...sheetSpellFields }),

@@ -60,10 +60,12 @@ export type {
 } from "./item.ts";
 export {
   armorTraitSchema,
+  DAMAGE_TYPES,
   homebrewItemInputSchema,
   homebrewItemRecordSchema,
   homebrewItemSchema,
   itemRecordSchema,
+  weaponTraitSchema,
 } from "./item.ts";
 export type {
   HomebrewRaceInput,

@@ -89,7 +89,28 @@ describe("characterSpellsRoutes", () => {
           school: "D",
           time: [{ number: 1, unit: "action" }],
           range: "not a range",
+          damageInflict: "not a list",
           duration: [{ type: "timed", duration: { type: "minute", amount: 10 } }],
+        }),
+      },
+      {
+        name: "Fire Bolt",
+        source: "PHB",
+        edition: "classic",
+        level: 0,
+        school: "V",
+        concentration: 0,
+        ritual: 0,
+        json: JSON.stringify({
+          name: "Fire Bolt",
+          source: "PHB",
+          level: 0,
+          school: "V",
+          damageInflict: ["fire"],
+          entries: [
+            "A target takes {@damage 1d10} fire damage.",
+            { type: "entries", entries: ["It rises to {@damage 2d10} at 5th level."] },
+          ],
         }),
       },
     ]);
@@ -142,8 +163,17 @@ describe("characterSpellsRoutes", () => {
 
     expect(spell).toMatchObject({ resolved: true, concentration: true, ritual: true });
     expect(spell).not.toHaveProperty("range");
+    expect(spell).not.toHaveProperty("damageTypes");
+    expect(spell).not.toHaveProperty("damageDice");
     expect(spell).toHaveProperty("time", [{ number: 1, unit: "action" }]);
     expect(spell).toHaveProperty("entries", []);
+  });
+
+  it("carries the first damage roll the text prints and every type the spell deals", async () => {
+    store(withSpells([{ ref: { name: "Fire Bolt", source: "PHB" } }]));
+    const [bolt] = await spells();
+
+    expect(bolt).toMatchObject({ damageDice: "1d10", damageTypes: ["fire"] });
   });
 
   it("resolves a homebrew spell by id and gives it no source", async () => {

@@ -8,6 +8,7 @@ import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
 import { InventorySection } from "./InventorySection.tsx";
 
 const flags = { quantity: 1, carried: true, equipped: false, attuned: false };
+const plain = { type: null, value: null, weapon: null, armor: null };
 
 const INVENTORY: CharacterInventory = {
   items: [
@@ -17,9 +18,13 @@ const INVENTORY: CharacterInventory = {
       source: "DMG",
       ...flags,
       equipped: true,
+      type: { abbreviation: "M", name: "Melee Weapon" },
       rarity: "uncommon",
       requiresAttunement: false,
       weight: 3,
+      value: null,
+      weapon: { category: "martial", damage: { dice: "1d8", type: "slashing" } },
+      armor: null,
       entries: ["You have a {@b +1 bonus} to attack rolls."],
     },
     {
@@ -27,6 +32,8 @@ const INVENTORY: CharacterInventory = {
       name: "Cloak of Protection",
       source: "DMG",
       ...flags,
+      ...plain,
+      type: { abbreviation: "W", name: null },
       attuned: true,
       rarity: "uncommon",
       requiresAttunement: true,
@@ -38,6 +45,9 @@ const INVENTORY: CharacterInventory = {
       name: "Ring of Warmth",
       source: "DMG",
       ...flags,
+      ...plain,
+      type: { abbreviation: "RG", name: "Ring" },
+      value: 7,
       carried: false,
       rarity: "unknown (magic)",
       requiresAttunement: true,
@@ -49,6 +59,9 @@ const INVENTORY: CharacterInventory = {
       name: "Arrow",
       source: "PHB",
       ...flags,
+      ...plain,
+      type: { abbreviation: "A", name: "Ammunition" },
+      value: 5,
       quantity: 20,
       rarity: "none",
       requiresAttunement: false,
@@ -59,9 +72,39 @@ const INVENTORY: CharacterInventory = {
       resolved: true,
       name: "Lucky Coin",
       ...flags,
+      ...plain,
+      value: 150,
       rarity: null,
       requiresAttunement: false,
       weight: null,
+      entries: [],
+    },
+    {
+      resolved: true,
+      name: "Shield",
+      source: "PHB",
+      ...flags,
+      type: { abbreviation: "S", name: "Shield" },
+      rarity: "none",
+      requiresAttunement: false,
+      weight: 6,
+      value: 1000,
+      weapon: null,
+      armor: { category: "shield", armorClass: 2 },
+      entries: [],
+    },
+    {
+      resolved: true,
+      name: "Chain Mail",
+      source: "PHB",
+      ...flags,
+      type: { abbreviation: "HA", name: "Heavy Armor" },
+      rarity: "none",
+      requiresAttunement: false,
+      weight: 55,
+      value: 7500,
+      weapon: null,
+      armor: { category: "heavy", armorClass: 16 },
       entries: [],
     },
     {
@@ -109,7 +152,8 @@ function renderSection(derived: CharacterDerived | null = load(), inventory = IN
 const card = (name: string) =>
   within(screen.getByRole("heading", { level: 3, name }).closest("section") as HTMLElement);
 
-const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
+/** The first match is the row's name, which comes before any chip spelling the same word. */
+const row = (name: string) => screen.getAllByText(name)[0]?.closest("li") as HTMLElement;
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -131,6 +175,46 @@ describe("InventorySection", () => {
     expect(row("Arrow")).toHaveTextContent("×20");
     expect(row("Arrow")).toHaveTextContent("Weight: 1 lb");
     expect(row("Arrow")).not.toHaveTextContent("none");
+  });
+
+  it("splits the items into Weapons, Armor and Gear by type, keeping their order", async () => {
+    renderSection();
+
+    await screen.findByText("+1 Longsword");
+    const names = (group: string) =>
+      card(group)
+        .getAllByRole("listitem")
+        .map((li) => li.firstElementChild?.textContent);
+    expect(names("Weapons")).toEqual(["+1 Longsword"]);
+    expect(names("Armor")).toEqual(["Shield", "Chain Mail"]);
+    expect(card("Gear").getAllByRole("listitem")).toHaveLength(5);
+    expect(screen.queryByRole("heading", { level: 3, name: "Items" })).toBeNull();
+  });
+
+  it("prints a row's type facts as chips and its price in the value slot", async () => {
+    renderSection();
+
+    await screen.findByText("+1 Longsword");
+    expect(row("+1 Longsword")).toHaveTextContent("Martial");
+    expect(within(row("+1 Longsword")).getByText("1d8")).toBeInTheDocument();
+    expect(within(row("+1 Longsword")).getByText("slashing")).toBeInTheDocument();
+    expect(row("+1 Longsword")).not.toHaveTextContent("Value:");
+    expect(row("Chain Mail")).toHaveTextContent("Heavy");
+    expect(row("Chain Mail")).toHaveTextContent("AC 16");
+    expect(row("Chain Mail")).toHaveTextContent("Value: 75 gp");
+    expect(row("Shield")).toHaveTextContent("AC +2");
+    expect(row("Shield")).toHaveTextContent("Value: 10 gp");
+    expect(row("Arrow")).toHaveTextContent("Ammunition");
+    expect(row("Arrow")).toHaveTextContent("Value: 1 gp");
+    expect(row("Lucky Coin")).toHaveTextContent("Value: 15 sp");
+    expect(row("Ring of Warmth")).toHaveTextContent("Value: 7 cp");
+  });
+
+  it("drops a nameless type rather than print its code", async () => {
+    renderSection();
+
+    await screen.findByText("Cloak of Protection");
+    expect(row("Cloak of Protection")).not.toHaveTextContent(/\bW\b/);
   });
 
   it("marks a homebrew item beside the catalog ones", async () => {

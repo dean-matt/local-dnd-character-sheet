@@ -17,14 +17,41 @@ const sheetItemFields = {
   attuned: z.boolean(),
 };
 
+/**
+ * `abbreviation` is upstream's `type` code with its source suffix dropped — `M` for
+ * `M|XPHB` — and `name` its label from the `itemType` lookups, null where none matches.
+ */
+const itemTypeSchema = z.strictObject({
+  abbreviation: z.string().min(1),
+  name: z.string().min(1).nullable(),
+});
+
+const weaponFactsSchema = z.strictObject({
+  category: z.enum(["simple", "martial"]).nullable(),
+  damage: z
+    .strictObject({ dice: z.string().min(1), type: z.string().min(1).nullable() })
+    .nullable(),
+});
+
+/** `armorClass` is the printed AC with the item's own `bonusAc`; a shield's is what it adds. */
+const armorFactsSchema = z.strictObject({
+  category: z.enum(["light", "medium", "heavy", "shield"]),
+  armorClass: z.int(),
+});
+
 const sheetItemSchema = z.discriminatedUnion("resolved", [
   z.strictObject({
     resolved: z.literal(true),
     ...sheetItemFields,
+    type: itemTypeSchema.nullable(),
     rarity: z.string().min(1).nullable(),
     requiresAttunement: z.boolean(),
     /** Pounds for one, null for an item that states none. */
     weight: z.number().min(0).nullable(),
+    /** Copper pieces for one, null for an item that states no price. */
+    value: z.number().min(0).nullable(),
+    weapon: weaponFactsSchema.nullable(),
+    armor: armorFactsSchema.nullable(),
     entries: entriesSchema,
   }),
   z.strictObject({

@@ -44,8 +44,8 @@ const KINDS: Record<string, string[]> = {
  * `special`, the lowercase word an item's line renders, not a title, so taking
  * `name` where it exists would key one of the 26 differently from the rest.
  *
- * The human label an `itemType` also carries stays in `json`, where a
- * picker listing types reads it.
+ * The human label an `itemType` also carries stays in `json`, where the
+ * sheet reads it to name an inventory row's type.
  */
 const NAMED_BY: Record<string, string> = {
   itemProperty: "abbreviation",

@@ -756,6 +756,33 @@ export function listSkills(dataDir: string, edition: Edition): SkillRow[] {
   }
 }
 
+/**
+ * Each item `type`'s label, keyed by the type as the item writes it. `HA|XPHB` reads the
+ * XPHB row. A bare `HA` names the classic type, whose source varies by code — `G` sits
+ * under PHB and `$A` under DMG — so it reads the classic row, and failing that the
+ * alphabetically first source.
+ */
+export function getItemTypeNames(dataDir: string, types: readonly string[]): Map<string, string> {
+  if (types.length === 0) return new Map();
+  const db = openContentDb(dataDir);
+  try {
+    const select = db.prepare<[string, string], { label: string | null }>(
+      `SELECT json_extract(json, '$.name') AS label FROM lookups
+       WHERE kind = 'itemType' AND name = ?
+       ORDER BY source = ? DESC, edition IS 'classic' DESC, source LIMIT 1`,
+    );
+    return new Map(
+      types.flatMap((type) => {
+        const [abbreviation = "", source = ""] = type.split("|");
+        const label = select.get(abbreviation, source)?.label;
+        return typeof label === "string" && label ? [[type, label]] : [];
+      }),
+    );
+  } finally {
+    db.close();
+  }
+}
+
 export type CatalogMetaRow = { key: string; value: string };
 
 const UPSTREAM_TAG_KEY = "upstream_tag";

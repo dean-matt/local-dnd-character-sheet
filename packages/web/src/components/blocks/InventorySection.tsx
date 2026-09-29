@@ -1,8 +1,8 @@
 /**
  * The Inventory page: what the character carries against what they can, the attunement
- * slots in use, their coins, then every item. The load comes off the derived block and
- * every item off `/characters/{id}/inventory`, so this file does no rules arithmetic of
- * its own.
+ * slots in use, their coins, then every item split into Weapons, Armor and Gear by its
+ * type. The load comes off the derived block and every item off
+ * `/characters/{id}/inventory`, so this file does no rules arithmetic of its own.
  */
 import type { SheetItem } from "@dnd/catalog";
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
@@ -136,26 +136,69 @@ function UnresolvedRow({ item }: { item: Extract<SheetItem, { resolved: false }>
   );
 }
 
-function ResolvedRow({ item }: { item: Extract<SheetItem, { resolved: true }> }) {
-  const rarity =
-    item.rarity && item.rarity !== "none"
-      ? item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1)
-      : undefined;
+type ResolvedItem = Extract<SheetItem, { resolved: true }>;
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** Upstream prices in copper; a price prints in the largest coin that divides it evenly. */
+function price(copper: number): string {
+  const [coin, per] = (
+    [
+      ["gp", 100],
+      ["sp", 10],
+    ] as const
+  ).find(([, size]) => copper % size === 0) ?? ["cp", 1];
+  return `${(copper / per).toLocaleString("en-US")} ${coin}`;
+}
+
+/** The facts a row's type prints: a weapon's category and die, an armor's category and AC. */
+function TypeChips({ item }: { item: ResolvedItem }) {
+  if (item.weapon) {
+    const { category, damage } = item.weapon;
+    return (
+      <>
+        {category && <Tag>{capitalize(category)}</Tag>}
+        {damage && <Tag>{damage.dice}</Tag>}
+        {damage?.type && <Tag>{damage.type}</Tag>}
+      </>
+    );
+  }
+  if (item.armor) {
+    const { category, armorClass } = item.armor;
+    return (
+      <>
+        <Tag>{capitalize(category)}</Tag>
+        <Tag>AC {category === "shield" ? `+${armorClass}` : armorClass}</Tag>
+      </>
+    );
+  }
+  return item.type?.name ? <Tag>{item.type.name}</Tag> : null;
+}
+
+function ResolvedRow({ item }: { item: ResolvedItem }) {
+  const rarity = item.rarity && item.rarity !== "none" ? capitalize(item.rarity) : undefined;
   return (
     <ListRow
       name={item.name}
       chips={
         <>
+          <TypeChips item={item} />
           {item.quantity > 1 && <Tag>×{item.quantity}</Tag>}
           {rarity && <Tag>{rarity}</Tag>}
+          {item.weight !== null && (
+            <Tag>
+              <span className="sr-only">Weight: </span>
+              {pounds(item.weight * item.quantity)}
+            </Tag>
+          )}
           <Marks item={item} />
         </>
       }
       value={
-        item.weight !== null && (
+        item.value !== null && (
           <>
-            <span className="sr-only">Weight: </span>
-            {pounds(item.weight * item.quantity)}
+            <span className="sr-only">Value: </span>
+            {price(item.value * item.quantity)}
           </>
         )
       }
@@ -173,6 +216,23 @@ function ResolvedRow({ item }: { item: Extract<SheetItem, { resolved: true }> })
   );
 }
 
+const GROUPS = ["Weapons", "Armor", "Gear"] as const;
+
+type Group = (typeof GROUPS)[number];
+
+const GROUP_OF_TYPE: Record<string, Group> = {
+  M: "Weapons",
+  R: "Weapons",
+  LA: "Armor",
+  MA: "Armor",
+  HA: "Armor",
+  S: "Armor",
+};
+
+/** An item nothing resolves has no type to sort by, so it lands in Gear. */
+const groupOf = (item: SheetItem): Group =>
+  (item.resolved && item.type && GROUP_OF_TYPE[item.type.abbreviation]) || "Gear";
+
 function ItemList({ character }: { character: CharacterRecord }) {
   const inventory = useCharacterInventory(character.id);
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
@@ -180,21 +240,26 @@ function ItemList({ character }: { character: CharacterRecord }) {
   if (inventory.data.items.length === 0) {
     return <EmptyState>{character.name} has no items yet.</EmptyState>;
   }
-  return (
-    <Card title="Items">
-      <ul className="flex flex-col gap-2">
-        {inventory.data.items.map((item, index) =>
-          item.resolved ? (
-            // biome-ignore lint/suspicious/noArrayIndexKey: two entries may hold the same item.
-            <ResolvedRow key={index} item={item} />
-          ) : (
-            // biome-ignore lint/suspicious/noArrayIndexKey: two entries may hold the same item.
-            <UnresolvedRow key={index} item={item} />
-          ),
-        )}
-      </ul>
-    </Card>
-  );
+  const entries = inventory.data.items.map((item, index) => ({ item, index }));
+  return GROUPS.map((group) => {
+    const rows = entries.filter(({ item }) => groupOf(item) === group);
+    return (
+      rows.length > 0 && (
+        <Card key={group} title={group}>
+          <ul className="flex flex-col gap-2">
+            {/* The key is the definition's index, since two entries may hold the same item. */}
+            {rows.map(({ item, index }) =>
+              item.resolved ? (
+                <ResolvedRow key={index} item={item} />
+              ) : (
+                <UnresolvedRow key={index} item={item} />
+              ),
+            )}
+          </ul>
+        </Card>
+      )
+    );
+  });
 }
 
 export function InventorySection({

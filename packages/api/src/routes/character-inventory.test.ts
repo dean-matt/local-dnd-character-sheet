@@ -5,7 +5,7 @@ import type { CharacterInventory } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { insertCharacter } from "../db/queries/characters.ts";
-import { publishItems } from "../db/queries/contentFixture.ts";
+import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem, updateHomebrewItem } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterInventoryRoutes } from "./character-inventory.ts";
@@ -14,6 +14,8 @@ const LONGSWORD = { name: "Longsword", source: "PHB" };
 const NET = { name: "Net", source: "PHB" };
 const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
 const CLOAK = { name: "Cloak of Protection", source: "DMG" };
+const CHAIN_MAIL = { name: "Chain Mail", source: "XPHB" };
+const GOLD_BAR = { name: "Gold Bar", source: "XDMG" };
 
 const row = (
   ref: { name: string; source: string },
@@ -66,9 +68,27 @@ describe("characterInventoryRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "character-inventory-"));
-    publishItems(dataDir, [
-      row(LONGSWORD, "baseitem", { weapon: true, weight: 3, entries: ["A {@b sharp} blade."] }),
+    const itemType = (name: string, label: string, source = "PHB") => ({
+      kind: "itemType",
+      name,
+      source,
+      edition: source === "PHB" ? "classic" : "one",
+      json: JSON.stringify({ name: label, abbreviation: name }),
+    });
+    const items = [
+      row(LONGSWORD, "baseitem", {
+        type: "M",
+        weapon: true,
+        weaponCategory: "martial",
+        dmg1: "1d8",
+        dmgType: "S",
+        value: 1500,
+        weight: 3,
+        entries: ["A {@b sharp} blade."],
+      }),
       row(NET, "baseitem", { weapon: true, net: true, weight: 3 }),
+      row(CHAIN_MAIL, "baseitem", { type: "HA|XPHB", armor: true, ac: 16, value: 7500 }),
+      row(GOLD_BAR, "item", { type: "TB" }),
       row(PLUS_ONE, "magicvariant", {
         requires: [{ weapon: true }],
         excludes: { net: true },
@@ -85,7 +105,19 @@ describe("characterInventoryRoutes", () => {
         { reqAttune: true, entries: ["A +1 bonus to AC."] },
         { rarity: "uncommon", requires_attunement: 1 },
       ),
-    ]);
+    ];
+    publishDerivedFixture(dataDir, {
+      items,
+      // Labels upstream never wrote, differing by source so a test sees which row answered.
+      lookups: [
+        itemType("M", "Melee Weapon"),
+        itemType("M", "Melee Weapon (2024)", "XPHB"),
+        itemType("HA", "Heavy Armor"),
+        itemType("HA", "Heavy Armor (2024)", "XPHB"),
+        itemType("TB", "Trade Bar (XPHB)", "XPHB"),
+        itemType("TB", "Trade Bar (XDMG)", "XDMG"),
+      ],
+    });
   });
 
   afterAll(() => {
@@ -117,13 +149,40 @@ describe("characterInventoryRoutes", () => {
         carried: true,
         equipped: true,
         attuned: true,
+        type: null,
         rarity: "uncommon",
         requiresAttunement: true,
         weight: null,
+        value: null,
+        weapon: null,
+        armor: null,
         entries: ["A +1 bonus to AC."],
       },
       expect.objectContaining({ name: "Longsword", weight: 3, attuned: false }),
     ]);
+  });
+
+  it("carries a weapon's and an armor's printed numbers, and names the item's type from its source", async () => {
+    store(withInventory([{ ref: LONGSWORD }, { ref: CHAIN_MAIL }]));
+    const [sword, mail] = await items();
+    expect(sword).toMatchObject({
+      type: { abbreviation: "M", name: "Melee Weapon" },
+      value: 1500,
+      weapon: { category: "martial", damage: { dice: "1d8", type: "slashing" } },
+      armor: null,
+    });
+    expect(mail).toMatchObject({
+      type: { abbreviation: "HA", name: "Heavy Armor (2024)" },
+      value: 7500,
+      weapon: null,
+      armor: { category: "heavy", armorClass: 16 },
+    });
+  });
+
+  it("names a bare type with no classic row from the first source", async () => {
+    store(withInventory([{ ref: GOLD_BAR }]));
+    const [bar] = await items();
+    expect(bar).toMatchObject({ type: { abbreviation: "TB", name: "Trade Bar (XDMG)" } });
   });
 
   it("names a magic variant the way its expansion does, not by joining two names", async () => {
@@ -134,8 +193,10 @@ describe("characterInventoryRoutes", () => {
       name: "+1 Longsword",
       source: "DMG",
       quantity: 2,
+      type: { abbreviation: "M", name: "Melee Weapon" },
       rarity: "uncommon",
       weight: 3,
+      weapon: { category: "martial", damage: { dice: "1d8", type: "slashing" } },
     });
   });
 
@@ -170,7 +231,7 @@ describe("characterInventoryRoutes", () => {
     );
     const [coin, gone, lost] = await items();
 
-    expect(coin).toMatchObject({ resolved: true, name: "Lucky Coin", weight: 0.02 });
+    expect(coin).toMatchObject({ resolved: true, name: "Lucky Coin", weight: 0.02, type: null });
     expect(coin).not.toHaveProperty("source");
     expect(gone).toEqual(expect.objectContaining({ resolved: false, name: "Homebrew" }));
     expect(gone).not.toHaveProperty("source");
