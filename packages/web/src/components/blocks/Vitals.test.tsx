@@ -48,6 +48,14 @@ describe("Vitals", () => {
     expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("60%");
   });
 
+  it("reads a new character at its maximum, with a full bar", async () => {
+    renderVitals({});
+
+    const hp = await card("Hit Points");
+    expect(hp.getAllByText("20")).toHaveLength(2);
+    expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("100%");
+  });
+
   it("shows temporary hit points only when there are some", async () => {
     renderVitals({ hitPoints: { current: 20, temporary: 5 } });
 

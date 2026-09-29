@@ -1,7 +1,7 @@
 /**
  * The Hit Points and Status Effects cards, read-only. Current and temporary hit points,
  * hit dice spent and conditions come from the character's state; the maximum and each
- * die's total come from the derived block.
+ * die's total come from the derived block, and a null current reads as that maximum.
  */
 import { type CharacterDerived, type CharacterState, derivedValue } from "@dnd/character";
 import { useCharacterState } from "../../hooks/useCharacterState.ts";
@@ -19,8 +19,9 @@ function hitDiceRemaining(derived: CharacterDerived, state: CharacterState) {
 }
 
 function HitPoints({ derived, state }: { derived: CharacterDerived; state: CharacterState }) {
-  const { current, temporary } = state.hitPoints;
   const maximum = derivedValue(derived.hitPointMaximum);
+  const current = state.hitPoints.current ?? maximum;
+  const { temporary } = state.hitPoints;
   const filled = Math.max(0, Math.min(100, Math.round((current / maximum) * 100)));
   const dice = hitDiceRemaining(derived, state);
 
