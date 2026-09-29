@@ -185,10 +185,17 @@ describe("InventorySection", () => {
     );
   });
 
-  it("shows every coin", () => {
+  it("shows every coin side by side, each label over its value", () => {
     renderSection();
 
     const currency = card("Currency");
+    expect(currency.getAllByRole("term").map((term) => term.textContent)).toEqual([
+      "Platinum (pp)",
+      "Gold (gp)",
+      "Electrum (ep)",
+      "Silver (sp)",
+      "Copper (cp)",
+    ]);
     expect(currency.getByText("Gold (gp)").nextSibling).toHaveTextContent("1,250");
     expect(currency.getByText("Silver (sp)").nextSibling).toHaveTextContent("3");
     expect(currency.getByText("Platinum (pp)").nextSibling).toHaveTextContent("0");

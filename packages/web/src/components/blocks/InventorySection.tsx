@@ -90,13 +90,18 @@ const COINS = [
 function Currency({ money }: { money: CharacterDefinition["money"] }) {
   return (
     <Card title="Currency">
-      <div className="flex flex-col gap-1">
+      <dl className="flex flex-wrap items-end gap-x-5 gap-y-3">
         {COINS.map(([coin, label]) => (
-          <Row key={coin} label={label}>
-            {money[coin].toLocaleString("en-US")}
-          </Row>
+          <div key={coin}>
+            <dt className="mb-1 font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
+              {label}
+            </dt>
+            <dd className="min-w-[70px] rounded-control border border-border bg-subtle px-2 py-1.5 text-body">
+              {money[coin].toLocaleString("en-US")}
+            </dd>
+          </div>
         ))}
-      </div>
+      </dl>
     </Card>
   );
 }
@@ -202,10 +207,12 @@ export function InventorySection({
   if (!character) return <EmptyState>Inventory isn't available yet.</EmptyState>;
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {derived && <Load character={character} derived={derived} />}
         {derived && <Attunement definition={character.definition} derived={derived} />}
-        <Currency money={character.definition.money} />
+        <div className="sm:col-span-2">
+          <Currency money={character.definition.money} />
+        </div>
       </div>
       <ItemList character={character} />
     </div>
