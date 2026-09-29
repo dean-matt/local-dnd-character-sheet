@@ -1,0 +1,39 @@
+/**
+ * The check names the `main` ruleset requires, and how a pull request's checks measure
+ * against them. `merge-gate.mjs` and `wait-checks.mjs` both read this, so the ruleset
+ * stays the only place a name is written down.
+ */
+import { execFileSync } from "node:child_process";
+
+/** Names the effective rules for `main` require, as GitHub applies them. */
+export function expectedChecks() {
+  const rules = JSON.parse(
+    execFileSync("gh", ["api", "repos/{owner}/{repo}/rules/branches/main"], { encoding: "utf8" }),
+  );
+  return rules
+    .filter((r) => r.type === "required_status_checks")
+    .flatMap((r) => r.parameters.required_status_checks.map((c) => c.context));
+}
+
+/**
+ * The head's checks. `gh` exits non-zero while a check is pending or red but still prints
+ * the rollup, so a failure with no output is the only one that reads as nothing reported.
+ */
+export function readChecks(pr) {
+  try {
+    return JSON.parse(
+      execFileSync("gh", ["pr", "checks", pr, "--json", "name,bucket"], { encoding: "utf8" }),
+    );
+  } catch (error) {
+    try {
+      return JSON.parse(error.stdout);
+    } catch {
+      return [];
+    }
+  }
+}
+
+export function missingChecks(expected, checks) {
+  const seen = new Set(checks.map((c) => c.name));
+  return expected.filter((name) => !seen.has(name));
+}

@@ -20,22 +20,23 @@ stops here.
 ## Block on the checks
 
 ```bash
-gh pr checks "$n" --watch --fail-fast
+node scripts/wait-checks.mjs "$n"
 ```
 
-`--watch` blocks until every check finishes, so a slow run outlives a single tool call —
-reinvoke it rather than shortening the wait. Rerun a red run once, never twice: one rerun
-covers a flaky runner, a second says the failure is the branch's.
+It polls for up to ten minutes. Exit 2 means a required check never reported or is still
+running, so name it and hand back; reinvoke it only after a tool timeout cut it off. Exit 1
+names a red check. Rerun a red run once, never twice: one rerun covers a flaky runner, a
+second says the failure is the branch's.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
   | .link | capture("/runs/(?<id>[0-9]+)").id] | unique | .[]' |
   while read -r id; do gh run rerun "$id" --failed; done
 sleep 30
-gh pr checks "$n" --watch --fail-fast
+node scripts/wait-checks.mjs "$n"
 ```
 
-The sleep covers the seconds before a rerun shows as pending; without it `--fail-fast` reads
+The sleep covers the seconds before a rerun shows as pending; without it `wait-checks` reads
 the old conclusion and exits on it.
 
 ## The gate
@@ -71,7 +72,7 @@ nobody read) and the cap line (a waiver at the cap, an overage past it).
 Branch protection requires a head carrying the tip of `main`, so `gh pr merge` refuses a
 pull request that sat while another merged, whatever the rest of the gate said.
 [`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
-the server and waits out the two windows where the checks describe the wrong commit. On its
+the server and waits out the window where the checks describe the old commit. On its
 `ready`, run *Block on the checks* and the gate again; a gate still saying GitHub is
 computing mergeability is the queued merge landing, so ask again. Two round trips is the ceiling — a third `BEHIND`
 means `main` moves faster than the checks run, and sequencing that is the user's call.

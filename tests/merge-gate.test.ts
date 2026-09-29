@@ -322,6 +322,12 @@ describe("the other three conditions", () => {
     expect(checksBlocked([])).toMatch(/no check has reported/);
   });
 
+  it("blocks on a required check that has not reported for the head", () => {
+    const reported = [{ name: "check", bucket: "pass" }];
+    expect(checksBlocked(reported, ["check"])).toBeNull();
+    expect(checksBlocked(reported, ["check", "e2e"])).toBe("e2e (not reported)");
+  });
+
   it("stops a conflict and asks again on UNKNOWN", () => {
     expect(mergeBlocked({ mergeable: "MERGEABLE", mergeStateStatus: "CLEAN" })).toBeNull();
     expect(mergeBlocked({ mergeable: "CONFLICTING", mergeStateStatus: "CLEAN" })).not.toBeNull();
