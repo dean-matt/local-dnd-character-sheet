@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
 import { ThemeToggle } from "../ThemeToggle.tsx";
-import { Sidebar, type SidebarItem } from "./Sidebar.tsx";
+import { Sidebar, SidebarFrame, type SidebarItem } from "./Sidebar.tsx";
 
 const SECTIONS: SidebarItem[] = [
   {
@@ -14,14 +14,11 @@ const SECTIONS: SidebarItem[] = [
 /** The Settings page: the section rail beside the open section, with no character header. */
 export function SettingsLayout() {
   return (
-    <div className="flex min-h-[calc(100vh-var(--spacing-topbar))]">
-      <aside className="sticky top-topbar h-[calc(100vh-var(--spacing-topbar))] shrink-0 self-start print:hidden">
-        <Sidebar label="Settings sections" items={SECTIONS} />
-      </aside>
+    <SidebarFrame rail={<Sidebar label="Settings sections" items={SECTIONS} />}>
       <div className="min-w-0 flex-1 px-gutter py-6">
         <Outlet />
       </div>
-    </div>
+    </SidebarFrame>
   );
 }
 

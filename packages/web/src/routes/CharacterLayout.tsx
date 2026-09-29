@@ -8,7 +8,7 @@ import { useCharacter } from "../hooks/useCharacters.ts";
 import { ErrorState } from "../states.tsx";
 import { CharacterHeader, PrintTitle } from "./CharacterHeader.tsx";
 import { ManagePages } from "./ManagePages.tsx";
-import { CharacterSidebar } from "./Sidebar.tsx";
+import { CharacterSidebar, SidebarFrame } from "./Sidebar.tsx";
 
 export function CharacterLayout() {
   const { id = "" } = useParams();
@@ -27,23 +27,23 @@ export function CharacterLayout() {
 
   return (
     <>
-      <div className="flex min-h-[calc(100vh-var(--spacing-topbar))]">
-        <aside className="sticky top-topbar h-[calc(100vh-var(--spacing-topbar))] shrink-0 self-start print:hidden">
+      <SidebarFrame
+        rail={
           <CharacterSidebar
             characterId={id}
             pages={pages}
             onManage={openManage}
             manageButtonRef={manageButtonRef}
           />
-        </aside>
-
+        }
+      >
         <div className="min-w-0 flex-1">
           {character.data && <CharacterHeader character={character.data} />}
           <div className="px-gutter py-6">
             <Outlet />
           </div>
         </div>
-      </div>
+      </SidebarFrame>
 
       {managing && <ManagePages id={id} onClose={closeManage} />}
 
