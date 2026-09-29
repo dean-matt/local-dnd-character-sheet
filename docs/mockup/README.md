@@ -29,9 +29,10 @@ widget, panel, or nav element:
   opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
   2024, switched by the artboard's Edition tweak.
 - Inventory: Currency, Weapons, Armor, Gear. A versatile weapon's row on Weapons carries
-  a one-handed/two-handed grip toggle that picks the damage die its chip and formula
-  show. Two-handed is unavailable while the sample character holds a shield, which the
-  artboard's `shieldEquipped` tweak switches.
+  a 1h/2h grip toggle, beside its Equip button, that picks the damage die its chip and
+  formula show. 2h is unavailable while that weapon and a shield are both equipped, and
+  hovering or focusing it opens a popover saying why. The artboard's `shieldEquipped`
+  tweak switches the shield.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
