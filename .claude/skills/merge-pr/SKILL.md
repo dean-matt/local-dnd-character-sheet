@@ -23,7 +23,7 @@ stops here.
 node scripts/wait-checks.mjs "$n"
 ```
 
-On exit 2, name the missing checks and hand back. On exit 1, rerun the failed runs once,
+On `wait-checks` exit 2, name the missing checks and hand back. On exit 1, rerun the failed runs once,
 never twice: one rerun covers a flaky runner, a second says the failure is the branch's.
 
 ```bash

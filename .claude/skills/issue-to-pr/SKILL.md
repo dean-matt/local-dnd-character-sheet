@@ -56,8 +56,8 @@ it took none — stop there.
     node scripts/merge-gate.mjs <pr>
     ```
 
-    On exit 2, name the missing checks and hand back. Hand back with the gate's exit, each
-    `FAIL` line and any failed check. A diff touching a fenced path always fails the gate,
+    On `wait-checks` exit 2, name the missing checks and hand back. On any other exit, run
+    the gate, then hand back with its exit, each `FAIL` line and any failed check. A diff touching a fenced path always fails the gate,
     for the user to weigh.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label, the gate's exit

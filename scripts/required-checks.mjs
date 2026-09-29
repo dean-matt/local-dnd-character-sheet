@@ -35,6 +35,7 @@ export function readChecks(pr, run = execFileSync) {
     try {
       return JSON.parse(error.stdout);
     } catch {
+      console.error(`gh pr checks printed no rollup: ${error.message}`);
       return [];
     }
   }
