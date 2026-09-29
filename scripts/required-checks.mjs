@@ -45,3 +45,8 @@ export function missingChecks(expected, checks) {
   const seen = new Set(checks.map((c) => c.name));
   return expected.filter((name) => !seen.has(name));
 }
+
+/** A check that reported green, or that the workflow chose to skip. */
+export function isGreen(check) {
+  return check.bucket === "pass" || check.bucket === "skipping";
+}

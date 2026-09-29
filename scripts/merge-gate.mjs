@@ -10,7 +10,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { expectedChecks, missingChecks, readChecks } from "./required-checks.mjs";
+import { expectedChecks, isGreen, missingChecks, readChecks } from "./required-checks.mjs";
 
 /**
  * The severity marker `audit-pr` writes at the head of a posted finding. A body this
@@ -28,7 +28,7 @@ export const FENCE =
   /^(CLAUDE|CONTRIBUTING)\.md$|^content\.(lock|manifest)\.json$|^\.github\/|^\.claude\/skills\/|^packages\/api\/drizzle\//;
 
 export function notGreen(checks) {
-  return checks.filter((c) => c.bucket !== "pass" && c.bucket !== "skipping").map((c) => c.name);
+  return checks.filter((c) => !isGreen(c)).map((c) => c.name);
 }
 
 /**
