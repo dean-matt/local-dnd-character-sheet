@@ -47,7 +47,8 @@ it took none — stop there.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
-    that label and what each pass found.
+    that label and what each pass found. Do not hand back while a review subagent you
+    started is still running.
 12. **Wait on CI, then run the gate:**
 
     ```bash
@@ -55,12 +56,9 @@ it took none — stop there.
     node scripts/merge-gate.mjs <pr>
     ```
 
-    `wait-checks` polls for up to ten minutes and needs no sleep of yours. Exit 0 means
-    every required check is green; 1 names a failed check, which you hand back; 2 means
-    the timeout passed, so name the checks it printed as unreported or pending and hand back. If a
-    tool timeout cuts it off, run it again — never hand back while a check is running.
-    Hand back with the gate's exit, each `FAIL` line and any failed check. A diff touching
-    a fenced path always fails the gate, for the user to weigh.
+    On exit 2, name the missing checks and hand back. Hand back with the gate's exit, each
+    `FAIL` line and any failed check. A diff touching a fenced path always fails the gate,
+    for the user to weigh.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label, the gate's exit
     and anything waiting on the user.

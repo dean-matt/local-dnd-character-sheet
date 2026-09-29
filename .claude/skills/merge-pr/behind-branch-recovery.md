@@ -17,8 +17,8 @@ this skill does not make: hand it over.
 
 ## Wait out the stale window
 
-The call answers 202 and queues the merge, so until the head carries `main` the checks
-describe the old commit and its green must not be trusted.
+The call answers 202 and queues the merge; until the head carries `main`, the checks
+describe the old commit.
 
 ```bash
 for _ in $(seq 8); do
@@ -29,14 +29,11 @@ for _ in $(seq 8); do
 done
 ```
 
-The guard reads the two fields the gate judges, so it cannot clear a wait the gate then
-refuses, and eight iterations fit a default tool timeout. Where a run ends without `ready`,
-read the state, then reinvoke:
+Where a run ends without `ready`, read the state, then reinvoke:
 
 ```bash
 gh pr view "$n" --json mergeStateStatus --jq .mergeStateStatus
 ```
 
-Still `BEHIND` means the update never landed or `main` moved again, and the branch needs
-another update. Three reinvocations go to the user, carrying that reading. On `ready`,
-`wait-checks` covers the new head: it holds until every required check has reported for it.
+Still `BEHIND` means the update never landed or `main` moved again: update again. Three
+reinvocations go to the user, carrying that reading.

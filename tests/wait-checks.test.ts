@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { missingChecks } from "../scripts/required-checks.mjs";
+import { expectedChecks, missingChecks, readChecks } from "../scripts/required-checks.mjs";
 import { settle, waitChecks } from "../scripts/wait-checks.mjs";
 
 const EXPECTED = ["check", "e2e"];
@@ -41,9 +41,18 @@ describe("waitChecks", () => {
     expect(r.code).toBe(0);
   });
 
-  it("exits 1 as soon as a check is red, without waiting for the rest", async () => {
+  it("exits 1 once a check is red and none is still running", async () => {
     const r = await harness([[pass("check"), { name: "e2e", bucket: "fail" }]]);
     expect(r).toMatchObject({ code: 1, failed: ["e2e"] });
+  });
+
+  it("keeps waiting on a running check while another is red", async () => {
+    const red = { name: "check", bucket: "fail" };
+    const r = await harness([
+      [red, { name: "e2e", bucket: "pending" }],
+      [red, pass("e2e")],
+    ]);
+    expect(r).toMatchObject({ code: 1, failed: ["check"] });
   });
 
   it("exits 2 naming the checks that never reported", async () => {
@@ -54,5 +63,27 @@ describe("waitChecks", () => {
   it("exits 2 on a check still pending at the deadline", async () => {
     const r = await harness([[pass("check"), { name: "e2e", bucket: "pending" }]]);
     expect(r).toMatchObject({ code: 2, waiting: ["e2e"] });
+  });
+});
+
+describe("gh readers", () => {
+  it("reads the rollup gh prints while exiting non-zero, and nothing when it prints nothing", () => {
+    const rollup = [{ name: "e2e", bucket: "pending" }];
+    const exits = (stdout: string) => () => {
+      throw Object.assign(new Error("exit 8"), { stdout });
+    };
+    expect(readChecks("1", exits(JSON.stringify(rollup)))).toEqual(rollup);
+    expect(readChecks("1", exits(""))).toEqual([]);
+  });
+
+  it("takes the required names from the ruleset's status-check rule alone", () => {
+    const rules = [
+      { type: "deletion" },
+      {
+        type: "required_status_checks",
+        parameters: { required_status_checks: [{ context: "e2e" }] },
+      },
+    ];
+    expect(expectedChecks(() => JSON.stringify(rules))).toEqual(["e2e"]);
   });
 });

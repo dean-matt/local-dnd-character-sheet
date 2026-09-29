@@ -5,10 +5,14 @@
  */
 import { execFileSync } from "node:child_process";
 
-/** Names the effective rules for `main` require, as GitHub applies them. */
-export function expectedChecks() {
+/**
+ * Names the effective rules for `main` require, as GitHub applies them.
+ *
+ * @param {(file: string, args: string[], options: { encoding: "utf8" }) => string} [run]
+ */
+export function expectedChecks(run = execFileSync) {
   const rules = JSON.parse(
-    execFileSync("gh", ["api", "repos/{owner}/{repo}/rules/branches/main"], { encoding: "utf8" }),
+    run("gh", ["api", "repos/{owner}/{repo}/rules/branches/main"], { encoding: "utf8" }),
   );
   return rules
     .filter((r) => r.type === "required_status_checks")
@@ -18,11 +22,14 @@ export function expectedChecks() {
 /**
  * The head's checks. `gh` exits non-zero while a check is pending or red but still prints
  * the rollup, so a failure with no output is the only one that reads as nothing reported.
+ *
+ * @param {string} pr
+ * @param {(file: string, args: string[], options: { encoding: "utf8" }) => string} [run]
  */
-export function readChecks(pr) {
+export function readChecks(pr, run = execFileSync) {
   try {
     return JSON.parse(
-      execFileSync("gh", ["pr", "checks", pr, "--json", "name,bucket"], { encoding: "utf8" }),
+      run("gh", ["pr", "checks", pr, "--json", "name,bucket"], { encoding: "utf8" }),
     );
   } catch (error) {
     try {

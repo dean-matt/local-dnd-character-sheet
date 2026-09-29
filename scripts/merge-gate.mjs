@@ -239,7 +239,12 @@ function gate(n) {
     if (!ok) failures.push(condition);
   };
 
-  const checkFailure = checksBlocked(readChecks(n), expectedChecks());
+  let checkFailure;
+  try {
+    checkFailure = checksBlocked(readChecks(n), expectedChecks());
+  } catch (error) {
+    checkFailure = `could not read the required checks: ${error.message}`;
+  }
   report(checkFailure === null, "every check is green", checkFailure);
 
   const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;

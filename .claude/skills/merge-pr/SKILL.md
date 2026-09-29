@@ -23,10 +23,8 @@ stops here.
 node scripts/wait-checks.mjs "$n"
 ```
 
-It polls for up to ten minutes. Exit 2 means a required check never reported or is still
-running, so name it and hand back; reinvoke it only after a tool timeout cut it off. Exit 1
-names a red check. Rerun a red run once, never twice: one rerun covers a flaky runner, a
-second says the failure is the branch's.
+On exit 2, name the missing checks and hand back. On exit 1, rerun the failed runs once,
+never twice: one rerun covers a flaky runner, a second says the failure is the branch's.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
@@ -36,8 +34,7 @@ sleep 30
 node scripts/wait-checks.mjs "$n"
 ```
 
-The sleep covers the seconds before a rerun shows as pending; without it `wait-checks` reads
-the old conclusion and exits on it.
+The sleep lets the rerun show as pending before `wait-checks` reads it.
 
 ## The gate
 

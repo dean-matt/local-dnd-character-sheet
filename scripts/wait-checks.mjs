@@ -1,9 +1,10 @@
 /**
  * Waits for the head of a pull request to finish its required checks.
  *
- * Exits 0 when every required check has reported and none is pending or red, 1 when any
- * check failed, and 2 when the timeout passed with a required check still unreported or
- * pending. The names it is waiting on are printed before it exits.
+ * Polls the head for up to ten minutes; no caller sleeps. Exits 0 when every required
+ * check has reported green, 1 when one failed and none is still running, and 2 when the
+ * timeout passed with a required check unreported or pending, or when the required names
+ * could not be read. The names it was waiting on are printed before it exits.
  */
 import { realpathSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -40,7 +41,7 @@ export async function waitChecks({
   const deadline = now() + timeoutMs;
   for (;;) {
     const { failed, pending, missing } = settle(expected, await read());
-    if (failed.length > 0) return { code: 1, failed, waiting: [] };
+    if (failed.length > 0 && pending.length === 0) return { code: 1, failed, waiting: [] };
     const waiting = [...missing, ...pending];
     if (waiting.length === 0) return { code: 0, failed: [], waiting: [] };
     if (now() >= deadline) return { code: 2, failed: [], waiting };
@@ -54,8 +55,15 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
     console.error("usage: node scripts/wait-checks.mjs <pr>");
     process.exit(2);
   }
+  let expected;
+  try {
+    expected = expectedChecks();
+  } catch (error) {
+    console.error(`could not read the required checks: ${error.message}`);
+    process.exit(2);
+  }
   const { code, failed, waiting } = await waitChecks({
-    expected: expectedChecks(),
+    expected,
     read: () => readChecks(pr),
   });
   if (code === 1) console.error(`failed: ${failed.join(", ")}`);
