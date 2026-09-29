@@ -167,6 +167,9 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
       chips={
         <>
           <Tag>{schoolName(spell.school)}</Tag>
+          {spell.damageDice && (
+            <Tag>{[spell.damageDice, ...(spell.damageTypes ?? [])].join(" ")}</Tag>
+          )}
           {marks}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}

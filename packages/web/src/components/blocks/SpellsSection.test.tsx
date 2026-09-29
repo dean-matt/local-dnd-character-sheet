@@ -29,6 +29,8 @@ const SPELLS: CharacterSpells = {
       range: { type: "point", distance: { type: "feet", amount: 90 } },
       components: { v: true, s: true, m: "the petrified eye of a newt" },
       duration: [{ type: "timed", duration: { type: "hour", amount: 1 }, concentration: true }],
+      damageDice: "1d6",
+      damageTypes: ["necrotic"],
       entries: ["Deal an extra {@damage 1d6} necrotic damage."],
     },
     {
@@ -191,6 +193,15 @@ describe("SpellsSection", () => {
     const glimmer = screen.getByText("Glimmer").closest("li") as HTMLElement;
     expect(glimmer).toHaveTextContent("Homebrew");
     expect(glimmer).toHaveTextContent("Ritual");
+  });
+
+  it("prints a spell's damage roll beside the types it deals", async () => {
+    renderSection();
+
+    const hex = (await screen.findByText("Hex")).closest("li") as HTMLElement;
+    expect(hex).toHaveTextContent("1d6 necrotic");
+    const blast = screen.getByText("Eldritch Blast").closest("li") as HTMLElement;
+    expect(blast).not.toHaveTextContent(/\dd\d/);
   });
 
   it("renders a spell's text through the token renderer", async () => {
