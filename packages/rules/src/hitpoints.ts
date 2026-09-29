@@ -68,9 +68,11 @@ export function maxHitPoints<Ref = unknown>(
       const face = faceRolled(level, index === 0);
       const source = index === 0 ? "highest" : level.rolled === undefined ? "average" : "rolled";
       const con = `${constitutionModifier < 0 ? "-" : "+"}${Math.abs(constitutionModifier)}`;
+      const value = Math.max(1, face + constitutionModifier);
+      const floor = value === face + constitutionModifier ? "" : " (min 1)";
       return {
-        label: `Level ${index + 1}: d${level.die} ${source} ${face} ${con} Con`,
-        value: Math.max(1, face + constitutionModifier),
+        label: `Level ${index + 1}: d${level.die} ${source} ${face} ${con} Con${floor}`,
+        value,
       };
     }),
   );

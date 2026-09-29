@@ -55,6 +55,12 @@ describe("maxHitPoints", () => {
     expect(maxHitPoints(wizardThenFighter, 1).total).toBe(6 + 4 + 6 + 3);
   });
 
+  it("names the one-hit-point floor where it applies", () => {
+    expect(maxHitPoints([{ die: 6 }, { die: 6 }], -5).terms[1]?.label).toBe(
+      "Level 2: d6 average 4 -5 Con (min 1)",
+    );
+  });
+
   it("labels one term per level and sums them to the total", () => {
     const result = maxHitPoints([{ die: 8 }, { die: 8 }, { die: 8, rolled: 7 }], 2);
     expect(result.terms).toEqual([

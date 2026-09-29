@@ -33,7 +33,7 @@ export function proficiencyBonusBreakdown<Ref = unknown>(totalLevel: number): Br
   }
   const terms: Term<Ref>[] = [{ label: "Base", value: 2 }];
   const steps = Math.floor((totalLevel - 1) / 4);
-  if (steps > 0) terms.push({ label: `Level ${totalLevel}`, value: steps });
+  if (steps > 0) terms.push({ label: `Level ${totalLevel} (+1 per 4 levels)`, value: steps });
   return breakdown(terms);
 }
 
