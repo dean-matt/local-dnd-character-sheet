@@ -26,7 +26,8 @@ widget, panel, or nav element:
 
 - Stats: the eight widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status,
   Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
-  opens.
+  opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
+  2024, switched by the artboard's Edition tweak.
 - Inventory: Currency, Weapons, Armor, Gear.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,

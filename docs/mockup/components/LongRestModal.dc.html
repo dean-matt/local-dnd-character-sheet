@@ -48,7 +48,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2f6b4f" stroke-width="2.5" style="flex-shrink: 0;"><path d="M20 6L9 17l-5-5"/></svg>
               <div style="flex-grow: 1; min-width: 0;">
                 <div style="font-size: 13px; color: #1f2430;">Hit Dice</div>
-                <div style="font-size: 11px; color: #6b7280;">Regain up to half your total (min 1)</div>
+                <div style="font-size: 11px; color: #6b7280;">{{diceHint}}</div>
               </div>
               <div style="font-size: 13px; font-weight: 600; color: #1f2430; flex-shrink: 0;">{{diceCur}} → {{diceAfter}} / {{diceTotal}}</div>
             </div>
@@ -90,7 +90,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":520}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"edition":{"editor":"enum","options":["classic","one"],"default":"classic"},"$preview":{"width":460,"height":520}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -99,13 +99,15 @@ class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
     const { hpCur, hpMax, diceCur, diceTotal, slotsUsed } = this.state;
-    const diceAfter = Math.min(diceTotal, diceCur + Math.max(1, Math.floor(diceTotal / 2)));
+    const allDice = (this.props.edition ?? 'classic') === 'one';
+    const diceAfter = allDice ? diceTotal : Math.min(diceTotal, diceCur + Math.max(1, Math.floor(diceTotal / 2)));
     return {
       accent,
       hpCur,
       hpMax,
       diceCur,
       diceAfter,
+      diceHint: allDice ? 'Regain all spent Hit Dice' : 'Regain up to half your total (min 1)',
       diceTotal,
       slotsUsed,
       open: this.state.open,
