@@ -84,6 +84,7 @@ const subtleLight = hex("#eef0f3");
 const inkLight = hex("#1f2430");
 const mutedLight = mixOklab(hex("#6b7280"), inkLight, 0.92);
 const placeholderLight = mutedLight;
+const borderLight = hex("#dde1e6");
 const accentLight = hex("#c1272d");
 const accentHoverLight = mixOklab(accentLight, [0, 0, 0], 0.85);
 const accentActiveLight = mixOklab(accentLight, [0, 0, 0], 0.7);
@@ -128,6 +129,12 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
     minimum: AA_NON_TEXT,
   },
   { name: "positive on surface, light", fg: positiveLight, bg: white, minimum: AA_TEXT },
+  {
+    name: "spinner arc on its track, light",
+    fg: mutedLight,
+    bg: borderLight,
+    minimum: AA_NON_TEXT,
+  },
   { name: "ink on canvas, dark", fg: inkDark, bg: gray900, minimum: AA_TEXT },
   { name: "ink on surface, dark", fg: inkDark, bg: gray800, minimum: AA_TEXT },
   { name: "muted on canvas, dark", fg: mutedDark, bg: gray900, minimum: AA_TEXT },
@@ -142,6 +149,7 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "focus ring on canvas, dark", fg: accentDark, bg: gray900, minimum: AA_NON_TEXT },
   { name: "focus ring on surface, dark", fg: accentDark, bg: gray800, minimum: AA_NON_TEXT },
   { name: "positive on surface, dark", fg: positiveDark, bg: gray800, minimum: AA_TEXT },
+  { name: "spinner arc on its track, dark", fg: mutedDark, bg: gray700, minimum: AA_NON_TEXT },
 ];
 
 describe("theme token contrast", () => {

@@ -78,6 +78,7 @@ holds every pair in both themes and fails a repalette that regresses one:
   AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
+- The loading spinner's `color-muted` arc on its `color-border` track: 3:1
 
 ## Motion
 
@@ -89,19 +90,20 @@ The sheet is read for its numbers, not its transitions. Most of it does not move
 | `ease-standard` | Tailwind's `ease-out` | Paired with `duration-standard` |
 
 A page change is a route change and gets nothing beyond what the router does for free —
-no crossfade, no slide. Everything else gets nothing: no hover transition, no entrance
-animation, and never a transition or animation on a `text-number` element, where
-movement would fight the read.
+no crossfade, no slide. The loading spinner turns while a request is in flight. Everything
+else gets nothing: no hover transition, no entrance animation, and never a transition or
+animation on a `text-number` element, where movement would fight the read.
 
 `index.css` also carries a global `prefers-reduced-motion: reduce` rule that collapses
-every `animation-duration` and `transition-duration` to near zero, so a reduced-motion
-reader gets the same policy without a component opting in.
+every `animation-duration` and `transition-duration` to near zero and plays an animation
+once, so a reduced-motion reader gets the same policy without a component opting in and the
+spinner holds still.
 
 ## Worked example
 
 `packages/web/src/states.tsx` renders its loading, error and empty cards against these
 tokens — surface, border, `radius-card` and `text-row` — and every route reuses them
-rather than inventing its own. The next view with a number to show is the first to reach
+rather than inventing its own. Its loading card draws a muted spinner in place of the text. The next view with a number to show is the first to reach
 for `text-number`.
 
 ## Print

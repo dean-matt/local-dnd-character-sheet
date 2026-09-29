@@ -11,7 +11,11 @@ function StateCard({ children }: { children: ReactNode }) {
 export function LoadingState({ label = "Loading…" }: { label?: string }) {
   return (
     <StateCard>
-      <p role="status" aria-live="polite">
+      <div
+        aria-hidden="true"
+        className="mx-auto size-5 animate-spin rounded-full border-2 border-border border-t-muted"
+      />
+      <p role="status" aria-live="polite" className="sr-only">
         {label}
       </p>
     </StateCard>
