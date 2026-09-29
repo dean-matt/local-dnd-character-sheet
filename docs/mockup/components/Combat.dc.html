@@ -12,52 +12,98 @@
 <style>
   body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
   * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
   input { font-family: inherit; }
   input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
 </style>
 </helmet>
 
-<div style="width: 460px; height: 200px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+<div style="width: 460px; height: 200px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Combat Stats</div>
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
-        <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Prof.</div>
+      <div style="background: #eef0f3; border-radius: 6px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative;">
+        <button aria-label="View proficiency bonus details" onClick="{{openProfDetail}}" onMouseEnter="{{showProfCalc}}" onMouseLeave="{{hideProfCalc}}" onFocus="{{showProfCalc}}" onBlur="{{hideProfCalc}}" aria-describedby="prof-calc" style="all: unset; cursor: pointer; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Prof.</button>
         <div style="font-size: 20px; font-weight: 700; color: #1f2430;">{{profLabel}}</div>
+        <sc-if value="{{profCalcOpen}}" hint-placeholder-val="{{false}}">
+          <div role="tooltip" id="prof-calc" style="position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; white-space: nowrap; pointer-events: none;">
+            <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">Proficiency Bonus</div>
+            <div style="font-size: 11px; color: #6b7280;">{{profCalcText}}</div>
+          </div>
+        </sc-if>
       </div>
-      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+      <div style="background: #eef0f3; border-radius: 6px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
         <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">AC</div>
         <input type="number" min="0" value="{{ac}}" onChange="{{onAcChange}}" aria-label="Armor class" style="width: 40px; text-align: center; border: none; background: none; outline: none; font-size: 20px; font-weight: 700; color: #1f2430;">
       </div>
-      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
-        <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Init.</div>
-        <div title="Dexterity modifier" style="font-size: 20px; font-weight: 700; color: #1f2430;">{{initiative}}</div>
+      <div style="background: #eef0f3; border-radius: 6px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative;">
+        <button aria-label="View initiative details" onClick="{{openInitDetail}}" onMouseEnter="{{showInitCalc}}" onMouseLeave="{{hideInitCalc}}" onFocus="{{showInitCalc}}" onBlur="{{hideInitCalc}}" aria-describedby="init-calc" style="all: unset; cursor: pointer; font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Init.</button>
+        <div style="font-size: 20px; font-weight: 700; color: #1f2430;">{{initiative}}</div>
+        <sc-if value="{{initCalcOpen}}" hint-placeholder-val="{{false}}">
+          <div role="tooltip" id="init-calc" style="position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; white-space: nowrap; pointer-events: none;">
+            <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">Initiative</div>
+            <div style="font-size: 11px; color: #6b7280;">{{initCalcText}}</div>
+          </div>
+        </sc-if>
       </div>
-      <div style="background: #eef0f3; border-radius: 8px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+      <div style="background: #eef0f3; border-radius: 6px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;">
         <div style="font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Speed</div>
         <input type="number" min="0" step="5" value="{{speed}}" onChange="{{onSpeedChange}}" aria-label="Speed" style="width: 40px; text-align: center; border: none; background: none; outline: none; font-size: 20px; font-weight: 700; color: #1f2430;">
       </div>
     </div>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 26px; font-weight: 700; color: #1f2430; margin-bottom: 10px;">{{modalValue}}</div>
+        <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalDesc}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":200}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { dexScore: 18, prof: 4, ac: 15, speed: 35 };
+    this.state = { dexScore: 18, prof: 4, ac: 15, speed: 35, level: 13, profCalcOpen: false, initCalcOpen: false, modalItem: null };
   }
   renderVals() {
     const mod = (s) => Math.floor((s - 10) / 2);
     const fmt = (n) => (n >= 0 ? '+' + n : String(n));
+    const { dexScore, prof, level } = this.state;
+    const initMod = mod(dexScore);
+    const profCalcText = 'Level ' + level + ' → proficiency ' + fmt(prof);
+    const initCalcText = 'DEX modifier ' + fmt(initMod) + ' = ' + fmt(initMod);
+    const modalItem = this.state.modalItem;
     return {
-      profLabel: fmt(this.state.prof),
+      profLabel: fmt(prof),
+      profCalcOpen: this.state.profCalcOpen,
+      profCalcText,
+      showProfCalc: () => this.setState({ profCalcOpen: true }),
+      hideProfCalc: () => this.setState({ profCalcOpen: false }),
+      openProfDetail: () => this.setState({ modalItem: { title: 'Proficiency Bonus', value: fmt(prof), desc: 'Set by total character level (currently ' + level + '). Added to any check, save or attack roll you are proficient in.' } }),
       ac: this.state.ac,
       onAcChange: (e) => this.setState({ ac: Math.max(0, parseInt(e.target.value, 10) || 0) }),
-      initiative: fmt(mod(this.state.dexScore)),
+      initiative: fmt(initMod),
+      initCalcOpen: this.state.initCalcOpen,
+      initCalcText,
+      showInitCalc: () => this.setState({ initCalcOpen: true }),
+      hideInitCalc: () => this.setState({ initCalcOpen: false }),
+      openInitDetail: () => this.setState({ modalItem: { title: 'Initiative', value: fmt(initMod), desc: 'Equal to your Dexterity modifier. Rolled as a d20 + this value at the start of combat to set turn order.' } }),
       speed: this.state.speed,
-      onSpeedChange: (e) => this.setState({ speed: Math.max(0, parseInt(e.target.value, 10) || 0) })
+      onSpeedChange: (e) => this.setState({ speed: Math.max(0, parseInt(e.target.value, 10) || 0) }),
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.title : '',
+      modalValue: modalItem ? modalItem.value : '',
+      modalDesc: modalItem ? modalItem.desc : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
     };
   }
 }

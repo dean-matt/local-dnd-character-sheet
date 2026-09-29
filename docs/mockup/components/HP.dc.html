@@ -19,12 +19,18 @@
 </style>
 </helmet>
 
-<div style="width: 420px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+<div style="width: 420px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Hit Points</div>
-    <div style="display: flex; align-items: baseline; gap: 6px;">
+    <div style="display: flex; align-items: baseline; gap: 6px; position: relative;">
       <div style="font-size: 26px; font-weight: 700; color: #1f2430;">{{hpCur}}</div>
-      <div style="font-size: 15px; color: #6b7280;">/ {{hpMax}}</div>
+      <button aria-label="View max hit points details" onClick="{{openMaxDetail}}" onMouseEnter="{{showMaxCalc}}" onMouseLeave="{{hideMaxCalc}}" onFocus="{{showMaxCalc}}" onBlur="{{hideMaxCalc}}" aria-describedby="hp-max-calc" style="all: unset; cursor: pointer; font-size: 15px; color: #6b7280;">/ {{hpMax}}</button>
+      <sc-if value="{{maxCalcOpen}}" hint-placeholder-val="{{false}}">
+        <div role="tooltip" id="hp-max-calc" style="position: absolute; top: calc(100% + 6px); left: 40px; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; white-space: nowrap; pointer-events: none;">
+          <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">Max Hit Points</div>
+          <div style="font-size: 11px; color: #6b7280;">{{maxCalcText}}</div>
+        </div>
+      </sc-if>
       <sc-if value="{{hasTempHp}}" hint-placeholder-val="{{false}}">
         <div title="Temporary hit points &mdash; absorb damage before real HP" style="font-size: 12px; font-weight: 600; color: #2f6b4f;">+{{tempHp}} temp</div>
       </sc-if>
@@ -35,36 +41,52 @@
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
       <label for="hpAmount" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Amount</label>
-      <input id="hpAmount" type="number" min="0" placeholder="0" value="{{dmgInput}}" onChange="{{onDmgInputChange}}" style="width: 64px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
-      <button onClick="{{applyDamage}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid {{accent}}; background: #ffffff; color: {{accent}}; font-size: 12px; font-weight: 600;">&minus; Damage</button>
-      <button onClick="{{applyHeal}}" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #2f6b4f; background: #ffffff; color: #2f6b4f; font-size: 12px; font-weight: 600;">+ Heal</button>
+      <input id="hpAmount" type="number" min="0" placeholder="0" value="{{dmgInput}}" onChange="{{onDmgInputChange}}" style="width: 64px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <button onClick="{{applyDamage}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid {{accent}}; background: #ffffff; color: {{accent}}; font-size: 12px; font-weight: 600;">&minus; Damage</button>
+      <button onClick="{{applyHeal}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #2f6b4f; background: #ffffff; color: #2f6b4f; font-size: 12px; font-weight: 600;">+ Heal</button>
     </div>
     <div style="display: flex; align-items: center; gap: 6px;">
       <label for="tempHpInput" style="font-size: 11px; color: #6b7280;">Temp HP</label>
-      <input id="tempHpInput" type="number" min="0" value="{{tempHp}}" onChange="{{onTempHpChange}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+      <input id="tempHpInput" type="number" min="0" value="{{tempHp}}" onChange="{{onTempHpChange}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; background: #ffffff; color: #1f2430;">
     </div>
     <div style="display: flex; gap: 8px; padding-top: 4px; border-top: 1px solid #dde1e6;">
-      <button onClick="{{shortRest}}" title="Roll a Hit Die + CON modifier to heal" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Short Rest</button>
-      <button onClick="{{longRest}}" title="Restore all HP" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Long Rest</button>
+      <button onClick="{{shortRest}}" title="Roll a Hit Die + CON modifier to heal" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Short Rest</button>
+      <button onClick="{{longRest}}" title="Restore all HP" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Long Rest</button>
     </div>
     <sc-if value="{{hasRoll}}" hint-placeholder-val="{{false}}">
       <div style="font-size: 12px; color: #6b7280;">{{rollText}}</div>
     </sc-if>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="Max hit points" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">Max Hit Points</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 26px; font-weight: 700; color: #1f2430; margin-bottom: 10px;">{{hpMax}}</div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{maxCalcText}}</div>
+        <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">Rolled (or averaged) per Hit Die at each level, plus your Constitution modifier per level. Recalculates automatically on level up.</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":340}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { hpCur: 54, hpMax: 58, tempHp: 0, hitDice: '7d10', conScore: 14, dmgInput: '', lastRoll: null };
+    this.state = { hpCur: 54, hpMax: 58, tempHp: 0, hitDice: '7d10', conScore: 14, dmgInput: '', lastRoll: null, maxCalcOpen: false, modalOpen: false };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
     const mod = (s) => Math.floor((s - 10) / 2);
+    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
     const { hpCur, hpMax, tempHp, hitDice, conScore, dmgInput } = this.state;
     const amount = parseInt(dmgInput, 10) || 0;
     const hpPct = Math.max(0, Math.min(100, Math.round((hpCur / hpMax) * 100)));
+    const conMod = mod(conScore);
+    const maxCalcText = 'Hit Dice ' + hitDice + ' + CON modifier ' + fmt(conMod) + ' per level';
     return {
       accent,
       hpCur,
@@ -73,6 +95,11 @@ class Component extends DCLogic {
       hitDice,
       tempHp,
       hasTempHp: !!tempHp,
+      maxCalcOpen: this.state.maxCalcOpen,
+      maxCalcText,
+      showMaxCalc: () => this.setState({ maxCalcOpen: true }),
+      hideMaxCalc: () => this.setState({ maxCalcOpen: false }),
+      openMaxDetail: () => this.setState({ modalOpen: true }),
       dmgInput,
       onDmgInputChange: (e) => this.setState({ dmgInput: e.target.value }),
       applyDamage: () => {
@@ -85,13 +112,15 @@ class Component extends DCLogic {
       shortRest: () => {
         const dieSize = parseInt((hitDice || '1d8').split('d')[1], 10) || 8;
         const roll = 1 + Math.floor(Math.random() * dieSize);
-        const conMod = mod(conScore);
         const healed = Math.max(1, roll + conMod);
         this.setState({ hpCur: Math.min(hpMax, hpCur + healed), lastRoll: { text: 'Short Rest (1d' + dieSize + ' + ' + conMod + '): ' + roll + ' → healed ' + healed } });
       },
       longRest: () => this.setState({ hpCur: hpMax, lastRoll: { text: 'Long Rest: HP fully restored' } }),
       hasRoll: !!this.state.lastRoll,
-      rollText: this.state.lastRoll ? this.state.lastRoll.text : ''
+      rollText: this.state.lastRoll ? this.state.lastRoll.text : '',
+      modalOpen: this.state.modalOpen,
+      closeModal: () => this.setState({ modalOpen: false }),
+      stopPropagation: (e) => e.stopPropagation()
     };
   }
 }

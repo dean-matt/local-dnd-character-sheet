@@ -16,23 +16,43 @@
 </style>
 </helmet>
 
-<div style="width: 460px; height: 240px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+<div style="width: 460px; height: 240px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Attacks &amp; Spellcasting</div>
     <div style="display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; padding: 0 2px;">
       <div>Name</div><div>Bonus</div><div>Damage / Type</div>
     </div>
     <sc-for list="{{attacks}}" as="atk" hint-placeholder-count="2">
-      <div style="display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; font-size: 13px; padding: 6px 2px; border-top: 1px solid #eceef1;">
-        <div style="color: #1f2430;">{{atk.name}}</div>
-        <button aria-label="Roll {{atk.name}} attack" title="Click to roll an attack" onClick="{{atk.roll}}" style="font-weight: 600; color: #1f2430; background: none; border: none; padding: 0; text-align: left;">{{atk.bonus}}</button>
+      <div style="display: grid; grid-template-columns: 1fr 60px 1fr; gap: 8px; font-size: 13px; padding: 6px 2px; border-top: 1px solid #eceef1; position: relative;">
+        <button aria-label="View {{atk.name}} details" onClick="{{atk.openDetail}}" style="all: unset; cursor: pointer; color: #1f2430;">{{atk.name}}</button>
+        <button aria-label="Roll {{atk.name}} attack" onClick="{{atk.roll}}" onMouseEnter="{{atk.showCalc}}" onMouseLeave="{{atk.hideCalc}}" onFocus="{{atk.showCalc}}" onBlur="{{atk.hideCalc}}" aria-describedby="{{atk.calcId}}" style="font-weight: 600; color: #1f2430; background: none; border: none; padding: 0; text-align: left;">{{atk.bonus}}</button>
         <div style="color: #6b7280;">{{atk.dmg}}</div>
+        <sc-if value="{{atk.calcOpen}}" hint-placeholder-val="{{false}}">
+          <div role="tooltip" id="{{atk.calcId}}" style="position: absolute; top: calc(100% + 2px); left: 96px; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+            <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{atk.calcLabel}}</div>
+            <div style="font-size: 11px; color: #6b7280;">{{atk.calcText}}</div>
+          </div>
+        </sc-if>
       </div>
     </sc-for>
     <sc-if value="{{hasRoll}}" hint-placeholder-val="{{false}}">
       <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 6px;">{{rollText}}</div>
     </sc-if>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 22px; font-weight: 700; color: #1f2430; margin-bottom: 2px;">{{modalBonus}} to hit</div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalCalcText}}</div>
+        <div style="font-size: 14px; color: #1f2430; margin-bottom: 10px;">{{modalDmg}}</div>
+        <div style="font-size: 13px; color: #6b7280; line-height: 1.5;">{{modalDesc}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":460,"height":240}}'>
@@ -41,24 +61,46 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       attacks: [
-        { name: 'Longbow +1', bonus: 8, dmg: '1d8+5 piercing' },
-        { name: 'Shortsword', bonus: 7, dmg: '1d6+4 piercing' }
+        { name: 'Longbow +1', bonus: 8, dmg: '1d8+5 piercing', breakdown: 'proficiency +4 + DEX +3 + magic +1', range: '150/600 ft.', desc: 'A magic longbow that grants a +1 bonus to attack and damage rolls.' },
+        { name: 'Shortsword', bonus: 7, dmg: '1d6+4 piercing', breakdown: 'proficiency +4 + STR +3', range: '5 ft. reach', desc: 'A light, finesse melee weapon.' }
       ],
-      lastRoll: null
+      hoverKey: null,
+      lastRoll: null,
+      modalItem: null
     };
   }
   renderVals() {
     const fmt = (n) => (n >= 0 ? '+' + n : String(n));
-    const attacks = this.state.attacks.map((a) => ({
+    const attacks = this.state.attacks.map((a, idx) => ({
       name: a.name,
       bonus: fmt(a.bonus),
       dmg: a.dmg,
+      calcId: 'atk-calc-' + idx,
+      calcOpen: this.state.hoverKey === idx,
+      calcLabel: a.name + ' Attack Bonus',
+      calcText: a.breakdown + ' = ' + fmt(a.bonus),
+      showCalc: () => this.setState({ hoverKey: idx }),
+      hideCalc: () => this.setState({ hoverKey: null }),
       roll: () => {
         const natural = 1 + Math.floor(Math.random() * 20);
-        this.setState({ lastRoll: { text: a.name + ': d20 (' + natural + ') + ' + a.bonus + ' = ' + (natural + a.bonus) } });
-      }
+        this.setState({ lastRoll: { text: a.name + ': d20 (' + natural + ') + ' + fmt(a.bonus) + ' = ' + (natural + a.bonus) } });
+      },
+      openDetail: () => this.setState({ modalItem: { name: a.name, bonus: fmt(a.bonus), calcText: a.breakdown + ' = ' + fmt(a.bonus), dmg: a.dmg + ', ' + a.range, desc: a.desc } })
     }));
-    return { attacks, hasRoll: !!this.state.lastRoll, rollText: this.state.lastRoll ? this.state.lastRoll.text : '' };
+    const modalItem = this.state.modalItem;
+    return {
+      attacks,
+      hasRoll: !!this.state.lastRoll,
+      rollText: this.state.lastRoll ? this.state.lastRoll.text : '',
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.name : '',
+      modalBonus: modalItem ? modalItem.bonus : '',
+      modalCalcText: modalItem ? modalItem.calcText : '',
+      modalDmg: modalItem ? modalItem.dmg : '',
+      modalDesc: modalItem ? modalItem.desc : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
+    };
   }
 }
 </script>

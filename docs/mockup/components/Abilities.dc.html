@@ -19,15 +19,21 @@
 </style>
 </helmet>
 
-<div style="width: 460px; height: 260px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+<div style="width: 460px; height: 260px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Ability Scores</div>
     <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
       <sc-for list="{{abilityRows}}" as="ab" hint-placeholder-count="6">
-        <div style="background: #eef0f3; border-radius: 8px; padding: 8px 0 6px 0; display: flex; flex-direction: column; align-items: center; gap: 2px;">
-          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280;">{{ab.label}}</div>
+        <div style="background: #eef0f3; border-radius: 6px; padding: 8px 0 6px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative;">
+          <button aria-label="View {{ab.label}} details" onClick="{{ab.openDetail}}" style="all: unset; cursor: pointer; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280;">{{ab.label}}</button>
           <input type="number" min="1" max="30" value="{{ab.score}}" onChange="{{ab.setScore}}" aria-label="{{ab.label}} score" style="width: 44px; text-align: center; border: none; background: none; outline: none; font-size: 20px; font-weight: 700; color: #1f2430;">
-          <button aria-label="Roll {{ab.label}} check" title="{{ab.modTitle}}" onClick="{{ab.roll}}" style="font-size: 11px; font-weight: 600; color: #ffffff; background: {{accent}}; border: none; border-radius: 999px; padding: 0px 8px;">{{ab.mod}}</button>
+          <button aria-label="Roll {{ab.label}} check" onClick="{{ab.roll}}" onMouseEnter="{{ab.showCalc}}" onMouseLeave="{{ab.hideCalc}}" onFocus="{{ab.showCalc}}" onBlur="{{ab.hideCalc}}" aria-describedby="{{ab.calcId}}" style="font-size: 11px; font-weight: 600; color: #ffffff; background: {{accent}}; border: none; border-radius: 999px; padding: 0px 8px;">{{ab.mod}}</button>
+          <sc-if value="{{ab.calcOpen}}" hint-placeholder-val="{{false}}">
+            <div role="tooltip" id="{{ab.calcId}}" style="position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; white-space: nowrap; pointer-events: none;">
+              <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{ab.calcLabel}}</div>
+              <div style="font-size: 11px; color: #6b7280;">{{ab.calcText}}</div>
+            </div>
+          </sc-if>
         </div>
       </sc-for>
     </div>
@@ -35,13 +41,30 @@
       <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 6px;">{{rollText}}</div>
     </sc-if>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+          <div style="font-size: 32px; font-weight: 700; color: #1f2430;">{{modalScore}}</div>
+          <div style="font-size: 15px; font-weight: 600; color: {{accent}};">{{modalMod}} modifier</div>
+        </div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalCalcText}}</div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Used for</div>
+        <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalUses}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":260}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 }, lastRoll: null };
+    this.state = { abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 }, lastRoll: null, hoverKey: null, modalItem: null };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -49,27 +72,55 @@ class Component extends DCLogic {
     const fmt = (n) => (n >= 0 ? '+' + n : String(n));
     const abilities = this.state.abilities;
     const keys = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
-    const abilityRows = keys.map((k) => ({
-      key: k,
-      label: k.toUpperCase(),
-      score: abilities[k],
-      mod: fmt(mod(abilities[k])),
-      modTitle: 'Modifier: (' + abilities[k] + ' − 10) ÷ 2, rounded down — click to roll',
-      roll: () => {
-        const natural = 1 + Math.floor(Math.random() * 20);
-        this.setState({ lastRoll: { label: k.toUpperCase() + ' Check', natural, total: natural + mod(abilities[k]) } });
-      },
-      setScore: (e) => {
-        const n = Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 0));
-        this.setState({ abilities: { ...abilities, [k]: n } });
-      }
-    }));
+    const USES = {
+      str: 'Strength saving throws, Athletics checks, melee attack and damage rolls with non-finesse weapons, carrying capacity.',
+      dex: 'Dexterity saving throws, Acrobatics, Sleight of Hand and Stealth checks, Armor Class, initiative, ranged and finesse attack rolls.',
+      con: 'Constitution saving throws, hit points per level, concentration checks.',
+      int: 'Intelligence saving throws, Arcana, History, Investigation, Nature and Religion checks.',
+      wis: 'Wisdom saving throws, Animal Handling, Insight, Medicine, Perception and Survival checks, passive Perception.',
+      cha: 'Charisma saving throws, Deception, Intimidation, Performance and Persuasion checks.'
+    };
+    const abilityRows = keys.map((k) => {
+      const score = abilities[k];
+      const m = mod(score);
+      const calcText = '(' + score + ' − 10) ÷ 2 = ' + fmt(m);
+      return {
+        key: k,
+        label: k.toUpperCase(),
+        score,
+        mod: fmt(m),
+        calcId: 'calc-' + k,
+        calcOpen: this.state.hoverKey === k,
+        calcLabel: k.toUpperCase() + ' Modifier',
+        calcText,
+        showCalc: () => this.setState({ hoverKey: k }),
+        hideCalc: () => this.setState({ hoverKey: null }),
+        roll: () => {
+          const natural = 1 + Math.floor(Math.random() * 20);
+          this.setState({ lastRoll: { label: k.toUpperCase() + ' Check', natural, total: natural + m } });
+        },
+        setScore: (e) => {
+          const n = Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 0));
+          this.setState({ abilities: { ...abilities, [k]: n } });
+        },
+        openDetail: () => this.setState({ modalItem: { key: k, label: k.toUpperCase(), score, mod: fmt(m), calcText, uses: USES[k] } })
+      };
+    });
     const lastRoll = this.state.lastRoll;
+    const modalItem = this.state.modalItem;
     return {
       accent,
       abilityRows,
       hasRoll: !!lastRoll,
-      rollText: lastRoll ? lastRoll.label + ': d20 (' + lastRoll.natural + ') → ' + lastRoll.total : ''
+      rollText: lastRoll ? lastRoll.label + ': d20 (' + lastRoll.natural + ') → ' + lastRoll.total : '',
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.label + ' — Ability Score' : '',
+      modalScore: modalItem ? modalItem.score : '',
+      modalMod: modalItem ? modalItem.mod : '',
+      modalCalcText: modalItem ? modalItem.calcText : '',
+      modalUses: modalItem ? modalItem.uses : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
     };
   }
 }

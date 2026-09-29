@@ -17,8 +17,8 @@
 </style>
 </helmet>
 
-<div style="width: 1200px; height: 160px; box-sizing: border-box; padding: 24px 40px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; display: flex; align-items: center; gap: 20px;">
+<div style="width: 1200px; height: 160px; display: flex; flex-direction: column; background: #f4f5f7;">
+  <div style="width: 100%; display: flex; align-items: center; gap: 20px; padding: 20px 40px; background: #ffffff; border-bottom: 1px solid #dde1e6;">
     <div style="position: relative; width: 72px; height: 72px; flex-shrink: 0;">
       <div style="width: 72px; height: 72px; border-radius: 50%; background: #3f5d44; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 30px;">E</div>
       <label for="avatarUpload" aria-label="Upload avatar image" style="position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; border-radius: 50%; background: {{accent}}; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; cursor: pointer;">
@@ -28,21 +28,39 @@
     </div>
     <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
       <div style="font-weight: 700; font-size: 28px; color: #1f2430;">Elara Nightshade</div>
-      <div style="font-size: 14px; color: #6b7280;">Half-Elf Ranger 7 • Folk Hero</div>
+      <div style="font-size: 14px; color: #6b7280;">Half-Elf Ranger 7 (Hunter) • Folk Hero • Chaotic Good</div>
     </div>
     <div style="display: flex; align-items: center; gap: 10px;">
-      <button aria-label="Toggle inspiration" title="Inspiration: spend for advantage on one roll" onClick="{{toggleInspiration}}" style="display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 36px; border-radius: 8px; border: 1px solid {{inspirationBorder}}; background: {{inspirationBg}};">
+      <button aria-label="Toggle inspiration" title="Inspiration: spend for advantage on one roll" onClick="{{toggleInspiration}}" style="display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 36px; border-radius: 6px; border: 1px solid {{inspirationBorder}}; background: {{inspirationBg}};">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="{{inspirationFill}}" stroke="{{inspirationColor}}" stroke-width="2"><path d="M13 2 4 14h6l-1 8 10-13h-6l1-7z"/></svg>
         <span style="font-size: 12px; font-weight: 600; color: {{inspirationColor}};">Inspiration</span>
       </button>
       <div style="position: relative;">
-        <button aria-label="Character menu" onClick="{{toggleMenu}}" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff; display: flex; align-items: center; justify-content: center;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+        <button title="Take a short or long rest" aria-expanded="{{restOpen}}" onClick="{{toggleRest}}" style="display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 36px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M12 3c2 3-1 4-1 6.5a2.5 2.5 0 005 0C17.5 6 15 4.5 15 2c2.5 2 5 5.5 5 9.5a8 8 0 11-16 0C4 7.5 8.5 5 12 3z"/><path d="M3 21l4.5-4.5M21 21l-4.5-4.5M8 21h8"/></svg>
+          <span style="font-size: 12px; font-weight: 600; color: #6b7280;">Rest</span>
+        </button>
+        <sc-if value="{{restOpen}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; top: calc(100% + 4px); right: 0; width: 200px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 40;">
+            <button onClick="{{shortRest}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none;">
+              <span style="font-size: 13px; font-weight: 600; color: #1f2430;">Short Rest</span>
+              <span style="font-size: 11px; color: #6b7280;">Spend Hit Dice to recover HP</span>
+            </button>
+            <button onClick="{{longRest}}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none;">
+              <span style="font-size: 13px; font-weight: 600; color: #1f2430;">Long Rest</span>
+              <span style="font-size: 11px; color: #6b7280;">Restore HP, Hit Dice and spent resources</span>
+            </button>
+          </div>
+        </sc-if>
+      </div>
+      <div style="position: relative;">
+        <button aria-label="Character menu" onClick="{{toggleMenu}}" style="width: 36px; height: 36px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; display: flex; align-items: center; justify-content: center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#6b7280"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
         </button>
         <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}">
-          <div style="position: absolute; top: calc(100% + 4px); right: 0; width: 180px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 40;">
-            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">Duplicate Character</button>
-            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: {{accent}};">Delete Character</button>
+          <div style="position: absolute; top: calc(100% + 4px); right: 0; width: 180px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 40;">
+            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">Duplicate Character</button>
+            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: {{accent}};">Delete Character</button>
           </div>
         </sc-if>
       </div>
@@ -54,7 +72,7 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { inspiration: false, menuOpen: false };
+    this.state = { inspiration: false, menuOpen: false, restOpen: false };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -67,7 +85,11 @@ class Component extends DCLogic {
       inspirationColor: on ? accent : '#6b7280',
       toggleInspiration: () => this.setState({ inspiration: !on }),
       menuOpen: this.state.menuOpen,
-      toggleMenu: () => this.setState({ menuOpen: !this.state.menuOpen })
+      toggleMenu: () => this.setState({ menuOpen: !this.state.menuOpen, restOpen: false }),
+      restOpen: this.state.restOpen,
+      toggleRest: () => this.setState({ restOpen: !this.state.restOpen, menuOpen: false }),
+      shortRest: () => this.setState({ restOpen: false }),
+      longRest: () => this.setState({ restOpen: false })
     };
   }
 }
