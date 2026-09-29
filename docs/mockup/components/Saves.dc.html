@@ -16,15 +16,21 @@
 </style>
 </helmet>
 
-<div style="width: 340px; height: 300px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+<div style="width: 340px; height: 300px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Saving Throws</div>
     <div style="display: flex; flex-direction: column; gap: 8px;">
       <sc-for list="{{saveRows}}" as="sv" hint-placeholder-count="6">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; position: relative;">
           <button aria-label="Toggle {{sv.label}} save proficiency" onClick="{{sv.toggle}}" style="width: 13px; height: 13px; padding: 0; border-radius: 50%; border: 1.5px solid {{sv.dotBorder}}; background: {{sv.dotFill}}; flex-shrink: 0;"></button>
-          <div style="color: #1f2430; flex-grow: 1;">{{sv.label}}</div>
-          <button aria-label="Roll {{sv.label}} save" title="{{sv.bonusTitle}}" onClick="{{sv.roll}}" style="font-weight: 600; color: #1f2430; background: none; border: none; padding: 0;">{{sv.bonus}}</button>
+          <button aria-label="View {{sv.label}} save details" onClick="{{sv.openDetail}}" style="all: unset; cursor: pointer; color: #1f2430; flex-grow: 1;">{{sv.label}}</button>
+          <button aria-label="Roll {{sv.label}} save" onClick="{{sv.roll}}" onMouseEnter="{{sv.showCalc}}" onMouseLeave="{{sv.hideCalc}}" onFocus="{{sv.showCalc}}" onBlur="{{sv.hideCalc}}" aria-describedby="{{sv.calcId}}" style="font-weight: 600; color: #1f2430; background: none; border: none; padding: 0;">{{sv.bonus}}</button>
+          <sc-if value="{{sv.calcOpen}}" hint-placeholder-val="{{false}}">
+            <div role="tooltip" id="{{sv.calcId}}" style="position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+              <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{sv.calcLabel}}</div>
+              <div style="font-size: 11px; color: #6b7280;">{{sv.calcText}}</div>
+            </div>
+          </sc-if>
         </div>
       </sc-for>
     </div>
@@ -32,6 +38,19 @@
       <div style="font-size: 12px; color: #6b7280; border-top: 1px solid #dde1e6; padding-top: 6px;">{{rollText}}</div>
     </sc-if>
   </div>
+  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
+    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
+      <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+          <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
+          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+        </div>
+        <div style="font-size: 26px; font-weight: 700; color: {{accent}}; margin-bottom: 10px;">{{modalBonus}}</div>
+        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalCalcText}}</div>
+        <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalDesc}}</div>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":340,"height":300}}'>
@@ -42,7 +61,9 @@ class Component extends DCLogic {
       abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 },
       prof: 4,
       saves: ['str', 'dex'],
-      lastRoll: null
+      lastRoll: null,
+      hoverKey: null,
+      modalItem: null
     };
   }
   renderVals() {
@@ -51,29 +72,53 @@ class Component extends DCLogic {
     const fmt = (n) => (n >= 0 ? '+' + n : String(n));
     const { abilities, prof, saves } = this.state;
     const keys = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    const DESC = {
+      str: 'Resists being forcibly moved, grappled or restrained.',
+      dex: 'Dodges area effects such as a fireball or a trap.',
+      con: 'Maintains concentration and resists poison and disease.',
+      int: 'Resists illusions and psychic assault.',
+      wis: 'Resists being charmed or frightened.',
+      cha: 'Resists banishment and possession.'
+    };
     const saveRows = keys.map((k) => {
       const proficient = saves.indexOf(k) !== -1;
-      const bonus = mod(abilities[k]) + (proficient ? prof : 0);
+      const modVal = mod(abilities[k]);
+      const bonus = modVal + (proficient ? prof : 0);
+      const calcText = k.toUpperCase() + ' modifier ' + fmt(modVal) + (proficient ? ' + proficiency ' + fmt(prof) : ' (not proficient)') + ' = ' + fmt(bonus);
       return {
         key: k,
         label: k.toUpperCase(),
         bonus: fmt(bonus),
-        bonusTitle: k.toUpperCase() + ' modifier ' + fmt(mod(abilities[k])) + (proficient ? ' + proficiency bonus ' + fmt(prof) : ' (not proficient)'),
+        calcId: 'save-calc-' + k,
+        calcOpen: this.state.hoverKey === k,
+        calcLabel: k.toUpperCase() + ' Save',
+        calcText,
+        showCalc: () => this.setState({ hoverKey: k }),
+        hideCalc: () => this.setState({ hoverKey: null }),
         dotFill: proficient ? accent : 'transparent',
         dotBorder: proficient ? accent : '#c7ccd3',
         roll: () => {
           const natural = 1 + Math.floor(Math.random() * 20);
           this.setState({ lastRoll: { label: k.toUpperCase() + ' Save', natural, total: natural + bonus } });
         },
-        toggle: () => this.setState({ saves: saves.indexOf(k) !== -1 ? saves.filter((x) => x !== k) : [...saves, k] })
+        toggle: () => this.setState({ saves: saves.indexOf(k) !== -1 ? saves.filter((x) => x !== k) : [...saves, k] }),
+        openDetail: () => this.setState({ modalItem: { label: k.toUpperCase(), bonus: fmt(bonus), calcText, desc: DESC[k] } })
       };
     });
     const lastRoll = this.state.lastRoll;
+    const modalItem = this.state.modalItem;
     return {
       accent,
       saveRows,
       hasRoll: !!lastRoll,
-      rollText: lastRoll ? lastRoll.label + ': d20 (' + lastRoll.natural + ') → ' + lastRoll.total : ''
+      rollText: lastRoll ? lastRoll.label + ': d20 (' + lastRoll.natural + ') → ' + lastRoll.total : '',
+      modalOpen: !!modalItem,
+      modalTitle: modalItem ? modalItem.label + ' Save' : '',
+      modalBonus: modalItem ? modalItem.bonus : '',
+      modalCalcText: modalItem ? modalItem.calcText : '',
+      modalDesc: modalItem ? modalItem.desc : '',
+      closeModal: () => this.setState({ modalItem: null }),
+      stopPropagation: (e) => e.stopPropagation()
     };
   }
 }
