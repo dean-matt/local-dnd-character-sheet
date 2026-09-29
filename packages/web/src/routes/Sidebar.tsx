@@ -59,7 +59,8 @@ function writeCollapsed(value: boolean) {
   } catch {}
 }
 
-export type SidebarItem = { to: string; label: string; icon?: readonly string[] };
+/** `end` marks the row active on its own path alone, not on the paths beneath it. */
+export type SidebarItem = { to: string; label: string; icon?: readonly string[]; end?: boolean };
 
 /**
  * The collapsible rail beside a page: a nav of `items`, then an optional `action` above the
@@ -98,6 +99,7 @@ export function Sidebar({
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.end}
             aria-label={collapsed ? item.label : undefined}
             className={({ isActive }) =>
               `${rowBase} ${isActive ? "bg-accent-tint" : "hover:bg-subtle"}`
