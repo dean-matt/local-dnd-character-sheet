@@ -10,6 +10,13 @@
  */
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
+import {
+  expectedChecks,
+  isGreen,
+  missingChecks,
+  noRequiredChecks,
+  readChecks,
+} from "./required-checks.mjs";
 
 /**
  * The severity marker `audit-pr` writes at the head of a posted finding. A body this
@@ -27,17 +34,20 @@ export const FENCE =
   /^(CLAUDE|CONTRIBUTING)\.md$|^content\.(lock|manifest)\.json$|^\.github\/|^\.claude\/skills\/|^packages\/api\/drizzle\//;
 
 export function notGreen(checks) {
-  return checks.filter((c) => c.bucket !== "pass" && c.bucket !== "skipping").map((c) => c.name);
+  return checks.filter((c) => !isGreen(c)).map((c) => c.name);
 }
 
 /**
- * An empty rollup is not a green one: the required checks run on every pull request, so
- * nothing reporting means the head is too new to judge rather than that it passed.
+ * A required check that has not reported blocks like a red one: a head too new to judge
+ * has not passed. A ruleset naming no required check blocks too: nothing says what to wait on.
  */
-export function checksBlocked(checks) {
+export function checksBlocked(checks, expected) {
+  const unjudgeable = noRequiredChecks(expected);
+  if (unjudgeable !== null) return unjudgeable;
   if (checks.length === 0) return "no check has reported on this head yet";
-  const red = notGreen(checks);
-  return red.length === 0 ? null : red.join(", ");
+  const missing = missingChecks(expected, checks).map((name) => `${name} (not reported)`);
+  const blocked = [...notGreen(checks), ...missing];
+  return blocked.length === 0 ? null : blocked.join(", ");
 }
 
 /** The line `converge-review` step 2 opens a pass body with. It renders as nothing on GitHub. */
@@ -191,13 +201,6 @@ export function dependenciesDiffer(before, after) {
 
 const gh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8" }));
 
-function tolerate(read, fallback) {
-  try {
-    return read();
-  } catch {
-    return fallback;
-  }
-}
 const git = (args) => execFileSync("git", args, { encoding: "utf8" }).trim();
 
 function show(ref, path) {
@@ -243,9 +246,12 @@ function gate(n) {
     if (!ok) failures.push(condition);
   };
 
-  // gh exits non-zero where no check has reported at all, which is not a bucket.
-  const checks = tolerate(() => gh(["pr", "checks", n, "--json", "name,bucket"]), []);
-  const checkFailure = checksBlocked(checks);
+  let checkFailure;
+  try {
+    checkFailure = checksBlocked(readChecks(n), expectedChecks());
+  } catch (error) {
+    checkFailure = `could not read the required checks: ${error.message}`;
+  }
   report(checkFailure === null, "every check is green", checkFailure);
 
   const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;

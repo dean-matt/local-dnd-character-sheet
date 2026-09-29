@@ -44,13 +44,14 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
    a pass returning nothing ends the loop earlier, and at the cap you apply what the pass
    found and let the verdict reply carry it. A finding you declined comes back and takes
    the same reply.
-5. **Label, then return.** `review:approved` where `pnpm check` is green and nothing a pass
-   returned still waits on the user; `review:changes-requested` where something does — a
-   decline, a second bug filed as its own issue, a red check. Preferences wait on nobody.
+5. **Label, then return.** Set a label only once the last pass's marked review has posted.
+   `review:approved` where `pnpm check` is green and nothing a pass returned still waits on
+   the user; `review:changes-requested` where something does — a decline, a second bug
+   filed as its own issue. Preferences wait on nobody.
 
-   Return the label left, what each pass found, and what `gh pr checks` says, to whatever
-   called this skill. Check once, right after the push — a run against the new commit is
-   reported in flight rather than waited on, the same as `audit-pr`'s own check.
+   Return the label left and what each pass found. Return only when every review subagent
+   this run started has finished; a label set before its review posts describes an older
+   commit.
 
 ## What this skill will not do
 
