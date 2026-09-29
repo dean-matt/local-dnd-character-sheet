@@ -197,7 +197,7 @@ function ResolvedRow({ item }: { item: ResolvedItem }) {
         item.value !== null && (
           <>
             <span className="sr-only">Value: </span>
-            {price(item.value)}
+            {price(item.value * item.quantity)}
           </>
         )
       }

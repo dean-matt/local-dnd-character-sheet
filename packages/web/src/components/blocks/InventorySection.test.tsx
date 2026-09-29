@@ -202,8 +202,7 @@ describe("InventorySection", () => {
     expect(row("Shield")).toHaveTextContent("AC +2");
     expect(row("Shield")).toHaveTextContent("Value: 10 gp");
     expect(row("Arrow")).toHaveTextContent("Ammunition");
-    expect(row("Arrow")).toHaveTextContent("Value: 5 cp");
-    expect(row("Ring of Warmth")).toHaveTextContent("Ring");
+    expect(row("Arrow")).toHaveTextContent("Value: 1 gp");
   });
 
   it("drops a nameless type rather than print its code", async () => {

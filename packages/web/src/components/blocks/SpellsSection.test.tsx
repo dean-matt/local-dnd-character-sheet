@@ -42,6 +42,8 @@ const SPELLS: CharacterSpells = {
       school: "V",
       concentration: false,
       ritual: false,
+      damageDice: "4d6",
+      damageTypes: ["fire", "radiant"],
       entries: [],
     },
     {
@@ -195,13 +197,14 @@ describe("SpellsSection", () => {
     expect(glimmer).toHaveTextContent("Ritual");
   });
 
-  it("prints a spell's damage roll beside the types it deals", async () => {
+  it("pairs a damage roll with its type only where the spell deals one", async () => {
     renderSection();
 
     const hex = (await screen.findByText("Hex")).closest("li") as HTMLElement;
     expect(hex).toHaveTextContent("1d6 necrotic");
     const blast = screen.getByText("Eldritch Blast").closest("li") as HTMLElement;
-    expect(blast).not.toHaveTextContent(/\dd\d/);
+    expect(within(blast).getByText("4d6")).toBeInTheDocument();
+    expect(within(blast).getByText("fire, radiant")).toBeInTheDocument();
   });
 
   it("renders a spell's text through the token renderer", async () => {
