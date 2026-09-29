@@ -158,7 +158,8 @@ function TypeChips({ item }: { item: ResolvedItem }) {
     return (
       <>
         {category && <Tag>{capitalize(category)}</Tag>}
-        {damage && <Tag>{damage.type ? `${damage.dice} ${damage.type}` : damage.dice}</Tag>}
+        {damage && <Tag>{damage.dice}</Tag>}
+        {damage?.type && <Tag>{damage.type}</Tag>}
       </>
     );
   }
@@ -246,6 +247,7 @@ function ItemList({ character }: { character: CharacterRecord }) {
       rows.length > 0 && (
         <Card key={group} title={group}>
           <ul className="flex flex-col gap-2">
+            {/* The key is the definition's index, since two entries may hold the same item. */}
             {rows.map(({ item, index }) =>
               item.resolved ? (
                 <ResolvedRow key={index} item={item} />

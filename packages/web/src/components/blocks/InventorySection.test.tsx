@@ -47,6 +47,7 @@ const INVENTORY: CharacterInventory = {
       ...flags,
       ...plain,
       type: { abbreviation: "RG", name: "Ring" },
+      value: 7,
       carried: false,
       rarity: "unknown (magic)",
       requiresAttunement: true,
@@ -72,6 +73,7 @@ const INVENTORY: CharacterInventory = {
       name: "Lucky Coin",
       ...flags,
       ...plain,
+      value: 150,
       rarity: null,
       requiresAttunement: false,
       weight: null,
@@ -194,7 +196,8 @@ describe("InventorySection", () => {
 
     await screen.findByText("+1 Longsword");
     expect(row("+1 Longsword")).toHaveTextContent("Martial");
-    expect(row("+1 Longsword")).toHaveTextContent("1d8 slashing");
+    expect(within(row("+1 Longsword")).getByText("1d8")).toBeInTheDocument();
+    expect(within(row("+1 Longsword")).getByText("slashing")).toBeInTheDocument();
     expect(row("+1 Longsword")).not.toHaveTextContent("Value:");
     expect(row("Chain Mail")).toHaveTextContent("Heavy");
     expect(row("Chain Mail")).toHaveTextContent("AC 16");
@@ -203,6 +206,8 @@ describe("InventorySection", () => {
     expect(row("Shield")).toHaveTextContent("Value: 10 gp");
     expect(row("Arrow")).toHaveTextContent("Ammunition");
     expect(row("Arrow")).toHaveTextContent("Value: 1 gp");
+    expect(row("Lucky Coin")).toHaveTextContent("Value: 15 sp");
+    expect(row("Ring of Warmth")).toHaveTextContent("Value: 7 cp");
   });
 
   it("drops a nameless type rather than print its code", async () => {
