@@ -1,6 +1,6 @@
 /**
  * The Spells page: the numbers a caster reads before every cast, the slots each level
- * carries, then the spells themselves grouped by level. Every number comes off the
+ * carries, then the spells themselves in one card, grouped by level. Every number comes off the
  * derived block and every spell off `/characters/{id}/spells`, so this file does no
  * rules arithmetic of its own.
  */
@@ -9,6 +9,8 @@ import {
   ABILITY_LABEL,
   type CharacterDerived,
   type CharacterRecord,
+  type Derived,
+  derivedValue,
   displayName,
   entryKey,
 } from "@dnd/character";
@@ -22,7 +24,7 @@ import {
 } from "../../lib/spellFacts.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
-import { Field } from "../Field.tsx";
+import { Field, OverrideMark } from "../Field.tsx";
 import { ListRow } from "../ListRow.tsx";
 import { firstLine, RulesEntries, RulesText } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
@@ -31,7 +33,7 @@ const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
 
 const ORDINAL = ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"];
 
-const levelLabel = (level: number) => (level === 0 ? "Cantrips" : `${ORDINAL[level]} level`);
+const levelLabel = (level: number) => (level === 0 ? "Cantrips" : `${ORDINAL[level]} Level`);
 
 /** One card per casting class, since a multiclassed caster has a DC and a bonus per class. */
 function CasterNumbers({ derived }: { derived: CharacterDerived }) {
@@ -65,30 +67,56 @@ function CasterNumbers({ derived }: { derived: CharacterDerived }) {
   );
 }
 
+/** Every pip draws empty: the sheet reads no expended slots yet. */
+function SlotRow({
+  label,
+  spoken = label,
+  total,
+}: {
+  label: string;
+  spoken?: string;
+  total: Derived<number>;
+}) {
+  const count = derivedValue(total);
+  return (
+    <li className="flex items-center gap-1.5">
+      <span aria-hidden="true" className="w-12 shrink-0 text-xs">
+        {label}
+      </span>
+      <span className="sr-only">
+        {spoken}: {count === 1 ? "1 slot" : `${count} slots`}
+      </span>
+      <span aria-hidden="true" className="flex grow flex-wrap gap-[3px]">
+        {Array.from({ length: count }, (_, index) => (
+          <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: pips are interchangeable.
+            key={index}
+            className="size-[15px] shrink-0 rounded-full border-[1.5px] border-accent"
+          />
+        ))}
+      </span>
+      {total.manual !== null && <OverrideMark computed={String(total.computed)} />}
+    </li>
+  );
+}
+
 function Slots({ derived }: { derived: CharacterDerived }) {
   const { spellSlots, pactSlots } = derived;
   if (spellSlots.length === 0 && !pactSlots) return null;
   return (
     <Card title="Spell Slots">
-      <div className="flex flex-col gap-1">
+      <ul className="flex flex-col gap-2.5">
         {spellSlots.map((slot) => (
-          <Field
-            key={slot.level}
-            mode="read"
-            label={levelLabel(slot.level)}
-            value={slot.total}
-            format={String}
-          />
+          <SlotRow key={slot.level} label={levelLabel(slot.level)} total={slot.total} />
         ))}
         {pactSlots && (
-          <Field
-            mode="read"
-            label={`Pact Magic, ${levelLabel(pactSlots.level)}`}
-            value={pactSlots.total}
-            format={String}
+          <SlotRow
+            label={`Pact ${ORDINAL[pactSlots.level]}`}
+            spoken={`Pact Magic, ${levelLabel(pactSlots.level)}`}
+            total={pactSlots.total}
           />
         )}
-      </div>
+      </ul>
     </Card>
   );
 }
@@ -138,12 +166,12 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
       name={spell.name}
       chips={
         <>
+          <Tag>{schoolName(spell.school)}</Tag>
           {marks}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}
         </>
       }
-      value={schoolName(spell.school)}
       preview={firstLine(spell.entries)}
       detail={{
         meta: (
@@ -192,18 +220,23 @@ function SpellList({ character }: { character: CharacterRecord }) {
     return <EmptyState>{character.name} has no spells yet.</EmptyState>;
   }
   return (
-    <>
-      {groupByLevel(spells.data.spells).map((group) => (
-        <Card key={group.key} title={group.title}>
-          <ul className="flex flex-col gap-2">
-            {group.spells.map((spell, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: a spell learned through two classes is listed twice under one name.
-              <SpellRow key={index} spell={spell} />
-            ))}
-          </ul>
-        </Card>
-      ))}
-    </>
+    <Card title="Known Spells">
+      <div className="flex flex-col gap-3">
+        {groupByLevel(spells.data.spells).map((group) => (
+          <div key={group.key}>
+            <h4 className="mb-2 font-semibold text-label text-muted uppercase tracking-label">
+              {group.title}
+            </h4>
+            <ul className="flex flex-col gap-1.5">
+              {group.spells.map((spell, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: a spell learned through two classes is listed twice under one name.
+                <SpellRow key={index} spell={spell} />
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 

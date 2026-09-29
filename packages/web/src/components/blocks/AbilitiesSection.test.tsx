@@ -6,7 +6,7 @@ import {
 } from "@dnd/character";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord } from "../../test/records.ts";
+import { characterRecord, stateRecord } from "../../test/records.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
 
@@ -57,7 +57,8 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
 }
 
 function renderSection(record = warlock(), derived = derivedFor(record)) {
-  render(<AbilitiesSection character={record} derived={derived} />);
+  stubRules([]);
+  renderWithClient(<AbilitiesSection character={record} derived={derived} />);
 }
 
 /** A row's text with the aria-hidden decoration dropped, as a screen reader reaches it. */
@@ -84,12 +85,17 @@ const nameButton = (region: string, name: string) =>
     "button",
   )[0] as HTMLElement;
 
+/** Answers the rules lookups a modal makes, and the state read `Vitals` makes apart from them. */
 function stubRules(entries: unknown[]) {
   const fetchMock = vi.fn(
     async (_url: RequestInfo | URL, _init?: RequestInit) =>
       new Response(JSON.stringify({ refs: [{ name: "x", source: "XPHB", entries }] })),
   );
-  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
+    String(url) === "/api/characters/1/state"
+      ? new Response(JSON.stringify(stateRecord()))
+      : fetchMock(url, init),
+  );
   return fetchMock;
 }
 

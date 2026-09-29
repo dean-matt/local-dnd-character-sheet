@@ -112,7 +112,7 @@ describe("SpellsSection", () => {
     await screen.findByText("Hex");
   });
 
-  it("lists slots by level and pact slots apart, marking an overridden total", async () => {
+  it("draws each level's slots as empty pips, pact slots in the same row shape", async () => {
     renderSection({
       ...derivedRecord(),
       spellSlots: [
@@ -122,24 +122,46 @@ describe("SpellsSection", () => {
     });
 
     const slots = card("Spell Slots");
-    expect(slots.getByText("1st level").nextSibling).toHaveTextContent("4");
-    expect(slots.getByText("2nd level").nextSibling).toHaveTextContent("2*");
-    expect(slots.getByText("Pact Magic, 1st level").nextSibling).toHaveTextContent("1");
+    const row = (spoken: string) =>
+      slots.getByText(new RegExp(`^${spoken}:`)).closest("li") as HTMLElement;
+    const pips = (spoken: string) => [
+      ...(row(spoken).querySelectorAll(":scope > [aria-hidden]")[1]?.children ?? []),
+    ];
+    expect(slots.getByText("1st Level: 4 slots")).toBeInTheDocument();
+    expect(pips("1st Level")).toHaveLength(4);
+    expect(pips("2nd Level")).toHaveLength(2);
+    expect(row("2nd Level")).toHaveTextContent("overridden from 3");
+    expect(slots.getByText("Pact Magic, 1st Level: 1 slot")).toBeInTheDocument();
+    expect(row("Pact Magic, 1st Level")).toHaveTextContent("Pact 1st");
+    expect(pips("Pact Magic, 1st Level")).toHaveLength(1);
+    for (const pip of pips("1st Level")) {
+      expect(pip.getAttribute("style")).toBeNull();
+      expect(pip.className.split(" ")).toEqual([
+        "size-[15px]",
+        "shrink-0",
+        "rounded-full",
+        "border-[1.5px]",
+        "border-accent",
+      ]);
+    }
     await screen.findByText("Hex");
   });
 
-  it("groups spells by level, cantrips first, and shows what a caster checks", async () => {
+  it("lists every spell in one card under level subheadings, cantrips first", async () => {
     renderSection();
 
     await screen.findByText("Hex");
-    const headings = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
-    expect(headings.slice(-3)).toEqual(["Cantrips", "1st level", "Not found"]);
+    const known = card("Known Spells");
+    const headings = known.getAllByRole("heading", { level: 4 }).map((h) => h.textContent);
+    expect(headings).toEqual(["Cantrips", "1st Level", "Not found"]);
 
     const hex = screen.getByText("Hex").closest("li") as HTMLElement;
-    expect(hex).toHaveTextContent("Enchantment");
-    expect(hex).toHaveTextContent("Prepared");
+    const school = within(hex).getByText("Enchantment");
+    const prepared = within(hex).getByText("Prepared");
+    expect(school.compareDocumentPosition(prepared)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(hex).toHaveTextContent("Concentration");
     expect(hex).not.toHaveTextContent("Ritual");
+    expect(hex).not.toHaveTextContent("90 feet");
     expect(hex).toHaveTextContent("Deal an extra 1d6 necrotic damage.");
   });
 

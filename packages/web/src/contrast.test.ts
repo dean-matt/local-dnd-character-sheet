@@ -88,6 +88,7 @@ const accentLight = hex("#c1272d");
 const accentHoverLight = mixOklab(accentLight, [0, 0, 0], 0.85);
 const accentActiveLight = mixOklab(accentLight, [0, 0, 0], 0.7);
 const accentTintLight = mixOklab(accentLight, canvasLight, 0.1);
+const positiveLight = hex("#2f6b4f");
 
 const inkDark = gray100;
 const mutedDark = gray400;
@@ -96,6 +97,7 @@ const accentDark = mixOklab(accentLight, white, 0.9);
 const subtleDark = mixOklab(gray700, gray800, 0.5);
 // Checked as non-text: the dark accent on the dark surface already sits near 3:1.
 const accentTintDark = mixOklab(accentDark, gray900, 0.1);
+const positiveDark = mixOklab(positiveLight, white, 0.5);
 
 const AA_TEXT = 4.5;
 const AA_NON_TEXT = 3;
@@ -125,6 +127,7 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
     bg: canvasLight,
     minimum: AA_NON_TEXT,
   },
+  { name: "positive on surface, light", fg: positiveLight, bg: white, minimum: AA_TEXT },
   { name: "ink on canvas, dark", fg: inkDark, bg: gray900, minimum: AA_TEXT },
   { name: "ink on surface, dark", fg: inkDark, bg: gray800, minimum: AA_TEXT },
   { name: "muted on canvas, dark", fg: mutedDark, bg: gray900, minimum: AA_TEXT },
@@ -138,6 +141,7 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "white text on accent, dark", fg: white, bg: accentDark, minimum: AA_TEXT },
   { name: "focus ring on canvas, dark", fg: accentDark, bg: gray900, minimum: AA_NON_TEXT },
   { name: "focus ring on surface, dark", fg: accentDark, bg: gray800, minimum: AA_NON_TEXT },
+  { name: "positive on surface, dark", fg: positiveDark, bg: gray800, minimum: AA_TEXT },
 ];
 
 describe("theme token contrast", () => {

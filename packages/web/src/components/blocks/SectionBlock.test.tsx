@@ -29,11 +29,13 @@ describe("SectionBlockView", () => {
 
   it("renders the abilities section from the character and its derived block", () => {
     render(
-      <SectionBlockView
-        block={{ kind: "section", section: "abilities" }}
-        character={characterRecord("1", "Vex")}
-        derived={derivedRecord()}
-      />,
+      <QueryClientProvider client={new QueryClient()}>
+        <SectionBlockView
+          block={{ kind: "section", section: "abilities" }}
+          character={characterRecord("1", "Vex")}
+          derived={derivedRecord()}
+        />
+      </QueryClientProvider>,
     );
     expect(screen.getByRole("region", { name: "Ability Scores" })).toBeInTheDocument();
   });

@@ -60,6 +60,29 @@ const FEATURES: CharacterFeatures = {
   ],
 };
 
+const WITH_BACKGROUND: CharacterFeatures = {
+  groups: [
+    ...FEATURES.groups.slice(0, 1),
+    {
+      origin: "subclass",
+      name: "Champion",
+      features: [
+        { resolved: true, name: "Improved Critical", source: "PHB", level: 3, entries: [] },
+      ],
+    },
+    ...FEATURES.groups.slice(1, 2),
+    {
+      origin: "background",
+      name: "Acolyte",
+      features: [{ resolved: true, name: "Shelter of the Faithful", source: "PHB", entries: [] }],
+    },
+    ...FEATURES.groups.slice(2),
+  ],
+};
+
+const card = (title: string) =>
+  screen.getByRole("heading", { level: 3, name: title }).closest("section") as HTMLElement;
+
 function renderSection(features: CharacterFeatures = FEATURES) {
   stubFetchByUrl({ "/api/characters/1/features": features });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -75,27 +98,46 @@ afterEach(() => {
 });
 
 describe("FeaturesSection", () => {
-  it("heads each group with its grantor and says what kind of grantor it is", async () => {
-    renderSection();
+  it("gathers features into Class, Race, Background and Chosen cards", async () => {
+    renderSection(WITH_BACKGROUND);
 
-    expect(
-      await screen.findByRole("heading", { level: 3, name: "Fighter, Class" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Elf (High), Race" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Feats" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 3, name: "Optional features" }),
-    ).toBeInTheDocument();
+    const headings = await screen.findAllByRole("heading", { level: 3 });
+    expect(headings.map((heading) => heading.textContent)).toEqual([
+      "Class Features",
+      "Race Features",
+      "Background Features",
+      "Chosen Features",
+    ]);
+    const cls = card("Class Features");
+    expect(within(cls).getByText("Second Wind")).toBeInTheDocument();
+    expect(within(cls).getByText("Improved Critical")).toBeInTheDocument();
+    const chosen = card("Chosen Features");
+    expect(within(chosen).getByText("Lucky (PHB)")).toBeInTheDocument();
+    expect(within(chosen).getByText("Archery")).toBeInTheDocument();
+    expect(within(card("Background Features")).getByText("Shelter of the Faithful")).toBeVisible();
   });
 
-  it("shows each feature's level and the type an option was taken under", async () => {
+  it("leaves out a card with nothing in it", async () => {
     renderSection();
 
-    const fighter = (await screen.findByRole("heading", { name: "Fighter, Class" })).closest(
-      "section",
-    );
-    expect(within(fighter as HTMLElement).getByText("Level 4")).toBeInTheDocument();
-    expect(screen.getByText("Fighting Style (Fighter)")).toBeInTheDocument();
+    await screen.findByText("Second Wind");
+    expect(screen.queryByRole("heading", { name: "Background Features" })).toBeNull();
+  });
+
+  it("chips each row with its grantor or option type and shows its level", async () => {
+    renderSection(WITH_BACKGROUND);
+
+    const secondWind = (await screen.findByText("Second Wind")).closest("li") as HTMLElement;
+    expect(within(secondWind).getByText("Fighter")).toBeInTheDocument();
+    expect(within(secondWind).getByText("Level 1", { selector: ".sr-only" })).toBeInTheDocument();
+    expect(within(secondWind).getByText("Lvl 1")).toHaveAttribute("aria-hidden", "true");
+    const critical = screen.getByText("Improved Critical").closest("li") as HTMLElement;
+    expect(within(critical).getByText("Champion")).toBeInTheDocument();
+    const darkvision = screen.getByText("Darkvision").closest("li") as HTMLElement;
+    expect(within(darkvision).getByText("Elf (High)")).toBeInTheDocument();
+    expect(within(darkvision).queryByText(/Lvl/)).toBeNull();
+    const archery = screen.getByText("Archery").closest("li") as HTMLElement;
+    expect(within(archery).getByText("Fighting Style (Fighter)")).toBeInTheDocument();
     expect(screen.getByText("RP")).toBeInTheDocument();
   });
 
@@ -107,6 +149,15 @@ describe("FeaturesSection", () => {
     expect(modal).toHaveTextContent("Fighter • Level 1");
     expect(modal).toHaveTextContent("Regain 1d10 hit points.");
     expect(modal).not.toHaveTextContent("{@dice");
+  });
+
+  it("names a chosen feature's origin and option type in its modal", async () => {
+    renderSection();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Archery" }));
+    expect(screen.getByRole("dialog", { name: "Archery" })).toHaveTextContent(
+      "Optional feature • Fighting Style (Fighter)",
+    );
   });
 
   it("resolves every feature's references in one request for the section", async () => {
@@ -149,23 +200,25 @@ describe("FeaturesSection", () => {
     expect(row).toHaveTextContent("Not found in homebrew");
   });
 
-  it("narrows every group to the features whose name matches the filter", async () => {
+  it("narrows every card to the features whose name matches the search", async () => {
     renderSection();
 
     await screen.findByText("Second Wind");
+    const search = screen.getByRole("searchbox", { name: "Search features" });
+    expect(search).toHaveAttribute("placeholder", "Search features…");
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
-    fireEvent.change(screen.getByLabelText("Find a feature"), {
-      target: { value: "dark" },
-    });
+
+    fireEvent.change(search, { target: { value: "dark" } });
     expect(screen.getByText("Darkvision")).toBeInTheDocument();
     expect(screen.queryByText("Second Wind")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Fighter, Class" })).toBeNull();
+    expect(within(card("Class Features")).getByText("No class features match “dark”.")).toHaveClass(
+      "italic",
+    );
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
 
-    fireEvent.change(screen.getByLabelText("Find a feature"), { target: { value: "zzz" } });
+    fireEvent.change(search, { target: { value: "zzz" } });
     expect(screen.getByRole("status")).toHaveTextContent("No feature matches “zzz”.");
-    expect(
-      screen.getByText("No feature matches “zzz”.", { selector: "[aria-hidden]" }),
-    ).toBeVisible();
+    expect(within(card("Race Features")).getByText("No race features match “zzz”.")).toBeVisible();
   });
 
   it("says so when the character has gained nothing", async () => {
