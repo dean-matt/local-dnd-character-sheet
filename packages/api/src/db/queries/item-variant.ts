@@ -4,6 +4,7 @@
  * and `excludes` gate which base items a variant reaches, and `inherits` states the
  * fields the resulting item carries over the base item's own.
  */
+import { DAMAGE_TYPES } from "@dnd/catalog";
 import { getItem, type ItemRow } from "./content.ts";
 
 type Entry = Record<string, unknown>;
@@ -181,22 +182,6 @@ export function expandItemFields(baseFields: Entry, inherits: Entry): Entry {
   }
   return merged;
 }
-
-const DAMAGE_TYPES: Record<string, string> = {
-  A: "acid",
-  B: "bludgeoning",
-  C: "cold",
-  F: "fire",
-  I: "poison",
-  L: "lightning",
-  N: "necrotic",
-  O: "force",
-  P: "piercing",
-  R: "radiant",
-  S: "slashing",
-  T: "thunder",
-  Y: "psychic",
-};
 
 /**
  * What a `{=property}` placeholder reads: the expanded item's own fields, except

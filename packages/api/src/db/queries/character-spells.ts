@@ -10,7 +10,7 @@ import {
   spellCastingFactsSchema,
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName } from "@dnd/character";
-import type { ZodType } from "zod";
+import { type ZodType, z } from "zod";
 import { getSpells } from "./content.ts";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 
@@ -37,6 +37,19 @@ function castingFacts(json: Record<string, unknown>) {
     range: pick(shape.range, json.range),
     components: pick(shape.components, json.components),
     duration: pick(shape.duration, json.duration),
+  };
+}
+
+const DAMAGE_TAG = /\{@damage ([^|}]+)/;
+
+const damageTypesSchema = z.array(z.string().min(1)).min(1);
+
+/** Scans the serialized text, whose key order is the order the entries print in. */
+function damageFacts(json: Record<string, unknown>) {
+  const dice = DAMAGE_TAG.exec(JSON.stringify(json.entries ?? []))?.[1]?.trim();
+  return {
+    ...(dice && { damageDice: dice }),
+    damageTypes: pick(damageTypesSchema, json.damageInflict),
   };
 }
 
@@ -86,6 +99,7 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined) {
     concentration: row.concentration,
     ritual: row.ritual,
     ...castingFacts(row.json),
+    ...damageFacts(row.json),
     // Upstream keeps the upcast rule apart, and dropping it makes the text read complete.
     entries: [
       ...(pick(entriesSchema, row.json.entries) ?? []),

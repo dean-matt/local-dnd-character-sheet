@@ -76,7 +76,8 @@ what a reference spells: `{@itemProperty 2H|XPHB}`, and an item's `type` reads `
 Only one of the 26 properties carries a `name` at all, and it writes `special` — the
 lowercase word an item's line renders rather than a title — so reading `name` where it
 exists would key that one differently from the rest. The human label a type also carries
-stays in `json`, which is where a picker listing types reads it. `load/lookups.ts` states
+stays in `json`, where the sheet reads it to name an inventory row's type — `Adventuring
+Gear` for `G`, which every source at the pinned tag labels alike. `load/lookups.ts` states
 the rule once, as `qualifier` already does for a deity's pantheon.
 
 An `itemType` `_copy` names its parent by abbreviation too, which `copy.ts` needs no

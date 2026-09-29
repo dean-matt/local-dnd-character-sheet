@@ -6,6 +6,7 @@ import {
   homebrewItemRecordSchema,
   homebrewItemSchema,
   itemRecordSchema,
+  weaponTraitSchema,
 } from "./index.ts";
 
 const minimal = { name: "Sunblade", source: "Homebrew" };
@@ -120,5 +121,28 @@ describe("armorTraitSchema", () => {
     expect(armorTraitSchema.parse({ type: "M", ac: 3 })).toBeUndefined();
     expect(armorTraitSchema.parse({ type: "HA" })).toBeUndefined();
     expect(armorTraitSchema.parse({})).toBeUndefined();
+  });
+});
+
+describe("weaponTraitSchema", () => {
+  it("reads the category and spells out the damage type", () => {
+    expect(
+      weaponTraitSchema.parse({ weaponCategory: "martial", dmg1: "1d8", dmgType: "S" }),
+    ).toEqual({ category: "martial", damage: { dice: "1d8", type: "slashing" } });
+  });
+
+  it("keeps a code it does not know, and a die with no type", () => {
+    expect(weaponTraitSchema.parse({ dmg1: "1d6", dmgType: "Z" })).toEqual({
+      category: null,
+      damage: { dice: "1d6", type: "Z" },
+    });
+    expect(weaponTraitSchema.parse({ weaponCategory: "simple" })).toEqual({
+      category: "simple",
+      damage: null,
+    });
+  });
+
+  it("is undefined for an item that states neither", () => {
+    expect(weaponTraitSchema.parse({ type: "G" })).toBeUndefined();
   });
 });

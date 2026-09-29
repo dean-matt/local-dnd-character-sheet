@@ -4,9 +4,15 @@
  * for a homebrew one. A reference nothing answers stays in the list, marked unresolved,
  * for the reason `features.ts` gives.
  */
-import { type CharacterInventory, entriesSchema, type SheetItem } from "@dnd/catalog";
+import {
+  armorTraitSchema,
+  type CharacterInventory,
+  entriesSchema,
+  type SheetItem,
+  weaponTraitSchema,
+} from "@dnd/catalog";
 import { type CharacterDefinition, displayName, itemKey } from "@dnd/character";
-import { getItems } from "./content.ts";
+import { getItems, getItemTypeNames } from "./content.ts";
 import { getHomebrewItem, type HomebrewDb } from "./homebrew.ts";
 import { getExpandedItem } from "./item-variant.ts";
 
@@ -77,7 +83,21 @@ export function itemWeights(
   );
 }
 
-function sheetItem(entry: InventoryEntry, row: ItemFacts | undefined): SheetItem {
+const typeAbbreviation = (row: ItemFacts): string | undefined => {
+  const { type } = row.json;
+  return typeof type === "string" ? type.split("|")[0] || undefined : undefined;
+};
+
+const priceOf = (row: ItemFacts): number | null => {
+  const { value } = row.json;
+  return typeof value === "number" && value >= 0 ? value : null;
+};
+
+function sheetItem(
+  entry: InventoryEntry,
+  row: ItemFacts | undefined,
+  typeNames: ReadonlyMap<string, string>,
+): SheetItem {
   const { ref, variant, quantity, carried, equipped, attuned } = entry;
   const flags = { quantity, carried, equipped, attuned };
   if (!row) {
@@ -91,14 +111,19 @@ function sheetItem(entry: InventoryEntry, row: ItemFacts | undefined): SheetItem
   }
   const entries = entriesSchema.safeParse(row.json.entries);
   const source = row.json.source;
+  const abbreviation = typeAbbreviation(row);
   return {
     resolved: true,
     name: row.name,
     ...("homebrewId" in ref || typeof source !== "string" ? {} : { source }),
     ...flags,
+    type: abbreviation ? { abbreviation, name: typeNames.get(abbreviation) ?? null } : null,
     rarity: row.rarity,
     requiresAttunement: row.requiresAttunement,
     weight: weightOf(row),
+    value: priceOf(row),
+    weapon: weaponTraitSchema.safeParse(row.json).data ?? null,
+    armor: armorTraitSchema.safeParse(row.json).data ?? null,
     entries: entries.success ? entries.data : [],
   };
 }
@@ -109,5 +134,9 @@ export function resolveCharacterInventory(
   definition: CharacterDefinition,
 ): CharacterInventory {
   const rows = resolveItemRows(dataDir, homebrewDb, definition.inventory);
-  return { items: definition.inventory.map((entry, index) => sheetItem(entry, rows[index])) };
+  const abbreviations = new Set(rows.flatMap((row) => (row ? (typeAbbreviation(row) ?? []) : [])));
+  const typeNames = getItemTypeNames(dataDir, [...abbreviations]);
+  return {
+    items: definition.inventory.map((entry, index) => sheetItem(entry, rows[index], typeNames)),
+  };
 }

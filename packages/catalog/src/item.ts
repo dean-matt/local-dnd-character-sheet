@@ -3,7 +3,7 @@
  * the fields the content loader (`packages/content/src/load/items.ts`) and a renderer
  * read off an entry; everything else upstream carries — weight, value, damage dice, and
  * every field specific to one item `type` — passes through unparsed. `armorTraitSchema`
- * reads armor class off the same entry for a derived block.
+ * and `weaponTraitSchema` read armor class and damage off the same entry.
  *
  * Passthrough rather than strict, departing from `packages/character/src/character.ts`:
  * a character definition is read, edited field by field and written back whole, so an
@@ -85,6 +85,43 @@ export const armorTraitSchema = z
     const code = type?.split("|")[0] ?? "";
     if (!isArmorCode(code) || ac === undefined) return undefined;
     return { category: ARMOR_CATEGORIES[code], armorClass: ac + Number(bonusAc ?? 0) };
+  });
+
+/** Upstream's one-letter `dmgType` codes, spelled out. */
+export const DAMAGE_TYPES: Readonly<Record<string, string>> = {
+  A: "acid",
+  B: "bludgeoning",
+  C: "cold",
+  F: "fire",
+  I: "poison",
+  L: "lightning",
+  N: "necrotic",
+  O: "force",
+  P: "piercing",
+  R: "radiant",
+  S: "slashing",
+  T: "thunder",
+  Y: "psychic",
+};
+
+/**
+ * A weapon's category and printed damage, `undefined` for an item that states neither.
+ * `dice` is `dmg1` as printed: a magic weapon's `bonusWeapon` is an attack-time bonus,
+ * not part of the die. A code outside `DAMAGE_TYPES` passes through as written.
+ */
+export const weaponTraitSchema = z
+  .looseObject({
+    weaponCategory: z.enum(["simple", "martial"]).optional(),
+    dmg1: z.string().min(1).optional(),
+    dmgType: z.string().min(1).optional(),
+  })
+  .transform(({ weaponCategory, dmg1, dmgType }) => {
+    if (weaponCategory === undefined && dmg1 === undefined) return undefined;
+    const type = dmgType === undefined ? null : (DAMAGE_TYPES[dmgType] ?? dmgType);
+    return {
+      category: weaponCategory ?? null,
+      damage: dmg1 === undefined ? null : { dice: dmg1, type },
+    };
   });
 
 /**

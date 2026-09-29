@@ -756,6 +756,34 @@ export function listSkills(dataDir: string, edition: Edition): SkillRow[] {
   }
 }
 
+/**
+ * Each `itemType` abbreviation's label, over one connection. Keyed by abbreviation alone:
+ * every source the pinned tag writes a type under gives it the same label, so the first
+ * source is as good as any. A tag where two disagree needs the item's own `|SOURCE`
+ * suffix in the key.
+ */
+export function getItemTypeNames(
+  dataDir: string,
+  abbreviations: readonly string[],
+): Map<string, string> {
+  if (abbreviations.length === 0) return new Map();
+  const db = openContentDb(dataDir);
+  try {
+    const select = db.prepare<[string], { label: string | null }>(
+      `SELECT json_extract(json, '$.name') AS label FROM lookups
+       WHERE kind = 'itemType' AND name = ? ORDER BY source LIMIT 1`,
+    );
+    return new Map(
+      abbreviations.flatMap((abbreviation) => {
+        const label = select.get(abbreviation)?.label;
+        return typeof label === "string" && label ? [[abbreviation, label]] : [];
+      }),
+    );
+  } finally {
+    db.close();
+  }
+}
+
 export type CatalogMetaRow = { key: string; value: string };
 
 const UPSTREAM_TAG_KEY = "upstream_tag";
