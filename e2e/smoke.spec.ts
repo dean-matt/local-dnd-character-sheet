@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("the app loads and renders its heading", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("local-dnd-character-sheet");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Characters");
 });
 
 test("the api answers its health probe", async ({ request }) => {
