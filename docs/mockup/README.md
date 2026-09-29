@@ -31,7 +31,7 @@ widget, panel, or nav element:
 - Inventory: Currency, Weapons, Armor, Gear. A weapon's price on Weapons is a gold chip
   with a coin icon, read aloud as its cost. A versatile weapon's row has a 1h/2h grip
   toggle beside its Equip button, a gray pill track with the chosen grip on an
-  accent-red thumb; it picks the damage die the chip and formula show. 2h is
+  accent-red thumb; the toggle picks the damage die the chip and formula show. 2h is
   unavailable while that weapon and a shield are both equipped, and hovering or
   focusing it opens a popover saying why. The artboard's `shieldEquipped` tweak
   switches the shield.
