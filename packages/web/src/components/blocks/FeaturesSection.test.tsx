@@ -151,6 +151,15 @@ describe("FeaturesSection", () => {
     expect(modal).not.toHaveTextContent("{@dice");
   });
 
+  it("names a chosen feature's origin and option type in its modal", async () => {
+    renderSection();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Archery" }));
+    expect(screen.getByRole("dialog", { name: "Archery" })).toHaveTextContent(
+      "Optional feature • Fighting Style (Fighter)",
+    );
+  });
+
   it("resolves every feature's references in one request for the section", async () => {
     const fetchMock = stubFetchByUrl({
       "/api/characters/1/features": FEATURES,
