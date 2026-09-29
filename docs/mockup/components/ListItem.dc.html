@@ -16,7 +16,7 @@
 </style>
 </helmet>
 
-<div style="width: 380px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+<div style="width: 460px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
   <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">List item — the shared row shape for Weapons, Armor, Gear, Known Spells, and Features</div>
 
@@ -42,6 +42,12 @@
         <sc-if value="{{showChip2}}" hint-placeholder-val="{{true}}">
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">Slashing</span>
         </sc-if>
+        <sc-if value="{{showGrip}}" hint-placeholder-val="{{true}}">
+          <div role="group" aria-label="Longsword grip" style="display: flex; flex-shrink: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; overflow: hidden;">
+            <button aria-pressed="true" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border: none; background: {{accent}}; color: #ffffff;">One-handed</button>
+            <button aria-pressed="false" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border: none; border-left: 1px solid #dde1e6; background: #ffffff; color: #6b7280;">Two-handed</button>
+          </div>
+        </sc-if>
         <div style="flex-grow: 1;"></div>
         <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">15 gp</span>
       </div>
@@ -52,14 +58,15 @@
       Row 1: name (ellipsis), an optional hover-calc chip (see Popover for the tooltip
       itself), a flex spacer, then an optional pill and remove (&times;) together at the
       far right.<br>
-      Row 2: zero, one, or two left chips for the item's category, a flex spacer, then a
+      Row 2: zero, one, or two left chips for the item's category, an optional
+      one-handed/two-handed grip toggle for a versatile weapon, a flex spacer, then a
       right-aligned value or level.<br>
       Row 3: a truncated one-line description.
     </div>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"$preview":{"width":380,"height":340}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"showGrip":{"editor":"boolean","default":true},"$preview":{"width":460,"height":340}}'>
 class Component extends DCLogic {
   renderVals() {
     return {
@@ -67,7 +74,8 @@ class Component extends DCLogic {
       showCalc: this.props.showCalc ?? true,
       showAction: this.props.showAction ?? true,
       showChip: this.props.showChip ?? true,
-      showChip2: this.props.showChip2 ?? true
+      showChip2: this.props.showChip2 ?? true,
+      showGrip: this.props.showGrip ?? true
     };
   }
 }

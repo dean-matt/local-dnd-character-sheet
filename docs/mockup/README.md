@@ -28,7 +28,10 @@ widget, panel, or nav element:
   Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
   opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
   2024, switched by the artboard's Edition tweak.
-- Inventory: Currency, Weapons, Armor, Gear.
+- Inventory: Currency, Weapons, Armor, Gear. A versatile weapon's row on Weapons carries
+  a one-handed/two-handed grip toggle that picks the damage die its chip and formula
+  show. Two-handed is unavailable while the sample character holds a shield, which the
+  artboard's `shieldEquipped` tweak switches.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
