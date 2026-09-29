@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reference — Popover</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 360px; height: 240px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 14px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; align-self: flex-start;">Hover popover — shown open for review</div>
+    <div style="position: relative; padding-top: 4px;">
+      <button aria-label="DEX Modifier" onMouseEnter="{{showCalc}}" onMouseLeave="{{hideCalc}}" onFocus="{{showCalc}}" onBlur="{{hideCalc}}" aria-describedby="demo-calc" style="font-size: 13px; font-weight: 600; color: #ffffff; background: #c1272d; border: none; border-radius: 999px; padding: 4px 14px;">+4</button>
+      <sc-if value="{{open}}" hint-placeholder-val="{{true}}">
+        <div role="tooltip" id="demo-calc" style="position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; white-space: nowrap; pointer-events: none;">
+          <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">DEX Modifier</div>
+          <div style="font-size: 11px; color: #6b7280;">(18 &minus; 10) &divide; 2 = +4</div>
+        </div>
+      </sc-if>
+    </div>
+    <button onClick="{{toggle}}" style="padding: 6px 14px; border-radius: 4px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">{{toggleLabel}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":360,"height":240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { open: true };
+  }
+  renderVals() {
+    const open = this.state.open;
+    return {
+      open,
+      toggleLabel: open ? 'Hide' : 'Show',
+      toggle: () => this.setState({ open: !open }),
+      showCalc: () => this.setState({ open: true }),
+      hideCalc: () => this.setState({ open: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

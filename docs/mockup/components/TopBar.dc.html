@@ -17,14 +17,14 @@
 </style>
 </helmet>
 
-<div style="width: 1440px; height: 120px; box-sizing: border-box; padding: 24px; display: flex; align-items: flex-start; background: #f4f5f7;">
-  <div style="position: relative; width: 100%; height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 24px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 10px;">
+<div style="width: 1440px; height: 120px; display: flex; flex-direction: column; background: #f4f5f7;">
+  <div style="position: relative; width: 100%; height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 24px; background: #ffffff; border-bottom: 1px solid #dde1e6;">
     <div style="font-weight: 700; font-size: 18px; color: {{accent}}; flex-shrink: 0; margin-right: 14px;">Local D&amp;D</div>
 
-    <div style="position: relative; flex-shrink: 0;">
-      <button onClick="{{toggleCharacterMenu}}" aria-expanded="{{characterMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; border: none; background: {{characterMenuBg}}; font-size: 14px; font-weight: 600; color: #1f2430;">
+    <div style="position: relative; flex-shrink: 0; align-self: stretch; display: flex; align-items: center;">
+      <button onClick="{{toggleCharacterMenu}}" aria-expanded="{{characterMenuOpen}}" aria-current="page" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{characterMenuBg}}; font-size: 14px; font-weight: 700; color: {{accent}}; text-decoration: none;">
         Character
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transform: {{characterCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5" style="transform: {{characterCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <sc-if value="{{characterMenuOpen}}" hint-placeholder-val="{{false}}">
         <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 240px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 8px; z-index: 50;">
@@ -38,14 +38,14 @@
               </div>
             </button>
           </sc-for>
-          <button onClick="{{viewAllCharacters}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: #1f2430;">See all characters →</button>
-          <button onClick="{{newCharacter}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}};">+ New Character</button>
+          <a href="CharacterList.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: #1f2430; text-decoration: none;">See all characters →</a>
+          <a href="CreationIdentity.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}}; text-decoration: none;">+ New Character</a>
         </div>
       </sc-if>
     </div>
 
-    <div style="position: relative; flex-shrink: 0;">
-      <button onClick="{{toggleMechanicsMenu}}" aria-expanded="{{mechanicsMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; border: none; background: {{mechanicsMenuBg}}; font-size: 14px; font-weight: 600; color: #1f2430;">
+    <div style="position: relative; flex-shrink: 0; align-self: stretch; display: flex; align-items: center;">
+      <button onClick="{{toggleMechanicsMenu}}" aria-expanded="{{mechanicsMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{mechanicsMenuBg}}; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
         Mechanics
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transform: {{mechanicsCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -103,23 +103,10 @@
       </sc-if>
     </div>
 
-    <div style="position: relative; flex-shrink: 0; margin-left: auto;">
-      <button aria-expanded="{{settingsOpen}}" onClick="{{toggleSettings}}" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: {{settingsBg}}; font-size: 14px; font-weight: 600; color: #1f2430;">
-        Settings
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f2430" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
-      </button>
-      <sc-if value="{{settingsOpen}}" hint-placeholder-val="{{false}}">
-        <div style="position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 12px; z-index: 50; display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 13px; color: #1f2430;">Dark mode</span>
-            <button aria-label="{{darkModeLabel}}" onClick="{{toggleDarkMode}}" style="width: 38px; height: 22px; border-radius: 999px; border: 1px solid #dde1e6; background: {{darkTrackBg}}; position: relative; padding: 0;">
-              <span style="position: absolute; top: 2px; left: {{darkThumbLeft}}; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; transition: left 0.15s;"></span>
-            </button>
-          </div>
-          <button onClick="{{openFullSettings}}" style="text-align: left; padding: 0; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}};">All settings…</button>
-        </div>
-      </sc-if>
-    </div>
+    <a href="SettingsSidebar.dc.html" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+      Settings
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+    </a>
   </div>
 </div>
 </x-dc>
@@ -127,7 +114,7 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { query: '', isDark: false, openMenu: null };
+    this.state = { query: '', openMenu: null };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -153,7 +140,6 @@ class Component extends DCLogic {
 
     const characterMenuOpen = openMenu === 'character';
     const mechanicsMenuOpen = openMenu === 'mechanics';
-    const settingsOpen = openMenu === 'settings';
 
     const characters = CHARACTERS.map((c) => ({
       id: c.id,
@@ -171,8 +157,6 @@ class Component extends DCLogic {
     const charResults = hasQuery ? CHARACTERS.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => this.setState({ query: '' }) })) : [];
     const compendiumResults = hasQuery ? COMPENDIUM.filter((c) => c.name.toLowerCase().indexOf(q) !== -1) : [];
 
-    const isDark = this.state.isDark;
-
     return {
       accent,
       characterMenuOpen,
@@ -180,8 +164,6 @@ class Component extends DCLogic {
       characterCaretRotation: characterMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
       toggleCharacterMenu: () => setMenu('character'),
       characters,
-      viewAllCharacters: () => this.setState({ openMenu: null }),
-      newCharacter: () => this.setState({ openMenu: null }),
 
       mechanicsMenuOpen,
       mechanicsMenuBg: mechanicsMenuOpen ? '#eef0f3' : 'none',
@@ -198,17 +180,7 @@ class Component extends DCLogic {
       charResults,
       hasCompendiumResults: compendiumResults.length > 0,
       compendiumResults,
-      noResults: hasQuery && charResults.length === 0 && compendiumResults.length === 0,
-
-      settingsOpen,
-      settingsBg: settingsOpen ? '#eef0f3' : '#ffffff',
-      toggleSettings: () => setMenu('settings'),
-      isDark,
-      darkModeLabel: isDark ? 'Switch to light mode' : 'Switch to dark mode',
-      toggleDarkMode: () => this.setState({ isDark: !isDark }),
-      darkTrackBg: isDark ? accent : '#dde1e6',
-      darkThumbLeft: isDark ? '18px' : '2px',
-      openFullSettings: () => this.setState({ openMenu: null })
+      noResults: hasQuery && charResults.length === 0 && compendiumResults.length === 0
     };
   }
 }

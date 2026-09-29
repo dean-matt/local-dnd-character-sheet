@@ -24,8 +24,10 @@ together. It is a fixed 1440px with no stretch behavior, so it fixes the arrange
 not how each piece grows; `packages/web/LAYOUT.md` says that. Every other file matches a
 widget, panel, or nav element:
 
-- Overview: the eight widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status,
-  Defenses).
+- Stats: the eight widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status,
+  Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
+  opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
+  2024, switched by the artboard's Edition tweak.
 - Inventory: Currency, Weapons, Armor, Gear.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
@@ -39,7 +41,11 @@ widget, panel, or nav element:
   and new spells for a class that gains them, all gating Apply until every open choice
   the level actually offers is made.
 - Page chrome: Sidebar (the tab rail), Top Bar Navigation (Character menu, Mechanics
-  menu, search, Settings), Character Header, Rolls Panel. Manage Tabs is the modal
+  menu, search, and a Settings link), Character Header, Rolls Panel. The top bar marks
+  the section you are in by its label alone — accent-colored and bold, with no fill or
+  underline — and an open menu takes a gray fill instead. Character Header carries the
+  character's edition as a `2014` or `2024` chip beside the name, the same chip as the
+  Character List tile. Manage Tabs is the modal
   Sidebar's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
   only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
@@ -53,17 +59,18 @@ widget, panel, or nav element:
   the character list's avatar widens past #206's — #311 and #312 are the new issues that
   settle those two, same as #310 settled the character list's own widening.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
-  — sized to the same 1440px width as Layout and Top Bar Navigation, each with its own
-  slim header (brand mark, and a Cancel link back to the list on every creation step)
-  rather than the character sheet's Sidebar and Character Header. Each creation step's
-  own card fills most of that page (1200px, two columns) rather than reading as a
-  narrow dialog. Top Bar Navigation's Character menu is how both are reached: "See all
-  characters →" opens the list, and "+ New Character" opens creation — a menu that
-  jumps straight to one character is a different action from either.
+  — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
+  bar with Character marked active. Neither boxes its content in a panel: it sits on the
+  page background, as the character sheet's does. Each creation step puts the five steps
+  in a left rail shaped like Sidebar — done, current, and not-yet-reached, with Cancel
+  at its foot — and its own two-column content beside it. Top Bar Navigation's Character
+  menu is how both are reached: "See all characters →" opens the list, and "+ New
+  Character" opens creation — a menu that jumps straight to one character is a different
+  action from either.
 - Character List is the entry point before any of the above — every character's name,
   level, edition, race and class summary (`High Elf Ranger`, or `Fighter 3 / Wizard 2`
   for a multiclass character), and an avatar (a colored initial circle when a character
-  has none), an empty state offering Import or New Character, forward design for #206.
+  has none), a page header offering Import and New Character, forward design for #206.
   The avatar widens past #206's own "out of scope" line the same way creation's Class
   step widens past #235's — a deliberate call, not an oversight the issue's text missed.
   Race and class needed a real schema answer rather than just a mockup call: #310 adds
@@ -71,7 +78,7 @@ widget, panel, or nav element:
   `edition`, and `level`, so the list still never parses a character's `definition` blob
   per row.
   Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
-  Equipment, Spells) are the wizard "+ New Character" opens: a step indicator, Back/Next
+  Equipment, Spells) are the wizard "+ New Character" opens: the step rail, Back/Next
   (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
   race with subraces blocks progress until one is picked, a proficiency granted twice is
   flagged rather than silently dropped, point buy shows an overspend rather than
@@ -113,7 +120,7 @@ widget, panel, or nav element:
   and shows the widget canvas a user-created tab gets: an Edit button gates
   drag-to-move and drag-a-corner-to-resize (each card previews as a title over a few
   skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
-  the picker. Built-in tabs (Overview, Inventory, Spells, Features, Identity, Level,
+  the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
   Alignment, Backstory, Notes) never get this — their widgets are fixed.
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
@@ -141,8 +148,9 @@ what the widget shows.
 Hovering a calculated value (an ability modifier, a save or skill bonus, AC, initiative,
 max HP, an attack bonus) opens a popover with its formula; clicking a widget's item
 (an ability, a skill, a weapon, a spell, a feature, and so on) opens a modal with that
-item's fuller detail. Both share one card style: white background, `#dde1e6` border, a
-bold label line over a muted body line.
+item's fuller detail. Both are white with a bold label line over a muted body line; the
+popover carries a `#dde1e6` border, and the modal drops it for a heavier shadow over a
+dimmed page.
 
 Simplifications specific to these widgets:
 - AC is a flat editable stat, not derived from equipped armor — that computation belongs
