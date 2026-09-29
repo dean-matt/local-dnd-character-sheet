@@ -52,13 +52,19 @@ interface Rules {
   source: string;
 }
 
-/** An ability and a save have no row of their own, so they read the 2024 rule that covers them. */
+/**
+ * An ability and a save have no row of their own, so they read the 2024 rule that covers
+ * them. The 2014 rules print no such row, so a classic character gets no rules text here.
+ */
 const ABILITY_RULES: Rules = {
   tag: "variantrule",
   name: "Ability Score and Modifier",
   source: "XPHB",
 };
 const SAVE_RULES: Rules = { tag: "variantrule", name: "Saving Throw", source: "XPHB" };
+
+const editionRules = (definition: CharacterDefinition, rules: Rules) =>
+  definition.edition === "one" ? rules : undefined;
 
 /** The catalog's rules text for one row, or nothing where the catalog has none. */
 function CatalogRules({ tag, name, source }: Rules) {
@@ -103,7 +109,7 @@ function DetailName({
   title: string;
   meta?: string;
   value: Derived<number>;
-  rules: Rules;
+  rules: Rules | undefined;
   className?: string;
   children: ReactNode;
 }) {
@@ -114,7 +120,7 @@ function DetailName({
       detail={
         <>
           <ValueDetail value={value} />
-          <CatalogRules {...rules} />
+          {rules && <CatalogRules {...rules} />}
         </>
       }
       className={className}
@@ -192,7 +198,7 @@ function ProficiencyRow({
   ability?: Ability;
   modifier: Derived<number>;
   title: string;
-  rules: Rules;
+  rules: Rules | undefined;
 }) {
   return (
     <li className="flex items-center gap-2 py-0.5 text-body">
@@ -257,7 +263,7 @@ function Tile({
   label: string;
   name: string;
   labelClassName: string;
-  detail?: { title: string; meta: string; value: Derived<number>; rules: Rules };
+  detail?: { title: string; meta: string; value: Derived<number>; rules: Rules | undefined };
   children: ReactNode;
 }) {
   const heading = (
@@ -305,7 +311,7 @@ function AbilityScores({
               title: ABILITY_LABEL[ability],
               meta: `Score ${definition.abilityScores[ability]}`,
               value: derived.abilityModifiers[ability],
-              rules: ABILITY_RULES,
+              rules: editionRules(definition, ABILITY_RULES),
             }}
           >
             <span>{definition.abilityScores[ability]}</span>
@@ -421,7 +427,7 @@ export function AbilitiesSection({
                 label={ability.toUpperCase()}
                 modifier={derived.savingThrows[ability]}
                 title={`${ABILITY_LABEL[ability]} saving throw`}
-                rules={SAVE_RULES}
+                rules={editionRules(definition, SAVE_RULES)}
               />
             ))}
           </ul>

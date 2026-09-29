@@ -295,6 +295,24 @@ describe("AbilitiesSection", () => {
       });
     });
 
+    it("leaves a classic character's ability and save without rules text, and keeps its skill's", () => {
+      const fetchMock = stubRules(["Roll to resist."]);
+      const record = warlock();
+      const classic = {
+        ...record,
+        definition: { ...record.definition, edition: "classic" as const },
+      };
+      renderWithClient(<AbilitiesSection character={classic} derived={derivedFor(classic)} />);
+
+      fireEvent.click(nameButton("Saving Throws", "Charisma"));
+      expect(screen.getByRole("dialog", { name: "Charisma saving throw" })).toBeVisible();
+      expect(fetchMock).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      fireEvent.click(nameButton("Skills", "Stealth"));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it("keeps the formula popover and the modal on separate controls, each keyboard reachable", async () => {
       stubRules([]);
       const record = warlock();
