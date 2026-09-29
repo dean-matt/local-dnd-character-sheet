@@ -43,7 +43,7 @@ function ChevronDown({ rotated }: { rotated: boolean }) {
 
 /**
  * Application top bar: the "Local D&D" wordmark, a Character switcher menu, and a
- * Settings button that opens the Settings page.
+ * Settings link to the Settings page.
  */
 export function TopBar() {
   const characters = useCharacters();
