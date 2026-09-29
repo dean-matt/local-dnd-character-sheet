@@ -39,9 +39,9 @@ widget, panel, or nav element:
   ("Equipped, Spear") with `aria-pressed` carrying the state. Stowed is a gray backpack
   on a white square, the same for every item type; equipped is the item type's icon in
   white on the accent — a sword for a weapon, a breastplate for armor, a shield for a
-  shield, a hand for other gear. An item the character is not proficient with shows a grayed backpack,
-  `aria-disabled`, with a popover naming the missing proficiency. The icons are inline
-  outlines adapted from Lucide (ISC). Weapons and List Item draw this today; Armor and
+  shield, a hand for other gear. An item the character is not proficient with shows a
+  grayed backpack, `aria-disabled`, with a popover naming the missing proficiency. The
+  icons are inline outlines adapted from Lucide (ISC). Weapons and List Item draw this today; Armor and
   Gear still carry the text pill.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
