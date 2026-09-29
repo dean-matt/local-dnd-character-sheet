@@ -90,7 +90,22 @@
                 </sc-if>
               </div>
             </sc-if>
-            <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="position: relative; padding: 2px 8px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: 0; right: 0;"></span>{{item.equipLabel}}</button>
+            <div style="position: relative; flex-shrink: 0;">
+              <button aria-label="{{item.equipAria}}" aria-pressed="{{item.equipPressed}}" aria-disabled="{{item.equipDisabled}}" aria-describedby="{{item.equipTipId}}" onClick="{{item.toggleEquip}}" onMouseEnter="{{item.showEquipTip}}" onMouseLeave="{{item.hideEquipTip}}" onFocus="{{item.showEquipTip}}" onBlur="{{item.hideEquipTip}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; cursor: {{item.equipCursor}};"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span>
+                <sc-if value="{{item.equipped}}" hint-placeholder-val="{{false}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" y1="19" x2="19" y2="13"></line><line x1="16" y1="16" x2="20" y2="20"></line><line x1="19" y1="21" x2="21" y2="19"></line></svg>
+                </sc-if>
+                <sc-if value="{{item.stowed}}" hint-placeholder-val="{{true}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><path d="M8 10h8"></path><path d="M8 18h8"></path><path d="M8 22v-6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+                </sc-if>
+              </button>
+              <div role="tooltip" id="{{item.equipTipId}}" style="display: {{item.equipTipDisplay}}; position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; width: max-content; max-width: 200px; white-space: normal; pointer-events: none;">
+                <div style="font-size: 11px; font-weight: 700;">{{item.equipTipLabel}}</div>
+                <sc-if value="{{item.equipBlocked}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">{{item.equipTipText}}</div>
+                </sc-if>
+              </div>
+            </div>
           </div>
         </div>
       </sc-for>
@@ -146,6 +161,7 @@ class Component extends DCLogic {
       hoverKey: null,
       hoverGripKey: null,
       hoverDmgKey: null,
+      hoverEquipKey: null,
       modalItem: null,
       filterOpen: false,
       weaponFilters: { classes: [], damageTypes: [], equipped: [], priceMin: null, priceMax: null }
@@ -192,9 +208,9 @@ class Component extends DCLogic {
       const dmgCalcText = (versatile ? (twoHanded ? 'Two-handed ' : 'One-handed ') : '') + die + ' + ' + item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + dice;
       const dmgFull = dice + ' ' + item.damageType;
       const setGrip = (grip) => this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, grip } : x)) });
-      let equipLabel = 'Equip', equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTitle = 'Click to equip';
-      if (!allowed) { equipLabel = "Can't equip"; equipTitle = 'Requires a matching proficiency'; }
-      else if (equipped) { equipLabel = 'Equipped'; equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTitle = 'Click to unequip'; }
+      let equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTipLabel = 'Stowed, click to equip';
+      if (!allowed) { equipColor = '#9aa1ab'; equipTipLabel = "Can't equip"; }
+      else if (equipped) { equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTipLabel = 'Equipped, click to stow'; }
       return {
         label: item.label,
         value: item.value,
@@ -237,8 +253,19 @@ class Component extends DCLogic {
         dmgCalcText,
         showDmgCalc: () => this.setState({ hoverDmgKey: idx }),
         hideDmgCalc: () => this.setState({ hoverDmgKey: null }),
-        equipLabel, equipBorder, equipBg, equipColor, equipTitle,
-        equipAria: (equipped ? 'Unequip ' : 'Equip ') + item.label,
+        equipped,
+        stowed: !equipped,
+        equipBlocked: !allowed,
+        equipBorder, equipBg, equipColor, equipTipLabel,
+        equipTipText: 'Requires ' + item.weaponClass + ' weapons proficiency.',
+        equipAria: 'Equipped, ' + item.label,
+        equipPressed: equipped ? 'true' : 'false',
+        equipDisabled: allowed ? 'false' : 'true',
+        equipCursor: allowed ? 'pointer' : 'not-allowed',
+        equipTipId: 'wpn-equip-' + idx,
+        equipTipDisplay: this.state.hoverEquipKey === idx ? 'block' : 'none',
+        showEquipTip: () => this.setState({ hoverEquipKey: idx }),
+        hideEquipTip: () => this.setState({ hoverEquipKey: null }),
         toggleEquip: () => {
           if (!allowed) return;
           const blocksGrip = !item.equipped && shieldEquipped && versatile;
