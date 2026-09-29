@@ -4,8 +4,8 @@ import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 
 /**
- * Gear icon for the Settings button — svg inline so it can inherit stroke from the button's
- * color, keeping the icon consistent with the button label without a separate token.
+ * Gear icon for the Settings link — svg inline so it can inherit stroke from the link's
+ * color, keeping the icon consistent with the link label without a separate token.
  */
 function GearIcon() {
   return (
@@ -50,7 +50,6 @@ export function TopBar() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close the menu when focus leaves the top bar or when Escape is pressed.
   useEffect(() => {
     if (!open) return;
     const onFocusIn = (e: FocusEvent) => {
