@@ -4,9 +4,10 @@ import {
   deriveCharacter,
   entryKey,
 } from "@dnd/character";
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../test/records.ts";
+import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
@@ -72,8 +73,27 @@ const card = (name: string) => within(screen.getByRole("region", { name }));
 const tile = (region: string, name: string) =>
   card(region).getAllByText(name)[0]?.closest("div") as HTMLElement;
 
+/** The button that opens a row's terms, which follows the one that opens its detail. */
 const rowButton = (region: string, name: string) =>
-  within(card(region).getByText(name).closest("li") as HTMLElement).getByRole("button");
+  within(card(region).getByText(name).closest("li") as HTMLElement)
+    .getAllByRole("button")
+    .at(-1) as HTMLElement;
+
+const nameButton = (region: string, name: string) =>
+  within(card(region).getByText(name).closest("li") as HTMLElement).getAllByRole(
+    "button",
+  )[0] as HTMLElement;
+
+function stubRules(entries: unknown[]) {
+  const fetchMock = vi.fn(
+    async (_url: RequestInfo | URL, _init?: RequestInit) =>
+      new Response(JSON.stringify({ refs: [{ name: "x", source: "XPHB", entries }] })),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("AbilitiesSection", () => {
   it("degrades until both the character and its derived block have loaded", () => {
@@ -235,5 +255,88 @@ describe("AbilitiesSection", () => {
   it("renders every overridable value read-only", () => {
     renderSection();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  describe("detail modal", () => {
+    it("opens a skill's terms and its catalog text, asking for the skill by its own source", async () => {
+      const fetchMock = stubRules(["Stealth covers hiding."]);
+      const record = warlock();
+      renderWithClient(<AbilitiesSection character={record} derived={derivedFor(record)} />);
+
+      fireEvent.click(nameButton("Skills", "Stealth"));
+
+      const modal = within(screen.getByRole("dialog", { name: "Stealth" }));
+      expect(modal.getByText("Expertise")).toBeVisible();
+      expect(modal.getByText("+7")).toBeVisible();
+      expect(await modal.findByText("Stealth covers hiding.")).toBeVisible();
+      const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+      expect(body.refs).toEqual([{ tag: "skill", name: "Stealth", source: "XPHB" }]);
+    });
+
+    it("opens a save from its name and an ability from its label", async () => {
+      const fetchMock = stubRules(["Roll to resist."]);
+      const record = warlock();
+      renderWithClient(<AbilitiesSection character={record} derived={derivedFor(record)} />);
+
+      fireEvent.click(nameButton("Saving Throws", "Charisma"));
+      expect(await screen.findByText("Roll to resist.")).toBeVisible();
+      expect(screen.getByRole("dialog", { name: "Charisma saving throw" })).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      fireEvent.click(within(tile("Ability Scores", "Strength")).getByRole("button"));
+      expect(screen.getByRole("dialog", { name: "Strength" })).toHaveTextContent("Score 8");
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const asked = fetchMock.mock.calls.map((call) => JSON.parse(String(call[1]?.body)).refs[0]);
+      expect(asked).toContainEqual({ tag: "variantrule", name: "Saving Throw", source: "XPHB" });
+      expect(asked).toContainEqual({
+        tag: "variantrule",
+        name: "Ability Score and Modifier",
+        source: "XPHB",
+      });
+    });
+
+    it("leaves a classic character's ability and save without rules text, and keeps its skill's", () => {
+      const fetchMock = stubRules(["Roll to resist."]);
+      const record = warlock();
+      const classic = {
+        ...record,
+        definition: { ...record.definition, edition: "classic" as const },
+      };
+      renderWithClient(<AbilitiesSection character={classic} derived={derivedFor(classic)} />);
+
+      fireEvent.click(nameButton("Saving Throws", "Charisma"));
+      expect(screen.getByRole("dialog", { name: "Charisma saving throw" })).toBeVisible();
+      expect(fetchMock).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      fireEvent.click(nameButton("Skills", "Stealth"));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the formula popover and the modal on separate controls, each keyboard reachable", async () => {
+      stubRules([]);
+      const record = warlock();
+      renderWithClient(<AbilitiesSection character={record} derived={derivedFor(record)} />);
+
+      expect(nameButton("Skills", "Stealth")).not.toBe(rowButton("Skills", "Stealth"));
+
+      rowButton("Skills", "Stealth").focus();
+      expect(await screen.findByRole("group", { name: "Stealth check breakdown" })).toBeVisible();
+
+      fireEvent.click(nameButton("Skills", "Stealth"));
+      expect(screen.getByRole("dialog", { name: "Stealth" })).toBeVisible();
+    });
+
+    it("returns focus to the name when the modal closes", async () => {
+      stubRules([]);
+      const record = warlock();
+      renderWithClient(<AbilitiesSection character={record} derived={derivedFor(record)} />);
+
+      const name = nameButton("Skills", "Arcana");
+      fireEvent.click(name);
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      await waitFor(() => expect(nameButton("Skills", "Arcana")).toHaveFocus());
+    });
   });
 });

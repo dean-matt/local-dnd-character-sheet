@@ -1,7 +1,8 @@
 /**
  * The numbers a player reads constantly. Every number comes off the derived block; the
  * definition supplies only what a player chose — the scores and which saves and skills
- * they are proficient in. A value with terms opens them in a popover.
+ * they are proficient in. A value with terms opens them in a popover; an ability, a save
+ * or a skill opens its terms and the catalog's rules text in a modal.
  */
 import {
   ABILITIES,
@@ -14,11 +15,14 @@ import {
   derivedValue,
   refKey,
 } from "@dnd/character";
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
+import { useResolvedRefs } from "../../hooks/useResolvedRefs.ts";
 import { EmptyState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
+import { DetailTrigger } from "../DetailTrigger.tsx";
 import { Field } from "../Field.tsx";
 import { Popover } from "../Popover.tsx";
+import { RulesEntries } from "../RulesText.tsx";
 import { TermList } from "../TermList.tsx";
 
 type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
@@ -40,6 +44,91 @@ const PROFICIENCY_MARK: Record<ProficiencyLevel, { text: string; className: stri
 };
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
+
+/** The catalog row a modal reads its rules text from. */
+interface Rules {
+  tag: string;
+  name: string;
+  source: string;
+}
+
+/**
+ * An ability and a save have no row of their own, so they read the 2024 rule that covers
+ * them. The 2014 rules print no such row, so a classic character gets no rules text here.
+ */
+const ABILITY_RULES: Rules = {
+  tag: "variantrule",
+  name: "Ability Score and Modifier",
+  source: "XPHB",
+};
+const SAVE_RULES: Rules = { tag: "variantrule", name: "Saving Throw", source: "XPHB" };
+
+const editionRules = (definition: CharacterDefinition, rules: Rules) =>
+  definition.edition === "one" ? rules : undefined;
+
+/** The catalog's rules text for one row, or nothing where the catalog has none. */
+function CatalogRules({ tag, name, source }: Rules) {
+  const refs = useMemo(() => [{ tag, name, source }], [tag, name, source]);
+  const entries = useResolvedRefs(refs).data?.[0]?.entries;
+  return entries && entries.length > 0 ? <RulesEntries entries={entries} /> : null;
+}
+
+/** A value's current total and the terms it is built from. */
+function ValueDetail({
+  value,
+  format = signed,
+}: {
+  value: Derived<number>;
+  format?: (n: number) => string;
+}) {
+  const terms = value.terms ?? [];
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="font-semibold">
+        {format(derivedValue(value))}
+        {value.manual !== null && (
+          <span className="ml-1 font-normal text-muted">
+            (overridden from {format(value.computed)})
+          </span>
+        )}
+      </p>
+      {terms.length > 0 && <TermList terms={terms} />}
+    </div>
+  );
+}
+
+/** A name that opens the value's terms above the catalog's rules text. */
+function DetailName({
+  title,
+  meta,
+  value,
+  rules,
+  className,
+  children,
+}: {
+  title: string;
+  meta?: string;
+  value: Derived<number>;
+  rules: Rules | undefined;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <DetailTrigger
+      title={title}
+      meta={meta}
+      detail={
+        <>
+          <ValueDetail value={value} />
+          {rules && <CatalogRules {...rules} />}
+        </>
+      }
+      className={className}
+    >
+      {children}
+    </DetailTrigger>
+  );
+}
 
 /** A value the rules leave unset, shown as a dash and spoken as "none" rather than as zero. */
 function Absent() {
@@ -100,25 +189,37 @@ function ProficiencyRow({
   label,
   ability,
   modifier,
+  title,
+  rules,
 }: {
   level: ProficiencyLevel;
   name: string;
   label?: string;
   ability?: Ability;
   modifier: Derived<number>;
+  title: string;
+  rules: Rules | undefined;
 }) {
   return (
     <li className="flex items-center gap-2 py-0.5 text-body">
       <Ring level={level} />
       <span className="flex-1">
-        {label ? (
-          <>
-            <span aria-hidden="true">{label}</span>
-            <span className="sr-only">{name}</span>
-          </>
-        ) : (
-          name
-        )}
+        <DetailName
+          title={title}
+          meta={PROFICIENCY_MARK[level].text}
+          value={modifier}
+          rules={rules}
+          className="hover:underline"
+        >
+          {label ? (
+            <>
+              <span aria-hidden="true">{label}</span>
+              <span className="sr-only">{name}</span>
+            </>
+          ) : (
+            name
+          )}
+        </DetailName>
         {level !== "none" && (
           <span className="sr-only">, {PROFICIENCY_MARK[level].text.toLowerCase()}</span>
         )}
@@ -156,18 +257,31 @@ function Tile({
   label,
   name,
   labelClassName,
+  detail,
   children,
 }: {
   label: string;
   name: string;
   labelClassName: string;
+  detail?: { title: string; meta: string; value: Derived<number>; rules: Rules | undefined };
   children: ReactNode;
 }) {
+  const heading = (
+    <>
+      <span aria-hidden="true">{label}</span>
+      <span className="sr-only">{name}</span>
+    </>
+  );
   return (
     <div className="flex flex-col items-center gap-0.5 rounded-control bg-subtle px-1 py-2">
       <dt className={`font-semibold text-muted uppercase ${labelClassName}`}>
-        <span aria-hidden="true">{label}</span>
-        <span className="sr-only">{name}</span>
+        {detail ? (
+          <DetailName {...detail} className="uppercase hover:underline">
+            {heading}
+          </DetailName>
+        ) : (
+          heading
+        )}
       </dt>
       <dd className="flex flex-col items-center font-bold text-number">{children}</dd>
     </div>
@@ -193,6 +307,12 @@ function AbilityScores({
             label={ability}
             name={ABILITY_LABEL[ability]}
             labelClassName={ABILITY_LABEL_CLASS}
+            detail={{
+              title: ABILITY_LABEL[ability],
+              meta: `Score ${definition.abilityScores[ability]}`,
+              value: derived.abilityModifiers[ability],
+              rules: editionRules(definition, ABILITY_RULES),
+            }}
           >
             <span>{definition.abilityScores[ability]}</span>
             <span className="sr-only">, </span>
@@ -306,6 +426,8 @@ export function AbilitiesSection({
                 name={ABILITY_LABEL[ability]}
                 label={ability.toUpperCase()}
                 modifier={derived.savingThrows[ability]}
+                title={`${ABILITY_LABEL[ability]} saving throw`}
+                rules={editionRules(definition, SAVE_RULES)}
               />
             ))}
           </ul>
@@ -319,6 +441,8 @@ export function AbilitiesSection({
                 name={skill.ref.name}
                 ability={skill.ability}
                 modifier={skill.modifier}
+                title={skill.ref.name}
+                rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
               />
             ))}
           </ul>
