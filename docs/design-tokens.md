@@ -78,9 +78,7 @@ holds every pair in both themes and fails a repalette that regresses one:
   AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
-
-The loading spinner draws its turning arc in `color-muted` on `color-surface`, so the muted
-pair covers it.
+- The loading spinner's `color-muted` arc on its `color-border` track: 3:1
 
 ## Motion
 
@@ -104,9 +102,8 @@ spinner holds still.
 ## Worked example
 
 `packages/web/src/states.tsx` renders its loading, error and empty cards against these
-tokens — surface, border, `radius-card` and `text-row`, and a muted spinner in place of
-the loading text — and every route reuses them
-rather than inventing its own. The next view with a number to show is the first to reach
+tokens — surface, border, `radius-card` and `text-row` — and every route reuses them
+rather than inventing its own. Its loading card draws a muted spinner in place of the text. The next view with a number to show is the first to reach
 for `text-number`.
 
 ## Print
