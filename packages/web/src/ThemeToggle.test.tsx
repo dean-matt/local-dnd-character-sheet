@@ -33,4 +33,15 @@ describe("ThemeToggle", () => {
     expect(localStorage.getItem("theme")).toBe("dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
+
+  it("describes what the chosen option does", () => {
+    render(<ThemeToggle />);
+    const group = screen.getByRole("group", { name: "Theme" });
+
+    expect(group).toHaveAccessibleDescription("Follows your device’s light/dark setting.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Light" }));
+
+    expect(group).toHaveAccessibleDescription("Overrides your device setting.");
+  });
 });

@@ -8,6 +8,7 @@ import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout.tsx";
+import { DisplaySettings, SettingsLayout } from "./routes/Settings.tsx";
 
 /** Adds the default content padding for routes that do not manage their own layout. */
 function ContentLayout() {
@@ -40,6 +41,11 @@ export const routeConfig: RouteObject[] = [
           { index: true, element: <CharacterRedirect /> },
           { path: "p/:slug", element: <CharacterPage /> },
         ],
+      },
+      {
+        path: "settings",
+        element: <SettingsLayout />,
+        children: [{ index: true, element: <DisplaySettings /> }],
       },
     ],
   },

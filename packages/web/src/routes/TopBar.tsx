@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
-import { ThemeToggle } from "../ThemeToggle.tsx";
 
 /**
  * Gear icon for the Settings button — svg inline so it can inherit stroke from the button's
@@ -42,28 +41,25 @@ function ChevronDown({ rotated }: { rotated: boolean }) {
   );
 }
 
-type Menu = "character" | "settings" | null;
-
 /**
  * Application top bar: the "Local D&D" wordmark, a Character switcher menu, and a
- * Settings button with the theme control.
+ * Settings button that opens the Settings page.
  */
 export function TopBar() {
   const characters = useCharacters();
-  const [open, setOpen] = useState<Menu>(null);
+  const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const toggle = (menu: Menu) => setOpen((prev) => (prev === menu ? null : menu));
 
-  // Close the open menu when focus leaves the top bar or when Escape is pressed.
+  // Close the menu when focus leaves the top bar or when Escape is pressed.
   useEffect(() => {
     if (!open) return;
     const onFocusIn = (e: FocusEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node | null)) {
-        setOpen(null);
+        setOpen(false);
       }
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(null);
+      if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("focusin", onFocusIn);
     document.addEventListener("keydown", onKeyDown);
@@ -84,22 +80,22 @@ export function TopBar() {
       <div className="relative shrink-0">
         <button
           type="button"
-          aria-expanded={open === "character"}
+          aria-expanded={open}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setOpen(null);
+            if (e.key === "Escape") setOpen(false);
           }}
-          onClick={() => toggle("character")}
+          onClick={() => setOpen((prev) => !prev)}
           className="flex items-center gap-1.5 rounded-control border-0 bg-transparent px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
         >
           Character
-          <ChevronDown rotated={open === "character"} />
+          <ChevronDown rotated={open} />
         </button>
 
-        {open === "character" && (
+        {open && (
           <>
             {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(null)} />
+            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
             <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-card border border-border bg-surface p-2 shadow-popover">
               <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted">
                 Your Characters
@@ -108,7 +104,7 @@ export function TopBar() {
                 <Link
                   key={c.id}
                   to={`/characters/${c.id}`}
-                  onClick={() => setOpen(null)}
+                  onClick={() => setOpen(false)}
                   className="flex items-center gap-2.5 rounded-control px-2.5 py-2 text-ink hover:bg-subtle"
                 >
                   <span
@@ -128,7 +124,7 @@ export function TopBar() {
               ))}
               <Link
                 to="/"
-                onClick={() => setOpen(null)}
+                onClick={() => setOpen(false)}
                 className="mt-1 block rounded-control border-t border-border px-2.5 py-2 text-sm font-semibold text-ink hover:bg-subtle"
               >
                 See all characters →
@@ -138,32 +134,13 @@ export function TopBar() {
         )}
       </div>
 
-      {/* Settings */}
-      <div className="relative ml-auto shrink-0">
-        <button
-          type="button"
-          aria-expanded={open === "settings"}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOpen(null);
-          }}
-          onClick={() => toggle("settings")}
-          className="flex items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
-        >
-          Settings
-          <GearIcon />
-        </button>
-
-        {open === "settings" && (
-          <>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(null)} />
-            <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-card border border-border bg-surface p-3 shadow-popover">
-              <ThemeToggle />
-            </div>
-          </>
-        )}
-      </div>
+      <Link
+        to="/settings"
+        className="ml-auto flex shrink-0 items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
+      >
+        Settings
+        <GearIcon />
+      </Link>
     </div>
   );
 }

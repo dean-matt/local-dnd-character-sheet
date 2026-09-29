@@ -8,7 +8,7 @@ import { useCharacter } from "../hooks/useCharacters.ts";
 import { ErrorState } from "../states.tsx";
 import { CharacterHeader, PrintTitle } from "./CharacterHeader.tsx";
 import { ManagePages } from "./ManagePages.tsx";
-import { Sidebar } from "./Sidebar.tsx";
+import { CharacterSidebar } from "./Sidebar.tsx";
 
 export function CharacterLayout() {
   const { id = "" } = useParams();
@@ -29,7 +29,7 @@ export function CharacterLayout() {
     <>
       <div className="flex min-h-[calc(100vh-var(--spacing-topbar))]">
         <aside className="sticky top-topbar h-[calc(100vh-var(--spacing-topbar))] shrink-0 self-start print:hidden">
-          <Sidebar
+          <CharacterSidebar
             characterId={id}
             pages={pages}
             onManage={openManage}
