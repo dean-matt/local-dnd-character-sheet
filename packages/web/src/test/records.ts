@@ -1,7 +1,9 @@
 import {
   type CharacterDerived,
   type CharacterPageRecord,
+  type CharacterStateRecord,
   characterDefinitionSchema,
+  defaultCharacterState,
   deriveCharacter,
   entryKey,
   PRESET_PAGES,
@@ -60,4 +62,13 @@ export function derivedRecord(): CharacterDerived {
     armor: new Map(),
     weights: new Map(),
   });
+}
+
+/** What `GET /characters/{id}/state` returns for a character nobody has played yet. */
+export function stateRecord(): CharacterStateRecord {
+  return {
+    characterId: "1",
+    state: defaultCharacterState(),
+    updatedAt: "2024-01-01T00:00:00.000Z",
+  };
 }

@@ -30,6 +30,8 @@
   --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
   /* Mixed into canvas, not surface: on the dark surface the accent tops out near 3:1. */
   --color-accent-tint: color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas));
+  /* What restores hit points or shields them: temporary hit points, healing. */
+  --color-positive: light-dark(#2f6b4f, color-mix(in oklab, #2f6b4f 50%, white));
 
   --text-row: var(--text-xs);
   --text-row--line-height: var(--text-xs--line-height);

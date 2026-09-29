@@ -1,7 +1,7 @@
 /**
- * The numbers a player reads constantly. Every number comes off the derived block; the
- * definition supplies only what a player chose — the scores and which saves and skills
- * they are proficient in. A value with terms opens them in a popover; an ability, a save
+ * The numbers a player reads constantly. Every computed number comes off the derived
+ * block; the definition supplies only what a player chose — the scores and which saves
+ * and skills they are proficient in — and `Vitals` reads what play has spent from state. A value with terms opens them in a popover; an ability, a save
  * or a skill opens its terms and the catalog's rules text in a modal.
  */
 import {
@@ -24,6 +24,7 @@ import { Field } from "../Field.tsx";
 import { Popover } from "../Popover.tsx";
 import { RulesEntries } from "../RulesText.tsx";
 import { TermList } from "../TermList.tsx";
+import { Vitals } from "./Vitals.tsx";
 
 type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
 
@@ -416,6 +417,7 @@ export function AbilitiesSection({
     <div className="flex flex-col gap-4">
       <AbilityScores definition={definition} derived={derived} />
       <Combat derived={derived} />
+      <Vitals characterId={character.id} derived={derived} />
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
           <ul className="flex flex-col gap-1">
