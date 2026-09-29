@@ -37,6 +37,24 @@ describe("TopBar", () => {
     expect(characterBtn).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("the app name links to the homepage", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    expect(screen.getByRole("link", { name: "Local D&D" })).toHaveAttribute("href", "/");
+  });
+
+  it("See all characters links to the character list", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    fireEvent.click(screen.getByRole("button", { name: /character/i }));
+    expect(screen.getByRole("link", { name: /see all characters/i })).toHaveAttribute(
+      "href",
+      "/characters",
+    );
+  });
+
   it("Settings links to the Settings page", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();

@@ -23,12 +23,12 @@ async function transitionDurationMs(page: Page): Promise<number> {
 
 test("prefers-reduced-motion collapses transitions on any element", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await page.goto("/characters");
   expect(await transitionDurationMs(page)).toBeLessThan(1);
 });
 
 test("transitions run at their authored duration with no stated preference", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await page.goto("/characters");
   expect(await transitionDurationMs(page)).toBe(500);
 });

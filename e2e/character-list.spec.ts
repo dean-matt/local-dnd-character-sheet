@@ -26,7 +26,7 @@ test("importing a character shows it in the list", async ({ page, request }) => 
   const { id } = await response.json();
 
   try {
-    await page.goto("/");
+    await page.goto("/characters");
     await expect(page.getByRole("link", { name: new RegExp(name) })).toBeVisible();
   } finally {
     await request.delete(`/api/characters/${id}`);

@@ -6,6 +6,7 @@ import { CharacterLayout } from "./routes/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
+import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout.tsx";
 import { DisplaySettings, SettingsLayout } from "./routes/Settings.tsx";
@@ -26,7 +27,8 @@ export const routeConfig: RouteObject[] = [
       {
         element: <ContentLayout />,
         children: [
-          { index: true, element: <CharacterListPage /> },
+          { index: true, element: <HomePage /> },
+          { path: "characters", element: <CharacterListPage /> },
           ...CATALOG_TARGETS.map((target) => ({
             path: `catalog/${target.path}`,
             element: <CatalogPage target={target} />,

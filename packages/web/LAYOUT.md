@@ -12,7 +12,7 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
 - **Character header** fills the content column, so it grows and shrinks with the side
   panels. Character sheet only; Settings skips it.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on
-  Settings, and in `ContentLayout` in `router.tsx`, which the list, catalog and 404 pages use.
+  Settings, and in `ContentLayout` in `router.tsx`, which the homepage, list, catalog and 404 pages use.
 
 A side panel joins the flex row in `src/routes/CharacterLayout.tsx`. The content column
 and the character header follow it; the top bar never does. The mockup's Rolls Panel, a

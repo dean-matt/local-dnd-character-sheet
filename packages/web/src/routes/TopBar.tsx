@@ -73,7 +73,9 @@ export function TopBar() {
       ref={containerRef}
       className="relative flex h-full w-full items-center gap-1.5 border-b border-border bg-surface px-6"
     >
-      <span className="mr-3.5 shrink-0 text-lg font-bold text-accent">Local D&D</span>
+      <Link to="/" className="mr-3.5 shrink-0 rounded-control text-lg font-bold text-accent">
+        Local D&D
+      </Link>
 
       {/* Character menu */}
       <div className="relative shrink-0">
@@ -122,7 +124,7 @@ export function TopBar() {
                 </Link>
               ))}
               <Link
-                to="/"
+                to="/characters"
                 onClick={() => setOpen(false)}
                 className="mt-1 block rounded-control border-t border-border px-2.5 py-2 text-sm font-semibold text-ink hover:bg-subtle"
               >

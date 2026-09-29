@@ -30,9 +30,18 @@ describe("routing", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders the character list at the root", () => {
-    renderAt("/");
+  it("renders the character list at /characters", () => {
+    renderAt("/characters");
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Characters");
+  });
+
+  it("renders a homepage at the root that links to the character list", () => {
+    renderAt("/");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(within(screen.getByRole("main")).getByRole("link")).toHaveAttribute(
+      "href",
+      "/characters",
+    );
   });
 
   it("redirects a character to its first visible page", async () => {
@@ -126,6 +135,10 @@ describe("routing", () => {
   it("shows the not-found state for an unmatched route", async () => {
     renderAt("/this/goes/nowhere");
     await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    expect(screen.getByRole("link", { name: "Back to your characters" })).toHaveAttribute(
+      "href",
+      "/characters",
+    );
   });
 
   /**
