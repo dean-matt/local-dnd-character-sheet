@@ -8,6 +8,7 @@
  */
 
 import type { Edition } from "./edition.ts";
+import { type Breakdown, breakdown } from "./term.ts";
 
 export const HIT_DICE = [6, 8, 10, 12] as const;
 
@@ -52,19 +53,26 @@ function faceRolled(level: HitPointLevel, isFirstLevel: boolean): number {
  * the character started as.
  *
  * A level contributes at least 1, so a punishing Constitution modifier stalls the
- * maximum rather than reducing it.
+ * maximum rather than reducing it. One term per level, its label naming the face and the
+ * Constitution modifier folded into it.
  */
-export function maxHitPoints(
+export function maxHitPoints<Ref = unknown>(
   levels: readonly HitPointLevel[],
   constitutionModifier: number,
-): number {
+): Breakdown<Ref> {
   if (levels.length === 0) {
     throw new RangeError("A character has at least one level");
   }
-  return levels.reduce(
-    (total, level, index) =>
-      total + Math.max(1, faceRolled(level, index === 0) + constitutionModifier),
-    0,
+  return breakdown(
+    levels.map((level, index) => {
+      const face = faceRolled(level, index === 0);
+      const source = index === 0 ? "highest" : level.rolled === undefined ? "average" : "rolled";
+      const con = `${constitutionModifier < 0 ? "-" : "+"}${Math.abs(constitutionModifier)}`;
+      return {
+        label: `Level ${index + 1}: d${level.die} ${source} ${face} ${con} Con`,
+        value: Math.max(1, face + constitutionModifier),
+      };
+    }),
   );
 }
 

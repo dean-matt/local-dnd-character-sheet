@@ -971,12 +971,12 @@ describe("passive scores", () => {
 
 describe("hit point maximum", () => {
   it("takes the first die's highest face, then the roll or the average", () => {
-    expect(hitPointMaximum(definition, hitDice)).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
+    expect(hitPointMaximum(definition, hitDice).total).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
   });
 
   it("reads a character back out of the database column it was stored in", () => {
     const stored = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(definition)));
-    expect(hitPointMaximum(stored, hitDice)).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
+    expect(hitPointMaximum(stored, hitDice).total).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
   });
 
   it("moves when a multiclass character reorders the levels it took", () => {
@@ -989,8 +989,8 @@ describe("hit point maximum", () => {
     const fighterFirst = { ...definition, levels: [{ class: fighter }, { class: wizard }] };
     const wizardFirst = { ...definition, levels: [{ class: wizard }, { class: fighter }] };
 
-    expect(hitPointMaximum(fighterFirst, dice)).toBe(10 + 4 + 2 * 2);
-    expect(hitPointMaximum(wizardFirst, dice)).toBe(6 + 6 + 2 * 2);
+    expect(hitPointMaximum(fighterFirst, dice).total).toBe(10 + 4 + 2 * 2);
+    expect(hitPointMaximum(wizardFirst, dice).total).toBe(6 + 6 + 2 * 2);
   });
 
   it("rejects a class whose die the catalog did not supply", () => {
@@ -1003,11 +1003,11 @@ describe("hit point maximum", () => {
     const homebrewLevels = { ...definition, levels: [{ class: { homebrewId: "hb_warden" } }] };
     const dice = new Map<string, HitDie>([[entryKey({ homebrewId: "hb_warden" }), 10]]);
 
-    expect(hitPointMaximum(homebrewLevels, dice)).toBe(10 + 2);
+    expect(hitPointMaximum(homebrewLevels, dice).total).toBe(10 + 2);
   });
 
   it("has somewhere to live, overridable like any derived field", () => {
-    const computed = hitPointMaximum(definition, hitDice);
+    const computed = hitPointMaximum(definition, hitDice).total;
     const derived = characterDerivedSchema.parse(derivedInput({ hitPointMaximum: { computed } }));
     expect(derivedValue(derived.hitPointMaximum)).toBe(37);
     expect(derivedValue({ ...derived.hitPointMaximum, manual: 45 })).toBe(45);
@@ -1067,7 +1067,7 @@ describe("deriveCharacter", () => {
   });
 
   it("assembles hit points, size and speed the way the existing fields already do", () => {
-    expect(derived.hitPointMaximum.computed).toBe(hitPointMaximum(equipped, hitDice));
+    expect(derived.hitPointMaximum.computed).toBe(hitPointMaximum(equipped, hitDice).total);
     expect(derived.size.computed).toBe("medium");
     expect(derived.speed.computed).toEqual({ walk: 30 });
   });
@@ -1159,7 +1159,11 @@ describe("deriveCharacter", () => {
   });
 
   it("sets every ability's modifier off its score", () => {
-    expect(derived.abilityModifiers.str).toEqual({ computed: -1, manual: null, terms: [] });
+    expect(derived.abilityModifiers.str).toEqual({
+      computed: -1,
+      manual: null,
+      terms: [{ label: "Score 8", value: -1 }],
+    });
     expect(derived.abilityModifiers.cha.computed).toBe(3);
   });
 
@@ -1210,7 +1214,19 @@ describe("deriveCharacter", () => {
   });
 
   it("reads initiative off Dexterity alone", () => {
-    expect(derived.initiative).toEqual({ computed: 3, manual: null, terms: [] });
+    expect(derived.initiative.computed).toBe(3);
+  });
+
+  it("carries terms that sum to each value it derives from a score or a level", () => {
+    for (const field of [
+      derived.initiative,
+      derived.proficiencyBonus,
+      derived.hitPointMaximum,
+      ...Object.values(derived.abilityModifiers),
+    ]) {
+      expect(field.terms.length).toBeGreaterThan(0);
+      expect(field.terms.reduce((sum, term) => sum + term.value, 0)).toBe(field.computed);
+    }
   });
 
   it("sets a save DC and attack bonus per caster class, and skips a class that does not cast", () => {

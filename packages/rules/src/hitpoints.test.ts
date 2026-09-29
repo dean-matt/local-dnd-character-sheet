@@ -23,11 +23,11 @@ describe("averageHitPoints", () => {
 
 describe("maxHitPoints", () => {
   it("gives level 1 the highest face of the die", () => {
-    expect(maxHitPoints(levels(10, 1), 0)).toBe(10);
+    expect(maxHitPoints(levels(10, 1), 0).total).toBe(10);
   });
 
   it("gives levels after the first the average", () => {
-    expect(maxHitPoints(levels(10, 3), 0)).toBe(10 + 6 + 6);
+    expect(maxHitPoints(levels(10, 3), 0).total).toBe(10 + 6 + 6);
   });
 
   it("takes a roll over the average, except at level 1", () => {
@@ -35,28 +35,38 @@ describe("maxHitPoints", () => {
       { die: 10, rolled: 2 },
       { die: 10, rolled: 9 },
     ];
-    expect(maxHitPoints(rolled, 0)).toBe(10 + 9);
+    expect(maxHitPoints(rolled, 0).total).toBe(10 + 9);
   });
 
   it("adds the constitution modifier once per level", () => {
-    expect(maxHitPoints(levels(8, 4), 2)).toBe(8 + 5 + 5 + 5 + 4 * 2);
+    expect(maxHitPoints(levels(8, 4), 2).total).toBe(8 + 5 + 5 + 5 + 4 * 2);
   });
 
   it("moves every level's contribution when the constitution modifier changes", () => {
     const eight = levels(8, 5);
-    expect(maxHitPoints(eight, 3) - maxHitPoints(eight, 2)).toBe(5);
-    expect(maxHitPoints(eight, 1) - maxHitPoints(eight, 0)).toBe(5);
+    expect(maxHitPoints(eight, 3).total - maxHitPoints(eight, 2).total).toBe(5);
+    expect(maxHitPoints(eight, 1).total - maxHitPoints(eight, 0).total).toBe(5);
   });
 
   it("sums a multiclass list in the order the levels were taken", () => {
     const fighterThenWizard: HitPointLevel[] = [{ die: 10 }, { die: 10 }, { die: 6 }];
     const wizardThenFighter: HitPointLevel[] = [{ die: 6 }, { die: 6 }, { die: 10 }];
-    expect(maxHitPoints(fighterThenWizard, 1)).toBe(10 + 6 + 4 + 3);
-    expect(maxHitPoints(wizardThenFighter, 1)).toBe(6 + 4 + 6 + 3);
+    expect(maxHitPoints(fighterThenWizard, 1).total).toBe(10 + 6 + 4 + 3);
+    expect(maxHitPoints(wizardThenFighter, 1).total).toBe(6 + 4 + 6 + 3);
+  });
+
+  it("labels one term per level and sums them to the total", () => {
+    const result = maxHitPoints([{ die: 8 }, { die: 8 }, { die: 8, rolled: 7 }], 2);
+    expect(result.terms).toEqual([
+      { label: "Level 1: d8 highest 8 +2 Con", value: 10 },
+      { label: "Level 2: d8 average 5 +2 Con", value: 7 },
+      { label: "Level 3: d8 rolled 7 +2 Con", value: 9 },
+    ]);
+    expect(result.total).toBe(26);
   });
 
   it("floors a level at 1 hit point however punishing the modifier", () => {
-    expect(maxHitPoints(levels(6, 3), -5)).toBe(1 + 1 + 1);
+    expect(maxHitPoints(levels(6, 3), -5).total).toBe(1 + 1 + 1);
   });
 
   it("rejects a level list with no levels", () => {

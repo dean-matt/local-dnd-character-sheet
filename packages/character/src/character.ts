@@ -19,6 +19,7 @@
 import {
   ABILITIES,
   abilityModifier,
+  abilityModifierBreakdown,
   armorClass,
   attunementSlots,
   type Breakdown,
@@ -38,7 +39,7 @@ import {
   type PreparationRule,
   passiveScore,
   preparedSpellCount,
-  proficiencyBonus,
+  proficiencyBonusBreakdown,
   proficiencyContribution,
   RESET_TRIGGERS,
   reducedSpeed,
@@ -932,7 +933,7 @@ export const characterDerivedSchema = z.strictObject({
 export function hitPointMaximum(
   definition: CharacterDefinition,
   hitDice: ReadonlyMap<string, HitDie>,
-): number {
+): Breakdown<TermReference> {
   const levels = definition.levels.map((level) => {
     const key = entryKey(level.class);
     const die = hitDice.get(key);
@@ -1070,6 +1071,12 @@ export type CasterTable = {
 
 /** A freshly computed derived field, always with its terms — never read back from storage. */
 type ComputedField<T> = { computed: T; manual: null; terms: Term<TermReference>[] };
+
+const fromBreakdown = (result: Breakdown<TermReference>): ComputedField<number> => ({
+  computed: result.total,
+  manual: null,
+  terms: result.terms,
+});
 
 const DEXTERITY_CAP: Record<Exclude<ArmorTrait["category"], "shield">, number | "none" | "all"> = {
   light: "all",
@@ -1267,29 +1274,21 @@ export function deriveCharacter(
   const abilityModifiers = Object.fromEntries(
     ABILITIES.map((ability): [Ability, ComputedField<number>] => [
       ability,
-      { computed: abilityModifier(definition.abilityScores[ability]), manual: null, terms: [] },
+      fromBreakdown(abilityModifierBreakdown(definition.abilityScores[ability])),
     ]),
   ) as Record<Ability, ComputedField<number>>;
 
   return {
     abilityModifiers,
-    hitPointMaximum: {
-      computed: hitPointMaximum(definition, catalog.hitDice),
-      manual: null,
-      terms: [],
-    },
+    hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice)),
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: catalog.size, manual: null, terms: [] },
     speed: { computed: catalog.speed, manual: null, terms: [] },
-    proficiencyBonus: { computed: proficiencyBonus(level), manual: null, terms: [] },
+    proficiencyBonus: fromBreakdown(proficiencyBonusBreakdown(level)),
     savingThrows,
     skills,
     armorClass: derivedArmorClass(definition, catalog),
-    initiative: {
-      computed: abilityModifier(definition.abilityScores.dex),
-      manual: null,
-      terms: [],
-    },
+    initiative: fromBreakdown(abilityModifierBreakdown(definition.abilityScores.dex)),
     spellcasting: spellcastingEntries(definition, catalog, level),
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),

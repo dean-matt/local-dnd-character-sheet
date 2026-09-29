@@ -207,6 +207,7 @@ describe("AbilitiesSection", () => {
     const derived = derivedFor(record);
     renderSection(record, {
       ...derived,
+      initiative: { ...derived.initiative, terms: [] },
       armorClass: {
         computed: 13,
         manual: null,

@@ -13,9 +13,11 @@ export {
 export {
   ABILITIES,
   abilityModifier,
+  abilityModifierBreakdown,
   PROFICIENCY_LEVELS,
   passiveScore,
   proficiencyBonus,
+  proficiencyBonusBreakdown,
   proficiencyContribution,
 } from "./core.ts";
 export { damageAtZeroHitPoints, deathSave } from "./death.ts";

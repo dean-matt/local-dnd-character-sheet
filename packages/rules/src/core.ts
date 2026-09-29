@@ -7,6 +7,8 @@
  * of them.
  */
 
+import { type Breakdown, breakdown, type Term } from "./term.ts";
+
 /** The six abilities, in the order a sheet prints them. */
 export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 
@@ -15,11 +17,24 @@ export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
 }
 
+/** The modifier as one term, named for the score it reads: the score is not a summand, so it goes in the label. */
+export function abilityModifierBreakdown<Ref = unknown>(score: number): Breakdown<Ref> {
+  return breakdown([{ label: `Score ${score}`, value: abilityModifier(score) }]);
+}
+
 export function proficiencyBonus(totalLevel: number): number {
+  return proficiencyBonusBreakdown(totalLevel).total;
+}
+
+/** The base of +2 and the +1 every fourth level adds, so a sheet can show where a +4 came from. */
+export function proficiencyBonusBreakdown<Ref = unknown>(totalLevel: number): Breakdown<Ref> {
   if (totalLevel < 1 || totalLevel > 20) {
     throw new RangeError(`Total character level must be 1-20, got ${totalLevel}`);
   }
-  return 2 + Math.floor((totalLevel - 1) / 4);
+  const terms: Term<Ref>[] = [{ label: "Base", value: 2 }];
+  const steps = Math.floor((totalLevel - 1) / 4);
+  if (steps > 0) terms.push({ label: `Level ${totalLevel}`, value: steps });
+  return breakdown(terms);
 }
 
 /**
