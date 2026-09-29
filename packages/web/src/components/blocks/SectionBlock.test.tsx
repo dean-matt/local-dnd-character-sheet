@@ -53,6 +53,22 @@ describe("SectionBlockView", () => {
     expect(screen.getByText("Features isn't available yet.")).toBeInTheDocument();
   });
 
+  it.each([
+    ["identity", "Identity"],
+    ["level", "Level"],
+    ["alignment", "Alignment"],
+    ["notes", "Notes"],
+  ] as const)("renders the %s section, which waits on the character", (section, page) => {
+    render(
+      <SectionBlockView
+        block={{ kind: "section", section }}
+        character={undefined}
+        derived={undefined}
+      />,
+    );
+    expect(screen.getByText(`${page} isn't available yet.`)).toBeInTheDocument();
+  });
+
   it("renders nothing for a block of another kind", () => {
     const { container } = render(
       <SectionBlockView

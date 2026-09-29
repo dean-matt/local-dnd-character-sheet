@@ -517,6 +517,12 @@ export function raceSummary(definition: CharacterDefinition): string {
   return displayName(definition.subrace ?? definition.race);
 }
 
+/** The race with any subrace beside it — `Elf (High)`, where `raceSummary` gives `High`. */
+export function raceLabel(definition: CharacterDefinition): string {
+  const subrace = definition.subrace ? ` (${definition.subrace.name})` : "";
+  return `${displayName(definition.race)}${subrace}`;
+}
+
 /** One class a character has levels in, with the subclass named on any of those levels. */
 type ClassLevels = { class: EntryRef; level: number; subclass?: ContentRef };
 
@@ -531,6 +537,12 @@ export function classLevels(definition: CharacterDefinition): ClassLevels[] {
     groups.set(key, group);
   }
   return [...groups.values()];
+}
+
+/** One `classLevels` group with its count and any subclass — `Wizard 3 (Evoker)`. */
+export function classLevelLabel(group: ClassLevels): string {
+  const subclass = group.subclass ? ` (${group.subclass.name})` : "";
+  return `${displayName(group.class)} ${group.level}${subclass}`;
 }
 
 /**
@@ -671,7 +683,16 @@ export function defaultCharacterState(): CharacterState {
 
 // Pages ----------------------------------------------------------------------
 
-const SHEET_SECTIONS = ["abilities", "spells", "inventory", "features"] as const;
+const SHEET_SECTIONS = [
+  "abilities",
+  "spells",
+  "inventory",
+  "features",
+  "identity",
+  "level",
+  "alignment",
+  "notes",
+] as const;
 
 /** The whole sheet section a `section` block renders. */
 const sectionBlockSchema = z.strictObject({
@@ -799,8 +820,8 @@ export type CharacterPageRecord = z.infer<typeof characterPageRecordSchema>;
 
 /**
  * Seeded on every character, in this order. A preset's blocks are whole sheet sections.
- * A new entry reaches existing characters only through a backfill migration, as these
- * four did. That migration must settle any user page already under the new slug, since
+ * A new entry reaches existing characters only through a backfill migration, as every
+ * entry here did. That migration must settle any user page already under the new slug, since
  * restoring the defaults fails on one.
  */
 export const PRESET_PAGES: readonly CharacterPage[] = [
@@ -827,6 +848,30 @@ export const PRESET_PAGES: readonly CharacterPage[] = [
     title: "Features",
     hidden: false,
     blocks: [{ kind: "section", section: "features" }],
+  },
+  {
+    slug: "identity",
+    title: "Identity",
+    hidden: false,
+    blocks: [{ kind: "section", section: "identity" }],
+  },
+  {
+    slug: "level",
+    title: "Level",
+    hidden: false,
+    blocks: [{ kind: "section", section: "level" }],
+  },
+  {
+    slug: "alignment",
+    title: "Alignment",
+    hidden: false,
+    blocks: [{ kind: "section", section: "alignment" }],
+  },
+  {
+    slug: "notes",
+    title: "Notes",
+    hidden: false,
+    blocks: [{ kind: "section", section: "notes" }],
   },
 ];
 

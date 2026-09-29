@@ -33,7 +33,7 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     const hidden = await request.put(`/api/characters/${id}/pages`, {
       data: pages.map(({ preset: _preset, ...rest }: { preset: boolean; slug: string }) => ({
         ...rest,
-        hidden: rest.slug === "inventory",
+        hidden: rest.slug === "inventory" || rest.slug === "alignment",
       })),
     });
     expect(hidden.ok()).toBe(true);
@@ -60,6 +60,9 @@ test("a character prints its visible pages in light ink, with the screen chrome 
       "Stats",
       "Spells",
       "Features",
+      "Identity",
+      "Level",
+      "Notes",
     ]);
     await expect(page.getByRole("banner")).toBeHidden();
     await expect(page.getByRole("navigation", { name: "Character pages" })).toBeHidden();

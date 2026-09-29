@@ -46,7 +46,7 @@ describe("routing", () => {
     await screen.findByRole("region", { name: "Spells" });
 
     const nav = screen.getByRole("navigation", { name: "Character pages" });
-    expect(nav.querySelectorAll("a")).toHaveLength(4);
+    expect(nav.querySelectorAll("a")).toHaveLength(presetPageRecords().length);
     expect(screen.getByRole("link", { name: "Spells" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Stats" })).not.toHaveAttribute("aria-current");
   });
@@ -78,7 +78,10 @@ describe("routing", () => {
     await screen.findByRole("region", { name: "Stats" });
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]") as HTMLElement;
-    expect(within(sheet).getAllByText("Vex", { ignore: "[aria-hidden]" })).toHaveLength(1);
+    const titles = within(sheet)
+      .getAllByText("Vex", { ignore: "[aria-hidden]" })
+      .filter((node) => !node.closest("section"));
+    expect(titles).toHaveLength(1);
     expect(sheet.firstElementChild).toHaveTextContent("Vex");
     expect(sheet.firstElementChild).toHaveTextContent("Half-Elf Warlock 1 • Charlatan");
 

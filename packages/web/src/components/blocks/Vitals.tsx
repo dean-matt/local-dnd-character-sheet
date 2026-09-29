@@ -7,6 +7,7 @@ import { type CharacterDerived, type CharacterState, derivedValue } from "@dnd/c
 import { useCharacterState } from "../../hooks/useCharacterState.ts";
 import { ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
+import { ChipList } from "../ChipList.tsx";
 import { Field } from "../Field.tsx";
 
 /** A die with no pool in state has spent nothing, the way a new character's empty `hitDice` reads. */
@@ -75,27 +76,12 @@ function HitPoints({ derived, state }: { derived: CharacterDerived; state: Chara
 function StatusEffects({ state }: { state: CharacterState }) {
   // A chip shows the name alone, so one condition held from two sources reads as one chip.
   const names = new Set(state.conditions.map((condition) => condition.name));
-  const labels = [...names].map((name) => ({ key: name, label: name }));
-  if (state.exhaustion > 0) {
-    labels.push({ key: "exhaustion", label: `Exhaustion ${state.exhaustion}` });
-  }
+  const labels = [...names];
+  if (state.exhaustion > 0) labels.push(`Exhaustion ${state.exhaustion}`);
 
   return (
     <Card title="Status Effects">
-      {labels.length === 0 ? (
-        <p className="text-muted text-row italic">No active conditions.</p>
-      ) : (
-        <ul className="flex flex-wrap gap-1.5">
-          {labels.map(({ key, label }) => (
-            <li
-              key={key}
-              className="rounded-pill border border-border bg-subtle px-2.5 py-1 text-row"
-            >
-              {label}
-            </li>
-          ))}
-        </ul>
-      )}
+      <ChipList labels={labels} empty="No active conditions." />
     </Card>
   );
 }
