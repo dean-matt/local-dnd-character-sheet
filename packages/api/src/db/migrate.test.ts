@@ -177,6 +177,60 @@ describe("migrations", () => {
     ).toEqual(presetPageRows("1"));
   });
 
+  it("backfills the identity presets after a character's own pages, moving a page the user wrote under one of their slugs", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0005_full_hit_points_for_new_characters");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insertPage = sqlite.prepare(
+      "INSERT INTO character_pages (character_id, slug, title, position, hidden, preset, blocks) VALUES (?, ?, ?, ?, 0, ?, ?)",
+    );
+    for (const id of ["1", "2"]) {
+      insertBareCharacter(sqlite, id);
+      insertPage.run(id, "stats", "Stats", 0, 1, '[{"kind":"section","section":"abilities"}]');
+    }
+    insertPage.run("1", "notes", "My notes", 1, 0, '[{"kind":"text","text":"Owes Sarth 10 gp"}]');
+
+    migrateCharacters(db);
+
+    const pages = (id: string) =>
+      sqlite
+        .prepare(
+          "SELECT slug, title, position, preset, blocks FROM character_pages WHERE character_id = ? ORDER BY position",
+        )
+        .all(id) as {
+        slug: string;
+        title: string;
+        position: number;
+        preset: number;
+        blocks: string;
+      }[];
+    const presets = ["identity", "level", "alignment", "notes"];
+    const seeded = (from: number) =>
+      presets.map((slug, index) => ({
+        slug,
+        position: from + index,
+        preset: 1,
+        blocks: presetPageRows("x").find((row) => row.slug === slug)?.blocks,
+      }));
+    const shape = ({ slug, position, preset, blocks }: ReturnType<typeof pages>[number]) => ({
+      slug,
+      position,
+      preset,
+      blocks: JSON.parse(blocks),
+    });
+
+    const [stats, moved, ...added] = pages("1");
+    expect(stats?.slug).toBe("stats");
+    expect(moved).toMatchObject({ title: "My notes", position: 1, preset: 0 });
+    expect(moved?.slug).toMatch(/^notes-[0-9a-f]{8}$/);
+    expect(JSON.parse(moved?.blocks ?? "")).toEqual([{ kind: "text", text: "Owes Sarth 10 gp" }]);
+    expect(added.map(shape)).toEqual(seeded(2));
+    expect(pages("2").slice(1).map(shape)).toEqual(seeded(1));
+  });
+
   it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {
     sqlite = new Database(join(workspace, "homebrew.db"));
     const db = drizzle(sqlite);

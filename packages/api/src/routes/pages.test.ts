@@ -90,12 +90,13 @@ describe("pagesRoutes", () => {
 
   it("reorders, hides and retitles, keeping each slug and preset flag", async () => {
     const id = await create();
-    const [stats, spells, inventory, features] = PRESET_PAGES as CharacterPage[];
+    const [stats, spells, inventory, features, ...rest] = PRESET_PAGES as CharacterPage[];
     const written = [
       { ...features, title: "Tricks" },
       { ...stats },
       { ...spells, hidden: true },
       { ...inventory },
+      ...rest,
     ] as CharacterPage[];
 
     const res = await replace(id, written);
@@ -192,11 +193,11 @@ describe("pagesRoutes", () => {
   it("restores every preset the user hid, edited or moved, and keeps the pages they wrote", async () => {
     const id = await create();
     const [stats, spells, ...rest] = PRESET_PAGES as CharacterPage[];
-    const notes: CharacterPage = { ...GRAPPLE, slug: "notes", title: "Notes", hidden: true };
+    const journal: CharacterPage = { ...GRAPPLE, slug: "journal", title: "Journal", hidden: true };
     await replace(id, [
       GRAPPLE,
       { ...spells, hidden: true, title: "Magic" } as CharacterPage,
-      notes,
+      journal,
       { ...stats, blocks: [] } as CharacterPage,
       ...rest,
     ]);
@@ -206,7 +207,7 @@ describe("pagesRoutes", () => {
     const expected = [
       { ...GRAPPLE, preset: false },
       { ...stats, preset: true },
-      { ...notes, preset: false },
+      { ...journal, preset: false },
       { ...spells, preset: true },
       ...rest.map((page) => ({ ...page, preset: true })),
     ];

@@ -14,6 +14,11 @@ const GRAPPLE: CharacterPageRecord = {
   blocks: [],
 };
 
+/** The presets after the first four, which every reorder here leaves in place. */
+const LATER = presetPageRecords().slice(4);
+const LATER_SLUGS = LATER.map((page) => page.slug);
+const LATER_TITLES = LATER.map((page) => page.title);
+
 /**
  * A fake of the pages routes: a `PUT` stores the list with each preset flag carried over,
  * and restoring resets the presets to seeded order in the slots presets hold.
@@ -100,14 +105,17 @@ describe("ManagePages", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Move Stats down" }));
 
-    await waitFor(() => expect(navTitles()).toEqual(["Spells", "Stats", "Inventory", "Features"]));
-    expect(status()).toHaveTextContent("Stats moved to position 2 of 4.");
+    await waitFor(() =>
+      expect(navTitles()).toEqual(["Spells", "Stats", "Inventory", "Features", ...LATER_TITLES]),
+    );
+    expect(status()).toHaveTextContent("Stats moved to position 2 of 8.");
     await waitFor(() =>
       expect(server.stored().map((page) => page.slug)).toEqual([
         "spells",
         "stats",
         "inventory",
         "features",
+        ...LATER_SLUGS,
       ]),
     );
     expect(server.puts[0]).toEqual(server.stored().map(({ preset: _preset, ...page }) => page));
@@ -129,8 +137,9 @@ describe("ManagePages", () => {
       "inventory",
       "stats",
       "features",
+      ...LATER_SLUGS,
     ]);
-    expect(navTitles()).toEqual(["Spells", "Inventory", "Stats", "Features"]);
+    expect(navTitles()).toEqual(["Spells", "Inventory", "Stats", "Features", ...LATER_TITLES]);
   });
 
   it("refuses a move past either end, keeping the button focusable", async () => {
@@ -141,7 +150,7 @@ describe("ManagePages", () => {
     expect(up).toHaveAttribute("aria-disabled", "true");
     expect(up).toBeEnabled();
     fireEvent.click(up);
-    fireEvent.click(screen.getByRole("button", { name: "Move Features down" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move Notes down" }));
 
     expect(server.puts).toHaveLength(0);
   });
@@ -152,7 +161,9 @@ describe("ManagePages", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Hide Spells" }));
 
-    await waitFor(() => expect(navTitles()).toEqual(["Stats", "Inventory", "Features"]));
+    await waitFor(() =>
+      expect(navTitles()).toEqual(["Stats", "Inventory", "Features", ...LATER_TITLES]),
+    );
     expect(status()).toHaveTextContent("Spells hidden.");
     await router.navigate("/characters/abc/p/spells");
     expect(await screen.findByRole("region", { name: "Spells" })).toBeInTheDocument();
@@ -169,7 +180,9 @@ describe("ManagePages", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show Spells" }));
 
-    await waitFor(() => expect(navTitles()).toEqual(["Stats", "Spells", "Inventory", "Features"]));
+    await waitFor(() =>
+      expect(navTitles()).toEqual(["Stats", "Spells", "Inventory", "Features", ...LATER_TITLES]),
+    );
     expect(status()).toHaveTextContent("Spells shown.");
   });
 

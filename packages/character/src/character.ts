@@ -533,6 +533,12 @@ export function classLevels(definition: CharacterDefinition): ClassLevels[] {
   return [...groups.values()];
 }
 
+/** One `classLevels` group with its count and any subclass — `Wizard 3 (Evoker)`. */
+export function classLevelLabel(group: ClassLevels): string {
+  const subclass = group.subclass ? ` (${group.subclass.name})` : "";
+  return `${displayName(group.class)} ${group.level}${subclass}`;
+}
+
 /**
  * `classLevels` joined the way `levelEntrySchema`'s own comment already writes a
  * multiclass character — `Wizard 1 / Fighter 1`. A single class carries no count.
@@ -671,7 +677,16 @@ export function defaultCharacterState(): CharacterState {
 
 // Pages ----------------------------------------------------------------------
 
-const SHEET_SECTIONS = ["abilities", "spells", "inventory", "features"] as const;
+const SHEET_SECTIONS = [
+  "abilities",
+  "spells",
+  "inventory",
+  "features",
+  "identity",
+  "level",
+  "alignment",
+  "notes",
+] as const;
 
 /** The whole sheet section a `section` block renders. */
 const sectionBlockSchema = z.strictObject({
@@ -799,8 +814,8 @@ export type CharacterPageRecord = z.infer<typeof characterPageRecordSchema>;
 
 /**
  * Seeded on every character, in this order. A preset's blocks are whole sheet sections.
- * A new entry reaches existing characters only through a backfill migration, as these
- * four did. That migration must settle any user page already under the new slug, since
+ * A new entry reaches existing characters only through a backfill migration, as every
+ * entry here did. That migration must settle any user page already under the new slug, since
  * restoring the defaults fails on one.
  */
 export const PRESET_PAGES: readonly CharacterPage[] = [
@@ -827,6 +842,30 @@ export const PRESET_PAGES: readonly CharacterPage[] = [
     title: "Features",
     hidden: false,
     blocks: [{ kind: "section", section: "features" }],
+  },
+  {
+    slug: "identity",
+    title: "Identity",
+    hidden: false,
+    blocks: [{ kind: "section", section: "identity" }],
+  },
+  {
+    slug: "level",
+    title: "Level",
+    hidden: false,
+    blocks: [{ kind: "section", section: "level" }],
+  },
+  {
+    slug: "alignment",
+    title: "Alignment",
+    hidden: false,
+    blocks: [{ kind: "section", section: "alignment" }],
+  },
+  {
+    slug: "notes",
+    title: "Notes",
+    hidden: false,
+    blocks: [{ kind: "section", section: "notes" }],
   },
 ];
 

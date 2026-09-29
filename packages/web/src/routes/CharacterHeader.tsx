@@ -1,14 +1,9 @@
-import { type CharacterRecord, classLevels, displayName } from "@dnd/character";
+import { type CharacterRecord, classLevelLabel, classLevels, displayName } from "@dnd/character";
 import { avatarColor } from "../lib/avatarColor.ts";
 
 /** Race, classes with levels, then background and whatever else the player set, in one line. */
 export function characterSubtitle({ definition, raceSummary }: CharacterRecord): string {
-  const classes = classLevels(definition)
-    .map((group) => {
-      const subclass = group.subclass ? ` (${group.subclass.name})` : "";
-      return `${displayName(group.class)} ${group.level}${subclass}`;
-    })
-    .join(" / ");
+  const classes = classLevels(definition).map(classLevelLabel).join(" / ");
   const { alignment, deity } = definition;
   return [
     [raceSummary, classes].filter(Boolean).join(" "),

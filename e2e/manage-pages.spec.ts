@@ -27,6 +27,7 @@ test("pages reorder from the keyboard, keep focus, persist and restore", async (
   expect(response.ok()).toBe(true);
   const { id } = await response.json();
   const nav = page.getByRole("navigation", { name: "Character pages" }).getByRole("link");
+  const later = ["Identity", "Level", "Alignment", "Notes"];
 
   try {
     await page.goto(`/characters/${id}/p/stats`);
@@ -35,21 +36,21 @@ test("pages reorder from the keyboard, keep focus, persist and restore", async (
     const down = page.getByRole("button", { name: "Move Stats down" });
     await down.focus();
     await page.keyboard.press("Enter");
-    await expect(nav).toHaveText(["Spells", "Stats", "Inventory", "Features"]);
+    await expect(nav).toHaveText(["Spells", "Stats", "Inventory", "Features", ...later]);
     await expect(down).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(nav).toHaveText(["Spells", "Inventory", "Stats", "Features"]);
+    await expect(nav).toHaveText(["Spells", "Inventory", "Stats", "Features", ...later]);
 
     await page.getByRole("button", { name: "Hide Stats" }).click();
     await expect(page).toHaveURL(new RegExp(`/characters/${id}/p/spells$`));
-    await expect(nav).toHaveText(["Spells", "Inventory", "Features"]);
+    await expect(nav).toHaveText(["Spells", "Inventory", "Features", ...later]);
 
     await page.reload();
-    await expect(nav).toHaveText(["Spells", "Inventory", "Features"]);
+    await expect(nav).toHaveText(["Spells", "Inventory", "Features", ...later]);
 
     await page.getByRole("button", { name: "Manage pages" }).click();
     await page.getByRole("button", { name: "Restore defaults" }).click();
-    await expect(nav).toHaveText(["Stats", "Spells", "Inventory", "Features"]);
+    await expect(nav).toHaveText(["Stats", "Spells", "Inventory", "Features", ...later]);
   } finally {
     await request.delete(`/api/characters/${id}`);
   }
