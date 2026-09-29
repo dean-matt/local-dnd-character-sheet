@@ -189,9 +189,7 @@ class Component extends DCLogic {
       const die = twoHanded ? item.diceVersatile : item.diceBase;
       const dmgMod = abilityMod + (item.magic || 0);
       const dice = die + (dmgMod ? fmt(dmgMod) : '');
-      const dmgCalcText = versatile
-        ? (twoHanded ? 'Two-handed ' : 'One-handed ') + die + ' + ' + item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + dice
-        : item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + fmt(dmgMod);
+      const dmgCalcText = (versatile ? (twoHanded ? 'Two-handed ' : 'One-handed ') : '') + die + ' + ' + item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + dice;
       const dmgFull = dice + ' ' + item.damageType;
       const setGrip = (grip) => this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, grip } : x)) });
       let equipLabel = 'Equip', equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTitle = 'Click to equip';
