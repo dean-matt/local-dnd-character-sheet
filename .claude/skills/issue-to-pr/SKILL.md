@@ -51,16 +51,19 @@ it took none — stop there.
 12. **Wait on CI, then run the gate:**
 
     ```bash
-    until [ "$(gh pr checks <pr> --json name --jq length 2>/dev/null)" -gt 0 ] 2>/dev/null; do sleep 10; done
+    for _ in $(seq 12); do
+      [ "$(gh pr checks <pr> --json name --jq length 2>/dev/null)" -gt 0 ] 2>/dev/null && break
+      sleep 10
+    done
     gh pr checks <pr> --watch
     node scripts/merge-gate.mjs <pr>
     ```
 
-    The loop waits for the new head's first check, since `--watch` exits at once before one
-    reports. Reinvoke `--watch` rather than shortening it. Never hand back while a check is
-    still running. Hand back with the gate's exit, each `FAIL` line it printed and any failed
-    check; it exits 0 only when nothing stopped you. A diff touching a fenced path always
-    fails the gate, for the user to weigh.
+    The loop waits up to two minutes for the head's first check, since `--watch` exits at
+    once before one reports; where none appears, hand back naming that. If a tool timeout
+    cuts `--watch` off, run it again — never hand back while a check is running. Hand back
+    with the gate's exit, each `FAIL` line and any failed check. A diff touching a fenced
+    path always fails the gate, for the user to weigh.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label, the gate's exit
     and anything waiting on the user.
