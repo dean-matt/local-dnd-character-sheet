@@ -1,11 +1,12 @@
 import type { RouteObject } from "react-router";
-import { createBrowserRouter, Link, Outlet } from "react-router";
+import { createBrowserRouter, Outlet } from "react-router";
 import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
+import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout.tsx";
 import { DisplaySettings, SettingsLayout } from "./routes/Settings.tsx";
@@ -16,18 +17,6 @@ function ContentLayout() {
     <div className="px-gutter py-6">
       <Outlet />
     </div>
-  );
-}
-
-/** A placeholder until the homepage has content of its own. */
-function HomePage() {
-  return (
-    <section>
-      <h1 className="font-semibold text-2xl">Local D&D</h1>
-      <Link to="/characters" className="mt-2 inline-block text-accent underline">
-        Your characters
-      </Link>
-    </section>
   );
 }
 
