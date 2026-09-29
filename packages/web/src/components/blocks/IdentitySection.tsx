@@ -8,12 +8,13 @@ import {
   classLevelLabel,
   classLevels,
   displayName,
+  raceLabel,
   totalLevel,
 } from "@dnd/character";
 import type { ReactNode } from "react";
 import { EmptyState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
-import { ChipList } from "../ChipList.tsx";
+import { ChipList, EmptyNote } from "../ChipList.tsx";
 
 type SectionProps = { character: CharacterRecord | undefined };
 
@@ -22,10 +23,6 @@ const classChips = (definition: CharacterDefinition) =>
 
 /** A tool held at `none` grants nothing, so it earns no chip. */
 const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertise: " (expertise)" };
-
-function Muted({ children }: { children: ReactNode }) {
-  return <p className="text-muted text-row italic">{children}</p>;
-}
 
 function Group({ heading, children }: { heading: string; children: ReactNode }) {
   return (
@@ -43,7 +40,7 @@ function Unavailable({ page }: { page: string }) {
 export function IdentitySection({ character }: SectionProps) {
   if (!character) return <Unavailable page="Identity" />;
   const { definition } = character;
-  const { race, subrace, background, proficiencies } = definition;
+  const { background, proficiencies } = definition;
   const tools = proficiencies.tools.flatMap(({ name, level }) => {
     const suffix = TOOL_SUFFIX[level];
     return suffix === undefined ? [] : [`${name}${suffix}`];
@@ -54,7 +51,7 @@ export function IdentitySection({ character }: SectionProps) {
         <p className="text-sm">{definition.name}</p>
       </Card>
       <Card title="Race">
-        <ChipList labels={[`${displayName(race)}${subrace ? ` (${subrace.name})` : ""}`]} />
+        <ChipList labels={[raceLabel(definition)]} />
       </Card>
       <Card title="Class">
         <div className="flex flex-col gap-2">
@@ -107,7 +104,11 @@ export function AlignmentSection({ character }: SectionProps) {
   const { alignment } = character.definition;
   return (
     <Card title="Alignment">
-      {alignment ? <p className="text-sm">{alignment}</p> : <Muted>No alignment set.</Muted>}
+      {alignment ? (
+        <p className="text-sm">{alignment}</p>
+      ) : (
+        <EmptyNote>No alignment set.</EmptyNote>
+      )}
     </Card>
   );
 }
@@ -120,7 +121,7 @@ export function NotesSection({ character }: SectionProps) {
       {notes.trim() ? (
         <p className="whitespace-pre-wrap text-body">{notes}</p>
       ) : (
-        <Muted>No notes yet.</Muted>
+        <EmptyNote>No notes yet.</EmptyNote>
       )}
     </Card>
   );

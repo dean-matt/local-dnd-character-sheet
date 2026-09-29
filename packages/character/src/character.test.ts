@@ -39,6 +39,7 @@ import {
   itemKey,
   PRESET_PAGES,
   passiveSkill,
+  raceLabel,
   raceSummary,
   resourceSchema,
   spellSlotSchema,
@@ -342,6 +343,11 @@ describe("subrace", () => {
 
   it("summarizes by the subrace's own name, not the race's", () => {
     expect(raceSummary(elf)).toBe("High");
+  });
+
+  it("labels the race with the subrace beside it", () => {
+    expect(raceLabel(elf)).toBe("Elf (High)");
+    expect(raceLabel(definition)).toBe("Half-Elf");
   });
 });
 

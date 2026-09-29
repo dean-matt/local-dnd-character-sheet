@@ -517,6 +517,12 @@ export function raceSummary(definition: CharacterDefinition): string {
   return displayName(definition.subrace ?? definition.race);
 }
 
+/** The race with any subrace beside it — `Elf (High)`, where `raceSummary` gives `High`. */
+export function raceLabel(definition: CharacterDefinition): string {
+  const subrace = definition.subrace ? ` (${definition.subrace.name})` : "";
+  return `${displayName(definition.race)}${subrace}`;
+}
+
 /** One class a character has levels in, with the subclass named on any of those levels. */
 type ClassLevels = { class: EntryRef; level: number; subclass?: ContentRef };
 
