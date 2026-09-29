@@ -10,7 +10,13 @@
  */
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { expectedChecks, isGreen, missingChecks, readChecks } from "./required-checks.mjs";
+import {
+  expectedChecks,
+  isGreen,
+  missingChecks,
+  noRequiredChecks,
+  readChecks,
+} from "./required-checks.mjs";
 
 /**
  * The severity marker `audit-pr` writes at the head of a posted finding. A body this
@@ -33,10 +39,11 @@ export function notGreen(checks) {
 
 /**
  * A required check that has not reported blocks like a red one: a head too new to judge
- * has not passed. Only the `expected` names are demanded, so a caller passing none judges
- * what reported.
+ * has not passed. A ruleset naming no required check blocks too: nothing says what to wait on.
  */
-export function checksBlocked(checks, expected = []) {
+export function checksBlocked(checks, expected) {
+  const unjudgeable = noRequiredChecks(expected);
+  if (unjudgeable !== null) return unjudgeable;
   if (checks.length === 0) return "no check has reported on this head yet";
   const missing = missingChecks(expected, checks).map((name) => `${name} (not reported)`);
   const blocked = [...notGreen(checks), ...missing];

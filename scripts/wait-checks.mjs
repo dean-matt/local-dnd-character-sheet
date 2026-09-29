@@ -9,7 +9,13 @@
  */
 import { realpathSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
-import { expectedChecks, isGreen, missingChecks, readChecks } from "./required-checks.mjs";
+import {
+  expectedChecks,
+  isGreen,
+  missingChecks,
+  noRequiredChecks,
+  readChecks,
+} from "./required-checks.mjs";
 
 export const TIMEOUT_MS = 9 * 60 * 1000;
 export const INTERVAL_MS = 10 * 1000;
@@ -39,7 +45,7 @@ export async function waitChecks({
   timeoutMs = TIMEOUT_MS,
   intervalMs = INTERVAL_MS,
 }) {
-  if (expected.length === 0) return { code: 2, failed: [], waiting: [] };
+  if (noRequiredChecks(expected) !== null) return { code: 2, failed: [], waiting: [] };
   const deadline = now() + timeoutMs;
   for (;;) {
     const { failed, pending, missing } = settle(expected, await read());
@@ -69,7 +75,7 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
     read: () => readChecks(pr),
   });
   if (code === 1) console.error(`failed: ${failed.join(", ")}`);
-  if (code === 2 && expected.length === 0) console.error("the ruleset names no required check");
+  if (code === 2 && noRequiredChecks(expected) !== null) console.error(noRequiredChecks(expected));
   else if (code === 2) console.error(`timed out waiting on: ${waiting.join(", ")}`);
   if (code === 0) console.log("every required check is green");
   process.exit(code);

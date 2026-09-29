@@ -50,3 +50,8 @@ export function missingChecks(expected, checks) {
 export function isGreen(check) {
   return check.bucket === "pass" || check.bucket === "skipping";
 }
+
+/** The reason a head cannot be judged when the ruleset lists nothing to wait on, else null. */
+export function noRequiredChecks(expected) {
+  return expected.length === 0 ? "the ruleset names no required check" : null;
+}

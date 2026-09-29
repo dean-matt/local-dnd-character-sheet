@@ -317,15 +317,19 @@ describe("the other three conditions", () => {
   });
 
   it("names the red checks, and reads an empty rollup as too new to judge", () => {
-    expect(checksBlocked([{ name: "check", bucket: "pass" }])).toBeNull();
-    expect(checksBlocked([{ name: "e2e", bucket: "fail" }])).toBe("e2e");
-    expect(checksBlocked([])).toMatch(/no check has reported/);
+    expect(checksBlocked([{ name: "check", bucket: "pass" }], ["check"])).toBeNull();
+    expect(checksBlocked([{ name: "e2e", bucket: "fail" }], ["e2e"])).toBe("e2e");
+    expect(checksBlocked([], ["check"])).toMatch(/no check has reported/);
   });
 
   it("blocks on a required check that has not reported for the head", () => {
     const reported = [{ name: "check", bucket: "pass" }];
     expect(checksBlocked(reported, ["check"])).toBeNull();
     expect(checksBlocked(reported, ["check", "e2e"])).toBe("e2e (not reported)");
+  });
+
+  it("blocks where the ruleset names no required check", () => {
+    expect(checksBlocked([{ name: "check", bucket: "pass" }], [])).toMatch(/no required check/);
   });
 
   it("stops a conflict and asks again on UNKNOWN", () => {
