@@ -15,6 +15,7 @@ const NET = { name: "Net", source: "PHB" };
 const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
 const CLOAK = { name: "Cloak of Protection", source: "DMG" };
 const CHAIN_MAIL = { name: "Chain Mail", source: "XPHB" };
+const GOLD_BAR = { name: "Gold Bar", source: "XDMG" };
 
 const row = (
   ref: { name: string; source: string },
@@ -87,6 +88,7 @@ describe("characterInventoryRoutes", () => {
       }),
       row(NET, "baseitem", { weapon: true, net: true, weight: 3 }),
       row(CHAIN_MAIL, "baseitem", { type: "HA|XPHB", armor: true, ac: 16, value: 7500 }),
+      row(GOLD_BAR, "item", { type: "TB" }),
       row(PLUS_ONE, "magicvariant", {
         requires: [{ weapon: true }],
         excludes: { net: true },
@@ -112,6 +114,8 @@ describe("characterInventoryRoutes", () => {
         itemType("M", "Melee Weapon (2024)", "XPHB"),
         itemType("HA", "Heavy Armor"),
         itemType("HA", "Heavy Armor (2024)", "XPHB"),
+        itemType("TB", "Trade Bar (XPHB)", "XPHB"),
+        itemType("TB", "Trade Bar (XDMG)", "XDMG"),
       ],
     });
   });
@@ -173,6 +177,12 @@ describe("characterInventoryRoutes", () => {
       weapon: null,
       armor: { category: "heavy", armorClass: 16 },
     });
+  });
+
+  it("names a bare type with no classic row from the first source", async () => {
+    store(withInventory([{ ref: GOLD_BAR }]));
+    const [bar] = await items();
+    expect(bar).toMatchObject({ type: { abbreviation: "TB", name: "Trade Bar (XDMG)" } });
   });
 
   it("names a magic variant the way its expansion does, not by joining two names", async () => {
