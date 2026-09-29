@@ -35,6 +35,14 @@ widget, panel, or nav element:
   unavailable while that weapon and a shield are both equipped, and hovering or
   focusing it opens a popover saying why. The artboard's `shieldEquipped` tweak
   switches the shield.
+  Equip is a fixed 18px icon toggle with a 24px hit area, named for its item
+  ("Equipped, Spear") with `aria-pressed` carrying the state. Stowed is a gray backpack on the chip's white, the
+  same for every item type; equipped is the item type's icon in white on the accent — a
+  sword for a weapon, a breastplate for armor, a shield for a shield, a hand for other
+  gear. An item the character is not proficient with shows a grayed backpack,
+  `aria-disabled`, with a popover naming the missing proficiency. The icons are inline
+  outlines adapted from Lucide (ISC). Weapons and List Item draw this today; Armor and
+  Gear still carry the text pill.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
