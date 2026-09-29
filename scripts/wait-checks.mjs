@@ -1,7 +1,7 @@
 /**
  * Waits for the head of a pull request to finish its required checks.
  *
- * Polls the head for up to ten minutes. Exits 0 when every required
+ * Polls the head for up to nine minutes, inside the longest tool call. Exits 0 when every required
  * check has reported green, 1 when one failed and none is still running, and 2 when the
  * timeout passed with a required check unreported or pending, or when the required names
  * could not be read. The names it was waiting on are printed before it exits.
@@ -10,7 +10,7 @@ import { realpathSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { expectedChecks, missingChecks, readChecks } from "./required-checks.mjs";
 
-export const TIMEOUT_MS = 10 * 60 * 1000;
+export const TIMEOUT_MS = 9 * 60 * 1000;
 export const INTERVAL_MS = 10 * 1000;
 
 /** @param {{ name: string, bucket: string }[]} checks */

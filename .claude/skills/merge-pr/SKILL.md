@@ -23,8 +23,9 @@ stops here.
 node scripts/wait-checks.mjs "$n"
 ```
 
-On `wait-checks` exit 2, name the missing checks and hand back. On exit 1, rerun the failed runs once,
-never twice: one rerun covers a flaky runner, a second says the failure is the branch's.
+Run it with a 600000 ms tool timeout. On its exit 2, name what it printed and hand back.
+On exit 1, rerun the failed runs once, never twice: one rerun covers a flaky runner, a
+second says the failure is the branch's.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
