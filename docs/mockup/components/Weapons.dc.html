@@ -76,8 +76,8 @@
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.damageType}}</span>
             <sc-if value="{{item.versatile}}" hint-placeholder-val="{{false}}">
               <div role="group" aria-label="{{item.label}} grip" style="display: flex; flex-shrink: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; overflow: hidden;">
-                <button aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border: none; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};">One-handed</button>
-                <button aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.gripNoteId}}" onClick="{{item.setTwoHand}}" style="font-size: 10px; font-weight: 600; padding: 2px 6px; border: none; border-left: 1px solid #dde1e6; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};">Two-handed</button>
+                <button aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="font-size: 10px; font-weight: 600; line-height: 14px; padding: 5px 8px; border: none; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};">One-handed</button>
+                <button aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.twoHandDescribedBy}}" onClick="{{item.setTwoHand}}" style="font-size: 10px; font-weight: 600; line-height: 14px; padding: 5px 8px; border: none; border-left: 1px solid #dde1e6; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};">Two-handed</button>
               </div>
             </sc-if>
             <div style="flex-grow: 1;"></div>
@@ -135,7 +135,7 @@ class Component extends DCLogic {
       equipment: [
         { label: 'Longbow +1', weaponClass: 'Martial', ability: 'dex', magic: 1, value: '150 gp', diceBase: '1d8', damageType: 'piercing', range: '150/600 ft.', desc: 'A magic longbow that grants a +1 bonus to attack and damage rolls.', equipped: false },
         { label: 'Handaxe', weaponClass: 'Simple', ability: 'str', magic: 0, value: '5 gp', diceBase: '1d6', damageType: 'slashing', range: 'thrown 20/60 ft.', desc: 'A light axe balanced for melee or a quick throw.', equipped: true },
-        { label: 'Spear', weaponClass: 'Simple', ability: 'str', magic: 0, value: '1 gp', diceBase: '1d6', diceVersatile: '1d8', damageType: 'piercing', range: 'thrown 20/60 ft.', desc: 'A hafted blade, thrown or thrust with one hand or both.', equipped: false, grip: 'two' }
+        { label: 'Spear', weaponClass: 'Simple', ability: 'str', magic: 0, value: '1 gp', diceBase: '1d6', diceVersatile: '1d8', damageType: 'piercing', range: 'thrown 20/60 ft.', desc: 'A hafted blade, thrown or thrust with one hand or both.', equipped: false, grip: 'one' }
       ],
       itemQuery: '',
       hoverKey: null,
@@ -200,6 +200,7 @@ class Component extends DCLogic {
         versatile,
         gripBlocked,
         gripNoteId: 'wpn-grip-' + idx,
+        twoHandDescribedBy: gripBlocked ? 'wpn-grip-' + idx : '',
         oneHandPressed: twoHanded ? 'false' : 'true',
         oneHandBg: twoHanded ? '#ffffff' : accent,
         oneHandColor: twoHanded ? '#6b7280' : '#ffffff',
