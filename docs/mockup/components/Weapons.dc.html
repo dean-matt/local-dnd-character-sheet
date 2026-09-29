@@ -18,7 +18,7 @@
 </style>
 </helmet>
 
-<div style="width: 460px; height: 390px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
+<div style="width: 460px; height: 490px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
   <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
       <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Weapons</div>
@@ -43,13 +43,21 @@
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <button aria-label="View {{item.label}} details" onClick="{{item.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.label}}</button>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.weaponClass}}</span>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.damageType}}</span>
+            <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>{{item.value}}</span>
+            <div style="flex-grow: 1;"></div>
+            <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
+          <div style="display: flex; align-items: center; gap: 6px;">
             <div style="position: relative; flex-shrink: 0;">
               <button aria-label="{{item.atkAria}}" onMouseEnter="{{item.showCalc}}" onMouseLeave="{{item.hideCalc}}" onFocus="{{item.showCalc}}" onBlur="{{item.hideCalc}}" aria-describedby="{{item.calcId}}" style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px;">
                 <span style="font-weight: 400; color: #6b7280;">Attack</span>
                 d20 {{item.atkBonus}}
               </button>
               <sc-if value="{{item.calcOpen}}" hint-placeholder-val="{{false}}">
-                <div role="tooltip" id="{{item.calcId}}" style="position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+                <div role="tooltip" id="{{item.calcId}}" style="position: absolute; top: calc(100% + 2px); left: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
                   <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{item.calcLabel}}</div>
                   <div style="font-size: 11px; color: #6b7280;">{{item.calcText}}</div>
                 </div>
@@ -61,23 +69,44 @@
                 {{item.dice}}
               </button>
               <sc-if value="{{item.dmgCalcOpen}}" hint-placeholder-val="{{false}}">
-                <div role="tooltip" id="{{item.dmgCalcId}}" style="position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+                <div role="tooltip" id="{{item.dmgCalcId}}" style="position: absolute; top: calc(100% + 2px); left: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
                   <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{item.dmgCalcLabel}}</div>
                   <div style="font-size: 11px; color: #6b7280;">{{item.dmgCalcText}}</div>
                 </div>
               </sc-if>
             </div>
             <div style="flex-grow: 1;"></div>
-            <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
-            <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+            <sc-if value="{{item.versatile}}" hint-placeholder-val="{{false}}">
+              <div style="position: relative; flex-shrink: 0;">
+                <div role="group" aria-label="{{item.label}} grip" style="display: flex; gap: 2px; padding: 1px; background: #dde1e6; border-radius: 999px;">
+                  <button aria-label="1h, one-handed" title="One-handed" aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="position: relative; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; padding: 2px 8px; border: none; border-radius: 999px; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: 0; right: 0;"></span>1h</button>
+                  <button aria-label="2h, two-handed" title="{{item.twoHandTitle}}" aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.twoHandDescribedBy}}" onClick="{{item.setTwoHand}}" onMouseEnter="{{item.showGripTip}}" onMouseLeave="{{item.hideGripTip}}" onFocus="{{item.showGripTip}}" onBlur="{{item.hideGripTip}}" style="position: relative; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; padding: 2px 8px; border: none; border-radius: 999px; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: 0; right: 0;"></span>2h</button>
+                </div>
+                <sc-if value="{{item.gripBlocked}}" hint-placeholder-val="{{false}}">
+                  <div role="tooltip" id="{{item.gripTipId}}" style="display: {{item.gripTipDisplay}}; position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; width: 200px; white-space: normal; pointer-events: none;">
+                    <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">Two-handed</div>
+                    <div style="font-size: 11px; color: #6b7280;">Unavailable while this weapon and a shield are both equipped.</div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+            <div style="position: relative; flex-shrink: 0;">
+              <button aria-label="{{item.equipAria}}" aria-pressed="{{item.equipPressed}}" aria-disabled="{{item.equipDisabled}}" aria-describedby="{{item.equipTipId}}" onClick="{{item.toggleEquip}}" onMouseEnter="{{item.showEquipTip}}" onMouseLeave="{{item.hideEquipTip}}" onFocus="{{item.showEquipTip}}" onBlur="{{item.hideEquipTip}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; cursor: {{item.equipCursor}};"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span>
+                <sc-if value="{{item.equipped}}" hint-placeholder-val="{{false}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" y1="19" x2="19" y2="13"></line><line x1="16" y1="16" x2="20" y2="20"></line><line x1="19" y1="21" x2="21" y2="19"></line></svg>
+                </sc-if>
+                <sc-if value="{{item.stowed}}" hint-placeholder-val="{{true}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><path d="M8 10h8"></path><path d="M8 18h8"></path><path d="M8 22v-6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+                </sc-if>
+              </button>
+              <div role="tooltip" id="{{item.equipTipId}}" style="display: {{item.equipTipDisplay}}; position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; width: max-content; max-width: 200px; white-space: normal; pointer-events: none;">
+                <div style="font-size: 11px; font-weight: 700;">{{item.equipTipLabel}}</div>
+                <sc-if value="{{item.equipBlocked}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">{{item.equipTipText}}</div>
+                </sc-if>
+              </div>
+            </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.weaponClass}}</span>
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.damageType}}</span>
-            <div style="flex-grow: 1;"></div>
-            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
-          </div>
-          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
         </div>
       </sc-for>
     </div>
@@ -115,7 +144,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":460,"height":390}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"shieldEquipped":{"editor":"boolean","default":true},"$preview":{"width":460,"height":490}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -125,11 +154,14 @@ class Component extends DCLogic {
       prof: 4,
       equipment: [
         { label: 'Longbow +1', weaponClass: 'Martial', ability: 'dex', magic: 1, value: '150 gp', diceBase: '1d8', damageType: 'piercing', range: '150/600 ft.', desc: 'A magic longbow that grants a +1 bonus to attack and damage rolls.', equipped: false },
-        { label: 'Handaxe', weaponClass: 'Simple', ability: 'str', magic: 0, value: '5 gp', diceBase: '1d6', damageType: 'slashing', range: 'thrown 20/60 ft.', desc: 'A light axe balanced for melee or a quick throw.', equipped: true }
+        { label: 'Handaxe', weaponClass: 'Simple', ability: 'str', magic: 0, value: '5 gp', diceBase: '1d6', damageType: 'slashing', range: 'thrown 20/60 ft.', desc: 'A light axe balanced for melee or a quick throw.', equipped: false },
+        { label: 'Spear', weaponClass: 'Simple', ability: 'str', magic: 0, value: '1 gp', diceBase: '1d6', diceVersatile: '1d8', damageType: 'piercing', range: 'thrown 20/60 ft.', desc: 'A hafted blade, thrown or thrust with one hand or both.', equipped: true, grip: 'one' }
       ],
       itemQuery: '',
       hoverKey: null,
+      hoverGripKey: null,
       hoverDmgKey: null,
+      hoverEquipKey: null,
       modalItem: null,
       filterOpen: false,
       weaponFilters: { classes: [], damageTypes: [], equipped: [], priceMin: null, priceMax: null }
@@ -144,8 +176,10 @@ class Component extends DCLogic {
       { name: 'Heavy Crossbow', weaponClass: 'Martial', ability: 'dex', magic: 0, value: '50 gp', diceBase: '1d10', damageType: 'piercing', range: '100/400 ft.', desc: 'A slow-loading but hard-hitting ranged weapon.', meta: 'Weapon • Martial ranged' },
       { name: 'Handaxe', weaponClass: 'Simple', ability: 'str', magic: 0, value: '5 gp', diceBase: '1d6', damageType: 'slashing', range: 'thrown 20/60 ft.', desc: 'A light axe balanced for melee or a quick throw.', meta: 'Weapon • Simple melee' },
       { name: 'Shortsword', weaponClass: 'Martial', ability: 'dex', magic: 0, value: '10 gp', diceBase: '1d6', damageType: 'piercing', range: 'finesse, light', desc: 'A quick, light blade that favors precision over force.', meta: 'Weapon • Martial melee' },
-      { name: 'Dagger', weaponClass: 'Simple', ability: 'dex', magic: 0, value: '2 gp', diceBase: '1d4', damageType: 'piercing', range: 'finesse, light, thrown 20/60 ft.', desc: 'A small, easily concealed blade.', meta: 'Weapon • Simple melee' }
+      { name: 'Dagger', weaponClass: 'Simple', ability: 'dex', magic: 0, value: '2 gp', diceBase: '1d4', damageType: 'piercing', range: 'finesse, light, thrown 20/60 ft.', desc: 'A small, easily concealed blade.', meta: 'Weapon • Simple melee' },
+      { name: 'Spear', weaponClass: 'Simple', ability: 'str', magic: 0, value: '1 gp', diceBase: '1d6', diceVersatile: '1d8', damageType: 'piercing', range: 'thrown 20/60 ft.', desc: 'A hafted blade, thrown or thrust with one hand or both.', meta: 'Weapon • Simple melee' }
     ];
+    const shieldEquipped = this.props.shieldEquipped ?? true;
     const { proficiencies, equipment, itemQuery, weaponFilters: wf } = this.state;
     const canEquip = (item) => proficiencies.some((p) => p.toLowerCase().indexOf(item.weaponClass.toLowerCase() + ' weapon') !== -1);
     const priceOf = (item) => parseFloat(item.value) || 0;
@@ -165,18 +199,45 @@ class Component extends DCLogic {
       const abilityMod = abilities[item.ability] ?? 0;
       const atkBonus = abilityMod + (allowed ? prof : 0) + (item.magic || 0);
       const calcText = item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (allowed ? ' + proficiency ' + fmt(prof) : ' (not proficient)') + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + fmt(atkBonus);
+      const versatile = !!item.diceVersatile;
+      const gripBlocked = versatile && equipped && shieldEquipped;
+      const twoHanded = versatile && item.grip === 'two' && !gripBlocked;
+      const die = twoHanded ? item.diceVersatile : item.diceBase;
       const dmgMod = abilityMod + (item.magic || 0);
-      const dmgCalcText = item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + fmt(dmgMod);
-      const dmgFull = item.diceBase + (dmgMod ? fmt(dmgMod) : '') + ' ' + item.damageType;
-      let equipLabel = 'Equip', equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTitle = 'Click to equip';
-      if (!allowed) { equipLabel = "Can't equip"; equipTitle = 'Requires a matching proficiency'; }
-      else if (equipped) { equipLabel = 'Equipped'; equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTitle = 'Click to unequip'; }
+      const dice = die + (dmgMod ? fmt(dmgMod) : '');
+      const dmgCalcText = (versatile ? (twoHanded ? 'Two-handed ' : 'One-handed ') : '') + die + ' + ' + item.ability.toUpperCase() + ' modifier ' + fmt(abilityMod) + (item.magic ? ' + magic ' + fmt(item.magic) : '') + ' = ' + dice;
+      const dmgFull = dice + ' ' + item.damageType;
+      const setGrip = (grip) => this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, grip } : x)) });
+      let equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTipLabel = 'Stowed, click to equip';
+      if (!allowed) { equipColor = '#9aa1ab'; equipTipLabel = "Can't equip"; }
+      else if (equipped) { equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTipLabel = 'Equipped, click to stow'; }
       return {
         label: item.label,
         value: item.value,
         weaponClass: item.weaponClass,
-        dice: item.diceBase + (dmgMod ? fmt(dmgMod) : ''),
+        dice,
         damageType: item.damageType,
+        versatile,
+        gripBlocked,
+        gripTipId: 'wpn-grip-' + idx,
+        gripTipDisplay: this.state.hoverGripKey === idx ? 'block' : 'none',
+        showGripTip: () => this.setState({ hoverGripKey: idx }),
+        hideGripTip: () => this.setState({ hoverGripKey: null }),
+        twoHandDescribedBy: gripBlocked ? 'wpn-grip-' + idx : '',
+        twoHandTitle: gripBlocked ? '' : 'Two-handed',
+        oneHandPressed: twoHanded ? 'false' : 'true',
+        oneHandBg: twoHanded ? 'transparent' : accent,
+        oneHandColor: twoHanded ? '#4b5563' : '#ffffff',
+        twoHandPressed: twoHanded ? 'true' : 'false',
+        twoHandDisabled: gripBlocked ? 'true' : 'false',
+        twoHandBg: twoHanded ? accent : 'transparent',
+        twoHandColor: twoHanded ? '#ffffff' : (gripBlocked ? '#9aa1ab' : '#4b5563'),
+        twoHandCursor: gripBlocked ? 'not-allowed' : 'pointer',
+        setOneHand: () => setGrip('one'),
+        setTwoHand: () => {
+          if (gripBlocked) return;
+          setGrip('two');
+        },
         descShort: item.desc,
         atkBonus: fmt(atkBonus),
         atkAria: item.label + ' attack bonus ' + fmt(atkBonus),
@@ -192,11 +253,23 @@ class Component extends DCLogic {
         dmgCalcText,
         showDmgCalc: () => this.setState({ hoverDmgKey: idx }),
         hideDmgCalc: () => this.setState({ hoverDmgKey: null }),
-        equipLabel, equipBorder, equipBg, equipColor, equipTitle,
-        equipAria: (equipped ? 'Unequip ' : 'Equip ') + item.label,
+        equipped,
+        stowed: !equipped,
+        equipBlocked: !allowed,
+        equipBorder, equipBg, equipColor, equipTipLabel,
+        equipTipText: 'Requires ' + item.weaponClass + ' weapons proficiency.',
+        equipAria: 'Equipped, ' + item.label,
+        equipPressed: equipped ? 'true' : 'false',
+        equipDisabled: allowed ? 'false' : 'true',
+        equipCursor: allowed ? 'pointer' : 'not-allowed',
+        equipTipId: 'wpn-equip-' + idx,
+        equipTipDisplay: this.state.hoverEquipKey === idx ? 'block' : 'none',
+        showEquipTip: () => this.setState({ hoverEquipKey: idx }),
+        hideEquipTip: () => this.setState({ hoverEquipKey: null }),
         toggleEquip: () => {
           if (!allowed) return;
-          this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped } : x)) });
+          const blocksGrip = !item.equipped && shieldEquipped && versatile;
+          this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped, grip: blocksGrip ? 'one' : x.grip } : x)) });
         },
         remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) }),
         openDetail: () => this.setState({ modalItem: { name: item.label, meta: item.weaponClass + ' weapon', atk: fmt(atkBonus), calcText, dmg: dmgFull + ', ' + item.range, dmgCalcText, value: item.value, desc: item.desc } })
@@ -208,7 +281,7 @@ class Component extends DCLogic {
           name: c.name,
           meta: c.meta,
           add: () => {
-            this.setState({ equipment: [...equipment, { label: c.name, weaponClass: c.weaponClass, ability: c.ability, magic: c.magic, value: c.value, diceBase: c.diceBase, damageType: c.damageType, range: c.range, desc: c.desc, equipped: false }], itemQuery: '' });
+            this.setState({ equipment: [...equipment, { label: c.name, weaponClass: c.weaponClass, ability: c.ability, magic: c.magic, value: c.value, diceBase: c.diceBase, diceVersatile: c.diceVersatile, damageType: c.damageType, range: c.range, desc: c.desc, equipped: false, grip: 'one' }], itemQuery: '' });
           }
         }))
       : [];

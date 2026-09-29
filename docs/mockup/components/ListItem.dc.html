@@ -16,13 +16,25 @@
 </style>
 </helmet>
 
-<div style="width: 380px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+<div style="width: 460px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
   <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">List item — the shared row shape for Weapons, Armor, Gear, Known Spells, and Features</div>
 
     <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
       <div style="display: flex; align-items: center; gap: 8px;">
         <button style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">Longsword</button>
+        <sc-if value="{{showChip}}" hint-placeholder-val="{{true}}">
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">Martial</span>
+        </sc-if>
+        <sc-if value="{{showChip2}}" hint-placeholder-val="{{true}}">
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">Slashing</span>
+        </sc-if>
+        <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>15 gp</span>
+        <div style="flex-grow: 1;"></div>
+        <button aria-label="Remove Longsword" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+      </div>
+      <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">A versatile blade balanced for one or two hands, dealing slashing damage.</div>
+      <div style="display: flex; align-items: center; gap: 6px;">
         <sc-if value="{{showCalc}}" hint-placeholder-val="{{true}}">
           <span style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">
             <span style="font-weight: 400; color: #6b7280;">Attack</span>
@@ -30,36 +42,33 @@
           </span>
         </sc-if>
         <div style="flex-grow: 1;"></div>
+        <sc-if value="{{showGrip}}" hint-placeholder-val="{{true}}">
+          <div role="group" aria-label="Longsword grip" style="display: flex; flex-shrink: 0; gap: 2px; padding: 1px; background: #dde1e6; border-radius: 999px;">
+            <button aria-label="1h, one-handed" title="One-handed" aria-pressed="true" style="position: relative; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; padding: 2px 8px; border: none; border-radius: 999px; background: {{accent}}; color: #ffffff;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: 0; right: 0;"></span>1h</button>
+            <button aria-label="2h, two-handed" title="Two-handed" aria-pressed="false" style="position: relative; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; padding: 2px 8px; border: none; border-radius: 999px; background: transparent; color: #4b5563;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: 0; right: 0;"></span>2h</button>
+          </div>
+        </sc-if>
         <sc-if value="{{showAction}}" hint-placeholder-val="{{true}}">
-          <button style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #6b7280; font-size: 11px; font-weight: 600; flex-shrink: 0;">Equip</button>
+          <button aria-label="Equipped, Longsword" aria-pressed="true" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid {{accent}}; background: {{accent}}; color: #ffffff; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" y1="19" x2="19" y2="13"></line><line x1="16" y1="16" x2="20" y2="20"></line><line x1="19" y1="21" x2="21" y2="19"></line></svg></button>
         </sc-if>
-        <button aria-label="Remove Longsword" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
       </div>
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <sc-if value="{{showChip}}" hint-placeholder-val="{{true}}">
-          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">Martial</span>
-        </sc-if>
-        <sc-if value="{{showChip2}}" hint-placeholder-val="{{true}}">
-          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">Slashing</span>
-        </sc-if>
-        <div style="flex-grow: 1;"></div>
-        <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">15 gp</span>
-      </div>
-      <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">A versatile blade balanced for one or two hands, dealing slashing damage.</div>
     </div>
 
     <div style="font-size: 11px; color: #6b7280; line-height: 1.5;">
-      Row 1: name (ellipsis), an optional hover-calc chip (see Popover for the tooltip
-      itself), a flex spacer, then an optional pill and remove (&times;) together at the
-      far right.<br>
-      Row 2: zero, one, or two left chips for the item's category, a flex spacer, then a
-      right-aligned value or level.<br>
-      Row 3: a truncated one-line description.
+      Row 1: name (ellipsis), zero, one, or two chips for the item's category, a gold
+      cost chip (a coin icon, read aloud as "Cost 15 gp") or a level, a flex spacer, then
+      remove (&times;) at the far right.<br>
+      Row 2: a truncated one-line description.<br>
+      Row 3: optional hover-calc chips (see Popover for the tooltip itself), a flex
+      spacer, an optional 1h/2h grip toggle for a versatile weapon, and an optional
+      Equip toggle at the far right: an 18px icon square, a backpack when stowed and the
+      item type's icon on the accent when equipped. Weapons draws its hover and focus
+      popover.
     </div>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"$preview":{"width":380,"height":340}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"showGrip":{"editor":"boolean","default":true},"$preview":{"width":460,"height":340}}'>
 class Component extends DCLogic {
   renderVals() {
     return {
@@ -67,7 +76,8 @@ class Component extends DCLogic {
       showCalc: this.props.showCalc ?? true,
       showAction: this.props.showAction ?? true,
       showChip: this.props.showChip ?? true,
-      showChip2: this.props.showChip2 ?? true
+      showChip2: this.props.showChip2 ?? true,
+      showGrip: this.props.showGrip ?? true
     };
   }
 }

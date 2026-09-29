@@ -28,7 +28,21 @@ widget, panel, or nav element:
   Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
   opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
   2024, switched by the artboard's Edition tweak.
-- Inventory: Currency, Weapons, Armor, Gear.
+- Inventory: Currency, Weapons, Armor, Gear. A weapon's price on Weapons is a gold chip
+  with a coin icon, read aloud as its cost. A versatile weapon's row has a 1h/2h grip
+  toggle beside its Equip button, a gray pill track with the chosen grip on an
+  accent-red thumb; the toggle picks the damage die the chip and formula show. 2h is
+  unavailable while that weapon and a shield are both equipped, and hovering or
+  focusing it opens a popover saying why. The artboard's `shieldEquipped` tweak
+  switches the shield.
+  Equip is a fixed 18px icon toggle with a 24px hit area, named for its item
+  ("Equipped, Spear") with `aria-pressed` carrying the state. Stowed is a gray backpack
+  on a white square, the same for every item type; equipped is the item type's icon in
+  white on the accent — a sword for a weapon, a breastplate for armor, a shield for a
+  shield, a hand for other gear. An item the character is not proficient with shows a
+  grayed backpack, `aria-disabled`, with a popover naming the missing proficiency. The
+  icons are inline outlines adapted from Lucide (ISC). Weapons and List Item draw this
+  today; Armor and Gear still carry the text pill.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
