@@ -1,11 +1,12 @@
 /**
  * Waits for the head of a pull request to finish its required checks.
  *
- * Polls the head for up to nine minutes, inside the longest tool call. Exits 0 when every required
- * check has reported green, 1 when one failed and none reported is still running (a required
- * check that never reported does not hold a red one back), and 2 when the timeout passed with
- * a required check unreported or pending, or when no required name was read. The names it
- * was waiting on are printed before it exits.
+ * Input: a pull request number. Polls every `INTERVAL_MS` for up to nine minutes, counted from
+ * the start, inside the longest tool call. Exits 0 once two consecutive polls both show every
+ * required check green, 1 when a check failed and none is pending (a required check that has
+ * not reported does not delay that exit), and 2 when the time ran out with a required check
+ * unreported, pending or unconfirmed, or when no required name could be read. Prints the
+ * names it was waiting on before it exits.
  */
 import { realpathSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -18,7 +19,8 @@ import {
 } from "./required-checks.mjs";
 
 export const TIMEOUT_MS = 9 * 60 * 1000;
-export const INTERVAL_MS = 10 * 1000;
+export const INTERVAL_MS = 15 * 1000;
+export const RULESET_RETRY_MS = 3 * 1000;
 
 /** @param {{ name: string, bucket: string }[]} checks */
 export function settle(expected, checks) {
@@ -32,8 +34,23 @@ export function settle(expected, checks) {
 }
 
 /**
- * Polls until the head settles or `timeoutMs` passes. `read`, `wait` and `now` are
- * parameters so a test drives the clock instead of sleeping through it.
+ * Reads the required names, retrying once after `delayMs` before the error stands.
+ *
+ * @param {() => string[]} read
+ * @param {(ms: number) => Promise<void>} [wait]
+ */
+export async function readExpected(read, wait = (ms) => sleep(ms), delayMs = RULESET_RETRY_MS) {
+  try {
+    return read();
+  } catch {
+    await wait(delayMs);
+    return read();
+  }
+}
+
+/**
+ * Polls until the head settles or the next poll would land past `timeoutMs`. `read`, `wait`
+ * and `now` are parameters so a test drives the clock instead of sleeping through it.
  *
  * @returns {Promise<{ code: 0 | 1 | 2, failed: string[], waiting: string[] }>}
  */
@@ -47,12 +64,20 @@ export async function waitChecks({
 }) {
   if (noRequiredChecks(expected) !== null) return { code: 2, failed: [], waiting: [] };
   const deadline = now() + timeoutMs;
+  let greens = 0;
   for (;;) {
     const { failed, pending, missing } = settle(expected, await read());
     if (failed.length > 0 && pending.length === 0) return { code: 1, failed, waiting: [] };
     const waiting = [...missing, ...pending];
-    if (waiting.length === 0) return { code: 0, failed: [], waiting: [] };
-    if (now() >= deadline) return { code: 2, failed: [], waiting };
+    greens = waiting.length === 0 ? greens + 1 : 0;
+    if (greens >= 2) return { code: 0, failed: [], waiting: [] };
+    if (now() + intervalMs > deadline) {
+      return {
+        code: 2,
+        failed: [],
+        waiting: waiting.length > 0 ? waiting : ["a second green poll"],
+      };
+    }
     await wait(intervalMs);
   }
 }
@@ -63,9 +88,10 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
     console.error("usage: node scripts/wait-checks.mjs <pr>");
     process.exit(2);
   }
+  const started = Date.now();
   let expected;
   try {
-    expected = expectedChecks();
+    expected = await readExpected(expectedChecks);
   } catch (error) {
     console.error(`could not read the required checks: ${error.message}`);
     process.exit(2);
@@ -73,6 +99,7 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
   const { code, failed, waiting } = await waitChecks({
     expected,
     read: () => readChecks(pr),
+    timeoutMs: TIMEOUT_MS - (Date.now() - started),
   });
   if (code === 1) console.error(`failed: ${failed.join(", ")}`);
   if (code === 2 && noRequiredChecks(expected) !== null) console.error(noRequiredChecks(expected));

@@ -35,6 +35,8 @@ sleep 30
 node scripts/wait-checks.mjs "$n"
 ```
 
+A second exit 1 is the branch's failure: name the failed checks and hand back.
+
 The sleep lets the rerun show as pending before `wait-checks` reads it.
 
 ## The gate

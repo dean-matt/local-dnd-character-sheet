@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { expectedChecks, missingChecks, readChecks } from "../scripts/required-checks.mjs";
-import { settle, waitChecks } from "../scripts/wait-checks.mjs";
+import { readExpected, settle, waitChecks } from "../scripts/wait-checks.mjs";
 
 const EXPECTED = ["check", "e2e"];
 const pass = (name: string) => ({ name, bucket: "pass" });
 
 /** A clock and a reader the test drives: each `read` returns the next rollup, each `wait` moves time. */
-function harness(
+async function harness(
   rollups: { name: string; bucket: string }[][],
   timeoutMs = 60_000,
   expected = EXPECTED,
 ) {
   let t = 0;
-  let i = 0;
-  return waitChecks({
+  let reads = 0;
+  const result = await waitChecks({
     expected,
-    read: async () => rollups[Math.min(i++, rollups.length - 1)] ?? [],
+    read: async () => rollups[Math.min(reads++, rollups.length - 1)] ?? [],
     wait: async (ms?: number) => {
       t += ms ?? 0;
     },
@@ -23,6 +23,7 @@ function harness(
     timeoutMs,
     intervalMs: 10_000,
   });
+  return { ...result, reads, elapsed: t };
 }
 
 describe("missingChecks", () => {
@@ -56,7 +57,7 @@ describe("waitChecks", () => {
       [red, { name: "e2e", bucket: "pending" }],
       [red, pass("e2e")],
     ]);
-    expect(r).toMatchObject({ code: 1, failed: ["check"] });
+    expect(r).toMatchObject({ code: 1, failed: ["check"], reads: 2 });
   });
 
   it("exits 2 naming the checks that never reported", async () => {
@@ -67,6 +68,50 @@ describe("waitChecks", () => {
   it("exits 2 on a check still pending at the deadline", async () => {
     const r = await harness([[pass("check"), { name: "e2e", bucket: "pending" }]]);
     expect(r).toMatchObject({ code: 2, waiting: ["e2e"] });
+  });
+});
+
+describe("a final answer", () => {
+  it("needs two consecutive green polls, and a red between them restarts the count", async () => {
+    const both = [pass("check"), pass("e2e")];
+    expect(await harness([both, both])).toMatchObject({ code: 0, reads: 2 });
+    const r = await harness([
+      both,
+      [pass("check"), { name: "e2e", bucket: "pending" }],
+      both,
+      both,
+    ]);
+    expect(r).toMatchObject({ code: 0, reads: 4 });
+  });
+
+  it("never polls past the deadline: a lone green with no time for a second is unconfirmed", async () => {
+    const both = [pass("check"), pass("e2e")];
+    const r = await harness([both], 9_000);
+    expect(r).toMatchObject({ code: 2, waiting: ["a second green poll"], reads: 1 });
+  });
+
+  it("stops before a poll whose interval would cross the deadline", async () => {
+    const r = await harness([[pass("check")]], 25_000);
+    expect(r).toMatchObject({ code: 2, waiting: ["e2e"] });
+    expect(r.elapsed).toBeLessThanOrEqual(25_000);
+  });
+});
+
+describe("readExpected", () => {
+  it("retries once after a delay, then lets the second error stand", async () => {
+    const waits: number[] = [];
+    const wait = async (ms: number) => void waits.push(ms);
+    let calls = 0;
+    const flaky = () => {
+      if (calls++ === 0) throw new Error("gh timed out");
+      return ["check"];
+    };
+    expect(await readExpected(flaky, wait, 5)).toEqual(["check"]);
+    expect(waits).toEqual([5]);
+    const dead = () => {
+      throw new Error("still down");
+    };
+    await expect(readExpected(dead, wait, 5)).rejects.toThrow("still down");
   });
 });
 
@@ -94,6 +139,24 @@ describe("gh readers", () => {
     };
     expect(readChecks("1", exits(JSON.stringify(rollup)))).toEqual(rollup);
     expect(readChecks("1", exits(""))).toEqual([]);
+  });
+
+  it("bounds every gh call and reads a timeout as no rollup", () => {
+    const timeouts: number[] = [];
+    const run = (_file: string, _args: string[], options: { timeout: number }) => {
+      timeouts.push(options.timeout);
+      return "[]";
+    };
+    readChecks("1", run);
+    expectedChecks(run);
+    expect(timeouts).toEqual([30_000, 30_000]);
+    const timedOut = () => {
+      throw Object.assign(new Error("spawnSync gh ETIMEDOUT"), {
+        code: "ETIMEDOUT",
+        stdout: JSON.stringify([{ name: "e2e", bucket: "pass" }]),
+      });
+    };
+    expect(readChecks("1", timedOut)).toEqual([]);
   });
 
   it("takes the required names from the ruleset's status-check rule alone", () => {
