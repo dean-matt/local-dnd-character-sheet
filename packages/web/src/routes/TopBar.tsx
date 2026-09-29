@@ -122,7 +122,7 @@ export function TopBar() {
                 </Link>
               ))}
               <Link
-                to="/"
+                to="/characters"
                 onClick={() => setOpen(false)}
                 className="mt-1 block rounded-control border-t border-border px-2.5 py-2 text-sm font-semibold text-ink hover:bg-subtle"
               >

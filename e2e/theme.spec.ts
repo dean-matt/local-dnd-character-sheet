@@ -27,7 +27,7 @@ for (const { stored, system, scheme, palette } of cases) {
   }) => {
     if (stored) await page.addInitScript((theme) => localStorage.setItem("theme", theme), stored);
     await page.emulateMedia({ colorScheme: system });
-    await page.goto("/");
+    await page.goto("/characters");
 
     // Native controls and scrollbars follow color-scheme, not the tokens.
     await expect(page.locator("html")).toHaveCSS("color-scheme", scheme);

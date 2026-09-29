@@ -1,5 +1,5 @@
 import type { RouteObject } from "react-router";
-import { createBrowserRouter, Outlet } from "react-router";
+import { createBrowserRouter, Link, Outlet } from "react-router";
 import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout.tsx";
@@ -19,6 +19,18 @@ function ContentLayout() {
   );
 }
 
+/** A placeholder until the homepage has content of its own. */
+function HomePage() {
+  return (
+    <section>
+      <h1 className="font-semibold text-2xl">Local D&D</h1>
+      <Link to="/characters" className="mt-2 inline-block text-accent underline">
+        Your characters
+      </Link>
+    </section>
+  );
+}
+
 export const routeConfig: RouteObject[] = [
   {
     element: <RootLayout />,
@@ -26,7 +38,8 @@ export const routeConfig: RouteObject[] = [
       {
         element: <ContentLayout />,
         children: [
-          { index: true, element: <CharacterListPage /> },
+          { index: true, element: <HomePage /> },
+          { path: "characters", element: <CharacterListPage /> },
           ...CATALOG_TARGETS.map((target) => ({
             path: `catalog/${target.path}`,
             element: <CatalogPage target={target} />,
