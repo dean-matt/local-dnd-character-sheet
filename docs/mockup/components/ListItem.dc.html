@@ -43,9 +43,9 @@
         <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">15 gp</span>
         <div style="flex-grow: 1;"></div>
         <sc-if value="{{showGrip}}" hint-placeholder-val="{{true}}">
-          <div role="group" aria-label="Longsword grip" style="display: flex; flex-shrink: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 999px; overflow: hidden;">
-            <button aria-label="One-handed" title="One-handed" aria-pressed="true" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; background: {{accent}}; color: #ffffff;">1h</button>
-            <button aria-label="Two-handed" title="Two-handed" aria-pressed="false" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-left: 1px solid #dde1e6; background: #ffffff; color: #6b7280;">2h</button>
+          <div role="group" aria-label="Longsword grip" style="display: flex; flex-shrink: 0; gap: 2px; padding: 2px; background: #dde1e6; border-radius: 999px;">
+            <button aria-label="1h, one-handed" title="One-handed" aria-pressed="true" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-radius: 999px; background: {{accent}}; color: #ffffff;">1h</button>
+            <button aria-label="2h, two-handed" title="Two-handed" aria-pressed="false" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-radius: 999px; background: transparent; color: #4b5563;">2h</button>
           </div>
         </sc-if>
         <sc-if value="{{showAction}}" hint-placeholder-val="{{true}}">

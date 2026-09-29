@@ -78,9 +78,9 @@
             <div style="flex-grow: 1;"></div>
             <sc-if value="{{item.versatile}}" hint-placeholder-val="{{false}}">
               <div style="position: relative; flex-shrink: 0;">
-                <div role="group" aria-label="{{item.label}} grip" style="display: flex; background: #ffffff; border: 1px solid #dde1e6; border-radius: 999px; overflow: hidden;">
-                  <button aria-label="One-handed" title="One-handed" aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};">1h</button>
-                  <button aria-label="Two-handed" title="{{item.twoHandTitle}}" aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.twoHandDescribedBy}}" onClick="{{item.setTwoHand}}" onMouseEnter="{{item.showGripTip}}" onMouseLeave="{{item.hideGripTip}}" onFocus="{{item.showGripTip}}" onBlur="{{item.hideGripTip}}" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-left: 1px solid #dde1e6; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};">2h</button>
+                <div role="group" aria-label="{{item.label}} grip" style="display: flex; gap: 2px; padding: 2px; background: #dde1e6; border-radius: 999px;">
+                  <button aria-label="1h, one-handed" title="One-handed" aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-radius: 999px; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};">1h</button>
+                  <button aria-label="2h, two-handed" title="{{item.twoHandTitle}}" aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.twoHandDescribedBy}}" onClick="{{item.setTwoHand}}" onMouseEnter="{{item.showGripTip}}" onMouseLeave="{{item.hideGripTip}}" onFocus="{{item.showGripTip}}" onBlur="{{item.hideGripTip}}" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-radius: 999px; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};">2h</button>
                 </div>
                 <sc-if value="{{item.gripBlocked}}" hint-placeholder-val="{{false}}">
                   <div role="tooltip" id="{{item.gripTipId}}" style="display: {{item.gripTipDisplay}}; position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; width: 200px; white-space: normal; pointer-events: none;">
@@ -210,12 +210,12 @@ class Component extends DCLogic {
         twoHandDescribedBy: gripBlocked ? 'wpn-grip-' + idx : '',
         twoHandTitle: gripBlocked ? '' : 'Two-handed',
         oneHandPressed: twoHanded ? 'false' : 'true',
-        oneHandBg: twoHanded ? '#ffffff' : accent,
-        oneHandColor: twoHanded ? '#6b7280' : '#ffffff',
+        oneHandBg: twoHanded ? 'transparent' : accent,
+        oneHandColor: twoHanded ? '#4b5563' : '#ffffff',
         twoHandPressed: twoHanded ? 'true' : 'false',
         twoHandDisabled: gripBlocked ? 'true' : 'false',
-        twoHandBg: twoHanded ? accent : '#ffffff',
-        twoHandColor: twoHanded ? '#ffffff' : (gripBlocked ? '#9aa1ab' : '#6b7280'),
+        twoHandBg: twoHanded ? accent : 'transparent',
+        twoHandColor: twoHanded ? '#ffffff' : (gripBlocked ? '#9aa1ab' : '#4b5563'),
         twoHandCursor: gripBlocked ? 'not-allowed' : 'pointer',
         setOneHand: () => setGrip('one'),
         setTwoHand: () => {
