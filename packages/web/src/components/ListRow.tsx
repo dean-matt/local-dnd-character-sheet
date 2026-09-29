@@ -1,5 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { Modal } from "./Modal.tsx";
+import type { ReactNode } from "react";
+import { DetailTrigger } from "./DetailTrigger.tsx";
 
 /**
  * The one row every list on the sheet draws: the name, the chips beside a right-aligned
@@ -19,28 +19,17 @@ export function ListRow({
   preview?: string;
   detail?: { meta?: ReactNode; children: ReactNode };
 }) {
-  const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const wasOpen = useRef(false);
-
-  // After the dialog unmounts, so the focus lands on an element that is no longer inert.
-  useEffect(() => {
-    if (wasOpen.current && !open) trigger.current?.focus();
-    wasOpen.current = open;
-  }, [open]);
-
   return (
     <li className="flex min-w-0 flex-col gap-1 rounded-control bg-subtle px-3 py-2.5 text-sm print:break-inside-avoid print:bg-transparent print:px-0">
       {detail ? (
-        <button
-          ref={trigger}
-          type="button"
-          aria-haspopup="dialog"
-          onClick={() => setOpen(true)}
-          className="min-w-0 cursor-pointer truncate text-left font-semibold print:overflow-visible print:whitespace-normal"
+        <DetailTrigger
+          title={name}
+          meta={detail.meta}
+          detail={detail.children}
+          className="min-w-0 truncate font-semibold print:overflow-visible print:whitespace-normal"
         >
           {name}
-        </button>
+        </DetailTrigger>
       ) : (
         <span
           title={name}
@@ -54,11 +43,6 @@ export function ListRow({
         {value && <span className="ml-auto shrink-0 text-label text-muted">{value}</span>}
       </div>
       {preview && <div className="truncate text-label text-muted print:hidden">{preview}</div>}
-      {open && detail && (
-        <Modal title={name} meta={detail.meta} onClose={() => setOpen(false)}>
-          {detail.children}
-        </Modal>
-      )}
     </li>
   );
 }
