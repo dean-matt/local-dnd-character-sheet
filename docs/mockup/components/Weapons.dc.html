@@ -68,25 +68,30 @@
               </sc-if>
             </div>
             <div style="flex-grow: 1;"></div>
-            <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
             <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
           </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
           <div style="display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.weaponClass}}</span>
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.damageType}}</span>
+            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
+            <div style="flex-grow: 1;"></div>
             <sc-if value="{{item.versatile}}" hint-placeholder-val="{{false}}">
-              <div role="group" aria-label="{{item.label}} grip" style="display: flex; flex-shrink: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; overflow: hidden;">
-                <button aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="font-size: 10px; font-weight: 600; line-height: 14px; padding: 5px 8px; border: none; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};">One-handed</button>
-                <button aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.twoHandDescribedBy}}" onClick="{{item.setTwoHand}}" style="font-size: 10px; font-weight: 600; line-height: 14px; padding: 5px 8px; border: none; border-left: 1px solid #dde1e6; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};">Two-handed</button>
+              <div style="position: relative; flex-shrink: 0;">
+                <div role="group" aria-label="{{item.label}} grip" style="display: flex; background: #ffffff; border: 1px solid #dde1e6; border-radius: 999px; overflow: hidden;">
+                  <button aria-label="One-handed" title="One-handed" aria-pressed="{{item.oneHandPressed}}" onClick="{{item.setOneHand}}" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; background: {{item.oneHandBg}}; color: {{item.oneHandColor}};">1h</button>
+                  <button aria-label="Two-handed" title="{{item.twoHandTitle}}" aria-pressed="{{item.twoHandPressed}}" aria-disabled="{{item.twoHandDisabled}}" aria-describedby="{{item.twoHandDescribedBy}}" onClick="{{item.setTwoHand}}" onMouseEnter="{{item.showGripTip}}" onMouseLeave="{{item.hideGripTip}}" onFocus="{{item.showGripTip}}" onBlur="{{item.hideGripTip}}" style="font-size: 11px; font-weight: 600; line-height: 14px; padding: 5px 10px; border: none; border-left: 1px solid #dde1e6; background: {{item.twoHandBg}}; color: {{item.twoHandColor}}; cursor: {{item.twoHandCursor}};">2h</button>
+                </div>
+                <sc-if value="{{item.gripBlocked}}" hint-placeholder-val="{{false}}">
+                  <div role="tooltip" id="{{item.gripTipId}}" style="display: {{item.gripTipDisplay}}; position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; width: 200px; white-space: normal; pointer-events: none;">
+                    <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">Two-handed</div>
+                    <div style="font-size: 11px; color: #6b7280;">Unavailable while this weapon and a shield are both equipped.</div>
+                  </div>
+                </sc-if>
               </div>
             </sc-if>
-            <div style="flex-grow: 1;"></div>
-            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
+            <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
           </div>
-          <sc-if value="{{item.gripBlocked}}" hint-placeholder-val="{{false}}">
-            <div id="{{item.gripNoteId}}" style="font-size: 11px; color: #6b7280;">Two-handed grip unavailable while a shield is equipped.</div>
-          </sc-if>
-          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
         </div>
       </sc-for>
     </div>
@@ -139,6 +144,7 @@ class Component extends DCLogic {
       ],
       itemQuery: '',
       hoverKey: null,
+      hoverGripKey: null,
       hoverDmgKey: null,
       modalItem: null,
       filterOpen: false,
@@ -199,8 +205,12 @@ class Component extends DCLogic {
         damageType: item.damageType,
         versatile,
         gripBlocked,
-        gripNoteId: 'wpn-grip-' + idx,
+        gripTipId: 'wpn-grip-' + idx,
+        gripTipDisplay: this.state.hoverGripKey === idx ? 'block' : 'none',
+        showGripTip: () => this.setState({ hoverGripKey: idx }),
+        hideGripTip: () => this.setState({ hoverGripKey: null }),
         twoHandDescribedBy: gripBlocked ? 'wpn-grip-' + idx : '',
+        twoHandTitle: gripBlocked ? '' : 'Two-handed',
         oneHandPressed: twoHanded ? 'false' : 'true',
         oneHandBg: twoHanded ? '#ffffff' : accent,
         oneHandColor: twoHanded ? '#6b7280' : '#ffffff',
@@ -233,7 +243,8 @@ class Component extends DCLogic {
         equipAria: (equipped ? 'Unequip ' : 'Equip ') + item.label,
         toggleEquip: () => {
           if (!allowed) return;
-          this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped } : x)) });
+          const blocksGrip = !item.equipped && shieldEquipped && versatile;
+          this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped, grip: blocksGrip ? 'one' : x.grip } : x)) });
         },
         remove: () => this.setState({ equipment: equipment.filter((_, i) => i !== idx) }),
         openDetail: () => this.setState({ modalItem: { name: item.label, meta: item.weaponClass + ' weapon', atk: fmt(atkBonus), calcText, dmg: dmgFull + ', ' + item.range, dmgCalcText, value: item.value, desc: item.desc } })
