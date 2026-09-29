@@ -47,7 +47,7 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
 5. **Label, then return.** Set a label only once the last pass's marked review has posted.
    `review:approved` where `pnpm check` is green and nothing a pass returned still waits on
    the user; `review:changes-requested` where something does — a decline, a second bug
-   filed as its own issue, a red check. Preferences wait on nobody.
+   filed as its own issue. Preferences wait on nobody.
 
    Return the label left and what each pass found. Return only when no review subagent
    this run started is still running; a label set before it posts describes an older
