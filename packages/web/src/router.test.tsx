@@ -32,9 +32,7 @@ describe("routing", () => {
 
   it("renders the character list at the root", () => {
     renderAt("/");
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "local-dnd-character-sheet",
-    );
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Characters");
   });
 
   it("redirects a character to its first visible page", async () => {

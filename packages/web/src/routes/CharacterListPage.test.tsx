@@ -67,32 +67,31 @@ describe("CharacterListPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("no data dir");
   });
 
-  it("shows the empty state when the list resolves with no characters, saying how to add one", async () => {
+  it("shows the empty state when the list resolves with no characters", async () => {
     stubFetch(new Response(JSON.stringify([]), { status: 200 }));
     renderPage();
 
-    expect(
-      await screen.findByText(
-        "No characters yet. POST a definition to http://127.0.0.1:8787/characters to add one.",
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("No characters yet")).toBeInTheDocument();
+    expect(screen.queryByText(/POST/)).not.toBeInTheDocument();
   });
 
-  it("lists each character as a link to its page, with its name, level, edition and summaries", async () => {
+  it("shows each character as a tile linking to its page, named first and chipped with its edition", async () => {
     stubFetch(
-      new Response(JSON.stringify([characterRecord("1", "Vex"), characterRecord("2", "Nyx")]), {
-        status: 200,
-      }),
+      new Response(
+        JSON.stringify([
+          characterRecord("1", "vex"),
+          { ...characterRecord("2", "Nyx"), edition: "classic", raceSummary: "" },
+        ]),
+        { status: 200 },
+      ),
     );
     renderPage();
 
     const links = await screen.findAllByRole("link");
     expect(links[0]).toHaveAttribute("href", "/characters/1");
-    expect(links[0]).toHaveTextContent("Vex");
-    expect(links[0]).toHaveTextContent("Half-Elf Warlock");
-    expect(links[0]).toHaveTextContent("Level 1");
-    expect(links[0]).toHaveTextContent("One");
+    expect(links[0]).toHaveAccessibleName("vex Half-Elf Warlock • Lvl 1 2024");
     expect(links[1]).toHaveAttribute("href", "/characters/2");
-    expect(links[1]).toHaveTextContent("Nyx");
+    expect(links[1]).toHaveAccessibleName("Nyx Warlock • Lvl 1 2014");
+    expect(links[0]?.querySelector("[aria-hidden]")).toHaveTextContent("V");
   });
 });
