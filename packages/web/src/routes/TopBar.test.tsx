@@ -23,7 +23,7 @@ afterEach(() => {
 });
 
 describe("TopBar", () => {
-  it("Character button toggles its menu without opening Settings", async () => {
+  it("Character button toggles its menu", async () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();
 
@@ -32,26 +32,18 @@ describe("TopBar", () => {
 
     fireEvent.click(characterBtn);
     expect(characterBtn).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: /settings/i })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
 
     fireEvent.click(characterBtn);
     expect(characterBtn).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("Settings button toggles its menu without opening Character", async () => {
+  it("Settings links to the Settings page", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();
 
-    const settingsBtn = screen.getByRole("button", { name: /settings/i });
-    fireEvent.click(settingsBtn);
-    expect(settingsBtn).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("button", { name: /character/i })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
+    expect(screen.getByRole("link", { name: /settings/i })).not.toHaveAttribute("aria-current");
+    expect(screen.queryByRole("group", { name: "Theme" })).not.toBeInTheDocument();
   });
 
   it("Escape anywhere in the document closes the open menu", async () => {
@@ -75,15 +67,14 @@ describe("TopBar", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();
 
-    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
-    expect(screen.getByRole("button", { name: /settings/i })).toHaveAttribute(
+    fireEvent.click(screen.getByRole("button", { name: /character/i }));
+    expect(screen.getByRole("button", { name: /character/i })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
 
-    // Simulate focus moving outside the top bar.
     fireEvent.focusIn(document.body);
-    expect(screen.getByRole("button", { name: /settings/i })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /character/i })).toHaveAttribute(
       "aria-expanded",
       "false",
     );

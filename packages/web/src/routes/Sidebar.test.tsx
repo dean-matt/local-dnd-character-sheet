@@ -3,14 +3,14 @@ import { createRef } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { presetPageRecords } from "../test/records.ts";
-import { Sidebar } from "./Sidebar.tsx";
+import { CharacterSidebar } from "./Sidebar.tsx";
 
 function renderSidebar() {
   const ref = createRef<HTMLButtonElement>();
   const pages = presetPageRecords().filter((p) => !p.hidden);
   const { unmount } = render(
     <MemoryRouter>
-      <Sidebar characterId="abc" pages={pages} onManage={() => {}} manageButtonRef={ref} />
+      <CharacterSidebar characterId="abc" pages={pages} onManage={() => {}} manageButtonRef={ref} />
     </MemoryRouter>,
   );
   return unmount;
@@ -20,7 +20,7 @@ afterEach(() => {
   localStorage.removeItem("sidebar-collapsed");
 });
 
-describe("Sidebar", () => {
+describe("CharacterSidebar", () => {
   it("starts expanded and collapses on click, persisting to localStorage", () => {
     renderSidebar();
 
@@ -31,6 +31,7 @@ describe("Sidebar", () => {
 
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Stats" })).toBeInTheDocument();
     expect(localStorage.getItem("sidebar-collapsed")).toBe("true");
   });
 

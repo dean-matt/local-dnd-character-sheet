@@ -105,6 +105,21 @@ describe("routing", () => {
     expect(screen.getByRole("navigation", { name: "Character pages" })).toBeInTheDocument();
   });
 
+  it("renders the Settings page with its section rail and no character header", async () => {
+    renderAt("/settings");
+
+    const nav = screen.getByRole("navigation", { name: "Settings sections" });
+    expect(within(nav).getByRole("link", { name: "Display" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("region", { name: "Display" })).toContainElement(
+      screen.getByRole("group", { name: "Theme" }),
+    );
+    expect(screen.queryByRole("navigation", { name: "Character pages" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("aria-current", "page");
+  });
+
   it("shows the not-found state for an unmatched route", async () => {
     renderAt("/this/goes/nowhere");
     await screen.findByRole("heading", { level: 1, name: "Page not found" });

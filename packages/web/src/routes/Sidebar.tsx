@@ -1,5 +1,5 @@
 import type { CharacterPageRecord } from "@dnd/character";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { NavLink } from "react-router";
 
 /** One or more SVG paths per page slug. */
@@ -18,8 +18,7 @@ const PAGE_PATHS: Record<string, readonly string[]> = {
   ],
 };
 
-function PageIcon({ slug, active }: { slug: string; active: boolean }) {
-  const paths = PAGE_PATHS[slug];
+function RowIcon({ paths, active }: { paths: readonly string[] | undefined; active: boolean }) {
   const stroke = active ? "var(--color-accent)" : "var(--color-muted)";
   return (
     <svg
@@ -60,21 +59,22 @@ function writeCollapsed(value: boolean) {
   } catch {}
 }
 
+/** `end` marks the row active on its own path alone, not on the paths beneath it. */
+export type SidebarItem = { to: string; label: string; icon?: readonly string[]; end?: boolean };
+
 /**
- * Character sheet tab sidebar. Collapses to an icon rail; the choice persists
- * across reloads via localStorage. The Manage button delegates to the caller
- * so the modal can be managed at layout level.
+ * The collapsible rail beside a page: a nav of `items`, then an optional `action` above the
+ * collapse toggle. Collapsed, it shows icons alone; localStorage keeps that choice across
+ * reloads, one choice for every rail.
  */
 export function Sidebar({
-  characterId,
-  pages,
-  onManage,
-  manageButtonRef,
+  label,
+  items,
+  action,
 }: {
-  characterId: string;
-  pages: CharacterPageRecord[];
-  onManage: () => void;
-  manageButtonRef: React.RefObject<HTMLButtonElement | null>;
+  label: string;
+  items: SidebarItem[];
+  action?: (collapsed: boolean) => ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -94,25 +94,27 @@ export function Sidebar({
         transition: "width var(--duration-standard)",
       }}
     >
-      <nav aria-label="Character pages" className="flex flex-col gap-0.5">
-        {pages.map((page) => (
+      <nav aria-label={label} className="flex flex-col gap-0.5">
+        {items.map((item) => (
           <NavLink
-            key={page.slug}
-            to={`/characters/${characterId}/p/${page.slug}`}
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            aria-label={collapsed ? item.label : undefined}
             className={({ isActive }) =>
               `${rowBase} ${isActive ? "bg-accent-tint" : "hover:bg-subtle"}`
             }
           >
             {({ isActive }) => (
               <>
-                <PageIcon slug={page.slug} active={isActive} />
+                <RowIcon paths={item.icon} active={isActive} />
                 {!collapsed && (
                   <span
                     className={`truncate text-sm ${
                       isActive ? "font-semibold text-ink" : "font-medium text-muted"
                     }`}
                   >
-                    {page.title}
+                    {item.label}
                   </span>
                 )}
               </>
@@ -123,28 +125,7 @@ export function Sidebar({
 
       <div className="flex-1" />
 
-      <button
-        ref={manageButtonRef}
-        type="button"
-        aria-label={collapsed ? "Manage pages" : undefined}
-        aria-haspopup="dialog"
-        onClick={onManage}
-        className={`flex items-center gap-2.5 rounded-control px-2.5 py-2 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden
-        >
-          <path d="M8 6h13M8 12h13M8 18h13" />
-          <path d="M3 6h.01M3 12h.01M3 18h.01" />
-        </svg>
-        {!collapsed && <span>Manage pages</span>}
-      </button>
+      {action?.(collapsed)}
 
       <div className="border-t border-border pt-3">
         <button
@@ -172,5 +153,68 @@ export function Sidebar({
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * The row a railed page draws: `rail` sticky under the top bar and out of print, then
+ * `children` as the content column beside it.
+ */
+export function SidebarFrame({ rail, children }: { rail: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex min-h-[calc(100vh-var(--spacing-topbar))]">
+      <aside className="sticky top-topbar h-[calc(100vh-var(--spacing-topbar))] shrink-0 self-start print:hidden">
+        {rail}
+      </aside>
+      {children}
+    </div>
+  );
+}
+
+/** The character sheet's rail: one row per visible page, and the Manage pages button. */
+export function CharacterSidebar({
+  characterId,
+  pages,
+  onManage,
+  manageButtonRef,
+}: {
+  characterId: string;
+  pages: CharacterPageRecord[];
+  onManage: () => void;
+  manageButtonRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  return (
+    <Sidebar
+      label="Character pages"
+      items={pages.map((page) => ({
+        to: `/characters/${characterId}/p/${page.slug}`,
+        label: page.title,
+        icon: PAGE_PATHS[page.slug],
+      }))}
+      action={(collapsed) => (
+        <button
+          ref={manageButtonRef}
+          type="button"
+          aria-label={collapsed ? "Manage pages" : undefined}
+          aria-haspopup="dialog"
+          onClick={onManage}
+          className={`flex items-center gap-2.5 rounded-control px-2.5 py-2 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+          >
+            <path d="M8 6h13M8 12h13M8 18h13" />
+            <path d="M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          {!collapsed && <span>Manage pages</span>}
+        </button>
+      )}
+    />
   );
 }
