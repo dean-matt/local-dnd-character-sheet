@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord, derivedRecord, presetPageRecords } from "../test/records.ts";
+import { characterRecord, derivedRecord, presetPageRecords, stateRecord } from "../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../test/stubFetch.ts";
 import { CharacterPage } from "./CharacterPage.tsx";
 
@@ -24,6 +24,7 @@ const stubCharacter = (pages = presetPageRecords()) =>
     "/api/characters/1": characterRecord("1", "Vex"),
     "/api/characters/1/derived": derivedRecord(),
     "/api/characters/1/pages": pages,
+    "/api/characters/1/state": stateRecord(),
   });
 
 afterEach(() => {
@@ -51,6 +52,14 @@ describe("CharacterPage", () => {
 
     expect(await screen.findByRole("region", { name: "Stats" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1, name: "Stats" })).not.toBeInTheDocument();
+  });
+
+  it("puts hit points and status effects on the Stats page", async () => {
+    stubCharacter();
+    renderPage();
+
+    expect(await screen.findByRole("region", { name: "Hit Points" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Status Effects" })).toBeInTheDocument();
   });
 
   it("renders a value block from the derived block the API computed", async () => {
