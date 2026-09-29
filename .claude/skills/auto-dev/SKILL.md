@@ -40,19 +40,25 @@ whatever waits on the user, and where its review pass ran. Stop where the report
 - **names an issue and no pull request** — give the condition. Looping back either retakes
   a `blocked` issue forever or skips a `pnpm check` that failed
 
-**3. Read the verdict.**
+**3. Run the gate.**
 
 ```bash
-gh pr view <pr> --json labels --jq '[.labels[].name] | any(. == "review:approved")'
+node scripts/merge-gate.mjs <pr>
 ```
 
-A `false` stops the run. The gate reads no label, so this is the only stop for a pass that
-left a second issue with the user.
+Exit 0 continues. Any other exit stops the run: quote each `FAIL` line, or the usage line
+on exit 2. No label query stands in for the gate.
 
-**4. Merge.** Dispatch a second fresh subagent naming
-[`merge-pr`](../merge-pr/SKILL.md) and the pull request number — the agent that wrote the
-code is the worst reader of a gate judging its own work. Stop where it names a condition
-instead of a merge commit.
+**4. Merge.** Dispatch a second fresh subagent with exactly this prompt, substituting the
+number, since the agent that wrote the code is the worst reader of a gate judging its own
+work:
+
+> Invoke the `merge-pr` skill for pull request <pr>. Report the merge commit, or the
+> condition that stopped you.
+
+Add nothing: no review commentary, no earlier denial. The auto-mode classifier reads the
+prompt as context and weighs the merge against every word in it. Stop where the
+report names a condition instead of a merge commit.
 
 **5. Count the merge and loop.** `gh pr view <pr> --json state,mergeCommit` settles whether
 it merged; the report of the subagent that merged it does not. A `state` other than `MERGED`

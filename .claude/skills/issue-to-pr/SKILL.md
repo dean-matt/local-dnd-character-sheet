@@ -26,7 +26,7 @@ it took none — stop there.
 3. **Verify every count and shape the issue states against `vendor/`** before designing
    against it. Say which are wrong, or that `vendor/` was not there to ask.
 4. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to open the worktree**, then
-   `cd` into it. Run every later step from inside; step 12 closes it.
+   `cd` into it. Run every later step from inside; step 13 closes it.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
@@ -47,12 +47,21 @@ it took none — stop there.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
-    that label, what each pass found, and what `gh pr checks` says.
-12. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
-    branch and the pull request stand.
+    that label and what each pass found.
+12. **Wait on CI, then run the gate:**
 
-    Report what `converge-review` returned. A run still in flight is reported in flight
-    rather than waited on; a red run is the user's to weigh.
+    ```bash
+    gh pr checks <pr> --watch
+    node scripts/merge-gate.mjs <pr>
+    ```
+
+    Reinvoke `--watch` rather than shortening it. Hand back only when both exit 0, or with
+    the condition that stopped you: the failed checks, or each `FAIL` line the gate printed.
+    A run in flight is not an exit. A diff touching a fenced path always stops here, for the
+    user to weigh.
+13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
+    branch and the pull request stand. Report the pull request, the label, the gate's exit
+    and anything waiting on the user.
 
 ## What this skill will not do
 
