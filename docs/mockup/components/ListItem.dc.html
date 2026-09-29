@@ -49,7 +49,7 @@
           </div>
         </sc-if>
         <sc-if value="{{showAction}}" hint-placeholder-val="{{true}}">
-          <button aria-label="Equipped, Longsword" aria-pressed="true" title="Equipped, click to stow" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid {{accent}}; background: {{accent}}; color: #ffffff; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" y1="19" x2="19" y2="13"></line><line x1="16" y1="16" x2="20" y2="20"></line><line x1="19" y1="21" x2="21" y2="19"></line></svg></button>
+          <button aria-label="Equipped, Longsword" aria-pressed="true" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid {{accent}}; background: {{accent}}; color: #ffffff; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" y1="19" x2="19" y2="13"></line><line x1="16" y1="16" x2="20" y2="20"></line><line x1="19" y1="21" x2="21" y2="19"></line></svg></button>
         </sc-if>
       </div>
     </div>
@@ -62,7 +62,8 @@
       Row 3: optional hover-calc chips (see Popover for the tooltip itself), a flex
       spacer, an optional 1h/2h grip toggle for a versatile weapon, and an optional
       Equip toggle at the far right: an 18px icon square, a backpack when stowed and the
-      item type's icon on the accent when equipped.
+      item type's icon on the accent when equipped. Weapons draws its hover and focus
+      popover.
     </div>
   </div>
 </div>
