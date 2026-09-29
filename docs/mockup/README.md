@@ -61,9 +61,9 @@ widget, panel, or nav element:
   page background, as the character sheet's does. Each creation step puts the five steps
   in a left rail shaped like Sidebar — done, current, and not-yet-reached, with Cancel
   at its foot — and its own two-column content beside it. Top Bar Navigation's Character
-  menu is how both are reached: "See all
-  characters →" opens the list, and "+ New Character" opens creation — a menu that
-  jumps straight to one character is a different action from either.
+  menu is how both are reached: "See all characters →" opens the list, and "+ New
+  Character" opens creation — a menu that jumps straight to one character is a different
+  action from either.
 - Character List is the entry point before any of the above — every character's name,
   level, edition, race and class summary (`High Elf Ranger`, or `Fighter 3 / Wizard 2`
   for a multiclass character), and an avatar (a colored initial circle when a character
@@ -145,8 +145,9 @@ what the widget shows.
 Hovering a calculated value (an ability modifier, a save or skill bonus, AC, initiative,
 max HP, an attack bonus) opens a popover with its formula; clicking a widget's item
 (an ability, a skill, a weapon, a spell, a feature, and so on) opens a modal with that
-item's fuller detail. Both share one card style: white background, `#dde1e6` border, a
-bold label line over a muted body line.
+item's fuller detail. Both are white with a bold label line over a muted body line; the
+popover carries a `#dde1e6` border, and the modal drops it for a heavier shadow over a
+dimmed page.
 
 Simplifications specific to these widgets:
 - AC is a flat editable stat, not derived from equipped armor — that computation belongs
