@@ -567,7 +567,10 @@ export type CharacterRecord = z.infer<typeof characterRecordSchema>;
 // State ----------------------------------------------------------------------
 
 const hitPointsSchema = z.strictObject({
-  /** Null reads as the derived maximum, so an unhurt character keeps pace with a level-up. */
+  /**
+   * Null reads as the derived maximum, so an unhurt character keeps pace with a level-up.
+   * A writer restoring a character to full writes null, not the maximum it read.
+   */
   current: z.int().nullable().default(null),
   temporary: z.int().min(0).default(0),
 });

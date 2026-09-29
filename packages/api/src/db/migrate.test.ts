@@ -111,7 +111,7 @@ describe("migrations", () => {
     expect(row && JSON.parse(row.state)).toEqual(defaultCharacterState());
   });
 
-  it("reads a state row left at 0 hit points as full, and leaves a hurt one alone", () => {
+  it("reads a state row left at 0 hit points as full, and leaves a hurt or dying one alone", () => {
     sqlite = new Database(join(workspace, "characters.db"));
     const db = drizzle(sqlite);
     const staged = stageMigrationsThrough("0004_shocking_the_spike");
@@ -121,14 +121,19 @@ describe("migrations", () => {
     const insertState = sqlite.prepare(
       "INSERT INTO character_state (character_id, state) VALUES (?, ?)",
     );
-    for (const [id, current] of [
-      ["1", 0],
-      ["2", 4],
+    for (const [id, current, failures] of [
+      ["1", 0, 0],
+      ["2", 4, 0],
+      ["3", 0, 1],
     ] as const) {
       insertBareCharacter(sqlite, id);
       insertState.run(
         id,
-        JSON.stringify({ ...defaultCharacterState(), hitPoints: { current, temporary: 0 } }),
+        JSON.stringify({
+          ...defaultCharacterState(),
+          hitPoints: { current, temporary: 0 },
+          deathSaves: { successes: 0, failures },
+        }),
       );
     }
 
@@ -142,6 +147,7 @@ describe("migrations", () => {
     expect(current).toEqual([
       { id: "1", current: null },
       { id: "2", current: 4 },
+      { id: "3", current: 0 },
     ]);
   });
 
