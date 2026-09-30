@@ -1235,7 +1235,10 @@ function derivedArmorClass(
 
 /**
  * A weapon proficiency names a category or one weapon, the way `proficiencies.weapons`
- * stores either: `Simple`, `Longsword`. Case is folded because the list is typed.
+ * stores either: `Simple`, `Longsword`. Case is folded because the list is typed; any
+ * other spelling, such as `Simple weapons` or `Longswords` as the book prints them, matches
+ * nothing and drops the proficiency term. The way out is a catalog picker writing the
+ * list, or normalizing the plural here.
  */
 function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait): boolean {
   const held = new Set(definition.proficiencies.weapons.map((name) => name.toLowerCase()));

@@ -123,9 +123,9 @@ function vex() {
   const definition = characterDefinitionSchema.parse({
     ...record.definition,
     inventory: [
+      { ref: { name: "Longsword", source: "PHB" }, equipped: true },
       { ref: { name: "Cloak of Protection", source: "DMG" }, attuned: true },
       { ref: { name: "Ring of Warmth", source: "DMG" }, attuned: true, carried: false },
-      { ref: { name: "Longsword", source: "PHB" }, equipped: true },
     ],
     money: { gold: 1250, silver: 3 },
   });
@@ -359,7 +359,7 @@ describe("InventorySection", () => {
       const init = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1")?.[1];
       expect(init?.method).toBe("PUT");
       expect(JSON.parse(String(init?.body)).inventory[0]).toMatchObject({
-        ref: { name: "Cloak of Protection", source: "DMG" },
+        ref: { name: "Longsword", source: "PHB" },
         grip: "two-handed",
       });
     });
