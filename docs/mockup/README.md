@@ -62,7 +62,7 @@ widget, panel, or nav element:
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
   after a `·`, with Inspiration (its icon alone, the label in a tooltip), Rest and the
   character menu as 32px buttons at the right. A long name or subtitle ends in an
-  ellipsis and keeps its full text in a tooltip; the `longText` tweak shows one. Manage Tabs is the modal
+  ellipsis and keeps its full text in a tooltip; the `longText` tweak shows both truncated. Manage Tabs is the modal
   Sidebar's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
   only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
