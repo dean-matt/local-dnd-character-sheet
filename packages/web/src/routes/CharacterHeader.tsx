@@ -17,10 +17,10 @@ export function characterSubtitle({ definition, raceSummary }: CharacterRecord):
 }
 
 /**
- * Pinned under the top bar above every page of a character on screen; print carries
- * `PrintTitle` instead. Its height, which a wrapping subtitle changes, goes on the root as
- * `--character-header-height` for `index.css`'s `scroll-padding-top`, so focus never lands
- * under it.
+ * Sits above every page of a character on screen, pinned under the top bar in a `tall`
+ * window; print carries `PrintTitle` instead. Its height, which a wrapping subtitle
+ * changes, goes on the root as `--character-header-height` for `index.css`'s
+ * `scroll-padding-top`, so focus never lands under it.
  */
 export function CharacterHeader({ character }: { character: CharacterRecord }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -42,7 +42,8 @@ export function CharacterHeader({ character }: { character: CharacterRecord }) {
   return (
     <div
       ref={ref}
-      className="sticky top-topbar z-20 flex items-center gap-5 border-b border-border bg-surface px-gutter py-5 print:hidden"
+      data-character-header
+      className="top-topbar z-20 flex tall:sticky items-center gap-5 border-b border-border bg-surface px-gutter py-5 print:hidden"
     >
       <span
         aria-hidden="true"

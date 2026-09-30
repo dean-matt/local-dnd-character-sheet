@@ -11,7 +11,8 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   The character sheet and Settings share one rail, `Sidebar` in `src/routes/Sidebar.tsx`, one
   collapsed state, and one row around it, `SidebarFrame` in the same file.
 - **Character header** fills the content column, so it grows and shrinks with the side
-  panels, and is pinned under the top bar. Character sheet only; Settings skips it.
+  panels, and is pinned under the top bar in a window at least 36rem tall, the `tall`
+  variant in `src/index.css`. Character sheet only; Settings skips it.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on
   Settings, and in `ContentLayout` in `router.tsx`, which the homepage, list, catalog and 404 pages use.
 

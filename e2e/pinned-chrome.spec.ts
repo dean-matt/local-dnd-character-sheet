@@ -17,7 +17,7 @@ async function scrollToBottom(page: Page, content: Locator) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 }
 
-test("the top bar, character header and sidebar stay pinned, and focus lands below them", async ({
+test("the top bar, character header and sidebar stay pinned in a tall window, and focus lands below them", async ({
   page,
   request,
 }) => {
@@ -42,12 +42,12 @@ test("the top bar, character header and sidebar stay pinned, and focus lands bel
     },
   });
   expect(response.ok()).toBe(true);
-  const { id, name } = await response.json();
+  const { id } = await response.json();
 
   try {
     await page.goto(`/characters/${id}/p/stats`);
     const bar = page.getByRole("banner");
-    const header = page.getByRole("heading", { level: 1, name }).locator("xpath=../..");
+    const header = page.locator("[data-character-header]");
     const rail = page.locator("aside");
     await expect(header).toBeVisible();
 
@@ -76,10 +76,17 @@ test("the top bar, character header and sidebar stay pinned, and focus lands bel
 
     await page.getByRole("button", { name: "Character" }).click();
     const covering = await page.evaluate(
-      ({ x, y }) => document.elementFromPoint(x, y)?.closest("header") !== null,
-      { x: 1200, y: headerBox.top + 10 },
+      (y) => document.elementFromPoint(window.innerWidth - 20, y)?.closest("header") !== null,
+      headerBox.top + 10,
     );
     expect(covering).toBe(true);
+
+    // Below the `tall` variant's 36rem the header scrolls away and the top bar stays.
+    await page.keyboard.press("Escape");
+    await page.setViewportSize({ width: 1280, height: 500 });
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect.poll(async () => (await edges(header)).bottom).toBeLessThan(0);
+    expect((await edges(bar)).top).toBe(0);
   } finally {
     await request.delete(`/api/characters/${id}`);
   }
