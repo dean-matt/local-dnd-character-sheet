@@ -39,6 +39,9 @@ whatever waits on the user, and where its review pass ran. Stop where the report
   truncated board and on a failed `gh` call
 - **names an issue and no pull request** — give the condition. Looping back either retakes
   a `blocked` issue forever or skips a `pnpm check` that failed
+- **names a changed mockup file** — the merge waits on the user's approval on the canvas.
+  Publish the files as [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup)
+  describes where this session holds the conversation, and report them either way
 
 **3. Run the gate and read the label.** The gate reads no label.
 

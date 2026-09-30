@@ -43,7 +43,10 @@ it took none — stop there.
    steps 6 and 7 — pre-commit runs neither the tests nor the caps. Never push past a
    failure with a note about it.
 10. **Invoke [`open-pr`](../open-pr/SKILL.md)**. It opens the pull request and writes its
-    body in the format it defines.
+    body in the format it defines. Where the diff changes `docs/mockup/components/`,
+    follow [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup) too: a
+    dispatched run opens the pull request as a draft and reports every changed mockup
+    file, and the session holding the conversation publishes them to the canvas.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
@@ -60,7 +63,7 @@ it took none — stop there.
     `warn` line, and any failed check. Both paths go on to step 13.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label, what step 12
-    noted and anything waiting on the user.
+    noted and anything waiting on the user, naming each changed mockup file.
 
 ## What this skill will not do
 
