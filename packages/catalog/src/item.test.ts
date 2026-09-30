@@ -174,6 +174,12 @@ describe("weaponTraitSchema", () => {
     expect(weaponTraitSchema.parse({ dmg1: "1d4" })).not.toHaveProperty("baseName");
   });
 
+  it("names a staff a quarterstaff, as Staff of Power (DMG) states no base item", () => {
+    expect(
+      weaponTraitSchema.parse({ weaponCategory: "simple", staff: true, dmg1: "1d6" })?.baseName,
+    ).toBe("quarterstaff");
+  });
+
   it("sums a magic weapon's bonus into each roll it names", () => {
     expect(
       weaponTraitSchema.parse({ dmg1: "1d8", bonusWeapon: "+1", bonusWeaponAttack: "+2" })?.bonus,

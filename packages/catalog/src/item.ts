@@ -126,7 +126,8 @@ const weaponPropertySchema = z.union([
  * `DAMAGE_TYPES` passes through as written.
  *
  * `baseName` is the weapon a named magic item is built on, `dagger` for `Dagger of Venom`
- * (DMG), so a proficiency in the one weapon covers it.
+ * (DMG), so a proficiency in the one weapon covers it. A staff states `staff: true` and no
+ * `baseItem` — `Staff of Power` (DMG), and the `Staff` (PHB) focus — and is a quarterstaff.
  *
  * `kind` is ranged for a type code of `R` and melee otherwise, since a staff (`SCF`) and a
  * claw (`OTH`) that state a die are swung. A malformed property list or bonus degrades to
@@ -136,6 +137,7 @@ export const weaponTraitSchema = z
   .looseObject({
     type: z.string().optional().catch(undefined),
     baseItem: z.string().min(1).optional().catch(undefined),
+    staff: z.boolean().optional().catch(undefined),
     weaponCategory: z.enum(["simple", "martial"]).optional(),
     dmg1: z.string().min(1).optional(),
     dmg2: z.string().min(1).optional().catch(undefined),
@@ -155,6 +157,7 @@ export const weaponTraitSchema = z
       damage: dmg1 === undefined ? null : { dice: dmg1, type },
       kind: item.type?.split("|")[0] === "R" ? ("ranged" as const) : ("melee" as const),
       ...(item.baseItem && { baseName: item.baseItem.split("|")[0] }),
+      ...(!item.baseItem && item.staff && { baseName: "quarterstaff" }),
       ...(item.property && { properties: item.property }),
       ...(dmg2 && { versatileDamage: dmg2 }),
       bonus: {
