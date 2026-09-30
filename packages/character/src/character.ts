@@ -1234,16 +1234,25 @@ function derivedArmorClass(
 }
 
 /**
- * A weapon proficiency names a category or one weapon, the way `proficiencies.weapons`
- * stores either: `Simple`, `Longsword`. Case is folded because the list is typed; any
- * other spelling, such as `Simple weapons` or `Longswords` as the book prints them, matches
- * nothing and drops the proficiency term. The way out is a catalog picker writing the
- * list, or normalizing the plural here.
+ * The typed form of a weapon or category name, folded so the spellings the book prints
+ * (`Simple weapons`, `Longswords`) meet the bare ones (`Simple`, `Longsword`). Both sides
+ * pass through it, so a name that ends in `s` still meets itself. Only these spellings fold
+ * until a catalog picker writes `proficiencies.weapons`.
  */
+function weaponKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+weapons?$/, "")
+    .replace(/s$/, "");
+}
+
+/** A weapon proficiency names a category or one weapon: `Simple`, `Longsword`. */
 function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait): boolean {
-  const held = new Set(definition.proficiencies.weapons.map((name) => name.toLowerCase()));
+  const held = new Set(definition.proficiencies.weapons.map(weaponKey));
   return (
-    (weapon.category !== null && held.has(weapon.category)) || held.has(weapon.name.toLowerCase())
+    (weapon.category !== null && held.has(weaponKey(weapon.category))) ||
+    held.has(weaponKey(weapon.name))
   );
 }
 

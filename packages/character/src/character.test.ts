@@ -1311,6 +1311,23 @@ describe("deriveCharacter", () => {
       expect(named(["longsword"])).toBe(2);
     });
 
+    it("reads a proficiency spelled the way the book prints it", () => {
+      const named = (weapons: string[]) =>
+        attackOf(
+          deriveCharacter(
+            withSword(
+              {},
+              { ...definition, proficiencies: { ...definition.proficiencies, weapons } },
+            ),
+            catalog,
+          ),
+          2,
+        )?.attackBonus.computed;
+      expect(named(["Martial weapons"])).toBe(2);
+      expect(named(["Longswords"])).toBe(2);
+      expect(named(["Simple weapons"])).toBe(-1);
+    });
+
     it("rolls a versatile weapon's stored grip, one-handed where none is stored", () => {
       const damage = (grip?: "two-handed") =>
         attackOf(deriveCharacter(withSword(grip ? { grip } : {}), catalog), 2);
