@@ -91,6 +91,15 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * `main` takes focus on every navigation so a screen reader starts at the content. It is a
+ * landmark rather than a control, and its ring would show only as a line across the page
+ * below the content.
+ */
+main:focus-visible {
+  outline: none;
+}
+
 dialog::backdrop {
   background-color: var(--color-scrim);
 }
@@ -106,7 +115,7 @@ dialog::backdrop {
     --text-row: 12pt;
   }
 
-  /* `main` takes focus on every navigation, and its ring would print around every sheet. */
+  /* A control focused from the keyboard when the user prints would carry its ring onto paper. */
   :focus-visible {
     outline: none;
   }
