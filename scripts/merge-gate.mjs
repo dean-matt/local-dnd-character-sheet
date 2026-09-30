@@ -308,14 +308,20 @@ function gate(n) {
     [...fenced, ...bumped].join("\n      "),
   );
 
-  const pr = gh(["pr", "view", n, "--json", "body,closingIssuesReferences"]);
+  const pr = gh([
+    "pr",
+    "view",
+    n,
+    "--json",
+    "body,closingIssuesReferences,mergeable,mergeStateStatus",
+  ]);
   const unlinked = linkBlocked(
     pr.body,
     pr.closingIssuesReferences.map((i) => i.number),
   );
   report(unlinked === null, "the pull request is linked to its issue", unlinked);
 
-  const conflict = mergeBlocked(gh(["pr", "view", n, "--json", "mergeable,mergeStateStatus"]));
+  const conflict = mergeBlocked(pr);
   report(conflict === null, "the branch merges cleanly", conflict);
 
   return failures;

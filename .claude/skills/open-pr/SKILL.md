@@ -8,6 +8,16 @@ description: Open the pull request for one local-dnd-character-sheet issue and w
 Open it with `gh pr create`, body written to the format below. This starts CI; the pushes
 before it started nothing.
 
+Then confirm GitHub linked the issue:
+
+```bash
+gh pr view <n> --json closingIssuesReferences --jq '[.closingIssuesReferences[].number]'
+```
+
+Where the list lacks the issue, GitHub dropped the link and nothing here can add it. Carry
+on, and name it in the report: the merge gate blocks until the user links it from the pull
+request's Development box.
+
 ## The pull request body
 
 `Closes #<issue>` on the first line. Then what the change does and, for anything a reviewer
