@@ -72,6 +72,7 @@ describe("CharacterListPage", () => {
     renderPage();
 
     expect(await screen.findByText("No characters yet")).toBeInTheDocument();
+    expect(screen.getByText("0 characters")).toBeInTheDocument();
     expect(screen.queryByText(/POST/)).not.toBeInTheDocument();
   });
 
@@ -93,5 +94,13 @@ describe("CharacterListPage", () => {
     expect(links[1]).toHaveAttribute("href", "/characters/2");
     expect(links[1]).toHaveAccessibleName("Nyx Warlock • Lvl 1 2014");
     expect(links[0]?.querySelector("[aria-hidden]")).toHaveTextContent("V");
+    expect(screen.getByText("2 characters")).toBeInTheDocument();
+  });
+
+  it("counts a lone character in the singular", async () => {
+    stubFetch(new Response(JSON.stringify([characterRecord("1", "vex")]), { status: 200 }));
+    renderPage();
+
+    expect(await screen.findByText("1 character")).toBeInTheDocument();
   });
 });
