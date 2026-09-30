@@ -60,26 +60,25 @@ function FeatureRow({ feature, group }: Entry) {
     <>
       {group.name && <Tag>{group.name}</Tag>}
       {type && <Tag>{type}</Tag>}
+      {level !== undefined && (
+        <Tag>
+          <span aria-hidden="true">Lvl {level}</span>
+          <span className="sr-only">Level {level}</span>
+        </Tag>
+      )}
       {!feature.resolved && (
         <Tag>{feature.source ? "Not found in the catalog" : "Not found in homebrew"}</Tag>
       )}
     </>
   );
-  const value = level !== undefined && (
-    <>
-      <span aria-hidden="true">Lvl {level}</span>
-      <span className="sr-only">Level {level}</span>
-    </>
-  );
   if (!feature.resolved) {
     const source = feature.source ? ` (${feature.source})` : "";
-    return <ListRow name={`${feature.name}${source}`} chips={chips} value={value} />;
+    return <ListRow name={`${feature.name}${source}`} chips={chips} />;
   }
   return (
     <ListRow
       name={feature.name}
       chips={chips}
-      value={value}
       preview={firstLine(feature.entries)}
       detail={{
         meta: [

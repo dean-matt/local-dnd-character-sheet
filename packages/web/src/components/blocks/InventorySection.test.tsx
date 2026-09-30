@@ -184,30 +184,30 @@ describe("InventorySection", () => {
     const names = (group: string) =>
       card(group)
         .getAllByRole("listitem")
-        .map((li) => li.firstElementChild?.textContent);
+        .map((li) => li.querySelector('[aria-haspopup="dialog"]')?.textContent);
     expect(names("Weapons")).toEqual(["+1 Longsword"]);
     expect(names("Armor")).toEqual(["Shield", "Chain Mail"]);
     expect(card("Gear").getAllByRole("listitem")).toHaveLength(5);
     expect(screen.queryByRole("heading", { level: 3, name: "Items" })).toBeNull();
   });
 
-  it("prints a row's type facts as chips and its price in the value slot", async () => {
+  it("prints a row's type facts as chips and its price in a price chip", async () => {
     renderSection();
 
     await screen.findByText("+1 Longsword");
     expect(row("+1 Longsword")).toHaveTextContent("Martial");
     expect(within(row("+1 Longsword")).getByText("1d8")).toBeInTheDocument();
     expect(within(row("+1 Longsword")).getByText("slashing")).toBeInTheDocument();
-    expect(row("+1 Longsword")).not.toHaveTextContent("Value:");
+    expect(row("+1 Longsword")).not.toHaveTextContent("Cost");
     expect(row("Chain Mail")).toHaveTextContent("Heavy");
     expect(row("Chain Mail")).toHaveTextContent("AC 16");
-    expect(row("Chain Mail")).toHaveTextContent("Value: 75 gp");
+    expect(row("Chain Mail")).toHaveTextContent("Cost 75 gp");
     expect(row("Shield")).toHaveTextContent("AC +2");
-    expect(row("Shield")).toHaveTextContent("Value: 10 gp");
+    expect(row("Shield")).toHaveTextContent("Cost 10 gp");
     expect(row("Arrow")).toHaveTextContent("Ammunition");
-    expect(row("Arrow")).toHaveTextContent("Value: 1 gp");
-    expect(row("Lucky Coin")).toHaveTextContent("Value: 15 sp");
-    expect(row("Ring of Warmth")).toHaveTextContent("Value: 7 cp");
+    expect(row("Arrow")).toHaveTextContent("Cost 1 gp");
+    expect(row("Lucky Coin")).toHaveTextContent("Cost 15 sp");
+    expect(row("Ring of Warmth")).toHaveTextContent("Cost 7 cp");
   });
 
   it("drops a nameless type rather than print its code", async () => {

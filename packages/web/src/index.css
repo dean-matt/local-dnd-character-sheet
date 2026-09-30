@@ -41,6 +41,13 @@
   --color-accent-tint: color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas));
   /* What restores hit points or shields them: temporary hit points, healing. */
   --color-positive: light-dark(#2f6b4f, color-mix(in oklab, #2f6b4f 50%, white));
+  /* A price: the gold chip a row's cost sits in. */
+  --color-money: light-dark(#7a5b00, #e5cf8f);
+  --color-money-tint: light-dark(#fbf3dc, color-mix(in oklab, #7a5b00 30%, var(--color-gray-800)));
+  --color-money-border: light-dark(
+    #e5cf8f,
+    color-mix(in oklab, #7a5b00 70%, var(--color-gray-800))
+  );
 
   --text-row: var(--text-xs);
   --text-row--line-height: var(--text-xs--line-height);

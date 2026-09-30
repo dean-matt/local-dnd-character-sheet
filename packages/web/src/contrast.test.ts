@@ -103,6 +103,10 @@ const subtleDark = mixOklab(gray700, gray800, 0.5);
 // Checked as non-text: the dark accent on the dark surface already sits near 3:1.
 const accentTintDark = mixOklab(accentDark, gray900, 0.1);
 const positiveDark = mixOklab(positiveLight, white, 0.5);
+const moneyLight = hex("#7a5b00");
+const moneyTintLight = hex("#fbf3dc");
+const moneyDark = hex("#e5cf8f");
+const moneyTintDark = mixOklab(moneyLight, gray800, 0.3);
 
 const AA_TEXT = 4.5;
 const AA_NON_TEXT = 3;
@@ -139,6 +143,7 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
     minimum: AA_NON_TEXT,
   },
   { name: "positive on surface, light", fg: positiveLight, bg: white, minimum: AA_TEXT },
+  { name: "money on money-tint, light", fg: moneyLight, bg: moneyTintLight, minimum: AA_TEXT },
   {
     name: "spinner arc on its track, light",
     fg: mutedLight,
@@ -165,6 +170,7 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "focus ring on canvas, dark", fg: accentDark, bg: gray900, minimum: AA_NON_TEXT },
   { name: "focus ring on surface, dark", fg: accentDark, bg: gray800, minimum: AA_NON_TEXT },
   { name: "positive on surface, dark", fg: positiveDark, bg: gray800, minimum: AA_TEXT },
+  { name: "money on money-tint, dark", fg: moneyDark, bg: moneyTintDark, minimum: AA_TEXT },
   { name: "spinner arc on its track, dark", fg: mutedDark, bg: gray700, minimum: AA_NON_TEXT },
 ];
 

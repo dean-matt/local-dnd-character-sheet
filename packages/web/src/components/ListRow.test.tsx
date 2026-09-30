@@ -9,8 +9,10 @@ function renderRow() {
       <ListRow
         name="Longsword"
         chips={<Tag>Martial</Tag>}
-        value="15 gp"
+        price="15 gp"
         preview="A versatile blade."
+        actions={<Tag>Attack d20 +5</Tag>}
+        controls={<button type="button">Equip</button>}
         detail={{ meta: "Weapon", children: <p>Full rules text.</p> }}
       />
     </ul>,
@@ -24,14 +26,45 @@ afterEach(() => {
 });
 
 describe("ListRow", () => {
-  it("shows the chips, the value and a preview of the text, with no modal", () => {
+  it("shows the chips, the price and a preview of the text, with no modal", () => {
     renderRow();
 
     const row = screen.getByRole("listitem");
     expect(row).toHaveTextContent("Martial");
-    expect(row).toHaveTextContent("15 gp");
+    expect(row).toHaveTextContent("Cost 15 gp");
     expect(row).toHaveTextContent("A versatile blade.");
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("draws the name and chips, then the description, then the actions and controls", () => {
+    renderRow();
+
+    const [first, second, third] = [...screen.getByRole("listitem").children];
+    expect(first).toHaveTextContent("Longsword");
+    expect(first).toHaveTextContent("Martial");
+    expect(first).toHaveTextContent("Cost 15 gp");
+    expect(second).toHaveTextContent("A versatile blade.");
+    expect(third).toHaveTextContent("Attack d20 +5");
+    expect(within(third as HTMLElement).getByRole("button", { name: "Equip" })).toBeInTheDocument();
+  });
+
+  it("draws the price as a chip with a coin, read aloud as a cost", () => {
+    renderRow();
+
+    const chip = screen.getByText("Cost").parentElement as HTMLElement;
+    expect(chip).toHaveTextContent(/^Cost 15 gp$/);
+    expect(chip).toHaveClass("rounded-chip", "bg-money-tint", "text-money");
+    expect(chip.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("has no third line without actions or controls", () => {
+    render(
+      <ul>
+        <ListRow name="Rope" preview="Fifty feet of hempen rope." />
+      </ul>,
+    );
+
+    expect(screen.getByRole("listitem").children).toHaveLength(2);
   });
 
   it("keeps the preview off the printed page", () => {
