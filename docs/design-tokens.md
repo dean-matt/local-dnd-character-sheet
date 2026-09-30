@@ -70,7 +70,8 @@ the sheet and the mockup it follows disagreeing on the one color meant to carry 
 ## Focus and contrast
 
 A single `:focus-visible` rule in `index.css` outlines the accent color around whatever
-has focus, so a view inherits it instead of each one styling its own outline. Contrast,
+has focus, so a view inherits it instead of each one styling its own outline. `main`, which
+takes focus on every navigation, is the one exception. Contrast,
 checked once against these tokens rather than per view. `packages/web/src/contrast.test.ts`
 holds every pair in both themes and fails a repalette that regresses one:
 

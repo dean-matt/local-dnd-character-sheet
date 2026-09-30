@@ -91,6 +91,14 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * `main` takes focus on every navigation so a screen reader starts at the content. It is a
+ * landmark rather than a control, and its ring would show only as a line under the top bar.
+ */
+main:focus-visible {
+  outline: none;
+}
+
 dialog::backdrop {
   background-color: var(--color-scrim);
 }
@@ -104,11 +112,6 @@ dialog::backdrop {
     --color-border: color-mix(in oklab, #dde1e6 90%, var(--color-ink));
 
     --text-row: 12pt;
-  }
-
-  /* `main` takes focus on every navigation, and its ring would print around every sheet. */
-  :focus-visible {
-    outline: none;
   }
 
   h1,
