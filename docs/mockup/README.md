@@ -190,3 +190,33 @@ Simplifications specific to these widgets:
 - Clicking a compendium search result adds it directly; there is no detail view first.
 - On Custom Tab, dragging a widget's corner cycles it through four preset sizes
   (S/M/L/XL) rather than resizing to an arbitrary pixel size.
+
+## Changing a mockup
+
+The user reviews a mockup on the live canvas, never in the diff, so a pull request that
+changes `docs/mockup/components/` waits on their approval there.
+
+1. **Open the pull request as a draft, and publish from the session holding the
+   conversation with the user once the review has converged.** A dispatched run reports
+   each changed file instead of publishing.
+2. **Read the canvas, then list its files**: an Artifact `read` of the live link, then a
+   `list` with `scope: "files"`. The publish refuses an artifact this session has not
+   read, and a path it has neither read nor listed.
+3. **Publish every changed file in one call**: an Artifact `publish` with the live link as
+   `url` and `files` mapping `project/<name>` to `docs/mockup/components/<name>`, or to
+   `null` for a file the branch deletes. A changed `canvas.json` publishes the same way.
+4. **Record it on the pull request.** Add `Canvas: <live link>, version <version>` to the
+   body, with the version the publish returned, then `gh pr ready <pr>`. A later push
+   that changes a mockup file publishes again and replaces the line, so the version the
+   user approves is the head that merges.
+5. **Merge only on the user's approval.** `scripts/merge-gate.mjs` fences the directory,
+   so the gate fails until the user approves the mockup on the canvas and the session
+   holding the conversation merges on that sign-off, as `merge-pr` describes.
+
+No skill closes a pull request, so whoever closes one without merging puts the canvas back
+in the same turn: publish `main`'s version of each file it published, writing
+`git show origin/main:docs/mockup/components/<name>` to the scratchpad and mapping
+`project/<name>` to that copy, and `null` for a file `main` does not have. Where another
+open pull request with a `Canvas:` line also changes the file, publish that pull request's
+head version instead, from `git show <its head>:docs/mockup/components/<name>`;
+`gh pr list --state open --json number,body,files,headRefOid` lists all three.

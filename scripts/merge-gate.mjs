@@ -31,7 +31,17 @@ export function severity(body) {
 
 /** Files where a wrong merge costs more than the wait. */
 export const FENCE =
-  /^(CLAUDE|CONTRIBUTING)\.md$|^content\.(lock|manifest)\.json$|^\.github\/|^\.claude\/skills\/|^packages\/api\/drizzle\//;
+  /^(CLAUDE|CONTRIBUTING)\.md$|^content\.(lock|manifest)\.json$|^\.github\/|^\.claude\/skills\/|^packages\/api\/drizzle\/|^docs\/mockup\/components\//;
+
+/**
+ * A mockup renders only on the canvas, so the user approves it there rather than in the
+ * diff, and the fenced line says so in place of the bare path.
+ */
+export function fenceNote(path) {
+  return path.startsWith("docs/mockup/components/")
+    ? `${path} — waits on the user's approval of the mockup on the canvas`
+    : path;
+}
 
 export function notGreen(checks) {
   return checks.filter((c) => !isGreen(c)).map((c) => c.name);
@@ -309,7 +319,7 @@ function gate(n) {
   report(
     fenced.length === 0 && bumped.length === 0,
     "the diff reaches no fenced path",
-    [...fenced, ...bumped].join("\n      "),
+    [...fenced.map(fenceNote), ...bumped].join("\n      "),
   );
 
   const pr = gh([

@@ -10,6 +10,7 @@ import {
   checksBlocked,
   dependenciesDiffer,
   FENCE,
+  fenceNote,
   linkNote,
   mergeBlocked,
   notGreen,
@@ -489,10 +490,19 @@ describe("the migration fence", () => {
       ".github/workflows/ci.yml",
       ".claude/skills/merge-pr/SKILL.md",
       "packages/api/drizzle/0001_init.sql",
+      "docs/mockup/components/TopBar.dc.html",
     ]) {
       expect(FENCE.test(path), `${path} is not fenced`).toBe(true);
     }
     expect(FENCE.test("packages/rules/src/spell-slots.ts")).toBe(false);
     expect(FENCE.test("docs/data-model.md")).toBe(false);
+    expect(FENCE.test("docs/mockup/README.md")).toBe(false);
+  });
+
+  it("names the canvas approval a mockup waits on", () => {
+    expect(fenceNote("docs/mockup/components/TopBar.dc.html")).toBe(
+      "docs/mockup/components/TopBar.dc.html — waits on the user's approval of the mockup on the canvas",
+    );
+    expect(fenceNote("CLAUDE.md")).toBe("CLAUDE.md");
   });
 });
