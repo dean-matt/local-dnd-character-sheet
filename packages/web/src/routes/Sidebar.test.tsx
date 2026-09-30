@@ -42,4 +42,12 @@ describe("CharacterSidebar", () => {
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
   });
+
+  it("spans the rail with the collapse button, expanded and collapsed", () => {
+    renderSidebar();
+    expect(screen.getByRole("button", { name: "Collapse sidebar" })).toHaveClass("w-full");
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveClass("w-full");
+  });
 });
