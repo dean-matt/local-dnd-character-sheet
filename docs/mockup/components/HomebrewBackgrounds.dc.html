@@ -30,7 +30,7 @@
     <sc-for list="{{items}}" as="item" hint-placeholder-count="1">
       <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button aria-label="Edit {{item.name}}" onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
+          <button onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.skills}}</span>
           <div style="flex-grow: 1;"></div>
           <button aria-label="Delete {{item.name}}" onClick="{{item.remove}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>

@@ -30,7 +30,7 @@
     <sc-for list="{{items}}" as="item" hint-placeholder-count="1">
       <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button aria-label="Edit {{item.name}}" onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
+          <button onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.size}}</span>
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.speed}}</span>
           <div style="flex-grow: 1;"></div>
