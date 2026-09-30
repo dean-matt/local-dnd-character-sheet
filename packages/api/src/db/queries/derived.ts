@@ -182,7 +182,8 @@ function armorTraits(
 
 /**
  * Every entry whose row states a weapon, keyed by `itemKey`. A proficiency names the base
- * weapon, so a magic variant answers to its base item's name. A magic bonus traces to the
+ * weapon, so a named magic item answers to the `baseItem` it states and a magic variant to
+ * its base item's name. A magic bonus traces to the
  * variant that grants it, or to the row itself; a homebrew row has no `(name, source)` to
  * trace to.
  */
@@ -203,7 +204,7 @@ function weaponTraits(
       ...(trait.properties && { properties: trait.properties }),
       ...(trait.damage && { damage: trait.damage.dice }),
       ...(trait.versatileDamage && { versatileDamage: trait.versatileDamage }),
-      name: catalog?.name ?? row.name,
+      name: trait.baseName ?? catalog?.name ?? row.name,
       category: trait.category,
       damageType: trait.damage?.type ?? null,
       bonus: { ...trait.bonus, ...(reference && { reference }) },

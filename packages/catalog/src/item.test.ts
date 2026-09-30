@@ -167,6 +167,13 @@ describe("weaponTraitSchema", () => {
     expect(weaponTraitSchema.parse({ type: "SCF", dmg1: "1d6" })?.kind).toBe("melee");
   });
 
+  it("names the weapon a named magic item is built on, as Dagger of Venom (DMG) states it", () => {
+    expect(weaponTraitSchema.parse({ dmg1: "1d4", baseItem: "dagger|phb" })?.baseName).toBe(
+      "dagger",
+    );
+    expect(weaponTraitSchema.parse({ dmg1: "1d4" })).not.toHaveProperty("baseName");
+  });
+
   it("sums a magic weapon's bonus into each roll it names", () => {
     expect(
       weaponTraitSchema.parse({ dmg1: "1d8", bonusWeapon: "+1", bonusWeaponAttack: "+2" })?.bonus,

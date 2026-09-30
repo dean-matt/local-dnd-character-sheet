@@ -32,6 +32,7 @@ const PLUS_ONE = { name: "+1 Armor", source: "DMG" };
 const BARDING = { name: "Barding", source: "PHB" };
 const LONGSWORD = { name: "Longsword", source: "PHB" };
 const PLUS_ONE_WEAPON = { name: "+1 Weapon", source: "DMG" };
+const DAGGER_OF_VENOM = { name: "Dagger of Venom", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -225,6 +226,15 @@ describe("derivedRoutes", () => {
           dmgType: "S",
           weight: 3,
         }),
+        item(DAGGER_OF_VENOM, "item", {
+          type: "M",
+          weaponCategory: "simple",
+          baseItem: "dagger|phb",
+          property: ["F", "L", "T"],
+          dmg1: "1d4",
+          dmgType: "P",
+          bonusWeapon: "+1",
+        }),
         item(PLUS_ONE_WEAPON, "magicvariant", {
           type: "GV",
           requires: [{ weapon: true }],
@@ -415,6 +425,19 @@ describe("derivedRoutes", () => {
       type: "slashing",
       modifier: { computed: 3 + 1 },
     });
+  });
+
+  it("grants a named weapon's proficiency to a magic item built on it", async () => {
+    store(
+      definitionWith({
+        proficiencies: { ...definitionWith().proficiencies, weapons: ["Dagger"] },
+        inventory: [{ ref: DAGGER_OF_VENOM }],
+      }),
+    );
+    const [attack] = (await derived()).attacks;
+
+    expect(attack?.attackBonus.terms).toContainEqual({ label: "Proficiency", value: 2 });
+    expect(attack?.attackBonus.computed).toBe(3 + 2 + 1);
   });
 
   it("holds a versatile weapon one-handed while it and a shield are both equipped", async () => {
