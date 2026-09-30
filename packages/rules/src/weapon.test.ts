@@ -30,57 +30,81 @@ describe("weaponAttack", () => {
   it("sums the ability modifier and the proficiency bonus", () => {
     expect(weaponAttack({ weapon: LONGSWORD, ...STRONG })).toMatchObject({
       ability: "strength",
-      attackBonus: 7,
-      damage: "1d8",
-      damageModifier: 4,
+      attack: { total: 7 },
+      damage: { dice: "1d8", modifier: { total: 4 } },
     });
   });
 
-  it("adds a magic weapon's bonus to the attack and the damage alike", () => {
-    expect(weaponAttack({ weapon: LONGSWORD, ...STRONG, bonus: 2 })).toMatchObject({
-      attackBonus: 9,
-      damageModifier: 6,
+  it("labels each term of the attack and the damage, so a sheet can list them", () => {
+    const reference = { name: "+1 Weapon", source: "DMG" };
+    const attack = weaponAttack({
+      weapon: LONGSWORD,
+      ...STRONG,
+      attackBonus: { value: 1, reference },
+      damageBonus: { value: 1, reference },
     });
+    expect(attack.attack.terms).toStrictEqual([
+      { label: "Strength", value: 4 },
+      { label: "Proficiency", value: 3, reference: undefined },
+      { label: "Magic", value: 1, reference },
+    ]);
+    expect(attack.damage?.modifier.terms).toStrictEqual([
+      { label: "Strength", value: 4 },
+      { label: "Magic", value: 1, reference },
+    ]);
   });
 
-  it("drops the proficiency bonus where the character is not proficient", () => {
-    expect(weaponAttack({ weapon: LONGSWORD, ...STRONG, proficiency: 0 }).attackBonus).toBe(4);
+  it("adds a magic weapon's attack and damage bonuses each to its own roll", () => {
+    const attack = weaponAttack({
+      weapon: LONGSWORD,
+      ...STRONG,
+      attackBonus: { value: 3 },
+      damageBonus: { value: 2 },
+    });
+    expect(attack.attack.total).toBe(10);
+    expect(attack.damage?.modifier.total).toBe(6);
+  });
+
+  it("drops the proficiency term where the character is not proficient", () => {
+    const attack = weaponAttack({ weapon: LONGSWORD, ...STRONG, proficiency: 0 }).attack;
+    expect(attack).toStrictEqual({ total: 4, terms: [{ label: "Strength", value: 4 }] });
   });
 
   it("takes proficiency as a number, so a halved bonus needs no second function", () => {
-    expect(weaponAttack({ weapon: LONGSWORD, ...STRONG, proficiency: 1 }).attackBonus).toBe(5);
+    expect(weaponAttack({ weapon: LONGSWORD, ...STRONG, proficiency: 1 }).attack.total).toBe(5);
   });
 
   it("rolls a versatile weapon's larger die in two hands", () => {
     expect(weaponAttack({ weapon: LONGSWORD, ...STRONG, grip: "two-handed" })).toMatchObject({
-      damage: "1d10",
-      damageModifier: 4,
+      damage: { dice: "1d10", modifier: { total: 4 } },
     });
   });
 
   it("keeps the one die of a two-handed weapon that is not versatile", () => {
-    expect(weaponAttack({ weapon: GREATSWORD, ...STRONG, grip: "two-handed" }).damage).toBe("2d6");
+    expect(weaponAttack({ weapon: GREATSWORD, ...STRONG, grip: "two-handed" }).damage?.dice).toBe(
+      "2d6",
+    );
   });
 
   it("leaves the damage dice for the dice parser rather than folding the modifier in", () => {
     const attack = weaponAttack({ weapon: GREATSWORD, ...STRONG });
-    expect(attack.damage).toBe("2d6");
-    expect(attack.damageModifier).toBe(4);
+    expect(attack.damage?.dice).toBe("2d6");
+    expect(attack.damage?.modifier.total).toBe(4);
   });
 
   it("takes Strength for a finesse weapon where Strength is the higher", () => {
     expect(weaponAttack({ weapon: RAPIER, ...STRONG })).toMatchObject({
       ability: "strength",
-      attackBonus: 7,
-      damageModifier: 4,
+      attack: { total: 7 },
+      damage: { modifier: { total: 4 } },
     });
   });
 
   it("takes Dexterity for a finesse weapon where Dexterity is the higher", () => {
     expect(weaponAttack({ weapon: RAPIER, ...NIMBLE })).toMatchObject({
       ability: "dexterity",
-      attackBonus: 7,
-      damageModifier: 4,
+      attack: { total: 7 },
+      damage: { modifier: { total: 4 } },
     });
   });
 
@@ -108,8 +132,8 @@ describe("weaponAttack", () => {
   it("takes Dexterity for a ranged weapon however strong the character", () => {
     expect(weaponAttack({ weapon: SHORTBOW, ...STRONG })).toMatchObject({
       ability: "dexterity",
-      attackBonus: 4,
-      damageModifier: 1,
+      attack: { total: 4 },
+      damage: { modifier: { total: 1 } },
     });
   });
 
@@ -157,7 +181,8 @@ describe("weaponAttack", () => {
 
   it("returns an attack but no damage for a weapon with no dice, as Net (PHB) has none", () => {
     const attack = weaponAttack({ weapon: { kind: "ranged", properties: ["S", "T"] }, ...STRONG });
-    expect(attack).toStrictEqual({ ability: "dexterity", attackBonus: 4 });
+    expect(attack.damage).toBeUndefined();
+    expect(attack.attack.total).toBe(4);
   });
 
   it("takes the better of two negative modifiers for a finesse weapon", () => {
@@ -169,7 +194,11 @@ describe("weaponAttack", () => {
         proficiency: 2,
         grip: "one-handed",
       }),
-    ).toMatchObject({ ability: "dexterity", attackBonus: 1, damageModifier: -1 });
+    ).toMatchObject({
+      ability: "dexterity",
+      attack: { total: 1 },
+      damage: { modifier: { total: -1 } },
+    });
   });
 
   it("returns a negative damage modifier rather than clamping it, so the roller sums it", () => {
@@ -181,7 +210,11 @@ describe("weaponAttack", () => {
         proficiency: 2,
         grip: "two-handed",
       }),
-    ).toMatchObject({ ability: "strength", attackBonus: -1, damage: "2d6", damageModifier: -3 });
+    ).toMatchObject({
+      ability: "strength",
+      attack: { total: -1 },
+      damage: { dice: "2d6", modifier: { total: -3 } },
+    });
   });
 
   it.each(["Melee", "M|XPHB", ""])("rejects a weapon kind of %o", (kind) => {
@@ -200,7 +233,8 @@ describe("weaponAttack", () => {
     ["strengthModifier", { strengthModifier: 1.5 }],
     ["dexterityModifier", { dexterityModifier: Number.NaN }],
     ["proficiency", { proficiency: 2.5 }],
-    ["bonus", { bonus: 0.5 }],
+    ["attackBonus", { attackBonus: { value: 0.5 } }],
+    ["damageBonus", { damageBonus: { value: 0.5 } }],
   ])("rejects a fractional %s rather than reaching the sheet as one", (_label, part) => {
     expect(() => weaponAttack({ weapon: LONGSWORD, ...STRONG, ...part })).toThrow(RangeError);
   });

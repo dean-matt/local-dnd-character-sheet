@@ -53,6 +53,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     speed: { walk: 30, fly: 40 },
     armor: new Map(),
     weights: new Map(),
+    weapons: new Map(),
   });
 }
 

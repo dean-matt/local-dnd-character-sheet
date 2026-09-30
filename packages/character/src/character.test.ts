@@ -44,6 +44,7 @@ import {
   resourceSchema,
   spellSlotSchema,
   totalLevel,
+  type WeaponTrait,
 } from "./index.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
@@ -92,6 +93,7 @@ const derivedInput = (traits: object = {}) => ({
   carriedWeight: 0,
   encumbrance: null,
   attunementSlots: { computed: 3 },
+  attacks: [],
   ...raceTraits,
   ...traits,
 });
@@ -1023,6 +1025,28 @@ describe("hit point maximum", () => {
 describe("deriveCharacter", () => {
   const STUDDED_LEATHER = { name: "Studded Leather Armor", source: "XPHB" };
   const SHIELD = { name: "Shield", source: "XPHB" };
+  const LONGSWORD = { name: "Longsword", source: "XPHB" };
+  const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
+  const noBonus = { attack: 0, damage: 0 };
+  const DAGGER_TRAIT: WeaponTrait = {
+    kind: "melee",
+    properties: ["F|XPHB", "L|XPHB", "T|XPHB"],
+    damage: "1d4",
+    name: "Dagger",
+    category: "simple",
+    damageType: "piercing",
+    bonus: noBonus,
+  };
+  const LONGSWORD_TRAIT: WeaponTrait = {
+    kind: "melee",
+    properties: ["V|XPHB"],
+    damage: "1d8",
+    versatileDamage: "1d10",
+    name: "Longsword",
+    category: "martial",
+    damageType: "slashing",
+    bonus: noBonus,
+  };
 
   /** The Warlock/Rogue fixture, with armor and a shield equipped. */
   const equipped: CharacterDefinition = {
@@ -1063,6 +1087,11 @@ describe("deriveCharacter", () => {
       [entryKey({ homebrewId: "hb_01" }), null],
       [entryKey(STUDDED_LEATHER), 13],
       [entryKey(SHIELD), 6],
+      [entryKey(LONGSWORD), 3],
+    ]),
+    weapons: new Map<string, WeaponTrait>([
+      [entryKey({ name: "Dagger", source: "XPHB" }), DAGGER_TRAIT],
+      [entryKey(LONGSWORD), LONGSWORD_TRAIT],
     ]),
   };
 
@@ -1217,6 +1246,118 @@ describe("deriveCharacter", () => {
       { ...catalog, hitDice: new Map([[entryKey(artificer), 8 as const]]) },
     );
     expect(tinkerer.attunementSlots.computed).toBe(5);
+  });
+
+  describe("attacks", () => {
+    const longsword = (entry: Partial<CharacterDefinition["inventory"][number]> = {}) => ({
+      ref: LONGSWORD,
+      quantity: 1,
+      carried: true,
+      equipped: false,
+      attuned: false,
+      ...entry,
+    });
+    const withSword = (
+      entry: Partial<CharacterDefinition["inventory"][number]> = {},
+      base: CharacterDefinition = definition,
+    ): CharacterDefinition => ({ ...base, inventory: [...base.inventory, longsword(entry)] });
+    const attackOf = (block: CharacterDerived, entry: number) =>
+      block.attacks.find((attack) => attack.entry === entry);
+
+    it("attacks with a finesse dagger's better Dexterity, terms and all", () => {
+      expect(attackOf(derived, 0)).toEqual({
+        entry: 0,
+        ability: "dex",
+        attackBonus: {
+          computed: 6,
+          manual: null,
+          terms: [
+            { label: "Dexterity", value: 3 },
+            { label: "Proficiency", value: 3, reference: undefined },
+          ],
+        },
+        damage: {
+          dice: "1d4",
+          type: "piercing",
+          modifier: { computed: 3, manual: null, terms: [{ label: "Dexterity", value: 3 }] },
+        },
+        grip: null,
+      });
+    });
+
+    it("lists only weapons, skipping the armor and the homebrew trinket", () => {
+      expect(derived.attacks.map((attack) => attack.entry)).toEqual([0]);
+    });
+
+    it("leaves out a weapon the character is not carrying", () => {
+      const left = deriveCharacter(withSword({ carried: false }), catalog);
+      expect(attackOf(left, 2)).toBeUndefined();
+    });
+
+    it("adds proficiency by category or by the weapon's own name, and not otherwise", () => {
+      const named = (weapons: string[]) =>
+        attackOf(
+          deriveCharacter(
+            withSword(
+              {},
+              { ...definition, proficiencies: { ...definition.proficiencies, weapons } },
+            ),
+            catalog,
+          ),
+          2,
+        )?.attackBonus.computed;
+      expect(named(["Simple"])).toBe(-1);
+      expect(named(["martial"])).toBe(2);
+      expect(named(["longsword"])).toBe(2);
+    });
+
+    it("rolls a versatile weapon's stored grip, one-handed where none is stored", () => {
+      const damage = (grip?: "two-handed") =>
+        attackOf(deriveCharacter(withSword(grip ? { grip } : {}), catalog), 2);
+      expect(damage()?.damage?.dice).toBe("1d8");
+      expect(damage()?.grip).toEqual({ held: "one-handed", twoHandedBlocked: false });
+      expect(damage("two-handed")?.damage?.dice).toBe("1d10");
+    });
+
+    it("holds a versatile weapon one-handed while it and a shield are both equipped", () => {
+      const both = deriveCharacter(
+        withSword({ equipped: true, grip: "two-handed" }, equipped),
+        catalog,
+      );
+      const sword = attackOf(both, 4);
+      expect(sword?.damage?.dice).toBe("1d8");
+      expect(sword?.grip).toEqual({ held: "one-handed", twoHandedBlocked: true });
+
+      const stowed = deriveCharacter(withSword({ grip: "two-handed" }, equipped), catalog);
+      expect(attackOf(stowed, 4)?.grip).toEqual({ held: "two-handed", twoHandedBlocked: false });
+    });
+
+    it("adds a magic weapon's bonus to each roll, referencing the row that granted it", () => {
+      const magic = deriveCharacter(withSword({ variant: PLUS_ONE }), {
+        ...catalog,
+        weights: new Map([...catalog.weights, [itemKey({ ref: LONGSWORD, variant: PLUS_ONE }), 3]]),
+        weapons: new Map([
+          ...catalog.weapons,
+          [
+            itemKey({ ref: LONGSWORD, variant: PLUS_ONE }),
+            { ...LONGSWORD_TRAIT, bonus: { attack: 1, damage: 1, reference: PLUS_ONE } },
+          ],
+        ]),
+      });
+      const sword = attackOf(magic, 2);
+      expect(sword?.attackBonus.terms).toContainEqual({
+        label: "Magic",
+        value: 1,
+        reference: PLUS_ONE,
+      });
+      expect(sword?.attackBonus.computed).toBe(0);
+      expect(sword?.damage?.modifier.computed).toBe(0);
+    });
+
+    it("parses as the derived block's attacks", () => {
+      const block = deriveCharacter(withSword({}, equipped), catalog);
+      expect(characterDerivedSchema.parse(block).attacks).toHaveLength(2);
+    });
   });
 
   it("reads initiative off Dexterity alone", () => {
@@ -1487,6 +1628,17 @@ describe("inventory", () => {
       inventory: [{ ref: { name: "Dagger", source: "XPHB" }, carried: false, equipped: true }],
     };
     expect(characterDefinitionSchema.safeParse(wielded).success).toBe(false);
+  });
+
+  it("stores a versatile weapon's grip, and refuses a grip outside the two", () => {
+    const held = (grip: string) => ({
+      ...structuredClone(definition),
+      inventory: [{ ref: { name: "Longsword", source: "XPHB" }, grip }],
+    });
+    expect(characterDefinitionSchema.parse(held("two-handed")).inventory[0]?.grip).toBe(
+      "two-handed",
+    );
+    expect(characterDefinitionSchema.safeParse(held("both")).success).toBe(false);
   });
 
   it("names a magic variant beside the base item it expands, rather than storing it expanded", () => {
