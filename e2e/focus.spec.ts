@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("a navigation focuses main without ringing it, and controls keep their ring", async ({
+test("a navigation focuses main without ringing it, and controls keep their ring on screen only", async ({
   page,
 }) => {
   await page.goto("/characters");
@@ -20,5 +20,9 @@ test("a navigation focuses main without ringing it, and controls keep their ring
   await expect(main).toHaveCSS("outline-style", "none");
 
   await page.keyboard.press("Tab");
-  await expect(page.locator(":focus")).toHaveCSS("outline-style", "solid");
+  const control = page.locator(":focus");
+  await expect(control).toHaveCSS("outline-style", "solid");
+
+  await page.emulateMedia({ media: "print" });
+  await expect(control).toHaveCSS("outline-style", "none");
 });

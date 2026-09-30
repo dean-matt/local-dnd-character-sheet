@@ -93,7 +93,8 @@ body {
 
 /*
  * `main` takes focus on every navigation so a screen reader starts at the content. It is a
- * landmark rather than a control, and its ring would show only as a line under the top bar.
+ * landmark rather than a control, and its ring would show only as a line across the page
+ * below the content.
  */
 main:focus-visible {
   outline: none;
@@ -112,6 +113,11 @@ dialog::backdrop {
     --color-border: color-mix(in oklab, #dde1e6 90%, var(--color-ink));
 
     --text-row: 12pt;
+  }
+
+  /* A control focused from the keyboard when the user prints would carry its ring onto paper. */
+  :focus-visible {
+    outline: none;
   }
 
   h1,
