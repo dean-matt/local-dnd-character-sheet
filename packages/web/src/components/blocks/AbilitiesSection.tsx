@@ -18,6 +18,7 @@ import {
 import { type ReactNode, useMemo } from "react";
 import { useResolvedRefs } from "../../hooks/useResolvedRefs.ts";
 import { EmptyState } from "../../states.tsx";
+import { signed } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { DetailTrigger } from "../DetailTrigger.tsx";
 import { Field } from "../Field.tsx";
@@ -44,8 +45,6 @@ const PROFICIENCY_MARK: Record<ProficiencyLevel, { text: string; className: stri
     className: "border-accent bg-accent shadow-[inset_0_0_0_2px_var(--color-surface)]",
   },
 };
-
-const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
 
 /** The catalog row a modal reads its rules text from. */
 interface Rules {
