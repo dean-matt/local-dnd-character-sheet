@@ -57,9 +57,12 @@ widget, panel, or nav element:
 - Page chrome: Sidebar (the tab rail), Top Bar Navigation (Character menu, Mechanics
   menu, search, and a Settings link), Character Header, Rolls Panel. The top bar marks
   the section you are in by its label alone — accent-colored and bold, with no fill or
-  underline — and an open menu takes a gray fill instead. Character Header carries the
-  character's edition as a `2014` or `2024` chip beside the name, the same chip as the
-  Character List tile. Manage Tabs is the modal
+  underline — and an open menu takes a gray fill instead. Character Header is one 52px
+  line: a 32px avatar with its upload badge, the name, the character's edition as a
+  `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
+  after a `·`, with Inspiration (its icon alone, the label in a tooltip), Rest and the
+  character menu as 32px buttons at the right. A long name or subtitle ends in an
+  ellipsis and keeps its full text in a tooltip; the `longText` tweak shows one. Manage Tabs is the modal
   Sidebar's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
   only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
