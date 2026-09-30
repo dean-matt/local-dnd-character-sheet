@@ -42,7 +42,7 @@ export function CharacterHeader({ character }: { character: CharacterRecord }) {
         <span aria-hidden="true" className="shrink-0 text-body text-muted">
           ·
         </span>
-        {/* The mockup's 160px floor, capped at half the line so a narrow window splits it rather than overflowing. */}
+        {/* The mockup's 160px floor, capped at half the name block so a narrow window splits the line rather than overflowing. */}
         <p
           title={subtitle}
           className="min-w-[min(--spacing(40),50%)] flex-1 basis-0 truncate text-body text-muted"
