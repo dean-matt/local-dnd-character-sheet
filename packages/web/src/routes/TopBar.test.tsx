@@ -84,11 +84,13 @@ describe("TopBar", () => {
     ] as const) {
       if (name === section) {
         expect(el).toHaveAttribute("aria-current", "page");
-        expect(el).toHaveClass("text-accent", "font-bold");
+        expect(el).toHaveClass("text-accent-text", "font-bold");
+        expect(el.querySelector("svg")).not.toHaveClass("text-muted");
         expect(el).not.toHaveClass("bg-subtle");
       } else {
         expect(el).not.toHaveAttribute("aria-current");
         expect(el).toHaveClass("text-secondary");
+        expect(el.querySelector("svg")).toHaveClass("text-muted");
       }
     }
   });

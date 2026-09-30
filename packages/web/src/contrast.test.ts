@@ -98,6 +98,7 @@ const secondaryDark = gray300;
 const mutedDark = gray400;
 const placeholderDark = mutedDark;
 const accentDark = mixOklab(accentLight, white, 0.9);
+const accentTextDark = mixOklab(accentLight, white, 0.6);
 const subtleDark = mixOklab(gray700, gray800, 0.5);
 // Checked as non-text: the dark accent on the dark surface already sits near 3:1.
 const accentTintDark = mixOklab(accentDark, gray900, 0.1);
@@ -118,6 +119,8 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "placeholder on canvas, light", fg: placeholderLight, bg: canvasLight, minimum: AA_TEXT },
   { name: "placeholder on surface, light", fg: placeholderLight, bg: white, minimum: AA_TEXT },
   { name: "placeholder on subtle, light", fg: placeholderLight, bg: subtleLight, minimum: AA_TEXT },
+  { name: "accent-text on surface, light", fg: accentLight, bg: white, minimum: AA_TEXT },
+  { name: "accent-text on subtle, light", fg: accentLight, bg: subtleLight, minimum: AA_TEXT },
   { name: "accent on accent-tint, light", fg: accentLight, bg: accentTintLight, minimum: AA_TEXT },
   { name: "white text on accent, light", fg: white, bg: accentLight, minimum: AA_TEXT },
   { name: "focus ring on canvas, light", fg: accentLight, bg: canvasLight, minimum: AA_NON_TEXT },
@@ -151,6 +154,8 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "placeholder on canvas, dark", fg: placeholderDark, bg: gray900, minimum: AA_TEXT },
   { name: "placeholder on surface, dark", fg: placeholderDark, bg: gray800, minimum: AA_TEXT },
   { name: "placeholder on subtle, dark", fg: placeholderDark, bg: subtleDark, minimum: AA_TEXT },
+  { name: "accent-text on surface, dark", fg: accentTextDark, bg: gray800, minimum: AA_TEXT },
+  { name: "accent-text on subtle, dark", fg: accentTextDark, bg: subtleDark, minimum: AA_TEXT },
   { name: "accent on accent-tint, dark", fg: accentDark, bg: accentTintDark, minimum: AA_NON_TEXT },
   { name: "white text on accent, dark", fg: white, bg: accentDark, minimum: AA_TEXT },
   { name: "focus ring on canvas, dark", fg: accentDark, bg: gray900, minimum: AA_NON_TEXT },

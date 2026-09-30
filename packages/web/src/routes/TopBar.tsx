@@ -40,7 +40,7 @@ function ChevronDown({ rotated, className }: { rotated: boolean; className?: str
 }
 
 const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 text-sm";
-const current = "font-bold text-accent";
+const current = "font-bold text-accent-text";
 const elsewhere = "font-medium text-secondary";
 
 /**

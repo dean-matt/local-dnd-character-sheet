@@ -33,6 +33,8 @@
    * active shades mix from var(--color-accent), so they follow.
    */
   --color-accent: light-dark(#c1272d, color-mix(in oklab, #c1272d 90%, white));
+  /* Accent as small text: the dark accent measures 3.10:1 on surface, under AA. */
+  --color-accent-text: light-dark(#c1272d, color-mix(in oklab, #c1272d 60%, white));
   --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
   --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
   /* Mixed into canvas, not surface: on the dark surface the accent tops out near 3:1. */
