@@ -194,14 +194,7 @@ function ResolvedRow({ item }: { item: ResolvedItem }) {
           <Marks item={item} />
         </>
       }
-      value={
-        item.value !== null && (
-          <>
-            <span className="sr-only">Value: </span>
-            {price(item.value * item.quantity)}
-          </>
-        )
-      }
+      price={item.value === null ? undefined : price(item.value * item.quantity)}
       preview={firstLine(item.entries)}
       detail={{
         meta: rarity ?? "Item",

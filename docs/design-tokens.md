@@ -44,8 +44,8 @@ convention drifts the first time someone reaches for `text-sm` instead.
 
 ## Color
 
-One cool neutral ground plus one accent, aliased so a view names the role rather than
-the shade:
+One cool neutral ground, one accent and a gold for a price, aliased so a view names the
+role rather than the shade:
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
@@ -62,6 +62,7 @@ the shade:
 | `color-accent-text` | `#c1272d` | `#c1272d` 60%, white 40% | The accent as text under the large-text size — a link, the wordmark, an override mark, the top bar's current section |
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
+| `color-money` / `color-money-tint` / `color-money-border` | `#7a5b00` on `#fbf3dc`, edged `#e5cf8f` | `#e5cf8f` on `#7a5b00` 30% into `gray-800`, edged at 70% | A list row's price chip |
 
 Two light values depart from the mockup. `#6b7280` measures 4.43:1 on canvas and 4.23:1
 on subtle, under AA, so `color-muted` takes 8% of the ink. `#9aa1ab` measures 2.61:1 on
