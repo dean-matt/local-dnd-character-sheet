@@ -29,9 +29,9 @@
         <sc-if value="{{showChip2}}" hint-placeholder-val="{{true}}">
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">Slashing</span>
         </sc-if>
-        <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>15 gp</span>
+        <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path><path d="M7 6h1v4"></path><path d="m16.71 13.88.7.71-2.82 2.82"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>15 gp</span>
         <div style="flex-grow: 1;"></div>
-        <button aria-label="Remove Longsword" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        <button aria-label="Remove Longsword" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
       </div>
       <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">A versatile blade balanced for one or two hands, dealing slashing damage.</div>
       <div style="display: flex; align-items: center; gap: 6px;">
@@ -57,14 +57,15 @@
     <div style="font-size: 11px; color: #6b7280; line-height: 1.5;">
       Row 1: name (ellipsis), gray property chips such as category or level, a gold
       cost chip (a coin icon, read aloud as "Cost 15 gp") where the item has a price, a
-      flex spacer, then remove (&times;) at the far right.<br>
+      flex spacer, then remove (an x) at the far right.<br>
       Row 2: a truncated one-line description.<br>
       Row 3: the accent action chips (see Popover for the tooltip itself), a flex
       spacer, then the row's controls at the far right: a 1h/2h grip toggle for a
       versatile weapon, an Equip toggle, Prepared, Edit, or a feature's use pips. Equip is
       an 18px icon square, a backpack when stowed and the item type's icon on the accent
-      when equipped. Edit is a gray pencil at the same size, bare like remove. A row with
-      no action chips or controls has no third line.
+      when equipped. Remove and Edit are gray icons with no border or fill in the same
+      18px box, so all three line up. Every icon is Lucide at 12px. A row with no action
+      chips or controls has no third line.
     </div>
   </div>
 </div>

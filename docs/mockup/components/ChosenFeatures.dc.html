@@ -47,7 +47,7 @@
             <button aria-label="View {{feat.label}} details" onClick="{{feat.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{feat.label}}</button>
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">Lvl {{feat.level}}</span>
             <div style="flex-grow: 1;"></div>
-            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+            <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
           </div>
           <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{feat.descShort}}</div>
           <sc-if value="{{feat.hasUses}}" hint-placeholder-val="{{false}}">

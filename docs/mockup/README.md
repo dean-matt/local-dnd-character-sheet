@@ -37,11 +37,11 @@ widget, panel, or nav element:
   Equip is a fixed 18px icon toggle with a 24px hit area, named for its item
   ("Equipped, Spear") with `aria-pressed` carrying the state. Stowed is a gray backpack
   on a white square, the same for every item type; equipped is the item type's icon in
-  white on the accent — a sword for a weapon, a breastplate for armor, a shield for a
+  white on the accent — a sword for a weapon, a shirt for armor, a shield for a
   shield, a hand for other gear. An item the character is not proficient with shows a
   grayed backpack, `aria-disabled`, with a popover naming the missing proficiency. The
-  icons are inline outlines adapted from Lucide (ISC). Weapons, Armor and List Item
-  draw it.
+  icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons, Armor
+  and List Item draw it.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
@@ -147,9 +147,9 @@ widget, panel, or nav element:
   change into each widget's rows. The name, its gray property chips and the gold price
   chip share the first line, with remove at the right; the description takes the
   second; the accent action chips (Attack, Damage, AC) take the third, with the row's
-  controls (Equip, Prepared, Edit, a feature's use pips) at its right. Edit is a gray
-  pencil the size of Equip, with no border or fill, like remove. A row with neither has
-  no third line.
+  controls (Equip, Prepared, Edit, a feature's use pips) at its right. Remove (an x)
+  and Edit (a pencil) are gray icons with no border or fill in Equip's 18px box, so the
+  three share one column. A row with neither has no third line.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that
