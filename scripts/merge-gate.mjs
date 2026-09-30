@@ -186,6 +186,8 @@ export function mergeBlocked({ mergeable, mergeStateStatus }) {
   return null;
 }
 
+export const LINKED = "the pull request is linked to its issue";
+
 /**
  * The issue `open-pr` names on the body's first line must come back in GitHub's
  * `closingIssuesReferences`. GitHub has dropped that link with the body intact, which leaves
@@ -194,8 +196,6 @@ export function mergeBlocked({ mergeable, mergeStateStatus }) {
  * @param {string} body
  * @param {number[]} closing
  */
-export const LINKED = "the pull request is linked to its issue";
-
 export function linkBlocked(body, closing) {
   const named = /^Closes #(\d+)$/.exec(body.split("\n")[0].trim())?.[1];
   if (named === undefined) return "the body does not open with Closes #<issue>";
