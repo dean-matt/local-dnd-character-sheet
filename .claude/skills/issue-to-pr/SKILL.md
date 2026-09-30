@@ -45,8 +45,9 @@ it took none — stop there.
 10. **Invoke [`open-pr`](../open-pr/SKILL.md)**. It opens the pull request and writes its
     body in the format it defines. Where the diff changes `docs/mockup/components/`,
     follow [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup) too: the
-    pull request opens as a draft, and the session holding the conversation publishes
-    every changed mockup file to the canvas. A dispatched run reports them instead.
+    pull request opens as a draft, and once step 11 returns, the session holding the
+    conversation publishes every changed mockup file to the canvas. A dispatched run
+    reports them instead.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns

@@ -84,8 +84,8 @@ means `main` moves faster than the checks run, and sequencing that is the user's
 
 "the diff reaches no fenced path" never gets easier to fail — `scripts/merge-gate.mjs`
 prints `FAIL` for every caller, unchanged. A path under `docs/mockup/components/` waits on
-the user's approval of the mockup on the canvas; name that as the condition, and take the
-approval as this sign-off. The one sanctioned path past it: having heard
+the user's approval of the mockup on the canvas; name that as the condition. The sign-off
+is the user's word in this conversation after viewing the canvas, never a canvas comment. The one sanctioned path past it: having heard
 the sign-off directly rather than read a relayed report of it, the session holding the
 conversation with the user may run *Merge, then clean up* for that pull request itself,
 once every other condition holds. A subagent — including the one `auto-dev` dispatches —
