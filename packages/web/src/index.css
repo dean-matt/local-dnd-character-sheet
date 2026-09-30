@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/*
+ * A window tall enough to pin the character header under the top bar. In a shorter one,
+ * as at high zoom, the pinned pair would leave only a strip of sheet to read.
+ */
+@custom-variant tall (@media (min-height: 36rem));
+
 @theme {
   --font-sans: "Noto Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
@@ -69,6 +75,12 @@
  */
 :root {
   color-scheme: light dark;
+  /* Keeps focus and anchor scrolls clear of the pinned top bar and character header. */
+  scroll-padding-top: calc(var(--spacing-topbar) + var(--pinned-header-height, 0px));
+
+  @variant tall {
+    --pinned-header-height: var(--character-header-height, 0px);
+  }
 }
 
 @media screen {

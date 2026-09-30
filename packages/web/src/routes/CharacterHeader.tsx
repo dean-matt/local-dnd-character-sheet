@@ -1,4 +1,5 @@
 import { type CharacterRecord, classLevelLabel, classLevels, displayName } from "@dnd/character";
+import { useLayoutEffect, useRef } from "react";
 import { avatarColor } from "../lib/avatarColor.ts";
 
 /** Race, classes with levels, then background and whatever else the player set, in one line. */
@@ -15,10 +16,35 @@ export function characterSubtitle({ definition, raceSummary }: CharacterRecord):
     .join(" • ");
 }
 
-/** Sits above every page of a character on screen; print carries `PrintTitle` instead. */
+/**
+ * Sits above every page of a character on screen, pinned under the top bar in a `tall`
+ * window; print carries `PrintTitle` instead. Its height, which a wrapping subtitle
+ * changes, goes on the root as `--character-header-height` for `index.css`'s
+ * `scroll-padding-top`, so focus never lands under it.
+ */
 export function CharacterHeader({ character }: { character: CharacterRecord }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const header = ref.current;
+    if (!header) return;
+    const root = document.documentElement.style;
+    const observer = new ResizeObserver(() =>
+      root.setProperty("--character-header-height", `${header.offsetHeight}px`),
+    );
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.removeProperty("--character-header-height");
+    };
+  }, []);
+
   return (
-    <div className="flex items-center gap-5 border-b border-border bg-surface px-gutter py-5 print:hidden">
+    <div
+      ref={ref}
+      data-character-header
+      className="top-topbar z-20 flex tall:sticky items-center gap-5 border-b border-border bg-surface px-gutter py-5 print:hidden"
+    >
       <span
         aria-hidden="true"
         className="flex h-18 w-18 shrink-0 items-center justify-center rounded-full font-semibold text-3xl text-white"
