@@ -10,6 +10,7 @@ import {
   checksBlocked,
   dependenciesDiffer,
   FENCE,
+  linkNote,
   mergeBlocked,
   notGreen,
   PASS_CAP,
@@ -19,6 +20,7 @@ import {
   severity,
   sinceLastPass,
   staleNote,
+  UNLINKED,
   unanswered,
 } from "../scripts/merge-gate.mjs";
 import { ROOT, read } from "./lib/doc-helpers.ts";
@@ -302,6 +304,28 @@ describe("thread verdicts", () => {
       otherDecline,
     ];
     expect(blockingDeclines(mixed)).toEqual([otherDecline.html_url]);
+  });
+});
+
+describe("the issue link", () => {
+  const BODY = "Closes #460\n\n`main:focus-visible { outline: none; }` in `index.css`";
+
+  it("stays quiet where GitHub links the issue the first line names", () => {
+    expect(linkNote(BODY, [460])).toBeNull();
+  });
+
+  it("warns where GitHub dropped the link the body still names", () => {
+    expect(linkNote(BODY, [])).toMatch(/has not linked #460/);
+    expect(linkNote(BODY, [461])).toMatch(/has not linked #460/);
+  });
+
+  it("warns on a body that does not open with the Closes line", () => {
+    expect(linkNote("Fixes the ring.\n\nCloses #460", [460])).toMatch(/does not open/);
+    expect(linkNote("Closes #460, #461\n", [460])).toMatch(/does not open/);
+  });
+
+  it("reaches merge-pr in the words the gate prints", () => {
+    expect(read(".claude/skills/merge-pr/SKILL.md")).toContain(UNLINKED);
   });
 });
 

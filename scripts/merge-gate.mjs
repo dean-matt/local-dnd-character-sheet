@@ -186,6 +186,25 @@ export function mergeBlocked({ mergeable, mergeStateStatus }) {
   return null;
 }
 
+export const UNLINKED = "the pull request is not linked to its issue";
+
+/**
+ * The issue `open-pr` names on the body's first line must come back in GitHub's
+ * `closingIssuesReferences`. GitHub has dropped that link with the body intact, which leaves
+ * the pull request off the issue and the board, so this reads the link and not the body.
+ * It warns rather than blocks: the fault is GitHub's and only a hand link repairs it, while
+ * the squash commit's `Closes` line still closes the issue.
+ *
+ * @param {string} body
+ * @param {number[]} closing
+ */
+export function linkNote(body, closing) {
+  const named = /^Closes #(\d+)$/.exec(body.split("\n")[0].trim())?.[1];
+  if (named === undefined) return "the body does not open with Closes #<issue>";
+  if (closing.includes(Number(named))) return null;
+  return `GitHub has not linked #${named} — link it from the pull request's Development box`;
+}
+
 const DEP_KEYS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
 
 /** A version bump stops the merge; a rename, a reordered script or a reordered map does not. */
@@ -293,7 +312,20 @@ function gate(n) {
     [...fenced, ...bumped].join("\n      "),
   );
 
-  const conflict = mergeBlocked(gh(["pr", "view", n, "--json", "mergeable,mergeStateStatus"]));
+  const pr = gh([
+    "pr",
+    "view",
+    n,
+    "--json",
+    "body,closingIssuesReferences,mergeable,mergeStateStatus",
+  ]);
+  const unlinked = linkNote(
+    pr.body,
+    pr.closingIssuesReferences.map((i) => i.number),
+  );
+  if (unlinked !== null) console.log(`warn  ${UNLINKED}\n      ${unlinked}`);
+
+  const conflict = mergeBlocked(pr);
   report(conflict === null, "the branch merges cleanly", conflict);
 
   return failures;
