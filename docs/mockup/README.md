@@ -216,6 +216,7 @@ changes `docs/mockup/components/` waits on their approval there.
 No skill closes a pull request, so whoever closes one without merging puts the canvas back
 in the same turn: publish `main`'s version of each file it published, writing
 `git show origin/main:docs/mockup/components/<name>` to the scratchpad and mapping
-`project/<name>` to that copy, and `null` for a file `main` does not have. Leave out a file
-another open pull request with a `Canvas:` line also changes, or the restore erases that
-change; `gh pr list --state open --json number,body,files` lists both.
+`project/<name>` to that copy, and `null` for a file `main` does not have. Where another
+open pull request with a `Canvas:` line also changes the file, publish that pull request's
+head version instead, from `git show <its head>:docs/mockup/components/<name>`;
+`gh pr list --state open --json number,body,files,headRefOid` lists all three.

@@ -43,16 +43,17 @@ it took none — stop there.
    steps 6 and 7 — pre-commit runs neither the tests nor the caps. Never push past a
    failure with a note about it.
 10. **Invoke [`open-pr`](../open-pr/SKILL.md)**. It opens the pull request and writes its
-    body in the format it defines. Where the diff changes `docs/mockup/components/`,
-    follow [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup) too: the
-    pull request opens as a draft, and once step 11 returns, the session holding the
-    conversation publishes every changed mockup file to the canvas. A dispatched run
-    reports them instead.
+    body in the format it defines, as a draft where the diff changes
+    `docs/mockup/components/`.
 11. **Invoke [`converge-review`](../converge-review/SKILL.md)** with the pull request
     number and nothing else. It dispatches the review, posts and applies each pass, and
     labels the pull request `review:approved` or `review:changes-requested`. It returns
     that label and what each pass found.
-12. **Wait on CI, then run the gate:**
+12. **Publish a mockup change, wait on CI, then run the gate.** Where the diff changes
+    `docs/mockup/components/`, the session holding the conversation publishes every
+    changed file as [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup)
+    says; a dispatched run reports them instead.
+
 
     ```bash
     node scripts/wait-checks.mjs <pr>
