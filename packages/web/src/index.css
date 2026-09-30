@@ -55,6 +55,7 @@
 
   --spacing-row: 2rem;
   --spacing-topbar: 4rem;
+  --spacing-header: 3.25rem;
   --spacing-gutter: 2.5rem;
   --spacing-sidebar: 16.25rem;
   --spacing-sidebar-collapsed: 4.5rem;
@@ -82,7 +83,9 @@
   scroll-padding-top: calc(var(--spacing-topbar) + var(--pinned-header-height, 0px));
 
   @variant tall {
-    --pinned-header-height: var(--character-header-height, 0px);
+    &:has([data-character-header]) {
+      --pinned-header-height: var(--spacing-header);
+    }
   }
 }
 

@@ -17,13 +17,15 @@ async function scrollToBottom(page: Page, content: Locator) {
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 }
 
-test("the top bar, character header and sidebar stay pinned in a tall window, and focus lands below them", async ({
+test("the top bar, character header and sidebar stay pinned in a tall window, the header on one line, and focus lands below them", async ({
   page,
   request,
 }) => {
   const response = await request.post("/api/characters", {
     data: {
-      name: `E2E Pinned ${Date.now()}`,
+      // Longer than any window is wide, so it wraps a name that can wrap and squeezes the
+      // subtitle to its 160px floor, narrower than the subtitle this character reads.
+      name: `E2E Pinned ${Date.now()}${" of the Silverwood".repeat(8)}`,
       edition: "one",
       levels: [{ class: { name: "Warlock", source: "XPHB" } }],
       race: { name: "Half-Elf", source: "XPHB" },
@@ -50,6 +52,14 @@ test("the top bar, character header and sidebar stay pinned in a tall window, an
     const header = page.locator("[data-character-header]");
     const rail = page.locator("aside");
     await expect(header).toBeVisible();
+    const lines = await header
+      .locator("h1, p")
+      .evaluateAll((elements) =>
+        elements.map((e) =>
+          Math.round(e.clientHeight / Number.parseFloat(getComputedStyle(e).lineHeight)),
+        ),
+      );
+    expect(lines).toEqual([1, 1]);
 
     const content = header.locator("xpath=following-sibling::div");
     await content.evaluate((element) => {
