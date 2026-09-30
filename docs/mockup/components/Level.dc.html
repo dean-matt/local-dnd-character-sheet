@@ -74,7 +74,7 @@
       <div role="dialog" aria-modal="true" aria-label="Level Up" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(440px, 90%); max-height: 85%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 16px;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
           <div style="font-size: 15px; font-weight: 700;">Level Up</div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+          <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -147,7 +147,7 @@
               <sc-if value="{{hasFeat}}" hint-placeholder-val="{{false}}">
                 <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
                   {{featChosen}}
-                  <button aria-label="Change feat" onClick="{{clearFeat}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+                  <button aria-label="Change feat" onClick="{{clearFeat}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
                 </div>
               </sc-if>
               <sc-if value="{{noFeat}}" hint-placeholder-val="{{true}}">
@@ -173,7 +173,7 @@
                 <sc-for list="{{spellsChosenChips}}" as="sp" hint-placeholder-count="1">
                   <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
                     {{sp.name}}
-                    <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+                    <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
                   </div>
                 </sc-for>
               </div>

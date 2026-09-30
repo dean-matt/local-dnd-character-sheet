@@ -20,7 +20,7 @@
 <div style="width: 220px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 24px rgba(0,0,0,0.18);">
   <div style="display: flex; align-items: center; justify-content: space-between;">
     <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Armor</div>
-    <button aria-label="Close filter" onClick="{{close}}" style="border: none; background: none; font-size: 16px; line-height: 1; color: #6b7280; padding: 0;">&times;</button>
+    <button aria-label="Close filter" onClick="{{close}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
   </div>
 
   <div>
@@ -29,7 +29,7 @@
       <sc-for list="{{classChips}}" as="chip" hint-placeholder-count="3">
         <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
           {{chip.label}}
-          <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+          <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
       </sc-for>
       <sc-if value="{{classEmpty}}" hint-placeholder-val="{{true}}">
