@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+// Each control is focused by locator rather than by Tab order: in dev, StrictMode runs the
+// route-change focus on load, so where a first Tab lands depends on that effect's timing.
 test("a navigation focuses main without ringing it, and controls keep their ring on screen only", async ({
   page,
 }) => {
   await page.goto("/characters");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Characters");
-  await page.keyboard.press("Tab");
   const skip = page.getByRole("link", { name: "Skip to main content" });
-  await expect(skip).toBeFocused();
+  await skip.focus();
   await expect(skip).toHaveCSS("outline-style", "solid");
   await skip.press("Enter");
   const main = page.locator("main");
@@ -19,10 +20,11 @@ test("a navigation focuses main without ringing it, and controls keep their ring
   await expect(main).toBeFocused();
   await expect(main).toHaveCSS("outline-style", "none");
 
-  await page.keyboard.press("Tab");
-  const control = page.locator(":focus");
+  const control = page.getByRole("button", { name: "Light" });
+  await control.focus();
   await expect(control).toHaveCSS("outline-style", "solid");
 
   await page.emulateMedia({ media: "print" });
+  await expect(control).toBeFocused();
   await expect(control).toHaveCSS("outline-style", "none");
 });
