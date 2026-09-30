@@ -24,6 +24,7 @@ import { Field } from "../Field.tsx";
 import { Popover } from "../Popover.tsx";
 import { RulesEntries } from "../RulesText.tsx";
 import { TermList } from "../TermList.tsx";
+import { Attacks } from "./Attacks.tsx";
 import { Vitals } from "./Vitals.tsx";
 
 type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
@@ -418,6 +419,7 @@ export function AbilitiesSection({
       <AbilityScores definition={definition} derived={derived} />
       <Combat derived={derived} />
       <Vitals characterId={character.id} derived={derived} />
+      <Attacks character={character} derived={derived} />
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
           <ul className="flex flex-col gap-1">

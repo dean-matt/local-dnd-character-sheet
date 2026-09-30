@@ -1,8 +1,6 @@
 /**
  * The worked example the next domain's hook copies: a list, a read and a write against
- * `/characters`, each parsed with the schema `@dnd/character` already exports. The write
- * path is exercised here and by its tests; no view calls the mutation yet, since turning
- * editing on in any view is a later milestone.
+ * `/characters`, each parsed with the schema `@dnd/character` already exports.
  */
 import {
   type CharacterDefinition,

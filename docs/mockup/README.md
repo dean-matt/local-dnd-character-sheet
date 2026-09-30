@@ -216,13 +216,13 @@ says how much of the artboard the app builds today.
 | `Skills` | #227, #399, #487 | read-only |
 | `Combat` | #227 | read-only |
 | `HP` | #277, #281, #487 | read-only |
-| `Attacks` | #398, #487 | nothing |
+| `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
 | `Defenses` | #387, #488 | nothing |
 | `ShortRestModal` | #281 | nothing |
 | `LongRestModal` | #281 | nothing |
 | `Currency` | #229 | read-only |
-| `Weapons` | #229, #311, #398, #400 | read-only |
+| `Weapons` | #229, #311, #398, #400 | read-only, and the grip toggle |
 | `WeaponsFilter` | #311 | nothing |
 | `Armor` | #229, #311, #400 | read-only |
 | `ArmorFilter` | #311 | nothing |
