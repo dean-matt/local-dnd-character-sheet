@@ -1,6 +1,5 @@
 import type { CharacterRecord } from "@dnd/character";
 import { Link } from "react-router";
-import { Tag } from "../components/Tag.tsx";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 import { ErrorState, LoadingState } from "../states.tsx";
@@ -15,7 +14,7 @@ function CharacterTile({ character }: { character: CharacterRecord }) {
   return (
     <Link
       to={`/characters/${character.id}`}
-      className="flex flex-col gap-2.5 rounded-card border border-border bg-subtle p-4.5"
+      className="flex flex-col gap-2.5 rounded-card border border-border bg-surface p-4.5"
     >
       <div className="truncate font-semibold text-title">{character.name}</div>
       <div className="truncate text-muted text-row">
@@ -30,7 +29,9 @@ function CharacterTile({ character }: { character: CharacterRecord }) {
         >
           {[...character.name][0]?.toUpperCase()}
         </span>
-        <Tag>{EDITION_LABELS[character.edition]}</Tag>
+        <span className="rounded-chip border border-border bg-canvas px-1.5 py-0.75 font-bold text-chip text-secondary uppercase tracking-chip">
+          {EDITION_LABELS[character.edition]}
+        </span>
       </div>
     </Link>
   );
@@ -38,20 +39,28 @@ function CharacterTile({ character }: { character: CharacterRecord }) {
 
 export function CharacterListPage() {
   const { data, isPending, isError, error } = useCharacters();
+  const loaded = !isPending && !isError;
 
   return (
-    <section className="mx-auto flex w-full max-w-300 flex-col gap-4.5 rounded-card border border-border bg-surface p-6">
-      <h1 className="font-bold text-lg">Characters</h1>
+    <section className="flex flex-col gap-5">
+      <div>
+        <h1 className="font-bold text-[22px]">Characters</h1>
+        {loaded && (
+          <p className="mt-0.5 text-body text-muted">
+            {data.length === 1 ? "1 character" : `${data.length} characters`}
+          </p>
+        )}
+      </div>
       {isPending && <LoadingState label="Loading characters…" />}
       {isError && <ErrorState message={error.message} />}
-      {!isPending && !isError && data.length === 0 && (
-        <div className="flex flex-col items-center gap-2.5 px-3 py-16 text-center">
+      {loaded && data.length === 0 && (
+        <div className="flex flex-col items-center gap-2.5 rounded-card border-2 border-border border-dashed px-3 py-24 text-center">
           <p className="font-semibold text-sm">No characters yet</p>
           <p className="text-body text-muted leading-normal">Characters you add appear here.</p>
         </div>
       )}
-      {!isPending && !isError && data.length > 0 && (
-        <ul className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      {loaded && data.length > 0 && (
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data.map((character) => (
             <li key={character.id} className="min-w-0">
               <CharacterTile character={character} />
