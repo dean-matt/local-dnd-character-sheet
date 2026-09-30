@@ -93,6 +93,12 @@ const priceOf = (row: ItemFacts): number | null => {
   return typeof value === "number" && value >= 0 ? value : null;
 };
 
+/** The category and die a row prints; what an attack reads goes to the derived block instead. */
+function weaponFacts(row: ItemFacts): Extract<SheetItem, { resolved: true }>["weapon"] {
+  const weapon = weaponTraitSchema.safeParse(row.json).data;
+  return weapon ? { category: weapon.category, damage: weapon.damage } : null;
+}
+
 function sheetItem(
   entry: InventoryEntry,
   row: ItemFacts | undefined,
@@ -123,7 +129,7 @@ function sheetItem(
     requiresAttunement: row.requiresAttunement,
     weight: weightOf(row),
     value: priceOf(row),
-    weapon: weaponTraitSchema.safeParse(row.json).data ?? null,
+    weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
     entries: entries.success ? entries.data : [],
   };

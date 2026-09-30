@@ -16,6 +16,7 @@ import {
   preparationRuleSchema,
   raceTraitsSchema,
   spellcastingAbilitySchema,
+  weaponTraitSchema,
 } from "@dnd/catalog";
 import {
   type Ability,
@@ -25,8 +26,10 @@ import {
   type CharacterDefinition,
   type EntryRef,
   entryKey,
+  itemKey,
   type Preparation,
   type SkillTrait,
+  type WeaponTrait,
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import type { ZodType } from "zod";
@@ -177,6 +180,39 @@ function armorTraits(
   return armor;
 }
 
+/**
+ * Every entry whose row states a weapon, keyed by `itemKey`. A proficiency names the base
+ * weapon, so a named magic item answers to the `baseItem` it states and a magic variant to
+ * its base item's name. A magic bonus traces to the
+ * variant that grants it, or to the row itself; a homebrew row has no `(name, source)` to
+ * trace to.
+ */
+function weaponTraits(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, WeaponTrait> {
+  const weapons = new Map<string, WeaponTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const trait = row && parseJson(weaponTraitSchema, row.json);
+    if (!trait) return;
+    const { ref, variant } = entry;
+    const catalog = "homebrewId" in ref ? undefined : ref;
+    const reference = variant ?? catalog;
+    weapons.set(itemKey(entry), {
+      kind: trait.kind,
+      ...(trait.properties && { properties: trait.properties }),
+      ...(trait.damage && { damage: trait.damage.dice }),
+      ...(trait.versatileDamage && { versatileDamage: trait.versatileDamage }),
+      name: trait.baseName ?? catalog?.name ?? row.name,
+      category: trait.category,
+      damageType: trait.damage?.type ?? null,
+      bonus: { ...trait.bonus, ...(reference && { reference }) },
+    });
+  });
+  return weapons;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -226,5 +262,6 @@ export function resolveCharacterCatalog(
     speed: race.speed,
     armor: armorTraits(definition, items),
     weights: itemWeights(definition.inventory, items),
+    weapons: weaponTraits(definition, items),
   };
 }

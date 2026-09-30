@@ -8,6 +8,7 @@
  */
 
 import { assertInteger } from "./integer.ts";
+import { type Breakdown, breakdown, type Term, type TermInput } from "./term.ts";
 
 const WEAPON_KINDS = ["melee", "ranged"] as const;
 
@@ -17,7 +18,7 @@ type WeaponKind = (typeof WEAPON_KINDS)[number];
 type WeaponAbility = "strength" | "dexterity";
 
 /** Which damage die a versatile weapon rolls; every other weapon rolls its one die. */
-const GRIPS = ["one-handed", "two-handed"] as const;
+export const GRIPS = ["one-handed", "two-handed"] as const;
 
 type Grip = (typeof GRIPS)[number];
 
@@ -46,7 +47,7 @@ export type Weapon = {
   versatileDamage?: string;
 };
 
-type WeaponAttackParts = {
+type WeaponAttackParts<Ref = unknown> = {
   weapon: Weapon;
   strengthModifier: number;
   dexterityModifier: number;
@@ -57,8 +58,12 @@ type WeaponAttackParts = {
    * because a default understates every attack a proficient character makes.
    */
   proficiency: number;
-  /** A magic weapon's flat bonus, which the attack roll and the damage both take. */
-  bonus?: number;
+  /**
+   * A magic weapon's flat bonuses, apart because upstream states them apart:
+   * `bonusWeapon` adds to both rolls, `bonusWeaponAttack` and `bonusWeaponDamage` to one.
+   */
+  attackBonus?: TermInput<Ref>;
+  damageBonus?: TermInput<Ref>;
   /**
    * Required rather than defaulted, because a versatile weapon under a default rolls its
    * smaller die and says nothing.
@@ -66,13 +71,19 @@ type WeaponAttackParts = {
   grip: Grip;
 };
 
-type WeaponAttack = {
+type WeaponAttack<Ref = unknown> = {
   ability: WeaponAbility;
-  attackBonus: number;
-  /** Dice notation, beside the flat modifier rather than folded into it. */
-  damage?: string;
-  /** Absent when `damage` is: a modifier on no dice is not a number a sheet can show. */
-  damageModifier?: number;
+  attack: Breakdown<Ref>;
+  /**
+   * `dice` is notation, beside the flat modifier rather than folded into it. Absent for a
+   * weapon with no dice: a modifier on no dice is not a number a sheet can show.
+   */
+  damage?: { dice: string; modifier: Breakdown<Ref> };
+};
+
+const ABILITY_LABEL: Record<WeaponAbility, string> = {
+  strength: "Strength",
+  dexterity: "Dexterity",
 };
 
 const FINESSE = "F";
@@ -109,14 +120,25 @@ function weaponAbility(
   return strengthModifier > dexterityModifier ? "strength" : "dexterity";
 }
 
-export function weaponAttack({
+/** A term worth nothing is left out, so a breakdown lists only what moved the total. */
+function withTerm<Ref>(
+  terms: Term<Ref>[],
+  label: string,
+  input: TermInput<Ref> | undefined,
+): Term<Ref>[] {
+  if (input === undefined || input.value === 0) return terms;
+  return [...terms, { label, value: input.value, reference: input.reference }];
+}
+
+export function weaponAttack<Ref = unknown>({
   weapon,
   strengthModifier,
   dexterityModifier,
   proficiency,
-  bonus = 0,
+  attackBonus,
+  damageBonus,
   grip,
-}: WeaponAttackParts): WeaponAttack {
+}: WeaponAttackParts<Ref>): WeaponAttack<Ref> {
   if (!WEAPON_KINDS.includes(weapon.kind)) {
     throw new RangeError(`Unknown weapon kind "${weapon.kind}"`);
   }
@@ -126,13 +148,21 @@ export function weaponAttack({
   assertInteger("A Strength modifier", strengthModifier);
   assertInteger("A Dexterity modifier", dexterityModifier);
   assertInteger("A proficiency bonus", proficiency);
-  assertInteger("A weapon bonus", bonus);
+  assertInteger("A weapon attack bonus", attackBonus?.value ?? 0);
+  assertInteger("A weapon damage bonus", damageBonus?.value ?? 0);
   const ability = weaponAbility(weapon, strengthModifier, dexterityModifier);
-  const abilityModifier = ability === "strength" ? strengthModifier : dexterityModifier;
-  const attack = { ability, attackBonus: abilityModifier + proficiency + bonus };
-  const damage = (grip === "two-handed" ? weapon.versatileDamage : undefined) ?? weapon.damage;
-  if (damage === undefined) {
+  const abilityTerm: Term<Ref> = {
+    label: ABILITY_LABEL[ability],
+    value: ability === "strength" ? strengthModifier : dexterityModifier,
+  };
+  const attackTerms = withTerm([abilityTerm], "Proficiency", { value: proficiency });
+  const attack = { ability, attack: breakdown(withTerm(attackTerms, "Magic", attackBonus)) };
+  const dice = (grip === "two-handed" ? weapon.versatileDamage : undefined) ?? weapon.damage;
+  if (dice === undefined) {
     return attack;
   }
-  return { ...attack, damage, damageModifier: abilityModifier + bonus };
+  return {
+    ...attack,
+    damage: { dice, modifier: breakdown(withTerm([abilityTerm], "Magic", damageBonus)) },
+  };
 }

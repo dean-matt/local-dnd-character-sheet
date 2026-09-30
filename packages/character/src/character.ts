@@ -29,6 +29,7 @@ import {
   EDITIONS,
   ENCUMBRANCE_TIERS,
   encumbranceAt,
+  GRIPS,
   HIT_DICE,
   type HitDie,
   maxHitPoints,
@@ -49,6 +50,8 @@ import {
   spellAttackBonus,
   spellSaveDc,
   type Term,
+  type Weapon,
+  weaponAttack,
 } from "@dnd/rules";
 
 export { ABILITIES };
@@ -204,6 +207,9 @@ const proficienciesSchema = z.strictObject({
  * It defaults true where the other flags default false: an entry naming no container is
  * a thing the character has on them.
  *
+ * `grip` is how a versatile weapon is held, and absent reads as one-handed. The stored grip
+ * survives a shield going on, so it comes back once the shield comes off.
+ *
  * `variant` names a `magicvariant` the API expands against `ref` at read time — `+1
  * Chain Mail` is stored as a `Chain Mail` ref and a `+1 Weapon` variant, never as the
  * expanded item, so a catalog rebuild still updates it. It pairs only with a catalog
@@ -218,6 +224,7 @@ const inventoryEntrySchema = z
     carried: z.boolean().default(true),
     equipped: z.boolean().default(false),
     attuned: z.boolean().default(false),
+    grip: z.enum(GRIPS).optional(),
   })
   .refine((entry) => entry.carried || !entry.equipped, {
     error: "an item is equipped but not carried",
@@ -970,6 +977,27 @@ export const characterDerivedSchema = z.strictObject({
   /** Null where the table plays without the encumbrance variant. */
   encumbrance: z.enum(ENCUMBRANCE_TIERS).nullable(),
   attunementSlots: derivedSchema(z.int().min(0)),
+  /**
+   * One per carried weapon, in inventory order. `entry` is the weapon's index in the
+   * definition's `inventory`, since two entries may hold the same item. `grip` is null for
+   * a weapon with one die; `twoHandedBlocked` is a versatile weapon equipped beside a
+   * shield, held one-handed whatever grip the entry stores.
+   */
+  attacks: z.array(
+    z.strictObject({
+      entry: z.int().min(0),
+      ability: z.enum(["str", "dex"]),
+      attackBonus: derivedSchema(z.int()),
+      damage: z
+        .strictObject({
+          dice: z.string().min(1),
+          type: z.string().min(1).nullable(),
+          modifier: derivedSchema(z.int()),
+        })
+        .nullable(),
+      grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
+    }),
+  ),
 });
 
 /**
@@ -1079,12 +1107,24 @@ export type SkillTrait = { ref: ContentRef; ability: Ability };
 export type ArmorTrait = { category: "light" | "medium" | "heavy" | "shield"; armorClass: number };
 
 /**
+ * What one weapon row attacks with: the fields `weaponAttack` reads, and the category and
+ * name a weapon proficiency matches. `bonus` is a magic weapon's, each roll's summed from
+ * every field upstream states it in; `reference` is the row that granted it.
+ */
+export type WeaponTrait = Weapon & {
+  name: string;
+  category: "simple" | "martial" | null;
+  damageType: string | null;
+  bonus: { attack: number; damage: number; reference?: ContentRef };
+};
+
+/**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference, `weights` by `itemKey` of the entry, the
- * way `carriedWeight` reads it.
+ * `entryKey` of an inventory entry's reference, `weights` and `weapons` by `itemKey` of
+ * the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
@@ -1100,6 +1140,8 @@ export type CharacterCatalog = {
   speed: Speed;
   armor: ReadonlyMap<string, ArmorTrait>;
   weights: ReadonlyMap<string, number | null>;
+  /** Absent for an item that is not a weapon. */
+  weapons: ReadonlyMap<string, WeaponTrait>;
 };
 
 /**
@@ -1189,6 +1231,76 @@ function derivedArmorClass(
       : undefined,
   });
   return { computed: result.total, manual: null, terms: result.terms };
+}
+
+/**
+ * The typed form of a weapon or category name, folded so the spellings the book prints
+ * (`Simple weapons`, `Longswords`) meet the bare ones (`Simple`, `Longsword`). Both sides
+ * pass through it, so a name that ends in `s` still meets itself. Only these spellings fold
+ * until a catalog picker writes `proficiencies.weapons`.
+ */
+function weaponKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+weapons?$/, "")
+    .replace(/s$/, "");
+}
+
+/** A weapon proficiency names a category or one weapon: `Simple`, `Longsword`. */
+function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait): boolean {
+  const held = new Set(definition.proficiencies.weapons.map(weaponKey));
+  return (
+    (weapon.category !== null && held.has(weaponKey(weapon.category))) ||
+    held.has(weaponKey(weapon.name))
+  );
+}
+
+/**
+ * One attack per carried weapon. A shield counts only while equipped, as armor class reads
+ * it. A second die is what makes a weapon versatile: every upstream row with a `dmg2`
+ * carries the `V` property, and none carries `V` without one.
+ */
+function derivedAttacks(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): CharacterDerived["attacks"] {
+  const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
+  const level = totalLevel(definition);
+  return definition.inventory.flatMap((entry, index) => {
+    const weapon = catalog.weapons.get(itemKey(entry));
+    if (!entry.carried || weapon === undefined) return [];
+    const twoHandedBlocked = entry.equipped && shield;
+    const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
+    const { reference } = weapon.bonus;
+    const result = weaponAttack<TermReference>({
+      weapon,
+      strengthModifier: abilityModifier(definition.abilityScores.str),
+      dexterityModifier: abilityModifier(definition.abilityScores.dex),
+      proficiency: proficiencyContribution(
+        level,
+        weaponProficient(definition, weapon) ? "proficient" : "none",
+      ),
+      attackBonus: { value: weapon.bonus.attack, reference },
+      damageBonus: { value: weapon.bonus.damage, reference },
+      grip: held,
+    });
+    return [
+      {
+        entry: index,
+        ability: result.ability === "strength" ? "str" : "dex",
+        attackBonus: fromBreakdown(result.attack),
+        damage: result.damage
+          ? {
+              dice: result.damage.dice,
+              type: weapon.damageType,
+              modifier: fromBreakdown(result.damage.modifier),
+            }
+          : null,
+        grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
+      },
+    ];
+  });
 }
 
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
@@ -1343,6 +1455,7 @@ export function deriveCharacter(
     pactSlots: pactSlots(casters),
     ...load(definition, catalog),
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
+    attacks: derivedAttacks(definition, catalog),
   };
 }
 

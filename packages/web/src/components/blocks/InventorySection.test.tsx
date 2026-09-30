@@ -1,7 +1,7 @@
 import type { CharacterInventory } from "@dnd/catalog";
 import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord } from "../../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
@@ -123,9 +123,9 @@ function vex() {
   const definition = characterDefinitionSchema.parse({
     ...record.definition,
     inventory: [
+      { ref: { name: "Longsword", source: "PHB" }, equipped: true },
       { ref: { name: "Cloak of Protection", source: "DMG" }, attuned: true },
       { ref: { name: "Ring of Warmth", source: "DMG" }, attuned: true, carried: false },
-      { ref: { name: "Longsword", source: "PHB" }, equipped: true },
     ],
     money: { gold: 1250, silver: 3 },
   });
@@ -297,6 +297,93 @@ describe("InventorySection", () => {
     renderSection(load(), { items: [] });
 
     expect(await screen.findByText("Vex has no items yet.")).toBeInTheDocument();
+  });
+
+  describe("a weapon's attack", () => {
+    const attack = (grip: CharacterDerived["attacks"][number]["grip"]) => ({
+      entry: 0,
+      ability: "str" as const,
+      attackBonus: {
+        computed: 4,
+        manual: null,
+        terms: [
+          { label: "Strength", value: 3 },
+          { label: "Magic", value: 1 },
+        ],
+      },
+      damage: {
+        dice: grip?.held === "two-handed" ? "1d10" : "1d8",
+        type: "slashing",
+        modifier: { computed: 4, manual: null, terms: [{ label: "Strength", value: 3 }] },
+      },
+      grip,
+    });
+    const held = { held: "one-handed" as const, twoHandedBlocked: false };
+
+    it("shows the attack and damage chips in place of the die, each opening its terms", async () => {
+      renderSection(load({ attacks: [attack(held)] }));
+
+      await screen.findByText("+1 Longsword");
+      const sword = within(row("+1 Longsword"));
+      expect(sword.queryByText("1d8")).toBeNull();
+      fireEvent.click(sword.getByRole("button", { name: "+1 Longsword attack bonus +4" }));
+      const terms = sword.getByRole("group", { name: "+1 Longsword attack bonus" });
+      expect(terms).toHaveTextContent("Strength3");
+      expect(terms).toHaveTextContent("Magic1");
+      fireEvent.click(sword.getByRole("button", { name: "+1 Longsword damage 1d8+4" }));
+      expect(sword.getByRole("group", { name: "+1 Longsword damage" })).toHaveTextContent(
+        "One-handed 1d8",
+      );
+    });
+
+    it("draws no grip toggle for a weapon with one die", async () => {
+      renderSection(load({ attacks: [attack(null)] }));
+
+      await screen.findByText("+1 Longsword");
+      expect(within(row("+1 Longsword")).queryByRole("group", { name: /grip/ })).toBeNull();
+    });
+
+    it("stores the grip a player picks on the weapon's own inventory entry", async () => {
+      const fetchMock = renderSection(load({ attacks: [attack(held)] }));
+
+      const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
+      expect(grip.getByRole("button", { name: "1h, one-handed" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      fireEvent.click(grip.getByRole("button", { name: "2h, two-handed" }));
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1", expect.anything()),
+      );
+      const init = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1")?.[1];
+      expect(init?.method).toBe("PUT");
+      expect(JSON.parse(String(init?.body)).inventory[0]).toMatchObject({
+        ref: { name: "Longsword", source: "PHB" },
+        grip: "two-handed",
+      });
+    });
+
+    it("says why two-handed is unavailable beside a shield, and writes nothing", async () => {
+      const fetchMock = renderSection(
+        load({ attacks: [attack({ held: "one-handed", twoHandedBlocked: true })] }),
+      );
+
+      const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
+      fireEvent.click(grip.getByRole("button", { name: "2h, two-handed, unavailable" }));
+      expect(grip.getByRole("group", { name: "Two-handed" })).toHaveTextContent(
+        "Unavailable while this weapon and a shield are both equipped.",
+      );
+      expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+    });
+
+    it("says so when the grip fails to save", async () => {
+      renderSection(load({ attacks: [attack(held)] }));
+
+      const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
+      fireEvent.click(grip.getByRole("button", { name: "2h, two-handed" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("The grip was not saved");
+    });
   });
 
   it("reports a failed read", async () => {

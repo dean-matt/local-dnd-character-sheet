@@ -125,21 +125,75 @@ describe("armorTraitSchema", () => {
 });
 
 describe("weaponTraitSchema", () => {
+  const noBonus = { attack: 0, damage: 0 };
+
   it("reads the category and spells out the damage type", () => {
     expect(
       weaponTraitSchema.parse({ weaponCategory: "martial", dmg1: "1d8", dmgType: "S" }),
-    ).toEqual({ category: "martial", damage: { dice: "1d8", type: "slashing" } });
+    ).toEqual({
+      category: "martial",
+      damage: { dice: "1d8", type: "slashing" },
+      kind: "melee",
+      bonus: noBonus,
+    });
   });
 
   it("keeps a code it does not know, and a die with no type", () => {
-    expect(weaponTraitSchema.parse({ dmg1: "1d6", dmgType: "Z" })).toEqual({
+    expect(weaponTraitSchema.parse({ dmg1: "1d6", dmgType: "Z" })).toMatchObject({
       category: null,
       damage: { dice: "1d6", type: "Z" },
     });
-    expect(weaponTraitSchema.parse({ weaponCategory: "simple" })).toEqual({
+    expect(weaponTraitSchema.parse({ weaponCategory: "simple" })).toMatchObject({
       category: "simple",
       damage: null,
     });
+  });
+
+  it("reads what an attack needs off a versatile weapon, as Longsword (XPHB) writes it", () => {
+    expect(
+      weaponTraitSchema.parse({
+        type: "M|XPHB",
+        weaponCategory: "martial",
+        property: ["V|XPHB"],
+        dmg1: "1d8",
+        dmg2: "1d10",
+        dmgType: "S",
+      }),
+    ).toMatchObject({ kind: "melee", properties: ["V|XPHB"], versatileDamage: "1d10" });
+  });
+
+  it("reads a ranged weapon off its type code alone", () => {
+    expect(weaponTraitSchema.parse({ type: "R|XPHB", dmg1: "1d6" })?.kind).toBe("ranged");
+    expect(weaponTraitSchema.parse({ type: "SCF", dmg1: "1d6" })?.kind).toBe("melee");
+  });
+
+  it("names the weapon a named magic item is built on, as Dagger of Venom (DMG) states it", () => {
+    expect(weaponTraitSchema.parse({ dmg1: "1d4", baseItem: "dagger|phb" })?.baseName).toBe(
+      "dagger",
+    );
+    expect(weaponTraitSchema.parse({ dmg1: "1d4" })).not.toHaveProperty("baseName");
+  });
+
+  it("names a staff a quarterstaff, as Staff of Power (DMG) states no base item", () => {
+    expect(
+      weaponTraitSchema.parse({ weaponCategory: "simple", staff: true, dmg1: "1d6" })?.baseName,
+    ).toBe("quarterstaff");
+  });
+
+  it("sums a magic weapon's bonus into each roll it names", () => {
+    expect(
+      weaponTraitSchema.parse({ dmg1: "1d8", bonusWeapon: "+1", bonusWeaponAttack: "+2" })?.bonus,
+    ).toEqual({ attack: 3, damage: 1 });
+    expect(weaponTraitSchema.parse({ dmg1: "1d8", bonusWeaponDamage: "+2" })?.bonus).toEqual({
+      attack: 0,
+      damage: 2,
+    });
+  });
+
+  it("degrades a malformed bonus or property list to none rather than dropping the weapon", () => {
+    expect(
+      weaponTraitSchema.parse({ dmg1: "1d8", bonusWeapon: "one", property: "F" }),
+    ).toMatchObject({ bonus: noBonus, damage: { dice: "1d8" } });
   });
 
   it("is undefined for an item that states neither", () => {

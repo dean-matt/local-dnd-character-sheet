@@ -1,17 +1,21 @@
 /**
  * The Inventory page: what the character carries against what they can, the attunement
  * slots in use, their coins, then every item split into Weapons, Armor and Gear by its
- * type. The load comes off the derived block and every item off
- * `/characters/{id}/inventory`, so this file does no rules arithmetic of its own.
+ * type. The load and each weapon's attack come off the derived block and every item off
+ * `/characters/{id}/inventory`, so this file does no rules arithmetic of its own. A
+ * versatile weapon's grip is the one thing it writes, back into the definition.
  */
 import type { SheetItem } from "@dnd/catalog";
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
 import type { ReactNode } from "react";
 import { useCharacterInventory } from "../../hooks/useCharacterInventory.ts";
+import { useUpdateCharacterDefinition } from "../../hooks/useCharacters.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
+import { type Attack, AttackChips, type Grip } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
 import { ListRow } from "../ListRow.tsx";
+import { Popover } from "../Popover.tsx";
 import { firstLine, RulesEntries } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
@@ -151,14 +155,17 @@ function price(copper: number): string {
   return `${(copper / per).toLocaleString("en-US")} ${coin}`;
 }
 
-/** The facts a row's type prints: a weapon's category and die, an armor's category and AC. */
-function TypeChips({ item }: { item: ResolvedItem }) {
+/**
+ * The facts a row's type prints: a weapon's category and die, an armor's category and AC.
+ * A weapon with an attack leaves its die to the damage chip.
+ */
+function TypeChips({ item, attacks }: { item: ResolvedItem; attacks: boolean }) {
   if (item.weapon) {
     const { category, damage } = item.weapon;
     return (
       <>
         {category && <Tag>{capitalize(category)}</Tag>}
-        {damage && <Tag>{damage.dice}</Tag>}
+        {damage && !attacks && <Tag>{damage.dice}</Tag>}
         {damage?.type && <Tag>{damage.type}</Tag>}
       </>
     );
@@ -175,14 +182,79 @@ function TypeChips({ item }: { item: ResolvedItem }) {
   return item.type?.name ? <Tag>{item.type.name}</Tag> : null;
 }
 
-function ResolvedRow({ item }: { item: ResolvedItem }) {
+const PILL = "relative rounded-pill px-2 py-0.5 font-bold text-chip leading-3 tracking-chip";
+
+const pillState = (pressed: boolean) =>
+  pressed ? `${PILL} bg-accent text-white` : `${PILL} bg-transparent text-muted`;
+
+/**
+ * The 1h/2h pill a versatile weapon draws. Two-handed opens a popover saying why in place
+ * of pressing while a shield is equipped beside the weapon.
+ */
+function GripToggle({
+  name,
+  grip,
+  onChange,
+  saving,
+}: {
+  name: string;
+  grip: NonNullable<Attack["grip"]>;
+  onChange: (grip: Grip) => void;
+  saving: boolean;
+}) {
+  const option = (value: Grip, label: string, spoken: string) => (
+    <button
+      type="button"
+      aria-label={`${label}, ${spoken}`}
+      aria-pressed={grip.held === value}
+      aria-disabled={saving}
+      onClick={() => !saving && grip.held !== value && onChange(value)}
+      className={pillState(grip.held === value)}
+    >
+      {label}
+    </button>
+  );
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: <fieldset> groups form fields; this groups two toggle buttons.
+    <div
+      role="group"
+      aria-label={`${name} grip`}
+      className="flex gap-0.5 rounded-pill bg-border p-px"
+    >
+      {option("one-handed", "1h", "one-handed")}
+      {grip.twoHandedBlocked ? (
+        <Popover
+          trigger={<span className={`${pillState(false)} opacity-60`}>2h</span>}
+          triggerLabel="2h, two-handed, unavailable"
+          label="Two-handed"
+        >
+          Unavailable while this weapon and a shield are both equipped.
+        </Popover>
+      ) : (
+        option("two-handed", "2h", "two-handed")
+      )}
+    </div>
+  );
+}
+
+function ResolvedRow({
+  item,
+  attack,
+  onGrip,
+  saving,
+}: {
+  item: ResolvedItem;
+  attack: Attack | undefined;
+  onGrip: (grip: Grip) => void;
+  saving: boolean;
+}) {
   const rarity = item.rarity && item.rarity !== "none" ? capitalize(item.rarity) : undefined;
   return (
     <ListRow
       name={item.name}
       chips={
         <>
-          <TypeChips item={item} />
+          <TypeChips item={item} attacks={attack !== undefined} />
           {item.quantity > 1 && <Tag>×{item.quantity}</Tag>}
           {rarity && <Tag>{rarity}</Tag>}
           {item.weight !== null && (
@@ -196,6 +268,12 @@ function ResolvedRow({ item }: { item: ResolvedItem }) {
       }
       price={item.value === null ? undefined : price(item.value * item.quantity)}
       preview={firstLine(item.entries)}
+      actions={attack && <AttackChips name={item.name} attack={attack} />}
+      controls={
+        attack?.grip && (
+          <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} saving={saving} />
+        )
+      }
       detail={{
         meta: rarity ?? "Item",
         children:
@@ -226,15 +304,31 @@ const GROUP_OF_TYPE: Record<string, Group> = {
 const groupOf = (item: SheetItem): Group =>
   (item.resolved && item.type && GROUP_OF_TYPE[item.type.abbreviation]) || "Gear";
 
-function ItemList({ character }: { character: CharacterRecord }) {
+function ItemList({
+  character,
+  derived,
+}: {
+  character: CharacterRecord;
+  derived: CharacterDerived | undefined;
+}) {
   const inventory = useCharacterInventory(character.id);
+  const update = useUpdateCharacterDefinition(character.id);
+  const setGrip = (index: number, grip: Grip) => {
+    const { definition } = character;
+    update.mutate({
+      ...definition,
+      inventory: definition.inventory.map((entry, at) =>
+        at === index ? { ...entry, grip } : entry,
+      ),
+    });
+  };
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState message={inventory.error.message} />;
   if (inventory.data.items.length === 0) {
     return <EmptyState>{character.name} has no items yet.</EmptyState>;
   }
   const entries = inventory.data.items.map((item, index) => ({ item, index }));
-  return GROUPS.map((group) => {
+  const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
     return (
       rows.length > 0 && (
@@ -243,7 +337,13 @@ function ItemList({ character }: { character: CharacterRecord }) {
             {/* The key is the definition's index, since two entries may hold the same item. */}
             {rows.map(({ item, index }) =>
               item.resolved ? (
-                <ResolvedRow key={index} item={item} />
+                <ResolvedRow
+                  key={index}
+                  item={item}
+                  attack={derived?.attacks.find((attack) => attack.entry === index)}
+                  onGrip={(grip) => setGrip(index, grip)}
+                  saving={update.isPending}
+                />
               ) : (
                 <UnresolvedRow key={index} item={item} />
               ),
@@ -253,6 +353,16 @@ function ItemList({ character }: { character: CharacterRecord }) {
       )
     );
   });
+  return (
+    <>
+      {update.isError && (
+        <p role="alert" className="text-row">
+          The grip was not saved: {update.error.message}
+        </p>
+      )}
+      {cards}
+    </>
+  );
 }
 
 export function InventorySection({
@@ -272,7 +382,7 @@ export function InventorySection({
           <Currency money={character.definition.money} />
         </div>
       </div>
-      <ItemList character={character} />
+      <ItemList character={character} derived={derived} />
     </div>
   );
 }

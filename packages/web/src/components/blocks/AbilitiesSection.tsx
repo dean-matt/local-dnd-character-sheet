@@ -18,12 +18,14 @@ import {
 import { type ReactNode, useMemo } from "react";
 import { useResolvedRefs } from "../../hooks/useResolvedRefs.ts";
 import { EmptyState } from "../../states.tsx";
+import { signed } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { DetailTrigger } from "../DetailTrigger.tsx";
 import { Field } from "../Field.tsx";
 import { Popover } from "../Popover.tsx";
 import { RulesEntries } from "../RulesText.tsx";
 import { TermList } from "../TermList.tsx";
+import { Attacks } from "./Attacks.tsx";
 import { Vitals } from "./Vitals.tsx";
 
 type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
@@ -43,8 +45,6 @@ const PROFICIENCY_MARK: Record<ProficiencyLevel, { text: string; className: stri
     className: "border-accent bg-accent shadow-[inset_0_0_0_2px_var(--color-surface)]",
   },
 };
-
-const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
 
 /** The catalog row a modal reads its rules text from. */
 interface Rules {
@@ -418,6 +418,7 @@ export function AbilitiesSection({
       <AbilityScores definition={definition} derived={derived} />
       <Combat derived={derived} />
       <Vitals characterId={character.id} derived={derived} />
+      <Attacks character={character} derived={derived} />
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
           <ul className="flex flex-col gap-1">

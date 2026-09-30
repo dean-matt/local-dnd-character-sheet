@@ -1,8 +1,6 @@
 /**
  * The worked example the next domain's hook copies: a list, a read and a write against
- * `/characters`, each parsed with the schema `@dnd/character` already exports. The write
- * path is exercised here and by its tests; no view calls the mutation yet, since turning
- * editing on in any view is a later milestone.
+ * `/characters`, each parsed with the schema `@dnd/character` already exports.
  */
 import {
   type CharacterDefinition,
@@ -34,7 +32,9 @@ export function useCharacter(id: string) {
 /**
  * Replaces a character's definition. On success the mutation writes the response
  * straight into the detail cache and invalidates the list, so a reader sees the write
- * on the character's own page without waiting on a refetch. On failure both caches stay
+ * on the character's own page without waiting on a refetch. The invalidation is by
+ * prefix, which also refetches the derived block and the inventory keyed under the
+ * character; a grip written from a row reaches its damage chip that way. On failure both caches stay
  * untouched and the mutation's own `error` is what a view renders — TanStack Query
  * never resolves a failed write as data.
  */

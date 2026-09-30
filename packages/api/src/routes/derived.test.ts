@@ -30,6 +30,9 @@ const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
 const PLUS_ONE = { name: "+1 Armor", source: "DMG" };
 const BARDING = { name: "Barding", source: "PHB" };
+const LONGSWORD = { name: "Longsword", source: "PHB" };
+const PLUS_ONE_WEAPON = { name: "+1 Weapon", source: "DMG" };
+const DAGGER_OF_VENOM = { name: "Dagger of Venom", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -213,6 +216,30 @@ describe("derivedRoutes", () => {
           requires: [{ armor: true }],
           inherits: { namePrefix: "+1 ", source: "DMG", bonusAc: "+1" },
         }),
+        item(LONGSWORD, "baseitem", {
+          type: "M",
+          weaponCategory: "martial",
+          weapon: true,
+          property: ["V"],
+          dmg1: "1d8",
+          dmg2: "1d10",
+          dmgType: "S",
+          weight: 3,
+        }),
+        item(DAGGER_OF_VENOM, "item", {
+          type: "M",
+          weaponCategory: "simple",
+          baseItem: "dagger|phb",
+          property: ["F", "L", "T"],
+          dmg1: "1d4",
+          dmgType: "P",
+          bonusWeapon: "+1",
+        }),
+        item(PLUS_ONE_WEAPON, "magicvariant", {
+          type: "GV",
+          requires: [{ weapon: true }],
+          inherits: { namePrefix: "+1 ", source: "DMG", bonusWeapon: "+1" },
+        }),
         item(BARDING, "magicvariant", {
           type: "GV",
           requires: [{ armor: true }],
@@ -376,6 +403,57 @@ describe("derivedRoutes", () => {
     expect(block.carryingCapacity.computed).toBe(16 * 15);
     expect(block.encumbrance).toBe("heavilyEncumbered");
     expect(block.attunementSlots.computed).toBe(3);
+  });
+
+  it("attacks with a magic variant's bonus, tracing it to the variant", async () => {
+    store(
+      definitionWith({
+        proficiencies: { ...definitionWith().proficiencies, weapons: ["Martial"] },
+        inventory: [{ ref: LONGSWORD, variant: PLUS_ONE_WEAPON, grip: "two-handed" }],
+      }),
+    );
+    const [attack] = (await derived()).attacks;
+
+    expect(attack?.attackBonus.computed).toBe(3 + 2 + 1);
+    expect(attack?.attackBonus.terms).toContainEqual({
+      label: "Magic",
+      value: 1,
+      reference: PLUS_ONE_WEAPON,
+    });
+    expect(attack?.damage).toMatchObject({
+      dice: "1d10",
+      type: "slashing",
+      modifier: { computed: 3 + 1 },
+    });
+  });
+
+  it("grants a named weapon's proficiency to a magic item built on it", async () => {
+    store(
+      definitionWith({
+        proficiencies: { ...definitionWith().proficiencies, weapons: ["Dagger"] },
+        inventory: [{ ref: DAGGER_OF_VENOM }],
+      }),
+    );
+    const [attack] = (await derived()).attacks;
+
+    expect(attack?.attackBonus.terms).toContainEqual({ label: "Proficiency", value: 2 });
+    expect(attack?.attackBonus.computed).toBe(3 + 2 + 1);
+  });
+
+  it("holds a versatile weapon one-handed while it and a shield are both equipped", async () => {
+    store(
+      definitionWith({
+        inventory: [
+          { ref: SHIELD, equipped: true },
+          { ref: LONGSWORD, equipped: true, grip: "two-handed" },
+        ],
+      }),
+    );
+    const [attack] = (await derived()).attacks;
+
+    expect(attack?.entry).toBe(1);
+    expect(attack?.damage?.dice).toBe("1d8");
+    expect(attack?.grip).toEqual({ held: "one-handed", twoHandedBlocked: true });
   });
 
   it("reads an equipped item that resolves to nothing as unarmored", async () => {

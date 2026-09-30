@@ -53,6 +53,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     speed: { walk: 30, fly: 40 },
     armor: new Map(),
     weights: new Map(),
+    weapons: new Map(),
   });
 }
 
@@ -85,16 +86,21 @@ const nameButton = (region: string, name: string) =>
     "button",
   )[0] as HTMLElement;
 
-/** Answers the rules lookups a modal makes, and the state read `Vitals` makes apart from them. */
+/**
+ * Answers the rules lookups a modal makes, and apart from them the state read `Vitals`
+ * makes and the inventory read `Attacks` makes.
+ */
 function stubRules(entries: unknown[]) {
   const fetchMock = vi.fn(
     async (_url: RequestInfo | URL, _init?: RequestInit) =>
       new Response(JSON.stringify({ refs: [{ name: "x", source: "XPHB", entries }] })),
   );
+  const reads: Record<string, unknown> = {
+    "/api/characters/1/state": stateRecord(),
+    "/api/characters/1/inventory": { items: [] },
+  };
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
-    String(url) === "/api/characters/1/state"
-      ? new Response(JSON.stringify(stateRecord()))
-      : fetchMock(url, init),
+    String(url) in reads ? new Response(JSON.stringify(reads[String(url)])) : fetchMock(url, init),
   );
   return fetchMock;
 }
