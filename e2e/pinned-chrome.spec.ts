@@ -87,11 +87,15 @@ test("the top bar, character header and sidebar stay pinned in a tall window, an
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect.poll(async () => (await edges(header)).bottom).toBeLessThan(0);
     expect((await edges(bar)).top).toBe(0);
+
+    // A client-side navigation, so only the header's unmount clears its padding.
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.getByRole("link", { name: "Settings" }).click();
+    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page.locator("html")).toHaveCSS("scroll-padding-top", "64px");
+    await scrollToBottom(page, page.locator("main"));
+    expect((await edges(bar)).top).toBe(0);
   } finally {
     await request.delete(`/api/characters/${id}`);
   }
-
-  await page.goto("/settings");
-  await scrollToBottom(page, page.locator("main"));
-  expect((await edges(page.getByRole("banner"))).top).toBe(0);
 });
