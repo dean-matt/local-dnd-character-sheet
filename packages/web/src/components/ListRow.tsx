@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { DetailTrigger } from "./DetailTrigger.tsx";
+import { CHIP } from "./Tag.tsx";
 
 /** Lucide's `coins` outline (ISC), the icon the mockup draws on a price chip. */
 function CoinsIcon() {
@@ -65,7 +66,9 @@ export function ListRow({
         )}
         {chips}
         {price && (
-          <span className="flex shrink-0 items-center gap-0.75 rounded-chip border border-money-border bg-money-tint px-1.25 py-0.5 font-bold text-chip text-money leading-3 tracking-chip">
+          <span
+            className={`${CHIP} flex shrink-0 items-center gap-0.75 border-money-border bg-money-tint text-money leading-3`}
+          >
             <CoinsIcon />
             <span className="sr-only">Cost </span>
             {price}

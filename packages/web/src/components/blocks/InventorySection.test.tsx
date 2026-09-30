@@ -184,7 +184,7 @@ describe("InventorySection", () => {
     const names = (group: string) =>
       card(group)
         .getAllByRole("listitem")
-        .map((li) => li.firstElementChild?.firstElementChild?.textContent);
+        .map((li) => li.querySelector('[aria-haspopup="dialog"]')?.textContent);
     expect(names("Weapons")).toEqual(["+1 Longsword"]);
     expect(names("Armor")).toEqual(["Shield", "Chain Mail"]);
     expect(card("Gear").getAllByRole("listitem")).toHaveLength(5);
