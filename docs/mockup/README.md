@@ -140,11 +140,9 @@ widget, panel, or nav element:
   skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
   the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
   Alignment, Backstory, Notes) never get this — their widgets are fixed.
-- Reference: Popover and Modal show the two interaction patterns below in isolation,
-  always open, so they can be reviewed without hovering or clicking inside a live widget.
-  List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, the
-  Features widgets, and every Homebrew artboard — design it here first, then carry a
-  change into each widget's rows. The name, its gray property chips and the gold price
+- Reference: List Item shows the row shape shared by Weapons, Armor, Gear, Known
+  Spells, the Features widgets, and every Homebrew artboard — design it here first, then
+  carry a change into each widget's rows. The name, its gray property chips and the gold price
   chip share the first line, with remove at the right; the description takes the
   second; the accent action chips (Attack, Damage, AC) take the third, with the row's
   controls (Equip, Prepared, Edit, a feature's use pips) at its right. Remove (an x)
@@ -275,8 +273,6 @@ says how much of the artboard the app builds today.
 | `CreationAbilityScores` | #233, #236 | nothing |
 | `CreationProficiencies` | #233, #237 | nothing |
 | `CreationSpells` | #233, #238 | nothing |
-| `Popover` | #490 | all of it |
-| `Modal` | #490 | all of it |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
 
