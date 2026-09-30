@@ -33,6 +33,10 @@ browsing it.
 | `shadow-popover` | `0 16px 32px`, black at 18% (50% dark) | A popover or menu |
 | `shadow-modal` | `0 24px 48px`, black at 18% (50% dark) | A modal dialog |
 
+The top bar takes Tailwind's radii rather than these, because its mockup draws its own:
+4px triggers (`rounded-sm`), a 12px menu panel (`rounded-xl`) and 8px menu rows
+(`rounded-lg`). A change to `radius-control` or `radius-card` leaves the bar alone.
+
 `text-row` and `text-number` name existing Tailwind sizes, so a view reaches for "the row
 size" or "the number size" rather than picking `text-xs` or `text-xl` by convention — a
 convention drifts the first time someone reaches for `text-sm` instead.
@@ -49,10 +53,12 @@ the shade:
 | `color-subtle` | `#eef0f3` | `gray-700` and `gray-800`, mixed evenly | A row tile or a track inside a card. The mockup's `#eceef1` folds into it |
 | `color-border` | `#dde1e6` | `gray-700` | Hairline borders |
 | `color-ink` | `#1f2430` | `gray-100` | Primary text |
-| `color-muted` | `#6b7280` 92%, `color-ink` 8% | `gray-400` | Secondary text — labels, captions |
+| `color-secondary` | `#4b5260` | `gray-300` | Text a step down from ink — an unselected nav label |
+| `color-muted` | `#6b7280` 92%, `color-ink` 8% | `gray-400` | Quiet text — labels, captions |
 | `color-placeholder` | `color-muted` | `color-muted` | Placeholder text |
 | `color-scrim` | `rgb(15 17 21 / 0.5)` | black at 60% | A modal's backdrop |
 | `color-accent` | `#c1272d` | `#c1272d` 90%, white 10% | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
+| `color-accent-text` | `#c1272d` | `#c1272d` 60%, white 40% | The accent as small text — the top bar's current section |
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
 
@@ -61,7 +67,8 @@ on subtle, under AA, so `color-muted` takes 8% of the ink. `#9aa1ab` measures 2.
 surface, and `color-muted` sits within 0.3 of 4.5:1 on subtle in both themes, too close
 for a visibly lighter gray, so `color-placeholder` aliases `color-muted`.
 `color-accent-tint` mixes into canvas rather than surface because the dark accent
-measures 3.10:1 on the dark surface already.
+measures 3.10:1 on the dark surface already, which is also why small accent text takes
+`color-accent-text` instead.
 
 `color-accent` reuses the default `docs/mockup/` already settled on — every widget's
 accent prop there defaults to the same value. Picking a different one here would leave
@@ -77,6 +84,8 @@ holds every pair in both themes and fails a repalette that regresses one:
 
 - `color-ink`, `color-muted` and `color-placeholder` on `color-canvas`, `color-surface` and `color-subtle`:
   AA for normal text
+- `color-secondary` on `color-surface` and `color-subtle`: AA for normal text
+- `color-accent-text` on `color-surface` and `color-subtle`: AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
 - The loading spinner's `color-muted` arc on its `color-border` track: 3:1
