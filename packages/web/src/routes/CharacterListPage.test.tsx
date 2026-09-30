@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { charactersKey } from "../hooks/useCharacters.ts";
 import { stubFetch } from "../test/stubFetch.ts";
 import { CharacterListPage } from "./CharacterListPage.tsx";
 
@@ -37,8 +38,9 @@ function characterRecord(id: string, name: string) {
   };
 }
 
-function renderPage() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderPage(
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
@@ -65,6 +67,16 @@ describe("CharacterListPage", () => {
     renderPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("no data dir");
+  });
+
+  it("drops the count when a refetch fails over a list it already holds", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(charactersKey, [characterRecord("1", "vex")]);
+    stubFetch(new Response(JSON.stringify({ error: "no data dir" }), { status: 500 }));
+    renderPage(queryClient);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("no data dir");
+    expect(screen.queryByText("1 character")).not.toBeInTheDocument();
   });
 
   it("shows the empty state when the list resolves with no characters", async () => {
