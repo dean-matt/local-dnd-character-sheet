@@ -143,7 +143,8 @@ describe("routing", () => {
 
   /**
    * Scrolls the sheet to 480, opens a catalog row, scrolls that to `catalogY`, clears the
-   * query cache and goes back. `beforeSettle` runs once the sheet's heading is back.
+   * query cache and goes back. `beforeSettle` runs as the returning sheet fetches its pages,
+   * so it always lands before the queries settle.
    */
   async function returnToSheet(catalogY: number, beforeSettle = () => {}) {
     stubFetchByUrl({
@@ -160,7 +161,10 @@ describe("routing", () => {
     let returning = false;
     vi.stubGlobal("fetch", (input: RequestInfo | URL) => {
       // The browser clamps the position to the short loading state the refetching sheet shows.
-      if (returning && String(input).endsWith("/pages")) scroll(0);
+      if (returning && String(input).endsWith("/pages")) {
+        scroll(0);
+        beforeSettle();
+      }
       return stubbed(input);
     });
     sessionStorage.clear();
@@ -193,7 +197,6 @@ describe("routing", () => {
     returning = true;
     await router.navigate(-1);
     await screen.findByRole("region", { name: "Stats" });
-    beforeSettle();
     await new Promise((resolve) => setTimeout(resolve, 100));
     return { scrollTo, pageShownAtScroll };
   }
