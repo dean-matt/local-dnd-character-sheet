@@ -44,7 +44,7 @@
             </span>
           </sc-if>
           <div style="flex-grow: 1;"></div>
-          <button onClick="{{item.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
+          <button aria-label="Edit {{item.name}}" title="Edit" onClick="{{item.edit}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg></button>
         </div>
       </div>
     </sc-for>

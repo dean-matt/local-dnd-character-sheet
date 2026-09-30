@@ -147,8 +147,9 @@ widget, panel, or nav element:
   change into each widget's rows. The name, its gray property chips and the gold price
   chip share the first line, with remove at the right; the description takes the
   second; the accent action chips (Attack, Damage, AC) take the third, with the row's
-  controls (Equip, Prepared, Edit, a feature's use pips) at its right. A row with
-  neither has no third line.
+  controls (Equip, Prepared, Edit, a feature's use pips) at its right. Edit is a gray
+  pencil the size of Equip, with no border or fill, like remove. A row with neither has
+  no third line.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that
