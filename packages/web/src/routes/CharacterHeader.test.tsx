@@ -84,16 +84,14 @@ describe("CharacterHeader", () => {
     expect(avatar).toHaveStyle({ background: avatarColor("1") });
   });
 
-  it("holds one line: name and subtitle truncate, carrying their full text on hover", () => {
-    const { container } = render(<CharacterHeader character={warlock()} />);
+  it("carries the full name and subtitle on hover, for when they truncate", () => {
+    render(<CharacterHeader character={warlock()} />);
 
-    expect(container.firstElementChild).toHaveClass("h-header");
-    const name = screen.getByRole("heading", { level: 1 });
-    expect(name).toHaveClass("truncate");
-    expect(name).toHaveAttribute("title", "Vex");
-    const subtitle = screen.getByText(/^Half-Elf Warlock 3/);
-    expect(subtitle).toHaveClass("truncate");
-    expect(subtitle).toHaveAttribute("title", characterSubtitle(warlock()));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveAttribute("title", "Vex");
+    expect(screen.getByText(/^Half-Elf Warlock 3/)).toHaveAttribute(
+      "title",
+      characterSubtitle(warlock()),
+    );
   });
 
   it("leaves the printed page to the print title", () => {

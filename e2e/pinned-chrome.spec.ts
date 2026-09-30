@@ -23,7 +23,8 @@ test("the top bar, character header and sidebar stay pinned in a tall window, th
 }) => {
   const response = await request.post("/api/characters", {
     data: {
-      // Longer than any window is wide, so it wraps a name or subtitle that can wrap.
+      // Longer than any window is wide, so it wraps a name that can wrap and squeezes the
+      // subtitle to its 160px floor, narrower than the subtitle this character reads.
       name: `E2E Pinned ${Date.now()}${" of the Silverwood".repeat(8)}`,
       edition: "one",
       levels: [{ class: { name: "Warlock", source: "XPHB" } }],
