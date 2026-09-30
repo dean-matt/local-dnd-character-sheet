@@ -194,6 +194,8 @@ export function mergeBlocked({ mergeable, mergeStateStatus }) {
  * @param {string} body
  * @param {number[]} closing
  */
+export const LINKED = "the pull request is linked to its issue";
+
 export function linkBlocked(body, closing) {
   const named = /^Closes #(\d+)$/.exec(body.split("\n")[0].trim())?.[1];
   if (named === undefined) return "the body does not open with Closes #<issue>";
@@ -319,7 +321,7 @@ function gate(n) {
     pr.body,
     pr.closingIssuesReferences.map((i) => i.number),
   );
-  report(unlinked === null, "the pull request is linked to its issue", unlinked);
+  report(unlinked === null, LINKED, unlinked);
 
   const conflict = mergeBlocked(pr);
   report(conflict === null, "the branch merges cleanly", conflict);

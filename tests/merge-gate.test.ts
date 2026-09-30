@@ -10,6 +10,7 @@ import {
   checksBlocked,
   dependenciesDiffer,
   FENCE,
+  LINKED,
   linkBlocked,
   mergeBlocked,
   notGreen,
@@ -324,9 +325,7 @@ describe("the issue link", () => {
   });
 
   it("reaches merge-pr in the words the gate prints", () => {
-    expect(read(".claude/skills/merge-pr/SKILL.md")).toContain(
-      "the pull request is linked to its issue",
-    );
+    expect(read(".claude/skills/merge-pr/SKILL.md")).toContain(LINKED);
   });
 });
 
