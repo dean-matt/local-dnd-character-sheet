@@ -31,23 +31,25 @@
       <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <button aria-label="Edit {{item.name}}" onClick="{{item.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{item.name}}</button>
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.armorClass}}</span>
+          <sc-if value="{{item.hasDexChip}}" hint-placeholder-val="{{true}}">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.dexChip}}</span>
+          </sc-if>
+          <sc-if value="{{item.hasValue}}" hint-placeholder-val="{{true}}">
+            <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>{{item.value}}</span>
+          </sc-if>
+          <div style="flex-grow: 1;"></div>
+          <button aria-label="Delete {{item.name}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+        </div>
+        <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
+        <div style="display: flex; align-items: center; gap: 6px;">
           <span style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">
             <span style="font-weight: 400; color: #6b7280;">{{item.acLabel}}</span>
             {{item.ac}}
           </span>
           <div style="flex-grow: 1;"></div>
           <button onClick="{{item.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
-          <button aria-label="Delete {{item.name}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.armorClass}}</span>
-          <sc-if value="{{item.hasDexChip}}" hint-placeholder-val="{{true}}">
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.dexChip}}</span>
-          </sc-if>
-          <div style="flex-grow: 1;"></div>
-          <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
-        </div>
-        <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
       </div>
     </sc-for>
     <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
@@ -103,6 +105,7 @@ class Component extends DCLogic {
       ac: it.ac,
       acLabel: it.armorClass === 'Shield' ? 'AC bonus' : 'AC',
       value: it.value,
+      hasValue: !!it.value,
       hasDexChip: it.armorClass !== 'Shield',
       dexChip: it.dexCap === 0 ? 'No DEX' : it.dexCap == null ? 'Full DEX' : 'DEX cap ' + fmt(it.dexCap),
       descShort: descOf(it.json),

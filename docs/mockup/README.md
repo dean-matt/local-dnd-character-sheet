@@ -28,21 +28,20 @@ widget, panel, or nav element:
   Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
   opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
   2024, switched by the artboard's Edition tweak.
-- Inventory: Currency, Weapons, Armor, Gear. A weapon's price on Weapons is a gold chip
-  with a coin icon, read aloud as its cost. A versatile weapon's row has a 1h/2h grip
-  toggle beside its Equip button, a gray pill track with the chosen grip on an
-  accent-red thumb; the toggle picks the damage die the chip and formula show. 2h is
-  unavailable while that weapon and a shield are both equipped, and hovering or
-  focusing it opens a popover saying why. The artboard's `shieldEquipped` tweak
-  switches the shield.
+- Inventory: Currency, Weapons, Armor, Gear. A price is a gold chip with a coin icon,
+  read aloud as its cost. A versatile weapon's row has a 1h/2h grip toggle beside its
+  Equip button, a gray pill track with the chosen grip on an accent-red thumb; the
+  toggle picks the damage die the chip and formula show. 2h is unavailable while that
+  weapon and a shield are both equipped, and hovering or focusing it opens a popover
+  saying why. The artboard's `shieldEquipped` tweak switches the shield.
   Equip is a fixed 18px icon toggle with a 24px hit area, named for its item
   ("Equipped, Spear") with `aria-pressed` carrying the state. Stowed is a gray backpack
   on a white square, the same for every item type; equipped is the item type's icon in
   white on the accent — a sword for a weapon, a breastplate for armor, a shield for a
   shield, a hand for other gear. An item the character is not proficient with shows a
   grayed backpack, `aria-disabled`, with a popover naming the missing proficiency. The
-  icons are inline outlines adapted from Lucide (ISC). Weapons and List Item draw this
-  today; Armor and Gear still carry the text pill.
+  icons are inline outlines adapted from Lucide (ISC). Weapons, Armor and List Item
+  draw it.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
@@ -144,8 +143,12 @@ widget, panel, or nav element:
 - Reference: Popover and Modal show the two interaction patterns below in isolation,
   always open, so they can be reviewed without hovering or clicking inside a live widget.
   List Item shows the row shape shared by Weapons, Armor, Gear, Known Spells, the
-  Features widgets, and Homebrew's own weapons, armor, gear, and spells — design it
-  here first, then carry a change into each widget's rows.
+  Features widgets, and every Homebrew artboard — design it here first, then carry a
+  change into each widget's rows. The name, its gray property chips and the gold price
+  chip share the first line, with remove at the right; the description takes the
+  second; the accent action chips (Attack, Damage, AC) take the third, with the row's
+  controls (Equip, Prepared, Edit, a feature's use pips) at its right. A row with
+  neither has no third line.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that
