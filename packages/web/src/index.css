@@ -69,6 +69,8 @@
  */
 :root {
   color-scheme: light dark;
+  /* Keeps focus and anchor scrolls clear of the pinned top bar and character header. */
+  scroll-padding-top: calc(var(--spacing-topbar) + var(--character-header-height, 0px));
 }
 
 @media screen {
