@@ -34,7 +34,9 @@ it took none — stop there.
    files in parallel if that helps, but write them one at a time.
 7. **Correct the docs the change made stale**, in the same commit. Past a `docs/` or
    `CLAUDE.md` cap, replace a sentence rather than append; a new `docs/` file needs a
-   README row.
+   README row. Where the issue is the last open one in an artboard's row of
+   [Retiring an artboard](../../../docs/mockup/README.md#retiring-an-artboard), delete
+   that artboard as the section says, and step 12 publishes the deletion.
 8. **Prose pass** with `writing-clearly-and-concisely` over every piece of prose the change
    wrote — commit message, comments, `docs/`, a skill, `CLAUDE.md`. A skill says what to
    do; keep a reason only where losing it lets the next agent delete a fence or walk into a

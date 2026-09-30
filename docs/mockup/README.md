@@ -195,6 +195,91 @@ Simplifications specific to these widgets:
 - On Custom Tab, dragging a widget's corner cycles it through four preset sizes
   (S/M/L/XL) rather than resizing to an arbitrary pixel size.
 
+## Retiring an artboard
+
+An artboard leads its widget's look and behavior until everything it shows has shipped,
+editing included. The pull request that merges the last open issue in its row below
+retires it: it deletes the file from `components/`, its entry from both `boards` and
+`order` in `canvas.json`, its row here and every other mention of it, such as its bullet
+under What is here, then publishes the deletion as [Changing a mockup](#changing-a-mockup)
+says.
+After that the app leads. A visual change to the widget is made in the app, and no mockup
+issue is filed for it; a redesign may still draw a fresh artboard for that one change,
+deleted by the pull request that builds it.
+
+An issue filed against something an artboard draws joins that artboard's row. Shipped
+says how much of the artboard the app builds today.
+
+| Artboard | Retired by | Shipped |
+|---|---|---|
+| `Layout` | #282 | all but the Rolls Panel |
+| `Abilities` | #227, #487 | read-only |
+| `Saves` | #227, #487 | read-only |
+| `Skills` | #227, #399, #487 | read-only |
+| `Combat` | #227 | read-only |
+| `HP` | #277, #281, #487 | read-only |
+| `Attacks` | #398, #487 | nothing |
+| `Status` | #280 | read-only |
+| `Defenses` | #387, #488 | nothing |
+| `ShortRestModal` | #281 | nothing |
+| `LongRestModal` | #281 | nothing |
+| `Currency` | #229 | read-only |
+| `Weapons` | #229, #311, #398, #400 | read-only |
+| `WeaponsFilter` | #311 | nothing |
+| `Armor` | #229, #311, #400 | read-only |
+| `ArmorFilter` | #311 | nothing |
+| `Gear` | #229, #311 | read-only |
+| `GearFilter` | #311 | nothing |
+| `SpellSlots` | #230, #278 | read-only |
+| `SpellList` | #230, #311 | read-only |
+| `SpellListFilter` | #311 | nothing |
+| `ClassFeatures` | #279, #311 | read-only |
+| `ClassFeaturesFilter` | #311 | nothing |
+| `RaceFeatures` | #279, #311 | read-only |
+| `RaceFeaturesFilter` | #311 | nothing |
+| `ChosenFeatures` | #231, #279, #311 | read-only |
+| `ChosenFeaturesFilter` | #311 | nothing |
+| `Backstory` | #392 | nothing |
+| `Notes` | #401 | read-only |
+| `Name` | #227 | read-only |
+| `Race` | #234, #488 | read-only |
+| `Class` | #235, #240 | read-only |
+| `Background` | #234, #488 | read-only |
+| `Level` | #239, #393 | read-only |
+| `LevelUpModal` | #239, #240 | nothing |
+| `Alignment` | #227 | read-only |
+| `Languages` | #488 | read-only |
+| `Proficiencies` | #400, #488 | read-only |
+| `Sidebar` | #242, #470, #486 | read-only |
+| `ManageTabs` | #242 | reorder and hide |
+| `TopBar` | #386 | read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
+| `RollsPanel` | #282, #311, #312 | nothing |
+| `RollsPanelFilter` | #311, #312 | nothing |
+| `SettingsSidebar` | #243, #313, #486, #489 | Display only |
+| `DisplaySettings` | #390 | theme only |
+| `Sources` | #313 | nothing |
+| `HomebrewWeapons` | #243 | nothing |
+| `HomebrewArmor` | #243 | nothing |
+| `HomebrewGear` | #243 | nothing |
+| `HomebrewSpells` | #243 | nothing |
+| `HomebrewRaces` | #489 | nothing |
+| `HomebrewClasses` | #489 | nothing |
+| `HomebrewBackgrounds` | #489 | nothing |
+| `HomebrewFeats` | #489 | nothing |
+| `WidgetPicker` | #242 | nothing |
+| `CustomTab` | #242 | nothing |
+| `CharacterList` | #233, #391, #395 | read-only |
+| `CreationIdentity` | #233, #234 | nothing |
+| `CreationClass` | #233, #235, #240 | nothing |
+| `CreationAbilityScores` | #233, #236 | nothing |
+| `CreationProficiencies` | #233, #237 | nothing |
+| `CreationSpells` | #233, #238 | nothing |
+| `Popover` | #490 | all of it |
+| `Modal` | #490 | all of it |
+| `ConfirmDialog` | #241, #242 | nothing |
+| `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
+
 ## Changing a mockup
 
 The user reviews a mockup on the live canvas, never in the diff, so a pull request that
