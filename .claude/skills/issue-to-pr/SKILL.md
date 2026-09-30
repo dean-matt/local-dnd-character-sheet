@@ -56,8 +56,8 @@ it took none — stop there.
     ```
 
     Run `wait-checks` with a 600000 ms tool timeout. On its exit 2, note what it printed
-    and skip the gate. On any other exit, run the gate and note its exit, each `FAIL` line
-    and any failed check. Both paths go on to step 13.
+    and skip the gate. On any other exit, run the gate and note its exit, each `FAIL` and
+    `warn` line, and any failed check. Both paths go on to step 13.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label, what step 12
     noted and anything waiting on the user.
