@@ -196,10 +196,12 @@ Simplifications specific to these widgets:
 The user reviews a mockup on the live canvas, never in the diff, so a pull request that
 changes `docs/mockup/components/` waits on their approval there.
 
-1. **Publish from the session holding the conversation with the user.** A dispatched run
-   opens its pull request as a draft and reports each changed file instead of publishing.
-2. **List the canvas files first**: an Artifact `list` with `scope: "files"` on the live
-   link. The publish refuses a path this session has neither read nor listed.
+1. **Open the pull request as a draft, and publish from the session holding the
+   conversation with the user.** A dispatched run reports each changed file instead of
+   publishing.
+2. **Read the canvas, then list its files**: an Artifact `read` of the live link, then a
+   `list` with `scope: "files"`. The publish refuses an artifact this session has not
+   read, and a path it has neither read nor listed.
 3. **Publish every changed file in one call**: an Artifact `publish` with the live link as
    `url` and `files` mapping `project/<name>` to `docs/mockup/components/<name>`, or to
    `null` for a file the branch deletes. A changed `canvas.json` publishes the same way.
@@ -209,7 +211,8 @@ changes `docs/mockup/components/` waits on their approval there.
    so the gate fails until the user approves the mockup on the canvas and the session
    holding the conversation merges on that sign-off, as `merge-pr` describes.
 
-A pull request closed without merging puts the canvas back: publish `main`'s version of
-each file it published, writing `git show origin/main:docs/mockup/components/<name>` to
-the scratchpad and mapping `project/<name>` to that copy, and `null` for a file `main`
-does not have.
+The session holding the conversation that closes a pull request without merging puts the
+canvas back in the same turn: publish `main`'s version of each file it published, writing
+`git show origin/main:docs/mockup/components/<name>` to the scratchpad and mapping
+`project/<name>` to that copy, and `null` for a file `main` does not have. Leave out a file
+another open pull request has published since, or the restore erases that change.

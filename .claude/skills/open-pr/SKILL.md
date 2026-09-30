@@ -6,9 +6,9 @@ description: Open the pull request for one local-dnd-character-sheet issue and w
 # Opening a pull request
 
 Open it with `gh pr create`, body written to the format below. This starts CI; the pushes
-before it started nothing. A dispatched run whose diff changes `docs/mockup/components/`
-adds `--draft`: [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup) marks
-it ready once the canvas carries the change.
+before it started nothing. A diff that changes `docs/mockup/components/` adds `--draft`,
+whoever runs it: [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup)
+marks it ready once the canvas carries the change.
 
 ## The pull request body
 
