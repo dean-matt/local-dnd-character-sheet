@@ -5,7 +5,7 @@ export function HomePage() {
   return (
     <section>
       <h1 className="font-semibold text-2xl">Local D&D</h1>
-      <Link to="/characters" className="mt-2 inline-block text-accent underline">
+      <Link to="/characters" className="mt-2 inline-block text-accent-text underline">
         Your characters
       </Link>
     </section>

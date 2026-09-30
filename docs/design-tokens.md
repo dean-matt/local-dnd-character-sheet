@@ -59,7 +59,7 @@ the shade:
 | `color-placeholder` | `color-muted` | `color-muted` | Placeholder text |
 | `color-scrim` | `rgb(15 17 21 / 0.5)` | black at 60% | A modal's backdrop |
 | `color-accent` | `#c1272d` | `#c1272d` 90%, white 10% | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
-| `color-accent-text` | `#c1272d` | `#c1272d` 60%, white 40% | The accent as small text — the top bar's current section |
+| `color-accent-text` | `#c1272d` | `#c1272d` 60%, white 40% | The accent as text under the large-text size — a link, the wordmark, an override mark, the top bar's current section |
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
 
@@ -86,7 +86,7 @@ holds every pair in both themes and fails a repalette that regresses one:
 - `color-ink`, `color-muted` and `color-placeholder` on `color-canvas`, `color-surface` and `color-subtle`:
   AA for normal text
 - `color-secondary` on `color-surface` and `color-subtle`: AA for normal text
-- `color-accent-text` on `color-surface` and `color-subtle`: AA for normal text
+- `color-accent-text` on `color-canvas`, `color-surface` and `color-subtle`: AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
 - The loading spinner's `color-muted` arc on its `color-border` track: 3:1

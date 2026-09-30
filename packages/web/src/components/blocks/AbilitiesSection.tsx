@@ -317,7 +317,7 @@ function AbilityScores({
           >
             <span>{definition.abilityScores[ability]}</span>
             <span className="sr-only">, </span>
-            <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent]:text-white">
+            <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
               <Field
                 mode="read"
                 label="modifier"
