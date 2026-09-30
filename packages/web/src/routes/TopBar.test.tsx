@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterRecord } from "../test/records.ts";
 import { stubFetchByUrl } from "../test/stubFetch.ts";
 import { TopBar } from "./TopBar.tsx";
 
@@ -66,14 +67,14 @@ describe("TopBar", () => {
   });
 
   it.each([
-    ["/characters", "character"],
-    ["/characters/7", "character"],
-    ["/characters/7/p/combat", "character"],
-    ["/settings", "settings"],
-    ["/", null],
-    ["/catalog/spells", null],
-  ])("on %s marks %s as the current section", (path, section) => {
-    stubFetchByUrl(noCharacters);
+    ["/characters", "character", "/characters"],
+    ["/characters/7", "character", "/characters/7"],
+    ["/characters/7/p/combat", "character", "/characters/7"],
+    ["/settings", "settings", null],
+    ["/", null, null],
+    ["/catalog/spells", null, null],
+  ])("on %s marks %s as the current section", async (path, section, currentLink) => {
+    stubFetchByUrl({ "/api/characters": [characterRecord("7", "Vex")] });
     renderTopBar(path);
 
     const character = screen.getByRole("button", { name: /character/i });
@@ -83,15 +84,31 @@ describe("TopBar", () => {
       ["settings", settings],
     ] as const) {
       if (name === section) {
-        expect(el).toHaveAttribute("aria-current", "page");
         expect(el).toHaveClass("text-accent-text", "font-bold");
         expect(el.querySelector("svg")).not.toHaveClass("text-muted");
         expect(el).not.toHaveClass("bg-subtle");
       } else {
-        expect(el).not.toHaveAttribute("aria-current");
         expect(el).toHaveClass("text-secondary");
         expect(el.querySelector("svg")).toHaveClass("text-muted");
       }
+    }
+    expect(character).not.toHaveAttribute("aria-current");
+    if (section === "settings") expect(settings).toHaveAttribute("aria-current", "page");
+    else expect(settings).not.toHaveAttribute("aria-current");
+
+    fireEvent.click(character);
+    await screen.findByRole("link", { name: /vex/i });
+    const menuLinks = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("href")?.startsWith("/characters"));
+    expect(menuLinks.map((link) => link.getAttribute("href"))).toEqual([
+      "/characters/7",
+      "/characters",
+    ]);
+    for (const link of menuLinks) {
+      if (link.getAttribute("href") === currentLink)
+        expect(link).toHaveAttribute("aria-current", "page");
+      else expect(link).not.toHaveAttribute("aria-current");
     }
   });
 

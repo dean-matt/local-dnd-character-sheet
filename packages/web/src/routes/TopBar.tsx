@@ -85,7 +85,6 @@ export function TopBar() {
         <button
           type="button"
           aria-expanded={open}
-          aria-current={inCharacters ? "page" : undefined}
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false);
           }}
@@ -106,7 +105,7 @@ export function TopBar() {
                 Your Characters
               </p>
               {characters.data?.map((c) => (
-                <Link
+                <NavLink
                   key={c.id}
                   to={`/characters/${c.id}`}
                   onClick={() => setOpen(false)}
@@ -125,15 +124,16 @@ export function TopBar() {
                       {c.raceSummary} {c.classSummary} • Lvl {c.level}
                     </span>
                   </span>
-                </Link>
+                </NavLink>
               ))}
-              <Link
+              <NavLink
                 to="/characters"
+                end
                 onClick={() => setOpen(false)}
                 className="mt-1 block rounded-lg border-t border-border px-2.5 py-2 text-body font-semibold text-ink hover:bg-subtle"
               >
                 See all characters →
-              </Link>
+              </NavLink>
             </div>
           </>
         )}
