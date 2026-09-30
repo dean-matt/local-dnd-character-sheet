@@ -11,8 +11,9 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   The character sheet and Settings share one rail, `Sidebar` in `src/routes/Sidebar.tsx`, one
   collapsed state, and one row around it, `SidebarFrame` in the same file.
 - **Character header** fills the content column, so it grows and shrinks with the side
-  panels, and is pinned under the top bar in a window at least 36rem tall, the `tall`
-  variant in `src/index.css`. Character sheet only; Settings skips it.
+  panels. Its height is `--spacing-header`, which the name and subtitle hold by truncating.
+  It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in
+  `src/index.css`. Character sheet only; Settings skips it.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on
   Settings, and in `ContentLayout` in `router.tsx`, which the homepage, list, catalog and 404 pages use.
 
@@ -25,7 +26,7 @@ right-docked collapsible rail, is the first one expected.
 - **Pinned chrome stacks under the top bar.** The top bar is `z-30`, so its menus and their
   backdrop cover the character header at `z-20`, which covers the sheet. Chrome pinned below
   the top bar adds its height to `scroll-padding-top` in `src/index.css`, as the character
-  header does through `--character-header-height`, or focus lands under it.
+  header does with `--spacing-header`, or focus lands under it.
 - **New chrome opts out of print.** Print hides every bar with `print:hidden` and renders
   `PrintSheet` and `PrintTitle` from `CharacterLayout.tsx` and `CharacterHeader.tsx`
   instead.

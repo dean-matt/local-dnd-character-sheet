@@ -23,6 +23,7 @@ browsing it.
 | `text-title` | `0.9375rem` (15px) | A modal's title |
 | `spacing-row` | `2rem` (32px) | The height of one dense list row (`h-row`, `min-h-row`) |
 | `spacing-topbar` | `4rem` (64px) | The top bar's height, and the offset of everything sticky or sized under it |
+| `spacing-header` | `3.25rem` (52px) | The character header's height, and its share of the pinned offset under the top bar |
 | `spacing-gutter` | `2.5rem` (40px) | The side inset of the character header and the page content |
 | `spacing-sidebar` | `16.25rem` (260px) | The sidebar's width |
 | `spacing-sidebar-collapsed` | `4.5rem` (72px) | The sidebar's width as an icon rail |
