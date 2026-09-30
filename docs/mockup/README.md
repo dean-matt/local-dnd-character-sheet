@@ -199,8 +199,10 @@ Simplifications specific to these widgets:
 
 An artboard leads its widget's look and behavior until everything it shows has shipped,
 editing included. The pull request that merges the last open issue in its row below
-retires it: it deletes the file from `components/`, its board from `canvas.json`, and its
-row here, then publishes the deletion as [Changing a mockup](#changing-a-mockup) says.
+retires it: it deletes the file from `components/`, its entry from both `boards` and
+`order` in `canvas.json`, its row here and every other mention of it, such as its bullet
+under What is here, then publishes the deletion as [Changing a mockup](#changing-a-mockup)
+says.
 After that the app leads. A visual change to the widget is made in the app, and no mockup
 issue is filed for it; a redesign may still draw a fresh artboard for that one change,
 deleted by the pull request that builds it.
