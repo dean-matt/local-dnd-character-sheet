@@ -149,7 +149,7 @@ class Component extends DCLogic {
       color: c.color,
       initial: c.name.charAt(0),
       sub: c.sub,
-      ariaCurrent: c.id === CURRENT_CHARACTER ? 'page' : 'false'
+      ariaCurrent: c.id === CURRENT_CHARACTER ? 'page' : undefined
     }));
     const mechanicsTypes = MECHANICS_TYPES.map((label) => ({ label, go: () => this.setState({ openMenu: null }) }));
 
