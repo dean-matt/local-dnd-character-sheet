@@ -43,31 +43,49 @@
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <button aria-label="View {{item.label}} details" onClick="{{item.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.label}}</button>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.armorClass}}</span>
+            <sc-if value="{{item.hasDexChip}}" hint-placeholder-val="{{true}}">
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.dexChip}}</span>
+            </sc-if>
+            <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path><path d="M7 6h1v4"></path><path d="m16.71 13.88.7.71-2.82 2.82"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>{{item.value}}</span>
+            <div style="flex-grow: 1;"></div>
+            <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+          </div>
+          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
+          <div style="display: flex; align-items: center; gap: 6px;">
             <div style="position: relative; flex-shrink: 0;">
               <button aria-label="{{item.acAria}}" onMouseEnter="{{item.showCalc}}" onMouseLeave="{{item.hideCalc}}" onFocus="{{item.showCalc}}" onBlur="{{item.hideCalc}}" aria-describedby="{{item.calcId}}" style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px;">
                 <span style="font-weight: 400; color: #6b7280;">AC</span>
                 {{item.acLabel}}
               </button>
               <sc-if value="{{item.calcOpen}}" hint-placeholder-val="{{false}}">
-                <div role="tooltip" id="{{item.calcId}}" style="position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
+                <div role="tooltip" id="{{item.calcId}}" style="position: absolute; top: calc(100% + 2px); left: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
                   <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{item.calcLabel}}</div>
                   <div style="font-size: 11px; color: #6b7280;">{{item.calcText}}</div>
                 </div>
               </sc-if>
             </div>
             <div style="flex-grow: 1;"></div>
-            <button aria-label="{{item.equipAria}}" title="{{item.equipTitle}}" onClick="{{item.toggleEquip}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{item.equipLabel}}</button>
-            <button aria-label="Remove {{item.label}}" onClick="{{item.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+            <div style="position: relative; flex-shrink: 0;">
+              <button aria-label="{{item.equipAria}}" aria-pressed="{{item.equipPressed}}" aria-disabled="{{item.equipDisabled}}" aria-describedby="{{item.equipTipId}}" onClick="{{item.toggleEquip}}" onMouseEnter="{{item.showEquipTip}}" onMouseLeave="{{item.hideEquipTip}}" onFocus="{{item.showEquipTip}}" onBlur="{{item.hideEquipTip}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid {{item.equipBorder}}; background: {{item.equipBg}}; color: {{item.equipColor}}; cursor: {{item.equipCursor}};"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span>
+                <sc-if value="{{item.equippedArmor}}" hint-placeholder-val="{{false}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path></svg>
+                </sc-if>
+                <sc-if value="{{item.equippedShield}}" hint-placeholder-val="{{false}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+                </sc-if>
+                <sc-if value="{{item.stowed}}" hint-placeholder-val="{{true}}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path><path d="M8 10h8"></path><path d="M8 18h8"></path><path d="M8 22v-6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>
+                </sc-if>
+              </button>
+              <div role="tooltip" id="{{item.equipTipId}}" style="display: {{item.equipTipDisplay}}; position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; width: max-content; max-width: 200px; white-space: normal; pointer-events: none;">
+                <div style="font-size: 11px; font-weight: 700;">{{item.equipTipLabel}}</div>
+                <sc-if value="{{item.equipBlocked}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">{{item.equipTipText}}</div>
+                </sc-if>
+              </div>
+            </div>
           </div>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.armorClass}}</span>
-            <sc-if value="{{item.hasDexChip}}" hint-placeholder-val="{{true}}">
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{item.dexChip}}</span>
-            </sc-if>
-            <div style="flex-grow: 1;"></div>
-            <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{item.value}}</span>
-          </div>
-          <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{item.descShort}}</div>
         </div>
       </sc-for>
     </div>
@@ -91,7 +109,7 @@
       <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
           <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+          <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
         <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">{{modalMeta}}</div>
         <div style="font-size: 20px; font-weight: 700; color: {{accent}}; margin-bottom: 2px;">{{modalAc}}</div>
@@ -117,6 +135,7 @@ class Component extends DCLogic {
       ],
       itemQuery: '',
       hoverKey: null,
+      hoverEquipKey: null,
       modalItem: null,
       filterOpen: false,
       armorFilters: { classes: [], equipped: [], priceMin: null, priceMax: null }
@@ -159,9 +178,9 @@ class Component extends DCLogic {
       else if (item.dexCap === 0) calcText = 'Base ' + item.base + ' (no Dexterity bonus allowed)';
       else if (item.dexCap === null) calcText = 'Base ' + item.base + ' + DEX modifier ' + fmt(dexMod) + ' = ' + acValue;
       else calcText = 'Base ' + item.base + ' + DEX modifier (max ' + fmt(item.dexCap) + ') ' + fmt(dexApplied) + ' = ' + acValue;
-      let equipLabel = 'Equip', equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTitle = 'Click to equip';
-      if (!allowed) { equipLabel = "Can't equip"; equipTitle = 'Requires a matching proficiency'; }
-      else if (equipped) { equipLabel = 'Equipped'; equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTitle = 'Click to unequip'; }
+      let equipBorder = '#dde1e6', equipBg = '#ffffff', equipColor = '#6b7280', equipTipLabel = 'Stowed, click to equip';
+      if (!allowed) { equipColor = '#9aa1ab'; equipTipLabel = "Can't equip"; }
+      else if (equipped) { equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTipLabel = 'Equipped, click to stow'; }
       return {
         label: item.label,
         value: item.value,
@@ -177,8 +196,20 @@ class Component extends DCLogic {
         calcText,
         showCalc: () => this.setState({ hoverKey: idx }),
         hideCalc: () => this.setState({ hoverKey: null }),
-        equipLabel, equipBorder, equipBg, equipColor, equipTitle,
-        equipAria: (equipped ? 'Unequip ' : 'Equip ') + item.label,
+        equippedArmor: equipped && !item.isBonus,
+        equippedShield: equipped && !!item.isBonus,
+        stowed: !equipped,
+        equipBlocked: !allowed,
+        equipBorder, equipBg, equipColor, equipTipLabel,
+        equipTipText: item.isBonus ? 'Requires shield proficiency.' : 'Requires ' + item.armorClass + ' armor proficiency.',
+        equipAria: 'Equipped, ' + item.label,
+        equipPressed: equipped ? 'true' : 'false',
+        equipDisabled: allowed ? 'false' : 'true',
+        equipCursor: allowed ? 'pointer' : 'not-allowed',
+        equipTipId: 'arm-equip-' + idx,
+        equipTipDisplay: this.state.hoverEquipKey === idx ? 'block' : 'none',
+        showEquipTip: () => this.setState({ hoverEquipKey: idx }),
+        hideEquipTip: () => this.setState({ hoverEquipKey: null }),
         toggleEquip: () => {
           if (!allowed) return;
           this.setState({ equipment: equipment.map((x, i) => (i === idx ? { ...x, equipped: !x.equipped } : x)) });

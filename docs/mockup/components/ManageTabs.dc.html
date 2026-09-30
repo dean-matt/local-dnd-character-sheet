@@ -21,7 +21,7 @@
   <div style="width: 100%; background: #ffffff; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);">
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <div style="font-size: 15px; font-weight: 700; color: #1f2430;">Manage Tabs</div>
-      <button aria-label="Close" onClick="{{close}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1;">&times;</button>
+      <button aria-label="Close" onClick="{{close}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
     </div>
     <div style="font-size: 11px; color: #6b7280;">Reorder or show/hide any tab; rename and delete apply to tabs you added.</div>
     <div style="display: flex; flex-direction: column; gap: 2px; max-height: 340px; overflow-y: auto;">
@@ -45,7 +45,7 @@
           <sc-if value="{{row.builtIn}}" hint-placeholder-val="{{true}}">
             <span title="Built-in tab — reorder or hide, but not rename" style="flex-grow: 1; min-width: 0; padding: 4px 6px; font-size: 13px; color: {{row.textColor}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{row.label}}</span>
           </sc-if>
-          <button aria-label="Delete {{row.label}}" onClick="{{row.confirmRemove}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; flex-shrink: 0; visibility: {{row.deleteVisibility}};">&times;</button>
+          <button aria-label="Delete {{row.label}}" onClick="{{row.confirmRemove}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; flex-shrink: 0; visibility: {{row.deleteVisibility}}; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
       </sc-for>
     </div>

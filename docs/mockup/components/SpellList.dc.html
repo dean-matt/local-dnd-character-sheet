@@ -49,6 +49,12 @@
               <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; background: #eef0f3; border: 1px solid #dde1e6; border-radius: 6px; min-width: 0;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <button aria-label="View {{sp.name}} details" onClick="{{sp.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; color: #1f2430;">{{sp.name}}</button>
+                  <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{sp.school}}</span>
+                  <div style="flex-grow: 1;"></div>
+                  <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </div>
+                <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.descShort}}</div>
+                <div style="display: flex; align-items: center; gap: 6px;">
                   <sc-if value="{{sp.hasDice}}" hint-placeholder-val="{{true}}">
                     <div style="position: relative; flex-shrink: 0;">
                       <button aria-label="{{sp.name}} damage" onMouseEnter="{{sp.showDmgCalc}}" onMouseLeave="{{sp.hideDmgCalc}}" onFocus="{{sp.showDmgCalc}}" onBlur="{{sp.hideDmgCalc}}" aria-describedby="{{sp.dmgCalcId}}" style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px;">
@@ -65,10 +71,7 @@
                   </sc-if>
                   <div style="flex-grow: 1;"></div>
                   <button aria-label="Toggle prepared for {{sp.name}}" title="{{sp.preparedLabel}}" onClick="{{sp.togglePrepared}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid {{sp.preparedBorder}}; background: {{sp.preparedBg}}; color: {{sp.preparedTextColor}}; font-size: 11px; font-weight: 600; flex-shrink: 0;">{{sp.preparedLabel}}</button>
-                  <button aria-label="Remove {{sp.name}}" onClick="{{sp.remove}}" style="width: 18px; height: 18px; border: none; background: none; color: #6b7280; font-size: 14px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
                 </div>
-                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; width: fit-content;">{{sp.school}}</span>
-                <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.descShort}}</div>
               </div>
             </sc-for>
           </div>
@@ -102,7 +105,7 @@
       <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
           <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+          <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
         <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalMeta}}</div>
         <div style="font-size: 12px; color: #1f2430; margin-bottom: 4px;"><strong>Casting Time:</strong> {{modalCastingTime}}</div>

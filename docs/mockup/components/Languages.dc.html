@@ -25,7 +25,7 @@
       <sc-for list="{{languages}}" as="lang" hint-placeholder-count="2">
         <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
           {{lang.label}}
-          <button aria-label="Remove {{lang.label}}" onClick="{{lang.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+          <button aria-label="Remove {{lang.label}}" onClick="{{lang.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
       </sc-for>
     </div>

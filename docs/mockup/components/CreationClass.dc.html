@@ -80,14 +80,14 @@
                   <div style="font-size: 14px; font-weight: 600; flex-grow: 1;">{{row.name}}</div>
                   <label for="classLevel-{{row.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{row.name}} level</label>
                   <input id="classLevel-{{row.id}}" type="number" min="1" max="20" value="{{row.level}}" onChange="{{row.onLevel}}" title="Level in {{row.name}}" style="width: 56px; padding: 4px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; text-align: center; font-size: 13px; font-weight: 600; color: {{accent}};">
-                  <button aria-label="Remove {{row.name}}" onClick="{{row.remove}}" style="width: 22px; height: 22px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0;">&times;</button>
+                  <button aria-label="Remove {{row.name}}" onClick="{{row.remove}}" style="width: 22px; height: 22px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
                 </div>
                 <sc-if value="{{row.needsSubclass}}" hint-placeholder-val="{{false}}">
                   <div style="font-size: 11px; color: {{accent}}; font-weight: 600;">Chooses a subclass at level {{row.subclassLevel}}</div>
                   <sc-if value="{{row.hasSubclass}}" hint-placeholder-val="{{true}}">
                     <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 4px 4px 10px; border-radius: 999px; background: #ffffff; border: 1px solid #dde1e6; color: #1f2430; width: fit-content;">
                       {{row.subclass}}
-                      <button aria-label="Change {{row.name}} subclass" onClick="{{row.clearSubclass}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+                      <button aria-label="Change {{row.name}} subclass" onClick="{{row.clearSubclass}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
                     </div>
                   </sc-if>
                   <sc-if value="{{row.noSubclass}}" hint-placeholder-val="{{false}}">

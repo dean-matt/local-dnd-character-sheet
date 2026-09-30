@@ -30,7 +30,13 @@
     <sc-for list="{{spells}}" as="sp" hint-placeholder-count="1">
       <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button aria-label="Edit {{sp.name}}" onClick="{{sp.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{sp.name}}</button>
+          <button onClick="{{sp.edit}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">{{sp.name}}</button>
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{sp.category}}</span>
+          <div style="flex-grow: 1;"></div>
+          <button aria-label="Delete {{sp.name}}" onClick="{{sp.remove}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+        </div>
+        <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.descShort}}</div>
+        <div style="display: flex; align-items: center; gap: 6px;">
           <sc-if value="{{sp.hasDice}}" hint-placeholder-val="{{false}}">
             <span style="display: flex; align-items: baseline; gap: 3px; font-size: 9px; font-weight: 700; color: {{accent}}; background: #ffffff; border: 1px solid {{accent}}; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">
               <span style="font-weight: 400; color: #6b7280;">Damage</span>
@@ -38,13 +44,8 @@
             </span>
           </sc-if>
           <div style="flex-grow: 1;"></div>
-          <button onClick="{{sp.edit}}" style="padding: 4px 10px; border-radius: 999px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 11px; font-weight: 600; flex-shrink: 0;">Edit</button>
-          <button aria-label="Delete {{sp.name}}" onClick="{{sp.remove}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; font-size: 16px; line-height: 1; padding: 0; flex-shrink: 0;">&times;</button>
+          <button aria-label="Edit {{sp.name}}" title="Edit" onClick="{{sp.edit}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg></button>
         </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{sp.category}}</span>
-        </div>
-        <div style="font-size: 11px; color: #6b7280; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{sp.descShort}}</div>
       </div>
     </sc-for>
     <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">

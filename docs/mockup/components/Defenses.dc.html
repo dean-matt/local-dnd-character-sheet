@@ -30,7 +30,7 @@
       <sc-for list="{{resistances}}" as="r" hint-placeholder-count="1">
         <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
           <button aria-label="View {{r.label}} resistance details" onClick="{{r.openDetail}}" style="all: unset; cursor: pointer;">{{r.label}}</button>
-          <button aria-label="Remove {{r.label}}" onClick="{{r.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+          <button aria-label="Remove {{r.label}}" onClick="{{r.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
       </sc-for>
     </div>
@@ -55,7 +55,7 @@
       <sc-for list="{{immunities}}" as="im" hint-placeholder-count="1">
         <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 4px 5px 4px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
           <button aria-label="View {{im.label}} immunity details" onClick="{{im.openDetail}}" style="all: unset; cursor: pointer;">{{im.label}}</button>
-          <button aria-label="Remove {{im.label}}" onClick="{{im.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; font-size: 12px; line-height: 1; padding: 0;">&times;</button>
+          <button aria-label="Remove {{im.label}}" onClick="{{im.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
       </sc-for>
     </div>
@@ -77,7 +77,7 @@
       <div role="dialog" aria-modal="true" aria-label="{{modalTitle}}" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
           <div style="font-size: 15px; font-weight: 700;">{{modalTitle}}</div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #6b7280;">&times;</button>
+          <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
         <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalDesc}}</div>
       </div>

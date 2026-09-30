@@ -33,7 +33,7 @@
           {{c.name}}
           <label for="classLevel-{{c.id}}" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{c.name}} level</label>
           <input id="classLevel-{{c.id}}" type="number" min="1" max="20" value="{{c.level}}" onChange="{{c.onLevel}}" title="Level in {{c.name}}" style="width: 30px; padding: 2px; border: none; background: none; text-align: center; font-size: 13px; font-weight: 600; color: {{accent}};">
-          <button aria-label="Remove {{c.name}}" onClick="{{c.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0;">&times;</button>
+          <button aria-label="Remove {{c.name}}" onClick="{{c.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
       </sc-for>
     </div>
