@@ -147,8 +147,9 @@ export function Sidebar({
           type="button"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={toggleCollapse}
-          className={`flex items-center gap-2.5 rounded-control px-2 py-2 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
+          className={`${rowBase} w-full text-sm font-medium text-muted hover:bg-subtle`}
         >
+          {/* The margin widens the 16px arrow to the rows' 19px icon column, so it centers under them. */}
           <svg
             width="16"
             height="16"
@@ -156,6 +157,7 @@ export function Sidebar({
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
+            className="mx-[1.5px] shrink-0"
             aria-hidden
             style={{
               transform: collapsed ? "rotate(180deg)" : undefined,
