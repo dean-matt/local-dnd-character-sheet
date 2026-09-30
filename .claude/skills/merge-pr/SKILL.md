@@ -45,13 +45,14 @@ The sleep lets the rerun show as pending before `wait-checks` reads it.
 node scripts/merge-gate.mjs "$n"
 ```
 
-Six conditions, each named where it fails:
+Seven conditions, each named where it fails:
 
 - every check is green
 - the review converged
 - every thread carries a verdict
 - no declined finding is `critical` or `warning`
 - the diff reaches no fenced path, and no `package.json` changed a dependency
+- the pull request is linked to its issue
 - the branch merges cleanly
 
 Merge where it exits 0; otherwise hand the user the condition it named and stop. Three
@@ -65,7 +66,7 @@ Two lines print beside *the review converged* and stop nothing: the distance lin
 behind the tip the last pass sits, and the `git log` range that counted it — run that range
 and weigh what it lists, since a pass short of the tip may be a fix answering it or code
 nobody read) and the cap line (a waiver at the cap, an overage past it).
-`scripts/merge-gate.mjs` holds the six conditions; `tests/merge-gate.test.ts` calls them.
+`scripts/merge-gate.mjs` holds the seven conditions; `tests/merge-gate.test.ts` calls them.
 
 ## Where the branch is behind
 

@@ -1,5 +1,5 @@
 /**
- * The six conditions that decide whether a pull request is fit to land.
+ * The seven conditions that decide whether a pull request is fit to land.
  *
  * `merge-pr` runs this and stops where it exits non-zero, handing the user the condition
  * it named. Every decision is a pure function over the shapes GitHub returns, which is
@@ -186,6 +186,21 @@ export function mergeBlocked({ mergeable, mergeStateStatus }) {
   return null;
 }
 
+/**
+ * The issue `open-pr` names on the body's first line must come back in GitHub's
+ * `closingIssuesReferences`. GitHub has dropped that link with the body intact, which leaves
+ * the pull request off the issue and the board, so this reads the link and not the body.
+ *
+ * @param {string} body
+ * @param {number[]} closing
+ */
+export function linkBlocked(body, closing) {
+  const named = /^Closes #(\d+)$/.exec(body.split("\n")[0].trim())?.[1];
+  if (named === undefined) return "the body does not open with Closes #<issue>";
+  if (closing.includes(Number(named))) return null;
+  return `GitHub has not linked #${named} — link it from the pull request's Development box, then run the gate again`;
+}
+
 const DEP_KEYS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
 
 /** A version bump stops the merge; a rename, a reordered script or a reordered map does not. */
@@ -293,6 +308,13 @@ function gate(n) {
     [...fenced, ...bumped].join("\n      "),
   );
 
+  const pr = gh(["pr", "view", n, "--json", "body,closingIssuesReferences"]);
+  const unlinked = linkBlocked(
+    pr.body,
+    pr.closingIssuesReferences.map((i) => i.number),
+  );
+  report(unlinked === null, "the pull request is linked to its issue", unlinked);
+
   const conflict = mergeBlocked(gh(["pr", "view", n, "--json", "mergeable,mergeStateStatus"]));
   report(conflict === null, "the branch merges cleanly", conflict);
 
@@ -310,5 +332,5 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
     console.error(`\n${failures.length} condition(s) block the merge. Hand each to the user.`);
     process.exit(1);
   }
-  console.log("\nall six conditions hold");
+  console.log("\nall seven conditions hold");
 }
