@@ -7,11 +7,11 @@ import { TopBar } from "./TopBar.tsx";
 
 const noCharacters = { "/api/characters": [] };
 
-function renderTopBar() {
+function renderTopBar(path = "/") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[path]}>
         <TopBar />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -32,6 +32,7 @@ describe("TopBar", () => {
 
     fireEvent.click(characterBtn);
     expect(characterBtn).toHaveAttribute("aria-expanded", "true");
+    expect(characterBtn).toHaveClass("bg-subtle");
 
     fireEvent.click(characterBtn);
     expect(characterBtn).toHaveAttribute("aria-expanded", "false");
@@ -62,6 +63,34 @@ describe("TopBar", () => {
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
     expect(screen.getByRole("link", { name: /settings/i })).not.toHaveAttribute("aria-current");
     expect(screen.queryByRole("group", { name: "Theme" })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["/characters", "character"],
+    ["/characters/7", "character"],
+    ["/characters/7/p/combat", "character"],
+    ["/settings", "settings"],
+    ["/", null],
+    ["/catalog/spells", null],
+  ])("on %s marks %s as the current section", (path, section) => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar(path);
+
+    const character = screen.getByRole("button", { name: /character/i });
+    const settings = screen.getByRole("link", { name: /settings/i });
+    for (const [name, el] of [
+      ["character", character],
+      ["settings", settings],
+    ] as const) {
+      if (name === section) {
+        expect(el).toHaveAttribute("aria-current", "page");
+        expect(el).toHaveClass("text-accent", "font-bold");
+        expect(el).not.toHaveClass("bg-subtle");
+      } else {
+        expect(el).not.toHaveAttribute("aria-current");
+        expect(el).toHaveClass("text-secondary");
+      }
+    }
   });
 
   it("Escape anywhere in the document closes the open menu", async () => {

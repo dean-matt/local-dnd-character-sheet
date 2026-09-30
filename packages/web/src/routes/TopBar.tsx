@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 
-/**
- * Gear icon for the Settings link — svg inline so it can inherit stroke from the link's
- * color, keeping the icon consistent with the link label without a separate token.
- */
-function GearIcon() {
+function GearIcon({ className }: { className?: string }) {
   return (
     <svg
+      className={className}
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -24,9 +21,10 @@ function GearIcon() {
   );
 }
 
-function ChevronDown({ rotated }: { rotated: boolean }) {
+function ChevronDown({ rotated, className }: { rotated: boolean; className?: string }) {
   return (
     <svg
+      className={className}
       width="12"
       height="12"
       viewBox="0 0 24 24"
@@ -41,6 +39,10 @@ function ChevronDown({ rotated }: { rotated: boolean }) {
   );
 }
 
+const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 text-sm";
+const current = "font-bold text-accent";
+const elsewhere = "font-medium text-secondary";
+
 /**
  * Application top bar: the "Local D&D" wordmark, a Character switcher menu, and a
  * Settings link to the Settings page.
@@ -48,6 +50,7 @@ function ChevronDown({ rotated }: { rotated: boolean }) {
 export function TopBar() {
   const characters = useCharacters();
   const [open, setOpen] = useState(false);
+  const inCharacters = useMatch({ path: "/characters", end: false }) !== null;
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,14 +85,15 @@ export function TopBar() {
         <button
           type="button"
           aria-expanded={open}
+          aria-current={inCharacters ? "page" : undefined}
           onKeyDown={(e) => {
             if (e.key === "Escape") setOpen(false);
           }}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex items-center gap-1.5 rounded-control border-0 bg-transparent px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
+          className={`${trigger} ${inCharacters ? current : elsewhere} ${open ? "bg-subtle" : "bg-transparent hover:bg-subtle"}`}
         >
           Character
-          <ChevronDown rotated={open} />
+          <ChevronDown rotated={open} className={inCharacters ? undefined : "text-muted"} />
         </button>
 
         {open && (
@@ -97,8 +101,8 @@ export function TopBar() {
             {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
             <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-            <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-card border border-border bg-surface p-2 shadow-popover">
-              <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted">
+            <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-xl border border-border bg-surface p-2 shadow-popover">
+              <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-label text-muted">
                 Your Characters
               </p>
               {characters.data?.map((c) => (
@@ -106,7 +110,7 @@ export function TopBar() {
                   key={c.id}
                   to={`/characters/${c.id}`}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 rounded-control px-2.5 py-2 text-ink hover:bg-subtle"
+                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-ink hover:bg-subtle"
                 >
                   <span
                     className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
@@ -116,9 +120,9 @@ export function TopBar() {
                     {c.name.charAt(0)}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium">{c.name}</span>
+                    <span className="block truncate text-body font-medium">{c.name}</span>
                     <span className="block truncate text-[11px] text-muted">
-                      {c.raceSummary} {c.classSummary} · Lvl {c.level}
+                      {c.raceSummary} {c.classSummary} • Lvl {c.level}
                     </span>
                   </span>
                 </Link>
@@ -126,7 +130,7 @@ export function TopBar() {
               <Link
                 to="/characters"
                 onClick={() => setOpen(false)}
-                className="mt-1 block rounded-control border-t border-border px-2.5 py-2 text-sm font-semibold text-ink hover:bg-subtle"
+                className="mt-1 block rounded-lg border-t border-border px-2.5 py-2 text-body font-semibold text-ink hover:bg-subtle"
               >
                 See all characters →
               </Link>
@@ -137,10 +141,16 @@ export function TopBar() {
 
       <NavLink
         to="/settings"
-        className="ml-auto flex shrink-0 items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-subtle"
+        className={({ isActive }) =>
+          `ml-auto shrink-0 ${trigger} ${isActive ? current : elsewhere} hover:bg-subtle`
+        }
       >
-        Settings
-        <GearIcon />
+        {({ isActive }) => (
+          <>
+            Settings
+            <GearIcon className={isActive ? undefined : "text-muted"} />
+          </>
+        )}
       </NavLink>
     </div>
   );

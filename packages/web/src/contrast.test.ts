@@ -73,6 +73,7 @@ function contrastRatio(a: Vec3, b: Vec3): number {
 // packages/web/src/index.css's tokens, resolved to the values behind each var().
 const white: Vec3 = [1, 1, 1];
 const gray100 = oklch(0.967, 0.003, 264.542);
+const gray300 = oklch(0.872, 0.01, 258.338);
 // biome-ignore lint/suspicious/noApproximativeNumericConstant: Tailwind's gray-400 lightness, not Math.SQRT1_2
 const gray400 = oklch(0.707, 0.022, 261.325);
 const gray700 = oklch(0.373, 0.034, 259.733);
@@ -82,6 +83,7 @@ const gray900 = oklch(0.21, 0.034, 264.665);
 const canvasLight = hex("#f4f5f7");
 const subtleLight = hex("#eef0f3");
 const inkLight = hex("#1f2430");
+const secondaryLight = hex("#4b5260");
 const mutedLight = mixOklab(hex("#6b7280"), inkLight, 0.92);
 const placeholderLight = mutedLight;
 const borderLight = hex("#dde1e6");
@@ -92,6 +94,7 @@ const accentTintLight = mixOklab(accentLight, canvasLight, 0.1);
 const positiveLight = hex("#2f6b4f");
 
 const inkDark = gray100;
+const secondaryDark = gray300;
 const mutedDark = gray400;
 const placeholderDark = mutedDark;
 const accentDark = mixOklab(accentLight, white, 0.9);
@@ -106,6 +109,8 @@ const AA_NON_TEXT = 3;
 const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "ink on canvas, light", fg: inkLight, bg: canvasLight, minimum: AA_TEXT },
   { name: "ink on surface, light", fg: inkLight, bg: white, minimum: AA_TEXT },
+  { name: "secondary on surface, light", fg: secondaryLight, bg: white, minimum: AA_TEXT },
+  { name: "secondary on subtle, light", fg: secondaryLight, bg: subtleLight, minimum: AA_TEXT },
   { name: "muted on canvas, light", fg: mutedLight, bg: canvasLight, minimum: AA_TEXT },
   { name: "muted on surface, light", fg: mutedLight, bg: white, minimum: AA_TEXT },
   { name: "ink on subtle, light", fg: inkLight, bg: subtleLight, minimum: AA_TEXT },
@@ -137,6 +142,8 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   },
   { name: "ink on canvas, dark", fg: inkDark, bg: gray900, minimum: AA_TEXT },
   { name: "ink on surface, dark", fg: inkDark, bg: gray800, minimum: AA_TEXT },
+  { name: "secondary on surface, dark", fg: secondaryDark, bg: gray800, minimum: AA_TEXT },
+  { name: "secondary on subtle, dark", fg: secondaryDark, bg: subtleDark, minimum: AA_TEXT },
   { name: "muted on canvas, dark", fg: mutedDark, bg: gray900, minimum: AA_TEXT },
   { name: "muted on surface, dark", fg: mutedDark, bg: gray800, minimum: AA_TEXT },
   { name: "ink on subtle, dark", fg: inkDark, bg: subtleDark, minimum: AA_TEXT },

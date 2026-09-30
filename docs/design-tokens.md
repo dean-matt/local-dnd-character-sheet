@@ -49,6 +49,7 @@ the shade:
 | `color-subtle` | `#eef0f3` | `gray-700` and `gray-800`, mixed evenly | A row tile or a track inside a card. The mockup's `#eceef1` folds into it |
 | `color-border` | `#dde1e6` | `gray-700` | Hairline borders |
 | `color-ink` | `#1f2430` | `gray-100` | Primary text |
+| `color-secondary` | `#4b5260` | `gray-300` | Text a step down from ink — an unselected nav label |
 | `color-muted` | `#6b7280` 92%, `color-ink` 8% | `gray-400` | Secondary text — labels, captions |
 | `color-placeholder` | `color-muted` | `color-muted` | Placeholder text |
 | `color-scrim` | `rgb(15 17 21 / 0.5)` | black at 60% | A modal's backdrop |
@@ -77,6 +78,7 @@ holds every pair in both themes and fails a repalette that regresses one:
 
 - `color-ink`, `color-muted` and `color-placeholder` on `color-canvas`, `color-surface` and `color-subtle`:
   AA for normal text
+- `color-secondary` on `color-surface` and `color-subtle`: AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
 - The loading spinner's `color-muted` arc on its `color-border` track: 3:1
