@@ -1,9 +1,9 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { box } from "./box";
 
 async function edges(locator: Locator) {
-  const box = await locator.boundingBox();
-  if (!box) throw new Error("not laid out");
-  return { top: box.y, bottom: box.y + box.height };
+  const b = await box(locator);
+  return { top: b.y, bottom: b.y + b.height };
 }
 
 /** Pads `content` past the viewport, so the test needs no catalog to fill a sheet. */

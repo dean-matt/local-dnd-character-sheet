@@ -1,10 +1,5 @@
-import { expect, type Locator, test } from "@playwright/test";
-
-async function box(locator: Locator) {
-  const b = await locator.boundingBox();
-  if (!b) throw new Error("not laid out");
-  return b;
-}
+import { expect, test } from "@playwright/test";
+import { box } from "./box";
 
 const centerX = (b: { x: number; width: number }) => b.x + b.width / 2;
 
