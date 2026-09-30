@@ -33,6 +33,10 @@ browsing it.
 | `shadow-popover` | `0 16px 32px`, black at 18% (50% dark) | A popover or menu |
 | `shadow-modal` | `0 24px 48px`, black at 18% (50% dark) | A modal dialog |
 
+The top bar takes Tailwind's radii rather than these, because its mockup draws its own:
+4px triggers (`rounded-sm`), a 12px menu panel (`rounded-xl`) and 8px menu rows
+(`rounded-lg`). A change to `radius-control` or `radius-card` leaves the bar alone.
+
 `text-row` and `text-number` name existing Tailwind sizes, so a view reaches for "the row
 size" or "the number size" rather than picking `text-xs` or `text-xl` by convention — a
 convention drifts the first time someone reaches for `text-sm` instead.
