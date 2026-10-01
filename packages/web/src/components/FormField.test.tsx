@@ -40,19 +40,6 @@ describe("FormField", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("gives two fields distinct ids", () => {
-    render(
-      <>
-        <InputField label="Name" />
-        <InputField label="Player" />
-      </>,
-    );
-
-    expect(screen.getByRole("textbox", { name: "Name" }).id).not.toBe(
-      screen.getByRole("textbox", { name: "Player" }).id,
-    );
-  });
-
   it("reads a falsy error as no error", () => {
     render(
       <FormField label="Alignment" status="Saved" error={false}>

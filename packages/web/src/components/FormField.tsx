@@ -19,7 +19,7 @@ interface ControlProps {
 
 interface ChromeProps {
   label: string;
-  /** Marks the control invalid and describes it. It may carry an action, such as a retry. */
+  /** Marks the control invalid and describes it. */
   error?: ReactNode;
   /** Progress the user should hear without moving focus, such as a save in flight. */
   status?: ReactNode;
