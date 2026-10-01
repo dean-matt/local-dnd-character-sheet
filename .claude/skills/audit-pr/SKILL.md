@@ -5,7 +5,7 @@ description: Review one local-dnd-character-sheet pull request through this repo
 
 # Reviewing a pull request
 
-The pull request number is the whole input. An agent that knows how the change was written
+The pull request number is the only input about the change. An agent that knows how the change was written
 reads its own intent into the diff and reviews that intent rather than the code.
 
 ## Skip what the fences assert
