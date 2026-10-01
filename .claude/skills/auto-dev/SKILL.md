@@ -100,4 +100,5 @@ writer until it reports back. Resuming it by hand, or dispatching a second one a
 issue, hands the worktree two drivers — wait for the report instead.
 
 **Research by fork.** A fork runs the dispatch prompts it inherits, as `issue-to-pr`
-warns. Research with an `Explore` agent, which holds no Edit, Write or Agent tool.
+warns. Research with an `Explore` agent: lacking Edit, Write and Agent narrows that drift,
+though its Bash can still commit.

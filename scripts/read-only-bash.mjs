@@ -12,7 +12,7 @@
  */
 import { readFileSync, realpathSync } from "node:fs";
 
-const GIT = String.raw`\bgit(?:\s+-[Cc]\s+(?:"[^"]*"|'[^']*'|\S+)|\s+--\S+)*\s+`;
+const GIT = String.raw`\bgit(?:\s+-[Cc]\s*(?:"[^"]*"|'[^']*'|\S+)|\s+--\S+(?:\s+[^-\s]\S*)?)*\s+`;
 
 const RULES = [
   [
@@ -26,7 +26,7 @@ const RULES = [
     "removes an issue's worktree",
   ],
   [
-    /\bgh\s+(?:pr|issue)\s+(?:checkout|close|comment|create|delete|develop|edit|lock|merge|ready|reopen|revert|review|transfer|update-branch)\b/,
+    /\bgh\s+(?:pr|issue)\s+(?:checkout|close|comment|create|delete|develop|edit|lock|merge|pin|ready|reopen|revert|review|transfer|unpin|update-branch)\b/,
     "writes to a pull request or an issue",
   ],
   [/\bgh\s+(?:label|project|release|workflow|run|repo)\s+(?!list\b|view\b)\S/, "writes to GitHub"],
@@ -46,8 +46,13 @@ export function rejects(command) {
 
 // ESM resolves symlinks and argv[1] does not, so comparing them raw fails open.
 if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
-  const command = JSON.parse(readFileSync(0, "utf8")).tool_input?.command ?? "";
-  const reason = rejects(command);
+  // Any exit but 2 lets the command run, so a payload this cannot read is refused.
+  let reason;
+  try {
+    reason = rejects(JSON.parse(readFileSync(0, "utf8")).tool_input?.command ?? "");
+  } catch {
+    reason = "arrived in a payload the hook could not parse";
+  }
   if (reason !== null) {
     console.error(
       `Refused: this command ${reason}. A review pass reads and reports; ` +

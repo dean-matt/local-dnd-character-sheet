@@ -43,6 +43,9 @@ describe("rejects", () => {
     "gh pr update-branch 7",
     "gh pr revert 7",
     'git -C "/a b" push',
+    'git -C"/x" push',
+    "git --work-tree /x push",
+    "gh issue pin 7",
     "gh issue create --title x",
     "gh project item-edit --id x",
     "gh label create x",
@@ -67,6 +70,11 @@ describe("the hook", () => {
     const result = hook("git push");
     expect(result.status).toBe(2);
     expect(result.stderr).toMatch(/^Refused: this command changes a branch/);
+  });
+
+  it("exits 2 on a payload it cannot parse, since any other exit lets the command run", () => {
+    const result = spawnSync("node", [SCRIPT], { input: "not json", encoding: "utf8" });
+    expect(result.status).toBe(2);
   });
 
   it("exits 0 on a read", () => {
