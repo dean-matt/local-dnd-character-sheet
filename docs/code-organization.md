@@ -8,7 +8,9 @@ says where it goes inside that package.
 A file holds schemas, or pure helpers over them, or queries, or a route — not a mix. Each
 kind changes for its own reason: a schema when the data's shape moves, a query when its
 SQL does, a route when the API contract does. A file holding two kinds changes for both,
-and a reader hunting one has to page past the other.
+and a reader hunting one has to page past the other. A route's own query, request and
+response schemas are part of the route; a record schema another file reads is a schema
+and lives with the other schemas.
 
 `packages/api` shows the split: `src/routes/` holds one route file per resource,
 `src/db/queries/` the queries those routes call, and `src/db/` the Drizzle table
@@ -16,8 +18,8 @@ schemas, connections and migrations beneath them.
 
 ## Placement follows dependency
 
-Code that no single feature's form, rules or workflow binds stays in the shared location.
-Code bound to one feature lives beside that feature. Shared code then never imports a
+Code bound to one feature's form, rules or workflow lives beside that feature. Code bound
+to none stays in the shared location. Shared code then never imports a
 feature, and deleting a feature takes its private code with it rather than orphaning a
 file in a shared folder.
 
@@ -34,8 +36,10 @@ test/               helpers only tests import
 
 A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`. The tree does not
 yet hold to the placement rule everywhere: `lib/spellFacts.ts` has one reader,
-`components/blocks/SpellsSection.tsx`, and belongs beside it. Treat a file like that as
-one to move, not as precedent.
+`components/blocks/SpellsSection.tsx`, and belongs beside it. Nor does it hold to the next
+rule: `AbilitiesSection.tsx`, `InventorySection.tsx` and `SpellsSection.tsx` in
+`components/blocks/` each define several private components inline. Treat files like
+these as ones to change, not as precedent.
 
 ## A private helper gets its own file
 
