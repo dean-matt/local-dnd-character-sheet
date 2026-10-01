@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { FormField, InputField } from "./FormField.tsx";
+import { FormField } from "./FormField.tsx";
+import { InputField } from "./InputField.tsx";
 
 describe("FormField", () => {
   it("labels whatever control its render prop returns", () => {

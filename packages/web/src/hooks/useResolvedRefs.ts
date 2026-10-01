@@ -1,6 +1,7 @@
 import { type RefQuery, refResolveResponseSchema } from "@dnd/catalog";
 import { useQuery } from "@tanstack/react-query";
-import { apiMutate, retryUnlessClientError } from "../lib/api.ts";
+import { apiMutate } from "../lib/api.ts";
+import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
 /**
  * The catalog or homebrew row each of one block's references names, `null` where there

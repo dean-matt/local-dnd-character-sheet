@@ -113,9 +113,9 @@ spinner holds still.
 
 ## Worked example
 
-`packages/web/src/states.tsx` renders its loading, error and empty cards against these
-tokens — surface, border, `radius-card` and `text-row` — and every route reuses them
-rather than inventing its own. Its loading card draws a muted spinner in place of the text. The next view with a number to show is the first to reach
+`packages/web/src/StateCard.tsx` draws the card the loading, error and empty states share
+against these tokens — surface, border, `radius-card` and `text-row` — and every route reuses them
+rather than inventing its own. `LoadingState` draws a muted spinner in place of the text. The next view with a number to show is the first to reach
 for `text-number`.
 
 ## Print

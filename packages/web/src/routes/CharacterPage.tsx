@@ -1,9 +1,10 @@
 import { useParams } from "react-router";
 import { PageBlocks } from "../components/blocks/PageBlocks.tsx";
+import { ErrorState } from "../ErrorState.tsx";
+import { useCharacter } from "../hooks/useCharacter.ts";
 import { useCharacterDerived } from "../hooks/useCharacterDerived.ts";
 import { useCharacterPages } from "../hooks/useCharacterPages.ts";
-import { useCharacter } from "../hooks/useCharacters.ts";
-import { ErrorState, LoadingState } from "../states.tsx";
+import { LoadingState } from "../LoadingState.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
 /**

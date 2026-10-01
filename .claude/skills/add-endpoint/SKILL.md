@@ -23,8 +23,9 @@ schema. That is the failure this order prevents.
 
 A hook never calls `fetch` directly. `apiGet` and `apiMutate` hold the base URL and turn
 a non-2xx response into a thrown `ApiError`, and both parse the response against the
-schema the route declares — see `packages/web/src/hooks/useCharacters.ts` for the shape
-a read, a parameterized read and a write take.
+schema the route declares — see `useCharacters.ts`, `useCharacter.ts` and
+`useUpdateCharacterDefinition.ts` in `packages/web/src/hooks/` for the shape a read, a
+parameterized read and a write take.
 
 Never skip step 1. A schema defined inline in a route cannot be reused by the web
 client, which is how a hand-written duplicate type appears and then drifts.

@@ -1,6 +1,7 @@
 import {
   type CharacterDerived,
   type CharacterPageRecord,
+  type CharacterRecord,
   type CharacterStateRecord,
   characterDefinitionSchema,
   defaultCharacterState,
@@ -41,6 +42,24 @@ export function characterRecord(id: string, name: string) {
     }),
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
+  };
+}
+
+/** `characterRecord`'s Vex at Warlock 3, a Fiend Patron from the third level. */
+export function warlockRecord(): CharacterRecord {
+  const warlock = { name: "Warlock", source: "XPHB" };
+  const record = characterRecord("1", "Vex");
+  return {
+    ...record,
+    level: 3,
+    definition: {
+      ...record.definition,
+      levels: [
+        { class: warlock },
+        { class: warlock },
+        { class: warlock, subclass: { name: "Fiend Patron", source: "XPHB" } },
+      ],
+    },
   };
 }
 
