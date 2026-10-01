@@ -1,4 +1,5 @@
 import type { CharacterFeatures } from "@dnd/catalog";
+import type { CharacterReferences } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -83,8 +84,11 @@ const WITH_BACKGROUND: CharacterFeatures = {
 const card = (title: string) =>
   screen.getByRole("heading", { level: 3, name: title }).closest("section") as HTMLElement;
 
-function renderSection(features: CharacterFeatures = FEATURES) {
-  stubFetchByUrl({ "/api/characters/1/features": features });
+function renderSection(features: CharacterFeatures = FEATURES, references?: CharacterReferences) {
+  stubFetchByUrl({
+    "/api/characters/1/features": features,
+    ...(references && { "/api/characters/1/references": references }),
+  });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -189,6 +193,22 @@ describe("FeaturesSection", () => {
     const row = (await screen.findByText("Lucky (PHB)")).closest("li") as HTMLElement;
     expect(row).toHaveTextContent("Not found in the catalog");
     expect(within(row).queryByRole("button")).toBeNull();
+  });
+
+  it("names the feat a renamed reference became", async () => {
+    renderSection(FEATURES, {
+      unresolved: [
+        {
+          field: "feats[0].ref",
+          kind: "feat",
+          ref: { name: "Lucky", source: "PHB" },
+          renamedTo: { name: "Lucky", source: "XPHB" },
+        },
+      ],
+    });
+
+    const row = (await screen.findByText("Lucky (PHB)")).closest("li") as HTMLElement;
+    expect(await within(row).findByText("Renamed to Lucky (XPHB)")).toBeInTheDocument();
   });
 
   it("says a missing homebrew reference is missing from homebrew, not the catalog", async () => {

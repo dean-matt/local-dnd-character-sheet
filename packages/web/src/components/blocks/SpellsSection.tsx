@@ -27,6 +27,7 @@ import { signed } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { Field, OverrideMark } from "../Field.tsx";
 import { ListRow } from "../ListRow.tsx";
+import { NotFoundTag, renamedAt } from "../NotFoundTag.tsx";
 import { firstLine, RulesEntries, RulesText } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
@@ -153,7 +154,16 @@ function DamageChips({ spell }: { spell: Extract<SheetSpell, { resolved: true }>
   );
 }
 
-function SpellRow({ spell }: { spell: SheetSpell }) {
+/** `index` is the spell's place in the definition, which names its field in the report. */
+function SpellRow({
+  spell,
+  index,
+  characterId,
+}: {
+  spell: SheetSpell;
+  index: number;
+  characterId: string;
+}) {
   const homebrew = spell.source === undefined;
   const marks = (
     <>
@@ -169,7 +179,11 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
         chips={
           <>
             {marks}
-            <Tag>{homebrew ? "Not found in homebrew" : "Not found in the catalog"}</Tag>
+            <NotFoundTag
+              characterId={characterId}
+              homebrew={homebrew}
+              renamed={renamedAt(`spells[${index}].ref`)}
+            />
           </>
         }
       />
@@ -203,25 +217,27 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
   );
 }
 
-type Group = { key: string; title: string; spells: SheetSpell[] };
+/** `index` is the spell's place in the definition. */
+type Placed = { spell: SheetSpell; index: number };
+type Group = { key: string; title: string; spells: Placed[] };
 
 /** By level, cantrips first, with every reference that resolved to nothing gathered last. */
 function groupByLevel(spells: readonly SheetSpell[]): Group[] {
-  const byLevel = new Map<number, SheetSpell[]>();
-  const missing: SheetSpell[] = [];
-  for (const spell of spells) {
+  const byLevel = new Map<number, Placed[]>();
+  const missing: Placed[] = [];
+  spells.forEach((spell, index) => {
     if (!spell.resolved) {
-      missing.push(spell);
-      continue;
+      missing.push({ spell, index });
+      return;
     }
-    byLevel.set(spell.level, [...(byLevel.get(spell.level) ?? []), spell]);
-  }
+    byLevel.set(spell.level, [...(byLevel.get(spell.level) ?? []), { spell, index }]);
+  });
   const groups: Group[] = [...byLevel]
     .sort(([a], [b]) => a - b)
     .map(([level, members]) => ({
       key: String(level),
       title: levelLabel(level),
-      spells: members.sort((a, b) => a.name.localeCompare(b.name)),
+      spells: members.sort((a, b) => a.spell.name.localeCompare(b.spell.name)),
     }));
   if (missing.length > 0) groups.push({ key: "missing", title: "Not found", spells: missing });
   return groups;
@@ -243,9 +259,8 @@ function SpellList({ character }: { character: CharacterRecord }) {
               {group.title}
             </h4>
             <ul className="flex flex-col gap-1.5">
-              {group.spells.map((spell, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: a spell learned through two classes is listed twice under one name.
-                <SpellRow key={index} spell={spell} />
+              {group.spells.map(({ spell, index }) => (
+                <SpellRow key={index} spell={spell} index={index} characterId={character.id} />
               ))}
             </ul>
           </div>

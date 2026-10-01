@@ -52,8 +52,9 @@ for a class or race that does not resolve, since it cannot guess a hit die or a 
 /characters/{id}/references` checks every catalog reference in a definition and its state,
 on demand, and names each miss by its field; a magic variant misses where its base item no
 longer takes it. Where `tag_redirects` sends a miss to a row of the same table, the report
-carries that row as `renamedTo`. Nothing rewrites the character: a redirect such as
-`Fighter|PHB` to `Fighter|XPHB` changes edition, and that is the user's call.
+carries that row as `renamedTo`, and the sheet names it on the unresolved row without
+showing it. Nothing rewrites the character: a redirect such as `Fighter|PHB` to
+`Fighter|XPHB` changes edition, and that is the user's call.
 
 **Homebrew is the exception.** Nothing else owns it, so `homebrew.db` stores full records
 carrying source `HB`, merged with catalog rows at query time. A character holds one by
