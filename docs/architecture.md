@@ -35,7 +35,8 @@ is why there is no `shared`. `rules` and `dice` depend on nothing at all; `chara
 depends on `rules` because the rest-trigger vocabulary a resource is stored with is a
 rule, not a storage detail. `rules` never takes a `CharacterDefinition` — a function
 that wants the whole character is a projection and belongs with the schemas, and the
-missing dependency edge is what enforces that.
+missing dependency edge is what enforces that. Where code goes inside a package is
+[`code-organization.md`](code-organization.md).
 
 The tag parser joins them as `packages/tags` when it is written, and a catalog row's
 schema gets a leaf package of its own at the first endpoint that returns one. Neither
