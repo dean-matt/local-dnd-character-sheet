@@ -1,13 +1,9 @@
 import type { CharacterRecord } from "@dnd/character";
 import { Link } from "react-router";
+import { EDITION_LABELS } from "../components/EditionTag.tsx";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 import { ErrorState, LoadingState } from "../states.tsx";
-
-const EDITION_LABELS: Record<CharacterRecord["edition"], string> = {
-  classic: "2014",
-  one: "2024",
-};
 
 function CharacterTile({ character }: { character: CharacterRecord }) {
   const summary = [character.raceSummary, character.classSummary].filter(Boolean).join(" ");
