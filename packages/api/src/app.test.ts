@@ -15,7 +15,12 @@ import { characterSpellsRoutes } from "./routes/character-spells.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { derivedRoutes } from "./routes/derived.ts";
 import { featuresRoutes } from "./routes/features.ts";
-import { homebrewRoutes } from "./routes/homebrew.ts";
+import { homebrewBackgroundsRoutes } from "./routes/homebrew-backgrounds.ts";
+import { homebrewClassesRoutes } from "./routes/homebrew-classes.ts";
+import { homebrewFeatsRoutes } from "./routes/homebrew-feats.ts";
+import { homebrewItemsRoutes } from "./routes/homebrew-items.ts";
+import { homebrewRacesRoutes } from "./routes/homebrew-races.ts";
+import { homebrewSpellsRoutes } from "./routes/homebrew-spells.ts";
 import { pagesRoutes } from "./routes/pages.ts";
 import { spellsRoutes } from "./routes/spells.ts";
 
@@ -49,7 +54,16 @@ describe("/openapi.json", () => {
     app.route("/", characterSpellsRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
     app.route("/", characterInventoryRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
     app.route("/", characterReferencesRoutes(opened.charactersDb, dataDir));
-    app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
+    for (const homebrewRoutes of [
+      homebrewItemsRoutes,
+      homebrewSpellsRoutes,
+      homebrewBackgroundsRoutes,
+      homebrewFeatsRoutes,
+      homebrewRacesRoutes,
+      homebrewClassesRoutes,
+    ]) {
+      app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
+    }
     app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
 
@@ -95,7 +109,7 @@ describe("/openapi.json", () => {
    */
   it("resolves the recursive entries field to a $ref instead of expanding it forever", async () => {
     const app = new OpenAPIHono();
-    app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
+    app.route("/", homebrewItemsRoutes(opened.homebrewDb, opened.charactersDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
 
     const res = await app.request("/openapi.json");
