@@ -137,6 +137,64 @@ web
 #217.
 `;
 
+const PARAGRAPH_PAIR = `## What
+
+Grip toggle.
+
+## Blocked by
+
+#453, for the grip toggle's design.
+
+#459, for the row the attack and damage chips sit in.
+`;
+
+const SENTENCE_AFTER_PAIR = `## What
+
+Delete a reference.
+
+## Blocked by
+
+#75 and #77. There is no delete route and no character to hold a reference until both
+land.
+
+## Out of scope
+
+Nothing.
+`;
+
+const TWO_SENTENCES = `## What
+
+Search.
+
+## Blocked by
+
+#192, which opens \`content.db\` and names the leaf package a result schema lives in, and
+#75, which makes homebrew rows reachable. #196 and #197 widen what a hit can be, and a
+search shipped before them covers fewer types rather than being wrong.
+
+## Out of scope
+
+Nothing.
+`;
+
+const SENTENCE_PER_BLOCKER = `## What
+
+Search.
+
+## Blocked by
+
+#75, for the route and the schema. #196 for the hit types.
+`;
+
+const COMMA_AFTER_DESCRIPTION = `## What
+
+Level up.
+
+## Blocked by
+
+#239, for the level-up flow, the picker.
+`;
+
 describe("blockedBySection", () => {
   it("reads the section between its heading and the next one", () => {
     expect(blockedBySection(SINGLE_BLOCKER)).toBe("#276, for a read endpoint.");
@@ -212,6 +270,39 @@ describe("removeBlockerTerm", () => {
     const body = "## What\n\nNo blockers here.\n";
     expect(removeBlockerTerm(body, 1)).toBe(body);
   });
+
+  it("keeps a blocker in its own paragraph, 'and' in its description included", () => {
+    expect(blockedBySection(removeBlockerTerm(PARAGRAPH_PAIR, 453))).toBe(
+      "#459, for the row the attack and damage chips sit in.",
+    );
+    expect(blockedBySection(removeBlockerTerm(PARAGRAPH_PAIR, 459))).toBe(
+      "#453, for the grip toggle's design.",
+    );
+  });
+
+  it("keeps the sentence describing the blocker that stays", () => {
+    expect(blockedBySection(removeBlockerTerm(SENTENCE_AFTER_PAIR, 75))).toBe(
+      "#77. There is no delete route and no character to hold a reference until both\nland.",
+    );
+  });
+
+  it("reads a sentence opening with an issue as its own blocker", () => {
+    expect(blockedBySection(removeBlockerTerm(SENTENCE_PER_BLOCKER, 75))).toBe(
+      "#196 for the hit types.",
+    );
+  });
+
+  it("keeps the sentence a closed issue's sibling opens", () => {
+    expect(blockedBySection(removeBlockerTerm(TWO_SENTENCES, 75))).toBe(
+      "#192, which opens `content.db` and names the leaf package a result schema lives in. #196 and #197 widen what a hit can be, and a\nsearch shipped before them covers fewer types rather than being wrong.",
+    );
+  });
+
+  it("keeps the blocker listed after the closed one in the same sentence", () => {
+    expect(blockedBySection(removeBlockerTerm(TWO_SENTENCES, 192))).toMatch(
+      /^#75, which makes homebrew rows reachable\. #196 and #197/,
+    );
+  });
 });
 
 describe("stillBlocked", () => {
@@ -229,6 +320,24 @@ describe("stillBlocked", () => {
 
   it("is false where the only other named issue is also closed", () => {
     expect(stillBlocked(BARE_PAIR, 214, new Set())).toBe(false);
+  });
+
+  it("reads an 'and' inside a blocker's description as part of it", () => {
+    expect(stillBlocked(SENTENCE_AFTER_PAIR, 75, new Set())).toBe(false);
+  });
+
+  it("stays true for a later sentence's blocker once the first closes", () => {
+    expect(stillBlocked(SENTENCE_PER_BLOCKER, 75, new Set([196]))).toBe(true);
+  });
+
+  it("stays true for an unnumbered blocker a comma sets after a description", () => {
+    expect(stillBlocked(COMMA_AFTER_DESCRIPTION, 239, new Set())).toBe(true);
+  });
+
+  it("clears once every paragraph's blocker has closed", () => {
+    expect(stillBlocked(PARAGRAPH_PAIR, 453, new Set([459]))).toBe(true);
+    const after = removeBlockerTerm(PARAGRAPH_PAIR, 453);
+    expect(stillBlocked(after, 459, new Set())).toBe(false);
   });
 
   it("stays true for an unnumbered blocker sitting beside a numbered one", () => {

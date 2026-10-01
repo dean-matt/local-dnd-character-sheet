@@ -5,17 +5,26 @@
  * keeps pure text functions here and `gh` orchestration in `run`, called only from the CLI
  * guard at the bottom.
  *
- * A `## Blocked by` section is prose, not a list a parser can trust structurally. A term
- * opens with an issue reference (`#NNN`, optionally after "and") or a subordinating word
- * ("for", "which", …) continuing the term before it; anything else starts its own
+ * A `## Blocked by` section is prose, not a list a parser can trust structurally. Each
+ * paragraph, and each sentence opening with an issue reference, is its own list, split on
+ * commas and "and". A term opens with an issue reference (`#NNN`, optionally after "and").
+ * Any other piece continues the term before it where it opens with a subordinating word
+ * ("for", "which", …), or where "and" joins it to a term that already describes an issue,
+ * so "#459, for the attack and damage chips" stays one term. Anything else starts its own
  * unnumbered term, such as "the picker" naming work with no issue yet.
  *
- * That reading matches every `## Blocked by` section this repository has written, but it
- * is a heuristic: a bare appositive with no subordinating word ("#239, the level-up
- * flow.") reads as two terms, not one description of #239. `stillBlocked` treats a term
- * with no issue number as blocking by default, since it has nothing to check against
- * `open` — so a misread appositive can leave a fully resolved issue's `blocked` label
- * standing, never a real blocker silently cleared.
+ * A term belongs to the issue it opens with, so a closed issue its description only
+ * mentions leaves it standing.
+ *
+ * The reading is a heuristic with three misreads. A bare appositive ("#239, the level-up
+ * flow.") reads as two terms; `stillBlocked` counts a term with no issue number as
+ * blocking, since it has nothing to check against `open`, so the label outlives #239. The
+ * other two clear a real blocker. An unnumbered blocker joined by "and" after a described
+ * issue ("#77 for the list route and class columns") reads as part of that description and
+ * clears with #77. An issue on the next line with no period or blank line before it
+ * ("#75 for the route\n#77 for the list.") reads as part of the term above and clears with
+ * #75; a line break does not end a term, because sections wrap mid-sentence ("and\n#75").
+ * Give such a blocker its own paragraph or sentence, or list it before the issues.
  */
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
@@ -38,21 +47,29 @@ export function referencedIssues(section) {
   return section === null ? [] : [...section.matchAll(/#(\d+)/g)].map((m) => Number(m[1]));
 }
 
+const UNIT_BREAK = /(\n\s*\n|(?<=\.)\s+(?=#\d))/;
+const SEPARATOR = /(\s*,\s*|\s+and\s+)/;
 const STARTS_TERM = /^(?:and\s+)?#\d+/;
+const BARE_REFERENCE = /^#\d+$/;
 const CONTINUATION = /^(for|which|since|because|though|the reason)\b/i;
 
-function splitTerms(section) {
-  const pieces = section
-    .replace(/\.\s*$/, "")
-    .split(/\s*,\s*|\s+and\s+/)
-    .filter(Boolean);
+function splitTerms(paragraph) {
+  const parts = paragraph.replace(/\.\s*$/, "").split(SEPARATOR);
   const terms = [];
-  for (const piece of pieces) {
-    const stripped = piece.replace(/^and\s+/, "");
-    if (terms.length > 0 && !STARTS_TERM.test(piece) && CONTINUATION.test(piece)) {
-      terms[terms.length - 1] += `, ${piece}`;
+  for (let i = 0; i < parts.length; i += 2) {
+    const piece = parts[i];
+    if (!piece) continue;
+    const last = terms.at(-1);
+    const joinedByAnd = /and/.test(parts[i - 1]) || /^and\s/.test(piece);
+    const describesIssue = last !== undefined && /^#\d+/.test(last) && !BARE_REFERENCE.test(last);
+    if (
+      last !== undefined &&
+      !STARTS_TERM.test(piece) &&
+      ((describesIssue && joinedByAnd) || CONTINUATION.test(piece))
+    ) {
+      terms[terms.length - 1] += parts[i - 1] + piece;
     } else {
-      terms.push(stripped);
+      terms.push(piece.replace(/^and\s+/, ""));
     }
   }
   return terms;
@@ -64,15 +81,33 @@ function joinTerms(terms) {
   return `${terms.slice(0, -1).join(", ")} and ${terms.at(-1)}.`;
 }
 
+const opensWith = (term, closed) => new RegExp(`^#${closed}\\b`).test(term);
+
+const units = (section) => section.split(UNIT_BREAK).filter((_, i) => i % 2 === 0);
+
 function remainingTerms(section, closed) {
-  return splitTerms(section).filter((t) => !new RegExp(`#${closed}\\b`).test(t));
+  return units(section)
+    .flatMap(splitTerms)
+    .filter((t) => !opensWith(t, closed));
+}
+
+function rebuildSection(section, closed) {
+  const parts = section.split(UNIT_BREAK);
+  let rebuilt = "";
+  for (let i = 0; i < parts.length; i += 2) {
+    const terms = splitTerms(parts[i]);
+    const kept = terms.filter((t) => !opensWith(t, closed));
+    const text = kept.length === terms.length ? parts[i] : joinTerms(kept);
+    if (text) rebuilt += (rebuilt ? parts[i - 1] : "") + text;
+  }
+  return rebuilt;
 }
 
 /** Removes only `closed`'s term, keeping every other term the section names. */
 export function removeBlockerTerm(body, closed) {
   const section = blockedBySection(body);
   if (section === null) return body;
-  const rebuilt = joinTerms(remainingTerms(section, closed)) ?? "";
+  const rebuilt = rebuildSection(section, closed);
   return sections(body)
     .map((s) =>
       s.heading === "Blocked by" ? `## Blocked by\n\n${rebuilt}${rebuilt ? "\n" : ""}` : s.chunk,
