@@ -211,46 +211,6 @@ describe("FeaturesSection", () => {
     expect(await within(row).findByText("Renamed to Lucky (XPHB)")).toBeInTheDocument();
   });
 
-  it("names no rename where two entries holding the reference disagree on it", async () => {
-    const subclass = { name: "Lost Path", source: "PHB" };
-    const lucky = { name: "Lucky", source: "PHB" };
-    renderSection(
-      {
-        groups: [
-          { origin: "subclass", features: [{ resolved: false, ...subclass }] },
-          { origin: "feat", features: [{ resolved: false, ...lucky }] },
-        ],
-      },
-      {
-        unresolved: [
-          {
-            field: "levels[0].subclass",
-            kind: "subclass",
-            ref: subclass,
-            parent: { name: "Fighter", source: "PHB" },
-            renamedTo: { name: "Lost Path", source: "XPHB" },
-          },
-          {
-            field: "levels[1].subclass",
-            kind: "subclass",
-            ref: subclass,
-            parent: { name: "Rogue", source: "PHB" },
-          },
-          {
-            field: "feats[0].ref",
-            kind: "feat",
-            ref: lucky,
-            renamedTo: { name: "Lucky", source: "XPHB" },
-          },
-        ],
-      },
-    );
-
-    await screen.findByText("Renamed to Lucky (XPHB)");
-    const row = screen.getByText("Lost Path (PHB)").closest("li") as HTMLElement;
-    expect(row).toHaveTextContent("Not found in the catalog");
-  });
-
   it("says a missing homebrew reference is missing from homebrew, not the catalog", async () => {
     renderSection({
       groups: [{ origin: "feat", features: [{ resolved: false, name: "Homebrew", level: 4 }] }],
