@@ -4,17 +4,16 @@
  */
 import { type CharacterDerived, derivedValue } from "@dnd/character";
 import { Card } from "../Card.tsx";
+import { capitalize } from "./capitalize.ts";
 import { DefenseChipRow, type DefenseChipRowProps } from "./DefenseChipRow.tsx";
 
 type Defense = CharacterDerived["defenses"]["computed"]["resistances"][number];
 
 type Chip = DefenseChipRowProps["items"][number];
 
-const capitalized = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
-
 function chips(defenses: readonly Defense[], kind: string, effect: (name: string) => string) {
   return defenses.map(({ name, from }): Chip => {
-    const label = capitalized(name);
+    const label = capitalize(name);
     return { label, title: `${label} ${kind}`, effect: effect(name), from };
   });
 }
@@ -39,7 +38,7 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
             ...chips(
               conditionImmunities,
               "Immunity",
-              (name) => `${capitalized(name)} can't affect you.`,
+              (name) => `${capitalize(name)} can't affect you.`,
             ),
           ]}
         />

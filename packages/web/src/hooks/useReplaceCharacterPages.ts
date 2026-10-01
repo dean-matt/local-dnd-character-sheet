@@ -1,9 +1,9 @@
-import { type CharacterPageRecord, characterPageRecordSchema } from "@dnd/character";
+import type { CharacterPageRecord } from "@dnd/character";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
-import { z } from "zod";
 import { apiMutate } from "../lib/api.ts";
 import { characterPagesKey } from "./characterKeys.ts";
+import { characterPagesSchema } from "./characterPagesSchema.ts";
 
 /**
  * `write` replaces the whole list, in display order. The cache takes the new list before
@@ -26,7 +26,7 @@ export function useReplaceCharacterPages(id: string) {
         apiMutate(
           "PUT",
           `/characters/${id}/pages`,
-          z.array(characterPageRecordSchema),
+          characterPagesSchema,
           pages.map(({ preset: _preset, ...page }) => page),
         ),
       );

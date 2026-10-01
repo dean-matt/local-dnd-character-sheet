@@ -47,8 +47,8 @@ exemption.
 
 ## One component, hook or concept per file
 
-In `packages/web`, a `.tsx` file defines one component, is named after it, and exports
-only it and its props type. A file under `hooks/` exports one hook, and a `lib/` file holds
+In `packages/web`, a `.tsx` file defines at most one component; one that defines a
+component is named after it and exports only it and its props type. A file under `hooks/` exports one hook, and a `lib/` file holds
 one concept, with the helpers and types only that concept uses. A constant or function a
 component file would export goes to `lib/` or a file of its own instead: Vite's Fast
 Refresh hot-swaps only a file whose exports are all components, and reloads the page for
