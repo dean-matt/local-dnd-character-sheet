@@ -32,7 +32,8 @@ interface FormFieldProps extends ChromeProps {
 export function FormField({ label, error, status, children }: FormFieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
-  const invalid = error !== undefined;
+  // Truthiness, so `error={touched && message}` reads its `false` as valid.
+  const invalid = Boolean(error);
 
   return (
     <div className="flex flex-col">

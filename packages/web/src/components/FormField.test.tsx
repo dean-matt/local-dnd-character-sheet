@@ -53,6 +53,20 @@ describe("FormField", () => {
     );
   });
 
+  it("reads a falsy error as no error", () => {
+    render(
+      <FormField label="Alignment" status="Saved" error={false}>
+        {(control) => <select {...control} />}
+      </FormField>,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Alignment" });
+    expect(select).toHaveAttribute("aria-invalid", "false");
+    expect(select).not.toHaveAttribute("aria-describedby");
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("silences the status while an error stands", () => {
     render(
       <FormField label="Alignment" status="Saved" error="Pick an alignment.">
