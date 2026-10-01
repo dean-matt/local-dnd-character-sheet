@@ -143,6 +143,17 @@ offers a retry, because autosave has no confirm step — the only way back from 
 is undo, which is why undo ships alongside editing rather than waiting for M6's play
 state.
 
+**Creation and level-up are forms, not fields.** They present many fields at once, their
+choices depend on each other, and they are validated as a whole, so they run through
+`react-hook-form` with the Zod resolver rather than the field contract above. Nothing is
+written until the flow finishes: Cancel walks away from the draft, and the list never
+shows a half-made character, because a row saved part way would need deleting on cancel.
+The resolver binds to the schemas in `packages/character`, so no form holds a second
+definition of a legal character. A choice an earlier one invalidates, such as a subclass
+after a class change, is flagged on its field rather than kept silently. The draft
+persists to `localStorage` per flow, so it survives a reload, and clears on finish or
+cancel. The dependency lands with the first form that reads it.
+
 ## Deliberately absent
 
 Listed so they do not get added back by reflex:
