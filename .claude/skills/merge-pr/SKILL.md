@@ -35,17 +35,17 @@ sleep 30
 node scripts/wait-checks.mjs "$n"
 ```
 
-A second exit 1 is the branch's failure: name the failed checks and hand back.
-
-The sleep lets the rerun show as pending before `wait-checks` reads it.
+The sleep lets the rerun show as pending before `wait-checks` reads it. A second exit 1 is
+the branch's failure: name the failed checks and hand back.
 
 ## The gate
 
 ```bash
 node scripts/merge-gate.mjs "$n"
+gh pr view "$n" --json labels --jq '[.labels[].name | select(startswith("review:"))] | join(",")'
 ```
 
-Six conditions, each named where it fails:
+The gate reads no label, so the second line does. Six conditions, each named where it fails:
 
 - every check is green
 - the review converged
@@ -54,12 +54,12 @@ Six conditions, each named where it fails:
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0; otherwise hand the user the condition it named and stop. Three
-conditions route elsewhere first: "the branch merges cleanly" goes to *Where the branch is
-behind* when its detail line says behind; "the diff reaches no fenced path" and "no
-declined finding is critical or warning" go to their sign-off sections below. Read the
-pass body the script points at too — a finding no line anchors lives there, not on a
-comment.
+Merge where it exits 0 and the label reads `review:approved`; otherwise name what failed
+and stop. "The branch merges cleanly" goes to *Where the branch is behind* when its detail
+line says behind. A fenced path, a blocking decline and any other label wait on the user:
+name each and hand back, since only [`user-signoff`](../user-signoff/SKILL.md) clears them.
+Read the pass body the script points at too — a finding no line anchors lives there, not on
+a comment.
 
 Two lines print beside *the review converged* and stop nothing: the distance line (how far
 behind the tip the last pass sits, and the `git log` range that counted it — run that range
@@ -77,39 +77,9 @@ pull request that sat while another merged, whatever the rest of the gate said.
 [`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
 the server and waits out the window where the checks describe the old commit. On its
 `ready`, run *Block on the checks* and the gate again; a gate still saying GitHub is
-computing mergeability is the queued merge landing, so ask again. Two round trips is the ceiling — a third `BEHIND`
-means `main` moves faster than the checks run, and sequencing that is the user's call.
-
-## A fenced path, with the user's direct sign-off
-
-"the diff reaches no fenced path" never gets easier to fail — `scripts/merge-gate.mjs`
-prints `FAIL` for every caller, unchanged. A path under `docs/mockup/components/` waits on
-the user's approval of the mockup on the canvas; name that as the condition. The sign-off
-is the user's word in this conversation after viewing the canvas, never a canvas comment. The one sanctioned path past it: having heard
-the sign-off directly rather than read a relayed report of it, the session holding the
-conversation with the user may run *Merge, then clean up* for that pull request itself,
-once every other condition holds. A subagent — including the one `auto-dev` dispatches —
-takes no such latitude: it reports `FAIL` and stops, same as any other failing condition.
-Every `gh` call authenticates as the same account regardless of driver; session identity
-is the only thing this path checks, which is what distinguishes a witnessed sign-off from
-a claimed one.
-
-## A declined critical or warning, with the user's direct sign-off
-
-"no declined finding is critical or warning" reads every declined thread, not just the
-last pass, and a verdict reply can't be withdrawn — so a `critical` or `warning` finding
-the user decides to accept anyway needs a record distinct from the decline itself. The one
-sanctioned path past it: having heard the acceptance directly rather than read a relayed
-report of it, the session holding the conversation posts an `**Accepted**` reply into that
-finding's own thread, naming what was approved, then runs the gate again:
-
-```bash
-gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted** — <what was approved>'
-```
-
-`blockingDeclines` in `scripts/merge-gate.mjs` reads that reply and drops the finding from
-the block. A subagent takes no such latitude: on this condition it reports `FAIL` and
-stops, same as on any other failing condition.
+computing mergeability is the queued merge landing, so ask again. Two round trips is the
+ceiling — a third `BEHIND` means `main` moves faster than the checks run, and sequencing
+that is the user's call.
 
 ## Merge, then clean up
 
@@ -129,19 +99,14 @@ open, and prints each issue it clears the label from.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. Then report the merge commit, the issue it
-closed, which issues it unblocked, that the checkout is on `main`, and any sign-off taken
-along the way — what was approved, heard directly rather than relayed.
+closed, which issues it unblocked and that the checkout is on `main`.
 
 ## What this skill will not do
 
 **Resolve a conflict.** It stops and hands the branch back.
 
-**Waive a condition from inside a dispatched run.** A gate that argues itself open on the
-merge it is judging is not a gate — see *A fenced path* and *A declined critical or
-warning*, both with the user's direct sign-off, for the two exceptions, and both belong to
-the session holding the conversation, never to a subagent. Widening
-`scripts/merge-gate.mjs`'s fence rule itself is a separate, reviewed change against that
-file, not something a single run decides for itself.
+**Waive a condition.** A gate that argues itself open on the merge it is judging is not a
+gate. Only `user-signoff`, run by the session holding the conversation, merges past one.
 
 **Review.** [`audit-pr`](../audit-pr/SKILL.md) does that; this skill reads what that pass
 left behind rather than forming an opinion of its own.

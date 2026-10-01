@@ -74,8 +74,8 @@ it took none — stop there.
 ## What this skill will not do
 
 **Merge.** Stop at the report, whatever the review found and however small the change.
-Stopping hands the merge to [`merge-pr`](../merge-pr/SKILL.md), not to the user; only its
-sign-off sections ask the user for one.
+Stopping hands the merge to [`merge-pr`](../merge-pr/SKILL.md), not to the user; only
+[`user-signoff`](../user-signoff/SKILL.md) asks the user for one.
 
 **Widen the issue.** A second bug found on the way is a second issue: file it or name it
 in the report, and leave it out of this branch. `gh issue create` leaves that issue off the

@@ -165,8 +165,8 @@ export function unanswered(comments) {
  * A declined `comment` is a taste call refused and ends a healthy review; anything else is
  * a judgment the user has not seen — unless an `**Accepted**` reply in the same thread
  * records that they have. That reply is a second comment, never the decline's own wording,
- * because `merge-pr`'s sign-off path is the only sanctioned way to write one: an agent
- * declining a finding for itself cannot also mark it seen.
+ * because `user-signoff` is the only sanctioned way to write one: an agent declining a
+ * finding for itself cannot also mark it seen.
  */
 const DECLINED = /^\*\*Declined\*\*/;
 const ACCEPTED = /^\*\*Accepted\*\*/;

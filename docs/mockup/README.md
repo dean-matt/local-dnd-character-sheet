@@ -296,7 +296,7 @@ changes `docs/mockup/components/` waits on their approval there.
    user approves is the head that merges.
 5. **Merge only on the user's approval.** `scripts/merge-gate.mjs` fences the directory,
    so the gate fails until the user approves the mockup on the canvas and the session
-   holding the conversation merges on that sign-off, as `merge-pr` describes.
+   holding the conversation merges on that sign-off, as `user-signoff` describes.
 
 No skill closes a pull request, so whoever closes one without merging puts the canvas back
 in the same turn: publish `main`'s version of each file it published, writing

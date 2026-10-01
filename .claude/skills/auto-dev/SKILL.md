@@ -42,7 +42,8 @@ whatever waits on the user, and where its review pass ran. Stop where the report
 - **names a changed mockup file** — the merge waits on the user's approval on the canvas.
   If this session holds the conversation, publish them as
   [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup) says. Either way,
-  stop and report them
+  stop and report them. An approval the user gives in this conversation goes to
+  [`user-signoff`](../user-signoff/SKILL.md) as step 3 says, and the run resumes at step 5
 
 **3. Run the gate and read the label.** The gate reads no label.
 
@@ -53,7 +54,11 @@ gh pr view <pr> --json labels --jq '[.labels[].name | select(startswith("review:
 
 Continue where the gate exits 0 and the label line reads exactly `review:approved`. Stop the
 run on either failing and quote what failed: each `FAIL` line, the usage line on exit 2, or
-the label line (empty means no review label).
+the label line (empty means no review label). Where the stop is a fenced path, a blocking
+decline or the label, and the user answers it in this conversation, run
+[`user-signoff`](../user-signoff/SKILL.md) yourself; never relabel and dispatch step 4,
+whose subagent would merge on a relayed answer. Then continue at step 5. Any other stop
+ends the run.
 
 **4. Merge.** Dispatch a second fresh subagent, since the agent that wrote the code is the
 worst reader of a gate judging its own work. Its prompt is exactly this, with the number
@@ -88,7 +93,8 @@ worktree add` fails on it until the user clears `.claude/worktrees/<n>`.
 
 **Resolve what stopped it, or skip past it.** A declined finding, a red check and a
 merge-gate condition are each the user's to weigh, and the board is ordered — taking the
-next issue buries that decision under a second pull request.
+next issue buries that decision under a second pull request. Step 3's `user-signoff` is
+not skipping past it: the user weighed the stop, and the run goes on only on their word.
 
 **Rerank the board.** The order is the user's.
 
