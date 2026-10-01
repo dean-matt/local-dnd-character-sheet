@@ -2,7 +2,8 @@
 
 How `optionalfeatureProgression` states how many options of a `featureType` a level
 knows, and what the ETL takes from it. The tables themselves are in
-`packages/content/src/schema.ts` and the loader is `packages/content/src/load/classes.ts`.
+`packages/content/src/schema.ts` and the loader is `packages/content/src/load/classes.ts`,
+which reads the progressions in `class-optional-features.ts`.
 
 `optionalfeatureProgression` — 9 blocks over 8 class entries, the `PHB` warlock carrying
 two, and 13 over 13 subclass entries — is the count half of the join whose pool half is a

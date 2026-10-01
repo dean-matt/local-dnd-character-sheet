@@ -207,7 +207,7 @@ export function getSubclassFeatures(
 /**
  * What a class grants by one level, assembled in a single connection: the resources and
  * slots printed at that level (a level with no row grants none, per
- * `packages/content/src/load/classes.ts`), the options known by then, and every feature
+ * `packages/content/src/load/class-table.ts`), the options known by then, and every feature
  * gained up to and including it.
  */
 export function getClassGrants(
@@ -264,7 +264,7 @@ const PREPARED_SPELLS_KEY = "prepared_spells";
 type PreparedRow = { level: number; value: string };
 
 /**
- * `packages/content/src/load/classes.ts` stores no row for a level a resource has not
+ * `packages/content/src/load/class-table.ts` stores no row for a level a resource has not
  * reached, so telling "no such column" from "not reached yet" needs every row for the
  * key, not just the one at this level — at most 20, one query reads them all.
  */

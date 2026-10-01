@@ -148,7 +148,7 @@ function reachesGrantPool(
  *
  * The level-keyed forms a class states belong to the tables keyed by level, so
  * one here is refused rather than folded onto a level this row does not carry —
- * the mirror of the refusal `classes.ts` makes for `*`.
+ * the mirror of the refusal `class-optional-features.ts` makes for `*`.
  */
 function grantCount(progression: unknown, context: string): number {
   if (!isRecord(progression)) {
