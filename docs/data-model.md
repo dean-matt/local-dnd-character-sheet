@@ -86,8 +86,9 @@ describe an outright grant, but nothing reads it structurally.
 
 **The API enforces a homebrew reference, since the schema cannot.** SQLite's foreign keys
 never see across `characters.db` and `homebrew.db`, separate files on separate connections.
-`routes/homebrew.ts` scans every character's `definition` for the id a delete names and
-refuses it, naming the characters holding it, rather than let it resolve to nothing.
+Each `routes/homebrew-*.ts` scans every character's `definition` for the id a delete
+names and refuses it, naming the characters holding it, rather than let it resolve to
+nothing.
 
 **A `homebrew_items` or `homebrew_spells` row's `json` holds the 5etools entry shape**,
 not a shape of our own — `packages/catalog` defines it. One renderer then serves the
