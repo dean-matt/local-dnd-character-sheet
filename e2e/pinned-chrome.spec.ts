@@ -1,46 +1,6 @@
-import { type APIRequestContext, expect, type Locator, type Page, test } from "@playwright/test";
-import { box } from "./box";
-
-async function edges(locator: Locator) {
-  const b = await box(locator);
-  return { top: b.y, bottom: b.y + b.height };
-}
-
-/** Pads `content` past the viewport, so the test needs no catalog to fill a sheet. */
-async function scrollToBottom(page: Page, content: Locator) {
-  await content.evaluate((element) => {
-    const spacer = document.createElement("div");
-    spacer.style.height = "3000px";
-    element.append(spacer);
-    window.scrollTo(0, document.documentElement.scrollHeight);
-  });
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-}
-
-async function createCharacter(request: APIRequestContext, name: string) {
-  const response = await request.post("/api/characters", {
-    data: {
-      name,
-      edition: "one",
-      levels: [{ class: { name: "Warlock", source: "XPHB" } }],
-      race: { name: "Half-Elf", source: "XPHB" },
-      background: { name: "Charlatan", source: "XPHB" },
-      abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    },
-  });
-  expect(response.ok()).toBe(true);
-  return (await response.json()).id as string;
-}
+import { expect, test } from "@playwright/test";
+import { edges, scrollToBottom } from "./box";
+import { createCharacter } from "./character";
 
 test("the top bar, character header and sidebar stay pinned in a tall window, the header on one line, and focus lands below them", async ({
   page,
@@ -112,31 +72,6 @@ test("the top bar, character header and sidebar stay pinned in a tall window, th
     await expect(page.locator("html")).toHaveCSS("scroll-padding-top", "64px");
     await scrollToBottom(page, page.locator("main"));
     expect((await edges(bar)).top).toBe(0);
-  } finally {
-    await request.delete(`/api/characters/${id}`);
-  }
-});
-
-test("in a window shorter than the rail, every rail row scrolls into view and the rail stays pinned", async ({
-  page,
-  request,
-}) => {
-  const id = await createCharacter(request, `E2E Short ${Date.now()}`);
-  try {
-    await page.setViewportSize({ width: 1280, height: 240 });
-    await page.goto(`/characters/${id}/p/stats`);
-    const rail = page.locator("aside");
-    await scrollToBottom(page, rail.locator("xpath=following-sibling::*"));
-    await rail.locator("> *").evaluate((element) => {
-      element.scrollTop = element.scrollHeight;
-    });
-
-    const railBox = await edges(rail);
-    expect(railBox.top).toBe((await edges(page.getByRole("banner"))).bottom);
-    expect(railBox.bottom).toBeLessThanOrEqual(240);
-    const collapseBox = await edges(page.getByRole("button", { name: "Collapse sidebar" }));
-    expect(collapseBox.top).toBeGreaterThanOrEqual(railBox.top);
-    expect(collapseBox.bottom).toBeLessThanOrEqual(railBox.bottom);
   } finally {
     await request.delete(`/api/characters/${id}`);
   }
