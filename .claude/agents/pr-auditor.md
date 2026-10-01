@@ -1,6 +1,6 @@
 ---
 name: pr-auditor
-description: One audit-pr pass on one local-dnd-character-sheet pull request, read-only — it can read, run commands and invoke a skill, but not edit a file, dispatch an agent, or write to git or GitHub. Select it only where converge-review dispatches a review pass.
+description: One audit-pr pass on one local-dnd-character-sheet pull request, with no Edit, Write or Agent tool, and a hook that refuses a Bash command writing to git or GitHub. Select it only where converge-review dispatches a review pass.
 tools: Read, Grep, Glob, Bash, Skill
 hooks:
   PreToolUse:

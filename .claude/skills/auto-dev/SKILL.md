@@ -99,6 +99,5 @@ asking. Nobody reads an unwatched run, and it merges to `main` all the same.
 writer until it reports back. Resuming it by hand, or dispatching a second one at the same
 issue, hands the worktree two drivers — wait for the report instead.
 
-**Research by fork.** A fork inherits this conversation, dispatch prompts included, and
-runs them as its own plan. Research an issue with an `Explore` agent, which holds no tool
-to edit a file or dispatch another agent.
+**Research by fork.** A fork runs the dispatch prompts it inherits, as `issue-to-pr`
+warns. Research with an `Explore` agent, which holds no Edit, Write or Agent tool.

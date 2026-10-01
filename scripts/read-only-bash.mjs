@@ -12,12 +12,12 @@
  */
 import { readFileSync, realpathSync } from "node:fs";
 
-const GIT = String.raw`\bgit(?:\s+-[Cc]\s+\S+|\s+--\S+)*\s+`;
+const GIT = String.raw`\bgit(?:\s+-[Cc]\s+(?:"[^"]*"|'[^']*'|\S+)|\s+--\S+)*\s+`;
 
 const RULES = [
   [
     new RegExp(
-      `${GIT}(?:add|am|apply|branch|checkout|cherry-pick|commit|merge|mv|pull|push|rebase|reset|restore|revert|rm|stash|switch|tag)\\b`,
+      `${GIT}(?:add|am|apply|branch|checkout|cherry-pick|clean|commit|merge|mv|pull|push|rebase|reset|restore|revert|rm|stash|switch|tag)\\b`,
     ),
     "changes a branch, the index or the remote",
   ],
@@ -26,7 +26,7 @@ const RULES = [
     "removes an issue's worktree",
   ],
   [
-    /\bgh\s+(?:pr|issue)\s+(?:close|comment|create|delete|develop|edit|lock|merge|ready|reopen|review|transfer)\b/,
+    /\bgh\s+(?:pr|issue)\s+(?:checkout|close|comment|create|delete|develop|edit|lock|merge|ready|reopen|revert|review|transfer|update-branch)\b/,
     "writes to a pull request or an issue",
   ],
   [/\bgh\s+(?:label|project|release|workflow|run|repo)\s+(?!list\b|view\b)\S/, "writes to GitHub"],
