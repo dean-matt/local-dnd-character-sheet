@@ -3,6 +3,7 @@
   "permissions": {
     "allow": [
       "Agent(general-purpose)",
+      "Agent(pr-auditor)",
       "Bash(gh:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh api repos/dean-matt/local-dnd-character-sheet/pulls/:*)",
