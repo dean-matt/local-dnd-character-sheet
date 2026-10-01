@@ -29,6 +29,27 @@ test("in a window shorter than the rail, every rail row scrolls into view and th
       expect(collapseBox.bottom).toBeLessThanOrEqual(railBox.bottom);
     }).toPass();
 
+    // A strip of the rail's left padding, where no row draws, so only the shadow changes it.
+    const container = rail.locator("> *");
+    const strip = async (edge: "top" | "bottom") => {
+      const b = await box(container);
+      const y = edge === "top" ? b.y + 2 : b.y + b.height - 6;
+      return page.screenshot({ clip: { x: b.x + 4, y, width: 8, height: 4 } });
+    };
+    const scrollRail = (to: "top" | "bottom") =>
+      container.evaluate((element, top) => {
+        element.scrollTop = top ? 0 : element.scrollHeight;
+      }, to === "top");
+    await expect(async () => {
+      await scrollRail("bottom");
+      const atEnd = { top: await strip("top"), bottom: await strip("bottom") };
+      await scrollRail("top");
+      const atStart = { top: await strip("top"), bottom: await strip("bottom") };
+      expect(atStart.top.equals(atEnd.bottom)).toBe(true);
+      expect(atEnd.top.equals(atStart.top)).toBe(false);
+      expect(atStart.bottom.equals(atEnd.bottom)).toBe(false);
+    }).toPass();
+
     // A classic scrollbar, as Windows draws, takes its width from the collapsed rail and
     // pushes the icons off center. macOS overlays one, so the style draws it here.
     await page.addStyleTag({ content: "::-webkit-scrollbar { width: 16px; }" });

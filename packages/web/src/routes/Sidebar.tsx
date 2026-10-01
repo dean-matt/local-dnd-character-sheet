@@ -102,11 +102,12 @@ export function Sidebar({
   const rowBase = `flex items-center gap-3 rounded-control px-2.5 py-2.5 ${collapsed ? "justify-center" : ""}`;
 
   // The collapsed rail has 40px inside its padding for 39px rows, so a classic scrollbar
-  // would push the icons off center. Hidden, the rows still scroll by wheel, touch and focus.
-  // A rail that must show its scrollbar needs a wider collapsed width first.
+  // would push the icons off center. Hidden, the rows still scroll by wheel, touch and focus,
+  // and scroll-shadow marks the clipped edge. A mouse with no wheel still cannot drag it, and
+  // showing a scrollbar needs a wider collapsed width first.
   return (
     <div
-      className="flex h-full flex-col gap-2.5 overflow-x-hidden overflow-y-auto [scrollbar-width:none] border-r border-border bg-surface px-4 py-5"
+      className="flex h-full flex-col gap-2.5 overflow-x-hidden overflow-y-auto [scrollbar-width:none] scroll-shadow border-r border-border bg-surface px-4 py-5"
       style={{
         width: collapsed ? "var(--spacing-sidebar-collapsed)" : "var(--spacing-sidebar)",
         transition: "width var(--duration-standard)",
