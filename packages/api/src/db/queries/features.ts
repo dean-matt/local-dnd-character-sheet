@@ -24,17 +24,16 @@ import {
   type EntryRef,
   houseRule,
 } from "@dnd/character";
+import { getBackground } from "./backgrounds.ts";
 import {
   type ClassFeatureRow,
-  getBackground,
   getClass,
   getClassFeatures,
-  getFeat,
-  getOptionalFeature,
   getSubclass,
   getSubclassFeatures,
-} from "./content.ts";
+} from "./classes.ts";
 import { parseJson, raceJson } from "./derived.ts";
+import { getFeat, getOptionalFeature } from "./feats.ts";
 import {
   getHomebrewBackground,
   getHomebrewClass,

@@ -1,6 +1,6 @@
 /** Liveness probe. `version` names the catalog's upstream tag, `null` before one is built. */
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { getCatalogVersion } from "../db/queries/content.ts";
+import { getCatalogVersion } from "../db/queries/catalog-meta.ts";
 
 const healthResponseSchema = z
   .object({ status: z.literal("ok"), version: z.string().nullable() })

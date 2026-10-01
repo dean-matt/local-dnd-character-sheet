@@ -6,7 +6,7 @@
 import { type BackgroundRecord, backgroundRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { type BackgroundRow, getBackground, listBackgrounds } from "../db/queries/content.ts";
+import { type BackgroundRow, getBackground, listBackgrounds } from "../db/queries/backgrounds.ts";
 import { notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;

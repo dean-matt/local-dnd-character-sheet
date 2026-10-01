@@ -15,9 +15,9 @@ import {
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { getSpell, listSpells, type SpellRow } from "../db/queries/content.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { listHomebrewSpells } from "../db/queries/homebrew.ts";
+import { getSpell, listSpells, type SpellRow } from "../db/queries/spells.ts";
 import { notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;

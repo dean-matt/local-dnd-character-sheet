@@ -37,17 +37,11 @@ import {
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import type { ZodType } from "zod";
-import {
-  getCasterRows,
-  getClass,
-  getFirstSpellSlotLevel,
-  getRace,
-  getSubclass,
-  getSubrace,
-  listSkills,
-} from "./content.ts";
+import { getCasterRows, getClass, getFirstSpellSlotLevel, getSubclass } from "./classes.ts";
 import { getHomebrewClass, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
+import { getRace, getSubrace } from "./races.ts";
+import { listSkills } from "./skills.ts";
 
 /** A class or race reference no catalog row or homebrew row answers. */
 export class UnresolvedReference extends Error {

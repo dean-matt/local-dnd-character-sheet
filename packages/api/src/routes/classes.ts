@@ -28,7 +28,7 @@ import {
   listClasses,
   listSubclasses,
   type SubclassRow,
-} from "../db/queries/content.ts";
+} from "../db/queries/classes.ts";
 import { notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;

@@ -1,6 +1,6 @@
 /** The catalog's build stamp: `content.db`'s `meta` table, read without a shell. */
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { getCatalogMeta } from "../db/queries/content.ts";
+import { getCatalogMeta } from "../db/queries/catalog-meta.ts";
 import { errorSchema } from "./errors.ts";
 
 const catalogMetaRowSchema = z.object({ key: z.string(), value: z.string() });

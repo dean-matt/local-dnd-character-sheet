@@ -12,9 +12,9 @@ import {
   weaponTraitSchema,
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName, itemKey } from "@dnd/character";
-import { getItems, getItemTypeNames } from "./content.ts";
 import { getHomebrewItem, type HomebrewDb } from "./homebrew.ts";
 import { getExpandedItem } from "./item-variant.ts";
+import { getItems, getItemTypeNames } from "./items.ts";
 
 type InventoryEntry = CharacterDefinition["inventory"][number];
 

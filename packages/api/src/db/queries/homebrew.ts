@@ -35,7 +35,7 @@ import {
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
-import { escapeLikeTerm } from "./content.ts";
+import { escapeLikeTerm } from "./search-terms.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;
 

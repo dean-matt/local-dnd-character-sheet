@@ -11,8 +11,8 @@ import {
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName } from "@dnd/character";
 import { type ZodType, z } from "zod";
-import { getSpells } from "./content.ts";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
+import { getSpells } from "./spells.ts";
 
 type SpellEntry = CharacterDefinition["spells"][number];
 
