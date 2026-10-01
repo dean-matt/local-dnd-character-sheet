@@ -11,8 +11,8 @@ SQL does, a route when the API contract does. A file holding two kinds changes f
 and a reader hunting one has to page past the other.
 
 `packages/api` shows the split: `src/routes/` holds one route file per resource,
-`src/db/queries/` the queries those routes call, and `src/db/` the connections and
-migrations beneath them.
+`src/db/queries/` the queries those routes call, and `src/db/` the Drizzle table
+schemas, connections and migrations beneath them.
 
 ## Placement follows dependency
 
@@ -21,7 +21,7 @@ Code bound to one feature lives beside that feature. Shared code then never impo
 feature, and deleting a feature takes its private code with it rather than orphaning a
 file in a shared folder.
 
-`packages/web/src` is the worked example:
+`packages/web/src` shows the shared locations:
 
 ```
 routes/             one file per route, plus the layout pieces around them
@@ -32,7 +32,10 @@ lib/                plain functions, the one request builder api.ts among them
 test/               helpers only tests import
 ```
 
-A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`.
+A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`. The tree does not
+yet hold to the placement rule everywhere: `lib/spellFacts.ts` has one reader,
+`components/blocks/SpellsSection.tsx`, and belongs beside it. Treat a file like that as
+one to move, not as precedent.
 
 ## A private helper gets its own file
 
@@ -49,8 +52,8 @@ this way. `content` exports only `./schema`, and `api` and `web` are application
 export nothing.
 
 Splitting a file never changes what the package exports. The new files re-export through
-`index.ts` under the same names, so no importer edits a path and the surface knip checks
-stays the same.
+`index.ts` under the same names, so no other package edits an import and the surface knip
+checks stays the same.
 
 ## Size is not the signal
 

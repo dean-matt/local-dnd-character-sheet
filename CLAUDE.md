@@ -109,7 +109,7 @@ duplicate a source of truth:
 | `package.json` | script bodies |
 | `README.md` | prerequisites, setup, the command list |
 | `CONTRIBUTING.md` | the reasoning behind every fence |
-| `docs/` | 5etools data quirks, data model, architecture, code organization, reviving |
+| `docs/` | 5etools data quirks, data model, architecture, code layout, reviving the project |
 | `packages/*/*.md` | anything true of one package only, such as dice notation |
 | `content.manifest.json` / `content.lock.json` | which upstream data is fetched |
 
@@ -137,7 +137,7 @@ The ladder runs *after* understanding the problem, never instead of it — the s
 change in the wrong place is a second bug. Fix root causes, not the path a report names:
 grep every caller and fix the shared function once. Prefer deleting to adding, boring to
 clever, and fewest files. Question a complex request rather than implementing it twice.
-Split a file that mixes concerns changing for different reasons; where code goes inside a
+Split a file whose concerns change for different reasons; where code goes inside a
 package is in [`docs/code-organization.md`](docs/code-organization.md).
 
 Do not be lazy about: understanding the problem, input validation at trust boundaries, error
