@@ -130,7 +130,7 @@ const hitDieRollSchema = z.strictObject({ number: z.literal(1), faces: z.int().p
 
 /**
  * A homebrew class's `json`: `classEntrySchema`'s shape plus a required `hd`, since a
- * homebrew class has no `packages/content/src/load/classes.ts` load step to reject a
+ * homebrew class has no `packages/content/src/load/class-rows.ts` load step to reject a
  * missing or malformed roll first — the schema is the only gate a caller's paste meets
  * before `homebrewClassRecordSchema.hitDie` reads `hd.faces` off it. It carries no
  * feature or subclass rows of its own — see `docs/data-model.md`.

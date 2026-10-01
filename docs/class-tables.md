@@ -2,7 +2,8 @@
 
 How `classTableGroups` states what a class gets at each level, and what the ETL can and
 cannot take from it. The tables themselves are in `packages/content/src/schema.ts` and
-the loader is `packages/content/src/load/classes.ts`.
+the loader is `packages/content/src/load/classes.ts`, which reads the table groups in
+`class-table.ts`.
 
 ## Class resources
 
