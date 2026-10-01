@@ -26,8 +26,11 @@ test("the collapse button lines up with the page rows, expanded and collapsed", 
 
   await collapse.click();
   const expand = page.getByRole("button", { name: "Expand sidebar" });
-  expect((await box(expand)).width).toBe((await box(row)).width);
-  expect(centerX(await box(expand.locator("svg")))).toBeCloseTo(
-    centerX(await box(row.locator("svg"))),
-  );
+  // The collapsed width can land a frame after the click, even with transitions at 0.01ms.
+  await expect(async () => {
+    expect((await box(expand)).width).toBe((await box(row)).width);
+    expect(centerX(await box(expand.locator("svg")))).toBeCloseTo(
+      centerX(await box(row.locator("svg"))),
+    );
+  }).toPass();
 });
