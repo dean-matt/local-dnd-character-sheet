@@ -162,7 +162,7 @@ land.
 Nothing.
 `;
 
-const REFERENCE_IN_DESCRIPTION = `## What
+const TWO_SENTENCES = `## What
 
 Search.
 
@@ -175,6 +175,24 @@ search shipped before them covers fewer types rather than being wrong.
 ## Out of scope
 
 Nothing.
+`;
+
+const SENTENCE_PER_BLOCKER = `## What
+
+Search.
+
+## Blocked by
+
+#75, for the route and the schema. #196 for the hit types.
+`;
+
+const COMMA_AFTER_DESCRIPTION = `## What
+
+Level up.
+
+## Blocked by
+
+#239, for the level-up flow, the picker.
 `;
 
 describe("blockedBySection", () => {
@@ -268,10 +286,21 @@ describe("removeBlockerTerm", () => {
     );
   });
 
-  it("leaves a term alone where the closed issue sits only in its description", () => {
-    expect(removeBlockerTerm(REFERENCE_IN_DESCRIPTION, 196)).toBe(REFERENCE_IN_DESCRIPTION);
-    expect(blockedBySection(removeBlockerTerm(REFERENCE_IN_DESCRIPTION, 192))).toMatch(
-      /^#75, which makes homebrew rows reachable\./,
+  it("reads a sentence opening with an issue as its own blocker", () => {
+    expect(blockedBySection(removeBlockerTerm(SENTENCE_PER_BLOCKER, 75))).toBe(
+      "#196 for the hit types.",
+    );
+  });
+
+  it("keeps the sentence a closed issue's sibling opens", () => {
+    expect(blockedBySection(removeBlockerTerm(TWO_SENTENCES, 75))).toBe(
+      "#192, which opens `content.db` and names the leaf package a result schema lives in. #196 and #197 widen what a hit can be, and a\nsearch shipped before them covers fewer types rather than being wrong.",
+    );
+  });
+
+  it("keeps the blocker listed after the closed one in the same sentence", () => {
+    expect(blockedBySection(removeBlockerTerm(TWO_SENTENCES, 192))).toMatch(
+      /^#75, which makes homebrew rows reachable\. #196 and #197/,
     );
   });
 });
@@ -295,6 +324,14 @@ describe("stillBlocked", () => {
 
   it("reads an 'and' inside a blocker's description as part of it", () => {
     expect(stillBlocked(SENTENCE_AFTER_PAIR, 75, new Set())).toBe(false);
+  });
+
+  it("stays true for a later sentence's blocker once the first closes", () => {
+    expect(stillBlocked(SENTENCE_PER_BLOCKER, 75, new Set([196]))).toBe(true);
+  });
+
+  it("stays true for an unnumbered blocker a comma sets after a description", () => {
+    expect(stillBlocked(COMMA_AFTER_DESCRIPTION, 239, new Set())).toBe(true);
   });
 
   it("clears once every paragraph's blocker has closed", () => {
