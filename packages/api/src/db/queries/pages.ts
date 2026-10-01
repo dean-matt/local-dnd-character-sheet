@@ -13,7 +13,6 @@ type PageRecordRow = typeof characterPages.$inferSelect;
 /** What a transaction and the database both offer, so a helper serves either. */
 type Db = Pick<CharactersDb, "select" | "insert" | "delete">;
 
-/** The preset rows for one character, at the head of its order. */
 export function presetPageRows(characterId: string): PageRow[] {
   return PRESET_PAGES.map((page, position) => ({ ...page, characterId, position, preset: true }));
 }

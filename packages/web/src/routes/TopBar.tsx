@@ -43,10 +43,6 @@ const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 tex
 const current = "font-bold text-accent-text";
 const elsewhere = "font-medium text-secondary";
 
-/**
- * Application top bar: the "Local D&D" wordmark, a Character switcher menu, and a
- * Settings link to the Settings page.
- */
 export function TopBar() {
   const characters = useCharacters();
   const [open, setOpen] = useState(false);
@@ -80,7 +76,6 @@ export function TopBar() {
         Local D&D
       </Link>
 
-      {/* Character menu */}
       <div className="relative shrink-0">
         <button
           type="button"

@@ -20,7 +20,6 @@ export type TermInput<Ref = unknown> = {
   reference?: Ref;
 };
 
-/** A computed total alongside the terms that produced it. */
 export type Breakdown<Ref = unknown> = {
   total: number;
   terms: Term<Ref>[];

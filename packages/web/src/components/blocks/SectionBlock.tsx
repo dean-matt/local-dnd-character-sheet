@@ -10,7 +10,6 @@ import { InventorySection } from "./InventorySection.tsx";
 import { SpellsSection } from "./SpellsSection.tsx";
 import type { BlockViewProps } from "./types.ts";
 
-/** A whole sheet section. */
 export function SectionBlockView({ block, character, derived }: BlockViewProps) {
   if (block.kind !== "section") return null;
   switch (block.section) {

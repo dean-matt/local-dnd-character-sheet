@@ -2,7 +2,6 @@ import type { CharacterPageRecord } from "@dnd/character";
 import { type ReactNode, useState } from "react";
 import { NavLink } from "react-router";
 
-/** One or more SVG paths per page slug. */
 const PAGE_PATHS: Record<string, readonly string[]> = {
   stats: ["M4 14h4v6H4zM10 9h4v11h-4zM16 4h4v16h-4z"],
   spells: ["M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"],

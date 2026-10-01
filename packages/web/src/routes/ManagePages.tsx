@@ -177,7 +177,6 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
       className="m-auto w-[360px] rounded-card border-0 bg-surface p-0 shadow-modal print:hidden"
     >
       <div className="flex flex-col gap-3 p-5">
-        {/* Title row */}
         <div className="flex items-center justify-between">
           <h2 id={headingId} className="text-sm font-bold text-ink">
             Manage pages
@@ -208,7 +207,6 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
 
         {error && <ErrorState message={error.message} />}
 
-        {/* Page rows */}
         <ol className="flex flex-col gap-1">
           {pages.map((page, index) => {
             const lastVisible = !page.hidden && visible.length === 1;
@@ -256,7 +254,6 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
           })}
         </ol>
 
-        {/* Footer */}
         <button
           type="button"
           className={secondaryBtn}

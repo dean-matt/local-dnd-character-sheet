@@ -254,7 +254,6 @@ function Legend() {
   );
 }
 
-/** One stat on the subtle fill: a tracked label above the value. */
 function Tile({
   label,
   name,
