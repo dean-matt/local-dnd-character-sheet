@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { edges, scrollToBottom } from "./box";
-import { createCharacter } from "./character";
+import { edges } from "./box";
+import { createCharacter, scrollToBottom } from "./character";
 
 test("the top bar, character header and sidebar stay pinned in a tall window, the header on one line, and focus lands below them", async ({
   page,
