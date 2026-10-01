@@ -94,6 +94,18 @@ describe("CharacterHeader", () => {
     );
   });
 
+  it("names the character's edition as its year's rules", () => {
+    const { rerender } = render(<CharacterHeader character={warlock()} />);
+    const chip = screen.getByTitle("This character uses the 2024 rules");
+    expect(chip).toHaveTextContent(/^2024 rules$/);
+    expect(chip.querySelector(".sr-only")).toHaveTextContent("rules");
+
+    rerender(<CharacterHeader character={{ ...warlock(), edition: "classic" }} />);
+    expect(screen.getByTitle("This character uses the 2014 rules")).toHaveTextContent(
+      /^2014 rules$/,
+    );
+  });
+
   it("leaves the printed page to the print title", () => {
     const { container } = render(<CharacterHeader character={warlock()} />);
     expect(container.firstElementChild).toHaveClass("print:hidden");

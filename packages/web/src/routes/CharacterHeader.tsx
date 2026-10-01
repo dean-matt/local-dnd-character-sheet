@@ -1,4 +1,5 @@
 import { type CharacterRecord, classLevelLabel, classLevels, displayName } from "@dnd/character";
+import { EditionTag } from "../components/Tag.tsx";
 import { avatarColor } from "../lib/avatarColor.ts";
 
 /** Race, classes with levels, then background and whatever else the player set, in one line. */
@@ -39,6 +40,7 @@ export function CharacterHeader({ character }: { character: CharacterRecord }) {
         <h1 title={character.name} className="min-w-0 truncate font-bold text-lg">
           {character.name}
         </h1>
+        <EditionTag edition={character.edition} />
         <span aria-hidden="true" className="shrink-0 text-body text-muted">
           ·
         </span>
