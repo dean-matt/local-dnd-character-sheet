@@ -36,6 +36,7 @@ import {
   hitDicePoolSchema,
   hitPointMaximum,
   houseRule,
+  type ItemDefenseTrait,
   itemKey,
   PRESET_PAGES,
   passiveSkill,
@@ -94,6 +95,7 @@ const derivedInput = (traits: object = {}) => ({
   encumbrance: null,
   attunementSlots: { computed: 3 },
   attacks: [],
+  defenses: { computed: { resistances: [], damageImmunities: [], conditionImmunities: [] } },
   ...raceTraits,
   ...traits,
 });
@@ -1028,6 +1030,7 @@ describe("deriveCharacter", () => {
   const LONGSWORD = { name: "Longsword", source: "XPHB" };
   const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
   const noBonus = { attack: 0, damage: 0 };
+  const noDefenses = { resist: [], immune: [], conditionImmune: [] };
   const DAGGER_TRAIT: WeaponTrait = {
     kind: "melee",
     properties: ["F|XPHB", "L|XPHB", "T|XPHB"],
@@ -1093,6 +1096,8 @@ describe("deriveCharacter", () => {
       [entryKey({ name: "Dagger", source: "XPHB" }), DAGGER_TRAIT],
       [entryKey(LONGSWORD), LONGSWORD_TRAIT],
     ]),
+    raceDefenses: noDefenses,
+    itemDefenses: new Map<string, ItemDefenseTrait>(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -1374,6 +1379,82 @@ describe("deriveCharacter", () => {
     it("parses as the derived block's attacks", () => {
       const block = deriveCharacter(withSword({}, equipped), catalog);
       expect(characterDerivedSchema.parse(block).attacks).toHaveLength(2);
+    });
+  });
+
+  describe("defenses", () => {
+    const DWARF = { name: "Dwarf", source: "PHB" };
+    const HILL = { name: "Hill", source: "PHB" };
+    const RING = { name: "Ring of Poison Resistance", source: "DMG" };
+    const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
+    const hillDwarf = (inventory: CharacterDefinition["inventory"]): CharacterDefinition => ({
+      ...definition,
+      race: DWARF,
+      subrace: HILL,
+      inventory,
+    });
+    const worn = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: flags.equipped ?? false,
+      attuned: flags.attuned ?? false,
+    });
+    const defended = {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(RING), 0], [entryKey(PERIAPT), 0]]),
+      raceDefenses: { ...noDefenses, resist: ["poison"] },
+      itemDefenses: new Map<string, ItemDefenseTrait>([
+        [
+          entryKey(RING),
+          { ...noDefenses, resist: ["poison"], name: RING.name, requiresAttunement: true },
+        ],
+        [
+          entryKey(PERIAPT),
+          {
+            resist: [],
+            immune: ["poison"],
+            conditionImmune: ["poisoned"],
+            name: PERIAPT.name,
+            requiresAttunement: false,
+          },
+        ],
+      ]),
+    };
+    const defensesOf = (inventory: CharacterDefinition["inventory"]) =>
+      deriveCharacter(hillDwarf(inventory), defended).defenses.computed;
+
+    it("names the race and subrace that grant a resistance", () => {
+      expect(defensesOf([])).toEqual({
+        resistances: [{ name: "poison", from: ["Dwarf (Hill)"] }],
+        damageImmunities: [],
+        conditionImmunities: [],
+      });
+    });
+
+    it("lists a type granted twice once, naming both sources", () => {
+      expect(defensesOf([worn(RING, { equipped: true, attuned: true })]).resistances).toEqual([
+        { name: "poison", from: ["Dwarf (Hill)", RING.name] },
+      ]);
+    });
+
+    it("grants an attunement item's defenses only while equipped and attuned", () => {
+      const raceOnly = [{ name: "poison", from: ["Dwarf (Hill)"] }];
+      expect(defensesOf([worn(RING, { equipped: true })]).resistances).toEqual(raceOnly);
+      expect(defensesOf([worn(RING, { attuned: true })]).resistances).toEqual(raceOnly);
+    });
+
+    it("grants any other item's defenses only while equipped", () => {
+      expect(defensesOf([worn(PERIAPT, { attuned: true })]).damageImmunities).toEqual([]);
+      expect(defensesOf([worn(PERIAPT, { equipped: true })])).toMatchObject({
+        damageImmunities: [{ name: "poison", from: [PERIAPT.name] }],
+        conditionImmunities: [{ name: "poisoned", from: [PERIAPT.name] }],
+      });
+    });
+
+    it("parses as the derived block's defenses", () => {
+      const block = deriveCharacter(hillDwarf([worn(PERIAPT, { equipped: true })]), defended);
+      expect(characterDerivedSchema.parse(block).defenses.manual).toBeNull();
     });
   });
 

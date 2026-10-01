@@ -218,7 +218,7 @@ says how much of the artboard the app builds today.
 | `HP` | #277, #281, #487 | read-only |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
-| `Defenses` | #387, #488 | nothing |
+| `Defenses` | #387, #488 | read-only |
 | `ShortRestModal` | #281 | nothing |
 | `LongRestModal` | #281 | nothing |
 | `Currency` | #229 | read-only |

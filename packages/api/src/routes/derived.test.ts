@@ -33,6 +33,9 @@ const BARDING = { name: "Barding", source: "PHB" };
 const LONGSWORD = { name: "Longsword", source: "PHB" };
 const PLUS_ONE_WEAPON = { name: "+1 Weapon", source: "DMG" };
 const DAGGER_OF_VENOM = { name: "Dagger of Venom", source: "DMG" };
+const DWARF = { name: "Dwarf", source: "PHB" };
+const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
+const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -197,7 +200,10 @@ describe("derivedRoutes", () => {
           }),
         },
       ],
-      races: [{ ...ELF, edition: "classic", json: JSON.stringify({ size: ["M"], speed: 30 }) }],
+      races: [
+        { ...ELF, edition: "classic", json: JSON.stringify({ size: ["M"], speed: 30 }) },
+        { ...DWARF, edition: "classic", json: JSON.stringify({ size: ["M"], speed: 25 }) },
+      ],
       subraces: [
         {
           name: "Wood",
@@ -206,6 +212,14 @@ describe("derivedRoutes", () => {
           race_source: "PHB",
           edition: "classic",
           json: JSON.stringify({ size: ["M"], speed: 35 }),
+        },
+        {
+          name: "Hill",
+          source: "PHB",
+          race_name: "Dwarf",
+          race_source: "PHB",
+          edition: "classic",
+          json: JSON.stringify({ size: ["M"], speed: 25, resist: ["poison"] }),
         },
       ],
       items: [
@@ -240,6 +254,17 @@ describe("derivedRoutes", () => {
           requires: [{ weapon: true }],
           inherits: { namePrefix: "+1 ", source: "DMG", bonusWeapon: "+1" },
         }),
+        item(FIRE_RESISTANCE, "magicvariant", {
+          type: "GV",
+          requires: [{ armor: true }],
+          inherits: {
+            nameSuffix: " of Fire Resistance",
+            source: "DMG",
+            reqAttune: true,
+            resist: ["fire"],
+          },
+        }),
+        item(PERIAPT, "item", { immune: ["poison"], conditionImmune: ["poisoned"] }),
         item(BARDING, "magicvariant", {
           type: "GV",
           requires: [{ armor: true }],
@@ -454,6 +479,28 @@ describe("derivedRoutes", () => {
     expect(attack?.entry).toBe(1);
     expect(attack?.damage?.dice).toBe("1d8");
     expect(attack?.grip).toEqual({ held: "one-handed", twoHandedBlocked: true });
+  });
+
+  it("gathers the subrace's defenses and those of an attuned variant and an equipped item", async () => {
+    store(
+      definitionWith({
+        race: DWARF,
+        subrace: { name: "Hill", source: "PHB" },
+        inventory: [
+          { ref: PLATE, variant: FIRE_RESISTANCE, equipped: true, attuned: true },
+          { ref: PERIAPT, equipped: true },
+        ],
+      }),
+    );
+
+    expect((await derived()).defenses.computed).toEqual({
+      resistances: [
+        { name: "poison", from: ["Dwarf (Hill)"] },
+        { name: "fire", from: ["Plate Armor of Fire Resistance"] },
+      ],
+      damageImmunities: [{ name: "poison", from: [PERIAPT.name] }],
+      conditionImmunities: [{ name: "poisoned", from: [PERIAPT.name] }],
+    });
   });
 
   it("reads an equipped item that resolves to nothing as unarmored", async () => {
