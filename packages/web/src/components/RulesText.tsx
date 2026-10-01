@@ -1,8 +1,3 @@
-/**
- * Renders 5etools rules text: `RulesText` turns one markup string into its tokens, and
- * `RulesEntries` walks the recursive `entries` structure around it — prose, lists, tables
- * and named subsections — down to the strings `RulesText` renders.
- */
 import { parseTags } from "@dnd/tags";
 import { RulesBlock } from "./RulesBlock.tsx";
 import { RulesTokens } from "./RulesTokens.tsx";

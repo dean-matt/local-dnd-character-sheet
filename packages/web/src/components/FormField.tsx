@@ -1,7 +1,7 @@
 /**
  * The chrome every form control renders inside: the label above it, a status line and an
  * error message below it, and the `id` and `aria-describedby` that tie the three to the
- * control. `FormField` takes any control through its render prop; `InputField`, beside it, is the
+ * control. `FormField` takes any control through its render prop; `InputField`, in its own file, is the
  * native `<input>` case, which most call sites want.
  *
  * The error reaches a screen reader through `aria-describedby` and a `role="alert"`

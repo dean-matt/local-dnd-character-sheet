@@ -1,9 +1,6 @@
 /**
  * The outermost `RulesText`, `RulesEntries` or `RulesBlock` is a block: it resolves every
- * reference inside it in one request, and a reference the catalog answers opens a popover
- * of that row's text. One it does not answer — or has not yet — renders as its display
- * text alone, its fields carried on the span as data attributes, and so does a roll
- * until a later tier makes it clickable.
+ * reference inside it in one request.
  */
 import { type ReactNode, useContext } from "react";
 import { ResolvedRefsProvider } from "./ResolvedRefsProvider.tsx";

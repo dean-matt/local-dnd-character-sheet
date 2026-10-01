@@ -8,6 +8,11 @@ import { ResolvedRefs } from "./resolvedRefsContext.ts";
 
 type RefToken = Extract<Token, { kind: "ref" }>;
 
+/**
+ * A reference the catalog answers opens a popover of that row's text. One it does not
+ * answer — or has not yet — renders as its display text alone, its fields carried on the
+ * span as data attributes.
+ */
 export function RulesRef({ token }: { token: RefToken }) {
   const row = useContext(ResolvedRefs)?.get(refKey(token));
   const prose = row === undefined ? [] : paragraphs(row.entries);

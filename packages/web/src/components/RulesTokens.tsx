@@ -20,7 +20,10 @@ function renderToken(token: Token, key: string): ReactNode {
   }
 }
 
-/** A parsed markup string's tokens, as the elements each one means. */
+/**
+ * A parsed markup string's tokens, as the elements each one means. A roll renders as its
+ * text until a later tier makes it clickable.
+ */
 export function RulesTokens({ tokens, keyPrefix }: { tokens: Token[]; keyPrefix: string }) {
   return tokens.map((token, index) => renderToken(token, `${keyPrefix}-${index}`));
 }

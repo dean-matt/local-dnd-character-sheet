@@ -1,3 +1,7 @@
+/**
+ * Walks 5etools' recursive `entries` structure — prose, lists, tables and named
+ * subsections — down to the markup strings `RulesText` renders.
+ */
 import type { Entries } from "@dnd/catalog";
 import type { ReactNode } from "react";
 import { type EntryNode, isEntries, isRecord, str } from "../lib/entryGuards.ts";
