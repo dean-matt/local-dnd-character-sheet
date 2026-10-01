@@ -1011,7 +1011,7 @@ export const characterDerivedSchema = z.strictObject({
       grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
     }),
   ),
-  /** Resistances and immunities from the race, then from each item granting them while equipped or attuned. */
+  /** Resistances and immunities from the race, then from each equipped item, attuned where it must be. */
   defenses: derivedSchema(defensesSchema),
 });
 
@@ -1339,8 +1339,8 @@ function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly st
 }
 
 /**
- * The race's grants, then each item's: one that requires attunement grants while attuned,
- * any other while equipped. A resistance stays listed beside an immunity to the same type,
+ * The race's grants, then each equipped item's, where one that requires attunement also
+ * waits on it: every such item upstream grants only while worn. A resistance stays listed beside an immunity to the same type,
  * since each names a source the reader may want.
  */
 function derivedDefenses(
@@ -1350,7 +1350,7 @@ function derivedDefenses(
   const grants: Grant[] = [{ ...catalog.raceDefenses, from: raceLabel(definition) }];
   for (const entry of definition.inventory) {
     const item = catalog.itemDefenses.get(itemKey(entry));
-    if (item && (item.requiresAttunement ? entry.attuned : entry.equipped)) {
+    if (item && entry.equipped && (entry.attuned || !item.requiresAttunement)) {
       grants.push({ ...item, from: item.name });
     }
   }

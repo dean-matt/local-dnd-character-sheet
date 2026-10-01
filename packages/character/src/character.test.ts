@@ -1433,15 +1433,15 @@ describe("deriveCharacter", () => {
     });
 
     it("lists a type granted twice once, naming both sources", () => {
-      expect(defensesOf([worn(RING, { attuned: true })]).resistances).toEqual([
+      expect(defensesOf([worn(RING, { equipped: true, attuned: true })]).resistances).toEqual([
         { name: "poison", from: ["Dwarf (Hill)", RING.name] },
       ]);
     });
 
-    it("grants an attunement item's defenses only while attuned", () => {
-      expect(defensesOf([worn(RING, { equipped: true })]).resistances).toEqual([
-        { name: "poison", from: ["Dwarf (Hill)"] },
-      ]);
+    it("grants an attunement item's defenses only while equipped and attuned", () => {
+      const raceOnly = [{ name: "poison", from: ["Dwarf (Hill)"] }];
+      expect(defensesOf([worn(RING, { equipped: true })]).resistances).toEqual(raceOnly);
+      expect(defensesOf([worn(RING, { attuned: true })]).resistances).toEqual(raceOnly);
     });
 
     it("grants any other item's defenses only while equipped", () => {

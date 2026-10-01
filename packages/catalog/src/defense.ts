@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * One list of damage types or conditions, lowercased. A `{choose: {from}}` element names a
  * pick the character stores nowhere, so it grants nothing: `Dragonborn` (PHB) resists
- * nothing here, and its colour versions, such as `Dragonborn (Black)`, state theirs. A
+ * nothing here, and its color versions, such as `Dragonborn (Black)`, state theirs. A
  * subrace's `null` clears what its race granted, as `Draconblood` (EGW) does. A malformed
  * list grants nothing rather than refusing the row.
  */

@@ -41,7 +41,8 @@ function ChipRow({ heading, items }: { heading: string; items: readonly Chip[] }
                 detail={<p>{chip.effect}</p>}
                 className={`${PILL} block`}
               >
-                {chip.label}
+                <span aria-hidden="true">{chip.label}</span>
+                <span className="sr-only">{chip.title}</span>
               </DetailTrigger>
             </li>
           ))}

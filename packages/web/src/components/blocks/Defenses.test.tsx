@@ -31,7 +31,8 @@ describe("Defenses", () => {
       within(card)
         .getAllByRole("button")
         .map((chip) => chip.textContent),
-    ).toEqual(["Poison", "Fire", "Poisoned"]);
+    ).toEqual(["PoisonPoison Resistance", "FireFire Immunity", "PoisonedPoisoned Immunity"]);
+    expect(within(card).getByRole("button", { name: "Fire Immunity" })).toBeInTheDocument();
     expect(within(card).queryByText("None.")).not.toBeInTheDocument();
   });
 
@@ -40,7 +41,7 @@ describe("Defenses", () => {
       resistances: [{ name: "poison", from: ["Dwarf (Hill)", "Ring of Poison Resistance"] }],
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Poison" }));
+    fireEvent.click(screen.getByRole("button", { name: "Poison Resistance" }));
     const dialog = screen.getByRole("dialog", { name: "Poison Resistance" });
     expect(dialog).toHaveTextContent("From Dwarf (Hill) and Ring of Poison Resistance");
     expect(dialog).toHaveTextContent("You take half damage from poison damage, rounded down.");

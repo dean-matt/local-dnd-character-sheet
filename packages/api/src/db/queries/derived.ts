@@ -25,6 +25,7 @@ import {
   type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
+  type DefenseTrait,
   type EntryRef,
   entryKey,
   type ItemDefenseTrait,
@@ -215,7 +216,7 @@ function weaponTraits(
   return weapons;
 }
 
-const grantsAny = (trait: { resist: unknown[]; immune: unknown[]; conditionImmune: unknown[] }) =>
+const grantsAny = (trait: DefenseTrait) =>
   trait.resist.length + trait.immune.length + trait.conditionImmune.length > 0;
 
 const raceDefenses = (json: unknown) =>
