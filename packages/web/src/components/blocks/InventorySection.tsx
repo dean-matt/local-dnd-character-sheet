@@ -15,6 +15,7 @@ import { type Attack, AttackChips, type Grip } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
 import { ListRow } from "../ListRow.tsx";
+import { NotFoundTag } from "../NotFoundTag.tsx";
 import { Popover } from "../Popover.tsx";
 import { firstLine, RulesEntries } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
@@ -122,7 +123,13 @@ function Marks({ item }: { item: SheetItem }) {
   );
 }
 
-function UnresolvedRow({ item }: { item: Extract<SheetItem, { resolved: false }> }) {
+function UnresolvedRow({
+  item,
+  characterId,
+}: {
+  item: Extract<SheetItem, { resolved: false }>;
+  characterId: string;
+}) {
   const source = item.source ? ` (${item.source})` : "";
   const variant = item.variant ? `, as ${item.variant.name} (${item.variant.source})` : "";
   return (
@@ -131,9 +138,18 @@ function UnresolvedRow({ item }: { item: Extract<SheetItem, { resolved: false }>
       chips={
         <>
           <Marks item={item} />
-          <Tag>
-            {item.source === undefined ? "Not found in homebrew" : "Not found in the catalog"}
-          </Tag>
+          <NotFoundTag
+            characterId={characterId}
+            kinds={["item"]}
+            refs={
+              item.source === undefined
+                ? []
+                : [
+                    { name: item.name, source: item.source },
+                    ...(item.variant ? [item.variant] : []),
+                  ]
+            }
+          />
         </>
       }
     />
@@ -345,7 +361,7 @@ function ItemList({
                   saving={update.isPending}
                 />
               ) : (
-                <UnresolvedRow key={index} item={item} />
+                <UnresolvedRow key={index} item={item} characterId={character.id} />
               ),
             )}
           </ul>

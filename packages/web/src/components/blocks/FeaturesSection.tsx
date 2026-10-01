@@ -5,12 +5,13 @@
  * feature skips the rest.
  */
 import type { FeatureGroup, FeatureOrigin, SheetFeature } from "@dnd/catalog";
-import type { CharacterRecord } from "@dnd/character";
+import type { CatalogKind, CharacterRecord } from "@dnd/character";
 import { useId, useState } from "react";
 import { useCharacterFeatures } from "../../hooks/useCharacterFeatures.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { ListRow } from "../ListRow.tsx";
+import { NotFoundTag } from "../NotFoundTag.tsx";
 import { firstLine, RulesBlock, RulesEntries } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
@@ -50,7 +51,17 @@ const FEATURE_TYPE_LABEL: Record<string, string> = {
 type Entry = { feature: SheetFeature; group: FeatureGroup };
 
 /** An unresolved feature with no source is a homebrew reference, which names no source. */
-function FeatureRow({ feature, group }: Entry) {
+/** The catalog tables an unresolved feature's own reference may name, by its group. */
+const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
+  class: ["class"],
+  subclass: ["subclass"],
+  race: ["race", "subrace"],
+  background: ["background"],
+  feat: ["feat"],
+  optionalFeature: ["optionalFeature"],
+};
+
+function FeatureRow({ feature, group, characterId }: Entry & { characterId: string }) {
   const type =
     feature.featureType === undefined
       ? undefined
@@ -67,7 +78,11 @@ function FeatureRow({ feature, group }: Entry) {
         </Tag>
       )}
       {!feature.resolved && (
-        <Tag>{feature.source ? "Not found in the catalog" : "Not found in homebrew"}</Tag>
+        <NotFoundTag
+          characterId={characterId}
+          kinds={ORIGIN_KINDS[group.origin]}
+          refs={feature.source ? [{ name: feature.name, source: feature.source }] : []}
+        />
       )}
     </>
   );
@@ -149,7 +164,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
               <ul className="flex flex-col gap-2">
                 {widget.matches.map((entry, index) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: one name can recur at several levels, and nothing reorders the list.
-                  <FeatureRow key={index} {...entry} />
+                  <FeatureRow key={index} {...entry} characterId={character.id} />
                 ))}
               </ul>
             )}

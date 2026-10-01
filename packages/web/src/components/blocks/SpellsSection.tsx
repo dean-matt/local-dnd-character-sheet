@@ -27,6 +27,7 @@ import { signed } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { Field, OverrideMark } from "../Field.tsx";
 import { ListRow } from "../ListRow.tsx";
+import { NotFoundTag } from "../NotFoundTag.tsx";
 import { firstLine, RulesEntries, RulesText } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
@@ -153,7 +154,7 @@ function DamageChips({ spell }: { spell: Extract<SheetSpell, { resolved: true }>
   );
 }
 
-function SpellRow({ spell }: { spell: SheetSpell }) {
+function SpellRow({ spell, characterId }: { spell: SheetSpell; characterId: string }) {
   const homebrew = spell.source === undefined;
   const marks = (
     <>
@@ -169,7 +170,11 @@ function SpellRow({ spell }: { spell: SheetSpell }) {
         chips={
           <>
             {marks}
-            <Tag>{homebrew ? "Not found in homebrew" : "Not found in the catalog"}</Tag>
+            <NotFoundTag
+              characterId={characterId}
+              kinds={["spell"]}
+              refs={spell.source ? [{ name: spell.name, source: spell.source }] : []}
+            />
           </>
         }
       />
@@ -245,7 +250,7 @@ function SpellList({ character }: { character: CharacterRecord }) {
             <ul className="flex flex-col gap-1.5">
               {group.spells.map((spell, index) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: a spell learned through two classes is listed twice under one name.
-                <SpellRow key={index} spell={spell} />
+                <SpellRow key={index} spell={spell} characterId={character.id} />
               ))}
             </ul>
           </div>

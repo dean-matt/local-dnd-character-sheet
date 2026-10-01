@@ -1,5 +1,9 @@
 import type { CharacterInventory } from "@dnd/catalog";
-import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterReferences,
+  characterDefinitionSchema,
+} from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -138,8 +142,15 @@ const load = (overrides: Partial<CharacterDerived> = {}): CharacterDerived => ({
   ...overrides,
 });
 
-function renderSection(derived: CharacterDerived | null = load(), inventory = INVENTORY) {
-  const fetchMock = stubFetchByUrl({ "/api/characters/1/inventory": inventory });
+function renderSection(
+  derived: CharacterDerived | null = load(),
+  inventory = INVENTORY,
+  references?: CharacterReferences,
+) {
+  const fetchMock = stubFetchByUrl({
+    "/api/characters/1/inventory": inventory,
+    ...(references && { "/api/characters/1/references": references }),
+  });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -241,6 +252,23 @@ describe("InventorySection", () => {
     expect(net).toHaveTextContent("Net (PHB), as +1 Weapon (DMG)");
     expect(net).toHaveTextContent("Not found in the catalog");
     expect(within(net).queryByRole("button")).toBeNull();
+  });
+
+  it("names the variant a renamed one became", async () => {
+    renderSection(load(), INVENTORY, {
+      unresolved: [
+        {
+          field: "inventory[3].variant",
+          kind: "item",
+          ref: { name: "+1 Weapon", source: "DMG" },
+          parent: { name: "Net", source: "PHB" },
+          renamedTo: { name: "+1 Weapon", source: "XDMG" },
+        },
+      ],
+    });
+
+    const net = (await screen.findByText(/Net \(PHB\)/)).closest("li") as HTMLElement;
+    expect(await within(net).findByText("Renamed to +1 Weapon (XDMG)")).toBeInTheDocument();
   });
 
   it("counts the attunement slots in use against the derived total", () => {

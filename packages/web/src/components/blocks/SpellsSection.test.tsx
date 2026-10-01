@@ -1,5 +1,5 @@
 import type { CharacterSpells } from "@dnd/catalog";
-import type { CharacterDerived } from "@dnd/character";
+import type { CharacterDerived, CharacterReferences } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -65,8 +65,12 @@ const computed = (value: number) => ({ computed: value, manual: null, terms: [] 
 function renderSection(
   derived: CharacterDerived = derivedRecord(),
   spells: CharacterSpells = SPELLS,
+  references?: CharacterReferences,
 ) {
-  const fetchMock = stubFetchByUrl({ "/api/characters/1/spells": spells });
+  const fetchMock = stubFetchByUrl({
+    "/api/characters/1/spells": spells,
+    ...(references && { "/api/characters/1/references": references }),
+  });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -223,6 +227,39 @@ describe("SpellsSection", () => {
     const row = (await screen.findByText("Lost Spell (PHB)")).closest("li") as HTMLElement;
     expect(row).toHaveTextContent("Not found in the catalog");
     expect(within(row).queryByRole("button")).toBeNull();
+  });
+
+  it("names the row a renamed reference became, without showing it", async () => {
+    renderSection(derivedRecord(), SPELLS, {
+      unresolved: [
+        {
+          field: "spells[0].ref",
+          kind: "item",
+          ref: { name: "Lost Spell", source: "PHB" },
+          renamedTo: { name: "Lost Item", source: "XPHB" },
+        },
+        {
+          field: "spells[3].ref",
+          kind: "spell",
+          ref: { name: "Lost Spell", source: "PHB" },
+          renamedTo: { name: "Found Spell", source: "XPHB" },
+        },
+      ],
+    });
+
+    const row = (await screen.findByText("Lost Spell (PHB)")).closest("li") as HTMLElement;
+    expect(await within(row).findByText("Renamed to Found Spell (XPHB)")).toBeInTheDocument();
+    expect(row).not.toHaveTextContent("Not found in the catalog");
+    expect(within(row).queryByRole("button")).toBeNull();
+  });
+
+  it("asks for no reference report where every spell resolves", async () => {
+    const fetchMock = renderSection(derivedRecord(), { spells: SPELLS.spells.slice(0, -1) });
+
+    await screen.findByText("Hex");
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContain(
+      "/api/characters/1/references",
+    );
   });
 
   it("shows no spell view for a character who does not cast", () => {
