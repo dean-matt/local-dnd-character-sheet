@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { avatarColor } from "../../lib/avatarColor.ts";
-import { characterSubtitle } from "../../lib/characterSubtitle.ts";
 import { warlockRecord } from "../../test/records.ts";
 import { CharacterHeader } from "./CharacterHeader.tsx";
+import { characterSubtitle } from "./characterSubtitle.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const WIZARD = { name: "Wizard", source: "XPHB" };

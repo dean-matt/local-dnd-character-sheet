@@ -1,6 +1,6 @@
 import { type Derived, derivedValue } from "@dnd/character";
-import { signed } from "../../../../lib/signed.ts";
 import { TermList } from "../../../TermList.tsx";
+import { signed } from "../../signed.ts";
 
 /** A value's current total and the terms it is built from. */
 export function ValueDetail({

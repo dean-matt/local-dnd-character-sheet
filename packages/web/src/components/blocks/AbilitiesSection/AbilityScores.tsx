@@ -4,9 +4,9 @@ import {
   type CharacterDefinition,
   type CharacterDerived,
 } from "@dnd/character";
-import { signed } from "../../../lib/signed.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
+import { signed } from "../signed.ts";
 import { ABILITY_RULES, editionRules } from "./abilityRules.ts";
 import { StatTile } from "./StatTile.tsx";
 

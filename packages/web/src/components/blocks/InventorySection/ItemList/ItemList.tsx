@@ -5,8 +5,8 @@ import { ErrorState } from "../../../../ErrorState.tsx";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
-import type { Grip } from "../../../../lib/attack.ts";
 import { Card } from "../../../Card.tsx";
+import type { Grip } from "../../attack.ts";
 import { ResolvedItemRow } from "./ResolvedItemRow/ResolvedItemRow.tsx";
 import { UnresolvedItemRow } from "./UnresolvedItemRow.tsx";
 

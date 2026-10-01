@@ -5,8 +5,8 @@
  */
 import { type CharacterDerived, type CharacterRecord, displayName, entryKey } from "@dnd/character";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
-import { damageText } from "../../../../lib/attack.ts";
 import { Card } from "../../../Card.tsx";
+import { damageText } from "../../attack.ts";
 import { AttackBonus } from "./AttackBonus.tsx";
 import { AttackRow } from "./AttackRow.tsx";
 

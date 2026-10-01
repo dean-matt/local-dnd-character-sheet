@@ -1,7 +1,7 @@
 import type { CharacterRecord } from "@dnd/character";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { avatarColor } from "../../lib/avatarColor.ts";
-import { characterSubtitle } from "../../lib/characterSubtitle.ts";
+import { characterSubtitle } from "./characterSubtitle.ts";
 
 /**
  * Sits above every page of a character on screen, pinned under the top bar in a `tall`

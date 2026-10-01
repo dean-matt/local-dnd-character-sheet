@@ -1,5 +1,5 @@
-import type { Attack, Grip } from "../../../../../lib/attack.ts";
 import { Popover } from "../../../../Popover.tsx";
+import type { Attack, Grip } from "../../../attack.ts";
 
 const PILL = "relative rounded-pill px-2 py-0.5 font-bold text-chip leading-3 tracking-chip";
 

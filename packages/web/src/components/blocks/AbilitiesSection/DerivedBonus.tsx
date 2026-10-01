@@ -1,8 +1,8 @@
 import { type Derived, derivedValue } from "@dnd/character";
-import { signed } from "../../../lib/signed.ts";
 import { Field } from "../../Field/Field.tsx";
 import { Popover } from "../../Popover.tsx";
 import { TermList } from "../../TermList.tsx";
+import { signed } from "../signed.ts";
 
 /** A derived number, behind a popover of its terms where the rules supplied any. */
 export function DerivedBonus({

@@ -3,10 +3,10 @@
  * derived block computed it from.
  */
 import { derivedValue } from "@dnd/character";
-import { type Attack, damageText } from "../../../../../../lib/attack.ts";
-import { signed } from "../../../../../../lib/signed.ts";
 import { Popover } from "../../../../../Popover.tsx";
 import { TermList } from "../../../../../TermList.tsx";
+import { type Attack, damageText } from "../../../../attack.ts";
+import { signed } from "../../../../signed.ts";
 import { AttackChip } from "./AttackChip.tsx";
 
 const GRIP_LABEL = { "one-handed": "One-handed", "two-handed": "Two-handed" } as const;

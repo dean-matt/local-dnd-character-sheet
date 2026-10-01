@@ -1,7 +1,7 @@
 import { ABILITY_LABEL, type CharacterDerived, displayName, entryKey } from "@dnd/character";
-import { signed } from "../../../lib/signed.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
+import { signed } from "../signed.ts";
 
 /** One card per casting class, since a multiclassed caster has a DC and a bonus per class. */
 export function CasterNumbers({ derived }: { derived: CharacterDerived }) {

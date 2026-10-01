@@ -1,5 +1,5 @@
 import type { CharacterRecord } from "@dnd/character";
-import { characterSubtitle } from "../../../lib/characterSubtitle.ts";
+import { characterSubtitle } from "../characterSubtitle.ts";
 
 /** The head of the first printed page: name and subtitle, no avatar. */
 export function PrintTitle({ character }: { character: CharacterRecord }) {
