@@ -145,14 +145,16 @@ state.
 
 **Creation and level-up are forms, not fields.** They present many fields at once, their
 choices depend on each other, and they are validated as a whole, so they run through
-`react-hook-form` with the Zod resolver rather than the field contract above. Nothing is
-written until the flow finishes: Cancel walks away from the draft, and the list never
-shows a half-made character, because a row saved part way would need deleting on cancel.
-The resolver binds to the schemas in `packages/character`, so no form holds a second
-definition of a legal character. A choice an earlier one invalidates, such as a subclass
-after a class change, is flagged on its field rather than kept silently. The draft
-persists to `localStorage` per flow, so it survives a reload, and clears on finish or
-cancel. The dependency lands with the first form that reads it.
+`react-hook-form` with the Zod resolver rather than the field contract above. It beat
+TanStack Form as the more conventional choice, with nothing else in the stack pulling
+toward TanStack. Nothing is written until the flow finishes: Cancel walks away from the
+draft, and the list never shows a half-made character, because a row saved part way would
+need deleting on cancel. The resolver binds to the schemas in `packages/character`, so no
+form holds a second definition of a legal character. A choice an earlier one invalidates,
+such as a subclass after a class change, is cleared, and its field says why. The draft
+persists to `localStorage` keyed by flow, and by character for level-up, so it survives a
+reload; it clears on finish or cancel. The dependency lands with the first form that reads
+it.
 
 ## Deliberately absent
 
