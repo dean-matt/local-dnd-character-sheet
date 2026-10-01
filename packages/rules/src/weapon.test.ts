@@ -29,7 +29,7 @@ const NIMBLE = {
 describe("weaponAttack", () => {
   it("sums the ability modifier and the proficiency bonus", () => {
     expect(weaponAttack({ weapon: LONGSWORD, ...STRONG })).toMatchObject({
-      ability: "strength",
+      ability: "str",
       attack: { total: 7 },
       damage: { dice: "1d8", modifier: { total: 4 } },
     });
@@ -94,7 +94,7 @@ describe("weaponAttack", () => {
 
   it("takes Strength for a finesse weapon where Strength is the higher", () => {
     expect(weaponAttack({ weapon: RAPIER, ...STRONG })).toMatchObject({
-      ability: "strength",
+      ability: "str",
       attack: { total: 7 },
       damage: { modifier: { total: 4 } },
     });
@@ -102,7 +102,7 @@ describe("weaponAttack", () => {
 
   it("takes Dexterity for a finesse weapon where Dexterity is the higher", () => {
     expect(weaponAttack({ weapon: RAPIER, ...NIMBLE })).toMatchObject({
-      ability: "dexterity",
+      ability: "dex",
       attack: { total: 7 },
       damage: { modifier: { total: 4 } },
     });
@@ -117,7 +117,7 @@ describe("weaponAttack", () => {
         proficiency: 2,
         grip: "one-handed",
       }).ability,
-    ).toBe("strength");
+    ).toBe("str");
     expect(
       weaponAttack({
         weapon: DART,
@@ -126,23 +126,23 @@ describe("weaponAttack", () => {
         proficiency: 2,
         grip: "one-handed",
       }).ability,
-    ).toBe("dexterity");
+    ).toBe("dex");
   });
 
   it("takes Dexterity for a ranged weapon however strong the character", () => {
     expect(weaponAttack({ weapon: SHORTBOW, ...STRONG })).toMatchObject({
-      ability: "dexterity",
+      ability: "dex",
       attack: { total: 4 },
       damage: { modifier: { total: 1 } },
     });
   });
 
   it("keeps Strength for a thrown melee weapon that is not finesse", () => {
-    expect(weaponAttack({ weapon: JAVELIN, ...NIMBLE }).ability).toBe("strength");
+    expect(weaponAttack({ weapon: JAVELIN, ...NIMBLE }).ability).toBe("str");
   });
 
   it("reaches Strength for a ranged weapon that is also finesse", () => {
-    expect(weaponAttack({ weapon: DART, ...STRONG }).ability).toBe("strength");
+    expect(weaponAttack({ weapon: DART, ...STRONG }).ability).toBe("str");
   });
 
   it("reads a finesse property upstream wraps in an object, as Lance (XPHB) wraps its 2H", () => {
@@ -155,12 +155,12 @@ describe("weaponAttack", () => {
         },
         ...NIMBLE,
       }).ability,
-    ).toBe("dexterity");
+    ).toBe("dex");
   });
 
   it.each([["F|XPHB"], ["f|xphb"]])("reads a property abbreviation spelled %s", (property) => {
     expect(weaponAttack({ weapon: { ...RAPIER, properties: [property] }, ...NIMBLE }).ability).toBe(
-      "dexterity",
+      "dex",
     );
   });
 
@@ -170,12 +170,12 @@ describe("weaponAttack", () => {
         weapon: { kind: "melee", properties: ["BF", "RLD"], damage: "1d8" },
         ...NIMBLE,
       }).ability,
-    ).toBe("strength");
+    ).toBe("str");
   });
 
   it("treats a weapon with no properties as one with none", () => {
     expect(weaponAttack({ weapon: { kind: "melee", damage: "1d4" }, ...STRONG }).ability).toBe(
-      "strength",
+      "str",
     );
   });
 
@@ -195,7 +195,7 @@ describe("weaponAttack", () => {
         grip: "one-handed",
       }),
     ).toMatchObject({
-      ability: "dexterity",
+      ability: "dex",
       attack: { total: 1 },
       damage: { modifier: { total: -1 } },
     });
@@ -211,7 +211,7 @@ describe("weaponAttack", () => {
         grip: "two-handed",
       }),
     ).toMatchObject({
-      ability: "strength",
+      ability: "str",
       attack: { total: -1 },
       damage: { dice: "2d6", modifier: { total: -3 } },
     });

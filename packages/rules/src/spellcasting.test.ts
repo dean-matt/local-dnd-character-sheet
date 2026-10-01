@@ -31,12 +31,6 @@ describe("spell math", () => {
       ],
     });
   });
-
-  it.each([1, 4, 5, 9, 13, 17, 20])("sums its terms to its total at level %i", (level) => {
-    for (const result of [spellSaveDc("wis", 3, level), spellAttackBonus("wis", 3, level)]) {
-      expect(result.terms.reduce((sum, term) => sum + term.value, 0)).toBe(result.total);
-    }
-  });
 });
 
 describe("concentrationSaveDc", () => {

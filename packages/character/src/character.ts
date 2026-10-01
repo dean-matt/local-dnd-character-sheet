@@ -1280,7 +1280,7 @@ function derivedAttacks(
     return [
       {
         entry: index,
-        ability: result.ability === "strength" ? "str" : "dex",
+        ability: result.ability,
         attackBonus: fromBreakdown(result.attack),
         damage: result.damage
           ? {
