@@ -66,12 +66,16 @@ it took none — stop there.
     and skip the gate. On any other exit, run the gate and note its exit, each `FAIL` and
     `warn` line, and any failed check. Both paths go on to step 13.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
-    branch and the pull request stand. Report the pull request, the label, what step 12
-    noted and anything waiting on the user, naming each changed mockup file.
+    branch and the pull request stand. Report the pull request, the label and what step 12
+    noted. Under "waiting on the user", list what needs the user, such as each changed
+    mockup file, a declined `critical` or `warning`, or an issue this run filed. With none,
+    say "nothing". Never list the merge: `merge-gate` decides it.
 
 ## What this skill will not do
 
-**Merge.** Report and wait, whatever the review found and however small the change.
+**Merge.** Stop at the report, whatever the review found and however small the change.
+Stopping hands the merge to [`merge-pr`](../merge-pr/SKILL.md), not to the user; only its
+sign-off sections ask the user for one.
 
 **Widen the issue.** A second bug found on the way is a second issue: file it or name it
 in the report, and leave it out of this branch. `gh issue create` leaves that issue off the
