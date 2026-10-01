@@ -8,13 +8,13 @@ says where it goes inside that package.
 A file holds schemas, or pure helpers over them, or queries, or a route — not a mix. Each
 kind changes for its own reason: a schema when the data's shape moves, a query when its
 SQL does, a route when the API contract does. A file holding two kinds changes for both,
-and a reader hunting one has to page past the other. A route's own query, request and
-response schemas are part of the route; a record schema another file reads is a schema
-and lives with the other schemas.
+and a reader hunting one has to page past the other. A route's own query-string, request
+and response schemas are part of the route; a record schema another file reads is a
+schema and lives with the other schemas.
 
 `packages/api` shows the split: `src/routes/` holds one route file per resource,
 `src/db/queries/` the queries, and `src/db/` the Drizzle table schemas, connections and
-migrations beneath them.
+the migration runner. The migrations themselves live in `drizzle/`.
 
 ## Placement follows dependency
 
@@ -40,8 +40,9 @@ A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`.
 
 Most of the existing tree breaks at least one rule here. Single-reader helpers such as
 `lib/spellFacts.ts` sit in shared folders, many components in `components/` and `routes/`
-define private components inline, and `api`'s `src/db/queries/contentFixture.ts` is a
-test helper among the queries. Existing code is not precedent: new code follows these
+define private components inline, `api`'s `src/db/queries/contentFixture.ts` is a test
+helper among the queries, and `api`'s `src/routes/errors.ts` is a shared schema module
+among the routes. Existing code is not precedent: new code follows these
 rules, and a file earns the fix when a change splits or moves it.
 
 ## A private helper gets its own file
@@ -58,9 +59,9 @@ what other packages may import: `rules`, `dice`, `tags`, `character` and `catalo
 this way. `content` exports only `./schema`, and `api` and `web` are applications that
 export nothing.
 
-Splitting a file never changes what the package exports. The new files re-export through
-`index.ts` under the same names, so no other package edits an import and the surface knip
-checks stays the same.
+Splitting a file never changes what the package exports. The file the `exports` map names
+re-exports the new files under the same names, so no other package edits an import and
+the surface knip checks stays the same.
 
 ## Size is not the signal
 
