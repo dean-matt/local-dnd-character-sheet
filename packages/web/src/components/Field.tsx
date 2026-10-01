@@ -14,8 +14,9 @@
  * which is why undo ships alongside editing rather than waiting for play state.
  */
 import { type Derived, derivedValue } from "@dnd/character";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { z } from "zod";
+import { InputField } from "./FormField.tsx";
 
 type SaveStatus = "idle" | "saving" | "saved" | "failed";
 
@@ -97,8 +98,6 @@ function EditableField<T>({
   debounceMs = DEFAULT_DEBOUNCE_MS,
   current,
 }: EditFieldProps<T> & { current: T }) {
-  const id = useId();
-  const errorId = `${id}-error`;
   const initial = format(current);
   // Read once: `text` never resyncs to a later `value` prop change. No caller
   // remounts a mounted edit field with a new value yet, so there is no live case
@@ -182,38 +181,23 @@ function EditableField<T>({
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-muted text-row">
-        {label}
-      </label>
-      <input
-        id={id}
-        type="text"
-        value={text}
-        onChange={(event) => handleChange(event.target.value)}
-        onBlur={handleBlur}
-        aria-invalid={status === "failed"}
-        aria-describedby={status === "failed" ? errorId : undefined}
-        className="rounded-card border border-border bg-surface px-2 py-1"
-      />
-      {status === "saving" && (
-        <span role="status" aria-live="polite" className="text-muted text-row">
-          Saving…
-        </span>
-      )}
-      {status === "saved" && (
-        <span role="status" aria-live="polite" className="text-muted text-row">
-          Saved
-        </span>
-      )}
-      {status === "failed" && (
-        <span id={errorId} role="alert" className="flex items-center gap-2 text-row">
-          {error ?? "Save failed."}
-          <button type="button" onClick={retry} className="underline">
-            Retry
-          </button>
-        </span>
-      )}
-    </div>
+    <InputField
+      label={label}
+      type="text"
+      value={text}
+      onChange={(event) => handleChange(event.target.value)}
+      onBlur={handleBlur}
+      status={status === "saving" ? "Saving…" : status === "saved" ? "Saved" : undefined}
+      error={
+        status === "failed" ? (
+          <>
+            {error ?? "Save failed."}
+            <button type="button" onClick={retry} className="underline">
+              Retry
+            </button>
+          </>
+        ) : undefined
+      }
+    />
   );
 }

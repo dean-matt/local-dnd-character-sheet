@@ -143,6 +143,10 @@ offers a retry, because autosave has no confirm step — the only way back from 
 is undo, which is why undo ships alongside editing rather than waiting for M6's play
 state.
 
+**One chrome for every control.** `packages/web/src/components/FormField.tsx` gives a
+control its label, status and error, and `Field`'s edit mode renders through it. Its
+module doc holds the rules a form follows, `noValidate` among them.
+
 **Creation and level-up are forms, not fields.** They present many fields at once, their
 choices depend on each other, and they are validated as a whole, so they run through
 `react-hook-form` with the Zod resolver rather than the field contract above. It beat
