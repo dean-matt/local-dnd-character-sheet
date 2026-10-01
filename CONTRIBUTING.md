@@ -258,6 +258,14 @@ which reports most of `rules` and `character` at this point in the build order â
 arithmetic and schemas whose readers are milestones away. It earns its place once the API
 and the sheet are those readers.
 
+A dispatched agent drifts the same way prose does. Handed a narrow job, a fresh agent that
+recognizes a pull request mid-review, or a fork that inherits a dispatch prompt, carries on
+into the steps after its own â€” posting, labeling, pushing, closing the worktree. A prompt
+naming what it must not do holds most of the time; a tool the agent lacks holds every time.
+So the review pass runs as `.claude/agents/pr-auditor.md`, which carries no edit or dispatch
+tool, and `scripts/read-only-bash.mjs` refuses its commands that write to git or GitHub.
+That hook matches words rather than parsing the shell, so it stops drift and not evasion.
+
 CI splits by what a check needs to read. Everything that reads only committed data runs
 on every pull request; `check` runs on Linux and Windows, the rest on Linux alone. The
 `corpus` job reads `vendor/` and fetches 109 MB to do it, so on a pull request it waits
