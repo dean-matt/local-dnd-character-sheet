@@ -96,14 +96,14 @@ describe("CharacterHeader", () => {
 
   it("names the character's edition as its year's rules", () => {
     const { rerender } = render(<CharacterHeader character={warlock()} />);
-    const chip = screen.getByTitle("This character uses the 2024 rules");
-    expect(chip).toHaveTextContent(/^2024 rules$/);
-    expect(chip.querySelector(".sr-only")).toHaveTextContent("rules");
+    const year = screen.getByTitle("This character uses the 2024 rules");
+    expect(year).toHaveTextContent(/^2024$/);
+    expect(year).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText("2024 rules")).toHaveClass("sr-only");
 
     rerender(<CharacterHeader character={{ ...warlock(), edition: "classic" }} />);
-    expect(screen.getByTitle("This character uses the 2014 rules")).toHaveTextContent(
-      /^2014 rules$/,
-    );
+    expect(screen.getByTitle("This character uses the 2014 rules")).toHaveTextContent(/^2014$/);
+    expect(screen.getByText("2014 rules")).toHaveClass("sr-only");
   });
 
   it("leaves the printed page to the print title", () => {

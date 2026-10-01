@@ -1,6 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
 import { Link } from "react-router";
-import { EDITION_LABELS } from "../components/Tag.tsx";
+import { EDITION_LABELS } from "../components/EditionTag.tsx";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 import { ErrorState, LoadingState } from "../states.tsx";

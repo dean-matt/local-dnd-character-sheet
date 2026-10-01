@@ -1,5 +1,5 @@
 import { type CharacterRecord, classLevelLabel, classLevels, displayName } from "@dnd/character";
-import { EditionTag } from "../components/Tag.tsx";
+import { EditionTag } from "../components/EditionTag.tsx";
 import { avatarColor } from "../lib/avatarColor.ts";
 
 /** Race, classes with levels, then background and whatever else the player set, in one line. */
