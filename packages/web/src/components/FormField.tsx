@@ -35,20 +35,22 @@ export function FormField({ label, error, status, children }: FormFieldProps) {
   const invalid = error !== undefined;
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-muted text-row">
+    <div className="flex flex-col">
+      <label htmlFor={id} className="mb-1 text-muted text-row">
         {label}
       </label>
       {children({ id, "aria-invalid": invalid, "aria-describedby": invalid ? errorId : undefined })}
-      {/* Rendered while empty: a live region added with its text is often not announced. */}
-      <span role="status" aria-live="polite" className="text-muted text-row empty:hidden">
+      {/* Rendered and left in the accessibility tree while empty: a live region added with
+          its text is often not announced. A margin rather than the parent's gap spaces it, so
+          an empty one takes no room. */}
+      <span role="status" aria-live="polite" className="mt-1 text-muted text-row empty:mt-0">
         {invalid ? null : status}
       </span>
       {invalid && (
         <span
           id={errorId}
           role="alert"
-          className="flex items-center gap-2 text-accent-text text-row"
+          className="mt-1 flex items-center gap-2 text-accent-text text-row"
         >
           {error}
         </span>

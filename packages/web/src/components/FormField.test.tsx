@@ -52,6 +52,17 @@ describe("FormField", () => {
       screen.getByRole("textbox", { name: "Player" }).id,
     );
   });
+
+  it("silences the status while an error stands", () => {
+    render(
+      <FormField label="Alignment" status="Saved" error="Pick an alignment.">
+        {(control) => <select {...control} />}
+      </FormField>,
+    );
+
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    expect(screen.getByRole("alert")).toHaveTextContent("Pick an alignment.");
+  });
 });
 
 describe("InputField", () => {
