@@ -67,9 +67,9 @@ it took none — stop there.
     `warn` line, and any failed check. Both paths go on to step 13.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
     branch and the pull request stand. Report the pull request, the label and what step 12
-    noted. Under "waiting on the user", list only what needs the user — each changed mockup
-    file, a declined `critical` or `warning`, an issue this run filed — or say "nothing".
-    Never list the merge: `merge-gate` decides it.
+    noted. Under "waiting on the user", list what needs the user, such as each changed
+    mockup file, a declined `critical` or `warning`, or an issue this run filed. With none,
+    say "nothing". Never list the merge: `merge-gate` decides it.
 
 ## What this skill will not do
 
