@@ -62,7 +62,7 @@ const getCharacter = createRoute({
 
 | Reading | Use |
 |---|---|
-| `content.db` | `openContentDb` in `packages/api/src/db/content.ts`, raw SQL — no Drizzle, FTS5 queries live here |
+| `content.db` | `openContentDb` in `packages/api/src/db/content.ts`, raw SQL — no Drizzle; the FTS5 search is `db/queries/catalog-search.ts` |
 | `characters.db`, `homebrew.db` | Drizzle |
 
 `openContentDb` opens one connection per query rather than a handle held for the

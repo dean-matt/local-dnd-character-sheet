@@ -1,7 +1,7 @@
 /**
  * Searches the catalog and homebrew together: Tier A's flat-keyed tables, Tier C's
  * `entities`, and `homebrew.db`'s items and spells, merged into one list ordered by name.
- * See `packages/api/src/db/queries/content.ts`'s `searchCatalog` for what each tier's
+ * See `packages/api/src/db/queries/catalog-search.ts`'s `searchCatalog` for what each tier's
  * query can and cannot do, and its `CATALOG_SEARCH_TABLES` for what a Tier A `type` can
  * be — a Tier C hit's `type` is open, since `packages/content` loads one for every array
  * key a data file contributes.
