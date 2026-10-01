@@ -44,6 +44,6 @@ describe("Defenses", () => {
     fireEvent.click(screen.getByRole("button", { name: "Poison Resistance" }));
     const dialog = screen.getByRole("dialog", { name: "Poison Resistance" });
     expect(dialog).toHaveTextContent("From Dwarf (Hill) and Ring of Poison Resistance");
-    expect(dialog).toHaveTextContent("You take half damage from poison damage, rounded down.");
+    expect(dialog).toHaveTextContent("You take half poison damage, rounded down.");
   });
 });

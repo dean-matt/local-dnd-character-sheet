@@ -1,6 +1,6 @@
 /**
- * The Resistances & Immunities card: what the race and the worn or attuned items grant,
- * read off the derived block. A chip opens a modal naming every source that grants it.
+ * The Resistances & Immunities card: what the race and the equipped items grant, read off
+ * the derived block. A chip opens a modal naming every source that grants it.
  */
 import { type CharacterDerived, derivedValue } from "@dnd/character";
 import { Card } from "../Card.tsx";
@@ -62,7 +62,7 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
           items={chips(
             resistances,
             "Resistance",
-            (name) => `You take half damage from ${name} damage, rounded down.`,
+            (name) => `You take half ${name} damage, rounded down.`,
           )}
         />
         <ChipRow
