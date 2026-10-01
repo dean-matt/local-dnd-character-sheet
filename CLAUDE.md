@@ -89,7 +89,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 | `user-signoff` | Clearing a merge that waits on the user, from the session they talk to |
 
 Indexed skills compete for this file's budget, which is capped; their number is not. A
-skill never restates what code and tests assert — no test runs on prose, so it drifts.
+skill never restates what code and tests assert — no test runs on prose, so the copy drifts.
 
 ## Maintaining this document
 

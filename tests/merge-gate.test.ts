@@ -280,7 +280,7 @@ describe("thread verdicts", () => {
   });
 
   /**
-   * `**Accepted**` is the sign-off `merge-pr` describes, posted as its own reply into the
+   * `**Accepted**` is the sign-off `user-signoff` describes, posted as its own reply into the
    * finding's thread — distinct from the decline it answers, which an agent writes for
    * itself and so cannot also carry the user's acceptance.
    */

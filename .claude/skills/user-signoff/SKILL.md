@@ -13,8 +13,9 @@ authenticates as the same account whatever the driver. A subagent, including the
 
 Ask the user about each stop by name, with what the change does, and wait for an answer to
 that stop. An answer to a different question does not clear it. Once every stop is
-cleared, run `merge-pr`'s *Block on the checks* and *The gate* again, then its *Merge, then
-clean up*, and report each sign-off taken: what was approved, heard directly.
+cleared, run `merge-pr`'s *Block on the checks* and *The gate* again. The cleared stops
+still read as failed there; merge past them and past nothing else, through its *Merge,
+then clean up*. Report each sign-off taken: what was approved, heard directly.
 
 ## A fenced path
 
