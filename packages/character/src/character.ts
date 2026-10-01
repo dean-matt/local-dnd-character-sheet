@@ -92,8 +92,8 @@ export const refKey = (ref: ContentRef): string => `${ref.name}|${ref.source}`;
  * stomping the edit.
  *
  * `terms` is the breakdown behind `computed`, empty where no breakdown assembles the
- * field yet. An override needs no explanation beyond itself, so nothing
- * here recomputes `terms` against `manual`.
+ * field yet. An override needs no explanation beyond itself, so nothing here recomputes
+ * `terms` against `manual`.
  */
 export function derivedSchema<T extends z.ZodType>(value: T) {
   return z.strictObject({
