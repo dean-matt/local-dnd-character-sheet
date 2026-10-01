@@ -5,7 +5,7 @@
  * fields the resulting item carries over the base item's own.
  */
 import { DAMAGE_TYPES } from "@dnd/catalog";
-import { getItem, type ItemRow } from "./content.ts";
+import { getItem, type ItemRow } from "./items.ts";
 
 type Entry = Record<string, unknown>;
 

@@ -23,7 +23,7 @@ import {
   listSubraces,
   type RaceRow,
   type SubraceRow,
-} from "../db/queries/content.ts";
+} from "../db/queries/races.ts";
 import { notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;

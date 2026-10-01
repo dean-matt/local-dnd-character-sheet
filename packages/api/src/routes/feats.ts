@@ -6,7 +6,7 @@
 import { type FeatRecord, featRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { type FeatRow, getFeat, listFeats } from "../db/queries/content.ts";
+import { type FeatRow, getFeat, listFeats } from "../db/queries/feats.ts";
 import { notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;

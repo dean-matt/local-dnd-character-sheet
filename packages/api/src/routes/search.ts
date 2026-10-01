@@ -14,7 +14,7 @@ import {
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { type CatalogSearchRow, searchCatalog } from "../db/queries/content.ts";
+import { type CatalogSearchRow, searchCatalog } from "../db/queries/catalog-search.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { searchHomebrewItems, searchHomebrewSpells } from "../db/queries/homebrew.ts";
 

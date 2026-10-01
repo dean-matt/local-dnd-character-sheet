@@ -23,10 +23,10 @@ import {
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { getItem, type ItemRow, listItems } from "../db/queries/content.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { listHomebrewItems } from "../db/queries/homebrew.ts";
 import { getExpandedItem } from "../db/queries/item-variant.ts";
+import { getItem, type ItemRow, listItems } from "../db/queries/items.ts";
 import { errorSchema, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
