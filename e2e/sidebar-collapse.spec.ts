@@ -6,7 +6,7 @@ const centerX = (b: { x: number; width: number }) => b.x + b.width / 2;
 test("the collapse button lines up with the page rows, expanded and collapsed", async ({
   page,
 }) => {
-  // Without transitions the collapsed rail is measured at its final width, not mid-animation.
+  // Reduced motion removes the collapse animation, so no measurement catches the rail mid-width.
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/settings");
   await page.evaluate(() => localStorage.removeItem("sidebar-collapsed"));
