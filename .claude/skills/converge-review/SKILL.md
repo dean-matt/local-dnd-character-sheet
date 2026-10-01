@@ -11,8 +11,8 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
 
    ```
    Invoke audit-pr on pull request <n> and return its findings. Do not post, label,
-   edit a tracked file, commit, push, dispatch another agent, or remove the issue's
-   worktree.
+   merge, edit a tracked file, commit, push, dispatch another agent, or remove the
+   issue's worktree.
    ```
 
    Keep the second sentence: handed a bare number, a subagent that recognizes a pull
