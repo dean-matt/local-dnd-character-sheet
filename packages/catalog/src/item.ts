@@ -5,7 +5,7 @@
  * every field specific to one item `type` — passes through unparsed. `armorTraitSchema`
  * and `weaponTraitSchema` read armor class, damage and attack off the same entry.
  *
- * Passthrough rather than strict, departing from `packages/character/src/character.ts`:
+ * Passthrough rather than strict, departing from the schemas in `packages/character`:
  * a character definition is read, edited field by field and written back whole, so an
  * open object silently drops an edit on save. Homebrew JSON is written once and
  * displayed, never edited in place — `packages/character` itself only ever *references*
