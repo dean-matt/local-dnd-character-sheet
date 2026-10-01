@@ -80,6 +80,28 @@
 }
 
 /*
+ * Shades a scroll container's edge while rows are clipped past it. The `local` covers ride
+ * with the content and hide each `scroll` shadow at its own end, so it needs no script. The
+ * covers are surface, so it suits a surface container; an opaque row at the edge hides it.
+ */
+@utility scroll-shadow {
+  --scroll-shadow-color: color-mix(in oklab, var(--color-scrim) 40%, transparent);
+  background-image:
+    linear-gradient(var(--color-surface) 30%, transparent),
+    linear-gradient(transparent, var(--color-surface) 70%),
+    linear-gradient(var(--scroll-shadow-color), transparent),
+    linear-gradient(transparent, var(--scroll-shadow-color));
+  background-position: top, bottom, top, bottom;
+  background-size:
+    100% 2.5rem,
+    100% 2.5rem,
+    100% 0.75rem,
+    100% 0.75rem;
+  background-repeat: no-repeat;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/*
  * color-scheme picks each light-dark() branch. Print sets it to light, because a dark
  * ground floods the page with ink, and the data-theme override stays screen only so its
  * higher specificity cannot outrank that.

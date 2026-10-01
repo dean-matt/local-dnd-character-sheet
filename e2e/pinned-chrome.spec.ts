@@ -1,50 +1,17 @@
-import { expect, type Locator, type Page, test } from "@playwright/test";
-import { box } from "./box";
-
-async function edges(locator: Locator) {
-  const b = await box(locator);
-  return { top: b.y, bottom: b.y + b.height };
-}
-
-/** Pads `content` past the viewport, so the test needs no catalog to fill a sheet. */
-async function scrollToBottom(page: Page, content: Locator) {
-  await content.evaluate((element) => {
-    const spacer = document.createElement("div");
-    spacer.style.height = "3000px";
-    element.append(spacer);
-    window.scrollTo(0, document.documentElement.scrollHeight);
-  });
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-}
+import { expect, test } from "@playwright/test";
+import { edges } from "./box";
+import { createCharacter, scrollToBottom } from "./character";
 
 test("the top bar, character header and sidebar stay pinned in a tall window, the header on one line, and focus lands below them", async ({
   page,
   request,
 }) => {
-  const response = await request.post("/api/characters", {
-    data: {
-      // Longer than any window is wide, so it wraps a name that can wrap and squeezes the
-      // subtitle to its 160px floor, narrower than the subtitle this character reads.
-      name: `E2E Pinned ${Date.now()}${" of the Silverwood".repeat(8)}`,
-      edition: "one",
-      levels: [{ class: { name: "Warlock", source: "XPHB" } }],
-      race: { name: "Half-Elf", source: "XPHB" },
-      background: { name: "Charlatan", source: "XPHB" },
-      abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    },
-  });
-  expect(response.ok()).toBe(true);
-  const { id } = await response.json();
+  // Longer than any window is wide, so it wraps a name that can wrap and squeezes the
+  // subtitle to its 160px floor, narrower than the subtitle this character reads.
+  const id = await createCharacter(
+    request,
+    `E2E Pinned ${Date.now()}${" of the Silverwood".repeat(8)}`,
+  );
 
   try {
     await page.goto(`/characters/${id}/p/stats`);

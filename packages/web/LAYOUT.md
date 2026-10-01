@@ -7,7 +7,10 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   beside it changes its width. Its height is `--spacing-topbar` in `src/index.css`; anything
   sized against it uses the token. Its own content sits at 24px, not the gutter, as the
   mockup draws it.
-- **Sidebar** fills its column, sticky under the top bar. Its widths are `--spacing-sidebar` and `--spacing-sidebar-collapsed`.
+- **Sidebar** fills its column, sticky under the top bar, and scrolls its own rows in a
+  window too short to hold them, with its scrollbar hidden so the collapsed icons stay
+  centered and `scroll-shadow` shading the clipped edge instead. Its widths are
+  `--spacing-sidebar` and `--spacing-sidebar-collapsed`.
   The character sheet and Settings share one rail, `Sidebar` in `src/routes/Sidebar.tsx`, one
   collapsed state, and one row around it, `SidebarFrame` in the same file.
 - **Character header** fills the content column, so it grows and shrinks with the side

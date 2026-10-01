@@ -1,31 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { createCharacter } from "./character";
 
 test("pages reorder from the keyboard, keep focus, persist and restore", async ({
   page,
   request,
 }) => {
-  const response = await request.post("/api/characters", {
-    data: {
-      name: `E2E Pages ${Date.now()}`,
-      edition: "one",
-      levels: [{ class: { name: "Warlock", source: "XPHB" } }],
-      race: { name: "Half-Elf", source: "XPHB" },
-      background: { name: "Charlatan", source: "XPHB" },
-      abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    },
-  });
-  expect(response.ok()).toBe(true);
-  const { id } = await response.json();
+  const id = await createCharacter(request, `E2E Pages ${Date.now()}`);
   const nav = page.getByRole("navigation", { name: "Character pages" }).getByRole("link");
   const later = ["Identity", "Level", "Alignment", "Notes"];
 
@@ -57,28 +37,7 @@ test("pages reorder from the keyboard, keep focus, persist and restore", async (
 });
 
 test("modal closes on Escape and returns focus to the Manage button", async ({ page, request }) => {
-  const response = await request.post("/api/characters", {
-    data: {
-      name: `E2E Pages Esc ${Date.now()}`,
-      edition: "one",
-      levels: [{ class: { name: "Warlock", source: "XPHB" } }],
-      race: { name: "Half-Elf", source: "XPHB" },
-      background: { name: "Charlatan", source: "XPHB" },
-      abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    },
-  });
-  expect(response.ok()).toBe(true);
-  const { id } = await response.json();
+  const id = await createCharacter(request, `E2E Pages Esc ${Date.now()}`);
 
   try {
     await page.goto(`/characters/${id}/p/stats`);

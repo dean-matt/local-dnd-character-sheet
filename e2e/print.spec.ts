@@ -1,32 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { createCharacter } from "./character";
 import { computedColor } from "./palette";
 
 test("a character prints its visible pages in light ink, with the screen chrome left out", async ({
   page,
   request,
 }) => {
-  const response = await request.post("/api/characters", {
-    data: {
-      name: `E2E Print ${Date.now()}`,
-      edition: "one",
-      levels: [{ class: { name: "Warlock", source: "XPHB" } }],
-      race: { name: "Half-Elf", source: "XPHB" },
-      background: { name: "Charlatan", source: "XPHB" },
-      abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    },
-  });
-  expect(response.ok()).toBe(true);
-  const { id } = await response.json();
+  const id = await createCharacter(request, `E2E Print ${Date.now()}`);
 
   try {
     const pages = await (await request.get(`/api/characters/${id}/pages`)).json();
