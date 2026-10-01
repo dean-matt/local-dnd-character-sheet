@@ -1,0 +1,138 @@
+import { ENCUMBRANCE_TIERS, GRIPS, HIT_DICE, SIZES } from "@dnd/rules";
+import { z } from "zod";
+import { derivedSchema } from "./derivedField.ts";
+import { abilitySchema, contentRefSchema, entryRefSchema } from "./refs.ts";
+
+/**
+ * Feet per round, by movement mode. Every race grants a walking speed, so `walk` is
+ * required and the rest stay absent until a race grants them. No upstream race grants a
+ * burrowing speed, so an override is the only thing that reaches `burrow`.
+ *
+ * Upstream spells a mode equal to the walking speed as `true`, which the caller resolves.
+ */
+const speedSchema = z.strictObject({
+  walk: z.int().min(0),
+  burrow: z.int().min(0).optional(),
+  climb: z.int().min(0).optional(),
+  fly: z.int().min(0).optional(),
+  swim: z.int().min(0).optional(),
+});
+
+/** One damage type or condition, and every race or item label that grants it. */
+const defenseSchema = z.strictObject({
+  name: z.string().min(1),
+  from: z.array(z.string().min(1)).min(1),
+});
+
+const defensesSchema = z.strictObject({
+  resistances: z.array(defenseSchema),
+  damageImmunities: z.array(defenseSchema),
+  conditionImmunities: z.array(defenseSchema),
+});
+
+/**
+ * What the sheet computes, each beside the value a user typed over it. Assembled on
+ * read rather than stored: `computed` comes from the definition and the catalog rows it
+ * names, `manual` from `field_overrides`.
+ */
+export const characterDerivedSchema = z.strictObject({
+  abilityModifiers: z.record(abilitySchema, derivedSchema(z.int())),
+  hitPointMaximum: derivedSchema(z.int().min(1)),
+  /**
+   * Grouped by die size the way `hitDicePoolSchema` groups the pool a rest spends, in the
+   * order each die was first taken. `total` is the pool's size; what remains is state.
+   */
+  hitDice: z.array(
+    z.strictObject({ die: z.literal(HIT_DICE), total: derivedSchema(z.int().min(1)) }),
+  ),
+  /**
+   * The race's size, in the vocabulary `carryingCapacity` reads, so the two cannot
+   * drift. A subrace never states one — all 98 upstream rows leave it to the race — so
+   * a race change moves it and nothing else does.
+   */
+  size: derivedSchema(z.enum(SIZES)),
+  /**
+   * The race's speeds, one field rather than one per mode because a subrace that states
+   * a speed replaces the set outright rather than adding to it — a Wood Elf walks 35
+   * feet, not the Elf's 30 and 5 more.
+   */
+  speed: derivedSchema(speedSchema),
+  proficiencyBonus: derivedSchema(z.int().min(2).max(6)),
+  /** Every ability, since an unproficient save is still a number the sheet shows. */
+  savingThrows: z.record(abilitySchema, derivedSchema(z.int())),
+  /**
+   * One entry per catalog skill row the caller hands in — every skill of the
+   * character's edition, proficient or not, so the sheet has a full list to render
+   * rather than only the ones a player picked.
+   */
+  skills: z.array(
+    z.strictObject({
+      ref: contentRefSchema,
+      ability: abilitySchema,
+      modifier: derivedSchema(z.int()),
+      passive: derivedSchema(z.int()),
+    }),
+  ),
+  armorClass: derivedSchema(z.int()),
+  initiative: derivedSchema(z.int()),
+  /**
+   * One entry per class that casts, since a multiclassed caster sets a different DC
+   * and attack bonus per class rather than one figure for the whole character. Empty
+   * for a character with no caster class.
+   */
+  spellcasting: z.array(
+    z.strictObject({
+      class: entryRefSchema,
+      ability: abilitySchema,
+      saveDc: derivedSchema(z.int()),
+      attackBonus: derivedSchema(z.int()),
+      /** How many spells the class may prepare, absent for a class that knows its spells instead. */
+      preparedSpells: derivedSchema(z.int().min(0)).optional(),
+    }),
+  ),
+  /** Slots by slot level, lowest first, omitting a level with none. */
+  spellSlots: z.array(
+    z.strictObject({ level: z.int().min(1).max(9), total: derivedSchema(z.int().min(1)) }),
+  ),
+  /** Pact magic's slots, all one level and recharged on a short rest, kept apart from `spellSlots`. */
+  pactSlots: z
+    .strictObject({ level: z.int().min(1).max(9), total: derivedSchema(z.int().min(1)) })
+    .nullable(),
+  /** Pounds, from the Strength score and `size`. */
+  carryingCapacity: derivedSchema(z.number().min(0)),
+  /**
+   * `carriedWeight`'s pounds. A plain number rather than a `Derived`, because the
+   * inventory it sums is where a player changes it.
+   */
+  carriedWeight: z.number().min(0),
+  /** Null where the table plays without the encumbrance variant. */
+  encumbrance: z.enum(ENCUMBRANCE_TIERS).nullable(),
+  attunementSlots: derivedSchema(z.int().min(0)),
+  /**
+   * One per carried weapon, in inventory order. `entry` is the weapon's index in the
+   * definition's `inventory`, since two entries may hold the same item. `grip` is null for
+   * a weapon with one die; `twoHandedBlocked` is a versatile weapon equipped beside a
+   * shield, held one-handed whatever grip the entry stores.
+   */
+  attacks: z.array(
+    z.strictObject({
+      entry: z.int().min(0),
+      ability: z.enum(["str", "dex"]),
+      attackBonus: derivedSchema(z.int()),
+      damage: z
+        .strictObject({
+          dice: z.string().min(1),
+          type: z.string().min(1).nullable(),
+          modifier: derivedSchema(z.int()),
+        })
+        .nullable(),
+      grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
+    }),
+  ),
+  /** Resistances and immunities from the race, then from each equipped item, attuned where it must be. */
+  defenses: derivedSchema(defensesSchema),
+});
+
+export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
+export type Speed = z.infer<typeof speedSchema>;
+export type Defenses = z.infer<typeof defensesSchema>;

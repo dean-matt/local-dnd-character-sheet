@@ -4,13 +4,9 @@
  * neither lists it.
  */
 import { z } from "zod";
-import {
-  type CharacterDefinition,
-  type CharacterState,
-  type ContentRef,
-  contentRefSchema,
-  type EntryRef,
-} from "./character.ts";
+import type { CharacterDefinition } from "./definition.ts";
+import { type ContentRef, contentRefSchema, type EntryRef } from "./refs.ts";
+import type { CharacterState } from "./state.ts";
 
 /** The catalog table a reference names a row of, one per shape of key. */
 const CATALOG_KINDS = [
