@@ -13,19 +13,21 @@ response schemas are part of the route; a record schema another file reads is a 
 and lives with the other schemas.
 
 `packages/api` shows the split: `src/routes/` holds one route file per resource,
-`src/db/queries/` the queries those routes call, and `src/db/` the Drizzle table
-schemas, connections and migrations beneath them.
+`src/db/queries/` the queries, and `src/db/` the Drizzle table schemas, connections and
+migrations beneath them.
 
 ## Placement follows dependency
 
 Code bound to one feature's form, rules or workflow lives beside that feature. Code bound
-to none stays in the shared location. Shared code then never imports a
-feature, and deleting a feature takes its private code with it rather than orphaning a
-file in a shared folder.
+to none stays in the shared location. Shared code then never imports a feature, and
+deleting a feature takes its private code with it rather than orphaning a file in a
+shared folder. A query hook binds to an API resource rather than a feature, so it stays
+in `hooks/` however few files read it.
 
 `packages/web/src` shows the shared locations:
 
 ```
+./                  entry, router, theme and its toggle, loading and error states
 routes/             one file per route, plus the layout pieces around them
 components/         UI any route may use: Card, Field, Modal, Popover, RulesText
 components/blocks/  the block renderers PageBlocks draws for a character's pages
@@ -34,12 +36,13 @@ lib/                plain functions, the one request builder api.ts among them
 test/               helpers only tests import
 ```
 
-A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`. The tree does not
-yet hold to the placement rule everywhere: `lib/spellFacts.ts` has one reader,
-`components/blocks/SpellsSection.tsx`, and belongs beside it. Nor does it hold to the next
-rule: `AbilitiesSection.tsx`, `InventorySection.tsx` and `SpellsSection.tsx` in
-`components/blocks/` each define several private components inline. Treat files like
-these as ones to change, not as precedent.
+A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`.
+
+Most of the existing tree breaks at least one rule here. Single-reader helpers such as
+`lib/spellFacts.ts` sit in shared folders, many components in `components/` and `routes/`
+define private components inline, and `api`'s `src/db/queries/contentFixture.ts` is a
+test helper among the queries. Existing code is not precedent: new code follows these
+rules, and a file earns the fix when a change splits or moves it.
 
 ## A private helper gets its own file
 
