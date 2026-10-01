@@ -6,11 +6,13 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
 # Converging a review
 
 1. **Dispatch the review to a subagent** with this prompt, `<n>` filled in and nothing
-   added — no rationale, no account of what you wrote, no defense of a choice:
+   added about the change — no rationale, no account of what you wrote, no defense of a
+   choice. A working directory or a hand-back line may ride along:
 
    ```
    Invoke audit-pr on pull request <n> and return its findings. Do not post, label,
-   edit, commit, push, dispatch another agent, or remove a worktree.
+   edit a tracked file, commit, push, dispatch another agent, or remove the issue's
+   worktree.
    ```
 
    Keep the second sentence: handed a bare number, a subagent that recognizes a pull
