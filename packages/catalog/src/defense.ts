@@ -23,7 +23,10 @@ const namesSchema = z
 /**
  * What a race, subrace or item row grants against damage and conditions. A potion's
  * grant lasts as long as the drink, so a potion row grants nothing here, however it is
- * flagged in an inventory.
+ * flagged in an inventory. Other temporary grants carry no type to fence them by — a balm
+ * such as `Muroosa Balm` (EGW), and a deck whose `resist` lists every card's outcome, such
+ * as `Deck of Wonder` (BMT) — so those grant while equipped. The way out is an item list
+ * that names them.
  */
 export const defenseTraitSchema = z
   .looseObject({

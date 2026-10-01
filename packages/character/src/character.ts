@@ -1339,10 +1339,9 @@ function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly st
 }
 
 /**
- * The race's grants, then each equipped item's. An item that requires attunement must also
- * be attuned, since upstream prints every such item as working only while worn. A
- * resistance stays listed beside an immunity to the same type, since each names a source
- * the reader may want.
+ * The race's grants, then each equipped item's. An item that requires attunement grants
+ * only once it is attuned as well. A resistance stays listed beside an immunity to the
+ * same type, since each names a source the reader may want.
  */
 function derivedDefenses(
   definition: CharacterDefinition,
