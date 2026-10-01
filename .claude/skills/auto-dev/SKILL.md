@@ -54,7 +54,7 @@ gh pr view <pr> --json labels --jq '[.labels[].name | select(startswith("review:
 Continue where the gate exits 0 and the label line reads exactly `review:approved`. Stop the
 run on either failing and quote what failed: each `FAIL` line, the usage line on exit 2, or
 the label line (empty means no review label). Where the user answers what stopped it in
-this conversation, run `merge-pr` yourself under its *The user's direct sign-off*; never
+this conversation, run [`user-signoff`](../user-signoff/SKILL.md) yourself; never
 relabel and dispatch step 4, whose subagent would merge on a relayed answer. Then continue
 at step 5.
 

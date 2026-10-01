@@ -86,10 +86,10 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 | `open-pr` | Opening a pull request and writing its body |
 | `pick-issue` | Choosing which issue to take, when `issue-to-pr` names none |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
+| `user-signoff` | Clearing a merge that waits on the user, from the session they talk to |
 
-Skills are indexed here so they compete for this file's budget. There is no cap on how
-many exist; there is a cap on this file. A skill never restates what code and tests
-already assert — no test runs on prose, so the copy is the half that goes wrong.
+Indexed skills compete for this file's budget, which is capped; their number is not. A
+skill never restates what code and tests assert — no test runs on prose, so it drifts.
 
 ## Maintaining this document
 
