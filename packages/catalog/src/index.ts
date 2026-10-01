@@ -41,6 +41,7 @@ export {
   spellcastingAbilitySchema,
   subclassRecordSchema,
 } from "./class.ts";
+export { defenseTraitSchema } from "./defense.ts";
 export type { Entries } from "./entry.ts";
 export { entriesSchema, rowEntries } from "./entry.ts";
 export type {

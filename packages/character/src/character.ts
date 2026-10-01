@@ -900,6 +900,18 @@ const speedSchema = z.strictObject({
   swim: z.int().min(0).optional(),
 });
 
+/** One damage type or condition, and every race or item label that grants it. */
+const defenseSchema = z.strictObject({
+  name: z.string().min(1),
+  from: z.array(z.string().min(1)).min(1),
+});
+
+const defensesSchema = z.strictObject({
+  resistances: z.array(defenseSchema),
+  damageImmunities: z.array(defenseSchema),
+  conditionImmunities: z.array(defenseSchema),
+});
+
 /**
  * What the sheet computes, each beside the value a user typed over it. Assembled on
  * read rather than stored: `computed` comes from the definition and the catalog rows it
@@ -999,6 +1011,8 @@ export const characterDerivedSchema = z.strictObject({
       grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
     }),
   ),
+  /** Resistances and immunities from the race, then from each item granting them while equipped or attuned. */
+  defenses: derivedSchema(defensesSchema),
 });
 
 /**
@@ -1110,13 +1124,23 @@ export type WeaponTrait = Weapon & {
   bonus: { attack: number; damage: number; reference?: ContentRef };
 };
 
+/** What a race or item row grants, each damage type or condition lowercased as upstream writes it. */
+export type DefenseTrait = {
+  resist: readonly string[];
+  immune: readonly string[];
+  conditionImmune: readonly string[];
+};
+
+/** An item's grant, the name its chip cites, and whether it waits on attunement. */
+export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement: boolean };
+
 /**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference, `weights` and `weapons` by `itemKey` of
- * the entry, the way `carriedWeight` reads it.
+ * `entryKey` of an inventory entry's reference, `weights`, `weapons` and `itemDefenses` by
+ * `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
@@ -1134,6 +1158,10 @@ export type CharacterCatalog = {
   weights: ReadonlyMap<string, number | null>;
   /** Absent for an item that is not a weapon. */
   weapons: ReadonlyMap<string, WeaponTrait>;
+  /** The race's, or the subrace row's, which already holds its race's. */
+  raceDefenses: DefenseTrait;
+  /** Keyed like `weapons`, and absent for an item that grants nothing. */
+  itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
 };
 
 /**
@@ -1295,6 +1323,44 @@ function derivedAttacks(
   });
 }
 
+type Grant = DefenseTrait & { from: string };
+
+/** Each name once, in the order first granted, with every label that grants it. */
+function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly string[]) {
+  const from = new Map<string, string[]>();
+  for (const grant of grants) {
+    for (const name of names(grant)) {
+      const labels = from.get(name) ?? [];
+      if (!labels.includes(grant.from)) labels.push(grant.from);
+      from.set(name, labels);
+    }
+  }
+  return [...from].map(([name, labels]) => ({ name, from: labels }));
+}
+
+/**
+ * The race's grants, then each item's: one that requires attunement grants while attuned,
+ * any other while equipped. A resistance stays listed beside an immunity to the same type,
+ * since each names a source the reader may want.
+ */
+function derivedDefenses(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): ComputedField<z.infer<typeof defensesSchema>> {
+  const grants: Grant[] = [{ ...catalog.raceDefenses, from: raceLabel(definition) }];
+  for (const entry of definition.inventory) {
+    const item = catalog.itemDefenses.get(itemKey(entry));
+    if (item && (item.requiresAttunement ? entry.attuned : entry.equipped)) {
+      grants.push({ ...item, from: item.name });
+    }
+  }
+  return computed({
+    resistances: gathered(grants, (grant) => grant.resist),
+    damageImmunities: gathered(grants, (grant) => grant.immune),
+    conditionImmunities: gathered(grants, (grant) => grant.conditionImmune),
+  });
+}
+
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
 function hitDicePools(
   definition: CharacterDefinition,
@@ -1448,6 +1514,7 @@ export function deriveCharacter(
     ...load(definition, catalog),
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     attacks: derivedAttacks(definition, catalog),
+    defenses: derivedDefenses(definition, catalog),
   };
 }
 

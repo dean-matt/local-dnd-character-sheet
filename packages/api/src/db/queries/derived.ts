@@ -12,6 +12,7 @@ import {
   armorTraitSchema,
   casterProgressionSchema,
   castingStartLevelSchema,
+  defenseTraitSchema,
   type PreparedSpellCount,
   preparationRuleSchema,
   raceTraitsSchema,
@@ -26,6 +27,7 @@ import {
   type CharacterDefinition,
   type EntryRef,
   entryKey,
+  type ItemDefenseTrait,
   itemKey,
   type Preparation,
   type SkillTrait,
@@ -213,6 +215,31 @@ function weaponTraits(
   return weapons;
 }
 
+const grantsAny = (trait: { resist: unknown[]; immune: unknown[]; conditionImmune: unknown[] }) =>
+  trait.resist.length + trait.immune.length + trait.conditionImmune.length > 0;
+
+const raceDefenses = (json: unknown) =>
+  parseJson(defenseTraitSchema, json) ?? { resist: [], immune: [], conditionImmune: [] };
+
+/** Every entry whose row grants a resistance or an immunity, keyed by `itemKey`. */
+function itemDefenses(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ItemDefenseTrait> {
+  const defenses = new Map<string, ItemDefenseTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const trait = row && parseJson(defenseTraitSchema, row.json);
+    if (!trait || !grantsAny(trait)) return;
+    defenses.set(itemKey(entry), {
+      ...trait,
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+    });
+  });
+  return defenses;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -263,5 +290,7 @@ export function resolveCharacterCatalog(
     armor: armorTraits(definition, items),
     weights: itemWeights(definition.inventory, items),
     weapons: weaponTraits(definition, items),
+    raceDefenses: raceDefenses(json),
+    itemDefenses: itemDefenses(definition, items),
   };
 }

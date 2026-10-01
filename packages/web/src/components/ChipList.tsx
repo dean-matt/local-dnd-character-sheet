@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-const CHIP = "rounded-pill border border-border bg-subtle px-2.5 py-1 text-row";
+export const PILL = "rounded-pill border border-border bg-subtle px-2.5 py-1 text-row";
 
 /** What a card shows in place of a value it has none of. */
 export function EmptyNote({ children }: { children: ReactNode }) {
@@ -14,7 +14,7 @@ export function ChipList({ labels, empty }: { labels: readonly string[]; empty?:
     <ul className="flex flex-wrap gap-1.5">
       {labels.map((label, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: two chips can share a label, and the list is redrawn whole.
-        <li key={index} className={CHIP}>
+        <li key={index} className={PILL}>
           {label}
         </li>
       ))}

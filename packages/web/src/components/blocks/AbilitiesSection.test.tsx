@@ -54,6 +54,8 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     armor: new Map(),
     weights: new Map(),
     weapons: new Map(),
+    raceDefenses: { resist: [], immune: [], conditionImmune: [] },
+    itemDefenses: new Map(),
   });
 }
 
