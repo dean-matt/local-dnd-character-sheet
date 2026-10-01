@@ -12,6 +12,7 @@ export {
 } from "./carrying.ts";
 export {
   ABILITIES,
+  ABILITY_LABEL,
   abilityModifier,
   abilityModifierBreakdown,
   PROFICIENCY_LEVELS,

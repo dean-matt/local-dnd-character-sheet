@@ -12,6 +12,17 @@ import { type Breakdown, breakdown, type Term } from "./term.ts";
 /** The six abilities, in the order a sheet prints them. */
 export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 
+export type Ability = (typeof ABILITIES)[number];
+
+export const ABILITY_LABEL: Record<Ability, string> = {
+  str: "Strength",
+  dex: "Dexterity",
+  con: "Constitution",
+  int: "Intelligence",
+  wis: "Wisdom",
+  cha: "Charisma",
+};
+
 /** Ability scores below 1 or above 30 are outside the rules; callers clamp before display. */
 export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);

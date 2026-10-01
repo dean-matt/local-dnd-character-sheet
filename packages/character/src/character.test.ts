@@ -1398,8 +1398,23 @@ describe("deriveCharacter", () => {
       {
         class: WARLOCK,
         ability: "cha",
-        saveDc: { computed: 14, manual: null, terms: [] },
-        attackBonus: { computed: 6, manual: null, terms: [] },
+        saveDc: {
+          computed: 14,
+          manual: null,
+          terms: [
+            { label: "Base", value: 8 },
+            { label: "Charisma", value: 3 },
+            { label: "Proficiency", value: 3 },
+          ],
+        },
+        attackBonus: {
+          computed: 6,
+          manual: null,
+          terms: [
+            { label: "Charisma", value: 3 },
+            { label: "Proficiency", value: 3 },
+          ],
+        },
         preparedSpells: { computed: 4, manual: null, terms: [] },
       },
     ]);

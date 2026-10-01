@@ -18,6 +18,7 @@
  */
 import {
   ABILITIES,
+  ABILITY_LABEL,
   abilityModifier,
   abilityModifierBreakdown,
   armorClass,
@@ -54,7 +55,7 @@ import {
   weaponAttack,
 } from "@dnd/rules";
 
-export { ABILITIES };
+export { ABILITIES, ABILITY_LABEL };
 
 import { z } from "zod";
 
@@ -1042,15 +1043,6 @@ export function passiveSkill(
   );
 }
 
-export const ABILITY_LABEL: Record<Ability, string> = {
-  str: "Strength",
-  dex: "Dexterity",
-  con: "Constitution",
-  int: "Intelligence",
-  wis: "Wisdom",
-  cha: "Charisma",
-};
-
 /**
  * The check modifier for one skill: the ability modifier and whatever the character's
  * proficiency in that skill is worth. Companion to `passiveSkill`, which takes the same
@@ -1351,8 +1343,8 @@ function spellcastingEntries(
       {
         class: group.class,
         ability,
-        saveDc: computed(spellSaveDc(modifier, characterLevel)),
-        attackBonus: computed(spellAttackBonus(modifier, characterLevel)),
+        saveDc: fromBreakdown(spellSaveDc(ability, modifier, characterLevel)),
+        attackBonus: fromBreakdown(spellAttackBonus(ability, modifier, characterLevel)),
         ...(preparation && { preparedSpells: preparedCount(preparation, modifier, group.level) }),
       },
     ];
