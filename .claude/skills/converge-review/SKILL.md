@@ -5,10 +5,17 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
 
 # Converging a review
 
-1. **Dispatch the review to a subagent** whose prompt carries the pull request number and
-   nothing else — no rationale, no account of what you wrote, no defense of a choice. It
-   invokes [`audit-pr`](../audit-pr/SKILL.md), which reviews from its own worktree. Its
-   findings reach step 2 unchanged.
+1. **Dispatch the review to a subagent** with this prompt, `<n>` filled in and nothing
+   added — no rationale, no account of what you wrote, no defense of a choice:
+
+   ```
+   Invoke audit-pr on pull request <n> and return its findings. Do not post, label,
+   edit, commit, push, dispatch another agent, or remove a worktree.
+   ```
+
+   Keep the second sentence: handed a bare number, a subagent that recognizes a pull
+   request mid-review finishes the whole run itself. [`audit-pr`](../audit-pr/SKILL.md)
+   reviews from its own worktree, and its findings reach step 2 unchanged.
 2. **Post the pass as one review, before applying** — a run that dies mid-apply then
    leaves the findings standing rather than a label pointing at nothing. One call sends
    `commit_id`, `event`, a `body` and each line comment as `{path, line, side, body}`;
