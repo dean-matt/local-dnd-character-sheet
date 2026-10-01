@@ -116,7 +116,7 @@ function weaponAbility(
   return strengthModifier > dexterityModifier ? "str" : "dex";
 }
 
-/** A term worth nothing is left out, so a breakdown lists only what moved the total. */
+/** Drops a term worth nothing, so a breakdown lists only what moved the total. */
 function withTerm<Ref>(
   terms: Term<Ref>[],
   label: string,

@@ -1,8 +1,8 @@
 /**
  * Reads `content.db`'s Tier A tables — spells, races, backgrounds, feats, optional
  * features, items, classes and subclasses. Every query opens and closes its own
- * connection through `openContentDb` instead of holding one — the staleness that module
- * exists to avoid.
+ * connection through `openContentDb` rather than holding one, which would keep reading
+ * a catalog a rebuild has replaced.
  */
 import type { CatalogSearchType, PreparedSpellCount } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";

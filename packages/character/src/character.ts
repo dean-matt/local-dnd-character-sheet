@@ -91,9 +91,9 @@ export const refKey = (ref: ContentRef): string => `${ref.name}|${ref.source}`;
  * Writing `manual` never touches `computed`, so a level-up recomputes without
  * stomping the edit.
  *
- * `terms` is the breakdown behind `computed`, empty where the field is not yet
- * assembled from one. An override needs no explanation beyond itself, so nothing
- * here recomputes `terms` against `manual`.
+ * `terms` is the breakdown behind `computed`, empty where no breakdown assembles the
+ * field yet. An override needs no explanation beyond itself, so nothing here recomputes
+ * `terms` against `manual`.
  */
 export function derivedSchema<T extends z.ZodType>(value: T) {
   return z.strictObject({
@@ -554,8 +554,8 @@ export function classLevelLabel(group: ClassLevels): string {
 }
 
 /**
- * `classLevels` joined the way `levelEntrySchema`'s own comment already writes a
- * multiclass character — `Wizard 1 / Fighter 1`. A single class carries no count.
+ * `classLevels` joined as `levelEntrySchema`'s comment writes a multiclass character —
+ * `Wizard 1 / Fighter 1`. A single class carries no count.
  */
 export function classSummary(definition: CharacterDefinition): string {
   const groups = classLevels(definition);
@@ -1019,8 +1019,8 @@ export const characterDerivedSchema = z.strictObject({
  * The hit point maximum for a stored character.
  *
  * `hitDice` maps a class to its die, keyed by `entryKey` — a class is catalog or
- * homebrew data a character references rather than copies. A class the map does not name is rejected rather than defaulted, since a
- * guessed die invents hit points.
+ * homebrew data a character references rather than copies. A class the map does not
+ * name is rejected rather than defaulted, since a guessed die invents hit points.
  */
 export function hitPointMaximum(
   definition: CharacterDefinition,

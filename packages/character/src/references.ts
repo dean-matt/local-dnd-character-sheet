@@ -1,6 +1,7 @@
 /**
  * Every catalog row a definition and its state name, and the report of those the catalog
- * no longer answers. A homebrew reference is an id rather than a `(name, source)`, so neither lists it.
+ * no longer answers. A homebrew reference is an id rather than a `(name, source)`, so
+ * neither lists it.
  */
 import { z } from "zod";
 import {

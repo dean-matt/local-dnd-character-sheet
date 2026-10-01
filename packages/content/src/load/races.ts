@@ -239,9 +239,9 @@ function subraceName(entry: Entry, where: string): string {
 /**
  * The compound name upstream writes for a subrace, in its race fluff and in a
  * `{@race}` tag: the race's name with the subrace's appended in parens, and the
- * fluff's `Base` where it carries none. A race that is itself a named variant reopens its own
- * closing paren rather than nesting a second — `Elf (Kaladesh)` names `Elf
- * (Kaladesh; Bishatar and Tirahar)`.
+ * fluff's `Base` where it carries none. A race that is itself a named variant reopens
+ * its own closing paren rather than nesting a second — `Elf (Kaladesh)` names
+ * `Elf (Kaladesh; Bishatar and Tirahar)`.
  */
 function subraceFullName(raceName: string, subraceName: string): string {
   const label = subraceName === "" ? "Base" : subraceName;

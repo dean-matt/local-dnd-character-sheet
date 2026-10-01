@@ -40,7 +40,6 @@ function Row({ name, bonus, damage }: { name: string; bonus: ReactNode; damage: 
   );
 }
 
-/** A bonus that opens the terms behind it. */
 function Bonus({ name, field }: { name: string; field: Derived<number> }) {
   const bonus = signed(derivedValue(field));
   return (
