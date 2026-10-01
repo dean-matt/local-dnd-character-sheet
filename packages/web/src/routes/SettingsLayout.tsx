@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { Sidebar, type SidebarProps } from "./Sidebar.tsx";
+import { Sidebar, type SidebarProps } from "./Sidebar/Sidebar.tsx";
 import { SidebarFrame } from "./SidebarFrame.tsx";
 
 const SECTIONS: SidebarProps["items"] = [

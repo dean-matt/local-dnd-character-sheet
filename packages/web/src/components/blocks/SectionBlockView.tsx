@@ -1,11 +1,11 @@
-import { AbilitiesSection } from "./AbilitiesSection.tsx";
+import { AbilitiesSection } from "./AbilitiesSection/AbilitiesSection.tsx";
 import { AlignmentSection } from "./AlignmentSection.tsx";
-import { FeaturesSection } from "./FeaturesSection.tsx";
-import { IdentitySection } from "./IdentitySection.tsx";
-import { InventorySection } from "./InventorySection.tsx";
+import { FeaturesSection } from "./FeaturesSection/FeaturesSection.tsx";
+import { IdentitySection } from "./IdentitySection/IdentitySection.tsx";
+import { InventorySection } from "./InventorySection/InventorySection.tsx";
 import { LevelSection } from "./LevelSection.tsx";
 import { NotesSection } from "./NotesSection.tsx";
-import { SpellsSection } from "./SpellsSection.tsx";
+import { SpellsSection } from "./SpellsSection/SpellsSection.tsx";
 import type { BlockViewProps } from "./types.ts";
 
 export function SectionBlockView({ block, character, derived }: BlockViewProps) {

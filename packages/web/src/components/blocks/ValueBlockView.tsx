@@ -1,6 +1,6 @@
 import { derivedValue, type ValueBlockField } from "@dnd/character";
 import { EmptyState } from "../../EmptyState.tsx";
-import { Field } from "../Field.tsx";
+import { Field } from "../Field/Field.tsx";
 import { Popover } from "../Popover.tsx";
 import { TermList } from "../TermList.tsx";
 import type { BlockViewProps } from "./types.ts";

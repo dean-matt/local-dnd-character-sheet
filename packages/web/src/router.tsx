@@ -2,15 +2,15 @@ import type { RouteObject } from "react-router";
 import { createBrowserRouter } from "react-router";
 import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
-import { CharacterLayout } from "./routes/CharacterLayout.tsx";
-import { CharacterListPage } from "./routes/CharacterListPage.tsx";
+import { CharacterLayout } from "./routes/CharacterLayout/CharacterLayout.tsx";
+import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { ContentLayout } from "./routes/ContentLayout.tsx";
 import { DisplaySettings } from "./routes/DisplaySettings.tsx";
 import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
-import { RootLayout } from "./routes/RootLayout.tsx";
+import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
 import { SettingsLayout } from "./routes/SettingsLayout.tsx";
 
 export const routeConfig: RouteObject[] = [

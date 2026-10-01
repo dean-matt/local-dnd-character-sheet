@@ -27,13 +27,17 @@ in `hooks/` however few files read it.
 `packages/web/src` shows the shared locations:
 
 ```
-./                  entry, router, theme and its toggle, loading and error states
-routes/             one file per route, plus the layout pieces around them
-components/         UI any route may use: Card, Field, Modal, Popover, RulesText
-components/blocks/  the block renderers PageBlocks draws for a character's pages
-hooks/              TanStack Query hooks, one per file, and the query keys they share
-lib/                plain functions, the one request builder api.ts among them
-test/               helpers only tests import
+./                       entry, router, theme and its toggle, loading and error states
+routes/                  one file or folder per route, plus the layout pieces around them
+  CharacterLayout/       a component with private parts is a folder named after it
+    CharacterLayout.tsx  the one file code outside the folder imports
+    CharacterSidebar.tsx a private part, read only inside the folder
+    PrintSheet/          a private part with private parts of its own
+components/              UI any route may use: Card, Field, Modal, Popover, RulesText
+components/blocks/       the block renderers PageBlocks draws for a character's pages
+hooks/                   TanStack Query hooks, one per file, and the query keys they share
+lib/                     plain functions, the one request builder api.ts among them
+test/                    helpers only tests import
 ```
 
 A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`.
@@ -53,13 +57,21 @@ exports one hook, and a `lib/` file holds one concept, with the helpers and type
 concept uses. Each file then changes for one reason, and a reader finds a component, hook
 or concept by its filename. A constant or function a component file would export goes to
 `lib/` or a file of its own instead: Vite's Fast Refresh hot-swaps only a file whose exports
-are all components, and reloads the page for any other. `tests/web-file-shape.test.ts` holds the component and hook rules; the concept
-rule is a judgment review makes.
+are all components, and reloads the page for any other. `tests/web-file-shape.test.ts`
+holds the component and hook rules; the concept rule is a judgment review makes.
 
 A helper component or hook that only one file uses still gets a file of its own, named
 so it reads without its parent — `SpellSlotRow.tsx`, not `Row.tsx`. A name that
 stands alone survives the day a second caller arrives, and a reader finds the helper by
 filename instead of scrolling a host file for it.
+
+A component with private parts becomes a folder named after it, holding the component,
+its test and those parts; a part with private parts of its own nests the same way. A leaf
+component stays one file, and a part two components share sits beside both. Code outside a
+folder imports only its namesake component, so a private part stays private and deleting
+the component takes its parts along. No `index.ts` barrel re-exports a folder: an import
+names the file, which keeps each export's readers visible to knip.
+`tests/web-file-shape.test.ts` fails an import that reaches past a namesake, and a barrel.
 
 ## The public surface is `index.ts`
 

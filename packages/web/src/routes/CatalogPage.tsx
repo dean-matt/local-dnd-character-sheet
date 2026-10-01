@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
-import { RulesEntries } from "../components/RulesEntries.tsx";
+import { RulesEntries } from "../components/RulesEntries/RulesEntries.tsx";
 import { Tag } from "../components/Tag.tsx";
 import { EmptyState } from "../EmptyState.tsx";
 import { ErrorState } from "../ErrorState.tsx";

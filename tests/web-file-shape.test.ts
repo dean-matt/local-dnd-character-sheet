@@ -1,6 +1,6 @@
-import { globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, globSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import {
   isArrowFunction,
   isCallExpression,
@@ -24,8 +24,10 @@ import { ROOT } from "./lib/doc-helpers.ts";
  * Fences `docs/code-organization.md`'s one-thing-per-file rules over `packages/web/src`. A
  * `.tsx` file holds at most one component, is named after it, and exports nothing but it
  * and its props type, because Vite's Fast Refresh hot-swaps only a file whose exports are
- * all components. A file under `hooks/` exports at most one hook. One concept per `lib/`
- * file is a judgment no parser makes, so review holds that one.
+ * all components. A file under `hooks/` exports at most one hook. A component folder —
+ * `X/` holding `X.tsx` — is entered from outside only through `X.tsx`, and no `index`
+ * barrel stands in for it. One concept per `lib/` file is a judgment no parser makes, so
+ * review holds that one.
  *
  * A component is a PascalCase function, or a PascalCase const bound to a function, at any
  * depth and through any wrapping call, so one declared inside another or wrapped in `memo`
@@ -99,21 +101,46 @@ function exportedNames(source: SourceFile): string[] {
   });
 }
 
-/** Every way `file` breaks the rules above, worded for a failing test. */
-function faults(file: string, source: SourceFile): string[] {
-  const found: string[] = [];
-  const exported = exportedNames(source);
-  if (file.endsWith(".tsx")) {
-    const defined = components(source);
-    if (defined.length > 1)
-      found.push(`defines ${defined.length} components: ${defined.join(", ")}`);
-    const [component] = defined;
-    if (component !== undefined) {
-      if (basename(file, ".tsx") !== component) found.push(`is not named after ${component}`);
-      const extra = exported.filter((name) => name !== component && name !== `${component}Props`);
-      if (extra.length > 0) found.push(`exports more than ${component}: ${extra.join(", ")}`);
-    }
+/** Each component folder holding `target`, outermost first, up to `root`. */
+function foldersAround(target: string, root: string): string[] {
+  const folders: string[] = [];
+  for (let dir = dirname(target); dir.startsWith(root + sep); dir = dirname(dir)) {
+    if (existsSync(join(dir, `${basename(dir)}.tsx`))) folders.unshift(dir);
   }
+  return folders;
+}
+
+/** The private files of a component folder `file` reaches into from outside it. */
+function privateImports(file: string, source: SourceFile, root: string): string[] {
+  return source.imports.flatMap((node) => {
+    const { text } = node as { text?: string };
+    if (!text?.startsWith(".")) return [];
+    const target = resolve(dirname(file), text);
+    return foldersAround(target, root)
+      .filter((dir) => !file.startsWith(dir + sep) && target !== join(dir, `${basename(dir)}.tsx`))
+      .map((dir) => `imports ${text}, private to ${relative(root, dir).replaceAll("\\", "/")}/`);
+  });
+}
+
+function componentFaults(file: string, source: SourceFile, exported: string[]): string[] {
+  const found: string[] = [];
+  const defined = components(source);
+  if (defined.length > 1) found.push(`defines ${defined.length} components: ${defined.join(", ")}`);
+  const [component] = defined;
+  if (component === undefined) return found;
+  if (basename(file, ".tsx") !== component) found.push(`is not named after ${component}`);
+  const extra = exported.filter((name) => name !== component && name !== `${component}Props`);
+  if (extra.length > 0) found.push(`exports more than ${component}: ${extra.join(", ")}`);
+  return found;
+}
+
+/** Every way `file` breaks the rules above, worded for a failing test. */
+function faults(file: string, source: SourceFile, root: string): string[] {
+  const found = privateImports(file, source, root);
+  if (/^index\.tsx?$/.test(basename(file))) found.push("is an index barrel");
+  if (/\.test\.tsx?$/.test(file)) return found;
+  const exported = exportedNames(source);
+  if (file.endsWith(".tsx")) found.push(...componentFaults(file, source, exported));
   if (/[\\/]hooks[\\/]/.test(file)) {
     const hooks = exported.filter((name) => HOOK.test(name));
     if (hooks.length > 1) found.push(`exports ${hooks.length} hooks: ${hooks.join(", ")}`);
@@ -122,15 +149,13 @@ function faults(file: string, source: SourceFile): string[] {
 }
 
 describe("packages/web/src", () => {
-  const files = globSync("src/**/*.{ts,tsx}", { cwd: WEB })
-    .filter((file) => !/\.test\.tsx?$/.test(file))
-    .map((file) => join(WEB, file));
+  const files = globSync("src/**/*.{ts,tsx}", { cwd: WEB }).map((file) => join(WEB, file));
   const sources = sourceFiles(join(WEB, "tsconfig.json"), files);
 
   it.each(files.map((file) => [file.slice(WEB.length + 1).replaceAll("\\", "/"), file]))(
     "%s holds one thing",
     (_, file) => {
-      expect(faults(file, sources.get(file) as SourceFile)).toEqual([]);
+      expect(faults(file, sources.get(file) as SourceFile, join(WEB, "src"))).toEqual([]);
     },
   );
 });
@@ -151,8 +176,18 @@ describe("the shape check", () => {
     "Extra.tsx":
       "export const LABEL = 'x'; export type ExtraProps = {}; export function Extra() { return <b />; }",
     "hooks/useTwo.ts": "export function useOne() {} export function useTwo() {}",
+    "Folder/Folder.tsx":
+      'import { Part } from "./Part.tsx"; export function Folder() { return <Part />; }',
+    "Folder/Part.tsx": "export function Part() { return <b />; }",
+    "Outside.tsx": [
+      'import { Folder } from "./Folder/Folder.tsx";',
+      'import { Part } from "./Folder/Part.tsx";',
+      "export function Outside() { return <Folder><Part /></Folder>; }",
+    ].join("\n"),
+    "index.ts": 'export { Folder } from "./Folder/Folder.tsx";',
   };
   mkdirSync(join(dir, "hooks"));
+  mkdirSync(join(dir, "Folder"));
   for (const [file, text] of Object.entries(cases)) writeFileSync(join(dir, file), text);
   writeFileSync(
     join(dir, "tsconfig.json"),
@@ -161,7 +196,7 @@ describe("the shape check", () => {
   const paths = Object.keys(cases).map((file) => join(dir, file));
   const sources = sourceFiles(join(dir, "tsconfig.json"), paths);
   const faultsOf = (file: string) =>
-    faults(join(dir, file), sources.get(join(dir, file)) as SourceFile);
+    faults(join(dir, file), sources.get(join(dir, file)) as SourceFile, dir);
 
   it("counts a component declared inside another", () => {
     expect(faultsOf("Nested.tsx")).toEqual(["defines 2 components: Nested, Inner"]);
@@ -181,5 +216,14 @@ describe("the shape check", () => {
 
   it("counts the hooks a file under hooks/ exports", () => {
     expect(faultsOf("hooks/useTwo.ts")).toEqual(["exports 2 hooks: useOne, useTwo"]);
+  });
+
+  it("rejects a private file of a component folder imported from outside it", () => {
+    expect(faultsOf("Outside.tsx")).toEqual(["imports ./Folder/Part.tsx, private to Folder/"]);
+    expect(faultsOf("Folder/Folder.tsx")).toEqual([]);
+  });
+
+  it("rejects an index barrel", () => {
+    expect(faultsOf("index.ts")).toEqual(["is an index barrel"]);
   });
 });

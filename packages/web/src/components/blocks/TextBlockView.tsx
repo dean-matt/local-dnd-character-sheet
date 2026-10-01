@@ -1,4 +1,4 @@
-import { RulesText } from "../RulesText.tsx";
+import { RulesText } from "../RulesText/RulesText.tsx";
 import type { BlockViewProps } from "./types.ts";
 
 /** A note in the same `{@tag}` markup a catalog row's prose carries. */
