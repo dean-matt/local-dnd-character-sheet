@@ -63,9 +63,8 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 - **Unknown `{@tag}` values degrade to plain text.** Never throw on unrecognized markup.
 - **`tests/fixtures/5etools/` is generated**, never hand-edited — `pnpm fixtures:build`
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
-- **A pushed commit is never rewritten.** No amend, no rebase, no force push — add a
-  commit. `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the branch you
-  are on.
+- **A pushed commit is never rewritten.** No amend, rebase or force push — add a commit.
+  `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the current branch.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — a leaf package exports a schema or a type the day something reads it,
   and a test import counts as a reader. `knip` reports an orphaned file and an export
@@ -94,8 +93,7 @@ already assert — no test runs on prose, so the copy is the half that goes wron
 
 ## Maintaining this document
 
-Correcting a stale rule here is part of the change that made it wrong, in the **same
-commit** — not a follow-up.
+Correct a stale rule here in the **same commit** as the change that made it wrong.
 
 **Update it when the change** contradicts something written here, adds structure a
 newcomer would otherwise have to discover, establishes a convention worth repeating, or
@@ -111,7 +109,7 @@ duplicate a source of truth:
 | `package.json` | script bodies |
 | `README.md` | prerequisites, setup, the command list |
 | `CONTRIBUTING.md` | the reasoning behind every fence |
-| `docs/` | 5etools data quirks, data model, architecture, reviving the project |
+| `docs/` | 5etools data quirks, data model, architecture, code organization, reviving |
 | `packages/*/*.md` | anything true of one package only, such as dice notation |
 | `content.manifest.json` / `content.lock.json` | which upstream data is fetched |
 
@@ -139,6 +137,8 @@ The ladder runs *after* understanding the problem, never instead of it — the s
 change in the wrong place is a second bug. Fix root causes, not the path a report names:
 grep every caller and fix the shared function once. Prefer deleting to adding, boring to
 clever, and fewest files. Question a complex request rather than implementing it twice.
+Split a file that mixes concerns changing for different reasons; where code goes inside a
+package is in [`docs/code-organization.md`](docs/code-organization.md).
 
 Do not be lazy about: understanding the problem, input validation at trust boundaries, error
 handling that prevents data loss, security, accessibility, or anything explicitly asked

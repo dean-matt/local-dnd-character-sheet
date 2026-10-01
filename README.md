@@ -120,6 +120,7 @@ data/               the three SQLite databases, gitignored
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Why every fence in this repository exists, and how to work here |
 | [`NOTICE`](NOTICE) | Licensing, and why game content is not committed |
 | [`docs/architecture.md`](docs/architecture.md) | Request flow, the three databases, content tiers, deliberate absences |
+| [`docs/code-organization.md`](docs/code-organization.md) | Where code goes inside a package, and when to split a file |
 | [`docs/data-model.md`](docs/data-model.md) | Character schema, overrides, references |
 | [`docs/5etools-data.md`](docs/5etools-data.md) | Editions, `_copy` inheritance, tag markup |
 | [`docs/class-tables.md`](docs/class-tables.md) | Class resource tables, what the ETL takes from them, and resource counters |
