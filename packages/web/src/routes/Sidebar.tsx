@@ -103,7 +103,7 @@ export function Sidebar({
 
   return (
     <div
-      className="flex h-full flex-col gap-2.5 border-r border-border bg-surface px-4 py-5"
+      className="flex h-full flex-col gap-2.5 overflow-y-auto border-r border-border bg-surface px-4 py-5"
       style={{
         width: collapsed ? "var(--spacing-sidebar-collapsed)" : "var(--spacing-sidebar)",
         transition: "width var(--duration-standard)",
