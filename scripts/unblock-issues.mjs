@@ -16,12 +16,15 @@
  * A term belongs to the issue it opens with, so a closed issue its description only
  * mentions leaves it standing.
  *
- * The reading is a heuristic with two misreads. A bare appositive ("#239, the level-up
+ * The reading is a heuristic with three misreads. A bare appositive ("#239, the level-up
  * flow.") reads as two terms; `stillBlocked` counts a term with no issue number as
- * blocking, since it has nothing to check against `open`, so the label outlives #239. An
- * unnumbered blocker joined by "and" after a described issue ("#77 for the list route and
- * class columns") reads as part of that description and clears with #77. Give such a
- * blocker its own paragraph, or list it before the issues.
+ * blocking, since it has nothing to check against `open`, so the label outlives #239. The
+ * other two clear a real blocker. An unnumbered blocker joined by "and" after a described
+ * issue ("#77 for the list route and class columns") reads as part of that description and
+ * clears with #77. An issue on the next line with no period or blank line before it
+ * ("#75 for the route\n#77 for the list.") reads as part of the term above and clears with
+ * #75; a line break does not end a term, because sections wrap mid-sentence ("and\n#75").
+ * Give such a blocker its own paragraph or sentence, or list it before the issues.
  */
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
