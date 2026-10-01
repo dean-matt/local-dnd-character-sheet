@@ -1,0 +1,69 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { FormField, InputField } from "./FormField.tsx";
+
+describe("FormField", () => {
+  it("labels whatever control its render prop returns", () => {
+    render(
+      <FormField label="Alignment">
+        {(control) => (
+          <select {...control}>
+            <option>Neutral</option>
+          </select>
+        )}
+      </FormField>,
+    );
+
+    expect(screen.getByRole("combobox", { name: "Alignment" })).toBeInTheDocument();
+  });
+
+  it("describes an invalid control by its error and marks it invalid", () => {
+    render(
+      <FormField label="Alignment" error="Pick an alignment.">
+        {(control) => <select {...control} />}
+      </FormField>,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Alignment" });
+    expect(select).toHaveAttribute("aria-invalid", "true");
+    expect(select).toHaveAccessibleDescription("Pick an alignment.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Pick an alignment.");
+  });
+
+  it("leaves a valid control undescribed and keeps an empty live region mounted", () => {
+    render(<FormField label="Alignment">{(control) => <select {...control} />}</FormField>);
+
+    const select = screen.getByRole("combobox", { name: "Alignment" });
+    expect(select).toHaveAttribute("aria-invalid", "false");
+    expect(select).not.toHaveAttribute("aria-describedby");
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("gives two fields distinct ids", () => {
+    render(
+      <>
+        <InputField label="Name" />
+        <InputField label="Player" />
+      </>,
+    );
+
+    expect(screen.getByRole("textbox", { name: "Name" }).id).not.toBe(
+      screen.getByRole("textbox", { name: "Player" }).id,
+    );
+  });
+});
+
+describe("InputField", () => {
+  it("passes the input type through", () => {
+    render(<InputField label="Level" type="number" />);
+
+    expect(screen.getByRole("spinbutton", { name: "Level" })).toBeInTheDocument();
+  });
+
+  it("announces a status while the field is valid", () => {
+    render(<InputField label="Name" status="Saving…" />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Saving…");
+  });
+});
