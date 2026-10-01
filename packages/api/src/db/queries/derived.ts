@@ -4,8 +4,9 @@
  *
  * A casting ability that resolves to nothing is left out, which `deriveCharacter` reads as
  * no spellcasting; an item that resolves to nothing adds no armor and weighs nothing. A
- * class or a race has no such reading — a guessed hit die invents hit points, and a guessed size moves
- * carrying capacity — so either one missing throws `UnresolvedReference`.
+ * class or a race has no such reading — a guessed hit die invents hit points, and a
+ * guessed size moves carrying capacity — so either one missing throws
+ * `UnresolvedReference`.
  */
 
 import {
@@ -186,9 +187,8 @@ function armorTraits(
 /**
  * Every entry whose row states a weapon, keyed by `itemKey`. A proficiency names the base
  * weapon, so a named magic item answers to the `baseItem` it states and a magic variant to
- * its base item's name. A magic bonus traces to the
- * variant that grants it, or to the row itself; a homebrew row has no `(name, source)` to
- * trace to.
+ * its base item's name. A magic bonus traces to the variant that grants it, or to the row
+ * itself; a homebrew row has no `(name, source)` to trace to.
  */
 function weaponTraits(
   definition: CharacterDefinition,

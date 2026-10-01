@@ -1,8 +1,9 @@
 /**
  * The numbers a player reads constantly. Every computed number comes off the derived
  * block; the definition supplies only what a player chose — the scores and which saves
- * and skills they are proficient in — and `Vitals` reads what play has spent from state. A value with terms opens them in a popover; an ability, a save
- * or a skill opens its terms and the catalog's rules text in a modal.
+ * and skills they are proficient in — and `Vitals` reads what play has spent from
+ * state. A value with terms opens them in a popover; an ability, a save or a skill opens
+ * its terms and the catalog's rules text in a modal.
  */
 import {
   ABILITIES,

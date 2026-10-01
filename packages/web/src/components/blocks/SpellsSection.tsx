@@ -1,8 +1,8 @@
 /**
  * The Spells page: the numbers a caster reads before every cast, the slots each level
- * carries, then the spells themselves in one card, grouped by level. Every number comes off the
- * derived block and every spell off `/characters/{id}/spells`, so this file does no
- * rules arithmetic of its own.
+ * carries, then the spells themselves in one card, grouped by level. Every number comes
+ * off the derived block and every spell off `/characters/{id}/spells`, so this file
+ * does no rules arithmetic of its own.
  */
 import type { SheetSpell } from "@dnd/catalog";
 import {

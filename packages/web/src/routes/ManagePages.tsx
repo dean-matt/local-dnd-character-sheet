@@ -111,7 +111,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
   const descId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  // Open as a modal when mounted; return focus on close is handled by the caller.
+  // Opens as a modal on mount; the caller returns focus on close.
   useEffect(() => {
     const el = dialogRef.current;
     if (!el) return;
