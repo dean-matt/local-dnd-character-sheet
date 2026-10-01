@@ -6,12 +6,12 @@
  */
 import type { CharacterDerived, CharacterRecord, PageBlock } from "@dnd/character";
 import type { FunctionComponent } from "react";
-import { ListBlockView } from "./ListBlock.tsx";
-import { SectionBlockView } from "./SectionBlock.tsx";
-import { TextBlockView } from "./TextBlock.tsx";
+import { ListBlockView } from "./ListBlockView.tsx";
+import { SectionBlockView } from "./SectionBlockView.tsx";
+import { TextBlockView } from "./TextBlockView.tsx";
 import type { BlockViewProps } from "./types.ts";
-import { UnknownBlockView } from "./UnknownBlock.tsx";
-import { ValueBlockView } from "./ValueBlock.tsx";
+import { UnknownBlockView } from "./UnknownBlockView.tsx";
+import { ValueBlockView } from "./ValueBlockView.tsx";
 
 const REGISTRY: Record<PageBlock["kind"], FunctionComponent<BlockViewProps>> = {
   section: SectionBlockView,

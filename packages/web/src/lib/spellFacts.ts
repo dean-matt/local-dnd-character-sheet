@@ -9,19 +9,6 @@ import type { SheetSpell } from "@dnd/catalog";
 
 type Resolved = Extract<SheetSpell, { resolved: true }>;
 
-const SCHOOL: Record<string, string> = {
-  A: "Abjuration",
-  C: "Conjuration",
-  D: "Divination",
-  E: "Enchantment",
-  V: "Evocation",
-  I: "Illusion",
-  N: "Necromancy",
-  T: "Transmutation",
-};
-
-export const schoolName = (code: string): string => SCHOOL[code] ?? code;
-
 const UNIT: Record<string, [singular: string, plural: string]> = {
   action: ["action", "actions"],
   bonus: ["bonus action", "bonus actions"],

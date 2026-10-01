@@ -4,7 +4,8 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../test/stubFetch.ts";
-import { RulesEntries, RulesText } from "./RulesText.tsx";
+import { RulesEntries } from "./RulesEntries.tsx";
+import { RulesText } from "./RulesText.tsx";
 
 describe("RulesText", () => {
   it("renders plain text with no markup", () => {

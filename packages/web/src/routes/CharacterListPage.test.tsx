@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { charactersKey } from "../hooks/useCharacters.ts";
+import { charactersKey } from "../hooks/characterKeys.ts";
 import { stubFetch } from "../test/stubFetch.ts";
 import { CharacterListPage } from "./CharacterListPage.tsx";
 

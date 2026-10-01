@@ -3,7 +3,7 @@ import { createRef } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { presetPageRecords } from "../test/records.ts";
-import { CharacterSidebar } from "./Sidebar.tsx";
+import { CharacterSidebar } from "./CharacterSidebar.tsx";
 
 function renderSidebar() {
   const ref = createRef<HTMLButtonElement>();

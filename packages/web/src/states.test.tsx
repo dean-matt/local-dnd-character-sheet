@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { EmptyState, ErrorState, LoadingState } from "./states.tsx";
+import { EmptyState } from "./EmptyState.tsx";
+import { ErrorState } from "./ErrorState.tsx";
+import { LoadingState } from "./LoadingState.tsx";
 
 describe("LoadingState", () => {
   it("announces itself politely", () => {

@@ -2,42 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../hooks/useCharacters.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
-
-function GearIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" />
-    </svg>
-  );
-}
-
-function ChevronDown({ rotated, className }: { rotated: boolean; className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      aria-hidden
-      style={{ transform: rotated ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
+import { ChevronDownIcon } from "./ChevronDownIcon.tsx";
+import { GearIcon } from "./GearIcon.tsx";
 
 const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 text-sm";
 const current = "font-bold text-accent-text";
@@ -87,7 +53,7 @@ export function TopBar() {
           className={`${trigger} ${inCharacters ? current : elsewhere} ${open ? "bg-subtle" : "bg-transparent hover:bg-subtle"}`}
         >
           Character
-          <ChevronDown rotated={open} className={inCharacters ? undefined : "text-muted"} />
+          <ChevronDownIcon rotated={open} className={inCharacters ? undefined : "text-muted"} />
         </button>
 
         {open && (

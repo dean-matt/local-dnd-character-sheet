@@ -1,6 +1,7 @@
 import { Navigate, useParams } from "react-router";
+import { ErrorState } from "../ErrorState.tsx";
 import { useCharacterPages } from "../hooks/useCharacterPages.ts";
-import { ErrorState, LoadingState } from "../states.tsx";
+import { LoadingState } from "../LoadingState.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
 export function CharacterRedirect() {

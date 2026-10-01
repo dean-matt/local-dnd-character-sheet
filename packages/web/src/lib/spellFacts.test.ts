@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  castingTime,
-  schoolName,
-  spellComponents,
-  spellDuration,
-  spellRange,
-} from "./spellFacts.ts";
+import { castingTime, spellComponents, spellDuration, spellRange } from "./spellFacts.ts";
+import { schoolName } from "./spellSchool.ts";
 
 describe("castingTime", () => {
   it("names the unit, pluralized past one, and joins alternatives", () => {

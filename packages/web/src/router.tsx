@@ -1,24 +1,17 @@
 import type { RouteObject } from "react-router";
-import { createBrowserRouter, Outlet } from "react-router";
+import { createBrowserRouter } from "react-router";
 import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
+import { ContentLayout } from "./routes/ContentLayout.tsx";
+import { DisplaySettings } from "./routes/DisplaySettings.tsx";
 import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout.tsx";
-import { DisplaySettings, SettingsLayout } from "./routes/Settings.tsx";
-
-/** Adds the default content padding for routes that do not manage their own layout. */
-function ContentLayout() {
-  return (
-    <div className="px-gutter py-6">
-      <Outlet />
-    </div>
-  );
-}
+import { SettingsLayout } from "./routes/SettingsLayout.tsx";
 
 export const routeConfig: RouteObject[] = [
   {

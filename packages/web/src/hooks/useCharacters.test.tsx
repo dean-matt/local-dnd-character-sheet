@@ -4,13 +4,10 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubFetch } from "../test/stubFetch.ts";
-import {
-  characterKey,
-  charactersKey,
-  useCharacter,
-  useCharacters,
-  useUpdateCharacterDefinition,
-} from "./useCharacters.ts";
+import { characterKey, charactersKey } from "./characterKeys.ts";
+import { useCharacter } from "./useCharacter.ts";
+import { useCharacters } from "./useCharacters.ts";
+import { useUpdateCharacterDefinition } from "./useUpdateCharacterDefinition.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 

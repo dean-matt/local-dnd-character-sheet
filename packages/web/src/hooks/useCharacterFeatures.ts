@@ -1,7 +1,8 @@
 import { characterFeaturesSchema } from "@dnd/catalog";
 import { useQuery } from "@tanstack/react-query";
-import { apiGet, retryUnlessClientError } from "../lib/api.ts";
-import { characterKey } from "./useCharacters.ts";
+import { apiGet } from "../lib/api.ts";
+import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
+import { characterKey } from "./characterKeys.ts";
 
 /** A character's features, keyed under the character so a definition write refetches them. */
 export function useCharacterFeatures(id: string) {

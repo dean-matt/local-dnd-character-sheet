@@ -2,8 +2,10 @@ import type { CharacterRecord } from "@dnd/character";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { avatarColor } from "../lib/avatarColor.ts";
+import { characterSubtitle } from "../lib/characterSubtitle.ts";
 import { characterRecord } from "../test/records.ts";
-import { CharacterHeader, characterSubtitle, PrintTitle } from "./CharacterHeader.tsx";
+import { CharacterHeader } from "./CharacterHeader.tsx";
+import { PrintTitle } from "./PrintTitle.tsx";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const WIZARD = { name: "Wizard", source: "XPHB" };

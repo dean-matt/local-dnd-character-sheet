@@ -3,22 +3,12 @@
  * class's spell attack. Every number comes off the derived block; a weapon's name comes
  * off `/characters/{id}/inventory`, since the derived block keys a weapon by its entry.
  */
-import {
-  type CharacterDerived,
-  type CharacterRecord,
-  type Derived,
-  derivedValue,
-  displayName,
-  entryKey,
-} from "@dnd/character";
-import type { ReactNode } from "react";
+import { type CharacterDerived, type CharacterRecord, displayName, entryKey } from "@dnd/character";
 import { useCharacterInventory } from "../../hooks/useCharacterInventory.ts";
-import { damageText, signed } from "../Attack.tsx";
+import { damageText } from "../../lib/attack.ts";
 import { Card } from "../Card.tsx";
-import { Popover } from "../Popover.tsx";
-import { TermList } from "../TermList.tsx";
-
-const CELL = "px-0.5 py-1.5 text-left align-top";
+import { AttackBonus } from "./AttackBonus.tsx";
+import { AttackRow } from "./AttackRow.tsx";
 
 /** A cell the rules leave empty, shown as a dash and spoken as "none". */
 const NONE = (
@@ -27,27 +17,6 @@ const NONE = (
     <span className="sr-only">None</span>
   </>
 );
-
-function Row({ name, bonus, damage }: { name: string; bonus: ReactNode; damage: ReactNode }) {
-  return (
-    <tr className="border-border border-t">
-      <th scope="row" className={`${CELL} truncate font-normal`}>
-        {name}
-      </th>
-      <td className={`${CELL} font-semibold`}>{bonus}</td>
-      <td className={`${CELL} text-muted`}>{damage}</td>
-    </tr>
-  );
-}
-
-function Bonus({ name, field }: { name: string; field: Derived<number> }) {
-  const bonus = signed(derivedValue(field));
-  return (
-    <Popover trigger={bonus} triggerLabel={`${name} ${bonus}`} label={name}>
-      <TermList terms={field.terms ?? []} />
-    </Popover>
-  );
-}
 
 export function Attacks({
   character,
@@ -91,10 +60,10 @@ export function Attacks({
             {weapons.map((attack) => {
               const name = nameOf(attack.entry);
               return (
-                <Row
+                <AttackRow
                   key={attack.entry}
                   name={name}
-                  bonus={<Bonus name={`${name} attack bonus`} field={attack.attackBonus} />}
+                  bonus={<AttackBonus name={`${name} attack bonus`} field={attack.attackBonus} />}
                   damage={
                     attack.damage
                       ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
@@ -106,10 +75,10 @@ export function Attacks({
             {derived.spellcasting.map((caster) => {
               const name = `${displayName(caster.class)} spell attack`;
               return (
-                <Row
+                <AttackRow
                   key={entryKey(caster.class)}
                   name={name}
-                  bonus={<Bonus name={`${name} bonus`} field={caster.attackBonus} />}
+                  bonus={<AttackBonus name={`${name} bonus`} field={caster.attackBonus} />}
                   damage={NONE}
                 />
               );

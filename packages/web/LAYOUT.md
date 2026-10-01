@@ -12,13 +12,13 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   centered and `scroll-shadow` shading the clipped edge instead. Its widths are
   `--spacing-sidebar` and `--spacing-sidebar-collapsed`.
   The character sheet and Settings share one rail, `Sidebar` in `src/routes/Sidebar.tsx`, one
-  collapsed state, and one row around it, `SidebarFrame` in the same file.
+  collapsed state, and one row around it, `SidebarFrame` beside it.
 - **Character header** fills the content column, so it grows and shrinks with the side
   panels. Its height is `--spacing-header`, which the name and subtitle hold by truncating.
   It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in
   `src/index.css`. Character sheet only; Settings skips it.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on
-  Settings, and in `ContentLayout` in `router.tsx`, which the homepage, list, catalog and 404 pages use.
+  Settings, and in `ContentLayout` in `src/routes/ContentLayout.tsx`, which the homepage, list, catalog and 404 pages use.
 
 A side panel joins the flex row in `src/routes/CharacterLayout.tsx`. The content column
 and the character header follow it; the top bar never does. The mockup's Rolls Panel, a
@@ -31,8 +31,7 @@ right-docked collapsible rail, is the first one expected.
   the top bar adds its height to `scroll-padding-top` in `src/index.css`, as the character
   header does with `--spacing-header`, or focus lands under it.
 - **New chrome opts out of print.** Print hides every bar with `print:hidden` and renders
-  `PrintSheet` and `PrintTitle` from `CharacterLayout.tsx` and `CharacterHeader.tsx`
-  instead.
+  `PrintSheet` and `PrintTitle`, each in its own file in `src/routes/`, instead.
 
 ## Not built
 

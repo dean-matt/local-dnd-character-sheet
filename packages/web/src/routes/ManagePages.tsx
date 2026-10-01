@@ -10,85 +10,20 @@
 import type { CharacterPageRecord } from "@dnd/character";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import {
-  useCharacterPages,
-  useReplaceCharacterPages,
-  useRestoreDefaultPages,
-} from "../hooks/useCharacterPages.ts";
-import { ErrorState } from "../states.tsx";
+import { ErrorState } from "../ErrorState.tsx";
+import { useCharacterPages } from "../hooks/useCharacterPages.ts";
+import { useReplaceCharacterPages } from "../hooks/useReplaceCharacterPages.ts";
+import { useRestoreDefaultPages } from "../hooks/useRestoreDefaultPages.ts";
+import { ArrowDownIcon } from "./ArrowDownIcon.tsx";
+import { ArrowUpIcon } from "./ArrowUpIcon.tsx";
+import { EyeIcon } from "./EyeIcon.tsx";
+import { EyeOffIcon } from "./EyeOffIcon.tsx";
 
 const secondaryBtn =
   "rounded-control border border-border px-3 py-1.5 text-row text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
 const iconBtn =
   "flex h-7 w-7 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
-
-function ArrowUp() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      aria-hidden
-    >
-      <path d="M12 19V5M5 12l7-7 7 7" />
-    </svg>
-  );
-}
-
-function ArrowDown() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      aria-hidden
-    >
-      <path d="M12 5v14M19 12l-7 7-7-7" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function EyeOffIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path d="M3 3l18 18" />
-      <path d="M10.6 5.1A10.6 10.6 0 0112 5c6 0 10 6 10 6a17.5 17.5 0 01-3.2 3.9M6.6 6.6C3.9 8.3 2 12 2 12s4 6 10 6a9.8 9.8 0 004.4-1" />
-      <path d="M9.9 9.9a3 3 0 004.2 4.2" />
-    </svg>
-  );
-}
 
 function move(pages: CharacterPageRecord[], from: number, to: number) {
   const next = [...pages];
@@ -222,7 +157,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
                   aria-disabled={index === 0 || busy}
                   onClick={() => shift(page.slug, -1)}
                 >
-                  <ArrowUp />
+                  <ArrowUpIcon />
                 </button>
                 <button
                   type="button"
@@ -231,7 +166,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
                   aria-disabled={index === pages.length - 1 || busy}
                   onClick={() => shift(page.slug, 1)}
                 >
-                  <ArrowDown />
+                  <ArrowDownIcon />
                 </button>
                 <span
                   className={`flex-1 truncate text-row ${page.hidden ? "text-muted" : "text-ink"}`}

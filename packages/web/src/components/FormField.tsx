@@ -1,14 +1,14 @@
 /**
  * The chrome every form control renders inside: the label above it, a status line and an
  * error message below it, and the `id` and `aria-describedby` that tie the three to the
- * control. `FormField` takes any control through its render prop; `InputField` is the
+ * control. `FormField` takes any control through its render prop; `InputField`, beside it, is the
  * native `<input>` case, which most call sites want.
  *
  * The error reaches a screen reader through `aria-describedby` and a `role="alert"`
  * region, never a native validation bubble, so a `<form>` holding these sets `noValidate`.
  * A control rendered outside `FormField` wires its own `aria-describedby`.
  */
-import { type ComponentProps, type ReactNode, useId } from "react";
+import { type ReactNode, useId } from "react";
 
 /** What `FormField` hands its control to spread onto the focusable element. */
 interface ControlProps {
@@ -17,15 +17,12 @@ interface ControlProps {
   "aria-describedby": string | undefined;
 }
 
-interface ChromeProps {
+export interface FormFieldProps {
   label: string;
   /** Marks the control invalid and describes it. */
   error?: ReactNode;
   /** Progress the user should hear without moving focus, such as a save in flight. */
   status?: ReactNode;
-}
-
-interface FormFieldProps extends ChromeProps {
   children: (control: ControlProps) => ReactNode;
 }
 
@@ -57,25 +54,5 @@ export function FormField({ label, error, status, children }: FormFieldProps) {
         </span>
       )}
     </div>
-  );
-}
-
-type InputFieldProps = ChromeProps &
-  Omit<
-    ComponentProps<"input">,
-    "id" | "aria-invalid" | "aria-describedby" | "children" | "className"
-  >;
-
-export function InputField({ label, error, status, ...input }: InputFieldProps) {
-  return (
-    <FormField label={label} error={error} status={status}>
-      {(control) => (
-        <input
-          {...input}
-          {...control}
-          className="rounded-control border border-border bg-surface px-2 py-1"
-        />
-      )}
-    </FormField>
   );
 }

@@ -31,21 +31,29 @@ in `hooks/` however few files read it.
 routes/             one file per route, plus the layout pieces around them
 components/         UI any route may use: Card, Field, Modal, Popover, RulesText
 components/blocks/  the block renderers PageBlocks draws for a character's pages
-hooks/              TanStack Query hooks, one file per resource
+hooks/              TanStack Query hooks, one per file, and the query keys they share
 lib/                plain functions, the one request builder api.ts among them
 test/               helpers only tests import
 ```
 
 A test sits beside the file it covers, as `X.test.tsx` next to `X.tsx`.
 
-Most of the existing tree breaks at least one rule here. Single-reader helpers such as
-`lib/spellFacts.ts` sit in shared folders, many components in `components/` and `routes/`
-define private components inline, `api`'s `src/db/queries/contentFixture.ts` is a test
-helper among the queries, and `api`'s `src/routes/errors.ts` is a shared schema module
-among the routes. Existing code is not precedent: new code follows these
-rules, and a file earns the fix when a change splits or moves it.
+Some of the existing tree breaks a placement rule here. Single-reader helpers such as
+`lib/spellFacts.ts` sit in shared folders, `api`'s `src/db/queries/contentFixture.ts` is a
+test helper among the queries, and `api`'s `src/routes/errors.ts` is a shared schema module
+among the routes. Existing placement is not precedent: new code follows these rules, and a
+file earns the fix when a change splits or moves it. The next section has no such
+exemption.
 
-## A private helper gets its own file
+## One component, hook or concept per file
+
+In `packages/web`, a `.tsx` file defines one component, is named after it, and exports
+only it and its props type. A file under `hooks/` exports one hook, and a `lib/` file holds
+one concept, with the helpers and types only that concept uses. A constant or function a
+component file would export goes to `lib/` or a file of its own instead: Vite's Fast
+Refresh hot-swaps only a file whose exports are all components, and reloads the page for
+any other. `tests/web-file-shape.test.ts` holds the component and hook rules; the concept
+rule is a judgment review makes.
 
 A helper component or hook that only one file uses still gets a file of its own, named
 so it reads without its parent — `SpellSlotRow.tsx`, not `Row.tsx`. A name that

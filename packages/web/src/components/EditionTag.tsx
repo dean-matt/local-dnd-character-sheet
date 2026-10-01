@@ -1,10 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
+import { EDITION_LABELS } from "../lib/editionLabels.ts";
 import { Tag } from "./Tag.tsx";
-
-export const EDITION_LABELS: Record<CharacterRecord["edition"], string> = {
-  classic: "2014",
-  one: "2024",
-};
 
 /**
  * A character's edition as its year. A screen reader hears the year's rules alone: the

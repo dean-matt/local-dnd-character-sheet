@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
-import { RulesEntries } from "../components/RulesText.tsx";
+import { RulesEntries } from "../components/RulesEntries.tsx";
 import { Tag } from "../components/Tag.tsx";
-import { ApiError, retryUnlessClientError } from "../lib/api.ts";
+import { EmptyState } from "../EmptyState.tsx";
+import { ErrorState } from "../ErrorState.tsx";
+import { LoadingState } from "../LoadingState.tsx";
+import { ApiError } from "../lib/api.ts";
 import type { CatalogTarget } from "../lib/catalogRows.ts";
-import { EmptyState, ErrorState, LoadingState } from "../states.tsx";
+import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
 /** One catalog or homebrew row, read by the identity key its address carries. */

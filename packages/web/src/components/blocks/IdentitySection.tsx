@@ -1,44 +1,19 @@
 /**
- * The Identity, Level, Alignment and Notes pages, read-only: each draws what the
- * definition already holds, and shows as unavailable until the character loads.
+ * The Identity page, read-only: it draws what the definition already holds, and shows as
+ * unavailable until the character loads, as the Level, Alignment and Notes pages beside it do.
  */
-import {
-  type CharacterDefinition,
-  type CharacterRecord,
-  classLevelLabel,
-  classLevels,
-  displayName,
-  raceLabel,
-  totalLevel,
-} from "@dnd/character";
-import type { ReactNode } from "react";
-import { EmptyState } from "../../states.tsx";
+import { type CharacterRecord, displayName, raceLabel, totalLevel } from "@dnd/character";
 import { Card } from "../Card.tsx";
-import { ChipList, EmptyNote } from "../ChipList.tsx";
-
-type SectionProps = { character: CharacterRecord | undefined };
-
-const classChips = (definition: CharacterDefinition) =>
-  classLevels(definition).map(classLevelLabel);
+import { ChipList } from "../ChipList.tsx";
+import { classChips } from "./classChips.ts";
+import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
+import { SectionUnavailable } from "./SectionUnavailable.tsx";
 
 /** A tool held at `none` grants nothing, so it earns no chip. */
 const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertise: " (expertise)" };
 
-function Group({ heading, children }: { heading: string; children: ReactNode }) {
-  return (
-    <div>
-      <h4 className="mb-1.5 font-semibold text-label text-muted">{heading}</h4>
-      {children}
-    </div>
-  );
-}
-
-function Unavailable({ page }: { page: string }) {
-  return <EmptyState>{page} isn't available yet.</EmptyState>;
-}
-
-export function IdentitySection({ character }: SectionProps) {
-  if (!character) return <Unavailable page="Identity" />;
+export function IdentitySection({ character }: { character: CharacterRecord | undefined }) {
+  if (!character) return <SectionUnavailable page="Identity" />;
   const { definition } = character;
   const { background, proficiencies } = definition;
   const tools = proficiencies.tools.flatMap(({ name, level }) => {
@@ -68,61 +43,17 @@ export function IdentitySection({ character }: SectionProps) {
       <Card title="Proficiencies">
         {/* Armor and weapons are categories, and `Light` names one of each, so each keeps a heading. */}
         <div className="flex flex-col gap-2.5">
-          <Group heading="Armor">
+          <ProficiencyGroup heading="Armor">
             <ChipList labels={proficiencies.armor} empty="No armor." />
-          </Group>
-          <Group heading="Weapons">
+          </ProficiencyGroup>
+          <ProficiencyGroup heading="Weapons">
             <ChipList labels={proficiencies.weapons} empty="No weapons." />
-          </Group>
-          <Group heading="Tools">
+          </ProficiencyGroup>
+          <ProficiencyGroup heading="Tools">
             <ChipList labels={tools} empty="No tools." />
-          </Group>
+          </ProficiencyGroup>
         </div>
       </Card>
     </div>
-  );
-}
-
-export function LevelSection({ character }: SectionProps) {
-  if (!character) return <Unavailable page="Level" />;
-  const { definition } = character;
-  return (
-    <Card title="Level">
-      <div className="flex flex-wrap items-baseline gap-2.5">
-        <p className="font-bold text-[32px] leading-none">
-          <span className="sr-only">Total level </span>
-          {totalLevel(definition)}
-        </p>
-        <ChipList labels={classChips(definition)} />
-      </div>
-    </Card>
-  );
-}
-
-export function AlignmentSection({ character }: SectionProps) {
-  if (!character) return <Unavailable page="Alignment" />;
-  const { alignment } = character.definition;
-  return (
-    <Card title="Alignment">
-      {alignment ? (
-        <p className="text-sm">{alignment}</p>
-      ) : (
-        <EmptyNote>No alignment set.</EmptyNote>
-      )}
-    </Card>
-  );
-}
-
-export function NotesSection({ character }: SectionProps) {
-  if (!character) return <Unavailable page="Notes" />;
-  const { notes } = character.definition;
-  return (
-    <Card title="Notes">
-      {notes.trim() ? (
-        <p className="whitespace-pre-wrap text-body">{notes}</p>
-      ) : (
-        <EmptyNote>No notes yet.</EmptyNote>
-      )}
-    </Card>
   );
 }

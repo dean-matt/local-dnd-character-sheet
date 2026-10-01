@@ -1,20 +1,7 @@
-import { type CharacterRecord, classLevelLabel, classLevels, displayName } from "@dnd/character";
+import type { CharacterRecord } from "@dnd/character";
 import { EditionTag } from "../components/EditionTag.tsx";
 import { avatarColor } from "../lib/avatarColor.ts";
-
-/** Race, classes with levels, then background and whatever else the player set, in one line. */
-export function characterSubtitle({ definition, raceSummary }: CharacterRecord): string {
-  const classes = classLevels(definition).map(classLevelLabel).join(" / ");
-  const { alignment, deity } = definition;
-  return [
-    [raceSummary, classes].filter(Boolean).join(" "),
-    displayName(definition.background),
-    alignment,
-    deity && `${deity.name} (${deity.pantheon})`,
-  ]
-    .filter(Boolean)
-    .join(" • ");
-}
+import { characterSubtitle } from "../lib/characterSubtitle.ts";
 
 /**
  * Sits above every page of a character on screen, pinned under the top bar in a `tall`
@@ -52,16 +39,6 @@ export function CharacterHeader({ character }: { character: CharacterRecord }) {
           {subtitle}
         </p>
       </div>
-    </div>
-  );
-}
-
-/** The head of the first printed page: name and subtitle, no avatar. */
-export function PrintTitle({ character }: { character: CharacterRecord }) {
-  return (
-    <div className="mb-4">
-      <p className="font-bold text-[28px] leading-tight">{character.name}</p>
-      <p className="text-muted text-sm">{characterSubtitle(character)}</p>
     </div>
   );
 }

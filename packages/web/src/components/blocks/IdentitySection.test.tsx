@@ -2,12 +2,10 @@ import { characterDefinitionSchema } from "@dnd/character";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../../test/records.ts";
-import {
-  AlignmentSection,
-  IdentitySection,
-  LevelSection,
-  NotesSection,
-} from "./IdentitySection.tsx";
+import { AlignmentSection } from "./AlignmentSection.tsx";
+import { IdentitySection } from "./IdentitySection.tsx";
+import { LevelSection } from "./LevelSection.tsx";
+import { NotesSection } from "./NotesSection.tsx";
 
 /** A Warlock 2 / Fighter 1 High Elf, with something in every proficiency list. */
 function vex() {
