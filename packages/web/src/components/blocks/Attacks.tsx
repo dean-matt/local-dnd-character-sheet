@@ -6,6 +6,7 @@
 import {
   type CharacterDerived,
   type CharacterRecord,
+  type Derived,
   derivedValue,
   displayName,
   entryKey,
@@ -36,6 +37,16 @@ function Row({ name, bonus, damage }: { name: string; bonus: ReactNode; damage: 
       <td className={`${CELL} font-semibold`}>{bonus}</td>
       <td className={`${CELL} text-muted`}>{damage}</td>
     </tr>
+  );
+}
+
+/** A bonus that opens the terms behind it. */
+function Bonus({ name, field }: { name: string; field: Derived<number> }) {
+  const bonus = signed(derivedValue(field));
+  return (
+    <Popover trigger={bonus} triggerLabel={`${name} ${bonus}`} label={name}>
+      <TermList terms={field.terms ?? []} />
+    </Popover>
   );
 }
 
@@ -80,20 +91,11 @@ export function Attacks({
           <tbody>
             {weapons.map((attack) => {
               const name = nameOf(attack.entry);
-              const bonus = signed(derivedValue(attack.attackBonus));
               return (
                 <Row
                   key={attack.entry}
                   name={name}
-                  bonus={
-                    <Popover
-                      trigger={bonus}
-                      triggerLabel={`${name} attack bonus ${bonus}`}
-                      label={`${name} attack bonus`}
-                    >
-                      <TermList terms={attack.attackBonus.terms ?? []} />
-                    </Popover>
-                  }
+                  bonus={<Bonus name={`${name} attack bonus`} field={attack.attackBonus} />}
                   damage={
                     attack.damage
                       ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
@@ -102,14 +104,17 @@ export function Attacks({
                 />
               );
             })}
-            {derived.spellcasting.map((caster) => (
-              <Row
-                key={entryKey(caster.class)}
-                name={`${displayName(caster.class)} spell attack`}
-                bonus={signed(derivedValue(caster.attackBonus))}
-                damage={NONE}
-              />
-            ))}
+            {derived.spellcasting.map((caster) => {
+              const name = `${displayName(caster.class)} spell attack`;
+              return (
+                <Row
+                  key={entryKey(caster.class)}
+                  name={name}
+                  bonus={<Bonus name={`${name} bonus`} field={caster.attackBonus} />}
+                  damage={NONE}
+                />
+              );
+            })}
           </tbody>
         </table>
       )}

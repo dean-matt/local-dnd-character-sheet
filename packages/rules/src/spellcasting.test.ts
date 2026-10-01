@@ -12,11 +12,24 @@ import {
 
 describe("spell math", () => {
   it("derives save DC from proficiency and modifier", () => {
-    expect(spellSaveDc(4, 5)).toBe(15);
+    expect(spellSaveDc("int", 4, 5)).toEqual({
+      total: 15,
+      terms: [
+        { label: "Base", value: 8 },
+        { label: "Intelligence", value: 4 },
+        { label: "Proficiency", value: 3 },
+      ],
+    });
   });
 
   it("derives attack bonus from proficiency and modifier", () => {
-    expect(spellAttackBonus(4, 5)).toBe(7);
+    expect(spellAttackBonus("cha", -1, 1)).toEqual({
+      total: 1,
+      terms: [
+        { label: "Charisma", value: -1 },
+        { label: "Proficiency", value: 2 },
+      ],
+    });
   });
 });
 

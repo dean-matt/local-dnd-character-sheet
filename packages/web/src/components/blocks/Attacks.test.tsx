@@ -66,6 +66,15 @@ describe("Attacks", () => {
     );
   });
 
+  it("opens a class's spell attack terms from its bonus", async () => {
+    renderAttacks(derivedRecord());
+
+    fireEvent.click(await screen.findByRole("button", { name: "Warlock spell attack bonus +5" }));
+    expect(screen.getByRole("group", { name: "Warlock spell attack bonus" })).toHaveTextContent(
+      "Charisma3Proficiency2",
+    );
+  });
+
   it("says so when nothing is equipped and nothing casts", () => {
     renderAttacks({ ...derivedRecord(), spellcasting: [], attacks: [attack(1, 2)] });
 

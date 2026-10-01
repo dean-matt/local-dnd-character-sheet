@@ -7,6 +7,7 @@
  * here as a proficiency bonus and a grip.
  */
 
+import { ABILITY_LABEL, type Ability } from "./core.ts";
 import { assertInteger } from "./integer.ts";
 import { type Breakdown, breakdown, type Term, type TermInput } from "./term.ts";
 
@@ -15,7 +16,7 @@ const WEAPON_KINDS = ["melee", "ranged"] as const;
 type WeaponKind = (typeof WEAPON_KINDS)[number];
 
 /** The ability a weapon attacks with. Returned so a sheet can label the number. */
-type WeaponAbility = "strength" | "dexterity";
+type WeaponAbility = Extract<Ability, "str" | "dex">;
 
 /** Which damage die a versatile weapon rolls; every other weapon rolls its one die. */
 export const GRIPS = ["one-handed", "two-handed"] as const;
@@ -81,11 +82,6 @@ type WeaponAttack<Ref = unknown> = {
   damage?: { dice: string; modifier: Breakdown<Ref> };
 };
 
-const ABILITY_LABEL: Record<WeaponAbility, string> = {
-  strength: "Strength",
-  dexterity: "Dexterity",
-};
-
 const FINESSE = "F";
 
 /**
@@ -112,12 +108,12 @@ function weaponAbility(
   strengthModifier: number,
   dexterityModifier: number,
 ): WeaponAbility {
-  const own: WeaponAbility = weapon.kind === "ranged" ? "dexterity" : "strength";
+  const own: WeaponAbility = weapon.kind === "ranged" ? "dex" : "str";
   const finesse = weapon.properties?.some((property) => abbreviation(property) === FINESSE);
   if (!finesse || strengthModifier === dexterityModifier) {
     return own;
   }
-  return strengthModifier > dexterityModifier ? "strength" : "dexterity";
+  return strengthModifier > dexterityModifier ? "str" : "dex";
 }
 
 /** A term worth nothing is left out, so a breakdown lists only what moved the total. */
@@ -153,7 +149,7 @@ export function weaponAttack<Ref = unknown>({
   const ability = weaponAbility(weapon, strengthModifier, dexterityModifier);
   const abilityTerm: Term<Ref> = {
     label: ABILITY_LABEL[ability],
-    value: ability === "strength" ? strengthModifier : dexterityModifier,
+    value: ability === "str" ? strengthModifier : dexterityModifier,
   };
   const attackTerms = withTerm([abilityTerm], "Proficiency", { value: proficiency });
   const attack = { ability, attack: breakdown(withTerm(attackTerms, "Magic", attackBonus)) };
