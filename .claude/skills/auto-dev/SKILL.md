@@ -42,8 +42,8 @@ whatever waits on the user, and where its review pass ran. Stop where the report
 - **names a changed mockup file** — the merge waits on the user's approval on the canvas.
   If this session holds the conversation, publish them as
   [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup) says. Either way,
-  stop and report them; the user's approval there goes to
-  [`user-signoff`](../user-signoff/SKILL.md)
+  stop and report them. An approval the user gives in this conversation goes to
+  [`user-signoff`](../user-signoff/SKILL.md) as step 3 says, and the run resumes at step 5
 
 **3. Run the gate and read the label.** The gate reads no label.
 
@@ -93,7 +93,8 @@ worktree add` fails on it until the user clears `.claude/worktrees/<n>`.
 
 **Resolve what stopped it, or skip past it.** A declined finding, a red check and a
 merge-gate condition are each the user's to weigh, and the board is ordered — taking the
-next issue buries that decision under a second pull request.
+next issue buries that decision under a second pull request. Step 3's `user-signoff` is
+not skipping past it: the user weighed the stop, and the run goes on only on their word.
 
 **Rerank the board.** The order is the user's.
 
