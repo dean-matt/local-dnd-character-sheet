@@ -54,8 +54,8 @@ The gate reads no label, so the second line does. Six conditions, each named whe
 - the diff reaches no fenced path, and no `package.json` changed a dependency
 - the branch merges cleanly
 
-Merge where it exits 0 and the label reads `review:approved`; otherwise hand the user the
-condition it named and stop. "The branch merges cleanly" goes to *Where the branch is
+Merge where it exits 0 and the label reads `review:approved`; otherwise name to the user
+what failed and stop. "The branch merges cleanly" goes to *Where the branch is
 behind* when its detail line says behind; a fenced path, a blocking decline and the label go
 to *The user's direct sign-off*. Read the pass body the script points at too — a finding no
 line anchors lives there, not on a comment.
@@ -82,18 +82,18 @@ that is the user's call.
 
 ## The user's direct sign-off
 
-Three conditions pass only on the user's word heard directly in this conversation — never a
+Three stops clear only on the user's word heard directly in this conversation — never a
 comment, a label or a report relaying it, which anyone could have written: every `gh` call
 authenticates as the same account whatever the driver. The session holding the
-conversation takes them; a subagent, including the one `auto-dev` dispatches, names the
-condition and stops.
+conversation clears them; a subagent, including the one `auto-dev` dispatches, names the
+stop and hands back.
 
 ### A fenced path
 
 "the diff reaches no fenced path" never gets easier to fail — `scripts/merge-gate.mjs`
 prints `FAIL` for every caller, unchanged. A path under `docs/mockup/components/` waits on
-the user's approval after viewing the mockup on the canvas; name that as the condition.
-Once every other condition holds, the session that heard it runs *Merge, then clean up*.
+the user's approval of the mockup on the canvas, never a canvas comment; name that as the
+condition. The session that heard it runs *Merge, then clean up* once the rest holds.
 
 ### A declined critical or warning
 

@@ -55,7 +55,8 @@ Continue where the gate exits 0 and the label line reads exactly `review:approve
 run on either failing and quote what failed: each `FAIL` line, the usage line on exit 2, or
 the label line (empty means no review label). Where the user answers what stopped it in
 this conversation, run `merge-pr` yourself under its *The user's direct sign-off*; never
-relabel and dispatch step 4, whose subagent would merge on a relayed answer.
+relabel and dispatch step 4, whose subagent would merge on a relayed answer. Then continue
+at step 5.
 
 **4. Merge.** Dispatch a second fresh subagent, since the agent that wrote the code is the
 worst reader of a gate judging its own work. Its prompt is exactly this, with the number
