@@ -5,13 +5,13 @@ import { characterKey } from "./useCharacters.ts";
 
 /**
  * A character's catalog references that no row answers, keyed under the character so a
- * definition write refetches them. Only a row already shown unresolved asks for it.
+ * definition write refetches them.
  */
-export function useCharacterReferences(id: string) {
+export function useCharacterReferences(id: string, enabled: boolean) {
   return useQuery({
     queryKey: [...characterKey(id), "references"],
     queryFn: () => apiGet(`/characters/${id}/references`, characterReferencesSchema),
-    enabled: id.length > 0,
+    enabled: enabled && id.length > 0,
     retry: retryUnlessClientError,
   });
 }

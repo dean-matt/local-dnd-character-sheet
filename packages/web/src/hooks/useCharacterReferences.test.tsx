@@ -27,7 +27,7 @@ describe("useCharacterReferences", () => {
     };
     const fetchMock = stubFetch(new Response(JSON.stringify(body), { status: 200 }));
 
-    const { result } = renderHook(() => useCharacterReferences("1"), { wrapper });
+    const { result } = renderHook(() => useCharacterReferences("1", true), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(body);
@@ -39,7 +39,7 @@ describe("useCharacterReferences", () => {
       new Response(JSON.stringify({ error: "No character with that id" }), { status: 404 }),
     );
 
-    const { result } = renderHook(() => useCharacterReferences("1"), { wrapper });
+    const { result } = renderHook(() => useCharacterReferences("1", true), { wrapper });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error?.message).toBe("No character with that id");

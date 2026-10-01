@@ -15,7 +15,7 @@ import { type Attack, AttackChips, type Grip } from "../Attack.tsx";
 import { Card } from "../Card.tsx";
 import { Field } from "../Field.tsx";
 import { ListRow } from "../ListRow.tsx";
-import { NotFoundTag } from "../NotFoundTag.tsx";
+import { NotFoundTag, renamedAt } from "../NotFoundTag.tsx";
 import { Popover } from "../Popover.tsx";
 import { firstLine, RulesEntries } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
@@ -123,11 +123,14 @@ function Marks({ item }: { item: SheetItem }) {
   );
 }
 
+/** `index` is the item's place in the definition, which names its field in the report. */
 function UnresolvedRow({
   item,
+  index,
   characterId,
 }: {
   item: Extract<SheetItem, { resolved: false }>;
+  index: number;
   characterId: string;
 }) {
   const source = item.source ? ` (${item.source})` : "";
@@ -140,15 +143,8 @@ function UnresolvedRow({
           <Marks item={item} />
           <NotFoundTag
             characterId={characterId}
-            kinds={["item"]}
-            refs={
-              item.source === undefined
-                ? []
-                : [
-                    { name: item.name, source: item.source },
-                    ...(item.variant ? [item.variant] : []),
-                  ]
-            }
+            homebrew={item.source === undefined}
+            renamed={renamedAt(`inventory[${index}].ref`, `inventory[${index}].variant`)}
           />
         </>
       }
@@ -361,7 +357,7 @@ function ItemList({
                   saving={update.isPending}
                 />
               ) : (
-                <UnresolvedRow key={index} item={item} characterId={character.id} />
+                <UnresolvedRow key={index} item={item} index={index} characterId={character.id} />
               ),
             )}
           </ul>

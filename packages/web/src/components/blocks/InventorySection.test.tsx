@@ -258,7 +258,7 @@ describe("InventorySection", () => {
     renderSection(load(), INVENTORY, {
       unresolved: [
         {
-          field: "inventory[3].variant",
+          field: "inventory[7].variant",
           kind: "item",
           ref: { name: "+1 Weapon", source: "DMG" },
           parent: { name: "Net", source: "PHB" },
@@ -269,6 +269,42 @@ describe("InventorySection", () => {
 
     const net = (await screen.findByText(/Net \(PHB\)/)).closest("li") as HTMLElement;
     expect(await within(net).findByText("Renamed to +1 Weapon (XDMG)")).toBeInTheDocument();
+  });
+
+  it("leaves a variant unrenamed where only another row's base takes the rename", async () => {
+    const variant = { name: "+1 Weapon", source: "DMG" };
+    const missing = { resolved: false, source: "PHB", ...flags, variant } as const;
+    renderSection(
+      load(),
+      {
+        items: [
+          { ...missing, name: "Net" },
+          { ...missing, name: "Whip" },
+        ],
+      },
+      {
+        unresolved: [
+          {
+            field: "inventory[0].variant",
+            kind: "item",
+            ref: variant,
+            parent: { name: "Net", source: "PHB" },
+            renamedTo: { name: "+1 Weapon", source: "XDMG" },
+          },
+          { field: "inventory[1].ref", kind: "item", ref: { name: "Whip", source: "PHB" } },
+          {
+            field: "inventory[1].variant",
+            kind: "item",
+            ref: variant,
+            parent: { name: "Whip", source: "PHB" },
+          },
+        ],
+      },
+    );
+
+    await screen.findByText("Renamed to +1 Weapon (XDMG)");
+    const whip = screen.getByText(/Whip \(PHB\)/).closest("li") as HTMLElement;
+    expect(whip).toHaveTextContent("Not found in the catalog");
   });
 
   it("counts the attunement slots in use against the derived total", () => {

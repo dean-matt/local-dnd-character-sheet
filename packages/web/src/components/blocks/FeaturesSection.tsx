@@ -11,7 +11,7 @@ import { useCharacterFeatures } from "../../hooks/useCharacterFeatures.ts";
 import { EmptyState, ErrorState, LoadingState } from "../../states.tsx";
 import { Card } from "../Card.tsx";
 import { ListRow } from "../ListRow.tsx";
-import { NotFoundTag } from "../NotFoundTag.tsx";
+import { NotFoundTag, renamedRef } from "../NotFoundTag.tsx";
 import { firstLine, RulesBlock, RulesEntries } from "../RulesText.tsx";
 import { Tag } from "../Tag.tsx";
 
@@ -50,7 +50,6 @@ const FEATURE_TYPE_LABEL: Record<string, string> = {
 
 type Entry = { feature: SheetFeature; group: FeatureGroup };
 
-/** An unresolved feature with no source is a homebrew reference, which names no source. */
 /** The catalog tables an unresolved feature's own reference may name, by its group. */
 const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
   class: ["class"],
@@ -61,6 +60,7 @@ const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
   optionalFeature: ["optionalFeature"],
 };
 
+/** An unresolved feature with no source is a homebrew reference, which names no source. */
 function FeatureRow({ feature, group, characterId }: Entry & { characterId: string }) {
   const type =
     feature.featureType === undefined
@@ -80,8 +80,11 @@ function FeatureRow({ feature, group, characterId }: Entry & { characterId: stri
       {!feature.resolved && (
         <NotFoundTag
           characterId={characterId}
-          kinds={ORIGIN_KINDS[group.origin]}
-          refs={feature.source ? [{ name: feature.name, source: feature.source }] : []}
+          homebrew={!feature.source}
+          renamed={renamedRef(ORIGIN_KINDS[group.origin], {
+            name: feature.name,
+            source: feature.source ?? "",
+          })}
         />
       )}
     </>

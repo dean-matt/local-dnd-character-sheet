@@ -233,12 +233,6 @@ describe("SpellsSection", () => {
     renderSection(derivedRecord(), SPELLS, {
       unresolved: [
         {
-          field: "spells[0].ref",
-          kind: "item",
-          ref: { name: "Lost Spell", source: "PHB" },
-          renamedTo: { name: "Lost Item", source: "XPHB" },
-        },
-        {
           field: "spells[3].ref",
           kind: "spell",
           ref: { name: "Lost Spell", source: "PHB" },
@@ -251,6 +245,32 @@ describe("SpellsSection", () => {
     expect(await within(row).findByText("Renamed to Found Spell (XPHB)")).toBeInTheDocument();
     expect(row).not.toHaveTextContent("Not found in the catalog");
     expect(within(row).queryByRole("button")).toBeNull();
+  });
+
+  it("reads the rename off the spell's own field, not another entry of the same name", async () => {
+    const lost = { resolved: false, name: "Lost Spell", source: "PHB", prepared: false } as const;
+    renderSection(
+      derivedRecord(),
+      { spells: [lost, { ...lost, prepared: true }] },
+      {
+        unresolved: [
+          {
+            field: "spells[0].ref",
+            kind: "spell",
+            ref: { name: "Lost Spell", source: "PHB" },
+            renamedTo: { name: "Found Spell", source: "XPHB" },
+          },
+          { field: "spells[1].ref", kind: "spell", ref: { name: "Lost Spell", source: "PHB" } },
+        ],
+      },
+    );
+
+    await screen.findByText("Renamed to Found Spell (XPHB)");
+    const [known, prepared] = screen
+      .getAllByText("Lost Spell (PHB)")
+      .map((name) => name.closest("li") as HTMLElement);
+    expect(known).toHaveTextContent("Renamed to Found Spell (XPHB)");
+    expect(prepared).toHaveTextContent("Not found in the catalog");
   });
 
   it("asks for no reference report where every spell resolves", async () => {
