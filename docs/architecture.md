@@ -150,7 +150,7 @@ state.
 control its label, status and error, and `Field`'s edit mode renders through it. Its
 module doc holds the rules a form follows, `noValidate` among them.
 
-**One picker for every catalog choice.** A flow picks any row `/search` reaches, such as a
+**One picker for every row `/search` reaches.** A flow picks a catalog choice, such as a
 spell, item or feat, through `packages/web/src/components/CatalogPicker/CatalogPicker.tsx`,
 which searches the catalog and homebrew together and returns a reference, never the row.
 The flow passes the reason a row is unavailable; the picker never judges legality. A
