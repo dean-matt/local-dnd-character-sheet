@@ -685,4 +685,62 @@ describe("deriveCharacter", () => {
       expect(block.spellcasting[0]).not.toHaveProperty("preparedSpells");
     });
   });
+
+  describe("overrides", () => {
+    const withOverrides = (overrides: CharacterDefinition["overrides"]) =>
+      deriveCharacter({ ...equipped, overrides }, catalog);
+
+    it("folds each override into the field its key names, leaving the computed side alone", () => {
+      const block = withOverrides({
+        armorClass: 20,
+        "abilityModifiers.dex": 5,
+        "skills.Stealth|XPHB.modifier": 12,
+      });
+
+      expect(block.armorClass).toEqual({ ...derived.armorClass, manual: 20 });
+      expect(derivedValue(block.abilityModifiers.dex)).toBe(5);
+      const stealth = block.skills.find((skill) => skill.ref.name === "Stealth");
+      expect(stealth?.modifier).toEqual({
+        computed: 9,
+        manual: 12,
+        terms: stealth?.modifier.terms,
+      });
+      expect(stealth?.passive.manual).toBeNull();
+    });
+
+    it("returns the computed value once the override is cleared", () => {
+      const overridden = withOverrides({ armorClass: 20 });
+      const cleared = withOverrides({});
+
+      expect(derivedValue(overridden.armorClass)).toBe(20);
+      expect(cleared.armorClass).toEqual(derived.armorClass);
+      expect(derivedValue(cleared.armorClass)).toBe(17);
+    });
+
+    it("keeps an override through a level-up that moves the computed value", () => {
+      const fighter = { name: "Fighter", source: "XPHB" };
+      const leveled = deriveCharacter(
+        {
+          ...equipped,
+          levels: [...equipped.levels, { class: fighter }],
+          overrides: { hitPointMaximum: 99 },
+        },
+        { ...catalog, hitDice: new Map([...hitDice, [entryKey(fighter), 10 as const]]) },
+      );
+
+      expect(leveled.hitPointMaximum.computed).toBeGreaterThan(derived.hitPointMaximum.computed);
+      expect(derivedValue(leveled.hitPointMaximum)).toBe(99);
+    });
+
+    it("leaves unapplied a key naming no field, rather than refusing the block", () => {
+      expect(withOverrides({ "skills.Juggling|XPHB.modifier": 4 })).toEqual(derived);
+    });
+
+    it("leaves unapplied a value its field refuses, and applies the rest", () => {
+      const block = withOverrides({ armorClass: "high", initiative: 6 });
+
+      expect(block.armorClass).toEqual(derived.armorClass);
+      expect(derivedValue(block.initiative)).toBe(6);
+    });
+  });
 });
