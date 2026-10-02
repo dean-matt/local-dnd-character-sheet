@@ -84,7 +84,8 @@ widget, panel, or nav element:
   the pill. Results group under Characters and Compendium, a type chip on each, and an
   "Advanced search" link at the foot opens Search, the `search` route: the query field,
   the results, and a collapsible filter sidebar shaped like Sidebar, its controls the
-  Filter artboards' checkboxes, chips and level range. It filters by type, source and
+  Filter artboards' checkboxes, chips and level range. The query field, results and
+  confirmation fill the main column beside the sidebar, with no maximum width. It filters by type, source and
   edition, adds level and school once Spell is ticked and rarity once Item is. A row with
   no edition, as Tier B and C allow, shows under either edition. The API's `/search` takes one
   `edition`, one `type` and `q` today, so ticking several types or both editions, and

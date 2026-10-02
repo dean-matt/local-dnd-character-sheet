@@ -170,7 +170,7 @@
 
     <div style="flex-grow: 1; min-width: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
       <h1 style="margin: 0; font-size: 22px; font-weight: 700;">Search</h1>
-      <div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff; max-width: 640px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <label for="searchQuery" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search the compendium</label>
         <input id="searchQuery" type="search" value="{{query}}" onChange="{{onQueryChange}}" placeholder="Search spells, items, feats, rules…" style="flex-grow: 1; border: none; background: none; outline: none; font-size: 14px; color: #1f2430;">
@@ -183,7 +183,7 @@
 
       <div role="status">
         <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
-          <div style="max-width: 760px; padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
+          <div style="padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
             <div style="font-weight: 600;">{{toastText}}</div>
             <sc-if value="{{hasToastNote}}" hint-placeholder-val="{{false}}">
               <div style="color: #6b4e16; margin-top: 2px;">{{toastNote}}</div>
@@ -192,7 +192,7 @@
         </sc-if>
       </div>
 
-      <div style="max-width: 760px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px;">
+      <div style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px;">
         <sc-for list="{{results}}" as="res" hint-placeholder-count="6">
           <div onKeyDown="{{res.onPickerKeyDown}}" style="border-bottom: 1px solid #eceef1;">
             <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px;">
