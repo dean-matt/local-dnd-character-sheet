@@ -10,7 +10,7 @@ import {
   catalogSearchHitSchema,
   homebrewSearchHitSchema,
   type SearchHit,
-  searchHitSchema,
+  searchResponseSchema,
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
@@ -52,13 +52,6 @@ const listQuery = z.object({
   type: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
-});
-
-const searchResponseSchema = z.object({
-  items: z.array(searchHitSchema),
-  total: z.int(),
-  limit: z.int(),
-  offset: z.int(),
 });
 
 const search = createRoute({
