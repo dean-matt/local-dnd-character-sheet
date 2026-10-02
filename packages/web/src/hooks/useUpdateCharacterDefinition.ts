@@ -5,7 +5,7 @@ import {
 } from "@dnd/character";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "../lib/api.ts";
-import { characterKey, charactersKey } from "./characterKeys.ts";
+import { characterDefinitionWriteKey, characterKey, charactersKey } from "./characterKeys.ts";
 
 /**
  * Replaces a character's definition. On success the mutation writes the response
@@ -20,6 +20,7 @@ export function useUpdateCharacterDefinition(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation<CharacterRecord, Error, CharacterDefinition>({
+    mutationKey: characterDefinitionWriteKey(id),
     mutationFn: (definition) =>
       apiMutate("PUT", `/characters/${id}`, characterRecordSchema, definition),
     onSuccess: (record) => {

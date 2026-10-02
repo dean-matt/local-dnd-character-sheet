@@ -3,7 +3,8 @@ import {
   characterDefinitionSchema,
   defaultCharacterState,
 } from "@dnd/character";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { characters, undoLog } from "../db/characters.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 
@@ -194,5 +195,135 @@ describe("charactersRoutes", () => {
       method: "PUT",
     });
     expect(putRes.status).toBe(404);
+  });
+});
+
+describe("the undo log", () => {
+  let opened: ReturnType<typeof openTestDatabases>;
+  let routes: ReturnType<typeof charactersRoutes>;
+  let id: string;
+
+  const put = (definition: CharacterDefinition) =>
+    routes.request(`/characters/${id}`, { ...json(definition), method: "PUT" });
+  const withCha = (cha: number) =>
+    baseDefinition({ abilityScores: { ...baseDefinition().abilityScores, cha } });
+  const entries = async () =>
+    (await (await routes.request(`/characters/${id}/undo`)).json()) as { describedAs: string }[];
+  const undo = () => routes.request(`/characters/${id}/undo`, { method: "POST" });
+
+  beforeEach(async () => {
+    opened = openTestDatabases();
+    routes = charactersRoutes(opened.charactersDb);
+    id = (await (await routes.request("/characters", json(baseDefinition()))).json()).id;
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+  });
+
+  it("starts empty, and an edit records what it replaced in words", async () => {
+    expect(await entries()).toEqual([]);
+    await put(withCha(18));
+    expect(await entries()).toEqual([
+      { id: expect.any(Number), describedAs: "Charisma 17 to 18", changedAt: expect.any(String) },
+    ]);
+  });
+
+  it("merges a burst on one field into one entry, and splits on another field", async () => {
+    for (const cha of [18, 19, 20]) await put(withCha(cha));
+    expect((await entries()).map((e) => e.describedAs)).toEqual(["Charisma 17 to 20"]);
+
+    await put(baseDefinition({ name: "Nyx", abilityScores: withCha(20).abilityScores }));
+    expect((await entries()).map((e) => e.describedAs)).toEqual([
+      "Name Vex to Nyx",
+      "Charisma 17 to 20",
+    ]);
+  });
+
+  it("drops the entry where a burst returns the field to where it started", async () => {
+    await put(withCha(18));
+    await put(withCha(17));
+    expect(await entries()).toEqual([]);
+  });
+
+  it("starts a new entry once the burst pauses past the window", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
+    await put(withCha(18));
+    vi.setSystemTime(new Date("2026-01-01T00:00:31Z"));
+    await put(withCha(19));
+    expect((await entries()).map((e) => e.describedAs)).toEqual([
+      "Charisma 18 to 19",
+      "Charisma 17 to 18",
+    ]);
+  });
+
+  it("restores newest first through the definition write, then has nothing left", async () => {
+    await put(withCha(18));
+    await put(baseDefinition({ name: "Nyx", abilityScores: withCha(18).abilityScores }));
+
+    const first = await undo();
+    expect(first.status).toBe(200);
+    expect(await first.json()).toMatchObject({ name: "Vex", definition: withCha(18) });
+
+    await undo();
+    const restored = await (await routes.request(`/characters/${id}`)).json();
+    expect(restored.definition).toEqual(baseDefinition());
+
+    const none = await undo();
+    expect(none.status).toBe(409);
+    expect(await none.json()).toEqual({ error: "Nothing to undo" });
+  });
+
+  it("keeps the newest 50 entries", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    for (let at = 1; at <= 55; at++) {
+      vi.setSystemTime(new Date(Date.UTC(2026, 0, 1, 0, at)));
+      await put(baseDefinition({ name: `Vex ${at}` }));
+    }
+    const kept = await entries();
+    expect(kept).toHaveLength(50);
+    expect(kept[0]?.describedAs).toBe("Name Vex 54 to Vex 55");
+    expect(kept.at(-1)?.describedAs).toBe("Name Vex 5 to Vex 6");
+    expect(opened.charactersDb.select().from(undoLog).all()).toHaveLength(50);
+  });
+
+  it("drops a snapshot its schema rejects, so the next undo reaches the entry behind it", async () => {
+    await put(withCha(18));
+    opened.charactersDb
+      .insert(undoLog)
+      .values({ characterId: id, previousState: { name: "" }, describedAs: "Broken" })
+      .run();
+
+    const res = await undo();
+    expect(res.status).toBe(422);
+    expect((await res.json()).error).toMatch(/^Cannot restore "Broken", so it was dropped/);
+    const current = await (await routes.request(`/characters/${id}`)).json();
+    expect(current.definition).toEqual(withCha(18));
+    expect((await entries()).map((e) => e.describedAs)).toEqual(["Charisma 17 to 18"]);
+    expect((await undo()).status).toBe(200);
+  });
+
+  it("restores a merged burst to where it started", async () => {
+    for (const cha of [18, 19, 20]) await put(withCha(cha));
+    await undo();
+    const restored = await (await routes.request(`/characters/${id}`)).json();
+    expect(restored.definition).toEqual(baseDefinition());
+  });
+
+  it("records nothing over a stored definition its schema now refuses", async () => {
+    opened.charactersDb
+      .update(characters)
+      .set({ definition: { name: "" } })
+      .run();
+    expect((await put(withCha(18))).status).toBe(200);
+    expect(await entries()).toEqual([]);
+  });
+
+  it("404s listing or undoing for an id that does not exist", async () => {
+    expect((await routes.request("/characters/missing/undo")).status).toBe(404);
+    expect((await routes.request("/characters/missing/undo", { method: "POST" })).status).toBe(404);
   });
 });
