@@ -46,13 +46,17 @@ type Placement = { level?: number; featureType?: string };
 const entryOf = (json: unknown): CharacterOptionEntry | undefined =>
   json === undefined ? undefined : parseJson(characterOptionEntrySchema, json);
 
-/** A homebrew row's stamped source names no book, so its feature carries none, as items do. */
-const sourceOf = (ref: EntryRef, source: string) => ("homebrewId" in ref ? {} : { source });
+/**
+ * A homebrew row's stamped source names no book, so its feature carries none, as items do.
+ * A catalog feature takes its row's source, or the reference's where no row answers.
+ */
+const sourceOf = (ref: EntryRef, source?: string) =>
+  "homebrewId" in ref ? {} : { source: source ?? ref.source };
 
 const unresolved = (ref: EntryRef, placement: Placement = {}): SheetFeature => ({
   resolved: false,
   name: displayName(ref),
-  ...("homebrewId" in ref ? {} : { source: ref.source }),
+  ...sourceOf(ref),
   ...placement,
 });
 
