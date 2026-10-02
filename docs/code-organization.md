@@ -73,6 +73,12 @@ the component takes its parts along. No `index.ts` barrel re-exports a folder: a
 names the file, which keeps each export's readers visible to knip.
 `tests/web-file-shape.test.ts` fails an import that reaches past a namesake, and a barrel.
 
+A form reaches `FormShell` only through `lib/createForm.ts`, which binds the schema and
+draft flow to it and returns the `useField` typed to that form. A route importing
+`FormShell.tsx` directly gets a working form with no bound `useField`, and has to name the
+form's type by hand. The namesake rule cannot hide the shell, so the same test fails any
+import of it from outside its own folder other than `createForm`'s.
+
 ## The public surface is `index.ts`
 
 A library package's `exports` map names `src/index.ts`, and that file is the whole of

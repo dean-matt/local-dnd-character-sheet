@@ -27,7 +27,9 @@ import { ROOT } from "./lib/doc-helpers.ts";
  * and its props type, because Vite's Fast Refresh hot-swaps only a file whose exports are
  * all components. A file under `hooks/` exports at most one hook. A component folder —
  * `X/` holding `X.tsx` — is entered from outside only through `X.tsx`, and no `index`
- * barrel stands in for it. No `.tsx` file draws its own `<svg>`: icons come from
+ * barrel stands in for it. A gated file is imported only by its gate and the files beside
+ * it, so a form reaches `FormShell` through `createForm` and gets the `useField` bound to
+ * its type. No `.tsx` file draws its own `<svg>`: icons come from
  * `lucide-react`, so none drifts from the set the mockup draws. One concept per `lib/` file
  * is a judgment no parser makes, so review holds that one.
  *
@@ -39,6 +41,8 @@ import { ROOT } from "./lib/doc-helpers.ts";
 const WEB = join(ROOT, "packages/web");
 const PASCAL = /^[A-Z](?=[A-Za-z0-9]*[a-z])[A-Za-z0-9]*$/;
 const HOOK = /^use[A-Z]/;
+/** Each gated file, relative to `src/`, and the one file outside its folder that may import it. */
+const GATES = new Map([["components/FormShell/FormShell.tsx", "lib/createForm.ts"]]);
 
 const api = new API({ cwd: ROOT });
 afterAll(() => api.close());
@@ -112,15 +116,33 @@ function foldersAround(target: string, root: string): string[] {
   return folders;
 }
 
+const posix = (from: string, to: string) => relative(from, to).replaceAll("\\", "/");
+
+/** Each relative import in `source`, as its specifier and the absolute path it resolves to. */
+function relativeImports(file: string, source: SourceFile): [string, string][] {
+  return source.imports.flatMap((node): [string, string][] => {
+    const { text } = node as { text?: string };
+    return text?.startsWith(".") ? [[text, resolve(dirname(file), text)]] : [];
+  });
+}
+
 /** The private files of a component folder `file` reaches into from outside it. */
 function privateImports(file: string, source: SourceFile, root: string): string[] {
-  return source.imports.flatMap((node) => {
-    const { text } = node as { text?: string };
-    if (!text?.startsWith(".")) return [];
-    const target = resolve(dirname(file), text);
-    return foldersAround(target, root)
+  return relativeImports(file, source).flatMap(([text, target]) =>
+    foldersAround(target, root)
       .filter((dir) => !file.startsWith(dir + sep) && target !== join(dir, `${basename(dir)}.tsx`))
-      .map((dir) => `imports ${text}, private to ${relative(root, dir).replaceAll("\\", "/")}/`);
+      .map((dir) => `imports ${text}, private to ${posix(root, dir)}/`),
+  );
+}
+
+/** The gated files `file` imports without being their gate or sitting beside them. */
+function gatedImports(file: string, source: SourceFile, root: string): string[] {
+  const from = posix(root, file);
+  return relativeImports(file, source).flatMap(([text, target]) => {
+    const gated = posix(root, target);
+    const gate = GATES.get(gated);
+    if (gate === undefined || from === gate || dirname(from) === dirname(gated)) return [];
+    return [`imports ${text}, which only ${gate} may import`];
   });
 }
 
@@ -145,7 +167,7 @@ function drawsSvg(source: SourceFile): boolean {
 
 /** Every way `file` breaks the rules above, worded for a failing test. */
 function faults(file: string, source: SourceFile, root: string): string[] {
-  const found = privateImports(file, source, root);
+  const found = [...privateImports(file, source, root), ...gatedImports(file, source, root)];
   if (/^index\.tsx?$/.test(basename(file))) found.push("is an index barrel");
   if (/\.test\.tsx?$/.test(file)) return found;
   const exported = exportedNames(source);
@@ -203,9 +225,19 @@ describe("the shape check", () => {
       "}",
     ].join("\n"),
     "Named.tsx": 'export function Named() { return <span title="<svg>" />; }',
+    "components/FormShell/FormShell.tsx": "export function FormShell() { return <form />; }",
+    "components/FormShell/FormShell.test.tsx":
+      'import { FormShell } from "./FormShell.tsx"; void FormShell;',
+    "lib/createForm.ts":
+      'import { FormShell } from "../components/FormShell/FormShell.tsx"; export const shell = FormShell;',
+    "Bypass.tsx": [
+      'import { FormShell } from "./components/FormShell/FormShell.tsx";',
+      "export function Bypass() { return <FormShell />; }",
+    ].join("\n"),
   };
-  mkdirSync(join(dir, "hooks"));
-  mkdirSync(join(dir, "Folder"));
+  for (const sub of ["hooks", "Folder", "components/FormShell", "lib"]) {
+    mkdirSync(join(dir, sub), { recursive: true });
+  }
   for (const [file, text] of Object.entries(cases)) writeFileSync(join(dir, file), text);
   writeFileSync(
     join(dir, "tsconfig.json"),
@@ -244,6 +276,14 @@ describe("the shape check", () => {
   it("rejects a hand-drawn <svg> and passes the text <svg>", () => {
     expect(faultsOf("Drawn.tsx")).toEqual(["draws an <svg> rather than a lucide-react icon"]);
     expect(faultsOf("Named.tsx")).toEqual([]);
+  });
+
+  it("rejects a gated file imported past its gate", () => {
+    expect(faultsOf("Bypass.tsx")).toEqual([
+      "imports ./components/FormShell/FormShell.tsx, which only lib/createForm.ts may import",
+    ]);
+    expect(faultsOf("lib/createForm.ts")).toEqual([]);
+    expect(faultsOf("components/FormShell/FormShell.test.tsx")).toEqual([]);
   });
 
   it("rejects an index barrel", () => {
