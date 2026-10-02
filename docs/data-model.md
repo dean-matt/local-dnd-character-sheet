@@ -12,7 +12,6 @@ a table definition.
 ```mermaid
 erDiagram
     characters ||--|| character_state : "current values"
-    characters ||--o{ field_overrides : "manual edits"
     characters ||--o{ character_pages : "by position"
     characters ||--o{ roll_log : "last 200"
     characters ||--o{ undo_log : "last 50"

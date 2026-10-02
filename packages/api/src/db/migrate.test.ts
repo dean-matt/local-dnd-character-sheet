@@ -67,12 +67,18 @@ describe("migrations", () => {
       expect.arrayContaining([
         "characters",
         "character_state",
-        "field_overrides",
         "character_pages",
         "roll_log",
         "undo_log",
       ]),
     );
+  });
+
+  it("drops the overrides table, since an override lives in the definition", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    migrateCharacters(drizzle(sqlite));
+
+    expect(tableNames(sqlite)).not.toContain("field_overrides");
   });
 
   it("creates every table homebrew.ts defines", () => {
