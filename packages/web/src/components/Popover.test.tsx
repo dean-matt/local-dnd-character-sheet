@@ -248,6 +248,30 @@ describe("Popover", () => {
     expect(screen.getByText("Strength")).toBeInTheDocument();
   });
 
+  it("draws its content in the top layer, out of reach of a scroll container's clip", () => {
+    const shown: Element[] = [];
+    HTMLElement.prototype.showPopover = function showPopover(this: HTMLElement) {
+      shown.push(this);
+    };
+    try {
+      render(
+        <div className="min-h-0 overflow-auto">
+          <Popover trigger="+3" label="Strength modifier">
+            Base 16, modifier +3
+          </Popover>
+        </div>,
+      );
+      const trigger = screen.getByRole("button", { name: "+3" });
+      fireEvent.click(trigger);
+
+      const content = document.getElementById(trigger.getAttribute("aria-controls") ?? "");
+      expect(content).toHaveAttribute("popover", "manual");
+      expect(shown).toEqual([content]);
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, "showPopover");
+    }
+  });
+
   it("allows one level of nesting, exactly one term explaining itself", () => {
     render(
       <Popover trigger="+3" label="Strength modifier">
