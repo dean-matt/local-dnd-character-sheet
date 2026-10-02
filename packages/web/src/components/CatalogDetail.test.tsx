@@ -82,6 +82,7 @@ describe("CatalogDetail", () => {
     expect(screen.getByText("PHB")).toBeInTheDocument();
     expect(screen.getByText("Spell")).toBeInTheDocument();
     expect(screen.getByText("2014 rules")).toBeInTheDocument();
+    expect(screen.getByTitle("This spell uses the 2014 rules")).toBeInTheDocument();
     expect(screen.getByText("bright").tagName).toBe("STRONG");
     expect(screen.getByRole("heading", { level: 3, name: "Blast" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 4, name: "Nested" })).toBeInTheDocument();

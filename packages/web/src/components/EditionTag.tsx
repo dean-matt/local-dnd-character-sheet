@@ -11,7 +11,8 @@ export function EditionTag({
   of = "character",
 }: {
   edition: CharacterRecord["edition"];
-  of?: "character" | "row";
+  /** What uses the edition, as the hover title names it: "character", "spell". */
+  of?: string;
 }) {
   const year = EDITION_LABELS[edition];
   return (

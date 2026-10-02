@@ -1,12 +1,11 @@
-import { skipToken, useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { EmptyState } from "../EmptyState.tsx";
 import { ErrorState } from "../ErrorState.tsx";
+import { useCatalogRow } from "../hooks/useCatalogRow.ts";
 import { LoadingState } from "../LoadingState.tsx";
 import { ApiError } from "../lib/api.ts";
 import { matchCatalogTarget } from "../lib/catalogRows.ts";
-import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 import { EditionTag } from "./EditionTag.tsx";
 import { Modal } from "./Modal.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
@@ -27,11 +26,7 @@ const capitalized = (label: string) => label.charAt(0).toUpperCase() + label.sli
  */
 export function CatalogDetail({ address, onClose }: CatalogDetailProps) {
   const match = matchCatalogTarget(address);
-  const row = useQuery({
-    queryKey: ["catalog", address],
-    queryFn: match ? () => match.target.load(match.key) : skipToken,
-    retry: retryUnlessClientError,
-  });
+  const row = useCatalogRow(match);
   const modal = (title: string, body: ReactNode, badge?: ReactNode, meta?: ReactNode) =>
     createPortal(
       <Modal title={title} badge={badge} meta={meta} width="w-140" onClose={onClose}>
@@ -61,7 +56,7 @@ export function CatalogDetail({ address, onClose }: CatalogDetailProps) {
     <Tag>{capitalized(match.target.label)}</Tag>,
     <span className="flex items-center gap-1.5">
       <Tag>{source ?? "Homebrew"}</Tag>
-      {edition && <EditionTag edition={edition} of="row" />}
+      {edition && <EditionTag edition={edition} of={match.target.label} />}
     </span>,
   );
 }
