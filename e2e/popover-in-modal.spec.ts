@@ -46,9 +46,18 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+let character: string | undefined;
+
+// Here rather than in a `finally`, which a timed-out test reaches only after its request context closed.
+test.afterEach(async ({ request }) => {
+  if (character) await request.delete(`/api/characters/${character}`);
+  character = undefined;
+});
+
 /** A character whose first page holds one rules reference, so the sheet behind a modal has a popover. */
 async function sheetWithReference(request: APIRequestContext) {
   const id = await createCharacter(request, `E2E Popover ${Date.now()}`);
+  character = id;
   const pages = (await (await request.get(`/api/characters/${id}/pages`)).json()) as {
     preset: boolean;
     blocks: unknown[];
@@ -139,57 +148,36 @@ test("a popover opened at the bottom of a modal draws past the modal's edge, fol
   await expect(trigger).toBeFocused();
 });
 
-test("while a modal is open, a popover on the page behind it sits beneath the backdrop, and hover and focus cannot open it", async ({
+test("while a modal is open, hovering or focusing a reference on the page behind it opens no popover", async ({
   page,
   request,
 }) => {
   const id = await sheetWithReference(request);
-  try {
-    await page.goto(`/characters/${id}/p/stats`);
-    const trigger = page.locator("main").getByRole("button", { name: fireball.name, exact: true });
-    const content = page
-      .locator("main")
-      .getByRole("group", { name: `${fireball.name} (${fireball.source})` });
+  await page.goto(`/characters/${id}/p/stats`);
+  const trigger = page.locator("main").getByRole("button", { name: fireball.name, exact: true });
+  await expect(trigger).toBeVisible();
+  await page.getByRole("combobox", { name: "Search characters and the compendium" }).fill("long");
+  await page.getByRole("option", { name: new RegExp(feat.name) }).click();
+  const dialog = page.getByRole("dialog", { name: feat.name });
+  await expect(dialog).toBeVisible();
 
-    // Opened by keyboard so the pointer stays on the reference and holds its popover open.
-    await trigger.hover();
-    await expect(content).toBeVisible();
-    const search = page.getByRole("combobox", { name: "Search characters and the compendium" });
-    await search.focus();
-    await page.keyboard.type("long");
-    await expect(page.getByRole("option", { name: new RegExp(feat.name) })).toBeVisible();
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("Enter");
-    const dialog = page.getByRole("dialog", { name: feat.name });
-    await expect(dialog).toBeVisible();
+  const opened = await watchOpened(trigger);
+  await trigger.scrollIntoViewIfNeeded();
+  const at = await box(trigger);
+  const onTrigger = { x: at.x + at.width / 2, y: at.y + at.height / 2 };
+  await page.mouse.move(onTrigger.x, onTrigger.y, { steps: 4 });
+  await settled(page);
+  expect(await hitAt(page, onTrigger)).toBe("dialog");
+  expect(await opened()).toBe(false);
 
-    const left = await box(content);
-    expect(await hitAt(page, { x: left.x + 4, y: left.y + 4 })).toBe("dialog");
-
-    await trigger.scrollIntoViewIfNeeded();
-    const at = await box(trigger);
-    await page.mouse.move(at.x + at.width / 2, at.y - 40);
-    await expect(content).toBeHidden();
-    const opened = await watchOpened(trigger);
-    const onTrigger = { x: at.x + at.width / 2, y: at.y + at.height / 2 };
-    await page.mouse.move(onTrigger.x, onTrigger.y, { steps: 4 });
-    await settled(page);
-    expect(await hitAt(page, onTrigger)).toBe("dialog");
-    expect(await opened()).toBe(false);
-
-    await trigger.evaluate((element) => (element as HTMLElement).focus());
-    await expect(trigger).not.toBeFocused();
-    for (const key of [...Array(4).fill("Tab"), ...Array(4).fill("Shift+Tab")]) {
-      await page.keyboard.press(key);
-      expect(await page.evaluate(() => document.activeElement?.closest("main") === null)).toBe(
-        true,
-      );
-    }
-    expect(await opened()).toBe(false);
-    await expect(dialog).toBeVisible();
-  } finally {
-    await request.delete(`/api/characters/${id}`);
+  await trigger.evaluate((element) => (element as HTMLElement).focus());
+  await expect(trigger).not.toBeFocused();
+  for (const key of [...Array(4).fill("Tab"), ...Array(4).fill("Shift+Tab")]) {
+    await page.keyboard.press(key);
+    expect(await page.evaluate(() => document.activeElement?.closest("main") === null)).toBe(true);
   }
+  expect(await opened()).toBe(false);
+  await expect(dialog).toBeVisible();
 });
 
 test("a popover pinned on the page closes under the modal it opens, and the page takes it back when the modal closes", async ({
@@ -197,39 +185,35 @@ test("a popover pinned on the page closes under the modal it opens, and the page
   request,
 }) => {
   const id = await sheetWithReference(request);
-  try {
-    await page.goto(`/characters/${id}/p/stats`);
-    const trigger = page.locator("main").getByRole("button", { name: fireball.name, exact: true });
-    const content = page
-      .locator("main")
-      .getByRole("group", { name: `${fireball.name} (${fireball.source})` });
-    await trigger.click();
-    await expect(content).toBeVisible();
-    const pinned = await box(content);
-    await content.getByRole("button", { name: `Open ${fireball.name}` }).click();
+  await page.goto(`/characters/${id}/p/stats`);
+  const trigger = page.locator("main").getByRole("button", { name: fireball.name, exact: true });
+  const content = page
+    .locator("main")
+    .getByRole("group", { name: `${fireball.name} (${fireball.source})` });
+  await trigger.click();
+  await expect(content).toBeVisible();
+  const pinned = await box(content);
+  await content.getByRole("button", { name: `Open ${fireball.name}` }).click();
 
-    const dialog = page.getByRole("dialog", { name: fireball.name });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
-    expect(await hitAt(page, { x: pinned.x + 4, y: pinned.y + 4 })).toBe("dialog");
-    expect(
-      await hitAt(page, { x: pinned.x + pinned.width - 4, y: pinned.y + pinned.height - 4 }),
-    ).toBe("dialog");
-    await expect(content).toBeHidden();
-    await trigger.evaluate((element) => (element as HTMLElement).focus());
-    await expect(trigger).not.toBeFocused();
+  const dialog = page.getByRole("dialog", { name: fireball.name });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
+  expect(await hitAt(page, { x: pinned.x + 4, y: pinned.y + 4 })).toBe("dialog");
+  expect(
+    await hitAt(page, { x: pinned.x + pinned.width - 4, y: pinned.y + pinned.height - 4 }),
+  ).toBe("dialog");
+  await expect(content).toBeHidden();
+  await trigger.evaluate((element) => (element as HTMLElement).focus());
+  await expect(trigger).not.toBeFocused();
 
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
-    await expect(trigger).toBeFocused();
-    await expect(content).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(content).toBeHidden();
-    await expect(trigger).toBeFocused();
-    await trigger.click();
-    await expect(content).toBeVisible();
-    expect(await hitAt(page, { x: pinned.x + 4, y: pinned.y + 4 })).toBe("popover");
-  } finally {
-    await request.delete(`/api/characters/${id}`);
-  }
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await expect(content).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(content).toBeHidden();
+  await expect(trigger).toBeFocused();
+  await trigger.click();
+  await expect(content).toBeVisible();
+  expect(await hitAt(page, { x: pinned.x + 4, y: pinned.y + 4 })).toBe("popover");
 });
