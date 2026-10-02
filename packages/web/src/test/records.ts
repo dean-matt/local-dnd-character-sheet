@@ -67,7 +67,7 @@ export function warlockRecord(): CharacterRecord {
  * `characterRecord`'s Vex as a Warlock 2 / Fighter 1 High Elf, with something in every
  * proficiency list, an alignment and notes.
  */
-export function identityRecord() {
+export function identityRecord(): CharacterRecord {
   const base = characterRecord("1", "Vex");
   const warlock = { class: { name: "Warlock", source: "XPHB" } };
   return {
