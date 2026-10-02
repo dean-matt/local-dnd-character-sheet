@@ -1,5 +1,14 @@
+import { matchRoutes } from "react-router";
 import { describe, expect, it } from "vitest";
-import { searchHitPath, searchHitTypeLabel } from "./searchHits.ts";
+import { routeConfig } from "../router.tsx";
+import { CatalogPage } from "../routes/CatalogPage.tsx";
+import { HIT_COLLECTIONS, searchHitPath, searchHitTypeLabel } from "./searchHits.ts";
+
+const leafElementType = (path: string) => {
+  const matches = matchRoutes(routeConfig, path) ?? [];
+  const element = matches.at(-1)?.route.element;
+  return element && typeof element === "object" && "type" in element ? element.type : undefined;
+};
 
 describe("searchHitPath", () => {
   it("addresses a catalog hit by its encoded name and source", () => {
@@ -13,9 +22,30 @@ describe("searchHitPath", () => {
     );
   });
 
-  it("has no path for a type without a detail route", () => {
+  it.each([...HIT_COLLECTIONS.keys()])(
+    "addresses a %s hit at a registered detail route",
+    (type) => {
+      const path = searchHitPath({
+        type,
+        name: "Mage Hand / Legerdemain",
+        source: "XPHB",
+        edition: "one",
+      });
+      expect(leafElementType(path ?? "")).toBe(CatalogPage);
+    },
+  );
+
+  it.each(["item", "spell"] as const)(
+    "addresses a homebrew %s hit at a registered detail route",
+    (type) => {
+      const path = searchHitPath({ type, id: "a1", name: "Ember", edition: "one" });
+      expect(leafElementType(path ?? "")).toBe(CatalogPage);
+    },
+  );
+
+  it.each(["monster", "constructor"])("has no path for the type %s", (type) => {
     expect(
-      searchHitPath({ type: "monster", name: "Fire Giant", source: "MM", edition: null }),
+      searchHitPath({ type, name: "Fire Giant", source: "MM", edition: null }),
     ).toBeUndefined();
   });
 });
