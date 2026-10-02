@@ -63,6 +63,44 @@ export function warlockRecord(): CharacterRecord {
   };
 }
 
+/**
+ * `characterRecord`'s Vex as a Warlock 2 / Fighter 1 High Elf, with something in every
+ * proficiency list, an alignment and notes.
+ */
+export function identityRecord() {
+  const base = characterRecord("1", "Vex");
+  const warlock = { class: { name: "Warlock", source: "XPHB" } };
+  return {
+    ...base,
+    definition: characterDefinitionSchema.parse({
+      ...base.definition,
+      levels: [
+        warlock,
+        { class: { name: "Fighter", source: "XPHB" } },
+        { ...warlock, subclass: { name: "Fiend Patron", source: "XPHB" } },
+      ],
+      race: { name: "Elf", source: "XPHB" },
+      subrace: { name: "High", source: "XPHB" },
+      proficiencies: {
+        ...base.definition.proficiencies,
+        armor: ["Light", "Shield"],
+        weapons: ["Simple", "Light"],
+        tools: [
+          { name: "Thieves' Tools", level: "expertise" },
+          { name: "Herbalism Kit", level: "proficient" },
+          { name: "Dice Set", level: "none" },
+        ],
+        languages: [
+          { name: "Common", source: "XPHB" },
+          { name: "Elvish", source: "XPHB" },
+        ],
+      },
+      alignment: "Chaotic Good",
+      notes: "Owes Sarth 10 gp.\nDo not trust the ferryman.",
+    }),
+  };
+}
+
 /** What `GET /characters/{id}/derived` returns for `characterRecord`'s Warlock, unarmored. */
 export function derivedRecord(): CharacterDerived {
   const warlock = entryKey({ name: "Warlock", source: "XPHB" });
