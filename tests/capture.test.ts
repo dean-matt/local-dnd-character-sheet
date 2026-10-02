@@ -5,6 +5,16 @@ import { capture } from "../scripts/capture.mjs";
 
 const SCRIPTS = join(import.meta.dirname, "../scripts");
 
+/** A `spawnSync` call with `stdio: "inherit"` on its line buffers nothing, so it passes. */
+const buffers = (source: string) =>
+  source
+    .split("\n")
+    .some(
+      (line) =>
+        /\bexec(File)?Sync\(/.test(line) ||
+        (line.includes("spawnSync(") && !line.includes('stdio: "inherit"')),
+    );
+
 describe("capture", () => {
   it("reads output past Node's default 1 MiB buffer", () => {
     const size = 2 * 1024 * 1024;
@@ -12,9 +22,9 @@ describe("capture", () => {
     expect(out.length).toBe(size);
   });
 
-  it("is the only script that buffers a child with execFileSync", () => {
+  it("is the only script that buffers a child's output", () => {
     const direct = readdirSync(SCRIPTS).filter(
-      (f) => f !== "capture.mjs" && readFileSync(join(SCRIPTS, f), "utf8").includes("execFileSync"),
+      (f) => f !== "capture.mjs" && buffers(readFileSync(join(SCRIPTS, f), "utf8")),
     );
     expect(direct).toEqual([]);
   });

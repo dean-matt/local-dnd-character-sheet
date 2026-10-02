@@ -17,7 +17,7 @@ export const MAX_BUFFER = 256 * 1024 * 1024;
  * @param {string} file
  * @param {string[]} args
  * @param {import("node:child_process").ExecFileSyncOptions} [options]
- * @returns {string}
+ * @returns {string} stdout, or null where `options.stdio` ignores it
  */
 export function capture(file, args, options = {}) {
   return execFileSync(file, args, { encoding: "utf8", maxBuffer: MAX_BUFFER, ...options });
