@@ -14,8 +14,9 @@ type Lists = {
  * added to the block fails to compile until it names one here.
  *
  * An inventory entry carries no id, so a weapon is named by its item and which copy of
- * that item it is. Removing another item leaves the override on its weapon; reordering
- * two copies of one item swaps theirs.
+ * that item it is. Removing another item leaves the override on its weapon. Reordering
+ * two copies of one item swaps theirs, and removing an earlier copy hands its override
+ * to the next; only an id per entry fixes that.
  */
 const ELEMENT_KEY: {
   [K in keyof Lists]: (element: Lists[K][number], definition: CharacterDefinition) => string;

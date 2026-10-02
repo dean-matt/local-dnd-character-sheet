@@ -54,7 +54,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   every class but the Mystic, which is playtest and classic only.
 - **A derived field holds its computed value and terms beside the manual override**, which
   the definition's sparse `overrides` stores. A null `manual` is no override, so a level-up
-  recomputes without stomping an edit; the terms come from the rules function, never rebuilt.
+  keeps the edit; the terms come from the rules function itself, never rebuilt beside it.
 - **A rule a table bends ships its house-rule option in the same commit as the rule.**
   `character` owns the vocabulary and an absent option means the rule as printed;
   `rules` takes a parameter and never learns what a house rule is.
