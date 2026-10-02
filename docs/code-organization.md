@@ -77,7 +77,7 @@ A form reaches `FormShell` only through `lib/createForm.ts`, which binds the sch
 draft flow to it and returns the `useField` typed to that form. A route importing
 `FormShell.tsx` directly gets a working form with no bound `useField`, and has to name the
 form's type by hand. The namesake rule cannot hide the shell, so the same test fails any
-import of it from outside its own folder other than `createForm`'s.
+import of it from outside its own folder except the one in `lib/createForm.ts`.
 
 ## The public surface is `index.ts`
 
