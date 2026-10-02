@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import type { z } from "zod";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishFeaturesFixture } from "../db/queries/contentFixture.ts";
-import { insertHomebrewFeat } from "../db/queries/homebrew.ts";
+import { insertHomebrewFeat, insertHomebrewRace } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { featuresRoutes } from "./features.ts";
 
@@ -342,6 +342,22 @@ describe("featuresRoutes", () => {
     expect(groups.map(({ origin }) => origin)).toEqual(["class", "subclass", "race", "feat"]);
     expect(groups[3]?.features).toEqual([
       { resolved: true, name: "Tavern Brawler Plus", entries: ["You brawl."] },
+    ]);
+  });
+
+  it("leaves the stamped source off a homebrew race's traits", async () => {
+    insertHomebrewRace(opened.homebrewDb, "hr", {
+      name: "Duskling",
+      edition: "classic",
+      size: ["M"],
+      speed: 30,
+      entries: [{ type: "entries", name: "Dusksight", entries: ["You see in dusk."] }],
+    });
+    store(definitionWith({ race: { homebrewId: "hr" } }));
+    const { groups } = await features();
+
+    expect(groups.find(({ origin }) => origin === "race")?.features).toEqual([
+      { resolved: true, name: "Dusksight", entries: ["You see in dusk."] },
     ]);
   });
 });
