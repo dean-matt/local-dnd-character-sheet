@@ -50,6 +50,7 @@ describe("UndoButton", () => {
     renderWithClient(
       <>
         <input aria-label="Notes" />
+        <input type="checkbox" aria-label="Prepared" />
         <UndoButton characterId="1" />
       </>,
     );
@@ -58,7 +59,7 @@ describe("UndoButton", () => {
     fireEvent.keyDown(screen.getByLabelText("Notes"), { key: "z", ctrlKey: true });
     expect(posts(fetchMock)).toHaveLength(0);
 
-    fireEvent.keyDown(document.body, { key: "z", metaKey: true });
+    fireEvent.keyDown(screen.getByLabelText("Prepared"), { key: "z", metaKey: true });
     await waitFor(() => expect(posts(fetchMock)).toHaveLength(1));
   });
 

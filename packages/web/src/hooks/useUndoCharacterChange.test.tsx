@@ -44,4 +44,18 @@ describe("useUndoCharacterChange", () => {
     expect(queryClient.getQueryData(characterUndoKey("1"))).toEqual([entry(1)]);
     expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
   });
+
+  it("refetches the undo log on a failure, since the server may have dropped its head", async () => {
+    stubFetch(new Response(JSON.stringify({ error: "Cannot restore" }), { status: 422 }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(characterUndoKey("1"), []);
+
+    const { result } = renderHook(() => useUndoCharacterChange("1"), {
+      wrapper: wrapper(queryClient),
+    });
+
+    result.current.mutate();
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
+  });
 });

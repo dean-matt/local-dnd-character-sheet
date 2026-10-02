@@ -130,7 +130,7 @@ export function undoLastChange(db: CharactersDb, id: string): UndoResult | undef
     if (!previous.success) {
       return {
         kind: "invalid",
-        message: `Cannot restore "${newest.describedAs}", so it was dropped: ${previous.error.message}`,
+        message: `Cannot restore "${newest.describedAs}", so it was dropped`,
       };
     }
     const row = writeDefinition(tx, id, previous.data, new Date());

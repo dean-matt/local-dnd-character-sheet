@@ -9,6 +9,11 @@ const SCOPE =
   "Undo reaches back through the last 50 changes to this character's details. It does not reach play " +
   "state, page layout or a deleted character, and there is no redo.";
 
+const TEXT_ENTRY =
+  "textarea, input:not([type]), input[type='text'], input[type='search'], " +
+  "input[type='email'], input[type='url'], input[type='tel'], input[type='password'], " +
+  "input[type='number']";
+
 /**
  * A text control keeps its own undo, so the shortcut leaves it to the browser there. An
  * open dialog hides the sheet, so the shortcut leaves that alone too.
@@ -16,7 +21,7 @@ const SCOPE =
 function shortcutIgnoredIn(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLElement &&
-    (target.isContentEditable || target.closest("input, textarea, select, dialog[open]") !== null)
+    (target.isContentEditable || target.closest(`${TEXT_ENTRY}, dialog[open]`) !== null)
   );
 }
 
@@ -29,7 +34,6 @@ export function UndoButton({ characterId }: { characterId: string }) {
   const undo = useUndoCharacterChange(characterId);
   const [announced, setAnnounced] = useState("");
   const scopeId = useId();
-  // A write in flight was built from the definition before the undo, and would land over it.
   const writing = useIsMutating({ mutationKey: characterDefinitionWriteKey(characterId) }) > 0;
   const next = log.data?.[0];
   const ready = next !== undefined && !undo.isPending && !writing;

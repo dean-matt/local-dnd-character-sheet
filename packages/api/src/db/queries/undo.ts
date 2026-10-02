@@ -19,7 +19,9 @@ type Db = Pick<CharactersDb, "select" | "insert" | "update" | "delete">;
  * A save landing within this long of the newest entry, on exactly the fields that entry
  * changed, merges into it, so a field's autosave burst is one undo. The window slides
  * with each merge: one field edited without a 30-second pause stays one entry however
- * long it runs. A per-edit id sent by the client is the way out once two edits merge.
+ * long it runs. A section with no keys, such as spells or a resized inventory, is one
+ * field, so two separate edits to it inside the window merge too. A per-edit id sent by
+ * the client is the way out for both.
  */
 const COALESCE_WINDOW_MS = 30_000;
 
