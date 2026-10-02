@@ -11,13 +11,18 @@ import type { Ability, EntryRef } from "./refs.ts";
  * A character's `undo_log` rows as an endpoint lists them, newest first, so the head is
  * what the next undo restores. Each row's snapshot stays on the server.
  */
-export const undoLogSchema = z.array(
-  z.strictObject({
-    id: z.int(),
-    describedAs: z.string().min(1),
-    changedAt: z.iso.datetime(),
-  }),
-);
+/** Newest kept per character; the insert that passes it prunes the oldest. */
+export const UNDO_LOG_LIMIT = 50;
+
+export const undoLogSchema = z
+  .array(
+    z.strictObject({
+      id: z.int(),
+      describedAs: z.string().min(1),
+      changedAt: z.iso.datetime(),
+    }),
+  )
+  .max(UNDO_LOG_LIMIT);
 
 /** Exhaustive, so a field added to the definition fails to compile until it has a label. */
 const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
@@ -155,8 +160,11 @@ function changes(before: CharacterDefinition, after: CharacterDefinition): Chang
   });
 }
 
+/** An empty string is how a cleared text field stores, so it reads as no value. */
+const blank = (value: unknown) => value === undefined || value === "";
+
 const quotable = (value: unknown) =>
-  value === undefined ||
+  blank(value) ||
   typeof value === "number" ||
   typeof value === "boolean" ||
   (typeof value === "string" && value.length <= QUOTED_MAX);
@@ -166,8 +174,8 @@ const quote = (value: unknown) =>
 
 function phrase({ label, before, after }: Change): string {
   if (!quotable(before) || !quotable(after)) return `${label} edited`;
-  if (before === undefined) return `${label} set to ${quote(after)}`;
-  if (after === undefined) return `${label} cleared`;
+  if (blank(before)) return `${label} set to ${quote(after)}`;
+  if (blank(after)) return `${label} cleared`;
   return `${label} ${quote(before)} to ${quote(after)}`;
 }
 

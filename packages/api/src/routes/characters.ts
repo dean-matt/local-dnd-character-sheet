@@ -14,6 +14,7 @@ import {
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
+  UNDO_LOG_LIMIT,
   undoLogSchema,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
@@ -177,7 +178,7 @@ const readUndo = createRoute({
   description:
     "Each `PUT /characters/{id}` records the definition it replaced, merging an autosave " +
     "burst on one field into one entry. The log covers the definition only — not state, " +
-    "pages or a deleted character — and keeps the newest 50.",
+    `pages or a deleted character — and keeps the newest ${UNDO_LOG_LIMIT}.`,
   request: { params: idParam },
   responses: {
     200: {
@@ -206,7 +207,7 @@ const undo = createRoute({
     },
     422: {
       description:
-        "The stored definition no longer passes the schema, so the entry is dropped " +
+        "The entry's snapshot no longer passes the schema, so the entry is dropped " +
         "and the definition left as it was",
       content: { "application/json": { schema: errorSchema } },
     },

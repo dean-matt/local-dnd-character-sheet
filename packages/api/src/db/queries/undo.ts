@@ -7,13 +7,11 @@ import {
   type CharacterDefinition,
   characterDefinitionSchema,
   describeChange,
+  UNDO_LOG_LIMIT,
 } from "@dnd/character";
 import { and, desc, eq, notInArray } from "drizzle-orm";
-import { UNDO_LOG_LIMIT, undoLog } from "../characters.ts";
-import type { CharactersDb } from "./characters.ts";
-
-/** What a transaction and the database both offer, so a helper serves either. */
-type Db = Pick<CharactersDb, "select" | "insert" | "update" | "delete">;
+import { undoLog } from "../characters.ts";
+import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
 
 /**
  * A save landing within this long of the newest entry, on exactly the fields that entry

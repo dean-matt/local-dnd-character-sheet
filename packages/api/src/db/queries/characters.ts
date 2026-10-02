@@ -61,9 +61,15 @@ export function insertCharacter(
   });
 }
 
-type Db = Pick<CharactersDb, "select" | "insert" | "update" | "delete">;
+/** What a transaction and the database both offer, so a helper serves either. */
+export type CharactersWriter = Pick<CharactersDb, "select" | "insert" | "update" | "delete">;
 
-function writeDefinition(db: Db, id: string, definition: CharacterDefinition, now: Date) {
+function writeDefinition(
+  db: CharactersWriter,
+  id: string,
+  definition: CharacterDefinition,
+  now: Date,
+) {
   return db
     .update(characters)
     .set({

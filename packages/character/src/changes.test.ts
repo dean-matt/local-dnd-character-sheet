@@ -51,6 +51,13 @@ describe("describeChange", () => {
     );
   });
 
+  it("reads a first note as set and an emptied one as cleared", () => {
+    const empty = edit({ notes: "" });
+    const noted = edit({ notes: "Buy rope" });
+    expect(describeChange(empty, noted)?.describedAs).toBe("Notes set to Buy rope");
+    expect(describeChange(noted, empty)?.describedAs).toBe("Notes cleared");
+  });
+
   it("says edited rather than quoting long text", () => {
     const after = edit({ notes: "x".repeat(41) });
     expect(describeChange(definition, after)?.describedAs).toBe("Notes edited");

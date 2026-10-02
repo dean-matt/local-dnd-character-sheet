@@ -1,3 +1,4 @@
+import { UNDO_LOG_LIMIT } from "@dnd/character";
 import { useIsMutating } from "@tanstack/react-query";
 import { Undo2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
@@ -6,8 +7,9 @@ import { useCharacterUndoLog } from "../../hooks/useCharacterUndoLog.ts";
 import { useUndoCharacterChange } from "../../hooks/useUndoCharacterChange.ts";
 
 const SCOPE =
-  "Undo reaches back through the last 50 changes to this character's details. It does not reach play " +
-  "state, page layout or a deleted character, and there is no redo.";
+  `Undo reaches back through the last ${UNDO_LOG_LIMIT} changes to this character's ` +
+  "details. It does not reach play state, page layout or a deleted character, and there " +
+  "is no redo.";
 
 const TEXT_ENTRY =
   "textarea, input:not([type]), input[type='text'], input[type='search'], " +
