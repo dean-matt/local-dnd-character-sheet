@@ -1,6 +1,8 @@
 import type { RouteObject } from "react-router";
 import { createBrowserRouter } from "react-router";
+import { CATALOG_INDEXES } from "./lib/catalogIndexes.ts";
 import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
+import { CatalogIndexPage } from "./routes/CatalogIndexPage.tsx";
 import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.tsx";
@@ -22,6 +24,10 @@ export const routeConfig: RouteObject[] = [
         children: [
           { index: true, element: <HomePage /> },
           { path: "characters", element: <CharacterListPage /> },
+          ...CATALOG_INDEXES.map((index) => ({
+            path: `catalog/${index.collection}`,
+            element: <CatalogIndexPage index={index} />,
+          })),
           ...CATALOG_TARGETS.map((target) => ({
             path: `catalog/${target.path}`,
             element: <CatalogPage target={target} />,
