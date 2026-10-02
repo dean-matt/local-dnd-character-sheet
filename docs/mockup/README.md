@@ -90,12 +90,12 @@ widget, panel, or nav element:
   controls the Filter artboards' checkboxes, chips and level range. The query field,
   results and confirmation fill the main column beside the sidebar, with no maximum
   width. It filters by type, source and edition, and adds level and school once Spell is
-  ticked and rarity once Item is. A row with no edition, as Tier B and C allow, shows
-  under either edition. The API's `/search` takes one `edition`, one `type` and `q`
-  today, and matches `q` against a Tier A row's name alone. Ticking several types or
-  both editions, every other filter, and matching a row's text, as Search does for Flame
-  Tongue on "fire", are forward design for #521. A homebrew row shows a Homebrew tag
-  where the source goes.
+  ticked and rarity once Item is. A row with no edition, which Tier B and C allow though
+  no loader writes one today, would show under either edition. The API's `/search`
+  takes one `edition`, one `type` and `q` today, and matches `q` against a Tier A row's
+  name alone. Ticking several types or both editions, every other filter, and matching a
+  row's text, as Search does for Flame Tongue on "fire", are forward design for #521. A
+  homebrew row shows a Homebrew tag where the source goes.
 - Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
@@ -107,8 +107,8 @@ widget, panel, or nav element:
   above it. Focus moves into the modal when it
   opens and Tab stays inside it; the close button, the scrim and Escape close it and
   return focus to the link.
-- Add to…: every item, spell and feat result, on Top Bar Navigation and Search, and
-  Catalog Detail carry "Add to…". Opened from a sheet (the `openedFrom` tweak, always true
+- Add to…: every item, spell and feat result on Top Bar Navigation and Search carries
+  "Add to…", and so does Catalog Detail. Opened from a sheet (the `openedFrom` tweak, always true
   of Catalog Detail's `sheet` host), it adds to that character; opened anywhere else, it
   asks which character first, and says there is none to add to when the list is empty
   (the `noCharacters` tweak). Top Bar Navigation opened from elsewhere sits over the

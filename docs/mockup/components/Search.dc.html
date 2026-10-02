@@ -273,7 +273,7 @@ class Component extends DCLogic {
       { id: 'ember-charm', type: 'Item', name: 'Ember Charm of Fire', meta: 'Wondrous item • Uncommon', source: '', edition: '2014', rarity: 'Uncommon' },
       { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite • acid, cold, fire, lightning or thunder', source: 'PHB', edition: '2014', needsCaster: true },
       { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', edition: '2014' },
-      { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: null }
+      { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: '2014' }
     ];
     const TYPES = ['Spell', 'Item', 'Feat', 'Race', 'Monster'];
     const SOURCES = ['PHB', 'XPHB', 'DMG', 'XGE', 'MPMM', 'MM', 'Homebrew'];
@@ -327,7 +327,7 @@ class Component extends DCLogic {
       if (!q || (r.name + ' ' + r.meta).toLowerCase().indexOf(q) === -1) return false;
       if (filters.types.length && filters.types.indexOf(r.type) === -1) return false;
       if (filters.sources.length && filters.sources.indexOf(r.source || 'Homebrew') === -1) return false;
-      // A row with no edition, as Tier B and C allow, shows under either edition.
+      // Tier B and C allow a null edition, which shows under either edition.
       if (r.edition && filters.editions.indexOf(r.edition) === -1) return false;
       if (r.type === 'Spell' && showSpellFilters) {
         if (r.level < filters.minLevel || r.level > filters.maxLevel) return false;
