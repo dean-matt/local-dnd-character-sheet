@@ -117,13 +117,12 @@ widget, panel, or nav element:
   confirmation notes why it is unusual. Races, classes and
   subclasses carry no "Add to…", since creation and level-up own them.
 - Home is the index route, a dashboard under the same top bar with no section marked
-  active; the brand links back to it. It leads with the four most recently opened
-  characters as Character List tiles, with Import and New Character and a "See all
-  characters" link to Character List. Below sit quick links to Search, Homebrew and
-  Settings, then one for each of the Mechanics menu's catalog types, each opening that
-  type's index route, which has no artboard of its own. The `noCharacters` tweak shows the
-  first run: an empty state leading with New Character, and the quick links still below.
-  Forward design for #541.
+  active. It leads with the four most recently opened characters as Character List
+  tiles, with Import and New Character and a "See all characters" link to Character
+  List. Below sit quick links to Search, Homebrew and Settings, then one for each of the
+  Mechanics menu's catalog types, each opening that type's index route, which has no
+  artboard of its own. The `noCharacters` tweak shows the first run: an empty state
+  leading with New Character, and the quick links still below. Forward design for #541.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the

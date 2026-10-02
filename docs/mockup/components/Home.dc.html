@@ -46,7 +46,7 @@
         <div>
           <h1 id="recentHeading" style="margin: 0; font-size: 22px; font-weight: 700;">{{recentHeading}}</h1>
           <sc-if value="{{hasCharacters}}" hint-placeholder-val="{{true}}">
-            <a href="CharacterList.dc.html" style="display: inline-block; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}}; text-decoration: none;">{{seeAllLabel}}</a>
+            <a href="CharacterList.dc.html" style="display: inline-block; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}}; text-decoration: none;">See all characters →</a>
           </sc-if>
         </div>
         <sc-if value="{{hasCharacters}}" hint-placeholder-val="{{true}}">
@@ -190,7 +190,6 @@ class Component extends DCLogic {
       hasCharacters: characters.length > 0,
       noCharacters: characters.length === 0,
       recentHeading: characters.length > 0 ? 'Recent characters' : 'Welcome to Local D&D',
-      seeAllLabel: 'See all ' + characters.length + ' characters →',
       catalogTypes: CATALOG_TYPES.map((label) => ({
         label,
         href: '#catalog/' + label.toLowerCase().replace(/ /g, '-')
