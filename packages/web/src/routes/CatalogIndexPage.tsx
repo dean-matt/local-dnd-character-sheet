@@ -1,11 +1,12 @@
 import { Link, useSearchParams } from "react-router";
-import { Tag } from "../components/Tag.tsx";
 import { EmptyState } from "../EmptyState.tsx";
 import { ErrorState } from "../ErrorState.tsx";
 import { useCatalogIndex } from "../hooks/useCatalogIndex.ts";
 import { LoadingState } from "../LoadingState.tsx";
-import { type CatalogIndex, catalogRowPath } from "../lib/catalogIndexes.ts";
+import type { CatalogIndex } from "../lib/catalogIndexes.ts";
 import { EDITION_LABELS } from "../lib/editionLabels.ts";
+import { CatalogIndexPager } from "./CatalogIndexPager.tsx";
+import { CatalogIndexRows } from "./CatalogIndexRows.tsx";
 
 const PAGE_SIZE = 100;
 const EDITIONS = ["one", "classic"] as const;
@@ -45,37 +46,18 @@ export function CatalogIndexPage({ index }: { index: CatalogIndex }) {
           <LoadingState />
         ) : list.isError ? (
           <ErrorState message={list.error.message} />
-        ) : list.data.items.length === 0 ? (
+        ) : list.data.total === 0 ? (
           <EmptyState>No {index.label.toLowerCase()} in this edition.</EmptyState>
+        ) : list.data.items.length === 0 ? (
+          <EmptyState>
+            This list ends at page {pages}.{" "}
+            <Link to={at({ page: pages })}>Go to the last page</Link>
+          </EmptyState>
         ) : (
-          <ul className="flex flex-col gap-0.5">
-            {list.data.items.map((row) => (
-              <li key={"id" in row ? `homebrew:${row.id}` : `${row.name}|${row.source}`}>
-                <Link
-                  to={catalogRowPath(index.collection, row)}
-                  className="flex items-baseline gap-2 rounded-control px-2 py-1 text-body hover:bg-subtle"
-                >
-                  <span>{row.name}</span>
-                  {"id" in row ? (
-                    <Tag>Homebrew</Tag>
-                  ) : (
-                    <span className="text-muted text-row">{row.source}</span>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <CatalogIndexRows collection={index.collection} rows={list.data.items} />
         )}
       </div>
-      {pages > 1 && (
-        <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-row">
-          {page > 1 && <Link to={at({ page: page - 1 })}>← Previous</Link>}
-          <span className="text-muted">
-            Page {page} of {pages}
-          </span>
-          {page < pages && <Link to={at({ page: page + 1 })}>Next →</Link>}
-        </nav>
-      )}
+      <CatalogIndexPager page={page} pages={pages} href={(to) => at({ page: to })} />
     </section>
   );
 }

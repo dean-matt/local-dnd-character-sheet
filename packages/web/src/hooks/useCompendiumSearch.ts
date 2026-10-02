@@ -1,8 +1,5 @@
-import type { SearchHit } from "@dnd/catalog";
+import { searchHitKey } from "../lib/searchHits.ts";
 import { useCatalogSearch } from "./useCatalogSearch.ts";
-
-const hitKey = (hit: SearchHit) =>
-  "id" in hit ? `homebrew:${hit.id}` : `${hit.type}|${hit.name}|${hit.source}`;
 
 /**
  * `/search` across both editions, merged by name, for a reader who has no character's
@@ -18,7 +15,7 @@ export function useCompendiumSearch(query: string, limit: number) {
   const hits = searches
     .flatMap((search) => search.data?.items ?? [])
     .filter((hit) => {
-      const key = hitKey(hit);
+      const key = searchHitKey(hit);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;

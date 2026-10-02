@@ -93,6 +93,7 @@ describe("GlobalSearch", () => {
     expect(screen.getByRole("status", { name: "location" })).toHaveTextContent(
       "/catalog/spells/Fireball/PHB",
     );
+    expect(document.querySelector(".bg-scrim")).toBeNull();
   });
 
   it("opens a character from its result", async () => {
@@ -103,6 +104,7 @@ describe("GlobalSearch", () => {
     type(input, "fira");
     fireEvent.click(await screen.findByRole("option", { name: /Fira/ }));
     expect(screen.getByRole("status", { name: "location" })).toHaveTextContent("/characters/7");
+    expect(document.querySelector(".bg-scrim")).toBeNull();
   });
 
   it("leaves a result with no page where it is", async () => {

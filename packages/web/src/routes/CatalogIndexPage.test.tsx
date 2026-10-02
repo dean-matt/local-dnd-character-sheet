@@ -99,6 +99,24 @@ describe("CatalogIndexPage", () => {
     );
   });
 
+  it("points a page past the last back to the last", async () => {
+    stubFetchByUrl({
+      "/api/feats?edition=one&limit=100&offset=800": {
+        items: [],
+        total: 250,
+        limit: 100,
+        offset: 800,
+      },
+    });
+    renderAt("/catalog/feats?page=9");
+
+    expect(await screen.findByText(/This list ends at page 3/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Go to the last page" })).toHaveAttribute(
+      "href",
+      "/catalog/feats?edition=one&page=3",
+    );
+  });
+
   it("says when an edition has no rows of the type", async () => {
     stubFetchByUrl({
       "/api/characters": [],

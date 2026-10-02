@@ -9,7 +9,7 @@ import { type KeyboardEvent, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
 import { useCompendiumSearch } from "../../../../hooks/useCompendiumSearch.ts";
-import { searchHitPath } from "../../../../lib/searchHits.ts";
+import { searchHitKey, searchHitPath } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
 import type { SearchResult } from "./searchResult.ts";
 
@@ -41,7 +41,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         .map((c) => ({ key: `character:${c.id}`, path: `/characters/${c.id}`, character: c }))
     : [];
   const compendiumResults: SearchResult[] = compendium.hits.map((hit) => ({
-    key: "id" in hit ? `homebrew:${hit.type}:${hit.id}` : `${hit.type}|${hit.name}|${hit.source}`,
+    key: searchHitKey(hit),
     path: searchHitPath(hit),
     hit,
   }));
@@ -52,6 +52,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   function pick(result: SearchResult) {
     if (result.path === undefined) return;
     navigate(result.path);
+    setOpen(false);
     setQuery("");
     setActive(-1);
   }

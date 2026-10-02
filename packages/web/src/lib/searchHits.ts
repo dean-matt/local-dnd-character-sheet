@@ -11,6 +11,11 @@ export function searchHitPath(hit: SearchHit): string | undefined {
   return index && catalogRowPath(index.collection, hit);
 }
 
+/** A hit's identity across both editions' searches: its type and key, or its homebrew id. */
+export function searchHitKey(hit: SearchHit): string {
+  return "id" in hit ? `homebrew:${hit.type}:${hit.id}` : `${hit.type}|${hit.name}|${hit.source}`;
+}
+
 const TYPE_LABELS: Record<string, string> = { optfeature: "Optional feature" };
 
 /** A hit's `type` as a reader names it: `legendaryGroup` reads "Legendary group". */
