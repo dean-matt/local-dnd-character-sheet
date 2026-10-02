@@ -26,13 +26,20 @@ interface FormConfig<In extends FieldValues, Out extends FieldValues> {
 export function createForm<In extends FieldValues, Out extends FieldValues>(
   config: FormConfig<In, Out>,
 ) {
-  function BoundFormShell(props: Omit<FormShellProps<In, Out>, keyof FormConfig<In, Out>>) {
-    return createElement(FormShell<In, Out>, { ...config, ...props });
+  function BoundFormShell({
+    draftScope,
+    ...props
+  }: Omit<FormShellProps<In, Out>, keyof FormConfig<In, Out>> & {
+    /** Splits the flow's draft per instance, such as by character for level-up. */
+    draftScope?: string;
+  }) {
+    const flow = draftScope === undefined ? config.flow : `${config.flow}:${draftScope}`;
+    return createElement(FormShell<In, Out>, { ...config, ...props, flow });
   }
 
   function useField(name: Path<In>): UseFormRegisterReturn & { error?: string } {
     const form = useFormContext<In>();
-    if (form === null) throw new Error(`useField("${name}") ran outside its FormShell`);
+    if (form === null) throw new Error(`useField("${name}") ran outside a FormShell`);
     const { error } = form.getFieldState(name, form.formState);
     return { ...form.register(name), error: error?.message };
   }

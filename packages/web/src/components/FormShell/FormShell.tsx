@@ -3,14 +3,15 @@
  * provider and the `<form>`, validates against `schema` through the Zod resolver, and
  * keeps the in-progress values as a draft under `flow`. A stored draft wins over
  * `defaultValues` on mount. `lib/createForm.ts` binds a schema and a flow to it once per
- * form, and is the only reader.
+ * form.
  *
  * The draft clears once `onSubmit` resolves, or on `cancel`; an `onSubmit` that throws
- * leaves it standing. A submit from a `<button>` without a `type` attribute is dropped, so
- * such a button acts as `type="button"` and a secondary action inside a step cannot submit.
+ * leaves it standing. Every descendant `<button>` without a `type` attribute is given
+ * `type="button"`, so a secondary action inside a step cannot submit, while Enter in a
+ * field still submits through the form's own submit button.
  */
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { type DefaultValues, type FieldValues, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
 import { readDraft, useFormDraft } from "./formDraft.ts";
@@ -39,6 +40,28 @@ export function FormShell<In extends FieldValues, Out extends FieldValues>({
     defaultValues: initialValues,
   });
   const discard = useFormDraft(flow, form.watch);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // A layout effect, so the first buttons are typed before paint; the observer's callback
+  // runs as a microtask, so a button rendered later is typed before any click reaches it.
+  useLayoutEffect(() => {
+    const element = formRef.current;
+    if (element === null) return;
+    const typeButtons = () => {
+      for (const button of element.querySelectorAll("button:not([type])")) {
+        button.setAttribute("type", "button");
+      }
+    };
+    typeButtons();
+    const observer = new MutationObserver(typeButtons);
+    observer.observe(element, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["type"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const cancel = () => {
     discard();
@@ -48,17 +71,12 @@ export function FormShell<In extends FieldValues, Out extends FieldValues>({
   return (
     <FormProvider {...form}>
       <form
+        ref={formRef}
         noValidate
-        onSubmit={(event) => {
-          if ((event.nativeEvent as SubmitEvent).submitter?.hasAttribute("type") === false) {
-            event.preventDefault();
-            return;
-          }
-          void form.handleSubmit(async (values) => {
-            await onSubmit(values);
-            discard();
-          })(event);
-        }}
+        onSubmit={form.handleSubmit(async (values) => {
+          await onSubmit(values);
+          discard();
+        })}
       >
         {children({ cancel })}
       </form>

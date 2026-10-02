@@ -30,8 +30,6 @@ function renderForm(onSubmit = vi.fn(), onCancel = vi.fn()) {
         <>
           <NameField />
           <LevelsError />
-          {/* biome-ignore lint/a11y/useButtonType: a typeless button is the case FormShell guards */}
-          <button>Add a level</button>
           <button type="button" onClick={cancel}>
             Cancel
           </button>
@@ -93,14 +91,48 @@ describe("createForm", () => {
     expect(localStorage.getItem(KEY)).toBeNull();
   });
 
-  it("treats a button without a type as type=button", async () => {
+  it("types a button without a type as type=button, including one rendered later", async () => {
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
-    const { onSubmit } = renderForm();
+    const onSubmit = vi.fn();
+    const form = (extra: boolean) => (
+      <FormShell onSubmit={onSubmit}>
+        {() => (
+          <>
+            {/* biome-ignore lint/a11y/useButtonType: a typeless button is the case FormShell guards */}
+            <button>Add a level</button>
+            {/* biome-ignore lint/a11y/useButtonType: a typeless button is the case FormShell guards */}
+            {extra && <button>Remove a level</button>}
+            <button type="submit">Create</button>
+          </>
+        )}
+      </FormShell>
+    );
+    const { rerender } = render(form(false));
+    rerender(form(true));
+    await act(() => Promise.resolve());
 
-    fireEvent.click(screen.getByRole("button", { name: "Add a level" }));
+    for (const name of ["Add a level", "Remove a level"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toHaveAttribute("type", "button");
+      fireEvent.click(button);
+    }
     await act(() => Promise.resolve());
 
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("keeps the draft until onSubmit resolves", async () => {
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
+    let resolve = () => {};
+    const onSubmit = vi.fn(() => new Promise<void>((done) => (resolve = done)));
+    renderForm(onSubmit);
+
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(localStorage.getItem(KEY)).not.toBeNull();
+
+    await act(async () => resolve());
+    expect(localStorage.getItem(KEY)).toBeNull();
   });
 
   it("writes the draft on a debounce and rehydrates it on mount", () => {
@@ -127,6 +159,28 @@ describe("createForm", () => {
     expect(JSON.parse(localStorage.getItem(KEY) ?? "null")).toMatchObject({ name: "Vex" });
   });
 
+  it("writes a pending draft on pagehide, before the debounce", () => {
+    vi.useFakeTimers();
+    renderForm();
+
+    typeName("Vex");
+    fireEvent(window, new Event("pagehide"));
+
+    expect(JSON.parse(localStorage.getItem(KEY) ?? "null")).toMatchObject({ name: "Vex" });
+  });
+
+  it("keys a scoped instance's draft apart from the flow's", () => {
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
+    localStorage.setItem(`${KEY}:pike`, JSON.stringify({ name: "Pike" }));
+    render(
+      <FormShell draftScope="pike" onSubmit={vi.fn()}>
+        {() => <NameField />}
+      </FormShell>,
+    );
+
+    expect(nameInput()).toHaveValue("Pike");
+  });
+
   it("discards the draft and a pending write on cancel", () => {
     vi.useFakeTimers();
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
@@ -150,6 +204,6 @@ describe("createForm", () => {
   it("refuses a field outside its FormShell", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    expect(() => render(<NameField />)).toThrow('useField("name") ran outside its FormShell');
+    expect(() => render(<NameField />)).toThrow('useField("name") ran outside a FormShell');
   });
 });
