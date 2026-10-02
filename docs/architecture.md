@@ -157,8 +157,8 @@ need deleting on cancel. The resolver binds to the schemas in `packages/characte
 form holds a second definition of a legal character. A choice an earlier one invalidates,
 such as a subclass after a class change, is cleared, and its field says why. The draft
 persists to `localStorage` keyed by flow, and by character for level-up, so it survives a
-reload; it clears on finish or cancel. The dependency lands with the first form that reads
-it.
+reload; it clears on finish or cancel. Each form is bound once through `createForm` in
+`packages/web/src/lib/createForm.ts`.
 
 ## Deliberately absent
 
