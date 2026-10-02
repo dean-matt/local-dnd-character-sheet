@@ -1,7 +1,7 @@
+import { Coins } from "lucide-react";
 import type { ReactNode } from "react";
 import { CHIP } from "../../lib/chipStyles.ts";
 import { DetailTrigger } from "../DetailTrigger.tsx";
-import { CoinsIcon } from "./CoinsIcon.tsx";
 
 /**
  * The one row every list on the sheet draws, in up to three lines: the name beside its
@@ -50,7 +50,7 @@ export function ListRow({
           <span
             className={`${CHIP} flex shrink-0 items-center gap-0.75 border-money-border bg-money-tint text-money leading-3`}
           >
-            <CoinsIcon />
+            <Coins size={9} strokeWidth={2.5} />
             <span className="sr-only">Cost </span>
             {price}
           </span>

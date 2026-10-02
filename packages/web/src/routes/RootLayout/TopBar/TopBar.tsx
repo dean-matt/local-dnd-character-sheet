@@ -1,9 +1,8 @@
+import { ChevronDown, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
 import { avatarColor } from "../../../lib/avatarColor.ts";
-import { ChevronDownIcon } from "./ChevronDownIcon.tsx";
-import { GearIcon } from "./GearIcon.tsx";
 
 const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 text-sm";
 const current = "font-bold text-accent-text";
@@ -53,7 +52,15 @@ export function TopBar() {
           className={`${trigger} ${inCharacters ? current : elsewhere} ${open ? "bg-subtle" : "bg-transparent hover:bg-subtle"}`}
         >
           Character
-          <ChevronDownIcon rotated={open} className={inCharacters ? undefined : "text-muted"} />
+          <ChevronDown
+            size={12}
+            strokeWidth={2.5}
+            className={inCharacters ? undefined : "text-muted"}
+            style={{
+              transform: open ? "rotate(180deg)" : undefined,
+              transition: "transform 0.15s",
+            }}
+          />
         </button>
 
         {open && (
@@ -109,7 +116,7 @@ export function TopBar() {
         {({ isActive }) => (
           <>
             Settings
-            <GearIcon className={isActive ? undefined : "text-muted"} />
+            <Settings size={16} className={isActive ? undefined : "text-muted"} />
           </>
         )}
       </NavLink>

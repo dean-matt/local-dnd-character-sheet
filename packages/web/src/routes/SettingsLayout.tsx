@@ -1,3 +1,4 @@
+import { Monitor } from "lucide-react";
 import { Outlet } from "react-router";
 import { Sidebar, type SidebarProps } from "./Sidebar/Sidebar.tsx";
 import { SidebarFrame } from "./SidebarFrame.tsx";
@@ -7,7 +8,7 @@ const SECTIONS: SidebarProps["items"] = [
     to: "/settings",
     label: "Display",
     end: true,
-    icon: ["M5 4h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z", "M8 20h8M12 16v4"],
+    icon: Monitor,
   },
 ];
 

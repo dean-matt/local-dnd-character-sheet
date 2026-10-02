@@ -9,6 +9,7 @@ import {
   isFunctionDeclaration,
   isFunctionExpression,
   isIdentifier,
+  isJsxOpeningLikeElement,
   isNamedExports,
   isVariableDeclaration,
   isVariableStatement,
@@ -26,8 +27,9 @@ import { ROOT } from "./lib/doc-helpers.ts";
  * and its props type, because Vite's Fast Refresh hot-swaps only a file whose exports are
  * all components. A file under `hooks/` exports at most one hook. A component folder —
  * `X/` holding `X.tsx` — is entered from outside only through `X.tsx`, and no `index`
- * barrel stands in for it. One concept per `lib/` file is a judgment no parser makes, so
- * review holds that one.
+ * barrel stands in for it. No `.tsx` file draws its own `<svg>`: icons come from
+ * `lucide-react`, so none drifts from the set the mockup draws. One concept per `lib/` file
+ * is a judgment no parser makes, so review holds that one.
  *
  * A component is a PascalCase function, or a PascalCase const bound to a function, at any
  * depth and through any wrapping call, so one declared inside another or wrapped in `memo`
@@ -134,13 +136,23 @@ function componentFaults(file: string, source: SourceFile, exported: string[]): 
   return found;
 }
 
+function drawsSvg(source: SourceFile): boolean {
+  const visit = (node: Node): boolean =>
+    (isJsxOpeningLikeElement(node) && isIdentifier(node.tagName) && node.tagName.text === "svg") ||
+    node.forEachChild(visit) === true;
+  return visit(source);
+}
+
 /** Every way `file` breaks the rules above, worded for a failing test. */
 function faults(file: string, source: SourceFile, root: string): string[] {
   const found = privateImports(file, source, root);
   if (/^index\.tsx?$/.test(basename(file))) found.push("is an index barrel");
   if (/\.test\.tsx?$/.test(file)) return found;
   const exported = exportedNames(source);
-  if (file.endsWith(".tsx")) found.push(...componentFaults(file, source, exported));
+  if (file.endsWith(".tsx")) {
+    found.push(...componentFaults(file, source, exported));
+    if (drawsSvg(source)) found.push("draws an <svg> rather than a lucide-react icon");
+  }
   if (/[\\/]hooks[\\/]/.test(file)) {
     const hooks = exported.filter((name) => HOOK.test(name));
     if (hooks.length > 1) found.push(`exports ${hooks.length} hooks: ${hooks.join(", ")}`);
@@ -185,6 +197,12 @@ describe("the shape check", () => {
       "export function Outside() { return <Folder><Part /></Folder>; }",
     ].join("\n"),
     "index.ts": 'export { Folder } from "./Folder/Folder.tsx";',
+    "Drawn.tsx": [
+      "export function Drawn() {",
+      '  return <span title="<svg>"><svg viewBox="0 0 24 24"><path d="M0 0" /></svg></span>;',
+      "}",
+    ].join("\n"),
+    "Named.tsx": 'export function Named() { return <span title="<svg>" />; }',
   };
   mkdirSync(join(dir, "hooks"));
   mkdirSync(join(dir, "Folder"));
@@ -221,6 +239,11 @@ describe("the shape check", () => {
   it("rejects a private file of a component folder imported from outside it", () => {
     expect(faultsOf("Outside.tsx")).toEqual(["imports ./Folder/Part.tsx, private to Folder/"]);
     expect(faultsOf("Folder/Folder.tsx")).toEqual([]);
+  });
+
+  it("rejects a hand-drawn <svg> and passes the text <svg>", () => {
+    expect(faultsOf("Drawn.tsx")).toEqual(["draws an <svg> rather than a lucide-react icon"]);
+    expect(faultsOf("Named.tsx")).toEqual([]);
   });
 
   it("rejects an index barrel", () => {
