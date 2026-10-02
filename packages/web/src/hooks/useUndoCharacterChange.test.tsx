@@ -18,11 +18,16 @@ afterEach(() => {
 });
 
 describe("useUndoCharacterChange", () => {
-  it("writes the restored character into the cache and invalidates its undo log", async () => {
+  it("writes the restored character into the cache and drops the undone entry at once", async () => {
     const restored = characterRecord("1", "Vex");
     const fetchMock = stubFetch(new Response(JSON.stringify(restored), { status: 200 }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    queryClient.setQueryData(characterUndoKey("1"), []);
+    const entry = (id: number) => ({
+      id,
+      describedAs: `Change ${id}`,
+      changedAt: "2026-01-01T00:00:00.000Z",
+    });
+    queryClient.setQueryData(characterUndoKey("1"), [entry(2), entry(1)]);
 
     const { result } = renderHook(() => useUndoCharacterChange("1"), {
       wrapper: wrapper(queryClient),
@@ -36,6 +41,7 @@ describe("useUndoCharacterChange", () => {
       expect.objectContaining({ method: "POST" }),
     );
     expect(queryClient.getQueryData(characterKey("1"))).toEqual(restored);
+    expect(queryClient.getQueryData(characterUndoKey("1"))).toEqual([entry(1)]);
     expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
   });
 });

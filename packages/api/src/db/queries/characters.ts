@@ -112,7 +112,8 @@ export type UndoResult =
 /**
  * Restores the definition the newest `undo_log` row holds and drops that row, recording
  * nothing, since there is no redo. `undefined` where `id` names no character. A snapshot
- * the schema now refuses stays in the log and restores nothing.
+ * the schema now refuses restores nothing and is dropped all the same, so the next undo
+ * reaches the entry behind it; the current definition is never touched.
  */
 export function undoLastChange(db: CharactersDb, id: string): UndoResult | undefined {
   return db.transaction((tx) => {
@@ -124,15 +125,15 @@ export function undoLastChange(db: CharactersDb, id: string): UndoResult | undef
     if (!exists) return undefined;
     const newest = newestUndoEntry(tx, id);
     if (!newest) return { kind: "empty" };
+    deleteUndoEntry(tx, newest.id);
     const previous = characterDefinitionSchema.safeParse(newest.previousState);
     if (!previous.success) {
       return {
         kind: "invalid",
-        message: `Cannot restore "${newest.describedAs}": ${previous.error.message}`,
+        message: `Cannot restore "${newest.describedAs}", so it was dropped: ${previous.error.message}`,
       };
     }
     const row = writeDefinition(tx, id, previous.data, new Date());
-    deleteUndoEntry(tx, newest.id);
     if (!row) return undefined;
     return { kind: "restored", row };
   });

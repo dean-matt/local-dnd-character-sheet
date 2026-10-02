@@ -62,6 +62,22 @@ describe("UndoButton", () => {
     await waitFor(() => expect(posts(fetchMock)).toHaveLength(1));
   });
 
+  it("leaves the sheet alone while a dialog is open over it", async () => {
+    const fetchMock = stubUndo([ENTRY]);
+    renderWithClient(
+      <>
+        <dialog open>
+          <button type="button">Close</button>
+        </dialog>
+        <UndoButton characterId="1" />
+      </>,
+    );
+    await screen.findByRole("button", { name: "Undo Charisma 17 to 18" });
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Close" }), { key: "z", ctrlKey: true });
+    expect(posts(fetchMock)).toHaveLength(0);
+  });
+
   it("does nothing with an empty log", async () => {
     const fetchMock = stubUndo([]);
     renderWithClient(<UndoButton characterId="1" />);

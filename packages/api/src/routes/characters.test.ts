@@ -4,7 +4,7 @@ import {
   defaultCharacterState,
 } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { undoLog } from "../db/characters.ts";
+import { characters, undoLog } from "../db/characters.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 
@@ -290,7 +290,8 @@ describe("the undo log", () => {
     expect(opened.charactersDb.select().from(undoLog).all()).toHaveLength(50);
   });
 
-  it("refuses a snapshot its schema rejects and keeps it in the log", async () => {
+  it("drops a snapshot its schema rejects, so the next undo reaches the entry behind it", async () => {
+    await put(withCha(18));
     opened.charactersDb
       .insert(undoLog)
       .values({ characterId: id, previousState: { name: "" }, describedAs: "Broken" })
@@ -298,8 +299,27 @@ describe("the undo log", () => {
 
     const res = await undo();
     expect(res.status).toBe(422);
-    expect((await res.json()).error).toMatch(/^Cannot restore "Broken"/);
-    expect((await entries()).map((e) => e.describedAs)).toEqual(["Broken"]);
+    expect((await res.json()).error).toMatch(/^Cannot restore "Broken", so it was dropped/);
+    const current = await (await routes.request(`/characters/${id}`)).json();
+    expect(current.definition).toEqual(withCha(18));
+    expect((await entries()).map((e) => e.describedAs)).toEqual(["Charisma 17 to 18"]);
+    expect((await undo()).status).toBe(200);
+  });
+
+  it("restores a merged burst to where it started", async () => {
+    for (const cha of [18, 19, 20]) await put(withCha(cha));
+    await undo();
+    const restored = await (await routes.request(`/characters/${id}`)).json();
+    expect(restored.definition).toEqual(baseDefinition());
+  });
+
+  it("records nothing over a stored definition its schema now refuses", async () => {
+    opened.charactersDb
+      .update(characters)
+      .set({ definition: { name: "" } })
+      .run();
+    expect((await put(withCha(18))).status).toBe(200);
+    expect(await entries()).toEqual([]);
   });
 
   it("404s listing or undoing for an id that does not exist", async () => {

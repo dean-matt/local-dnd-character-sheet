@@ -205,7 +205,9 @@ const undo = createRoute({
       content: { "application/json": { schema: errorSchema } },
     },
     422: {
-      description: "The stored definition no longer passes the schema, so the log keeps it",
+      description:
+        "The stored definition no longer passes the schema, so the entry is dropped " +
+        "and the definition left as it was",
       content: { "application/json": { schema: errorSchema } },
     },
   },
