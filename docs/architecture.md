@@ -150,6 +150,12 @@ state.
 control its label, status and error, and `Field`'s edit mode renders through it. Its
 module doc holds the rules a form follows, `noValidate` among them.
 
+**One picker for every row `/search` reaches.** A flow picks a catalog choice, such as a
+spell, item or feat, through `packages/web/src/components/CatalogPicker/CatalogPicker.tsx`,
+which searches the catalog and homebrew together and returns a reference, never the row.
+The flow passes the reason a row is unavailable; the picker never judges legality. A
+subclass or subrace is keyed within its parent, so `/search` does not reach it.
+
 **Creation and level-up are forms, not fields.** They present many fields at once, their
 choices depend on each other, and they are validated as a whole, so they run through
 `react-hook-form` with the Zod resolver rather than the field contract above. It beat
