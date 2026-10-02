@@ -86,6 +86,7 @@ describe("CatalogPicker", () => {
 
     expect(await screen.findByText("No matches")).toBeInTheDocument();
     expect(screen.queryByRole("option")).not.toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-expanded", "false");
   });
 
   it("arrows through the options, announcing the active one, and picks a reference", async () => {
@@ -212,6 +213,9 @@ describe("CatalogPicker", () => {
 
     expect(screen.queryByRole("option")).not.toBeInTheDocument();
     expect(await screen.findByText("Searching…")).toBeInTheDocument();
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(input).toHaveValue("ice");
   });
 
   it("closes when focus leaves the input", async () => {

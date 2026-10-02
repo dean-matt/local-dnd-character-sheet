@@ -15,6 +15,9 @@ import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
 
+// An unavailable row still counts against this bound, so a broad query can fill the page
+// with rows the caller rejects. The way out is a narrowing filter on `/search`, such as
+// spell level or class list, passed through beside `type`.
 const RESULT_LIMIT = 20;
 
 export interface CatalogPickerProps {
@@ -79,7 +82,7 @@ export function CatalogPicker({
   }
 
   function dismiss() {
-    if (showList) setOpen(false);
+    if (open) setOpen(false);
     else setQuery("");
     setActive(-1);
   }
@@ -110,7 +113,7 @@ export function CatalogPicker({
             role="combobox"
             autoComplete="off"
             aria-autocomplete="list"
-            aria-expanded={showList}
+            aria-expanded={showList && hits.length > 0}
             aria-controls={listboxId}
             aria-activedescendant={activeIndex === -1 ? undefined : optionId(activeIndex)}
             placeholder={placeholder}
