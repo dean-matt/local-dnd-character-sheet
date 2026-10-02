@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { InModal } from "./inModalContext.ts";
 import { Popover } from "./Popover.tsx";
 
 describe("Popover", () => {
@@ -246,6 +247,34 @@ describe("Popover", () => {
 
     expect(event.defaultPrevented).toBe(false);
     expect(screen.getByText("Strength")).toBeInTheDocument();
+  });
+
+  // jsdom lays nothing out, so the clip itself is e2e/popover-in-modal.spec.ts's to catch.
+  it.each([
+    { where: "inside a modal", inModal: true, promoted: true },
+    { where: "on the page", inModal: false, promoted: false },
+  ])("draws in the top layer only $where", ({ inModal, promoted }) => {
+    const shown: Element[] = [];
+    HTMLElement.prototype.showPopover = function showPopover(this: HTMLElement) {
+      shown.push(this);
+    };
+    try {
+      render(
+        <InModal.Provider value={inModal}>
+          <Popover trigger="+3" label="Strength modifier">
+            Base 16, modifier +3
+          </Popover>
+        </InModal.Provider>,
+      );
+      const trigger = screen.getByRole("button", { name: "+3" });
+      fireEvent.click(trigger);
+
+      const content = document.getElementById(trigger.getAttribute("aria-controls") ?? "");
+      expect(content?.getAttribute("popover")).toBe(promoted ? "manual" : null);
+      expect(shown).toEqual(promoted ? [content] : []);
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, "showPopover");
+    }
   });
 
   it("allows one level of nesting, exactly one term explaining itself", () => {

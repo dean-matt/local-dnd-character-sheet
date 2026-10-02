@@ -5,12 +5,15 @@
  * keyboard and touch, dismissible without losing the reader's place — so it
  * lives here rather than in either consumer.
  *
- * Content stays in normal document flow, positioned absolutely beside the
- * trigger rather than portalled, so Tab order runs trigger then content with no
- * focus trap to build or break. Nesting stops one level down: a term inside a
- * breakdown may open its own explanation, but a trigger inside *that* renders as
- * plain text. Stacking a third floating layer has no good place to return focus
- * to on close, and nothing here needs more than one level to explain a term.
+ * Content stays in the DOM right after the trigger rather than portalled, so Tab
+ * order runs trigger then content with no focus trap to build or break. On the
+ * page it sits absolutely beside the trigger, beneath the pinned chrome and the
+ * search panel. Inside a modal it draws in the top layer instead, anchored to the
+ * trigger by CSS anchor positioning, so the modal's scrolling body cannot clip it.
+ * Nesting stops one level down: a term inside a breakdown may open its own
+ * explanation, but a trigger inside *that* renders as plain text. Stacking a third
+ * floating layer has no good place to return focus to on close, and nothing here
+ * needs more than one level to explain a term.
  */
 import {
   createContext,
@@ -21,9 +24,11 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import { InModal } from "./inModalContext.ts";
 
 const MAX_DEPTH = 1;
 const HOVER_CLOSE_DELAY_MS = 150;
@@ -44,6 +49,7 @@ export interface PopoverProps {
 
 export function Popover({ trigger, label, triggerLabel, triggerRef, children }: PopoverProps) {
   const depth = useContext(DepthContext);
+  const inModal = useContext(InModal);
   // Hover and focus drive one flag, a click or tap the other, because a real
   // pointer always fires `mouseenter` before `click` — including the tap that
   // opens it on a touchscreen. A shared flag toggled on click would read as
@@ -57,6 +63,8 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
   const open = transientOpen || pinned;
   const id = useId();
   const contentId = `${id}-content`;
+  const anchorName = `--popover${id.replace(/[^\w-]/g, "")}`;
+  const contentRef = useRef<HTMLSpanElement>(null);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const ownTriggerRef = useRef<HTMLButtonElement>(null);
   const triggerButton = triggerRef ?? ownTriggerRef;
@@ -66,6 +74,16 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
   const returningFocus = useRef(false);
 
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
+
+  // Set here rather than as a prop: jsdom has no showPopover, and hides a `popover` it
+  // cannot show. A second run under StrictMode finds it already showing.
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!inModal || !open || !content || typeof content.showPopover !== "function") return;
+    if (content.hasAttribute("popover")) return;
+    content.setAttribute("popover", "manual");
+    content.showPopover();
+  }, [inModal, open]);
 
   // A pointer down anywhere outside the trigger and its content closes it —
   // the only way a mouse user dismisses one opened by hover, since it never
@@ -151,6 +169,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
         aria-controls={open ? contentId : undefined}
         onFocus={handleTriggerFocus}
         onClick={handleActivate}
+        style={{ anchorName }}
         className="underline decoration-dotted underline-offset-2 print:no-underline"
       >
         {trigger}
@@ -158,10 +177,21 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
       {open && (
         // biome-ignore lint/a11y/useSemanticElements: <fieldset> groups form controls; this groups prose and links.
         <span
+          ref={contentRef}
           id={contentId}
           role="group"
           aria-label={label}
-          className="absolute top-full left-0 z-10 mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-row shadow-lg"
+          style={
+            inModal
+              ? {
+                  positionAnchor: anchorName,
+                  positionArea: "bottom span-right",
+                  positionTryFallbacks: "flip-block, flip-inline, flip-block flip-inline",
+                  positionVisibility: "anchors-visible",
+                }
+              : undefined
+          }
+          className={`${inModal ? "inset-auto m-0" : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-lg`}
         >
           <DepthContext.Provider value={depth + 1}>{children}</DepthContext.Provider>
         </span>

@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useId, useRef } from "react";
+import { InModal } from "./inModalContext.ts";
 
 /**
  * A modal dialog for one entry's detail. The native `<dialog>` traps focus and marks the
@@ -55,26 +56,28 @@ export function Modal({
       }}
       className={`m-auto max-h-[80%] ${width} max-w-[85%] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
     >
-      <div className="min-h-0 overflow-auto p-5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h2 id={titleId} className="font-bold text-title">
-              {title}
-            </h2>
-            {badge}
+      <InModal.Provider value={true}>
+        <div className="min-h-0 overflow-auto p-5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <h2 id={titleId} className="font-bold text-title">
+                {title}
+              </h2>
+              {badge}
+            </div>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+              className="cursor-pointer text-lg text-muted leading-none"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={onClose}
-            className="cursor-pointer text-lg text-muted leading-none"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
+          {meta && <div className="mt-1 mb-2.5 text-muted text-row">{meta}</div>}
+          <div className="flex flex-col gap-2 text-body leading-normal">{children}</div>
         </div>
-        {meta && <div className="mt-1 mb-2.5 text-muted text-row">{meta}</div>}
-        <div className="flex flex-col gap-2 text-body leading-normal">{children}</div>
-      </div>
+      </InModal.Provider>
     </dialog>
   );
 }
