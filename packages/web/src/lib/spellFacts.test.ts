@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { castingTime, spellComponents, spellDuration, spellRange } from "./spellFacts.ts";
-import { schoolName } from "./spellSchool.ts";
 
 describe("castingTime", () => {
   it("names the unit, pluralized past one, and joins alternatives", () => {
@@ -67,12 +66,5 @@ describe("spellDuration", () => {
     expect(spellDuration([{ type: "permanent", ends: ["dispel", "trigger"] }])).toBe(
       "Until dispelled or triggered",
     );
-  });
-});
-
-describe("schoolName", () => {
-  it("spells out a school code, and prints one it does not know as itself", () => {
-    expect(schoolName("V")).toBe("Evocation");
-    expect(schoolName("P")).toBe("P");
   });
 });

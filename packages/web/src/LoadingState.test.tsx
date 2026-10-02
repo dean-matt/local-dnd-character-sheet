@@ -1,7 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { EmptyState } from "./EmptyState.tsx";
-import { ErrorState } from "./ErrorState.tsx";
 import { LoadingState } from "./LoadingState.tsx";
 
 describe("LoadingState", () => {
@@ -14,19 +12,5 @@ describe("LoadingState", () => {
     const { container } = render(<LoadingState label="Loading spells…" />);
     expect(screen.getByRole("status")).toHaveClass("sr-only");
     expect(container.querySelector("[aria-hidden='true']")).toHaveClass("animate-spin");
-  });
-});
-
-describe("ErrorState", () => {
-  it("announces itself as an alert", () => {
-    render(<ErrorState message="Could not reach the server." />);
-    expect(screen.getByRole("alert")).toHaveTextContent("Could not reach the server.");
-  });
-});
-
-describe("EmptyState", () => {
-  it("renders its children", () => {
-    render(<EmptyState>No characters yet.</EmptyState>);
-    expect(screen.getByText("No characters yet.")).toBeInTheDocument();
   });
 });
