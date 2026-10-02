@@ -1,7 +1,6 @@
-import type { SearchHit } from "@dnd/catalog";
 import { useEffect, useRef } from "react";
+import { SourceChip } from "../../../../components/SourceChip.tsx";
 import { Tag } from "../../../../components/Tag.tsx";
-import { EDITION_LABELS } from "../../../../lib/editionLabels.ts";
 import { searchHitTypeLabel } from "../../../../lib/searchHits.ts";
 import { CharacterAvatar } from "../CharacterAvatar.tsx";
 import type { SearchResult } from "./searchResult.ts";
@@ -12,11 +11,6 @@ export interface SearchResultOptionProps {
   active: boolean;
   onPick: () => void;
   onPoint: () => void;
-}
-
-function hitMeta(hit: SearchHit): string {
-  const source = "id" in hit ? "Homebrew" : hit.source;
-  return hit.edition ? `${source} • ${EDITION_LABELS[hit.edition]}` : source;
 }
 
 export function SearchResultOption({
@@ -33,14 +27,29 @@ export function SearchResultOption({
     if (active) ref.current?.scrollIntoView?.({ block: "nearest" });
   }, [active]);
 
-  const [chip, name, meta] =
+  const { chip, name, meta } =
     "character" in result
-      ? [
-          "Character",
-          result.character.name,
-          `${result.character.raceSummary} ${result.character.classSummary} • Lvl ${result.character.level}`,
-        ]
-      : [searchHitTypeLabel(result.hit.type), result.hit.name, hitMeta(result.hit)];
+      ? {
+          chip: "Character",
+          name: result.character.name,
+          meta: (
+            <span className="truncate">
+              {result.character.raceSummary} {result.character.classSummary} • Lvl{" "}
+              {result.character.level}
+            </span>
+          ),
+        }
+      : {
+          chip: searchHitTypeLabel(result.hit.type),
+          name: result.hit.name,
+          meta: (
+            <SourceChip
+              source={"source" in result.hit ? result.hit.source : undefined}
+              edition={result.hit.edition}
+              of={searchHitTypeLabel(result.hit.type).toLowerCase()}
+            />
+          ),
+        };
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: focus stays in the combobox input, which handles every key.
@@ -60,9 +69,9 @@ export function SearchResultOption({
       )}
       <span className="min-w-0 grow">
         <span className="block truncate text-body font-medium text-ink">{name}</span>
-        <span className="block truncate text-[11px] text-muted">
+        <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
           {meta}
-          {!opens && " • No page yet"}
+          {!opens && <span className="truncate">No page yet</span>}
         </span>
       </span>
       <Tag>{chip}</Tag>

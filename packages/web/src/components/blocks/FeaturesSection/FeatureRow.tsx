@@ -75,12 +75,12 @@ export function FeatureRow({ feature, group, characterId }: Entry & { characterI
     </>
   );
   if (!feature.resolved) {
-    const source = feature.source ? ` (${feature.source})` : "";
-    return <ListRow name={`${feature.name}${source}`} chips={chips} />;
+    return <ListRow name={feature.name} source={feature.source} chips={chips} />;
   }
   return (
     <ListRow
       name={feature.name}
+      source={feature.source}
       chips={chips}
       preview={firstLine(feature.entries)}
       detail={{

@@ -6,10 +6,10 @@ import { useCatalogRow } from "../hooks/useCatalogRow.ts";
 import { LoadingState } from "../LoadingState.tsx";
 import { ApiError } from "../lib/api.ts";
 import { matchCatalogTarget } from "../lib/catalogRows.ts";
-import { EditionTag } from "./EditionTag.tsx";
 import { Modal } from "./Modal.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
 import { ResolvedRefs } from "./resolvedRefsContext.ts";
+import { SourceChip } from "./SourceChip.tsx";
 import { Tag } from "./Tag.tsx";
 
 export interface CatalogDetailProps {
@@ -54,9 +54,6 @@ export function CatalogDetail({ address, onClose }: CatalogDetailProps) {
       <EmptyState>This row carries no rules text of its own.</EmptyState>
     ),
     <Tag>{capitalized(match.target.label)}</Tag>,
-    <span className="flex items-center gap-1.5">
-      <Tag>{source ?? "Homebrew"}</Tag>
-      {edition && <EditionTag edition={edition} of={match.target.label} />}
-    </span>,
+    <SourceChip source={source} edition={edition} of={match.target.label} />,
   );
 }

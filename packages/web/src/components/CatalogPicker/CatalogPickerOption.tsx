@@ -1,6 +1,7 @@
 import type { SearchHit } from "@dnd/catalog";
 import { useEffect, useRef } from "react";
-import { Tag } from "../Tag.tsx";
+import { searchHitTypeLabel } from "../../lib/searchHits.ts";
+import { SourceChip } from "../SourceChip.tsx";
 
 export interface CatalogPickerOptionProps {
   id: string;
@@ -42,11 +43,11 @@ export function CatalogPickerOption({
       } ${reason === undefined ? "cursor-pointer" : "cursor-not-allowed text-muted"}`}
     >
       <span>{hit.name}</span>
-      {"id" in hit ? (
-        <Tag>Homebrew</Tag>
-      ) : (
-        <span className="text-muted text-row">{hit.source}</span>
-      )}
+      <SourceChip
+        source={"source" in hit ? hit.source : undefined}
+        edition={hit.edition}
+        of={searchHitTypeLabel(hit.type).toLowerCase()}
+      />
       {reason !== undefined && <span className="text-row">{reason}</span>}
     </div>
   );

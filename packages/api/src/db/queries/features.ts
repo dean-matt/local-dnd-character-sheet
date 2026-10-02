@@ -46,10 +46,17 @@ type Placement = { level?: number; featureType?: string };
 const entryOf = (json: unknown): CharacterOptionEntry | undefined =>
   json === undefined ? undefined : parseJson(characterOptionEntrySchema, json);
 
+/**
+ * A homebrew row's stamped source names no book, so its feature carries none, as items do.
+ * A catalog feature takes its row's source, or the reference's where no row answers.
+ */
+const sourceOf = (ref: EntryRef, source?: string) =>
+  "homebrewId" in ref ? {} : { source: source ?? ref.source };
+
 const unresolved = (ref: EntryRef, placement: Placement = {}): SheetFeature => ({
   resolved: false,
   name: displayName(ref),
-  ...("homebrewId" in ref ? {} : { source: ref.source }),
+  ...sourceOf(ref),
   ...placement,
 });
 
@@ -63,7 +70,7 @@ function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): Sh
   return {
     resolved: true,
     name: entry.name,
-    source: entry.source,
+    ...sourceOf(ref, entry.source),
     ...placement,
     entries: entry.entries ?? [],
   };
@@ -72,8 +79,8 @@ function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): Sh
 type EntryNode = Exclude<NonNullable<CharacterOptionEntry["entries"]>[number], string>;
 
 /** A named node inside a row, such as a race's `Darkvision`, as a feature of its own. */
-function nodeFeature(node: EntryNode, name: string, source: string): SheetFeature {
-  return { resolved: true, name, source, entries: node.entries ?? [node] };
+function nodeFeature(node: EntryNode, name: string, ref: EntryRef, source: string): SheetFeature {
+  return { resolved: true, name, ...sourceOf(ref, source), entries: node.entries ?? [node] };
 }
 
 const isNode = (entry: string | EntryNode): entry is EntryNode => typeof entry !== "string";
@@ -145,7 +152,7 @@ function raceGroup(
   const features = (entry.entries ?? [])
     .filter(isNode)
     .flatMap((node) =>
-      typeof node.name === "string" ? [nodeFeature(node, node.name, entry.source)] : [],
+      typeof node.name === "string" ? [nodeFeature(node, node.name, race, entry.source)] : [],
     );
   return { origin: "race", name, features };
 }
@@ -174,6 +181,7 @@ function backgroundGroup(
       nodeFeature(
         node,
         typeof node.name === "string" ? node.name.replace(/^Feature:\s*/, "") : entry.name,
+        ref,
         entry.source,
       ),
     );

@@ -111,7 +111,7 @@
                 <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px;">{{type}}</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: #6b7280;">
-                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border: 1px solid #eceef1; border-radius: 4px; padding: 2px 5px;">{{sourceLabel}}</span>
+                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{sourceTitle}}">{{sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{sourceTitle}}</span></span>
                 <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{editionTitle}}">{{edition}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{edition}} rules</span></span>
               </div>
             </div>
@@ -231,6 +231,8 @@ class Component extends DCLogic {
     const row = ROWS[this.props.kind ?? 'spell'] || ROWS.spell;
     const { open, pickerOpen, toast } = this.state;
     const sourceLabel = row.source || 'Homebrew';
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
+    const sourceTitle = SOURCE_TITLES[row.source] || sourceLabel;
 
     const focusById = (id) => setTimeout(() => {
       const el = document.getElementById(id);
@@ -292,6 +294,7 @@ class Component extends DCLogic {
       edition: EDITION_LABELS[row.edition],
       editionTitle: 'This row uses the ' + EDITION_LABELS[row.edition] + ' rules',
       sourceLabel,
+      sourceTitle,
       noEntries: row.entries.length === 0,
       entries: row.entries,
       open,

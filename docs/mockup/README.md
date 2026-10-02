@@ -83,7 +83,7 @@ widget, panel, or nav element:
   everything else; clicking it or pressing Escape closes the results and returns focus to
   the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics and Settings
   controls. Results group under Characters and Compendium, each with a type chip and each
-  compendium row naming its source, and an "Advanced search" link at the foot opens Search,
+  compendium row carrying the source chip List Item defines, and an "Advanced search" link at the foot opens Search,
   the `search` route. The app carries the pill's query there as `?q=<query>`; each
   artboard keeps its own state, so Search opens on its own sample query. Search draws the
   query field, the results, and a collapsible filter sidebar shaped like Sidebar, its
@@ -94,14 +94,13 @@ widget, panel, or nav element:
   no loader writes one today, would show under either edition. The API's `/search`
   takes one `edition`, one `type` and `q` today, and matches `q` against a Tier A row's
   name alone. Ticking several types or both editions, every other filter, and matching a
-  row's text, as Search does for Flame Tongue on "fire", are forward design for #521. A
-  homebrew row shows a Homebrew tag where the source goes.
+  row's text, as Search does for Flame Tongue on "fire", are forward design for #521.
 - Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
   scrim, and its `kind` tweak switches between a spell, an item, a feat and a homebrew
-  item. Its header puts the type chip beside the name, and below the name a source chip,
-  Homebrew for a homebrew row, and the edition year chip the app's `EditionTag` draws;
+  item. Its header puts the type chip beside the name, and below the name the source chip
+  and the edition year chip the app's `EditionTag` draws;
   the rules text follows, or the empty rules-text state for the homebrew item. "Add to…"
   sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
   above it. Focus moves into the modal when it
@@ -189,12 +188,18 @@ widget, panel, or nav element:
   Alignment, Backstory, Notes) never get this — their widgets are fixed.
 - Reference: List Item shows the row shape shared by Weapons, Armor, Gear, Known
   Spells, the Features widgets, and every Homebrew artboard — design it here first, then
-  carry a change into each widget's rows. The name, its gray property chips and the gold price
-  chip share the first line, with remove at the right; the description takes the
+  carry a change into each widget's rows. The name, the source chip, its gray property chips
+  and the gold price chip share the first line, with remove at the right; the description takes the
   second; the accent action chips (Attack, Damage, AC) take the third, with the row's
   controls (Equip, Prepared, Edit, a feature's use pips) at its right. Remove (an x)
   and Edit (a pencil) are gray icons with no border or fill in Equip's 18px box, so the
-  three share one column. A row with neither has no third line.
+  three share one column. A row with neither has no third line. The source chip is one
+  gray-filled chip holding a source's abbreviation, or Homebrew for a homebrew row, read
+  aloud and shown on hover as the source's title. Wherever a row carries an edition, as a
+  search result and Catalog Detail do, the year chip sits beside it; a sheet row shows the
+  source alone, since the source already tells a 2014 book from a 2024 one. The Homebrew
+  artboards leave it out: every row there is homebrew. List Item's
+  `homebrew` tweak turns its chip to Homebrew, and `showYear` hides the year.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that

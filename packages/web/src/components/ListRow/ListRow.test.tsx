@@ -1,13 +1,16 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithClient } from "../../test/renderWithClient.tsx";
+import { stubFetchByUrl } from "../../test/stubFetch.ts";
 import { Tag } from "../Tag.tsx";
 import { ListRow } from "./ListRow.tsx";
 
 function renderRow() {
-  render(
+  renderWithClient(
     <ul>
       <ListRow
         name="Longsword"
+        source="PHB"
         chips={<Tag>Martial</Tag>}
         price="15 gp"
         preview="A versatile blade."
@@ -21,15 +24,21 @@ function renderRow() {
 
 const nativeShowModal = HTMLDialogElement.prototype.showModal;
 
+beforeEach(() => {
+  stubFetchByUrl({});
+});
+
 afterEach(() => {
   HTMLDialogElement.prototype.showModal = nativeShowModal;
+  vi.unstubAllGlobals();
 });
 
 describe("ListRow", () => {
-  it("shows the chips, the price and a preview of the text, with no modal", () => {
+  it("shows the source, the chips, the price and a preview of the text, with no modal", () => {
     renderRow();
 
     const row = screen.getByRole("listitem");
+    expect(row).toHaveTextContent("PHB");
     expect(row).toHaveTextContent("Martial");
     expect(row).toHaveTextContent("Cost 15 gp");
     expect(row).toHaveTextContent("A versatile blade.");
@@ -41,6 +50,7 @@ describe("ListRow", () => {
 
     const [first, second, third] = [...screen.getByRole("listitem").children];
     expect(first).toHaveTextContent("Longsword");
+    expect(first).toHaveTextContent("PHB");
     expect(first).toHaveTextContent("Martial");
     expect(first).toHaveTextContent("Cost 15 gp");
     expect(second).toHaveTextContent("A versatile blade.");
@@ -58,9 +68,9 @@ describe("ListRow", () => {
   });
 
   it("has no third line without actions or controls", () => {
-    render(
+    renderWithClient(
       <ul>
-        <ListRow name="Rope" preview="Fifty feet of hempen rope." />
+        <ListRow name="Rope" source="PHB" preview="Fifty feet of hempen rope." />
       </ul>,
     );
 
@@ -120,13 +130,13 @@ describe("ListRow", () => {
   });
 
   it("is plain text where there is no detail to open", () => {
-    render(
+    renderWithClient(
       <ul>
-        <ListRow name="Net (PHB)" chips={<Tag>Not found in the catalog</Tag>} />
+        <ListRow name="Net" source="PHB" chips={<Tag>Not found in the catalog</Tag>} />
       </ul>,
     );
 
     expect(screen.queryByRole("button")).toBeNull();
-    expect(screen.getByText("Net (PHB)")).toBeInTheDocument();
+    expect(screen.getByText("Net")).toBeInTheDocument();
   });
 });

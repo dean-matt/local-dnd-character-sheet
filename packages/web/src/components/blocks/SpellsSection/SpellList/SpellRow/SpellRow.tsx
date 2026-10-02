@@ -25,24 +25,18 @@ export function SpellRow({
   index: number;
   characterId: string;
 }) {
-  const homebrew = spell.source === undefined;
-  const marks = (
-    <>
-      {homebrew && <Tag>Homebrew</Tag>}
-      <Tag>{spell.prepared ? "Prepared" : "Known"}</Tag>
-    </>
-  );
+  const marks = <Tag>{spell.prepared ? "Prepared" : "Known"}</Tag>;
   if (!spell.resolved) {
-    const source = spell.source ? ` (${spell.source})` : "";
     return (
       <ListRow
-        name={`${spell.name}${source}`}
+        name={spell.name}
+        source={spell.source}
         chips={
           <>
             {marks}
             <NotFoundTag
               characterId={characterId}
-              homebrew={homebrew}
+              homebrew={spell.source === undefined}
               renamed={renamedAt(`spells[${index}].ref`)}
             />
           </>
@@ -53,6 +47,7 @@ export function SpellRow({
   return (
     <ListRow
       name={spell.name}
+      source={spell.source}
       chips={
         <>
           <Tag>{schoolName(spell.school)}</Tag>

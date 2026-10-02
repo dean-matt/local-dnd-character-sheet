@@ -39,6 +39,7 @@ export function ResolvedItemRow({
   return (
     <ListRow
       name={item.name}
+      source={item.source}
       chips={
         <>
           <ItemTypeChips item={item} attacks={attack !== undefined} />

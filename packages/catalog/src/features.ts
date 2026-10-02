@@ -22,7 +22,7 @@ const featureFields = {
     .string()
     .min(1)
     .optional()
-    .describe("Absent only on an unresolved homebrew reference, which stores an id and no source"),
+    .describe("Absent on a homebrew reference, resolved or not, since homebrew names no source"),
   level: z.int().min(1).max(20).optional(),
   featureType: z.string().min(1).optional(),
 };
