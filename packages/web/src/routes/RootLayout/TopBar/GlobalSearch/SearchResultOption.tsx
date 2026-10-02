@@ -1,5 +1,3 @@
-import type { SearchHit } from "@dnd/catalog";
-import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { SourceChip } from "../../../../components/SourceChip.tsx";
 import { Tag } from "../../../../components/Tag.tsx";
@@ -13,16 +11,6 @@ export interface SearchResultOptionProps {
   active: boolean;
   onPick: () => void;
   onPoint: () => void;
-}
-
-function hitMeta(hit: SearchHit): ReactNode {
-  return (
-    <SourceChip
-      source={"source" in hit ? hit.source : undefined}
-      edition={hit.edition}
-      of={searchHitTypeLabel(hit.type).toLowerCase()}
-    />
-  );
 }
 
 export function SearchResultOption({
@@ -54,7 +42,13 @@ export function SearchResultOption({
       : {
           chip: searchHitTypeLabel(result.hit.type),
           name: result.hit.name,
-          meta: hitMeta(result.hit),
+          meta: (
+            <SourceChip
+              source={"source" in result.hit ? result.hit.source : undefined}
+              edition={result.hit.edition}
+              of={searchHitTypeLabel(result.hit.type).toLowerCase()}
+            />
+          ),
         };
 
   return (
