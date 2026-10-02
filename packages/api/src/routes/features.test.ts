@@ -341,7 +341,7 @@ describe("featuresRoutes", () => {
 
     expect(groups.map(({ origin }) => origin)).toEqual(["class", "subclass", "race", "feat"]);
     expect(groups[3]?.features).toEqual([
-      { resolved: true, name: "Tavern Brawler Plus", source: "HB", entries: ["You brawl."] },
+      { resolved: true, name: "Tavern Brawler Plus", entries: ["You brawl."] },
     ]);
   });
 });

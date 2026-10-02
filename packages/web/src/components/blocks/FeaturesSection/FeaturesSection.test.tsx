@@ -212,6 +212,22 @@ describe("FeaturesSection", () => {
     expect(await within(row).findByText("Renamed to Lucky (XPHB)")).toBeInTheDocument();
   });
 
+  it("marks a resolved homebrew feat with the Homebrew chip", async () => {
+    renderSection({
+      groups: [
+        {
+          origin: "feat",
+          features: [{ resolved: true, name: "Moonlit Oath", level: 4, entries: ["You swear."] }],
+        },
+      ],
+    });
+
+    const row = (await screen.findByRole("button", { name: "Moonlit Oath" })).closest(
+      "li",
+    ) as HTMLElement;
+    expect(row).toHaveTextContent("Homebrew");
+  });
+
   it("says a missing homebrew reference is missing from homebrew, not the catalog", async () => {
     renderSection({
       groups: [{ origin: "feat", features: [{ resolved: false, name: "Moonlit Oath", level: 4 }] }],
