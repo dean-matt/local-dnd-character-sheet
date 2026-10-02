@@ -45,10 +45,10 @@
       <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
         <div style="min-width: 0;">
           <h1 style="margin: 0; font-size: 24px; font-weight: 600;">{{name}}</h1>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">{{source}}</p>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;"><sc-if value="{{isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>{{source}}</p>
         </div>
         <div style="position: relative; flex-shrink: 0;" onKeyDown="{{onPickerKeyDown}}">
-          <button id="catalogAddTo" onClick="{{addClick}}" aria-label="{{addLabel}}" aria-expanded="{{pickerOpen}}" style="padding: 7px 14px; border-radius: 6px; border: none; background: {{accent}}; font-size: 13px; font-weight: 600; color: #ffffff;">Add to…</button>
+          <button id="catalogAddTo" onClick="{{addClick}}" aria-expanded="{{expandedAttr}}" style="padding: 7px 14px; border-radius: 6px; border: none; background: {{accent}}; font-size: 13px; font-weight: 600; color: #ffffff;">Add to…<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{addHint}}</span></button>
           <sc-if value="{{pickerOpen}}" hint-placeholder-val="{{false}}">
             <div role="group" aria-label="{{pickerLabel}}" style="position: absolute; top: calc(100% + 6px); right: 0; width: 240px; padding: 6px; border: 1px solid #dde1e6; border-radius: 10px; background: #ffffff; box-shadow: 0 12px 24px rgba(0,0,0,0.18); z-index: 20;">
               <div style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 2px 6px 4px 6px;">Add to which character?</div>
@@ -81,12 +81,15 @@
         <sc-for list="{{entries}}" as="para" hint-placeholder-count="2">
           <p style="margin: 0;">{{para}}</p>
         </sc-for>
+        <sc-if value="{{noEntries}}" hint-placeholder-val="{{false}}">
+          <p style="margin: 0; padding: 18px; border: 1px dashed #dde1e6; border-radius: 8px; font-size: 13px; color: #6b7280;">This row carries no rules text of its own.</p>
+        </sc-if>
       </div>
     </article>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","item","feat"],"default":"spell"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":560}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","item","feat","homebrew"],"default":"spell"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":560}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -119,6 +122,7 @@ class Component extends DCLogic {
         type: 'Item', name: 'Longbow +1', source: 'DMG',
         entries: ['Attack and damage rolls made with this bow gain a +1 bonus.']
       },
+      homebrew: { type: 'Item', name: 'Ember Charm', source: '', entries: [] },
       feat: {
         type: 'Feat', name: 'Alert', source: 'PHB',
         entries: [
@@ -140,7 +144,7 @@ class Component extends DCLogic {
       this.setState({
         pickerOpen: false,
         toast: {
-          text: 'Added ' + row.name + ' (' + row.source + ') to ' + c.name + '.',
+          text: 'Added ' + row.name + ' (' + (row.source || 'Homebrew') + ') to ' + c.name + '.',
           note: offList ? 'Noted: ' + row.name + ' is not on the ' + c.cls + ' spell list.' : ''
         }
       });
@@ -151,8 +155,11 @@ class Component extends DCLogic {
       accent,
       name: row.name,
       source: row.source,
+      isHomebrew: !row.source,
+      noEntries: row.entries.length === 0,
       entries: row.entries,
-      addLabel: onSheet ? 'Add ' + row.name + ' to ' + current.name : 'Add ' + row.name + ' to a character',
+      addHint: onSheet ? ' ' + row.name + ', for ' + current.name : ' ' + row.name,
+      expandedAttr: onSheet ? undefined : pickerOpen,
       pickerLabel: 'Add ' + row.name + ' to which character',
       pickerOpen,
       addClick: () => (onSheet ? add(current) : this.setState({ pickerOpen: !pickerOpen, toast: null })),
