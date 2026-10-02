@@ -80,7 +80,7 @@
     "CreationSpells.dc.html": { "x": 7700, "y": 10205, "w": 1440, "h": 800, "title": "Creation 5/5 — Spells — pending #238", "is_interactive": true },
 
     "Search.dc.html": { "x": 0, "y": 11105, "w": 1440, "h": 900, "title": "Advanced Search — pending #521", "is_interactive": true },
-    "CatalogDetail.dc.html": { "x": 1540, "y": 11105, "w": 1440, "h": 560, "title": "Catalog Detail — pending #522", "is_interactive": true },
+    "CatalogDetail.dc.html": { "x": 1540, "y": 11105, "w": 1440, "h": 720, "title": "Catalog Detail Modal — pending #537", "is_interactive": true },
 
     "ConfirmDialog.dc.html": { "x": 3380, "y": 0, "w": 340, "h": 200, "title": "Confirm Dialog — Style Reference", "is_interactive": true },
     "ListItem.dc.html": { "x": 3800, "y": 0, "w": 460, "h": 340, "title": "List Item — Style Reference", "is_interactive": true }

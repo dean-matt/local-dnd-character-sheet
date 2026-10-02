@@ -94,11 +94,15 @@ widget, panel, or nav element:
   Search opens on its own sample query, while the app carries the pill's query to the
   `search` route as `?q=<query>`. A homebrew row shows a Homebrew tag where the source
   goes, on Search and on Catalog Detail's `homebrew` kind, which also draws the empty
-  rules-text state `CatalogPage.tsx` shows. Catalog Detail is the catalog route laid out as
-  `CatalogPage.tsx` renders it — name, source, rules text — with its `kind` tweak
-  switching between a spell, an item, a feat and a homebrew item. Every item, spell and feat result, and
-  Catalog Detail, carries "Add to…". Opened from a sheet (the `openedFrom` tweak), it adds
-  to that character; opened anywhere else, it asks which character first, and says there
+  rules-text state. Catalog Detail is a modal, not a page: a result in the dropdown or on
+  Search, or a rules-text reference on a sheet, opens it over the page that holds the
+  link, and the app drops its `catalog` route (#537). Its `host` tweak draws that page
+  behind the scrim, and its `kind` tweak switches between a spell, an item, a feat and a
+  homebrew item. It shows the row's type, name, source and rules text. The close button,
+  the scrim and Escape close it and return focus to the link, and Tab stays inside it
+  while it is open. Every item, spell and feat result, and Catalog Detail, carries
+  "Add to…". Opened from a sheet (the `openedFrom` tweak, always true of the `sheet`
+  host), it adds to that character; opened anywhere else, it asks which character first, and says there
   is none to add to when the list is empty (the `noCharacters` tweak). A row the rules do
   not allow, such as Fireball for a ranger, still lands, and the confirmation notes why
   it is unusual. Races, classes and subclasses carry no "Add to…", since creation and
@@ -189,7 +193,7 @@ its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium, with an advanced search page, a
-catalog detail page, and a way to add a result to a character; light, dark, and system
+catalog detail modal, and a way to add a result to a character; light, dark, and system
 theme; a user-customizable accent color; a settings page for homebrew content and sources; a way
 to add or remove experience points in XP leveling mode; and a filter on Weapons, Armor,
 Gear, Known Spells, Class Features, Race Features, and Chosen Features to narrow
@@ -279,7 +283,7 @@ says how much of the artboard the app builds today.
 | `ManageTabs` | #242 | reorder and hide |
 | `TopBar` | #386, #522 | read-only |
 | `Search` | #521, #522 | nothing |
-| `CatalogDetail` | #522 | all but Add to… |
+| `CatalogDetail` | #522, #537 | its content, as a page |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
