@@ -10,6 +10,7 @@ import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 import { EditionTag } from "./EditionTag.tsx";
 import { Modal } from "./Modal.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
+import { ResolvedRefs } from "./resolvedRefsContext.ts";
 import { Tag } from "./Tag.tsx";
 
 export interface CatalogDetailProps {
@@ -50,7 +51,10 @@ export function CatalogDetail({ address, onClose }: CatalogDetailProps) {
   return modal(
     name,
     entries.length > 0 ? (
-      <RulesEntries entries={entries} headingLevel={3} />
+      // A block of its own: the map of the sheet that opened it holds none of this row's references.
+      <ResolvedRefs value={null}>
+        <RulesEntries entries={entries} headingLevel={3} />
+      </ResolvedRefs>
     ) : (
       <EmptyState>This row carries no rules text of its own.</EmptyState>
     ),

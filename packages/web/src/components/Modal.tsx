@@ -2,8 +2,8 @@ import { type ReactNode, useEffect, useId, useRef } from "react";
 
 /**
  * A modal dialog for one entry's detail. The native `<dialog>` traps focus and marks the
- * page behind it inert; Escape arrives as `cancel` and a click on the backdrop as a click
- * on the dialog itself, and both are routed to `onClose` so the caller unmounts it and
+ * page behind it inert; Escape arrives as `cancel` and a press and click on the backdrop as
+ * ones on the dialog itself, and both are routed to `onClose` so the caller unmounts it and
  * returns focus. It is never printed.
  */
 export function Modal({
@@ -23,6 +23,9 @@ export function Modal({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // A selection dragged out of the content ends in a click on the dialog; only a press that
+  // also began on the backdrop closes it.
+  const pressedBackdrop = useRef(false);
   const titleId = useId();
 
   // jsdom has no showModal; a second call under StrictMode finds the dialog already open.
@@ -44,12 +47,15 @@ export function Modal({
         event.preventDefault();
         onClose();
       }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+      onPointerDown={(event) => {
+        pressedBackdrop.current = event.target === event.currentTarget;
       }}
-      className={`m-auto max-h-[80%] ${width} max-w-[85%] overflow-auto rounded-card border-0 bg-surface p-0 text-ink shadow-modal print:hidden`}
+      onClick={(event) => {
+        if (pressedBackdrop.current && event.target === event.currentTarget) onClose();
+      }}
+      className={`m-auto max-h-[80%] ${width} max-w-[85%] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
     >
-      <div className="p-5">
+      <div className="min-h-0 overflow-auto p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <h2 id={titleId} className="font-bold text-title">

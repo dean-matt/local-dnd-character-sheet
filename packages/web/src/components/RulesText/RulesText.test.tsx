@@ -104,7 +104,13 @@ describe("reference resolution", () => {
   });
 
   it("opens a resolved reference onto the row's prose, and from there its detail", async () => {
-    stubFetchByUrl({
+    const shield = {
+      name: "Shield",
+      source: "PHB",
+      entries: ["A barrier."],
+      path: "/spells/Shield/PHB",
+    };
+    const byUrl = stubFetchByUrl({
       "/api/refs/resolve": { refs: [FIREBALL] },
       "/api/spells/Fireball/PHB": {
         name: "Fireball",
@@ -120,10 +126,15 @@ describe("reference resolution", () => {
           level: 3,
           school: "V",
           duration: [{ type: "instant" }],
-          entries: ["A bright streak."],
+          entries: ["A bright streak, warded by {@spell shield}."],
         },
       },
     });
+    vi.stubGlobal("fetch", (url: RequestInfo | URL, init?: RequestInit) =>
+      String(init?.body).includes("shield")
+        ? Promise.resolve(new Response(JSON.stringify({ refs: [shield] })))
+        : byUrl(url, init),
+    );
     renderWithClient(
       <p>
         <RulesText text="Cast {@spell fireball}." />
@@ -137,7 +148,8 @@ describe("reference resolution", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open Fireball" }));
     const dialog = await screen.findByRole("dialog", { name: "Fireball" });
-    expect(await within(dialog).findByText("A bright streak.")).toBeInTheDocument();
+    // The detail resolves its own references, rather than reading the sheet's.
+    expect(await within(dialog).findByRole("button", { name: "shield" })).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

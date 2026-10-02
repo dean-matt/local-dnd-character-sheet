@@ -35,7 +35,7 @@ routes/                  one file or folder per route, plus the layout pieces ar
     PrintSheet/          a private part with private parts of its own
 components/              UI any route may use: Card, Field, Modal, Popover, RulesText
 components/blocks/       the block renderers PageBlocks draws for a character's pages
-hooks/                   TanStack Query hooks, one per file, and the query keys they share
+hooks/                   React hooks, one per file, and the query keys they share
 lib/                     plain functions, the one request builder api.ts among them
 test/                    helpers only tests import
 ```

@@ -231,7 +231,13 @@ describe("CatalogDetail", () => {
 
   it.each([
     ["the close button", () => fireEvent.click(screen.getByRole("button", { name: "Close" }))],
-    ["the backdrop", () => fireEvent.click(screen.getByRole("dialog"))],
+    [
+      "the backdrop",
+      () => {
+        fireEvent.pointerDown(screen.getByRole("dialog"));
+        fireEvent.click(screen.getByRole("dialog"));
+      },
+    ],
     ["Escape", () => fireEvent(screen.getByRole("dialog"), new Event("cancel"))],
   ])("closes by %s", async (_how, close) => {
     stubFetchByUrl({ "/api/spells/Fireball/PHB": fireball });
@@ -248,6 +254,16 @@ describe("CatalogDetail", () => {
     await dialogNamed("Fireball");
 
     fireEvent.click(screen.getByText("More dice."));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("stays open for a selection dragged from its content onto the backdrop", async () => {
+    stubFetchByUrl({ "/api/spells/Fireball/PHB": fireball });
+    const onClose = renderAt("/spells/Fireball/PHB");
+    await dialogNamed("Fireball");
+
+    fireEvent.pointerDown(screen.getByText("More dice."));
+    fireEvent.click(screen.getByRole("dialog"));
     expect(onClose).not.toHaveBeenCalled();
   });
 
