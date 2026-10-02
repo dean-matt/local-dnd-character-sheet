@@ -98,10 +98,11 @@ widget, panel, or nav element:
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
   scrim, and its `kind` tweak switches between a spell, an item, a feat and a homebrew
-  item. Its header puts the type chip beside the name, and below the name the source and
-  the edition year chip the app's `EditionTag` draws; the rules text follows, or the
-  empty rules-text state for the homebrew item. "Add to…" sits at the bottom right of a footer pinned to
-  the modal's foot, and its picker opens above it. Focus moves into the modal when it
+  item. Its header puts the type chip beside the name, and below the name a source chip,
+  Homebrew for a homebrew row, and the edition year chip the app's `EditionTag` draws;
+  the rules text follows, or the empty rules-text state for the homebrew item. "Add to…"
+  sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
+  above it. Focus moves into the modal when it
   opens and Tab stays inside it; the close button, the scrim and Escape close it and
   return focus to the link.
 - Add to…: every item, spell and feat result, on Top Bar Navigation and Search, and

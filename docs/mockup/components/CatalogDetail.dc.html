@@ -111,8 +111,7 @@
                 <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px;">{{type}}</span>
               </div>
               <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: #6b7280;">
-                <sc-if value="{{isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>
-                <sc-if value="{{source}}" hint-placeholder-val="{{true}}"><span>{{source}}</span></sc-if>
+                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border: 1px solid #eceef1; border-radius: 4px; padding: 2px 5px;">{{sourceLabel}}</span>
                 <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{editionTitle}}">{{edition}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{edition}} rules</span></span>
               </div>
             </div>
@@ -221,11 +220,11 @@ class Component extends DCLogic {
         entries: []
       },
       feat: {
-        type: 'Feat', name: 'Alert', source: 'XPHB', edition: 'one', query: 'alert', meta: 'Origin feat',
-        refHeading: 'Background — Criminal', refBefore: 'You gain the ', refAfter: ' feat.',
+        type: 'Feat', name: 'Elemental Adept', source: 'PHB', edition: 'classic', needsCaster: true, query: 'elemental', meta: 'Spellcaster prerequisite',
+        refHeading: 'Notes', refBefore: 'At Ranger 8, take ', refAfter: ' for fire.',
         entries: [
-          'Initiative Proficiency. Add your Proficiency Bonus to Initiative rolls.',
-          'Initiative Swap. Right after rolling Initiative, you can trade your roll with a willing ally in the same combat, unless either of you is Incapacitated.'
+          'Pick one damage type: acid, cold, fire, lightning or thunder. Your spells ignore resistance to it.',
+          'When a spell of that type rolls damage, any 1 on a damage die counts as a 2. Take the feat again to pick another type.'
         ]
       }
     };
@@ -260,7 +259,7 @@ class Component extends DCLogic {
 
     const rail = host === 'searchRoute' ? ['Filters', 'Type', 'Source', 'Edition'] : ['Stats', 'Inventory', 'Spells', 'Features', 'Identity', 'Notes'];
     const activeLabel = {
-      sheet: { spell: 'Inventory', item: 'Spells', homebrew: 'Notes', feat: 'Identity' }[this.props.kind ?? 'spell'],
+      sheet: { spell: 'Inventory', item: 'Spells', homebrew: 'Notes', feat: 'Notes' }[this.props.kind ?? 'spell'],
       searchDropdown: 'Stats',
       searchRoute: 'Filters'
     }[host];
@@ -290,11 +289,9 @@ class Component extends DCLogic {
       type: row.type,
       tagColor: TAG[row.type],
       name: row.name,
-      source: row.source,
       edition: EDITION_LABELS[row.edition],
       editionTitle: 'This row uses the ' + EDITION_LABELS[row.edition] + ' rules',
       sourceLabel,
-      isHomebrew: !row.source,
       noEntries: row.entries.length === 0,
       entries: row.entries,
       open,
