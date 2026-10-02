@@ -248,18 +248,17 @@ describe("Popover", () => {
     expect(screen.getByText("Strength")).toBeInTheDocument();
   });
 
-  it("draws its content in the top layer, out of reach of a scroll container's clip", () => {
+  // jsdom lays nothing out, so the clip itself is e2e/popover-in-modal.spec.ts's to catch.
+  it("promotes its opened content to a manual popover", () => {
     const shown: Element[] = [];
     HTMLElement.prototype.showPopover = function showPopover(this: HTMLElement) {
       shown.push(this);
     };
     try {
       render(
-        <div className="min-h-0 overflow-auto">
-          <Popover trigger="+3" label="Strength modifier">
-            Base 16, modifier +3
-          </Popover>
-        </div>,
+        <Popover trigger="+3" label="Strength modifier">
+          Base 16, modifier +3
+        </Popover>,
       );
       const trigger = screen.getByRole("button", { name: "+3" });
       fireEvent.click(trigger);
