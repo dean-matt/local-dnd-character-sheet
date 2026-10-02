@@ -178,10 +178,10 @@ class Component extends DCLogic {
     const accent = this.props.accent ?? '#c1272d';
     const onSheet = (this.props.openedFrom ?? 'sheet') === 'sheet';
     const ALL_CHARACTERS = [
-      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger', sub: 'Half-Elf Ranger • Lvl 7' },
-      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter', sub: 'Mountain Dwarf Fighter • Lvl 6' },
-      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard', sub: 'Human Wizard • Lvl 5' },
-      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock', sub: 'Tiefling Warlock • Lvl 4' }
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger', caster: true, sub: 'Half-Elf Ranger • Lvl 7' },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter', caster: false, sub: 'Mountain Dwarf Fighter • Lvl 6' },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard', caster: true, sub: 'Human Wizard • Lvl 5' },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock', caster: true, sub: 'Tiefling Warlock • Lvl 4' }
     ];
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     // Opened from a sheet, the bar sits over Elara's, the character the other sheet artboards show.
@@ -199,6 +199,7 @@ class Component extends DCLogic {
       { id: 'longbow', type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', source: 'DMG', tagColor: '#8a6a2e' },
       { id: 'fire-resistance', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', tagColor: '#8a6a2e' },
       { id: 'alert', type: 'Feat', name: 'Alert', meta: 'Origin feat', source: 'XPHB', tagColor: '#6b4f7a' },
+      { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite', source: 'PHB', tagColor: '#6b4f7a', needsCaster: true },
       { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', tagColor: '#5b5f66' },
       { id: 'extra-attack', type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', source: 'PHB', tagColor: '#4f6b6b' }
     ];
@@ -235,13 +236,17 @@ class Component extends DCLogic {
       focusPill();
     };
     // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
+    const noteFor = (res, c) => {
+      if (res.type === 'Spell' && res.classes.indexOf(c.cls) === -1) return 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.';
+      if (res.type === 'Feat' && res.needsCaster && !c.caster) return 'Noted: ' + c.name + ' cannot cast a spell, which ' + res.name + ' requires.';
+      return '';
+    };
     const add = (res, c) => {
-      const offList = res.type === 'Spell' && res.classes.indexOf(c.cls) === -1;
       this.setState({
         pickerFor: null,
         toast: {
           text: 'Added ' + res.name + ' (' + res.source + ') to ' + c.name + '.',
-          note: offList ? 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.' : ''
+          note: noteFor(res, c)
         }
       });
       focusAdd(res.id);

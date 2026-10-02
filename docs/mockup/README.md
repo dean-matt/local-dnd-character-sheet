@@ -107,7 +107,8 @@ widget, panel, or nav element:
   asks which character first, and says there is none to add to when the list is empty
   (the `noCharacters` tweak). Top Bar Navigation opened from elsewhere sits over the
   Settings page instead of a sheet. A row the rules do not allow, such as Fireball for a
-  ranger, still lands, and the confirmation notes why it is unusual. Races, classes and
+  ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
+  confirmation notes why it is unusual. Races, classes and
   subclasses carry no "Add to…", since creation and level-up own them.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top

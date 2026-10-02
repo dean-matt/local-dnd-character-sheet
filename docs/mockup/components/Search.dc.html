@@ -252,10 +252,10 @@ class Component extends DCLogic {
     const accent = this.props.accent ?? '#c1272d';
     const onSheet = (this.props.openedFrom ?? 'sheet') === 'sheet';
     const ALL_CHARACTERS = [
-      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger' },
-      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter' },
-      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard' },
-      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock' }
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger', caster: true },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter', caster: false },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard', caster: true },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock', caster: true }
     ];
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     const current = ALL_CHARACTERS[0];
@@ -271,7 +271,7 @@ class Component extends DCLogic {
       { id: 'ring-fire', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', edition: '2014', rarity: 'Rare' },
       { id: 'flame-tongue', type: 'Item', name: 'Flame Tongue', meta: 'Weapon • Rare • fire damage', source: 'DMG', edition: '2014', rarity: 'Rare' },
       { id: 'ember-charm', type: 'Item', name: 'Ember Charm of Fire', meta: 'Wondrous item • Uncommon', source: '', edition: '2014', rarity: 'Uncommon' },
-      { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite • acid, cold, fire, lightning or thunder', source: 'PHB', edition: '2014' },
+      { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite • acid, cold, fire, lightning or thunder', source: 'PHB', edition: '2014', needsCaster: true },
       { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', edition: '2014' },
       { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: null }
     ];
@@ -306,13 +306,17 @@ class Component extends DCLogic {
       if (b) b.focus();
     };
     // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
+    const noteFor = (res, c) => {
+      if (res.type === 'Spell' && res.classes.indexOf(c.cls) === -1) return 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.';
+      if (res.type === 'Feat' && res.needsCaster && !c.caster) return 'Noted: ' + c.name + ' cannot cast a spell, which ' + res.name + ' requires.';
+      return '';
+    };
     const add = (res, c) => {
-      const offList = res.type === 'Spell' && res.classes.indexOf(c.cls) === -1;
       this.setState({
         pickerFor: null,
         toast: {
           text: 'Added ' + res.name + ' (' + (res.source || 'Homebrew') + ') to ' + c.name + '.',
-          note: offList ? 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.' : ''
+          note: noteFor(res, c)
         }
       });
       focusAdd(res.id);

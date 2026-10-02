@@ -175,10 +175,10 @@ class Component extends DCLogic {
     // A rules-text reference lives on a sheet, so that host always has a character in view.
     const onSheet = host === 'sheet' || (this.props.openedFrom ?? 'sheet') === 'sheet';
     const ALL_CHARACTERS = [
-      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger' },
-      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter' },
-      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard' },
-      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock' }
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger', caster: true },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter', caster: false },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard', caster: true },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock', caster: true }
     ];
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     const current = ALL_CHARACTERS[0];
@@ -225,13 +225,17 @@ class Component extends DCLogic {
       focusById('catalogOpener');
     };
     // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
+    const noteFor = (c) => {
+      if (row.type === 'Spell' && row.classes.indexOf(c.cls) === -1) return 'Noted: ' + row.name + ' is not on the ' + c.cls + ' spell list.';
+      if (row.type === 'Feat' && row.needsCaster && !c.caster) return 'Noted: ' + c.name + ' cannot cast a spell, which ' + row.name + ' requires.';
+      return '';
+    };
     const add = (c) => {
-      const offList = row.type === 'Spell' && row.classes.indexOf(c.cls) === -1;
       this.setState({
         pickerOpen: false,
         toast: {
           text: 'Added ' + row.name + ' (' + sourceLabel + ') to ' + c.name + '.',
-          note: offList ? 'Noted: ' + row.name + ' is not on the ' + c.cls + ' spell list.' : ''
+          note: noteFor(c)
         }
       });
       focusById('catalogAddTo');
