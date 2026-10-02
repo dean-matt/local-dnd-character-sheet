@@ -224,7 +224,7 @@ describe("SpellsSection", () => {
   it("shows a reference that resolves to nothing by its stored name, marked", async () => {
     renderSection();
 
-    const row = (await screen.findByText("Lost Spell (PHB)")).closest("li") as HTMLElement;
+    const row = (await screen.findByText("Lost Spell")).closest("li") as HTMLElement;
     expect(row).toHaveTextContent("Not found in the catalog");
     expect(within(row).queryByRole("button")).toBeNull();
   });
@@ -241,7 +241,7 @@ describe("SpellsSection", () => {
       ],
     });
 
-    const row = (await screen.findByText("Lost Spell (PHB)")).closest("li") as HTMLElement;
+    const row = (await screen.findByText("Lost Spell")).closest("li") as HTMLElement;
     expect(await within(row).findByText("Renamed to Found Spell (XPHB)")).toBeInTheDocument();
     expect(row).not.toHaveTextContent("Not found in the catalog");
     expect(within(row).queryByRole("button")).toBeNull();
@@ -267,7 +267,7 @@ describe("SpellsSection", () => {
 
     await screen.findByText("Renamed to Found Spell (XPHB)");
     const [known, prepared] = screen
-      .getAllByText("Lost Spell (PHB)")
+      .getAllByText("Lost Spell")
       .map((name) => name.closest("li") as HTMLElement);
     expect(known).toHaveTextContent("Renamed to Found Spell (XPHB)");
     expect(prepared).toHaveTextContent("Not found in the catalog");

@@ -78,9 +78,9 @@ describe("GlobalSearch", () => {
     expect(within(characters).getByRole("option")).toHaveTextContent(/Fira.*Character/);
     const options = within(compendium).getAllByRole("option");
     expect(options.map((o) => o.textContent)).toEqual([
-      "FireballPHB • 2014Spell",
-      "Fire GiantMM • No page yetMonster",
-      "Ember CharmHomebrew • 2024Item",
+      "FireballPHB20142014 rulesSpell",
+      "Fire GiantMMNo page yetMonster",
+      "Ember CharmHomebrew20242024 rulesItem",
     ]);
     expect(options[1]).toHaveAttribute("aria-disabled", "true");
   });

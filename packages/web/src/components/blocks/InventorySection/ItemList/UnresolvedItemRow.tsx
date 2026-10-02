@@ -14,11 +14,11 @@ export function UnresolvedItemRow({
   index: number;
   characterId: string;
 }) {
-  const source = item.source ? ` (${item.source})` : "";
   const variant = item.variant ? `, as ${item.variant.name} (${item.variant.source})` : "";
   return (
     <ListRow
-      name={`${item.name}${source}${variant}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
+      name={`${item.name}${variant}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
+      source={item.source}
       chips={
         <>
           <ItemMarks item={item} />

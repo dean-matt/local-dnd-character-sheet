@@ -2,16 +2,18 @@ import { Coins } from "lucide-react";
 import type { ReactNode } from "react";
 import { CHIP } from "../../lib/chipStyles.ts";
 import { DetailTrigger } from "../DetailTrigger.tsx";
+import { SourceChip } from "../SourceChip.tsx";
 
 /**
  * The one row every list on the sheet draws, in up to three lines: the name beside its
- * property chips and a price chip; a one-line preview of the rules text; then the row's
+ * source chip, property chips and a price chip; a one-line preview of the rules text; then the row's
  * action chips, with its controls at the right. A row with neither actions nor controls
  * has no third line. A row with `detail` opens it in a modal from its name; one without is
- * plain text, since there is nothing to open.
+ * plain text, since there is nothing to open. `source` is absent on a homebrew row.
  */
 export function ListRow({
   name,
+  source,
   chips,
   price,
   preview,
@@ -20,6 +22,7 @@ export function ListRow({
   detail,
 }: {
   name: string;
+  source: string | undefined;
   chips?: ReactNode;
   price?: string;
   preview?: string;
@@ -45,6 +48,7 @@ export function ListRow({
             {name}
           </span>
         )}
+        <SourceChip source={source} />
         {chips}
         {price && (
           <span

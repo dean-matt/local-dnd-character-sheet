@@ -248,8 +248,8 @@ describe("InventorySection", () => {
   it("shows an unresolved magic variant by the pair it names, with nothing to open", async () => {
     renderSection();
 
-    const net = (await screen.findByText(/Net \(PHB\)/)).closest("li") as HTMLElement;
-    expect(net).toHaveTextContent("Net (PHB), as +1 Weapon (DMG)");
+    const net = (await screen.findByText("Net, as +1 Weapon (DMG)")).closest("li") as HTMLElement;
+    expect(net).toHaveTextContent("PHB");
     expect(net).toHaveTextContent("Not found in the catalog");
     expect(within(net).queryByRole("button")).toBeNull();
   });
@@ -267,7 +267,7 @@ describe("InventorySection", () => {
       ],
     });
 
-    const net = (await screen.findByText(/Net \(PHB\)/)).closest("li") as HTMLElement;
+    const net = (await screen.findByText(/^Net,/)).closest("li") as HTMLElement;
     expect(await within(net).findByText("Renamed to +1 Weapon (XDMG)")).toBeInTheDocument();
   });
 
@@ -303,7 +303,7 @@ describe("InventorySection", () => {
     );
 
     await screen.findByText("Renamed to +1 Weapon (XDMG)");
-    const whip = screen.getByText(/Whip \(PHB\)/).closest("li") as HTMLElement;
+    const whip = screen.getByText(/^Whip,/).closest("li") as HTMLElement;
     expect(whip).toHaveTextContent("Not found in the catalog");
   });
 

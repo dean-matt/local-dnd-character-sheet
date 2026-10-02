@@ -116,7 +116,7 @@ describe("FeaturesSection", () => {
     expect(within(cls).getByText("Second Wind")).toBeInTheDocument();
     expect(within(cls).getByText("Improved Critical")).toBeInTheDocument();
     const chosen = card("Chosen Features");
-    expect(within(chosen).getByText("Lucky (PHB)")).toBeInTheDocument();
+    expect(within(chosen).getByText("Lucky")).toBeInTheDocument();
     expect(within(chosen).getByText("Archery")).toBeInTheDocument();
     expect(within(card("Background Features")).getByText("Shelter of the Faithful")).toBeVisible();
   });
@@ -190,7 +190,8 @@ describe("FeaturesSection", () => {
   it("shows a reference that resolves to nothing by its stored name, marked", async () => {
     renderSection();
 
-    const row = (await screen.findByText("Lucky (PHB)")).closest("li") as HTMLElement;
+    const row = (await screen.findByText("Lucky")).closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("PHB");
     expect(row).toHaveTextContent("Not found in the catalog");
     expect(within(row).queryByRole("button")).toBeNull();
   });
@@ -207,16 +208,17 @@ describe("FeaturesSection", () => {
       ],
     });
 
-    const row = (await screen.findByText("Lucky (PHB)")).closest("li") as HTMLElement;
+    const row = (await screen.findByText("Lucky")).closest("li") as HTMLElement;
     expect(await within(row).findByText("Renamed to Lucky (XPHB)")).toBeInTheDocument();
   });
 
   it("says a missing homebrew reference is missing from homebrew, not the catalog", async () => {
     renderSection({
-      groups: [{ origin: "feat", features: [{ resolved: false, name: "Homebrew", level: 4 }] }],
+      groups: [{ origin: "feat", features: [{ resolved: false, name: "Moonlit Oath", level: 4 }] }],
     });
 
-    const row = (await screen.findByText("Homebrew")).closest("li") as HTMLElement;
+    const row = (await screen.findByText("Moonlit Oath")).closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("Homebrew");
     expect(row).toHaveTextContent("Not found in homebrew");
   });
 
