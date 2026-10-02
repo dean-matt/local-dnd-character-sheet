@@ -112,6 +112,18 @@ describe("TopBar", () => {
     }
   });
 
+  it("focusing the search closes the Character menu", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    const character = screen.getByRole("button", { name: /character/i });
+    fireEvent.click(character);
+    expect(character).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.focus(screen.getByRole("combobox"));
+    expect(character).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("Escape anywhere in the document closes the open menu", async () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();

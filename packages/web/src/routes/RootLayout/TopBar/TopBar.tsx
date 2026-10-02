@@ -2,7 +2,8 @@ import { ChevronDown, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
-import { avatarColor } from "../../../lib/avatarColor.ts";
+import { CharacterAvatar } from "./CharacterAvatar.tsx";
+import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
 
 const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 text-sm";
 const current = "font-bold text-accent-text";
@@ -79,13 +80,7 @@ export function TopBar() {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-ink hover:bg-subtle"
                 >
-                  <span
-                    className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                    style={{ background: avatarColor(c.id) }}
-                    aria-hidden
-                  >
-                    {c.name.charAt(0)}
-                  </span>
+                  <CharacterAvatar id={c.id} name={c.name} />
                   <span className="min-w-0">
                     <span className="block truncate text-body font-medium">{c.name}</span>
                     <span className="block truncate text-[11px] text-muted">
@@ -106,6 +101,8 @@ export function TopBar() {
           </>
         )}
       </div>
+
+      <GlobalSearch onOpen={() => setOpen(false)} />
 
       <NavLink
         to="/settings"
