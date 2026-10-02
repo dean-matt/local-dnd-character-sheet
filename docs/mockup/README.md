@@ -79,6 +79,43 @@ widget, panel, or nav element:
   line ("Filtering or searching the log") and its single-character framing the same way
   the character list's avatar widens past #206's — #311 and #312 are the new issues that
   settle those two, same as #310 settled the character list's own widening.
+- Search: while Top Bar Navigation's search pill has focus or a query, a scrim dims
+  everything else; clicking it or pressing Escape closes the results and returns focus to
+  the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics and Settings
+  controls. Results group under Characters and Compendium, each with a type chip and each
+  compendium row naming its source, and an "Advanced search" link at the foot opens Search,
+  the `search` route. The app carries the pill's query there as `?q=<query>`; each
+  artboard keeps its own state, so Search opens on its own sample query. Search draws the
+  query field, the results, and a collapsible filter sidebar shaped like Sidebar, its
+  controls the Filter artboards' checkboxes, chips and level range. The query field,
+  results and confirmation fill the main column beside the sidebar, with no maximum
+  width. It filters by type, source and edition, and adds level and school once Spell is
+  ticked and rarity once Item is. A row with no edition, which Tier B and C allow though
+  no loader writes one today, would show under either edition. The API's `/search`
+  takes one `edition`, one `type` and `q` today, and matches `q` against a Tier A row's
+  name alone. Ticking several types or both editions, every other filter, and matching a
+  row's text, as Search does for Flame Tongue on "fire", are forward design for #521. A
+  homebrew row shows a Homebrew tag where the source goes.
+- Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
+  rules-text reference on a sheet, opens it over the page that holds the link, and the
+  app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
+  scrim, and its `kind` tweak switches between a spell, an item, a feat and a homebrew
+  item. Its header puts the type chip beside the name, and below the name a source chip,
+  Homebrew for a homebrew row, and the edition year chip the app's `EditionTag` draws;
+  the rules text follows, or the empty rules-text state for the homebrew item. "Add to…"
+  sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
+  above it. Focus moves into the modal when it
+  opens and Tab stays inside it; the close button, the scrim and Escape close it and
+  return focus to the link.
+- Add to…: every item, spell and feat result on Top Bar Navigation and Search carries
+  "Add to…", and so does Catalog Detail. Opened from a sheet (the `openedFrom` tweak, always true
+  of Catalog Detail's `sheet` host), it adds to that character; opened anywhere else, it
+  asks which character first, and says there is none to add to when the list is empty
+  (the `noCharacters` tweak). Top Bar Navigation opened from elsewhere sits over the
+  Settings page instead of a sheet. A row the rules do not allow, such as Fireball for a
+  ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
+  confirmation notes why it is unusual. Races, classes and
+  subclasses carry no "Add to…", since creation and level-up own them.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the
@@ -164,8 +201,9 @@ where any tab reorders and hides, but only a user-created tab renames, deletes, 
 its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects and resistances/immunities; a global
-search across characters and a sample compendium; light, dark, and system theme; a
-user-customizable accent color; a settings page for homebrew content and sources; a way
+search across characters and a sample compendium, with an advanced search page, a
+catalog detail modal, and a way to add a result to a character; light, dark, and system
+theme; a user-customizable accent color; a settings page for homebrew content and sources; a way
 to add or remove experience points in XP leveling mode; and a filter on Weapons, Armor,
 Gear, Known Spells, Class Features, Race Features, and Chosen Features to narrow
 what the widget shows.
@@ -191,8 +229,7 @@ Simplifications specific to these widgets:
 
 - No mobile or narrow-width pass exists in this style yet — an earlier, since-removed
   version of this mockup had one; a phone-width layout still needs redoing here.
-- No keyboard navigation through the search dropdowns.
-- Clicking a compendium search result adds it directly; there is no detail view first.
+- The search dropdowns take Tab and Escape, but not the arrow keys.
 - On Custom Tab, dragging a widget's corner cycles it through four preset sizes
   (S/M/L/XL) rather than resizing to an arbitrary pixel size.
 
@@ -253,7 +290,9 @@ says how much of the artboard the app builds today.
 | `Proficiencies` | #400, #488 | read-only |
 | `Sidebar` | #242, #470, #486 | read-only |
 | `ManageTabs` | #242 | reorder and hide |
-| `TopBar` | #386 | read-only |
+| `TopBar` | #386, #522 | read-only |
+| `Search` | #521, #522 | nothing |
+| `CatalogDetail` | #522, #537 | its content, as a page |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
