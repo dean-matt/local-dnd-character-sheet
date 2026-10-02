@@ -8,16 +8,13 @@
  * and focus returns to the trigger button on close.
  */
 import type { CharacterPageRecord } from "@dnd/character";
+import { ArrowDown, ArrowUp, Eye, EyeOff, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ErrorState } from "../../../ErrorState.tsx";
 import { useCharacterPages } from "../../../hooks/useCharacterPages.ts";
 import { useReplaceCharacterPages } from "../../../hooks/useReplaceCharacterPages.ts";
 import { useRestoreDefaultPages } from "../../../hooks/useRestoreDefaultPages.ts";
-import { ArrowDownIcon } from "./ArrowDownIcon.tsx";
-import { ArrowUpIcon } from "./ArrowUpIcon.tsx";
-import { EyeIcon } from "./EyeIcon.tsx";
-import { EyeOffIcon } from "./EyeOffIcon.tsx";
 
 const secondaryBtn =
   "rounded-control border border-border px-3 py-1.5 text-row text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
@@ -122,17 +119,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
             onClick={onClose}
             className="flex h-6 w-6 items-center justify-center rounded-control border-0 bg-transparent text-muted hover:bg-subtle"
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              aria-hidden
-            >
-              <path d="M4 4l16 16M20 4L4 20" />
-            </svg>
+            <X size={14} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -157,7 +144,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
                   aria-disabled={index === 0 || busy}
                   onClick={() => shift(page.slug, -1)}
                 >
-                  <ArrowUpIcon />
+                  <ArrowUp size={13} strokeWidth={2.5} />
                 </button>
                 <button
                   type="button"
@@ -166,7 +153,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
                   aria-disabled={index === pages.length - 1 || busy}
                   onClick={() => shift(page.slug, 1)}
                 >
-                  <ArrowDownIcon />
+                  <ArrowDown size={13} strokeWidth={2.5} />
                 </button>
                 <span
                   className={`flex-1 truncate text-row ${page.hidden ? "text-muted" : "text-ink"}`}
@@ -182,7 +169,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
                   aria-describedby={lastVisible ? lastVisibleId : undefined}
                   onClick={() => toggle(page.slug)}
                 >
-                  {page.hidden ? <EyeOffIcon /> : <EyeIcon />}
+                  {page.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </li>
             );

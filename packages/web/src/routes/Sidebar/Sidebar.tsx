@@ -1,6 +1,6 @@
+import { ChevronLeft, type LucideIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { NavLink } from "react-router";
-import { SidebarRowIcon } from "./SidebarRowIcon.tsx";
 
 const COLLAPSED_KEY = "sidebar-collapsed";
 
@@ -19,7 +19,7 @@ function writeCollapsed(value: boolean) {
 }
 
 /** `end` marks the row active on its own path alone, not on the paths beneath it. */
-type SidebarItem = { to: string; label: string; icon?: readonly string[]; end?: boolean };
+type SidebarItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
 
 export interface SidebarProps {
   label: string;
@@ -68,7 +68,11 @@ export function Sidebar({ label, items, action }: SidebarProps) {
           >
             {({ isActive }) => (
               <>
-                <SidebarRowIcon paths={item.icon} active={isActive} />
+                <item.icon
+                  size={19}
+                  color={isActive ? "var(--color-accent)" : "var(--color-muted)"}
+                  className="shrink-0"
+                />
                 {!collapsed && (
                   <span
                     className={`truncate text-sm ${
@@ -96,22 +100,14 @@ export function Sidebar({ label, items, action }: SidebarProps) {
           className={`${rowBase} w-full text-sm font-medium text-muted hover:bg-subtle`}
         >
           {/* The margin widens the 16px arrow to the rows' 19px icon column, so it centers under them. */}
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+          <ChevronLeft
+            size={16}
             className="mx-[1.5px] shrink-0"
-            aria-hidden
             style={{
               transform: collapsed ? "rotate(180deg)" : undefined,
               transition: "transform var(--duration-standard)",
             }}
-          >
-            <path d="M15 5l-7 7 7 7" />
-          </svg>
+          />
           {!collapsed && <span>Collapse</span>}
         </button>
       </div>
