@@ -22,10 +22,15 @@ describe("SourceChip", () => {
   });
 
   it("reads a source no volume titles as its abbreviation", async () => {
-    const fetchMock = stubFetchByUrl({ "/api/catalog/sources": SOURCES });
-    renderWithClient(<SourceChip source="TftYP" />);
+    stubFetchByUrl({ "/api/catalog/sources": SOURCES });
+    renderWithClient(
+      <>
+        <SourceChip source="PHB" />
+        <SourceChip source="TftYP" />
+      </>,
+    );
 
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await screen.findByText("Player's Handbook (2014)");
     expect(screen.getByText("TftYP")).not.toHaveAttribute("aria-hidden");
   });
 
