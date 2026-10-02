@@ -7,6 +7,7 @@ import { CharacterHeader } from "./CharacterHeader.tsx";
 import { CharacterSidebar } from "./CharacterSidebar.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
+import { UndoButton } from "./UndoButton.tsx";
 
 export function CharacterLayout() {
   const { id = "" } = useParams();
@@ -36,7 +37,9 @@ export function CharacterLayout() {
         }
       >
         <div className="min-w-0 flex-1">
-          {character.data && <CharacterHeader character={character.data} />}
+          {character.data && (
+            <CharacterHeader character={character.data} actions={<UndoButton characterId={id} />} />
+          )}
           <div className="px-gutter py-6">
             <Outlet />
           </div>

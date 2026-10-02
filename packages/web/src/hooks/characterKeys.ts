@@ -2,3 +2,4 @@
 export const charactersKey = ["characters"] as const;
 export const characterKey = (id: string) => [...charactersKey, id] as const;
 export const characterPagesKey = (id: string) => [...characterKey(id), "pages"] as const;
+export const characterUndoKey = (id: string) => [...characterKey(id), "undo"] as const;

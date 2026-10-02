@@ -1,6 +1,7 @@
 /**
  * List, read, create, update and delete for `characters.db`'s `characters` table, plus
- * read and replace for the `character_state` row each one owns. `name`, `level`,
+ * read and replace for the `character_state` row each one owns, and the undo log a
+ * definition update writes. `name`, `level`,
  * `edition`, `raceSummary` and `classSummary` are never accepted from a request body —
  * the query layer derives all five from `definition` on every write, and a state write
  * never reaches that table.
@@ -13,6 +14,7 @@ import {
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
+  undoLogSchema,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
@@ -22,10 +24,12 @@ import {
   getCharacterState,
   insertCharacter,
   listCharacters,
+  undoLastChange,
   updateCharacterDefinition,
   updateCharacterState,
 } from "../db/queries/characters.ts";
-import { notFound } from "./errors.ts";
+import { listUndoEntries } from "../db/queries/undo.ts";
+import { errorSchema, notFound } from "./errors.ts";
 
 type CharacterRow = NonNullable<ReturnType<typeof getCharacter>>;
 type CharacterStateRow = NonNullable<ReturnType<typeof getCharacterState>>;
@@ -165,6 +169,48 @@ const writeState = createRoute({
   },
 });
 
+const readUndo = createRoute({
+  method: "get",
+  path: "/characters/{id}/undo",
+  tags: ["characters"],
+  summary: "List a character's undo entries, newest first",
+  description:
+    "Each `PUT /characters/{id}` records the definition it replaced, merging an autosave " +
+    "burst on one field into one entry. The log covers the definition only — not state, " +
+    "pages or a deleted character — and keeps the newest 50.",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "What each undo would restore, the next one first",
+      content: { "application/json": { schema: undoLogSchema } },
+    },
+    404: notFound("character"),
+  },
+});
+
+const undo = createRoute({
+  method: "post",
+  path: "/characters/{id}/undo",
+  tags: ["characters"],
+  summary: "Restore the definition the newest undo entry holds, and drop the entry",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The character as restored",
+      content: { "application/json": { schema: characterRecordSchema } },
+    },
+    404: notFound("character"),
+    409: {
+      description: "Nothing left to undo",
+      content: { "application/json": { schema: errorSchema } },
+    },
+    422: {
+      description: "The stored definition no longer passes the schema, so the log keeps it",
+      content: { "application/json": { schema: errorSchema } },
+    },
+  },
+});
+
 export function charactersRoutes(db: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -205,6 +251,24 @@ export function charactersRoutes(db: CharactersDb) {
     const row = updateCharacterState(db, id, c.req.valid("json"));
     if (!row) return c.json({ error: NOT_FOUND }, 404);
     return c.json(toStateRecord(row), 200);
+  });
+
+  routes.openapi(readUndo, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
+    const entries = listUndoEntries(db, id).map((entry) => ({
+      ...entry,
+      changedAt: entry.changedAt.toISOString(),
+    }));
+    return c.json(undoLogSchema.parse(entries), 200);
+  });
+
+  routes.openapi(undo, (c) => {
+    const result = undoLastChange(db, c.req.valid("param").id);
+    if (!result) return c.json({ error: NOT_FOUND }, 404);
+    if (result.kind === "empty") return c.json({ error: "Nothing to undo" }, 409);
+    if (result.kind === "invalid") return c.json({ error: result.message }, 422);
+    return c.json(toRecord(result.row), 200);
   });
 
   return routes;

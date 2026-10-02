@@ -87,6 +87,7 @@ export const undoLog = sqliteTable(
     characterId: text("character_id")
       .notNull()
       .references(() => characters.id, { onDelete: "cascade" }),
+    /** The whole definition the write replaced, not `character_state`, which undo never reaches. */
     previousState: text("previous_state", { mode: "json" }).notNull(),
     describedAs: text("described_as").notNull(),
     changedAt: integer("changed_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),

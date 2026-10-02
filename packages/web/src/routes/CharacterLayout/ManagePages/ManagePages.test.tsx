@@ -68,7 +68,7 @@ const navTitles = () =>
     .queryAllByRole("link")
     .map((link) => link.textContent);
 
-const status = () => document.querySelector("[aria-live='polite']");
+const status = () => document.querySelector("dialog [aria-live='polite']");
 
 afterEach(() => {
   vi.unstubAllGlobals();

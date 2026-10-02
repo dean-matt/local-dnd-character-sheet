@@ -1,4 +1,5 @@
 import type { CharacterRecord } from "@dnd/character";
+import type { ReactNode } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { avatarColor } from "../../lib/avatarColor.ts";
 import { characterSubtitle } from "./characterSubtitle.ts";
@@ -7,9 +8,16 @@ import { characterSubtitle } from "./characterSubtitle.ts";
  * Sits above every page of a character on screen, pinned under the top bar in a `tall`
  * window; print carries `PrintTitle` instead. Its height is `--spacing-header`, which
  * `index.css` adds to `scroll-padding-top` while it is mounted, so focus never lands under
- * it. Name and subtitle truncate rather than wrap, holding that height.
+ * it. Name and subtitle truncate rather than wrap, holding that height. `actions` sit at
+ * the right, where the mockup puts its 32px buttons.
  */
-export function CharacterHeader({ character }: { character: CharacterRecord }) {
+export function CharacterHeader({
+  character,
+  actions,
+}: {
+  character: CharacterRecord;
+  actions?: ReactNode;
+}) {
   const subtitle = characterSubtitle(character);
   return (
     <div
@@ -39,6 +47,7 @@ export function CharacterHeader({ character }: { character: CharacterRecord }) {
           {subtitle}
         </p>
       </div>
+      {actions}
     </div>
   );
 }

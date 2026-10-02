@@ -2,11 +2,13 @@
  * The only path that writes `characters.definition`. `name`, `level`, `edition`,
  * `raceSummary` and `classSummary` are denormalized projections of it, so all five
  * recompute here in the same statement rather than arrive as arguments a caller could
- * set adrift.
+ * set adrift. An edit and an undo share that statement, so a restore passes the schema
+ * and the projections an edit does.
  */
 import {
   type CharacterDefinition,
   type CharacterState,
+  characterDefinitionSchema,
   classSummary,
   defaultCharacterState,
   raceSummary,
@@ -17,6 +19,7 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as charactersSchema from "../characters.ts";
 import { characterPages, characterState, characters } from "../characters.ts";
 import { presetPageRows } from "./pages.ts";
+import { deleteUndoEntry, newestUndoEntry, recordChange } from "./undo.ts";
 
 export type CharactersDb = BetterSQLite3Database<typeof charactersSchema>;
 
@@ -58,12 +61,9 @@ export function insertCharacter(
   });
 }
 
-/** `undefined` where `id` names no row, so a caller reads a missed update the way `getCharacter` reads a miss. */
-export function updateCharacterDefinition(
-  db: CharactersDb,
-  id: string,
-  definition: CharacterDefinition,
-) {
+type Db = Pick<CharactersDb, "select" | "insert" | "update" | "delete">;
+
+function writeDefinition(db: Db, id: string, definition: CharacterDefinition, now: Date) {
   return db
     .update(characters)
     .set({
@@ -73,11 +73,69 @@ export function updateCharacterDefinition(
       level: totalLevel(definition),
       raceSummary: raceSummary(definition),
       classSummary: classSummary(definition),
-      updatedAt: new Date(),
+      updatedAt: now,
     })
     .where(eq(characters.id, id))
     .returning()
     .get();
+}
+
+/**
+ * `undefined` where `id` names no row, so a caller reads a missed update the way
+ * `getCharacter` reads a miss. Records what it replaced in `undo_log`; a stored
+ * definition its schema now refuses records nothing, since undo could not restore it.
+ */
+export function updateCharacterDefinition(
+  db: CharactersDb,
+  id: string,
+  definition: CharacterDefinition,
+) {
+  return db.transaction((tx) => {
+    const current = tx
+      .select({ definition: characters.definition })
+      .from(characters)
+      .where(eq(characters.id, id))
+      .get();
+    if (!current) return undefined;
+    const now = new Date();
+    const before = characterDefinitionSchema.safeParse(current.definition);
+    if (before.success) recordChange(tx, id, before.data, definition, now);
+    return writeDefinition(tx, id, definition, now);
+  });
+}
+
+export type UndoResult =
+  | { kind: "restored"; row: NonNullable<ReturnType<typeof writeDefinition>> }
+  | { kind: "empty" }
+  | { kind: "invalid"; message: string };
+
+/**
+ * Restores the definition the newest `undo_log` row holds and drops that row, recording
+ * nothing, since there is no redo. `undefined` where `id` names no character. A snapshot
+ * the schema now refuses stays in the log and restores nothing.
+ */
+export function undoLastChange(db: CharactersDb, id: string): UndoResult | undefined {
+  return db.transaction((tx) => {
+    const exists = tx
+      .select({ id: characters.id })
+      .from(characters)
+      .where(eq(characters.id, id))
+      .get();
+    if (!exists) return undefined;
+    const newest = newestUndoEntry(tx, id);
+    if (!newest) return { kind: "empty" };
+    const previous = characterDefinitionSchema.safeParse(newest.previousState);
+    if (!previous.success) {
+      return {
+        kind: "invalid",
+        message: `Cannot restore "${newest.describedAs}": ${previous.error.message}`,
+      };
+    }
+    const row = writeDefinition(tx, id, previous.data, new Date());
+    deleteUndoEntry(tx, newest.id);
+    if (!row) return undefined;
+    return { kind: "restored", row };
+  });
 }
 
 /** Returns whether a row existed to delete. The `character_state` cascade needs `PRAGMA foreign_keys = ON`, set in `client.ts`. */
