@@ -132,6 +132,11 @@ describe("routing", () => {
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("aria-current", "page");
   });
 
+  it("shows the not-found state for an address catalog detail used to have", async () => {
+    renderAt("/catalog/spells/Fireball/PHB");
+    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+  });
+
   it("shows the not-found state for an unmatched route", async () => {
     renderAt("/this/goes/nowhere");
     await screen.findByRole("heading", { level: 1, name: "Page not found" });
@@ -142,20 +147,15 @@ describe("routing", () => {
   });
 
   /**
-   * Scrolls the sheet to 480, opens a catalog row, scrolls that to `catalogY`, clears the
+   * Scrolls the sheet to 480, opens the character list, scrolls that to `listY`, clears the
    * query cache and goes back. `beforeSettle` runs as the returning sheet fetches its pages,
    * so it always lands before the queries settle.
    */
-  async function returnToSheet(catalogY: number, beforeSettle = () => {}) {
+  async function returnToSheet(listY: number, beforeSettle = () => {}) {
     stubFetchByUrl({
       "/api/characters/abc": characterRecord("abc", "Vex"),
       "/api/characters/abc/pages": presetPageRecords(),
-      "/api/feats/Alert/PHB": {
-        name: "Alert",
-        source: "PHB",
-        edition: "classic",
-        json: { name: "Alert", source: "PHB" },
-      },
+      "/api/characters": [],
     });
     const stubbed = fetch;
     let returning = false;
@@ -188,10 +188,10 @@ describe("routing", () => {
     await screen.findByRole("region", { name: "Stats" });
 
     scroll(480);
-    await router.navigate("/catalog/feats/Alert/PHB");
-    await screen.findByRole("heading", { level: 1, name: "Alert" });
+    await router.navigate("/characters");
+    await screen.findByRole("heading", { level: 1, name: "Characters" });
     expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
-    scroll(catalogY);
+    scroll(listY);
 
     queryClient.clear();
     returning = true;
@@ -207,7 +207,7 @@ describe("routing", () => {
     expect(pageShownAtScroll.at(-1)).toBe(true);
   });
 
-  it("restores the sheet however far down the catalog page the reader went", async () => {
+  it("restores the sheet however far down the list the reader went", async () => {
     const { scrollTo } = await returnToSheet(900);
     expect(scrollTo).toHaveBeenLastCalledWith(0, 480);
   });

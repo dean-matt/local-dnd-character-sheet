@@ -12,6 +12,16 @@ const searchUrl = (edition: string, q: string) => `/api/search?edition=${edition
 const fireball = { type: "spell", name: "Fireball", source: "PHB", edition: "classic" };
 const fireGiant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
 const ember = { type: "item", id: "3", name: "Ember Charm", edition: "one" };
+const fireballRecord = {
+  name: "Fireball",
+  source: "PHB",
+  edition: "classic",
+  level: 3,
+  school: "V",
+  concentration: false,
+  ritual: false,
+  json: { name: "Fireball", source: "PHB", level: 3, school: "V", duration: [{ type: "instant" }] },
+};
 
 function Where() {
   return <output aria-label="location">{useLocation().pathname}</output>;
@@ -75,10 +85,11 @@ describe("GlobalSearch", () => {
     expect(options[1]).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("moves through results by arrow and opens one with Enter", async () => {
+  it("moves through results by arrow and opens one's detail over the page with Enter", async () => {
     const { input } = renderSearch({
       [searchUrl("classic", "fir")]: page([fireball]),
       [searchUrl("one", "fir")]: page([]),
+      "/api/spells/Fireball/PHB": fireballRecord,
     });
     type(input, "fir");
     await screen.findByRole("option", { name: /Fireball/ });
@@ -90,10 +101,13 @@ describe("GlobalSearch", () => {
     expect(active).toHaveAttribute("aria-selected", "true");
 
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(screen.getByRole("status", { name: "location" })).toHaveTextContent(
-      "/catalog/spells/Fireball/PHB",
-    );
-    expect(document.querySelector(".bg-scrim")).toBeNull();
+    const dialog = await screen.findByRole("dialog", { name: "Fireball" });
+    expect(screen.getByRole("status", { name: "location" })).toHaveTextContent(/^\/$/);
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("fir");
   });
 
   it("keeps the highlight on its row when the other edition's hits land", async () => {

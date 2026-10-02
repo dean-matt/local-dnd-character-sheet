@@ -1,6 +1,6 @@
 /**
- * The catalog rows a URL can name, each under `/catalog/` at the path of the API route
- * that reads it, so a row's address carries its whole identity key. A class feature has
+ * The catalog rows a detail address can name, each at the path of the API route that
+ * reads it, so a row's address carries its whole identity key. A class feature has
  * no API route of its own and is read from its class's grants at its level, which is
  * why its address names the class and the level. Its address takes the parts
  * `{@classFeature}` and `{@subclassFeature}` carry, a subclass's short name included.
@@ -24,7 +24,8 @@ import {
   subclassRecordSchema,
   subraceRecordSchema,
 } from "@dnd/catalog";
-import type { Params } from "react-router";
+import type { CharacterRecord } from "@dnd/character";
+import { matchPath, type Params } from "react-router";
 import { z } from "zod";
 import { ApiError, apiGet } from "./api.ts";
 
@@ -32,20 +33,29 @@ import { ApiError, apiGet } from "./api.ts";
 interface CatalogRow {
   name: string;
   source?: string;
+  /** Absent on a class or subclass feature, which the grants list carries without one. */
+  edition?: CharacterRecord["edition"];
   entries: Entries;
 }
 
 export interface CatalogTarget {
   path: string;
+  /** What the row is, as its detail labels it: "spell", "class feature". */
+  label: string;
   lookedFor: (key: Params) => string;
   load: (key: Params) => Promise<CatalogRow>;
 }
 
-type Row = { name: string; json: { entries?: Entries; entriesHigherLevel?: unknown } };
+type Row = {
+  name: string;
+  edition?: CharacterRecord["edition"];
+  json: { entries?: Entries; entriesHigherLevel?: unknown };
+};
 
 const toRow = (record: Row & { source?: string }): CatalogRow => ({
   name: record.name,
   source: record.source,
+  edition: record.edition,
   entries: rowEntries(record.json),
 });
 
@@ -61,6 +71,7 @@ function nameSource(
 ) {
   return {
     path: `${collection}/:name/:source`,
+    label,
     lookedFor: (key: Params) => `the ${label} ${pair(key.name, key.source)}`,
     load: async (key: Params) =>
       toRow(await apiGet(`/${collection}/${segments(key.name, key.source)}`, schema)),
@@ -70,6 +81,7 @@ function nameSource(
 function homebrew(collection: string, label: string, schema: z.ZodType<Row>) {
   return {
     path: `homebrew/${collection}/:id`,
+    label,
     lookedFor: (key: Params) => `the homebrew ${label} ${key.id}`,
     load: async (key: Params) =>
       toRow(await apiGet(`/homebrew/${collection}/${segments(key.id)}`, schema)),
@@ -119,11 +131,12 @@ async function subclassPath(key: Params): Promise<string> {
   return `${classPath(key)}/subclasses/${segments(subclass.name, subclass.source)}`;
 }
 
-export const CATALOG_TARGETS: CatalogTarget[] = [
+const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("spells", "spell", spellRecordSchema),
   nameSource("items", "item", itemRecordSchema),
   {
     path: "items/:name/:source/variants/:variantName/:variantSource",
+    label: "magic variant",
     lookedFor: (key) =>
       `the magic variant ${pair(key.variantName, key.variantSource)} of ${pair(key.name, key.source)}`,
     load: async (key) =>
@@ -137,6 +150,7 @@ export const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("races", "race", raceRecordSchema),
   {
     path: "races/:raceName/:raceSource/subraces/:name/:source",
+    label: "subrace",
     lookedFor: (key) =>
       `the subrace ${pair(key.name, key.source)} of ${pair(key.raceName, key.raceSource)}`,
     load: async (key) =>
@@ -152,6 +166,7 @@ export const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("classes", "class", classRecordSchema),
   {
     path: "classes/:className/:classSource/subclasses/:name/:source",
+    label: "subclass",
     lookedFor: (key) =>
       `the subclass ${pair(key.name, key.source)} of ${pair(key.className, key.classSource)}`,
     load: async (key) =>
@@ -164,12 +179,14 @@ export const CATALOG_TARGETS: CatalogTarget[] = [
   },
   {
     path: "classes/:className/:classSource/features/:name/:source/:level",
+    label: "class feature",
     lookedFor: (key) =>
       `the class feature ${pair(key.name, key.source)} of ${pair(key.className, key.classSource)} at level ${key.level}`,
     load: (key) => feature(() => classPath(key), key),
   },
   {
     path: "classes/:className/:classSource/subclasses/:subclassShortName/:subclassSource/features/:name/:source/:level",
+    label: "subclass feature",
     lookedFor: (key) =>
       `the subclass feature ${pair(key.name, key.source)} of ${pair(key.subclassShortName, key.subclassSource)}, ${pair(key.className, key.classSource)}, at level ${key.level}`,
     load: (key) => feature(() => subclassPath(key), key),
@@ -181,3 +198,29 @@ export const CATALOG_TARGETS: CatalogTarget[] = [
   homebrew("feats", "feat", homebrewFeatRecordSchema),
   homebrew("classes", "class", homebrewClassRecordSchema),
 ];
+
+/**
+ * The target a detail address such as `/spells/Fireball/PHB` names, and the key it carries,
+ * or `undefined` for an address no target matches or one with a malformed escape. Each
+ * segment decodes after the match, so a name holding an encoded `/` stays one segment.
+ */
+export function matchCatalogTarget(
+  address: string,
+): { target: CatalogTarget; key: Params } | undefined {
+  for (const target of CATALOG_TARGETS) {
+    const match = matchPath(`/${target.path}`, address);
+    if (!match) continue;
+    try {
+      const key = Object.fromEntries(
+        Object.entries(match.params).map(([part, value]) => [
+          part,
+          decodeURIComponent(value ?? ""),
+        ]),
+      );
+      return { target, key };
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}

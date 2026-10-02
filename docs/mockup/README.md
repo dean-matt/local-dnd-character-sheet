@@ -299,7 +299,7 @@ says how much of the artboard the app builds today.
 | `ManageTabs` | #242 | reorder and hide |
 | `TopBar` | #386, #521, #522 | all but the Mechanics menu, "Add to…" and the "Advanced search" link |
 | `Search` | #521, #522 | nothing |
-| `CatalogDetail` | #522, #537 | its content, as a page |
+| `CatalogDetail` | #522, #537 | all but "Add to…" |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |

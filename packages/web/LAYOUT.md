@@ -18,7 +18,7 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in
   `src/index.css`. Character sheet only; Settings skips it.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on
-  Settings, and in `ContentLayout` in `src/routes/ContentLayout.tsx`, which the homepage, list, catalog and 404 pages use.
+  Settings, and in `ContentLayout` in `src/routes/ContentLayout.tsx`, which the homepage, list and 404 pages use.
 
 A side panel joins the flex row in `src/routes/CharacterLayout/CharacterLayout.tsx`. The content column
 and the character header follow it; the top bar never does. The mockup's Rolls Panel, a

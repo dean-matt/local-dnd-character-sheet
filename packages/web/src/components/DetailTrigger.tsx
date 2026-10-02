@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
+import { useReturnFocus } from "../hooks/useReturnFocus.ts";
 import { Modal } from "./Modal.tsx";
 
 /**
@@ -19,14 +20,7 @@ export function DetailTrigger({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const wasOpen = useRef(false);
-
-  // After the dialog unmounts, so the focus lands on an element that is no longer inert.
-  useEffect(() => {
-    if (wasOpen.current && !open) trigger.current?.focus();
-    wasOpen.current = open;
-  }, [open]);
+  const trigger = useReturnFocus<HTMLButtonElement>(open);
 
   return (
     <>
