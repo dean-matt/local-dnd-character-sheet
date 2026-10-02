@@ -112,6 +112,46 @@ describe("TopBar", () => {
     }
   });
 
+  it("Mechanics lists each catalog type, linking to its index", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    const mechanics = screen.getByRole("button", { name: /mechanics/i });
+    fireEvent.click(mechanics);
+    expect(mechanics).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen
+        .getAllByRole("link")
+        .filter((link) => link.getAttribute("href")?.startsWith("/catalog/"))
+        .map((link) => [link.textContent, link.getAttribute("href")]),
+    ).toEqual([
+      ["Backgrounds", "/catalog/backgrounds"],
+      ["Classes", "/catalog/classes"],
+      ["Feats", "/catalog/feats"],
+      ["Items", "/catalog/items"],
+      ["Races", "/catalog/races"],
+      ["Spells", "/catalog/spells"],
+    ]);
+
+    fireEvent.click(screen.getByRole("link", { name: "Spells" }));
+    expect(mechanics).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("opening one menu closes the other, and focusing search closes both", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    const character = screen.getByRole("button", { name: /character/i });
+    const mechanics = screen.getByRole("button", { name: /mechanics/i });
+    fireEvent.click(character);
+    fireEvent.click(mechanics);
+    expect(character).toHaveAttribute("aria-expanded", "false");
+    expect(mechanics).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.focus(screen.getByRole("combobox"));
+    expect(mechanics).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("Escape anywhere in the document closes the open menu", async () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();

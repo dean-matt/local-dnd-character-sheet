@@ -297,7 +297,7 @@ says how much of the artboard the app builds today.
 | `Proficiencies` | #400, #488 | read-only |
 | `Sidebar` | #242, #470, #486 | read-only |
 | `ManageTabs` | #242 | reorder and hide |
-| `TopBar` | #386, #522 | read-only |
+| `TopBar` | #386, #522 | all but "Add to…" and the "Advanced search" link |
 | `Search` | #521, #522 | nothing |
 | `CatalogDetail` | #522, #537 | its content, as a page |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
