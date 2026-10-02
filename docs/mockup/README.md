@@ -116,16 +116,24 @@ widget, panel, or nav element:
   ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
   confirmation notes why it is unusual. Races, classes and
   subclasses carry no "Add to…", since creation and level-up own them.
+- Home is the index route, a dashboard under the same top bar with no section marked
+  active; the brand links back to it. It leads with the four most recently opened
+  characters as Character List tiles, with Import and New Character and a "See all
+  characters" link to Character List. Below sit quick links to Search, Homebrew and
+  Settings, then one for each of the Mechanics menu's catalog types, each opening that
+  type's index route, which has no artboard of its own. The `noCharacters` tweak shows the
+  first run: an empty state leading with New Character, and the quick links still below.
+  Forward design for #541.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the
   page background, as the character sheet's does. Each creation step puts the five steps
   in a left rail shaped like Sidebar — done, current, and not-yet-reached, with Cancel
-  at its foot — and its own two-column content beside it. Top Bar Navigation's Character
-  menu is how both are reached: "See all characters →" opens the list, and "+ New
-  Character" opens creation — a menu that jumps straight to one character is a different
-  action from either.
-- Character List is the entry point before any of the above — every character's name,
+  at its foot — and its own two-column content beside it. Home and Top Bar Navigation's
+  Character menu are how both are reached: "See all characters →" opens the list, and
+  "+ New Character" opens creation — a menu that jumps straight to one character is a
+  different action from either.
+- Character List is the full list at the `characters` route — every character's name,
   level, edition, race and class summary (`High Elf Ranger`, or `Fighter 3 / Wizard 2`
   for a multiclass character), and an avatar (a colored initial circle when a character
   has none), a page header offering Import and New Character, forward design for #206.
@@ -196,9 +204,9 @@ widget, panel, or nav element:
 
 ## Covered
 
-Ability scores, saves, and skills (with custom, non-ability-based skills); a tab rail
-where any tab reorders and hides, but only a user-created tab renames, deletes, or has
-its widgets added, moved, or resized; inventory split into weapons, armor, and
+A home dashboard; ability scores, saves, and skills (with custom, non-ability-based
+skills); a tab rail where any tab reorders and hides, but only a user-created tab
+renames, deletes, or has its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium, with an advanced search page, a
@@ -309,6 +317,7 @@ says how much of the artboard the app builds today.
 | `HomebrewFeats` | #489 | nothing |
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
+| `Home` | #541 | nothing |
 | `CharacterList` | #233, #391, #395 | read-only |
 | `CreationIdentity` | #233, #234 | nothing |
 | `CreationClass` | #233, #235, #240 | nothing |
