@@ -47,3 +47,11 @@ export const homebrewSearchHitSchema = z.strictObject({
 export const searchHitSchema = z.union([catalogSearchHitSchema, homebrewSearchHitSchema]);
 
 export type SearchHit = z.infer<typeof searchHitSchema>;
+
+/** One page of `/search`, bounded by `limit` and `offset`; `total` counts every match. */
+export const searchResponseSchema = z.object({
+  items: z.array(searchHitSchema),
+  total: z.int(),
+  limit: z.int(),
+  offset: z.int(),
+});

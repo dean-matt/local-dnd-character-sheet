@@ -79,7 +79,7 @@ export const rollLog = sqliteTable(
   (t) => [index("roll_log_by_character").on(t.characterId, t.id)],
 );
 
-/** Bounded: the newest 50 rows per character are kept. Session affordance, not an audit trail. */
+/** Bounded by `UNDO_LOG_LIMIT` from `@dnd/character`, pruned on insert. Session affordance, not an audit trail. */
 export const undoLog = sqliteTable(
   "undo_log",
   {
@@ -87,6 +87,7 @@ export const undoLog = sqliteTable(
     characterId: text("character_id")
       .notNull()
       .references(() => characters.id, { onDelete: "cascade" }),
+    /** The whole definition the write replaced, not `character_state`, which undo never reaches. */
     previousState: text("previous_state", { mode: "json" }).notNull(),
     describedAs: text("described_as").notNull(),
     changedAt: integer("changed_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
@@ -95,4 +96,3 @@ export const undoLog = sqliteTable(
 );
 
 export const ROLL_LOG_LIMIT = 200;
-export const UNDO_LOG_LIMIT = 50;

@@ -131,7 +131,10 @@ different things. `character` attaches whatever reference explains a term — a 
 arithmetic — since `rules` knows a term's meaning but never what supplied its input.
 
 Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per
-character. They are session affordances, not audit trails.
+character. They are session affordances, not audit trails. A definition write records
+the definition it replaced, and saves on one field in quick succession merge into one
+entry. Undo restores through that same write, so it reaches the definition alone — not
+play state, pages or a deleted character.
 
 **One field contract, two modes.** `packages/web/src/components/Field/Field.tsx` is the only
 component that renders a computed-versus-manual value. M4 uses its read mode, which marks
@@ -146,6 +149,12 @@ state.
 **One chrome for every control.** `packages/web/src/components/FormField.tsx` gives a
 control its label, status and error, and `Field`'s edit mode renders through it. Its
 module doc holds the rules a form follows, `noValidate` among them.
+
+**One picker for every row `/search` reaches.** A flow picks a catalog choice, such as a
+spell, item or feat, through `packages/web/src/components/CatalogPicker/CatalogPicker.tsx`,
+which searches the catalog and homebrew together and returns a reference, never the row.
+The flow passes the reason a row is unavailable; the picker never judges legality. A
+subclass or subrace is keyed within its parent, so `/search` does not reach it.
 
 **Creation and level-up are forms, not fields.** They present many fields at once, their
 choices depend on each other, and they are validated as a whole, so they run through

@@ -90,7 +90,12 @@ export {
   refResolveResponseSchema,
 } from "./ref.ts";
 export type { CatalogSearchType, SearchHit } from "./search.ts";
-export { catalogSearchHitSchema, homebrewSearchHitSchema, searchHitSchema } from "./search.ts";
+export {
+  catalogSearchHitSchema,
+  homebrewSearchHitSchema,
+  searchHitSchema,
+  searchResponseSchema,
+} from "./search.ts";
 export type {
   CharacterSpells,
   HomebrewSpellInput,
