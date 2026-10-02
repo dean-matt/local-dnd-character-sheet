@@ -22,7 +22,7 @@
     <div style="font-weight: 700; font-size: 18px; color: {{accent}}; flex-shrink: 0; margin-right: 14px;">Local D&amp;D</div>
 
     <div style="position: relative; flex-shrink: 0; align-self: stretch; display: flex; align-items: center;">
-      <button onClick="{{toggleCharacterMenu}}" aria-expanded="{{characterMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{characterMenuBg}}; font-size: 14px; font-weight: 700; color: {{accent}}; text-decoration: none;">
+      <button onClick="{{toggleCharacterMenu}}" tabIndex="{{barTabIndex}}" aria-expanded="{{characterMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{characterMenuBg}}; font-size: 14px; font-weight: 700; color: {{accent}}; text-decoration: none;">
         Character
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5" style="transform: {{characterCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -45,7 +45,7 @@
     </div>
 
     <div style="position: relative; flex-shrink: 0; align-self: stretch; display: flex; align-items: center;">
-      <button onClick="{{toggleMechanicsMenu}}" aria-expanded="{{mechanicsMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{mechanicsMenuBg}}; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+      <button onClick="{{toggleMechanicsMenu}}" tabIndex="{{barTabIndex}}" aria-expanded="{{mechanicsMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{mechanicsMenuBg}}; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
         Mechanics
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transform: {{mechanicsCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -99,7 +99,7 @@
                     </div>
                   </a>
                   <sc-if value="{{res.addable}}" hint-placeholder-val="{{true}}">
-                    <button onClick="{{res.add}}" aria-label="{{res.addLabel}}" aria-expanded="{{res.pickerOpen}}" style="flex-shrink: 0; padding: 4px 10px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; font-weight: 600; color: {{accent}};">Add to…</button>
+                    <button id="{{res.addId}}" onClick="{{res.add}}" aria-label="{{res.addLabel}}" aria-expanded="{{res.pickerOpen}}" style="flex-shrink: 0; padding: 4px 10px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; font-weight: 600; color: {{accent}};">Add to…</button>
                   </sc-if>
                 </div>
                 <sc-if value="{{res.pickerOpen}}" hint-placeholder-val="{{false}}">
@@ -140,7 +140,7 @@
       </sc-if>
     </div>
 
-    <a href="SettingsSidebar.dc.html" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+    <a href="SettingsSidebar.dc.html" tabIndex="{{barTabIndex}}" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
       Settings
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
     </a>
@@ -210,7 +210,7 @@ class Component extends DCLogic {
     const characterMenuOpen = openMenu === 'character';
     const mechanicsMenuOpen = openMenu === 'mechanics';
 
-    const characters = ALL_CHARACTERS.map((c) => ({
+    const characters = CHARACTERS.map((c) => ({
       id: c.id,
       name: c.name,
       color: c.color,
@@ -226,6 +226,10 @@ class Component extends DCLogic {
       this.skipFocusOpen = true;
       pill.focus();
     };
+    const focusAdd = (id) => {
+      const b = document.getElementById('add-' + id);
+      if (b) b.focus();
+    };
     const closeSearch = () => {
       this.setState({ searchOpen: false, pickerFor: null });
       focusPill();
@@ -240,6 +244,7 @@ class Component extends DCLogic {
           note: offList ? 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.' : ''
         }
       });
+      focusAdd(res.id);
     };
     const current = ALL_CHARACTERS.find((c) => c.id === CURRENT_CHARACTER);
 
@@ -252,6 +257,7 @@ class Component extends DCLogic {
       return {
         ...res,
         addable: ADDABLE.indexOf(res.type) !== -1,
+        addId: 'add-' + res.id,
         pickerOpen,
         addLabel: onSheet ? 'Add ' + res.name + ' to ' + current.name : 'Add ' + res.name + ' to a character',
         pickerLabel: 'Add ' + res.name + ' to which character',
@@ -289,8 +295,11 @@ class Component extends DCLogic {
       },
       onSearchKeyDown: (e) => {
         if (e.key !== 'Escape') return;
-        if (this.state.pickerFor) this.setState({ pickerFor: null });
-        else closeSearch();
+        const open = this.state.pickerFor;
+        if (open) {
+          this.setState({ pickerFor: null });
+          focusAdd(open);
+        } else closeSearch();
       },
       closeSearch,
       hasQuery,
@@ -299,6 +308,7 @@ class Component extends DCLogic {
         focusPill();
       },
       showScrim: searchOpen,
+      barTabIndex: searchOpen ? -1 : 0,
       pillBg: searchOpen ? '#ffffff' : '#eef0f3',
       pillBorder: searchOpen ? accent : '#dde1e6',
       showSearchDropdown: searchOpen && hasQuery,

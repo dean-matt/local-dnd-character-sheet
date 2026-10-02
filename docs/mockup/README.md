@@ -85,10 +85,13 @@ widget, panel, or nav element:
   "Advanced search" link at the foot opens Search, the `search` route: the query field,
   the results, and a collapsible filter sidebar shaped like Sidebar, its controls the
   Filter artboards' checkboxes, chips and level range. It filters by type, source and
-  edition, adds level and school once Spell is ticked and rarity once Item is. `/search`
-  takes only `edition`, `q` and `type` today, so the rest is forward design for #521.
-  Each artboard keeps its own state, so Search opens on its own sample query rather than
-  the one typed into the pill. Catalog Detail is the catalog route laid out as
+  edition, adds level and school once Spell is ticked and rarity once Item is. A row with
+  no edition, as Tier B and C allow, shows under either edition. `/search` takes one
+  `edition`, one `type` and `q` today, so ticking several types or both editions, and
+  every other filter, is forward design for #521. While the scrim is up, Tab skips the
+  dimmed Character, Mechanics and Settings controls. Each artboard keeps its own state, so
+  Search opens on its own sample query, where the app carries the pill's query as
+  `/search?q=<query>`. Catalog Detail is the catalog route laid out as
   `CatalogPage.tsx` renders it — name, source, rules text — with its `kind` tweak
   switching between a spell, an item and a feat. Every item, spell and feat result, and
   Catalog Detail, carries "Add to…". Opened from a sheet (the `openedFrom` tweak), it adds
