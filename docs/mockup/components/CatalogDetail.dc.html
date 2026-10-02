@@ -102,56 +102,62 @@
 
   <sc-if value="{{open}}" hint-placeholder-val="{{true}}">
     <div role="presentation" onClick="{{closeModal}}" style="position: absolute; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
-      <div id="catalogDialog" role="dialog" aria-modal="true" aria-labelledby="catalogTitle" tabIndex="-1" onClick="{{stopPropagation}}" onKeyDown="{{onDialogKeyDown}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(560px, 90%); max-height: 85%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 12px; outline: none;">
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-          <div style="min-width: 0;">
-            <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px;">
-              <h2 id="catalogTitle" style="margin: 0; font-size: 20px; font-weight: 700;">{{name}}</h2>
-              <p style="margin: 0; font-size: 12px; color: #6b7280;"><sc-if value="{{isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>{{source}}</p>
+      <div id="catalogDialog" role="dialog" aria-modal="true" aria-labelledby="catalogTitle" tabIndex="-1" onClick="{{stopPropagation}}" onKeyDown="{{onDialogKeyDown}}" style="background: #ffffff; border-radius: 10px; width: min(560px, 90%); max-height: 85%; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; outline: none;">
+        <div style="flex: 1 1 auto; min-height: 0; overflow: auto; padding: 20px;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;">
+                <h2 id="catalogTitle" style="margin: 0; font-size: 20px; font-weight: 700;">{{name}}</h2>
+                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px;">{{type}}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: #6b7280;">
+                <sc-if value="{{isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>
+                <sc-if value="{{source}}" hint-placeholder-val="{{true}}"><span>{{source}}</span></sc-if>
+                <sc-if value="{{hasEdition}}" hint-placeholder-val="{{true}}"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{editionTitle}}">{{edition}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{edition}} rules</span></span></sc-if>
+              </div>
             </div>
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px; display: inline-block; margin-top: 6px;">{{type}}</span>
+            <button aria-label="Close" onClick="{{closeModal}}" style="flex-shrink: 0; width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-            <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+
+          <div role="status">
+            <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+              <div style="margin-top: 12px; padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
+                <div style="font-weight: 600;">{{toastText}}</div>
+                <sc-if value="{{hasToastNote}}" hint-placeholder-val="{{false}}">
+                  <div style="color: #6b4e16; margin-top: 2px;">{{toastNote}}</div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.55; color: #1f2430;">
+            <sc-for list="{{entries}}" as="para" hint-placeholder-count="2">
+              <p style="margin: 0;">{{para}}</p>
+            </sc-for>
+            <sc-if value="{{noEntries}}" hint-placeholder-val="{{false}}">
+              <p style="margin: 0; padding: 18px; border: 1px dashed #dde1e6; border-radius: 8px; font-size: 13px; color: #6b7280;">This row carries no rules text of its own.</p>
+            </sc-if>
           </div>
         </div>
 
-        <div role="status">
-          <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
-            <div style="padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
-              <div style="font-weight: 600;">{{toastText}}</div>
-              <sc-if value="{{hasToastNote}}" hint-placeholder-val="{{false}}">
-                <div style="color: #6b4e16; margin-top: 2px;">{{toastNote}}</div>
-              </sc-if>
-            </div>
-          </sc-if>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.55; color: #1f2430;">
-          <sc-for list="{{entries}}" as="para" hint-placeholder-count="2">
-            <p style="margin: 0;">{{para}}</p>
-          </sc-for>
-          <sc-if value="{{noEntries}}" hint-placeholder-val="{{false}}">
-            <p style="margin: 0; padding: 18px; border: 1px dashed #dde1e6; border-radius: 8px; font-size: 13px; color: #6b7280;">This row carries no rules text of its own.</p>
-          </sc-if>
-        </div>
-
-        <div style="position: sticky; bottom: 0; margin: 0 -20px -20px -20px; padding: 12px 20px 20px 20px; border-top: 1px solid #dde1e6; background: #ffffff; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-          <button id="catalogAddTo" onClick="{{addClick}}" aria-expanded="{{expandedAttr}}" style="position: relative; padding: 7px 14px; border-radius: 6px; border: none; background: {{accent}}; font-size: 13px; font-weight: 600; color: #ffffff;">Add to…<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{addHint}}</span></button>
-          <sc-if value="{{pickerOpen}}" hint-placeholder-val="{{false}}">
-            <div role="group" aria-label="{{pickerLabel}}" style="width: 240px; padding: 6px; border: 1px solid #dde1e6; border-radius: 8px; background: #f8f9fb;">
-              <div style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 2px 6px 4px 6px;">Add to which character?</div>
-              <sc-for list="{{pickerCharacters}}" as="c" hint-placeholder-count="4">
-                <button onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 5px 6px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">
-                  <span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 10px; flex-shrink: 0;">{{c.initial}}</span>
-                  {{c.name}}
-                </button>
-              </sc-for>
-              <sc-if value="{{noCharacters}}" hint-placeholder-val="{{false}}">
-                <div style="font-size: 12px; color: #6b7280; padding: 4px 6px;">There is no character to add to. <a href="CreationIdentity.dc.html" style="color: {{accent}}; font-weight: 600; text-decoration: none;">+ New Character</a></div>
-              </sc-if>
-            </div>
-          </sc-if>
+        <div style="flex-shrink: 0; padding: 12px 20px 20px 20px; border-top: 1px solid #dde1e6; display: flex; justify-content: flex-end;">
+          <div style="position: relative;">
+            <button id="catalogAddTo" onClick="{{addClick}}" aria-expanded="{{expandedAttr}}" style="position: relative; display: block; padding: 7px 14px; border-radius: 6px; border: none; background: {{accent}}; font-size: 13px; font-weight: 600; color: #ffffff;">Add to…<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{addHint}}</span></button>
+            <sc-if value="{{pickerOpen}}" hint-placeholder-val="{{false}}">
+              <div role="group" aria-label="{{pickerLabel}}" style="position: absolute; right: 0; bottom: calc(100% + 6px); width: 240px; padding: 6px; border: 1px solid #dde1e6; border-radius: 8px; background: #f8f9fb; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+                <div style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 2px 6px 4px 6px;">Add to which character?</div>
+                <sc-for list="{{pickerCharacters}}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 5px 6px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">
+                    <span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 10px; flex-shrink: 0;">{{c.initial}}</span>
+                    {{c.name}}
+                  </button>
+                </sc-for>
+                <sc-if value="{{noCharacters}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 12px; color: #6b7280; padding: 4px 6px;">There is no character to add to. <a href="CreationIdentity.dc.html" style="color: {{accent}}; font-weight: 600; text-decoration: none;">+ New Character</a></div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
         </div>
       </div>
     </div>
@@ -164,10 +170,20 @@ class Component extends DCLogic {
     super(props);
     this.state = { open: true, pickerOpen: false, toast: null };
   }
+  componentDidMount() {
+    this.focusDialog();
+  }
   componentDidUpdate(prev) {
     if (prev.kind !== this.props.kind || prev.openedFrom !== this.props.openedFrom || prev.host !== this.props.host) {
       this.setState({ open: true, pickerOpen: false, toast: null });
+      this.focusDialog();
     }
+  }
+  focusDialog() {
+    setTimeout(() => {
+      const el = document.getElementById('catalogDialog');
+      if (el) el.focus();
+    }, 0);
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -183,10 +199,11 @@ class Component extends DCLogic {
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     const current = ALL_CHARACTERS[0];
     const TAG = { Spell: '#3a4f7a', Item: '#8a6a2e', Feat: '#6b4f7a' };
+    const EDITION_LABELS = { classic: '2014', one: '2024' };
     // Paraphrased stand-ins: the real modal renders the row's own entries through RulesEntries.
     const ROWS = {
       spell: {
-        type: 'Spell', name: 'Fireball', source: 'PHB', classes: ['Sorcerer', 'Wizard'], query: 'fire', meta: 'Level 3 · Evocation',
+        type: 'Spell', name: 'Fireball', source: 'PHB', edition: 'classic', classes: ['Sorcerer', 'Wizard'], query: 'fire', meta: 'Level 3 · Evocation',
         refHeading: 'Gear — Wand of Fireballs', refBefore: 'While holding this wand, you can expend charges to cast ', refAfter: ' (save DC 15) from it.',
         entries: [
           'Flame bursts in a 20-foot radius around a point you can see within range. Each creature in the burst makes a Dexterity save, taking 8d6 fire damage on a failure or half as much on a success.',
@@ -194,17 +211,17 @@ class Component extends DCLogic {
         ]
       },
       item: {
-        type: 'Item', name: 'Longbow +1', source: 'DMG', query: 'longbow', meta: 'Weapon · Uncommon',
+        type: 'Item', name: 'Longbow +1', source: 'DMG', edition: 'classic', query: 'longbow', meta: 'Weapon · Uncommon',
         refHeading: 'Spells — Magic Weapon', refBefore: 'You touch a nonmagical weapon. Until the spell ends it becomes a magic weapon, like a ', refAfter: ', with a +1 bonus to attack and damage rolls.',
         entries: ['Attack and damage rolls made with this bow gain a +1 bonus.']
       },
       homebrew: {
-        type: 'Item', name: 'Ember Charm of Fire', source: '', query: 'ember', meta: 'Wondrous item',
+        type: 'Item', name: 'Ember Charm of Fire', source: '', edition: null, query: 'ember', meta: 'Wondrous item',
         refHeading: 'Notes', refBefore: 'Worn at the throat: ', refAfter: '.',
         entries: []
       },
       feat: {
-        type: 'Feat', name: 'Alert', source: 'XPHB', query: 'alert', meta: 'Origin feat',
+        type: 'Feat', name: 'Alert', source: 'XPHB', edition: 'one', query: 'alert', meta: 'Origin feat',
         refHeading: 'Background — Criminal', refBefore: 'You gain the ', refAfter: ' feat.',
         entries: [
           'Initiative Proficiency. Add your Proficiency Bonus to Initiative rolls.',
@@ -274,6 +291,9 @@ class Component extends DCLogic {
       tagColor: TAG[row.type],
       name: row.name,
       source: row.source,
+      hasEdition: !!row.edition,
+      edition: EDITION_LABELS[row.edition] || '',
+      editionTitle: row.edition ? 'This row uses the ' + EDITION_LABELS[row.edition] + ' rules' : '',
       sourceLabel,
       isHomebrew: !row.source,
       noEntries: row.entries.length === 0,
@@ -281,7 +301,7 @@ class Component extends DCLogic {
       open,
       openModal: () => {
         this.setState({ open: true, pickerOpen: false, toast: null });
-        focusById('catalogDialog');
+        this.focusDialog();
       },
       closeModal,
       stopPropagation: (e) => e.stopPropagation(),
