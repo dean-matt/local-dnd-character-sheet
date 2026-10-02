@@ -28,6 +28,16 @@ const FIRE_ELEMENTAL = {
   rendered_text: "Fire Elemental. A fire elemental is a mass of elemental fire.",
 };
 
+const AZER = {
+  type: "monster",
+  name: "Azer",
+  source: "MM",
+  qualifier: "",
+  edition: null,
+  json: JSON.stringify({ name: "Azer", source: "MM" }),
+  rendered_text: "Azer. Its hair is a mane of fire.",
+};
+
 describe("searchRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
@@ -35,7 +45,7 @@ describe("searchRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "search-routes-"));
-    publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
+    publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL, AZER] });
   });
 
   afterAll(() => {
@@ -57,7 +67,7 @@ describe("searchRoutes", () => {
     expect((await routes.request("/search?edition=classic")).status).toBe(400);
   });
 
-  it("returns a Tier A hit, a Tier C hit and a homebrew hit for one term, in one list", async () => {
+  it("returns Tier A, Tier C and homebrew hits in one list, a text-only match after every name match", async () => {
     insertHomebrewItem(opened.homebrewDb, "1", {
       name: "Firebrand Axe",
       edition: "classic",
@@ -68,11 +78,12 @@ describe("searchRoutes", () => {
     expect(res.status).toBe(200);
 
     const body = await res.json();
-    expect(body).toMatchObject({ total: 3, limit: 50, offset: 0 });
+    expect(body).toMatchObject({ total: 4, limit: 50, offset: 0 });
     expect(body.items).toEqual([
-      { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
       { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
       { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+      { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
+      { type: "monster", name: "Azer", source: "MM", edition: null },
     ]);
   });
 
@@ -89,8 +100,8 @@ describe("searchRoutes", () => {
     const body = await res.json();
 
     expect(body.items).toEqual([
-      { type: "spell", id: "1", name: "Fire Shield", edition: "classic" },
       { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      { type: "spell", id: "1", name: "Fire Shield", edition: "classic" },
     ]);
   });
 
@@ -98,9 +109,9 @@ describe("searchRoutes", () => {
     const res = await routes.request("/search?edition=classic&q=fire&limit=1&offset=1");
     const body = await res.json();
 
-    expect(body).toMatchObject({ total: 2, limit: 1, offset: 1 });
+    expect(body).toMatchObject({ total: 3, limit: 1, offset: 1 });
     expect(body.items).toEqual([
-      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
     ]);
   });
 });

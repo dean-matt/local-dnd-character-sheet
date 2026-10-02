@@ -1,8 +1,9 @@
+import { compareSearchHits } from "@dnd/catalog";
 import { searchHitKey } from "../lib/searchHits.ts";
 import { useCatalogSearch } from "./useCatalogSearch.ts";
 
 /**
- * `/search` across both editions, merged by name, for a reader who has no character's
+ * `/search` across both editions, merged in the server's ranking, for a reader who has no character's
  * edition to narrow by. A Tier C row with no edition matches either search, so the merge
  * keeps its first copy. `limit` bounds each edition, so a page holds up to twice that.
  */
@@ -20,7 +21,7 @@ export function useCompendiumSearch(query: string, limit: number) {
       seen.add(key);
       return true;
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort(compareSearchHits(query));
 
   return {
     hits,

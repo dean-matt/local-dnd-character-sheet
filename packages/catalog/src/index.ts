@@ -92,6 +92,7 @@ export {
 export type { CatalogSearchType, SearchHit } from "./search.ts";
 export {
   catalogSearchHitSchema,
+  compareSearchHits,
   homebrewSearchHitSchema,
   searchHitSchema,
   searchResponseSchema,

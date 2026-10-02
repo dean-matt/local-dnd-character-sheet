@@ -55,7 +55,7 @@ afterEach(() => {
 });
 
 describe("GlobalSearch", () => {
-  it("groups characters and compendium hits from both editions, each with its type", async () => {
+  it("groups characters and compendium hits from both editions, ranked by name match, each with its type", async () => {
     const { input, onOpen } = renderSearch({
       [searchUrl("classic", "fir")]: page([fireball, fireGiant]),
       [searchUrl("one", "fir")]: page([fireGiant, ember]),
@@ -68,9 +68,9 @@ describe("GlobalSearch", () => {
     expect(within(characters).getByRole("option")).toHaveTextContent(/Fira.*Character/);
     const options = within(compendium).getAllByRole("option");
     expect(options.map((o) => o.textContent)).toEqual([
-      "Ember CharmHomebrew • 2024Item",
-      "Fire GiantMM • No page yetMonster",
       "FireballPHB • 2014Spell",
+      "Fire GiantMM • No page yetMonster",
+      "Ember CharmHomebrew • 2024Item",
     ]);
     expect(options[1]).toHaveAttribute("aria-disabled", "true");
   });
