@@ -305,6 +305,13 @@ export const characterDefinitionSchema = z.strictObject({
   /** Whatever the player writes down, unbounded and stored verbatim. */
   notes: z.string().default(""),
   houseRules: houseRulesSchema,
+  /**
+   * What the user typed over a derived field, keyed by the field's path through the
+   * derived block — `armorClass`, `abilityModifiers.dex`, `skills.Stealth|XPHB.modifier`
+   * — for `deriveCharacter` to fold into its `manual`. Sparse: an absent key is no
+   * override, and deleting one restores the computed value.
+   */
+  overrides: z.record(z.string().min(1), z.unknown()).default({}),
 });
 
 /**

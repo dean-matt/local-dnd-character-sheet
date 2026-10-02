@@ -12,7 +12,6 @@ a table definition.
 ```mermaid
 erDiagram
     characters ||--|| character_state : "current values"
-    characters ||--o{ field_overrides : "manual edits"
     characters ||--o{ character_pages : "by position"
     characters ||--o{ roll_log : "last 200"
     characters ||--o{ undo_log : "last 50"
@@ -179,8 +178,11 @@ the same four parts the `subclasses` key uses, with the short name in place of t
 A character stores the full name, because it names a row rather than a join — the level's
 own class carries the other two parts, and the short name keys the features instead.
 
-**Overrides are sparse.** An absent `field_overrides` row means the computed value applies.
-Writing one leaves it untouched; clearing it restores that value, not a remembered old number.
+**Overrides are sparse.** An override lives in `characters.definition`, under `overrides`,
+keyed by the field's path through the derived block; `deriveCharacter` folds it into that
+field's `manual`. An absent key means the computed value applies. Writing one leaves the
+computed value untouched; clearing it restores that value, not a remembered old number. A
+key naming no field, or a value its field refuses, stays stored and unapplied.
 
 **`name`, `edition`, `level`, `race_summary` and `class_summary` are recomputed, never
 accepted.** All five derive from `characters.definition` — `race_summary` and `class_summary`

@@ -33,7 +33,7 @@ const defensesSchema = z.strictObject({
 /**
  * What the sheet computes, each beside the value a user typed over it. Assembled on
  * read rather than stored: `computed` comes from the definition and the catalog rows it
- * names, `manual` from `field_overrides`.
+ * names, `manual` from the definition's `overrides`.
  */
 export const characterDerivedSchema = z.strictObject({
   abilityModifiers: z.record(abilitySchema, derivedSchema(z.int())),
