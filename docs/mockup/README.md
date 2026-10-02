@@ -81,32 +81,34 @@ widget, panel, or nav element:
   settle those two, same as #310 settled the character list's own widening.
 - Search: while Top Bar Navigation's search pill has focus or a query, a scrim dims
   everything else; clicking it or pressing Escape closes the results and returns focus to
-  the pill. Results group under Characters and Compendium, a type chip on each, and an
-  "Advanced search" link at the foot opens Search, the `search` route: the query field,
-  the results, and a collapsible filter sidebar shaped like Sidebar, its controls the
-  Filter artboards' checkboxes, chips and level range. The query field, results and
-  confirmation fill the main column beside the sidebar, with no maximum width. It filters by type, source and
-  edition, adds level and school once Spell is ticked and rarity once Item is. A row with
-  no edition, as Tier B and C allow, shows under either edition. The API's `/search` takes one
-  `edition`, one `type` and `q` today, so ticking several types or both editions, and
-  every other filter, is forward design for #521. While the scrim is up, Tab skips the
-  dimmed Character, Mechanics and Settings controls. Each artboard keeps its own state, so
-  Search opens on its own sample query, while the app carries the pill's query to the
-  `search` route as `?q=<query>`. A homebrew row shows a Homebrew tag where the source
-  goes, on Search and on Catalog Detail's `homebrew` kind, which also draws the empty
-  rules-text state. Catalog Detail is a modal, not a page: a result in the dropdown or on
-  Search, or a rules-text reference on a sheet, opens it over the page that holds the
-  link, and the app drops its `catalog` route (#537). Its `host` tweak draws that page
-  behind the scrim, and its `kind` tweak switches between a spell, an item, a feat and a
-  homebrew item. It shows the row's type, name, source and rules text. The close button,
-  the scrim and Escape close it and return focus to the link, and Tab stays inside it
-  while it is open. Every item, spell and feat result, and Catalog Detail, carries
-  "Add to…". Opened from a sheet (the `openedFrom` tweak, always true of the `sheet`
-  host), it adds to that character; opened anywhere else, it asks which character first, and says there
-  is none to add to when the list is empty (the `noCharacters` tweak). A row the rules do
-  not allow, such as Fireball for a ranger, still lands, and the confirmation notes why
-  it is unusual. Races, classes and subclasses carry no "Add to…", since creation and
-  level-up own them.
+  the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics and Settings
+  controls. Results group under Characters and Compendium, each with a type chip and each
+  compendium row naming its source, and an "Advanced search" link at the foot opens Search,
+  the `search` route. The app carries the pill's query there as `?q=<query>`; each
+  artboard keeps its own state, so Search opens on its own sample query. Search draws the
+  query field, the results, and a collapsible filter sidebar shaped like Sidebar, its
+  controls the Filter artboards' checkboxes, chips and level range. The query field,
+  results and confirmation fill the main column beside the sidebar, with no maximum
+  width. It filters by type, source and edition, and adds level and school once Spell is
+  ticked and rarity once Item is. A row with no edition, as Tier B and C allow, shows
+  under either edition. The API's `/search` takes one `edition`, one `type` and `q`
+  today, so ticking several types or both editions, and every other filter, is forward
+  design for #521. A homebrew row shows a Homebrew tag where the source goes.
+- Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
+  rules-text reference on a sheet, opens it over the page that holds the link, and the
+  app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
+  scrim, and its `kind` tweak switches between a spell, an item, a feat and a homebrew
+  item. It shows the row's type, name, source and rules text, or the empty rules-text
+  state for the homebrew item. The close button, the scrim and Escape close it and return
+  focus to the link, and Tab stays inside it while it is open.
+- Add to…: every item, spell and feat result, on Top Bar Navigation and Search, and
+  Catalog Detail carry "Add to…". Opened from a sheet (the `openedFrom` tweak, always true
+  of Catalog Detail's `sheet` host), it adds to that character; opened anywhere else, it
+  asks which character first, and says there is none to add to when the list is empty
+  (the `noCharacters` tweak). Top Bar Navigation opened from elsewhere sits over the
+  Settings page instead of a sheet. A row the rules do not allow, such as Fireball for a
+  ranger, still lands, and the confirmation notes why it is unusual. Races, classes and
+  subclasses carry no "Add to…", since creation and level-up own them.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the

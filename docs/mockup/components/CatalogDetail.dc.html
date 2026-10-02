@@ -24,9 +24,9 @@
       Character
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{characterColor}}" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
     </a>
-    <a href="TopBar.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 4px; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+    <a href="TopBar.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 4px; font-size: 14px; font-weight: {{mechanicsWeight}}; color: {{mechanicsColor}}; text-decoration: none;">
       Mechanics
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{mechanicsColor}}" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
     </a>
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; z-index: 5;">
       <a href="TopBar.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid #dde1e6; background: {{pillBg}}; font-size: 13px; color: {{pillColor}}; text-decoration: none;">
@@ -65,7 +65,7 @@
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="width: 32px; height: 32px; border-radius: 50%; background: #3f5d44; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px;">E</span>
           <span style="font-size: 18px; font-weight: 700;">Elara Nightshade</span>
-          <span style="font-size: 13px; color: #6b7280;">· High Elf Ranger 5</span>
+          <span style="font-size: 13px; color: #6b7280;">· Half-Elf Ranger 7</span>
         </div>
       </sc-if>
       <sc-if value="{{hostDropdown}}" hint-placeholder-val="{{false}}">
@@ -200,11 +200,11 @@ class Component extends DCLogic {
         entries: []
       },
       feat: {
-        type: 'Feat', name: 'Alert', source: 'PHB', query: 'alert', meta: 'General feat',
+        type: 'Feat', name: 'Alert', source: 'XPHB', query: 'alert', meta: 'Origin feat',
         refHeading: 'Background — Criminal', refBefore: 'You gain the ', refAfter: ' feat.',
         entries: [
-          'Initiative rolls gain +5, and while conscious the character cannot be surprised.',
-          'A creature the character cannot see gains no advantage on attacks against them.'
+          'Initiative Proficiency. Add your Proficiency Bonus to Initiative rolls.',
+          'Initiative Swap. Right after rolling Initiative, you can trade your roll with a willing ally in the same combat, unless either of you is Incapacitated.'
         ]
       }
     };
@@ -248,6 +248,8 @@ class Component extends DCLogic {
       hostRoute: host === 'searchRoute',
       characterWeight: host === 'searchRoute' ? 500 : 700,
       characterColor: host === 'searchRoute' ? '#4b5260' : accent,
+      mechanicsWeight: host === 'searchRoute' ? 700 : 500,
+      mechanicsColor: host === 'searchRoute' ? accent : '#4b5260',
       pillText: host === 'searchDropdown' ? row.query : 'Search characters, spells, items, rules…',
       pillColor: host === 'searchDropdown' ? '#1f2430' : '#6b7280',
       pillBg: host === 'searchDropdown' ? '#ffffff' : '#eef0f3',

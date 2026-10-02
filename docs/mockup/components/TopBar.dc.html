@@ -22,9 +22,9 @@
     <div style="font-weight: 700; font-size: 18px; color: {{accent}}; flex-shrink: 0; margin-right: 14px;">Local D&amp;D</div>
 
     <div style="position: relative; flex-shrink: 0; align-self: stretch; display: flex; align-items: center;">
-      <button onClick="{{toggleCharacterMenu}}" tabIndex="{{barTabIndex}}" aria-expanded="{{characterMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{characterMenuBg}}; font-size: 14px; font-weight: 700; color: {{accent}}; text-decoration: none;">
+      <button onClick="{{toggleCharacterMenu}}" tabIndex="{{barTabIndex}}" aria-expanded="{{characterMenuOpen}}" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: {{characterMenuBg}}; font-size: 14px; font-weight: {{characterWeight}}; color: {{characterColor}}; text-decoration: none;">
         Character
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5" style="transform: {{characterCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{characterColor}}" stroke-width="2.5" style="transform: {{characterCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <sc-if value="{{characterMenuOpen}}" hint-placeholder-val="{{false}}">
         <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 240px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 8px; z-index: 50;">
@@ -140,7 +140,7 @@
       </sc-if>
     </div>
 
-    <a href="SettingsSidebar.dc.html" tabIndex="{{barTabIndex}}" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+    <a href="SettingsSidebar.dc.html" tabIndex="{{barTabIndex}}" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: {{settingsWeight}}; color: {{settingsColor}}; text-decoration: none;">
       Settings
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
     </a>
@@ -154,7 +154,7 @@
       <div style="height: 14px; width: 65%; margin: 8px 10px; border-radius: 4px; background: #eceef1;"></div>
     </div>
     <div style="flex-grow: 1; padding: 24px 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-content: start;">
-      <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6; padding: 14px;"><div style="font-size: 13px; font-weight: 700; color: #6b7280;">Elara Nightshade's sheet</div></div>
+      <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6; padding: 14px;"><div style="font-size: 13px; font-weight: 700; color: #6b7280;">{{backdropLabel}}</div></div>
       <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
       <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
       <div style="height: 200px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
@@ -184,7 +184,7 @@ class Component extends DCLogic {
       { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock', sub: 'Tiefling Warlock • Lvl 4' }
     ];
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
-    // The bar sits over Elara's sheet, the character the other sheet artboards show.
+    // Opened from a sheet, the bar sits over Elara's, the character the other sheet artboards show.
     const CURRENT_CHARACTER = 'elara';
     const MECHANICS_TYPES = [
       'Actions', 'Backgrounds', 'Classes', 'Conditions', 'Deities', 'Diseases', 'Feats',
@@ -193,14 +193,14 @@ class Component extends DCLogic {
     ];
     // Only an item, a spell or a feat adds from search; creation and level-up own the rest.
     const COMPENDIUM = [
-      { id: 'fireball', type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
-      { id: 'fire-bolt', type: 'Spell', name: 'Fire Bolt', meta: 'Evocation cantrip', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
-      { id: 'hunters-mark', type: 'Spell', name: "Hunter's Mark", meta: 'Divination • 1st level', tagColor: '#3a4f7a', classes: ['Ranger'] },
-      { id: 'longbow', type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', tagColor: '#8a6a2e' },
-      { id: 'fire-resistance', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', tagColor: '#8a6a2e' },
-      { id: 'alert', type: 'Feat', name: 'Alert', meta: 'General feat', tagColor: '#6b4f7a' },
-      { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', tagColor: '#5b5f66' },
-      { id: 'extra-attack', type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', tagColor: '#4f6b6b' }
+      { id: 'fireball', type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', source: 'PHB', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'fire-bolt', type: 'Spell', name: 'Fire Bolt', meta: 'Evocation cantrip', source: 'PHB', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'hunters-mark', type: 'Spell', name: "Hunter's Mark", meta: 'Divination • 1st level', source: 'PHB', tagColor: '#3a4f7a', classes: ['Ranger'] },
+      { id: 'longbow', type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', source: 'DMG', tagColor: '#8a6a2e' },
+      { id: 'fire-resistance', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', tagColor: '#8a6a2e' },
+      { id: 'alert', type: 'Feat', name: 'Alert', meta: 'Origin feat', source: 'XPHB', tagColor: '#6b4f7a' },
+      { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', tagColor: '#5b5f66' },
+      { id: 'extra-attack', type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', source: 'PHB', tagColor: '#4f6b6b' }
     ];
     const ADDABLE = ['Spell', 'Item', 'Feat'];
 
@@ -216,7 +216,7 @@ class Component extends DCLogic {
       color: c.color,
       initial: c.name.charAt(0),
       sub: c.sub,
-      ariaCurrent: c.id === CURRENT_CHARACTER ? 'page' : undefined
+      ariaCurrent: onSheet && c.id === CURRENT_CHARACTER ? 'page' : undefined
     }));
     const mechanicsTypes = MECHANICS_TYPES.map((label) => ({ label, go: () => this.setState({ openMenu: null }) }));
 
@@ -240,7 +240,7 @@ class Component extends DCLogic {
       this.setState({
         pickerFor: null,
         toast: {
-          text: 'Added ' + res.name + ' to ' + c.name + '.',
+          text: 'Added ' + res.name + ' (' + res.source + ') to ' + c.name + '.',
           note: offList ? 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.' : ''
         }
       });
@@ -256,10 +256,11 @@ class Component extends DCLogic {
       const pickerOpen = this.state.pickerFor === res.id;
       return {
         ...res,
+        meta: res.meta + ' • ' + res.source,
         addable: ADDABLE.indexOf(res.type) !== -1,
         addId: 'add-' + res.id,
         pickerOpen,
-        addHint: onSheet ? ' ' + res.name + ', for ' + current.name : ' ' + res.name,
+        addHint: ' ' + res.name + ' (' + res.source + ')' + (onSheet ? ', for ' + current.name : ''),
         expandedAttr: onSheet ? undefined : pickerOpen,
         pickerLabel: 'Add ' + res.name + ' to which character',
         add: () => (onSheet ? add(res, current) : this.setState({ pickerFor: pickerOpen ? null : res.id, toast: null }))
@@ -273,6 +274,11 @@ class Component extends DCLogic {
 
     return {
       accent,
+      backdropLabel: onSheet ? "Elara Nightshade's sheet" : 'Settings page',
+      characterWeight: onSheet ? 700 : 500,
+      characterColor: onSheet ? accent : '#4b5260',
+      settingsWeight: onSheet ? 500 : 700,
+      settingsColor: onSheet ? '#4b5260' : accent,
       characterMenuOpen,
       characterMenuBg: characterMenuOpen ? '#eef0f3' : 'none',
       characterCaretRotation: characterMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
