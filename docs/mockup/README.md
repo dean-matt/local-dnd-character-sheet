@@ -15,8 +15,8 @@ and a small `<script type="text/x-dc">` block per file driving the interactive s
 They do not run standalone in a browser — open the live link above to interact with
 them, or read the markup here for the shapes and interactions it settled on.
 
-Every icon is an inline Lucide outline (ISC). The app takes the same set from
-`lucide-react` rather than copying the markup.
+The app takes its icons from `lucide-react` rather than copying an artboard's `<svg>`
+markup.
 
 ## What is here
 
