@@ -6,9 +6,12 @@ export interface CatalogIndexPagerProps {
   href: (page: number) => string;
 }
 
-/** Previous and next links around "Page n of m", drawn only where there is a second page. */
+/**
+ * Previous and next links around "Page n of m", drawn only where there is a second page and
+ * `page` is one of them.
+ */
 export function CatalogIndexPager({ page, pages, href }: CatalogIndexPagerProps) {
-  if (pages <= 1) return null;
+  if (pages <= 1 || page > pages) return null;
   return (
     <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-row">
       {page > 1 && <Link to={href(page - 1)}>← Previous</Link>}

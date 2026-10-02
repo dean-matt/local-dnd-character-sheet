@@ -115,6 +115,7 @@ describe("CatalogIndexPage", () => {
       "href",
       "/catalog/feats?edition=one&page=3",
     );
+    expect(screen.queryByRole("navigation", { name: "Pages" })).not.toBeInTheDocument();
   });
 
   it("says when an edition has no rows of the type", async () => {

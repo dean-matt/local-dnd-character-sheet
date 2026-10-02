@@ -178,11 +178,15 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
             {group("Characters", characterResults, 0)}
             {group("Compendium", compendiumResults, characterResults.length)}
           </div>
-          <p role="status" className="px-2.5 py-1.5 text-body text-muted empty:hidden">
+          <p aria-hidden className="px-2.5 py-1.5 text-body text-muted empty:hidden">
             {showPanel ? status() : undefined}
           </p>
         </div>
       </div>
+      {/* Mounted outside the hidden panel, so a screen reader hears each change of text. */}
+      <p role="status" className="sr-only">
+        {showPanel ? status() : undefined}
+      </p>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../../../test/records.ts";
@@ -125,7 +125,9 @@ describe("GlobalSearch", () => {
       [searchUrl("one", "zzz")]: page([]),
     });
     type(input, "zzz");
-    expect(await screen.findByText('No results for "zzz".')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent('No results for "zzz".'),
+    );
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
