@@ -170,6 +170,50 @@ describe("CatalogPicker", () => {
     expect(input).toHaveValue("");
   });
 
+  it("keeps Enter from submitting an enclosing form while the list is open", async () => {
+    stubFetch(page([FIREBALL]));
+    const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    renderWithClient(
+      <form onSubmit={onSubmit}>
+        <CatalogPicker label="Spell" edition="classic" type="spell" onPick={vi.fn()} />
+        <button type="submit">Next</button>
+      </form>,
+    );
+    const input = screen.getByRole("combobox", { name: "Spell" });
+
+    fireEvent.change(input, { target: { value: "fire" } });
+    await screen.findByRole("option", { name: /Fireball/ });
+
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+  });
+
+  it("cancels a mousedown anywhere in the list, so the input keeps focus", async () => {
+    stubFetch(page([FIREBALL]));
+    const { input } = renderPicker();
+
+    fireEvent.change(input, { target: { value: "fire" } });
+    await screen.findByRole("option", { name: /Fireball/ });
+
+    expect(fireEvent.mouseDown(screen.getByRole("listbox"))).toBe(false);
+    expect(fireEvent.mouseDown(screen.getByRole("option", { name: /Fireball/ }))).toBe(false);
+  });
+
+  it("hides the last query's rows while the next query loads", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(page([FIREBALL]))
+      .mockReturnValueOnce(new Promise(() => {}));
+    vi.stubGlobal("fetch", fetchMock);
+    const { input } = renderPicker();
+
+    fireEvent.change(input, { target: { value: "fire" } });
+    await screen.findByRole("option", { name: /Fireball/ });
+    fireEvent.change(input, { target: { value: "ice" } });
+
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
+    expect(await screen.findByText("Searching…")).toBeInTheDocument();
+  });
+
   it("closes when focus leaves the input", async () => {
     stubFetch(page([FIREBALL]));
     const { input } = renderPicker();

@@ -88,8 +88,10 @@ export function CatalogPicker({
     const hit = hits[activeIndex];
     if (event.key === "ArrowDown") move(1);
     else if (event.key === "ArrowUp") move(-1);
-    else if (event.key === "Enter" && hit) pick(hit);
-    else if (event.key === "Escape") dismiss();
+    else if (event.key === "Enter" && showList) {
+      // Cancelled even with no row active, so Enter never submits an enclosing form.
+      if (hit) pick(hit);
+    } else if (event.key === "Escape") dismiss();
     else return;
     event.preventDefault();
   }
@@ -122,9 +124,12 @@ export function CatalogPicker({
             onBlur={() => setOpen(false)}
             className="rounded-control border border-border bg-surface px-2 py-1"
           />
+          {/* A mousedown on a row or the scrollbar is cancelled so it never blurs the input,
+              which closes the list. */}
           <div
             id={listboxId}
             role="listbox"
+            onMouseDown={(event) => event.preventDefault()}
             aria-label={label}
             hidden={!showList || hits.length === 0}
             className="max-h-64 overflow-y-auto rounded-card border border-border bg-surface p-1 shadow-popover"

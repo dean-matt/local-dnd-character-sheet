@@ -1,6 +1,6 @@
 import { searchResponseSchema } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
@@ -14,7 +14,7 @@ export interface CatalogSearchParams {
 
 /**
  * One page of `/search` over the catalog and homebrew together. A blank query fetches
- * nothing, and the previous page stays on screen while the next keystroke's loads.
+ * nothing.
  */
 export function useCatalogSearch({ edition, type, query, limit }: CatalogSearchParams) {
   const q = query.trim();
@@ -24,7 +24,6 @@ export function useCatalogSearch({ edition, type, query, limit }: CatalogSearchP
     queryKey: ["search", edition, type, q, limit],
     queryFn: () => apiGet(`/search?${params}`, searchResponseSchema),
     enabled: q.length > 0,
-    placeholderData: keepPreviousData,
     retry: retryUnlessClientError,
   });
 }

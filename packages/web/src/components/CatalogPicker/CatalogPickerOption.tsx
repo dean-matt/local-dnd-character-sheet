@@ -27,9 +27,7 @@ export function CatalogPickerOption({
   }, [active]);
 
   return (
-    // The input keeps focus throughout, as a combobox's does, so the option takes no
-    // key handler of its own and a mousedown is cancelled before it can blur the input.
-    // biome-ignore lint/a11y/useKeyWithClickEvents: the combobox input handles every key.
+    // biome-ignore lint/a11y/useKeyWithClickEvents: focus stays in the combobox input, which handles every key.
     <div
       ref={ref}
       id={id}
@@ -37,7 +35,6 @@ export function CatalogPickerOption({
       tabIndex={-1}
       aria-selected={active}
       aria-disabled={reason === undefined ? undefined : true}
-      onMouseDown={(event) => event.preventDefault()}
       onMouseEnter={onPoint}
       onClick={onPick}
       className={`flex flex-wrap items-baseline gap-x-2 rounded-control px-2 py-1.5 text-body ${
