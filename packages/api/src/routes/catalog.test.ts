@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { publishMeta } from "../db/queries/contentFixture.ts";
+import { publishMeta, publishSearchFixture } from "../db/queries/contentFixture.ts";
 import { catalogRoutes } from "./catalog.ts";
 
 describe("catalogRoutes", () => {
@@ -40,5 +40,32 @@ describe("catalogRoutes", () => {
     expect(await res.json()).toEqual({
       error: "No catalog has been built yet — run `pnpm content:build`.",
     });
+  });
+
+  it("titles each source the catalog's books and adventures name", async () => {
+    publishSearchFixture(dataDir, {
+      entities: [
+        {
+          type: "book",
+          name: "Player's Handbook (2024)",
+          source: "XPHB",
+          qualifier: "",
+          edition: "one",
+          json: "{}",
+          rendered_text: "",
+        },
+      ],
+    });
+
+    const res = await routes.request("/catalog/sources");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      sources: [{ source: "XPHB", name: "Player's Handbook (2024)" }],
+    });
+  });
+
+  it("answers the sources with the same 503 as the meta before any build", async () => {
+    const res = await routes.request("/catalog/sources");
+    expect(res.status).toBe(503);
   });
 });
