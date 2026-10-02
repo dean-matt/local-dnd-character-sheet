@@ -105,9 +105,11 @@
       <div id="catalogDialog" role="dialog" aria-modal="true" aria-labelledby="catalogTitle" tabIndex="-1" onClick="{{stopPropagation}}" onKeyDown="{{onDialogKeyDown}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(560px, 90%); max-height: 85%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 12px; outline: none;">
         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
           <div style="min-width: 0;">
-            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px;">{{type}}</span>
-            <h2 id="catalogTitle" style="margin: 6px 0 0 0; font-size: 20px; font-weight: 700;">{{name}}</h2>
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;"><sc-if value="{{isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>{{source}}</p>
+            <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px;">
+              <h2 id="catalogTitle" style="margin: 0; font-size: 20px; font-weight: 700;">{{name}}</h2>
+              <p style="margin: 0; font-size: 12px; color: #6b7280;"><sc-if value="{{isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>{{source}}</p>
+            </div>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px; display: inline-block; margin-top: 6px;">{{type}}</span>
           </div>
           <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
             <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
