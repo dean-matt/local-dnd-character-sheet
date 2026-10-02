@@ -8,8 +8,8 @@
  * Exports `checkBranchName` for `tests/branch-name.test.ts`; running the file
  * checks the current branch and exits non-zero when it fails.
  */
-import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
+import { capture } from "./capture.mjs";
 
 /** The commit types `@commitlint/config-conventional` accepts, so the two lists cannot drift. */
 const TYPES = [
@@ -40,7 +40,7 @@ export function checkBranchName(branch) {
 }
 
 function currentBranch() {
-  const branch = execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim();
+  const branch = capture("git", ["branch", "--show-current"]).trim();
   return branch === "" ? null : branch;
 }
 

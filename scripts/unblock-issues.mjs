@@ -26,8 +26,8 @@
  * #75; a line break does not end a term, because sections wrap mid-sentence ("and\n#75").
  * Give such a blocker its own paragraph or sentence, or list it before the issues.
  */
-import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
+import { capture } from "./capture.mjs";
 
 const HEADING_LINE = /^## (.+)\n\n([\s\S]*)$/;
 
@@ -143,7 +143,7 @@ export function stillBlocked(body, closed, open) {
   });
 }
 
-const gh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8" }));
+const gh = (args) => JSON.parse(capture("gh", args));
 
 function openIssueNumbers() {
   return new Set(
@@ -175,7 +175,7 @@ function run(closed) {
     const body = clearBlocker(issue.body, closed, keepSection);
     const args = ["issue", "edit", String(issue.number), "--body", body];
     if (!keepSection) args.push("--remove-label", "blocked");
-    execFileSync("gh", args, { encoding: "utf8" });
+    capture("gh", args);
     if (!keepSection) unblocked.push(issue.number);
   }
   return unblocked;

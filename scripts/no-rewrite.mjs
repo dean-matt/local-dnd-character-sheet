@@ -12,8 +12,8 @@
  * Exports `checkRewrite` for `tests/no-rewrite.test.ts`; running the file checks the
  * current branch and exits non-zero when the push would rewrite.
  */
-import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
+import { capture } from "./capture.mjs";
 
 /**
  * Takes what git reports rather than reading it, so the rule is testable without a
@@ -28,8 +28,7 @@ export function checkRewrite({ upstream, upstreamIsAncestor }) {
 
 function rev(ref) {
   try {
-    return execFileSync("git", ["rev-parse", "--verify", "--quiet", ref], {
-      encoding: "utf8",
+    return capture("git", ["rev-parse", "--verify", "--quiet", ref], {
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
   } catch {
@@ -43,7 +42,7 @@ function rev(ref) {
  */
 function upstreamRef() {
   if (rev("@{u}") !== null) return "@{u}";
-  const branch = execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim();
+  const branch = capture("git", ["branch", "--show-current"]).trim();
   if (branch === "") return null;
   const remote = `origin/${branch}`;
   return rev(remote) === null ? null : remote;
@@ -51,7 +50,7 @@ function upstreamRef() {
 
 function isAncestor(ref) {
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", ref, "HEAD"], { stdio: "ignore" });
+    capture("git", ["merge-base", "--is-ancestor", ref, "HEAD"], { stdio: "ignore" });
     return true;
   } catch {
     return false;

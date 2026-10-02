@@ -3,17 +3,17 @@
  * against them. `merge-gate.mjs` and `wait-checks.mjs` both read this, so the ruleset
  * stays the only place a name is written down.
  */
-import { execFileSync } from "node:child_process";
+import { capture } from "./capture.mjs";
 
 export const GH_TIMEOUT_MS = 30 * 1000;
-const OPTIONS = { encoding: "utf8", timeout: GH_TIMEOUT_MS };
+const OPTIONS = { timeout: GH_TIMEOUT_MS };
 
 /**
  * Names the effective rules for `main` require, as GitHub applies them.
  *
- * @param {(file: string, args: string[], options: { encoding: "utf8", timeout: number }) => string} [run]
+ * @param {(file: string, args: string[], options: { timeout: number }) => string} [run]
  */
-export function expectedChecks(run = execFileSync) {
+export function expectedChecks(run = capture) {
   const rules = JSON.parse(run("gh", ["api", "repos/{owner}/{repo}/rules/branches/main"], OPTIONS));
   return rules
     .filter((r) => r.type === "required_status_checks")
@@ -26,9 +26,9 @@ export function expectedChecks(run = execFileSync) {
  * that reads as nothing reported.
  *
  * @param {string} pr
- * @param {(file: string, args: string[], options: { encoding: "utf8", timeout: number }) => string} [run]
+ * @param {(file: string, args: string[], options: { timeout: number }) => string} [run]
  */
-export function readChecks(pr, run = execFileSync) {
+export function readChecks(pr, run = capture) {
   try {
     return JSON.parse(run("gh", ["pr", "checks", pr, "--json", "name,bucket"], OPTIONS));
   } catch (error) {
