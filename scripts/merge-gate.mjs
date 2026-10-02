@@ -8,8 +8,8 @@
  * Running the file gathers the inputs with `gh` and `git`, prints a line per condition,
  * and exits 1 where any of them blocks.
  */
-import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
+import { capture } from "./capture.mjs";
 import {
   expectedChecks,
   isGreen,
@@ -228,13 +228,13 @@ export function dependenciesDiffer(before, after) {
   return pick(before) !== pick(after);
 }
 
-const gh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8" }));
+const gh = (args) => JSON.parse(capture("gh", args));
 
-const git = (args) => execFileSync("git", args, { encoding: "utf8" }).trim();
+const git = (args) => capture("git", args).trim();
 
 function show(ref, path) {
   try {
-    return JSON.parse(execFileSync("git", ["show", `${ref}:${path}`], { encoding: "utf8" }));
+    return JSON.parse(capture("git", ["show", `${ref}:${path}`]));
   } catch {
     return null;
   }
@@ -256,14 +256,11 @@ function show(ref, path) {
 export function sinceLastPass(sha, head, cwd) {
   if (sha === null) return null;
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", sha, head], { stdio: "ignore", cwd });
+    capture("git", ["merge-base", "--is-ancestor", sha, head], { stdio: "ignore", cwd });
   } catch {
     return null;
   }
-  const count = execFileSync("git", ["rev-list", "--count", `${sha}..${head}`, "^origin/main"], {
-    encoding: "utf8",
-    cwd,
-  });
+  const count = capture("git", ["rev-list", "--count", `${sha}..${head}`, "^origin/main"], { cwd });
   return Number(count.trim());
 }
 
@@ -284,7 +281,7 @@ function gate(n) {
   report(checkFailure === null, "every check is green", checkFailure);
 
   const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;
-  execFileSync("git", ["fetch", "--quiet", "origin", "main", head]);
+  capture("git", ["fetch", "--quiet", "origin", "main", head]);
 
   const reviews = api(`repos/{owner}/{repo}/pulls/${n}/reviews`);
   const pass = passes(reviews).at(-1) ?? null;
