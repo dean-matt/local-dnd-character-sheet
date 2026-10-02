@@ -96,6 +96,37 @@ describe("GlobalSearch", () => {
     expect(document.querySelector(".bg-scrim")).toBeNull();
   });
 
+  it("keeps the highlight on its row when the other edition's hits land", async () => {
+    const { input } = renderSearch({
+      [searchUrl("classic", "fir")]: page([fireball]),
+      [searchUrl("one", "fir")]: page([ember]),
+    });
+    const answer = globalThis.fetch;
+    let release = () => {};
+    const late = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).includes("edition=one")) await late;
+      return answer(url, init);
+    });
+    type(input, "fir");
+    await screen.findByRole("option", { name: /Fireball/ });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(screen.getByRole("option", { name: /Fireball/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    release();
+    await screen.findByRole("option", { name: /Ember Charm/ });
+    expect(screen.getByRole("option", { name: /Fireball/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
   it("opens a character from its result", async () => {
     const { input } = renderSearch({
       [searchUrl("classic", "fira")]: page([]),

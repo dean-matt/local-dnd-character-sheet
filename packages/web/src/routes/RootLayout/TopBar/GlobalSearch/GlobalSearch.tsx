@@ -25,7 +25,7 @@ const groupLabel = "px-2.5 pt-2 pb-1 text-[10px] font-semibold uppercase trackin
 export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(-1);
+  const [active, setActive] = useState<string | null>(null);
   const characters = useCharacters();
   const compendium = useCompendiumSearch(query, RESULT_LIMIT);
   const navigate = useNavigate();
@@ -47,27 +47,28 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   }));
   const results = [...characterResults, ...compendiumResults];
   const showPanel = open && q.length > 0;
-  const activeIndex = showPanel && active < results.length ? active : -1;
+  // Held by key, so a late edition's hits re-sorting the list leave the highlight on its row.
+  const activeIndex = showPanel ? results.findIndex((result) => result.key === active) : -1;
 
   function pick(result: SearchResult) {
     if (result.path === undefined) return;
     navigate(result.path);
     setOpen(false);
     setQuery("");
-    setActive(-1);
+    setActive(null);
   }
 
   function move(step: 1 | -1) {
     setOpen(true);
     if (results.length === 0) return;
     const from = activeIndex === -1 ? (step === 1 ? -1 : 0) : activeIndex;
-    setActive((from + step + results.length) % results.length);
+    setActive(results[(from + step + results.length) % results.length]?.key ?? null);
   }
 
   function dismiss() {
     if (open) setOpen(false);
     else setQuery("");
-    setActive(-1);
+    setActive(null);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -101,7 +102,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
             result={result}
             active={offset + i === activeIndex}
             onPick={() => pick(result)}
-            onPoint={() => setActive(offset + i)}
+            onPoint={() => setActive(result.key)}
           />
         ))}
       </div>
@@ -137,7 +138,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
             onChange={(event) => {
               setQuery(event.target.value);
               setOpen(true);
-              setActive(-1);
+              setActive(null);
             }}
             onFocus={() => {
               setOpen(true);
@@ -154,7 +155,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
                 setQuery("");
-                setActive(-1);
+                setActive(null);
                 inputRef.current?.focus();
               }}
               className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-border text-ink"
