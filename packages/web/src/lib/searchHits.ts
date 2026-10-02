@@ -1,7 +1,7 @@
 /** How the web names and addresses a `/search` hit. */
 import type { SearchHit } from "@dnd/catalog";
 
-/** Each hit type with a detail route, mapped to the collection `catalogRows.ts` reads it from. */
+/** Each hit type with a detail, mapped to the collection `catalogRows.ts` reads it from. */
 export const HIT_COLLECTIONS = new Map([
   ["background", "backgrounds"],
   ["class", "classes"],
@@ -12,15 +12,15 @@ export const HIT_COLLECTIONS = new Map([
 ]);
 
 /**
- * The detail route a hit opens, or `undefined` for a type the web has no detail route for,
+ * The detail address a hit opens, or `undefined` for a type the web shows no detail for,
  * such as an optional feature or a Tier C monster.
  */
-export function searchHitPath(hit: SearchHit): string | undefined {
+export function searchHitAddress(hit: SearchHit): string | undefined {
   const collection = HIT_COLLECTIONS.get(hit.type);
   if (!collection) return undefined;
   return "id" in hit
-    ? `/catalog/homebrew/${collection}/${encodeURIComponent(hit.id)}`
-    : `/catalog/${collection}/${encodeURIComponent(hit.name)}/${encodeURIComponent(hit.source)}`;
+    ? `/homebrew/${collection}/${encodeURIComponent(hit.id)}`
+    : `/${collection}/${encodeURIComponent(hit.name)}/${encodeURIComponent(hit.source)}`;
 }
 
 /** A hit's identity across both editions' searches: its type and key, or its homebrew id. */

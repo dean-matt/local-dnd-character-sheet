@@ -27,7 +27,7 @@ export function SearchResultOption({
   onPoint,
 }: SearchResultOptionProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const opens = result.path !== undefined;
+  const opens = "character" in result || result.address !== undefined;
 
   useEffect(() => {
     if (active) ref.current?.scrollIntoView?.({ block: "nearest" });

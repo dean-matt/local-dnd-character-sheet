@@ -1,5 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
@@ -83,16 +82,10 @@ describe("reference resolution", () => {
     });
     const fetchMock = stubFetchByUrl({ "/api/refs/resolve": { refs: [asi(4), asi(6)] } });
     renderWithClient(
-      <MemoryRouter>
-        <RulesText text="{@classFeature Ability Score Improvement|Fighter||4||At 4} and {@classFeature Ability Score Improvement|Fighter||6||at 6}" />
-      </MemoryRouter>,
+      <RulesText text="{@classFeature Ability Score Improvement|Fighter||4||At 4} and {@classFeature Ability Score Improvement|Fighter||6||at 6}" />,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "at 6" }));
-    expect(screen.getByRole("link", { name: "Open Ability Score Improvement" })).toHaveAttribute(
-      "href",
-      "/catalog/classes/Fighter/PHB/features/Ability%20Score%20Improvement/PHB/6",
-    );
     expect(requested(fetchMock)).toEqual([
       [
         "/api/refs/resolve",
@@ -103,29 +96,67 @@ describe("reference resolution", () => {
         })),
       ],
     ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Ability Score Improvement" }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/classes/Fighter/PHB/at/6", undefined),
+    );
   });
 
-  it("opens a resolved reference onto the row's prose and its page", async () => {
-    stubFetchByUrl({ "/api/refs/resolve": { refs: [FIREBALL] } });
+  it("opens a resolved reference onto the row's prose, and from there its detail", async () => {
+    const shield = {
+      name: "Shield",
+      source: "PHB",
+      entries: ["A barrier."],
+      path: "/spells/Shield/PHB",
+    };
+    const byUrl = stubFetchByUrl({
+      "/api/refs/resolve": { refs: [FIREBALL] },
+      "/api/spells/Fireball/PHB": {
+        name: "Fireball",
+        source: "PHB",
+        edition: "classic",
+        level: 3,
+        school: "V",
+        concentration: false,
+        ritual: false,
+        json: {
+          name: "Fireball",
+          source: "PHB",
+          level: 3,
+          school: "V",
+          duration: [{ type: "instant" }],
+          entries: ["A bright streak, warded by {@spell shield}."],
+        },
+      },
+    });
+    vi.stubGlobal("fetch", (url: RequestInfo | URL, init?: RequestInit) =>
+      String(init?.body).includes("shield")
+        ? Promise.resolve(new Response(JSON.stringify({ refs: [shield] })))
+        : byUrl(url, init),
+    );
     renderWithClient(
-      <MemoryRouter>
-        <p>
-          <RulesText text="Cast {@spell fireball}." />
-        </p>
-      </MemoryRouter>,
+      <p>
+        <RulesText text="Cast {@spell fireball}." />
+      </p>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "fireball" }));
     const popover = screen.getByRole("group", { name: "Fireball (PHB)" });
     expect(popover).toHaveTextContent("A bright streak flashes from your finger.");
-    expect(screen.getByRole("link", { name: "Open Fireball" })).toHaveAttribute(
-      "href",
-      "/catalog/spells/Fireball/PHB",
-    );
     expect(popover.querySelector("p, ul, div")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Fireball" }));
+    const dialog = await screen.findByRole("dialog", { name: "Fireball" });
+    // The detail resolves its own references, rather than reading the sheet's.
+    expect(await within(dialog).findByRole("button", { name: "shield" })).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "fireball" })).toHaveFocus();
   });
 
-  it("offers no link for a row no page shows", async () => {
+  it("offers no detail for a row nothing shows", async () => {
     stubFetchByUrl({
       "/api/refs/resolve": { refs: [{ name: "Blinded", source: "XPHB", entries: ["Can't see."] }] },
     });
@@ -133,10 +164,10 @@ describe("reference resolution", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "blinded" }));
     expect(screen.getByRole("group", { name: "Blinded (XPHB)" })).toHaveTextContent("Can't see.");
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Open/ })).not.toBeInTheDocument();
   });
 
-  it("keeps a row with neither prose nor a page as text, rather than a popover of its name", async () => {
+  it("keeps a row with neither prose nor a detail as text, rather than a popover of its name", async () => {
     const fetchMock = stubFetchByUrl({
       "/api/refs/resolve": { refs: [{ name: "Goblin", source: "MM", entries: [] }] },
     });

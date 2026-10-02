@@ -17,6 +17,7 @@ import {
   type FocusEvent,
   type KeyboardEvent,
   type ReactNode,
+  type RefObject,
   useContext,
   useEffect,
   useId,
@@ -36,10 +37,12 @@ export interface PopoverProps {
   label: string;
   /** Names the trigger where its content alone (a bare number) says too little. */
   triggerLabel?: string;
+  /** For a caller that hands focus back to the trigger, such as after a modal it opened. */
+  triggerRef?: RefObject<HTMLButtonElement | null>;
   children: ReactNode;
 }
 
-export function Popover({ trigger, label, triggerLabel, children }: PopoverProps) {
+export function Popover({ trigger, label, triggerLabel, triggerRef, children }: PopoverProps) {
   const depth = useContext(DepthContext);
   // Hover and focus drive one flag, a click or tap the other, because a real
   // pointer always fires `mouseenter` before `click` — including the tap that
@@ -55,7 +58,8 @@ export function Popover({ trigger, label, triggerLabel, children }: PopoverProps
   const id = useId();
   const contentId = `${id}-content`;
   const wrapperRef = useRef<HTMLSpanElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const ownTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerButton = triggerRef ?? ownTriggerRef;
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   // Set just before `close()` refocuses the trigger, so the resulting `focus`
   // event does not reopen the popover through `onFocus` below.
@@ -101,7 +105,7 @@ export function Popover({ trigger, label, triggerLabel, children }: PopoverProps
   function close() {
     hideNow();
     returningFocus.current = true;
-    triggerRef.current?.focus({ preventScroll: true });
+    triggerButton.current?.focus({ preventScroll: true });
   }
 
   function handleTriggerFocus() {
@@ -141,7 +145,7 @@ export function Popover({ trigger, label, triggerLabel, children }: PopoverProps
     >
       <button
         type="button"
-        ref={triggerRef}
+        ref={triggerButton}
         aria-label={triggerLabel}
         aria-expanded={open}
         aria-controls={open ? contentId : undefined}

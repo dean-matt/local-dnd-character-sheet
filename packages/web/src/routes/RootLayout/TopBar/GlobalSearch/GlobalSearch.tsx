@@ -1,15 +1,19 @@
 /**
  * The top bar's search across the user's characters and the compendium. Characters match
  * by name in the list the bar already holds; the compendium is `/search` over both
- * editions. A result with no detail route stays in the list, reachable by arrow so a
- * screen reader hears it, and Enter or a click on it does nothing.
+ * editions. A character result opens its sheet; a compendium result opens its detail in a
+ * modal over the current page, and closing it returns focus to the search with the query
+ * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
+ * hears it, and Enter or a click on it does nothing.
  */
 import { Search, X } from "lucide-react";
-import { type KeyboardEvent, useId, useRef, useState } from "react";
+import { type KeyboardEvent, useId, useState } from "react";
 import { useNavigate } from "react-router";
+import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
 import { useCompendiumSearch } from "../../../../hooks/useCompendiumSearch.ts";
-import { searchHitKey, searchHitPath } from "../../../../lib/searchHits.ts";
+import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
+import { searchHitAddress, searchHitKey } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
 import type { SearchResult } from "./searchResult.ts";
 
@@ -26,10 +30,11 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
+  const [detail, setDetail] = useState<string | undefined>(undefined);
   const characters = useCharacters();
   const compendium = useCompendiumSearch(query, RESULT_LIMIT);
   const navigate = useNavigate();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useReturnFocus<HTMLInputElement>(detail !== undefined);
   const id = useId();
   const listboxId = `${id}-listbox`;
   const optionId = (index: number) => `${id}-option-${index}`;
@@ -38,11 +43,11 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const characterResults: SearchResult[] = q
     ? (characters.data ?? [])
         .filter((c) => c.name.toLowerCase().includes(q))
-        .map((c) => ({ key: `character:${c.id}`, path: `/characters/${c.id}`, character: c }))
+        .map((c) => ({ key: `character:${c.id}`, character: c }))
     : [];
   const compendiumResults: SearchResult[] = compendium.hits.map((hit) => ({
     key: searchHitKey(hit),
-    path: searchHitPath(hit),
+    address: searchHitAddress(hit),
     hit,
   }));
   const results = [...characterResults, ...compendiumResults];
@@ -51,8 +56,11 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const activeIndex = showPanel ? results.findIndex((result) => result.key === active) : -1;
 
   function pick(result: SearchResult) {
-    if (result.path === undefined) return;
-    navigate(result.path);
+    if (!("character" in result)) {
+      if (result.address !== undefined) setDetail(result.address);
+      return;
+    }
+    navigate(`/characters/${result.character.id}`);
     setOpen(false);
     setQuery("");
     setActive(null);
@@ -184,6 +192,9 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           </p>
         </div>
       </div>
+      {detail !== undefined && (
+        <CatalogDetail address={detail} onClose={() => setDetail(undefined)} />
+      )}
       {/* Mounted outside the hidden panel, so a screen reader hears each change of text. */}
       <p role="status" className="sr-only">
         {showPanel ? status() : undefined}

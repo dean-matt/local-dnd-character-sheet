@@ -1,18 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { routeConfig } from "../router.tsx";
 import { stubFetchByUrl } from "../test/stubFetch.ts";
+import { CatalogDetail } from "./CatalogDetail.tsx";
 
-function renderAt(path: string) {
+function renderAt(address: string) {
+  const onClose = vi.fn();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={createMemoryRouter(routeConfig, { initialEntries: [path] })} />
+      <CatalogDetail address={address} onClose={onClose} />
     </QueryClientProvider>,
   );
+  return onClose;
 }
+
+const dialogNamed = (name: string) => screen.findByRole("dialog", { name });
 
 const fireball = {
   name: "Fireball",
@@ -70,34 +73,37 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("CatalogPage", () => {
+describe("CatalogDetail", () => {
   it("renders a row's name, source and text through the token renderer", async () => {
     stubFetchByUrl({ "/api/spells/Fireball/PHB": fireball });
-    renderAt("/catalog/spells/Fireball/PHB");
+    renderAt("/spells/Fireball/PHB");
 
-    await screen.findByRole("heading", { level: 1, name: "Fireball" });
+    await dialogNamed("Fireball");
     expect(screen.getByText("PHB")).toBeInTheDocument();
+    expect(screen.getByText("Spell")).toBeInTheDocument();
+    expect(screen.getByText("2014 rules")).toBeInTheDocument();
+    expect(screen.getByTitle("This spell uses the 2014 rules")).toBeInTheDocument();
     expect(screen.getByText("bright").tagName).toBe("STRONG");
-    expect(screen.getByRole("heading", { level: 2, name: "Blast" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Nested" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "At Higher Levels" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Blast" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 4, name: "Nested" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "At Higher Levels" })).toBeInTheDocument();
     expect(screen.getByText("More dice.")).toBeInTheDocument();
   });
 
   it("reads a class feature from its class's grants at the level its address names", async () => {
     const fetchMock = stubFetchByUrl({ "/api/classes/Barbarian/PHB/at/3": barbarianAt3 });
-    renderAt("/catalog/classes/Barbarian/PHB/features/Primal%20Path/PHB/3");
+    renderAt("/classes/Barbarian/PHB/features/Primal%20Path/PHB/3");
 
-    await screen.findByRole("heading", { level: 1, name: "Primal Path" });
+    await dialogNamed("Primal Path");
     expect(screen.getByText("Primal Path text.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/classes/Barbarian/PHB/at/3", undefined);
   });
 
   it("says a feature granted at another level is not found at this one", async () => {
     stubFetchByUrl({ "/api/classes/Barbarian/PHB/at/3": barbarianAt3 });
-    renderAt("/catalog/classes/Barbarian/PHB/features/Rage/PHB/3");
+    renderAt("/classes/Barbarian/PHB/features/Rage/PHB/3");
 
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await dialogNamed("Not found");
     expect(
       screen.getByText(/the class feature Rage \(PHB\) of Barbarian \(PHB\) at level 3/),
     ).toBeInTheDocument();
@@ -122,9 +128,9 @@ describe("CatalogPage", () => {
         features: [feature("Frenzy", 3)],
       },
     });
-    renderAt("/catalog/classes/Barbarian/PHB/subclasses/Berserker/PHB/features/Frenzy/PHB/3");
+    renderAt("/classes/Barbarian/PHB/subclasses/Berserker/PHB/features/Frenzy/PHB/3");
 
-    await screen.findByRole("heading", { level: 1, name: "Frenzy" });
+    await dialogNamed("Frenzy");
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/classes/Barbarian/PHB/subclasses/Path%20of%20the%20Berserker/PHB/at/3",
       undefined,
@@ -136,9 +142,9 @@ describe("CatalogPage", () => {
       "/api/classes/Barbarian/PHB/subclasses?edition=classic&limit=200": { items: [] },
       "/api/classes/Barbarian/PHB/subclasses?edition=one&limit=200": { items: [] },
     });
-    renderAt("/catalog/classes/Barbarian/PHB/subclasses/Nope/PHB/features/Frenzy/PHB/3");
+    renderAt("/classes/Barbarian/PHB/subclasses/Nope/PHB/features/Frenzy/PHB/3");
 
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await dialogNamed("Not found");
     expect(
       screen.getByText(/the subclass feature Frenzy \(PHB\) of Nope \(PHB\)/),
     ).toBeInTheDocument();
@@ -155,7 +161,7 @@ describe("CatalogPage", () => {
         json: { name: "High", source: "PHB", entries: ["A keen mind."] },
       },
     });
-    renderAt("/catalog/races/Elf/PHB/subraces/High/PHB");
+    renderAt("/races/Elf/PHB/subraces/High/PHB");
 
     await screen.findByText("A keen mind.");
     expect(fetchMock).toHaveBeenCalledWith("/api/races/Elf/PHB/subraces/High/PHB", undefined);
@@ -163,9 +169,9 @@ describe("CatalogPage", () => {
 
   it("says a feature level no class reaches is not found, without asking the API", async () => {
     const fetchMock = stubFetchByUrl({ "/api/characters": [] });
-    renderAt("/catalog/classes/Barbarian/PHB/features/Rage/PHB/21");
+    renderAt("/classes/Barbarian/PHB/features/Rage/PHB/21");
 
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await dialogNamed("Not found");
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/classes/Barbarian/PHB/features/Rage/PHB/21",
       undefined,
@@ -182,9 +188,9 @@ describe("CatalogPage", () => {
         json: { name: "Barbarian", source: "PHB" },
       },
     });
-    renderAt("/catalog/classes/Barbarian/PHB");
+    renderAt("/classes/Barbarian/PHB");
 
-    await screen.findByRole("heading", { level: 1, name: "Barbarian" });
+    await dialogNamed("Barbarian");
     expect(screen.getByText("This row carries no rules text of its own.")).toBeInTheDocument();
   });
 
@@ -202,24 +208,71 @@ describe("CatalogPage", () => {
         createdAt: "2026-01-01T00:00:00.000Z",
       },
     });
-    renderAt("/catalog/homebrew/spells/hb-1");
+    renderAt("/homebrew/spells/hb-1");
 
-    await screen.findByRole("heading", { level: 1, name: "Frost Nova" });
+    await dialogNamed("Frost Nova");
     expect(screen.getByText("Homebrew")).toBeInTheDocument();
   });
 
   it("renders a magic variant under the name its expansion gives it", async () => {
     stubFetchByUrl({ "/api/items/Longsword/PHB/variants/%2B1%20Weapon/DMG": longsword });
-    renderAt("/catalog/items/Longsword/PHB/variants/%2B1%20Weapon/DMG");
+    renderAt("/items/Longsword/PHB/variants/%2B1%20Weapon/DMG");
 
-    await screen.findByRole("heading", { level: 1, name: "+1 Longsword" });
+    await dialogNamed("+1 Longsword");
+  });
+
+  it("says an address no target matches is not found, without asking the API", async () => {
+    const fetchMock = stubFetchByUrl({});
+    renderAt("/monsters/Goblin/MM");
+
+    await dialogNamed("Not found");
+    expect(screen.getByText(/Nothing answers to \/monsters\/Goblin\/MM\./)).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the close button", () => fireEvent.click(screen.getByRole("button", { name: "Close" }))],
+    [
+      "the backdrop",
+      () => {
+        fireEvent.pointerDown(screen.getByRole("dialog"));
+        fireEvent.click(screen.getByRole("dialog"));
+      },
+    ],
+    ["Escape", () => fireEvent(screen.getByRole("dialog"), new Event("cancel"))],
+  ])("closes by %s", async (_how, close) => {
+    stubFetchByUrl({ "/api/spells/Fireball/PHB": fireball });
+    const onClose = renderAt("/spells/Fireball/PHB");
+    await dialogNamed("Fireball");
+
+    close();
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("stays open for a click inside its content", async () => {
+    stubFetchByUrl({ "/api/spells/Fireball/PHB": fireball });
+    const onClose = renderAt("/spells/Fireball/PHB");
+    await dialogNamed("Fireball");
+
+    fireEvent.click(screen.getByText("More dice."));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("stays open for a selection dragged from its content onto the backdrop", async () => {
+    stubFetchByUrl({ "/api/spells/Fireball/PHB": fireball });
+    const onClose = renderAt("/spells/Fireball/PHB");
+    await dialogNamed("Fireball");
+
+    fireEvent.pointerDown(screen.getByText("More dice."));
+    fireEvent.click(screen.getByRole("dialog"));
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("says what a stale link looked for", async () => {
     stubFetchByUrl({});
-    renderAt("/catalog/spells/Fireball/XPHB");
+    renderAt("/spells/Fireball/XPHB");
 
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await dialogNamed("Not found");
     expect(
       screen.getByText(/Nothing answers to the spell Fireball \(XPHB\)\./),
     ).toBeInTheDocument();
@@ -231,7 +284,7 @@ describe("CatalogPage", () => {
       "fetch",
       vi.fn(async () => new Response(JSON.stringify({ error: "Not a sword" }), { status: 409 })),
     );
-    renderAt(url.replace("/api", "/catalog"));
+    renderAt(url.replace("/api", ""));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Not a sword");
   });

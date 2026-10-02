@@ -1,51 +1,46 @@
-import { matchRoutes } from "react-router";
 import { describe, expect, it } from "vitest";
-import { routeConfig } from "../router.tsx";
-import { CatalogPage } from "../routes/CatalogPage.tsx";
-import { HIT_COLLECTIONS, searchHitPath, searchHitTypeLabel } from "./searchHits.ts";
+import { matchCatalogTarget } from "./catalogRows.ts";
+import { HIT_COLLECTIONS, searchHitAddress, searchHitTypeLabel } from "./searchHits.ts";
 
-const leafElementType = (path: string) => {
-  const matches = matchRoutes(routeConfig, path) ?? [];
-  const element = matches.at(-1)?.route.element;
-  return element && typeof element === "object" && "type" in element ? element.type : undefined;
-};
-
-describe("searchHitPath", () => {
+describe("searchHitAddress", () => {
   it("addresses a catalog hit by its encoded name and source", () => {
     const hit = { type: "item", name: "+1 Longsword", source: "DMG", edition: "classic" as const };
-    expect(searchHitPath(hit)).toBe("/catalog/items/%2B1%20Longsword/DMG");
+    expect(searchHitAddress(hit)).toBe("/items/%2B1%20Longsword/DMG");
   });
 
   it("addresses a homebrew hit by its id", () => {
-    expect(searchHitPath({ type: "spell", id: "7", name: "Ember", edition: "one" })).toBe(
-      "/catalog/homebrew/spells/7",
+    expect(searchHitAddress({ type: "spell", id: "7", name: "Ember", edition: "one" })).toBe(
+      "/homebrew/spells/7",
     );
   });
 
   it.each([...HIT_COLLECTIONS.keys()])(
-    "addresses a %s hit at a registered detail route",
+    "addresses a %s hit at an address a catalog target reads",
     (type) => {
-      const path = searchHitPath({
+      const address = searchHitAddress({
         type,
         name: "Mage Hand / Legerdemain",
         source: "XPHB",
         edition: "one",
       });
-      expect(leafElementType(path ?? "")).toBe(CatalogPage);
+      expect(matchCatalogTarget(address ?? "")?.key).toEqual({
+        name: "Mage Hand / Legerdemain",
+        source: "XPHB",
+      });
     },
   );
 
   it.each(["item", "spell"] as const)(
-    "addresses a homebrew %s hit at a registered detail route",
+    "addresses a homebrew %s hit at an address a catalog target reads",
     (type) => {
-      const path = searchHitPath({ type, id: "a1", name: "Ember", edition: "one" });
-      expect(leafElementType(path ?? "")).toBe(CatalogPage);
+      const address = searchHitAddress({ type, id: "a1", name: "Ember", edition: "one" });
+      expect(matchCatalogTarget(address ?? "")?.key).toEqual({ id: "a1" });
     },
   );
 
   it.each(["monster", "constructor"])("has no path for the type %s", (type) => {
     expect(
-      searchHitPath({ type, name: "Fire Giant", source: "MM", edition: null }),
+      searchHitAddress({ type, name: "Fire Giant", source: "MM", edition: null }),
     ).toBeUndefined();
   });
 });

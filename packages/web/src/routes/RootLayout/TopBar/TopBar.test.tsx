@@ -72,7 +72,7 @@ describe("TopBar", () => {
     ["/characters/7/p/combat", "character", "/characters/7"],
     ["/settings", "settings", null],
     ["/", null, null],
-    ["/catalog/spells", null, null],
+    ["/this/goes/nowhere", null, null],
   ])("on %s marks %s as the current section", async (path, section, currentLink) => {
     stubFetchByUrl({ "/api/characters": [characterRecord("7", "Vex")] });
     renderTopBar(path);

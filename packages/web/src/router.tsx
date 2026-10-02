@@ -1,7 +1,5 @@
 import type { RouteObject } from "react-router";
 import { createBrowserRouter } from "react-router";
-import { CATALOG_TARGETS } from "./lib/catalogRows.ts";
-import { CatalogPage } from "./routes/CatalogPage.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage.tsx";
@@ -22,10 +20,6 @@ export const routeConfig: RouteObject[] = [
         children: [
           { index: true, element: <HomePage /> },
           { path: "characters", element: <CharacterListPage /> },
-          ...CATALOG_TARGETS.map((target) => ({
-            path: `catalog/${target.path}`,
-            element: <CatalogPage target={target} />,
-          })),
           { path: "*", element: <NotFoundPanel /> },
         ],
       },
