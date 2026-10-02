@@ -1,6 +1,7 @@
 /**
  * Searches the catalog and homebrew together: Tier A's flat-keyed tables, Tier C's
- * `entities`, and `homebrew.db`'s items and spells, merged into one list ordered by name.
+ * `entities`, and `homebrew.db`'s items and spells, merged into one list ranked by
+ * `compareSearchHits`.
  * See `packages/api/src/db/queries/catalog-search.ts`'s `searchCatalog` for what each tier's
  * query can and cannot do, and its `CATALOG_SEARCH_TABLES` for what a Tier A `type` can
  * be — a Tier C hit's `type` is open, since `packages/content` loads one for every array
@@ -8,6 +9,7 @@
  */
 import {
   catalogSearchHitSchema,
+  compareSearchHits,
   homebrewSearchHitSchema,
   type SearchHit,
   searchResponseSchema,
@@ -84,8 +86,8 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
         ? searchHomebrewSpells(homebrewDb, edition, q).map(toHomebrewSpellHit)
         : [];
 
-    const merged = [...catalogHits, ...homebrewItemHits, ...homebrewSpellHits].sort((a, b) =>
-      a.name.localeCompare(b.name),
+    const merged = [...catalogHits, ...homebrewItemHits, ...homebrewSpellHits].sort(
+      compareSearchHits(q),
     );
 
     return c.json({
