@@ -39,6 +39,8 @@ export function Modal({
       ref={ref}
       aria-labelledby={titleId}
       onCancel={(event) => {
+        // React bubbles `cancel` to an enclosing modal; the browser cancels only the top one.
+        event.stopPropagation();
         event.preventDefault();
         onClose();
       }}
