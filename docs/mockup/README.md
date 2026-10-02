@@ -197,7 +197,8 @@ widget, panel, or nav element:
   gray-filled chip holding a source's abbreviation, or Homebrew for a homebrew row, read
   aloud and shown on hover as the source's title. Wherever a row carries an edition, as a
   search result and Catalog Detail do, the year chip sits beside it; a sheet row shows the
-  source alone, since the source already tells a 2014 book from a 2024 one. List Item's
+  source alone, since the source already tells a 2014 book from a 2024 one. The Homebrew
+  artboards leave it out: every row there is homebrew. List Item's
   `homebrew` tweak turns its chip to Homebrew, and `showYear` hides the year.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
