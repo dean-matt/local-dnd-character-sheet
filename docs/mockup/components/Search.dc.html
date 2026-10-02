@@ -225,6 +225,9 @@
             </sc-if>
           </div>
         </sc-for>
+        <sc-if value="{{emptyQuery}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 13px; color: #6b7280; padding: 18px 14px;">Type a name to search the compendium.</div>
+        </sc-if>
         <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
           <div style="font-size: 13px; color: #6b7280; padding: 18px 14px;">No results for "{{query}}" under these filters. <button onClick="{{reset}}" style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 600; color: {{accent}};">Reset filters</button></div>
         </sc-if>
@@ -343,7 +346,7 @@ class Component extends DCLogic {
           this.setState({ pickerFor: null });
           focusAdd(res.id);
         },
-        addHint: onSheet ? ' ' + res.name + ', for ' + current.name : ' ' + res.name,
+        addHint: ' ' + res.name + ' (' + (res.source || 'Homebrew') + ')' + (onSheet ? ', for ' + current.name : ''),
         expandedAttr: onSheet ? undefined : pickerOpen,
         pickerLabel: 'Add ' + res.name + ' to which character',
         add: () => (onSheet ? add(res, current) : this.setState({ pickerFor: pickerOpen ? null : res.id, toast: null }))
@@ -402,7 +405,8 @@ class Component extends DCLogic {
       countLabel: results.length === 1 ? '1 result' : results.length + ' results',
       contextLabel: onSheet ? 'Add to… adds to ' + current.name + ', whose sheet you searched from' : 'Add to… asks which character',
       results,
-      noResults: results.length === 0,
+      emptyQuery: !q,
+      noResults: !!q && results.length === 0,
       pickerCharacters,
       noCharacters: CHARACTERS.length === 0,
       hasToast: !!toast,

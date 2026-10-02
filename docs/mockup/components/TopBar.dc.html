@@ -58,7 +58,7 @@
       </sc-if>
     </div>
 
-    <div onKeyDown="{{onSearchKeyDown}}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; z-index: 45;">
+    <div id="globalSearchWrap" onKeyDown="{{onSearchKeyDown}}" onBlur="{{onSearchBlur}}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; z-index: 45;">
       <div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid {{pillBorder}}; background: {{pillBg}};">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <label for="globalSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search characters and the compendium</label>
@@ -164,7 +164,7 @@
   </div>
 
   <sc-if value="{{showScrim}}" hint-placeholder-val="{{false}}">
-    <button aria-label="Close search" onClick="{{closeSearch}}" onKeyDown="{{onSearchKeyDown}}" style="position: absolute; inset: 0; z-index: 40; border: none; padding: 0; background: rgba(15,17,21,0.5); cursor: default;"></button>
+    <button id="searchScrim" aria-label="Close search" onClick="{{closeSearch}}" onKeyDown="{{onSearchKeyDown}}" onBlur="{{onSearchBlur}}" style="position: absolute; inset: 0; z-index: 40; border: none; padding: 0; background: rgba(15,17,21,0.5); cursor: default;"></button>
   </sc-if>
 </div>
 </x-dc>
@@ -301,6 +301,13 @@ class Component extends DCLogic {
           this.setState({ pickerFor: null });
           focusAdd(open);
         } else closeSearch();
+      },
+      // With no query, the scrim lasts only while focus stays in the search or on the scrim.
+      onSearchBlur: (e) => {
+        const next = e.relatedTarget;
+        const wrap = document.getElementById('globalSearchWrap');
+        if (next && ((wrap && wrap.contains(next)) || next.id === 'searchScrim')) return;
+        if (!this.state.query.trim()) this.setState({ searchOpen: false, pickerFor: null });
       },
       closeSearch,
       hasQuery,

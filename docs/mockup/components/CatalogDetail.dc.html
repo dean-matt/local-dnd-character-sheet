@@ -122,7 +122,7 @@ class Component extends DCLogic {
         type: 'Item', name: 'Longbow +1', source: 'DMG',
         entries: ['Attack and damage rolls made with this bow gain a +1 bonus.']
       },
-      homebrew: { type: 'Item', name: 'Ember Charm', source: '', entries: [] },
+      homebrew: { type: 'Item', name: 'Ember Charm of Fire', source: '', entries: [] },
       feat: {
         type: 'Feat', name: 'Alert', source: 'PHB',
         entries: [
@@ -158,7 +158,7 @@ class Component extends DCLogic {
       isHomebrew: !row.source,
       noEntries: row.entries.length === 0,
       entries: row.entries,
-      addHint: onSheet ? ' ' + row.name + ', for ' + current.name : ' ' + row.name,
+      addHint: ' ' + row.name + ' (' + (row.source || 'Homebrew') + ')' + (onSheet ? ', for ' + current.name : ''),
       expandedAttr: onSheet ? undefined : pickerOpen,
       pickerLabel: 'Add ' + row.name + ' to which character',
       pickerOpen,
