@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Page — Advanced Search</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  label, input, select { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; display: flex; flex-direction: column; background: #f4f5f7;">
+  <div style="position: relative; flex-shrink: 0; height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 24px; background: #ffffff; border-bottom: 1px solid #dde1e6;">
+    <div style="font-weight: 700; font-size: 18px; color: {{accent}}; margin-right: 14px;">Local D&amp;D</div>
+    <a href="CharacterList.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 4px; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+      Character
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
+    <a href="TopBar.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 4px; font-size: 14px; font-weight: 700; color: {{accent}}; text-decoration: none;">
+      Mechanics
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
+    <a href="TopBar.dc.html" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid #dde1e6; background: #eef0f3; font-size: 13px; color: #6b7280; text-decoration: none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Search characters, spells, items, rules…
+    </a>
+    <a href="SettingsSidebar.dc.html" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+      Settings
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+    </a>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <aside aria-label="Search filters" style="width: {{sidebarWidth}}; flex-shrink: 0; height: 100%; background: #ffffff; border-right: 1px solid #dde1e6; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;">
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Results</div>
+          <button onClick="{{reset}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
+        </div>
+
+        <fieldset style="border: none; margin: 0; padding: 0;">
+          <legend style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px; padding: 0;">Type</legend>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <sc-for list="{{typeOptions}}" as="opt" hint-placeholder-count="5">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+                <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}"> {{opt.label}}
+              </label>
+            </sc-for>
+          </div>
+        </fieldset>
+
+        <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+          <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Source</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+            <sc-for list="{{sourceChips}}" as="chip" hint-placeholder-count="2">
+              <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                {{chip.label}}
+                <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+              </div>
+            </sc-for>
+            <sc-if value="{{sourceEmpty}}" hint-placeholder-val="{{true}}">
+              <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+            </sc-if>
+          </div>
+          <sc-if value="{{sourceHasHidden}}" hint-placeholder-val="{{true}}">
+            <select onChange="{{onSourceAdd}}" value="" aria-label="Narrow by source" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+              <option value="" disabled>+ Narrow to source…</option>
+              <sc-for list="{{sourceHiddenOptions}}" as="opt" hint-placeholder-count="1">
+                <option value="{{opt.value}}">{{opt.label}}</option>
+              </sc-for>
+            </select>
+          </sc-if>
+        </div>
+
+        <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+        <fieldset style="border: none; margin: 0; padding: 0;">
+          <legend style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px; padding: 0;">Edition</legend>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+              <input type="checkbox" checked="{{edition2014}}" onChange="{{toggle2014}}"> 2014
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+              <input type="checkbox" checked="{{edition2024}}" onChange="{{toggle2024}}"> 2024
+            </label>
+          </div>
+        </fieldset>
+        </div>
+
+        <sc-if value="{{showSpellFilters}}" hint-placeholder-val="{{true}}">
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Spell level</div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label for="searchMinLevel" style="font-size: 12px; color: #6b7280;">Min</label>
+              <input id="searchMinLevel" type="number" min="0" max="9" value="{{minLevel}}" onChange="{{onMinLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+              <label for="searchMaxLevel" style="font-size: 12px; color: #6b7280;">Max</label>
+              <input id="searchMaxLevel" type="number" min="0" max="9" value="{{maxLevel}}" onChange="{{onMaxLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
+            </div>
+          </div>
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">School</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+              <sc-for list="{{schoolChips}}" as="chip" hint-placeholder-count="1">
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                  {{chip.label}}
+                  <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </div>
+              </sc-for>
+              <sc-if value="{{schoolEmpty}}" hint-placeholder-val="{{true}}">
+                <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{schoolHasHidden}}" hint-placeholder-val="{{true}}">
+              <select onChange="{{onSchoolAdd}}" value="" aria-label="Narrow by school" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+                <option value="" disabled>+ Narrow to school…</option>
+                <sc-for list="{{schoolHiddenOptions}}" as="opt" hint-placeholder-count="1">
+                  <option value="{{opt.value}}">{{opt.label}}</option>
+                </sc-for>
+              </select>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{showItemFilters}}" hint-placeholder-val="{{false}}">
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Rarity</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+              <sc-for list="{{rarityChips}}" as="chip" hint-placeholder-count="1">
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                  {{chip.label}}
+                  <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </div>
+              </sc-for>
+              <sc-if value="{{rarityEmpty}}" hint-placeholder-val="{{true}}">
+                <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{rarityHasHidden}}" hint-placeholder-val="{{true}}">
+              <select onChange="{{onRarityAdd}}" value="" aria-label="Narrow by rarity" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+                <option value="" disabled>+ Narrow to rarity…</option>
+                <sc-for list="{{rarityHiddenOptions}}" as="opt" hint-placeholder-count="1">
+                  <option value="{{opt.value}}">{{opt.label}}</option>
+                </sc-for>
+              </select>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{showTypeHint}}" hint-placeholder-val="{{false}}">
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; font-size: 12px; color: #6b7280;">Tick Spell for level and school, or Item for rarity.</div>
+        </sc-if>
+      </sc-if>
+
+      <div style="flex-grow: 1;"></div>
+
+      <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
+        <button aria-label="{{toggleLabel}}" aria-expanded="{{expanded}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 6px; border: none; background: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; margin: 0 1.5px; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
+          <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+        </button>
+      </div>
+    </aside>
+
+    <div style="flex-grow: 1; min-width: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 700;">Search</h1>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 8px; border: 1px solid #dde1e6; background: #ffffff; max-width: 640px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <label for="searchQuery" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search the compendium</label>
+        <input id="searchQuery" type="search" value="{{query}}" onChange="{{onQueryChange}}" placeholder="Search spells, items, feats, rules…" style="flex-grow: 1; border: none; background: none; outline: none; font-size: 14px; color: #1f2430;">
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 12px; font-size: 13px; color: #6b7280;">
+        <span>{{countLabel}}</span>
+        <span>·</span>
+        <span>{{contextLabel}}</span>
+      </div>
+
+      <div role="status">
+        <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+          <div style="max-width: 760px; padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
+            <div style="font-weight: 600;">{{toastText}}</div>
+            <sc-if value="{{hasToastNote}}" hint-placeholder-val="{{false}}">
+              <div style="color: #6b4e16; margin-top: 2px;">{{toastNote}}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="max-width: 760px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px;">
+        <sc-for list="{{results}}" as="res" hint-placeholder-count="6">
+          <div style="border-bottom: 1px solid #eceef1;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px;">
+              <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{res.tagColor}}; border-radius: 6px; padding: 3px 6px; flex-shrink: 0; width: 56px; text-align: center;">{{res.type}}</div>
+              <div style="min-width: 0; flex-grow: 1;">
+                <a href="CatalogDetail.dc.html" style="font-size: 14px; font-weight: 600; color: #1f2430; text-decoration: none;">{{res.name}}</a>
+                <div style="font-size: 12px; color: #6b7280;">{{res.meta}}</div>
+              </div>
+              <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;">{{res.source}}</span>
+              <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: #4b5260; background: #f4f5f7; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{res.edition}}</span>
+              <div style="width: 76px; flex-shrink: 0; display: flex; justify-content: flex-end;">
+                <sc-if value="{{res.addable}}" hint-placeholder-val="{{true}}">
+                  <button onClick="{{res.add}}" aria-label="{{res.addLabel}}" aria-expanded="{{res.pickerOpen}}" style="padding: 4px 10px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; font-weight: 600; color: {{accent}};">Add to…</button>
+                </sc-if>
+              </div>
+            </div>
+            <sc-if value="{{res.pickerOpen}}" hint-placeholder-val="{{false}}">
+              <div role="group" aria-label="{{res.pickerLabel}}" style="margin: 0 14px 10px 82px; padding: 6px; border: 1px solid #dde1e6; border-radius: 8px; background: #f8f9fb;">
+                <div style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 2px 6px 4px 6px;">Add to which character?</div>
+                <sc-for list="{{pickerCharacters}}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 5px 6px; border-radius: 6px; border: none; background: none; font-size: 12px; color: #1f2430;">
+                    <span style="width: 20px; height: 20px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 10px; flex-shrink: 0;">{{c.initial}}</span>
+                    {{c.name}}
+                  </button>
+                </sc-for>
+                <sc-if value="{{noCharacters}}" hint-placeholder-val="{{false}}">
+                  <div style="font-size: 12px; color: #6b7280; padding: 4px 6px;">There is no character to add to. <a href="CreationIdentity.dc.html" style="color: {{accent}}; font-weight: 600; text-decoration: none;">+ New Character</a></div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+          <div style="font-size: 13px; color: #6b7280; padding: 18px 14px;">No results for "{{query}}" under these filters. <button onClick="{{reset}}" style="border: none; background: none; padding: 0; font-size: 13px; font-weight: 600; color: {{accent}};">Reset filters</button></div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      query: 'fire',
+      collapsed: false,
+      filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [] },
+      pickerFor: null,
+      toast: null
+    };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const onSheet = (this.props.openedFrom ?? 'sheet') === 'sheet';
+    const ALL_CHARACTERS = [
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger' },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter' },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard' },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock' }
+    ];
+    const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
+    const current = ALL_CHARACTERS[0];
+    const TAG = { Spell: '#3a4f7a', Item: '#8a6a2e', Feat: '#6b4f7a', Race: '#5b5f66', Monster: '#7a3b2e' };
+    // Only an item, a spell or a feat adds from search; creation and level-up own the rest.
+    const ADDABLE = ['Spell', 'Item', 'Feat'];
+    const ROWS = [
+      { id: 'fireball-phb', type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', source: 'PHB', edition: '2014', level: 3, school: 'Evocation', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'fireball-xphb', type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', source: 'XPHB', edition: '2024', level: 3, school: 'Evocation', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'fire-bolt', type: 'Spell', name: 'Fire Bolt', meta: 'Evocation cantrip', source: 'PHB', edition: '2014', level: 0, school: 'Evocation', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'fire-shield', type: 'Spell', name: 'Fire Shield', meta: 'Evocation • 4th level', source: 'PHB', edition: '2014', level: 4, school: 'Evocation', classes: ['Wizard'] },
+      { id: 'flame-arrows', type: 'Spell', name: 'Flame Arrows', meta: 'Transmutation • 3rd level • fire damage', source: 'XGE', edition: '2014', level: 3, school: 'Transmutation', classes: ['Druid', 'Ranger', 'Sorcerer', 'Wizard'] },
+      { id: 'ring-fire', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', edition: '2014', rarity: 'Rare' },
+      { id: 'flame-tongue', type: 'Item', name: 'Flame Tongue', meta: 'Weapon • Rare • fire damage', source: 'DMG', edition: '2014', rarity: 'Rare' },
+      { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'General feat • acid, cold, fire, lightning or thunder', source: 'PHB', edition: '2014' },
+      { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', edition: '2014' },
+      { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: '2014' }
+    ];
+    const TYPES = ['Spell', 'Item', 'Feat', 'Race', 'Monster'];
+    const SOURCES = ['PHB', 'XPHB', 'DMG', 'XGE', 'MPMM', 'MM'];
+    const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
+    const RARITIES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
+
+    const { query, collapsed, filters, pickerFor, toast } = this.state;
+    const set = (next) => this.setState({ filters: { ...filters, ...next }, pickerFor: null });
+    const toggleIn = (list, v) => (list.indexOf(v) !== -1 ? list.filter((x) => x !== v) : [...list, v]);
+    const clamp = (n) => Math.max(0, Math.min(9, n));
+    const makeFacet = (selected, allKeys, apply) => {
+      const hidden = allKeys.filter((k) => selected.indexOf(k) === -1);
+      return {
+        chips: selected.map((k) => ({ label: k, remove: () => apply(selected.filter((x) => x !== k)) })),
+        isEmpty: selected.length === 0,
+        hasHidden: hidden.length > 0,
+        hiddenOptions: hidden.map((k) => ({ value: k, label: k })),
+        onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
+      };
+    };
+    const sourceFacet = makeFacet(filters.sources, SOURCES, (next) => set({ sources: next }));
+    const schoolFacet = makeFacet(filters.schools, SCHOOLS, (next) => set({ schools: next }));
+    const rarityFacet = makeFacet(filters.rarities, RARITIES, (next) => set({ rarities: next }));
+
+    const showSpellFilters = filters.types.indexOf('Spell') !== -1;
+    const showItemFilters = filters.types.indexOf('Item') !== -1;
+
+    // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
+    const add = (res, c) => {
+      const offList = res.type === 'Spell' && res.classes.indexOf(c.cls) === -1;
+      this.setState({
+        pickerFor: null,
+        toast: {
+          text: 'Added ' + res.name + ' (' + res.source + ') to ' + c.name + '.',
+          note: offList ? 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.' : ''
+        }
+      });
+    };
+
+    const q = query.trim().toLowerCase();
+    const matches = (r) => {
+      if (!q || (r.name + ' ' + r.meta).toLowerCase().indexOf(q) === -1) return false;
+      if (filters.types.length && filters.types.indexOf(r.type) === -1) return false;
+      if (filters.sources.length && filters.sources.indexOf(r.source) === -1) return false;
+      if (filters.editions.indexOf(r.edition) === -1) return false;
+      if (r.type === 'Spell' && showSpellFilters) {
+        if (r.level < filters.minLevel || r.level > filters.maxLevel) return false;
+        if (filters.schools.length && filters.schools.indexOf(r.school) === -1) return false;
+      }
+      if (r.type === 'Item' && showItemFilters && filters.rarities.length && filters.rarities.indexOf(r.rarity) === -1) return false;
+      return true;
+    };
+    const results = ROWS.filter(matches).map((res) => {
+      const pickerOpen = pickerFor === res.id;
+      return {
+        ...res,
+        tagColor: TAG[res.type],
+        addable: ADDABLE.indexOf(res.type) !== -1,
+        pickerOpen,
+        addLabel: onSheet ? 'Add ' + res.name + ' to ' + current.name : 'Add ' + res.name + ' to a character',
+        pickerLabel: 'Add ' + res.name + ' to which character',
+        add: () => (onSheet ? add(res, current) : this.setState({ pickerFor: pickerOpen ? null : res.id, toast: null }))
+      };
+    });
+    const picking = ROWS.find((r) => r.id === pickerFor);
+    const pickerCharacters = CHARACTERS.map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => add(picking, c) }));
+
+    return {
+      accent,
+      expanded: !collapsed,
+      sidebarWidth: collapsed ? '72px' : '260px',
+      textDisplay: collapsed ? 'none' : 'flex',
+      rowJustify: collapsed ? 'center' : 'flex-start',
+      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
+      toggleLabel: collapsed ? 'Expand filters' : 'Collapse filters',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+
+      typeOptions: TYPES.map((t) => ({ label: t, checked: filters.types.indexOf(t) !== -1, toggle: () => set({ types: toggleIn(filters.types, t) }) })),
+      sourceChips: sourceFacet.chips,
+      sourceEmpty: sourceFacet.isEmpty,
+      sourceHasHidden: sourceFacet.hasHidden,
+      sourceHiddenOptions: sourceFacet.hiddenOptions,
+      onSourceAdd: sourceFacet.onAdd,
+      edition2014: filters.editions.indexOf('2014') !== -1,
+      edition2024: filters.editions.indexOf('2024') !== -1,
+      toggle2014: () => set({ editions: toggleIn(filters.editions, '2014') }),
+      toggle2024: () => set({ editions: toggleIn(filters.editions, '2024') }),
+      showSpellFilters,
+      showItemFilters,
+      showTypeHint: !showSpellFilters && !showItemFilters,
+      minLevel: filters.minLevel,
+      maxLevel: filters.maxLevel,
+      onMinLevel: (e) => {
+        const n = clamp(parseInt(e.target.value, 10) || 0);
+        set({ minLevel: n, maxLevel: Math.max(n, filters.maxLevel) });
+      },
+      onMaxLevel: (e) => {
+        const n = clamp(parseInt(e.target.value, 10) || 0);
+        set({ maxLevel: n, minLevel: Math.min(n, filters.minLevel) });
+      },
+      schoolChips: schoolFacet.chips,
+      schoolEmpty: schoolFacet.isEmpty,
+      schoolHasHidden: schoolFacet.hasHidden,
+      schoolHiddenOptions: schoolFacet.hiddenOptions,
+      onSchoolAdd: schoolFacet.onAdd,
+      rarityChips: rarityFacet.chips,
+      rarityEmpty: rarityFacet.isEmpty,
+      rarityHasHidden: rarityFacet.hasHidden,
+      rarityHiddenOptions: rarityFacet.hiddenOptions,
+      onRarityAdd: rarityFacet.onAdd,
+      reset: () => this.setState({ filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [] }, pickerFor: null }),
+
+      query,
+      onQueryChange: (e) => this.setState({ query: e.target.value, pickerFor: null, toast: null }),
+      countLabel: results.length === 1 ? '1 result' : results.length + ' results',
+      contextLabel: onSheet ? 'Add to… adds to ' + current.name + ', whose sheet you searched from' : 'Add to… asks which character',
+      results,
+      noResults: results.length === 0,
+      pickerCharacters,
+      noCharacters: CHARACTERS.length === 0,
+      hasToast: !!toast,
+      hasToastNote: !!(toast && toast.note),
+      toastText: toast ? toast.text : '',
+      toastNote: toast ? toast.note : '',
+      toastBg: toast && toast.note ? '#fbf3e0' : '#eaf0ec'
+    };
+  }
+}
+</script>
+</body>
+</html>

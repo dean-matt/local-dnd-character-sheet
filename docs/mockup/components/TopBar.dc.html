@@ -17,7 +17,7 @@
 </style>
 </helmet>
 
-<div style="width: 1440px; height: 120px; display: flex; flex-direction: column; background: #f4f5f7;">
+<div style="position: relative; width: 1440px; height: 560px; display: flex; flex-direction: column; background: #f4f5f7; overflow: hidden;">
   <div style="position: relative; width: 100%; height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 0 24px; background: #ffffff; border-bottom: 1px solid #dde1e6;">
     <div style="font-weight: 700; font-size: 18px; color: {{accent}}; flex-shrink: 0; margin-right: 14px;">Local D&amp;D</div>
 
@@ -58,11 +58,11 @@
       </sc-if>
     </div>
 
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 420px;">
-      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid #dde1e6; background: #eef0f3;">
+    <div onKeyDown="{{onSearchKeyDown}}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; z-index: 45;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid {{pillBorder}}; background: {{pillBg}};">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <label for="globalSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Search characters and the compendium</label>
-        <input id="globalSearch" type="search" placeholder="Search characters, spells, items, rules…" value="{{query}}" onChange="{{onQueryChange}}" style="flex-grow: 1; border: none; background: none; outline: none; font-size: 13px; color: #1f2430;">
+        <input id="globalSearch" type="search" placeholder="Search characters, spells, items, rules…" value="{{query}}" onChange="{{onQueryChange}}" onFocus="{{onSearchFocus}}" aria-expanded="{{showSearchDropdown}}" aria-controls="globalSearchResults" style="flex-grow: 1; border: none; background: none; outline: none; font-size: 13px; color: #1f2430;">
         <sc-if value="{{hasQuery}}" hint-placeholder-val="{{false}}">
           <button aria-label="Clear search" onClick="{{clearQuery}}" style="width: 18px; height: 18px; border-radius: 50%; border: none; background: #dde1e6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0;">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#1f2430" stroke-width="3"><path d="M4 4l16 16M20 4L4 20"/></svg>
@@ -71,34 +71,71 @@
       </div>
 
       <sc-if value="{{showSearchDropdown}}" hint-placeholder-val="{{false}}">
-      <div style="position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 8px; max-height: 260px; overflow-y: auto; z-index: 50;">
-        <sc-if value="{{hasCharResults}}" hint-placeholder-val="{{true}}">
-          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 8px 10px 4px 10px;">Characters</div>
-          <sc-for list="{{charResults}}" as="res" hint-placeholder-count="2">
-            <button onClick="{{res.pick}}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font: inherit;">
-              <div style="width: 28px; height: 28px; border-radius: 50%; background: {{res.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0;">{{res.initial}}</div>
-              <div style="min-width: 0;">
-                <div style="font-size: 13px; color: #1f2430; font-weight: 500;">{{res.name}}</div>
-                <div style="font-size: 11px; color: #6b7280;">{{res.sub}}</div>
+      <div id="globalSearchResults" style="position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); display: flex; flex-direction: column; max-height: 420px;">
+        <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 8px;">
+          <sc-if value="{{hasCharResults}}" hint-placeholder-val="{{true}}">
+            <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 8px 10px 4px 10px;">Characters</div>
+            <sc-for list="{{charResults}}" as="res" hint-placeholder-count="2">
+              <a href="Layout.dc.html" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; text-decoration: none;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: {{res.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0;">{{res.initial}}</div>
+                <div style="min-width: 0; flex-grow: 1;">
+                  <div style="font-size: 13px; color: #1f2430; font-weight: 500;">{{res.name}}</div>
+                  <div style="font-size: 11px; color: #6b7280;">{{res.sub}}</div>
+                </div>
+                <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 6px; padding: 3px 6px; flex-shrink: 0;">Character</div>
+              </a>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{hasCompendiumResults}}" hint-placeholder-val="{{true}}">
+            <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 10px 10px 4px 10px;">Compendium</div>
+            <sc-for list="{{compendiumResults}}" as="res" hint-placeholder-count="3">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px 2px 0; border-radius: 8px;">
+                  <a href="CatalogDetail.dc.html" style="display: flex; align-items: center; gap: 10px; flex-grow: 1; min-width: 0; padding: 6px 10px; border-radius: 8px; text-decoration: none;">
+                    <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{res.tagColor}}; border-radius: 6px; padding: 3px 6px; flex-shrink: 0;">{{res.type}}</div>
+                    <div style="min-width: 0;">
+                      <div style="font-size: 13px; color: #1f2430; font-weight: 500;">{{res.name}}</div>
+                      <div style="font-size: 11px; color: #6b7280;">{{res.meta}}</div>
+                    </div>
+                  </a>
+                  <sc-if value="{{res.addable}}" hint-placeholder-val="{{true}}">
+                    <button onClick="{{res.add}}" aria-label="{{res.addLabel}}" aria-expanded="{{res.pickerOpen}}" style="flex-shrink: 0; padding: 4px 10px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; font-weight: 600; color: {{accent}};">Add to…</button>
+                  </sc-if>
+                </div>
+                <sc-if value="{{res.pickerOpen}}" hint-placeholder-val="{{false}}">
+                  <div role="group" aria-label="{{res.pickerLabel}}" style="margin: 2px 4px 6px 48px; padding: 6px; border: 1px solid #dde1e6; border-radius: 8px; background: #f8f9fb;">
+                    <div style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 2px 6px 4px 6px;">Add to which character?</div>
+                    <sc-for list="{{pickerCharacters}}" as="c" hint-placeholder-count="4">
+                      <button onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 5px 6px; border-radius: 6px; border: none; background: none; font-size: 12px; color: #1f2430;">
+                        <span style="width: 20px; height: 20px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 10px; flex-shrink: 0;">{{c.initial}}</span>
+                        {{c.name}}
+                      </button>
+                    </sc-for>
+                    <sc-if value="{{noCharacters}}" hint-placeholder-val="{{false}}">
+                      <div style="font-size: 12px; color: #6b7280; padding: 4px 6px;">There is no character to add to. <a href="CreationIdentity.dc.html" style="color: {{accent}}; font-weight: 600; text-decoration: none;">+ New Character</a></div>
+                    </sc-if>
+                  </div>
+                </sc-if>
               </div>
-            </button>
-          </sc-for>
-        </sc-if>
-        <sc-if value="{{hasCompendiumResults}}" hint-placeholder-val="{{true}}">
-          <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase; padding: 10px 10px 4px 10px;">Compendium</div>
-          <sc-for list="{{compendiumResults}}" as="res" hint-placeholder-count="3">
-            <button onClick="{{clearQuery}}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font: inherit;">
-              <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{res.tagColor}}; border-radius: 6px; padding: 3px 6px; flex-shrink: 0;">{{res.type}}</div>
-              <div style="min-width: 0;">
-                <div style="font-size: 13px; color: #1f2430; font-weight: 500;">{{res.name}}</div>
-                <div style="font-size: 11px; color: #6b7280;">{{res.meta}}</div>
-              </div>
-            </button>
-          </sc-for>
-        </sc-if>
-        <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
-          <div style="font-size: 13px; color: #6b7280; padding: 14px 10px;">No results for "{{query}}".</div>
-        </sc-if>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+            <div style="font-size: 13px; color: #6b7280; padding: 14px 10px;">No results for "{{query}}".</div>
+          </sc-if>
+        </div>
+        <div role="status" style="flex-shrink: 0;">
+          <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+            <div style="margin: 0 8px 8px 8px; padding: 8px 10px; border-radius: 8px; background: {{toastBg}}; font-size: 12px; color: #1f2430;">
+              <div style="font-weight: 600;">{{toastText}}</div>
+              <sc-if value="{{hasToastNote}}" hint-placeholder-val="{{false}}">
+                <div style="color: #6b4e16; margin-top: 2px;">{{toastNote}}</div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+        <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding: 6px 8px; display: flex; justify-content: flex-end;">
+          <a href="Search.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; color: {{accent}}; text-decoration: none;">Advanced search for "{{query}}" →</a>
+        </div>
       </div>
       </sc-if>
     </div>
@@ -108,22 +145,45 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
     </a>
   </div>
+
+  <div aria-hidden="{{showScrim}}" style="flex-grow: 1; min-height: 0; display: flex;">
+    <div style="width: 260px; flex-shrink: 0; background: #ffffff; border-right: 1px solid #dde1e6; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="height: 34px; border-radius: 6px; background: #eef0f3;"></div>
+      <div style="height: 14px; width: 70%; margin: 8px 10px; border-radius: 4px; background: #eceef1;"></div>
+      <div style="height: 14px; width: 60%; margin: 8px 10px; border-radius: 4px; background: #eceef1;"></div>
+      <div style="height: 14px; width: 65%; margin: 8px 10px; border-radius: 4px; background: #eceef1;"></div>
+    </div>
+    <div style="flex-grow: 1; padding: 24px 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-content: start;">
+      <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6; padding: 14px;"><div style="font-size: 13px; font-weight: 700; color: #6b7280;">Elara Nightshade's sheet</div></div>
+      <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
+      <div style="height: 180px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
+      <div style="height: 200px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
+      <div style="height: 200px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
+      <div style="height: 200px; border-radius: 8px; background: #ffffff; border: 1px solid #dde1e6;"></div>
+    </div>
+  </div>
+
+  <sc-if value="{{showScrim}}" hint-placeholder-val="{{false}}">
+    <button aria-label="Close search" onClick="{{closeSearch}}" onKeyDown="{{onSearchKeyDown}}" style="position: absolute; inset: 0; z-index: 40; border: none; padding: 0; background: rgba(15,17,21,0.5); cursor: default;"></button>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":1440,"height":120}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":560}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { query: '', openMenu: null };
+    this.state = { query: '', openMenu: null, searchOpen: false, pickerFor: null, toast: null };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const CHARACTERS = [
-      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', sub: 'Half-Elf Ranger • Lvl 7' },
-      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', sub: 'Mountain Dwarf Fighter • Lvl 6' },
-      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', sub: 'Human Wizard • Lvl 5' },
-      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', sub: 'Tiefling Warlock • Lvl 4' }
+    const onSheet = (this.props.openedFrom ?? 'sheet') === 'sheet';
+    const ALL_CHARACTERS = [
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger', sub: 'Half-Elf Ranger • Lvl 7' },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter', sub: 'Mountain Dwarf Fighter • Lvl 6' },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard', sub: 'Human Wizard • Lvl 5' },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock', sub: 'Tiefling Warlock • Lvl 4' }
     ];
+    const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     // The bar sits over Elara's sheet, the character the other sheet artboards show.
     const CURRENT_CHARACTER = 'elara';
     const MECHANICS_TYPES = [
@@ -131,19 +191,26 @@ class Component extends DCLogic {
       'Items', 'Languages', 'Monsters', 'Optional Features', 'Races', 'Senses', 'Skills',
       'Spells', 'Subclasses', 'Tables', 'Variant Rules', 'Vehicles'
     ];
+    // Only an item, a spell or a feat adds from search; creation and level-up own the rest.
     const COMPENDIUM = [
-      { type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', tagColor: '#3a4f7a' },
-      { type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', tagColor: '#8a6a2e' },
-      { type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', tagColor: '#4f6b6b' }
+      { id: 'fireball', type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'fire-bolt', type: 'Spell', name: 'Fire Bolt', meta: 'Evocation cantrip', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
+      { id: 'hunters-mark', type: 'Spell', name: "Hunter's Mark", meta: 'Divination • 1st level', tagColor: '#3a4f7a', classes: ['Ranger'] },
+      { id: 'longbow', type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', tagColor: '#8a6a2e' },
+      { id: 'fire-resistance', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', tagColor: '#8a6a2e' },
+      { id: 'alert', type: 'Feat', name: 'Alert', meta: 'General feat', tagColor: '#6b4f7a' },
+      { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', tagColor: '#5b5f66' },
+      { id: 'extra-attack', type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', tagColor: '#4f6b6b' }
     ];
+    const ADDABLE = ['Spell', 'Item', 'Feat'];
 
     const openMenu = this.state.openMenu;
-    const setMenu = (name) => this.setState({ openMenu: openMenu === name ? null : name });
+    const setMenu = (name) => this.setState({ openMenu: openMenu === name ? null : name, searchOpen: false });
 
     const characterMenuOpen = openMenu === 'character';
     const mechanicsMenuOpen = openMenu === 'mechanics';
 
-    const characters = CHARACTERS.map((c) => ({
+    const characters = ALL_CHARACTERS.map((c) => ({
       id: c.id,
       name: c.name,
       color: c.color,
@@ -153,11 +220,49 @@ class Component extends DCLogic {
     }));
     const mechanicsTypes = MECHANICS_TYPES.map((label) => ({ label, go: () => this.setState({ openMenu: null }) }));
 
+    const focusPill = () => {
+      const pill = document.getElementById('globalSearch');
+      if (!pill || document.activeElement === pill) return;
+      this.skipFocusOpen = true;
+      pill.focus();
+    };
+    const closeSearch = () => {
+      this.setState({ searchOpen: false, pickerFor: null });
+      focusPill();
+    };
+    // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
+    const add = (res, c) => {
+      const offList = res.type === 'Spell' && res.classes.indexOf(c.cls) === -1;
+      this.setState({
+        pickerFor: null,
+        toast: {
+          text: 'Added ' + res.name + ' to ' + c.name + '.',
+          note: offList ? 'Noted: ' + res.name + ' is not on the ' + c.cls + ' spell list.' : ''
+        }
+      });
+    };
+    const current = ALL_CHARACTERS.find((c) => c.id === CURRENT_CHARACTER);
+
     const query = this.state.query;
     const q = query.trim().toLowerCase();
     const hasQuery = !!q;
-    const charResults = hasQuery ? CHARACTERS.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => this.setState({ query: '' }) })) : [];
-    const compendiumResults = hasQuery ? COMPENDIUM.filter((c) => c.name.toLowerCase().indexOf(q) !== -1) : [];
+    const charResults = hasQuery ? CHARACTERS.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({ ...c, initial: c.name.charAt(0) })) : [];
+    const compendiumResults = hasQuery ? COMPENDIUM.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((res) => {
+      const pickerOpen = this.state.pickerFor === res.id;
+      return {
+        ...res,
+        addable: ADDABLE.indexOf(res.type) !== -1,
+        pickerOpen,
+        addLabel: onSheet ? 'Add ' + res.name + ' to ' + current.name : 'Add ' + res.name + ' to a character',
+        pickerLabel: 'Add ' + res.name + ' to which character',
+        add: () => (onSheet ? add(res, current) : this.setState({ pickerFor: pickerOpen ? null : res.id, toast: null }))
+      };
+    }) : [];
+    const picking = COMPENDIUM.find((res) => res.id === this.state.pickerFor);
+    const pickerCharacters = CHARACTERS.map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => add(picking, c) }));
+
+    const searchOpen = this.state.searchOpen;
+    const toast = this.state.toast;
 
     return {
       accent,
@@ -174,15 +279,41 @@ class Component extends DCLogic {
       mechanicsTypes,
 
       query,
-      onQueryChange: (e) => this.setState({ query: e.target.value }),
+      onQueryChange: (e) => this.setState({ query: e.target.value, searchOpen: true, openMenu: null, toast: null }),
+      onSearchFocus: () => {
+        if (this.skipFocusOpen) {
+          this.skipFocusOpen = false;
+          return;
+        }
+        this.setState({ searchOpen: true, openMenu: null });
+      },
+      onSearchKeyDown: (e) => {
+        if (e.key !== 'Escape') return;
+        if (this.state.pickerFor) this.setState({ pickerFor: null });
+        else closeSearch();
+      },
+      closeSearch,
       hasQuery,
-      clearQuery: () => this.setState({ query: '' }),
-      showSearchDropdown: hasQuery,
+      clearQuery: () => {
+        this.setState({ query: '', pickerFor: null, toast: null });
+        focusPill();
+      },
+      showScrim: searchOpen,
+      pillBg: searchOpen ? '#ffffff' : '#eef0f3',
+      pillBorder: searchOpen ? accent : '#dde1e6',
+      showSearchDropdown: searchOpen && hasQuery,
       hasCharResults: charResults.length > 0,
       charResults,
       hasCompendiumResults: compendiumResults.length > 0,
       compendiumResults,
-      noResults: hasQuery && charResults.length === 0 && compendiumResults.length === 0
+      pickerCharacters,
+      noCharacters: CHARACTERS.length === 0,
+      noResults: hasQuery && charResults.length === 0 && compendiumResults.length === 0,
+      hasToast: !!toast,
+      hasToastNote: !!(toast && toast.note),
+      toastText: toast ? toast.text : '',
+      toastNote: toast ? toast.note : '',
+      toastBg: toast && toast.note ? '#fbf3e0' : '#eaf0ec'
     };
   }
 }

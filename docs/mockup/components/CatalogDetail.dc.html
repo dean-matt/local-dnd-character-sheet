@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Page — Catalog Detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+  label, input, select { font-family: inherit; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; }
+</style>
+</helmet>
+
+<div style="width: 1440px; height: 560px; display: flex; flex-direction: column; background: #f4f5f7;">
+  <div style="position: relative; flex-shrink: 0; height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 24px; background: #ffffff; border-bottom: 1px solid #dde1e6;">
+    <div style="font-weight: 700; font-size: 18px; color: {{accent}}; margin-right: 14px;">Local D&amp;D</div>
+    <a href="CharacterList.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 4px; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+      Character
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
+    <a href="TopBar.dc.html" style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 4px; font-size: 14px; font-weight: 700; color: {{accent}}; text-decoration: none;">
+      Mechanics
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
+    <a href="TopBar.dc.html" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-radius: 999px; border: 1px solid #dde1e6; background: #eef0f3; font-size: 13px; color: #6b7280; text-decoration: none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Search characters, spells, items, rules…
+    </a>
+    <a href="SettingsSidebar.dc.html" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: 500; color: #4b5260; text-decoration: none;">
+      Settings
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+    </a>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 24px 40px; overflow-y: auto;">
+    <article style="max-width: 760px;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+        <div style="min-width: 0;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: 600;">{{name}}</h1>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #6b7280;">{{source}}</p>
+        </div>
+        <div style="position: relative; flex-shrink: 0;" onKeyDown="{{onPickerKeyDown}}">
+          <button id="catalogAddTo" onClick="{{addClick}}" aria-label="{{addLabel}}" aria-expanded="{{pickerOpen}}" style="padding: 7px 14px; border-radius: 6px; border: none; background: {{accent}}; font-size: 13px; font-weight: 600; color: #ffffff;">Add to…</button>
+          <sc-if value="{{pickerOpen}}" hint-placeholder-val="{{false}}">
+            <div role="group" aria-label="{{pickerLabel}}" style="position: absolute; top: calc(100% + 6px); right: 0; width: 240px; padding: 6px; border: 1px solid #dde1e6; border-radius: 10px; background: #ffffff; box-shadow: 0 12px 24px rgba(0,0,0,0.18); z-index: 20;">
+              <div style="font-size: 11px; font-weight: 600; color: #6b7280; padding: 2px 6px 4px 6px;">Add to which character?</div>
+              <sc-for list="{{pickerCharacters}}" as="c" hint-placeholder-count="4">
+                <button onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 6px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">
+                  <span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 10px; flex-shrink: 0;">{{c.initial}}</span>
+                  {{c.name}}
+                </button>
+              </sc-for>
+              <sc-if value="{{noCharacters}}" hint-placeholder-val="{{false}}">
+                <div style="font-size: 12px; color: #6b7280; padding: 4px 6px;">There is no character to add to. <a href="CreationIdentity.dc.html" style="color: {{accent}}; font-weight: 600; text-decoration: none;">+ New Character</a></div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div role="status" style="margin-top: 12px;">
+        <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
+          <div style="padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
+            <div style="font-weight: 600;">{{toastText}}</div>
+            <sc-if value="{{hasToastNote}}" hint-placeholder-val="{{false}}">
+              <div style="color: #6b4e16; margin-top: 2px;">{{toastNote}}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.55; color: #1f2430;">
+        <sc-for list="{{entries}}" as="para" hint-placeholder-count="2">
+          <p style="margin: 0;">{{para}}</p>
+        </sc-for>
+      </div>
+    </article>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","item","feat"],"default":"spell"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { pickerOpen: false, toast: null };
+  }
+  componentDidUpdate(prev) {
+    if (prev.kind !== this.props.kind || prev.openedFrom !== this.props.openedFrom) this.setState({ pickerOpen: false, toast: null });
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const onSheet = (this.props.openedFrom ?? 'sheet') === 'sheet';
+    const ALL_CHARACTERS = [
+      { id: 'elara', name: 'Elara Nightshade', color: '#3f5d44', cls: 'Ranger' },
+      { id: 'thorin', name: 'Thorin Ironfist', color: '#7a3b2e', cls: 'Fighter' },
+      { id: 'mira', name: 'Mira Sundown', color: '#3a4f7a', cls: 'Wizard' },
+      { id: 'vex', name: 'Vex Larimore', color: '#7a3b53', cls: 'Warlock' }
+    ];
+    const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
+    const current = ALL_CHARACTERS[0];
+    // Paraphrased stand-ins: the real page renders the row's own entries through RulesEntries.
+    const ROWS = {
+      spell: {
+        type: 'Spell', name: 'Fireball', source: 'PHB', classes: ['Sorcerer', 'Wizard'],
+        entries: [
+          'Flame bursts in a 20-foot radius around a point you can see within range. Each creature in the burst makes a Dexterity save, taking 8d6 fire damage on a failure or half as much on a success.',
+          'Cast with a higher slot, the damage grows by 1d6 for each slot level above 3rd.'
+        ]
+      },
+      item: {
+        type: 'Item', name: 'Longbow +1', source: 'DMG',
+        entries: ['Attack and damage rolls made with this bow gain a +1 bonus.']
+      },
+      feat: {
+        type: 'Feat', name: 'Alert', source: 'PHB',
+        entries: [
+          'Initiative rolls gain +5, and while conscious the character cannot be surprised.',
+          'A creature the character cannot see gains no advantage on attacks against them.'
+        ]
+      }
+    };
+    const row = ROWS[this.props.kind ?? 'spell'] || ROWS.spell;
+    const { pickerOpen, toast } = this.state;
+
+    const focusButton = () => {
+      const b = document.getElementById('catalogAddTo');
+      if (b) b.focus();
+    };
+    // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
+    const add = (c) => {
+      const offList = row.type === 'Spell' && row.classes.indexOf(c.cls) === -1;
+      this.setState({
+        pickerOpen: false,
+        toast: {
+          text: 'Added ' + row.name + ' (' + row.source + ') to ' + c.name + '.',
+          note: offList ? 'Noted: ' + row.name + ' is not on the ' + c.cls + ' spell list.' : ''
+        }
+      });
+      focusButton();
+    };
+
+    return {
+      accent,
+      name: row.name,
+      source: row.source,
+      entries: row.entries,
+      addLabel: onSheet ? 'Add ' + row.name + ' to ' + current.name : 'Add ' + row.name + ' to a character',
+      pickerLabel: 'Add ' + row.name + ' to which character',
+      pickerOpen,
+      addClick: () => (onSheet ? add(current) : this.setState({ pickerOpen: !pickerOpen, toast: null })),
+      onPickerKeyDown: (e) => {
+        if (e.key !== 'Escape' || !pickerOpen) return;
+        this.setState({ pickerOpen: false });
+        focusButton();
+      },
+      pickerCharacters: CHARACTERS.map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => add(c) })),
+      noCharacters: CHARACTERS.length === 0,
+      hasToast: !!toast,
+      hasToastNote: !!(toast && toast.note),
+      toastText: toast ? toast.text : '',
+      toastNote: toast ? toast.note : '',
+      toastBg: toast && toast.note ? '#fbf3e0' : '#eaf0ec'
+    };
+  }
+}
+</script>
+</body>
+</html>
