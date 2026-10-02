@@ -603,6 +603,16 @@ describe("deriveCharacter", () => {
     const totals = (block: CharacterDerived) =>
       block.spellSlots.map((slot) => [slot.level, slot.total.computed]);
 
+    it("names a slot override by its slot level", () => {
+      const block = deriveCharacter(
+        { ...caster(WIZARD), overrides: { "spellSlots.1.total": 4 } },
+        tables([[WIZARD, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
+      );
+      expect(block.spellSlots).toEqual([
+        { level: 1, total: { computed: 2, manual: 4, terms: [] } },
+      ]);
+    });
+
     it("counts pact slots apart from the rest", () => {
       expect(derived.pactSlots).toEqual({
         level: 2,
@@ -741,6 +751,51 @@ describe("deriveCharacter", () => {
 
       expect(block.armorClass).toEqual(derived.armorClass);
       expect(derivedValue(block.initiative)).toBe(6);
+    });
+
+    it("leaves unapplied a refused value inside a list element or a nested object", () => {
+      const block = withOverrides({
+        "skills.Stealth|XPHB.modifier": "x",
+        speed: { walk: -5 },
+        "skills.Deception|XPHB.modifier": 8,
+      });
+
+      expect(block.skills).toEqual(
+        derived.skills.map((skill) =>
+          skill.ref.name === "Deception"
+            ? { ...skill, modifier: { ...skill.modifier, manual: 8 } }
+            : skill,
+        ),
+      );
+      expect(block.speed).toEqual(derived.speed);
+    });
+
+    it("names a hit die pool, a caster and a weapon by what they are", () => {
+      const block = withOverrides({
+        "hitDice.8.total": 7,
+        "spellcasting.catalog|Warlock|XPHB.saveDc": 18,
+        "attacks.catalog|Dagger|XPHB#0.attackBonus": 9,
+      });
+
+      expect(block.hitDice[0]?.total.manual).toBe(7);
+      expect(block.spellcasting[0]?.saveDc.manual).toBe(18);
+      expect(block.attacks.find((attack) => attack.entry === 0)?.attackBonus.manual).toBe(9);
+    });
+
+    it("keeps a weapon's override on it when an item lands ahead of it", () => {
+      const block = deriveCharacter(
+        {
+          ...equipped,
+          inventory: [
+            { ref: STUDDED_LEATHER, quantity: 1, carried: true, equipped: false, attuned: false },
+            ...equipped.inventory,
+          ],
+          overrides: { "attacks.catalog|Dagger|XPHB#0.attackBonus": 9 },
+        },
+        catalog,
+      );
+
+      expect(block.attacks.find((attack) => attack.entry === 1)?.attackBonus.manual).toBe(9);
     });
   });
 });

@@ -1,5 +1,6 @@
 import { type CharacterDerived, characterDerivedSchema } from "./characterDerived.ts";
-import { entryKey, refKey } from "./keys.ts";
+import type { CharacterDefinition } from "./definition.ts";
+import { entryKey, itemKey, refKey } from "./keys.ts";
 
 type Lists = {
   [K in keyof CharacterDerived as CharacterDerived[K] extends readonly unknown[]
@@ -11,13 +12,23 @@ type Lists = {
  * The path segment naming one element of each list in the block, so an override follows
  * the skill, class or slot level it was typed over rather than its position. A list
  * added to the block fails to compile until it names one here.
+ *
+ * An inventory entry carries no id, so a weapon is named by its item and which copy of
+ * that item it is. Removing another item leaves the override on its weapon; reordering
+ * two copies of one item swaps theirs.
  */
-const ELEMENT_KEY: { [K in keyof Lists]: (element: Lists[K][number]) => string } = {
+const ELEMENT_KEY: {
+  [K in keyof Lists]: (element: Lists[K][number], definition: CharacterDefinition) => string;
+} = {
   hitDice: (pool) => String(pool.die),
   skills: (skill) => refKey(skill.ref),
   spellcasting: (caster) => entryKey(caster.class),
   spellSlots: (slot) => String(slot.level),
-  attacks: (attack) => String(attack.entry),
+  attacks: (attack, { inventory }) => {
+    const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);
+    const item = earlier.pop() ?? "";
+    return `${item}#${earlier.filter((key) => key === item).length}`;
+  },
 };
 
 const isDerived = (node: object): node is { manual: unknown } =>
@@ -40,16 +51,18 @@ function visit(node: unknown, path: string, overrides: Record<string, unknown>):
  */
 export function applyOverrides(
   block: CharacterDerived,
-  overrides: Record<string, unknown>,
+  definition: CharacterDefinition,
 ): CharacterDerived {
+  const { overrides } = definition;
   if (Object.keys(overrides).length === 0) return block;
   const folded = structuredClone(block);
   for (const [key, value] of Object.entries(folded)) {
     const elementKey = ELEMENT_KEY[key as keyof Lists] as
-      | ((element: unknown) => string)
+      | ((element: unknown, definition: CharacterDefinition) => string)
       | undefined;
     if (Array.isArray(value) && elementKey) {
-      for (const element of value) visit(element, `${key}.${elementKey(element)}`, overrides);
+      for (const element of value)
+        visit(element, `${key}.${elementKey(element, definition)}`, overrides);
     } else {
       visit(value, key, overrides);
     }

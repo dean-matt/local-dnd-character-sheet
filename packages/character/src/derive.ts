@@ -464,7 +464,7 @@ export function deriveCharacter(
     attacks: derivedAttacks(definition, catalog),
     defenses: derivedDefenses(definition, catalog),
   };
-  return applyOverrides(block, definition.overrides);
+  return applyOverrides(block, definition);
 }
 
 function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
