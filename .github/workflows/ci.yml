@@ -57,7 +57,7 @@ jobs:
       # can be minutes before its release assets exist, and the download 404s before a
       # file is read. Dependabot raises the version once a month; the pin is what
       # makes that a reviewed change rather than a surprise.
-      - uses: crate-ci/typos@v1.50.2
+      - uses: crate-ci/typos@v1.50.3
 
   e2e:
     runs-on: ubuntu-latest
