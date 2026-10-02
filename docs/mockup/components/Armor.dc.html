@@ -43,6 +43,7 @@
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <button aria-label="View {{item.label}} details" onClick="{{item.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.label}}</button>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{item.sourceTitle}}">{{item.sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{item.sourceTitle}}</span></span>
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.armorClass}}</span>
             <sc-if value="{{item.hasDexChip}}" hint-placeholder-val="{{true}}">
               <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.dexChip}}</span>
@@ -129,9 +130,9 @@ class Component extends DCLogic {
       proficiencies: ['Light armor', 'Simple weapons'],
       dexMod: 4,
       equipment: [
-        { label: 'Studded Leather Armor', armorClass: 'Light', base: 12, dexCap: null, value: '45 gp', desc: 'Reinforced leather that trades bulk for flexibility.', equipped: true },
-        { label: 'Chain Mail', armorClass: 'Heavy', base: 16, dexCap: 0, value: '75 gp', desc: 'Interlocking metal rings worn over a padded layer; too heavy to benefit from agility.', equipped: false },
-        { label: 'Shield', armorClass: 'Shield', base: 2, dexCap: null, isBonus: true, value: '10 gp', desc: 'A sturdy shield strapped to one arm, adding to your Armor Class.', equipped: false }
+        { label: 'Studded Leather Armor', source: 'PHB', armorClass: 'Light', base: 12, dexCap: null, value: '45 gp', desc: 'Reinforced leather that trades bulk for flexibility.', equipped: true },
+        { label: 'Chain Mail', source: 'PHB', armorClass: 'Heavy', base: 16, dexCap: 0, value: '75 gp', desc: 'Interlocking metal rings worn over a padded layer; too heavy to benefit from agility.', equipped: false },
+        { label: 'Shield', source: 'PHB', armorClass: 'Shield', base: 2, dexCap: null, isBonus: true, value: '10 gp', desc: 'A sturdy shield strapped to one arm, adding to your Armor Class.', equipped: false }
       ],
       itemQuery: '',
       hoverKey: null,
@@ -142,15 +143,16 @@ class Component extends DCLogic {
     };
   }
   renderVals() {
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
     const accent = this.props.accent ?? '#c1272d';
     const { dexMod } = this.state;
     const fmt = (n) => (n >= 0 ? '+' + n : String(n));
     const CATALOG = [
-      { name: 'Studded Leather Armor', armorClass: 'Light', base: 12, dexCap: null, value: '45 gp', desc: 'Reinforced leather that trades bulk for flexibility.', meta: 'Armor • Light' },
-      { name: 'Chain Mail', armorClass: 'Heavy', base: 16, dexCap: 0, value: '75 gp', desc: 'Interlocking metal rings worn over a padded layer; too heavy to benefit from agility.', meta: 'Armor • Heavy' },
-      { name: 'Shield', armorClass: 'Shield', base: 2, dexCap: null, isBonus: true, value: '10 gp', desc: 'A sturdy shield strapped to one arm, adding to your Armor Class.', meta: 'Armor • Shield' },
-      { name: 'Leather Armor', armorClass: 'Light', base: 11, dexCap: null, value: '10 gp', desc: 'Boiled leather, stiffened with a wax bath.', meta: 'Armor • Light' },
-      { name: 'Half Plate', armorClass: 'Medium', base: 15, dexCap: 2, value: '750 gp', desc: 'Shaped metal plates covering most of the body over a leather backing.', meta: 'Armor • Medium' }
+      { name: 'Studded Leather Armor', source: 'PHB', armorClass: 'Light', base: 12, dexCap: null, value: '45 gp', desc: 'Reinforced leather that trades bulk for flexibility.', meta: 'Armor • Light' },
+      { name: 'Chain Mail', source: 'PHB', armorClass: 'Heavy', base: 16, dexCap: 0, value: '75 gp', desc: 'Interlocking metal rings worn over a padded layer; too heavy to benefit from agility.', meta: 'Armor • Heavy' },
+      { name: 'Shield', source: 'PHB', armorClass: 'Shield', base: 2, dexCap: null, isBonus: true, value: '10 gp', desc: 'A sturdy shield strapped to one arm, adding to your Armor Class.', meta: 'Armor • Shield' },
+      { name: 'Leather Armor', source: 'PHB', armorClass: 'Light', base: 11, dexCap: null, value: '10 gp', desc: 'Boiled leather, stiffened with a wax bath.', meta: 'Armor • Light' },
+      { name: 'Half Plate', source: 'PHB', armorClass: 'Medium', base: 15, dexCap: 2, value: '750 gp', desc: 'Shaped metal plates covering most of the body over a leather backing.', meta: 'Armor • Medium' }
     ];
     const { proficiencies, equipment, itemQuery, armorFilters: wf } = this.state;
     const canEquip = (item) => {
@@ -183,6 +185,7 @@ class Component extends DCLogic {
       else if (equipped) { equipBorder = accent; equipBg = accent; equipColor = '#ffffff'; equipTipLabel = 'Equipped, click to stow'; }
       return {
         label: item.label,
+        sourceLabel: item.source || 'Homebrew', sourceTitle: SOURCE_TITLES[item.source] || item.source || 'Homebrew',
         value: item.value,
         armorClass: item.armorClass,
         hasDexChip: !item.isBonus,
@@ -224,7 +227,7 @@ class Component extends DCLogic {
           name: c.name,
           meta: c.meta,
           add: () => {
-            this.setState({ equipment: [...equipment, { label: c.name, armorClass: c.armorClass, base: c.base, dexCap: c.dexCap, isBonus: c.isBonus, value: c.value, desc: c.desc, equipped: false }], itemQuery: '' });
+            this.setState({ equipment: [...equipment, { label: c.name, source: c.source, armorClass: c.armorClass, base: c.base, dexCap: c.dexCap, isBonus: c.isBonus, value: c.value, desc: c.desc, equipped: false }], itemQuery: '' });
           }
         }))
       : [];

@@ -16,13 +16,19 @@
 </style>
 </helmet>
 
-<div style="width: 460px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
+<div style="width: 460px; height: 400px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7;">
   <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">List item — the shared row shape for Weapons, Armor, Gear, Known Spells, and Features</div>
 
     <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
       <div style="display: flex; align-items: center; gap: 8px;">
         <button style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600;">Longsword</button>
+        <span style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+          <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; flex-shrink: 0; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6;"><span aria-hidden="true" title="{{sourceTitle}}">{{sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{sourceTitle}}</span></span>
+          <sc-if value="{{showYear}}" hint-placeholder-val="{{true}}">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 4px; padding: 2px 5px; flex-shrink: 0; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6;"><span aria-hidden="true" title="This weapon uses the 2014 rules">2014</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">2014 rules</span></span>
+          </sc-if>
+        </span>
         <sc-if value="{{showChip}}" hint-placeholder-val="{{true}}">
           <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">Martial</span>
         </sc-if>
@@ -55,7 +61,7 @@
     </div>
 
     <div style="font-size: 11px; color: #6b7280; line-height: 1.5;">
-      Row 1: name (ellipsis), gray property chips such as category or level, a gold
+      Row 1: name (ellipsis), the source chip, gray property chips such as category or level, a gold
       cost chip (a coin icon, read aloud as "Cost 15 gp") where the item has a price, a
       flex spacer, then remove (an x) at the far right.<br>
       Row 2: a truncated one-line description.<br>
@@ -65,21 +71,30 @@
       an 18px icon square, a backpack when stowed and the item type's icon on the accent
       when equipped. Remove and Edit are gray icons with no border or fill in the same
       18px box, so all three line up, each a 12px Lucide icon. A row with no action
-      chips or controls has no third line.
+      chips or controls has no third line.<br>
+      The source chip: the source's abbreviation, or Homebrew for a homebrew row, in one
+      gray-filled chip, read aloud and shown on hover as the source's title. The edition's
+      year chip sits beside it wherever the row carries an edition: a search result and
+      Catalog Detail. A sheet row shows the source alone, since the source already tells
+      a 2014 book from a 2024 one.
     </div>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"showGrip":{"editor":"boolean","default":true},"$preview":{"width":460,"height":340}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"showCalc":{"editor":"boolean","default":true},"showAction":{"editor":"boolean","default":true},"showChip":{"editor":"boolean","default":true},"showChip2":{"editor":"boolean","default":true},"showGrip":{"editor":"boolean","default":true},"homebrew":{"editor":"boolean","default":false},"showYear":{"editor":"boolean","default":true},"$preview":{"width":460,"height":400}}'>
 class Component extends DCLogic {
   renderVals() {
+    const homebrew = this.props.homebrew ?? false;
     return {
       accent: this.props.accent ?? '#c1272d',
       showCalc: this.props.showCalc ?? true,
       showAction: this.props.showAction ?? true,
       showChip: this.props.showChip ?? true,
       showChip2: this.props.showChip2 ?? true,
-      showGrip: this.props.showGrip ?? true
+      showGrip: this.props.showGrip ?? true,
+      showYear: this.props.showYear ?? true,
+      sourceLabel: homebrew ? 'Homebrew' : 'PHB',
+      sourceTitle: homebrew ? 'Homebrew' : "Player's Handbook (2014)"
     };
   }
 }

@@ -43,6 +43,7 @@
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <button aria-label="View {{item.label}} details" onClick="{{item.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{item.label}}</button>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{item.sourceTitle}}">{{item.sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{item.sourceTitle}}</span></span>
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">{{item.category}}</span>
             <span style="display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; line-height: 12px; color: #7a5b00; background: #fbf3dc; border: 1px solid #e5cf8f; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="8" cy="8" r="6"></circle><path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path><path d="M7 6h1v4"></path><path d="m16.71 13.88.7.71-2.82 2.82"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Cost </span>{{item.value}}</span>
             <div style="flex-grow: 1;"></div>
@@ -87,8 +88,8 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       equipment: [
-        { label: "Explorer's Pack", value: '10 gp', category: 'Pack', desc: 'A backpack holding a bedroll, mess kit, tinderbox, rations and rope — the standard kit for life on the road.' },
-        { label: 'Quiver, 20 arrows', value: '1 gp', category: 'Adventuring', desc: 'A leather quiver holding twenty arrows for a bow.' }
+        { label: "Explorer's Pack", source: 'PHB', value: '10 gp', category: 'Pack', desc: 'A backpack holding a bedroll, mess kit, tinderbox, rations and rope — the standard kit for life on the road.' },
+        { label: 'Quiver, 20 arrows', source: 'PHB', value: '1 gp', category: 'Adventuring', desc: 'A leather quiver holding twenty arrows for a bow.' }
       ],
       itemQuery: '',
       modalItem: null,
@@ -97,13 +98,14 @@ class Component extends DCLogic {
     };
   }
   renderVals() {
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
     const accent = '#c1272d';
     const KNOWN_CATEGORIES = ['Pack', 'Adventuring', 'Consumable', 'Wondrous item'];
     const CATALOG = [
-      { name: 'Potion of Healing', value: '50 gp', category: 'Consumable', meta: 'Potion • Consumable', desc: 'A crimson elixir that restores 2d4+2 hit points when drunk.' },
-      { name: 'Bag of Holding', value: '5000 gp', category: 'Wondrous item', meta: 'Wondrous item', desc: 'A bag whose inside is larger than its outside, holding up to 500 pounds without adding weight.' },
-      { name: "Explorer's Pack", value: '10 gp', category: 'Pack', meta: 'Gear • Pack', desc: 'A backpack holding a bedroll, mess kit, tinderbox, rations and rope — the standard kit for life on the road.' },
-      { name: 'Rope, 50 ft', value: '1 gp', category: 'Adventuring', meta: 'Gear • Adventuring', desc: 'Hempen rope, useful for climbing, hauling or binding.' }
+      { name: 'Potion of Healing', source: 'PHB', value: '50 gp', category: 'Consumable', meta: 'Potion • Consumable', desc: 'A crimson elixir that restores 2d4+2 hit points when drunk.' },
+      { name: 'Bag of Holding', source: 'DMG', value: '5000 gp', category: 'Wondrous item', meta: 'Wondrous item', desc: 'A bag whose inside is larger than its outside, holding up to 500 pounds without adding weight.' },
+      { name: "Explorer's Pack", source: 'PHB', value: '10 gp', category: 'Pack', meta: 'Gear • Pack', desc: 'A backpack holding a bedroll, mess kit, tinderbox, rations and rope — the standard kit for life on the road.' },
+      { name: 'Rope, 50 ft', source: 'PHB', value: '1 gp', category: 'Adventuring', meta: 'Gear • Adventuring', desc: 'Hempen rope, useful for climbing, hauling or binding.' }
     ];
     const { equipment, itemQuery, gearFilters: wf } = this.state;
     const bucketOf = (item) => (KNOWN_CATEGORIES.indexOf(item.category) !== -1 ? item.category : 'Other');
@@ -119,6 +121,7 @@ class Component extends DCLogic {
       const idx = equipment.indexOf(item);
       return {
         label: item.label,
+        sourceLabel: item.source || 'Homebrew', sourceTitle: SOURCE_TITLES[item.source] || item.source || 'Homebrew',
         value: item.value,
         category: item.category || 'Gear',
         descShort: item.desc,
@@ -131,7 +134,7 @@ class Component extends DCLogic {
       ? CATALOG.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({
           name: c.name,
           meta: c.meta,
-          add: () => this.setState({ equipment: [...equipment, { label: c.name, value: c.value, category: c.category, desc: c.desc }], itemQuery: '' })
+          add: () => this.setState({ equipment: [...equipment, { label: c.name, source: c.source, value: c.value, category: c.category, desc: c.desc }], itemQuery: '' })
         }))
       : [];
     const modalItem = this.state.modalItem;

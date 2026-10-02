@@ -201,8 +201,7 @@
                 <a href="CatalogDetail.dc.html" style="font-size: 14px; font-weight: 600; color: #1f2430; text-decoration: none;">{{res.name}}</a>
                 <div style="font-size: 12px; color: #6b7280;">{{res.meta}}</div>
               </div>
-              <span style="font-size: 11px; color: #6b7280; flex-shrink: 0;"><sc-if value="{{res.isHomebrew}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #eceef1; border-radius: 4px; padding: 2px 5px;">Homebrew</span></sc-if>{{res.source}}</span>
-              <span style="width: 38px; flex-shrink: 0; display: flex; justify-content: flex-end;"><sc-if value="{{res.edition}}" hint-placeholder-val="{{true}}"><span style="font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: #4b5260; background: #f4f5f7; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;">{{res.edition}}</span></sc-if></span>
+              <span style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{res.sourceTitle}}">{{res.sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{res.sourceTitle}}</span></span><sc-if value="{{res.edition}}" hint-placeholder-val="{{true}}"><span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{res.yearTitle}}">{{res.edition}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{res.edition}} rules</span></span></sc-if></span>
               <div style="width: 76px; flex-shrink: 0; display: flex; justify-content: flex-end;">
                 <sc-if value="{{res.addable}}" hint-placeholder-val="{{true}}">
                   <button id="{{res.addId}}" onClick="{{res.add}}" aria-expanded="{{res.expandedAttr}}" style="padding: 4px 10px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 12px; font-weight: 600; color: {{accent}};">Add to…<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{res.addHint}}</span></button>
@@ -276,6 +275,7 @@ class Component extends DCLogic {
       { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: '2014' }
     ];
     const TYPES = ['Spell', 'Item', 'Feat', 'Race', 'Monster'];
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse', XGE: "Xanathar's Guide to Everything", MM: 'Monster Manual (2014)' };
     const SOURCES = ['PHB', 'XPHB', 'DMG', 'XGE', 'MPMM', 'MM', 'Homebrew'];
     const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
     const RARITIES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
@@ -341,7 +341,9 @@ class Component extends DCLogic {
       return {
         ...res,
         tagColor: TAG[res.type],
-        isHomebrew: !res.source,
+        sourceLabel: res.source || 'Homebrew',
+        sourceTitle: SOURCE_TITLES[res.source] || res.source || 'Homebrew',
+        yearTitle: 'This ' + res.type.toLowerCase() + ' uses the ' + res.edition + ' rules',
         addable: ADDABLE.indexOf(res.type) !== -1,
         addId: 'add-' + res.id,
         pickerOpen,

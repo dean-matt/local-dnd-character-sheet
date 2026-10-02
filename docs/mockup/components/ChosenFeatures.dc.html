@@ -45,6 +45,7 @@
         <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #eef0f3; border-radius: 6px; font-size: 14px; color: #1f2430; min-width: 0;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <button aria-label="View {{feat.label}} details" onClick="{{feat.openDetail}}" style="all: unset; cursor: pointer; min-width: 20px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{feat.label}}</button>
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{feat.sourceTitle}}">{{feat.sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{feat.sourceTitle}}</span></span>
             <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">Lvl {{feat.level}}</span>
             <div style="flex-grow: 1;"></div>
             <button aria-label="Remove {{feat.label}}" onClick="{{feat.remove}}" style="position: relative; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; background: none; color: #6b7280; flex-shrink: 0;"><span aria-hidden="true" style="position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px;"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
@@ -116,7 +117,7 @@ class Component extends DCLogic {
     super(props);
     this.state = {
       features: [
-        { label: 'Alert', level: 4, uses: null, kind: 'Feat' }
+        { label: 'Alert', source: 'PHB', level: 4, uses: null, kind: 'Feat' }
       ],
       featureQuery: '',
       newFeatureKind: 'Feat',
@@ -128,14 +129,15 @@ class Component extends DCLogic {
     };
   }
   renderVals() {
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
     const accent = this.props.accent ?? '#c1272d';
     const FEATURE_DESC = {
       'Alert': "You gain +5 to initiative and can't be surprised while conscious.",
       'Tough': 'Your hit point maximum increases by 2 for each level you have.'
     };
     const CATALOG = [
-      { name: 'Alert', meta: 'Feat', kind: 'Feat' },
-      { name: 'Tough', meta: 'Feat', kind: 'Feat' }
+      { name: 'Alert', source: 'PHB', meta: 'Feat', kind: 'Feat' },
+      { name: 'Tough', source: 'PHB', meta: 'Feat', kind: 'Feat' }
     ];
     const { features, featureQuery, featureFilters: wf } = this.state;
     const featureRows = features.map((f, idx) => {
@@ -150,7 +152,7 @@ class Component extends DCLogic {
       const desc = FEATURE_DESC[f.label] || 'No further detail recorded for this feature.';
       const usesText = hasUses ? f.uses.total - f.uses.used + ' of ' + f.uses.total + ' uses remaining.' : '';
       return {
-        idx, label: f.label, level: f.level, hasUses, pips, descShort: desc,
+        idx, label: f.label, sourceLabel: f.source || 'Homebrew', sourceTitle: SOURCE_TITLES[f.source] || f.source || 'Homebrew', level: f.level, hasUses, pips, descShort: desc,
         kind: f.kind || 'Feat',
         remove: () => this.setState({ features: features.filter((_, i) => i !== idx) }),
         openDetail: () => this.setState({ modalItem: { label: f.label, meta: (f.kind || 'Feat') + ' • gained at level ' + f.level + (usesText ? ' • ' + usesText : ''), desc } })
@@ -171,7 +173,7 @@ class Component extends DCLogic {
           meta: c.meta,
           add: () => {
             const uses = newFeatureUses > 0 ? { total: newFeatureUses, used: 0 } : null;
-            this.setState({ features: [...features, { label: c.name, level: newFeatureLevel, uses, kind: c.kind }], featureQuery: '' });
+            this.setState({ features: [...features, { label: c.name, source: c.source, level: newFeatureLevel, uses, kind: c.kind }], featureQuery: '' });
           }
         }))
       : [];

@@ -95,7 +95,11 @@
                     <div style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{res.tagColor}}; border-radius: 6px; padding: 3px 6px; flex-shrink: 0;">{{res.type}}</div>
                     <div style="min-width: 0;">
                       <div style="font-size: 13px; color: #1f2430; font-weight: 500;">{{res.name}}</div>
-                      <div style="font-size: 11px; color: #6b7280;">{{res.meta}}</div>
+                      <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: 11px; color: #6b7280;">
+                        <span>{{res.meta}}</span>
+                        <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{res.sourceTitle}}">{{res.sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{res.sourceTitle}}</span></span>
+                        <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;"><span aria-hidden="true" title="{{res.yearTitle}}">{{res.year}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{res.year}} rules</span></span>
+                      </div>
                     </div>
                   </a>
                   <sc-if value="{{res.addable}}" hint-placeholder-val="{{true}}">
@@ -201,8 +205,11 @@ class Component extends DCLogic {
       { id: 'alert', type: 'Feat', name: 'Alert', meta: 'Origin feat', source: 'XPHB', tagColor: '#6b4f7a' },
       { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite', source: 'PHB', tagColor: '#6b4f7a', needsCaster: true },
       { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', tagColor: '#5b5f66' },
-      { id: 'extra-attack', type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', source: 'PHB', tagColor: '#4f6b6b' }
+      { id: 'extra-attack', type: 'Feature', name: 'Extra Attack', meta: 'Martial class feature', source: 'PHB', tagColor: '#4f6b6b' },
+      { id: 'ember-charm', type: 'Item', name: 'Ember Charm of Fire', meta: 'Wondrous item', source: '', edition: '2014', tagColor: '#8a6a2e' }
     ];
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
+    const sourceLabel = (res) => res.source || 'Homebrew';
     const ADDABLE = ['Spell', 'Item', 'Feat'];
 
     const openMenu = this.state.openMenu;
@@ -245,7 +252,7 @@ class Component extends DCLogic {
       this.setState({
         pickerFor: null,
         toast: {
-          text: 'Added ' + res.name + ' (' + res.source + ') to ' + c.name + '.',
+          text: 'Added ' + res.name + ' (' + sourceLabel(res) + ') to ' + c.name + '.',
           note: noteFor(res, c)
         }
       });
@@ -259,13 +266,17 @@ class Component extends DCLogic {
     const charResults = hasQuery ? CHARACTERS.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((c) => ({ ...c, initial: c.name.charAt(0) })) : [];
     const compendiumResults = hasQuery ? COMPENDIUM.filter((c) => c.name.toLowerCase().indexOf(q) !== -1).map((res) => {
       const pickerOpen = this.state.pickerFor === res.id;
+      const year = res.edition || (res.source === 'XPHB' ? '2024' : '2014');
       return {
         ...res,
-        meta: res.meta + ' • ' + res.source,
+        sourceLabel: sourceLabel(res),
+        sourceTitle: SOURCE_TITLES[res.source] || sourceLabel(res),
+        year,
+        yearTitle: 'This ' + res.type.toLowerCase() + ' uses the ' + year + ' rules',
         addable: ADDABLE.indexOf(res.type) !== -1,
         addId: 'add-' + res.id,
         pickerOpen,
-        addHint: ' ' + res.name + ' (' + res.source + ')' + (onSheet ? ', for ' + current.name : ''),
+        addHint: ' ' + res.name + ' (' + sourceLabel(res) + ')' + (onSheet ? ', for ' + current.name : ''),
         expandedAttr: onSheet ? undefined : pickerOpen,
         pickerLabel: 'Add ' + res.name + ' to which character',
         add: () => (onSheet ? add(res, current) : this.setState({ pickerFor: pickerOpen ? null : res.id, toast: null }))
