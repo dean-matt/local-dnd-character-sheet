@@ -603,6 +603,16 @@ describe("deriveCharacter", () => {
     const totals = (block: CharacterDerived) =>
       block.spellSlots.map((slot) => [slot.level, slot.total.computed]);
 
+    it("names a slot override by its slot level", () => {
+      const block = deriveCharacter(
+        { ...caster(WIZARD), overrides: { "spellSlots.1.total": 4 } },
+        tables([[WIZARD, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
+      );
+      expect(block.spellSlots).toEqual([
+        { level: 1, total: { computed: 2, manual: 4, terms: [] } },
+      ]);
+    });
+
     it("counts pact slots apart from the rest", () => {
       expect(derived.pactSlots).toEqual({
         level: 2,
@@ -683,6 +693,109 @@ describe("deriveCharacter", () => {
         tables([[SORCERER, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
       );
       expect(block.spellcasting[0]).not.toHaveProperty("preparedSpells");
+    });
+  });
+
+  describe("overrides", () => {
+    const withOverrides = (overrides: CharacterDefinition["overrides"]) =>
+      deriveCharacter({ ...equipped, overrides }, catalog);
+
+    it("folds each override into the field its key names, leaving the computed side alone", () => {
+      const block = withOverrides({
+        armorClass: 20,
+        "abilityModifiers.dex": 5,
+        "skills.Stealth|XPHB.modifier": 12,
+      });
+
+      expect(block.armorClass).toEqual({ ...derived.armorClass, manual: 20 });
+      expect(derivedValue(block.abilityModifiers.dex)).toBe(5);
+      const stealth = block.skills.find((skill) => skill.ref.name === "Stealth");
+      expect(stealth?.modifier).toEqual({
+        computed: 9,
+        manual: 12,
+        terms: stealth?.modifier.terms,
+      });
+      expect(stealth?.passive.manual).toBeNull();
+    });
+
+    it("returns the computed value once the override is cleared", () => {
+      const overridden = withOverrides({ armorClass: 20 });
+      const cleared = withOverrides({});
+
+      expect(derivedValue(overridden.armorClass)).toBe(20);
+      expect(cleared.armorClass).toEqual(derived.armorClass);
+      expect(derivedValue(cleared.armorClass)).toBe(17);
+    });
+
+    it("keeps an override through a level-up that moves the computed value", () => {
+      const fighter = { name: "Fighter", source: "XPHB" };
+      const leveled = deriveCharacter(
+        {
+          ...equipped,
+          levels: [...equipped.levels, { class: fighter }],
+          overrides: { hitPointMaximum: 99 },
+        },
+        { ...catalog, hitDice: new Map([...hitDice, [entryKey(fighter), 10 as const]]) },
+      );
+
+      expect(leveled.hitPointMaximum.computed).toBeGreaterThan(derived.hitPointMaximum.computed);
+      expect(derivedValue(leveled.hitPointMaximum)).toBe(99);
+    });
+
+    it("leaves unapplied a key naming no field, rather than refusing the block", () => {
+      expect(withOverrides({ "skills.Juggling|XPHB.modifier": 4 })).toEqual(derived);
+    });
+
+    it("leaves unapplied a value its field refuses, and applies the rest", () => {
+      const block = withOverrides({ armorClass: "high", initiative: 6 });
+
+      expect(block.armorClass).toEqual(derived.armorClass);
+      expect(derivedValue(block.initiative)).toBe(6);
+    });
+
+    it("leaves unapplied a refused value inside a list element or a nested object", () => {
+      const block = withOverrides({
+        "skills.Stealth|XPHB.modifier": "x",
+        speed: { walk: -5 },
+        "skills.Deception|XPHB.modifier": 8,
+      });
+
+      expect(block.skills).toEqual(
+        derived.skills.map((skill) =>
+          skill.ref.name === "Deception"
+            ? { ...skill, modifier: { ...skill.modifier, manual: 8 } }
+            : skill,
+        ),
+      );
+      expect(block.speed).toEqual(derived.speed);
+    });
+
+    it("names a hit die pool, a caster and a weapon by what they are", () => {
+      const block = withOverrides({
+        "hitDice.8.total": 7,
+        "spellcasting.catalog|Warlock|XPHB.saveDc": 18,
+        "attacks.catalog|Dagger|XPHB#0.attackBonus": 9,
+      });
+
+      expect(block.hitDice[0]?.total.manual).toBe(7);
+      expect(block.spellcasting[0]?.saveDc.manual).toBe(18);
+      expect(block.attacks.find((attack) => attack.entry === 0)?.attackBonus.manual).toBe(9);
+    });
+
+    it("keeps a weapon's override on it when an item lands ahead of it", () => {
+      const block = deriveCharacter(
+        {
+          ...equipped,
+          inventory: [
+            { ref: STUDDED_LEATHER, quantity: 1, carried: true, equipped: false, attuned: false },
+            ...equipped.inventory,
+          ],
+          overrides: { "attacks.catalog|Dagger|XPHB#0.attackBonus": 9 },
+        },
+        catalog,
+      );
+
+      expect(block.attacks.find((attack) => attack.entry === 1)?.attackBonus.manual).toBe(9);
     });
   });
 });

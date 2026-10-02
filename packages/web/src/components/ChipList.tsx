@@ -1,11 +1,5 @@
-import type { ReactNode } from "react";
-
-export const PILL = "rounded-pill border border-border bg-subtle px-2.5 py-1 text-row";
-
-/** What a card shows in place of a value it has none of. */
-export function EmptyNote({ children }: { children: ReactNode }) {
-  return <p className="text-muted text-row italic">{children}</p>;
-}
+import { PILL } from "../lib/chipStyles.ts";
+import { EmptyNote } from "./EmptyNote.tsx";
 
 /** A wrapping row of pill chips, or `empty` in their place when there are none. */
 export function ChipList({ labels, empty }: { labels: readonly string[]; empty?: string }) {

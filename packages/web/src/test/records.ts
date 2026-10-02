@@ -1,6 +1,7 @@
 import {
   type CharacterDerived,
   type CharacterPageRecord,
+  type CharacterRecord,
   type CharacterStateRecord,
   characterDefinitionSchema,
   defaultCharacterState,
@@ -41,6 +42,62 @@ export function characterRecord(id: string, name: string) {
     }),
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
+  };
+}
+
+/** `characterRecord`'s Vex at Warlock 3, a Fiend Patron from the third level. */
+export function warlockRecord(): CharacterRecord {
+  const warlock = { name: "Warlock", source: "XPHB" };
+  const record = characterRecord("1", "Vex");
+  return {
+    ...record,
+    level: 3,
+    definition: {
+      ...record.definition,
+      levels: [
+        { class: warlock },
+        { class: warlock },
+        { class: warlock, subclass: { name: "Fiend Patron", source: "XPHB" } },
+      ],
+    },
+  };
+}
+
+/**
+ * `characterRecord`'s Vex as a Warlock 2 / Fighter 1 High Elf, with something in every
+ * proficiency list, an alignment and notes.
+ */
+export function identityRecord(): CharacterRecord {
+  const base = characterRecord("1", "Vex");
+  const warlock = { class: { name: "Warlock", source: "XPHB" } };
+  return {
+    ...base,
+    definition: characterDefinitionSchema.parse({
+      ...base.definition,
+      levels: [
+        warlock,
+        { class: { name: "Fighter", source: "XPHB" } },
+        { ...warlock, subclass: { name: "Fiend Patron", source: "XPHB" } },
+      ],
+      race: { name: "Elf", source: "XPHB" },
+      subrace: { name: "High", source: "XPHB" },
+      proficiencies: {
+        ...base.definition.proficiencies,
+        armor: ["Light", "Shield"],
+        weapons: ["Simple", "Light"],
+        tools: [
+          { name: "Thieves' Tools", level: "expertise" },
+          { name: "Herbalism Kit", level: "proficient" },
+          { name: "Dice Set", level: "none" },
+        ],
+        languages: [
+          { name: "Common", source: "XPHB" },
+          { name: "Elvish", source: "XPHB" },
+        ],
+      },
+      alignment: "Chaotic Good",
+      notes: "Owes Sarth 10 gp.\nDo not trust the ferryman.",
+    }),
   };
 }
 

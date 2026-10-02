@@ -5,7 +5,7 @@ import { derivedSchema, derivedValue } from "./index.ts";
 describe("derived fields", () => {
   const schema = derivedSchema(z.int());
 
-  it("defaults to no override, matching an absent field_overrides row", () => {
+  it("defaults to no override, matching a key absent from overrides", () => {
     expect(schema.parse({ computed: 38 })).toEqual({ computed: 38, manual: null, terms: [] });
     expect(derivedValue({ computed: 38, manual: null })).toBe(38);
   });

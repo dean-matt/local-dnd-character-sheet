@@ -77,7 +77,7 @@ above and stops:
 | Rules lawyer | `packages/{rules,character,dice,tags}` | Whether the arithmetic is what 5e says, whether the `classic` and `one` split holds, and the token contract [`tag-render`](../tag-render/SKILL.md) states |
 | Data steward | `packages/content` | What [`content-import`](../content-import/SKILL.md) states: identity keys, edition tiers, `_copy` resolution, the lockfile, and interpolation in the raw SQL |
 | API contract | `packages/api` | What [`add-endpoint`](../add-endpoint/SKILL.md) states: the Zod to OpenAPI to Drizzle to query-hook order, spec drift, a migration that cannot be rerun |
-| UI and accessibility | `packages/web` | Semantics, keyboard reachability, contrast — what the `accessibility` label marks |
+| UI and accessibility | `packages/web` | Semantics, keyboard reachability, contrast — what the `accessibility` label marks — and one concept per `lib/` file, against `docs/code-organization.md`, since no test can judge it |
 
 A lens returning nothing is the common case rather than a failure.
 

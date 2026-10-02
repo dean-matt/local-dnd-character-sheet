@@ -4,6 +4,11 @@
 
 The source code in this repository is licensed under the MIT License. See LICENSE.
 
+## Third-party code
+
+The web app draws its icons with `lucide-react` (https://lucide.dev), licensed
+under the ISC License. Its license ships in the installed package.
+
 ## Game content
 
 This project reads Dungeons & Dragons rules data from the 5etools project

@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { presetPageRecords } from "../test/records.ts";
 import { stubFetch } from "../test/stubFetch.ts";
-import { useCharacterPages, useReplaceCharacterPages } from "./useCharacterPages.ts";
+import { useCharacterPages } from "./useCharacterPages.ts";
+import { useReplaceCharacterPages } from "./useReplaceCharacterPages.ts";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>;

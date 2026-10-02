@@ -1,15 +1,9 @@
 /**
  * Schema for `characters.db` — your data. Backed up, migrated, never regenerated.
  *
- * Two deliberate splits:
- *
- *   definition vs state   `characters` holds who the character is; `character_state`
- *                         holds what is true right now. A long rest touches state
- *                         only, so it can never corrupt the sheet.
- *   computed vs manual    derived values are computed on read; `field_overrides`
- *                         holds only the values a user has edited. An absent row
- *                         means "use the computed value", so a level-up recomputes
- *                         without stomping an edit.
+ * `characters` holds who the character is; `character_state` holds what is true right
+ * now. A long rest touches state only, so it can never corrupt the sheet. Derived values
+ * are computed on read, and the ones a user has edited live in the definition.
  *
  * Cascading deletes need `PRAGMA foreign_keys = ON`, which SQLite leaves off by
  * default. Open these databases through `./client.ts`, never directly.
@@ -44,19 +38,6 @@ export const characterState = sqliteTable("character_state", {
   state: text("state", { mode: "json" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
-
-/** Derived fields the user has overridden. Absent row means "use the computed value". */
-export const fieldOverrides = sqliteTable(
-  "field_overrides",
-  {
-    characterId: text("character_id")
-      .notNull()
-      .references(() => characters.id, { onDelete: "cascade" }),
-    field: text("field").notNull(),
-    value: text("value").notNull(),
-  },
-  (t) => [primaryKey({ columns: [t.characterId, t.field] })],
-);
 
 /**
  * A character's pages, in `position` order. `preset` marks the pages seeded on insert,

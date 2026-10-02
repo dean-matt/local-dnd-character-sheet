@@ -26,9 +26,9 @@ const termSchema = z.strictObject({
 });
 
 /**
- * A computed field a user may have typed over. A null `manual` is the absent
- * `field_overrides` row: use the computed value. There is no third state,
- * because the table has nowhere to hold a manual value that is switched off.
+ * A computed field a user may have typed over. A null `manual` is a key absent from the
+ * definition's `overrides`: use the computed value. There is no third state, because
+ * `overrides` has nowhere to hold a manual value that is switched off.
  *
  * Writing `manual` never touches `computed`, so a level-up recomputes without
  * stomping the edit.

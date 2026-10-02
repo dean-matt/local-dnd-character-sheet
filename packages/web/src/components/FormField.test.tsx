@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { FormField, InputField } from "./FormField.tsx";
+import { FormField } from "./FormField.tsx";
 
 describe("FormField", () => {
   it("labels whatever control its render prop returns", () => {
@@ -63,19 +63,5 @@ describe("FormField", () => {
 
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
     expect(screen.getByRole("alert")).toHaveTextContent("Pick an alignment.");
-  });
-});
-
-describe("InputField", () => {
-  it("passes the input type through", () => {
-    render(<InputField label="Level" type="number" />);
-
-    expect(screen.getByRole("spinbutton", { name: "Level" })).toBeInTheDocument();
-  });
-
-  it("announces a status while the field is valid", () => {
-    render(<InputField label="Name" status="Saving…" />);
-
-    expect(screen.getByRole("status")).toHaveTextContent("Saving…");
   });
 });

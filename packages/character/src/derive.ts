@@ -36,6 +36,7 @@ import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight } from "./load.ts";
+import { applyOverrides } from "./overrides.ts";
 import type { Ability, ContentRef, EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
 import { classLevels, raceLabel, totalLevel } from "./summaries.ts";
@@ -407,8 +408,7 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 /**
  * The whole derived block for one character: every value `characterDerivedSchema`
  * holds, assembled from the definition and the catalog facts the caller resolved for
- * it. `manual` is always null here — an override lives in `field_overrides` and is a
- * later layer's job to fold in, never this one's to invent.
+ * it, with the definition's `overrides` folded into each `manual`.
  */
 export function deriveCharacter(
   definition: CharacterDefinition,
@@ -445,7 +445,7 @@ export function deriveCharacter(
     ]),
   ) as Record<Ability, ComputedField<number>>;
 
-  return {
+  const block: CharacterDerived = {
     abilityModifiers,
     hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice)),
     hitDice: hitDicePools(definition, catalog.hitDice),
@@ -464,6 +464,7 @@ export function deriveCharacter(
     attacks: derivedAttacks(definition, catalog),
     defenses: derivedDefenses(definition, catalog),
   };
+  return applyOverrides(block, definition);
 }
 
 function load(definition: CharacterDefinition, catalog: CharacterCatalog) {

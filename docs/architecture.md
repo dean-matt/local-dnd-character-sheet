@@ -133,7 +133,7 @@ arithmetic — since `rules` knows a term's meaning but never what supplied its 
 Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per
 character. They are session affordances, not audit trails.
 
-**One field contract, two modes.** `packages/web/src/components/Field.tsx` is the only
+**One field contract, two modes.** `packages/web/src/components/Field/Field.tsx` is the only
 component that renders a computed-versus-manual value. M4 uses its read mode, which marks
 an override and names the computed value it replaced; M5 turns on
 its edit mode without rewriting the view already rendering it. Edit mode commits on a
@@ -157,8 +157,8 @@ need deleting on cancel. The resolver binds to the schemas in `packages/characte
 form holds a second definition of a legal character. A choice an earlier one invalidates,
 such as a subclass after a class change, is cleared, and its field says why. The draft
 persists to `localStorage` keyed by flow, and by character for level-up, so it survives a
-reload; it clears on finish or cancel. The dependency lands with the first form that reads
-it.
+reload; it clears on finish or cancel. Each form is bound once through `createForm` in
+`packages/web/src/lib/createForm.ts`.
 
 ## Deliberately absent
 

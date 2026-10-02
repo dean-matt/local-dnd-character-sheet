@@ -1,7 +1,8 @@
 import { characterDerivedSchema } from "@dnd/character";
 import { useQuery } from "@tanstack/react-query";
-import { apiGet, retryUnlessClientError } from "../lib/api.ts";
-import { characterKey } from "./useCharacters.ts";
+import { apiGet } from "../lib/api.ts";
+import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
+import { characterKey } from "./characterKeys.ts";
 
 /**
  * A character's derived block. Keyed under the character, so a definition write that
