@@ -34,7 +34,8 @@ export function createForm<In extends FieldValues, Out extends FieldValues>(
     draftScope?: string;
   }) {
     const flow = draftScope === undefined ? config.flow : `${config.flow}:${draftScope}`;
-    return createElement(FormShell<In, Out>, { ...config, ...props, flow });
+    // FormShell reads its draft once on mount, so a new scope needs a fresh instance.
+    return createElement(FormShell<In, Out>, { ...config, ...props, flow, key: flow });
   }
 
   function useField(name: Path<In>): UseFormRegisterReturn & { error?: string } {
