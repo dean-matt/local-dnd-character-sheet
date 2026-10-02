@@ -92,9 +92,10 @@ widget, panel, or nav element:
   width. It filters by type, source and edition, and adds level and school once Spell is
   ticked and rarity once Item is. A row with no edition, as Tier B and C allow, shows
   under either edition. The API's `/search` takes one `edition`, one `type` and `q`
-  today, and matches `q` against a Tier A row's name alone. Ticking several
-  types or both editions, every other filter, and matching a row's text, as Search does
-  for Flame Tongue on "fire", are forward design for #521. A homebrew row shows a Homebrew tag where the source goes.
+  today, and matches `q` against a Tier A row's name alone. Ticking several types or
+  both editions, every other filter, and matching a row's text, as Search does for Flame
+  Tongue on "fire", are forward design for #521. A homebrew row shows a Homebrew tag
+  where the source goes.
 - Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
