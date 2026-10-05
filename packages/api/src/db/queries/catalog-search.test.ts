@@ -371,6 +371,32 @@ describe("searchCatalog", () => {
     ]);
   });
 
+  it("shows a deity's or a language's fields, so only a language with none of them is textless", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const lookup = (kind: string, name: string, source: string, json: object) => ({
+      kind,
+      name,
+      source,
+      edition: null,
+      json: JSON.stringify({ name, source, ...json }),
+    });
+    publishSearchFixture(dataDir, {
+      lookups: [
+        { ...lookup("deity", "Moradin", "PHB", { pantheon: "Nonhuman" }), qualifier: "Nonhuman" },
+        lookup("language", "Common", "XPHB", { type: "standard", origin: "Sigil" }),
+        lookup("language", "Draconic", "MOT", { typicalSpeakers: ["Dragons"] }),
+        lookup("language", "Olman", "TftYP", { page: 238 }),
+      ],
+    });
+
+    expect(searchCatalog(dataDir, { types: ["deity", "language"] })).toEqual([
+      { type: "deity", name: "Moradin", source: "PHB", qualifier: "Nonhuman", edition: null },
+      { type: "language", name: "Common", source: "XPHB", edition: null },
+      { type: "language", name: "Draconic", source: "MOT", edition: null },
+      { type: "language", name: "Olman", source: "TftYP", textless: true, edition: null },
+    ]);
+  });
+
   it("carries a card's deck as its qualifier", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {

@@ -677,6 +677,7 @@ export const FIXTURES: Fixture[] = [
             "Moradin|PHB|Nonhuman",
             "Bahgtru|SCAG|Orc",
             "Bahgtru|VGM|Orc",
+            "Abbathor|MTF|Dwarven",
           ],
         },
       },

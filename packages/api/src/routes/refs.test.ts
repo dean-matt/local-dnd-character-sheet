@@ -138,6 +138,14 @@ describe("refsRoutes", () => {
         { kind: "variantrule", qualifier: "", ...row("Unarmed Strike", "XPHB", ["Punch."]) },
         { kind: "condition", qualifier: "", ...row("Blinded", "XPHB") },
         { kind: "deity", qualifier: "Greek", ...row("Zeus", "PHB") },
+        {
+          kind: "language",
+          qualifier: "",
+          name: "Common",
+          source: "PHB",
+          json: JSON.stringify({ name: "Common", source: "PHB", type: "standard" }),
+        },
+        { kind: "language", qualifier: "", ...row("Olman", "TftYP") },
       ],
       optionalFeatures: [row("Agonizing Blast", "PHB", ["Add your Charisma modifier."])],
       entities: [
@@ -253,6 +261,20 @@ describe("refsRoutes", () => {
     ]);
     expect(invocation.path).toBe("/catalog/optfeature/Agonizing%20Blast/PHB");
     expect(condition).not.toHaveProperty("path");
+  });
+
+  it("links a language to its fields, though it has no prose, and leaves one with neither unlinked", async () => {
+    const [common, olman] = await resolveOk([
+      { tag: "language", name: "common" },
+      { tag: "language", name: "Olman", source: "TftYP" },
+    ]);
+    expect(common).toEqual({
+      name: "Common",
+      source: "PHB",
+      entries: [],
+      path: "/catalog/language/Common/PHB",
+    });
+    expect(olman).not.toHaveProperty("path");
   });
 
   it("links a creature to its stat block, though it has no prose to show in a popover", async () => {
