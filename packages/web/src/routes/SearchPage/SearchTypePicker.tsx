@@ -88,11 +88,17 @@ export function SearchTypePicker({ options, selected, onChange }: SearchTypePick
         <fieldset
           ref={list}
           id={`${id}-list`}
-          className="absolute top-full left-0 z-30 mt-1 flex max-h-80 w-full min-w-0 flex-col gap-1.5 overflow-y-auto rounded-control border border-border bg-surface p-2.5 shadow-popover"
+          // A press on a label's text focuses nothing, and Safari never focuses a clicked
+          // checkbox, so the blur above would close the list before the click toggled it.
+          tabIndex={-1}
+          className="absolute top-full left-0 z-30 mt-1 flex max-h-80 w-full min-w-0 flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none"
         >
           <legend className="sr-only">Types to search</legend>
           {options.map(({ type, label }) => (
-            <label key={type} className="flex items-center gap-2 text-row text-ink">
+            <label
+              key={type}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-row text-ink hover:bg-subtle"
+            >
               <input
                 type="checkbox"
                 checked={selected.includes(type)}
