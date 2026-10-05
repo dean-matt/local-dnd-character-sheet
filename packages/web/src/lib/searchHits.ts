@@ -23,7 +23,7 @@ export function searchHitAddress(hit: SearchHit): string | undefined {
     : `/${collection}/${encodeURIComponent(hit.name)}/${encodeURIComponent(hit.source)}`;
 }
 
-/** A hit's identity across both editions' searches: its type and key, or its homebrew id. */
+/** A hit's identity: its type and key, or its homebrew id. */
 export function searchHitKey(hit: SearchHit): string {
   return "id" in hit ? `homebrew:${hit.type}:${hit.id}` : `${hit.type}|${hit.name}|${hit.source}`;
 }
@@ -34,4 +34,12 @@ const TYPE_LABELS: Record<string, string> = { optfeature: "Optional feature" };
 export function searchHitTypeLabel(type: string): string {
   const words = TYPE_LABELS[type] ?? type.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** A hit's `type` in the plural, as a list of kinds names it: `class` reads "Classes". */
+export function searchHitTypePlural(type: string): string {
+  const label = searchHitTypeLabel(type);
+  if (/(s|x|ch|sh)$/.test(label)) return `${label}es`;
+  if (/[^aeiou]y$/.test(label)) return `${label.slice(0, -1)}ies`;
+  return `${label}s`;
 }

@@ -68,6 +68,8 @@ export {
   itemRecordSchema,
   weaponTraitSchema,
 } from "./item.ts";
+export type { ItemHitFacts, ItemKind } from "./item-kind.ts";
+export { ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
 export type {
   HomebrewRaceInput,
   HomebrewRaceRecord,
@@ -98,7 +100,11 @@ export {
   searchResponseSchema,
 } from "./search.ts";
 export type { CatalogSource } from "./source.ts";
-export { catalogSourcesResponseSchema, searchSourcesResponseSchema } from "./source.ts";
+export {
+  catalogSourcesResponseSchema,
+  searchSourcesResponseSchema,
+  searchTypesResponseSchema,
+} from "./source.ts";
 export type {
   CharacterSpells,
   HomebrewSpellInput,

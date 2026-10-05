@@ -38,7 +38,8 @@
               </div>
             </a>
           </sc-for>
-          <a href="CharacterList.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: #1f2430; text-decoration: none;">See all characters →</a>
+          <hr style="margin: 4px 10px; border: none; border-top: 1px solid #dde1e6;">
+          <a href="CharacterList.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: #1f2430; text-decoration: none;">See all characters →</a>
           <a href="CreationIdentity.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}}; text-decoration: none;">+ New Character</a>
         </div>
       </sc-if>
@@ -50,10 +51,12 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="transform: {{mechanicsCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <sc-if value="{{mechanicsMenuOpen}}" hint-placeholder-val="{{false}}">
-        <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 420px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 10px; z-index: 50; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px;">
-          <sc-for list="{{mechanicsTypes}}" as="m" hint-placeholder-count="19">
+        <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 640px; max-height: calc(100vh - 72px); overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 10px; z-index: 50; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px 8px;">
+          <sc-for list="{{mechanicsTypes}}" as="m" hint-placeholder-count="21">
             <button onClick="{{m.go}}" style="display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.label}}</button>
           </sc-for>
+          <hr style="grid-column: 1 / -1; margin: 4px 10px; border: none; border-top: 1px solid #dde1e6;">
+          <button onClick="{{goAllTypes}}" style="grid-column: 1 / -1; display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">All types…</button>
         </div>
       </sc-if>
     </div>
@@ -190,17 +193,19 @@ class Component extends DCLogic {
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     // Opened from a sheet, the bar sits over Elara's, the character the other sheet artboards show.
     const CURRENT_CHARACTER = 'elara';
+    // Picked by hand. The app shows an entry once search returns its type; Weapons and Armor
+    // open Search on items of those kinds, and All types… opens it unfiltered.
     const MECHANICS_TYPES = [
-      'Actions', 'Backgrounds', 'Classes', 'Conditions', 'Deities', 'Diseases', 'Feats',
+      'Actions', 'Armor', 'Backgrounds', 'Classes', 'Conditions', 'Deities', 'Diseases', 'Feats',
       'Items', 'Languages', 'Monsters', 'Optional Features', 'Races', 'Senses', 'Skills',
-      'Spells', 'Subclasses', 'Tables', 'Variant Rules', 'Vehicles'
+      'Spells', 'Subclasses', 'Tables', 'Variant Rules', 'Vehicles', 'Weapons'
     ];
     // Only an item, a spell or a feat adds from search; creation and level-up own the rest.
     const COMPENDIUM = [
       { id: 'fireball', type: 'Spell', name: 'Fireball', meta: 'Evocation • 3rd level', source: 'PHB', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
       { id: 'fire-bolt', type: 'Spell', name: 'Fire Bolt', meta: 'Evocation cantrip', source: 'PHB', tagColor: '#3a4f7a', classes: ['Sorcerer', 'Wizard'] },
       { id: 'hunters-mark', type: 'Spell', name: "Hunter's Mark", meta: 'Divination • 1st level', source: 'PHB', tagColor: '#3a4f7a', classes: ['Ranger'] },
-      { id: 'longbow', type: 'Item', name: 'Longbow +1', meta: 'Weapon • Martial ranged', source: 'DMG', tagColor: '#8a6a2e' },
+      { id: 'longbow', type: 'Item', name: 'Longbow +1', meta: 'Martial ranged weapon • Uncommon', source: 'DMG', tagColor: '#8a6a2e' },
       { id: 'fire-resistance', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', tagColor: '#8a6a2e' },
       { id: 'alert', type: 'Feat', name: 'Alert', meta: 'Origin feat', source: 'XPHB', tagColor: '#6b4f7a' },
       { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite', source: 'PHB', tagColor: '#6b4f7a', needsCaster: true },
@@ -306,6 +311,7 @@ class Component extends DCLogic {
       mechanicsCaretRotation: mechanicsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
       toggleMechanicsMenu: () => setMenu('mechanics'),
       mechanicsTypes,
+      goAllTypes: () => this.setState({ openMenu: null }),
 
       query,
       onQueryChange: (e) => this.setState({ query: e.target.value, searchOpen: true, openMenu: null, pickerFor: null, toast: null }),

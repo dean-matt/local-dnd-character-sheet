@@ -49,6 +49,29 @@ describe("useCatalogSearch", () => {
     );
   });
 
+  it("lists every row for a blank query where asked, across both editions and the filters given", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(body), { status: 200 }));
+
+    const { result } = renderHook(
+      () =>
+        useCatalogSearch({
+          type: "spell,item",
+          query: " ",
+          limit: 20,
+          offset: 40,
+          listAll: true,
+          filters: { source: "PHB", school: "V" },
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/search?limit=20&offset=40&type=spell%2Citem&source=PHB&school=V",
+      undefined,
+    );
+  });
+
   it("fetches nothing for a blank query", () => {
     const fetchMock = stubFetch(new Response(JSON.stringify(body), { status: 200 }));
 
@@ -59,5 +82,26 @@ describe("useCatalogSearch", () => {
 
     expect(result.current.fetchStatus).toBe("idle");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps the last page up while the next query loads, only where asked", async () => {
+    const page = { ...body, items: [], total: 7 };
+    for (const keepPrevious of [true, false]) {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValueOnce(new Response(JSON.stringify(page), { status: 200 }))
+          .mockReturnValueOnce(new Promise(() => {})),
+      );
+      const { result, rerender } = renderHook(
+        ({ query }) => useCatalogSearch({ query, limit: 20, keepPrevious }),
+        { wrapper, initialProps: { query: "fire" } },
+      );
+      await waitFor(() => expect(result.current.data?.total).toBe(7));
+
+      rerender({ query: "ice" });
+      expect(result.current.data?.total).toBe(keepPrevious ? 7 : undefined);
+    }
   });
 });

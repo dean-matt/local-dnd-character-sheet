@@ -1,5 +1,5 @@
-/** A spell school's name from upstream's one-letter code; a code not listed prints as itself. */
-const SCHOOL: Record<string, string> = {
+/** Each spell school's name, keyed by upstream's one-letter code. */
+export const SCHOOLS: Record<string, string> = {
   A: "Abjuration",
   C: "Conjuration",
   D: "Divination",
@@ -10,4 +10,5 @@ const SCHOOL: Record<string, string> = {
   T: "Transmutation",
 };
 
-export const schoolName = (code: string): string => SCHOOL[code] ?? code;
+/** A spell school's name from its code; a code not listed prints as itself. */
+export const schoolName = (code: string): string => SCHOOLS[code] ?? code;

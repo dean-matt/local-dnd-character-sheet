@@ -38,6 +38,8 @@ const AZER = {
   rendered_text: "Azer. Its hair is a mane of fire.",
 };
 
+const axe = { kinds: ["melee"], rarity: null, category: null };
+
 describe("searchRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
@@ -62,9 +64,9 @@ describe("searchRoutes", () => {
     opened.homebrewDb.$client.close();
   });
 
-  it("requires an edition and a term", async () => {
-    expect((await routes.request("/search?q=fire")).status).toBe(400);
-    expect((await routes.request("/search?edition=classic")).status).toBe(400);
+  it("rejects an unknown edition and a spell level past 9", async () => {
+    expect((await routes.request("/search?edition=third&q=fire")).status).toBe(400);
+    expect((await routes.request("/search?q=fire&maxLevel=10")).status).toBe(400);
   });
 
   it("returns Tier A, Tier C and homebrew hits in one list, a text-only match after every name match", async () => {
@@ -81,7 +83,7 @@ describe("searchRoutes", () => {
     expect(body).toMatchObject({ total: 4, limit: 50, offset: 0 });
     expect(body.items).toEqual([
       { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
-      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic", item: axe },
       { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
       { type: "monster", name: "Azer", source: "MM", edition: null },
     ]);
@@ -129,8 +131,133 @@ describe("searchRoutes", () => {
 
     expect(body).toMatchObject({ total: 2, limit: 1, offset: 1 });
     expect(body.items).toEqual([
-      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic", item: axe },
     ]);
+  });
+
+  it("lists every row of a type, alphabetically, for a blank query", async () => {
+    const res = await routes.request("/search?edition=classic&type=monster");
+    const body = await res.json();
+
+    expect(body.items.map((hit: { name: string }) => hit.name)).toEqual(["Azer", "Fire Elemental"]);
+  });
+
+  it("reads both editions where none is named, and narrows to several types", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", {
+      name: "Fire Shield",
+      edition: "one",
+      level: 4,
+      school: "V",
+      duration: [{ type: "instant" }],
+    });
+
+    const res = await routes.request("/search?q=fire&type=spell,item");
+    const body = await res.json();
+
+    expect(body.items).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      { type: "spell", id: "1", name: "Fire Shield", edition: "one" },
+    ]);
+  });
+
+  it("narrows spells, homebrew among them, by level and school", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", {
+      name: "Fire Shield",
+      edition: "classic",
+      level: 4,
+      school: "A",
+      duration: [{ type: "instant" }],
+    });
+    const names = async (query: string) =>
+      (await (await routes.request(`/search?edition=classic&q=fire&${query}`)).json()).items.map(
+        (hit: { name: string }) => hit.name,
+      );
+
+    expect(await names("minLevel=4")).toEqual(["Fire Shield", "Fire Elemental", "Azer"]);
+    expect(await names("school=V&type=spell")).toEqual(["Fireball"]);
+    expect(await names("minLevel=9&maxLevel=4&type=spell")).toEqual(["Fire Shield"]);
+  });
+
+  it("narrows items, homebrew among them, by rarity", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+      rarity: "rare",
+    });
+    insertHomebrewItem(opened.homebrewDb, "2", {
+      name: "Fire Poker",
+      edition: "classic",
+      type: "M",
+      rarity: "common",
+    });
+
+    const res = await routes.request("/search?edition=classic&q=fire&type=item&rarity=rare");
+    const body = await res.json();
+
+    expect(body.items).toEqual([
+      {
+        type: "item",
+        id: "1",
+        name: "Firebrand Axe",
+        edition: "classic",
+        item: { ...axe, rarity: "rare" },
+      },
+    ]);
+  });
+
+  it("narrows items, homebrew among them, by kind", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+    });
+    insertHomebrewItem(opened.homebrewDb, "2", {
+      name: "Fire Cloak",
+      edition: "classic",
+      wondrous: true,
+    });
+
+    const res = await routes.request("/search?edition=classic&q=fire&type=item&kind=wondrous");
+    const body = await res.json();
+
+    expect(body.items).toEqual([
+      {
+        type: "item",
+        id: "2",
+        name: "Fire Cloak",
+        edition: "classic",
+        item: { kinds: ["wondrous"], rarity: null, category: null },
+      },
+    ]);
+  });
+
+  it("refuses a kind of item it does not know", async () => {
+    const res = await routes.request("/search?type=item&kind=melee,mele");
+
+    expect(res.status).toBe(400);
+  });
+
+  it("narrows to the named sources and leaves homebrew out", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+    });
+
+    const res = await routes.request("/search?edition=classic&q=fire&source=PHB");
+    const body = await res.json();
+
+    expect(body.items).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+    ]);
+  });
+
+  it("lists every type a search can return", async () => {
+    const res = await routes.request("/search/types");
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).types).toContain("monster");
   });
 
   it("lists every source a search can return", async () => {

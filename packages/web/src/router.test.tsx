@@ -44,6 +44,12 @@ describe("routing", () => {
     );
   });
 
+  it("renders the advanced search at /search", () => {
+    renderAt("/search?q=fire");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Search");
+    expect(screen.getByRole("searchbox", { name: "Search the compendium" })).toHaveValue("fire");
+  });
+
   it("redirects a character to its first visible page", async () => {
     const router = renderAt("/characters/abc");
     await screen.findByRole("region", { name: "Stats" });

@@ -9,6 +9,7 @@ import { DisplaySettings } from "./routes/DisplaySettings.tsx";
 import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
+import { SearchPage } from "./routes/SearchPage/SearchPage.tsx";
 import { SettingsLayout } from "./routes/SettingsLayout.tsx";
 import { SourcesSettings } from "./routes/SourcesSettings/SourcesSettings.tsx";
 
@@ -32,6 +33,7 @@ export const routeConfig: RouteObject[] = [
           { path: "p/:slug", element: <CharacterPage /> },
         ],
       },
+      { path: "search", element: <SearchPage /> },
       {
         path: "settings",
         element: <SettingsLayout />,

@@ -4,26 +4,27 @@ import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
 import { CharacterAvatar } from "./CharacterAvatar.tsx";
 import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
-
-const trigger = "flex items-center gap-1.5 rounded-sm border-0 px-2.5 py-1.5 text-sm";
-const current = "font-bold text-accent-text";
-const elsewhere = "font-medium text-secondary";
+import { MechanicsMenu } from "./MechanicsMenu.tsx";
+import { MenuDivider } from "./MenuDivider.tsx";
+import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
 export function TopBar() {
   const characters = useCharacters();
-  const [open, setOpen] = useState(false);
+  const [menu, setMenu] = useState<"character" | "mechanics" | null>(null);
+  const open = menu === "character";
+  const closeMenu = () => setMenu(null);
   const inCharacters = useMatch({ path: "/characters", end: false }) !== null;
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (menu === null) return;
     const onFocusIn = (e: FocusEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node | null)) {
-        setOpen(false);
+        setMenu(null);
       }
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") setMenu(null);
     };
     document.addEventListener("focusin", onFocusIn);
     document.addEventListener("keydown", onKeyDown);
@@ -31,7 +32,7 @@ export function TopBar() {
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [menu]);
 
   return (
     <div
@@ -47,10 +48,10 @@ export function TopBar() {
           type="button"
           aria-expanded={open}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setOpen(false);
+            if (e.key === "Escape") closeMenu();
           }}
-          onClick={() => setOpen((prev) => !prev)}
-          className={`${trigger} ${inCharacters ? current : elsewhere} ${open ? "bg-subtle" : "bg-transparent hover:bg-subtle"}`}
+          onClick={() => setMenu(open ? null : "character")}
+          className={`${TRIGGER} ${inCharacters ? CURRENT : ELSEWHERE} ${open ? "bg-subtle" : "bg-transparent hover:bg-subtle"}`}
         >
           Character
           <ChevronDown
@@ -68,7 +69,7 @@ export function TopBar() {
           <>
             {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <div className="fixed inset-0 z-40" onClick={closeMenu} />
             <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-xl border border-border bg-surface p-2 shadow-popover">
               <p className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-label text-muted">
                 Your Characters
@@ -77,7 +78,7 @@ export function TopBar() {
                 <NavLink
                   key={c.id}
                   to={`/characters/${c.id}`}
-                  onClick={() => setOpen(false)}
+                  onClick={closeMenu}
                   className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-ink hover:bg-subtle"
                 >
                   <CharacterAvatar id={c.id} name={c.name} />
@@ -89,11 +90,12 @@ export function TopBar() {
                   </span>
                 </NavLink>
               ))}
+              <MenuDivider />
               <NavLink
                 to="/characters"
                 end
-                onClick={() => setOpen(false)}
-                className="mt-1 block rounded-lg border-t border-border px-2.5 py-2 text-body font-semibold text-ink hover:bg-subtle"
+                onClick={closeMenu}
+                className="block rounded-lg px-2.5 py-2 text-body font-semibold text-ink hover:bg-subtle"
               >
                 See all characters →
               </NavLink>
@@ -102,12 +104,18 @@ export function TopBar() {
         )}
       </div>
 
-      <GlobalSearch onOpen={() => setOpen(false)} />
+      <MechanicsMenu
+        open={menu === "mechanics"}
+        onToggle={() => setMenu(menu === "mechanics" ? null : "mechanics")}
+        onClose={closeMenu}
+      />
+
+      <GlobalSearch onOpen={closeMenu} />
 
       <NavLink
         to="/settings"
         className={({ isActive }) =>
-          `ml-auto shrink-0 ${trigger} ${isActive ? current : elsewhere} hover:bg-subtle`
+          `ml-auto shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
         }
       >
         {({ isActive }) => (

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { listSearchSources, searchCatalog } from "./catalog-search.ts";
+import { listSearchSources, listSearchTypes, searchCatalog } from "./catalog-search.ts";
 import { publishSearchFixture } from "./contentFixture.ts";
 
 const FIREBALL = {
@@ -61,7 +61,7 @@ describe("searchCatalog", () => {
       entities: [FIRE_ELEMENTAL, GELATINOUS_CUBE],
     });
 
-    const hits = searchCatalog(dataDir, "classic", "fire");
+    const hits = searchCatalog(dataDir, { edition: "classic", term: "fire" });
 
     expect(hits).toEqual(
       expect.arrayContaining([
@@ -79,7 +79,7 @@ describe("searchCatalog", () => {
       entities: [FIRE_ELEMENTAL],
     });
 
-    const hits = searchCatalog(dataDir, "one", "fire");
+    const hits = searchCatalog(dataDir, { edition: "one", term: "fire" });
 
     expect(hits).toEqual([
       { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
@@ -90,11 +90,142 @@ describe("searchCatalog", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
 
-    expect(searchCatalog(dataDir, "classic", "fire", "spell")).toEqual([
+    expect(searchCatalog(dataDir, { edition: "classic", term: "fire", types: ["spell"] })).toEqual([
       { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
     ]);
-    expect(searchCatalog(dataDir, "classic", "fire", "monster")).toEqual([
+    expect(
+      searchCatalog(dataDir, { edition: "classic", term: "fire", types: ["monster"] }),
+    ).toEqual([{ type: "monster", name: "Fire Elemental", source: "MM", edition: null }]);
+  });
+
+  it("reads both editions where none is named", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, { spells: [FIREBALL, GOODBERRY_ONE], entities: [] });
+
+    expect(searchCatalog(dataDir, { types: ["spell"] })).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      { type: "spell", name: "Goodberry", source: "XPHB", edition: "one" },
+    ]);
+  });
+
+  it("lists every row of the named types for a blank term", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      entities: [FIRE_ELEMENTAL, GELATINOUS_CUBE],
+    });
+
+    expect(searchCatalog(dataDir, { edition: "classic", term: "", types: ["monster"] })).toEqual([
       { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
+      { type: "monster", name: "Gelatinous Cube", source: "MM", edition: null },
+    ]);
+  });
+
+  it("narrows spells by level and school and passes every other kind through", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const fireBolt = { ...FIREBALL, name: "Fire Bolt", level: 0 };
+    const fireShield = { ...FIREBALL, name: "Fire Shield", level: 4, school: "A" };
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL, fireBolt, fireShield],
+      entities: [FIRE_ELEMENTAL],
+    });
+
+    const names = (filter: Parameters<typeof searchCatalog>[1]) =>
+      searchCatalog(dataDir, { edition: "classic", term: "fire", ...filter }).map((h) => h.name);
+
+    expect(names({ spellLevels: { min: 1, max: 9 } })).toEqual([
+      "Fireball",
+      "Fire Shield",
+      "Fire Elemental",
+    ]);
+    expect(names({ schools: ["V"] })).toEqual(["Fireball", "Fire Bolt", "Fire Elemental"]);
+    expect(names({ spellLevels: { min: 3, max: 9 }, schools: ["V"], types: ["spell"] })).toEqual([
+      "Fireball",
+    ]);
+  });
+
+  it("narrows items by rarity and passes every other kind through", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const item = (name: string, rarity: string) => ({
+      name,
+      source: "DMG",
+      edition: "classic",
+      kind: "item",
+      type: null,
+      rarity,
+      requires_attunement: 0 as const,
+      json: JSON.stringify({ name, source: "DMG" }),
+    });
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      items: [item("Flame Tongue", "rare"), item("Fire Opal", "none")],
+      entities: [],
+    });
+
+    expect(
+      searchCatalog(dataDir, { edition: "classic", term: "f", rarities: ["rare"] }).map(
+        (h) => h.name,
+      ),
+    ).toEqual(["Fireball", "Flame Tongue"]);
+  });
+
+  it("narrows items by kind, read off the type and the flags, and passes every other kind through", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const item = (name: string, type: string | null, flags: object = {}) => ({
+      name,
+      source: "DMG",
+      edition: "classic",
+      kind: "item",
+      type,
+      rarity: "rare",
+      requires_attunement: 0 as const,
+      json: JSON.stringify({ name, source: "DMG", ...flags }),
+    });
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      items: [
+        item("Flame Tongue Shortsword", "M"),
+        item("Fire Staff", "M|XPHB", { staff: true }),
+        item("Fire Opal", "$G"),
+        item("Firework Bag", null, { wondrous: true }),
+      ],
+      entities: [],
+    });
+    const names = (itemKinds: string[]) =>
+      searchCatalog(dataDir, { edition: "classic", term: "f", itemKinds }).map((h) => h.name);
+
+    expect(names(["melee"])).toEqual(["Fireball", "Flame Tongue Shortsword", "Fire Staff"]);
+    expect(names(["staff", "wondrous"])).toEqual(["Fireball", "Fire Staff", "Firework Bag"]);
+  });
+
+  it("gives an item hit its kinds, rarity and weapon category", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      items: [
+        {
+          name: "Flame Tongue Longbow",
+          source: "DMG",
+          edition: "classic",
+          kind: "item",
+          type: "R",
+          rarity: "rare",
+          requires_attunement: 1 as const,
+          json: JSON.stringify({ name: "Flame Tongue Longbow", weaponCategory: "martial" }),
+        },
+      ],
+      entities: [],
+    });
+
+    expect(searchCatalog(dataDir, { term: "f" })).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      {
+        type: "item",
+        name: "Flame Tongue Longbow",
+        source: "DMG",
+        edition: "classic",
+        item: { kinds: ["ranged"], rarity: "rare", category: "martial" },
+      },
     ]);
   });
 
@@ -102,7 +233,7 @@ describe("searchCatalog", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
 
-    expect(searchCatalog(dataDir, "classic", "nonexistent")).toEqual([]);
+    expect(searchCatalog(dataDir, { edition: "classic", term: "nonexistent" })).toEqual([]);
   });
 });
 
@@ -121,5 +252,33 @@ describe("listSearchSources", () => {
     });
 
     expect(listSearchSources(dataDir)).toEqual(["MM", "PHB", "TftYP", "XPHB"]);
+  });
+});
+
+describe("listSearchTypes", () => {
+  let dataDir: string;
+
+  afterEach(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("lists every Tier A type and each type an entity carries, once, sorted", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      entities: [FIRE_ELEMENTAL, GELATINOUS_CUBE, { ...FIRE_ELEMENTAL, type: "hazard" }],
+    });
+
+    expect(listSearchTypes(dataDir)).toEqual([
+      "background",
+      "class",
+      "feat",
+      "hazard",
+      "item",
+      "monster",
+      "optfeature",
+      "race",
+      "spell",
+    ]);
   });
 });

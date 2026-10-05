@@ -4,14 +4,16 @@
  * editions. A character result opens its sheet; a compendium result opens its detail in a
  * modal over the current page, and closing it returns focus to the search with the query
  * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
- * hears it, and Enter or a click on it does nothing.
+ * hears it, and Enter or a click on it does nothing. Below the results, a link carries the
+ * query to the advanced search page.
  */
 import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
+import { SEARCH_DEBOUNCE_MS, useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
-import { useCompendiumSearch } from "../../../../hooks/useCompendiumSearch.ts";
+import { useDebounce } from "../../../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { searchHitAddress, searchHitKey } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
@@ -32,7 +34,12 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
   const characters = useCharacters();
-  const compendium = useCompendiumSearch(query, RESULT_LIMIT);
+  const debounced = useDebounce(query, SEARCH_DEBOUNCE_MS);
+  const compendium = useCatalogSearch({
+    query: debounced,
+    limit: RESULT_LIMIT,
+    keepPrevious: true,
+  });
   const navigate = useNavigate();
   const inputRef = useReturnFocus<HTMLInputElement>(detail !== undefined);
   const id = useId();
@@ -45,7 +52,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         .filter((c) => c.name.toLowerCase().includes(q))
         .map((c) => ({ key: `character:${c.id}`, character: c }))
     : [];
-  const compendiumResults: SearchResult[] = compendium.hits.map((hit) => ({
+  const compendiumResults: SearchResult[] = (compendium.data?.items ?? []).map((hit) => ({
     key: searchHitKey(hit),
     address: searchHitAddress(hit),
     hit,
@@ -93,7 +100,9 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   function status(): string | undefined {
     if (compendium.error) return `Search failed: ${compendium.error.message}`;
     if (results.length > 0) return undefined;
-    return compendium.settled ? `No results for "${query.trim()}".` : "Searching…";
+    // An answer to the last query, kept up or not yet replaced, says nothing of this one.
+    const settled = debounced === query && !compendium.isPlaceholderData;
+    return settled && compendium.isSuccess ? `No results for "${query.trim()}".` : "Searching…";
   }
 
   const group = (label: string, rows: SearchResult[], offset: number) =>
@@ -126,7 +135,20 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           className="fixed inset-0 z-40 bg-scrim"
         />
       )}
-      <div className="absolute top-1/2 left-1/2 z-45 w-120 max-w-[40vw] -translate-x-1/2 -translate-y-1/2">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: focusout and Escape bubbling from the input and the Advanced search link; only focus leaving the wrapper closes the panel, so Tab reaches the link. */}
+      <div
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+        }}
+        onKeyDown={(event) => {
+          // The input handles its own Escape; from the Advanced search link, close and go back to it.
+          if (event.key !== "Escape" || event.target === inputRef.current) return;
+          inputRef.current?.focus();
+          setOpen(false);
+          setActive(null);
+        }}
+        className="absolute top-1/2 left-1/2 z-45 w-120 max-w-[40vw] -translate-x-1/2 -translate-y-1/2"
+      >
         <div
           className={`flex items-center gap-2.5 rounded-pill border px-3.5 py-2 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-accent has-[input:focus-visible]:outline-offset-2 ${open ? "border-accent bg-surface" : "border-border bg-subtle"}`}
         >
@@ -152,7 +174,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
               setOpen(true);
               onOpen();
             }}
-            onBlur={() => setOpen(false)}
             onKeyDown={handleKeyDown}
             className="min-w-0 grow bg-transparent text-body text-ink focus-visible:outline-none! [&::-webkit-search-cancel-button]:appearance-none"
           />
@@ -176,20 +197,35 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         <div
           hidden={!showPanel}
           onMouseDown={(event) => event.preventDefault()}
-          className="absolute top-full right-0 left-0 mt-2 max-h-105 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover"
+          className="absolute top-full right-0 left-0 mt-2 flex max-h-105 flex-col rounded-xl border border-border bg-surface p-2 shadow-popover"
         >
+          {/* The results scroll alone, so the Advanced search link below stays in view. */}
           <div
             id={listboxId}
             role="listbox"
             aria-label="Search results"
             hidden={results.length === 0}
+            className="min-h-0 flex-1 overflow-y-auto"
           >
             {group("Characters", characterResults, 0)}
             {group("Compendium", compendiumResults, characterResults.length)}
           </div>
-          <p aria-hidden className="px-2.5 py-1.5 text-body text-muted empty:hidden">
+          <p aria-hidden className="shrink-0 px-2.5 py-1.5 text-body text-muted empty:hidden">
             {showPanel ? status() : undefined}
           </p>
+          <div className="mt-1 shrink-0 border-t border-border pt-1">
+            <Link
+              to={`/search?${new URLSearchParams({ q: query.trim() })}`}
+              onClick={() => {
+                setOpen(false);
+                setQuery("");
+                setActive(null);
+              }}
+              className="block rounded-lg px-2.5 py-1.5 text-row font-semibold text-accent-text hover:bg-subtle"
+            >
+              Advanced search for "{query.trim()}" →
+            </Link>
+          </div>
         </div>
       </div>
       {detail !== undefined && (

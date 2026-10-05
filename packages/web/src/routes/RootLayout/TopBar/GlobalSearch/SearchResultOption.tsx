@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { SourceChip } from "../../../../components/SourceChip.tsx";
 import { TypeChip } from "../../../../components/TypeChip.tsx";
+import { itemMeta } from "../../../../lib/itemKind.ts";
 import { searchHitTypeLabel } from "../../../../lib/searchHits.ts";
 import { CharacterAvatar } from "../CharacterAvatar.tsx";
 import type { SearchResult } from "./searchResult.ts";
@@ -45,11 +46,14 @@ export function SearchResultOption({
           chip: searchHitTypeLabel(result.hit.type),
           name: result.hit.name,
           meta: (
-            <SourceChip
-              source={"source" in result.hit ? result.hit.source : undefined}
-              edition={result.hit.edition}
-              of={searchHitTypeLabel(result.hit.type).toLowerCase()}
-            />
+            <>
+              {result.hit.item && <span className="truncate">{itemMeta(result.hit.item)}</span>}
+              <SourceChip
+                source={"source" in result.hit ? result.hit.source : undefined}
+                edition={result.hit.edition}
+                of={searchHitTypeLabel(result.hit.type).toLowerCase()}
+              />
+            </>
           ),
         };
 
