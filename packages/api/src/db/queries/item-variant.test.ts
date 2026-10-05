@@ -256,6 +256,15 @@ describe("variantDetail", () => {
     expect(JSON.stringify(detail.entries)).toContain("Elided. +1 Elided.");
   });
 
+  it("names the base item by a camelCase flag in words", () => {
+    const detail = variantDetail({
+      name: "Sling Bullet of Slaying",
+      requires: [{ bulletSling: true }],
+      inherits: { source: "XDMG", entries: ["{=baseName/at} {=baseName/l}."] },
+    });
+    expect(detail.entries).toEqual(["A bullet sling."]);
+  });
+
   it("reads a placeholder upstream adds later as its name in words", () => {
     const detail = variantDetail({
       name: "Future",

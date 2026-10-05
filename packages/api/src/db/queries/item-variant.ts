@@ -232,7 +232,12 @@ function neutralValue(field: string): string {
   if (field === "baseName") return "item";
   if (field === "dmgType") return "weapon";
   if (field.startsWith("bonus")) return "magic";
-  return field.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  return inWords(field);
+}
+
+/** `bulletSling` as "bullet sling". */
+function inWords(camelCase: string): string {
+  return camelCase.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 }
 
 function fillPlaceholder(field: string, value: unknown, modifiers: string): string {
@@ -262,15 +267,16 @@ function injectProperties(node: unknown, values: Entry): unknown {
 
 /**
  * The noun a template's base item goes by while none is chosen: the first flag its
- * `requires` names, such as `arrow` for Arrow of Slaying. `undefined` where every clause
- * matches on a value, such as a `type` code, rather than a flag.
+ * `requires` names, in words, such as "arrow" for Arrow of Slaying. `undefined` where
+ * every clause matches on a value, such as a `type` code, rather than a flag.
  */
 function requiredNoun(requires: unknown): string | undefined {
   if (!Array.isArray(requires)) return undefined;
-  return requires
+  const flag = requires
     .filter(isRecord)
     .flatMap((clause) => Object.entries(clause))
     .find(([, wanted]) => wanted === true)?.[0];
+  return flag === undefined ? undefined : inWords(flag);
 }
 
 /**
