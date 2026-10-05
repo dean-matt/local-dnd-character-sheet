@@ -53,11 +53,11 @@ export function SourcesSettings() {
                 aria-checked={!disabled.includes(source)}
                 aria-labelledby={`${id}-${source}`}
                 onClick={() => toggle(source)}
-                className="group relative h-5 w-9 shrink-0 rounded-full bg-muted aria-checked:bg-accent"
+                className="group relative h-5 w-9 shrink-0 rounded-full border border-border bg-muted aria-checked:bg-accent"
               >
                 <span
                   aria-hidden="true"
-                  className="absolute top-0.5 left-0.5 size-4 rounded-full bg-surface transition-transform group-aria-checked:translate-x-4"
+                  className="absolute top-px left-px size-4 rounded-full bg-surface forced-colors:bg-[CanvasText] transition-transform group-aria-checked:translate-x-4"
                 />
               </button>
             </li>

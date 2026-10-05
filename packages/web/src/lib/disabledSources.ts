@@ -38,8 +38,19 @@ export function setDisabledSources(sources: Iterable<string>): void {
     // Storage can throw in private mode or with blocked site data. The list in memory
     // still applies for this session; it just doesn't survive a reload.
   }
+  notify();
+}
+
+function notify(): void {
   for (const listener of listeners) listener();
 }
+
+// Another tab's toggle; without this, a toggle here would write a stale list over it.
+window.addEventListener("storage", (event) => {
+  if (event.key !== STORAGE_KEY && event.key !== null) return;
+  current = load();
+  notify();
+});
 
 export function subscribeDisabledSources(listener: () => void): () => void {
   listeners.add(listener);

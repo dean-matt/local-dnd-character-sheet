@@ -28,6 +28,19 @@ describe("disabledSources", () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it("picks up another tab's change", async () => {
+    const { getDisabledSources, subscribeDisabledSources } = await freshModule();
+    const listener = vi.fn();
+    subscribeDisabledSources(listener);
+    getDisabledSources();
+
+    localStorage.setItem("disabledSources", '["VGM"]');
+    window.dispatchEvent(new StorageEvent("storage", { key: "disabledSources" }));
+
+    expect(getDisabledSources()).toEqual(["VGM"]);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it("reads a malformed stored value as every source on", async () => {
     localStorage.setItem("disabledSources", '{"VGM":true}');
 

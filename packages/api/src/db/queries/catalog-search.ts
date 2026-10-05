@@ -81,7 +81,7 @@ export function searchCatalog(
   }
 }
 
-/** Every source a row `searchCatalog` reads cites, once each. */
+/** Each source cited by a row `searchCatalog` reads, listed once. */
 export function listSearchSources(dataDir: string): string[] {
   const cited = [
     ...CATALOG_SEARCH_TABLES.map(
