@@ -147,6 +147,18 @@ main:focus-visible {
   outline: none;
 }
 
+/*
+ * A modal dialog makes the page inert but leaves it scrollable. The stable gutter keeps the
+ * page from shifting sideways where hiding the overflow removes a classic scrollbar.
+ */
+:root {
+  scrollbar-gutter: stable;
+
+  &:has(dialog:modal) {
+    overflow: hidden;
+  }
+}
+
 dialog::backdrop {
   background-color: var(--color-scrim);
 }

@@ -29,7 +29,7 @@ export function CatalogDetail({ address, onClose }: CatalogDetailProps) {
   const row = useCatalogRow(match);
   const modal = (title: string, body: ReactNode, badge?: ReactNode, meta?: ReactNode) =>
     createPortal(
-      <Modal title={title} badge={badge} meta={meta} width="w-140" onClose={onClose}>
+      <Modal title={title} badge={badge} meta={meta} onClose={onClose}>
         {body}
       </Modal>,
       document.body,

@@ -5,13 +5,14 @@ import { InModal } from "./inModalContext.ts";
  * A modal dialog for one entry's detail. The native `<dialog>` traps focus and marks the
  * page behind it inert; Escape arrives as `cancel` and a press and click on the backdrop as
  * ones on the dialog itself, and both are routed to `onClose` so the caller unmounts it and
- * returns focus. It is never printed.
+ * returns focus. Only the body scrolls: the header and the optional `footer` stay put. The
+ * page behind it does not scroll while it is open. It is never printed.
  */
 export function Modal({
   title,
   badge,
   meta,
-  width = "w-80",
+  footer,
   onClose,
   children,
 }: {
@@ -19,7 +20,7 @@ export function Modal({
   /** Sits beside the title, outside the heading that names the dialog. */
   badge?: ReactNode;
   meta?: ReactNode;
-  width?: string;
+  footer?: ReactNode;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -28,7 +29,6 @@ export function Modal({
   // also began on the backdrop closes it.
   const pressedBackdrop = useRef(false);
   const titleId = useId();
-
   // jsdom has no showModal; a second call under StrictMode finds the dialog already open.
   useEffect(() => {
     const dialog = ref.current;
@@ -54,10 +54,10 @@ export function Modal({
       onClick={(event) => {
         if (pressedBackdrop.current && event.target === event.currentTarget) onClose();
       }}
-      className={`m-auto max-h-[80%] ${width} max-w-[85%] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
+      className="m-auto max-h-[80%] w-3xl max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden"
     >
       <InModal.Provider value={true}>
-        <div className="min-h-0 overflow-auto p-5">
+        <div className="shrink-0 px-5 pt-5 pb-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
               <h2 id={titleId} className="font-bold text-title">
@@ -74,9 +74,21 @@ export function Modal({
               <span aria-hidden="true">×</span>
             </button>
           </div>
-          {meta && <div className="mt-1 mb-2.5 text-muted text-row">{meta}</div>}
-          <div className="flex flex-col gap-2 text-body leading-normal">{children}</div>
+          {meta && <div className="mt-1 text-muted text-row">{meta}</div>}
         </div>
+        <section
+          aria-labelledby={titleId}
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container takes focus so the keyboard can scroll it; the dialog opens with focus on the close button, outside it.
+          tabIndex={0}
+          className={`flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-5 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
+        >
+          {children}
+        </section>
+        {footer && (
+          <div className="flex shrink-0 justify-end border-border border-t px-5 pt-3 pb-5">
+            {footer}
+          </div>
+        )}
       </InModal.Provider>
     </dialog>
   );
