@@ -1,7 +1,7 @@
+import { CharacterTile } from "../../components/CharacterTile.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCharacters } from "../../hooks/useCharacters.ts";
 import { LoadingState } from "../../LoadingState.tsx";
-import { CharacterTile } from "../CharacterTile.tsx";
 
 export function CharacterListPage() {
   const { data, isPending, isError, error } = useCharacters();
