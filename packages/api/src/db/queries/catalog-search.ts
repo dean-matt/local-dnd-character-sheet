@@ -169,11 +169,14 @@ type KeyedRow = Omit<CatalogSearchRow, "qualifier" | "textless"> & {
 };
 
 /**
- * Whether a row's detail would show nothing but its name: a table's text is its rows, and
- * every other row's is its `entries`, which a monster, for one, lacks.
+ * Whether a row's detail would show nothing but its name: a table's text is its `rows`, and
+ * every other row's is its `entries`, which a monster, for one, lacks. `refs.ts` asks the
+ * same of `rowEntries`, whose `entriesHigherLevel` no lookup or entity carries; read in SQL
+ * so a search lists thousands of rows without parsing each one's json.
  */
 const TEXTLESS = (alias: string, type: string) =>
-  `NOT (${alias}${type} = 'table' OR coalesce(json_array_length(${alias}json, '$.entries'), 0) > 0) AS textless`;
+  `coalesce(json_array_length(${alias}json, CASE ${alias}${type} WHEN 'table' THEN '$.rows'
+     ELSE '$.entries' END), 0) = 0 AS textless`;
 
 /** A hit carries its qualifier only where its type has one, and `textless` only where true. */
 const toHit = ({ qualifier, textless, ...row }: KeyedRow): CatalogSearchRow => ({

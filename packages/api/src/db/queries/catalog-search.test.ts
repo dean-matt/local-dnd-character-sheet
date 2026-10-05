@@ -279,16 +279,23 @@ describe("searchCatalog", () => {
     ]);
   });
 
-  it("marks a row with no rules text to show, and counts a table's rows as its text", () => {
+  it("marks a row with no rules text to show, a table's text being its rows", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {
       entities: [{ ...FIRE_ELEMENTAL, json: JSON.stringify({ name: "Fire Elemental" }) }],
       lookups: [
-        { ...RESTRAINED, kind: "table", name: "Fire Tables", json: JSON.stringify({ rows: [] }) },
+        {
+          ...RESTRAINED,
+          kind: "table",
+          name: "Fire Tables",
+          json: JSON.stringify({ rows: [["1"]] }),
+        },
+        { ...RESTRAINED, kind: "table", name: "Fire Blank", json: JSON.stringify({ rows: [] }) },
       ],
     });
 
     expect(searchCatalog(dataDir, { term: "fire" })).toEqual([
+      { type: "table", name: "Fire Blank", source: "XPHB", textless: true, edition: "one" },
       { type: "table", name: "Fire Tables", source: "XPHB", edition: "one" },
       { type: "monster", name: "Fire Elemental", source: "MM", textless: true, edition: null },
     ]);
