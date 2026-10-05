@@ -63,7 +63,8 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
     .map((type) => ({ value: type, label: searchHitTypePlural(type), hint: filtersAddedBy(type) }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const sourceOptions = (sources.data ?? [])
-    .filter((source) => !disabled.includes(source))
+    // A source Settings turned off still lists while a link has it chosen, so it can be unticked.
+    .filter((source) => !disabled.includes(source) || filters.sources.includes(source))
     .map((source) => {
       const title = titles.data?.get(source)?.name;
       return { value: source, label: title ? `${source} · ${title}` : source, short: source };
