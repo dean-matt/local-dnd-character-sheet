@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Sources</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button, input { font-family: inherit; }
+  button { cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 420px; height: 760px; box-sizing: border-box; padding: 24px; display: flex; background: #f4f5f7;">
+  <div style="width: 100%; max-height: 712px; overflow-y: auto; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+    <div>
+      <h1 style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Sources</h1>
+      <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">Which sourcebooks show up in search and catalog pickers. Turning one off hides its rows there and leaves the synced catalog as it is.</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <label for="sourcesFilter" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Filter sources</label>
+      <input id="sourcesFilter" type="search" placeholder="Filter by abbreviation or title…" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; padding: 8px 12px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+      <sc-if value="{{showMatchBar}}" hint-placeholder-val="{{false}}">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div id="sourcesShown" style="font-size: 11px; color: #6b7280;">{{matchLabel}}</div>
+          <div style="display: flex; gap: 6px;">
+            <button aria-describedby="sourcesShown" onClick="{{shownOn}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all on</button>
+            <button aria-describedby="sourcesShown" onClick="{{shownOff}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all off</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{noMatch}}" hint-placeholder-val="{{false}}">
+      <div role="status" style="font-size: 13px; color: #6b7280; font-style: italic;">No source matches “{{trimmedQuery}}”.</div>
+    </sc-if>
+
+    <sc-for list="{{shelves}}" as="shelf" hint-placeholder-count="4">
+      <section aria-labelledby="{{shelf.headingId}}" style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <h2 id="{{shelf.headingId}}" style="margin: 0; font-size: 13px; font-weight: 600; color: #1f2430;">{{shelf.label}}</h2>
+          <div style="display: flex; gap: 6px;">
+            <button aria-describedby="{{shelf.headingId}}" onClick="{{shelf.allOn}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all on</button>
+            <button aria-describedby="{{shelf.headingId}}" onClick="{{shelf.allOff}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all off</button>
+          </div>
+        </div>
+        <sc-for list="{{shelf.sources}}" as="src" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #eef0f3; border-radius: 6px;">
+            <div id="{{src.labelId}}" style="min-width: 0;">
+              <div style="font-size: 13px; color: #1f2430; font-weight: 600;">{{src.abbr}}</div>
+              <sc-if value="{{src.name}}" hint-placeholder-val="{{true}}">
+                <div style="font-size: 11px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{src.name}}</div>
+              </sc-if>
+            </div>
+            <button role="switch" aria-checked="{{src.enabled}}" aria-labelledby="{{src.labelId}}" onClick="{{src.toggle}}" style="width: 36px; height: 20px; border-radius: 999px; border: 1px solid #dde1e6; background: {{src.trackBg}}; position: relative; padding: 0; flex-shrink: 0;">
+              <span style="position: absolute; top: 1px; left: {{src.thumbLeft}}; width: 16px; height: 16px; border-radius: 50%; background: #ffffff; transition: left 0.15s;"></span>
+            </button>
+          </div>
+        </sc-for>
+      </section>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"filter":{"editor":"enum","options":["none","player","noMatch"],"default":"none"},"$preview":{"width":420,"height":760}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      query: this.queryFor(props.filter),
+      sources: [
+        { abbr: 'PHB', name: "Player's Handbook (2014)", shelf: 'Core rulebooks', enabled: true },
+        { abbr: 'XPHB', name: "Player's Handbook (2024)", shelf: 'Core rulebooks', enabled: true },
+        { abbr: 'DMG', name: "Dungeon Master's Guide (2014)", shelf: 'Core rulebooks', enabled: true },
+        { abbr: 'MM', name: 'Monster Manual (2014)', shelf: 'Core rulebooks', enabled: true },
+        { abbr: 'TCE', name: "Tasha's Cauldron of Everything", shelf: 'Supplements', enabled: true },
+        { abbr: 'XGE', name: "Xanathar's Guide to Everything", shelf: 'Supplements', enabled: true },
+        { abbr: 'VGM', name: "Volo's Guide to Monsters", shelf: 'Supplements', enabled: false },
+        { abbr: 'SCAG', name: "Sword Coast Adventurer's Guide", shelf: 'Settings', enabled: false },
+        { abbr: 'ERLW', name: 'Eberron: Rising from the Last War', shelf: 'Settings', enabled: true },
+        { abbr: 'CoS', name: 'Curse of Strahd', shelf: 'Adventures', enabled: true },
+        { abbr: 'LMoP', name: 'Lost Mine of Phandelver', shelf: 'Adventures', enabled: true },
+        { abbr: 'Screen', name: "Dungeon Master's Screen", shelf: 'Screens', enabled: true },
+        { abbr: 'UATheMysticClass', name: '', shelf: 'Playtest', enabled: false },
+        { abbr: 'HF', name: "Heroes' Feast", shelf: 'Other', enabled: true },
+        { abbr: 'TftYP', name: '', shelf: 'Other', enabled: true }
+      ]
+    };
+  }
+  queryFor(filter) {
+    return filter === 'player' ? 'player' : filter === 'noMatch' ? 'zzz' : '';
+  }
+  componentDidUpdate(prev) {
+    if (prev.filter !== this.props.filter) this.setState({ query: this.queryFor(this.props.filter) });
+  }
+  turn(abbrs, enabled) {
+    this.setState({ sources: this.state.sources.map((s) => (abbrs.includes(s.abbr) ? { ...s, enabled } : s)) });
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#c1272d';
+    const SHELVES = ['Core rulebooks', 'Supplements', 'Settings', 'Adventures', 'Screens', 'Playtest', 'Other'];
+    const trimmedQuery = this.state.query.trim();
+    const q = trimmedQuery.toLowerCase();
+    const shown = this.state.sources.filter((s) => s.abbr.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
+    const shelves = SHELVES.map((label, i) => {
+      const inShelf = shown.filter((s) => s.shelf === label);
+      const abbrs = inShelf.map((s) => s.abbr);
+      return {
+        label,
+        headingId: `sourcesShelf${i}`,
+        allOn: () => this.turn(abbrs, true),
+        allOff: () => this.turn(abbrs, false),
+        sources: inShelf.map((s) => ({
+          abbr: s.abbr,
+          name: s.name,
+          labelId: `source-${s.abbr}`,
+          enabled: s.enabled,
+          trackBg: s.enabled ? accent : '#dde1e6',
+          thumbLeft: s.enabled ? '18px' : '1px',
+          toggle: () => this.turn([s.abbr], !s.enabled)
+        }))
+      };
+    }).filter((shelf) => shelf.sources.length > 0);
+    const shownAbbrs = shown.map((s) => s.abbr);
+    return {
+      accent,
+      query: this.state.query,
+      trimmedQuery,
+      onQueryChange: (e) => this.setState({ query: e.target.value }),
+      showMatchBar: q !== '' && shown.length > 0,
+      matchLabel: shown.length === 1 ? '1 source matches' : `${shown.length} sources match`,
+      shownOn: () => this.turn(shownAbbrs, true),
+      shownOff: () => this.turn(shownAbbrs, false),
+      noMatch: q !== '' && shown.length === 0,
+      shelves
+    };
+  }
+}
+</script>
+</body>
+</html>
