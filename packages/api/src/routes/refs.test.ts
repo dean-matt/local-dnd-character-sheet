@@ -140,7 +140,16 @@ describe("refsRoutes", () => {
         { kind: "deity", qualifier: "Greek", ...row("Zeus", "PHB") },
       ],
       optionalFeatures: [row("Agonizing Blast", "PHB", ["Add your Charisma modifier."])],
-      entities: [{ type: "monster", qualifier: "", ...row("Goblin", "MM") }],
+      entities: [
+        {
+          type: "monster",
+          qualifier: "",
+          name: "Goblin",
+          source: "MM",
+          json: JSON.stringify({ name: "Goblin", source: "MM", size: ["S"], cr: "1/4" }),
+        },
+        { type: "legendaryGroup", qualifier: "", ...row("Aboleth", "MM") },
+      ],
       tagRedirects: [
         {
           tag: "actions.html",
@@ -205,7 +214,7 @@ describe("refsRoutes", () => {
       { tag: "creature", name: "goblin" },
     ]);
     expect(spell).toMatchObject({ name: "Fireball", source: "PHB" });
-    expect(creature).toEqual({ name: "Goblin", source: "MM", entries: [] });
+    expect(creature).toMatchObject({ name: "Goblin", source: "MM", entries: [] });
   });
 
   it("refuses an empty source rather than matching it", async () => {
@@ -231,12 +240,27 @@ describe("refsRoutes", () => {
   });
 
   it("links an optional feature with prose to its catalog row, and leaves one without unlinked", async () => {
-    const [invocation, creature] = await resolveOk([
+    const [invocation, condition] = await resolveOk([
       { tag: "optfeature", name: "agonizing blast" },
-      { tag: "creature", name: "Goblin" },
+      { tag: "condition", name: "Blinded" },
     ]);
     expect(invocation.path).toBe("/catalog/optfeature/Agonizing%20Blast/PHB");
-    expect(creature).not.toHaveProperty("path");
+    expect(condition).not.toHaveProperty("path");
+  });
+
+  it("links a creature to its stat block, though it has no prose to show in a popover", async () => {
+    const [creature] = await resolveOk([{ tag: "creature", name: "Goblin" }]);
+    expect(creature).toEqual({
+      name: "Goblin",
+      source: "MM",
+      entries: [],
+      path: "/catalog/monster/Goblin/MM",
+    });
+  });
+
+  it("links a legendary group to its lair only where it has one to show", async () => {
+    const [group] = await resolveOk([{ tag: "legroup", name: "Aboleth" }]);
+    expect(group).not.toHaveProperty("path");
   });
 
   it("answers null, in place, for what the catalog does not have", async () => {

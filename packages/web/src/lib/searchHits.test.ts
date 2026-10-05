@@ -54,8 +54,13 @@ describe("searchHitAddress", () => {
   });
 
   it("has no address for a row with no rules text to show", () => {
+    const book = { type: "book", name: "Player's Handbook", source: "PHB", edition: null };
+    expect(searchHitAddress({ ...book, textless: true })).toBeUndefined();
+  });
+
+  it("addresses a monster's stat block through the catalog", () => {
     const giant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
-    expect(searchHitAddress({ ...giant, textless: true })).toBeUndefined();
+    expect(searchHitAddress(giant)).toBe("/catalog/monster/Fire%20Giant/MM");
   });
 
   it("addresses a subclass under its class", () => {

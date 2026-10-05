@@ -36,7 +36,7 @@ export const catalogSearchHitSchema = z.strictObject({
   source: z.string().min(1),
   qualifier: z.string().min(1).optional(),
   parent: z.strictObject({ name: z.string().min(1), source: z.string().min(1) }).optional(),
-  /** Present on a lookup or entity hit with no rules text to show, such as a monster. */
+  /** Present on a lookup or entity hit with no rules text to show, such as a book. */
   textless: z.literal(true).optional(),
   edition: z.enum(EDITIONS).nullable(),
   /** Present on an item hit alone. */

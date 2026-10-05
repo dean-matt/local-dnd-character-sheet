@@ -246,6 +246,57 @@ describe("CatalogDetail", () => {
     expect(await screen.findByRole("cell", { name: "Silver ewer" })).toBeInTheDocument();
   });
 
+  it("renders a monster as its stat block", async () => {
+    stubFetchByUrl({
+      "/api/catalog/monster/Goblin/MM": {
+        type: "monster",
+        name: "Goblin",
+        source: "MM",
+        edition: "classic",
+        json: {
+          size: ["S"],
+          type: "humanoid",
+          ac: [15],
+          str: 8,
+          dex: 14,
+          con: 10,
+          int: 10,
+          wis: 8,
+          cha: 8,
+          action: [{ name: "Scimitar", entries: ["Slashes."] }],
+          legendaryGroup: { name: "Goblin King", source: "MM" },
+        },
+      },
+    });
+    renderAt("/catalog/monster/Goblin/MM");
+
+    expect(await screen.findByText("Small humanoid")).toBeInTheDocument();
+    expect(screen.getByText("Armor Class")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "DEX" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "14 (+2)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Actions" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 4, name: "Scimitar" })).toBeInTheDocument();
+    expect(screen.getByText("Goblin King")).toBeInTheDocument();
+    expect(screen.getByText("Monster")).toBeInTheDocument();
+  });
+
+  it("renders a legendary group as its lair actions and regional effects", async () => {
+    stubFetchByUrl({
+      "/api/catalog/legendaryGroup/Aboleth/MM": {
+        type: "legendaryGroup",
+        name: "Aboleth",
+        source: "MM",
+        edition: null,
+        json: { lairActions: ["Lair."], regionalEffects: ["Region."] },
+      },
+    });
+    renderAt("/catalog/legendaryGroup/Aboleth/MM");
+
+    expect(await screen.findByRole("heading", { name: "Lair Actions" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Regional Effects" })).toBeInTheDocument();
+    expect(screen.getByText("Legendary group")).toBeInTheDocument();
+  });
+
   it("marks a homebrew row as homebrew", async () => {
     stubFetchByUrl({
       "/api/homebrew/spells/hb-1": {

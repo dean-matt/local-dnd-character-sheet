@@ -195,14 +195,15 @@ type KeyedRow = Omit<CatalogSearchRow, "qualifier" | "textless"> & {
 };
 
 /**
- * Whether a row's detail would show nothing but its name: a table's text is its `rows`, and
- * every other row's is its `entries`, which a monster, for one, lacks. `refs.ts` asks the
- * same of `rowEntries`, whose `entriesHigherLevel` no lookup or entity carries; read in SQL
- * so a search lists thousands of rows without parsing each one's json.
+ * Whether a row's detail would show nothing but its name: a monster's text is its stat
+ * block and a legendary group's its lair, which every one carries; a table's is its `rows`,
+ * and every other row's its `entries`. `refs.ts` asks the same of `catalogRowEntries`; read
+ * in SQL so a search lists thousands of rows without parsing each one's json.
  */
 const TEXTLESS = (alias: string, type: string) =>
-  `coalesce(json_array_length(${alias}json, CASE ${alias}${type} WHEN 'table' THEN '$.rows'
-     ELSE '$.entries' END), 0) = 0 AS textless`;
+  `${alias}${type} NOT IN ('monster', 'legendaryGroup')
+     AND coalesce(json_array_length(${alias}json, CASE ${alias}${type} WHEN 'table' THEN '$.rows'
+       ELSE '$.entries' END), 0) = 0 AS textless`;
 
 /** A hit carries its qualifier only where its type has one, and `textless` only where true. */
 const toHit = ({ qualifier, textless, ...row }: KeyedRow): CatalogSearchRow => ({

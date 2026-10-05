@@ -15,7 +15,7 @@ export const catalogRowRecordSchema = z.strictObject({
   edition: z.enum(EDITIONS).nullable(),
   /**
    * The upstream entry whole, unparsed: its prose sits in `entries` on most types, in `rows`
-   * on a table, and in neither on a monster, whose stat block nothing renders yet.
+   * on a table, and in neither on a monster, whose stat block `catalogRowEntries` builds.
    */
   json: z.looseObject({}),
 });

@@ -1,4 +1,5 @@
 export { catalogRowRecordSchema } from "./catalog-row.ts";
+export { catalogRowEntries } from "./catalog-row-entries.ts";
 export type {
   BackgroundRecord,
   CharacterOptionEntry,
