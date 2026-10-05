@@ -9,6 +9,7 @@
  */
 import {
   backgroundRecordSchema,
+  catalogRowEntries,
   catalogRowRecordSchema,
   classGrantsSchema,
   classRecordSchema,
@@ -213,8 +214,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
         source: row.source,
         edition: row.edition ?? undefined,
         qualifier: row.qualifier,
-        // A table's rows sit on the row itself, which renders as the table it is.
-        entries: row.type === "table" ? [{ ...row.json, type: "table" }] : rowEntries(row.json),
+        entries: catalogRowEntries(row.type, row.json),
       };
     },
   },

@@ -108,7 +108,7 @@
           <div style="min-width: 0;">
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;">
               <h2 id="catalogTitle" style="margin: 0; font-size: 20px; font-weight: 700;">{{shownName}}</h2>
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{shownTagColor}}; border-radius: 6px; padding: 3px 6px;">{{shownType}}</span>
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: {{shownTagText}}; background: {{shownTagColor}}; border-radius: 6px; padding: 3px 6px;">{{shownType}}</span>
             </div>
             <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: #6b7280;">
               <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{shownSourceTitle}}">{{shownSourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{shownSourceTitle}}</span></span>
@@ -137,6 +137,54 @@
             <sc-for list="{{entries}}" as="para" hint-placeholder-count="2">
               <p style="margin: 0;">{{para}}</p>
             </sc-for>
+            <sc-if value="{{showStatBlock}}" hint-placeholder-val="{{false}}">
+              <p style="margin: 0; font-style: italic;">{{statKind}}</p>
+              <sc-for list="{{statLines}}" as="l" hint-placeholder-count="3">
+                <p style="margin: 0;"><strong>{{l.label}}</strong> {{l.value}}</p>
+              </sc-for>
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                  <tr>
+                    <th scope="col" style="border-bottom: 1px solid #dde1e6; padding: 4px 8px;">STR</th>
+                    <th scope="col" style="border-bottom: 1px solid #dde1e6; padding: 4px 8px;">DEX</th>
+                    <th scope="col" style="border-bottom: 1px solid #dde1e6; padding: 4px 8px;">CON</th>
+                    <th scope="col" style="border-bottom: 1px solid #dde1e6; padding: 4px 8px;">INT</th>
+                    <th scope="col" style="border-bottom: 1px solid #dde1e6; padding: 4px 8px;">WIS</th>
+                    <th scope="col" style="border-bottom: 1px solid #dde1e6; padding: 4px 8px;">CHA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding: 4px 8px;">{{abilities.str}}</td>
+                    <td style="padding: 4px 8px;">{{abilities.dex}}</td>
+                    <td style="padding: 4px 8px;">{{abilities.con}}</td>
+                    <td style="padding: 4px 8px;">{{abilities.int}}</td>
+                    <td style="padding: 4px 8px;">{{abilities.wis}}</td>
+                    <td style="padding: 4px 8px;">{{abilities.cha}}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <sc-for list="{{statFacts}}" as="l" hint-placeholder-count="5">
+                <p style="margin: 0;"><strong>{{l.label}}</strong> {{l.value}}</p>
+              </sc-for>
+            </sc-if>
+            <sc-for list="{{sections}}" as="sec" hint-placeholder-count="0">
+              <section style="display: flex; flex-direction: column; gap: 8px;">
+                <h3 style="margin: 0; font-size: 14px; font-weight: 600;">{{sec.name}}</h3>
+                <sc-for list="{{sec.lead}}" as="para" hint-placeholder-count="0">
+                  <p style="margin: 0;">{{para}}</p>
+                </sc-for>
+                <sc-for list="{{sec.items}}" as="it" hint-placeholder-count="2">
+                  <section style="display: flex; flex-direction: column; gap: 8px;">
+                    <h4 style="margin: 0; font-size: 14px; font-weight: 600;">{{it.name}}</h4>
+                    <p style="margin: 0;">{{it.text}}</p>
+                  </section>
+                </sc-for>
+              </section>
+            </sc-for>
+            <sc-if value="{{showGroupLink}}" hint-placeholder-val="{{false}}">
+              <p style="margin: 0;"><strong>Lair Actions and Regional Effects</strong> <button onClick="{{openGroup}}" style="border: none; background: none; padding: 0; font-size: 14px; font-weight: 600; color: {{accent}}; text-decoration: underline;">{{groupName}}</button></p>
+            </sc-if>
             <sc-if value="{{noEntries}}" hint-placeholder-val="{{false}}">
               <p style="margin: 0; padding: 18px; border: 1px dashed #dde1e6; border-radius: 8px; font-size: 13px; color: #6b7280;">This row carries no rules text of its own.</p>
             </sc-if>
@@ -167,7 +215,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","longSpell","item","feat","homebrew"],"default":"longSpell"},"scrolled":{"editor":"boolean","default":true},"host":{"editor":"enum","options":["sheet","searchDropdown","searchRoute"],"default":"sheet"},"throughLink":{"editor":"boolean","default":false},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","longSpell","item","feat","homebrew","monster","legendaryGroup"],"default":"longSpell"},"scrolled":{"editor":"boolean","default":true},"host":{"editor":"enum","options":["sheet","searchDropdown","searchRoute"],"default":"sheet"},"throughLink":{"editor":"boolean","default":false},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -210,7 +258,23 @@ class Component extends DCLogic {
     ];
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     const current = ALL_CHARACTERS[0];
-    const TAG = { Spell: '#3a4f7a', Item: '#8a6a2e', Feat: '#6b4f7a' };
+    const TAG = { Spell: '#3a4f7a', Item: '#8a6a2e', Feat: '#6b4f7a', Monster: '#7a3b2e', 'Legendary group': '#dde1e6' };
+    // A type with no fill of its own takes the neutral chip, dark text on gray.
+    const TAG_TEXT = { 'Legendary group': '#4b5260' };
+    // A monster's lair, which its stat block links to and the legendary group kind opens directly.
+    const GROUP = {
+      type: 'Legendary group', name: 'Aboleth', source: 'MM', edition: 'classic', entries: [],
+      sections: [
+        { name: 'Lair Actions', lead: ['Inside its lair, on initiative count 20, the aboleth can take one lair action.'], items: [
+          { name: 'Phantasm', text: 'It casts an illusion on any number of creatures it can see within 60 feet.' },
+          { name: 'Grasping Tide', text: 'Nearby pools surge and can drag a creature into the water, prone.' }
+        ] },
+        { name: 'Regional Effects', lead: ['The land around the lair bends to the aboleth while it lives.'], items: [
+          { name: 'Slick Ground', text: 'Underground surfaces within a mile turn slimy and count as difficult terrain.' },
+          { name: 'Fouled Water', text: 'Water within a mile sickens the aboleth\'s enemies who drink it.' }
+        ] }
+      ]
+    };
     const EDITION_LABELS = { classic: '2014', one: '2024' };
     // Paraphrased stand-ins: the real modal renders the row's own entries through RulesEntries.
     const ROWS = {
@@ -252,6 +316,52 @@ class Component extends DCLogic {
         refHeading: 'Notes', refBefore: 'Worn at the throat: ', refAfter: '.',
         entries: []
       },
+      monster: {
+        type: 'Monster', name: 'Aboleth', source: 'MM', edition: 'classic', query: 'aboleth', meta: 'Large aberration · Challenge 10',
+        from: { type: 'Item', name: 'Ring of Mind Shielding', source: 'DMG', before: 'Worn against the ', after: '\'s probing telepathy, it keeps your thoughts your own.' },
+        refHeading: 'Notes', refBefore: 'The lake cave belongs to an ', refAfter: '. Bring a ring of mind shielding.',
+        entries: [],
+        statBlock: {
+          kind: 'Large aberration, lawful evil',
+          lines: [
+            { label: 'Armor Class', value: '17 (natural armor)' },
+            { label: 'Hit Points', value: '135 (18d10 + 36)' },
+            { label: 'Speed', value: '10 ft., swim 40 ft.' }
+          ],
+          abilities: { str: '21 (+5)', dex: '9 (-1)', con: '15 (+2)', int: '18 (+4)', wis: '15 (+2)', cha: '18 (+4)' },
+          facts: [
+            { label: 'Saving Throws', value: 'Con +6, Int +8, Wis +6' },
+            { label: 'Skills', value: 'History +12, Perception +10' },
+            { label: 'Senses', value: 'darkvision 120 ft., passive Perception 20' },
+            { label: 'Languages', value: 'Deep Speech, telepathy 120 ft.' },
+            { label: 'Challenge', value: '10' }
+          ]
+        },
+        sections: [
+          { name: 'Traits', lead: [], items: [
+            { name: 'Amphibious', text: 'It breathes air and water alike.' },
+            { name: 'Mucous Cloud', text: 'Underwater, a creature that touches it risks a disease that lets it breathe only water.' },
+            { name: 'Probing Telepathy', text: 'A creature that speaks to it telepathically reveals its deepest desires.' }
+          ] },
+          { name: 'Actions', lead: [], items: [
+            { name: 'Multiattack', text: 'It makes three tentacle attacks.' },
+            { name: 'Tentacle', text: 'Melee Weapon Attack: +9 to hit, reach 10 ft. Hit: 12 (2d6 + 5) bludgeoning damage, and the target may catch its disease.' },
+            { name: 'Tail', text: 'Melee Weapon Attack: +9 to hit, reach 10 ft. Hit: 15 (3d6 + 5) bludgeoning damage.' },
+            { name: 'Enslave (3/Day)', text: 'One creature within 30 feet is charmed and under its control.' }
+          ] },
+          { name: 'Legendary Actions', lead: ['Legendary action uses: 3.'], items: [
+            { name: 'Detect', text: 'It makes a Wisdom (Perception) check.' },
+            { name: 'Tail Swipe', text: 'It makes one tail attack.' },
+            { name: 'Psychic Drain (Costs 2 Actions)', text: 'A creature it has charmed takes 10 (3d6) psychic damage, which the aboleth regains as hit points.' }
+          ] }
+        ],
+        group: GROUP
+      },
+      legendaryGroup: {
+        ...GROUP, query: 'aboleth', meta: 'Lair of the Aboleth',
+        from: { type: 'Monster', name: 'Aboleth', source: 'MM', before: 'The aboleth\'s ', after: ' turn its lake into a weapon.' },
+        refHeading: 'Notes', refBefore: 'Read up on the ', refAfter: ' before the party goes back to the lake.'
+      },
       feat: {
         type: 'Feat', name: 'Elemental Adept', source: 'PHB', edition: 'classic', needsCaster: true, query: 'elemental', meta: 'Spellcaster prerequisite',
         from: { type: 'Feat', name: 'Spell Sniper', source: 'PHB', needsCaster: true, before: 'A caster who takes this feat often pairs it with ', after: '.' },
@@ -266,10 +376,10 @@ class Component extends DCLogic {
     const { open, view, linked, pickerOpen, toast } = this.state;
     // The entry whose rules text links to this row: one modal shows either, never both.
     const from = { edition: 'classic', before: row.refBefore, after: row.refAfter, entries: [], ...row.from };
-    const shown = view === 'from' ? from : row;
+    const shown = view === 'from' ? from : view === 'group' ? row.group : row;
     const sourceLabel = row.source || 'Homebrew';
     const shownSourceLabel = shown.source || 'Homebrew';
-    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MM: 'Monster Manual (2014)', MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
     const sourceTitle = SOURCE_TITLES[row.source] || sourceLabel;
 
     const focusById = (id) => setTimeout(() => {
@@ -303,7 +413,7 @@ class Component extends DCLogic {
 
     const rail = host === 'searchRoute' ? ['Filters', 'Type', 'Source', 'Edition'] : ['Stats', 'Inventory', 'Spells', 'Features', 'Identity', 'Notes'];
     const activeLabel = {
-      sheet: { spell: 'Inventory', longSpell: 'Inventory', item: 'Spells', homebrew: 'Notes', feat: 'Notes' }[this.props.kind ?? 'spell'],
+      sheet: { spell: 'Inventory', longSpell: 'Inventory', item: 'Spells', homebrew: 'Notes', feat: 'Notes', monster: 'Notes', legendaryGroup: 'Notes' }[this.props.kind ?? 'spell'],
       searchDropdown: 'Stats',
       searchRoute: 'Filters'
     }[host];
@@ -340,16 +450,26 @@ class Component extends DCLogic {
       shownName: shown.name,
       shownType: shown.type,
       shownTagColor: TAG[shown.type],
+      shownTagText: TAG_TEXT[shown.type] || '#ffffff',
+      showStatBlock: view === 'row' && !!row.statBlock,
+      statKind: row.statBlock ? row.statBlock.kind : '',
+      statLines: row.statBlock ? row.statBlock.lines : [],
+      abilities: row.statBlock ? row.statBlock.abilities : {},
+      statFacts: row.statBlock ? row.statBlock.facts : [],
+      sections: view === 'from' ? [] : shown.sections || [],
+      showGroupLink: view === 'row' && !!row.group,
+      groupName: row.group ? row.group.name : '',
+      openGroup: () => showView('group', false),
       shownSourceLabel,
       shownSourceTitle: SOURCE_TITLES[shown.source] || shownSourceLabel,
-      noEntries: view === 'row' && row.entries.length === 0,
+      noEntries: view === 'row' && row.entries.length === 0 && !row.sections,
       entries: shown.entries,
       showLink: view === 'from',
       linkBefore: from.before,
       linkAfter: from.after,
       followLink: () => showView('row', true),
-      backLabel: view === 'row' && linked ? 'Back to ' + from.name : 'Back',
-      back: () => (view === 'row' && linked ? showView('from', false) : closeModal()),
+      backLabel: view === 'group' ? 'Back to ' + row.name : view === 'row' && linked ? 'Back to ' + from.name : 'Back',
+      back: () => (view === 'group' ? showView('row', linked) : view === 'row' && linked ? showView('from', false) : closeModal()),
       open,
       openModal: () => {
         this.setState({ open: true, view: 'row', linked: false, pickerOpen: false, toast: null });

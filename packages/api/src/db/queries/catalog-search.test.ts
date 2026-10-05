@@ -326,10 +326,24 @@ describe("searchCatalog", () => {
     ]);
   });
 
-  it("marks a row with no rules text to show, a table's text being its rows", () => {
+  it("marks a row with no rules text to show, a table's text being its rows and a monster's its stat block", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const prose = (type: string, name: string) => ({
+      ...FIRE_ELEMENTAL,
+      type,
+      name,
+      json: JSON.stringify({ name }),
+    });
     publishSearchFixture(dataDir, {
-      entities: [{ ...FIRE_ELEMENTAL, json: JSON.stringify({ name: "Fire Elemental" }) }],
+      entities: [
+        prose("monster", "Fire Elemental"),
+        {
+          ...prose("legendaryGroup", "Fire Giant Dreadnought"),
+          json: JSON.stringify({ lairActions: ["Lair."] }),
+        },
+        prose("legendaryGroup", "Fire Lairless"),
+        prose("book", "Fire Book"),
+      ],
       lookups: [
         {
           ...RESTRAINED,
@@ -344,7 +358,16 @@ describe("searchCatalog", () => {
     expect(searchCatalog(dataDir, { term: "fire" })).toEqual([
       { type: "table", name: "Fire Blank", source: "XPHB", textless: true, edition: "one" },
       { type: "table", name: "Fire Tables", source: "XPHB", edition: "one" },
-      { type: "monster", name: "Fire Elemental", source: "MM", textless: true, edition: null },
+      { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
+      { type: "legendaryGroup", name: "Fire Giant Dreadnought", source: "MM", edition: null },
+      {
+        type: "legendaryGroup",
+        name: "Fire Lairless",
+        source: "MM",
+        textless: true,
+        edition: null,
+      },
+      { type: "book", name: "Fire Book", source: "MM", textless: true, edition: null },
     ]);
   });
 

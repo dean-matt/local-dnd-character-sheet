@@ -195,14 +195,20 @@ type KeyedRow = Omit<CatalogSearchRow, "qualifier" | "textless"> & {
 };
 
 /**
- * Whether a row's detail would show nothing but its name: a table's text is its `rows`, and
- * every other row's is its `entries`, which a monster, for one, lacks. `refs.ts` asks the
- * same of `rowEntries`, whose `entriesHigherLevel` no lookup or entity carries; read in SQL
- * so a search lists thousands of rows without parsing each one's json.
+ * Whether a row's detail would show nothing but its name: a monster's text is its stat
+ * block, which every one has; a legendary group's is its lair; a table's is its `rows`; and
+ * every other row's is its `entries`. `refs.ts` asks the same of `catalogRowEntries`; read
+ * in SQL so a search lists thousands of rows without parsing each one's json.
  */
-const TEXTLESS = (alias: string, type: string) =>
-  `coalesce(json_array_length(${alias}json, CASE ${alias}${type} WHEN 'table' THEN '$.rows'
-     ELSE '$.entries' END), 0) = 0 AS textless`;
+const TEXTLESS = (alias: string, type: string) => {
+  const length = (path: string) => `coalesce(json_array_length(${alias}json, '${path}'), 0)`;
+  return `CASE ${alias}${type}
+     WHEN 'monster' THEN 0
+     WHEN 'legendaryGroup' THEN
+       ${length("$.lairActions")} + ${length("$.regionalEffects")} + ${length("$.mythicEncounter")} = 0
+     WHEN 'table' THEN ${length("$.rows")} = 0
+     ELSE ${length("$.entries")} = 0 END AS textless`;
+};
 
 /** A hit carries its qualifier only where its type has one, and `textless` only where true. */
 const toHit = ({ qualifier, textless, ...row }: KeyedRow): CatalogSearchRow => ({

@@ -18,7 +18,7 @@ const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/")
 
 /**
  * The detail address a hit opens, or `undefined` for a row with no rules text to show,
- * such as a monster. A type with no route of its own, such as an optional feature or a
+ * such as a book. A type with no route of its own, such as an optional feature or a
  * condition, opens through `/catalog`, its qualifier a last segment where it carries one.
  */
 export function searchHitAddress(hit: SearchHit): string | undefined {

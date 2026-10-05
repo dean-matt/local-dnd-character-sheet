@@ -26,8 +26,7 @@ export function RulesRef({ token }: { token: RefToken }) {
   const reference = useReturnFocus<HTMLButtonElement>(detailOpen);
   const modal = useContext(InModal);
   const prose = row === undefined ? [] : paragraphs(row.entries);
-  // A row with no prose and no detail — every monster, whose stat block is not `entries` —
-  // would open onto its name alone, so it stays text.
+  // A row with no prose and no detail would open onto its name alone, so it stays text.
   if (row === undefined || (prose.length === 0 && row.path === undefined)) {
     return (
       <span data-tag={token.tag} data-name={token.name} data-source={token.source}>

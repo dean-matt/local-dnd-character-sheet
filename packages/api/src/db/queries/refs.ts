@@ -13,7 +13,7 @@
  * survives a rename; a tag holds the name, so a renamed or deleted row leaves it
  * unresolved.
  */
-import { type RefQuery, rowEntries } from "@dnd/catalog";
+import { catalogRowEntries, type RefQuery } from "@dnd/catalog";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
 import {
@@ -51,12 +51,11 @@ interface Target {
 const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/");
 
 /**
- * The address of a row `GET /catalog/{type}/{name}/{source}` reads, absent where the row
- * carries no prose — every monster, whose stat block is not `entries` — since its detail
+ * The address of a row `GET /catalog/{type}/{name}/{source}` reads, absent where its detail
  * would show nothing but its name.
  */
 const catalogPath = (type: string) => (row: Row) =>
-  rowEntries(JSON.parse(row.json)).length > 0
+  catalogRowEntries(type, JSON.parse(row.json)).length > 0
     ? `/catalog/${segments(type, row.name, row.source)}`
     : undefined;
 
