@@ -106,8 +106,11 @@ widget, panel, or nav element:
   `EditionTag` draws; the rules text follows, or the empty rules-text state for the
   homebrew item. "Add to…" sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
   above it. Focus moves into the modal when it
-  opens and Tab stays inside it; the close button, the scrim and Escape close it and
-  return focus to the link.
+  opens and Tab stays inside it; the close button, the scrim and Escape close it from any
+  entry and return focus to the link. A link inside the modal replaces its entry rather
+  than opening a second modal. A back button at the page's top left, over the scrim, reads
+  "Back to" the entry before and returns to it, or reads "Back" on the first and closes
+  the modal. The artboard's `throughLink` tweak opens on an entry reached through a link.
 - Add to…: every item, spell and feat result on Top Bar Navigation and Search carries
   "Add to…", and so does Catalog Detail. Opened from a sheet (the `openedFrom` tweak, always true
   of Catalog Detail's `sheet` host), it adds to that character; opened anywhere else, it
@@ -306,7 +309,7 @@ says how much of the artboard the app builds today.
 | `ManageTabs` | #242 | reorder and hide |
 | `TopBar` | #386, #521, #522 | all but the Mechanics menu, "Add to…" and the "Advanced search" link |
 | `Search` | #521, #522 | nothing |
-| `CatalogDetail` | #522, #537 | all but "Add to…" |
+| `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |

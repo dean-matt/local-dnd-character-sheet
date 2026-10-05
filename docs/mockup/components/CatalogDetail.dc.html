@@ -103,18 +103,19 @@
   <sc-if value="{{open}}" hint-placeholder-val="{{true}}">
     <div role="presentation" onClick="{{closeModal}}" style="position: absolute; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
       <div id="catalogDialog" role="dialog" aria-modal="true" aria-labelledby="catalogTitle" tabIndex="-1" onClick="{{stopPropagation}}" onKeyDown="{{onDialogKeyDown}}" style="background: #ffffff; border-radius: 10px; width: min(768px, 90%); max-height: 80%; box-shadow: 0 12px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; outline: none;">
+        <button id="catalogBack" onClick="{{back}}" style="position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 4px; padding: 6px 12px 6px 8px; border: none; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0,0,0,0.15); font-size: 13px; font-weight: 600; color: #1f2430;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>{{backLabel}}</button>
         <div style="flex-shrink: 0; padding: 20px 20px 0 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
           <div style="min-width: 0;">
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;">
-              <h2 id="catalogTitle" style="margin: 0; font-size: 20px; font-weight: 700;">{{name}}</h2>
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{tagColor}}; border-radius: 6px; padding: 3px 6px;">{{type}}</span>
+              <h2 id="catalogTitle" style="margin: 0; font-size: 20px; font-weight: 700;">{{shownName}}</h2>
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #ffffff; background: {{shownTagColor}}; border-radius: 6px; padding: 3px 6px;">{{shownType}}</span>
             </div>
             <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; color: #6b7280;">
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{sourceTitle}}">{{sourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{sourceTitle}}</span></span>
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #dde1e6; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{shownSourceTitle}}">{{shownSourceLabel}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">{{shownSourceTitle}}</span></span>
               <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #6b7280; background: #ffffff; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px;"><span aria-hidden="true" title="{{editionTitle}}">{{edition}}</span><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{edition}} rules</span></span>
             </div>
           </div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="flex-shrink: 0; width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+          <button id="catalogClose" aria-label="Close" onClick="{{closeModal}}" style="flex-shrink: 0; width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
 
         <div id="catalogBody" role="region" aria-labelledby="catalogTitle" tabIndex="0" style="flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 20px 20px 20px;">
@@ -130,6 +131,9 @@
           </div>
 
           <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.55; color: #1f2430;">
+            <sc-if value="{{showLink}}" hint-placeholder-val="{{false}}">
+              <p style="margin: 0;">{{linkBefore}}<button onClick="{{followLink}}" style="border: none; background: none; padding: 0; font-size: 14px; font-weight: 600; color: {{accent}}; text-decoration: underline;">{{name}}</button>{{linkAfter}}</p>
+            </sc-if>
             <sc-for list="{{entries}}" as="para" hint-placeholder-count="2">
               <p style="margin: 0;">{{para}}</p>
             </sc-for>
@@ -163,19 +167,19 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","longSpell","item","feat","homebrew"],"default":"longSpell"},"scrolled":{"editor":"boolean","default":true},"host":{"editor":"enum","options":["sheet","searchDropdown","searchRoute"],"default":"sheet"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","longSpell","item","feat","homebrew"],"default":"longSpell"},"scrolled":{"editor":"boolean","default":true},"host":{"editor":"enum","options":["sheet","searchDropdown","searchRoute"],"default":"sheet"},"throughLink":{"editor":"boolean","default":false},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { open: true, pickerOpen: false, toast: null };
+    this.state = { open: true, view: 'row', linked: !!this.props.throughLink, pickerOpen: false, toast: null };
   }
   componentDidMount() {
     this.focusDialog();
     this.scrollBody();
   }
   componentDidUpdate(prev) {
-    if (prev.kind !== this.props.kind || prev.openedFrom !== this.props.openedFrom || prev.host !== this.props.host) {
-      this.setState({ open: true, pickerOpen: false, toast: null });
+    if (prev.kind !== this.props.kind || prev.openedFrom !== this.props.openedFrom || prev.host !== this.props.host || prev.throughLink !== this.props.throughLink) {
+      this.setState({ open: true, view: 'row', linked: !!this.props.throughLink, pickerOpen: false, toast: null });
       this.focusDialog();
     }
     if (prev.kind !== this.props.kind || prev.scrolled !== this.props.scrolled) this.scrollBody();
@@ -212,6 +216,7 @@ class Component extends DCLogic {
     const ROWS = {
       spell: {
         type: 'Spell', name: 'Fireball', source: 'PHB', edition: 'classic', classes: ['Sorcerer', 'Wizard'], query: 'fire', meta: 'Level 3 · Evocation',
+        from: { type: 'Item', name: 'Wand of Fireballs', source: 'DMG' },
         refHeading: 'Gear — Wand of Fireballs', refBefore: 'While holding this wand, you can expend charges to cast ', refAfter: ' (save DC 15) from it.',
         entries: [
           'Flame bursts in a 20-foot radius around a point you can see within range. Each creature in the burst makes a Dexterity save, taking 8d6 fire damage on a failure or half as much on a success.',
@@ -220,6 +225,7 @@ class Component extends DCLogic {
       },
       longSpell: {
         type: 'Spell', name: 'Wish', source: 'PHB', edition: 'classic', classes: ['Sorcerer', 'Wizard'], query: 'wish', meta: 'Level 9 · Conjuration',
+        from: { type: 'Item', name: 'Ring of Three Wishes', source: 'DMG' },
         refHeading: 'Gear — Ring of Three Wishes', refBefore: 'While wearing this ring, you can expend one of its charges to cast ', refAfter: ' from it.',
         entries: [
           'The mightiest spell a mortal can cast. You speak aloud and reshape reality to your desire.',
@@ -236,16 +242,19 @@ class Component extends DCLogic {
       },
       item: {
         type: 'Item', name: 'Longbow +1', source: 'DMG', edition: 'classic', query: 'longbow', meta: 'Weapon · Uncommon',
+        from: { type: 'Spell', name: 'Magic Weapon', source: 'PHB', classes: ['Paladin', 'Wizard'] },
         refHeading: 'Spells — Magic Weapon', refBefore: 'You touch a nonmagical weapon. Until the spell ends it becomes a magic weapon, like a ', refAfter: ', with a +1 bonus to attack and damage rolls.',
         entries: ['Attack and damage rolls made with this bow gain a +1 bonus.']
       },
       homebrew: {
         type: 'Item', name: 'Ember Charm of Fire', source: '', edition: 'classic', query: 'ember', meta: 'Wondrous item',
+        from: { type: 'Spell', name: 'Produce Flame', source: 'PHB', classes: ['Druid'], before: 'A flickering flame appears in your hand, as bright as an ', after: ' at full glow.' },
         refHeading: 'Notes', refBefore: 'Worn at the throat: ', refAfter: '.',
         entries: []
       },
       feat: {
         type: 'Feat', name: 'Elemental Adept', source: 'PHB', edition: 'classic', needsCaster: true, query: 'elemental', meta: 'Spellcaster prerequisite',
+        from: { type: 'Feat', name: 'Spell Sniper', source: 'PHB', needsCaster: true, before: 'A caster who takes this feat often pairs it with ', after: '.' },
         refHeading: 'Notes', refBefore: 'At Ranger 8, take ', refAfter: ' for fire.',
         entries: [
           'Pick one damage type: acid, cold, fire, lightning or thunder. Your spells ignore resistance to it.',
@@ -254,8 +263,12 @@ class Component extends DCLogic {
       }
     };
     const row = ROWS[this.props.kind ?? 'spell'] || ROWS.spell;
-    const { open, pickerOpen, toast } = this.state;
+    const { open, view, linked, pickerOpen, toast } = this.state;
+    // The entry whose rules text links to this row: one modal shows either, never both.
+    const from = { edition: 'classic', before: row.refBefore, after: row.refAfter, entries: [], ...row.from };
+    const shown = view === 'from' ? from : row;
     const sourceLabel = row.source || 'Homebrew';
+    const shownSourceLabel = shown.source || 'Homebrew';
     const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse' };
     const sourceTitle = SOURCE_TITLES[row.source] || sourceLabel;
 
@@ -267,17 +280,21 @@ class Component extends DCLogic {
       this.setState({ open: false, pickerOpen: false, toast: null });
       focusById('catalogOpener');
     };
+    const showView = (next, nextLinked) => {
+      this.setState({ view: next, linked: nextLinked, pickerOpen: false, toast: null });
+      focusById(next === 'row' ? 'catalogClose' : 'catalogBack');
+    };
     // A row the rules disallow still lands: the confirmation notes why, rather than refusing.
     const noteFor = (c) => {
-      if (row.type === 'Spell' && row.classes.indexOf(c.cls) === -1) return 'Noted: ' + row.name + ' is not on the ' + c.cls + ' spell list.';
-      if (row.type === 'Feat' && row.needsCaster && !c.caster) return 'Noted: ' + c.name + ' cannot cast a spell, which ' + row.name + ' requires.';
+      if (shown.type === 'Spell' && shown.classes.indexOf(c.cls) === -1) return 'Noted: ' + shown.name + ' is not on the ' + c.cls + ' spell list.';
+      if (shown.type === 'Feat' && shown.needsCaster && !c.caster) return 'Noted: ' + c.name + ' cannot cast a spell, which ' + shown.name + ' requires.';
       return '';
     };
     const add = (c) => {
       this.setState({
         pickerOpen: false,
         toast: {
-          text: 'Added ' + row.name + ' (' + sourceLabel + ') to ' + c.name + '.',
+          text: 'Added ' + shown.name + ' (' + shownSourceLabel + ') to ' + c.name + '.',
           note: noteFor(c)
         }
       });
@@ -316,15 +333,26 @@ class Component extends DCLogic {
       type: row.type,
       tagColor: TAG[row.type],
       name: row.name,
-      edition: EDITION_LABELS[row.edition],
-      editionTitle: 'This row uses the ' + EDITION_LABELS[row.edition] + ' rules',
+      edition: EDITION_LABELS[shown.edition],
+      editionTitle: 'This row uses the ' + EDITION_LABELS[shown.edition] + ' rules',
       sourceLabel,
       sourceTitle,
-      noEntries: row.entries.length === 0,
-      entries: row.entries,
+      shownName: shown.name,
+      shownType: shown.type,
+      shownTagColor: TAG[shown.type],
+      shownSourceLabel,
+      shownSourceTitle: SOURCE_TITLES[shown.source] || shownSourceLabel,
+      noEntries: view === 'row' && row.entries.length === 0,
+      entries: shown.entries,
+      showLink: view === 'from',
+      linkBefore: from.before,
+      linkAfter: from.after,
+      followLink: () => showView('row', true),
+      backLabel: view === 'row' && linked ? 'Back to ' + from.name : 'Back',
+      back: () => (view === 'row' && linked ? showView('from', false) : closeModal()),
       open,
       openModal: () => {
-        this.setState({ open: true, pickerOpen: false, toast: null });
+        this.setState({ open: true, view: 'row', linked: false, pickerOpen: false, toast: null });
         this.focusDialog();
       },
       closeModal,
@@ -355,9 +383,9 @@ class Component extends DCLogic {
           first.focus();
         }
       },
-      addHint: ' ' + row.name + ' (' + sourceLabel + ')' + (onSheet ? ', for ' + current.name : ''),
+      addHint: ' ' + shown.name + ' (' + shownSourceLabel + ')' + (onSheet ? ', for ' + current.name : ''),
       expandedAttr: onSheet ? undefined : pickerOpen,
-      pickerLabel: 'Add ' + row.name + ' to which character',
+      pickerLabel: 'Add ' + shown.name + ' to which character',
       pickerOpen,
       addClick: () => (onSheet ? add(current) : this.setState({ pickerOpen: !pickerOpen, toast: null })),
       pickerCharacters: CHARACTERS.map((c) => ({ ...c, initial: c.name.charAt(0), pick: () => add(c) })),
