@@ -48,6 +48,8 @@ export function Modal({
       if (scroll.clientHeight < chrome) setRoomy(true);
     });
     observer.observe(dialog);
+    // At its height cap the dialog holds still while a growing header or footer shrinks the body.
+    if (body.current) observer.observe(body.current);
     return () => observer.disconnect();
   }, [roomy]);
 
