@@ -23,8 +23,9 @@ import {
   spellEntrySchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
-import { and, eq, sql } from "drizzle-orm";
+import { and, between, eq, inArray, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type * as homebrewSchema from "../homebrew.ts";
 import {
   HOMEBREW_SOURCE,
@@ -35,6 +36,7 @@ import {
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
+import type { SearchFilter } from "./catalog-search.ts";
 import { escapeLikeTerm } from "./search-terms.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;
@@ -43,15 +45,19 @@ export function listHomebrewItems(db: HomebrewDb) {
   return db.select().from(homebrewItems).all();
 }
 
-/** Homebrew items of one edition whose name holds `term`, for `/search`. */
-export function searchHomebrewItems(db: HomebrewDb, edition: Edition, term: string) {
+const nameHolds = (column: SQLiteColumn, term: string) =>
+  sql`${column} LIKE ${`%${escapeLikeTerm(term)}%`} ESCAPE '!'`;
+
+/** Homebrew items `filter` admits, for `/search`; see `SearchFilter`. */
+export function searchHomebrewItems(db: HomebrewDb, filter: SearchFilter) {
   return db
     .select()
     .from(homebrewItems)
     .where(
       and(
-        eq(homebrewItems.edition, edition),
-        sql`${homebrewItems.name} LIKE ${`%${escapeLikeTerm(term)}%`} ESCAPE '!'`,
+        filter.edition ? eq(homebrewItems.edition, filter.edition) : undefined,
+        filter.term ? nameHolds(homebrewItems.name, filter.term) : undefined,
+        filter.rarities?.length ? inArray(homebrewItems.rarity, [...filter.rarities]) : undefined,
       ),
     )
     .all();
@@ -145,15 +151,18 @@ export function listHomebrewSpells(db: HomebrewDb) {
   return db.select().from(homebrewSpells).all();
 }
 
-/** Homebrew spells of one edition whose name holds `term`, for `/search`. */
-export function searchHomebrewSpells(db: HomebrewDb, edition: Edition, term: string) {
+/** Homebrew spells `filter` admits, for `/search`; see `SearchFilter`. */
+export function searchHomebrewSpells(db: HomebrewDb, filter: SearchFilter) {
+  const { edition, term, spellLevels, schools } = filter;
   return db
     .select()
     .from(homebrewSpells)
     .where(
       and(
-        eq(homebrewSpells.edition, edition),
-        sql`${homebrewSpells.name} LIKE ${`%${escapeLikeTerm(term)}%`} ESCAPE '!'`,
+        edition ? eq(homebrewSpells.edition, edition) : undefined,
+        term ? nameHolds(homebrewSpells.name, term) : undefined,
+        spellLevels ? between(homebrewSpells.level, spellLevels.min, spellLevels.max) : undefined,
+        schools?.length ? inArray(homebrewSpells.school, [...schools]) : undefined,
       ),
     )
     .all();

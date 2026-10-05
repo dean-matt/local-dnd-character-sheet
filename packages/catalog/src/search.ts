@@ -70,12 +70,14 @@ function nameMatchRank(name: string, term: string): number {
 
 /**
  * Orders `/search` hits for `term`: by how closely the name matches, then the shorter name,
- * since a name with less beyond the term is the nearer match, then alphabetically. Both the
+ * since a name with less beyond the term is the nearer match, then alphabetically. A blank
+ * term, which lists rows rather than searching them, sorts alphabetically alone. Both the
  * API's page and the web's merge of two editions' pages sort by it, so the merge keeps the
  * order each page arrived in.
  */
 export function compareSearchHits(term: string): (a: SearchHit, b: SearchHit) => number {
   const needle = term.trim().toLowerCase();
+  if (needle === "") return (a, b) => a.name.localeCompare(b.name);
   return (a, b) =>
     nameMatchRank(a.name, needle) - nameMatchRank(b.name, needle) ||
     a.name.length - b.name.length ||

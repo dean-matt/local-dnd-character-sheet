@@ -19,3 +19,6 @@ export type CatalogSource = z.infer<typeof catalogSourceSchema>;
 
 /** Every source `/search` can return a row from, one abbreviation each, sorted. */
 export const searchSourcesResponseSchema = z.object({ sources: z.array(z.string().min(1)) });
+
+/** Every `type` `/search` can return a row of, one each, sorted. */
+export const searchTypesResponseSchema = z.object({ types: z.array(z.string().min(1)) });

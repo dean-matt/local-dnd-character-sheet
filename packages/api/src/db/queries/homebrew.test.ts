@@ -477,24 +477,32 @@ describe("homebrew queries", () => {
       insertHomebrewItem(db, "1", sunblade());
       insertHomebrewItem(db, "2", sunblade({ name: "Moonblade", edition: "classic" }));
 
-      expect(searchHomebrewItems(db, "one", "sun").map((row) => row.id)).toEqual(["1"]);
-      expect(searchHomebrewItems(db, "one", "blade").map((row) => row.id)).toEqual(["1"]);
-      expect(searchHomebrewItems(db, "one", "nonexistent")).toEqual([]);
+      expect(searchHomebrewItems(db, { edition: "one", term: "sun" }).map((row) => row.id)).toEqual(
+        ["1"],
+      );
+      expect(
+        searchHomebrewItems(db, { edition: "one", term: "blade" }).map((row) => row.id),
+      ).toEqual(["1"]);
+      expect(searchHomebrewItems(db, { edition: "one", term: "nonexistent" })).toEqual([]);
     });
 
     it("finds a spell by a case-insensitive substring of its name, filtered to one edition", () => {
       insertHomebrewSpell(db, "1", acidSplash());
       insertHomebrewSpell(db, "2", acidSplash({ name: "Fire Bolt", edition: "classic" }));
 
-      expect(searchHomebrewSpells(db, "one", "acid").map((row) => row.id)).toEqual(["1"]);
-      expect(searchHomebrewSpells(db, "classic", "acid")).toEqual([]);
+      expect(
+        searchHomebrewSpells(db, { edition: "one", term: "acid" }).map((row) => row.id),
+      ).toEqual(["1"]);
+      expect(searchHomebrewSpells(db, { edition: "classic", term: "acid" })).toEqual([]);
     });
 
     it("escapes a literal percent in the term so it does not act as a wildcard", () => {
       insertHomebrewItem(db, "1", sunblade({ name: "100% Cotton Cloak" }));
       insertHomebrewItem(db, "2", sunblade({ name: "Moonblade" }));
 
-      expect(searchHomebrewItems(db, "one", "100%").map((row) => row.id)).toEqual(["1"]);
+      expect(
+        searchHomebrewItems(db, { edition: "one", term: "100%" }).map((row) => row.id),
+      ).toEqual(["1"]);
     });
   });
 });

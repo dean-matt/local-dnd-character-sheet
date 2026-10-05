@@ -60,4 +60,8 @@ describe("compareSearchHits", () => {
       "Abominable Yeti",
     ]);
   });
+
+  it("sorts alphabetically alone for a blank term", () => {
+    expect(ranked(" ", ["Fireball", "Aid", "Fire Bolt"])).toEqual(["Aid", "Fire Bolt", "Fireball"]);
+  });
 });
