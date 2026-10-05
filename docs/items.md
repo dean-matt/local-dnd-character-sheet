@@ -41,7 +41,13 @@ Read alone, `GET /items/{name}/{source}` returns a template as the item it descr
 `inherits` lifted over the entry around it, a placeholder filled where `inherits` holds
 the value. `{=baseName}` stays as written, since no base item is chosen. Search lists the
 templates beside the items and places each by the base items its `requires` and
-`excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
+`excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both. A `requires` clause
+naming `type`, `staff`, `wondrous` or `name` passes on every kind of the items it admits.
+A clause on any other trait, such as `weaponCategory` or `dmgType`, passes on only their
+weapon and armor kinds. The arcane focus `Staff` carries a simple weapon's stats, so such
+a clause admits it, yet Holy Avenger and the 17 other templates it reaches that way are
+weapons, not staffs or foci. Imbued Wood requires an arcane focus by `type`, so it still
+lists as a staff and a focus.
 
 `rarity` spans 10 upstream values, `none`, `varies` and `unknown (magic)` among them,
 and the column is nullable because 43 items carry none — though every one of those

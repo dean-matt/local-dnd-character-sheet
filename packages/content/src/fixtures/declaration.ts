@@ -791,7 +791,15 @@ export const FIXTURES: Fixture[] = [
       ],
       within: {
         baseitem: {
-          items: ["Longsword|PHB", "Longsword|XPHB", "Alchemist's Supplies|PHB"],
+          items: [
+            "Longsword|PHB",
+            "Longsword|XPHB",
+            "Alchemist's Supplies|PHB",
+            "Longbow|XPHB",
+            "Staff|XPHB",
+            "Orb|XPHB",
+            "Wand|XPHB",
+          ],
         },
         itemProperty: { items: ["PHB|2H", "XPHB|2H", "special|PHB|S"] },
         itemType: {
@@ -811,7 +819,15 @@ export const FIXTURES: Fixture[] = [
       fields: ["magicvariant"],
       within: {
         magicvariant: {
-          items: ["Arrow of Slaying (*)", "Ammunition of Slaying", "Armblade"],
+          items: [
+            "Arrow of Slaying (*)",
+            "Ammunition of Slaying",
+            "Armblade",
+            // Upstream lists the DMG entry first; the second name claims the XDMG one.
+            "Holy Avenger",
+            "Holy Avenger",
+            "Imbued Wood (Fernian Ash)",
+          ],
         },
       },
     },
@@ -830,9 +846,12 @@ export const FIXTURES: Fixture[] = [
             "Cloak of Billowing|XDMG",
             "Cloak of Billowing|WttHC",
             "Longsword|XPHB",
+            "Longbow|XPHB",
             "Arrow of Slaying (*)|DMG",
             "Ammunition of Slaying|XDMG",
             "Armblade|ERLW",
+            "Holy Avenger|DMG",
+            "Holy Avenger|XDMG",
           ],
         },
       },

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -188,6 +188,31 @@ describe("variantKinds", () => {
   it("falls back to the variant's own kinds where no base item qualifies", () => {
     const barding = { type: "TAH|PHB", requires: [{ barding: true }], inherits: {} };
     expect(variantKinds(barding, BASES)).toEqual(["other"]);
+  });
+
+  describe("against the generated fixtures", () => {
+    const data = join(import.meta.dirname, "../../../../../tests/fixtures/5etools/data");
+    const read = (file: string) => JSON.parse(readFileSync(join(data, file), "utf8"));
+    const { baseitem } = read("items-base.json");
+    const { magicvariant } = read("magicvariants.json");
+    const variant = (name: string, source: string) =>
+      magicvariant.find(
+        (one: { name: string; inherits: { source: string } }) =>
+          one.name === name && one.inherits.source === source,
+      );
+
+    it("files Holy Avenger by the weapons it admits, not by the Staff a focus doubles as", () => {
+      const staff = baseitem.find((one: { name: string }) => one.name === "Staff");
+      expect(baseItemMatchesVariant(staff, variant("Holy Avenger", "XDMG"))).toBe(true);
+      expect(variantKinds(variant("Holy Avenger", "XDMG"), baseitem)).toEqual(["melee", "ranged"]);
+    });
+
+    it("files a variant requiring an arcane focus under Staff and Spellcasting focus", () => {
+      expect(variantKinds(variant("Imbued Wood (Fernian Ash)", "ERLW"), baseitem)).toEqual([
+        "staff",
+        "focus",
+      ]);
+    });
   });
 });
 
