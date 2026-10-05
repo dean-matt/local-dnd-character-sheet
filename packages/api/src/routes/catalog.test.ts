@@ -42,7 +42,7 @@ describe("catalogRoutes", () => {
     });
   });
 
-  it("titles each source the catalog's books and adventures name", async () => {
+  it("titles and groups each source the catalog's books and adventures name", async () => {
     publishSearchFixture(dataDir, {
       entities: [
         {
@@ -51,7 +51,7 @@ describe("catalogRoutes", () => {
           source: "XPHB",
           qualifier: "",
           edition: "one",
-          json: "{}",
+          json: JSON.stringify({ group: "core" }),
           rendered_text: "",
         },
       ],
@@ -60,7 +60,7 @@ describe("catalogRoutes", () => {
     const res = await routes.request("/catalog/sources");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
-      sources: [{ source: "XPHB", name: "Player's Handbook (2024)" }],
+      sources: [{ source: "XPHB", name: "Player's Handbook (2024)", group: "core" }],
     });
   });
 

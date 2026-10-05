@@ -8,7 +8,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const SOURCES = { sources: [{ source: "PHB", name: "Player's Handbook (2014)" }] };
+const SOURCES = { sources: [{ source: "PHB", name: "Player's Handbook (2014)", group: "core" }] };
 
 describe("SourceChip", () => {
   it("reads a source as its title, with the abbreviation on screen and the title on hover", async () => {

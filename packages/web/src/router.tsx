@@ -10,7 +10,7 @@ import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
 import { SettingsLayout } from "./routes/SettingsLayout.tsx";
-import { SourcesSettings } from "./routes/SourcesSettings.tsx";
+import { SourcesSettings } from "./routes/SourcesSettings/SourcesSettings.tsx";
 
 export const routeConfig: RouteObject[] = [
   {

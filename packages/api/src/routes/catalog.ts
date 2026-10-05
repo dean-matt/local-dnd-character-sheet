@@ -1,4 +1,4 @@
-/** What the catalog says of itself: its build stamp and the title of each source it holds. */
+/** What the catalog says of itself: its build stamp and the title and group of each source it holds. */
 
 import { catalogSourcesResponseSchema } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
@@ -33,10 +33,10 @@ const sources = createRoute({
   method: "get",
   path: "/catalog/sources",
   tags: ["catalog"],
-  summary: "The title of every book and adventure the catalog cites as a source",
+  summary: "The title and group of every book and adventure the catalog cites as a source",
   responses: {
     200: {
-      description: "Each source abbreviation and its title",
+      description: "Each source abbreviation, its title, and its group",
       content: { "application/json": { schema: catalogSourcesResponseSchema } },
     },
     503: notBuilt,

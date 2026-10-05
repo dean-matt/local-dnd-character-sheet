@@ -219,7 +219,7 @@ gear, gated by proficiency to equip; spell slots as a per-level, clickable pip t
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium, with an advanced search page, a
 catalog detail modal, and a way to add a result to a character; light, dark, and system
-theme; a user-customizable accent color; a settings page for homebrew content; a way
+theme; a user-customizable accent color; a settings page for homebrew content and sources; a way
 to add or remove experience points in XP leveling mode; and a filter on Weapons, Armor,
 Gear, Known Spells, Class Features, Race Features, and Chosen Features to narrow
 what the widget shows.

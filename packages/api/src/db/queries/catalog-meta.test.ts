@@ -51,13 +51,13 @@ describe("getCatalogVersion", () => {
   });
 });
 
-const volume = (type: string, name: string, source: string) => ({
+const volume = (type: string, name: string, source: string, group?: string) => ({
   type,
   name,
   source,
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name, source }),
+  json: JSON.stringify({ name, source, group }),
   rendered_text: name,
 });
 
@@ -68,22 +68,24 @@ describe("getCatalogSources", () => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
-  it("titles each source once, preferring the book where an adventure shares its source", () => {
+  it("titles and groups each source once, preferring the book where an adventure shares its source", () => {
     dataDir = mkdtempSync(join(tmpdir(), "catalog-sources-"));
     publishSearchFixture(dataDir, {
       entities: [
-        volume("book", "Player's Handbook (2014)", "PHB"),
-        volume("adventure", "Theros: No Silent Secret", "MOT"),
-        volume("book", "Mythic Odysseys of Theros", "MOT"),
-        volume("adventure", "Curse of Strahd", "CoS"),
+        volume("book", "Player's Handbook (2014)", "PHB", "core"),
+        volume("adventure", "Theros: No Silent Secret", "MOT", "supplement"),
+        volume("book", "Mythic Odysseys of Theros", "MOT", "setting"),
+        volume("adventure", "Curse of Strahd", "CoS", "supplement"),
+        volume("book", "Ungrouped Almanac", "UGA"),
         volume("monster", "Goblin", "MM"),
       ],
     });
 
     expect(getCatalogSources(dataDir)).toEqual([
-      { source: "CoS", name: "Curse of Strahd" },
-      { source: "MOT", name: "Mythic Odysseys of Theros" },
-      { source: "PHB", name: "Player's Handbook (2014)" },
+      { source: "CoS", name: "Curse of Strahd", group: "adventure" },
+      { source: "MOT", name: "Mythic Odysseys of Theros", group: "setting" },
+      { source: "PHB", name: "Player's Handbook (2014)", group: "core" },
+      { source: "UGA", name: "Ungrouped Almanac", group: null },
     ]);
   });
 
