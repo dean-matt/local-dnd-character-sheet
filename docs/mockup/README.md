@@ -170,11 +170,7 @@ widget, panel, or nav element:
   Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
   Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
   5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
-  level/school — its real counterpart widget does), and Sources: a switch per source
-  under a heading for each group (Core rulebooks, Supplements, Settings, Adventures,
-  Screens, Playtest, Other), with a filter box and "Turn all on" and "Turn all off" for
-  each group and for every source the filter shows. Its `filter` tweak opens on a
-  filter that matches, or on one that matches nothing.
+  level/school — its real counterpart widget does).
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats follow the same
   paste-and-parse shape as the four shipped Homebrew artboards above, but nothing behind
   them exists yet — `homebrew.db` only reaches items and spells today. They're forward
@@ -318,7 +314,6 @@ says how much of the artboard the app builds today.
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `SettingsSidebar` | #243, #486, #489 | Display and Sources |
 | `DisplaySettings` | #390 | theme only |
-| `Sources` | #558 | all, on #558's branch |
 | `HomebrewWeapons` | #243 | nothing |
 | `HomebrewArmor` | #243 | nothing |
 | `HomebrewGear` | #243 | nothing |
