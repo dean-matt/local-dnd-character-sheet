@@ -189,21 +189,23 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         <div
           hidden={!showPanel}
           onMouseDown={(event) => event.preventDefault()}
-          className="absolute top-full right-0 left-0 mt-2 max-h-105 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover"
+          className="absolute top-full right-0 left-0 mt-2 flex max-h-105 flex-col rounded-xl border border-border bg-surface p-2 shadow-popover"
         >
+          {/* The results scroll alone, so the Advanced search link below stays in view. */}
           <div
             id={listboxId}
             role="listbox"
             aria-label="Search results"
             hidden={results.length === 0}
+            className="min-h-0 flex-1 overflow-y-auto"
           >
             {group("Characters", characterResults, 0)}
             {group("Compendium", compendiumResults, characterResults.length)}
           </div>
-          <p aria-hidden className="px-2.5 py-1.5 text-body text-muted empty:hidden">
+          <p aria-hidden className="shrink-0 px-2.5 py-1.5 text-body text-muted empty:hidden">
             {showPanel ? status() : undefined}
           </p>
-          <div className="mt-1 border-t border-border pt-1">
+          <div className="mt-1 shrink-0 border-t border-border pt-1">
             <Link
               to={`/search?${new URLSearchParams({ q: query.trim() })}`}
               onClick={() => {
