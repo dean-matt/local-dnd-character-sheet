@@ -139,6 +139,7 @@ describe("refsRoutes", () => {
         { kind: "condition", qualifier: "", ...row("Blinded", "XPHB") },
         { kind: "deity", qualifier: "Greek", ...row("Zeus", "PHB") },
       ],
+      optionalFeatures: [row("Agonizing Blast", "PHB", ["Add your Charisma modifier."])],
       entities: [{ type: "monster", qualifier: "", ...row("Goblin", "MM") }],
       tagRedirects: [
         {
@@ -220,8 +221,22 @@ describe("refsRoutes", () => {
       ]),
     ).toEqual([
       { name: "Blinded", source: "XPHB", entries: [] },
-      { name: "Unarmed Strike", source: "XPHB", entries: ["Punch."] },
+      {
+        name: "Unarmed Strike",
+        source: "XPHB",
+        entries: ["Punch."],
+        path: "/catalog/variantrule/Unarmed%20Strike/XPHB",
+      },
     ]);
+  });
+
+  it("links an optional feature with prose to its catalog row, and leaves one without unlinked", async () => {
+    const [invocation, creature] = await resolveOk([
+      { tag: "optfeature", name: "agonizing blast" },
+      { tag: "creature", name: "Goblin" },
+    ]);
+    expect(invocation.path).toBe("/catalog/optfeature/Agonizing%20Blast/PHB");
+    expect(creature).not.toHaveProperty("path");
   });
 
   it("answers null, in place, for what the catalog does not have", async () => {

@@ -24,7 +24,7 @@ const FIRE_ELEMENTAL = {
   source: "MM",
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name: "Fire Elemental", source: "MM" }),
+  json: JSON.stringify({ name: "Fire Elemental", source: "MM", entries: ["Fire Elemental."] }),
   rendered_text: "Fire Elemental. A fire elemental is a mass of elemental fire.",
 };
 
@@ -34,7 +34,7 @@ const AZER = {
   source: "MM",
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name: "Azer", source: "MM" }),
+  json: JSON.stringify({ name: "Azer", source: "MM", entries: ["Azer."] }),
   rendered_text: "Azer. Its hair is a mane of fire.",
 };
 

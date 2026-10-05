@@ -1,7 +1,10 @@
 /** How the web names and addresses a `/search` hit. */
 import type { SearchHit } from "@dnd/catalog";
 
-/** Each hit type with a detail, mapped to the collection `catalogRows.ts` reads it from. */
+/**
+ * Each hit type with an API route of its own, mapped to the collection `catalogRows.ts`
+ * reads it from.
+ */
 export const HIT_COLLECTIONS = new Map([
   ["background", "backgrounds"],
   ["class", "classes"],
@@ -11,24 +14,39 @@ export const HIT_COLLECTIONS = new Map([
   ["spell", "spells"],
 ]);
 
+const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/");
+
 /**
- * The detail address a hit opens, or `undefined` for a type the web shows no detail for,
- * such as an optional feature or a Tier C monster.
+ * The detail address a hit opens, or `undefined` for a row with no rules text to show,
+ * such as a monster. A type with no route of its own, such as an optional feature or a
+ * condition, opens through `/catalog`, its qualifier a last segment where it carries one.
  */
 export function searchHitAddress(hit: SearchHit): string | undefined {
   const collection = HIT_COLLECTIONS.get(hit.type);
-  if (!collection) return undefined;
-  return "id" in hit
-    ? `/homebrew/${collection}/${encodeURIComponent(hit.id)}`
-    : `/${collection}/${encodeURIComponent(hit.name)}/${encodeURIComponent(hit.source)}`;
+  if ("id" in hit) {
+    return collection && `/homebrew/${collection}/${encodeURIComponent(hit.id)}`;
+  }
+  if (hit.textless) return undefined;
+  if (collection) return `/${collection}/${segments(hit.name, hit.source)}`;
+  if (hit.parent) {
+    const { parent } = hit;
+    return `/classes/${segments(parent.name, parent.source, "subclasses", hit.name, hit.source)}`;
+  }
+  const key = hit.qualifier ? [hit.name, hit.source, hit.qualifier] : [hit.name, hit.source];
+  return `/catalog/${segments(hit.type, ...key)}`;
 }
 
 /** A hit's identity: its type and key, or its homebrew id. */
 export function searchHitKey(hit: SearchHit): string {
-  return "id" in hit ? `homebrew:${hit.type}:${hit.id}` : `${hit.type}|${hit.name}|${hit.source}`;
+  return "id" in hit
+    ? `homebrew:${hit.type}:${hit.id}`
+    : JSON.stringify([hit.type, hit.name, hit.source, hit.qualifier, hit.parent]);
 }
 
-const TYPE_LABELS: Record<string, string> = { optfeature: "Optional feature" };
+const TYPE_LABELS: Record<string, string> = {
+  optfeature: "Optional feature",
+  variantrule: "Variant rule",
+};
 
 /** A hit's `type` as a reader names it: `legendaryGroup` reads "Legendary group". */
 export function searchHitTypeLabel(type: string): string {

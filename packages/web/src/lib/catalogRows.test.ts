@@ -4,14 +4,25 @@ import { matchCatalogTarget } from "./catalogRows.ts";
 describe("matchCatalogTarget", () => {
   it("decodes each segment of the key, an encoded slash included", () => {
     const match = matchCatalogTarget("/spells/Mage%20Hand%20%2F%20Legerdemain/XPHB");
-    expect(match?.target.label).toBe("spell");
+    expect(match?.target.label(match.key)).toBe("spell");
     expect(match?.key).toEqual({ name: "Mage Hand / Legerdemain", source: "XPHB" });
   });
 
   it("names a class feature by its class, its key and its level", () => {
     const match = matchCatalogTarget("/classes/Fighter/PHB/features/Action%20Surge/PHB/2");
-    expect(match?.target.label).toBe("class feature");
+    expect(match?.target.label(match.key)).toBe("class feature");
     expect(match?.key).toMatchObject({ className: "Fighter", name: "Action Surge", level: "2" });
+  });
+
+  it("labels a catalog row by its type and reads a qualifier as the last segment", () => {
+    const match = matchCatalogTarget("/catalog/variantrule/Hiding/XPHB");
+    expect(match?.target.label(match.key)).toBe("variant rule");
+    expect(matchCatalogTarget("/catalog/card/Balance/BMT/Deck%20of%20Many%20Things")?.key).toEqual({
+      type: "card",
+      name: "Balance",
+      source: "BMT",
+      qualifier: "Deck of Many Things",
+    });
   });
 
   it.each(["/monsters/Goblin/MM", "/spells/%E0%A4%A/PHB"])("matches nothing at %s", (address) => {

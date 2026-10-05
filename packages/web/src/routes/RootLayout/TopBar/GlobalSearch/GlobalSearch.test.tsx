@@ -10,7 +10,13 @@ const page = (items: unknown[]) => ({ items, total: items.length, limit: 10, off
 const searchUrl = (q: string) => `/api/search?q=${q}&limit=10`;
 
 const fireball = { type: "spell", name: "Fireball", source: "PHB", edition: "classic" };
-const fireGiant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
+const fireGiant = {
+  type: "monster",
+  name: "Fire Giant",
+  source: "MM",
+  textless: true as const,
+  edition: null,
+};
 const ember = {
   type: "item",
   id: "3",

@@ -48,6 +48,9 @@ export function SearchResultOption({
           meta: (
             <>
               {result.hit.item && <span className="truncate">{itemMeta(result.hit.item)}</span>}
+              {"qualifier" in result.hit && result.hit.qualifier && (
+                <span className="truncate">{result.hit.qualifier}</span>
+              )}
               <SourceChip
                 source={"source" in result.hit ? result.hit.source : undefined}
                 edition={result.hit.edition}

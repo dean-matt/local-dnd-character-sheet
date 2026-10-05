@@ -33,7 +33,7 @@ const FIRE_ELEMENTAL = {
   source: "MM",
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name: "Fire Elemental", source: "MM" }),
+  json: JSON.stringify({ name: "Fire Elemental", source: "MM", entries: ["Fire Elemental."] }),
   rendered_text: "Fire Elemental. A fire elemental is a mass of elemental fire.",
 };
 
@@ -43,9 +43,27 @@ const GELATINOUS_CUBE = {
   source: "MM",
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name: "Gelatinous Cube", source: "MM" }),
+  json: JSON.stringify({ name: "Gelatinous Cube", source: "MM", entries: ["Gelatinous Cube."] }),
   rendered_text: "Gelatinous Cube. A nearly transparent ooze.",
 };
+
+const RESTRAINED = {
+  kind: "condition",
+  name: "Restrained",
+  source: "XPHB",
+  edition: "one",
+  json: JSON.stringify({ name: "Restrained", source: "XPHB", entries: ["Restrained."] }),
+};
+
+const battleMaster = (classSource: string) => ({
+  name: "Battle Master",
+  source: "PHB",
+  short_name: "Battle Master",
+  class_name: "Fighter",
+  class_source: classSource,
+  edition: "classic",
+  json: "{}",
+});
 
 describe("searchCatalog", () => {
   let dataDir: string;
@@ -229,6 +247,79 @@ describe("searchCatalog", () => {
     ]);
   });
 
+  it("finds each rules lookup a reader looks up by name, and leaves out an abbreviation", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      lookups: [
+        RESTRAINED,
+        { ...RESTRAINED, kind: "itemProperty", name: "R" },
+        { ...RESTRAINED, kind: "deity", name: "Moradin", source: "PHB", qualifier: "Dwarven" },
+      ],
+    });
+
+    expect(searchCatalog(dataDir, { term: "r" })).toEqual([
+      { type: "condition", name: "Restrained", source: "XPHB", edition: "one" },
+      { type: "deity", name: "Moradin", source: "PHB", qualifier: "Dwarven", edition: "one" },
+    ]);
+    expect(searchCatalog(dataDir, { types: ["deity"] })).toHaveLength(1);
+  });
+
+  it("finds a subclass once, under the class printed in its own source", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, { subclasses: [battleMaster("XPHB"), battleMaster("PHB")] });
+
+    expect(searchCatalog(dataDir, { term: "battle" })).toEqual([
+      {
+        type: "subclass",
+        name: "Battle Master",
+        source: "PHB",
+        parent: { name: "Fighter", source: "PHB" },
+        edition: "classic",
+      },
+    ]);
+  });
+
+  it("marks a row with no rules text to show, a table's text being its rows", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      entities: [{ ...FIRE_ELEMENTAL, json: JSON.stringify({ name: "Fire Elemental" }) }],
+      lookups: [
+        {
+          ...RESTRAINED,
+          kind: "table",
+          name: "Fire Tables",
+          json: JSON.stringify({ rows: [["1"]] }),
+        },
+        { ...RESTRAINED, kind: "table", name: "Fire Blank", json: JSON.stringify({ rows: [] }) },
+      ],
+    });
+
+    expect(searchCatalog(dataDir, { term: "fire" })).toEqual([
+      { type: "table", name: "Fire Blank", source: "XPHB", textless: true, edition: "one" },
+      { type: "table", name: "Fire Tables", source: "XPHB", edition: "one" },
+      { type: "monster", name: "Fire Elemental", source: "MM", textless: true, edition: null },
+    ]);
+  });
+
+  it("carries a card's deck as its qualifier", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      entities: [
+        { ...FIRE_ELEMENTAL, type: "card", name: "Balance", qualifier: "Deck of Many Things" },
+      ],
+    });
+
+    expect(searchCatalog(dataDir, { types: ["card"] })).toEqual([
+      {
+        type: "card",
+        name: "Balance",
+        source: "MM",
+        qualifier: "Deck of Many Things",
+        edition: null,
+      },
+    ]);
+  });
+
   it("finds nothing for a term no row's name or rendered text holds", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
@@ -244,14 +335,18 @@ describe("listSearchSources", () => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
-  it("lists each source a Tier A or Tier C row cites once, sorted", () => {
+  it("lists each source a searched row of any tier cites once, sorted", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {
       spells: [FIREBALL, GOODBERRY_ONE, { ...FIREBALL, name: "Fire Bolt", level: 0 }],
       entities: [FIRE_ELEMENTAL, { ...FIRE_ELEMENTAL, name: "Azer", source: "TftYP" }],
+      lookups: [
+        { ...RESTRAINED, source: "XGE" },
+        { ...RESTRAINED, kind: "itemType", source: "AI" },
+      ],
     });
 
-    expect(listSearchSources(dataDir)).toEqual(["MM", "PHB", "TftYP", "XPHB"]);
+    expect(listSearchSources(dataDir)).toEqual(["MM", "PHB", "TftYP", "XGE", "XPHB"]);
   });
 });
 
@@ -262,16 +357,18 @@ describe("listSearchTypes", () => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
-  it("lists every Tier A type and each type an entity carries, once, sorted", () => {
+  it("lists every Tier A type and each searched lookup kind and entity type, once, sorted", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {
       spells: [FIREBALL],
       entities: [FIRE_ELEMENTAL, GELATINOUS_CUBE, { ...FIRE_ELEMENTAL, type: "hazard" }],
+      lookups: [RESTRAINED, { ...RESTRAINED, kind: "itemProperty", name: "R" }],
     });
 
     expect(listSearchTypes(dataDir)).toEqual([
       "background",
       "class",
+      "condition",
       "feat",
       "hazard",
       "item",
@@ -279,6 +376,7 @@ describe("listSearchTypes", () => {
       "optfeature",
       "race",
       "spell",
+      "subclass",
     ]);
   });
 });

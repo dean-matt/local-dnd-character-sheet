@@ -8,7 +8,7 @@ const row = "flex items-center gap-3 rounded-control border border-border bg-sur
 
 /**
  * One compendium hit on the search page: its type, its name opening its detail, an item's kind
- * and rarity beneath, and where it comes from. A hit the web shows no detail for names itself
+ * and rarity or a deity's pantheon or a card's deck beneath, and where it comes from. A hit the web shows no detail for names itself
  * in plain text.
  */
 export function SearchHitRow({
@@ -41,6 +41,9 @@ export function SearchHitRow({
         )}
         {hit.item && (
           <span className="block truncate text-label text-muted">{itemMeta(hit.item)}</span>
+        )}
+        {"qualifier" in hit && hit.qualifier && (
+          <span className="block truncate text-label text-muted">{hit.qualifier}</span>
         )}
       </span>
       <SourceChip

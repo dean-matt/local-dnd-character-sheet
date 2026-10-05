@@ -167,6 +167,35 @@ describe("reference resolution", () => {
     expect(screen.queryByRole("button", { name: /^Open/ })).not.toBeInTheDocument();
   });
 
+  it("opens a rules lookup's catalog row from its popover", async () => {
+    stubFetchByUrl({
+      "/api/refs/resolve": {
+        refs: [
+          {
+            name: "Restrained",
+            source: "XPHB",
+            entries: ["Your Speed is 0."],
+            path: "/catalog/condition/Restrained/XPHB",
+          },
+        ],
+      },
+      "/api/catalog/condition/Restrained/XPHB": {
+        type: "condition",
+        name: "Restrained",
+        source: "XPHB",
+        edition: "one",
+        json: { entries: ["Your Speed is 0."] },
+      },
+    });
+    renderWithClient(<RulesText text="{@condition Restrained|XPHB}" />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Restrained" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Restrained" }));
+    const dialog = await screen.findByRole("dialog", { name: "Restrained" });
+    expect(await within(dialog).findByText("Your Speed is 0.")).toBeInTheDocument();
+    expect(within(dialog).getByText("Condition")).toBeInTheDocument();
+  });
+
   it("keeps a row with neither prose nor a detail as text, rather than a popover of its name", async () => {
     const fetchMock = stubFetchByUrl({
       "/api/refs/resolve": { refs: [{ name: "Goblin", source: "MM", entries: [] }] },

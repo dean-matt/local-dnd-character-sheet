@@ -4,9 +4,12 @@
  * no API route of its own and is read from its class's grants at its level, which is
  * why its address names the class and the level. Its address takes the parts
  * `{@classFeature}` and `{@subclassFeature}` carry, a subclass's short name included.
+ * A deity's pantheon or a card's deck rides as a fourth segment of a `/catalog` address,
+ * where the API reads it as a query parameter.
  */
 import {
   backgroundRecordSchema,
+  catalogRowRecordSchema,
   classGrantsSchema,
   classRecordSchema,
   type Entries,
@@ -28,6 +31,7 @@ import type { CharacterRecord } from "@dnd/character";
 import { matchPath, type Params } from "react-router";
 import { z } from "zod";
 import { ApiError, apiGet } from "./api.ts";
+import { searchHitTypeLabel } from "./searchHits.ts";
 
 /** `source` is absent on a homebrew row, the shape difference the sheet reads everywhere. */
 interface CatalogRow {
@@ -35,13 +39,15 @@ interface CatalogRow {
   source?: string;
   /** Absent on a class or subclass feature, which the grants list carries without one. */
   edition?: CharacterRecord["edition"];
+  /** A deity's pantheon or a card's deck. */
+  qualifier?: string;
   entries: Entries;
 }
 
 export interface CatalogTarget {
   path: string;
   /** What the row is, as its detail labels it: "spell", "class feature". */
-  label: string;
+  label: (key: Params) => string;
   lookedFor: (key: Params) => string;
   load: (key: Params) => Promise<CatalogRow>;
 }
@@ -71,7 +77,7 @@ function nameSource(
 ) {
   return {
     path: `${collection}/:name/:source`,
-    label,
+    label: () => label,
     lookedFor: (key: Params) => `the ${label} ${pair(key.name, key.source)}`,
     load: async (key: Params) =>
       toRow(await apiGet(`/${collection}/${segments(key.name, key.source)}`, schema)),
@@ -81,7 +87,7 @@ function nameSource(
 function homebrew(collection: string, label: string, schema: z.ZodType<Row>) {
   return {
     path: `homebrew/${collection}/:id`,
-    label,
+    label: () => label,
     lookedFor: (key: Params) => `the homebrew ${label} ${key.id}`,
     load: async (key: Params) =>
       toRow(await apiGet(`/homebrew/${collection}/${segments(key.id)}`, schema)),
@@ -136,7 +142,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("items", "item", itemRecordSchema),
   {
     path: "items/:name/:source/variants/:variantName/:variantSource",
-    label: "magic variant",
+    label: () => "magic variant",
     lookedFor: (key) =>
       `the magic variant ${pair(key.variantName, key.variantSource)} of ${pair(key.name, key.source)}`,
     load: async (key) =>
@@ -150,7 +156,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("races", "race", raceRecordSchema),
   {
     path: "races/:raceName/:raceSource/subraces/:name/:source",
-    label: "subrace",
+    label: () => "subrace",
     lookedFor: (key) =>
       `the subrace ${pair(key.name, key.source)} of ${pair(key.raceName, key.raceSource)}`,
     load: async (key) =>
@@ -166,7 +172,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("classes", "class", classRecordSchema),
   {
     path: "classes/:className/:classSource/subclasses/:name/:source",
-    label: "subclass",
+    label: () => "subclass",
     lookedFor: (key) =>
       `the subclass ${pair(key.name, key.source)} of ${pair(key.className, key.classSource)}`,
     load: async (key) =>
@@ -179,17 +185,38 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   },
   {
     path: "classes/:className/:classSource/features/:name/:source/:level",
-    label: "class feature",
+    label: () => "class feature",
     lookedFor: (key) =>
       `the class feature ${pair(key.name, key.source)} of ${pair(key.className, key.classSource)} at level ${key.level}`,
     load: (key) => feature(() => classPath(key), key),
   },
   {
     path: "classes/:className/:classSource/subclasses/:subclassShortName/:subclassSource/features/:name/:source/:level",
-    label: "subclass feature",
+    label: () => "subclass feature",
     lookedFor: (key) =>
       `the subclass feature ${pair(key.name, key.source)} of ${pair(key.subclassShortName, key.subclassSource)}, ${pair(key.className, key.classSource)}, at level ${key.level}`,
     load: (key) => feature(() => subclassPath(key), key),
+  },
+  {
+    path: "catalog/:type/:name/:source/:qualifier?",
+    label: (key) => searchHitTypeLabel(key.type ?? "").toLowerCase(),
+    lookedFor: (key) =>
+      `the ${searchHitTypeLabel(key.type ?? "").toLowerCase()} ${pair(key.name, key.source)}${key.qualifier ? ` of ${key.qualifier}` : ""}`,
+    load: async (key) => {
+      const query = key.qualifier ? `?${new URLSearchParams({ qualifier: key.qualifier })}` : "";
+      const row = await apiGet(
+        `/catalog/${segments(key.type, key.name, key.source)}${query}`,
+        catalogRowRecordSchema,
+      );
+      return {
+        name: row.name,
+        source: row.source,
+        edition: row.edition ?? undefined,
+        qualifier: row.qualifier,
+        // A table's rows sit on the row itself, which renders as the table it is.
+        entries: row.type === "table" ? [{ ...row.json, type: "table" }] : rowEntries(row.json),
+      };
+    },
   },
   homebrew("spells", "spell", homebrewSpellRecordSchema),
   homebrew("items", "item", homebrewItemRecordSchema),

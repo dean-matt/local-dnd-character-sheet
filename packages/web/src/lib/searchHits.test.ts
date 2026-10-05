@@ -43,10 +43,31 @@ describe("searchHitAddress", () => {
     },
   );
 
-  it.each(["monster", "constructor"])("has no path for the type %s", (type) => {
+  it("addresses a type with no route of its own through the catalog, its qualifier last", () => {
     expect(
-      searchHitAddress({ type, name: "Fire Giant", source: "MM", edition: null }),
-    ).toBeUndefined();
+      searchHitAddress({ type: "condition", name: "Restrained", source: "XPHB", edition: "one" }),
+    ).toBe("/catalog/condition/Restrained/XPHB");
+    const key = { type: "deity", name: "Moradin", source: "PHB", qualifier: "Dwarven" };
+    const address = searchHitAddress({ ...key, edition: null });
+    expect(address).toBe("/catalog/deity/Moradin/PHB/Dwarven");
+    expect(matchCatalogTarget(address ?? "")?.key).toEqual(key);
+  });
+
+  it("has no address for a row with no rules text to show", () => {
+    const giant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
+    expect(searchHitAddress({ ...giant, textless: true })).toBeUndefined();
+  });
+
+  it("addresses a subclass under its class", () => {
+    const address = searchHitAddress({
+      type: "subclass",
+      name: "Battle Master",
+      source: "PHB",
+      parent: { name: "Fighter", source: "PHB" },
+      edition: "classic",
+    });
+    expect(address).toBe("/classes/Fighter/PHB/subclasses/Battle%20Master/PHB");
+    expect(matchCatalogTarget(address ?? "")?.target.label({})).toBe("subclass");
   });
 });
 
@@ -54,6 +75,7 @@ describe("searchHitTypeLabel", () => {
   it.each([
     ["spell", "Spell"],
     ["optfeature", "Optional feature"],
+    ["variantrule", "Variant rule"],
     ["legendaryGroup", "Legendary group"],
   ])("labels %s as %s", (type, label) => {
     expect(searchHitTypeLabel(type)).toBe(label);
