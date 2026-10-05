@@ -16,7 +16,7 @@ export interface MechanicsMenuProps {
  * items to kinds; the rest name a type. An entry shows only once `/search/types` returns its
  * type, so a type that becomes searchable joins the menu with no change here.
  */
-const ENTRIES: { label: string; params: Record<string, string> }[] = [
+const ENTRIES: { label: string; params: { type: string; kind?: string } }[] = [
   { label: "Actions", params: { type: "action" } },
   { label: "Armor", params: { type: "item", kind: ARMOR_KINDS.join(",") } },
   { label: "Backgrounds", params: { type: "background" } },
@@ -51,7 +51,7 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
   const types = useSearchTypes();
   const here = useMatch("/search") !== null;
   const searchable = new Set(types.data ?? []);
-  const entries = ENTRIES.filter(({ params }) => searchable.has(params.type ?? ""));
+  const entries = ENTRIES.filter(({ params }) => searchable.has(params.type));
 
   return (
     <div className="relative shrink-0">
