@@ -382,7 +382,7 @@ class Component extends DCLogic {
       });
       return {
         [key + 'Open']: open,
-        [key + 'Summary']: selected.length === 0 ? 'All ' + noun : names.length === 1 || (names.length === 2 && joined.length <= 24) ? joined : selected.length + ' ' + noun,
+        [key + 'Summary']: selected.length === 0 ? 'All ' + noun : names.length === 1 || (names.length === 2 && joined.length <= 20) ? joined : selected.length + ' ' + noun,
         [key + 'Caret']: open ? 'rotate(180deg)' : 'rotate(0deg)',
         [key + 'Toggle']: () => {
           this.setState({ openMenu: open ? null : key, menuQuery: '', menuLeading: selected });
@@ -502,7 +502,7 @@ class Component extends DCLogic {
     return {
       accent,
       expanded: !collapsed,
-      sidebarWidth: collapsed ? '72px' : '260px',
+      sidebarWidth: collapsed ? '72px' : '224px',
       collapsedRail: collapsed,
       toggleSidebar: () => this.setState({ collapsed: !collapsed, openMenu: null }),
       toggleLabel: collapsed ? 'Expand filters' : 'Collapse filters',

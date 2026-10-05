@@ -23,7 +23,7 @@ export interface MultiSelectProps {
 /** Past this many options the list opens with a filter input. */
 const FILTER_ABOVE = 10;
 /** The longest two names the closed button joins before it counts them instead. */
-const SHORT_SUMMARY = 24;
+const SHORT_SUMMARY = 20;
 
 /** What the closed button says: all, one by name, two by name while short, then a count. */
 function summary(options: MultiSelectOption[], selected: string[], noun: string): string {

@@ -51,6 +51,26 @@ for (const [width, colorScheme] of [
   });
 }
 
+test("a two-name summary at the length limit fits the sidebar without an ellipsis", async ({
+  page,
+}) => {
+  // Twenty characters, the longest two names the button joins, wide letters among them.
+  await page.route("**/api/search/sources", (route) =>
+    route.fulfill({ json: { sources: ["HFDoMM", "MMWScreenKit"] } }),
+  );
+  await page.route("**/api/catalog/sources", (route) => route.fulfill({ json: { sources: [] } }));
+  await page.goto("/search?source=HFDoMM,MMWScreenKit");
+  const summary = page
+    .getByRole("complementary", { name: "Search filters" })
+    .getByText("HFDoMM, MMWScreenKit", { exact: true });
+  await expect(summary).toBeVisible();
+  const { scroll, client } = await summary.evaluate((el) => ({
+    scroll: el.scrollWidth,
+    client: el.clientWidth,
+  }));
+  expect(scroll).toBeLessThanOrEqual(client);
+});
+
 test("a click anywhere on a row ticks it and keeps the list open", async ({ page }) => {
   await page.route("**/api/search/types", (route) =>
     route.fulfill({ json: { types: ["spell", "item"] } }),
