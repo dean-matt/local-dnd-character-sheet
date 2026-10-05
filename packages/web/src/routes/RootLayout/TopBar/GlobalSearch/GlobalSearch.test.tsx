@@ -100,10 +100,9 @@ describe("GlobalSearch", () => {
     const options = within(compendium).getAllByRole("option");
     expect(options.map((o) => o.textContent)).toEqual([
       "FireballPHB20142014 rulesSpell",
-      "Fire GiantMMNo page yetMonster",
+      "Fire GiantMMMonster",
       "Ember CharmWondrous item • UncommonHomebrew20242024 rulesItem",
     ]);
-    expect(options[1]).toHaveAttribute("aria-disabled", "true");
   });
 
   it("moves through results by arrow and opens one's detail over the page with Enter", async () => {

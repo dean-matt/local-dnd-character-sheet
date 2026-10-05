@@ -3,9 +3,7 @@
  * by name in the list the bar already holds; the compendium is `/search` over both
  * editions. A character result opens its sheet; a compendium result opens its detail in a
  * modal over the current page, and closing it returns focus to the search with the query
- * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
- * hears it, and Enter or a click on it does nothing. Below the results, a link carries the
- * query to the advanced search page.
+ * kept. Below the results, a link carries the query to the advanced search page.
  */
 import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
@@ -64,7 +62,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
 
   function pick(result: SearchResult) {
     if (!("character" in result)) {
-      if (result.address !== undefined) setDetail(result.address);
+      setDetail(result.address);
       return;
     }
     navigate(`/characters/${result.character.id}`);

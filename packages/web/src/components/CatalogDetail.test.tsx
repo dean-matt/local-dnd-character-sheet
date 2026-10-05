@@ -194,6 +194,57 @@ describe("CatalogDetail", () => {
     expect(screen.getByText("This row carries no rules text of its own.")).toBeInTheDocument();
   });
 
+  it("reads an optional feature through the catalog, labeled by its type", async () => {
+    stubFetchByUrl({
+      "/api/catalog/optfeature/Agonizing%20Blast/PHB": {
+        type: "optfeature",
+        name: "Agonizing Blast",
+        source: "PHB",
+        edition: "classic",
+        json: { entries: ["Add your Charisma modifier."] },
+      },
+    });
+    renderAt("/catalog/optfeature/Agonizing%20Blast/PHB");
+
+    await screen.findByText("Add your Charisma modifier.");
+    expect(screen.getByText("Optional feature")).toBeInTheDocument();
+  });
+
+  it("reads a deity under the pantheon its address carries", async () => {
+    const fetchMock = stubFetchByUrl({
+      "/api/catalog/deity/Moradin/PHB?qualifier=Dwarven": {
+        type: "deity",
+        name: "Moradin",
+        source: "PHB",
+        qualifier: "Dwarven",
+        edition: null,
+        json: { entries: ["The Soul Forger."] },
+      },
+    });
+    renderAt("/catalog/deity/Moradin/PHB/Dwarven");
+
+    await screen.findByText("The Soul Forger.");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/catalog/deity/Moradin/PHB?qualifier=Dwarven",
+      undefined,
+    );
+  });
+
+  it("renders a table lookup as the table it is", async () => {
+    stubFetchByUrl({
+      "/api/catalog/table/Art%20Objects/DMG": {
+        type: "table",
+        name: "Art Objects",
+        source: "DMG",
+        edition: null,
+        json: { name: "Art Objects", colLabels: ["d10", "Object"], rows: [["1", "Silver ewer"]] },
+      },
+    });
+    renderAt("/catalog/table/Art%20Objects/DMG");
+
+    expect(await screen.findByRole("cell", { name: "Silver ewer" })).toBeInTheDocument();
+  });
+
   it("marks a homebrew row as homebrew", async () => {
     stubFetchByUrl({
       "/api/homebrew/spells/hb-1": {

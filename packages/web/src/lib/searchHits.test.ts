@@ -28,7 +28,7 @@ describe("searchHitAddress", () => {
         source: "XPHB",
         edition: "one",
       });
-      expect(matchCatalogTarget(address ?? "")?.key).toEqual({
+      expect(matchCatalogTarget(address)?.key).toEqual({
         name: "Mage Hand / Legerdemain",
         source: "XPHB",
       });
@@ -39,14 +39,30 @@ describe("searchHitAddress", () => {
     "addresses a homebrew %s hit at an address a catalog target reads",
     (type) => {
       const address = searchHitAddress({ type, id: "a1", name: "Ember", edition: "one" });
-      expect(matchCatalogTarget(address ?? "")?.key).toEqual({ id: "a1" });
+      expect(matchCatalogTarget(address)?.key).toEqual({ id: "a1" });
     },
   );
 
-  it.each(["monster", "constructor"])("has no path for the type %s", (type) => {
+  it("addresses a type with no route of its own through the catalog, its qualifier last", () => {
     expect(
-      searchHitAddress({ type, name: "Fire Giant", source: "MM", edition: null }),
-    ).toBeUndefined();
+      searchHitAddress({ type: "monster", name: "Fire Giant", source: "MM", edition: null }),
+    ).toBe("/catalog/monster/Fire%20Giant/MM");
+    const key = { type: "deity", name: "Moradin", source: "PHB", qualifier: "Dwarven" };
+    const address = searchHitAddress({ ...key, edition: null });
+    expect(address).toBe("/catalog/deity/Moradin/PHB/Dwarven");
+    expect(matchCatalogTarget(address)?.key).toEqual(key);
+  });
+
+  it("addresses a subclass under its class", () => {
+    const address = searchHitAddress({
+      type: "subclass",
+      name: "Battle Master",
+      source: "PHB",
+      parent: { name: "Fighter", source: "PHB" },
+      edition: "classic",
+    });
+    expect(address).toBe("/classes/Fighter/PHB/subclasses/Battle%20Master/PHB");
+    expect(matchCatalogTarget(address)?.target.label({})).toBe("subclass");
   });
 });
 
@@ -54,6 +70,7 @@ describe("searchHitTypeLabel", () => {
   it.each([
     ["spell", "Spell"],
     ["optfeature", "Optional feature"],
+    ["variantrule", "Variant rule"],
     ["legendaryGroup", "Legendary group"],
   ])("labels %s as %s", (type, label) => {
     expect(searchHitTypeLabel(type)).toBe(label);

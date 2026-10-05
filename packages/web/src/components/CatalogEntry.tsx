@@ -31,6 +31,7 @@ export function CatalogEntry({ address }: { address: string }) {
   if (row.isPending) return entry("Loading…", <LoadingState />);
 
   const { name, source, edition, entries } = row.data;
+  const label = match.target.label(match.key);
   return entry(
     name,
     entries.length > 0 ? (
@@ -41,7 +42,7 @@ export function CatalogEntry({ address }: { address: string }) {
     ) : (
       <EmptyState>This row carries no rules text of its own.</EmptyState>
     ),
-    <TypeChip type={match.target.label}>{capitalized(match.target.label)}</TypeChip>,
-    <SourceChip source={source} edition={edition} of={match.target.label} />,
+    <TypeChip type={label}>{capitalized(label)}</TypeChip>,
+    <SourceChip source={source} edition={edition} of={label} />,
   );
 }

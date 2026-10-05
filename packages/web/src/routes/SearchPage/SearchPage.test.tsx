@@ -69,7 +69,7 @@ describe("SearchPage", () => {
       "/characters/7",
     );
     expect(screen.getByRole("status")).toHaveTextContent("2 results and 1 character");
-    expect(within(results).getByText(/No page yet/)).toBeInTheDocument();
+    expect(within(results).getByRole("button", { name: "Fire Giant" })).toBeInTheDocument();
   });
 
   it("opens a compendium result's detail in a modal", async () => {
