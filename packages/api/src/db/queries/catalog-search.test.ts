@@ -337,7 +337,11 @@ describe("searchCatalog", () => {
     publishSearchFixture(dataDir, {
       entities: [
         prose("monster", "Fire Elemental"),
-        prose("legendaryGroup", "Fire Giant Dreadnought"),
+        {
+          ...prose("legendaryGroup", "Fire Giant Dreadnought"),
+          json: JSON.stringify({ lairActions: ["Lair."] }),
+        },
+        prose("legendaryGroup", "Fire Lairless"),
         prose("book", "Fire Book"),
       ],
       lookups: [
@@ -356,6 +360,13 @@ describe("searchCatalog", () => {
       { type: "table", name: "Fire Tables", source: "XPHB", edition: "one" },
       { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
       { type: "legendaryGroup", name: "Fire Giant Dreadnought", source: "MM", edition: null },
+      {
+        type: "legendaryGroup",
+        name: "Fire Lairless",
+        source: "MM",
+        textless: true,
+        edition: null,
+      },
       { type: "book", name: "Fire Book", source: "MM", textless: true, edition: null },
     ]);
   });

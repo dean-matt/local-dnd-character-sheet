@@ -248,13 +248,14 @@ const spellNames = (spells: unknown) =>
     )
     .join(", ");
 
-/** The per-use spell lists upstream keys by how often each refreshes. */
-const PER: Record<string, string> = {
-  daily: "day",
-  rest: "rest",
-  restLong: "long rest",
-  weekly: "week",
-  yearly: "year",
+/** The per-use spell lists upstream keys by how often each refreshes, or what each costs. */
+const PER: Record<string, (uses: number) => string> = {
+  daily: (uses) => `${uses}/day`,
+  rest: (uses) => `${uses}/rest`,
+  restLong: (uses) => `${uses}/long rest`,
+  weekly: (uses) => `${uses}/week`,
+  yearly: (uses) => `${uses}/year`,
+  charges: (uses) => `${uses} ${uses === 1 ? "charge" : "charges"}`,
 };
 
 /**
@@ -272,13 +273,14 @@ function spellcasting(block: Json): Entries[number] {
   });
   const lines = [
     ...(shown("will") ? [item("At will:", block.will)] : []),
-    ...Object.keys(PER).flatMap((key) =>
+    ...(shown("ritual") ? [item("Rituals:", block.ritual)] : []),
+    ...Object.entries(PER).flatMap(([key, label]) =>
       shown(key) && isRecord(block[key])
         ? Object.entries(block[key])
             .sort(([a], [b]) => Number.parseInt(b, 10) - Number.parseInt(a, 10))
             .map(([uses, spells]) =>
               item(
-                `${Number.parseInt(uses, 10)}/${PER[key]}${uses.endsWith("e") ? " each" : ""}:`,
+                `${label(Number.parseInt(uses, 10))}${uses.endsWith("e") ? " each" : ""}:`,
                 spells,
               ),
             )

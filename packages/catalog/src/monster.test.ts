@@ -314,6 +314,21 @@ describe("a monster's stat block", () => {
     });
   });
 
+  it("lists rituals, and spells cast from an item's charges", () => {
+    const spellcasting = [
+      { name: "Spellcasting", ritual: ["{@spell knock}"] },
+      {
+        name: "Wand Spellcasting",
+        charges: { "1e": ["{@spell finger of death}"], "2e": ["{@spell power word kill}"] },
+      },
+    ];
+    const [traits] = monster({ spellcasting });
+    expect(JSON.stringify(traits)).toContain('"name":"Rituals:","entry":"{@spell knock}"');
+    expect(JSON.stringify(traits)).toContain(
+      '"name":"2 charges each:","entry":"{@spell power word kill}"},{"type":"item","name":"1 charge each:"',
+    );
+  });
+
   it("joins spellcasting with no display to the traits", () => {
     const spellcasting = [{ name: "Innate Spellcasting", will: ["{@spell light}"] }];
     expect(

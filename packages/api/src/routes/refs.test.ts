@@ -149,6 +149,13 @@ describe("refsRoutes", () => {
           json: JSON.stringify({ name: "Goblin", source: "MM", size: ["S"], cr: "1/4" }),
         },
         { type: "legendaryGroup", qualifier: "", ...row("Aboleth", "MM") },
+        {
+          type: "legendaryGroup",
+          qualifier: "",
+          name: "Lich",
+          source: "MM",
+          json: JSON.stringify({ name: "Lich", source: "MM", lairActions: ["Lair."] }),
+        },
       ],
       tagRedirects: [
         {
@@ -259,8 +266,12 @@ describe("refsRoutes", () => {
   });
 
   it("links a legendary group to its lair only where it has one to show", async () => {
-    const [group] = await resolveOk([{ tag: "legroup", name: "Aboleth" }]);
-    expect(group).not.toHaveProperty("path");
+    const [lich, aboleth] = await resolveOk([
+      { tag: "legroup", name: "Lich" },
+      { tag: "legroup", name: "Aboleth" },
+    ]);
+    expect(lich.path).toBe("/catalog/legendaryGroup/Lich/MM");
+    expect(aboleth).not.toHaveProperty("path");
   });
 
   it("answers null, in place, for what the catalog does not have", async () => {
