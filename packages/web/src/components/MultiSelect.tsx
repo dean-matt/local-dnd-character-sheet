@@ -1,7 +1,7 @@
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 
-export interface MultiSelectOption {
+interface MultiSelectOption {
   value: string;
   label: string;
   /** A shorter name for the closed button, such as a source's abbreviation. */

@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
-import { MultiSelect, type MultiSelectOption } from "./MultiSelect.tsx";
+import { MultiSelect, type MultiSelectProps } from "./MultiSelect.tsx";
+
+type MultiSelectOption = MultiSelectProps["options"][number];
 
 const SOURCES: MultiSelectOption[] = [
   { value: "PHB", label: "PHB · Player's Handbook", short: "PHB" },
