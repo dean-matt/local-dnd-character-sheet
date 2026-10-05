@@ -1,4 +1,4 @@
-import type { CatalogSearchType } from "@dnd/catalog";
+import { type CatalogSearchType, itemKinds } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 import { escapeLikeTerm, ftsPrefixQuery } from "./search-terms.ts";
@@ -31,7 +31,8 @@ const CATALOG_SEARCH_TABLES: { type: CatalogSearchType; table: string; where?: s
  * every row the rest admit, and an absent `types` reads every kind. `spellLevels` and
  * `schools` narrow spells alone, and `rarities` items alone, passing every other kind
  * through; a school is upstream's one-letter code, such as `V` for evocation, and a rarity
- * is upstream's word, such as `very rare` or `none`.
+ * is upstream's word, such as `very rare` or `none`. `itemKinds` narrows items too, to those
+ * `@dnd/catalog`'s `itemKinds` places in any one of the kinds named.
  */
 export type SearchFilter = {
   edition?: Edition;
@@ -40,7 +41,18 @@ export type SearchFilter = {
   spellLevels?: { min: number; max: number };
   schools?: readonly string[];
   rarities?: readonly string[];
+  itemKinds?: readonly string[];
 };
+
+/**
+ * Whether an item is of a kind `wanted` names; every item is where it names none. An item's
+ * kind is read off its fields rather than a column, so the filter scans the rows the rest of
+ * the `WHERE` admits — a few thousand at most. A `content.db` column is the way out the day
+ * that scan shows.
+ */
+export function itemOfKind(item: Parameters<typeof itemKinds>[0], wanted?: readonly string[]) {
+  return !wanted?.length || itemKinds(item).some((kind) => wanted.includes(kind));
+}
 
 const placeholders = (values: readonly unknown[]) => values.map(() => "?").join(", ");
 
@@ -60,10 +72,12 @@ class Conditions {
 }
 
 type Db = ReturnType<typeof openContentDb>;
+type ItemFlags = { itemType?: string | null; wondrous?: number | null; staff?: number | null };
 type SearchTable = (typeof CATALOG_SEARCH_TABLES)[number];
 
 function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSearchRow[] {
   const { edition, term, spellLevels, schools, rarities } = filter;
+  const kinds = entry.type === "item" ? filter.itemKinds : undefined;
   const conditions = new Conditions();
   if (entry.where) conditions.add(entry.where);
   if (edition !== undefined) conditions.add("edition = ?", edition);
@@ -77,10 +91,15 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
   if (entry.type === "item" && rarities?.length) {
     conditions.add(`rarity IN (${placeholders(rarities)})`, ...rarities);
   }
+  const flags = kinds?.length
+    ? ", type AS itemType, json_extract(json, '$.wondrous') AS wondrous, json_extract(json, '$.staff') AS staff"
+    : "";
   const rows = db
-    .prepare(`SELECT name, source, edition FROM ${entry.table}${conditions.where}`)
-    .all(...conditions.params) as Omit<CatalogSearchRow, "type">[];
-  return rows.map((row) => ({ type: entry.type, ...row }));
+    .prepare(`SELECT name, source, edition${flags} FROM ${entry.table}${conditions.where}`)
+    .all(...conditions.params) as (Omit<CatalogSearchRow, "type"> & ItemFlags)[];
+  return rows
+    .filter((row) => itemOfKind({ ...row, type: row.itemType }, kinds))
+    .map(({ name, source, edition }) => ({ type: entry.type, name, source, edition }));
 }
 
 function entityRows(db: Db, { edition, term, types }: SearchFilter): CatalogSearchRow[] {

@@ -36,7 +36,7 @@ import {
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
-import type { SearchFilter } from "./catalog-search.ts";
+import { itemOfKind, type SearchFilter } from "./catalog-search.ts";
 import { escapeLikeTerm } from "./search-terms.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;
@@ -60,7 +60,8 @@ export function searchHomebrewItems(db: HomebrewDb, filter: SearchFilter) {
         filter.rarities?.length ? inArray(homebrewItems.rarity, [...filter.rarities]) : undefined,
       ),
     )
-    .all();
+    .all()
+    .filter((row) => itemOfKind(row.json, filter.itemKinds));
 }
 
 /** A homebrew table whose rows a `{@tag}` names, each name unique within its edition. */

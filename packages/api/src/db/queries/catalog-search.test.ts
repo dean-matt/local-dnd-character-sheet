@@ -169,6 +169,35 @@ describe("searchCatalog", () => {
     ).toEqual(["Fireball", "Flame Tongue"]);
   });
 
+  it("narrows items by kind, read off the type and the flags, and passes every other kind through", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const item = (name: string, type: string | null, flags: object = {}) => ({
+      name,
+      source: "DMG",
+      edition: "classic",
+      kind: "item",
+      type,
+      rarity: "rare",
+      requires_attunement: 0 as const,
+      json: JSON.stringify({ name, source: "DMG", ...flags }),
+    });
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      items: [
+        item("Flame Tongue Shortsword", "M"),
+        item("Fire Staff", "M|XPHB", { staff: true }),
+        item("Fire Opal", "$G"),
+        item("Firework Bag", null, { wondrous: true }),
+      ],
+      entities: [],
+    });
+    const names = (itemKinds: string[]) =>
+      searchCatalog(dataDir, { edition: "classic", term: "f", itemKinds }).map((h) => h.name);
+
+    expect(names(["melee"])).toEqual(["Fireball", "Flame Tongue Shortsword", "Fire Staff"]);
+    expect(names(["staff", "wondrous"])).toEqual(["Fireball", "Fire Staff", "Firework Bag"]);
+  });
+
   it("finds nothing for a term no row's name or rendered text holds", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });

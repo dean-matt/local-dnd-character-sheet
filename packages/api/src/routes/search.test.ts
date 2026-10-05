@@ -198,6 +198,24 @@ describe("searchRoutes", () => {
     ]);
   });
 
+  it("narrows items, homebrew among them, by kind", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+    });
+    insertHomebrewItem(opened.homebrewDb, "2", {
+      name: "Fire Cloak",
+      edition: "classic",
+      wondrous: true,
+    });
+
+    const res = await routes.request("/search?edition=classic&q=fire&type=item&kind=wondrous");
+    const body = await res.json();
+
+    expect(body.items).toEqual([{ type: "item", id: "2", name: "Fire Cloak", edition: "classic" }]);
+  });
+
   it("narrows to the named sources and leaves homebrew out", async () => {
     insertHomebrewItem(opened.homebrewDb, "1", {
       name: "Firebrand Axe",

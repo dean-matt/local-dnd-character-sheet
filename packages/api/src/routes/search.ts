@@ -12,6 +12,7 @@ import {
   catalogSearchHitSchema,
   compareSearchHits,
   homebrewSearchHitSchema,
+  ITEM_KINDS,
   type SearchHit,
   searchResponseSchema,
   searchSourcesResponseSchema,
@@ -75,6 +76,10 @@ const listQuery = z.object({
   maxLevel: spellLevel.openapi({ description: "The highest spell level to read" }),
   school: csv("Comma-separated spell school codes to narrow spells to", "V,A"),
   rarity: csv("Comma-separated rarities to narrow items to", "rare,very rare"),
+  kind: csv(
+    `Comma-separated kinds of item to narrow items to, of ${ITEM_KINDS.join(", ")}`,
+    "melee,ranged",
+  ),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
@@ -95,7 +100,7 @@ const search = createRoute({
   tags: ["search"],
   summary: "Search the catalog and homebrew together, one ranked list",
   description:
-    "minLevel, maxLevel and school narrow spells alone, and rarity items alone, passing every other kind through. " +
+    "minLevel, maxLevel and school narrow spells alone, and rarity and kind items alone, passing every other kind through. " +
     "A source narrows to catalog rows, so it leaves homebrew out.",
   request: { query: listQuery },
   responses: {
@@ -148,6 +153,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       types: typeList,
       schools: list(query.school),
       rarities: list(query.rarity),
+      itemKinds: list(query.kind),
       spellLevels:
         query.minLevel === undefined && query.maxLevel === undefined
           ? undefined
