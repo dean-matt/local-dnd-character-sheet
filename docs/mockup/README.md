@@ -109,7 +109,7 @@ widget, panel, or nav element:
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
   scrim, and its `kind` tweak switches between a short spell, a long one, an item, a feat,
-  a homebrew item, a monster and a legendary group. It opens on the long spell, its body scrolled partway, so the header
+  a homebrew item, a monster, a legendary group, a deity and a language. It opens on the long spell, its body scrolled partway, so the header
   and footer show holding still while the rules text scrolls; its `scrolled` tweak starts
   the body at the top instead. It puts the type chip beside
   the name and, below the name, the source chip and the edition year chip the app's
@@ -118,7 +118,11 @@ widget, panel, or nav element:
   from Armor Class to Speed, the six abilities as a table, the lines from Saving Throws to
   Challenge, then a heading per group of traits and actions, each trait under a heading
   of its own. A line the monster lacks is left out. A monster with a legendary group ends
-  on a link to it, which opens its lair actions and regional effects in its place. "Add to…" sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
+  on a link to it, which opens its lair actions and regional effects in its place. A
+  deity or a language opens on a bold-labelled line per field, ahead of any prose: a
+  deity's pantheon, alignment, domains, province and symbol, and a language's type,
+  script and typical speakers. A field the row lacks is left out, and its fields stand in
+  for the empty rules-text state where it has no prose. "Add to…" sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
   above it. Focus moves into the modal when it
   opens and Tab stays inside it; the close button, the scrim and Escape close it from any
   entry and return focus to the link. A link inside the modal replaces its entry rather
