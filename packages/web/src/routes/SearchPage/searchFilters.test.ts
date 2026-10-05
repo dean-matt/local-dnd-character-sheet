@@ -30,4 +30,8 @@ describe("searchFilters", () => {
       maxLevel: 9,
     });
   });
+
+  it("reads a backwards level range the right way round", () => {
+    expect(read("type=spell&minLevel=5&maxLevel=2")).toMatchObject({ minLevel: 2, maxLevel: 5 });
+  });
 });

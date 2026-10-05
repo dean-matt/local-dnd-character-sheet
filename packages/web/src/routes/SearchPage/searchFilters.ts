@@ -48,13 +48,18 @@ export const itemsShown = (filters: SearchFilters) => filters.types.includes("it
 export function readSearchFilters(params: URLSearchParams): SearchFilters {
   const edition = params.get("edition");
   const offset = Number.parseInt(params.get("offset") ?? "", 10);
+  const levels = [
+    level(params.get("minLevel"), MIN_SPELL_LEVEL),
+    level(params.get("maxLevel"), MAX_SPELL_LEVEL),
+  ];
   return {
     q: params.get("q") ?? "",
     types: list(params.get("type")),
     sources: list(params.get("source")),
     edition: edition === "classic" || edition === "one" ? edition : undefined,
-    minLevel: level(params.get("minLevel"), MIN_SPELL_LEVEL),
-    maxLevel: level(params.get("maxLevel"), MAX_SPELL_LEVEL),
+    // A range written backwards, as a hand-edited link can, reads the right way round.
+    minLevel: Math.min(...levels),
+    maxLevel: Math.max(...levels),
     schools: list(params.get("school")),
     rarities: list(params.get("rarity")),
     offset: Number.isNaN(offset) || offset < 0 ? 0 : offset,

@@ -80,6 +80,9 @@ const listQuery = z.object({
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
 });
 
+/** The spell levels from `a` to `b`, read the right way round when written backwards. */
+const levelRange = (a: number, b: number) => ({ min: Math.min(a, b), max: Math.max(a, b) });
+
 /** A comma-separated parameter's values, or `undefined` where it names none. */
 function list(param: string | undefined): string[] | undefined {
   const values = param?.split(",").filter((value) => value !== "");
@@ -148,7 +151,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       spellLevels:
         query.minLevel === undefined && query.maxLevel === undefined
           ? undefined
-          : { min: query.minLevel ?? 0, max: query.maxLevel ?? 9 },
+          : levelRange(query.minLevel ?? 0, query.maxLevel ?? 9),
     };
     const reads = (type: string) => typeList === undefined || typeList.includes(type);
 

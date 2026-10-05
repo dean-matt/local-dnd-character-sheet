@@ -1,7 +1,8 @@
 /**
  * The advanced search: a query, a rail of filters, and a page of results from the user's
  * characters and the compendium. The query and every filter live in the URL. With a type
- * ticked and no query, it lists every row of the type, which makes it the catalog browse.
+ * or source picked and no query, it lists every row they admit, which makes it the catalog
+ * browse.
  */
 import { Search } from "lucide-react";
 import { useId, useState } from "react";
@@ -37,10 +38,10 @@ export function SearchPage() {
   const id = useId();
 
   const q = filters.q.trim();
-  const browsing = filters.types.length > 0;
+  const browsing = filters.types.length > 0 || filters.sources.length > 0;
   const search = useCatalogSearch({
     edition: filters.edition,
-    type: browsing ? filters.types.join(",") : undefined,
+    type: filters.types.length > 0 ? filters.types.join(",") : undefined,
     query: q,
     limit: PAGE_SIZE,
     offset: filters.offset,
@@ -60,12 +61,14 @@ export function SearchPage() {
   const hits = search.data?.items ?? [];
   const total = search.data?.total ?? 0;
   const count = total + characterResults.length;
+  const counted = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
   const update = (next: Partial<SearchFilters>, replace = false) =>
     setParams(writeSearchFilters({ ...filters, offset: 0, ...next }), { replace });
 
   function status(): string {
-    if (q === "" && !browsing) return "Type a name to search the compendium, or tick a type.";
+    if (q === "" && !browsing)
+      return "Type a name to search the compendium, or pick a type or source.";
     if (search.isError) return `Search failed: ${search.error.message}`;
     if (search.isPending) return "Searching…";
     if (count === 0) {
@@ -73,7 +76,10 @@ export function SearchPage() {
         ? "Nothing matches these filters."
         : `No results for "${q}" under these filters.`;
     }
-    return count === 1 ? "1 result" : `${count} results`;
+    // Characters count apart, so the total agrees with the pager's.
+    return characterResults.length === 0
+      ? counted(total, "result")
+      : `${counted(total, "result")} and ${counted(characterResults.length, "character")}`;
   }
 
   const empty = search.isSuccess && count === 0;

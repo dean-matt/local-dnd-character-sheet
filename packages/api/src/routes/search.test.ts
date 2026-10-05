@@ -173,6 +173,7 @@ describe("searchRoutes", () => {
 
     expect(await names("minLevel=4")).toEqual(["Fire Shield", "Fire Elemental", "Azer"]);
     expect(await names("school=V&type=spell")).toEqual(["Fireball"]);
+    expect(await names("minLevel=9&maxLevel=4&type=spell")).toEqual(["Fire Shield"]);
   });
 
   it("narrows items, homebrew among them, by rarity", async () => {

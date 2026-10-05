@@ -67,7 +67,7 @@ describe("SearchPage", () => {
       "href",
       "/characters/7",
     );
-    expect(screen.getByRole("status")).toHaveTextContent("3 results");
+    expect(screen.getByRole("status")).toHaveTextContent("2 results and 1 character");
     expect(within(results).getByText(/No page yet/)).toBeInTheDocument();
   });
 
@@ -132,6 +132,12 @@ describe("SearchPage", () => {
     expect(where()).toBe("/search?q=fire");
   });
 
+  it("lists every row of a picked source for an empty query", async () => {
+    renderAt("/search?source=MM", { "/api/search?limit=50&source=MM": page([fireGiant]) });
+
+    expect(await screen.findByText("Fire Giant")).toBeInTheDocument();
+  });
+
   it("offers rarity once Item is ticked", async () => {
     renderAt("/search?type=item", {
       "/api/search?limit=50&type=item": page([]),
@@ -162,7 +168,7 @@ describe("SearchPage", () => {
     const fetchMock = renderAt("/search", {});
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Type a name to search the compendium, or tick a type.",
+      "Type a name to search the compendium, or pick a type or source.",
     );
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContainEqual(
       expect.stringMatching(/^\/api\/search\?/),
