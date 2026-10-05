@@ -35,13 +35,14 @@ describe("routing", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Characters");
   });
 
-  it("renders a homepage at the root that links to the character list", () => {
+  it("renders the home dashboard at the root", async () => {
     renderAt("/");
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(within(screen.getByRole("main")).getByRole("link")).toHaveAttribute(
-      "href",
-      "/characters",
-    );
+    expect(
+      await within(screen.getByRole("main")).findByRole("heading", {
+        level: 1,
+        name: "Welcome to Local D&D",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("renders the advanced search at /search", () => {

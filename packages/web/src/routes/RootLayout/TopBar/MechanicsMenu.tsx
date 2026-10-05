@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
-import { ARMOR_KINDS, WEAPON_KINDS } from "../../../lib/itemKind.ts";
+import { MECHANICS_ENTRIES, mechanicsHref } from "../../../lib/mechanicsEntries.ts";
 import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
@@ -10,35 +10,6 @@ export interface MechanicsMenuProps {
   onToggle: () => void;
   onClose: () => void;
 }
-
-/**
- * The menu's entries, alphabetical, each with the search it opens. Weapons and Armor narrow
- * items to kinds; the rest name a type. An entry shows only once `/search/types` returns its
- * type, so a type that becomes searchable joins the menu with no change here.
- */
-const ENTRIES: { label: string; params: { type: string; kind?: string } }[] = [
-  { label: "Actions", params: { type: "action" } },
-  { label: "Armor", params: { type: "item", kind: ARMOR_KINDS.join(",") } },
-  { label: "Backgrounds", params: { type: "background" } },
-  { label: "Classes", params: { type: "class" } },
-  { label: "Conditions", params: { type: "condition" } },
-  { label: "Deities", params: { type: "deity" } },
-  { label: "Diseases", params: { type: "disease" } },
-  { label: "Feats", params: { type: "feat" } },
-  { label: "Items", params: { type: "item" } },
-  { label: "Languages", params: { type: "language" } },
-  { label: "Monsters", params: { type: "monster" } },
-  { label: "Optional Features", params: { type: "optfeature" } },
-  { label: "Races", params: { type: "race" } },
-  { label: "Senses", params: { type: "sense" } },
-  { label: "Skills", params: { type: "skill" } },
-  { label: "Spells", params: { type: "spell" } },
-  { label: "Subclasses", params: { type: "subclass" } },
-  { label: "Tables", params: { type: "table" } },
-  { label: "Variant Rules", params: { type: "variantrule" } },
-  { label: "Vehicles", params: { type: "vehicle" } },
-  { label: "Weapons", params: { type: "item", kind: WEAPON_KINDS.join(",") } },
-];
 
 const entryLink = "rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle";
 
@@ -51,7 +22,7 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
   const types = useSearchTypes();
   const here = useMatch("/search") !== null;
   const searchable = new Set(types.data ?? []);
-  const entries = ENTRIES.filter(({ params }) => searchable.has(params.type));
+  const entries = MECHANICS_ENTRIES.filter(({ type }) => searchable.has(type));
 
   return (
     <div className="relative shrink-0">
@@ -80,14 +51,14 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
                 The catalog's types did not load.
               </p>
             )}
-            {entries.map(({ label, params }) => (
+            {entries.map((entry) => (
               <Link
-                key={label}
-                to={`/search?${new URLSearchParams(params)}`}
+                key={entry.label}
+                to={mechanicsHref(entry)}
                 onClick={onClose}
                 className={entryLink}
               >
-                {label}
+                {entry.label}
               </Link>
             ))}
             <MenuDivider className="col-span-3" />

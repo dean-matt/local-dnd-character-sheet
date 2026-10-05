@@ -6,7 +6,7 @@ import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { ContentLayout } from "./routes/ContentLayout.tsx";
 import { DisplaySettings } from "./routes/DisplaySettings.tsx";
-import { HomePage } from "./routes/HomePage.tsx";
+import { HomePage } from "./routes/HomePage/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
 import { SearchPage } from "./routes/SearchPage/SearchPage.tsx";
