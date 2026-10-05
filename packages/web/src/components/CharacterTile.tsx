@@ -1,7 +1,7 @@
 import type { CharacterRecord } from "@dnd/character";
 import { Link } from "react-router";
-import { avatarColor } from "../../lib/avatarColor.ts";
-import { EDITION_LABELS } from "../../lib/editionLabels.ts";
+import { avatarColor } from "../lib/avatarColor.ts";
+import { EDITION_LABELS } from "../lib/editionLabels.ts";
 
 export function CharacterTile({ character }: { character: CharacterRecord }) {
   const summary = [character.raceSummary, character.classSummary].filter(Boolean).join(" ");
