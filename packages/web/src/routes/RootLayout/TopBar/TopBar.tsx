@@ -5,6 +5,7 @@ import { useCharacters } from "../../../hooks/useCharacters.ts";
 import { CharacterAvatar } from "./CharacterAvatar.tsx";
 import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
 import { MechanicsMenu } from "./MechanicsMenu.tsx";
+import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
 export function TopBar() {
@@ -89,11 +90,12 @@ export function TopBar() {
                   </span>
                 </NavLink>
               ))}
+              <MenuDivider />
               <NavLink
                 to="/characters"
                 end
                 onClick={closeMenu}
-                className="mt-1 block rounded-lg border-t border-border px-2.5 py-2 text-body font-semibold text-ink hover:bg-subtle"
+                className="block rounded-lg px-2.5 py-2 text-body font-semibold text-ink hover:bg-subtle"
               >
                 See all characters →
               </NavLink>

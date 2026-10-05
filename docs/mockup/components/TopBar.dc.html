@@ -38,7 +38,8 @@
               </div>
             </a>
           </sc-for>
-          <a href="CharacterList.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 4px; font-size: 13px; font-weight: 600; color: #1f2430; text-decoration: none;">See all characters →</a>
+          <hr style="margin: 4px 10px; border: none; border-top: 1px solid #dde1e6;">
+          <a href="CharacterList.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: #1f2430; text-decoration: none;">See all characters →</a>
           <a href="CreationIdentity.dc.html" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: none; background: none; font-size: 13px; font-weight: 600; color: {{accent}}; text-decoration: none;">+ New Character</a>
         </div>
       </sc-if>
@@ -54,7 +55,8 @@
           <sc-for list="{{mechanicsTypes}}" as="m" hint-placeholder-count="21">
             <button onClick="{{m.go}}" style="display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.label}}</button>
           </sc-for>
-          <button onClick="{{goAllTypes}}" style="grid-column: 1 / -1; display: block; width: 100%; text-align: left; margin-top: 4px; padding: 9px 10px 7px; border-radius: 6px; border: none; border-top: 1px solid #dde1e6; background: none; font-size: 13px; color: #1f2430;">All types…</button>
+          <hr style="grid-column: 1 / -1; margin: 4px 10px; border: none; border-top: 1px solid #dde1e6;">
+          <button onClick="{{goAllTypes}}" style="grid-column: 1 / -1; display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">All types…</button>
         </div>
       </sc-if>
     </div>

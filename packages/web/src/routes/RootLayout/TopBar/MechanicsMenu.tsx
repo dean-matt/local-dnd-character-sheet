@@ -2,6 +2,7 @@ import { ChevronDown } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
 import { ARMOR_KINDS, WEAPON_KINDS } from "../../../lib/itemKind.ts";
+import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
 export interface MechanicsMenuProps {
@@ -89,11 +90,8 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
                 {label}
               </Link>
             ))}
-            <Link
-              to="/search"
-              onClick={onClose}
-              className={`${entryLink} col-span-3 mt-1 border-t border-border pt-2.5`}
-            >
+            <MenuDivider className="col-span-3" />
+            <Link to="/search" onClick={onClose} className={`${entryLink} col-span-3`}>
               All types…
             </Link>
           </div>
