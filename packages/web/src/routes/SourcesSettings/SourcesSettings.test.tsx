@@ -82,9 +82,15 @@ describe("SourcesSettings", () => {
 
     fireEvent.change(filter(), { target: { value: "player" } });
     expect(screen.getAllByRole("switch")).toHaveLength(2);
-    expect(screen.getByText("2 sources match")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("2 sources match");
+    expect(
+      within(screen.getByRole("region", { name: "Core rulebooks" })).getByRole("button", {
+        name: "Turn all off",
+      }),
+    ).toHaveAccessibleDescription("Core rulebooks 2 sources match");
 
-    const matched = screen.getByText("2 sources match").parentElement as HTMLElement;
+    const matched = screen.getByText("2 sources match", { selector: "p[id]" })
+      .parentElement as HTMLElement;
     fireEvent.click(within(matched).getByRole("button", { name: "Turn all off" }));
     expect(getDisabledSources()).toEqual(["PHB", "XPHB"]);
   });

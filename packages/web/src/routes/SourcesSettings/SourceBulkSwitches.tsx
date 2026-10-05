@@ -18,7 +18,7 @@ export function SourceBulkSwitches({
   describedBy,
 }: {
   sources: readonly string[];
-  /** The id of the text naming which sources these cover, since both buttons read alike. */
+  /** The ids of the text naming which sources these cover, since both buttons read alike. */
   describedBy: string;
 }) {
   return (

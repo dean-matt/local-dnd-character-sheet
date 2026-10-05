@@ -28,6 +28,8 @@ export function SourcesSettings() {
   const shelves = data ? shelveSources(data, catalog, query) : [];
   const shown = shelves.flatMap((shelf) => shelf.sources.map(({ source }) => source));
   const filtering = query.trim() !== "";
+  const matchCount = shown.length === 1 ? "1 source matches" : `${shown.length} sources match`;
+  const noMatch = `No source matches “${query.trim()}”.`;
 
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
@@ -61,17 +63,22 @@ export function SourcesSettings() {
             />
             {filtering && shown.length > 0 && (
               <div className="flex items-center gap-3">
-                <p id={`${id}-shown`} className="text-label text-muted">
-                  {shown.length === 1 ? "1 source matches" : `${shown.length} sources match`}
+                <p id={`${id}-shown`} aria-hidden="true" className="text-label text-muted">
+                  {matchCount}
                 </p>
                 <SourceBulkSwitches sources={shown} describedBy={`${id}-shown`} />
               </div>
             )}
           </div>
           {/* Rendered even while empty: a live region added with its text is often not announced. */}
-          <p role="status" aria-live="polite" className="text-body text-muted italic empty:hidden">
-            {filtering && shown.length === 0 ? `No source matches “${query.trim()}”.` : ""}
+          <p role="status" aria-live="polite" className="sr-only">
+            {filtering ? (shown.length === 0 ? noMatch : matchCount) : ""}
           </p>
+          {filtering && shown.length === 0 && (
+            <p aria-hidden="true" className="text-body text-muted italic">
+              {noMatch}
+            </p>
+          )}
           {shelves.map((shelf, index) => (
             <section
               key={shelf.label}
@@ -84,7 +91,9 @@ export function SourcesSettings() {
                 </h2>
                 <SourceBulkSwitches
                   sources={shelf.sources.map(({ source }) => source)}
-                  describedBy={`${id}-shelf-${index}`}
+                  describedBy={
+                    filtering ? `${id}-shelf-${index} ${id}-shown` : `${id}-shelf-${index}`
+                  }
                 />
               </div>
               <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
