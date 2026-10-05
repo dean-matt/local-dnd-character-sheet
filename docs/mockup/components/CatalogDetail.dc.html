@@ -117,7 +117,7 @@
           <button aria-label="Close" onClick="{{closeModal}}" style="flex-shrink: 0; width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
         </div>
 
-        <div role="region" aria-labelledby="catalogTitle" tabIndex="0" style="flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 20px 20px 20px;">
+        <div id="catalogBody" role="region" aria-labelledby="catalogTitle" tabIndex="0" style="flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 20px 20px 20px;">
           <div role="status">
             <sc-if value="{{hasToast}}" hint-placeholder-val="{{false}}">
               <div style="margin-top: 12px; padding: 8px 12px; border-radius: 8px; background: {{toastBg}}; font-size: 13px; color: #1f2430;">
@@ -163,7 +163,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","item","feat","homebrew"],"default":"spell"},"host":{"editor":"enum","options":["sheet","searchDropdown","searchRoute"],"default":"sheet"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"kind":{"editor":"enum","options":["spell","longSpell","item","feat","homebrew"],"default":"longSpell"},"scrolled":{"editor":"boolean","default":true},"host":{"editor":"enum","options":["sheet","searchDropdown","searchRoute"],"default":"sheet"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":720}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -171,12 +171,21 @@ class Component extends DCLogic {
   }
   componentDidMount() {
     this.focusDialog();
+    this.scrollBody();
   }
   componentDidUpdate(prev) {
     if (prev.kind !== this.props.kind || prev.openedFrom !== this.props.openedFrom || prev.host !== this.props.host) {
       this.setState({ open: true, pickerOpen: false, toast: null });
       this.focusDialog();
     }
+    if (prev.kind !== this.props.kind || prev.scrolled !== this.props.scrolled) this.scrollBody();
+  }
+  // Starts the body partway down its rules text, so a still frame shows the header and footer holding while it scrolls.
+  scrollBody() {
+    setTimeout(() => {
+      const el = document.getElementById('catalogBody');
+      if (el) el.scrollTop = this.props.scrolled ?? true ? (el.scrollHeight - el.clientHeight) / 2 : 0;
+    }, 0);
   }
   focusDialog() {
     setTimeout(() => {
@@ -207,6 +216,22 @@ class Component extends DCLogic {
         entries: [
           'Flame bursts in a 20-foot radius around a point you can see within range. Each creature in the burst makes a Dexterity save, taking 8d6 fire damage on a failure or half as much on a success.',
           'Cast with a higher slot, the damage grows by 1d6 for each slot level above 3rd.'
+        ]
+      },
+      longSpell: {
+        type: 'Spell', name: 'Wish', source: 'PHB', edition: 'classic', classes: ['Sorcerer', 'Wizard'], query: 'wish', meta: 'Level 9 · Conjuration',
+        refHeading: 'Gear — Ring of Three Wishes', refBefore: 'While wearing this ring, you can expend one of its charges to cast ', refAfter: ' from it.',
+        entries: [
+          'The mightiest spell a mortal can cast. You speak aloud and reshape reality to your desire.',
+          'Its plainest use copies any other spell of 8th level or lower. You need meet none of its requirements, costly components included; the spell simply takes effect.',
+          'Instead, you can make one nonmagical object worth up to 25,000 gp, no larger than 300 feet in any dimension. It appears in an unoccupied space you can see on the ground.',
+          'Or up to twenty creatures you can see regain all their hit points, and each is cured of every effect the greater restoration spell ends.',
+          'Or up to ten creatures you can see gain resistance to one damage type you choose.',
+          'Or up to ten creatures you can see gain immunity to one spell or other magical effect for 8 hours.',
+          'Or you undo one event from the last round: the world rerolls any roll made during it, and you can have the reroll made with advantage or disadvantage.',
+          'You can wish for something beyond these. State it as precisely as you can. The DM decides what happens, and the bigger the wish, the likelier something goes wrong: it may fail, come true only in part, or come true with an unwanted twist.',
+          'Casting it for anything but copying a spell weakens you. Until you finish a long rest, each spell you cast deals you 1d10 necrotic damage per level of that spell, and your Strength drops to 3 for 2d4 days.',
+          'Each of those days you spend resting and doing nothing more than light activity shortens the recovery by 2 days. And there is a 33 percent chance you can never cast this spell again.'
         ]
       },
       item: {
@@ -261,7 +286,7 @@ class Component extends DCLogic {
 
     const rail = host === 'searchRoute' ? ['Filters', 'Type', 'Source', 'Edition'] : ['Stats', 'Inventory', 'Spells', 'Features', 'Identity', 'Notes'];
     const activeLabel = {
-      sheet: { spell: 'Inventory', item: 'Spells', homebrew: 'Notes', feat: 'Notes' }[this.props.kind ?? 'spell'],
+      sheet: { spell: 'Inventory', longSpell: 'Inventory', item: 'Spells', homebrew: 'Notes', feat: 'Notes' }[this.props.kind ?? 'spell'],
       searchDropdown: 'Stats',
       searchRoute: 'Filters'
     }[host];
