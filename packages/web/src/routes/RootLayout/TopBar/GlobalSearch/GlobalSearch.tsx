@@ -127,10 +127,17 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           className="fixed inset-0 z-40 bg-scrim"
         />
       )}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: a focusout bubbling from the input; only focus leaving the wrapper closes the panel, so Tab reaches the Advanced search link. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: focusout and Escape bubbling from the input and the Advanced search link; only focus leaving the wrapper closes the panel, so Tab reaches the link. */}
       <div
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+        }}
+        onKeyDown={(event) => {
+          // The input handles its own Escape; from the Advanced search link, close and go back to it.
+          if (event.key !== "Escape" || event.target === inputRef.current) return;
+          inputRef.current?.focus();
+          setOpen(false);
+          setActive(null);
         }}
         className="absolute top-1/2 left-1/2 z-45 w-120 max-w-[40vw] -translate-x-1/2 -translate-y-1/2"
       >

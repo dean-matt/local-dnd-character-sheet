@@ -193,4 +193,18 @@ describe("GlobalSearch", () => {
     fireEvent.keyDown(input, { key: "Escape" });
     expect(input).toHaveValue("");
   });
+
+  it("closes on Escape from the Advanced search link and returns focus to the input", async () => {
+    const { input } = renderSearch({ [searchUrl("fir")]: page([fireball]) });
+    type(input, "fir");
+    await screen.findByRole("option", { name: /Fireball/ });
+
+    const advanced = screen.getByRole("link", { name: /Advanced search/ });
+    advanced.focus();
+    fireEvent.keyDown(advanced, { key: "Escape" });
+
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue("fir");
+  });
 });

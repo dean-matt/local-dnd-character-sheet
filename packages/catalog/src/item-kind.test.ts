@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemHitFacts, itemKinds } from "./index.ts";
+import { itemHitFacts, itemKinds, ofWantedKind } from "./index.ts";
 
 describe("itemKinds", () => {
   it.each([
@@ -55,5 +55,14 @@ describe("itemHitFacts", () => {
       rarity: null,
       category: null,
     });
+  });
+});
+
+describe("ofWantedKind", () => {
+  it("admits an item of any kind named, and every item where none is", () => {
+    expect(ofWantedKind(["melee", "staff"], ["staff", "ring"])).toBe(true);
+    expect(ofWantedKind(["ring"], ["melee"])).toBe(false);
+    expect(ofWantedKind(["ring"], [])).toBe(true);
+    expect(ofWantedKind(["ring"])).toBe(true);
   });
 });

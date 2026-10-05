@@ -1,8 +1,8 @@
 import {
   type CatalogSearchType,
   type ItemHitFacts,
-  type ItemKind,
   itemHitFacts,
+  ofWantedKind,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
@@ -50,16 +50,6 @@ export type SearchFilter = {
   rarities?: readonly string[];
   itemKinds?: readonly string[];
 };
-
-/**
- * Whether an item of `kinds` is one `wanted` admits; every item is where it names none. An
- * item's kinds are read off its fields rather than a column, so the filter scans the rows the
- * rest of the `WHERE` admits — a few thousand at most. A `content.db` column is the way out
- * the day that scan shows.
- */
-export function ofWantedKind(kinds: readonly ItemKind[], wanted?: readonly string[]) {
-  return !wanted?.length || kinds.some((kind) => wanted.includes(kind));
-}
 
 const placeholders = (values: readonly unknown[]) => values.map(() => "?").join(", ");
 
@@ -119,6 +109,8 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
     const hit = { type: entry.type, name, source, edition };
     if (!isItem) return [hit];
     const item = itemHitFacts({ ...fields, type: itemType });
+    // Kinds are read off each row rather than a column, so this scans every row the WHERE
+    // admits — a few thousand at most. A content.db column is the way out the day it shows.
     return ofWantedKind(item.kinds, kinds) ? [{ ...hit, item }] : [];
   });
 }

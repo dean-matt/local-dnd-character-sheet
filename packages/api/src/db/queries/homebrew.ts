@@ -20,6 +20,7 @@ import {
   homebrewClassSchema,
   homebrewItemSchema,
   itemKinds,
+  ofWantedKind,
   raceEntrySchema,
   spellEntrySchema,
 } from "@dnd/catalog";
@@ -37,7 +38,7 @@ import {
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
-import { ofWantedKind, type SearchFilter } from "./catalog-search.ts";
+import type { SearchFilter } from "./catalog-search.ts";
 import { escapeLikeTerm } from "./search-terms.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;

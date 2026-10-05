@@ -76,6 +76,11 @@ export function itemKinds(item: { type?: unknown; wondrous?: unknown; staff?: un
   return [...kinds];
 }
 
+/** Whether an item of `kinds` is one `wanted` admits; every item is where it names none. */
+export function ofWantedKind(kinds: readonly ItemKind[], wanted?: readonly string[]) {
+  return !wanted?.length || kinds.some((kind) => wanted.includes(kind));
+}
+
 /**
  * What a search hit says of an item beyond its name: its kinds, its rarity, and whether a
  * weapon is simple or martial. A row with none of a field carries `null` for it.
