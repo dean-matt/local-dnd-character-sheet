@@ -54,7 +54,9 @@ describe("the items loader", () => {
       row("Cloak of Billowing", "WttHC", "one", "item", null, "common", 0),
       row("Cloak of Billowing", "XDMG", "one", "item", null, "common", 0),
       row("Arcane Focus", "PHB", "classic", "itemGroup", "SCF", "none", 0),
+      row("Vicious +1 Weapon", "AI", "classic", "magicvariant", null, "unknown (magic)", 0),
       row("Arrow of Slaying (*)", "DMG", "classic", "magicvariant", null, "very rare", 0),
+      row("Vicious Weapon", "DMG", "classic", "magicvariant", null, "rare", 0),
       row("Armblade", "ERLW", "classic", "magicvariant", null, "common", 1),
       row("Ammunition of Slaying", "XDMG", "one", "magicvariant", null, "very rare", 0),
     ]);

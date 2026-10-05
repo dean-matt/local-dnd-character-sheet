@@ -14,29 +14,29 @@
       "ingredients": [
         {
           "type": "ingredient",
-          "entry": "Elided.",
+          "entry": "{=amount1/v} Elided.",
           "amount1": 4
         },
         {
           "type": "ingredient",
-          "entry": "Elided.",
+          "entry": "{=amount1/v} Elided.",
           "amount1": 1.5
         },
         {
           "type": "ingredient",
-          "entry": "Elided.",
+          "entry": "{=amount1/v} Elided.",
           "amount1": 1.5
         },
         {
           "type": "ingredient",
-          "entry": "Elided.",
+          "entry": "{=amount1/v} Elided.",
           "amount1": 4
         }
       ],
       "equipment": [
         {
           "type": "ingredient",
-          "entry": "Elided.",
+          "entry": "{=amount1/v} Elided.",
           "amount1": 2
         }
       ],

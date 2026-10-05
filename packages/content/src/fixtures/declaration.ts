@@ -810,7 +810,13 @@ export const FIXTURES: Fixture[] = [
       fields: ["magicvariant"],
       within: {
         magicvariant: {
-          items: ["Arrow of Slaying (*)", "Ammunition of Slaying", "Armblade"],
+          items: [
+            "Arrow of Slaying (*)",
+            "Ammunition of Slaying",
+            "Armblade",
+            "Vicious Weapon",
+            "Vicious +1 Weapon",
+          ],
         },
       },
     },
@@ -832,6 +838,7 @@ export const FIXTURES: Fixture[] = [
             "Arrow of Slaying (*)|DMG",
             "Ammunition of Slaying|XDMG",
             "Armblade|ERLW",
+            "Vicious Weapon|DMG",
           ],
         },
       },
