@@ -28,7 +28,7 @@ describe("searchHitAddress", () => {
         source: "XPHB",
         edition: "one",
       });
-      expect(matchCatalogTarget(address)?.key).toEqual({
+      expect(matchCatalogTarget(address ?? "")?.key).toEqual({
         name: "Mage Hand / Legerdemain",
         source: "XPHB",
       });
@@ -39,18 +39,23 @@ describe("searchHitAddress", () => {
     "addresses a homebrew %s hit at an address a catalog target reads",
     (type) => {
       const address = searchHitAddress({ type, id: "a1", name: "Ember", edition: "one" });
-      expect(matchCatalogTarget(address)?.key).toEqual({ id: "a1" });
+      expect(matchCatalogTarget(address ?? "")?.key).toEqual({ id: "a1" });
     },
   );
 
   it("addresses a type with no route of its own through the catalog, its qualifier last", () => {
     expect(
-      searchHitAddress({ type: "monster", name: "Fire Giant", source: "MM", edition: null }),
-    ).toBe("/catalog/monster/Fire%20Giant/MM");
+      searchHitAddress({ type: "condition", name: "Restrained", source: "XPHB", edition: "one" }),
+    ).toBe("/catalog/condition/Restrained/XPHB");
     const key = { type: "deity", name: "Moradin", source: "PHB", qualifier: "Dwarven" };
     const address = searchHitAddress({ ...key, edition: null });
     expect(address).toBe("/catalog/deity/Moradin/PHB/Dwarven");
-    expect(matchCatalogTarget(address)?.key).toEqual(key);
+    expect(matchCatalogTarget(address ?? "")?.key).toEqual(key);
+  });
+
+  it("has no address for a row with no rules text to show", () => {
+    const giant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
+    expect(searchHitAddress({ ...giant, textless: true })).toBeUndefined();
   });
 
   it("addresses a subclass under its class", () => {
@@ -62,7 +67,7 @@ describe("searchHitAddress", () => {
       edition: "classic",
     });
     expect(address).toBe("/classes/Fighter/PHB/subclasses/Battle%20Master/PHB");
-    expect(matchCatalogTarget(address)?.target.label({})).toBe("subclass");
+    expect(matchCatalogTarget(address ?? "")?.target.label({})).toBe("subclass");
   });
 });
 

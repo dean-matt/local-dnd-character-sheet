@@ -14,6 +14,7 @@ export type CatalogSearchRow = {
   source: string;
   qualifier?: string;
   parent?: { name: string; source: string };
+  textless?: true;
   edition: Edition | null;
   item?: ItemHitFacts;
 };
@@ -162,11 +163,24 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
   );
 }
 
-type KeyedRow = Omit<CatalogSearchRow, "qualifier"> & { qualifier: string };
+type KeyedRow = Omit<CatalogSearchRow, "qualifier" | "textless"> & {
+  qualifier: string;
+  textless: 0 | 1;
+};
 
-/** A hit carries its qualifier only where its type has one. */
-const withQualifier = ({ qualifier, ...row }: KeyedRow): CatalogSearchRow =>
-  qualifier === "" ? row : { ...row, qualifier };
+/**
+ * Whether a row's detail would show nothing but its name: a table's text is its rows, and
+ * every other row's is its `entries`, which a monster, for one, lacks.
+ */
+const TEXTLESS = (alias: string, type: string) =>
+  `NOT (${alias}${type} = 'table' OR coalesce(json_array_length(${alias}json, '$.entries'), 0) > 0) AS textless`;
+
+/** A hit carries its qualifier only where its type has one, and `textless` only where true. */
+const toHit = ({ qualifier, textless, ...row }: KeyedRow): CatalogSearchRow => ({
+  ...row,
+  ...(qualifier === "" ? {} : { qualifier }),
+  ...(textless ? { textless: true } : {}),
+});
 
 function lookupRows(db: Db, { edition, term, types }: SearchFilter): CatalogSearchRow[] {
   const kinds = SEARCH_LOOKUP_KINDS.filter((kind) => types === undefined || types.includes(kind));
@@ -177,10 +191,11 @@ function lookupRows(db: Db, { edition, term, types }: SearchFilter): CatalogSear
   if (edition !== undefined) conditions.add("(edition = ? OR edition IS NULL)", edition);
   const rows = db
     .prepare(
-      `SELECT kind AS type, name, source, qualifier, edition FROM lookups${conditions.where}`,
+      `SELECT kind AS type, name, source, qualifier, edition, ${TEXTLESS("", "kind")}
+       FROM lookups${conditions.where}`,
     )
     .all(...conditions.params) as KeyedRow[];
-  return rows.map(withQualifier);
+  return rows.map(toHit);
 }
 
 function entityRows(db: Db, { edition, term, types }: SearchFilter): CatalogSearchRow[] {
@@ -191,10 +206,11 @@ function entityRows(db: Db, { edition, term, types }: SearchFilter): CatalogSear
   const from = term ? "entities_fts f JOIN entities e ON e.rowid = f.rowid" : "entities e";
   const rows = db
     .prepare(
-      `SELECT e.type, e.name, e.source, e.qualifier, e.edition FROM ${from}${conditions.where}`,
+      `SELECT e.type, e.name, e.source, e.qualifier, e.edition, ${TEXTLESS("e.", "type")}
+       FROM ${from}${conditions.where}`,
     )
     .all(...conditions.params) as KeyedRow[];
-  return rows.map(withQualifier);
+  return rows.map(toHit);
 }
 
 /**

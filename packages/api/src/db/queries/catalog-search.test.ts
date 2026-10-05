@@ -33,7 +33,7 @@ const FIRE_ELEMENTAL = {
   source: "MM",
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name: "Fire Elemental", source: "MM" }),
+  json: JSON.stringify({ name: "Fire Elemental", source: "MM", entries: ["Fire Elemental."] }),
   rendered_text: "Fire Elemental. A fire elemental is a mass of elemental fire.",
 };
 
@@ -43,7 +43,7 @@ const GELATINOUS_CUBE = {
   source: "MM",
   qualifier: "",
   edition: null,
-  json: JSON.stringify({ name: "Gelatinous Cube", source: "MM" }),
+  json: JSON.stringify({ name: "Gelatinous Cube", source: "MM", entries: ["Gelatinous Cube."] }),
   rendered_text: "Gelatinous Cube. A nearly transparent ooze.",
 };
 
@@ -52,7 +52,7 @@ const RESTRAINED = {
   name: "Restrained",
   source: "XPHB",
   edition: "one",
-  json: JSON.stringify({ name: "Restrained", source: "XPHB" }),
+  json: JSON.stringify({ name: "Restrained", source: "XPHB", entries: ["Restrained."] }),
 };
 
 const battleMaster = (classSource: string) => ({
@@ -276,6 +276,21 @@ describe("searchCatalog", () => {
         parent: { name: "Fighter", source: "PHB" },
         edition: "classic",
       },
+    ]);
+  });
+
+  it("marks a row with no rules text to show, and counts a table's rows as its text", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      entities: [{ ...FIRE_ELEMENTAL, json: JSON.stringify({ name: "Fire Elemental" }) }],
+      lookups: [
+        { ...RESTRAINED, kind: "table", name: "Fire Tables", json: JSON.stringify({ rows: [] }) },
+      ],
+    });
+
+    expect(searchCatalog(dataDir, { term: "fire" })).toEqual([
+      { type: "table", name: "Fire Tables", source: "XPHB", edition: "one" },
+      { type: "monster", name: "Fire Elemental", source: "MM", textless: true, edition: null },
     ]);
   });
 

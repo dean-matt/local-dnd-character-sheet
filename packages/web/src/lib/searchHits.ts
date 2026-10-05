@@ -17,13 +17,16 @@ export const HIT_COLLECTIONS = new Map([
 const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/");
 
 /**
- * The detail address a hit opens. A type with no route of its own, such as an optional
- * feature or a monster, opens through `/catalog`, its qualifier a last segment where it
- * carries one.
+ * The detail address a hit opens, or `undefined` for a row with no rules text to show,
+ * such as a monster. A type with no route of its own, such as an optional feature or a
+ * condition, opens through `/catalog`, its qualifier a last segment where it carries one.
  */
-export function searchHitAddress(hit: SearchHit): string {
+export function searchHitAddress(hit: SearchHit): string | undefined {
   const collection = HIT_COLLECTIONS.get(hit.type);
-  if ("id" in hit) return `/homebrew/${collection}/${encodeURIComponent(hit.id)}`;
+  if ("id" in hit) {
+    return collection && `/homebrew/${collection}/${encodeURIComponent(hit.id)}`;
+  }
+  if (hit.textless) return undefined;
   if (collection) return `/${collection}/${segments(hit.name, hit.source)}`;
   if (hit.parent) {
     const { parent } = hit;

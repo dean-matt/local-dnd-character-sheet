@@ -39,6 +39,8 @@ interface CatalogRow {
   source?: string;
   /** Absent on a class or subclass feature, which the grants list carries without one. */
   edition?: CharacterRecord["edition"];
+  /** A deity's pantheon or a card's deck. */
+  qualifier?: string;
   entries: Entries;
 }
 
@@ -210,6 +212,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
         name: row.name,
         source: row.source,
         edition: row.edition ?? undefined,
+        qualifier: row.qualifier,
         // A table's rows sit on the row itself, which renders as the table it is.
         entries: row.type === "table" ? [{ ...row.json, type: "table" }] : rowEntries(row.json),
       };

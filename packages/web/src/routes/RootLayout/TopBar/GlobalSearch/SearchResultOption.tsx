@@ -22,6 +22,7 @@ export function SearchResultOption({
   onPoint,
 }: SearchResultOptionProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const opens = "character" in result || result.address !== undefined;
 
   useEffect(() => {
     if (active) ref.current?.scrollIntoView?.({ block: "nearest" });
@@ -47,6 +48,9 @@ export function SearchResultOption({
           meta: (
             <>
               {result.hit.item && <span className="truncate">{itemMeta(result.hit.item)}</span>}
+              {"qualifier" in result.hit && result.hit.qualifier && (
+                <span className="truncate">{result.hit.qualifier}</span>
+              )}
               <SourceChip
                 source={"source" in result.hit ? result.hit.source : undefined}
                 edition={result.hit.edition}
@@ -64,16 +68,20 @@ export function SearchResultOption({
       role="option"
       tabIndex={-1}
       aria-selected={active}
+      aria-disabled={opens ? undefined : true}
       onMouseEnter={onPoint}
       onClick={onPick}
-      className={`flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 ${active ? "bg-accent-tint" : ""}`}
+      className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 ${active ? "bg-accent-tint" : ""} ${opens ? "cursor-pointer" : "cursor-not-allowed"}`}
     >
       {"character" in result && (
         <CharacterAvatar id={result.character.id} name={result.character.name} />
       )}
       <span className="min-w-0 grow">
         <span className="block truncate text-body font-medium text-ink">{name}</span>
-        <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted">{meta}</span>
+        <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
+          {meta}
+          {!opens && <span className="truncate">No page yet</span>}
+        </span>
       </span>
       <TypeChip type={type}>{chip}</TypeChip>
     </div>

@@ -15,7 +15,13 @@ const page = (items: unknown[], total = items.length, offset = 0) => ({
 });
 
 const fireball = { type: "spell", name: "Fireball", source: "PHB", edition: "classic" };
-const fireGiant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
+const fireGiant = {
+  type: "monster",
+  name: "Fire Giant",
+  source: "MM",
+  textless: true as const,
+  edition: null,
+};
 
 const shared = {
   "/api/characters": [characterRecord("7", "Fira")],
@@ -69,7 +75,7 @@ describe("SearchPage", () => {
       "/characters/7",
     );
     expect(screen.getByRole("status")).toHaveTextContent("2 results and 1 character");
-    expect(within(results).getByRole("button", { name: "Fire Giant" })).toBeInTheDocument();
+    expect(within(results).getByText(/No page yet/)).toBeInTheDocument();
   });
 
   it("opens a compendium result's detail in a modal", async () => {

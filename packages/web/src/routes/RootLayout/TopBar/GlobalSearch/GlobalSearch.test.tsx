@@ -10,7 +10,13 @@ const page = (items: unknown[]) => ({ items, total: items.length, limit: 10, off
 const searchUrl = (q: string) => `/api/search?q=${q}&limit=10`;
 
 const fireball = { type: "spell", name: "Fireball", source: "PHB", edition: "classic" };
-const fireGiant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
+const fireGiant = {
+  type: "monster",
+  name: "Fire Giant",
+  source: "MM",
+  textless: true as const,
+  edition: null,
+};
 const ember = {
   type: "item",
   id: "3",
@@ -100,9 +106,10 @@ describe("GlobalSearch", () => {
     const options = within(compendium).getAllByRole("option");
     expect(options.map((o) => o.textContent)).toEqual([
       "FireballPHB20142014 rulesSpell",
-      "Fire GiantMMMonster",
+      "Fire GiantMMNo page yetMonster",
       "Ember CharmWondrous item • UncommonHomebrew20242024 rulesItem",
     ]);
+    expect(options[1]).toHaveAttribute("aria-disabled", "true");
   });
 
   it("moves through results by arrow and opens one's detail over the page with Enter", async () => {

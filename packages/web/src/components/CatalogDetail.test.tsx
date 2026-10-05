@@ -224,6 +224,7 @@ describe("CatalogDetail", () => {
     renderAt("/catalog/deity/Moradin/PHB/Dwarven");
 
     await screen.findByText("The Soul Forger.");
+    expect(screen.getByText("Dwarven")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/catalog/deity/Moradin/PHB?qualifier=Dwarven",
       undefined,

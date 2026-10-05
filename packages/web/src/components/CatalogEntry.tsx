@@ -30,7 +30,7 @@ export function CatalogEntry({ address }: { address: string }) {
   if (row.isError) return entry("Could not load", <ErrorState message={row.error.message} />);
   if (row.isPending) return entry("Loading…", <LoadingState />);
 
-  const { name, source, edition, entries } = row.data;
+  const { name, source, edition, qualifier, entries } = row.data;
   const label = match.target.label(match.key);
   return entry(
     name,
@@ -43,6 +43,9 @@ export function CatalogEntry({ address }: { address: string }) {
       <EmptyState>This row carries no rules text of its own.</EmptyState>
     ),
     <TypeChip type={label}>{capitalized(label)}</TypeChip>,
-    <SourceChip source={source} edition={edition} of={label} />,
+    <span className="flex items-center gap-2">
+      {qualifier}
+      <SourceChip source={source} edition={edition} of={label} />
+    </span>,
   );
 }
