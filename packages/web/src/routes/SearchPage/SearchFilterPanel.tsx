@@ -78,6 +78,7 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
     onChange({
       edition: filters.edition === undefined ? editions.find((e) => e !== edition) : undefined,
     });
+  // A field cleared to type a new number leaves the range alone until the number arrives.
   const level = (value: string) =>
     Math.min(MAX_SPELL_LEVEL, Math.max(MIN_SPELL_LEVEL, Number.parseInt(value, 10) || 0));
 
@@ -154,6 +155,7 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
                     max={MAX_SPELL_LEVEL}
                     value={filters.minLevel}
                     onChange={(event) => {
+                      if (event.target.value === "") return;
                       const n = level(event.target.value);
                       onChange({ minLevel: n, maxLevel: Math.max(n, filters.maxLevel) });
                     }}
@@ -167,6 +169,7 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
                     max={MAX_SPELL_LEVEL}
                     value={filters.maxLevel}
                     onChange={(event) => {
+                      if (event.target.value === "") return;
                       const n = level(event.target.value);
                       onChange({ maxLevel: n, minLevel: Math.min(n, filters.minLevel) });
                     }}

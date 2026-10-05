@@ -95,8 +95,11 @@ widget, panel, or nav element:
   no loader writes one today, would show under either edition. The API's `/search`
   takes every filter Search offers, but matches `q` against a Tier A row's name alone,
   so matching a row's text, as Search does for Flame Tongue on "fire", is forward design.
-  The Mechanics menu lists each catalog type and, among them, Weapons and Armor, which
-  open Search on items of those kinds.
+  The Mechanics menu is a hand-picked list in three columns, wide enough to need no
+  scrolling, ending in "All types…", which opens Search unfiltered; the app shows an entry
+  once search returns its type. Weapons and Armor open Search on items of those kinds. An
+  item result, here and in the dropdown, keeps its Item chip and leads the line under its
+  name with its kind, then its rarity: "Martial ranged weapon • Uncommon".
 - Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the

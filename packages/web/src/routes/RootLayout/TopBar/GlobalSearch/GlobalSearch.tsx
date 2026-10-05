@@ -11,8 +11,8 @@ import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
+import { useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
-import { useCompendiumSearch } from "../../../../hooks/useCompendiumSearch.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { searchHitAddress, searchHitKey } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
@@ -33,7 +33,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
   const characters = useCharacters();
-  const compendium = useCompendiumSearch(query, RESULT_LIMIT);
+  const compendium = useCatalogSearch({ query, limit: RESULT_LIMIT });
   const navigate = useNavigate();
   const inputRef = useReturnFocus<HTMLInputElement>(detail !== undefined);
   const id = useId();
@@ -46,7 +46,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         .filter((c) => c.name.toLowerCase().includes(q))
         .map((c) => ({ key: `character:${c.id}`, character: c }))
     : [];
-  const compendiumResults: SearchResult[] = compendium.hits.map((hit) => ({
+  const compendiumResults: SearchResult[] = (compendium.data?.items ?? []).map((hit) => ({
     key: searchHitKey(hit),
     address: searchHitAddress(hit),
     hit,
@@ -94,7 +94,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   function status(): string | undefined {
     if (compendium.error) return `Search failed: ${compendium.error.message}`;
     if (results.length > 0) return undefined;
-    return compendium.settled ? `No results for "${query.trim()}".` : "Searching…";
+    return compendium.isSuccess ? `No results for "${query.trim()}".` : "Searching…";
   }
 
   const group = (label: string, rows: SearchResult[], offset: number) =>

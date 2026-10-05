@@ -51,7 +51,7 @@ export function SearchPage() {
 
   // A type or source filter narrows to the compendium, where a character has neither.
   const characterResults =
-    q !== "" && !browsing && filters.sources.length === 0 && filters.offset === 0
+    q !== "" && !browsing && filters.offset === 0
       ? (characters.data ?? []).filter(
           (c) =>
             c.name.toLowerCase().includes(q.toLowerCase()) &&
@@ -83,6 +83,7 @@ export function SearchPage() {
   }
 
   const empty = search.isSuccess && count === 0;
+  const filtered = writeSearchFilters({ ...filters, q: "", offset: 0 }).size > 0;
   const first = filters.offset + 1;
   const last = Math.min(filters.offset + PAGE_SIZE, total);
 
@@ -135,7 +136,7 @@ export function SearchPage() {
           </ul>
         )}
 
-        {empty && (
+        {empty && filtered && (
           <button
             type="button"
             onClick={() => update(CLEARED_FILTERS)}

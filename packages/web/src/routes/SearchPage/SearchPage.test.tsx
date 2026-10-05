@@ -165,6 +165,43 @@ describe("SearchPage", () => {
     expect(where()).toBe("/search?type=item&kind=melee%2Cshield");
   });
 
+  it("leaves the level range alone while a level field is cleared to type a new one", async () => {
+    renderAt("/search?type=spell&minLevel=3", {
+      "/api/search?limit=50&type=spell&minLevel=3": page([]),
+      "/api/search?limit=50&type=spell&minLevel=3&maxLevel=5": page([]),
+    });
+
+    const max = await screen.findByRole("spinbutton", { name: "Max" });
+    fireEvent.change(max, { target: { value: "" } });
+    expect(where()).toBe("/search?type=spell&minLevel=3");
+    fireEvent.change(max, { target: { value: "5" } });
+    expect(where()).toBe("/search?type=spell&minLevel=3&maxLevel=5");
+  });
+
+  it("offers Reset filters for no results only where a filter is set", async () => {
+    renderAt("/search?q=zzz", { "/api/search?q=zzz&limit=50": page([]) });
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent('No results for "zzz"'),
+    );
+    expect(screen.queryByRole("button", { name: "Reset filters" })).not.toBeInTheDocument();
+  });
+
+  it("leads an item's line under its name with its kind, then its rarity", async () => {
+    const longbow = {
+      type: "item",
+      name: "Longbow of Warning",
+      source: "DMG",
+      edition: "classic",
+      item: { kinds: ["ranged"], rarity: "uncommon", category: "martial" },
+    };
+    renderAt("/search?type=item", { "/api/search?limit=50&type=item": page([longbow]) });
+
+    const row = (await screen.findByRole("button", { name: "Longbow of Warning" })).closest("li");
+    expect(row).toHaveTextContent("Martial ranged weapon • Uncommon");
+    expect(within(row as HTMLElement).getByText("Item")).toBeInTheDocument();
+  });
+
   it("pages through results by offset", async () => {
     renderAt("/search?type=monster", {
       "/api/search?limit=50&type=monster": page([fireGiant], 120),

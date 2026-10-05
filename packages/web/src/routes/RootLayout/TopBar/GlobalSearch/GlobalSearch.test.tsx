@@ -7,11 +7,17 @@ import { stubFetchByUrl } from "../../../../test/stubFetch.ts";
 import { GlobalSearch } from "./GlobalSearch.tsx";
 
 const page = (items: unknown[]) => ({ items, total: items.length, limit: 10, offset: 0 });
-const searchUrl = (edition: string, q: string) => `/api/search?edition=${edition}&q=${q}&limit=10`;
+const searchUrl = (q: string) => `/api/search?q=${q}&limit=10`;
 
 const fireball = { type: "spell", name: "Fireball", source: "PHB", edition: "classic" };
 const fireGiant = { type: "monster", name: "Fire Giant", source: "MM", edition: null };
-const ember = { type: "item", id: "3", name: "Ember Charm", edition: "one" };
+const ember = {
+  type: "item",
+  id: "3",
+  name: "Ember Charm",
+  edition: "one",
+  item: { kinds: ["wondrous"], rarity: "uncommon", category: null },
+};
 const fireballRecord = {
   name: "Fireball",
   source: "PHB",
@@ -67,8 +73,7 @@ afterEach(() => {
 describe("GlobalSearch", () => {
   it("links to the advanced search with the query, keeping the panel open as focus moves to it", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "fire")]: page([]),
-      [searchUrl("one", "fire")]: page([]),
+      [searchUrl("fire")]: page([]),
     });
     type(input, " fire ");
 
@@ -82,10 +87,9 @@ describe("GlobalSearch", () => {
     expect(input).toHaveValue("");
   });
 
-  it("groups characters and compendium hits from both editions, ranked by name match, each with its type", async () => {
+  it("groups characters and compendium hits from both editions, in the order the server ranks them, each with its type", async () => {
     const { input, onOpen } = renderSearch({
-      [searchUrl("classic", "fir")]: page([fireball, fireGiant]),
-      [searchUrl("one", "fir")]: page([fireGiant, ember]),
+      [searchUrl("fir")]: page([fireball, fireGiant, ember]),
     });
     type(input, "fir");
     expect(onOpen).toHaveBeenCalled();
@@ -97,15 +101,14 @@ describe("GlobalSearch", () => {
     expect(options.map((o) => o.textContent)).toEqual([
       "FireballPHB20142014 rulesSpell",
       "Fire GiantMMNo page yetMonster",
-      "Ember CharmHomebrew20242024 rulesItem",
+      "Ember CharmWondrous item • UncommonHomebrew20242024 rulesItem",
     ]);
     expect(options[1]).toHaveAttribute("aria-disabled", "true");
   });
 
   it("moves through results by arrow and opens one's detail over the page with Enter", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "fir")]: page([fireball]),
-      [searchUrl("one", "fir")]: page([]),
+      [searchUrl("fir")]: page([fireball]),
       "/api/spells/Fireball/PHB": fireballRecord,
     });
     type(input, "fir");
@@ -127,41 +130,9 @@ describe("GlobalSearch", () => {
     expect(input).toHaveValue("fir");
   });
 
-  it("keeps the highlight on its row when the other edition's hits land", async () => {
-    const { input } = renderSearch({
-      [searchUrl("classic", "fir")]: page([fireball]),
-      [searchUrl("one", "fir")]: page([ember]),
-    });
-    const answer = globalThis.fetch;
-    let release = () => {};
-    const late = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
-      if (String(url).includes("edition=one")) await late;
-      return answer(url, init);
-    });
-    type(input, "fir");
-    await screen.findByRole("option", { name: /Fireball/ });
-    fireEvent.keyDown(input, { key: "ArrowDown" });
-    fireEvent.keyDown(input, { key: "ArrowDown" });
-    expect(screen.getByRole("option", { name: /Fireball/ })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-
-    release();
-    await screen.findByRole("option", { name: /Ember Charm/ });
-    expect(screen.getByRole("option", { name: /Fireball/ })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-  });
-
   it("opens a character from its result", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "fira")]: page([]),
-      [searchUrl("one", "fira")]: page([]),
+      [searchUrl("fira")]: page([]),
     });
     type(input, "fira");
     fireEvent.click(await screen.findByRole("option", { name: /Fira/ }));
@@ -171,8 +142,7 @@ describe("GlobalSearch", () => {
 
   it("leaves a result with no page where it is", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "giant")]: page([fireGiant]),
-      [searchUrl("one", "giant")]: page([fireGiant]),
+      [searchUrl("giant")]: page([fireGiant]),
     });
     type(input, "giant");
     await screen.findByRole("option", { name: /Fire Giant/ });
@@ -183,8 +153,7 @@ describe("GlobalSearch", () => {
 
   it("says when nothing matches", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "zzz")]: page([]),
-      [searchUrl("one", "zzz")]: page([]),
+      [searchUrl("zzz")]: page([]),
     });
     type(input, "zzz");
     await waitFor(() =>
@@ -195,8 +164,7 @@ describe("GlobalSearch", () => {
 
   it("a click on the scrim closes the results and leaves focus in the pill", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "fir")]: page([fireball]),
-      [searchUrl("one", "fir")]: page([]),
+      [searchUrl("fir")]: page([fireball]),
     });
     input.focus();
     type(input, "fir");
@@ -213,8 +181,7 @@ describe("GlobalSearch", () => {
 
   it("closes on Escape, then clears on a second", async () => {
     const { input } = renderSearch({
-      [searchUrl("classic", "fir")]: page([fireball]),
-      [searchUrl("one", "fir")]: page([]),
+      [searchUrl("fir")]: page([fireball]),
     });
     type(input, "fir");
     await screen.findByRole("option", { name: /Fireball/ });

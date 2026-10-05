@@ -1,13 +1,15 @@
 import type { SearchHit } from "@dnd/catalog";
 import { SourceChip } from "../../components/SourceChip.tsx";
 import { TypeChip } from "../../components/TypeChip.tsx";
+import { itemMeta } from "../../lib/itemKind.ts";
 import { searchHitAddress, searchHitTypeLabel } from "../../lib/searchHits.ts";
 
 const row = "flex items-center gap-3 rounded-control border border-border bg-surface px-3.5 py-2.5";
 
 /**
- * One compendium hit on the search page: its type, its name opening its detail, and where it
- * comes from. A hit the web shows no detail for names itself in plain text.
+ * One compendium hit on the search page: its type, its name opening its detail, an item's kind
+ * and rarity beneath, and where it comes from. A hit the web shows no detail for names itself
+ * in plain text.
  */
 export function SearchHitRow({
   hit,
@@ -36,6 +38,9 @@ export function SearchHitRow({
           >
             {hit.name}
           </button>
+        )}
+        {hit.item && (
+          <span className="block truncate text-label text-muted">{itemMeta(hit.item)}</span>
         )}
       </span>
       <SourceChip

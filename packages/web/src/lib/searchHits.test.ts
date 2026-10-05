@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { matchCatalogTarget } from "./catalogRows.ts";
-import {
-  HIT_COLLECTIONS,
-  searchHitAddress,
-  searchHitTypeLabel,
-  searchHitTypePlural,
-} from "./searchHits.ts";
+import { HIT_COLLECTIONS, searchHitAddress, searchHitTypeLabel } from "./searchHits.ts";
 
 describe("searchHitAddress", () => {
   it("addresses a catalog hit by its encoded name and source", () => {
@@ -57,17 +52,5 @@ describe("searchHitTypeLabel", () => {
     ["legendaryGroup", "Legendary group"],
   ])("labels %s as %s", (type, label) => {
     expect(searchHitTypeLabel(type)).toBe(label);
-  });
-});
-
-describe("searchHitTypePlural", () => {
-  it.each([
-    ["spell", "Spells"],
-    ["class", "Classes"],
-    ["facility", "Facilities"],
-    ["optfeature", "Optional features"],
-    ["legendaryGroup", "Legendary groups"],
-  ])("names %s as %s", (type, label) => {
-    expect(searchHitTypePlural(type)).toBe(label);
   });
 });

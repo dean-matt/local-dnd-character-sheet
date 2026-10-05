@@ -2,7 +2,6 @@ import { ChevronDown } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
 import { ARMOR_KINDS, WEAPON_KINDS } from "../../../lib/itemKind.ts";
-import { searchHitTypePlural } from "../../../lib/searchHits.ts";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
 export interface MechanicsMenuProps {
@@ -12,22 +11,46 @@ export interface MechanicsMenuProps {
 }
 
 /**
- * The top bar's Mechanics menu: each kind of catalog row, opening the search page filtered to
- * it, and Weapons and Armor, opening it filtered to items of those kinds.
+ * The menu's entries, alphabetical, each with the search it opens. Weapons and Armor narrow
+ * items to kinds; the rest name a type. An entry shows only once `/search/types` returns its
+ * type, so a type that becomes searchable joins the menu with no change here.
+ */
+const ENTRIES: { label: string; params: Record<string, string> }[] = [
+  { label: "Actions", params: { type: "action" } },
+  { label: "Armor", params: { type: "item", kind: ARMOR_KINDS.join(",") } },
+  { label: "Backgrounds", params: { type: "background" } },
+  { label: "Classes", params: { type: "class" } },
+  { label: "Conditions", params: { type: "condition" } },
+  { label: "Deities", params: { type: "deity" } },
+  { label: "Diseases", params: { type: "disease" } },
+  { label: "Feats", params: { type: "feat" } },
+  { label: "Items", params: { type: "item" } },
+  { label: "Languages", params: { type: "language" } },
+  { label: "Monsters", params: { type: "monster" } },
+  { label: "Optional Features", params: { type: "optfeature" } },
+  { label: "Races", params: { type: "race" } },
+  { label: "Senses", params: { type: "sense" } },
+  { label: "Skills", params: { type: "skill" } },
+  { label: "Spells", params: { type: "spell" } },
+  { label: "Subclasses", params: { type: "subclass" } },
+  { label: "Tables", params: { type: "table" } },
+  { label: "Variant Rules", params: { type: "variantrule" } },
+  { label: "Vehicles", params: { type: "vehicle" } },
+  { label: "Weapons", params: { type: "item", kind: WEAPON_KINDS.join(",") } },
+];
+
+const entryLink = "rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle";
+
+/**
+ * The top bar's Mechanics menu: a hand-picked list of the catalog's kinds, each opening the
+ * search page filtered to it, then "All types…" opening it unfiltered. Three columns hold
+ * the whole list in an ordinary window; a window shorter than the menu scrolls it.
  */
 export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
   const types = useSearchTypes();
   const here = useMatch("/search") !== null;
-  const typeList = types.data ?? [];
-  const entries = [
-    ...typeList.map((type) => ({ label: searchHitTypePlural(type), params: { type } })),
-    ...(typeList.includes("item")
-      ? [
-          { label: "Weapons", params: { type: "item", kind: WEAPON_KINDS.join(",") } },
-          { label: "Armor", params: { type: "item", kind: ARMOR_KINDS.join(",") } },
-        ]
-      : []),
-  ].sort((a, b) => a.label.localeCompare(b.label));
+  const searchable = new Set(types.data ?? []);
+  const entries = ENTRIES.filter(({ params }) => searchable.has(params.type ?? ""));
 
   return (
     <div className="relative shrink-0">
@@ -50,9 +73,9 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
           {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
           <div className="fixed inset-0 z-40" onClick={onClose} />
-          <div className="absolute left-0 top-full z-50 mt-2 grid max-h-[70vh] w-100 grid-cols-2 gap-0.5 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover">
+          <div className="absolute left-0 top-full z-50 mt-2 grid max-h-[calc(100dvh-var(--spacing-topbar)-1rem)] w-160 grid-cols-3 gap-0.5 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover">
             {types.isError && (
-              <p className="col-span-2 px-2.5 py-2 text-body text-muted">
+              <p className="col-span-3 px-2.5 py-2 text-body text-muted">
                 The catalog's types did not load.
               </p>
             )}
@@ -61,11 +84,18 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
                 key={label}
                 to={`/search?${new URLSearchParams(params)}`}
                 onClick={onClose}
-                className="rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle"
+                className={entryLink}
               >
                 {label}
               </Link>
             ))}
+            <Link
+              to="/search"
+              onClick={onClose}
+              className={`${entryLink} col-span-3 mt-1 border-t border-border pt-2.5`}
+            >
+              All types…
+            </Link>
           </div>
         </>
       )}

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../../test/records.ts";
@@ -112,8 +112,11 @@ describe("TopBar", () => {
     }
   });
 
-  it("the Mechanics menu lists each catalog type, opening the search filtered to it", async () => {
-    stubFetchByUrl({ ...noCharacters, "/api/search/types": { types: ["spell", "class"] } });
+  it("the Mechanics menu lists its picked entries that search can return, then All types", async () => {
+    stubFetchByUrl({
+      ...noCharacters,
+      "/api/search/types": { types: ["spell", "class", "item", "recipe"] },
+    });
     renderTopBar();
 
     const mechanics = screen.getByRole("button", { name: "Mechanics" });
@@ -121,27 +124,14 @@ describe("TopBar", () => {
     expect(mechanics).toHaveAttribute("aria-expanded", "true");
 
     const spells = await screen.findByRole("link", { name: "Spells" });
+    const menu = spells.parentElement as HTMLElement;
+    expect(
+      within(menu)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Armor", "Classes", "Items", "Spells", "Weapons", "All types…"]);
     expect(spells).toHaveAttribute("href", "/search?type=spell");
-    expect(screen.getByRole("link", { name: "Classes" })).toHaveAttribute(
-      "href",
-      "/search?type=class",
-    );
-    expect(screen.getByRole("button", { name: /character/i })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
-
-    fireEvent.click(spells);
-    expect(mechanics).toHaveAttribute("aria-expanded", "false");
-  });
-
-  it("the Mechanics menu offers Weapons and Armor, opening the search filtered to those kinds of item", async () => {
-    stubFetchByUrl({ ...noCharacters, "/api/search/types": { types: ["item", "spell"] } });
-    renderTopBar();
-
-    fireEvent.click(screen.getByRole("button", { name: "Mechanics" }));
-
-    expect(await screen.findByRole("link", { name: "Weapons" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Weapons" })).toHaveAttribute(
       "href",
       "/search?type=item&kind=melee%2Cranged",
     );
@@ -149,6 +139,14 @@ describe("TopBar", () => {
       "href",
       "/search?type=item&kind=light%2Cmedium%2Cheavy%2Cshield",
     );
+    expect(screen.getByRole("link", { name: "All types…" })).toHaveAttribute("href", "/search");
+    expect(screen.getByRole("button", { name: /character/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    fireEvent.click(spells);
+    expect(mechanics).toHaveAttribute("aria-expanded", "false");
   });
 
   it("marks Mechanics as the current section on the search page", () => {
