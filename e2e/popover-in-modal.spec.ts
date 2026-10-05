@@ -217,3 +217,30 @@ test("a popover pinned on the page closes under the modal it opens, and the page
   await expect(content).toBeVisible();
   expect(await hitAt(page, { x: pinned.x + 4, y: pinned.y + 4 })).toBe("popover");
 });
+
+test("the page behind an open modal does not scroll, and the modal opens wide", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await page.goto("/characters");
+  await page.evaluate(() => {
+    const spacer = document.createElement("div");
+    spacer.style.height = "3000px";
+    document.body.append(spacer);
+  });
+  await page.mouse.move(20, 300);
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  await page.getByRole("combobox", { name: "Search characters and the compendium" }).fill("long");
+  await page.getByRole("option", { name: new RegExp(feat.name) }).click();
+  const dialog = page.getByRole("dialog", { name: feat.name });
+  await expect(dialog).toBeVisible();
+  expect((await box(dialog)).width).toBe(768);
+
+  await page.mouse.move(20, 300);
+  await page.mouse.wheel(0, 600);
+  await settled(page);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});

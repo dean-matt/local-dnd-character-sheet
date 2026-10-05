@@ -1,12 +1,7 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createPortal } from "react-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Modal } from "./Modal.tsx";
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-});
 
 describe("Modal", () => {
   it("scrolls the body alone, with the header and footer outside it", () => {
@@ -38,48 +33,6 @@ describe("Modal", () => {
     ]) {
       expect(body).not.toContainElement(fixed);
     }
-  });
-
-  it("grows once the header and footer leave the body less room than they take", () => {
-    let resized = () => {};
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        constructor(callback: () => void) {
-          resized = callback;
-        }
-        observe() {}
-        disconnect() {}
-      },
-    );
-    const height = (body: number, chrome: number, content = 1000) => {
-      vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(body);
-      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(content);
-      vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(chrome / 2);
-    };
-    render(
-      <Modal title="Fireball" footer="Add to…" width="w-140" onClose={() => {}}>
-        text
-      </Modal>,
-    );
-    const dialog = screen.getByRole("dialog", { name: "Fireball" });
-
-    height(200, 150);
-    act(() => resized());
-    expect(dialog).toHaveClass("w-140");
-
-    height(100, 150, 100);
-    act(() => resized());
-    expect(dialog).toHaveClass("w-140");
-
-    height(100, 150);
-    act(() => resized());
-    expect(dialog).not.toHaveClass("w-140");
-    expect(dialog).toHaveClass("w-4xl");
-
-    height(400, 150);
-    act(() => resized());
-    expect(dialog).toHaveClass("w-4xl");
   });
 
   it("cancels only the modal Escape lands on, not one it opened over", () => {
