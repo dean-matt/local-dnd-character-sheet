@@ -68,8 +68,8 @@ export {
   itemRecordSchema,
   weaponTraitSchema,
 } from "./item.ts";
-export type { ItemKind } from "./item-kind.ts";
-export { ITEM_KINDS, itemKinds } from "./item-kind.ts";
+export type { ItemHitFacts, ItemKind } from "./item-kind.ts";
+export { ITEM_KINDS, itemHitFacts, itemKinds } from "./item-kind.ts";
 export type {
   HomebrewRaceInput,
   HomebrewRaceRecord,

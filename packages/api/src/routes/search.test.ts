@@ -38,6 +38,8 @@ const AZER = {
   rendered_text: "Azer. Its hair is a mane of fire.",
 };
 
+const axe = { kinds: ["melee"], rarity: null, category: null };
+
 describe("searchRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
@@ -81,7 +83,7 @@ describe("searchRoutes", () => {
     expect(body).toMatchObject({ total: 4, limit: 50, offset: 0 });
     expect(body.items).toEqual([
       { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
-      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic", item: axe },
       { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
       { type: "monster", name: "Azer", source: "MM", edition: null },
     ]);
@@ -129,7 +131,7 @@ describe("searchRoutes", () => {
 
     expect(body).toMatchObject({ total: 2, limit: 1, offset: 1 });
     expect(body.items).toEqual([
-      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic", item: axe },
     ]);
   });
 
@@ -194,7 +196,13 @@ describe("searchRoutes", () => {
     const body = await res.json();
 
     expect(body.items).toEqual([
-      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+      {
+        type: "item",
+        id: "1",
+        name: "Firebrand Axe",
+        edition: "classic",
+        item: { ...axe, rarity: "rare" },
+      },
     ]);
   });
 
@@ -213,7 +221,21 @@ describe("searchRoutes", () => {
     const res = await routes.request("/search?edition=classic&q=fire&type=item&kind=wondrous");
     const body = await res.json();
 
-    expect(body.items).toEqual([{ type: "item", id: "2", name: "Fire Cloak", edition: "classic" }]);
+    expect(body.items).toEqual([
+      {
+        type: "item",
+        id: "2",
+        name: "Fire Cloak",
+        edition: "classic",
+        item: { kinds: ["wondrous"], rarity: null, category: null },
+      },
+    ]);
+  });
+
+  it("refuses a kind of item it does not know", async () => {
+    const res = await routes.request("/search?type=item&kind=melee,mele");
+
+    expect(res.status).toBe(400);
   });
 
   it("narrows to the named sources and leaves homebrew out", async () => {

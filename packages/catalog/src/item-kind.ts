@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * The kinds of item a search narrows to, each grouping upstream's item `type` codes or one
  * of its flags. Upstream's own codes run to more than forty — a shipping vessel, a trade
@@ -72,4 +74,32 @@ export function itemKinds(item: { type?: unknown; wondrous?: unknown; staff?: un
   if (item.wondrous) kinds.add("wondrous");
   if (kinds.size === 0) kinds.add("other");
   return [...kinds];
+}
+
+/**
+ * What a search hit says of an item beyond its name: its kinds, its rarity, and whether a
+ * weapon is simple or martial. A row with none of a field carries `null` for it.
+ */
+export const itemHitFactsSchema = z.strictObject({
+  kinds: z.array(z.enum(ITEM_KINDS)).min(1),
+  rarity: z.string().min(1).nullable(),
+  category: z.enum(["simple", "martial"]).nullable(),
+});
+
+export type ItemHitFacts = z.infer<typeof itemHitFactsSchema>;
+
+/** An item entry's hit facts, read off the same fields `itemKinds` reads and two more. */
+export function itemHitFacts(item: {
+  type?: unknown;
+  wondrous?: unknown;
+  staff?: unknown;
+  rarity?: unknown;
+  weaponCategory?: unknown;
+}): ItemHitFacts {
+  const { rarity, weaponCategory } = item;
+  return {
+    kinds: itemKinds(item),
+    rarity: typeof rarity === "string" && rarity !== "" ? rarity : null,
+    category: weaponCategory === "simple" || weaponCategory === "martial" ? weaponCategory : null,
+  };
 }

@@ -19,6 +19,7 @@ import {
   characterOptionEntrySchema,
   homebrewClassSchema,
   homebrewItemSchema,
+  itemKinds,
   raceEntrySchema,
   spellEntrySchema,
 } from "@dnd/catalog";
@@ -36,7 +37,7 @@ import {
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
-import { itemOfKind, type SearchFilter } from "./catalog-search.ts";
+import { ofWantedKind, type SearchFilter } from "./catalog-search.ts";
 import { escapeLikeTerm } from "./search-terms.ts";
 
 export type HomebrewDb = BetterSQLite3Database<typeof homebrewSchema>;
@@ -61,7 +62,7 @@ export function searchHomebrewItems(db: HomebrewDb, filter: SearchFilter) {
       ),
     )
     .all()
-    .filter((row) => itemOfKind(row.json, filter.itemKinds));
+    .filter((row) => ofWantedKind(itemKinds(row.json), filter.itemKinds));
 }
 
 /** A homebrew table whose rows a `{@tag}` names, each name unique within its edition. */

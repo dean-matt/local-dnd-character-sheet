@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemKinds } from "./index.ts";
+import { itemHitFacts, itemKinds } from "./index.ts";
 
 describe("itemKinds", () => {
   it.each([
@@ -37,5 +37,23 @@ describe("itemKinds", () => {
     expect(itemKinds({ type: "SHP" })).toEqual(["other"]);
     expect(itemKinds({ type: "OTH", wondrous: true })).toEqual(["wondrous"]);
     expect(itemKinds({})).toEqual(["other"]);
+  });
+});
+
+describe("itemHitFacts", () => {
+  it("reads the rarity and a weapon's category beside the kinds", () => {
+    expect(itemHitFacts({ type: "M", rarity: "rare", weaponCategory: "martial" })).toEqual({
+      kinds: ["melee"],
+      rarity: "rare",
+      category: "martial",
+    });
+  });
+
+  it("reads a missing or malformed field as null", () => {
+    expect(itemHitFacts({ wondrous: true, rarity: "", weaponCategory: "exotic" })).toEqual({
+      kinds: ["wondrous"],
+      rarity: null,
+      category: null,
+    });
   });
 });

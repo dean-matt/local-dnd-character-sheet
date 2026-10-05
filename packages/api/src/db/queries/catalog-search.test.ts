@@ -198,6 +198,37 @@ describe("searchCatalog", () => {
     expect(names(["staff", "wondrous"])).toEqual(["Fireball", "Fire Staff", "Firework Bag"]);
   });
 
+  it("gives an item hit its kinds, rarity and weapon category", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      items: [
+        {
+          name: "Flame Tongue Longbow",
+          source: "DMG",
+          edition: "classic",
+          kind: "item",
+          type: "R",
+          rarity: "rare",
+          requires_attunement: 1 as const,
+          json: JSON.stringify({ name: "Flame Tongue Longbow", weaponCategory: "martial" }),
+        },
+      ],
+      entities: [],
+    });
+
+    expect(searchCatalog(dataDir, { term: "f" })).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      {
+        type: "item",
+        name: "Flame Tongue Longbow",
+        source: "DMG",
+        edition: "classic",
+        item: { kinds: ["ranged"], rarity: "rare", category: "martial" },
+      },
+    ]);
+  });
+
   it("finds nothing for a term no row's name or rendered text holds", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });

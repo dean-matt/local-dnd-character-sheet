@@ -13,6 +13,7 @@ import {
   compareSearchHits,
   homebrewSearchHitSchema,
   ITEM_KINDS,
+  itemHitFacts,
   type SearchHit,
   searchResponseSchema,
   searchSourcesResponseSchema,
@@ -46,6 +47,7 @@ function toHomebrewItemHit(row: HomebrewItemRow): SearchHit {
     id: row.id,
     name: row.name,
     edition: row.edition,
+    item: itemHitFacts(row.json),
   });
 }
 
@@ -63,6 +65,12 @@ const csv = (description: string, example: string) =>
 
 const spellLevel = z.coerce.number().int().min(0).max(9).optional();
 
+/** A comma-separated parameter's values, or `undefined` where it names none. */
+function list(param: string | undefined): string[] | undefined {
+  const values = param?.split(",").filter((value) => value !== "");
+  return values?.length ? values : undefined;
+}
+
 const listQuery = z.object({
   edition: z.enum(EDITIONS).optional().openapi({
     description: "The ruleset to read; absent reads both. A row with no edition matches either",
@@ -76,10 +84,16 @@ const listQuery = z.object({
   maxLevel: spellLevel.openapi({ description: "The highest spell level to read" }),
   school: csv("Comma-separated spell school codes to narrow spells to", "V,A"),
   rarity: csv("Comma-separated rarities to narrow items to", "rare,very rare"),
-  kind: csv(
-    `Comma-separated kinds of item to narrow items to, of ${ITEM_KINDS.join(", ")}`,
-    "melee,ranged",
-  ),
+  kind: z
+    .string()
+    .optional()
+    .refine((value) => list(value)?.every((kind) => ITEM_KINDS.some((k) => k === kind)) ?? true, {
+      message: `Each kind must be one of ${ITEM_KINDS.join(", ")}`,
+    })
+    .openapi({
+      description: `Comma-separated kinds of item to narrow items to, of ${ITEM_KINDS.join(", ")}`,
+      example: "melee,ranged",
+    }),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
@@ -87,12 +101,6 @@ const listQuery = z.object({
 
 /** The spell levels from `a` to `b`, read the right way round when written backwards. */
 const levelRange = (a: number, b: number) => ({ min: Math.min(a, b), max: Math.max(a, b) });
-
-/** A comma-separated parameter's values, or `undefined` where it names none. */
-function list(param: string | undefined): string[] | undefined {
-  const values = param?.split(",").filter((value) => value !== "");
-  return values?.length ? values : undefined;
-}
 
 const search = createRoute({
   method: "get",
