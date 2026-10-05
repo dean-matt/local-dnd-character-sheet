@@ -1,18 +1,17 @@
 /**
- * A hit from `/search`: one row from `content.db`'s Tier A tables, one from its Tier C
- * `entities`, or one from `homebrew.db`. A homebrew hit carries `id` and no `source` — the
- * structural difference `item.ts` and `spell.ts` already use so a caller tells the two
- * apart without reading a field's value.
+ * A hit from `/search`: one row from `content.db`'s Tier A tables, its Tier B `lookups` or
+ * its Tier C `entities`, or one from `homebrew.db`. A homebrew hit carries `id` and no
+ * `source` — the structural difference `item.ts` and `spell.ts` already use so a caller
+ * tells the two apart without reading a field's value.
  */
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
 import { itemHitFactsSchema } from "./item-kind.ts";
 
 /**
- * The Tier A types this endpoint searches, each addressed by `(name, source)` alone.
- * Subclasses and subraces carry a compound key beyond that — the class or race that owns
- * them — so a search narrows within a chosen parent instead, and a future search reaching
- * them widens this list.
+ * The Tier A types this endpoint searches. A subclass hit names its class in `parent`, since
+ * its key reaches into the class that owns it. A subrace, keyed within its race the same
+ * way, is not searched yet.
  */
 const CATALOG_SEARCH_TYPES = [
   "spell",
@@ -21,16 +20,22 @@ const CATALOG_SEARCH_TYPES = [
   "background",
   "feat",
   "class",
+  "subclass",
   "optfeature",
 ] as const;
 
 export type CatalogSearchType = (typeof CATALOG_SEARCH_TYPES)[number];
 
-/** A catalog hit, Tier A or Tier C, addressed by `(name, source)`. */
+/**
+ * A catalog hit, addressed by `(name, source)` and the rest of its key where it has more:
+ * `qualifier` names a deity's pantheon or a card's deck, and `parent` a subclass's class.
+ */
 export const catalogSearchHitSchema = z.strictObject({
   type: z.string().min(1),
   name: z.string().min(1),
   source: z.string().min(1),
+  qualifier: z.string().min(1).optional(),
+  parent: z.strictObject({ name: z.string().min(1), source: z.string().min(1) }).optional(),
   edition: z.enum(EDITIONS).nullable(),
   /** Present on an item hit alone. */
   item: itemHitFactsSchema.optional(),

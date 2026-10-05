@@ -142,7 +142,9 @@ export type SearchFixture = {
   backgrounds?: BackgroundFixtureRow[];
   feats?: FeatFixtureRow[];
   classes?: ClassFixtureRow[];
+  subclasses?: SubclassFixtureRow[];
   optionalFeatures?: RaceFixtureRow[];
+  lookups?: LookupFixtureRow[];
   entities?: EntityFixtureRow[];
 };
 
@@ -250,6 +252,7 @@ type LookupFixtureRow = {
   kind: string;
   name: string;
   source: string;
+  qualifier?: string;
   edition: string | null;
   json: string;
 };
@@ -325,6 +328,7 @@ export type RefsFixture = {
     level: number;
     json: string;
   }[];
+  optionalFeatures?: { name: string; source: string; json: string }[];
   lookups?: { kind: string; name: string; source: string; qualifier: string; json: string }[];
   entities?: { type: string; name: string; source: string; qualifier: string; json: string }[];
   tagRedirects?: { tag: string; from_key: string; to_tag: string; to_key: string }[];

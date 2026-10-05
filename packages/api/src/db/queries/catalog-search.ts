@@ -12,24 +12,65 @@ export type CatalogSearchRow = {
   type: string;
   name: string;
   source: string;
+  qualifier?: string;
+  parent?: { name: string; source: string };
   edition: Edition | null;
   item?: ItemHitFacts;
 };
 
 /**
- * The Tier A tables a search reads, each keyed by `(name, source)` alone — see
- * `@dnd/catalog`'s `CatalogSearchType` for why subclasses and subraces, whose key reaches
- * into a parent, are not among them. `items` narrows to the two kinds a character can
- * own, matching `listItems`.
+ * One subclass row per `(name, source)`. A subclass sits under each printing of its class —
+ * Battle Master|PHB under Fighter|PHB and Fighter|XPHB alike — and the class of its own
+ * source is the one it was printed for, as `refs.ts` reads it.
  */
-const CATALOG_SEARCH_TABLES: { type: CatalogSearchType; table: string; where?: string }[] = [
+const ONE_SUBCLASS_EACH = `rowid = (SELECT t.rowid FROM subclasses t
+  WHERE t.name = subclasses.name AND t.source = subclasses.source
+  ORDER BY t.class_source = t.source DESC, t.class_source LIMIT 1)`;
+
+/**
+ * The Tier A tables a search reads. `items` narrows to the two kinds a character can own,
+ * matching `listItems`, and `subclasses` to one row of each subclass, its class read into
+ * `parent`.
+ */
+const CATALOG_SEARCH_TABLES: {
+  type: CatalogSearchType;
+  table: string;
+  where?: string;
+  parent?: string;
+}[] = [
   { type: "spell", table: "spells" },
   { type: "item", table: "items", where: "kind IN ('item', 'baseitem')" },
   { type: "race", table: "races" },
   { type: "background", table: "backgrounds" },
   { type: "feat", table: "feats" },
   { type: "class", table: "classes" },
+  {
+    type: "subclass",
+    table: "subclasses",
+    where: ONE_SUBCLASS_EACH,
+    parent: ", class_name AS parentName, class_source AS parentSource",
+  },
   { type: "optfeature", table: "optional_features" },
+];
+
+/**
+ * The Tier B kinds a search reads: the rules a reader looks up by name. The rest of
+ * `lookups` names what a reference abbreviates, such as the item property `M`, and would
+ * list as noise.
+ */
+const SEARCH_LOOKUP_KINDS = [
+  "action",
+  "condition",
+  "deity",
+  "disease",
+  "itemMastery",
+  "language",
+  "psionic",
+  "sense",
+  "skill",
+  "status",
+  "table",
+  "variantrule",
 ];
 
 /**
@@ -102,17 +143,44 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
   const isItem = entry.type === "item";
   const rows = db
     .prepare(
-      `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""} FROM ${entry.table}${conditions.where}`,
+      `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""}${entry.parent ?? ""} FROM ${entry.table}${conditions.where}`,
     )
-    .all(...conditions.params) as (Omit<CatalogSearchRow, "type"> & Partial<ItemFields>)[];
-  return rows.flatMap(({ name, source, edition, itemType, ...fields }) => {
-    const hit = { type: entry.type, name, source, edition };
-    if (!isItem) return [hit];
-    const item = itemHitFacts({ ...fields, type: itemType });
-    // Kinds are read off each row rather than a column, so this scans every row the WHERE
-    // admits — a few thousand at most. A content.db column is the way out the day it shows.
-    return ofWantedKind(item.kinds, kinds) ? [{ ...hit, item }] : [];
-  });
+    .all(...conditions.params) as (Omit<CatalogSearchRow, "type" | "parent"> &
+    Partial<ItemFields> & { parentName?: string; parentSource?: string })[];
+  return rows.flatMap(
+    ({ name, source, edition, itemType, parentName, parentSource, ...fields }) => {
+      const hit: CatalogSearchRow = { type: entry.type, name, source, edition };
+      if (parentName !== undefined && parentSource !== undefined) {
+        hit.parent = { name: parentName, source: parentSource };
+      }
+      if (!isItem) return [hit];
+      const item = itemHitFacts({ ...fields, type: itemType });
+      // Kinds are read off each row rather than a column, so this scans every row the WHERE
+      // admits — a few thousand at most. A content.db column is the way out the day it shows.
+      return ofWantedKind(item.kinds, kinds) ? [{ ...hit, item }] : [];
+    },
+  );
+}
+
+type KeyedRow = Omit<CatalogSearchRow, "qualifier"> & { qualifier: string };
+
+/** A hit carries its qualifier only where its type has one. */
+const withQualifier = ({ qualifier, ...row }: KeyedRow): CatalogSearchRow =>
+  qualifier === "" ? row : { ...row, qualifier };
+
+function lookupRows(db: Db, { edition, term, types }: SearchFilter): CatalogSearchRow[] {
+  const kinds = SEARCH_LOOKUP_KINDS.filter((kind) => types === undefined || types.includes(kind));
+  if (kinds.length === 0) return [];
+  const conditions = new Conditions();
+  conditions.add(`kind IN (${placeholders(kinds)})`, ...kinds);
+  if (term) conditions.add("name LIKE ? ESCAPE '!'", `%${escapeLikeTerm(term)}%`);
+  if (edition !== undefined) conditions.add("(edition = ? OR edition IS NULL)", edition);
+  const rows = db
+    .prepare(
+      `SELECT kind AS type, name, source, qualifier, edition FROM lookups${conditions.where}`,
+    )
+    .all(...conditions.params) as KeyedRow[];
+  return rows.map(withQualifier);
 }
 
 function entityRows(db: Db, { edition, term, types }: SearchFilter): CatalogSearchRow[] {
@@ -121,19 +189,22 @@ function entityRows(db: Db, { edition, term, types }: SearchFilter): CatalogSear
   if (edition !== undefined) conditions.add("(e.edition = ? OR e.edition IS NULL)", edition);
   if (types !== undefined) conditions.add(`e.type IN (${placeholders(types)})`, ...types);
   const from = term ? "entities_fts f JOIN entities e ON e.rowid = f.rowid" : "entities e";
-  return db
-    .prepare(`SELECT e.type, e.name, e.source, e.edition FROM ${from}${conditions.where}`)
-    .all(...conditions.params) as CatalogSearchRow[];
+  const rows = db
+    .prepare(
+      `SELECT e.type, e.name, e.source, e.qualifier, e.edition FROM ${from}${conditions.where}`,
+    )
+    .all(...conditions.params) as KeyedRow[];
+  return rows.map(withQualifier);
 }
 
 /**
- * Searches the catalog: every Tier A table `CATALOG_SEARCH_TABLES` names, matched by a
- * substring `LIKE` over `name`, and Tier C's `entities`, matched by `entities_fts` over
- * name and rendered text. content.db carries no index spanning the sixteen Tier A
- * tables, so a search here is O(rows) per table rather than tuned ranking — an index
- * spanning the tiers is a `packages/content` change the day the scan is too slow, not an
- * API one. `types` narrows across both tiers, and a caller reading `null` from an
- * `edition`-less Tier C hit is reading a row that applies to either ruleset, not a hit
+ * Searches the catalog: every Tier A table `CATALOG_SEARCH_TABLES` names and each Tier B
+ * kind `SEARCH_LOOKUP_KINDS` names, matched by a substring `LIKE` over `name`, and Tier C's
+ * `entities`, matched by `entities_fts` over name and rendered text. content.db carries no
+ * index spanning the tiers, so a search here is O(rows) per table rather than tuned
+ * ranking — such an index is a `packages/content` change the day the scan is too slow, not
+ * an API one. `types` narrows across every tier, and a caller reading `null` from an
+ * `edition`-less Tier B or C hit is reading a row that applies to either ruleset, not a hit
  * this search failed to classify.
  */
 export function searchCatalog(dataDir: string, filter: SearchFilter): CatalogSearchRow[] {
@@ -143,6 +214,7 @@ export function searchCatalog(dataDir: string, filter: SearchFilter): CatalogSea
       ...CATALOG_SEARCH_TABLES.filter(
         ({ type }) => filter.types === undefined || filter.types.includes(type),
       ).flatMap((entry) => tierARows(db, entry, filter)),
+      ...lookupRows(db, filter),
       ...entityRows(db, filter),
     ];
   } finally {
@@ -150,12 +222,21 @@ export function searchCatalog(dataDir: string, filter: SearchFilter): CatalogSea
   }
 }
 
-/** Each kind of row `searchCatalog` reads: every Tier A type, then each type `entities` holds. */
+/**
+ * Each kind of row `searchCatalog` reads: every Tier A type, then each Tier B kind and each
+ * type `entities` holds.
+ */
 export function listSearchTypes(dataDir: string): string[] {
   const db = openContentDb(dataDir);
   try {
-    const entityTypes = db.prepare("SELECT DISTINCT type FROM entities").pluck().all() as string[];
-    return [...new Set([...CATALOG_SEARCH_TABLES.map(({ type }) => type), ...entityTypes])].sort();
+    const held = db
+      .prepare(
+        `SELECT DISTINCT kind FROM lookups WHERE kind IN (${placeholders(SEARCH_LOOKUP_KINDS)})
+         UNION SELECT DISTINCT type FROM entities`,
+      )
+      .pluck()
+      .all(...SEARCH_LOOKUP_KINDS) as string[];
+    return [...new Set([...CATALOG_SEARCH_TABLES.map(({ type }) => type), ...held])].sort();
   } finally {
     db.close();
   }
@@ -167,6 +248,7 @@ export function listSearchSources(dataDir: string): string[] {
     ...CATALOG_SEARCH_TABLES.map(
       ({ table, where }) => `SELECT source FROM ${table}${where ? ` WHERE ${where}` : ""}`,
     ),
+    `SELECT source FROM lookups WHERE kind IN (${placeholders(SEARCH_LOOKUP_KINDS)})`,
     "SELECT source FROM entities",
   ].join(" UNION ");
   const db = openContentDb(dataDir);
@@ -174,7 +256,7 @@ export function listSearchSources(dataDir: string): string[] {
     return db
       .prepare(`SELECT source FROM (${cited}) ORDER BY source COLLATE NOCASE`)
       .pluck()
-      .all() as string[];
+      .all(...SEARCH_LOOKUP_KINDS) as string[];
   } finally {
     db.close();
   }

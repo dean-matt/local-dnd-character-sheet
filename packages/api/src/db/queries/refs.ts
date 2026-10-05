@@ -13,7 +13,7 @@
  * survives a rename; a tag holds the name, so a renamed or deleted row leaves it
  * unresolved.
  */
-import type { RefQuery } from "@dnd/catalog";
+import { type RefQuery, rowEntries } from "@dnd/catalog";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
 import {
@@ -45,10 +45,20 @@ interface Target {
   source: string;
   sql: string;
   bind?: (ref: Wanted) => (string | number)[] | undefined;
-  path?: (row: Row) => string;
+  path?: (row: Row) => string | undefined;
 }
 
 const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/");
+
+/**
+ * The address of a row `GET /catalog/{type}/{name}/{source}` reads, absent where the row
+ * carries no prose — every monster, whose stat block is not `entries` — since its detail
+ * would show nothing but its name.
+ */
+const catalogPath = (type: string) => (row: Row) =>
+  rowEntries(JSON.parse(row.json)).length > 0
+    ? `/catalog/${segments(type, row.name, row.source)}`
+    : undefined;
 
 // COLLATE NOCASE cannot use the BINARY primary keys, so each lookup scans its table:
 // at most the 4,808 monsters, well under a millisecond apiece. A NOCASE index in
@@ -62,11 +72,13 @@ const flat = (table: string, route?: string): Omit<Target, "page" | "source"> =>
 const lookup = (kind: string): Omit<Target, "page" | "source"> => ({
   sql: `SELECT name, source, json FROM lookups WHERE kind = '${kind}' AND qualifier = ''
         AND name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE`,
+  path: catalogPath(kind),
 });
 
 const entity = (type: string): Omit<Target, "page" | "source"> => ({
   sql: `SELECT name, source, json FROM entities WHERE type = '${type}' AND qualifier = ''
         AND name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE`,
+  path: catalogPath(type),
 });
 
 /**
@@ -162,7 +174,12 @@ const TARGETS: Record<string, Target> = {
   subclass: { page: "classes.html", source: "PHB", ...subclass },
   classFeature: { source: "PHB", ...classFeature },
   subclassFeature: { source: "PHB", ...subclassFeature },
-  optfeature: { page: "optionalfeatures.html", source: "PHB", ...flat("optional_features") },
+  optfeature: {
+    page: "optionalfeatures.html",
+    source: "PHB",
+    ...flat("optional_features"),
+    path: catalogPath("optfeature"),
+  },
   condition: { page: "conditionsdiseases.html", source: "PHB", ...lookup("condition") },
   status: { page: "conditionsdiseases.html", source: "PHB", ...lookup("status") },
   disease: { page: "conditionsdiseases.html", source: "DMG", ...lookup("disease") },

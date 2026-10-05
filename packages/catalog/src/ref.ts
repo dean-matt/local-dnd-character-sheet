@@ -37,10 +37,11 @@ export const refResolveRequestSchema = z.object({
 
 /**
  * `path` is the row's detail address, which the sheet opens in a modal. For most rows that
- * is the API route that reads it; the sheet reads a feature from its class's grants instead. It is
- * absent for a type nothing serves, such as a condition or a creature. `name` and `source`
- * are the row's own, which differ from the reference's in case, in a defaulted source, and
- * after a redirect. A subrace answers with its merged name, `Human (Keldon)` where the row
+ * is the API route that reads it — `/catalog/{type}/{name}/{source}` for a type with no
+ * route of its own, such as a condition; the sheet reads a feature from its class's grants
+ * instead. It is absent for a row of such a type with no prose, as a creature has none.
+ * `name` and `source` are the row's own, which differ from the reference's in case, in a
+ * defaulted source, and after a redirect. A subrace answers with its merged name, `Human (Keldon)` where the row
  * reads `Keldon`.
  */
 const resolvedRefSchema = z.strictObject({

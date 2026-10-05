@@ -12,6 +12,25 @@ describe("searchHitSchema", () => {
     expect(searchHitSchema.parse(hit)).toEqual(hit);
   });
 
+  it("accepts the rest of a key: a deity's pantheon, a subclass's class", () => {
+    const deity = {
+      type: "deity",
+      name: "Moradin",
+      source: "PHB",
+      qualifier: "Dwarven",
+      edition: null,
+    };
+    const subclass = {
+      type: "subclass",
+      name: "Battle Master",
+      source: "PHB",
+      parent: { name: "Fighter", source: "PHB" },
+      edition: "classic",
+    };
+    expect(searchHitSchema.parse(deity)).toEqual(deity);
+    expect(searchHitSchema.parse(subclass)).toEqual(subclass);
+  });
+
   it("accepts a homebrew hit, addressed by id rather than source", () => {
     const hit = { type: "item", id: "1", name: "Sunblade", edition: "one" };
     expect(searchHitSchema.parse(hit)).toEqual(hit);

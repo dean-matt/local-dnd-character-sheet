@@ -1,9 +1,13 @@
-/** What the catalog says of itself: its build stamp and the title and group of each source it holds. */
+/**
+ * What the catalog says of itself — its build stamp and the title and group of each source
+ * it holds — and the rows of each type no route of its own reads.
+ */
 
-import { catalogSourcesResponseSchema } from "@dnd/catalog";
+import { catalogRowRecordSchema, catalogSourcesResponseSchema } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { getCatalogMeta, getCatalogSources } from "../db/queries/catalog-meta.ts";
-import { errorSchema } from "./errors.ts";
+import { type CatalogRow, getCatalogRow } from "../db/queries/catalog-row.ts";
+import { errorSchema, notFound } from "./errors.ts";
 
 const catalogMetaRowSchema = z.object({ key: z.string(), value: z.string() });
 
@@ -43,6 +47,42 @@ const sources = createRoute({
   },
 });
 
+const read = createRoute({
+  method: "get",
+  path: "/catalog/{type}/{name}/{source}",
+  tags: ["catalog"],
+  summary: "Read one optional feature, lookup or entity row by the type a search hit carries",
+  request: {
+    params: z.object({
+      type: z.string().openapi({ example: "condition" }),
+      name: z.string().openapi({ example: "Restrained" }),
+      source: z.string().openapi({ example: "XPHB" }),
+    }),
+    query: z.object({
+      qualifier: z
+        .string()
+        .min(1)
+        .optional()
+        .openapi({ description: "A deity's pantheon or a card's deck", example: "Dwarven" }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "The row",
+      content: { "application/json": { schema: catalogRowRecordSchema } },
+    },
+    404: notFound("row", "type, name, source and qualifier"),
+  },
+});
+
+function toCatalogRowRecord({ qualifier, json, ...row }: CatalogRow) {
+  return catalogRowRecordSchema.parse({
+    ...row,
+    ...(qualifier === "" ? {} : { qualifier }),
+    json: JSON.parse(json),
+  });
+}
+
 const CATALOG_NOT_BUILT = "No catalog has been built yet — run `pnpm content:build`.";
 
 export function catalogRoutes(dataDir: string) {
@@ -58,6 +98,13 @@ export function catalogRoutes(dataDir: string) {
     const rows = getCatalogSources(dataDir);
     if (!rows) return c.json({ error: CATALOG_NOT_BUILT }, 503);
     return c.json({ sources: rows }, 200);
+  });
+
+  routes.openapi(read, (c) => {
+    const { type, name, source } = c.req.valid("param");
+    const row = getCatalogRow(dataDir, type, name, source, c.req.valid("query").qualifier ?? "");
+    if (!row) return c.json({ error: "No row with that type, name, source and qualifier" }, 404);
+    return c.json(toCatalogRowRecord(row), 200);
   });
 
   return routes;
