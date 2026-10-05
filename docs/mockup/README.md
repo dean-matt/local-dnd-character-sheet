@@ -318,7 +318,7 @@ says how much of the artboard the app builds today.
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `SettingsSidebar` | #243, #486, #489 | Display and Sources |
 | `DisplaySettings` | #390 | theme only |
-| `Sources` | #558 | one switch per source |
+| `Sources` | #558 | all, once #558 merges |
 | `HomebrewWeapons` | #243 | nothing |
 | `HomebrewArmor` | #243 | nothing |
 | `HomebrewGear` | #243 | nothing |

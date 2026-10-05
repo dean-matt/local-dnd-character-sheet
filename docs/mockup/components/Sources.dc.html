@@ -29,7 +29,7 @@
       <input id="sourcesFilter" type="search" placeholder="Filter by abbreviation or title…" value="{{query}}" onChange="{{onQueryChange}}" style="width: 100%; padding: 8px 12px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
       <sc-if value="{{showMatchBar}}" hint-placeholder-val="{{false}}">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <div id="sourcesShown" style="font-size: 11px; color: #6b7280;">{{matchLabel}}</div>
+          <div id="sourcesShown" aria-hidden="true" style="font-size: 11px; color: #6b7280;">{{matchLabel}}</div>
           <div style="display: flex; gap: 6px;">
             <button aria-describedby="sourcesShown" onClick="{{shownOn}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all on</button>
             <button aria-describedby="sourcesShown" onClick="{{shownOff}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all off</button>
@@ -38,8 +38,9 @@
       </sc-if>
     </div>
 
+    <div role="status" aria-live="polite" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{statusText}}</div>
     <sc-if value="{{noMatch}}" hint-placeholder-val="{{false}}">
-      <div role="status" style="font-size: 13px; color: #6b7280; font-style: italic;">No source matches “{{trimmedQuery}}”.</div>
+      <div aria-hidden="true" style="font-size: 13px; color: #6b7280; font-style: italic;">No source matches “{{trimmedQuery}}”.</div>
     </sc-if>
 
     <sc-for list="{{shelves}}" as="shelf" hint-placeholder-count="4">
@@ -47,8 +48,8 @@
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
           <h2 id="{{shelf.headingId}}" style="margin: 0; font-size: 13px; font-weight: 600; color: #1f2430;">{{shelf.label}}</h2>
           <div style="display: flex; gap: 6px;">
-            <button aria-describedby="{{shelf.headingId}}" onClick="{{shelf.allOn}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all on</button>
-            <button aria-describedby="{{shelf.headingId}}" onClick="{{shelf.allOff}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all off</button>
+            <button aria-describedby="{{shelf.describedBy}}" onClick="{{shelf.allOn}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all on</button>
+            <button aria-describedby="{{shelf.describedBy}}" onClick="{{shelf.allOff}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all off</button>
           </div>
         </div>
         <sc-for list="{{shelf.sources}}" as="src" hint-placeholder-count="3">
@@ -115,6 +116,7 @@ class Component extends DCLogic {
       return {
         label,
         headingId: `sourcesShelf${i}`,
+        describedBy: q !== '' ? `sourcesShelf${i} sourcesShown` : `sourcesShelf${i}`,
         allOn: () => this.turn(abbrs, true),
         allOff: () => this.turn(abbrs, false),
         sources: inShelf.map((s) => ({
@@ -129,13 +131,15 @@ class Component extends DCLogic {
       };
     }).filter((shelf) => shelf.sources.length > 0);
     const shownAbbrs = shown.map((s) => s.abbr);
+    const matchLabel = shown.length === 1 ? '1 source matches' : `${shown.length} sources match`;
     return {
       accent,
       query: this.state.query,
       trimmedQuery,
       onQueryChange: (e) => this.setState({ query: e.target.value }),
       showMatchBar: q !== '' && shown.length > 0,
-      matchLabel: shown.length === 1 ? '1 source matches' : `${shown.length} sources match`,
+      matchLabel,
+      statusText: q === '' ? '' : shown.length === 0 ? `No source matches “${trimmedQuery}”.` : matchLabel,
       shownOn: () => this.turn(shownAbbrs, true),
       shownOff: () => this.turn(shownAbbrs, false),
       noMatch: q !== '' && shown.length === 0,
