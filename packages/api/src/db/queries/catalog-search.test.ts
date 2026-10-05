@@ -113,34 +113,13 @@ describe("listSearchSources", () => {
     rmSync(dataDir, { recursive: true, force: true });
   });
 
-  it("lists each cited source once, titled by its book over its adventure, and null where untitled", () => {
+  it("lists each source a Tier A or Tier C row cites once, sorted", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
-    const volume = (type: string, name: string, source: string) => ({
-      type,
-      name,
-      source,
-      qualifier: "",
-      edition: null,
-      json: JSON.stringify({ name, source }),
-      rendered_text: name,
-    });
     publishSearchFixture(dataDir, {
       spells: [FIREBALL, GOODBERRY_ONE, { ...FIREBALL, name: "Fire Bolt", level: 0 }],
-      entities: [
-        FIRE_ELEMENTAL,
-        volume("book", "Player's Handbook", "PHB"),
-        volume("adventure", "Mythic Odysseys of Theros", "MOT"),
-        volume("book", "Mythic Odysseys of Theros (book)", "MOT"),
-        volume("adventure", "Tales from the Yawning Portal", "TftYP-AtG"),
-      ],
+      entities: [FIRE_ELEMENTAL, { ...FIRE_ELEMENTAL, name: "Azer", source: "TftYP" }],
     });
 
-    expect(listSearchSources(dataDir)).toEqual([
-      { source: "MM", name: null },
-      { source: "MOT", name: "Mythic Odysseys of Theros (book)" },
-      { source: "PHB", name: "Player's Handbook" },
-      { source: "TftYP-AtG", name: "Tales from the Yawning Portal" },
-      { source: "XPHB", name: null },
-    ]);
+    expect(listSearchSources(dataDir)).toEqual(["MM", "PHB", "TftYP", "XPHB"]);
   });
 });

@@ -137,11 +137,6 @@ describe("searchRoutes", () => {
     const res = await routes.request("/search/sources");
 
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({
-      sources: [
-        { source: "MM", name: null },
-        { source: "PHB", name: null },
-      ],
-    });
+    expect(await res.json()).toEqual({ sources: ["MM", "PHB"] });
   });
 });

@@ -14,10 +14,10 @@ describe("SourcesSettings", () => {
   it("lists each source with its title and toggles one at a time", async () => {
     setDisabledSources(["VGM"]);
     stubFetchByUrl({
-      "/api/search/sources": {
+      "/api/search/sources": { sources: ["PHB", "UATheMysticClass", "VGM"] },
+      "/api/catalog/sources": {
         sources: [
           { source: "PHB", name: "Player's Handbook" },
-          { source: "UATheMysticClass", name: null },
           { source: "VGM", name: "Volo's Guide to Monsters" },
         ],
       },

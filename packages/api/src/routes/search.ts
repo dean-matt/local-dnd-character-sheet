@@ -87,7 +87,7 @@ const sources = createRoute({
   summary: "Every source a search can return a catalog row from",
   responses: {
     200: {
-      description: "Each source abbreviation and its title, where one is known",
+      description: "Each source abbreviation, sorted",
       content: { "application/json": { schema: searchSourcesResponseSchema } },
     },
   },

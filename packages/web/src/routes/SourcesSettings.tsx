@@ -2,12 +2,14 @@ import { useId } from "react";
 import { ErrorState } from "../ErrorState.tsx";
 import { useDisabledSources } from "../hooks/useDisabledSources.ts";
 import { useSearchSources } from "../hooks/useSearchSources.ts";
+import { useSourceNames } from "../hooks/useSourceNames.ts";
 import { LoadingState } from "../LoadingState.tsx";
 import { setDisabledSources } from "../lib/disabledSources.ts";
 
 /** One switch per source a search can return, turning its rows off in search and pickers. */
 export function SourcesSettings() {
   const { data, isPending, isError, error } = useSearchSources();
+  const names = useSourceNames().data;
   const disabled = useDisabledSources();
   const id = useId();
 
@@ -34,14 +36,16 @@ export function SourcesSettings() {
       {isError && <ErrorState message={error.message} />}
       {data && (
         <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {data.map(({ source, name }) => (
+          {data.map((source) => (
             <li
               key={source}
               className="flex items-center justify-between gap-3 rounded-control bg-subtle px-3 py-2.5"
             >
               <div id={`${id}-${source}`} className="min-w-0">
                 <p className="font-semibold text-row">{source}</p>
-                {name && <p className="truncate text-label text-muted">{name}</p>}
+                {names?.has(source) && (
+                  <p className="truncate text-label text-muted">{names.get(source)}</p>
+                )}
               </div>
               <button
                 type="button"
@@ -49,11 +53,11 @@ export function SourcesSettings() {
                 aria-checked={!disabled.includes(source)}
                 aria-labelledby={`${id}-${source}`}
                 onClick={() => toggle(source)}
-                className="group relative h-5 w-9 shrink-0 rounded-full border border-border bg-border aria-checked:bg-accent"
+                className="group relative h-5 w-9 shrink-0 rounded-full bg-muted aria-checked:bg-accent"
               >
                 <span
                   aria-hidden="true"
-                  className="absolute top-px left-px size-4 rounded-full bg-white transition-transform group-aria-checked:translate-x-4"
+                  className="absolute top-0.5 left-0.5 size-4 rounded-full bg-surface transition-transform group-aria-checked:translate-x-4"
                 />
               </button>
             </li>
