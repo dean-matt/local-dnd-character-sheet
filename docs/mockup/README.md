@@ -92,9 +92,8 @@ widget, panel, or nav element:
   width. It filters by type, source and edition, and adds level and school once Spell is
   ticked and rarity once Item is. A row with no edition, which Tier B and C allow though
   no loader writes one today, would show under either edition. The API's `/search`
-  takes one `edition`, one `type` and `q` today, and matches `q` against a Tier A row's
-  name alone. Ticking several types or both editions, every other filter, and matching a
-  row's text, as Search does for Flame Tongue on "fire", are forward design for #521.
+  takes every filter Search offers, but matches `q` against a Tier A row's name alone,
+  so matching a row's text, as Search does for Flame Tongue on "fire", is forward design.
 - Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
@@ -124,8 +123,7 @@ widget, panel, or nav element:
   active. It leads with the four most recently opened characters as Character List
   tiles, with Import and New Character and a "See all characters" link to Character
   List. Below sit quick links to Search, Homebrew and Settings, then one for each of the
-  Mechanics menu's catalog types, each opening that type's index route, which has no
-  artboard of its own. The `noCharacters` tweak shows the first run: an empty state
+  Mechanics menu's catalog types, each opening Search filtered to that type. The `noCharacters` tweak shows the first run: an empty state
   leading with New Character, and the quick links still below. Forward design for #541.
 - Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
@@ -306,8 +304,8 @@ says how much of the artboard the app builds today.
 | `Proficiencies` | #400, #488 | read-only |
 | `Sidebar` | #242, #470, #486 | read-only |
 | `ManageTabs` | #242 | reorder and hide |
-| `TopBar` | #386, #521, #522 | all but the Mechanics menu, "Add to…" and the "Advanced search" link |
-| `Search` | #521, #522 | nothing |
+| `TopBar` | #386, #521, #522 | all but "Add to…" |
+| `Search` | #521, #522 | all but "Add to…" |
 | `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |

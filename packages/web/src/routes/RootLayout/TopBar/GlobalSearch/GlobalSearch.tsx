@@ -4,11 +4,12 @@
  * editions. A character result opens its sheet; a compendium result opens its detail in a
  * modal over the current page, and closing it returns focus to the search with the query
  * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
- * hears it, and Enter or a click on it does nothing.
+ * hears it, and Enter or a click on it does nothing. Below the results, a link carries the
+ * query to the advanced search page.
  */
 import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
 import { useCompendiumSearch } from "../../../../hooks/useCompendiumSearch.ts";
@@ -126,7 +127,13 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           className="fixed inset-0 z-40 bg-scrim"
         />
       )}
-      <div className="absolute top-1/2 left-1/2 z-45 w-120 max-w-[40vw] -translate-x-1/2 -translate-y-1/2">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: a focusout bubbling from the input; only focus leaving the wrapper closes the panel, so Tab reaches the Advanced search link. */}
+      <div
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+        }}
+        className="absolute top-1/2 left-1/2 z-45 w-120 max-w-[40vw] -translate-x-1/2 -translate-y-1/2"
+      >
         <div
           className={`flex items-center gap-2.5 rounded-pill border px-3.5 py-2 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-accent has-[input:focus-visible]:outline-offset-2 ${open ? "border-accent bg-surface" : "border-border bg-subtle"}`}
         >
@@ -152,7 +159,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
               setOpen(true);
               onOpen();
             }}
-            onBlur={() => setOpen(false)}
             onKeyDown={handleKeyDown}
             className="min-w-0 grow bg-transparent text-body text-ink focus-visible:outline-none! [&::-webkit-search-cancel-button]:appearance-none"
           />
@@ -190,6 +196,19 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           <p aria-hidden className="px-2.5 py-1.5 text-body text-muted empty:hidden">
             {showPanel ? status() : undefined}
           </p>
+          <div className="mt-1 border-t border-border pt-1">
+            <Link
+              to={`/search?${new URLSearchParams({ q: query.trim() })}`}
+              onClick={() => {
+                setOpen(false);
+                setQuery("");
+                setActive(null);
+              }}
+              className="block rounded-lg px-2.5 py-1.5 text-row font-semibold text-accent-text hover:bg-subtle"
+            >
+              Advanced search for "{query.trim()}" →
+            </Link>
+          </div>
         </div>
       </div>
       {detail !== undefined && (

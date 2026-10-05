@@ -155,8 +155,8 @@ spell, item or feat, through `packages/web/src/components/CatalogPicker/CatalogP
 which searches the catalog and homebrew together and returns a reference, never the row.
 The flow passes the reason a row is unavailable; the picker never judges legality. A
 subclass or subrace is keyed within its parent, so `/search` does not reach it. A source
-turned off in Settings rides every `/search` as `exclude`, so the picker and the global
-search both drop its rows. The list lives in `localStorage`, since it is neither catalog
+turned off in Settings rides every `/search` as `exclude`, so the picker, the global
+search and the search page all drop its rows. The list lives in `localStorage`, since it is neither catalog
 data nor a character's; `packages/web/src/lib/disabledSources.ts` holds it.
 
 **Creation and level-up are forms, not fields.** They present many fields at once, their

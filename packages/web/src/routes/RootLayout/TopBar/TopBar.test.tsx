@@ -112,6 +112,39 @@ describe("TopBar", () => {
     }
   });
 
+  it("the Mechanics menu lists each catalog type, opening the search filtered to it", async () => {
+    stubFetchByUrl({ ...noCharacters, "/api/search/types": { types: ["spell", "class"] } });
+    renderTopBar();
+
+    const mechanics = screen.getByRole("button", { name: "Mechanics" });
+    fireEvent.click(mechanics);
+    expect(mechanics).toHaveAttribute("aria-expanded", "true");
+
+    const spells = await screen.findByRole("link", { name: "Spells" });
+    expect(spells).toHaveAttribute("href", "/search?type=spell");
+    expect(screen.getByRole("link", { name: "Classes" })).toHaveAttribute(
+      "href",
+      "/search?type=class",
+    );
+    expect(screen.getByRole("button", { name: /character/i })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+
+    fireEvent.click(spells);
+    expect(mechanics).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("marks Mechanics as the current section on the search page", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar("/search");
+
+    expect(screen.getByRole("button", { name: "Mechanics" })).toHaveClass(
+      "text-accent-text",
+      "font-bold",
+    );
+  });
+
   it("focusing the search closes the Character menu", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();

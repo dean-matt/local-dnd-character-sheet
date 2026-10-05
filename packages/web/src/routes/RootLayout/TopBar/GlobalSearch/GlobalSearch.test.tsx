@@ -65,6 +65,23 @@ afterEach(() => {
 });
 
 describe("GlobalSearch", () => {
+  it("links to the advanced search with the query, keeping the panel open as focus moves to it", async () => {
+    const { input } = renderSearch({
+      [searchUrl("classic", "fire")]: page([]),
+      [searchUrl("one", "fire")]: page([]),
+    });
+    type(input, " fire ");
+
+    const advanced = screen.getByRole("link", { name: 'Advanced search for "fire" →' });
+    expect(advanced).toHaveAttribute("href", "/search?q=fire");
+    fireEvent.blur(input, { relatedTarget: advanced });
+    expect(advanced).toBeVisible();
+
+    fireEvent.click(advanced);
+    expect(screen.getByRole("status", { name: "location" })).toHaveTextContent("/search");
+    expect(input).toHaveValue("");
+  });
+
   it("groups characters and compendium hits from both editions, ranked by name match, each with its type", async () => {
     const { input, onOpen } = renderSearch({
       [searchUrl("classic", "fir")]: page([fireball, fireGiant]),

@@ -49,6 +49,29 @@ describe("useCatalogSearch", () => {
     );
   });
 
+  it("lists every row for a blank query where asked, across both editions and the filters given", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(body), { status: 200 }));
+
+    const { result } = renderHook(
+      () =>
+        useCatalogSearch({
+          type: "spell,item",
+          query: " ",
+          limit: 20,
+          offset: 40,
+          listAll: true,
+          filters: { source: "PHB", school: "V" },
+        }),
+      { wrapper },
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/search?limit=20&offset=40&type=spell%2Citem&source=PHB&school=V",
+      undefined,
+    );
+  });
+
   it("fetches nothing for a blank query", () => {
     const fetchMock = stubFetch(new Response(JSON.stringify(body), { status: 200 }));
 
