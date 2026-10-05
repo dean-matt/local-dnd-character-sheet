@@ -247,13 +247,29 @@ describe("SearchPage", () => {
       "/api/search?limit=50&type=item&kind=melee%2Cranged": page([]),
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Hide filters" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Collapse filters" }));
     const show = screen.getByRole("button", { name: "Show filters (3 on)" });
     expect(show).toHaveTextContent("3");
     expect(screen.queryByRole("button", { name: /^Type/ })).not.toBeInTheDocument();
 
     fireEvent.click(show);
     expect(screen.getByRole("button", { name: "Type Items" })).toBeInTheDocument();
+  });
+
+  it("keeps the foot toggle in the collapsed rail, which expands it again", async () => {
+    renderAt("/search?type=item", { "/api/search?limit=50&type=item": page([]) });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Collapse filters" }));
+    const expand = screen.getByRole("button", { name: "Expand filters" });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+    expect(expand).not.toHaveTextContent("Collapse");
+
+    fireEvent.click(expand);
+    expect(screen.getByRole("button", { name: "Type Items" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Collapse filters" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 
   it("pages through results by offset", async () => {

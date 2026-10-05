@@ -47,7 +47,8 @@ const levelInput =
 /**
  * The search page's filter rail: type, source and edition, then spell level and school once
  * the types include spells, and rarity and kind once they include items. Collapsed, it shows a
- * filter icon alone, badged with how many filters are on, which opens it again.
+ * filter icon, badged with how many filters are on, and the Expand toggle at the foot, either of
+ * which opens it again.
  */
 export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -220,20 +221,26 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
 
       <div className="flex-1" />
 
-      {!collapsed && (
-        <div className="border-t border-border pt-3">
-          <button
-            type="button"
-            aria-label="Hide filters"
-            aria-expanded
-            onClick={() => setCollapsed(true)}
-            className="flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-sm font-medium text-muted hover:bg-subtle"
-          >
-            <ChevronLeft size={16} aria-hidden className="shrink-0" />
-            <span>Collapse</span>
-          </button>
-        </div>
-      )}
+      <div className="border-t border-border pt-3">
+        <button
+          type="button"
+          aria-label={collapsed ? "Expand filters" : "Collapse filters"}
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed(!collapsed)}
+          className={`flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
+        >
+          <ChevronLeft
+            size={16}
+            aria-hidden
+            className="shrink-0"
+            style={{
+              transform: collapsed ? "rotate(180deg)" : undefined,
+              transition: "transform var(--duration-standard)",
+            }}
+          />
+          {!collapsed && <span>Collapse</span>}
+        </button>
+      </div>
     </div>
   );
 }

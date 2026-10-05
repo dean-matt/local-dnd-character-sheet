@@ -234,14 +234,14 @@
 
       <div style="flex-grow: 1;"></div>
 
-      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
-        <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
-          <button aria-label="Hide filters" aria-expanded="true" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 6px; border: none; background: none;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; margin: 0 1.5px;"><path d="M15 5l-7 7 7 7"/></svg>
+      <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
+        <button aria-label="{{toggleLabel}}" aria-expanded="{{expanded}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{toggleJustify}}; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 6px; border: none; background: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; margin: 0 1.5px; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
+          <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
             <span style="font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
-          </button>
-        </div>
-      </sc-if>
+          </sc-if>
+        </button>
+      </div>
     </aside>
 
     <div style="flex-grow: 1; min-width: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
@@ -505,6 +505,9 @@ class Component extends DCLogic {
       sidebarWidth: collapsed ? '72px' : '260px',
       collapsedRail: collapsed,
       toggleSidebar: () => this.setState({ collapsed: !collapsed, openMenu: null }),
+      toggleLabel: collapsed ? 'Expand filters' : 'Collapse filters',
+      toggleJustify: collapsed ? 'center' : 'flex-start',
+      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
       showFiltersLabel: activeCount > 0 ? 'Show filters (' + activeCount + ' on)' : 'Show filters',
       hasActiveFilters: activeCount > 0,
       activeFilterCount: activeCount,
