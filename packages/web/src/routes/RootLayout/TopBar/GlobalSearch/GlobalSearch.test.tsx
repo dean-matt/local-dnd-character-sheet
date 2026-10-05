@@ -162,6 +162,23 @@ describe("GlobalSearch", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
+  it("says it is searching, not that nothing matches, while a new query waits on the last one's empty answer", async () => {
+    const { input } = renderSearch({
+      [searchUrl("fireballx")]: page([]),
+      [searchUrl("fireball")]: page([fireball]),
+    });
+    type(input, "fireballx");
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent(
+        'No results for "fireballx".',
+      ),
+    );
+
+    type(input, "fireball");
+    expect(screen.getByRole("status", { name: "" })).toHaveTextContent("Searching…");
+    expect(await screen.findByRole("option", { name: /Fireball/ })).toBeInTheDocument();
+  });
+
   it("a click on the scrim closes the results and leaves focus in the pill", async () => {
     const { input } = renderSearch({
       [searchUrl("fir")]: page([fireball]),

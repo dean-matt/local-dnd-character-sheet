@@ -34,8 +34,9 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
   const characters = useCharacters();
+  const debounced = useDebounce(query, SEARCH_DEBOUNCE_MS);
   const compendium = useCatalogSearch({
-    query: useDebounce(query, SEARCH_DEBOUNCE_MS),
+    query: debounced,
     limit: RESULT_LIMIT,
     keepPrevious: true,
   });
@@ -99,7 +100,9 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   function status(): string | undefined {
     if (compendium.error) return `Search failed: ${compendium.error.message}`;
     if (results.length > 0) return undefined;
-    return compendium.isSuccess ? `No results for "${query.trim()}".` : "Searching…";
+    // An answer to the last query, kept up or not yet replaced, says nothing of this one.
+    const settled = debounced === query && !compendium.isPlaceholderData;
+    return settled && compendium.isSuccess ? `No results for "${query.trim()}".` : "Searching…";
   }
 
   const group = (label: string, rows: SearchResult[], offset: number) =>
