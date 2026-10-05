@@ -5,13 +5,14 @@ import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
 import { useSearchSources } from "../../hooks/useSearchSources.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import { setDisabledSources } from "../../lib/disabledSources.ts";
-import { shelveSources } from "../../lib/sourceShelves.ts";
+import { type SourceShelf, shelveSources } from "../../lib/sourceShelves.ts";
 import { SourceBulkSwitches } from "./SourceBulkSwitches.tsx";
+import { SourceGroupChips } from "./SourceGroupChips.tsx";
 
 /**
  * One switch per source a search can return, turning its rows off in search and pickers,
- * under a group heading for each kind of book, with a filter and switches for a whole
- * group or everything the filter shows.
+ * under a group heading for each kind of book, with a filter, chips narrowing the list to
+ * chosen groups, and switches for a whole group or everything the filter and chips show.
  */
 export function SourcesSettings() {
   const { data, isPending, isError, error } = useSearchSources();
@@ -19,6 +20,7 @@ export function SourcesSettings() {
   const catalog = catalogSources.data;
   const disabled = useDisabledSources();
   const [query, setQuery] = useState("");
+  const [chosen, setChosen] = useState<SourceShelf["label"][]>([]);
   const id = useId();
 
   const toggle = (source: string) =>
@@ -26,12 +28,19 @@ export function SourcesSettings() {
       disabled.includes(source) ? disabled.filter((s) => s !== source) : [...disabled, source],
     );
 
-  const shelves = data ? shelveSources(data, catalog, query) : [];
+  const groups = data ? shelveSources(data, catalog, "").map((shelf) => shelf.label) : [];
+  const shelves = (data ? shelveSources(data, catalog, query) : []).filter(
+    (shelf) => chosen.length === 0 || chosen.includes(shelf.label),
+  );
   const shown = shelves.flatMap((shelf) => shelf.sources.map(({ source }) => source));
   const filtering = query.trim() !== "";
+  const narrowing = filtering || chosen.length > 0;
   const countOf = (n: number) => (n === 1 ? "1 source matches" : `${n} sources match`);
   const matchCount = countOf(shown.length);
-  const noMatch = `No source matches “${query.trim()}”.`;
+  const noMatch =
+    chosen.length > 0
+      ? `No source in the chosen groups matches “${query.trim()}”.`
+      : `No source matches “${query.trim()}”.`;
 
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-4">
@@ -68,7 +77,7 @@ export function SourcesSettings() {
               onChange={(event) => setQuery(event.target.value)}
               className="min-w-0 flex-1 rounded-control border border-border bg-surface px-3 py-2 text-body placeholder:text-muted"
             />
-            {filtering && shown.length > 0 && (
+            {narrowing && shown.length > 0 && (
               <div className="flex items-center gap-3">
                 <p id={`${id}-shown`} aria-hidden="true" className="text-label text-muted">
                   {matchCount}
@@ -77,11 +86,12 @@ export function SourcesSettings() {
               </div>
             )}
           </div>
+          <SourceGroupChips groups={groups} chosen={chosen} onChange={setChosen} />
           {/* Rendered even while empty: a live region added with its text is often not announced. */}
           <p role="status" aria-live="polite" className="sr-only">
-            {filtering ? (shown.length === 0 ? noMatch : matchCount) : ""}
+            {narrowing ? (shown.length === 0 ? noMatch : matchCount) : ""}
           </p>
-          {filtering && shown.length === 0 && (
+          {narrowing && shown.length === 0 && (
             <p aria-hidden="true" className="text-body text-muted italic">
               {noMatch}
             </p>

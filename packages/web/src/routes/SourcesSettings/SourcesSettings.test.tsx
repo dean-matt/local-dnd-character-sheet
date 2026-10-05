@@ -120,6 +120,88 @@ describe("SourcesSettings", () => {
     expect(screen.getByRole("status")).toHaveTextContent("No source matches “zzz”.");
   });
 
+  const chip = (name: string) => screen.getByRole("button", { name });
+  const headings = () => screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+
+  it("offers a chip per group with sources, after All", async () => {
+    stubSources();
+    renderWithClient(<SourcesSettings />);
+    await screen.findByRole("switch", { name: "PHB Player's Handbook" });
+
+    const chips = within(screen.getByRole("group", { name: "Show groups" })).getAllByRole("button");
+    expect(chips.map((c) => c.textContent)).toEqual([
+      "All",
+      "Core rulebooks",
+      "Supplements",
+      "Adventures",
+      "Playtest",
+    ]);
+    expect(chip("All")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("narrows the list to the chosen groups, combining several", async () => {
+    stubSources();
+    renderWithClient(<SourcesSettings />);
+    await screen.findByRole("switch", { name: "PHB Player's Handbook" });
+
+    fireEvent.click(chip("Core rulebooks"));
+    expect(chip("All")).toHaveAttribute("aria-pressed", "false");
+    expect(chip("Core rulebooks")).toHaveAttribute("aria-pressed", "true");
+    expect(headings()).toEqual(["Core rulebooks"]);
+    expect(screen.getByRole("status")).toHaveTextContent("2 sources match");
+
+    fireEvent.click(chip("Adventures"));
+    expect(headings()).toEqual(["Core rulebooks", "Adventures"]);
+    expect(screen.getByRole("status")).toHaveTextContent("3 sources match");
+
+    fireEvent.click(chip("Core rulebooks"));
+    expect(headings()).toEqual(["Adventures"]);
+  });
+
+  it("clears the chosen groups when All is pressed", async () => {
+    stubSources();
+    renderWithClient(<SourcesSettings />);
+    await screen.findByRole("switch", { name: "PHB Player's Handbook" });
+
+    fireEvent.click(chip("Core rulebooks"));
+    fireEvent.click(chip("Playtest"));
+    fireEvent.click(chip("All"));
+
+    expect(chip("All")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Core rulebooks")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getAllByRole("switch")).toHaveLength(5);
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("turns off only what the chips and the filter both show", async () => {
+    stubSources();
+    renderWithClient(<SourcesSettings />);
+    await screen.findByRole("switch", { name: "PHB Player's Handbook" });
+
+    fireEvent.click(chip("Core rulebooks"));
+    fireEvent.click(chip("Supplements"));
+    fireEvent.change(filter(), { target: { value: "o" } });
+    expect(screen.getByRole("status")).toHaveTextContent("3 sources match");
+
+    const matched = screen.getByText("3 sources match", { selector: "p[id]" })
+      .parentElement as HTMLElement;
+    fireEvent.click(within(matched).getByRole("button", { name: "Turn all off" }));
+    expect(getDisabledSources()).toEqual(["PHB", "VGM", "XPHB"]);
+  });
+
+  it("says so when the filter matches nothing in the chosen groups", async () => {
+    stubSources();
+    renderWithClient(<SourcesSettings />);
+    await screen.findByRole("switch", { name: "PHB Player's Handbook" });
+
+    fireEvent.click(chip("Adventures"));
+    fireEvent.change(filter(), { target: { value: "player" } });
+    expect(screen.queryAllByRole("switch")).toHaveLength(0);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "No source in the chosen groups matches “player”.",
+    );
+  });
+
   it("says why every source sits under Other when the titles fail to load", async () => {
     stubFetchByUrl({ "/api/search/sources": { sources: ["PHB", "VGM"] } });
     renderWithClient(<SourcesSettings />);
