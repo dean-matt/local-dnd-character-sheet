@@ -6,7 +6,7 @@ const read = (query: string) => readSearchFilters(new URLSearchParams(query));
 describe("searchFilters", () => {
   it("round-trips every filter through the URL", () => {
     const query =
-      "q=fire&type=spell%2Citem&edition=one&source=PHB%2CXGE&minLevel=1&maxLevel=3&school=V%2CA&rarity=rare&offset=50";
+      "q=fire&type=spell%2Citem&edition=one&source=PHB%2CXGE&minLevel=1&maxLevel=3&school=V%2CA&rarity=rare&kind=melee%2Cranged&offset=50";
     expect(writeSearchFilters(read(query)).toString()).toBe(query);
   });
 
@@ -20,7 +20,7 @@ describe("searchFilters", () => {
     expect(narrowingParams(read("type=item&minLevel=2&school=V&source=DMG"))).toEqual({
       source: "DMG",
     });
-    expect(narrowingParams(read("type=spell&rarity=rare"))).toEqual({});
+    expect(narrowingParams(read("type=spell&rarity=rare&kind=melee"))).toEqual({});
   });
 
   it("reads an unknown edition as both and clamps a level into 0 to 9", () => {

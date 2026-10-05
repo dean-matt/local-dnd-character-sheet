@@ -152,9 +152,31 @@
               </select>
             </sc-if>
           </div>
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
+            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Kind</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
+              <sc-for list="{{kindChips}}" as="chip" hint-placeholder-count="1">
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
+                  {{chip.label}}
+                  <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                </div>
+              </sc-for>
+              <sc-if value="{{kindEmpty}}" hint-placeholder-val="{{true}}">
+                <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+              </sc-if>
+            </div>
+            <sc-if value="{{kindHasHidden}}" hint-placeholder-val="{{true}}">
+              <select onChange="{{onKindAdd}}" value="" aria-label="Narrow by kind" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+                <option value="" disabled>+ Narrow to kind…</option>
+                <sc-for list="{{kindHiddenOptions}}" as="opt" hint-placeholder-count="1">
+                  <option value="{{opt.value}}">{{opt.label}}</option>
+                </sc-for>
+              </select>
+            </sc-if>
+          </div>
         </sc-if>
         <sc-if value="{{showTypeHint}}" hint-placeholder-val="{{false}}">
-          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; font-size: 12px; color: #6b7280;">Tick Spell for level and school, or Item for rarity.</div>
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; font-size: 12px; color: #6b7280;">Tick Spell for level and school, or Item for rarity and kind.</div>
         </sc-if>
       </sc-if>
 
@@ -242,7 +264,7 @@ class Component extends DCLogic {
     this.state = {
       query: 'fire',
       collapsed: false,
-      filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [] },
+      filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [], kinds: [] },
       pickerFor: null,
       toast: null
     };
@@ -267,9 +289,9 @@ class Component extends DCLogic {
       { id: 'fire-bolt', type: 'Spell', name: 'Fire Bolt', meta: 'Evocation cantrip', source: 'PHB', edition: '2014', level: 0, school: 'Evocation', classes: ['Sorcerer', 'Wizard'] },
       { id: 'fire-shield', type: 'Spell', name: 'Fire Shield', meta: 'Evocation • 4th level', source: 'PHB', edition: '2014', level: 4, school: 'Evocation', classes: ['Wizard'] },
       { id: 'flame-arrows', type: 'Spell', name: 'Flame Arrows', meta: 'Transmutation • 3rd level • fire damage', source: 'XGE', edition: '2014', level: 3, school: 'Transmutation', classes: ['Druid', 'Ranger', 'Sorcerer', 'Wizard'] },
-      { id: 'ring-fire', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', edition: '2014', rarity: 'Rare' },
-      { id: 'flame-tongue', type: 'Item', name: 'Flame Tongue', meta: 'Weapon • Rare • fire damage', source: 'DMG', edition: '2014', rarity: 'Rare' },
-      { id: 'ember-charm', type: 'Item', name: 'Ember Charm of Fire', meta: 'Wondrous item • Uncommon', source: '', edition: '2014', rarity: 'Uncommon' },
+      { id: 'ring-fire', type: 'Item', name: 'Ring of Fire Resistance', meta: 'Ring • Rare', source: 'DMG', edition: '2014', rarity: 'Rare', kinds: ['Ring'] },
+      { id: 'flame-tongue', type: 'Item', name: 'Flame Tongue', meta: 'Weapon • Rare • fire damage', source: 'DMG', edition: '2014', rarity: 'Rare', kinds: ['Melee weapon'] },
+      { id: 'ember-charm', type: 'Item', name: 'Ember Charm of Fire', meta: 'Wondrous item • Uncommon', source: '', edition: '2014', rarity: 'Uncommon', kinds: ['Wondrous item'] },
       { id: 'elemental-adept', type: 'Feat', name: 'Elemental Adept', meta: 'Spellcaster prerequisite • acid, cold, fire, lightning or thunder', source: 'PHB', edition: '2014', needsCaster: true },
       { id: 'fire-genasi', type: 'Race', name: 'Fire Genasi', meta: 'Race', source: 'MPMM', edition: '2014' },
       { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: '2014' }
@@ -279,6 +301,8 @@ class Component extends DCLogic {
     const SOURCES = ['PHB', 'XPHB', 'DMG', 'XGE', 'MPMM', 'MM', 'Homebrew'];
     const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
     const RARITIES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
+    // Each grouping of upstream's item type codes; an item can be two, as a staff that is also a melee weapon.
+    const KINDS = ['Melee weapon', 'Ranged weapon', 'Ammunition', 'Light armor', 'Medium armor', 'Heavy armor', 'Shield', 'Potion', 'Scroll', 'Ring', 'Wand', 'Rod', 'Staff', 'Wondrous item', 'Spellcasting focus', 'Adventuring gear', 'Tool or instrument', 'Treasure or trade good', 'Other'];
 
     const { query, collapsed, filters, pickerFor, toast } = this.state;
     const set = (next) => this.setState({ filters: { ...filters, ...next }, pickerFor: null });
@@ -297,6 +321,7 @@ class Component extends DCLogic {
     const sourceFacet = makeFacet(filters.sources, SOURCES, (next) => set({ sources: next }));
     const schoolFacet = makeFacet(filters.schools, SCHOOLS, (next) => set({ schools: next }));
     const rarityFacet = makeFacet(filters.rarities, RARITIES, (next) => set({ rarities: next }));
+    const kindFacet = makeFacet(filters.kinds, KINDS, (next) => set({ kinds: next }));
 
     const showSpellFilters = filters.types.indexOf('Spell') !== -1;
     const showItemFilters = filters.types.indexOf('Item') !== -1;
@@ -333,7 +358,10 @@ class Component extends DCLogic {
         if (r.level < filters.minLevel || r.level > filters.maxLevel) return false;
         if (filters.schools.length && filters.schools.indexOf(r.school) === -1) return false;
       }
-      if (r.type === 'Item' && showItemFilters && filters.rarities.length && filters.rarities.indexOf(r.rarity) === -1) return false;
+      if (r.type === 'Item' && showItemFilters) {
+        if (filters.rarities.length && filters.rarities.indexOf(r.rarity) === -1) return false;
+        if (filters.kinds.length && !r.kinds.some((k) => filters.kinds.indexOf(k) !== -1)) return false;
+      }
       return true;
     };
     const results = ROWS.filter(matches).map((res) => {
@@ -404,7 +432,12 @@ class Component extends DCLogic {
       rarityHasHidden: rarityFacet.hasHidden,
       rarityHiddenOptions: rarityFacet.hiddenOptions,
       onRarityAdd: rarityFacet.onAdd,
-      reset: () => this.setState({ filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [] }, pickerFor: null }),
+      kindChips: kindFacet.chips,
+      kindEmpty: kindFacet.isEmpty,
+      kindHasHidden: kindFacet.hasHidden,
+      kindHiddenOptions: kindFacet.hiddenOptions,
+      onKindAdd: kindFacet.onAdd,
+      reset: () => this.setState({ filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [], kinds: [] }, pickerFor: null }),
 
       query,
       onQueryChange: (e) => this.setState({ query: e.target.value, pickerFor: null, toast: null }),

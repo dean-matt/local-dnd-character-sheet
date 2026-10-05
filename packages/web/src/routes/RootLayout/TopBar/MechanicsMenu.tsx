@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
+import { ARMOR_KINDS, WEAPON_KINDS } from "../../../lib/itemKind.ts";
 import { searchHitTypePlural } from "../../../lib/searchHits.ts";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
@@ -10,13 +11,23 @@ export interface MechanicsMenuProps {
   onClose: () => void;
 }
 
-/** The top bar's Mechanics menu: each kind of catalog row, opening the search page filtered to it. */
+/**
+ * The top bar's Mechanics menu: each kind of catalog row, opening the search page filtered to
+ * it, and Weapons and Armor, opening it filtered to items of those kinds.
+ */
 export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
   const types = useSearchTypes();
   const here = useMatch("/search") !== null;
-  const entries = (types.data ?? [])
-    .map((type) => ({ type, label: searchHitTypePlural(type) }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const typeList = types.data ?? [];
+  const entries = [
+    ...typeList.map((type) => ({ label: searchHitTypePlural(type), params: { type } })),
+    ...(typeList.includes("item")
+      ? [
+          { label: "Weapons", params: { type: "item", kind: WEAPON_KINDS.join(",") } },
+          { label: "Armor", params: { type: "item", kind: ARMOR_KINDS.join(",") } },
+        ]
+      : []),
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   return (
     <div className="relative shrink-0">
@@ -45,10 +56,10 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
                 The catalog's types did not load.
               </p>
             )}
-            {entries.map(({ type, label }) => (
+            {entries.map(({ label, params }) => (
               <Link
-                key={type}
-                to={`/search?type=${encodeURIComponent(type)}`}
+                key={label}
+                to={`/search?${new URLSearchParams(params)}`}
                 onClick={onClose}
                 className="rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle"
               >

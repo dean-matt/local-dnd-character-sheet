@@ -5,6 +5,7 @@ import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
 import { useSearchSources } from "../../hooks/useSearchSources.ts";
 import { useSearchTypes } from "../../hooks/useSearchTypes.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
+import { ITEM_KIND_OPTIONS } from "../../lib/itemKind.ts";
 import { searchHitTypeLabel } from "../../lib/searchHits.ts";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
 import { SearchFacet } from "./SearchFacet.tsx";
@@ -46,7 +47,7 @@ const toggled = (list: string[], value: string) =>
 
 /**
  * The search page's filter rail: type, source and edition, then spell level and school once
- * the types include spells, and rarity once they include items. Collapsed, it shows its
+ * the types include spells, and rarity and kind once they include items. Collapsed, it shows its
  * toggle alone.
  */
 export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps) {
@@ -182,16 +183,24 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
             </>
           )}
           {itemsShown(filters) && (
-            <SearchFacet
-              label="Rarity"
-              selected={filters.rarities}
-              options={RARITIES}
-              onChange={(next) => onChange({ rarities: next })}
-            />
+            <>
+              <SearchFacet
+                label="Rarity"
+                selected={filters.rarities}
+                options={RARITIES}
+                onChange={(next) => onChange({ rarities: next })}
+              />
+              <SearchFacet
+                label="Kind"
+                selected={filters.kinds}
+                options={ITEM_KIND_OPTIONS}
+                onChange={(next) => onChange({ kinds: next })}
+              />
+            </>
           )}
           {!spellsShown(filters) && !itemsShown(filters) && (
             <p className="text-row text-muted italic">
-              Tick Spell for level and school, or Item for rarity.
+              Tick Spell for level and school, or Item for rarity and kind.
             </p>
           )}
         </>

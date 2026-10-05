@@ -151,6 +151,20 @@ describe("SearchPage", () => {
     expect(screen.queryByRole("spinbutton", { name: "Min" })).not.toBeInTheDocument();
   });
 
+  it("narrows items by kind once Item is ticked", async () => {
+    renderAt("/search?type=item&kind=melee", {
+      "/api/search?limit=50&type=item&kind=melee": page([]),
+      "/api/search?limit=50&type=item&kind=melee%2Cshield": page([]),
+    });
+
+    const kind = await screen.findByRole("group", { name: "Kind" });
+    expect(within(kind).getByText("Melee weapon")).toBeInTheDocument();
+    fireEvent.change(within(kind).getByRole("combobox", { name: "Narrow by kind" }), {
+      target: { value: "shield" },
+    });
+    expect(where()).toBe("/search?type=item&kind=melee%2Cshield");
+  });
+
   it("pages through results by offset", async () => {
     renderAt("/search?type=monster", {
       "/api/search?limit=50&type=monster": page([fireGiant], 120),

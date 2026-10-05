@@ -90,10 +90,13 @@ widget, panel, or nav element:
   controls the Filter artboards' checkboxes, chips and level range. The query field,
   results and confirmation fill the main column beside the sidebar, with no maximum
   width. It filters by type, source and edition, and adds level and school once Spell is
-  ticked and rarity once Item is. A row with no edition, which Tier B and C allow though
+  ticked and rarity and kind once Item is — a melee weapon, light armor or a wondrous
+  item, each grouping upstream's item type codes. A row with no edition, which Tier B and C allow though
   no loader writes one today, would show under either edition. The API's `/search`
   takes every filter Search offers, but matches `q` against a Tier A row's name alone,
   so matching a row's text, as Search does for Flame Tongue on "fire", is forward design.
+  The Mechanics menu lists each catalog type and, among them, Weapons and Armor, which
+  open Search on items of those kinds.
 - Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
   rules-text reference on a sheet, opens it over the page that holds the link, and the
   app drops its `catalog` route (#537). Its `host` tweak draws that page behind the

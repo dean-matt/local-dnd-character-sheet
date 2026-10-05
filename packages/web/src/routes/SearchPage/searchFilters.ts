@@ -18,6 +18,8 @@ export interface SearchFilters {
   maxLevel: number;
   schools: string[];
   rarities: string[];
+  /** Kinds of item, as `@dnd/catalog`'s `ITEM_KINDS` names them. */
+  kinds: string[];
   offset: number;
 }
 
@@ -33,6 +35,7 @@ export const CLEARED_FILTERS = {
   maxLevel: MAX_SPELL_LEVEL,
   schools: [],
   rarities: [],
+  kinds: [],
 } satisfies Partial<SearchFilters>;
 
 const list = (value: string | null) => (value ? value.split(",").filter(Boolean) : []);
@@ -62,6 +65,7 @@ export function readSearchFilters(params: URLSearchParams): SearchFilters {
     maxLevel: Math.max(...levels),
     schools: list(params.get("school")),
     rarities: list(params.get("rarity")),
+    kinds: list(params.get("kind")),
     offset: Number.isNaN(offset) || offset < 0 ? 0 : offset,
   };
 }
@@ -75,8 +79,9 @@ export function narrowingParams(filters: SearchFilters): Record<string, string> 
     if (filters.maxLevel !== MAX_SPELL_LEVEL) params.maxLevel = String(filters.maxLevel);
     if (filters.schools.length > 0) params.school = filters.schools.join(",");
   }
-  if (itemsShown(filters) && filters.rarities.length > 0) {
-    params.rarity = filters.rarities.join(",");
+  if (itemsShown(filters)) {
+    if (filters.rarities.length > 0) params.rarity = filters.rarities.join(",");
+    if (filters.kinds.length > 0) params.kind = filters.kinds.join(",");
   }
   return params;
 }

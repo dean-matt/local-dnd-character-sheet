@@ -51,7 +51,7 @@
       </button>
       <sc-if value="{{mechanicsMenuOpen}}" hint-placeholder-val="{{false}}">
         <div style="position: absolute; top: calc(100% + 8px); left: 0; width: 420px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 12px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 10px; z-index: 50; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px;">
-          <sc-for list="{{mechanicsTypes}}" as="m" hint-placeholder-count="19">
+          <sc-for list="{{mechanicsTypes}}" as="m" hint-placeholder-count="21">
             <button onClick="{{m.go}}" style="display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 6px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.label}}</button>
           </sc-for>
         </div>
@@ -190,10 +190,11 @@ class Component extends DCLogic {
     const CHARACTERS = this.props.noCharacters && !onSheet ? [] : ALL_CHARACTERS;
     // Opened from a sheet, the bar sits over Elara's, the character the other sheet artboards show.
     const CURRENT_CHARACTER = 'elara';
+    // Weapons and Armor open Search on items of those kinds rather than on a catalog type.
     const MECHANICS_TYPES = [
-      'Actions', 'Backgrounds', 'Classes', 'Conditions', 'Deities', 'Diseases', 'Feats',
+      'Actions', 'Armor', 'Backgrounds', 'Classes', 'Conditions', 'Deities', 'Diseases', 'Feats',
       'Items', 'Languages', 'Monsters', 'Optional Features', 'Races', 'Senses', 'Skills',
-      'Spells', 'Subclasses', 'Tables', 'Variant Rules', 'Vehicles'
+      'Spells', 'Subclasses', 'Tables', 'Variant Rules', 'Vehicles', 'Weapons'
     ];
     // Only an item, a spell or a feat adds from search; creation and level-up own the rest.
     const COMPENDIUM = [

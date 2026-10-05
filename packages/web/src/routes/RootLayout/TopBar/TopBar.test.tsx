@@ -135,6 +135,22 @@ describe("TopBar", () => {
     expect(mechanics).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("the Mechanics menu offers Weapons and Armor, opening the search filtered to those kinds of item", async () => {
+    stubFetchByUrl({ ...noCharacters, "/api/search/types": { types: ["item", "spell"] } });
+    renderTopBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mechanics" }));
+
+    expect(await screen.findByRole("link", { name: "Weapons" })).toHaveAttribute(
+      "href",
+      "/search?type=item&kind=melee%2Cranged",
+    );
+    expect(screen.getByRole("link", { name: "Armor" })).toHaveAttribute(
+      "href",
+      "/search?type=item&kind=light%2Cmedium%2Cheavy%2Cshield",
+    );
+  });
+
   it("marks Mechanics as the current section on the search page", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar("/search");
