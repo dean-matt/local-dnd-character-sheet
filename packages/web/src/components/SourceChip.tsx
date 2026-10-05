@@ -1,5 +1,5 @@
 import type { CharacterRecord } from "@dnd/character";
-import { useSourceNames } from "../hooks/useSourceNames.ts";
+import { useCatalogSources } from "../hooks/useCatalogSources.ts";
 import { CHIP } from "../lib/chipStyles.ts";
 import { EditionTag } from "./EditionTag.tsx";
 
@@ -19,8 +19,8 @@ export function SourceChip({
   /** What carries the edition, as `EditionTag`'s hover title names it. */
   of?: string;
 }) {
-  const names = useSourceNames();
-  const title = source && names.data?.get(source);
+  const sources = useCatalogSources();
+  const title = source && sources.data?.get(source)?.name;
   return (
     <span className="flex shrink-0 items-center gap-1.5">
       <span className={`${CHIP} border-border bg-border text-secondary uppercase`}>

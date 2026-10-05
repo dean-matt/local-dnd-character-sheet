@@ -36,14 +36,16 @@ export function getCatalogVersion(dataDir: string): string | undefined {
 }
 
 /**
- * Each source's title, from the book and adventure rows in `entities`. Where both indexes
- * name a source, such as `MOT`, the book's title wins: the adventure is a chapter of it.
+ * Each source's title and group, from the book and adventure rows in `entities`. Where
+ * both indexes name a source, such as `MOT`, the book wins: the adventure is a chapter of it.
  */
 export function getCatalogSources(dataDir: string): CatalogSource[] | undefined {
   return readBuiltCatalog(dataDir, (db) => {
     const rows = db
       .prepare(
-        `SELECT source, name FROM entities WHERE type IN ('book', 'adventure')
+        `SELECT source, name,
+                CASE type WHEN 'adventure' THEN 'adventure' ELSE json_extract(json, '$.group') END AS "group"
+         FROM entities WHERE type IN ('book', 'adventure')
          ORDER BY source, type = 'book' DESC, name`,
       )
       .all() as CatalogSource[];
