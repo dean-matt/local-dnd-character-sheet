@@ -102,7 +102,11 @@ describe("SearchPage", () => {
     await screen.findByText("Fire Giant");
 
     fireEvent.click(await screen.findByRole("button", { name: "Type All types" }));
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Spells" }));
+    fireEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Spells (adds level and school filters)",
+      }),
+    );
     expect(where()).toBe("/search?q=fire&type=spell");
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 result"));
 
@@ -121,18 +125,20 @@ describe("SearchPage", () => {
     expect(where()).toBe("/search?q=fire");
   });
 
-  it("narrows by a source picked from the select, and removes it by its chip", async () => {
+  it("narrows by a source ticked in the Source list, names it on the button, and clears it", async () => {
     renderAt("/search?q=fire", {
       "/api/search?q=fire&limit=50": page([fireball, fireGiant]),
       "/api/search?q=fire&limit=50&source=PHB": page([fireball]),
     });
-    const select = await screen.findByRole("combobox", { name: "Narrow by source" });
-    await within(select).findByRole("option", { name: "PHB" });
-
-    fireEvent.change(select, { target: { value: "PHB" } });
+    await screen.findByText("Fire Giant");
+    fireEvent.click(await screen.findByRole("button", { name: "Source All sources" }));
+    const list = screen.getByRole("group", { name: "Sources to search" });
+    fireEvent.click(await within(list).findByRole("checkbox", { name: "PHB" }));
     expect(where()).toBe("/search?q=fire&source=PHB");
+    expect(screen.getByRole("button", { name: "Source PHB" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 result"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Remove PHB" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear sources" }));
     expect(where()).toBe("/search?q=fire");
   });
 
@@ -148,9 +154,8 @@ describe("SearchPage", () => {
       "/api/search?limit=50&type=item&rarity=very+rare": page([]),
     });
 
-    fireEvent.change(await screen.findByRole("combobox", { name: "Narrow by rarity" }), {
-      target: { value: "very rare" },
-    });
+    fireEvent.click(await screen.findByRole("button", { name: "Rarity All rarities" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Very rare" }));
     expect(where()).toBe("/search?type=item&rarity=very+rare");
     expect(screen.queryByRole("spinbutton", { name: "Min" })).not.toBeInTheDocument();
   });
@@ -161,11 +166,10 @@ describe("SearchPage", () => {
       "/api/search?limit=50&type=item&kind=melee%2Cshield": page([]),
     });
 
-    const kind = await screen.findByRole("group", { name: "Kind" });
-    expect(within(kind).getByText("Melee weapon")).toBeInTheDocument();
-    fireEvent.change(within(kind).getByRole("combobox", { name: "Narrow by kind" }), {
-      target: { value: "shield" },
-    });
+    fireEvent.click(await screen.findByRole("button", { name: "Kind Melee weapon" }));
+    const kinds = screen.getByRole("group", { name: "Kinds to search" });
+    expect(within(kinds).getByRole("checkbox", { name: "Melee weapon" })).toBeChecked();
+    fireEvent.click(within(kinds).getByRole("checkbox", { name: "Shield" }));
     expect(where()).toBe("/search?type=item&kind=melee%2Cshield");
   });
 
@@ -216,12 +220,15 @@ describe("SearchPage", () => {
     const button = await screen.findByRole("button", { name: "Type All types" });
     fireEvent.click(button);
     const list = await screen.findByRole("group", { name: "Types to search" });
-    const items = within(list).getByRole("checkbox", { name: "Items" });
+    const items = within(list).getByRole("checkbox", {
+      name: "Items (adds rarity and kind filters)",
+    });
+    expect(within(list).getByRole("checkbox", { name: "Monsters" })).toBeInTheDocument();
     fireEvent.keyDown(button, { key: "ArrowDown" });
     expect(items).toHaveFocus();
     fireEvent.click(items);
     expect(where()).toBe("/search?q=fire&type=item");
-    expect(await screen.findByRole("combobox", { name: "Narrow by kind" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Kind All kinds" })).toBeInTheDocument();
 
     fireEvent.keyDown(items, { key: "ArrowDown" });
     const monsters = within(list).getByRole("checkbox", { name: "Monsters" });

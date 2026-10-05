@@ -45,8 +45,20 @@ function level(value: string | null, fallback: number): number {
   return Number.isNaN(n) ? fallback : Math.min(MAX_SPELL_LEVEL, Math.max(MIN_SPELL_LEVEL, n));
 }
 
-export const spellsShown = (filters: SearchFilters) => filters.types.includes("spell");
-export const itemsShown = (filters: SearchFilters) => filters.types.includes("item");
+/** The types whose choice shows more filters, beside what the Type list says each adds. */
+const TYPE_FILTERS = {
+  spell: "adds level and school filters",
+  item: "adds rarity and kind filters",
+} as const;
+
+/** What choosing a type adds to the filters, where it adds any. */
+export const filtersAddedBy = (type: string): string | undefined =>
+  Object.hasOwn(TYPE_FILTERS, type) ? TYPE_FILTERS[type as keyof typeof TYPE_FILTERS] : undefined;
+
+const shows = (filters: SearchFilters, type: keyof typeof TYPE_FILTERS) =>
+  filters.types.includes(type);
+export const spellsShown = (filters: SearchFilters) => shows(filters, "spell");
+export const itemsShown = (filters: SearchFilters) => shows(filters, "item");
 
 /**
  * How many filters are on beyond the query: each type, source, school, rarity and kind

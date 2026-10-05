@@ -1,5 +1,6 @@
 import { ChevronLeft, SlidersHorizontal } from "lucide-react";
 import { useId, useState } from "react";
+import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { useCatalogSources } from "../../hooks/useCatalogSources.ts";
 import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
 import { useSearchSources } from "../../hooks/useSearchSources.ts";
@@ -8,11 +9,10 @@ import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import { ITEM_KIND_OPTIONS } from "../../lib/itemKind.ts";
 import { searchHitTypePlural } from "../../lib/searchHits.ts";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
-import { SearchFacet } from "./SearchFacet.tsx";
-import { SearchTypePicker } from "./SearchTypePicker.tsx";
 import {
   activeFilterCount,
   CLEARED_FILTERS,
+  filtersAddedBy,
   itemsShown,
   MAX_SPELL_LEVEL,
   MIN_SPELL_LEVEL,
@@ -59,13 +59,13 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
   const active = activeFilterCount(filters);
 
   const typeOptions = (types.data ?? [])
-    .map((type) => ({ type, label: searchHitTypePlural(type) }))
+    .map((type) => ({ value: type, label: searchHitTypePlural(type), hint: filtersAddedBy(type) }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const sourceOptions = (sources.data ?? [])
     .filter((source) => !disabled.includes(source))
     .map((source) => {
       const title = titles.data?.get(source)?.name;
-      return { value: source, label: title ? `${source} · ${title}` : source, chip: source };
+      return { value: source, label: title ? `${source} · ${title}` : source, short: source };
     });
   const schoolOptions = Object.entries(SCHOOLS)
     .map(([value, label]) => ({ value, label }))
@@ -121,14 +121,17 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
             </button>
           </div>
 
-          <SearchTypePicker
+          <MultiSelect
+            label="Type"
+            noun="types"
             options={typeOptions}
             selected={filters.types}
             onChange={(next) => onChange({ types: next })}
           />
 
-          <SearchFacet
+          <MultiSelect
             label="Source"
+            noun="sources"
             selected={filters.sources}
             options={sourceOptions}
             onChange={(next) => onChange({ sources: next })}
@@ -185,8 +188,9 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
                   />
                 </div>
               </fieldset>
-              <SearchFacet
+              <MultiSelect
                 label="School"
+                noun="schools"
                 selected={filters.schools}
                 options={schoolOptions}
                 onChange={(next) => onChange({ schools: next })}
@@ -195,24 +199,21 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
           )}
           {itemsShown(filters) && (
             <>
-              <SearchFacet
+              <MultiSelect
                 label="Rarity"
+                noun="rarities"
                 selected={filters.rarities}
                 options={RARITIES}
                 onChange={(next) => onChange({ rarities: next })}
               />
-              <SearchFacet
+              <MultiSelect
                 label="Kind"
+                noun="kinds"
                 selected={filters.kinds}
                 options={ITEM_KIND_OPTIONS}
                 onChange={(next) => onChange({ kinds: next })}
               />
             </>
-          )}
-          {!spellsShown(filters) && !itemsShown(filters) && (
-            <p className="text-row text-muted italic">
-              Tick Spell for level and school, or Item for rarity and kind.
-            </p>
           )}
         </>
       )}

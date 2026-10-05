@@ -56,44 +56,63 @@
           <button onClick="{{reset}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
         </div>
 
-        <div style="position: relative;" onKeyDown="{{onTypeKeyDown}}">
-          <div id="searchTypeLabel" style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Type</div>
-          <button id="searchTypeButton" aria-labelledby="searchTypeLabel searchTypeValue" aria-expanded="{{typeMenuOpen}}" aria-controls="searchTypeList" onClick="{{toggleTypeMenu}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
-            <span id="searchTypeValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{typeSummary}}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{typeCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
+        <div style="position: relative;" onKeyDown="{{typeKeyDown}}">
+          <div style="display: flex; align-items: center; justify-content: space-between; height: 24px; margin-bottom: 4px;">
+            <div id="typeLabel" style="font-size: 11px; font-weight: 600; color: #6b7280;">Type</div>
+            <sc-if value="{{typeHasChosen}}" hint-placeholder-val="{{false}}">
+              <button aria-label="{{typeClearLabel}}" onClick="{{typeClear}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Clear</button>
+            </sc-if>
+          </div>
+          <button id="typeButton" aria-labelledby="typeLabel typeValue" aria-expanded="{{typeOpen}}" aria-controls="typeList" onClick="{{typeToggle}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
+            <span id="typeValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{typeSummary}}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{typeCaret}};"><path d="M6 9l6 6 6-6"/></svg>
           </button>
-          <sc-if value="{{typeMenuOpen}}" hint-placeholder-val="{{false}}">
-            <fieldset id="searchTypeList" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 10px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 6px;">
-              <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Types to search</legend>
-              <sc-for list="{{typeOptions}}" as="opt" hint-placeholder-count="5">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
-                  <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}"> {{opt.label}}
+          <sc-if value="{{typeOpen}}" hint-placeholder-val="{{false}}">
+            <fieldset id="typeList" tabindex="-1" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 6px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; outline: none;">
+              <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{typeLegend}}</legend>
+              <sc-if value="{{typeFilterable}}" hint-placeholder-val="{{false}}">
+                <input id="typeFilter" type="search" autocomplete="off" aria-label="{{typeFilterLabel}}" placeholder="{{typeFilterLabel}}…" value="{{menuQuery}}" onChange="{{onMenuQuery}}" style="width: 100%; min-width: 0; box-sizing: border-box; margin-bottom: 4px; padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+              </sc-if>
+              <sc-for list="{{typeOptions}}" as="opt" hint-placeholder-count="4">
+                <label style="display: flex; align-items: flex-start; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 13px; color: #1f2430; cursor: pointer;">
+                  <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}" style="flex-shrink: 0; margin-top: 2px;"> <span style="min-width: 0; overflow-wrap: anywhere;">{{opt.label}}<sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"> <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">({{opt.hint}})</span></sc-if></span>
+            <sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" title="{{opt.hint}}" style="flex-shrink: 0; margin-top: 2px; margin-left: auto; display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span></sc-if>
                 </label>
               </sc-for>
+              <sc-if value="{{typeNoMatch}}" hint-placeholder-val="{{false}}">
+                <div style="padding: 5px 8px; font-size: 12px; color: #6b7280; font-style: italic;">{{typeNoMatchText}}</div>
+              </sc-if>
             </fieldset>
           </sc-if>
         </div>
 
-        <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
-          <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Source</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
-            <sc-for list="{{sourceChips}}" as="chip" hint-placeholder-count="2">
-              <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
-                {{chip.label}}
-                <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
-              </div>
-            </sc-for>
-            <sc-if value="{{sourceEmpty}}" hint-placeholder-val="{{true}}">
-              <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+        <div style="border-top: 1px solid #dde1e6; padding-top: 8px; position: relative;" onKeyDown="{{sourceKeyDown}}">
+          <div style="display: flex; align-items: center; justify-content: space-between; height: 24px; margin-bottom: 4px;">
+            <div id="sourceLabel" style="font-size: 11px; font-weight: 600; color: #6b7280;">Source</div>
+            <sc-if value="{{sourceHasChosen}}" hint-placeholder-val="{{false}}">
+              <button aria-label="{{sourceClearLabel}}" onClick="{{sourceClear}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Clear</button>
             </sc-if>
           </div>
-          <sc-if value="{{sourceHasHidden}}" hint-placeholder-val="{{true}}">
-            <select onChange="{{onSourceAdd}}" value="" aria-label="Narrow by source" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-              <option value="" disabled>+ Narrow to source…</option>
-              <sc-for list="{{sourceHiddenOptions}}" as="opt" hint-placeholder-count="1">
-                <option value="{{opt.value}}">{{opt.label}}</option>
+          <button id="sourceButton" aria-labelledby="sourceLabel sourceValue" aria-expanded="{{sourceOpen}}" aria-controls="sourceList" onClick="{{sourceToggle}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
+            <span id="sourceValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{sourceSummary}}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{sourceCaret}};"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <sc-if value="{{sourceOpen}}" hint-placeholder-val="{{false}}">
+            <fieldset id="sourceList" tabindex="-1" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 6px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; outline: none;">
+              <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{sourceLegend}}</legend>
+              <sc-if value="{{sourceFilterable}}" hint-placeholder-val="{{false}}">
+                <input id="sourceFilter" type="search" autocomplete="off" aria-label="{{sourceFilterLabel}}" placeholder="{{sourceFilterLabel}}…" value="{{menuQuery}}" onChange="{{onMenuQuery}}" style="width: 100%; min-width: 0; box-sizing: border-box; margin-bottom: 4px; padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+              </sc-if>
+              <sc-for list="{{sourceOptions}}" as="opt" hint-placeholder-count="4">
+                <label style="display: flex; align-items: flex-start; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 13px; color: #1f2430; cursor: pointer;">
+                  <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}" style="flex-shrink: 0; margin-top: 2px;"> <span style="min-width: 0; overflow-wrap: anywhere;">{{opt.label}}<sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"> <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">({{opt.hint}})</span></sc-if></span>
+            <sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" title="{{opt.hint}}" style="flex-shrink: 0; margin-top: 2px; margin-left: auto; display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span></sc-if>
+                </label>
               </sc-for>
-            </select>
+              <sc-if value="{{sourceNoMatch}}" hint-placeholder-val="{{false}}">
+                <div style="padding: 5px 8px; font-size: 12px; color: #6b7280; font-style: italic;">{{sourceNoMatchText}}</div>
+              </sc-if>
+            </fieldset>
           </sc-if>
         </div>
 
@@ -121,77 +140,95 @@
               <input id="searchMaxLevel" type="number" min="0" max="9" value="{{maxLevel}}" onChange="{{onMaxLevel}}" style="width: 48px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; text-align: center; background: #ffffff; color: #1f2430;">
             </div>
           </div>
-          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
-            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">School</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
-              <sc-for list="{{schoolChips}}" as="chip" hint-placeholder-count="1">
-                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
-                  {{chip.label}}
-                  <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
-                </div>
-              </sc-for>
-              <sc-if value="{{schoolEmpty}}" hint-placeholder-val="{{true}}">
-                <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; position: relative;" onKeyDown="{{schoolKeyDown}}">
+            <div style="display: flex; align-items: center; justify-content: space-between; height: 24px; margin-bottom: 4px;">
+              <div id="schoolLabel" style="font-size: 11px; font-weight: 600; color: #6b7280;">School</div>
+              <sc-if value="{{schoolHasChosen}}" hint-placeholder-val="{{false}}">
+                <button aria-label="{{schoolClearLabel}}" onClick="{{schoolClear}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Clear</button>
               </sc-if>
             </div>
-            <sc-if value="{{schoolHasHidden}}" hint-placeholder-val="{{true}}">
-              <select onChange="{{onSchoolAdd}}" value="" aria-label="Narrow by school" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-                <option value="" disabled>+ Narrow to school…</option>
-                <sc-for list="{{schoolHiddenOptions}}" as="opt" hint-placeholder-count="1">
-                  <option value="{{opt.value}}">{{opt.label}}</option>
+            <button id="schoolButton" aria-labelledby="schoolLabel schoolValue" aria-expanded="{{schoolOpen}}" aria-controls="schoolList" onClick="{{schoolToggle}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
+              <span id="schoolValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{schoolSummary}}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{schoolCaret}};"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <sc-if value="{{schoolOpen}}" hint-placeholder-val="{{false}}">
+              <fieldset id="schoolList" tabindex="-1" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 6px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; outline: none;">
+                <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{schoolLegend}}</legend>
+                <sc-if value="{{schoolFilterable}}" hint-placeholder-val="{{false}}">
+                  <input id="schoolFilter" type="search" autocomplete="off" aria-label="{{schoolFilterLabel}}" placeholder="{{schoolFilterLabel}}…" value="{{menuQuery}}" onChange="{{onMenuQuery}}" style="width: 100%; min-width: 0; box-sizing: border-box; margin-bottom: 4px; padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+                </sc-if>
+                <sc-for list="{{schoolOptions}}" as="opt" hint-placeholder-count="4">
+                  <label style="display: flex; align-items: flex-start; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 13px; color: #1f2430; cursor: pointer;">
+                    <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}" style="flex-shrink: 0; margin-top: 2px;"> <span style="min-width: 0; overflow-wrap: anywhere;">{{opt.label}}<sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"> <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">({{opt.hint}})</span></sc-if></span>
+            <sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" title="{{opt.hint}}" style="flex-shrink: 0; margin-top: 2px; margin-left: auto; display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span></sc-if>
+                  </label>
                 </sc-for>
-              </select>
+                <sc-if value="{{schoolNoMatch}}" hint-placeholder-val="{{false}}">
+                  <div style="padding: 5px 8px; font-size: 12px; color: #6b7280; font-style: italic;">{{schoolNoMatchText}}</div>
+                </sc-if>
+              </fieldset>
             </sc-if>
           </div>
         </sc-if>
         <sc-if value="{{showItemFilters}}" hint-placeholder-val="{{false}}">
-          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
-            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Rarity</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
-              <sc-for list="{{rarityChips}}" as="chip" hint-placeholder-count="1">
-                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
-                  {{chip.label}}
-                  <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
-                </div>
-              </sc-for>
-              <sc-if value="{{rarityEmpty}}" hint-placeholder-val="{{true}}">
-                <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; position: relative;" onKeyDown="{{rarityKeyDown}}">
+            <div style="display: flex; align-items: center; justify-content: space-between; height: 24px; margin-bottom: 4px;">
+              <div id="rarityLabel" style="font-size: 11px; font-weight: 600; color: #6b7280;">Rarity</div>
+              <sc-if value="{{rarityHasChosen}}" hint-placeholder-val="{{false}}">
+                <button aria-label="{{rarityClearLabel}}" onClick="{{rarityClear}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Clear</button>
               </sc-if>
             </div>
-            <sc-if value="{{rarityHasHidden}}" hint-placeholder-val="{{true}}">
-              <select onChange="{{onRarityAdd}}" value="" aria-label="Narrow by rarity" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-                <option value="" disabled>+ Narrow to rarity…</option>
-                <sc-for list="{{rarityHiddenOptions}}" as="opt" hint-placeholder-count="1">
-                  <option value="{{opt.value}}">{{opt.label}}</option>
+            <button id="rarityButton" aria-labelledby="rarityLabel rarityValue" aria-expanded="{{rarityOpen}}" aria-controls="rarityList" onClick="{{rarityToggle}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
+              <span id="rarityValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{raritySummary}}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{rarityCaret}};"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <sc-if value="{{rarityOpen}}" hint-placeholder-val="{{false}}">
+              <fieldset id="rarityList" tabindex="-1" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 6px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; outline: none;">
+                <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{rarityLegend}}</legend>
+                <sc-if value="{{rarityFilterable}}" hint-placeholder-val="{{false}}">
+                  <input id="rarityFilter" type="search" autocomplete="off" aria-label="{{rarityFilterLabel}}" placeholder="{{rarityFilterLabel}}…" value="{{menuQuery}}" onChange="{{onMenuQuery}}" style="width: 100%; min-width: 0; box-sizing: border-box; margin-bottom: 4px; padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+                </sc-if>
+                <sc-for list="{{rarityOptions}}" as="opt" hint-placeholder-count="4">
+                  <label style="display: flex; align-items: flex-start; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 13px; color: #1f2430; cursor: pointer;">
+                    <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}" style="flex-shrink: 0; margin-top: 2px;"> <span style="min-width: 0; overflow-wrap: anywhere;">{{opt.label}}<sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"> <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">({{opt.hint}})</span></sc-if></span>
+            <sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" title="{{opt.hint}}" style="flex-shrink: 0; margin-top: 2px; margin-left: auto; display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span></sc-if>
+                  </label>
                 </sc-for>
-              </select>
+                <sc-if value="{{rarityNoMatch}}" hint-placeholder-val="{{false}}">
+                  <div style="padding: 5px 8px; font-size: 12px; color: #6b7280; font-style: italic;">{{rarityNoMatchText}}</div>
+                </sc-if>
+              </fieldset>
             </sc-if>
           </div>
-          <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
-            <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Kind</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
-              <sc-for list="{{kindChips}}" as="chip" hint-placeholder-count="1">
-                <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
-                  {{chip.label}}
-                  <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
-                </div>
-              </sc-for>
-              <sc-if value="{{kindEmpty}}" hint-placeholder-val="{{true}}">
-                <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
+          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; position: relative;" onKeyDown="{{kindKeyDown}}">
+            <div style="display: flex; align-items: center; justify-content: space-between; height: 24px; margin-bottom: 4px;">
+              <div id="kindLabel" style="font-size: 11px; font-weight: 600; color: #6b7280;">Kind</div>
+              <sc-if value="{{kindHasChosen}}" hint-placeholder-val="{{false}}">
+                <button aria-label="{{kindClearLabel}}" onClick="{{kindClear}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Clear</button>
               </sc-if>
             </div>
-            <sc-if value="{{kindHasHidden}}" hint-placeholder-val="{{true}}">
-              <select onChange="{{onKindAdd}}" value="" aria-label="Narrow by kind" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-                <option value="" disabled>+ Narrow to kind…</option>
-                <sc-for list="{{kindHiddenOptions}}" as="opt" hint-placeholder-count="1">
-                  <option value="{{opt.value}}">{{opt.label}}</option>
+            <button id="kindButton" aria-labelledby="kindLabel kindValue" aria-expanded="{{kindOpen}}" aria-controls="kindList" onClick="{{kindToggle}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
+              <span id="kindValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{kindSummary}}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{kindCaret}};"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <sc-if value="{{kindOpen}}" hint-placeholder-val="{{false}}">
+              <fieldset id="kindList" tabindex="-1" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 6px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; outline: none;">
+                <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{kindLegend}}</legend>
+                <sc-if value="{{kindFilterable}}" hint-placeholder-val="{{false}}">
+                  <input id="kindFilter" type="search" autocomplete="off" aria-label="{{kindFilterLabel}}" placeholder="{{kindFilterLabel}}…" value="{{menuQuery}}" onChange="{{onMenuQuery}}" style="width: 100%; min-width: 0; box-sizing: border-box; margin-bottom: 4px; padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+                </sc-if>
+                <sc-for list="{{kindOptions}}" as="opt" hint-placeholder-count="4">
+                  <label style="display: flex; align-items: flex-start; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 13px; color: #1f2430; cursor: pointer;">
+                    <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}" style="flex-shrink: 0; margin-top: 2px;"> <span style="min-width: 0; overflow-wrap: anywhere;">{{opt.label}}<sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"> <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">({{opt.hint}})</span></sc-if></span>
+            <sc-if value="{{opt.hasHint}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" title="{{opt.hint}}" style="flex-shrink: 0; margin-top: 2px; margin-left: auto; display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span></sc-if>
+                  </label>
                 </sc-for>
-              </select>
+                <sc-if value="{{kindNoMatch}}" hint-placeholder-val="{{false}}">
+                  <div style="padding: 5px 8px; font-size: 12px; color: #6b7280; font-style: italic;">{{kindNoMatchText}}</div>
+                </sc-if>
+              </fieldset>
             </sc-if>
           </div>
-        </sc-if>
-        <sc-if value="{{showTypeHint}}" hint-placeholder-val="{{false}}">
-          <div style="border-top: 1px solid #dde1e6; padding-top: 8px; font-size: 12px; color: #6b7280;">Tick Spell for level and school, or Item for rarity and kind.</div>
         </sc-if>
       </sc-if>
 
@@ -314,8 +351,10 @@ class Component extends DCLogic {
       { id: 'fire-giant', type: 'Monster', name: 'Fire Giant', meta: 'Huge giant • CR 9', source: 'MM', edition: '2014' }
     ];
     const TYPES = ['Spell', 'Item', 'Feat', 'Race', 'Monster'];
-    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse', XGE: "Xanathar's Guide to Everything", MM: 'Monster Manual (2014)' };
-    const SOURCES = ['PHB', 'XPHB', 'DMG', 'XGE', 'MPMM', 'MM', 'Homebrew'];
+    // The types whose choice shows more filters, beside what the Type list says each adds.
+    const TYPE_FILTERS = { Spell: 'adds level and school filters', Item: 'adds rarity and kind filters' };
+    const SOURCE_TITLES = { PHB: "Player's Handbook (2014)", XPHB: "Player's Handbook (2024)", DMG: "Dungeon Master's Guide (2014)", MPMM: 'Mordenkainen Presents: Monsters of the Multiverse', XGE: "Xanathar's Guide to Everything", MM: 'Monster Manual (2014)', XDMG: "Dungeon Master's Guide (2024)", XMM: 'Monster Manual (2025)', TCE: "Tasha's Cauldron of Everything", FTD: "Fizban's Treasury of Dragons", SCAG: "Sword Coast Adventurer's Guide", EGW: "Explorer's Guide to Wildemount" };
+    const SOURCES = ['PHB', 'XPHB', 'DMG', 'XDMG', 'MM', 'XMM', 'XGE', 'TCE', 'MPMM', 'FTD', 'SCAG', 'EGW', 'Homebrew'];
     const SCHOOLS = ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'];
     const RARITIES = ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'];
     // Each grouping of upstream's item type codes; an item can be two, as a staff that is also a melee weapon.
@@ -325,20 +364,70 @@ class Component extends DCLogic {
     const set = (next) => this.setState({ filters: { ...filters, ...next }, pickerFor: null });
     const toggleIn = (list, v) => (list.indexOf(v) !== -1 ? list.filter((x) => x !== v) : [...list, v]);
     const clamp = (n) => Math.max(0, Math.min(9, n));
-    const makeFacet = (selected, allKeys, apply) => {
-      const hidden = allKeys.filter((k) => selected.indexOf(k) === -1);
+    const menu = this.state.openMenu || null;
+    const menuQuery = this.state.menuQuery || '';
+    // One multi-select per facet: the closed button names one or two short values or counts them, and a list past ten options opens with a filter.
+    const makeFacet = (key, noun, options, selected, apply) => {
+      const open = menu === key;
+      const shortOf = (v) => (options.find((o) => o.value === v) || {}).short || (options.find((o) => o.value === v) || {}).label || v;
+      const names = selected.map(shortOf);
+      const joined = names.join(', ');
+      const needle = menuQuery.trim().toLowerCase();
+      const leading = this.state.menuLeading || [];
+      const ordered = [...options.filter((o) => leading.indexOf(o.value) !== -1), ...options.filter((o) => leading.indexOf(o.value) === -1)];
+      const shown = ordered.filter((o) => (o.value + ' ' + o.label).toLowerCase().indexOf(needle) !== -1);
+      const focusIn = () => setTimeout(() => {
+        const el = document.getElementById(key + 'Filter') || document.getElementById(key + 'List');
+        if (el) el.focus();
+      });
       return {
-        chips: selected.map((k) => ({ label: k, remove: () => apply(selected.filter((x) => x !== k)) })),
-        isEmpty: selected.length === 0,
-        hasHidden: hidden.length > 0,
-        hiddenOptions: hidden.map((k) => ({ value: k, label: k })),
-        onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
+        [key + 'Open']: open,
+        [key + 'Summary']: selected.length === 0 ? 'All ' + noun : names.length === 1 || (names.length === 2 && joined.length <= 24) ? joined : selected.length + ' ' + noun,
+        [key + 'Caret']: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        [key + 'Toggle']: () => {
+          this.setState({ openMenu: open ? null : key, menuQuery: '', menuLeading: selected });
+          if (!open) focusIn();
+        },
+        [key + 'Legend']: noun.charAt(0).toUpperCase() + noun.slice(1) + ' to search',
+        [key + 'Filterable']: options.length > 10,
+        [key + 'FilterLabel']: 'Filter ' + noun,
+        [key + 'HasChosen']: selected.length > 0,
+        [key + 'ClearLabel']: 'Clear ' + noun,
+        [key + 'Clear']: () => {
+          apply([]);
+          const b = document.getElementById(key + 'Button');
+          if (b) b.focus();
+        },
+        [key + 'Options']: shown.map((o) => ({ label: o.label, checked: selected.indexOf(o.value) !== -1, hasHint: !!o.hint, hint: o.hint || '', toggle: () => apply(toggleIn(selected, o.value)) })),
+        [key + 'NoMatch']: shown.length === 0,
+        [key + 'NoMatchText']: 'No ' + noun + ' match "' + menuQuery + '".',
+        // Arrow keys step through the shown checkboxes; Escape closes the list and returns to the button.
+        [key + 'KeyDown']: (e) => {
+          if (e.key === 'Escape' && open) {
+            this.setState({ openMenu: null });
+            const b = document.getElementById(key + 'Button');
+            if (b) b.focus();
+            return;
+          }
+          if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+          const boxes = Array.from(document.querySelectorAll('#' + key + 'List input[type=checkbox]'));
+          if (!boxes.length) return;
+          e.preventDefault();
+          const at = boxes.indexOf(document.activeElement);
+          const step = e.key === 'ArrowDown' ? 1 : -1;
+          const next = at === -1 ? (step === 1 ? 0 : boxes.length - 1) : at + step;
+          boxes[(next + boxes.length) % boxes.length].focus();
+        }
       };
     };
-    const sourceFacet = makeFacet(filters.sources, SOURCES, (next) => set({ sources: next }));
-    const schoolFacet = makeFacet(filters.schools, SCHOOLS, (next) => set({ schools: next }));
-    const rarityFacet = makeFacet(filters.rarities, RARITIES, (next) => set({ rarities: next }));
-    const kindFacet = makeFacet(filters.kinds, KINDS, (next) => set({ kinds: next }));
+    const asOptions = (values) => values.map((v) => ({ value: v, label: v }));
+    const facets = {
+      ...makeFacet('type', 'types', TYPES.map((t) => ({ value: t, label: t + 's', hint: TYPE_FILTERS[t] })), filters.types, (next) => set({ types: next })),
+      ...makeFacet('source', 'sources', SOURCES.map((v) => ({ value: v, label: SOURCE_TITLES[v] ? v + ' · ' + SOURCE_TITLES[v] : v, short: v })), filters.sources, (next) => set({ sources: next })),
+      ...makeFacet('school', 'schools', asOptions(SCHOOLS), filters.schools, (next) => set({ schools: next })),
+      ...makeFacet('rarity', 'rarities', asOptions(RARITIES), filters.rarities, (next) => set({ rarities: next })),
+      ...makeFacet('kind', 'kinds', asOptions(KINDS), filters.kinds, (next) => set({ kinds: next }))
+    };
 
     const showSpellFilters = filters.types.indexOf('Spell') !== -1;
     // What the collapsed rail's badge counts: every value chosen, one for a single edition and one for a narrowed level range.
@@ -415,45 +504,18 @@ class Component extends DCLogic {
       expanded: !collapsed,
       sidebarWidth: collapsed ? '72px' : '260px',
       collapsedRail: collapsed,
-      toggleSidebar: () => this.setState({ collapsed: !collapsed, typeMenuOpen: false }),
+      toggleSidebar: () => this.setState({ collapsed: !collapsed, openMenu: null }),
       showFiltersLabel: activeCount > 0 ? 'Show filters (' + activeCount + ' on)' : 'Show filters',
       hasActiveFilters: activeCount > 0,
       activeFilterCount: activeCount,
-      typeMenuOpen: !!this.state.typeMenuOpen,
-      typeSummary: filters.types.length === 0 ? 'All types' : filters.types.length > 2 ? filters.types.length + ' types' : filters.types.map((t) => t + 's').join(', '),
-      typeCaretRotation: this.state.typeMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-      toggleTypeMenu: () => this.setState({ typeMenuOpen: !this.state.typeMenuOpen }),
-      // Arrow keys step through the checkboxes; Escape closes the list and returns to the button.
-      onTypeKeyDown: (e) => {
-        if (e.key === 'Escape' && this.state.typeMenuOpen) {
-          this.setState({ typeMenuOpen: false });
-          const b = document.getElementById('searchTypeButton');
-          if (b) b.focus();
-          return;
-        }
-        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-        const boxes = Array.from(document.querySelectorAll('#searchTypeList input'));
-        if (!boxes.length) return;
-        e.preventDefault();
-        const at = boxes.indexOf(document.activeElement);
-        const step = e.key === 'ArrowDown' ? 1 : -1;
-        const next = at === -1 ? (step === 1 ? 0 : boxes.length - 1) : at + step;
-        boxes[(next + boxes.length) % boxes.length].focus();
-      },
-
-      typeOptions: TYPES.map((t) => ({ label: t + 's', checked: filters.types.indexOf(t) !== -1, toggle: () => set({ types: toggleIn(filters.types, t) }) })),
-      sourceChips: sourceFacet.chips,
-      sourceEmpty: sourceFacet.isEmpty,
-      sourceHasHidden: sourceFacet.hasHidden,
-      sourceHiddenOptions: sourceFacet.hiddenOptions,
-      onSourceAdd: sourceFacet.onAdd,
+      ...facets,
+      onMenuQuery: (e) => this.setState({ menuQuery: e.target.value }),
       edition2014: filters.editions.indexOf('2014') !== -1,
       edition2024: filters.editions.indexOf('2024') !== -1,
       toggle2014: () => set({ editions: toggleIn(filters.editions, '2014') }),
       toggle2024: () => set({ editions: toggleIn(filters.editions, '2024') }),
       showSpellFilters,
       showItemFilters,
-      showTypeHint: !showSpellFilters && !showItemFilters,
       minLevel: filters.minLevel,
       maxLevel: filters.maxLevel,
       onMinLevel: (e) => {
@@ -464,21 +526,6 @@ class Component extends DCLogic {
         const n = clamp(parseInt(e.target.value, 10) || 0);
         set({ maxLevel: n, minLevel: Math.min(n, filters.minLevel) });
       },
-      schoolChips: schoolFacet.chips,
-      schoolEmpty: schoolFacet.isEmpty,
-      schoolHasHidden: schoolFacet.hasHidden,
-      schoolHiddenOptions: schoolFacet.hiddenOptions,
-      onSchoolAdd: schoolFacet.onAdd,
-      rarityChips: rarityFacet.chips,
-      rarityEmpty: rarityFacet.isEmpty,
-      rarityHasHidden: rarityFacet.hasHidden,
-      rarityHiddenOptions: rarityFacet.hiddenOptions,
-      onRarityAdd: rarityFacet.onAdd,
-      kindChips: kindFacet.chips,
-      kindEmpty: kindFacet.isEmpty,
-      kindHasHidden: kindFacet.hasHidden,
-      kindHiddenOptions: kindFacet.hiddenOptions,
-      onKindAdd: kindFacet.onAdd,
       reset: () => this.setState({ filters: { types: [], sources: [], editions: ['2014', '2024'], minLevel: 0, maxLevel: 9, schools: [], rarities: [], kinds: [] }, pickerFor: null }),
 
       query,
