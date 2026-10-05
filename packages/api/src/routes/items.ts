@@ -6,7 +6,8 @@
  *
  * The list filters to `item` and `baseitem` kinds — the equipment a character can own,
  * per docs/items.md. The read does not: `(name, source)` resolves any kind, which a
- * `{@item}` reference or a magic-variant expansion needs.
+ * `{@item}` reference or a magic-variant expansion needs. A magic variant reads as the
+ * item its template describes, its `inherits` fields lifted to the top level.
  *
  * `/variants` expands a base item and a magic variant into the specific item they make —
  * `+1 Chain Mail` exists nowhere in `content.db`, so a character's inventory row names
@@ -25,7 +26,7 @@ import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { listHomebrewItems } from "../db/queries/homebrew.ts";
-import { getExpandedItem } from "../db/queries/item-variant.ts";
+import { getExpandedItem, variantDetail } from "../db/queries/item-variant.ts";
 import { getItem, type ItemRow, listItems } from "../db/queries/items.ts";
 import { errorSchema, notFound } from "./errors.ts";
 
@@ -33,6 +34,7 @@ const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 
 function toItemRecord(row: ItemRow): ItemRecord {
+  const json = JSON.parse(row.json);
   return itemRecordSchema.parse({
     name: row.name,
     source: row.source,
@@ -41,7 +43,7 @@ function toItemRecord(row: ItemRow): ItemRecord {
     type: row.type,
     rarity: row.rarity,
     requiresAttunement: row.requires_attunement === 1,
-    json: JSON.parse(row.json),
+    json: row.kind === "magicvariant" ? variantDetail(json) : json,
   });
 }
 

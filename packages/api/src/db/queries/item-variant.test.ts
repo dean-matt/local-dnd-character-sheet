@@ -3,7 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishItems } from "./contentFixture.ts";
-import { baseItemMatchesVariant, expandItemFields, getExpandedItem } from "./item-variant.ts";
+import {
+  baseItemMatchesVariant,
+  expandItemFields,
+  getExpandedItem,
+  variantDetail,
+  variantKinds,
+} from "./item-variant.ts";
 
 const LONGSWORD_FIELDS = {
   name: "Longsword",
@@ -135,6 +141,78 @@ describe("baseItemMatchesVariant", () => {
 
   it("throws where requires is missing, rather than silently matching everything", () => {
     expect(() => baseItemMatchesVariant(LONGSWORD_FIELDS, { inherits: {} })).toThrow();
+  });
+});
+
+describe("variantKinds", () => {
+  const base = (name: string, type: string, flags: object = {}) => ({
+    name,
+    source: "XPHB",
+    type,
+    ...flags,
+  });
+  const LONGBOW = base("Longbow", "R|XPHB", { weapon: true, bow: true });
+  const LEATHER = base("Leather Armor", "LA|XPHB", { armor: true });
+  const CHAIN_MAIL = base("Chain Mail", "HA|XPHB", { armor: true });
+  const BREASTPLATE = base("Breastplate", "MA|XPHB", { armor: true });
+  const SHIELD = base("Shield", "S|XPHB", { armor: true });
+  const BASES = [LONGSWORD_FIELDS, NET_FIELDS, LONGBOW, LEATHER, BREASTPLATE, CHAIN_MAIL, SHIELD];
+
+  it("places +1 Weapon by every weapon it admits, melee and ranged", () => {
+    expect(variantKinds(PLUS_ONE_WEAPON_FIELDS, BASES)).toEqual(["melee", "ranged"]);
+  });
+
+  it("drops a kind only a base item excludes refuses would give it", () => {
+    expect(variantKinds(PLUS_ONE_WEAPON_FIELDS, [LONGSWORD_FIELDS, NET_FIELDS])).toEqual(["melee"]);
+  });
+
+  it("places +1 Armor by the armor types it requires, leaving out the shield", () => {
+    const plusOneArmor = {
+      requires: [{ type: "LA|XPHB" }, { type: "MA|XPHB" }, { type: "HA|XPHB" }],
+      inherits: {},
+    };
+    expect(variantKinds(plusOneArmor, BASES)).toEqual(["light", "medium", "heavy"]);
+  });
+
+  it("places a variant naming its base items by name and source", () => {
+    const vorpal = {
+      requires: [
+        { name: "Glaive", source: "XPHB" },
+        { name: "Longsword", source: "XPHB" },
+      ],
+      inherits: {},
+    };
+    expect(variantKinds(vorpal, BASES)).toEqual(["melee"]);
+  });
+
+  it("falls back to the variant's own kinds where no base item qualifies", () => {
+    const barding = { type: "TAH|PHB", requires: [{ barding: true }], inherits: {} };
+    expect(variantKinds(barding, BASES)).toEqual(["other"]);
+  });
+});
+
+describe("variantDetail", () => {
+  it("lifts inherits to the top level, keeping the template's name", () => {
+    const detail = variantDetail(PLUS_ONE_WEAPON_FIELDS);
+    expect(detail).toMatchObject({ name: "+1 Weapon", source: "XDMG", rarity: "uncommon" });
+    expect(detail).not.toHaveProperty("inherits");
+  });
+
+  it("fills a placeholder inherits supplies and leaves one naming the base item", () => {
+    const detail = variantDetail({
+      name: "+1 Armor",
+      requires: [{ armor: true }],
+      inherits: {
+        source: "DMG",
+        bonusAc: "+1",
+        entries: ["A {=bonusAc} bonus to AC.", "{=baseName/at} of warning."],
+      },
+    });
+    expect(detail.entries).toEqual(["A +1 bonus to AC.", "{=baseName/at} of warning."]);
+  });
+
+  it("throws where inherits is missing", () => {
+    expect(() => variantDetail({ name: "Broken", requires: [{ weapon: true }] })).toThrow();
   });
 });
 

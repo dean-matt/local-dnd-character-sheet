@@ -214,6 +214,17 @@ describe("itemsRoutes", () => {
       });
     });
 
+    it("reads a magic variant on its own, as the item its template describes", async () => {
+      const res = await variantRoutes.request("/items/%2B1%20Weapon/DMG");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({
+        name: "+1 Weapon",
+        source: "DMG",
+        kind: "magicvariant",
+        json: { name: "+1 Weapon", source: "DMG", rarity: "uncommon" },
+      });
+    });
+
     it("404s a base item or a variant no row holds", async () => {
       const res = await variantRoutes.request("/items/Nonexistent/PHB/variants/%2B1%20Weapon/DMG");
       expect(res.status).toBe(404);
