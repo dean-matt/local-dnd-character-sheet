@@ -147,6 +147,10 @@ describe("a monster's stat block", () => {
   it("reads a swarm, a typical alignment, a choice of types and a tag's prefix", () => {
     const swarm = { size: ["M"], type: { type: "beast", swarmSize: "T" }, alignment: ["U"] };
     expect(monster(swarm)[0]).toBe("{@i Medium swarm of Tiny beasts, unaligned}");
+    const rats = { size: ["M"], type: { type: "undead", swarmSize: "T" } };
+    expect(monster(rats)[0]).toBe("{@i Medium swarm of Tiny undead}");
+    const scarabs = { size: ["M"], type: { type: "monstrosity", swarmSize: "T" } };
+    expect(monster(scarabs)[0]).toBe("{@i Medium swarm of Tiny monstrosities}");
     const typical = { size: ["M"], type: "fey", alignmentPrefix: "typically ", alignment: ["N"] };
     expect(monster(typical)[0]).toBe("{@i Medium fey, typically neutral}");
     expect(monster({ type: { type: { choose: ["celestial", "fiend"] } } })[0]).toBe(
@@ -215,6 +219,11 @@ describe("a monster's stat block", () => {
     expect(monster({ conditionImmune: ["charmed", "frightened"] })).toEqual([
       "{@b Condition Immunities} charmed, frightened",
     ]);
+  });
+
+  it("prints a skill of several words as the book does", () => {
+    const skill = { "animal handling": "+4", "sleight of hand": "+5" };
+    expect(monster({ skill })).toEqual(["{@b Skills} Animal Handling +4, Sleight of Hand +5"]);
   });
 
   it("offers a skill choice, and reads a challenge raised in a lair", () => {

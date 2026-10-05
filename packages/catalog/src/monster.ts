@@ -42,12 +42,15 @@ function creatureTag(tag: unknown): string | undefined {
   return texts([prefix, tag.tag]).join(" ") || undefined;
 }
 
+/** The creature types a swarm names whose plural is not the type plus an `s`. */
+const PLURALS: Record<string, string> = { monstrosity: "monstrosities", undead: "undead" };
+
 function creatureType(type: unknown): string | undefined {
   if (!isRecord(type)) return text(type);
   const base = isRecord(type.type) ? texts(list(type.type.choose)).join(" or ") : text(type.type);
   if (!base) return undefined;
   const swarm = text(type.swarmSize);
-  const kind = swarm ? `swarm of ${SIZES[swarm] ?? swarm} ${base}s` : base;
+  const kind = swarm ? `swarm of ${SIZES[swarm] ?? swarm} ${PLURALS[base] ?? `${base}s`}` : base;
   const tags = list(type.tags).flatMap((tag) => creatureTag(tag) ?? []);
   return tags.length > 0 ? `${kind} (${tags.join(", ")})` : kind;
 }
@@ -186,7 +189,8 @@ function saves(save: unknown): string | undefined {
   );
 }
 
-const titled = (name: string) => name.replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+/** A skill as printed: each word capitalized but `of`, as in `Sleight of Hand`. */
+const titled = (name: string) => name.replace(/\b(?!of\b)[a-z]/g, (letter) => letter.toUpperCase());
 
 const bonuses = (skills: Json) =>
   Object.entries(skills).flatMap(([name, bonus]) =>
