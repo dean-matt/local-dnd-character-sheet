@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { searchCatalog } from "./catalog-search.ts";
+import { listSearchSources, searchCatalog } from "./catalog-search.ts";
 import { publishSearchFixture } from "./contentFixture.ts";
 
 const FIREBALL = {
@@ -103,5 +103,23 @@ describe("searchCatalog", () => {
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
 
     expect(searchCatalog(dataDir, "classic", "nonexistent")).toEqual([]);
+  });
+});
+
+describe("listSearchSources", () => {
+  let dataDir: string;
+
+  afterEach(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("lists each source a Tier A or Tier C row cites once, sorted", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL, GOODBERRY_ONE, { ...FIREBALL, name: "Fire Bolt", level: 0 }],
+      entities: [FIRE_ELEMENTAL, { ...FIRE_ELEMENTAL, name: "Azer", source: "TftYP" }],
+    });
+
+    expect(listSearchSources(dataDir)).toEqual(["MM", "PHB", "TftYP", "XPHB"]);
   });
 });

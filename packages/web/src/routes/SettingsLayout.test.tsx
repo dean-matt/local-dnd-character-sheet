@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import { SettingsLayout } from "./SettingsLayout.tsx";
 
 describe("SettingsLayout", () => {
-  it("does not mark Display current on a section beneath /settings", () => {
+  it("marks the open section current, and Display not, beneath /settings", () => {
     render(
-      <MemoryRouter initialEntries={["/settings/homebrew"]}>
+      <MemoryRouter initialEntries={["/settings/sources"]}>
         <Routes>
           <Route path="/settings/*" element={<SettingsLayout />} />
         </Routes>
@@ -15,5 +15,9 @@ describe("SettingsLayout", () => {
 
     const nav = screen.getByRole("navigation", { name: "Settings sections" });
     expect(within(nav).getByRole("link", { name: "Display" })).not.toHaveAttribute("aria-current");
+    expect(within(nav).getByRole("link", { name: "Sources" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });

@@ -170,8 +170,7 @@ widget, panel, or nav element:
   Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
   Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
   5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
-  level/school — its real counterpart widget does), Sources — a per-source toggle for
-  Mechanics search and catalog pickers, forward design for #313.
+  level/school — its real counterpart widget does).
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats follow the same
   paste-and-parse shape as the four shipped Homebrew artboards above, but nothing behind
   them exists yet — `homebrew.db` only reaches items and spells today. They're forward
@@ -220,7 +219,7 @@ gear, gated by proficiency to equip; spell slots as a per-level, clickable pip t
 short and long rest; temporary HP; status effects and resistances/immunities; a global
 search across characters and a sample compendium, with an advanced search page, a
 catalog detail modal, and a way to add a result to a character; light, dark, and system
-theme; a user-customizable accent color; a settings page for homebrew content and sources; a way
+theme; a user-customizable accent color; a settings page for homebrew content; a way
 to add or remove experience points in XP leveling mode; and a filter on Weapons, Armor,
 Gear, Known Spells, Class Features, Race Features, and Chosen Features to narrow
 what the widget shows.
@@ -313,9 +312,8 @@ says how much of the artboard the app builds today.
 | `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
-| `SettingsSidebar` | #243, #313, #486, #489 | Display only |
+| `SettingsSidebar` | #243, #486, #489 | Display and Sources |
 | `DisplaySettings` | #390 | theme only |
-| `Sources` | #313 | nothing |
 | `HomebrewWeapons` | #243 | nothing |
 | `HomebrewArmor` | #243 | nothing |
 | `HomebrewGear` | #243 | nothing |

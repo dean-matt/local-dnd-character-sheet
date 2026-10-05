@@ -10,3 +10,6 @@ const catalogSourceSchema = z.strictObject({
 export const catalogSourcesResponseSchema = z.object({ sources: z.array(catalogSourceSchema) });
 
 export type CatalogSource = z.infer<typeof catalogSourceSchema>;
+
+/** Every source `/search` can return a row from, one abbreviation each, sorted. */
+export const searchSourcesResponseSchema = z.object({ sources: z.array(z.string().min(1)) });

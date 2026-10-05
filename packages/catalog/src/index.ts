@@ -98,7 +98,7 @@ export {
   searchResponseSchema,
 } from "./search.ts";
 export type { CatalogSource } from "./source.ts";
-export { catalogSourcesResponseSchema } from "./source.ts";
+export { catalogSourcesResponseSchema, searchSourcesResponseSchema } from "./source.ts";
 export type {
   CharacterSpells,
   HomebrewSpellInput,

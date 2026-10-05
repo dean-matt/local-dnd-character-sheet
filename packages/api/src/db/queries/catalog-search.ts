@@ -80,3 +80,22 @@ export function searchCatalog(
     db.close();
   }
 }
+
+/** Each source cited by a row `searchCatalog` reads, listed once. */
+export function listSearchSources(dataDir: string): string[] {
+  const cited = [
+    ...CATALOG_SEARCH_TABLES.map(
+      ({ table, where }) => `SELECT source FROM ${table}${where ? ` WHERE ${where}` : ""}`,
+    ),
+    "SELECT source FROM entities",
+  ].join(" UNION ");
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(`SELECT source FROM (${cited}) ORDER BY source COLLATE NOCASE`)
+      .pluck()
+      .all() as string[];
+  } finally {
+    db.close();
+  }
+}
