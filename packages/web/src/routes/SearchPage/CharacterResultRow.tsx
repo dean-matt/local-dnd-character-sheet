@@ -11,7 +11,7 @@ export function CharacterResultRow({ character }: { character: CharacterRecord }
       <span className="min-w-0 grow">
         <Link
           to={`/characters/${character.id}`}
-          className="block truncate text-body font-semibold text-accent-text hover:underline"
+          className="block truncate text-body font-medium text-ink hover:underline"
         >
           {character.name}
         </Link>

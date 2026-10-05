@@ -34,7 +34,7 @@ export function SearchHitRow({
             type="button"
             aria-haspopup="dialog"
             onClick={() => onOpen(address)}
-            className="block max-w-full cursor-pointer truncate text-left text-body font-semibold text-accent-text hover:underline"
+            className="block max-w-full cursor-pointer truncate text-left text-body font-medium text-ink hover:underline"
           >
             {hit.name}
           </button>
