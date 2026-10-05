@@ -11,9 +11,12 @@ describe("itemMeta", () => {
     );
   });
 
-  it("leaves off a mundane item's rarity and leads with the first of two kinds", () => {
+  it("leaves off a mundane item's rarity and leads with its type code's kind of two", () => {
     expect(itemMeta({ kinds: ["melee", "staff"], rarity: "none", category: "simple" })).toBe(
       "Simple melee weapon",
+    );
+    expect(itemMeta({ kinds: ["tool", "wondrous"], rarity: "rare", category: null })).toBe(
+      "Tool or instrument • Rare",
     );
     expect(itemMeta({ kinds: ["wondrous"], rarity: null, category: null })).toBe("Wondrous item");
   });

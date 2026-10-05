@@ -33,8 +33,9 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
 
 /**
  * The line under an item hit's name: its kind, then its rarity, as `Martial ranged weapon •
- * Uncommon`. An item of two kinds leads with the first `ITEM_KINDS` lists, so Staff of Power
- * reads as a melee weapon; a mundane item's rarity of `none` is left off.
+ * Uncommon`. An item of two kinds leads with the kind its type code gives, ahead of a
+ * `staff` or `wondrous` flag, so Staff of Power reads as a melee weapon and Instrument of the
+ * Bards as a tool; a mundane item's rarity of `none` is left off.
  */
 export function itemMeta({ kinds, rarity, category }: ItemHitFacts): string {
   const [kind = "other"] = kinds;
