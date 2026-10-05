@@ -15,7 +15,8 @@ import { SourceBulkSwitches } from "./SourceBulkSwitches.tsx";
  */
 export function SourcesSettings() {
   const { data, isPending, isError, error } = useSearchSources();
-  const catalog = useCatalogSources().data;
+  const catalogSources = useCatalogSources();
+  const catalog = catalogSources.data;
   const disabled = useDisabledSources();
   const [query, setQuery] = useState("");
   const id = useId();
@@ -45,10 +46,15 @@ export function SourcesSettings() {
           there and leaves the synced catalog as it is.
         </p>
       </div>
-      {isPending && <LoadingState label="Loading sources…" />}
+      {(isPending || catalogSources.isPending) && <LoadingState label="Loading sources…" />}
       {isError && <ErrorState message={error.message} />}
-      {data && (
+      {data && !catalogSources.isPending && (
         <>
+          {catalogSources.isError && (
+            <p className="text-label text-muted">
+              Titles and groups did not load, so every source sits under Other.
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <label htmlFor={`${id}-filter`} className="sr-only">
               Filter sources

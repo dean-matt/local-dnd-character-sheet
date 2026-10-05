@@ -104,4 +104,16 @@ describe("SourcesSettings", () => {
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
     expect(screen.getByRole("status")).toHaveTextContent("No source matches “zzz”.");
   });
+
+  it("says why every source sits under Other when the titles fail to load", async () => {
+    stubFetchByUrl({ "/api/search/sources": { sources: ["PHB", "VGM"] } });
+    renderWithClient(<SourcesSettings />);
+
+    expect(
+      await screen.findByText("Titles and groups did not load, so every source sits under Other."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "Other",
+    ]);
+  });
 });
