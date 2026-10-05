@@ -4,7 +4,7 @@
  * and `excludes` gate which base items a variant reaches, and `inherits` states the
  * fields the resulting item carries over the base item's own.
  */
-import { DAMAGE_TYPES } from "@dnd/catalog";
+import { DAMAGE_TYPES, ITEM_KINDS, type ItemKind, itemKinds } from "@dnd/catalog";
 import { getItem, type ItemRow } from "./items.ts";
 
 type Entry = Record<string, unknown>;
@@ -40,6 +40,21 @@ export function baseItemMatchesVariant(baseFields: Entry, variantFields: Entry):
   if (!required) return false;
   const excludes = variantFields.excludes;
   return !(isRecord(excludes) && isMatch(baseFields, excludes, "some"));
+}
+
+/**
+ * Every kind a variant's expansions are, read off each base item its `requires` and
+ * `excludes` admit — `+1 Weapon` is melee and ranged because a longsword and a longbow both
+ * qualify. A variant no base item admits falls back to its own fields' kinds.
+ */
+export function variantKinds(variantFields: Entry, baseItems: readonly Entry[]): ItemKind[] {
+  const kinds = new Set(
+    baseItems
+      .filter((base) => baseItemMatchesVariant(base, variantFields))
+      .flatMap((base) => itemKinds(base)),
+  );
+  if (kinds.size === 0) return itemKinds(variantFields);
+  return ITEM_KINDS.filter((kind) => kinds.has(kind));
 }
 
 /**
@@ -231,6 +246,20 @@ function injectProperties(node: unknown, values: Entry): unknown {
     );
   }
   return node;
+}
+
+/**
+ * A magic variant read on its own rather than expanded: the template's fields with
+ * `inherits` over them and the template's name kept, each `{=property}` placeholder filled
+ * where `inherits` supplies the value. A placeholder naming the base item, such as
+ * `{=baseName}`, stays as written, since no base item is chosen.
+ */
+export function variantDetail(template: Entry): Entry {
+  const { inherits, ...own } = template;
+  if (!isRecord(inherits)) throw new Error(`${String(template.name)}: inherits is missing`);
+  const detail: Entry = { ...own, ...inherits, name: own.name };
+  if (detail.entries !== undefined) detail.entries = injectProperties(detail.entries, detail);
+  return detail;
 }
 
 /** `true` and a condition such as `"by a spellcaster"` both require it; `optional` does not. */

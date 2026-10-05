@@ -247,6 +247,53 @@ describe("searchCatalog", () => {
     ]);
   });
 
+  it("finds a magic variant and places it by the base items its requires and excludes admit", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const row = (name: string, kind: string, fields: object) => ({
+      name,
+      source: "DMG",
+      edition: "classic",
+      kind,
+      type: null,
+      rarity: kind === "magicvariant" ? "uncommon" : "none",
+      requires_attunement: 0 as const,
+      json: JSON.stringify({ name, ...fields }),
+    });
+    publishSearchFixture(dataDir, {
+      spells: [],
+      items: [
+        row("Longsword", "baseitem", { source: "PHB", type: "M", weapon: true, sword: true }),
+        row("Longbow", "baseitem", { source: "PHB", type: "R", weapon: true, bow: true }),
+        row("Net", "baseitem", { source: "PHB", type: "R", weapon: true, net: true }),
+        row("Plate Armor", "baseitem", { source: "PHB", type: "HA", armor: true }),
+        row("+1 Weapon", "magicvariant", {
+          requires: [{ weapon: true }],
+          excludes: { net: true },
+          inherits: { source: "DMG", rarity: "uncommon" },
+        }),
+        row("+1 Armor", "magicvariant", {
+          requires: [{ armor: true }],
+          inherits: { source: "DMG", rarity: "uncommon" },
+        }),
+      ],
+      entities: [],
+    });
+    const names = (itemKinds: string[]) =>
+      searchCatalog(dataDir, { term: "+1", itemKinds }).map((h) => h.name);
+
+    expect(names(["ranged"])).toEqual(["+1 Weapon"]);
+    expect(names(["heavy"])).toEqual(["+1 Armor"]);
+    expect(searchCatalog(dataDir, { term: "+1 W" })).toEqual([
+      {
+        type: "item",
+        name: "+1 Weapon",
+        source: "DMG",
+        edition: "classic",
+        item: { kinds: ["melee", "ranged"], rarity: "uncommon", category: null },
+      },
+    ]);
+  });
+
   it("finds each rules lookup a reader looks up by name, and leaves out an abbreviation", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {

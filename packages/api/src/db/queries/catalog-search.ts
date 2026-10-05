@@ -6,6 +6,7 @@ import {
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
+import { variantKinds } from "./item-variant.ts";
 import { escapeLikeTerm, ftsPrefixQuery } from "./search-terms.ts";
 
 export type CatalogSearchRow = {
@@ -29,9 +30,10 @@ const ONE_SUBCLASS_EACH = `rowid = (SELECT t.rowid FROM subclasses t
   ORDER BY t.class_source = t.source DESC, t.class_source LIMIT 1)`;
 
 /**
- * The Tier A tables a search reads. `items` narrows to the two kinds a character can own,
- * matching `listItems`, and `subclasses` to one row of each subclass, its class read into
- * `parent`.
+ * The Tier A tables a search reads. `items` narrows to the two kinds a character can own
+ * and the magic variants upstream expands against them, leaving out the `itemGroup` a
+ * family is written under, and `subclasses` to one row of each subclass, its class read
+ * into `parent`.
  */
 const CATALOG_SEARCH_TABLES: {
   type: CatalogSearchType;
@@ -40,7 +42,7 @@ const CATALOG_SEARCH_TABLES: {
   parent?: string;
 }[] = [
   { type: "spell", table: "spells" },
-  { type: "item", table: "items", where: "kind IN ('item', 'baseitem')" },
+  { type: "item", table: "items", where: "kind IN ('item', 'baseitem', 'magicvariant')" },
   { type: "race", table: "races" },
   { type: "background", table: "backgrounds" },
   { type: "feat", table: "feats" },
@@ -80,8 +82,9 @@ const SEARCH_LOOKUP_KINDS = [
  * `schools` narrow spells alone, and `rarities` items alone, passing every other kind
  * through; a school is upstream's one-letter code, such as `V` for evocation, and a rarity
  * is upstream's word, such as `very rare` or `none`. `itemKinds` narrows items too, to those
- * `@dnd/catalog`'s `itemKinds` places in any one of the kinds named, and an item hit
- * carries its kinds, rarity and weapon category as `item`.
+ * `@dnd/catalog`'s `itemKinds` places in any one of the kinds named — a magic variant by
+ * the base items it admits — and an item hit carries its kinds, rarity and weapon category
+ * as `item`.
  */
 export type SearchFilter = {
   edition?: Edition;
@@ -118,11 +121,14 @@ type ItemFields = {
   staff: number | null;
   rarity: string | null;
   weaponCategory: string | null;
+  itemKind: string;
+  variantJson: string | null;
 };
 
 const ITEM_FIELDS =
   ", type AS itemType, rarity, json_extract(json, '$.wondrous') AS wondrous," +
-  " json_extract(json, '$.staff') AS staff, json_extract(json, '$.weaponCategory') AS weaponCategory";
+  " json_extract(json, '$.staff') AS staff, json_extract(json, '$.weaponCategory') AS weaponCategory," +
+  " kind AS itemKind, CASE kind WHEN 'magicvariant' THEN json END AS variantJson";
 type SearchTable = (typeof CATALOG_SEARCH_TABLES)[number];
 
 function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSearchRow[] {
@@ -142,6 +148,11 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
     conditions.add(`rarity IN (${placeholders(rarities)})`, ...rarities);
   }
   const isItem = entry.type === "item";
+  let bases: Record<string, unknown>[] | undefined;
+  const baseItems = () =>
+    (bases ??= (
+      db.prepare("SELECT json FROM items WHERE kind = 'baseitem'").pluck().all() as string[]
+    ).map((json) => JSON.parse(json)));
   const rows = db
     .prepare(
       `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""}${entry.parent ?? ""} FROM ${entry.table}${conditions.where}`,
@@ -149,15 +160,30 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
     .all(...conditions.params) as (Omit<CatalogSearchRow, "type" | "parent"> &
     Partial<ItemFields> & { parentName?: string; parentSource?: string })[];
   return rows.flatMap(
-    ({ name, source, edition, itemType, parentName, parentSource, ...fields }) => {
+    ({
+      name,
+      source,
+      edition,
+      itemType,
+      itemKind,
+      variantJson,
+      parentName,
+      parentSource,
+      ...fields
+    }) => {
       const hit: CatalogSearchRow = { type: entry.type, name, source, edition };
       if (parentName !== undefined && parentSource !== undefined) {
         hit.parent = { name: parentName, source: parentSource };
       }
       if (!isItem) return [hit];
       const item = itemHitFacts({ ...fields, type: itemType });
-      // Kinds are read off each row rather than a column, so this scans every row the WHERE
-      // admits — a few thousand at most. A content.db column is the way out the day it shows.
+      // A variant has no type of its own, so it takes the kinds of the base items it expands
+      // against. Kinds are read off each row rather than a column, so this scans every row the
+      // WHERE admits and matches every variant against every base item — some fifty thousand
+      // checks a search. A content.db column is the way out the day it shows.
+      if (itemKind === "magicvariant" && variantJson) {
+        item.kinds = variantKinds(JSON.parse(variantJson), baseItems());
+      }
       return ofWantedKind(item.kinds, kinds) ? [{ ...hit, item }] : [];
     },
   );

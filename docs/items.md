@@ -37,6 +37,12 @@ not `{@tag}` markup, so the renderer would print them as written.
 Four dangling targets survive both, all of them barding: `{@item leather barding|phb}`
 and its three fellows are written as one `Barding` variant upstream renders per animal.
 
+Read alone, `GET /items/{name}/{source}` returns a template as the item it describes:
+`inherits` lifted over the entry around it, a placeholder filled where `inherits` holds
+the value. `{=baseName}` stays as written, since no base item is chosen. Search lists the
+templates beside the items and places each by the base items its `requires` and
+`excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
+
 `rarity` spans 10 upstream values, `none`, `varies` and `unknown (magic)` among them,
 and the column is nullable because 43 items carry none — though every one of those
 inherits a rarity through `_copy`, so nothing is NULL at the pinned tag.
