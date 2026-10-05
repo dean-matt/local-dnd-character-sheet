@@ -1,58 +1,17 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { catalogRowEntries } from "./index.ts";
 
+const FIXTURES = join(import.meta.dirname, "../../../tests/fixtures/5etools/data/bestiary");
+
+/** A monster from the generated fixtures, which keep upstream's fields and elide its prose. */
+function fixture(file: string, name: string): Record<string, unknown> {
+  const { monster } = JSON.parse(readFileSync(join(FIXTURES, file), "utf8"));
+  return monster.find((one: { name: string }) => one.name === name);
+}
+
 // Every field but the prose is upstream's own, at the pinned tag: the prose is WotC's.
-const GOBLIN_MM = {
-  name: "Goblin",
-  source: "MM",
-  size: ["S"],
-  type: { type: "humanoid", tags: ["goblinoid"] },
-  alignment: ["N", "E"],
-  ac: [{ ac: 15, from: ["{@item leather armor|phb}", "{@item shield|phb}"] }],
-  hp: { average: 7, formula: "2d6" },
-  speed: { walk: 30 },
-  str: 8,
-  dex: 14,
-  con: 10,
-  int: 10,
-  wis: 8,
-  cha: 8,
-  skill: { stealth: "+6" },
-  senses: ["darkvision 60 ft."],
-  passive: 9,
-  languages: ["Common", "Goblin"],
-  cr: "1/4",
-  trait: [{ name: "Nimble Escape", entries: ["Escapes."] }],
-  action: [
-    { name: "Scimitar", entries: ["{@atk mw} {@hit 4} to hit."] },
-    { name: "Shortbow", entries: ["{@atk rw} {@hit 4} to hit."] },
-  ],
-};
-
-const GOBLIN_WARRIOR_XMM = {
-  name: "Goblin Warrior",
-  source: "XMM",
-  size: ["S"],
-  type: { type: "fey", tags: ["goblinoid"] },
-  alignment: ["C", "N"],
-  ac: [15],
-  hp: { average: 10, formula: "3d6" },
-  speed: { walk: 30 },
-  str: 8,
-  dex: 15,
-  con: 10,
-  int: 10,
-  wis: 8,
-  cha: 8,
-  skill: { stealth: "+6" },
-  senses: ["Darkvision 60 ft."],
-  passive: 9,
-  languages: ["Common", "Goblin"],
-  cr: "1/4",
-  action: [{ name: "Scimitar", entries: ["{@atkr m} {@hit 4}, reach 5 ft."] }],
-  bonus: [{ name: "Nimble Escape", entries: ["Disengages or hides."] }],
-};
-
 const ABOLETH_MM = {
   name: "Aboleth",
   source: "MM",
@@ -91,7 +50,7 @@ const named = (entries: unknown[]) =>
 
 describe("a monster's stat block", () => {
   it("reads a 2014 monster's lines in printed order, then its traits and actions", () => {
-    const entries = monster(GOBLIN_MM);
+    const entries = monster(fixture("bestiary-mm.json", "Goblin"));
     expect(entries.filter((entry) => typeof entry === "string")).toEqual([
       "{@i Small humanoid (goblinoid), neutral evil}",
       "{@b Armor Class} 15 ({@item leather armor|phb}, {@item shield|phb})",
@@ -108,18 +67,18 @@ describe("a monster's stat block", () => {
       rows: [["8 (-1)", "14 (+2)", "10 (+0)", "10 (+0)", "8 (-1)", "8 (-1)"]],
     });
     expect(named(entries)).toEqual(["Traits", "Actions"]);
-    expect(entries.at(-1)).toEqual({
+    expect(entries.at(-1)).toMatchObject({
       type: "entries",
       name: "Actions",
       entries: [
-        { type: "entries", name: "Scimitar", entries: ["{@atk mw} {@hit 4} to hit."] },
-        { type: "entries", name: "Shortbow", entries: ["{@atk rw} {@hit 4} to hit."] },
+        { type: "entries", name: "Scimitar" },
+        { type: "entries", name: "Shortbow" },
       ],
     });
   });
 
   it("reads a 2024 monster's bare armor class and its bonus actions", () => {
-    const entries = monster(GOBLIN_WARRIOR_XMM);
+    const entries = monster(fixture("bestiary-xmm.json", "Goblin Warrior"));
     expect(entries.slice(0, 2)).toEqual([
       "{@i Small fey (goblinoid), chaotic neutral}",
       "{@b Armor Class} 15",
@@ -245,6 +204,14 @@ describe("a monster's stat block", () => {
     expect(monster({ immune })).toEqual([
       "{@b Damage Immunities} poison; bludgeoning, piercing, slashing from nonmagical attacks",
     ]);
+    const resist = [
+      "fire",
+      "poison",
+      { resist: ["bludgeoning", "piercing", "slashing"], note: "from nonmagical attacks" },
+    ];
+    expect(monster({ resist })).toEqual([
+      "{@b Damage Resistances} fire, poison; bludgeoning, piercing, slashing from nonmagical attacks",
+    ]);
     expect(monster({ conditionImmune: ["charmed", "frightened"] })).toEqual([
       "{@b Condition Immunities} charmed, frightened",
     ]);
@@ -312,6 +279,18 @@ describe("a monster's stat block", () => {
       name: "Bonus Actions",
       entries: [{ type: "entries", name: "Misty Step (3/Day)", entries: ["Steps."] }],
     });
+  });
+
+  it("reads pact slots, all at the top level, as a range of spell levels", () => {
+    const spellcasting = [
+      {
+        name: "Spellcasting",
+        spells: { "3": { lower: 1, slots: 2, spells: ["{@spell hold person}"] } },
+      },
+    ];
+    expect(JSON.stringify(monster({ spellcasting }))).toContain(
+      '"name":"1st-3rd level (2 3rd-level slots):","entry":"{@spell hold person}"',
+    );
   });
 
   it("lists rituals, and spells cast from an item's charges", () => {

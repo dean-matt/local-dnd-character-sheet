@@ -30,6 +30,20 @@ const MONSTER_FIELDS = [
   "action",
 ];
 
+/** What a stat block's lines read beyond `MONSTER_FIELDS`, on a monster that has each. */
+const STAT_BLOCK_FIELDS = [
+  "str",
+  "dex",
+  "con",
+  "int",
+  "wis",
+  "cha",
+  "skill",
+  "senses",
+  "passive",
+  "languages",
+];
+
 const CLASS_FIELDS = [
   "name",
   "source",
@@ -179,7 +193,16 @@ export const FIXTURES: Fixture[] = [
               id: "Archmage|MM",
               fields: [...MONSTER_FIELDS, "spellcasting", "trait", "_versions"],
             },
-            { id: "Goblin|MM", fields: [...MONSTER_FIELDS, "trait", "attachedItems", "soundClip"] },
+            {
+              id: "Goblin|MM",
+              fields: [
+                ...MONSTER_FIELDS,
+                ...STAT_BLOCK_FIELDS,
+                "trait",
+                "attachedItems",
+                "soundClip",
+              ],
+            },
           ],
         },
       },
@@ -192,7 +215,16 @@ export const FIXTURES: Fixture[] = [
   {
     file: "data/bestiary/bestiary-xmm.json",
     keep: {
-      within: { monster: { items: [{ id: "Goblin Warrior|XMM", fields: MONSTER_FIELDS }] } },
+      within: {
+        monster: {
+          items: [
+            {
+              id: "Goblin Warrior|XMM",
+              fields: [...MONSTER_FIELDS, ...STAT_BLOCK_FIELDS, "bonus"],
+            },
+          ],
+        },
+      },
     },
   },
   {

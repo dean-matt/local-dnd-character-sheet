@@ -206,15 +206,26 @@ function skills(skill: unknown): string | undefined {
 
 /**
  * A damage or condition list: plain names, or a group of them qualified by a note before
- * or after, under the same `key` the list sits under. Groups part with a semicolon.
+ * or after, under the same `key` the list sits under. A semicolon parts a group from its
+ * neighbors, and a comma parts two plain names: `fire, poison; bludgeoning, ... from
+ * nonmagical attacks`.
  */
 function defenses(value: unknown, key: string): string | undefined {
-  const parts = list(value).flatMap((one) => {
-    if (!isRecord(one)) return text(one) ?? [];
-    if (one.special !== undefined) return text(one.special) ?? [];
-    return texts([one.preNote, defenses(one[key], key), one.note]).join(" ") || [];
+  const parts = list(value).flatMap((one): { shown: string; grouped: boolean }[] => {
+    const shown = !isRecord(one)
+      ? text(one)
+      : one.special !== undefined
+        ? text(one.special)
+        : texts([one.preNote, defenses(one[key], key), one.note]).join(" ");
+    return shown ? [{ shown, grouped: isRecord(one) }] : [];
   });
-  return parts.join(list(value).some(isRecord) ? "; " : ", ") || undefined;
+  return (
+    parts
+      .map(({ shown, grouped }, at) =>
+        at === 0 ? shown : `${grouped || parts[at - 1]?.grouped ? "; " : ", "}${shown}`,
+      )
+      .join("") || undefined
+  );
 }
 
 function senses(json: Json): string | undefined {
@@ -237,6 +248,8 @@ function challenge(cr: unknown): string | undefined {
 
 const ORDINALS = ["", "1st", "2nd", "3rd"];
 
+const ordinal = (level: string) => ORDINALS[Number(level)] ?? `${level}th`;
+
 const spellNames = (spells: unknown) =>
   list(spells)
     .flatMap((spell) =>
@@ -247,6 +260,19 @@ const spellNames = (spells: unknown) =>
         : (text(spell) ?? []),
     )
     .join(", ");
+
+/** A spell level's label, its slots counted. Pact slots all sit at the top level of a range. */
+function spellLevel(level: string, at: Json): string {
+  if (level === "0") return "Cantrips (at will):";
+  const top = ordinal(level);
+  const lower = text(at.lower);
+  const pact = lower !== undefined && lower !== level;
+  const slots = text(at.slots);
+  const count = slots
+    ? ` (${slots}${pact ? ` ${top}-level` : ""} ${slots === "1" ? "slot" : "slots"})`
+    : "";
+  return `${pact ? `${ordinal(lower)}-${top}` : top} level${count}:`;
+}
 
 /** The per-use spell lists upstream keys by how often each refreshes, or what each costs. */
 const PER: Record<string, (uses: number) => string> = {
@@ -289,15 +315,7 @@ function spellcasting(block: Json): Entries[number] {
     ...(shown("spells") && isRecord(block.spells)
       ? Object.entries(block.spells).flatMap(([level, at]) => {
           if (!isRecord(at)) return [];
-          if (level === "0") return [item("Cantrips (at will):", at.spells)];
-          const slots = text(at.slots);
-          const ordinal = ORDINALS[Number(level)] ?? `${level}th`;
-          return [
-            item(
-              `${ordinal} level${slots ? ` (${slots} ${slots === "1" ? "slot" : "slots"})` : ""}:`,
-              at.spells,
-            ),
-          ];
+          return [item(spellLevel(level, at), at.spells)];
         })
       : []),
   ];

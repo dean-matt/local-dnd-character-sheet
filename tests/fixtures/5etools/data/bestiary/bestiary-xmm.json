@@ -18,6 +18,18 @@
       "speed": {
         "walk": 30
       },
+      "str": 8,
+      "dex": 15,
+      "con": 10,
+      "int": 10,
+      "wis": 8,
+      "cha": 8,
+      "skill": {
+        "stealth": "+6"
+      },
+      "senses": ["Darkvision 60 ft."],
+      "passive": 9,
+      "languages": ["Common", "Goblin"],
       "cr": "1/4",
       "action": [
         {
@@ -31,6 +43,12 @@
           "entries": [
             "{@atkr r} {@hit 4} Elided. {@h} Elided. {@damage 1d6 + 2} Elided. {@damage 1d4} Elided. {@variantrule Advantage|XPHB} Elided."
           ]
+        }
+      ],
+      "bonus": [
+        {
+          "name": "Nimble Escape",
+          "entries": ["Elided. {@action Disengage|XPHB} Elided. {@action Hide|XPHB} Elided."]
         }
       ]
     }
