@@ -109,6 +109,7 @@ describe("SearchPage", () => {
       }),
     );
     expect(where()).toBe("/search?q=fire&type=spell");
+    expect(screen.getByRole("status")).toHaveTextContent("Searching…");
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 result"));
 
     fireEvent.change(screen.getByRole("spinbutton", { name: "Min" }), { target: { value: "3" } });
@@ -294,6 +295,18 @@ describe("SearchPage", () => {
 
     expect(await screen.findByText("101–120 of 120")).toBeInTheDocument();
     expect(where()).toBe("/search?type=monster&offset=100");
+  });
+
+  it("leaves a deep page alone while the last search's shorter total is still up", async () => {
+    renderAt("/search?type=monster&offset=100", {
+      "/api/search?limit=50&offset=100&type=monster": page([fireGiant], 120, 100),
+      "/api/search?limit=50&offset=500&type=spell": page([fireball], 600, 500),
+    });
+    expect(await screen.findByText("101–120 of 120")).toBeInTheDocument();
+
+    await router.navigate("/search?type=spell&offset=500");
+    expect(await screen.findByText("501–550 of 600")).toBeInTheDocument();
+    expect(where()).toBe("/search?type=spell&offset=500");
   });
 
   it("lists a source Settings turned off while a link has it chosen, so it can be unticked", async () => {

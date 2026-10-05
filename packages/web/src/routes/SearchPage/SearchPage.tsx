@@ -39,11 +39,12 @@ export function SearchPage() {
   const id = useId();
 
   const q = filters.q.trim();
+  const query = useDebounce(q, SEARCH_DEBOUNCE_MS);
   const browsing = filters.types.length > 0 || filters.sources.length > 0;
   const search = useCatalogSearch({
     edition: filters.edition,
     type: filters.types.length > 0 ? filters.types.join(",") : undefined,
-    query: useDebounce(q, SEARCH_DEBOUNCE_MS),
+    query,
     keepPrevious: true,
     limit: PAGE_SIZE,
     offset: filters.offset,
@@ -53,23 +54,25 @@ export function SearchPage() {
 
   // A type or source filter narrows to the compendium, where a character has neither.
   const characterResults =
-    q !== "" && !browsing && filters.offset === 0
+    query !== "" && !browsing && filters.offset === 0
       ? (characters.data ?? []).filter(
           (c) =>
-            c.name.toLowerCase().includes(q.toLowerCase()) &&
+            c.name.toLowerCase().includes(query.toLowerCase()) &&
             (filters.edition === undefined || c.edition === filters.edition),
         )
       : [];
   const hits = search.data?.items ?? [];
   const total = search.data?.total ?? 0;
   const count = total + characterResults.length;
+  // The last page stays up while the next loads, and nothing may read it as the new answer.
+  const settled = query === q && !search.isPlaceholderData;
   const counted = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
   const update = (next: Partial<SearchFilters>, replace = false) =>
     setParams(writeSearchFilters({ ...filters, offset: 0, ...next }), { replace });
 
   // A link whose offset runs past the last page, as a stale one can, moves back to that page.
-  const pastEnd = total > 0 && filters.offset >= total;
+  const pastEnd = settled && total > 0 && filters.offset >= total;
   useEffect(() => {
     if (pastEnd) update({ offset: Math.floor((total - 1) / PAGE_SIZE) * PAGE_SIZE }, true);
   });
@@ -78,7 +81,7 @@ export function SearchPage() {
     if (q === "" && !browsing)
       return "Type a name to search the compendium, or pick a type or source.";
     if (search.isError) return `Search failed: ${search.error.message}`;
-    if (search.isPending) return "Searching…";
+    if (search.isPending || !settled) return "Searching…";
     if (count === 0) {
       return q === ""
         ? "Nothing matches these filters."
@@ -90,7 +93,7 @@ export function SearchPage() {
       : `${counted(total, "result")} and ${counted(characterResults.length, "character")}`;
   }
 
-  const empty = search.isSuccess && count === 0;
+  const empty = settled && search.isSuccess && count === 0;
   const filtered = writeSearchFilters({ ...filters, q: "", offset: 0 }).size > 0;
   const first = filters.offset + 1;
   const last = Math.min(filters.offset + PAGE_SIZE, total);
