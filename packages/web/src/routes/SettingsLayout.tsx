@@ -1,4 +1,4 @@
-import { Monitor } from "lucide-react";
+import { Layers, Monitor } from "lucide-react";
 import { Outlet } from "react-router";
 import { Sidebar, type SidebarProps } from "./Sidebar/Sidebar.tsx";
 import { SidebarFrame } from "./SidebarFrame.tsx";
@@ -10,6 +10,7 @@ const SECTIONS: SidebarProps["items"] = [
     end: true,
     icon: Monitor,
   },
+  { to: "/settings/sources", label: "Sources", icon: Layers },
 ];
 
 /** The Settings page: the section rail beside the open section, with no character header. */

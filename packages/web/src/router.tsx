@@ -10,6 +10,7 @@ import { HomePage } from "./routes/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
 import { SettingsLayout } from "./routes/SettingsLayout.tsx";
+import { SourcesSettings } from "./routes/SourcesSettings.tsx";
 
 export const routeConfig: RouteObject[] = [
   {
@@ -34,7 +35,10 @@ export const routeConfig: RouteObject[] = [
       {
         path: "settings",
         element: <SettingsLayout />,
-        children: [{ index: true, element: <DisplaySettings /> }],
+        children: [
+          { index: true, element: <DisplaySettings /> },
+          { path: "sources", element: <SourcesSettings /> },
+        ],
       },
     ],
   },
