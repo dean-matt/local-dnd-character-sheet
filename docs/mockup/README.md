@@ -121,7 +121,7 @@ widget, panel, or nav element:
   on a link to it, which opens its lair actions and regional effects in its place. A
   deity or a language opens on a bold-labelled line per field, ahead of any prose: a
   deity's pantheon, alignment, domains, province and symbol, and a language's type,
-  script and typical speakers. A field the row lacks is left out, and its fields stand in
+  script, typical speakers and, on a 2024 row, origin. A field the row lacks is left out, and its fields stand in
   for the empty rules-text state where it has no prose. "Add to…" sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
   above it. Focus moves into the modal when it
   opens and Tab stays inside it; the close button, the scrim and Escape close it from any
