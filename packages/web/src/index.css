@@ -83,7 +83,7 @@
   --spacing-gutter: 2.5rem;
   /* The narrowest width at which a search filter's two-name summary, up to MultiSelect's
      SHORT_SUMMARY characters, still shows in full. Narrower needs a shorter limit. */
-  --spacing-sidebar: 15.25rem;
+  --spacing-sidebar: 14rem;
   --spacing-sidebar-collapsed: 4.5rem;
 
   --radius-chip: var(--radius-sm);
