@@ -87,7 +87,10 @@ widget, panel, or nav element:
   the `search` route. The app carries the pill's query there as `?q=<query>`; each
   artboard keeps its own state, so Search opens on its own sample query. Search draws the
   query field, the results, and a collapsible filter sidebar shaped like Sidebar, its
-  controls the Filter artboards' checkboxes, chips and level range. The query field,
+  controls the Filter artboards' checkboxes, chips and level range. Type is a button naming
+  the chosen types ("All types", "Spells, Items", "3 types") that opens a list of
+  checkboxes, and collapsed, the sidebar shows a filter icon badged with how many filters
+  are on. The query field,
   results and confirmation fill the main column beside the sidebar, with no maximum
   width. It filters by type, source and edition, and adds level and school once Spell is
   ticked and rarity and kind once Item is — a melee weapon, light armor or a wondrous

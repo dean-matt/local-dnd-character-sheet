@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, SlidersHorizontal } from "lucide-react";
 import { useId, useState } from "react";
 import { useCatalogSources } from "../../hooks/useCatalogSources.ts";
 import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
@@ -6,10 +6,12 @@ import { useSearchSources } from "../../hooks/useSearchSources.ts";
 import { useSearchTypes } from "../../hooks/useSearchTypes.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import { ITEM_KIND_OPTIONS } from "../../lib/itemKind.ts";
-import { searchHitTypeLabel } from "../../lib/searchHits.ts";
+import { searchHitTypePlural } from "../../lib/searchHits.ts";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
 import { SearchFacet } from "./SearchFacet.tsx";
+import { SearchTypePicker } from "./SearchTypePicker.tsx";
 import {
+  activeFilterCount,
   CLEARED_FILTERS,
   itemsShown,
   MAX_SPELL_LEVEL,
@@ -42,13 +44,10 @@ const heading = "text-label font-semibold uppercase tracking-label text-muted";
 const levelInput =
   "w-14 rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink";
 
-const toggled = (list: string[], value: string) =>
-  list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
-
 /**
  * The search page's filter rail: type, source and edition, then spell level and school once
- * the types include spells, and rarity and kind once they include items. Collapsed, it shows its
- * toggle alone.
+ * the types include spells, and rarity and kind once they include items. Collapsed, it shows a
+ * filter icon alone, badged with how many filters are on, which opens it again.
  */
 export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -57,9 +56,10 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
   const titles = useCatalogSources();
   const disabled = useDisabledSources();
   const id = useId();
+  const active = activeFilterCount(filters);
 
   const typeOptions = (types.data ?? [])
-    .map((type) => ({ type, label: searchHitTypeLabel(type) }))
+    .map((type) => ({ type, label: searchHitTypePlural(type) }))
     .sort((a, b) => a.label.localeCompare(b.label));
   const sourceOptions = (sources.data ?? [])
     .filter((source) => !disabled.includes(source))
@@ -89,6 +89,25 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
         transition: "width var(--duration-standard)",
       }}
     >
+      {collapsed && (
+        <button
+          type="button"
+          aria-label={active > 0 ? `Show filters (${active} on)` : "Show filters"}
+          aria-expanded={false}
+          onClick={() => setCollapsed(false)}
+          className="relative flex justify-center rounded-control px-2.5 py-2.5 text-muted hover:bg-subtle"
+        >
+          <SlidersHorizontal size={16} aria-hidden />
+          {active > 0 && (
+            <span
+              aria-hidden
+              className="absolute top-0.5 right-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-semibold text-white"
+            >
+              {active}
+            </span>
+          )}
+        </button>
+      )}
       {!collapsed && (
         <>
           <div className="flex items-center justify-between">
@@ -102,21 +121,11 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
             </button>
           </div>
 
-          <fieldset>
-            <legend className={`${heading} mb-2`}>Type</legend>
-            <div className="flex flex-col gap-1.5">
-              {typeOptions.map(({ type, label }) => (
-                <label key={type} className="flex items-center gap-2 text-row text-ink">
-                  <input
-                    type="checkbox"
-                    checked={filters.types.includes(type)}
-                    onChange={() => onChange({ types: toggled(filters.types, type) })}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <SearchTypePicker
+            options={typeOptions}
+            selected={filters.types}
+            onChange={(next) => onChange({ types: next })}
+          />
 
           <SearchFacet
             label="Source"
@@ -210,26 +219,20 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
 
       <div className="flex-1" />
 
-      <div className="border-t border-border pt-3">
-        <button
-          type="button"
-          aria-label={collapsed ? "Expand filters" : "Collapse filters"}
-          aria-expanded={!collapsed}
-          onClick={() => setCollapsed(!collapsed)}
-          className={`flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
-        >
-          <ChevronLeft
-            size={16}
-            aria-hidden
-            className="shrink-0"
-            style={{
-              transform: collapsed ? "rotate(180deg)" : undefined,
-              transition: "transform var(--duration-standard)",
-            }}
-          />
-          {!collapsed && <span>Collapse</span>}
-        </button>
-      </div>
+      {!collapsed && (
+        <div className="border-t border-border pt-3">
+          <button
+            type="button"
+            aria-label="Hide filters"
+            aria-expanded
+            onClick={() => setCollapsed(true)}
+            className="flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-sm font-medium text-muted hover:bg-subtle"
+          >
+            <ChevronLeft size={16} aria-hidden className="shrink-0" />
+            <span>Collapse</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

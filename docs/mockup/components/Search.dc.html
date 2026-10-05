@@ -42,22 +42,37 @@
 
   <div style="flex-grow: 1; min-height: 0; display: flex;">
     <aside aria-label="Search filters" style="width: {{sidebarWidth}}; flex-shrink: 0; height: 100%; background: #ffffff; border-right: 1px solid #dde1e6; padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;">
+      <sc-if value="{{collapsedRail}}" hint-placeholder-val="{{false}}">
+        <button aria-label="{{showFiltersLabel}}" aria-expanded="false" onClick="{{toggleSidebar}}" style="position: relative; display: flex; justify-content: center; padding: 9px 10px; border-radius: 6px; border: none; background: none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg>
+          <sc-if value="{{hasActiveFilters}}" hint-placeholder-val="{{false}}">
+            <span aria-hidden="true" style="position: absolute; top: 2px; right: 6px; min-width: 16px; padding: 0 4px; border-radius: 999px; background: {{accent}}; color: #ffffff; font-size: 10px; font-weight: 600; line-height: 16px; text-align: center;">{{activeFilterCount}}</span>
+          </sc-if>
+        </button>
+      </sc-if>
       <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6b7280;">Filter Results</div>
           <button onClick="{{reset}}" style="border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
         </div>
 
-        <fieldset style="border: none; margin: 0; padding: 0;">
-          <legend style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px; padding: 0;">Type</legend>
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <sc-for list="{{typeOptions}}" as="opt" hint-placeholder-count="5">
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
-                <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}"> {{opt.label}}
-              </label>
-            </sc-for>
-          </div>
-        </fieldset>
+        <div style="position: relative;" onKeyDown="{{onTypeKeyDown}}">
+          <div id="searchTypeLabel" style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Type</div>
+          <button id="searchTypeButton" aria-labelledby="searchTypeLabel searchTypeValue" aria-expanded="{{typeMenuOpen}}" aria-controls="searchTypeList" onClick="{{toggleTypeMenu}}" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 12px; color: #1f2430; text-align: left;">
+            <span id="searchTypeValue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{typeSummary}}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2.5" style="flex-shrink: 0; transform: {{typeCaretRotation}};"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <sc-if value="{{typeMenuOpen}}" hint-placeholder-val="{{false}}">
+            <fieldset id="searchTypeList" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 10px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14); display: flex; flex-direction: column; gap: 6px;">
+              <legend style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Types to search</legend>
+              <sc-for list="{{typeOptions}}" as="opt" hint-placeholder-count="5">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1f2430;">
+                  <input type="checkbox" checked="{{opt.checked}}" onChange="{{opt.toggle}}"> {{opt.label}}
+                </label>
+              </sc-for>
+            </fieldset>
+          </sc-if>
+        </div>
 
         <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
           <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Source</div>
@@ -182,12 +197,14 @@
 
       <div style="flex-grow: 1;"></div>
 
-      <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
-        <button aria-label="{{toggleLabel}}" aria-expanded="{{expanded}}" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; justify-content: {{rowJustify}}; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 6px; border: none; background: none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; margin: 0 1.5px; transform: {{toggleRotation}};"><path d="M15 5l-7 7 7 7"/></svg>
-          <span style="display: {{textDisplay}}; font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
-        </button>
-      </div>
+      <sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+        <div style="flex-shrink: 0; border-top: 1px solid #dde1e6; padding-top: 12px;">
+          <button aria-label="Hide filters" aria-expanded="true" onClick="{{toggleSidebar}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 6px; border: none; background: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0; margin: 0 1.5px;"><path d="M15 5l-7 7 7 7"/></svg>
+            <span style="font-size: 13px; font-weight: 500; color: #6b7280;">Collapse</span>
+          </button>
+        </div>
+      </sc-if>
     </aside>
 
     <div style="flex-grow: 1; min-width: 0; padding: 24px 40px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
@@ -324,6 +341,10 @@ class Component extends DCLogic {
     const kindFacet = makeFacet(filters.kinds, KINDS, (next) => set({ kinds: next }));
 
     const showSpellFilters = filters.types.indexOf('Spell') !== -1;
+    // What the collapsed rail's badge counts: every value chosen, one for a single edition and one for a narrowed level range.
+    const activeCount = filters.types.length + filters.sources.length + (filters.editions.length === 1 ? 1 : 0)
+      + (showSpellFilters ? (filters.minLevel > 0 || filters.maxLevel < 9 ? 1 : 0) + filters.schools.length : 0)
+      + (filters.types.indexOf('Item') !== -1 ? filters.rarities.length + filters.kinds.length : 0);
     const showItemFilters = filters.types.indexOf('Item') !== -1;
 
     const focusAdd = (id) => {
@@ -393,13 +414,34 @@ class Component extends DCLogic {
       accent,
       expanded: !collapsed,
       sidebarWidth: collapsed ? '72px' : '260px',
-      textDisplay: collapsed ? 'none' : 'flex',
-      rowJustify: collapsed ? 'center' : 'flex-start',
-      toggleSidebar: () => this.setState({ collapsed: !collapsed }),
-      toggleLabel: collapsed ? 'Expand filters' : 'Collapse filters',
-      toggleRotation: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+      collapsedRail: collapsed,
+      toggleSidebar: () => this.setState({ collapsed: !collapsed, typeMenuOpen: false }),
+      showFiltersLabel: activeCount > 0 ? 'Show filters (' + activeCount + ' on)' : 'Show filters',
+      hasActiveFilters: activeCount > 0,
+      activeFilterCount: activeCount,
+      typeMenuOpen: !!this.state.typeMenuOpen,
+      typeSummary: filters.types.length === 0 ? 'All types' : filters.types.length > 2 ? filters.types.length + ' types' : filters.types.map((t) => t + 's').join(', '),
+      typeCaretRotation: this.state.typeMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+      toggleTypeMenu: () => this.setState({ typeMenuOpen: !this.state.typeMenuOpen }),
+      // Arrow keys step through the checkboxes; Escape closes the list and returns to the button.
+      onTypeKeyDown: (e) => {
+        if (e.key === 'Escape' && this.state.typeMenuOpen) {
+          this.setState({ typeMenuOpen: false });
+          const b = document.getElementById('searchTypeButton');
+          if (b) b.focus();
+          return;
+        }
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        const boxes = Array.from(document.querySelectorAll('#searchTypeList input'));
+        if (!boxes.length) return;
+        e.preventDefault();
+        const at = boxes.indexOf(document.activeElement);
+        const step = e.key === 'ArrowDown' ? 1 : -1;
+        const next = at === -1 ? (step === 1 ? 0 : boxes.length - 1) : at + step;
+        boxes[(next + boxes.length) % boxes.length].focus();
+      },
 
-      typeOptions: TYPES.map((t) => ({ label: t, checked: filters.types.indexOf(t) !== -1, toggle: () => set({ types: toggleIn(filters.types, t) }) })),
+      typeOptions: TYPES.map((t) => ({ label: t + 's', checked: filters.types.indexOf(t) !== -1, toggle: () => set({ types: toggleIn(filters.types, t) }) })),
       sourceChips: sourceFacet.chips,
       sourceEmpty: sourceFacet.isEmpty,
       sourceHasHidden: sourceFacet.hasHidden,

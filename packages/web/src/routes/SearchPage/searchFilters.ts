@@ -48,6 +48,25 @@ function level(value: string | null, fallback: number): number {
 export const spellsShown = (filters: SearchFilters) => filters.types.includes("spell");
 export const itemsShown = (filters: SearchFilters) => filters.types.includes("item");
 
+/**
+ * How many filters are on beyond the query: each type, source, school, rarity and kind
+ * chosen, one for a single edition, and one for a spell level range narrower than 0 to 9.
+ * The spell and item filters count only while they narrow, as `narrowingParams` reads them.
+ */
+export function activeFilterCount(filters: SearchFilters): number {
+  const narrowing = narrowingParams(filters);
+  const values = (param: string | undefined) => (param ? param.split(",").length : 0);
+  return (
+    filters.types.length +
+    values(narrowing.source) +
+    (filters.edition === undefined ? 0 : 1) +
+    (narrowing.minLevel !== undefined || narrowing.maxLevel !== undefined ? 1 : 0) +
+    values(narrowing.school) +
+    values(narrowing.rarity) +
+    values(narrowing.kind)
+  );
+}
+
 export function readSearchFilters(params: URLSearchParams): SearchFilters {
   const edition = params.get("edition");
   const offset = Number.parseInt(params.get("offset") ?? "", 10);

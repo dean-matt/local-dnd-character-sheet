@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { narrowingParams, readSearchFilters, writeSearchFilters } from "./searchFilters.ts";
+import {
+  activeFilterCount,
+  narrowingParams,
+  readSearchFilters,
+  writeSearchFilters,
+} from "./searchFilters.ts";
 
 const read = (query: string) => readSearchFilters(new URLSearchParams(query));
 
@@ -33,5 +38,15 @@ describe("searchFilters", () => {
 
   it("reads a backwards level range the right way round", () => {
     expect(read("type=spell&minLevel=5&maxLevel=2")).toMatchObject({ minLevel: 2, maxLevel: 5 });
+  });
+
+  it("counts each filter value on, and a level range once, but not the query", () => {
+    expect(activeFilterCount(read("q=fire"))).toBe(0);
+    expect(
+      activeFilterCount(
+        read("q=fire&type=spell%2Citem&edition=one&minLevel=2&maxLevel=5&kind=ring"),
+      ),
+    ).toBe(5);
+    expect(activeFilterCount(read("type=item&school=V"))).toBe(1);
   });
 });
