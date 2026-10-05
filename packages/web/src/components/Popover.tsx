@@ -49,7 +49,7 @@ export interface PopoverProps {
 
 export function Popover({ trigger, label, triggerLabel, triggerRef, children }: PopoverProps) {
   const depth = useContext(DepthContext);
-  const inModal = useContext(InModal);
+  const inModal = useContext(InModal) !== null;
   // Hover and focus drive one flag, a click or tap the other, because a real
   // pointer always fires `mouseenter` before `click` — including the tap that
   // opens it on a touchscreen. A shared flag toggled on click would read as

@@ -244,3 +244,52 @@ test("the page behind an open modal does not scroll, and the modal opens wide", 
   await settled(page);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
+
+/** Opens the feat from search, then the spell its rules text names, in the same modal. */
+async function followLink(page: Page) {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/characters");
+  const search = page.getByRole("combobox", { name: "Search characters and the compendium" });
+  await search.fill("long");
+  await page.getByRole("option", { name: new RegExp(feat.name) }).click();
+  const first = page.getByRole("dialog", { name: feat.name });
+  await expect(first).toBeVisible();
+  await first.getByRole("button", { name: fireball.name, exact: true }).click();
+  await page.getByRole("button", { name: `Open ${fireball.name}` }).click();
+  await expect(page.getByRole("dialog", { name: fireball.name })).toBeVisible();
+  await expect(page.locator("dialog")).toHaveCount(1);
+  return { search, first };
+}
+
+test("a link inside a modal replaces its entry, and Back steps back to the first and then closes", async ({
+  page,
+}) => {
+  const { search, first } = await followLink(page);
+  const dialog = page.getByRole("dialog", { name: fireball.name });
+  await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
+
+  const backTo = page.getByRole("button", { name: `Back to ${feat.name}` });
+  const card = await box(dialog.getByRole("heading", { name: fireball.name }));
+  const at = await box(backTo);
+  expect(at.x + at.width).toBeLessThan(card.x);
+  expect(at.y + at.height).toBeLessThan(card.y);
+  await page.keyboard.press("Shift+Tab");
+  await expect(backTo).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(first).toBeVisible();
+
+  const back = page.getByRole("button", { name: "Back", exact: true });
+  await expect(back).toBeFocused();
+  await back.click();
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(search).toBeFocused();
+});
+
+test("Escape closes a modal from an entry a link opened, and focus returns to what opened the first", async ({
+  page,
+}) => {
+  const { search } = await followLink(page);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog")).toHaveCount(0);
+  await expect(search).toBeFocused();
+});

@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { useReturnFocus } from "../hooks/useReturnFocus.ts";
 import { Modal } from "./Modal.tsx";
+import { ModalEntry } from "./ModalEntry.tsx";
 
 /**
  * A button that opens one entry's detail in a modal and takes focus back when it closes.
@@ -34,8 +35,10 @@ export function DetailTrigger({
         {children}
       </button>
       {open && (
-        <Modal title={title} meta={meta} onClose={() => setOpen(false)}>
-          {detail}
+        <Modal onClose={() => setOpen(false)}>
+          <ModalEntry title={title} meta={meta}>
+            {detail}
+          </ModalEntry>
         </Modal>
       )}
     </>

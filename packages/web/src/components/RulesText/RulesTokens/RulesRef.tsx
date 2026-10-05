@@ -4,6 +4,8 @@ import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { paragraphs } from "../../../lib/rulesProse.ts";
 import { refKey } from "../../../lib/rulesRefs.ts";
 import { CatalogDetail } from "../../CatalogDetail.tsx";
+import { CatalogEntry } from "../../CatalogEntry.tsx";
+import { InModal } from "../../inModalContext.ts";
 import { Popover } from "../../Popover.tsx";
 import { ResolvedRefs } from "../../resolvedRefsContext.ts";
 
@@ -16,11 +18,13 @@ type RefToken = Extract<Token, { kind: "ref" }>;
  *
  * The modal sits beside the popover rather than inside it, since moving focus into the
  * modal closes the popover. Closing the modal hands focus back to the reference itself.
+ * Inside a modal already, the row replaces the entry showing there instead.
  */
 export function RulesRef({ token }: { token: RefToken }) {
   const row = useContext(ResolvedRefs)?.get(refKey(token));
   const [detailOpen, setDetailOpen] = useState(false);
   const reference = useReturnFocus<HTMLButtonElement>(detailOpen);
+  const modal = useContext(InModal);
   const prose = row === undefined ? [] : paragraphs(row.entries);
   // A row with no prose and no detail — every monster, whose stat block is not `entries` —
   // would open onto its name alone, so it stays text.
@@ -47,7 +51,11 @@ export function RulesRef({ token }: { token: RefToken }) {
           <button
             type="button"
             aria-haspopup="dialog"
-            onClick={() => setDetailOpen(true)}
+            onClick={() => {
+              if (!row.path) return;
+              if (modal) modal.open(<CatalogEntry address={row.path} />);
+              else setDetailOpen(true);
+            }}
             className="mt-1 block cursor-pointer underline"
           >
             Open {row.name}
