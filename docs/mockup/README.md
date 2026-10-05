@@ -87,13 +87,15 @@ widget, panel, or nav element:
   the `search` route. The app carries the pill's query there as `?q=<query>`; each
   artboard keeps its own state, so Search opens on its own sample query. Search draws the
   query field, the results, and a collapsible filter sidebar shaped like Sidebar, its
-  controls the Filter artboards' checkboxes, chips and level range. Type is a button naming
-  the chosen types ("All types", "Spells, Items", "3 types") that opens a list of
-  checkboxes, and collapsed, the sidebar shows a filter icon badged with how many filters
-  are on. The query field,
-  results and confirmation fill the main column beside the sidebar, with no maximum
-  width. It filters by type, source and edition, and adds level and school once Spell is
-  ticked and rarity and kind once Item is — a melee weapon, light armor or a wondrous
+  controls the Filter artboards' checkboxes and level range. Type, Source, School, Rarity
+  and Kind are each the same multi-select: a button naming what is chosen ("All types",
+  "Spells, Items", "3 types") that opens a list of checkboxes, with a filter box at the top
+  of any list longer than ten and a Clear link beside the filter's heading once something
+  is chosen. The Spells and Items rows carry an icon saying they add filters. Collapsed,
+  the sidebar shows a filter icon badged with how many filters are on, and its foot keeps
+  the expand button. The query field, results and confirmation fill the main column
+  beside the sidebar, with no maximum width. It filters by type, source and edition, and
+  adds level and school once Spells is chosen and rarity and kind once Items is — a melee weapon, light armor or a wondrous
   item, each grouping upstream's item type codes. A row with no edition, which Tier B and C allow though
   no loader writes one today, would show under either edition. The API's `/search`
   takes every filter Search offers, but matches `q` against a Tier A row's name alone,
