@@ -23,7 +23,7 @@ export function SearchFacet({ label, selected, options, onChange }: SearchFacetP
   const noun = label.toLowerCase();
 
   return (
-    <fieldset className="flex flex-col gap-2">
+    <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className="mb-2 text-label font-semibold uppercase tracking-label text-muted">
         {label}
       </legend>
@@ -50,7 +50,7 @@ export function SearchFacet({ label, selected, options, onChange }: SearchFacetP
           onChange={(event) => {
             if (event.target.value) onChange([...selected, event.target.value]);
           }}
-          className="rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink"
+          className="w-full min-w-0 max-w-full truncate rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink"
         >
           <option value="" disabled>
             + Narrow to {noun}…
