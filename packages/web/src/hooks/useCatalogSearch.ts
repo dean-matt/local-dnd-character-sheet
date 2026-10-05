@@ -1,9 +1,12 @@
 import { searchResponseSchema } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 import { useDisabledSources } from "./useDisabledSources.ts";
+
+/** How long typing must pause before a search goes out. */
+export const SEARCH_DEBOUNCE_MS = 200;
 
 export interface CatalogSearchParams {
   /** The ruleset to search; absent searches both. */
@@ -15,6 +18,11 @@ export interface CatalogSearchParams {
   offset?: number;
   /** With a blank query, list every row the rest admit instead of fetching nothing. */
   listAll?: boolean;
+  /**
+   * Keep the last page up while the next loads, so typing does not blank the list. A picker
+   * leaves it off: a row from the last query must not be chosen for the new one.
+   */
+  keepPrevious?: boolean;
   /** Any further `/search` parameter, such as `source` or `minLevel`, as the URL spells it. */
   filters?: Record<string, string>;
 }
@@ -30,6 +38,7 @@ export function useCatalogSearch({
   limit,
   offset,
   listAll = false,
+  keepPrevious = false,
   filters,
 }: CatalogSearchParams) {
   const disabled = useDisabledSources();
@@ -42,10 +51,13 @@ export function useCatalogSearch({
   if (type !== undefined) params.set("type", type);
   for (const [key, value] of Object.entries(filters ?? {})) params.set(key, value);
   if (disabled.length > 0) params.set("exclude", disabled.join(","));
+  const enabled = q.length > 0 || listAll;
   return useQuery({
     queryKey: ["search", params.toString()],
     queryFn: () => apiGet(`/search?${params}`, searchResponseSchema),
-    enabled: q.length > 0 || listAll,
+    enabled,
+    // A disabled search shows nothing rather than a stale page.
+    placeholderData: keepPrevious && enabled ? keepPreviousData : undefined,
     retry: retryUnlessClientError,
   });
 }

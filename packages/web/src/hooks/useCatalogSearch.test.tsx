@@ -83,4 +83,25 @@ describe("useCatalogSearch", () => {
     expect(result.current.fetchStatus).toBe("idle");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("keeps the last page up while the next query loads, only where asked", async () => {
+    const page = { ...body, items: [], total: 7 };
+    for (const keepPrevious of [true, false]) {
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValueOnce(new Response(JSON.stringify(page), { status: 200 }))
+          .mockReturnValueOnce(new Promise(() => {})),
+      );
+      const { result, rerender } = renderHook(
+        ({ query }) => useCatalogSearch({ query, limit: 20, keepPrevious }),
+        { wrapper, initialProps: { query: "fire" } },
+      );
+      await waitFor(() => expect(result.current.data?.total).toBe(7));
+
+      rerender({ query: "ice" });
+      expect(result.current.data?.total).toBe(keepPrevious ? 7 : undefined);
+    }
+  });
 });

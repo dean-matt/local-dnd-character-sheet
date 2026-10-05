@@ -11,8 +11,9 @@ import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
-import { useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
+import { SEARCH_DEBOUNCE_MS, useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
+import { useDebounce } from "../../../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { searchHitAddress, searchHitKey } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
@@ -33,7 +34,11 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
   const characters = useCharacters();
-  const compendium = useCatalogSearch({ query, limit: RESULT_LIMIT });
+  const compendium = useCatalogSearch({
+    query: useDebounce(query, SEARCH_DEBOUNCE_MS),
+    limit: RESULT_LIMIT,
+    keepPrevious: true,
+  });
   const navigate = useNavigate();
   const inputRef = useReturnFocus<HTMLInputElement>(detail !== undefined);
   const id = useId();

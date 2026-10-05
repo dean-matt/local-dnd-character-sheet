@@ -8,8 +8,9 @@ import { Search } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useSearchParams } from "react-router";
 import { CatalogDetail } from "../../components/CatalogDetail.tsx";
-import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
+import { SEARCH_DEBOUNCE_MS, useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../hooks/useCharacters.ts";
+import { useDebounce } from "../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
 import { searchHitKey } from "../../lib/searchHits.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
@@ -42,7 +43,8 @@ export function SearchPage() {
   const search = useCatalogSearch({
     edition: filters.edition,
     type: filters.types.length > 0 ? filters.types.join(",") : undefined,
-    query: q,
+    query: useDebounce(q, SEARCH_DEBOUNCE_MS),
+    keepPrevious: true,
     limit: PAGE_SIZE,
     offset: filters.offset,
     listAll: browsing,
