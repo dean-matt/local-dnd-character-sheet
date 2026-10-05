@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setDisabledSources } from "../../lib/disabledSources.ts";
 import { characterRecord } from "../../test/records.ts";
 import { stubFetchByUrl } from "../../test/stubFetch.ts";
 import { SearchPage } from "./SearchPage.tsx";
@@ -283,6 +284,31 @@ describe("SearchPage", () => {
     fireEvent.click(within(pages).getByRole("button", { name: "Next" }));
     expect(where()).toBe("/search?type=monster&offset=50");
     expect(await screen.findByText("51–100 of 120")).toBeInTheDocument();
+  });
+
+  it("moves a link whose offset runs past the last page back to that page", async () => {
+    renderAt("/search?type=monster&offset=150", {
+      "/api/search?limit=50&offset=150&type=monster": page([], 120, 150),
+      "/api/search?limit=50&offset=100&type=monster": page([fireGiant], 120, 100),
+    });
+
+    expect(await screen.findByText("101–120 of 120")).toBeInTheDocument();
+    expect(where()).toBe("/search?type=monster&offset=100");
+  });
+
+  it("lists a source Settings turned off while a link has it chosen, so it can be unticked", async () => {
+    setDisabledSources(["MM"]);
+    try {
+      renderAt("/search?source=MM", {});
+      fireEvent.click(await screen.findByRole("button", { name: "Source MM" }));
+      const list = screen.getByRole("group", { name: "Sources to search" });
+      const mm = await within(list).findByRole("checkbox", { name: "MM" });
+      expect(mm).toBeChecked();
+      fireEvent.click(mm);
+      expect(where()).toBe("/search");
+    } finally {
+      setDisabledSources([]);
+    }
   });
 
   it("asks for a query before searching anything", () => {

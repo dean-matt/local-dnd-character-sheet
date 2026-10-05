@@ -5,7 +5,7 @@
  * browse.
  */
 import { Search } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useSearchParams } from "react-router";
 import { CatalogDetail } from "../../components/CatalogDetail.tsx";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
@@ -65,6 +65,12 @@ export function SearchPage() {
 
   const update = (next: Partial<SearchFilters>, replace = false) =>
     setParams(writeSearchFilters({ ...filters, offset: 0, ...next }), { replace });
+
+  // A link whose offset runs past the last page, as a stale one can, moves back to that page.
+  const pastEnd = total > 0 && filters.offset >= total;
+  useEffect(() => {
+    if (pastEnd) update({ offset: Math.floor((total - 1) / PAGE_SIZE) * PAGE_SIZE }, true);
+  });
 
   function status(): string {
     if (q === "" && !browsing)
