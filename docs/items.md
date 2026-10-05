@@ -39,9 +39,11 @@ and its three fellows are written as one `Barding` variant upstream renders per 
 
 Read alone, `GET /items/{name}/{source}` returns a template as the item it describes:
 `inherits` lifted over the entry around it, a placeholder filled where `inherits` holds
-the value. `{=baseName}` stays as written, since no base item is chosen. Search lists the
-templates beside the items and places each by the base items its `requires` and
-`excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
+the value. No base item is chosen, so `{=baseName}` reads as the first flag `requires`
+names — "an arrow" for Arrow of Slaying — and `{=dmgType}` as "weapon". Any other
+placeholder left empty, here or in an expansion, reads as neutral prose rather than
+markup. Search lists the templates beside the items and places each by the base items
+its `requires` and `excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
 
 `rarity` spans 10 upstream values, `none`, `varies` and `unknown (magic)` among them,
 and the column is nullable because 43 items carry none — though every one of those

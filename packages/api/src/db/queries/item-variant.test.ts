@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -10,6 +10,19 @@ import {
   variantDetail,
   variantKinds,
 } from "./item-variant.ts";
+
+const FIXTURE_VARIANTS: Record<string, unknown>[] = JSON.parse(
+  readFileSync(
+    join(import.meta.dirname, "../../../../../tests/fixtures/5etools/data/magicvariants.json"),
+    "utf8",
+  ),
+).magicvariant;
+
+function fixtureVariant(name: string): Record<string, unknown> {
+  const found = FIXTURE_VARIANTS.find((variant) => variant.name === name);
+  if (!found) throw new Error(`${name}: not in the magicvariants fixture`);
+  return found;
+}
 
 const LONGSWORD_FIELDS = {
   name: "Longsword",
@@ -198,17 +211,58 @@ describe("variantDetail", () => {
     expect(detail).not.toHaveProperty("inherits");
   });
 
-  it("fills a placeholder inherits supplies and leaves one naming the base item", () => {
+  it("fills a placeholder inherits supplies, and names the base item by the flag requires names", () => {
     const detail = variantDetail({
-      name: "+1 Armor",
-      requires: [{ armor: true }],
+      name: "+1 Weapon of Warning",
+      requires: [{ weapon: true }],
       inherits: {
         source: "DMG",
-        bonusAc: "+1",
-        entries: ["A {=bonusAc} bonus to AC.", "{=baseName/at} of warning."],
+        bonusWeapon: "+1",
+        entries: ["A {=bonusWeapon} bonus.", "{=baseName/at} {=baseName/l} of warning."],
       },
     });
-    expect(detail.entries).toEqual(["A +1 bonus to AC.", "{=baseName/at} of warning."]);
+    expect(detail.entries).toEqual(["A +1 bonus.", "A weapon of warning."]);
+  });
+
+  it("names the base item an item where requires matches a type code rather than a flag", () => {
+    const detail = variantDetail({
+      name: "Ammunition",
+      requires: [{ type: "A|XPHB" }],
+      inherits: { source: "XDMG", entries: ["{=baseName/at} {=baseName}."] },
+    });
+    expect(detail.entries).toEqual(["An item."]);
+  });
+
+  it("reads an arrow of slaying for Arrow of Slaying (*), with no base item chosen", () => {
+    const detail = variantDetail(fixtureVariant("Arrow of Slaying (*)"));
+    const text = JSON.stringify(detail.entries);
+    expect(text).not.toContain("{=");
+    expect(text).toContain("An arrow Elided. arrow Elided.");
+    expect(text).toContain("Elided. an arrow Elided. arrow Elided.");
+  });
+
+  it.each(["Vicious Weapon", "Vicious +1 Weapon"])(
+    "reads weapon damage for %s, with no damage type to fill",
+    (name) => {
+      const detail = variantDetail(fixtureVariant(name));
+      const text = JSON.stringify(detail.entries);
+      expect(text).not.toContain("{=");
+      expect(text).toContain("{@damage 2d6} weapon Elided.");
+    },
+  );
+
+  it("keeps the bonus Vicious +1 Weapon's inherits supplies", () => {
+    const detail = variantDetail(fixtureVariant("Vicious +1 Weapon"));
+    expect(JSON.stringify(detail.entries)).toContain("Elided. +1 Elided.");
+  });
+
+  it("reads a placeholder upstream adds later as its name in words", () => {
+    const detail = variantDetail({
+      name: "Future",
+      requires: [{ weapon: true }],
+      inherits: { source: "XDMG", entries: ["{=critRange/l}; {=bonusSpellAttack}."] },
+    });
+    expect(detail.entries).toEqual(["crit range; magic."]);
   });
 
   it("throws where inherits is missing", () => {
@@ -301,11 +355,11 @@ describe("expandItemFields", () => {
     expect(merged.entries).toEqual(["The target takes an extra 7 slashing damage."]);
   });
 
-  it("leaves a placeholder naming a field the item lacks as written, rather than throwing", () => {
-    const merged = expandItemFields(LONGSWORD_FIELDS, {
-      entries: ["A {=bonusSavingThrow} bonus to saving throws."],
+  it("reads a placeholder naming a field the item lacks as neutral prose, rather than throwing", () => {
+    const merged = expandItemFields(NET_FIELDS, {
+      entries: ["A {=bonusSavingThrow} bonus; an extra 7 {=dmgType} damage."],
     });
-    expect(merged.entries).toEqual(["A {=bonusSavingThrow} bonus to saving throws."]);
+    expect(merged.entries).toEqual(["A magic bonus; an extra 7 weapon damage."]);
   });
 });
 
