@@ -49,6 +49,23 @@
     color-mix(in oklab, #7a5b00 70%, var(--color-gray-800))
   );
 
+  /*
+   * A catalog type chip's fill, under white text. Dark deepens each toward the canvas
+   * rather than lightening it: lightened, the item's ochre drops under 4.5:1.
+   */
+  --color-type-spell: light-dark(#3a4f7a, color-mix(in oklab, #3a4f7a 85%, var(--color-gray-900)));
+  --color-type-item: light-dark(#8a6a2e, color-mix(in oklab, #8a6a2e 85%, var(--color-gray-900)));
+  --color-type-feat: light-dark(#6b4f7a, color-mix(in oklab, #6b4f7a 85%, var(--color-gray-900)));
+  --color-type-race: light-dark(#5b5f66, color-mix(in oklab, #5b5f66 85%, var(--color-gray-900)));
+  --color-type-feature: light-dark(
+    #4f6b6b,
+    color-mix(in oklab, #4f6b6b 85%, var(--color-gray-900))
+  );
+  --color-type-monster: light-dark(
+    #7a3b2e,
+    color-mix(in oklab, #7a3b2e 85%, var(--color-gray-900))
+  );
+
   --text-row: var(--text-xs);
   --text-row--line-height: var(--text-xs--line-height);
   --text-number: var(--text-xl);

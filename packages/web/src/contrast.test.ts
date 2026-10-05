@@ -108,6 +108,15 @@ const moneyTintLight = hex("#fbf3dc");
 const moneyDark = hex("#e5cf8f");
 const moneyTintDark = mixOklab(moneyLight, gray800, 0.3);
 
+const TYPE_FILLS = {
+  spell: "#3a4f7a",
+  item: "#8a6a2e",
+  feat: "#6b4f7a",
+  race: "#5b5f66",
+  feature: "#4f6b6b",
+  monster: "#7a3b2e",
+};
+
 const AA_TEXT = 4.5;
 const AA_NON_TEXT = 3;
 
@@ -172,6 +181,15 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "positive on surface, dark", fg: positiveDark, bg: gray800, minimum: AA_TEXT },
   { name: "money on money-tint, dark", fg: moneyDark, bg: moneyTintDark, minimum: AA_TEXT },
   { name: "spinner arc on its track, dark", fg: mutedDark, bg: gray700, minimum: AA_NON_TEXT },
+  ...Object.entries(TYPE_FILLS).flatMap(([type, fill]) => [
+    { name: `white on type-${type}, light`, fg: white, bg: hex(fill), minimum: AA_TEXT },
+    {
+      name: `white on type-${type}, dark`,
+      fg: white,
+      bg: mixOklab(hex(fill), gray900, 0.85),
+      minimum: AA_TEXT,
+    },
+  ]),
 ];
 
 describe("theme token contrast", () => {
