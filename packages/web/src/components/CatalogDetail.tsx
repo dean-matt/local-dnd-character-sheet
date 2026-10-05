@@ -10,7 +10,7 @@ import { Modal } from "./Modal.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
 import { ResolvedRefs } from "./resolvedRefsContext.ts";
 import { SourceChip } from "./SourceChip.tsx";
-import { Tag } from "./Tag.tsx";
+import { TypeChip } from "./TypeChip.tsx";
 
 export interface CatalogDetailProps {
   /** A detail address such as `/spells/Fireball/PHB`, as `catalogRows.ts` names a row. */
@@ -53,7 +53,7 @@ export function CatalogDetail({ address, onClose }: CatalogDetailProps) {
     ) : (
       <EmptyState>This row carries no rules text of its own.</EmptyState>
     ),
-    <Tag>{capitalized(match.target.label)}</Tag>,
+    <TypeChip type={match.target.label}>{capitalized(match.target.label)}</TypeChip>,
     <SourceChip source={source} edition={edition} of={match.target.label} />,
   );
 }

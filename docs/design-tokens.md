@@ -44,7 +44,7 @@ convention drifts the first time someone reaches for `text-sm` instead.
 
 ## Color
 
-One cool neutral ground, one accent and a gold for a price, aliased so a view names the
+One cool neutral ground, one accent, a gold for a price and a fill per catalog type, aliased so a view names the
 role rather than the shade:
 
 | Token | Light | Dark | Role |
@@ -63,6 +63,7 @@ role rather than the shade:
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
 | `color-money` / `color-money-tint` / `color-money-border` | `#7a5b00` on `#fbf3dc`, edged `#e5cf8f` | `#e5cf8f` on `#7a5b00` 30% into `gray-800`, edged at 70% | A list row's price chip |
+| `color-type-spell`, `-item`, `-feat`, `-race`, `-feature`, `-monster` | `#3a4f7a`, `#8a6a2e`, `#6b4f7a`, `#5b5f66`, `#4f6b6b`, `#7a3b2e` | each 85% into `gray-900` | A type chip's fill under white text. `TypeChip` maps a type to its fill, and a type with none takes the neutral `Tag` |
 
 Two light values depart from the mockup. `#6b7280` measures 4.43:1 on canvas and 4.23:1
 on subtle, under AA, so `color-muted` takes 8% of the ink. `#9aa1ab` measures 2.61:1 on
@@ -90,6 +91,7 @@ holds every pair in both themes and fails a repalette that regresses one:
 - `color-accent-text` on `color-canvas`, `color-surface` and `color-subtle`: AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
+- White on every `color-type-*` fill: AA for normal text
 - The loading spinner's `color-muted` arc on its `color-border` track: 3:1
 
 ## Motion

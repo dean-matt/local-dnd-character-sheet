@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SourceChip } from "../../../../components/SourceChip.tsx";
-import { Tag } from "../../../../components/Tag.tsx";
+import { TypeChip } from "../../../../components/TypeChip.tsx";
 import { searchHitTypeLabel } from "../../../../lib/searchHits.ts";
 import { CharacterAvatar } from "../CharacterAvatar.tsx";
 import type { SearchResult } from "./searchResult.ts";
@@ -27,9 +27,10 @@ export function SearchResultOption({
     if (active) ref.current?.scrollIntoView?.({ block: "nearest" });
   }, [active]);
 
-  const { chip, name, meta } =
+  const { type, chip, name, meta } =
     "character" in result
       ? {
+          type: "character",
           chip: "Character",
           name: result.character.name,
           meta: (
@@ -40,6 +41,7 @@ export function SearchResultOption({
           ),
         }
       : {
+          type: result.hit.type,
           chip: searchHitTypeLabel(result.hit.type),
           name: result.hit.name,
           meta: (
@@ -74,7 +76,7 @@ export function SearchResultOption({
           {!opens && <span className="truncate">No page yet</span>}
         </span>
       </span>
-      <Tag>{chip}</Tag>
+      <TypeChip type={type}>{chip}</TypeChip>
     </div>
   );
 }
