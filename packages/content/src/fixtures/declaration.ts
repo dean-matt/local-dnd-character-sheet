@@ -823,7 +823,7 @@ export const FIXTURES: Fixture[] = [
             "Arrow of Slaying (*)",
             "Ammunition of Slaying",
             "Armblade",
-            // Upstream lists the DMG entry first; the second name claims the XDMG one.
+            // Two entries share the name, DMG and XDMG; each listing claims one.
             "Holy Avenger",
             "Holy Avenger",
             "Imbued Wood (Fernian Ash)",
