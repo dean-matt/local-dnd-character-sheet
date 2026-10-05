@@ -114,4 +114,34 @@ describe("searchRoutes", () => {
       { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
     ]);
   });
+
+  it("leaves out each excluded source's catalog rows before paging, and keeps homebrew", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+    });
+
+    const res = await routes.request(
+      "/search?edition=classic&q=fire&exclude=MM,DMG&limit=1&offset=1",
+    );
+    const body = await res.json();
+
+    expect(body).toMatchObject({ total: 2, limit: 1, offset: 1 });
+    expect(body.items).toEqual([
+      { type: "item", id: "1", name: "Firebrand Axe", edition: "classic" },
+    ]);
+  });
+
+  it("lists every source a search can return", async () => {
+    const res = await routes.request("/search/sources");
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      sources: [
+        { source: "MM", name: null },
+        { source: "PHB", name: null },
+      ],
+    });
+  });
 });

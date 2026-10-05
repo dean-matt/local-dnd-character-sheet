@@ -1,4 +1,4 @@
-import type { CatalogSearchType } from "@dnd/catalog";
+import type { CatalogSearchType, SearchSource } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 import { escapeLikeTerm, ftsPrefixQuery } from "./search-terms.ts";
@@ -76,6 +76,36 @@ export function searchCatalog(
     rows.push(...entityRows);
 
     return rows;
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Every source a row `searchCatalog` reads cites, titled from the book and adventure rows
+ * in `entities` the way `getCatalogSources` titles one, or `null` where neither index names
+ * it.
+ */
+export function listSearchSources(dataDir: string): SearchSource[] {
+  const cited = [
+    ...CATALOG_SEARCH_TABLES.map(
+      ({ table, where }) => `SELECT source FROM ${table}${where ? ` WHERE ${where}` : ""}`,
+    ),
+    "SELECT source FROM entities",
+  ].join(" UNION ");
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(
+        `SELECT cited.source, (
+           SELECT t.name FROM entities t
+           WHERE t.source = cited.source AND t.type IN ('book', 'adventure')
+           ORDER BY t.type = 'book' DESC, t.name LIMIT 1
+         ) AS name
+         FROM (${cited}) cited
+         ORDER BY cited.source COLLATE NOCASE`,
+      )
+      .all() as SearchSource[];
   } finally {
     db.close();
   }

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { searchCatalog } from "./catalog-search.ts";
+import { listSearchSources, searchCatalog } from "./catalog-search.ts";
 import { publishSearchFixture } from "./contentFixture.ts";
 
 const FIREBALL = {
@@ -103,5 +103,44 @@ describe("searchCatalog", () => {
     publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL] });
 
     expect(searchCatalog(dataDir, "classic", "nonexistent")).toEqual([]);
+  });
+});
+
+describe("listSearchSources", () => {
+  let dataDir: string;
+
+  afterEach(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("lists each cited source once, titled by its book over its adventure, and null where untitled", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const volume = (type: string, name: string, source: string) => ({
+      type,
+      name,
+      source,
+      qualifier: "",
+      edition: null,
+      json: JSON.stringify({ name, source }),
+      rendered_text: name,
+    });
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL, GOODBERRY_ONE, { ...FIREBALL, name: "Fire Bolt", level: 0 }],
+      entities: [
+        FIRE_ELEMENTAL,
+        volume("book", "Player's Handbook", "PHB"),
+        volume("adventure", "Mythic Odysseys of Theros", "MOT"),
+        volume("book", "Mythic Odysseys of Theros (book)", "MOT"),
+        volume("adventure", "Tales from the Yawning Portal", "TftYP-AtG"),
+      ],
+    });
+
+    expect(listSearchSources(dataDir)).toEqual([
+      { source: "MM", name: null },
+      { source: "MOT", name: "Mythic Odysseys of Theros (book)" },
+      { source: "PHB", name: "Player's Handbook" },
+      { source: "TftYP-AtG", name: "Tales from the Yawning Portal" },
+      { source: "XPHB", name: null },
+    ]);
   });
 });
