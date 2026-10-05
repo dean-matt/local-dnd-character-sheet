@@ -35,6 +35,7 @@ export function RulesRef({ token }: { token: RefToken }) {
       </span>
     );
   }
+  const { path } = row;
   return (
     <>
       <Popover trigger={token.display} label={`${row.name} (${row.source})`} triggerRef={reference}>
@@ -47,24 +48,20 @@ export function RulesRef({ token }: { token: RefToken }) {
             {text}
           </span>
         ))}
-        {row.path && (
+        {path && (
           <button
             type="button"
-            aria-haspopup="dialog"
-            onClick={() => {
-              if (!row.path) return;
-              if (modal) modal.open(<CatalogEntry address={row.path} />);
-              else setDetailOpen(true);
-            }}
+            aria-haspopup={modal ? undefined : "dialog"}
+            onClick={() =>
+              modal ? modal.open(<CatalogEntry address={path} />) : setDetailOpen(true)
+            }
             className="mt-1 block cursor-pointer underline"
           >
             Open {row.name}
           </button>
         )}
       </Popover>
-      {row.path && detailOpen && (
-        <CatalogDetail address={row.path} onClose={() => setDetailOpen(false)} />
-      )}
+      {path && detailOpen && <CatalogDetail address={path} onClose={() => setDetailOpen(false)} />}
     </>
   );
 }

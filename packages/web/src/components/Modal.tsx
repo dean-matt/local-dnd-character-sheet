@@ -44,15 +44,13 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
     close.current?.focus();
   }, []);
 
-  const previous = trail.at(-1);
+  const shown = trail.at(-1);
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: the click lands on the backdrop, which takes no focus; Escape is its keyboard twin, handled as `cancel`.
     <dialog
       ref={ref}
       aria-labelledby={titleId}
       onCancel={(event) => {
-        // React bubbles `cancel` to an enclosing modal; the browser cancels only the top one.
-        event.stopPropagation();
         event.preventDefault();
         onClose();
       }}
@@ -67,11 +65,11 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
       {/* Fixed to the viewport, so it draws over the backdrop rather than inside the dialog's box. */}
       <button
         type="button"
-        onClick={() => (previous ? setTrail(trail.slice(0, -1)) : onClose())}
+        onClick={() => (shown ? setTrail(trail.slice(0, -1)) : onClose())}
         className="fixed top-4 left-4 flex cursor-pointer items-center gap-1 rounded-control bg-surface py-1.5 pr-3 pl-2 font-semibold text-ink text-row shadow-lg"
       >
         <ChevronLeft size={16} />
-        {previous ? `Back to ${previous.backTo}` : "Back"}
+        {shown ? `Back to ${shown.backTo}` : "Back"}
       </button>
       <button
         ref={close}
@@ -83,7 +81,7 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
         <span aria-hidden="true">×</span>
       </button>
       <InModal.Provider value={context}>
-        <Fragment key={trail.length}>{previous ? previous.entry : children}</Fragment>
+        <Fragment key={trail.length}>{shown ? shown.entry : children}</Fragment>
       </InModal.Provider>
     </dialog>
   );

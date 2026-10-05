@@ -110,7 +110,7 @@ widget, panel, or nav element:
   entry and return focus to the link. A link inside the modal replaces its entry rather
   than opening a second modal. A back button at the page's top left, over the scrim, reads
   "Back to" the entry before and returns to it, or reads "Back" on the first and closes
-  the modal. Its `throughLink` tweak opens on an entry reached through a link.
+  the modal. The artboard's `throughLink` tweak opens on an entry reached through a link.
 - Add to…: every item, spell and feat result on Top Bar Navigation and Search carries
   "Add to…", and so does Catalog Detail. Opened from a sheet (the `openedFrom` tweak, always true
   of Catalog Detail's `sheet` host), it adds to that character; opened anywhere else, it

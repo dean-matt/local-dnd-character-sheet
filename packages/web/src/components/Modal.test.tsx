@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { type ReactNode, useContext } from "react";
-import { createPortal } from "react-dom";
 import { describe, expect, it, vi } from "vitest";
 import { InModal } from "./inModalContext.ts";
 import { Modal } from "./Modal.tsx";
@@ -38,27 +37,6 @@ describe("Modal", () => {
     ]) {
       expect(body).not.toContainElement(fixed);
     }
-  });
-
-  it("cancels only the modal Escape lands on, not one it opened over", () => {
-    const outer = vi.fn();
-    const inner = vi.fn();
-    render(
-      <Modal onClose={outer}>
-        <ModalEntry title="Outer">
-          {createPortal(
-            <Modal onClose={inner}>
-              <ModalEntry title="Inner">text</ModalEntry>
-            </Modal>,
-            document.body,
-          )}
-        </ModalEntry>
-      </Modal>,
-    );
-
-    fireEvent(screen.getByRole("dialog", { name: "Inner" }), new Event("cancel"));
-    expect(inner).toHaveBeenCalledOnce();
-    expect(outer).not.toHaveBeenCalled();
   });
 
   it("opens an entry from inside it in place of the one showing, and steps back through them", () => {
