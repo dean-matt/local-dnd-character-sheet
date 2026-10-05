@@ -25,7 +25,9 @@ describe("Modal", () => {
     const dialog = screen.getByRole("dialog", { name: "Fireball" });
     const scrolling = dialog.querySelectorAll(".overflow-auto");
     expect(scrolling).toHaveLength(1);
-    const [body] = scrolling;
+    const body = screen.getByRole("region", { name: "Fireball" });
+    expect(scrolling[0]).toBe(body);
+    expect(body).toHaveAttribute("tabindex", "0");
     expect(body).toContainElement(screen.getByText("Rules text"));
     for (const fixed of [
       screen.getByRole("heading", { name: "Fireball" }),
@@ -50,9 +52,9 @@ describe("Modal", () => {
         disconnect() {}
       },
     );
-    const height = (body: number, chrome: number) => {
+    const height = (body: number, chrome: number, content = 1000) => {
       vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(body);
-      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(1000);
+      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(content);
       vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(chrome / 2);
     };
     render(
@@ -66,9 +68,17 @@ describe("Modal", () => {
     act(() => resized());
     expect(dialog).toHaveClass("w-140");
 
+    height(100, 150, 100);
+    act(() => resized());
+    expect(dialog).toHaveClass("w-140");
+
     height(100, 150);
     act(() => resized());
     expect(dialog).not.toHaveClass("w-140");
+    expect(dialog).toHaveClass("w-4xl");
+
+    height(400, 150);
+    act(() => resized());
     expect(dialog).toHaveClass("w-4xl");
   });
 

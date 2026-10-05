@@ -110,7 +110,7 @@ test("a popover opened at the bottom of a modal draws past the modal's edge, fol
   await page.getByRole("option", { name: new RegExp(feat.name) }).click();
 
   const dialog = page.getByRole("dialog", { name: feat.name });
-  const body = dialog.locator("> div");
+  const body = dialog.getByRole("region", { name: feat.name });
   const trigger = dialog.getByRole("button", { name: fireball.name, exact: true });
   await expect(trigger).toBeVisible();
   // Short of the end, so the scroll below moves the trigger up and leaves room under it.

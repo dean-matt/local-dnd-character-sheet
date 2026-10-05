@@ -33,7 +33,7 @@ export function Modal({
   const pressedBackdrop = useRef(false);
   const titleId = useId();
   const header = useRef<HTMLDivElement>(null);
-  const body = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLElement>(null);
   const foot = useRef<HTMLDivElement>(null);
   const [roomy, setRoomy] = useState(false);
 
@@ -98,12 +98,15 @@ export function Modal({
           </div>
           {meta && <div className="mt-1 text-muted text-row">{meta}</div>}
         </div>
-        <div
+        <section
           ref={body}
+          aria-labelledby={titleId}
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container takes focus so the keyboard can scroll it; the dialog opens with focus on the close button, outside it.
+          tabIndex={0}
           className={`flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-5 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
         >
           {children}
-        </div>
+        </section>
         {footer && (
           <div
             ref={foot}
