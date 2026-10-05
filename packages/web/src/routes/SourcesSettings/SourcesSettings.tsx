@@ -29,7 +29,8 @@ export function SourcesSettings() {
   const shelves = data ? shelveSources(data, catalog, query) : [];
   const shown = shelves.flatMap((shelf) => shelf.sources.map(({ source }) => source));
   const filtering = query.trim() !== "";
-  const matchCount = shown.length === 1 ? "1 source matches" : `${shown.length} sources match`;
+  const countOf = (n: number) => (n === 1 ? "1 source matches" : `${n} sources match`);
+  const matchCount = countOf(shown.length);
   const noMatch = `No source matches “${query.trim()}”.`;
 
   return (
@@ -95,10 +96,17 @@ export function SourcesSettings() {
                 <h2 id={`${id}-shelf-${index}`} className="font-semibold text-row">
                   {shelf.label}
                 </h2>
+                {filtering && (
+                  <span id={`${id}-shelf-${index}-count`} hidden>
+                    {countOf(shelf.sources.length)}
+                  </span>
+                )}
                 <SourceBulkSwitches
                   sources={shelf.sources.map(({ source }) => source)}
                   describedBy={
-                    filtering ? `${id}-shelf-${index} ${id}-shown` : `${id}-shelf-${index}`
+                    filtering
+                      ? `${id}-shelf-${index} ${id}-shelf-${index}-count`
+                      : `${id}-shelf-${index}`
                   }
                 />
               </div>

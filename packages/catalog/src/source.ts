@@ -2,9 +2,9 @@ import { z } from "zod";
 
 /**
  * A source abbreviation beside the title of the book or adventure that prints it, and the
- * shelf upstream files it on: a book's own `group`, such as `core` or `setting`, or
+ * group upstream files it under: a book's own `group`, such as `core` or `setting`, or
  * `adventure` for an adventure, whose upstream `group` says only `supplement` or
- * `supplement-alt`.
+ * `supplement-alt`. Null for a book upstream gives no `group`.
  */
 const catalogSourceSchema = z.strictObject({
   source: z.string().min(1),

@@ -95,6 +95,21 @@ describe("SourcesSettings", () => {
     expect(getDisabledSources()).toEqual(["PHB", "XPHB"]);
   });
 
+  it("describes a group's bulk switches by that group's matches, not the page's", async () => {
+    stubSources();
+    renderWithClient(<SourcesSettings />);
+    await screen.findByRole("switch", { name: "PHB Player's Handbook" });
+
+    fireEvent.change(filter(), { target: { value: "o" } });
+    expect(screen.getByRole("status")).toHaveTextContent("4 sources match");
+    const core = screen.getByRole("region", { name: "Core rulebooks" });
+    const off = within(core).getByRole("button", { name: "Turn all off" });
+    expect(off).toHaveAccessibleDescription("Core rulebooks 2 sources match");
+
+    fireEvent.click(off);
+    expect(getDisabledSources()).toEqual(["PHB", "XPHB"]);
+  });
+
   it("says so when the filter matches nothing", async () => {
     stubSources();
     renderWithClient(<SourcesSettings />);
