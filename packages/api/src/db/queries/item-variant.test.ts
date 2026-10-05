@@ -162,7 +162,7 @@ describe("variantKinds", () => {
     expect(variantKinds(PLUS_ONE_WEAPON_FIELDS, BASES)).toEqual(["melee", "ranged"]);
   });
 
-  it("drops a kind only a base item excludes refuses would give it", () => {
+  it("drops a kind that only an excluded base item would give it", () => {
     expect(variantKinds(PLUS_ONE_WEAPON_FIELDS, [LONGSWORD_FIELDS, NET_FIELDS])).toEqual(["melee"]);
   });
 
