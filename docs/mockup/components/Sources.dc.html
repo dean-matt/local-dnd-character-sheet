@@ -47,6 +47,7 @@
       <section aria-labelledby="{{shelf.headingId}}" style="display: flex; flex-direction: column; gap: 8px;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
           <h2 id="{{shelf.headingId}}" style="margin: 0; font-size: 13px; font-weight: 600; color: #1f2430;">{{shelf.label}}</h2>
+          <span id="{{shelf.countId}}" hidden>{{shelf.countLabel}}</span>
           <div style="display: flex; gap: 6px;">
             <button aria-describedby="{{shelf.describedBy}}" onClick="{{shelf.allOn}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all on</button>
             <button aria-describedby="{{shelf.describedBy}}" onClick="{{shelf.allOff}}" style="padding: 4px 8px; border: 1px solid #dde1e6; border-radius: 6px; background: #ffffff; font-size: 11px; color: #6b7280;">Turn all off</button>
@@ -116,7 +117,9 @@ class Component extends DCLogic {
       return {
         label,
         headingId: `sourcesShelf${i}`,
-        describedBy: q !== '' ? `sourcesShelf${i} sourcesShown` : `sourcesShelf${i}`,
+        countId: `sourcesShelf${i}Count`,
+        countLabel: inShelf.length === 1 ? '1 source matches' : `${inShelf.length} sources match`,
+        describedBy: q !== '' ? `sourcesShelf${i} sourcesShelf${i}Count` : `sourcesShelf${i}`,
         allOn: () => this.turn(abbrs, true),
         allOff: () => this.turn(abbrs, false),
         sources: inShelf.map((s) => ({
