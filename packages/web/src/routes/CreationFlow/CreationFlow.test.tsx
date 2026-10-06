@@ -286,10 +286,30 @@ describe("CreationFlow", () => {
     expect(location()).toBe("/characters");
   });
 
+  it("collapses the rail to step numbers that keep their names, sharing the sidebar's choice", () => {
+    localStorage.setItem("sidebar-collapsed", "true");
+    renderFlow("identity");
+
+    const toggle = screen.getByRole("button", { name: "Expand sidebar" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("New Character")).not.toBeInTheDocument();
+    expect(within(rail()).getByRole("link", { name: "Class" })).toHaveTextContent("2");
+
+    fireEvent.click(toggle);
+
+    expect(screen.getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByText("New Character")).toBeInTheDocument();
+    expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
+  });
+
   it("discards the draft on Cancel and returns to the list", async () => {
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
     renderFlow("identity");
 
+    expect(screen.getByRole("button", { name: "Cancel" }).closest("aside")).toBeNull();
     click("Cancel");
 
     await waitFor(() => expect(location()).toBe("/characters"));

@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
@@ -17,7 +18,7 @@ const { FormShell } = creationForm;
 const BUTTON = "rounded-control px-4 py-2 font-semibold text-body";
 
 /**
- * The `characters/new` route: the step rail, the open step, and Back, Next and Finish.
+ * The `characters/new` route: the step rail, the open step, and Back, Cancel, Next and Finish.
  * Nothing is written until Finish, which validates the whole definition and creates the
  * character; the draft carries the values between steps and across a reload, and leaving
  * the flow by any route discards it. Next never validates, because guidance refuses no
@@ -59,7 +60,7 @@ export function CreationFlow() {
       onCancel={() => navigate("/characters")}
     >
       {({ cancel }) => (
-        <SidebarFrame rail={<CreationRail current={step} onCancel={cancel} />}>
+        <SidebarFrame rail={<CreationRail current={step} />}>
           <div className="flex min-w-0 flex-1 flex-col gap-4 px-gutter py-6">
             <div>
               <p className="text-muted text-row">
@@ -78,14 +79,24 @@ export function CreationFlow() {
             )}
             <StepDepartures step={step} />
             <div className="flex justify-between border-t border-border pt-3">
-              <button
-                type="button"
-                disabled={previous === undefined}
-                onClick={() => previous && goTo(previous.slug)}
-                className={`${BUTTON} border border-border bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-60`}
-              >
-                Back
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={previous === undefined}
+                  onClick={() => previous && goTo(previous.slug)}
+                  className={`${BUTTON} border border-border bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={cancel}
+                  className={`${BUTTON} flex items-center gap-2 text-secondary hover:bg-subtle`}
+                >
+                  <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
+                  Cancel
+                </button>
+              </div>
               {next ? (
                 <button
                   type="button"
