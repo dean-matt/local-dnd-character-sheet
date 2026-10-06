@@ -26,6 +26,7 @@ import {
   type Term,
   weaponAttack,
 } from "@dnd/rules";
+import { abilityScore } from "./abilityScore.ts";
 import type {
   ArmorTrait,
   CharacterCatalog,
@@ -60,7 +61,7 @@ export function hitPointMaximum(
     if (die === undefined) throw new RangeError(`No hit die for ${key}`);
     return { die, rolled: level.rolled };
   });
-  return maxHitPoints(levels, abilityModifier(definition.abilityScores.con));
+  return maxHitPoints(levels, abilityModifier(abilityScore(definition, "con")));
 }
 
 /**
@@ -80,7 +81,7 @@ export function passiveSkill(
   const key = refKey(skill);
   const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
   return passiveScore(
-    abilityModifier(definition.abilityScores[ability]),
+    abilityModifier(abilityScore(definition, ability)),
     proficiencyContribution(totalLevel(definition), entry?.level ?? "none"),
   );
 }
@@ -101,7 +102,7 @@ function skillModifier(
   const terms: Term<TermReference>[] = [
     {
       label: ABILITY_LABEL[ability],
-      value: abilityModifier(definition.abilityScores[ability]),
+      value: abilityModifier(abilityScore(definition, ability)),
       reference: skill,
     },
   ];
@@ -125,7 +126,7 @@ function savingThrowModifier(
     proficient ? "proficient" : "none",
   );
   const terms: Term<TermReference>[] = [
-    { label: ABILITY_LABEL[ability], value: abilityModifier(definition.abilityScores[ability]) },
+    { label: ABILITY_LABEL[ability], value: abilityModifier(abilityScore(definition, ability)) },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
   return breakdown(terms);
@@ -195,7 +196,7 @@ function derivedArmorClass(
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
-    dexterityModifier: { value: abilityModifier(definition.abilityScores.dex) },
+    dexterityModifier: { value: abilityModifier(abilityScore(definition, "dex")) },
     dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
     shield: shield
       ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
@@ -246,8 +247,8 @@ function derivedAttacks(
     const { reference } = weapon.bonus;
     const result = weaponAttack<TermReference>({
       weapon,
-      strengthModifier: abilityModifier(definition.abilityScores.str),
-      dexterityModifier: abilityModifier(definition.abilityScores.dex),
+      strengthModifier: abilityModifier(abilityScore(definition, "str")),
+      dexterityModifier: abilityModifier(abilityScore(definition, "dex")),
       proficiency: proficiencyContribution(
         level,
         weaponProficient(definition, weapon) ? "proficient" : "none",
@@ -363,7 +364,7 @@ function spellcastingEntries(
     const key = entryKey(group.class);
     const ability = catalog.spellcastingAbilities.get(key);
     if (ability === undefined) return [];
-    const modifier = abilityModifier(definition.abilityScores[ability]);
+    const modifier = abilityModifier(abilityScore(definition, ability));
     const preparation = catalog.casterTables.get(key)?.preparation;
     return [
       {
@@ -452,7 +453,7 @@ export function deriveCharacter(
   const abilityModifiers = Object.fromEntries(
     ABILITIES.map((ability): [Ability, ComputedField<number>] => [
       ability,
-      fromBreakdown(abilityModifierBreakdown(definition.abilityScores[ability])),
+      fromBreakdown(abilityModifierBreakdown(abilityScore(definition, ability))),
     ]),
   ) as Record<Ability, ComputedField<number>>;
 
@@ -466,7 +467,7 @@ export function deriveCharacter(
     savingThrows,
     skills,
     armorClass: derivedArmorClass(definition, catalog),
-    initiative: fromBreakdown(abilityModifierBreakdown(definition.abilityScores.dex)),
+    initiative: fromBreakdown(abilityModifierBreakdown(abilityScore(definition, "dex"))),
     spellcasting: spellcastingEntries(definition, catalog, level),
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
@@ -488,7 +489,7 @@ function raceSize(definition: CharacterDefinition, catalog: CharacterCatalog): S
 }
 
 function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
-  const strength = definition.abilityScores.str;
+  const strength = abilityScore(definition, "str");
   const size = raceSize(definition, catalog);
   const weight = carriedWeight(definition, catalog.weights);
   return {

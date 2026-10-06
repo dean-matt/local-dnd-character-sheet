@@ -707,6 +707,22 @@ describe("ability scores", () => {
     expect(result.error?.issues[0]?.message).toBe("A score is a whole number from 1 to 30.");
   });
 
+  it("keeps an increase beside the score, defaulting to none, and refuses one of 0", () => {
+    const { abilityIncreases: _, ...without } = definition;
+    expect(characterDefinitionSchema.parse(without).abilityIncreases).toEqual([]);
+    const increase = { ability: "dex", amount: 2, grantedBy: "race" };
+    expect(
+      characterDefinitionSchema.parse({ ...definition, abilityIncreases: [increase] })
+        .abilityIncreases,
+    ).toEqual([increase]);
+    expect(
+      characterDefinitionSchema.safeParse({
+        ...definition,
+        abilityIncreases: [{ ...increase, amount: 0 }],
+      }).success,
+    ).toBe(false);
+  });
+
   it("names a missing name in words a sheet can show", () => {
     const result = characterDefinitionSchema.safeParse({ ...definition, name: "" });
     expect(result.error?.issues[0]?.message).toBe("A character needs a name.");

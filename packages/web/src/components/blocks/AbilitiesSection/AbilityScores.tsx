@@ -1,6 +1,7 @@
 import {
   ABILITIES,
   ABILITY_LABEL,
+  abilityScore,
   abilityScoresSchema,
   type CharacterDerived,
   type CharacterRecord,
@@ -32,48 +33,57 @@ export function AbilityScores({
   return (
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-        {ABILITIES.map((ability) => (
-          <StatTile
-            key={ability}
-            label={ability}
-            name={ABILITY_LABEL[ability]}
-            labelClassName={ABILITY_LABEL_CLASS}
-            detail={{
-              title: ABILITY_LABEL[ability],
-              meta: `Score ${definition.abilityScores[ability]}`,
-              value: derived.abilityModifiers[ability],
-              rules: editionRules(definition, ABILITY_RULES),
-            }}
-          >
-            <Field
-              mode="edit"
-              label={`${ABILITY_LABEL[ability]} score`}
-              labelHidden
-              current={definition.abilityScores[ability]}
-              format={String}
-              parse={parseScore}
-              schema={abilityScoresSchema.valueType}
-              inputClassName="w-12 text-center"
-              inputMode="numeric"
-              messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
-              onSave={async (score: number) => {
-                await update.mutateAsync((latest) => ({
-                  ...latest,
-                  abilityScores: { ...latest.abilityScores, [ability]: score },
-                }));
+        {ABILITIES.map((ability) => {
+          const score = abilityScore(definition, ability);
+          return (
+            <StatTile
+              key={ability}
+              label={ability}
+              name={ABILITY_LABEL[ability]}
+              labelClassName={ABILITY_LABEL_CLASS}
+              detail={{
+                title: ABILITY_LABEL[ability],
+                meta: `Score ${score}`,
+                value: derived.abilityModifiers[ability],
+                rules: editionRules(definition, ABILITY_RULES),
               }}
-            />
-            <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
+            >
               <Field
-                mode="read"
-                label="modifier"
+                mode="edit"
+                label={`${ABILITY_LABEL[ability]} score`}
                 labelHidden
-                value={derived.abilityModifiers[ability]}
-                format={signed}
+                current={score}
+                format={String}
+                parse={parseScore}
+                schema={abilityScoresSchema.valueType}
+                inputClassName="w-12 text-center"
+                inputMode="numeric"
+                messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
+                onSave={async (typed: number) => {
+                  // The player edits the score they see; the base takes the difference, so
+                  // a race's increase stays its own term.
+                  await update.mutateAsync((latest) => ({
+                    ...latest,
+                    abilityScores: {
+                      ...latest.abilityScores,
+                      [ability]:
+                        latest.abilityScores[ability] + typed - abilityScore(latest, ability),
+                    },
+                  }));
+                }}
               />
-            </span>
-          </StatTile>
-        ))}
+              <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
+                <Field
+                  mode="read"
+                  label="modifier"
+                  labelHidden
+                  value={derived.abilityModifiers[ability]}
+                  format={signed}
+                />
+              </span>
+            </StatTile>
+          );
+        })}
       </dl>
       <div ref={setMessages} className="flex flex-col" />
     </Card>
