@@ -103,6 +103,38 @@ describe("reference resolution", () => {
     );
   });
 
+  it("asks for a deity by its pantheon, and opens the one it names", async () => {
+    const tyr = (pantheon: string) => ({
+      name: "Tyr",
+      source: "PHB",
+      entries: [`Of ${pantheon}.`],
+      path: `/catalog/deity/Tyr/PHB/${encodeURIComponent(pantheon)}`,
+    });
+    const fetchMock = stubFetchByUrl({
+      "/api/refs/resolve": { refs: [tyr("Forgotten Realms"), tyr("Norse")] },
+    });
+    renderWithClient(<RulesText text="{@deity Tyr} and {@deity Tyr|norse|PHB|the Norse Tyr}" />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "the Norse Tyr" }));
+    expect(requested(fetchMock)).toEqual([
+      [
+        "/api/refs/resolve",
+        [
+          { tag: "deity", name: "Tyr" },
+          { tag: "deity", name: "Tyr", source: "PHB", qualifier: "norse" },
+        ],
+      ],
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open Tyr" }));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/catalog/deity/Tyr/PHB?qualifier=Norse",
+        undefined,
+      ),
+    );
+  });
+
   it("opens a resolved reference onto the row's prose, and from there its detail", async () => {
     const shield = {
       name: "Shield",
