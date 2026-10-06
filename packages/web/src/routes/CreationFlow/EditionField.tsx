@@ -33,7 +33,7 @@ export function EditionField() {
             </p>
             <ul className="mt-1 list-disc pl-5">
               {mismatches.map(({ label, value }) => (
-                <li key={label}>
+                <li key={`${label}: ${value}`}>
                   {label}: {value}
                 </li>
               ))}

@@ -59,6 +59,23 @@ const ROWS: Record<string, unknown> = {
     json: { ...PHB("Cleric"), classFeatures: [] },
   },
   "/api/classes/Cleric/PHB/subclasses?edition=one&limit=200": page([]),
+  "/api/homebrew/races/hr-1": { id: "hr-1", name: "Kenku", edition: "classic" },
+  "/api/homebrew/backgrounds/hbg-1": { id: "hbg-1", name: "Smuggler", edition: "classic" },
+  "/api/homebrew/classes/hc-1": {
+    id: "hc-1",
+    name: "Blood Hunter",
+    edition: "classic",
+    hitDie: 10,
+    json: { name: "Blood Hunter", source: "Homebrew", hd: { number: 1, faces: 10 } },
+    createdAt: "2026-10-06T00:00:00.000Z",
+  },
+  "/api/catalog/deity/Oghma/PHB?qualifier=Celtic": {
+    type: "deity",
+    ...PHB("Oghma"),
+    qualifier: "Celtic",
+    edition: "classic",
+    json: PHB("Oghma"),
+  },
 };
 
 const SEARCHES: Record<string, unknown[]> = {
@@ -273,6 +290,32 @@ describe("IdentityStep", () => {
     click("2014 rules");
 
     await waitFor(() => expect(status).toBeEmptyDOMElement());
+  });
+
+  it("names a homebrew choice and a deity of the other edition", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        race: { homebrewId: "hr-1" },
+        background: { homebrewId: "hbg-1" },
+        deity: { ...PHB("Oghma"), pantheon: "Celtic" },
+        levels: [{ class: { homebrewId: "hc-1" } }],
+      }),
+    );
+    renderStep();
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+
+    click("2024 rules");
+
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+        "Race: Kenku (homebrew)",
+        "Background: Smuggler (homebrew)",
+        "Class: Blood Hunter (homebrew)",
+        "Deity: Oghma · Celtic",
+      ]),
+    );
   });
 
   it("sets the name and the alignment", async () => {
