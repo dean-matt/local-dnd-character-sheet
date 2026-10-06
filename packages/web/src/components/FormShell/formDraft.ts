@@ -57,6 +57,8 @@ export function useFormDraft<T extends FieldValues>(
   }, [flow]);
 
   useEffect(() => {
+    // Two tabs on one flow share its key, so either tab's mount or departure overwrites the
+    // other's draft. `sessionStorage`, which holds one tab's alone, is the way out.
     pending.current = getValues();
     flush();
     const subscription = watch((values) => {

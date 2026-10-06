@@ -171,7 +171,8 @@ form holds a second definition of a legal character. A choice an earlier one inv
 such as a subclass after a class change, is cleared, and its field says why. The draft
 persists to `localStorage` keyed by flow, and by character for level-up, so it survives a
 reload; it clears on finish, cancel, or leaving the form. Creation keeps one URL and
-holds its step in the history entry, so browser Back leaves the flow. Each form is bound once through `createForm` in
+holds its step in the history entry, which a reload keeps, and replaces that entry on each
+step, so browser Back leaves the flow. Each form is bound once through `createForm` in
 `packages/web/src/lib/createForm.ts`.
 
 **Creation guides and never refuses.** Each step offers the rules' path and an escape
