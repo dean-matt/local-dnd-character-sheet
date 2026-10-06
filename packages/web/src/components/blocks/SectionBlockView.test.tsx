@@ -60,11 +60,13 @@ describe("SectionBlockView", () => {
     ["notes", "Notes"],
   ] as const)("renders the %s section, which waits on the character", (section, page) => {
     render(
-      <SectionBlockView
-        block={{ kind: "section", section }}
-        character={undefined}
-        derived={undefined}
-      />,
+      <QueryClientProvider client={new QueryClient()}>
+        <SectionBlockView
+          block={{ kind: "section", section }}
+          character={undefined}
+          derived={undefined}
+        />
+      </QueryClientProvider>,
     );
     expect(screen.getByText(`${page} isn't available yet.`)).toBeInTheDocument();
   });

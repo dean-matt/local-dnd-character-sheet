@@ -5,24 +5,37 @@ import {
 } from "@dnd/character";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "../lib/api.ts";
-import { characterDefinitionWriteKey, characterKey, charactersKey } from "./characterKeys.ts";
+import {
+  characterDefinitionWriteKey,
+  characterDefinitionWriteScope,
+  characterKey,
+  charactersKey,
+} from "./characterKeys.ts";
+
+type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
 
 /**
- * Replaces a character's definition. On success the mutation writes the response
- * straight into the detail cache and invalidates the list, so a reader sees the write
- * on the character's own page without waiting on a refetch. The invalidation is by
- * prefix, which also refetches the derived block and the inventory keyed under the
- * character; a grip written from a row reaches its damage chip that way. On failure both
- * caches stay untouched and a view renders the mutation's own `error` — TanStack Query
- * never resolves a failed write as data.
+ * Applies an edit to a character's definition and writes the result. The edit runs when
+ * the write starts, against the definition in the detail cache, and writes queue in one
+ * scope: two fields saving at once each land on the other's result rather than over it.
+ *
+ * On success the mutation writes the response straight into the detail cache and
+ * invalidates by prefix, which refetches the list, the derived block, the inventory and
+ * the undo log keyed under the character; a grip written from a row reaches its damage
+ * chip that way. On failure the caches stay untouched and a view renders the mutation's
+ * own `error` — TanStack Query never resolves a failed write as data.
  */
 export function useUpdateCharacterDefinition(id: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<CharacterRecord, Error, CharacterDefinition>({
+  return useMutation<CharacterRecord, Error, DefinitionEdit>({
     mutationKey: characterDefinitionWriteKey(id),
-    mutationFn: (definition) =>
-      apiMutate("PUT", `/characters/${id}`, characterRecordSchema, definition),
+    scope: { id: characterDefinitionWriteScope(id) },
+    mutationFn: (edit) => {
+      const record = queryClient.getQueryData<CharacterRecord>(characterKey(id));
+      if (!record) throw new Error("The character has not loaded yet.");
+      return apiMutate("PUT", `/characters/${id}`, characterRecordSchema, edit(record.definition));
+    },
     onSuccess: (record) => {
       queryClient.setQueryData(characterKey(id), record);
       queryClient.invalidateQueries({ queryKey: charactersKey });

@@ -2,10 +2,9 @@
 export const charactersKey = ["characters"] as const;
 export const characterKey = (id: string) => [...charactersKey, id] as const;
 export const characterPagesKey = (id: string) => [...characterKey(id), "pages"] as const;
-/**
- * Tags every write to a character's definition, an undo among them, so a control that
- * writes it waits out one in flight: a write built before the other lands over it.
- */
+/** Tags every write to a character's definition, an undo among them, so a control can see one in flight. */
 export const characterDefinitionWriteKey = (id: string) =>
   [...characterKey(id), "definition-write"] as const;
+/** Writes to one character's definition run one at a time, an undo among them. */
+export const characterDefinitionWriteScope = (id: string) => `definition-write:${id}`;
 export const characterUndoKey = (id: string) => [...characterKey(id), "undo"] as const;

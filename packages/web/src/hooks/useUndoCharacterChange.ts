@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { apiMutate } from "../lib/api.ts";
 import {
   characterDefinitionWriteKey,
+  characterDefinitionWriteScope,
   characterKey,
   charactersKey,
   characterUndoKey,
@@ -21,6 +22,7 @@ export function useUndoCharacterChange(id: string) {
 
   return useMutation<CharacterRecord, Error, void>({
     mutationKey: characterDefinitionWriteKey(id),
+    scope: { id: characterDefinitionWriteScope(id) },
     mutationFn: () => apiMutate("POST", `/characters/${id}/undo`, characterRecordSchema, {}),
     onSuccess: (record) => {
       queryClient.setQueryData(characterKey(id), record);

@@ -1,9 +1,7 @@
 import type { SheetItem } from "@dnd/catalog";
 import type { CharacterDerived, CharacterRecord } from "@dnd/character";
-import { useIsMutating } from "@tanstack/react-query";
 import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
-import { characterDefinitionWriteKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
@@ -38,16 +36,13 @@ export function ItemList({
 }) {
   const inventory = useCharacterInventory(character.id);
   const update = useUpdateCharacterDefinition(character.id);
-  const writing = useIsMutating({ mutationKey: characterDefinitionWriteKey(character.id) }) > 0;
-  const setGrip = (index: number, grip: Grip) => {
-    const { definition } = character;
-    update.mutate({
+  const setGrip = (index: number, grip: Grip) =>
+    update.mutate((definition) => ({
       ...definition,
       inventory: definition.inventory.map((entry, at) =>
         at === index ? { ...entry, grip } : entry,
       ),
-    });
-  };
+    }));
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState message={inventory.error.message} />;
   if (inventory.data.items.length === 0) {
@@ -68,7 +63,6 @@ export function ItemList({
                   item={item}
                   attack={derived?.attacks.find((attack) => attack.entry === index)}
                   onGrip={(grip) => setGrip(index, grip)}
-                  saving={writing}
                 />
               ) : (
                 <UnresolvedItemRow

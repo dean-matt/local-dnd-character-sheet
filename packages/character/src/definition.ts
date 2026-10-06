@@ -39,8 +39,13 @@ const levelEntrySchema = z.strictObject({
     .optional(),
 });
 
+const SCORE_RANGE = "A score is a whole number from 1 to 30.";
+
 /** Exhaustive: a record keyed by an enum requires every ability to be present. */
-export const abilityScoresSchema = z.record(abilitySchema, z.int().min(1).max(30));
+export const abilityScoresSchema = z.record(
+  abilitySchema,
+  z.int({ error: SCORE_RANGE }).min(1, { error: SCORE_RANGE }).max(30, { error: SCORE_RANGE }),
+);
 
 const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 
@@ -252,7 +257,7 @@ const appearanceSchema = z
   .prefault({});
 
 export const characterDefinitionSchema = z.strictObject({
-  name: z.string().min(1),
+  name: z.string().min(1, { error: "A character needs a name." }),
   edition: editionSchema,
   levels: z
     .array(levelEntrySchema)

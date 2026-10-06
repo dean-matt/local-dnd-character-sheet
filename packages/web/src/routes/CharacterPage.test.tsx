@@ -1,5 +1,6 @@
+import type { CharacterDefinition } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord, presetPageRecords, stateRecord } from "../test/records.ts";
@@ -99,6 +100,43 @@ describe("CharacterPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("nothing at /api/characters/1");
     expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
+  });
+
+  it("saves a changed score and moves what derives from it, without a reload", async () => {
+    let definition: CharacterDefinition = characterRecord("1", "Vex").definition;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === "/api/characters/1" && init?.method === "PUT") {
+          definition = JSON.parse(String(init.body));
+        }
+        const bodies: Record<string, unknown> = {
+          "/api/characters/1": { ...characterRecord("1", "Vex"), definition },
+          "/api/characters/1/derived": derivedRecord(definition),
+          "/api/characters/1/pages": presetPageRecords(),
+          "/api/characters/1/state": stateRecord(),
+          "/api/characters/1/inventory": { items: [] },
+        };
+        return url in bodies
+          ? new Response(JSON.stringify(bodies[url]))
+          : new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 });
+      }),
+    );
+    renderPage();
+
+    const score = await screen.findByRole("textbox", { name: "Charisma score" });
+    const save = () =>
+      within(screen.getByRole("region", { name: "Saving Throws" }))
+        .getByText("Charisma")
+        .closest("li");
+    expect(save()).toHaveTextContent("+3");
+
+    fireEvent.change(score, { target: { value: "20" } });
+    fireEvent.blur(score);
+
+    await waitFor(() => expect(save()).toHaveTextContent("+5"));
+    expect(definition.abilityScores.cha).toBe(20);
   });
 
   it("reaches a hidden page by its URL", async () => {

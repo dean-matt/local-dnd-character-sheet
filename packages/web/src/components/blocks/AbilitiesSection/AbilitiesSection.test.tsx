@@ -4,8 +4,11 @@ import {
   deriveCharacter,
   entryKey,
 } from "@dnd/character";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterKey } from "../../../hooks/characterKeys.ts";
+import { SAVED_STATUS_MS } from "../../../hooks/useFleeting.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
@@ -107,7 +110,10 @@ function stubRules(entries: unknown[]) {
   return fetchMock;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("AbilitiesSection", () => {
   it("degrades until both the character and its derived block have loaded", () => {
@@ -115,11 +121,86 @@ describe("AbilitiesSection", () => {
     expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
   });
 
-  it("reads each ability as its name, score and signed modifier", () => {
+  it("reads each ability as its name, an editable score and a signed modifier", () => {
     renderSection();
 
-    expect(spoken(tile("Ability Scores", "Strength"))).toBe("Strength8, modifier-1");
-    expect(spoken(tile("Ability Scores", "Charisma"))).toBe("Charisma17, modifier+3");
+    expect(screen.getByRole("textbox", { name: "Strength score" })).toHaveValue("8");
+    expect(screen.getByRole("textbox", { name: "Strength score" })).toHaveAttribute(
+      "inputmode",
+      "numeric",
+    );
+    expect(spoken(tile("Ability Scores", "Strength"))).toContain("modifier-1");
+    expect(screen.getByRole("textbox", { name: "Charisma score" })).toHaveValue("17");
+    expect(spoken(tile("Ability Scores", "Charisma"))).toContain("modifier+3");
+  });
+
+  it.each(["1e1", "0x1E", "+5"])(
+    "refuses %s rather than saving the number it spells",
+    async (raw) => {
+      renderSection();
+
+      const score = screen.getByRole("textbox", { name: "Strength score" });
+      fireEvent.change(score, { target: { value: raw } });
+      fireEvent.blur(score);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "A score is a whole number from 1 to 30.",
+      );
+    },
+  );
+
+  it("reports a refused score under the grid, naming the ability and keeping what was typed", async () => {
+    renderSection();
+
+    const score = screen.getByRole("textbox", { name: "Strength score" });
+    fireEvent.change(score, { target: { value: "31" } });
+    fireEvent.blur(score);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Strength: A score is a whole number from 1 to 30.");
+    const grid = tile("Ability Scores", "Strength").closest("dl");
+    expect(grid).not.toContainElement(alert);
+    expect(grid?.nextElementSibling).toContainElement(alert);
+    expect(score).toHaveValue("31");
+    expect(score).toHaveAttribute("aria-invalid", "true");
+    expect(score).toHaveAccessibleDescription("Strength: A score is a whole number from 1 to 30.");
+  });
+
+  it("clears each score's Saved after a moment, so saves in a row never stack under the grid", async () => {
+    vi.useFakeTimers();
+    const record = warlock();
+    stubRules([]);
+    const reads = fetch;
+    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === "PUT"
+        ? new Response(JSON.stringify({ ...record, definition: JSON.parse(String(init.body)) }))
+        : reads(url, init),
+    );
+    const client = new QueryClient();
+    client.setQueryData(characterKey(record.id), record);
+    render(
+      <QueryClientProvider client={client}>
+        <AbilitiesSection character={record} derived={derivedFor(record)} />
+      </QueryClientProvider>,
+    );
+    const slot = tile("Ability Scores", "Strength").closest("dl")?.nextElementSibling;
+    const saveScore = async (name: string, value: string) => {
+      const score = screen.getByRole("textbox", { name });
+      fireEvent.change(score, { target: { value } });
+      fireEvent.blur(score);
+      await act(() => vi.advanceTimersByTimeAsync(0));
+    };
+
+    await saveScore("Strength score", "10");
+    expect(slot).toHaveTextContent(/^Strength: Saved$/);
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS));
+    expect(slot).toHaveTextContent(/^$/);
+
+    await saveScore("Dexterity score", "14");
+    expect(slot).toHaveTextContent(/^Dexterity: Saved$/);
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS));
+    expect(slot).toHaveTextContent(/^$/);
+    expect(slot?.querySelectorAll("[role='status']")).toHaveLength(6);
   });
 
   it("takes each modifier from the derived block, not from the score", () => {
@@ -277,9 +358,9 @@ describe("AbilitiesSection", () => {
     );
   });
 
-  it("renders every overridable value read-only", () => {
+  it("edits the six scores and leaves every derived value read-only", () => {
     renderSection();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")).toHaveLength(6);
   });
 
   describe("detail modal", () => {

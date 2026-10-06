@@ -1,5 +1,6 @@
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { Dropdown } from "./Dropdown.tsx";
 
 interface MultiSelectOption {
   value: string;
@@ -83,12 +84,6 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    if (event.key === "Escape" && open) {
-      event.preventDefault();
-      setOpen(false);
-      button.current?.focus();
-      return;
-    }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     const boxes = [
       ...(list.current?.querySelectorAll<HTMLInputElement>("input[type=checkbox]") ?? []),
@@ -99,63 +94,51 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
   }
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: Escape, the arrow keys and focusout bubbling from the button and the list.
-    <div
-      className="relative flex min-w-0 flex-col gap-1"
+    <Dropdown
+      open={open}
+      onClose={() => setOpen(false)}
       onKeyDown={onKeyDown}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      value={summary(options, selected, noun)}
+      valueId={`${id}-value`}
+      button={{
+        ref: button,
+        "aria-controls": `${id}-list`,
+        "aria-labelledby": `${id}-label ${id}-value`,
+        onClick: toggle,
       }}
-    >
-      {/* A fixed height, so Clear appearing moves nothing below it. */}
-      <div className="flex h-6 items-center justify-between">
-        <span
-          id={`${id}-label`}
-          className="text-label font-semibold uppercase tracking-label text-muted"
-        >
-          {label}
-        </span>
-        {selected.length > 0 && (
-          <button
-            type="button"
-            aria-label={`Clear ${noun}`}
-            onClick={() => {
-              onChange([]);
-              button.current?.focus();
-            }}
-            className="rounded-control px-2 py-0.5 text-row font-semibold text-accent-text hover:bg-subtle"
+      header={
+        // A fixed height, so Clear appearing moves nothing below it.
+        <div className="flex h-6 items-center justify-between">
+          <span
+            id={`${id}-label`}
+            className="text-label font-semibold uppercase tracking-label text-muted"
           >
-            Clear
-          </button>
-        )}
-      </div>
-      <button
-        ref={button}
-        type="button"
-        aria-expanded={open}
-        aria-controls={`${id}-list`}
-        aria-labelledby={`${id}-label ${id}-value`}
-        onClick={toggle}
-        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink"
-      >
-        <span id={`${id}-value`} className="truncate">
-          {summary(options, selected, noun)}
-        </span>
-        <ChevronDown
-          size={14}
-          aria-hidden
-          className="shrink-0 text-muted"
-          style={{ transform: open ? "rotate(180deg)" : undefined }}
-        />
-      </button>
-      {open && (
+            {label}
+          </span>
+          {selected.length > 0 && (
+            <button
+              type="button"
+              aria-label={`Clear ${noun}`}
+              onClick={() => {
+                onChange([]);
+                button.current?.focus();
+              }}
+              className="rounded-control px-2 py-0.5 text-row font-semibold text-accent-text hover:bg-subtle"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      }
+    >
+      {(panelClassName) => (
         <fieldset
           ref={list}
           id={`${id}-list`}
           // A press on a label's text focuses nothing, and Safari never focuses a clicked
-          // checkbox, so the blur above would close the list before the click toggled it.
+          // checkbox, so the dropdown's blur would close the list before the click toggled it.
           tabIndex={-1}
-          className="absolute top-full left-0 z-30 mt-1 flex max-h-80 w-full min-w-0 flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none"
+          className={panelClassName}
         >
           <legend className="sr-only">{capitalize(noun)} to search</legend>
           {filterable && (
@@ -204,6 +187,6 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
           )}
         </fieldset>
       )}
-    </div>
+    </Dropdown>
   );
 }

@@ -1,6 +1,7 @@
-import { characterDerivedSchema } from "@dnd/character";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { characterDefinitionSchema, characterDerivedSchema } from "@dnd/character";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SAVED_STATUS_MS } from "../../hooks/useFleeting.ts";
 import { Field } from "./Field.tsx";
 
 /** The real schema a hit point maximum field validates against, not a stand-in. */
@@ -337,6 +338,7 @@ describe("Field, edit mode", () => {
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
     expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 
   it("surfaces a parse failure without calling onSave", async () => {
@@ -363,5 +365,141 @@ describe("Field, edit mode", () => {
 
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
     expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Field, edit mode, a value changed from outside", () => {
+  const edit = (manual: number | null, onSave = vi.fn().mockResolvedValue(undefined)) => (
+    <Field
+      mode="edit"
+      label="Hit points"
+      value={{ computed: 8, manual }}
+      format={format}
+      schema={schema}
+      parse={parse}
+      onSave={onSave}
+      debounceMs={100_000}
+    />
+  );
+
+  it("shows the new value while the field holds no unsaved edit, as after an undo", () => {
+    const { rerender } = render(edit(12));
+    rerender(edit(15));
+
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveValue("15");
+  });
+
+  it("keeps the user's unsaved text over it", () => {
+    const { rerender } = render(edit(12));
+    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), {
+      target: { value: "20" },
+    });
+    rerender(edit(15));
+
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveValue("20");
+  });
+});
+
+describe("Field, edit mode, a plain value", () => {
+  it("keeps the text being typed when its own save reads back normalized", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const name = (current: string) => (
+      <Field
+        mode="edit"
+        label="Name"
+        current={current}
+        format={(value: string) => value}
+        parse={(raw) => raw.trim()}
+        schema={characterDefinitionSchema.shape.name}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />
+    );
+    const { rerender } = render(name("Ve"));
+    const input = screen.getByRole("textbox", { name: "Name" });
+
+    fireEvent.change(input, { target: { value: "Vex " } });
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith("Vex"));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    rerender(name("Vex"));
+
+    expect(input).toHaveValue("Vex ");
+  });
+
+  it("refuses a name of spaces alone", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Field
+        mode="edit"
+        label="Name"
+        current="Vex"
+        format={(value: string) => value}
+        parse={(raw) => raw.trim()}
+        schema={characterDefinitionSchema.shape.name}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), { target: { value: "   " } });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("A character needs a name.");
+    expect(onSave).not.toHaveBeenCalled();
+  });
+});
+
+describe("Field, edit mode, the status after a save", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const edit = (onSave: () => Promise<void>) =>
+    render(
+      <Field
+        mode="edit"
+        label="Hit points"
+        value={{ computed: 8, manual: null }}
+        format={format}
+        schema={schema}
+        parse={parse}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+  const typeAndSettle = async (value: string) => {
+    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), { target: { value } });
+    await act(() => vi.advanceTimersByTimeAsync(DEBOUNCE_MS));
+  };
+
+  it("clears Saved after a moment, leaving the live region mounted", async () => {
+    vi.useFakeTimers();
+    edit(vi.fn().mockResolvedValue(undefined));
+
+    await typeAndSettle("12");
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS - 1));
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    await act(() => vi.advanceTimersByTimeAsync(1));
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("restarts the wait for a save that lands while Saved still shows", async () => {
+    vi.useFakeTimers();
+    edit(vi.fn().mockResolvedValue(undefined));
+
+    await typeAndSettle("12");
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS / 2));
+    await typeAndSettle("13");
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS - DEBOUNCE_MS));
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+  });
+
+  it("keeps a failed save on screen until it is fixed", async () => {
+    vi.useFakeTimers();
+    edit(vi.fn().mockRejectedValue(new Error("network down")));
+
+    await typeAndSettle("12");
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS * 5));
+    expect(screen.getByRole("alert")).toHaveTextContent("network down");
   });
 });

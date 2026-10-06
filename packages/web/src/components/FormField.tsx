@@ -7,8 +7,13 @@
  * The error reaches a screen reader through `aria-describedby` and a `role="alert"`
  * region, never a native validation bubble, so a `<form>` holding these sets `noValidate`.
  * A control rendered outside `FormField` wires its own `aria-describedby`.
+ *
+ * `messageSlot` moves the status and error out of the field into an element the caller
+ * places, for a control too narrow to hold a sentence, and names the field in each so one
+ * slot can hold several fields' messages.
  */
 import { type ReactNode, useId } from "react";
+import { createPortal } from "react-dom";
 
 /** What `FormField` hands its control to spread onto the focusable element. */
 interface ControlProps {
@@ -19,30 +24,45 @@ interface ControlProps {
 
 export interface FormFieldProps {
   label: string;
+  /** Keeps the label for a screen reader where the surrounding layout already names the control. */
+  labelHidden?: boolean;
   /** Marks the control invalid and describes it. */
   error?: ReactNode;
   /** Progress the user should hear without moving focus, such as a save in flight. */
   status?: ReactNode;
+  /** `into` is null until the caller's element mounts; nothing renders until then. */
+  messageSlot?: { into: Element | null; name: string };
   children: (control: ControlProps) => ReactNode;
 }
 
-export function FormField({ label, error, status, children }: FormFieldProps) {
+export function FormField({
+  label,
+  labelHidden,
+  error,
+  status,
+  messageSlot,
+  children,
+}: FormFieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
   // Truthiness, so `error={touched && message}` reads its `false` as valid.
   const invalid = Boolean(error);
-
-  return (
-    <div className="flex flex-col">
-      <label htmlFor={id} className="mb-1 text-muted text-row">
-        {label}
-      </label>
-      {children({ id, "aria-invalid": invalid, "aria-describedby": invalid ? errorId : undefined })}
+  const named = (message: ReactNode) =>
+    messageSlot && message ? (
+      <>
+        {`${messageSlot.name}: `}
+        {message}
+      </>
+    ) : (
+      message
+    );
+  const messages = (
+    <>
       {/* Rendered and left in the accessibility tree while empty: a live region added with
           its text is often not announced. A margin rather than the parent's gap spaces it, so
           an empty one takes no room. */}
       <span role="status" aria-live="polite" className="mt-1 text-muted text-row empty:mt-0">
-        {invalid ? null : status}
+        {invalid ? null : named(status)}
       </span>
       {invalid && (
         <span
@@ -50,9 +70,19 @@ export function FormField({ label, error, status, children }: FormFieldProps) {
           role="alert"
           className="mt-1 flex items-center gap-2 text-error text-row"
         >
-          {error}
+          {named(error)}
         </span>
       )}
+    </>
+  );
+
+  return (
+    <div className="flex flex-col">
+      <label htmlFor={id} className={labelHidden ? "sr-only" : "mb-1 text-muted text-row"}>
+        {label}
+      </label>
+      {children({ id, "aria-invalid": invalid, "aria-describedby": invalid ? errorId : undefined })}
+      {messageSlot ? messageSlot.into && createPortal(messages, messageSlot.into) : messages}
     </div>
   );
 }

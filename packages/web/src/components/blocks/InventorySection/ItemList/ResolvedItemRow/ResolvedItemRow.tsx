@@ -28,12 +28,10 @@ export function ResolvedItemRow({
   item,
   attack,
   onGrip,
-  saving,
 }: {
   item: ResolvedItem;
   attack: Attack | undefined;
   onGrip: (grip: Grip) => void;
-  saving: boolean;
 }) {
   const rarity = item.rarity && item.rarity !== "none" ? capitalize(item.rarity) : undefined;
   return (
@@ -58,9 +56,7 @@ export function ResolvedItemRow({
       preview={firstLine(item.entries)}
       actions={attack && <AttackChips name={item.name} attack={attack} />}
       controls={
-        attack?.grip && (
-          <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} saving={saving} />
-        )
+        attack?.grip && <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} />
       }
       detail={{
         meta: rarity ?? "Item",

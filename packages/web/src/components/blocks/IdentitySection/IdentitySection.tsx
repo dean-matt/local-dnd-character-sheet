@@ -1,10 +1,19 @@
 /**
- * The Identity page, read-only: it draws what the definition already holds, and shows as
- * unavailable until the character loads, as the Level, Alignment and Notes pages beside it do.
+ * The Identity page: the name edits in place and saves itself; race, class, background and
+ * the proficiency lists are catalog picks and stay read-only here. It shows as unavailable
+ * until the character loads, as the Level, Alignment and Notes pages beside it do.
  */
-import { type CharacterRecord, displayName, raceLabel, totalLevel } from "@dnd/character";
+import {
+  type CharacterRecord,
+  characterDefinitionSchema,
+  displayName,
+  raceLabel,
+  totalLevel,
+} from "@dnd/character";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { ChipList } from "../../ChipList.tsx";
+import { Field } from "../../Field/Field.tsx";
 import { classChips } from "../classChips.ts";
 import { SectionUnavailable } from "../SectionUnavailable.tsx";
 import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
@@ -13,6 +22,7 @@ import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
 const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertise: " (expertise)" };
 
 export function IdentitySection({ character }: { character: CharacterRecord | undefined }) {
+  const update = useUpdateCharacterDefinition(character?.id ?? "");
   if (!character) return <SectionUnavailable page="Identity" />;
   const { definition } = character;
   const { background, proficiencies } = definition;
@@ -23,7 +33,18 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Card title="Name">
-        <p className="text-sm">{definition.name}</p>
+        <Field
+          mode="edit"
+          label="Name"
+          labelHidden
+          current={definition.name}
+          format={(name) => name}
+          parse={(raw) => raw.trim()}
+          schema={characterDefinitionSchema.shape.name}
+          onSave={async (name: string) => {
+            await update.mutateAsync((latest) => ({ ...latest, name }));
+          }}
+        />
       </Card>
       <Card title="Race">
         <ChipList labels={[raceLabel(definition)]} />

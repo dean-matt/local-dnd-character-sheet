@@ -49,9 +49,9 @@ widget, panel, or nav element:
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Backstory, Notes.
-- Identity: Name, Race, Class, Background, Languages, Proficiencies — each its own
-  widget. Level (level, leveling mode, experience) and Alignment are their own sidebar
-  tabs, not part of Identity. Level Up is the modal a level-up button on Level opens —
+- Identity: Race, Class, Background, Languages, Proficiencies — each its own
+  widget. Level (level, leveling mode, experience) is its own sidebar tab, not part of
+  Identity. Level Up is the modal a level-up button on Level opens —
   pick an existing class or multiclass into a new one, Hit Points by average, roll, or
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
   and new spells for a class that gains them, all gating Apply until every open choice
@@ -277,10 +277,10 @@ says how much of the artboard the app builds today.
 | Artboard | Retired by | Shipped |
 |---|---|---|
 | `Layout` | #282 | all but the Rolls Panel |
-| `Abilities` | #227, #487 | read-only |
+| `Abilities` | #227, #487 | the scores edit, the rest read-only |
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | read-only |
-| `Combat` | #227 | read-only |
+| `Combat` | #227, #228 | read-only |
 | `HP` | #277, #281, #487 | read-only |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
@@ -305,13 +305,11 @@ says how much of the artboard the app builds today.
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |
-| `Name` | #227 | read-only |
 | `Race` | #234, #488 | read-only |
 | `Class` | #235, #240 | read-only |
 | `Background` | #234, #488 | read-only |
 | `Level` | #239, #393 | read-only |
 | `LevelUpModal` | #239, #240 | nothing |
-| `Alignment` | #227 | read-only |
 | `Languages` | #488 | read-only |
 | `Proficiencies` | #400, #488 | read-only |
 | `Sidebar` | #242, #470, #486 | read-only |

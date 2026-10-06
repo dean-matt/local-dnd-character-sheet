@@ -7,6 +7,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { InventorySection } from "./InventorySection.tsx";
@@ -152,9 +153,11 @@ function renderSection(
     ...(references && { "/api/characters/1/references": references }),
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const character = vex();
+  client.setQueryData(characterKey(character.id), character);
   render(
     <QueryClientProvider client={client}>
-      <InventorySection character={vex()} derived={derived ?? undefined} />
+      <InventorySection character={character} derived={derived ?? undefined} />
     </QueryClientProvider>,
   );
   return fetchMock;

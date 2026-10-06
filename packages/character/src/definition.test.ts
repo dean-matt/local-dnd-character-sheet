@@ -686,10 +686,14 @@ describe("ability scores", () => {
     expect(abilityScoresSchema.safeParse(missing).success).toBe(false);
   });
 
-  it("rejects a score outside 1-30", () => {
-    expect(abilityScoresSchema.safeParse({ ...definition.abilityScores, str: 31 }).success).toBe(
-      false,
-    );
+  it("rejects a score outside 1-30 in words a sheet can show", () => {
+    const result = abilityScoresSchema.safeParse({ ...definition.abilityScores, str: 31 });
+    expect(result.error?.issues[0]?.message).toBe("A score is a whole number from 1 to 30.");
+  });
+
+  it("names a missing name in words a sheet can show", () => {
+    const result = characterDefinitionSchema.safeParse({ ...definition, name: "" });
+    expect(result.error?.issues[0]?.message).toBe("A character needs a name.");
   });
 });
 
