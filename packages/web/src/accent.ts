@@ -34,29 +34,78 @@ export const ACCENT_PRESETS = [
  */
 export type Accent = { color: string; ring: number; text: number };
 
-type Pair = { fg: Vec3; bg: Vec3; minimum: number };
+type Pair = { name: string; fg: Vec3; bg: Vec3; minimum: number };
 
-function lightPairs(accent: Vec3): Pair[] {
+const surfaces = (theme: string, ...grounds: [string, Vec3][]) =>
+  grounds.map(([ground, bg]) => ({ ground: `${ground}, ${theme}`, bg }));
+
+/** The light accent pairs, which `contrast.test.ts` also holds the default accent to. */
+export function lightPairs(accent: Vec3): Pair[] {
+  const grounds = surfaces(
+    "light",
+    ["canvas", canvasLight],
+    ["surface", white],
+    ["subtle", subtleLight],
+  );
   return [
-    ...[canvasLight, white, subtleLight].map((bg) => ({ fg: accent, bg, minimum: AA_TEXT })),
-    { fg: accent, bg: mixOklab(accent, canvasLight, 0.1), minimum: AA_TEXT },
-    { fg: white, bg: accent, minimum: AA_TEXT },
-    { fg: mixOklab(accent, black, 0.85), bg: canvasLight, minimum: AA_NON_TEXT },
-    { fg: mixOklab(accent, black, 0.7), bg: canvasLight, minimum: AA_NON_TEXT },
+    ...grounds.map(({ ground, bg }) => ({
+      name: `accent-text on ${ground}`,
+      fg: accent,
+      bg,
+      minimum: AA_TEXT,
+    })),
+    {
+      name: "accent on accent-tint, light",
+      fg: accent,
+      bg: mixOklab(accent, canvasLight, 0.1),
+      minimum: AA_TEXT,
+    },
+    { name: "white text on accent, light", fg: white, bg: accent, minimum: AA_TEXT },
+    {
+      name: "accent-hover focus ring on canvas, light",
+      fg: mixOklab(accent, black, 0.85),
+      bg: canvasLight,
+      minimum: AA_NON_TEXT,
+    },
+    {
+      name: "accent-active focus ring on canvas, light",
+      fg: mixOklab(accent, black, 0.7),
+      bg: canvasLight,
+      minimum: AA_NON_TEXT,
+    },
   ];
 }
 
-function darkRingPairs(ring: Vec3): Pair[] {
+/** Takes the dark `--color-accent`. */
+export function darkRingPairs(ring: Vec3): Pair[] {
   return [
-    { fg: ring, bg: canvasDark, minimum: AA_NON_TEXT },
-    { fg: ring, bg: surfaceDark, minimum: AA_NON_TEXT },
-    { fg: ring, bg: mixOklab(ring, canvasDark, 0.1), minimum: AA_NON_TEXT },
-    { fg: white, bg: ring, minimum: AA_TEXT },
+    { name: "focus ring on canvas, dark", fg: ring, bg: canvasDark, minimum: AA_NON_TEXT },
+    { name: "focus ring on surface, dark", fg: ring, bg: surfaceDark, minimum: AA_NON_TEXT },
+    // Checked as non-text: the dark accent on the dark surface already sits near 3:1.
+    {
+      name: "accent on accent-tint, dark",
+      fg: ring,
+      bg: mixOklab(ring, canvasDark, 0.1),
+      minimum: AA_NON_TEXT,
+    },
+    { name: "white text on accent, dark", fg: white, bg: ring, minimum: AA_TEXT },
   ];
 }
 
-function darkTextPairs(text: Vec3): Pair[] {
-  return [canvasDark, surfaceDark, subtleDark].map((bg) => ({ fg: text, bg, minimum: AA_TEXT }));
+/** Takes the dark `--color-accent-text`. */
+export function darkTextPairs(text: Vec3): Pair[] {
+  const grounds = surfaces(
+    "dark",
+    ["canvas", canvasDark],
+    ["surface", surfaceDark],
+    ["subtle", subtleDark],
+  );
+  return grounds.map(({ ground, bg }) => ({
+    name: `accent-text on ${ground}`,
+    fg: text,
+    bg,
+    minimum: AA_TEXT,
+  }));
 }
 
 const passes = (pairs: Pair[]) => pairs.every((p) => contrastRatio(p.fg, p.bg) >= p.minimum);
@@ -70,8 +119,7 @@ function leastLift(color: Vec3, pairs: (shade: Vec3) => Pair[]): number | undefi
 }
 
 /**
- * Holds a `#rrggbb` color to every pair `contrast.test.ts` holds the default accent to.
- * The light theme uses the color as chosen; the dark theme lightens it as little as clears
+ * Holds a `#rrggbb` color to the accent pairs above. The light theme uses the color as chosen; the dark theme lightens it as little as clears
  * each pair there, which the default's fixed mixes in `index.css` cannot do for every hue.
  */
 export function deriveAccent(color: string): { accent: Accent } | { refusal: string } {
@@ -137,4 +185,13 @@ export function setStoredAccent(accent: Accent): void {
     // Storage can throw in private mode or with blocked site data. The document carries
     // the accent regardless, so it applies for this session without surviving a reload.
   }
+}
+
+/**
+ * Re-derives the stored choice, so lifts stored before a dark token changed still clear
+ * their pairs, and a choice the new tokens refuse falls back to the default.
+ */
+export function refreshStoredAccent(): void {
+  const result = deriveAccent(getStoredAccent());
+  setStoredAccent("accent" in result ? result.accent : { color: DEFAULT_ACCENT, ring: 0, text: 0 });
 }

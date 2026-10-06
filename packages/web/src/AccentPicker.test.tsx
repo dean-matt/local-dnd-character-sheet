@@ -50,6 +50,17 @@ describe("AccentPicker", () => {
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
+  it("waits for the picker to close before applying a color dragged through", () => {
+    render(<AccentPicker />);
+    const input = screen.getByLabelText("Custom accent color");
+
+    fireEvent.input(input, { target: { value: "#1b5e20" } });
+
+    expect(input).toHaveValue("#1b5e20");
+    expect(rootAccent()).toBe("");
+    expect(localStorage.getItem("accent")).toBeNull();
+  });
+
   it("refuses a custom color that fails contrast, keeping the accent and saying why", () => {
     render(<AccentPicker />);
     const input = screen.getByLabelText("Custom accent color");

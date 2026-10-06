@@ -1,10 +1,11 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ACCENT_PRESETS, deriveAccent, getStoredAccent, setStoredAccent } from "./accent.ts";
 
 export function AccentPicker() {
   const [accent, setAccent] = useState(getStoredAccent);
   const [custom, setCustom] = useState(accent);
   const [refusal, setRefusal] = useState<string>();
+  const input = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const refusalId = useId();
 
@@ -20,6 +21,17 @@ export function AccentPicker() {
     setStoredAccent(result.accent);
     setAccent(normalized);
   };
+
+  // React's onChange fires on every input event, so a drag through the native picker would
+  // apply each color it crosses. The native change event fires once, on the color kept.
+  const commit = useRef(choose);
+  commit.current = choose;
+  useEffect(() => {
+    const element = input.current;
+    const onCommit = () => element && commit.current(element.value);
+    element?.addEventListener("change", onCommit);
+    return () => element?.removeEventListener("change", onCommit);
+  }, []);
 
   return (
     <fieldset className="m-0 min-w-0 border-0 p-0">
@@ -43,13 +55,14 @@ export function AccentPicker() {
           Custom accent color
         </label>
         <input
+          ref={input}
           id={inputId}
           type="color"
           value={custom}
           title="Custom color"
           aria-invalid={refusal !== undefined}
           aria-describedby={refusalId}
-          onChange={(event) => choose(event.target.value)}
+          onChange={(event) => setCustom(event.target.value)}
           className="size-6.5 cursor-pointer rounded-full border border-border bg-transparent p-0"
         />
       </div>

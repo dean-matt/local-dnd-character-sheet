@@ -80,9 +80,10 @@ Display Settings changes the accent to one of five presets or a custom color.
 `src/accent.ts` holds a choice to every accent pair below. It refuses a color that fails a
 light pair or that no dark shade clears, and otherwise sets `--accent` and the two lifts on
 the root element, each the least white that clears its dark pairs — the default's fixed
-lifts do not suit every hue. The mockup's
-orange measures 3.00:1 on canvas, so that preset is scaled down to `#9e5409`. A choice is
-stored as the theme is, and `index.html` applies it before first paint.
+lifts do not suit every hue. The mockup's orange measures 3.00:1 on canvas, so that preset
+is scaled down to `#9e5409`. A choice is stored as the theme is, `index.html` applies it
+before first paint, and `main.tsx` re-derives its lifts on load, so a later token change
+cannot leave a stored choice failing its pairs.
 
 ## Focus and contrast
 

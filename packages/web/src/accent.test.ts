@@ -6,6 +6,7 @@ import {
   DEFAULT_ACCENT,
   deriveAccent,
   getStoredAccent,
+  refreshStoredAccent,
   setStoredAccent,
 } from "./accent.ts";
 import { contrastRatio, hex, mixOklab, subtleDark, surfaceDark, white } from "./lib/contrast.ts";
@@ -26,6 +27,22 @@ describe("deriveAccent", () => {
   it("refuses a color too light for the light theme, saying by how much", () => {
     expect(deriveAccent("#d9730d")).toEqual({
       refusal: "Too light for the light theme: it measures 3.00:1 where AA needs 4.5:1.",
+    });
+  });
+
+  it("refuses a color no dark shade clears", async () => {
+    // A dark surface this light leaves no shade both 3:1 on it and under white text at 4.5:1.
+    vi.resetModules();
+    vi.doMock("./lib/contrast.ts", async (original) => ({
+      ...(await original<typeof import("./lib/contrast.ts")>()),
+      surfaceDark: [0.1, 0.1, 0.1],
+    }));
+    const mocked = await import("./accent.ts");
+    vi.doUnmock("./lib/contrast.ts");
+
+    expect(mocked.deriveAccent(DEFAULT_ACCENT)).toEqual({
+      refusal:
+        "No shade of it in the dark theme keeps both white text on it and its focus ring readable.",
     });
   });
 
@@ -70,6 +87,15 @@ describe("the stored accent", () => {
 
     expect(localStorage.getItem("accent")).toBeNull();
     expect(rootStyle().getPropertyValue("--accent")).toBe("");
+  });
+
+  it("re-derives stale stored lifts on refresh", () => {
+    localStorage.setItem("accent", JSON.stringify({ color: "#3a4f7a", ring: 3, text: 5 }));
+
+    refreshStoredAccent();
+
+    expect(JSON.parse(localStorage.getItem("accent") ?? "null")).toEqual(derived("#3a4f7a"));
+    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("21%");
   });
 
   it("ignores a corrupt stored value", () => {
