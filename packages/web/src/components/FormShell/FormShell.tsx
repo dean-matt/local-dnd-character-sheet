@@ -6,7 +6,8 @@
  * form.
  *
  * The draft clears once `onSubmit` resolves, or on `cancel`; an `onSubmit` that throws
- * leaves it standing. Every descendant `<button>` without a `type` attribute is given
+ * leaves it standing, and its rejection stops here, so the caller renders its own failure
+ * — a mutation's `error` — rather than leaving an unhandled rejection. Every descendant `<button>` without a `type` attribute is given
  * `type="button"`, so a secondary action inside a step cannot submit, while Enter in a
  * field still submits through the form's own submit button.
  */
@@ -73,10 +74,14 @@ export function FormShell<In extends FieldValues, Out extends FieldValues>({
       <form
         ref={formRef}
         noValidate
-        onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(values);
-          discard();
-        })}
+        onSubmit={(event) =>
+          form
+            .handleSubmit(async (values) => {
+              await onSubmit(values);
+              discard();
+            })(event)
+            .catch(() => {})
+        }
       >
         {children({ cancel })}
       </form>
