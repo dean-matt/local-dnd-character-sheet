@@ -157,7 +157,7 @@ describe("deriveCharacter", () => {
       { ref: STEALTH, ability: "dex" as const },
       { ref: PERCEPTION, ability: "wis" as const },
     ],
-    size: "medium" as const,
+    sizes: ["medium" as const],
     speed: { walk: 30 },
     armor: new Map([
       [entryKey(STUDDED_LEATHER), { category: "light" as const, armorClass: 12 }],
@@ -188,6 +188,16 @@ describe("deriveCharacter", () => {
     expect(derived.hitPointMaximum.computed).toBe(hitPointMaximum(equipped, hitDice).total);
     expect(derived.size.computed).toBe("medium");
     expect(derived.speed.computed).toEqual({ walk: 30 });
+  });
+
+  it("takes the size the definition picks where the race offers it, and the largest otherwise", () => {
+    const sizes = ["tiny" as const, "medium" as const];
+    const sized = (size?: "tiny" | "small") =>
+      deriveCharacter({ ...equipped, size }, { ...catalog, sizes });
+    expect(sized("tiny").size.computed).toBe("tiny");
+    expect(sized("tiny").carryingCapacity.computed).toBe(60);
+    expect(sized().size.computed).toBe("medium");
+    expect(sized("small").size.computed).toBe("medium");
   });
 
   it("reads the proficiency bonus off total level", () => {
