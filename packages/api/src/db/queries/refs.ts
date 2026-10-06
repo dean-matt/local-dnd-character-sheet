@@ -117,13 +117,14 @@ const race: Omit<Target, "page" | "source"> = {
       : `/races/${segments(row.race_name ?? "", row.race_source ?? "", "subraces", row.subrace ?? "", row.source)}`,
 };
 
-/**
- * A deity is keyed by its pantheon as well, and a card by its deck, both held in
- * `qualifier`. A deity reference naming no pantheon means the Forgotten Realms one, as
- * every such reference in the corpus does; a card reference always names its deck.
- */
+/** A deity reference naming no pantheon means this one, as every such reference in the corpus does. */
 const DEFAULT_PANTHEON = "Forgotten Realms";
 
+/**
+ * A deity is keyed by its pantheon as well, and a card by its deck, both held in
+ * `qualifier`. `fallback` fills a reference naming none; a card has none, because every
+ * card reference in the corpus names its deck.
+ */
 const qualified = (
   from: "lookups" | "entities",
   type: string,

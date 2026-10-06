@@ -80,7 +80,8 @@ resolver matches `short_name` for that tag. `{@race}` may name a subrace as
 `Human (Keldon)`, so the resolver also matches a subrace row on that merged name. A
 feature's token carries an `owner` — its class, subclass and level — because its key
 needs them, and a feature tag missing one degrades to text. A deity's or a card's token
-carries its pantheon or deck as `qualifier`, for the same reason.
+carries its pantheon or deck as `qualifier`; a deity naming none means the Forgotten
+Realms, and a card naming none stays unresolved.
 
 ## Resolving
 
