@@ -31,7 +31,10 @@
         "reprintedAs": ["Ammunition of Slaying|XDMG"],
         "tier": "minor",
         "rarity": "very rare",
-        "entries": ["Elided. {@dc 17} Elided. {@damage 6d10} Elided.", "Elided."]
+        "entries": [
+          "{=baseName/at} {=baseName/l} Elided. {=baseName/l} Elided. {=baseName/l} Elided. {=baseName/a} {=baseName/l} Elided. {=baseName/l} Elided. {@dc 17} Elided. {@damage 6d10} Elided.",
+          "Elided. {=baseName/a} {=baseName/l} Elided. {=baseName/l} Elided."
+        ]
       },
       "hasFluffImages": true
     },
@@ -200,6 +203,67 @@
         "wondrous": true,
         "bonusSpellDamage": "+1",
         "entries": ["Elided.", "Elided."]
+      }
+    },
+    {
+      "name": "Vicious Weapon",
+      "referenceSources": ["CoA"],
+      "edition": "classic",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "weapon": true
+        }
+      ],
+      "excludes": {
+        "net": true
+      },
+      "entries": [
+        "Elided.",
+        "Elided. {@damage 2d6} Elided. {@link this is incorrect|https://rpg.stackexchange.com/a/174522/53884} Elided."
+      ],
+      "inherits": {
+        "namePrefix": "Vicious ",
+        "source": "DMG",
+        "page": 209,
+        "srd": true,
+        "reprintedAs": ["Vicious Weapon|XDMG"],
+        "tier": "major",
+        "rarity": "rare",
+        "entries": [
+          "Elided. {=dmgType} Elided.",
+          "Elided. {@damage 2d6} {=dmgType} Elided. {@link this is incorrect|https://rpg.stackexchange.com/a/174522/53884} Elided."
+        ],
+        "lootTables": ["Magic Item Table G"]
+      },
+      "hasFluffImages": true
+    },
+    {
+      "name": "Vicious +1 Weapon",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "weapon": true
+        }
+      ],
+      "excludes": {
+        "net": true
+      },
+      "entries": [
+        "Elided.",
+        "Elided. {@damage 2d6} Elided. {@link this is incorrect|https://rpg.stackexchange.com/a/174522/53884} Elided."
+      ],
+      "inherits": {
+        "namePrefix": "Vicious +1 ",
+        "source": "AI",
+        "page": 149,
+        "rarity": "unknown (magic)",
+        "bonusWeapon": "+1",
+        "entries": [
+          "Elided. {=bonusWeapon} Elided.",
+          "Elided. {=dmgType} Elided.",
+          "Elided. {@damage 2d6} {=dmgType} Elided. {@link this is incorrect|https://rpg.stackexchange.com/a/174522/53884} Elided."
+        ]
       }
     }
   ]
