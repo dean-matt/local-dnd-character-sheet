@@ -27,6 +27,43 @@ import {
 
 const PAGE_SIZE = 50;
 
+const counted = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
+/**
+ * The line under the search box, and whether it reports a failure. One branch decides both:
+ * the box empties at once while the debounced query still holds a failed search.
+ */
+function searchStatus(s: {
+  browsing: boolean;
+  error: Error | null;
+  pending: boolean;
+  settled: boolean;
+  q: string;
+  total: number;
+  characters: number;
+}): { text: string; failed: boolean } {
+  if (s.q === "" && !s.browsing)
+    return {
+      text: "Type a name to search the compendium, or pick a type or source.",
+      failed: false,
+    };
+  if (s.error) return { text: `Search failed: ${s.error.message}`, failed: true };
+  if (s.pending || !s.settled) return { text: "Searching…", failed: false };
+  if (s.total + s.characters === 0) {
+    const text =
+      s.q === ""
+        ? "Nothing matches these filters."
+        : `No results for "${s.q}" under these filters.`;
+    return { text, failed: false };
+  }
+  // Characters count apart, so the total agrees with the pager's.
+  const text =
+    s.characters === 0
+      ? counted(s.total, "result")
+      : `${counted(s.total, "result")} and ${counted(s.characters, "character")}`;
+  return { text, failed: false };
+}
+
 const pageButton =
   "rounded-control border border-border bg-surface px-3 py-1.5 text-row font-medium text-ink hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -66,7 +103,6 @@ export function SearchPage() {
   const count = total + characterResults.length;
   // The last page stays up while the next loads, and nothing may read it as the new answer.
   const settled = query === q && !search.isPlaceholderData;
-  const counted = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
   const update = (next: Partial<SearchFilters>, replace = false) =>
     setParams(writeSearchFilters({ ...filters, offset: 0, ...next }), { replace });
@@ -77,21 +113,15 @@ export function SearchPage() {
     if (pastEnd) update({ offset: Math.floor((total - 1) / PAGE_SIZE) * PAGE_SIZE }, true);
   });
 
-  function status(): string {
-    if (q === "" && !browsing)
-      return "Type a name to search the compendium, or pick a type or source.";
-    if (search.isError) return `Search failed: ${search.error.message}`;
-    if (search.isPending || !settled) return "Searching…";
-    if (count === 0) {
-      return q === ""
-        ? "Nothing matches these filters."
-        : `No results for "${q}" under these filters.`;
-    }
-    // Characters count apart, so the total agrees with the pager's.
-    return characterResults.length === 0
-      ? counted(total, "result")
-      : `${counted(total, "result")} and ${counted(characterResults.length, "character")}`;
-  }
+  const status = searchStatus({
+    browsing,
+    error: search.error,
+    pending: search.isPending,
+    settled,
+    q,
+    total,
+    characters: characterResults.length,
+  });
 
   const empty = settled && search.isSuccess && count === 0;
   const filtered = writeSearchFilters({ ...filters, q: "", offset: 0 }).size > 0;
@@ -123,14 +153,14 @@ export function SearchPage() {
 
         <p
           aria-hidden
-          data-failed={search.isError}
+          data-failed={status.failed}
           className="text-row text-muted data-[failed=true]:text-error"
         >
-          {status()}
+          {status.text}
         </p>
         {/* Rendered even while empty: a live region added with its text is often not announced. */}
         <p role="status" className="sr-only">
-          {status()}
+          {status.text}
         </p>
 
         {(characterResults.length > 0 || hits.length > 0) && (
