@@ -10,6 +10,7 @@ export {
   pushDragLiftCapacity,
   SIZES,
 } from "./carrying.ts";
+export { challengeRatingValue, creatureProficiencyBonus } from "./challenge.ts";
 export {
   ABILITIES,
   ABILITY_LABEL,

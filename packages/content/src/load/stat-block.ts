@@ -9,7 +9,7 @@
  * creature does not carry. They arrive under the `_` property, upstream
  * saying the operation takes the whole entry.
  */
-import { abilityModifier } from "@dnd/rules";
+import { abilityModifier, challengeRatingValue, creatureProficiencyBonus } from "@dnd/rules";
 import { type Entry, isRecord } from "./json.ts";
 
 /** The ability a skill is rolled with. Upstream keys a skill lowercase, spaces and all. */
@@ -40,8 +40,7 @@ function ratingValue(declared: unknown, context: string): number {
   if (typeof declared !== "string") {
     throw new Error(`${context}: needs a challenge rating, found ${typeof declared}`);
   }
-  const [numerator, denominator] = declared.split("/");
-  const value = Number(numerator) / Number(denominator ?? 1);
+  const value = challengeRatingValue(declared);
   if (!Number.isFinite(value)) {
     throw new Error(`${context}: challenge rating ${JSON.stringify(declared)} is not a number`);
   }
@@ -57,16 +56,6 @@ export function challengeRating(entry: Entry, context: string): number {
   return ratingValue(isRecord(entry.cr) ? entry.cr.cr : entry.cr, context);
 }
 
-/**
- * Not `proficiencyBonus` from `@dnd/rules`, which takes a character level and
- * refuses anything outside 1-20. The curve is the same, but a creature's input is
- * its challenge rating, and ratings run from 0 to 30: everything below 1 shares
- * the bonus of a rating of 1.
- */
-function creatureProficiencyBonus(entry: Entry, context: string): number {
-  return 2 + Math.floor((Math.max(challengeRating(entry, context), 1) - 1) / 4);
-}
-
 /** A bonus as a stat block prints it, signed even when it is zero. */
 export const signed = (value: number): string => (value < 0 ? String(value) : `+${value}`);
 
@@ -77,7 +66,7 @@ export const signed = (value: number): string => (value < 0 ? String(value) : `+
  */
 export function addSkills(entry: Entry, op: Entry, context: string): void {
   if (!isRecord(op.skills)) throw new Error(`${context}: addSkills needs a skills object`);
-  const bonus = creatureProficiencyBonus(entry, context);
+  const bonus = creatureProficiencyBonus(challengeRating(entry, context));
   const skills: Entry = isRecord(entry.skill) ? { ...entry.skill } : {};
 
   for (const [skill, multiplier] of Object.entries(op.skills)) {
