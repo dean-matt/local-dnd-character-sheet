@@ -6,8 +6,9 @@
  * form.
  *
  * The draft clears once `onSubmit` resolves, or on `cancel`; an `onSubmit` that throws
- * leaves it standing, and its rejection stops here, so the caller renders its own failure
- * — a mutation's `error` — rather than leaving an unhandled rejection. Every descendant `<button>` without a `type` attribute is given
+ * leaves it standing, and its rejection stops here rather than going unhandled. So an
+ * `onSubmit` must surface its own failure, such as a mutation's `error`: the shell
+ * reports none. Every descendant `<button>` without a `type` attribute is given
  * `type="button"`, so a secondary action inside a step cannot submit, while Enter in a
  * field still submits through the form's own submit button.
  */

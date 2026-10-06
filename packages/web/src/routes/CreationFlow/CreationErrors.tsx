@@ -22,10 +22,12 @@ function firstMessage(error: unknown): string | undefined {
  */
 export function CreationErrors() {
   const { errors, submitCount } = useFormState<CharacterDefinition>();
-  const faults = Object.keys(errors as FieldErrors).filter(
-    (key): key is keyof CharacterDefinition => key in SECTION_LABEL,
-  );
-  if (submitCount === 0 || faults.length === 0) return null;
+  const keys = Object.keys(errors as FieldErrors);
+  const faults = keys.filter((key): key is keyof CharacterDefinition => key in SECTION_LABEL);
+  // A draft saved by an older build can hold a key the schema no longer has, which the
+  // resolver files under no section; Cancel is the only way past it.
+  const unplaced = keys.length > faults.length;
+  if (submitCount === 0 || keys.length === 0) return null;
   return (
     <section
       role="alert"
@@ -57,6 +59,11 @@ export function CreationErrors() {
             </li>
           );
         })}
+        {unplaced && (
+          <li>
+            The draft holds something a character cannot store. Cancel discards it and starts over.
+          </li>
+        )}
       </ul>
     </section>
   );

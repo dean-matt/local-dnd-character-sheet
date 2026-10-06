@@ -3,9 +3,9 @@ import { Link } from "react-router";
 import { CREATION_STEPS, type CreationStep } from "./creationSteps.ts";
 
 /**
- * The flow's step list: steps before the current one read as done, the current one is
- * marked, and every step is a link, because the flow refuses nothing — a later step is
- * open before the earlier ones are finished.
+ * The flow's step list, the current step marked. Every step is a link, because the flow
+ * refuses nothing — a later step is open before the earlier ones are finished — and no
+ * step reads as done, since reaching a step past it says nothing about what it holds.
  */
 export function CreationRail({
   current,
@@ -24,7 +24,6 @@ export function CreationRail({
         <ol className="flex flex-col gap-0.5">
           {CREATION_STEPS.map((step, index) => {
             const isCurrent = index === currentIndex;
-            const isDone = index < currentIndex;
             return (
               <li key={step.slug}>
                 <Link
@@ -41,17 +40,12 @@ export function CreationRail({
                     className={`flex size-5.5 shrink-0 items-center justify-center rounded-full border font-bold text-label ${
                       isCurrent
                         ? "border-accent bg-accent text-white"
-                        : isDone
-                          ? "border-accent bg-accent-tint text-accent-text"
-                          : "border-border bg-surface text-muted"
+                        : "border-border bg-surface text-muted"
                     }`}
                   >
                     {index + 1}
                   </span>
-                  <span>
-                    {step.label}
-                    {isDone && <span className="sr-only"> (done)</span>}
-                  </span>
+                  <span>{step.label}</span>
                 </Link>
               </li>
             );

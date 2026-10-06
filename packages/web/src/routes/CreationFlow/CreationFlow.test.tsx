@@ -49,7 +49,6 @@ describe("CreationFlow", () => {
     click("Next: Class →");
     expect(await screen.findByRole("heading", { level: 1, name: "Class" })).toBeVisible();
     expect(location()).toBe("/characters/new/class");
-    expect(within(rail()).getByRole("link", { name: /^Identity\s*\(done\)$/ })).toBeVisible();
 
     click("Back");
     expect(await screen.findByRole("heading", { level: 1, name: "Identity" })).toBeVisible();
@@ -117,6 +116,19 @@ describe("CreationFlow", () => {
     fireEvent.click(within(rail()).getByRole("link", { name: /Ability Scores/ }));
     const offBook = await screen.findByRole("region", { name: "Off the rules" });
     expect(within(offBook).getByText(departure.note)).toBeVisible();
+  });
+
+  it("says so when the draft holds what no character can store", async () => {
+    localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, retired: true }));
+    const fetchMock = stubFetch(new Response(null, { status: 500 }));
+    renderFlow("/characters/new/spells");
+
+    click("Finish →");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The draft holds something a character cannot store.",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("discards the draft on Cancel and returns to the list", async () => {
