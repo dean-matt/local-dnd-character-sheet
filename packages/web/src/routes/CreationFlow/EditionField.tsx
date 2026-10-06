@@ -20,14 +20,19 @@ export function EditionField() {
     <div className="flex flex-col">
       <fieldset className="mt-2 flex flex-col">
         <legend className="mb-1.5 text-muted text-row">Rules</legend>
-        <div className="flex w-fit gap-0.5 rounded-pill bg-border p-px">
+        <div className="relative grid w-fit grid-cols-2 rounded-pill bg-border p-px">
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-px left-px w-[calc(50%-1px)] rounded-pill bg-accent transition-transform duration-200 ease-out motion-reduce:transition-none"
+            style={{ transform: `translateX(${EDITIONS.indexOf(edition) * 100}%)` }}
+          />
           {EDITIONS.map((each) => (
             <button
               type="button"
               key={each}
               aria-pressed={each === edition}
               onClick={() => setValue("edition", each, { shouldDirty: true })}
-              className="rounded-pill bg-transparent px-3 py-1 font-semibold text-muted text-row hover:text-ink aria-pressed:bg-accent aria-pressed:text-white"
+              className="relative rounded-pill px-3 py-1 font-semibold text-muted text-row transition-colors duration-200 not-aria-pressed:hover:text-ink aria-pressed:text-white motion-reduce:transition-none"
             >
               {EDITION_LABELS[each]}
             </button>
