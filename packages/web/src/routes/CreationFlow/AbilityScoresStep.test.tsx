@@ -1,9 +1,11 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { useState } from "react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { AbilityScoresStep } from "./AbilityScoresStep.tsx";
+import type { AbilitiesMemory } from "./abilityMethods.ts";
 import { CreationIncreases } from "./CreationIncreases.tsx";
 import { creationForm } from "./creationForm.ts";
 import { useAbilitiesDone } from "./useAbilitiesDone.ts";
@@ -40,6 +42,12 @@ const ROWS: Record<string, unknown> = {
   "/api/races/Half-Elf/PHB/subraces?edition=classic&limit=200": page([]),
   "/api/backgrounds?edition=classic&limit=200": page([]),
   "/api/backgrounds?edition=one&limit=200": page([SOLDIER]),
+  "/api/catalog/skill/Athletics/PHB": {
+    type: "skill",
+    ...PHB("Athletics"),
+    edition: "classic",
+    json: { ...PHB("Athletics"), ability: "str" },
+  },
 };
 
 function stubCatalog() {
@@ -47,7 +55,10 @@ function stubCatalog() {
     "fetch",
     vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      const body = url.startsWith("/api/search?") ? page([]) : ROWS[url];
+      const skills = url.includes("type=skill&source=PHB")
+        ? [{ type: "skill", ...PHB("Athletics"), edition: "classic" }]
+        : [];
+      const body = url.startsWith("/api/search?") ? page(skills) : ROWS[url];
       return body === undefined
         ? new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 })
         : new Response(JSON.stringify(body), { status: 200 });
@@ -64,18 +75,26 @@ function Probe() {
   return null;
 }
 
+/** The flow's hold on the step's memory, with a toggle that leaves the step and comes back. */
+function Flow() {
+  const [memory, setMemory] = useState<AbilitiesMemory>();
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <CreationIncreases />
+      <button type="button" onClick={() => setOpen(!open)}>
+        Away
+      </button>
+      {open && <AbilityScoresStep memory={memory} onMemory={setMemory} />}
+      <Probe />
+    </>
+  );
+}
+
 function renderStep(draft: object = {}) {
   localStorage.setItem("draft:creation", JSON.stringify({ edition: "classic", ...draft }));
   renderWithClient(
-    <creationForm.FormShell onSubmit={() => {}}>
-      {() => (
-        <>
-          <CreationIncreases />
-          <AbilityScoresStep />
-          <Probe />
-        </>
-      )}
-    </creationForm.FormShell>,
+    <creationForm.FormShell onSubmit={() => {}}>{() => <Flow />}</creationForm.FormShell>,
   );
 }
 
@@ -148,7 +167,7 @@ describe("AbilityScoresStep", () => {
     expect(screen.getByText("36 of 27 points spent, over budget by 9")).toBeVisible();
     expect(values.abilityScores?.int).toBe(16);
     expect(scoresDeparture()).toBe(
-      "Point buy spends 36 of 27 points; takes scores from 8 to 15, past which Intelligence is 16.",
+      "Point buy: 36 of 27 points spent; Intelligence is 16, outside its 8 to 15.",
     );
 
     type("Intelligence", "8");
@@ -168,6 +187,44 @@ describe("AbilityScoresStep", () => {
 
     click("Reroll all (4d6kh3)");
     expect(Math.random).toHaveBeenCalledTimes(48);
+
+    click("Away");
+    click("Away");
+    expect(screen.getByRole("button", { name: "Roll" })).toHaveAttribute("aria-pressed", "true");
+    expect(row("Strength").getByText("dropped")).toBeInTheDocument();
+  });
+
+  it("scores each skill off its ability, with the proficiency the character holds", async () => {
+    renderStep({
+      abilityScores: ARRAY,
+      levels: [{ class: PHB("Fighter") }],
+      proficiencies: {
+        savingThrows: ["str"],
+        skills: [{ ref: PHB("Athletics"), level: "proficient" }],
+        armor: [],
+        weapons: [],
+        tools: [],
+        languages: [],
+      },
+    });
+
+    expect(await row("Strength").findByText("Athletics +4")).toBeVisible();
+    expect(row("Strength").getByText("Save +4")).toBeVisible();
+    expect(row("Dexterity").getByText("Save +2")).toBeVisible();
+  });
+
+  it("frees a race's increases to any ability under the custom-origin house rule", async () => {
+    renderStep({
+      race: PHB("Elf"),
+      subrace: PHB("High"),
+      abilityScores: ARRAY,
+      houseRules: { customOrigin: true },
+    });
+
+    const first = await screen.findByRole("group", { name: "Race +2, 1 of 2 — choose one" });
+    fireEvent.click(within(first).getByRole("button", { name: "Wisdom" }));
+
+    expect(values.abilityIncreases).toEqual([{ ability: "wis", amount: 2, grantedBy: "race" }]);
   });
 
   it("notes typed-in scores as a departure, and drops the note on returning to a method", () => {

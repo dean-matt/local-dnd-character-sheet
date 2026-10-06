@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { AbilityScoresStep } from "./AbilityScoresStep.tsx";
+import type { AbilitiesMemory } from "./abilityMethods.ts";
 import { ClassStep } from "./ClassStep.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
@@ -36,6 +37,7 @@ export function CreationFlow() {
   const create = useCreateCharacter();
   const marked = stepIn(location.state);
   const [fresh] = useState(marked === undefined);
+  const [abilities, setAbilities] = useState<AbilitiesMemory>();
   const step = marked ?? CREATION_STEPS[0];
 
   const goTo = (slug: CreationStep["slug"]) => {
@@ -78,7 +80,7 @@ export function CreationFlow() {
             ) : step.slug === "class" ? (
               <ClassStep />
             ) : step.slug === "abilities" ? (
-              <AbilityScoresStep />
+              <AbilityScoresStep memory={abilities} onMemory={setAbilities} />
             ) : (
               <StepPending />
             )}

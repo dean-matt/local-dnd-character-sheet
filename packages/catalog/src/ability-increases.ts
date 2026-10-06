@@ -67,3 +67,16 @@ export const abilityIncreasesSchema = z
     lineage: z.unknown().optional(),
   })
   .transform(({ ability, lineage }) => ability ?? (lineage ? LINEAGE : []));
+
+/**
+ * `alternatives` under Tasha's custom origin: each keeps its amounts, fixed ones included,
+ * and every increase goes to any ability the player picks.
+ */
+export const customOrigin = (alternatives: readonly IncreaseAlternative[]): IncreaseAlternative[] =>
+  alternatives.map((alternative) => ({
+    fixed: {},
+    slots: [
+      ...Object.values(alternative.fixed).map((amount) => ({ from: ABILITIES, amount })),
+      ...alternative.slots.map((slot) => ({ from: ABILITIES, amount: slot.amount })),
+    ],
+  }));

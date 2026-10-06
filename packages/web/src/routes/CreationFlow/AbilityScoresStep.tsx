@@ -5,7 +5,8 @@ import {
   abilityModifier,
   abilityScoreBreakdown,
   type CharacterDefinition,
-  proficiencyBonus,
+  proficiencyContribution,
+  refKey,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useState } from "react";
@@ -16,6 +17,7 @@ import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { AbilityIncreasesField } from "./AbilityIncreasesField.tsx";
 import {
+  type AbilitiesMemory,
   METHODS,
   type Method,
   methodDeparture,
@@ -30,8 +32,7 @@ import {
 import { ChoicePills } from "./ChoicePills.tsx";
 import { withDeparture } from "./departures.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
-
-type Dice = ReturnType<typeof rollDice>["dice"];
+import { useSkillAbilities } from "./useSkillAbilities.ts";
 
 const ROLL = "4d6kh3";
 
@@ -53,20 +54,35 @@ const parseScore = (raw: string) => (/^\d+$/.test(raw.trim()) ? Number(raw.trim(
  * typed in, then the race's and background's increases on top as terms of their own. A
  * value the method does not allow is kept and noted as a departure rather than refused.
  * Changing method starts its scores afresh: the array unassigned, point buy at 8 across,
- * a fresh roll; typing keeps whatever was there.
+ * a fresh roll; typing keeps whatever was there. A step the flow holds no memory for, as
+ * after a reload, reads its method off the scores.
  */
-export function AbilityScoresStep() {
+export function AbilityScoresStep({
+  memory,
+  onMemory,
+}: {
+  memory: AbilitiesMemory | undefined;
+  onMemory: (memory: AbilitiesMemory) => void;
+}) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const [stored, increases, proficiencies, levels] = useWatch<
+  const [stored, increases, proficiencies, levels, edition = "one"] = useWatch<
     CharacterDefinition,
-    ["abilityScores", "abilityIncreases", "proficiencies", "levels"]
-  >({ name: ["abilityScores", "abilityIncreases", "proficiencies", "levels"] });
+    ["abilityScores", "abilityIncreases", "proficiencies", "levels", "edition"]
+  >({ name: ["abilityScores", "abilityIncreases", "proficiencies", "levels", "edition"] });
+  const skills = useSkillAbilities(edition);
   const scores: Scores = stored ?? {};
   const sources = useIncreaseOptions();
-  const [method, setMethod] = useState<Method>(() =>
-    methodOf(getValues("abilityScores") ?? {}, getValues("departures")),
+  const [{ method, rolls }, setHeld] = useState<AbilitiesMemory>(
+    () =>
+      memory ?? {
+        method: methodOf(getValues("abilityScores") ?? {}, getValues("departures")),
+        rolls: {},
+      },
   );
-  const [rolls, setRolls] = useState<Partial<Record<Ability, Dice>>>({});
+  const hold = (next: AbilitiesMemory) => {
+    setHeld(next);
+    onMemory(next);
+  };
 
   const write = (next: Scores, as: Method) => {
     setValue("abilityScores", next as CharacterDefinition["abilityScores"], { shouldDirty: true });
@@ -82,11 +98,14 @@ export function AbilityScoresStep() {
   };
   const rollAll = () => {
     const rolled = ABILITIES.map((ability) => [ability, rollDice(ROLL)] as const);
-    setRolls(Object.fromEntries(rolled.map(([ability, roll]) => [ability, roll.dice])));
+    hold({
+      method: "roll",
+      rolls: Object.fromEntries(rolled.map(([ability, roll]) => [ability, roll.dice])),
+    });
     write(Object.fromEntries(rolled.map(([ability, roll]) => [ability, roll.total])), "roll");
   };
 
-  const bonus = proficiencyBonus(Math.min(Math.max(levels?.length ?? 1, 1), 20));
+  const level = Math.min(Math.max(levels?.length ?? 1, 1), 20);
   const spent = pointsSpent(scores);
 
   return (
@@ -97,8 +116,7 @@ export function AbilityScoresStep() {
         value={method}
         onChange={(value) => {
           const next = value as Method;
-          setMethod(next);
-          setRolls({});
+          hold({ method: next, rolls: {} });
           if (next === "roll") rollAll();
           else
             write(next === "standard" ? {} : next === "pointBuy" ? POINT_BUY_START : scores, next);
@@ -136,82 +154,94 @@ export function AbilityScoresStep() {
           );
           const modifier = abilityModifier(total);
           const proficient = proficiencies?.savingThrows.includes(ability) ?? false;
+          const save =
+            modifier + proficiencyContribution(level, proficient ? "proficient" : "none");
+          const governed = skills
+            .filter((skill) => skill.ability === ability)
+            .map(({ ref }) => {
+              const held = proficiencies?.skills.find((skill) => refKey(skill.ref) === refKey(ref));
+              const bonus = proficiencyContribution(level, held?.level ?? "none");
+              return `${ref.name} ${signed(modifier + bonus)}`;
+            });
           const label = ABILITY_LABEL[ability];
           return (
             <fieldset
               key={ability}
               aria-label={label}
-              className="flex items-center gap-3 rounded-control bg-subtle px-3 py-2"
+              className="flex flex-col gap-1 rounded-control bg-subtle px-3 py-2"
             >
-              <span aria-hidden="true" className="w-9 font-bold text-muted text-row uppercase">
-                {ability}
-              </span>
-              {method === "standard" ? (
-                <FormField label={`${label} base score`} labelHidden>
-                  {(control) => (
-                    <Select
-                      {...control}
-                      options={STANDARD_OPTIONS}
-                      value={base === undefined ? "" : String(base)}
-                      onChange={(value) => setScore(ability, parseScore(value))}
-                    />
-                  )}
-                </FormField>
-              ) : method === "roll" ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-8 text-center font-semibold">{base ?? "—"}</span>
-                  {rolls[ability] && (
-                    <span className="text-muted text-row">
-                      <span className="sr-only">rolled </span>
-                      {rolls[ability].map((die, index) => (
-                        <span
-                          // biome-ignore lint/suspicious/noArrayIndexKey: a die is its position in the roll.
-                          key={index}
-                          className={die.kept ? "mr-1" : "mr-1 line-through"}
-                        >
-                          {die.value}
-                          {!die.kept && <span className="sr-only"> dropped</span>}
-                        </span>
-                      ))}
-                    </span>
+              <div className="flex items-center gap-3">
+                <span aria-hidden="true" className="w-9 font-bold text-muted text-row uppercase">
+                  {ability}
+                </span>
+                {method === "standard" ? (
+                  <FormField label={`${label} base score`} labelHidden>
+                    {(control) => (
+                      <Select
+                        {...control}
+                        options={STANDARD_OPTIONS}
+                        value={base === undefined ? "" : String(base)}
+                        onChange={(value) => setScore(ability, parseScore(value))}
+                      />
+                    )}
+                  </FormField>
+                ) : method === "roll" ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-8 text-center font-semibold">{base ?? "—"}</span>
+                    {rolls[ability] && (
+                      <span className="text-muted text-row">
+                        <span className="sr-only">rolled </span>
+                        {rolls[ability].map((die, index) => (
+                          <span
+                            // biome-ignore lint/suspicious/noArrayIndexKey: a die is its position in the roll.
+                            key={index}
+                            className={die.kept ? "mr-1" : "mr-1 line-through"}
+                          >
+                            {die.value}
+                            {!die.kept && <span className="sr-only"> dropped</span>}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <InputField
+                    label={`${label} base score`}
+                    labelHidden
+                    type="number"
+                    inputMode="numeric"
+                    value={base ?? ""}
+                    onChange={(event) => setScore(ability, parseScore(event.target.value))}
+                    className="w-16 text-center"
+                  />
+                )}
+                <span className="text-muted text-row">
+                  {terms
+                    .slice(1)
+                    .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`)
+                    .join(", ")}
+                </span>
+                <span className="ml-auto flex items-baseline gap-3">
+                  {base === undefined ? (
+                    <span className="text-muted">—</span>
+                  ) : (
+                    <>
+                      <span className="font-bold text-[15px]">
+                        <span className="sr-only">Score </span>
+                        {total}
+                      </span>
+                      <span className="font-bold text-accent-text text-row">
+                        <span className="sr-only">Modifier </span>
+                        {signed(modifier)}
+                      </span>
+                      <span className="text-muted text-row">Save {signed(save)}</span>
+                    </>
                   )}
                 </span>
-              ) : (
-                <InputField
-                  label={`${label} base score`}
-                  labelHidden
-                  type="number"
-                  inputMode="numeric"
-                  value={base ?? ""}
-                  onChange={(event) => setScore(ability, parseScore(event.target.value))}
-                  className="w-16 text-center"
-                />
+              </div>
+              {base !== undefined && governed.length > 0 && (
+                <p className="text-muted text-row">{governed.join(", ")}</p>
               )}
-              <span className="text-muted text-row">
-                {terms
-                  .slice(1)
-                  .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`)
-                  .join(", ")}
-              </span>
-              <span className="ml-auto flex items-baseline gap-3">
-                {base === undefined ? (
-                  <span className="text-muted">—</span>
-                ) : (
-                  <>
-                    <span className="font-bold text-[15px]">
-                      <span className="sr-only">Score </span>
-                      {total}
-                    </span>
-                    <span className="font-bold text-accent-text text-row">
-                      <span className="sr-only">Modifier </span>
-                      {signed(modifier)}
-                    </span>
-                    <span className="text-muted text-row">
-                      Save {signed(modifier + (proficient ? bonus : 0))}
-                    </span>
-                  </>
-                )}
-              </span>
             </fieldset>
           );
         })}

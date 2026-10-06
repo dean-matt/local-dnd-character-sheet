@@ -16,7 +16,7 @@ describe("methodDeparture", () => {
 
 describe("methodOf", () => {
   it("reads the method a departure names before the scores", () => {
-    const departures = [{ field: "abilityScores", note: "Point buy spends 30 of 27 points." }];
+    const departures = [{ field: "abilityScores", note: "Point buy: 30 of 27 points spent." }];
     expect(methodOf({ str: 15, dex: 15, con: 15 }, departures)).toBe("pointBuy");
   });
 

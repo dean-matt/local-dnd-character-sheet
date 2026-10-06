@@ -1,9 +1,15 @@
 import { ABILITIES, ABILITY_LABEL, type Ability, type CharacterDefinition } from "@dnd/character";
+import type { rollDice } from "@dnd/dice";
 
 /** A draft's base scores, which hold only the abilities the player has set so far. */
 export type Scores = Partial<Record<Ability, number>>;
 
 export type Method = "standard" | "pointBuy" | "roll" | "custom";
+
+type Dice = ReturnType<typeof rollDice>["dice"];
+
+/** The method and the dice a roll showed, which the flow holds so leaving the step keeps them. */
+export type AbilitiesMemory = { method: Method; rolls: Partial<Record<Ability, Dice>> };
 
 export const METHODS: readonly { value: Method; label: string }[] = [
   { value: "standard", label: "Standard Array" },
@@ -65,16 +71,16 @@ export function methodDeparture(method: Method, scores: Scores): string | undefi
     const spent = pointsSpent(scores);
     const outside = set.filter(({ score }) => score < POINT_MIN || score > POINT_MAX);
     const notes = [
-      ...(spent > POINT_BUDGET ? [`spends ${spent} of ${POINT_BUDGET} points`] : []),
+      ...(spent > POINT_BUDGET ? [`${spent} of ${POINT_BUDGET} points spent`] : []),
       ...(outside.length > 0
         ? [
-            `takes scores from ${POINT_MIN} to ${POINT_MAX}, past which ${outside
+            `${outside
               .map(({ ability, score }) => `${ABILITY_LABEL[ability]} is ${score}`)
-              .join(", ")}`,
+              .join(", ")}, outside its ${POINT_MIN} to ${POINT_MAX}`,
           ]
         : []),
     ];
-    return notes.length === 0 ? undefined : `${NOTE.pointBuy} ${notes.join("; ")}.`;
+    return notes.length === 0 ? undefined : `${NOTE.pointBuy}: ${notes.join("; ")}.`;
   }
   if (method === "custom")
     return `${NOTE.custom} rather than set by the standard array, point buy or a roll.`;

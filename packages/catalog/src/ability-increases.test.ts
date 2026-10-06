@@ -1,6 +1,6 @@
 import { ABILITIES } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
-import { abilityIncreasesSchema } from "./index.ts";
+import { abilityIncreasesSchema, customOrigin } from "./index.ts";
 
 describe("abilityIncreasesSchema", () => {
   it("reads a classic race's fixed increases and its choice", () => {
@@ -63,5 +63,22 @@ describe("abilityIncreasesSchema", () => {
   it("offers nothing for a row with no increases, or with malformed ones", () => {
     expect(abilityIncreasesSchema.parse({ name: "Elf" })).toEqual([]);
     expect(abilityIncreasesSchema.parse({ ability: [{ choose: { from: ["luck"] } }] })).toEqual([]);
+  });
+});
+
+describe("customOrigin", () => {
+  it("frees every increase to any ability, keeping its amount", () => {
+    const halfElf = abilityIncreasesSchema.parse({
+      ability: [{ cha: 2, choose: { from: ["str", "dex"], count: 1 } }],
+    });
+    expect(customOrigin(halfElf)).toEqual([
+      {
+        fixed: {},
+        slots: [
+          { from: ABILITIES, amount: 2 },
+          { from: ABILITIES, amount: 1 },
+        ],
+      },
+    ]);
   });
 });
