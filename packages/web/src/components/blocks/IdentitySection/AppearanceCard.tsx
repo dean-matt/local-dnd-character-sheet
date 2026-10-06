@@ -16,7 +16,7 @@ const FIELDS: { key: AppearanceKey; label: string }[] = [
   { key: "hair", label: "Hair" },
 ];
 
-/** Drops the key rather than storing an empty string, which the schema refuses. */
+/** Drops a cleared key, as the stored definition does, rather than caching it as `undefined`. */
 function withAppearance(appearance: Appearance, key: AppearanceKey, value: string | undefined) {
   const { [key]: _cleared, ...rest } = appearance;
   return value === undefined ? rest : { ...rest, [key]: value };
