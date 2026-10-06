@@ -75,6 +75,8 @@ describe("Select", () => {
     key("ArrowUp");
     key(" ");
     expect(onChange).toHaveBeenCalledWith("copper");
+    // Cancelled, so an engine activating the button on keyup does not reopen the list.
+    expect(fireEvent.keyUp(combobox(), { key: " " })).toBe(false);
   });
 
   it("closes on Escape without picking, focus on the combobox", () => {

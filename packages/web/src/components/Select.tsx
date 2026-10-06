@@ -86,6 +86,10 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
         "aria-controls": `${id}-list`,
         "aria-activedescendant": open ? optionId(active) : undefined,
         onClick: () => (open ? setOpen(false) : show(Math.max(chosen, 0))),
+        // Space acts on keydown; an engine that still activates on keyup would undo it.
+        onKeyUp: (event) => {
+          if (event.key === " ") event.preventDefault();
+        },
       }}
     >
       {(panelClassName) => (
