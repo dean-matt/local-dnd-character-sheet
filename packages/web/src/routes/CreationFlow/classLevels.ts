@@ -3,7 +3,6 @@ import { rollDice } from "@dnd/dice";
 
 type Level = CharacterDefinition["levels"][number];
 
-/** One roll of a `faces`-sided hit die. */
 export const rollHitDie = (faces: number): number => rollDice(`1d${faces}`).total;
 
 /**
@@ -42,6 +41,5 @@ export function rerolled(levels: readonly Level[], roll?: () => number): Level[]
   });
 }
 
-/** The subclass a level names, wherever it sits. */
 export const subclassOf = (levels: readonly Level[]): ContentRef | undefined =>
   levels.find((level) => level.subclass)?.subclass;

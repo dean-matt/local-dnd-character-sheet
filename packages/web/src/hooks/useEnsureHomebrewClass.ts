@@ -7,7 +7,8 @@ import { homebrewClassKey } from "./useHomebrewClass.ts";
 /**
  * The homebrew class of `input`'s name and edition: the one already stored, else a new
  * one. Reusing it keeps a name typed twice from failing on the name a homebrew class
- * holds alone; a stored class keeps its own hit die.
+ * holds alone. A stored class on another die is refused rather than reused, since other
+ * characters may count their hit points on it and the player named a different die.
  */
 export function useEnsureHomebrewClass() {
   const queryClient = useQueryClient();
@@ -18,6 +19,11 @@ export function useEnsureHomebrewClass() {
         (row) =>
           row.edition === input.edition && row.name.toLowerCase() === input.name.toLowerCase(),
       );
+      if (same && same.hitDie !== input.hd.faces) {
+        throw new Error(
+          `${same.name} is already a homebrew class on a d${same.hitDie}. Choose d${same.hitDie} to use it, or another name.`,
+        );
+      }
       return (
         same ?? (await apiMutate("POST", "/homebrew/classes", homebrewClassRecordSchema, input))
       );

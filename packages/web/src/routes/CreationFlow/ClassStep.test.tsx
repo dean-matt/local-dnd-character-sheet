@@ -159,6 +159,7 @@ describe("ClassStep", () => {
     stubCatalog();
   });
   afterEach(() => {
+    ROWS["/api/homebrew/classes"] = [];
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -283,5 +284,24 @@ describe("ClassStep", () => {
 
     expect(values.levels).toEqual([]);
     expect(values.departures).toEqual([]);
+  });
+
+  it("refuses to reuse a stored homebrew class on another die than the one named", async () => {
+    ROWS["/api/homebrew/classes"] = [BLOOD_HUNTER];
+    const fetchMock = stubCatalog();
+    renderStep();
+
+    click("Not listed? Type a class");
+    fireEvent.change(screen.getByRole("textbox", { name: "Class name" }), {
+      target: { value: "blood hunter" },
+    });
+    click("d8");
+    click("Use");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Blood Hunter is already a homebrew class on a d10. Choose d10 to use it, or another name.",
+    );
+    expect(values.levels).toEqual([]);
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
 });
