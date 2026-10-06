@@ -23,7 +23,6 @@ export {
   averageHitPoints,
   HIT_DICE,
   type HitDie,
-  proficiencyContribution,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {
@@ -52,6 +51,8 @@ export {
   deriveCharacter,
   hitPointMaximum,
   passiveSkill,
+  savingThrowModifier,
+  skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
 export { deityKey, entryKey, itemKey, refKey } from "./keys.ts";

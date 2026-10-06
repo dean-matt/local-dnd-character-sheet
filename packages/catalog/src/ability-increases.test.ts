@@ -81,4 +81,11 @@ describe("customOrigin", () => {
       },
     ]);
   });
+
+  it("keeps a printed decrease fixed where the race puts it", () => {
+    const kobold = abilityIncreasesSchema.parse({ ability: [{ dex: 2, str: -2 }] });
+    expect(customOrigin(kobold)).toEqual([
+      { fixed: { str: -2 }, slots: [{ from: ABILITIES, amount: 2 }] },
+    ]);
+  });
 });

@@ -233,7 +233,7 @@ describe("AbilitiesSection", () => {
     fireEvent.change(score, { target: { value: "2" } });
     fireEvent.blur(score);
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Strength: With +2 from increases, a score is a whole number from 3 to 32.",
+      "Strength: With +2 from race and background, a score is a whole number from 3 to 32.",
     );
     expect(saved).toBeUndefined();
 

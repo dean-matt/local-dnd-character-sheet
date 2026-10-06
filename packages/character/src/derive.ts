@@ -86,13 +86,19 @@ export function passiveSkill(
   );
 }
 
+/** What a check modifier reads, which a creation draft holds before the rest of the definition. */
+type Scored = Pick<
+  CharacterDefinition,
+  "abilityScores" | "abilityIncreases" | "proficiencies" | "levels"
+>;
+
 /**
  * The check modifier for one skill: the ability modifier and whatever the character's
  * proficiency in that skill is worth. Companion to `passiveSkill`, which takes the same
  * inputs to the passive score instead.
  */
-function skillModifier(
-  definition: CharacterDefinition,
+export function skillModifier(
+  definition: Scored,
   skill: ContentRef,
   ability: Ability,
 ): Breakdown<TermReference> {
@@ -116,8 +122,8 @@ function skillModifier(
  * saving throw proficiency in 5e, so that choice is already resolved into this list
  * rather than read again from a class row here.
  */
-function savingThrowModifier(
-  definition: CharacterDefinition,
+export function savingThrowModifier(
+  definition: Scored,
   ability: Ability,
 ): Breakdown<TermReference> {
   const proficient = definition.proficiencies.savingThrows.includes(ability);

@@ -69,14 +69,20 @@ export const abilityIncreasesSchema = z
   .transform(({ ability, lineage }) => ability ?? (lineage ? LINEAGE : []));
 
 /**
- * `alternatives` under Tasha's custom origin: each keeps its amounts, fixed ones included,
- * and every increase goes to any ability the player picks.
+ * `alternatives` under Tasha's custom origin: each increase keeps its amount, fixed ones
+ * included, and goes to any ability the player picks. The rule moves increases alone, so
+ * a printed decrease stays fixed where the race puts it.
  */
 export const customOrigin = (alternatives: readonly IncreaseAlternative[]): IncreaseAlternative[] =>
-  alternatives.map((alternative) => ({
-    fixed: {},
-    slots: [
-      ...Object.values(alternative.fixed).map((amount) => ({ from: ABILITIES, amount })),
-      ...alternative.slots.map((slot) => ({ from: ABILITIES, amount: slot.amount })),
-    ],
-  }));
+  alternatives.map((alternative) => {
+    const fixed = Object.entries(alternative.fixed) as [Ability, number][];
+    return {
+      fixed: Object.fromEntries(fixed.filter(([, amount]) => amount < 0)),
+      slots: [
+        ...fixed
+          .filter(([, amount]) => amount > 0)
+          .map(([, amount]) => ({ from: ABILITIES, amount })),
+        ...alternative.slots.map((slot) => ({ from: ABILITIES, amount: slot.amount })),
+      ],
+    };
+  });
