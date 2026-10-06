@@ -161,7 +161,7 @@ widget, panel, or nav element:
   Equipment, Spells) are the wizard "+ New Character" opens: the step rail, Back/Next
   (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
   race with subraces blocks progress until one is picked, a class skill the background
-  already grants shows disabled rather than pickable twice, point buy shows an overspend
+  already grants shows checked and disabled rather than pickable twice, point buy shows an overspend
   rather than refusing it, a non-caster skips the spells step. Nothing behind any of these
   six exists yet, and #224 (whether the flow validates as it goes or all at once) is still
   undecided — these are the step content and the interaction shape, not that answer.

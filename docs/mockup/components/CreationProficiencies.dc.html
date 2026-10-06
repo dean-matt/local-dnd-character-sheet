@@ -152,7 +152,7 @@ class Component extends DCLogic {
       return {
         name,
         granted,
-        checked: !granted && !!checkedSkills[name],
+        checked: granted || !!checkedSkills[name],
         color: granted ? '#6b7280' : '#1f2430',
         cursor: granted ? 'not-allowed' : 'pointer',
         toggle: () => { if (!granted) this.setState({ checkedSkills: { ...checkedSkills, [name]: !checkedSkills[name] } }); }
