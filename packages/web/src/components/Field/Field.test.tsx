@@ -365,3 +365,35 @@ describe("Field, edit mode", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 });
+
+describe("Field, edit mode, a value changed from outside", () => {
+  const edit = (manual: number | null, onSave = vi.fn().mockResolvedValue(undefined)) => (
+    <Field
+      mode="edit"
+      label="Hit points"
+      value={{ computed: 8, manual }}
+      format={format}
+      schema={schema}
+      parse={parse}
+      onSave={onSave}
+      debounceMs={100_000}
+    />
+  );
+
+  it("shows the new value while the field holds no unsaved edit, as after an undo", () => {
+    const { rerender } = render(edit(12));
+    rerender(edit(15));
+
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveValue("15");
+  });
+
+  it("keeps the user's unsaved text over it", () => {
+    const { rerender } = render(edit(12));
+    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), {
+      target: { value: "20" },
+    });
+    rerender(edit(15));
+
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveValue("20");
+  });
+});

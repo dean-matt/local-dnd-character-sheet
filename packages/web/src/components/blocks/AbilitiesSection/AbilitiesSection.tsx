@@ -42,7 +42,7 @@ export function AbilitiesSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <AbilityScores definition={definition} derived={derived} />
+      <AbilityScores character={character} derived={derived} />
       <CombatStats derived={derived} />
       <Vitals characterId={character.id} derived={derived} />
       <Attacks character={character} derived={derived} />

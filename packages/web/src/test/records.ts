@@ -1,4 +1,5 @@
 import {
+  type CharacterDefinition,
   type CharacterDerived,
   type CharacterPageRecord,
   type CharacterRecord,
@@ -101,10 +102,15 @@ export function identityRecord(): CharacterRecord {
   };
 }
 
-/** What `GET /characters/{id}/derived` returns for `characterRecord`'s Warlock, unarmored. */
-export function derivedRecord(): CharacterDerived {
+/**
+ * What `GET /characters/{id}/derived` returns for `characterRecord`'s Warlock, unarmored,
+ * or for `definition` read in that Warlock's catalog.
+ */
+export function derivedRecord(
+  definition: CharacterDefinition = characterRecord("1", "Vex").definition,
+): CharacterDerived {
   const warlock = entryKey({ name: "Warlock", source: "XPHB" });
-  return deriveCharacter(characterRecord("1", "Vex").definition, {
+  return deriveCharacter(definition, {
     hitDice: new Map([[warlock, 8]]),
     spellcastingAbilities: new Map([[warlock, "cha"]]),
     casterTables: new Map([

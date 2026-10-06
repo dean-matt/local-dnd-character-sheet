@@ -115,11 +115,27 @@ describe("AbilitiesSection", () => {
     expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
   });
 
-  it("reads each ability as its name, score and signed modifier", () => {
+  it("reads each ability as its name, an editable score and a signed modifier", () => {
     renderSection();
 
-    expect(spoken(tile("Ability Scores", "Strength"))).toBe("Strength8, modifier-1");
-    expect(spoken(tile("Ability Scores", "Charisma"))).toBe("Charisma17, modifier+3");
+    expect(screen.getByRole("textbox", { name: "Strength score" })).toHaveValue("8");
+    expect(spoken(tile("Ability Scores", "Strength"))).toContain("modifier-1");
+    expect(screen.getByRole("textbox", { name: "Charisma score" })).toHaveValue("17");
+    expect(spoken(tile("Ability Scores", "Charisma"))).toContain("modifier+3");
+  });
+
+  it("reports a score the schema refuses on its own field, keeping what was typed", async () => {
+    renderSection();
+
+    const score = screen.getByRole("textbox", { name: "Strength score" });
+    fireEvent.change(score, { target: { value: "31" } });
+    fireEvent.blur(score);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "A score is a whole number from 1 to 30.",
+    );
+    expect(score).toHaveValue("31");
+    expect(score).toHaveAccessibleDescription(/A score is a whole number from 1 to 30/);
   });
 
   it("takes each modifier from the derived block, not from the score", () => {
@@ -277,9 +293,9 @@ describe("AbilitiesSection", () => {
     );
   });
 
-  it("renders every overridable value read-only", () => {
+  it("edits the six scores and leaves every derived value read-only", () => {
     renderSection();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")).toHaveLength(6);
   });
 
   describe("detail modal", () => {

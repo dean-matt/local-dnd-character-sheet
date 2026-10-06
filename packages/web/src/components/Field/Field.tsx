@@ -30,32 +30,28 @@ interface ReadFieldProps<T> {
 export type FieldProps<T> = ReadFieldProps<T> | EditableFieldProps<T>;
 
 export function Field<T>(props: FieldProps<T>) {
+  if (props.mode === "edit") return <EditableField {...props} />;
   const current = derivedValue(props.value);
-
-  if (props.mode === "read") {
-    const override =
-      props.value.manual === null ? null : (
-        <OverrideMark computed={props.format(props.value.computed)} />
-      );
-    if (props.labelHidden) {
-      return (
-        <span className="font-medium">
-          <span className="sr-only">{props.label}</span>
-          {props.format(current)}
-          {override}
-        </span>
-      );
-    }
+  const override =
+    props.value.manual === null ? null : (
+      <OverrideMark computed={props.format(props.value.computed)} />
+    );
+  if (props.labelHidden) {
     return (
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-muted text-row">{props.label}</span>
-        <span className="font-medium">
-          {props.format(current)}
-          {override}
-        </span>
-      </div>
+      <span className="font-medium">
+        <span className="sr-only">{props.label}</span>
+        {props.format(current)}
+        {override}
+      </span>
     );
   }
-
-  return <EditableField {...props} current={current} />;
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-muted text-row">{props.label}</span>
+      <span className="font-medium">
+        {props.format(current)}
+        {override}
+      </span>
+    </div>
+  );
 }

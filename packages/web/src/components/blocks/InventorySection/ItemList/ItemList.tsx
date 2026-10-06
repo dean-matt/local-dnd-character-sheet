@@ -39,15 +39,13 @@ export function ItemList({
   const inventory = useCharacterInventory(character.id);
   const update = useUpdateCharacterDefinition(character.id);
   const writing = useIsMutating({ mutationKey: characterDefinitionWriteKey(character.id) }) > 0;
-  const setGrip = (index: number, grip: Grip) => {
-    const { definition } = character;
-    update.mutate({
+  const setGrip = (index: number, grip: Grip) =>
+    update.mutate((definition) => ({
       ...definition,
       inventory: definition.inventory.map((entry, at) =>
         at === index ? { ...entry, grip } : entry,
       ),
-    });
-  };
+    }));
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState message={inventory.error.message} />;
   if (inventory.data.items.length === 0) {

@@ -19,6 +19,8 @@ interface ControlProps {
 
 export interface FormFieldProps {
   label: string;
+  /** Keeps the label for a screen reader where the surrounding layout already names the control. */
+  labelHidden?: boolean;
   /** Marks the control invalid and describes it. */
   error?: ReactNode;
   /** Progress the user should hear without moving focus, such as a save in flight. */
@@ -26,7 +28,7 @@ export interface FormFieldProps {
   children: (control: ControlProps) => ReactNode;
 }
 
-export function FormField({ label, error, status, children }: FormFieldProps) {
+export function FormField({ label, labelHidden, error, status, children }: FormFieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
   // Truthiness, so `error={touched && message}` reads its `false` as valid.
@@ -34,7 +36,7 @@ export function FormField({ label, error, status, children }: FormFieldProps) {
 
   return (
     <div className="flex flex-col">
-      <label htmlFor={id} className="mb-1 text-muted text-row">
+      <label htmlFor={id} className={labelHidden ? "sr-only" : "mb-1 text-muted text-row"}>
         {label}
       </label>
       {children({ id, "aria-invalid": invalid, "aria-describedby": invalid ? errorId : undefined })}
