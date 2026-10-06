@@ -81,6 +81,22 @@
       ]
     },
     {
+      "name": "Longbow",
+      "source": "XPHB",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/XPHB/Longbow.webp"
+          },
+          "credit": "Polar Engine",
+          "width": 136,
+          "height": 956
+        }
+      ]
+    },
+    {
       "name": "Arrow of Slaying (*)",
       "source": "DMG",
       "images": [
@@ -123,6 +139,38 @@
           },
           "width": 801,
           "height": 594
+        }
+      ]
+    },
+    {
+      "name": "Holy Avenger",
+      "source": "DMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/DMG/Holy Avenger.webp"
+          },
+          "title": "Holy Avenger (Greatsword)",
+          "width": 624,
+          "height": 1000
+        }
+      ]
+    },
+    {
+      "name": "Holy Avenger",
+      "source": "XDMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/XDMG/Holy Avenger.webp"
+          },
+          "title": "Holy Avenger (Greatsword)",
+          "width": 624,
+          "height": 1000
         }
       ]
     },

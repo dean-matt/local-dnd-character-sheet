@@ -44,6 +44,13 @@ names — "an arrow" for Arrow of Slaying — and `{=dmgType}` as "weapon". Any 
 placeholder left empty, here or in an expansion, reads as neutral prose rather than
 markup. Search lists the templates beside the items and places each by the base items
 its `requires` and `excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
+A `requires` clause naming `type`, `staff`, `wondrous` or `name` passes on every kind of
+the items it admits. A
+clause on any other trait, such as `weaponCategory` or `dmgType`, passes on only the
+weapon and armor kinds of the items it admits. The focuses `Staff` and `Wooden Staff`
+carry a simple weapon's stats, so a `weaponCategory` clause admits them, yet a template
+such as Holy Avenger that reaches them that way is a weapon, not a staff or a focus.
+Imbued Wood requires an arcane focus by `type`, so it still lists as a staff and a focus.
 
 `rarity` spans 10 upstream values, `none`, `varies` and `unknown (magic)` among them,
 and the column is nullable because 43 items carry none — though every one of those

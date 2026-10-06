@@ -40,7 +40,11 @@ describe("the items loader", () => {
     expect(rows).toEqual([
       row("Alchemist's Supplies", "PHB", "classic", "baseitem", "AT", "none", 0),
       row("Longsword", "PHB", "classic", "baseitem", "M", "none", 0),
+      row("Longbow", "XPHB", "one", "baseitem", "R|XPHB", "none", 0),
       row("Longsword", "XPHB", "one", "baseitem", "M|XPHB", "none", 0),
+      row("Orb", "XPHB", "one", "baseitem", "SCF|XPHB", "none", 0),
+      row("Staff", "XPHB", "one", "baseitem", "SCF|XPHB", "none", 0),
+      row("Wand", "XPHB", "one", "baseitem", "SCF|XPHB", "none", 0),
       row("+1 Wand of the War Mage", "DMG", "classic", "item", "WD|DMG", "uncommon", 1),
       row("Bag of Holding", "DMG", "classic", "item", null, "uncommon", 0),
       row("Wand of Magic Missiles", "DMG", "classic", "item", "WD|DMG", "uncommon", 0),
@@ -56,9 +60,12 @@ describe("the items loader", () => {
       row("Arcane Focus", "PHB", "classic", "itemGroup", "SCF", "none", 0),
       row("Vicious +1 Weapon", "AI", "classic", "magicvariant", null, "unknown (magic)", 0),
       row("Arrow of Slaying (*)", "DMG", "classic", "magicvariant", null, "very rare", 0),
+      row("Holy Avenger", "DMG", "classic", "magicvariant", null, "legendary", 1),
       row("Vicious Weapon", "DMG", "classic", "magicvariant", null, "rare", 0),
       row("Armblade", "ERLW", "classic", "magicvariant", null, "common", 1),
+      row("Imbued Wood (Fernian Ash)", "ERLW", "classic", "magicvariant", null, "common", 1),
       row("Ammunition of Slaying", "XDMG", "one", "magicvariant", null, "very rare", 0),
+      row("Holy Avenger", "XDMG", "one", "magicvariant", null, "legendary", 1),
     ]);
   });
 

@@ -791,7 +791,15 @@ export const FIXTURES: Fixture[] = [
       ],
       within: {
         baseitem: {
-          items: ["Longsword|PHB", "Longsword|XPHB", "Alchemist's Supplies|PHB"],
+          items: [
+            "Longsword|PHB",
+            "Longsword|XPHB",
+            "Alchemist's Supplies|PHB",
+            "Longbow|XPHB",
+            "Staff|XPHB",
+            "Orb|XPHB",
+            "Wand|XPHB",
+          ],
         },
         itemProperty: { items: ["PHB|2H", "XPHB|2H", "special|PHB|S"] },
         itemType: {
@@ -815,6 +823,10 @@ export const FIXTURES: Fixture[] = [
             "Arrow of Slaying (*)",
             "Ammunition of Slaying",
             "Armblade",
+            // Two entries share the name, DMG and XDMG; each listing claims one.
+            "Holy Avenger",
+            "Holy Avenger",
+            "Imbued Wood (Fernian Ash)",
             "Vicious Weapon",
             "Vicious +1 Weapon",
           ],
@@ -836,9 +848,12 @@ export const FIXTURES: Fixture[] = [
             "Cloak of Billowing|XDMG",
             "Cloak of Billowing|WttHC",
             "Longsword|XPHB",
+            "Longbow|XPHB",
             "Arrow of Slaying (*)|DMG",
             "Ammunition of Slaying|XDMG",
             "Armblade|ERLW",
+            "Holy Avenger|DMG",
+            "Holy Avenger|XDMG",
             "Vicious Weapon|DMG",
           ],
         },

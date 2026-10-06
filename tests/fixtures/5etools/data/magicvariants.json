@@ -116,6 +116,96 @@
       "hasFluffImages": true
     },
     {
+      "name": "Holy Avenger",
+      "referenceSources": ["CoA"],
+      "edition": "classic",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "sword": true
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Holy Avenger ",
+        "source": "DMG",
+        "page": 174,
+        "srd": true,
+        "reprintedAs": ["Holy Avenger|XDMG"],
+        "tier": "major",
+        "rarity": "legendary",
+        "reqAttune": "by a paladin",
+        "reqAttuneTags": [
+          {
+            "class": "paladin"
+          }
+        ],
+        "bonusWeapon": "+3",
+        "entries": ["Elided. {@damage 2d10} Elided.", "Elided."],
+        "lootTables": ["Magic Item Table I"]
+      },
+      "hasFluffImages": true
+    },
+    {
+      "name": "Holy Avenger",
+      "type": "GV|XDMG",
+      "requires": [
+        {
+          "weaponCategory": "simple"
+        },
+        {
+          "weaponCategory": "martial"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Holy Avenger ",
+        "source": "XDMG",
+        "page": 269,
+        "srd52": true,
+        "basicRules2024": true,
+        "rarity": "legendary",
+        "reqAttune": "by a paladin",
+        "reqAttuneTags": [
+          {
+            "class": "paladin"
+          }
+        ],
+        "bonusWeapon": "+3",
+        "entries": [
+          "Elided. {@damage 2d10} Elided.",
+          "Elided. {@variantrule Emanation [Area of Effect]|XPHB|Emanation} Elided. {@variantrule Friendly [Attitude]|XPHB|Friendly} Elided. {@variantrule Emanation [Area of Effect]|XPHB|Emanation} Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Emanation [Area of Effect]|XPHB|Emanation} Elided."
+        ],
+        "lootTables": ["Armaments - Legendary|XDMG", "Relics - Legendary|XDMG"]
+      },
+      "hasFluffImages": true
+    },
+    {
+      "name": "Imbued Wood (Fernian Ash)",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "SCF",
+          "scfType": "arcane"
+        },
+        {
+          "type": "SCF|XPHB",
+          "scfType": "arcane"
+        }
+      ],
+      "excludes": {
+        "name": ["Crystal", "Orb"]
+      },
+      "inherits": {
+        "namePrefix": "Fernian Ash ",
+        "source": "ERLW",
+        "page": 277,
+        "rarity": "common",
+        "reqAttune": true,
+        "wondrous": true,
+        "bonusSpellDamage": "+1",
+        "entries": ["Elided.", "Elided."]
+      }
+    },
+    {
       "name": "Vicious Weapon",
       "referenceSources": ["CoA"],
       "edition": "classic",

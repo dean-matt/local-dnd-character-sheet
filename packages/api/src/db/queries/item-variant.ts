@@ -30,28 +30,52 @@ function isMatch(candidate: Entry, requirements: Entry, method: "every" | "some"
   });
 }
 
-/** Whether `baseFields` is one this variant's `requires`/`excludes` allows expanding. */
-export function baseItemMatchesVariant(baseFields: Entry, variantFields: Entry): boolean {
+/** The `requires` alternatives that admit `baseFields`, or none where `excludes` refuses it. */
+function admittingClauses(baseFields: Entry, variantFields: Entry): Entry[] {
   const requires = variantFields.requires;
   if (!Array.isArray(requires) || requires.length === 0) {
     throw new Error("a magicvariant's requires must be a non-empty array");
   }
-  const required = requires.some((req) => isRecord(req) && isMatch(baseFields, req, "every"));
-  if (!required) return false;
   const excludes = variantFields.excludes;
-  return !(isRecord(excludes) && isMatch(baseFields, excludes, "some"));
+  if (isRecord(excludes) && isMatch(baseFields, excludes, "some")) return [];
+  return requires.filter((req): req is Entry => isRecord(req) && isMatch(baseFields, req, "every"));
 }
+
+/** Whether `baseFields` is one this variant's `requires`/`excludes` allows expanding. */
+export function baseItemMatchesVariant(baseFields: Entry, variantFields: Entry): boolean {
+  return admittingClauses(baseFields, variantFields).length > 0;
+}
+
+/** Clause keys that say what a base item is, so every kind of each item they admit is meant. */
+const KIND_KEYS = ["type", "staff", "wondrous", "name"];
+
+/** The weapon and armor kinds, all a clause on a trait such as `weaponCategory` speaks to. */
+const ARMS_KINDS: ReadonlySet<ItemKind> = new Set([
+  "melee",
+  "ranged",
+  "ammunition",
+  "light",
+  "medium",
+  "heavy",
+  "shield",
+]);
 
 /**
  * Every kind a variant's expansions are, read off each base item its `requires` and
  * `excludes` admit — `+1 Weapon` is melee and ranged because a longsword and a longbow both
- * qualify. A variant no base item admits falls back to its own fields' kinds.
+ * qualify. A clause naming a kind key takes an admitted item's kinds whole; a clause on a
+ * trait takes only its weapon and armor kinds, so `{ weaponCategory: "simple" }` admitting
+ * the arcane focus `Staff` does not file Holy Avenger under Staff and Spellcasting focus.
+ * A variant no base item admits falls back to its own fields' kinds.
  */
 export function variantKinds(variantFields: Entry, baseItems: readonly Entry[]): ItemKind[] {
   const kinds = new Set(
-    baseItems
-      .filter((base) => baseItemMatchesVariant(base, variantFields))
-      .flatMap((base) => itemKinds(base)),
+    baseItems.flatMap((base) => {
+      const clauses = admittingClauses(base, variantFields);
+      const whole = clauses.some((clause) => KIND_KEYS.some((key) => key in clause));
+      const own = clauses.length === 0 ? [] : itemKinds(base);
+      return whole ? own : own.filter((kind) => ARMS_KINDS.has(kind));
+    }),
   );
   if (kinds.size === 0) return itemKinds(variantFields);
   return ITEM_KINDS.filter((kind) => kinds.has(kind));
