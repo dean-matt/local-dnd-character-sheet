@@ -85,6 +85,10 @@ describe("CharacterListPage", () => {
 
     expect(await screen.findByText("No characters yet")).toBeInTheDocument();
     expect(screen.getByText("0 characters")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "+ New Character" })).toHaveAttribute(
+      "href",
+      "/characters/new",
+    );
     expect(screen.queryByText(/POST/)).not.toBeInTheDocument();
   });
 
@@ -100,7 +104,11 @@ describe("CharacterListPage", () => {
     );
     renderPage();
 
-    const links = await screen.findAllByRole("link");
+    expect(await screen.findByRole("link", { name: "+ New Character" })).toHaveAttribute(
+      "href",
+      "/characters/new",
+    );
+    const links = screen.getAllByRole("link").filter((link) => link.closest("li"));
     expect(links[0]).toHaveAttribute("href", "/characters/1");
     expect(links[0]).toHaveAccessibleName("vex Half-Elf Warlock • Lvl 1 2024");
     expect(links[1]).toHaveAttribute("href", "/characters/2");

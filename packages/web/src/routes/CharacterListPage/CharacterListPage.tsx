@@ -1,3 +1,4 @@
+import { CharacterActions } from "../../components/CharacterActions.tsx";
 import { CharacterTile } from "../../components/CharacterTile.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCharacters } from "../../hooks/useCharacters.ts";
@@ -9,20 +10,26 @@ export function CharacterListPage() {
 
   return (
     <section className="flex flex-col gap-5">
-      <div>
-        <h1 className="font-bold text-[22px]">Characters</h1>
-        {loaded && (
-          <p className="mt-0.5 text-body text-muted">
-            {data.length === 1 ? "1 character" : `${data.length} characters`}
-          </p>
-        )}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-bold text-[22px]">Characters</h1>
+          {loaded && (
+            <p className="mt-0.5 text-body text-muted">
+              {data.length === 1 ? "1 character" : `${data.length} characters`}
+            </p>
+          )}
+        </div>
+        {loaded && data.length > 0 && <CharacterActions />}
       </div>
       {isPending && <LoadingState label="Loading characters…" />}
       {isError && <ErrorState message={error.message} />}
       {loaded && data.length === 0 && (
         <div className="flex flex-col items-center gap-2.5 rounded-card border-2 border-border border-dashed px-3 py-24 text-center">
           <p className="font-semibold text-sm">No characters yet</p>
-          <p className="text-body text-muted leading-normal">Characters you add appear here.</p>
+          <p className="text-body text-muted leading-normal">
+            Start one from scratch, or import a character you already have.
+          </p>
+          <CharacterActions newFirst />
         </div>
       )}
       {loaded && data.length > 0 && (

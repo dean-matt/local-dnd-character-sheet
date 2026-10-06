@@ -4,7 +4,7 @@ import { Link } from "react-router";
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-body";
 
 /**
- * New Character and Import, drawn where the dashboard offers them. Import has no flow
+ * New Character and Import, on the dashboard and the character list. Import has no flow
  * behind it yet, so it is a disabled button with the reason shown beside it, rather than a
  * link to nothing.
  */
