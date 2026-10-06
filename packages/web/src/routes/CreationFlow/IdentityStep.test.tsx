@@ -50,6 +50,15 @@ const ROWS: Record<string, unknown> = {
     background("Sage", { arcana: true, history: true }),
     background("Acolyte", { insight: true, religion: true }),
   ]),
+  "/api/races/Elf/PHB/subraces?edition=one&limit=200": page([]),
+  "/api/backgrounds?edition=one&limit=200": page([]),
+  "/api/classes/Cleric/PHB": {
+    ...PHB("Cleric"),
+    edition: "classic",
+    hitDie: 8,
+    json: { ...PHB("Cleric"), classFeatures: [] },
+  },
+  "/api/classes/Cleric/PHB/subclasses?edition=one&limit=200": page([]),
 };
 
 const SEARCHES: Record<string, unknown[]> = {
@@ -217,6 +226,53 @@ describe("IdentityStep", () => {
 
     expect(values.deity).toBeUndefined();
     expect(combobox("Deity (optional)")).toHaveFocus();
+  });
+
+  it("asks the rules first, and names each choice a change leaves behind without clearing it", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        levels: [{ class: PHB("Cleric"), subclass: PHB("Life Domain") }],
+      }),
+    );
+    renderStep();
+
+    const rules = screen.getByRole("group", { name: "Rules" });
+    expect(rules.compareDocumentPosition(combobox("Race"))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByRole("button", { name: "2014 rules" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await pick("Race", "elf", /^Elf/);
+    fireEvent.click(await screen.findByRole("button", { name: "High" }));
+    await pick("Background", "sa", /Sage/);
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+    expect(status).toBeEmptyDOMElement();
+
+    click("2024 rules");
+
+    expect(values.edition).toBe("one");
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+        "Race: Elf (PHB)",
+        "Subrace: High (PHB)",
+        "Background: Sage (PHB)",
+        "Class: Cleric (PHB)",
+        "Subclass: Life Domain (PHB)",
+      ]),
+    );
+    expect(status).toHaveTextContent(
+      "Not in the 2024 rules. Each stays as chosen until you clear it",
+    );
+    expect(values.race).toEqual(PHB("Elf"));
+    expect(values.subrace).toEqual(PHB("High"));
+    expect(values.background).toEqual(PHB("Sage"));
+    expect(values.levels).toEqual([{ class: PHB("Cleric"), subclass: PHB("Life Domain") }]);
+
+    click("2014 rules");
+
+    await waitFor(() => expect(status).toBeEmptyDOMElement());
   });
 
   it("sets the name and the alignment", async () => {
