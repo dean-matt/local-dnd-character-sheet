@@ -223,20 +223,37 @@ const MODIFIERS: Record<string, (text: string) => string> = {
   a: (text) => (/^[aeiou]/i.test(text) ? "an" : "a"),
 };
 
-function fillPlaceholder(all: string, value: unknown, modifiers: string): string {
-  if (typeof value !== "string" && typeof value !== "number") return all;
-  return [...modifiers].reduce((text, m) => MODIFIERS[m]?.(text) ?? text, String(value));
+/**
+ * What a placeholder reads where nothing fills it, worded for the sentence the template
+ * sets it in: "a magic bonus to attack rolls", "an extra 7 weapon damage". A field upstream
+ * adds later reads as its own name in words rather than as markup.
+ */
+function neutralValue(field: string): string {
+  if (field === "baseName") return "item";
+  if (field === "dmgType") return "weapon";
+  if (field.startsWith("bonus")) return "magic";
+  return inWords(field);
+}
+
+/** `bulletSling` as "bullet sling". */
+function inWords(camelCase: string): string {
+  return camelCase.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+}
+
+function fillPlaceholder(field: string, value: unknown, modifiers: string): string {
+  const text =
+    typeof value === "string" || typeof value === "number" ? String(value) : neutralValue(field);
+  return [...modifiers].reduce((filled, m) => MODIFIERS[m]?.(filled) ?? filled, text);
 }
 
 /**
  * Upstream's `{=property/modifiers}` substitution over every string in `entries`. A
- * placeholder naming a field the item lacks stays as written rather than reading
- * "undefined".
+ * placeholder naming a field the item lacks reads as neutral prose, never as the markup.
  */
 function injectProperties(node: unknown, values: Entry): unknown {
   if (typeof node === "string") {
-    return node.replace(/\{=([^}/]+)(?:\/([^}]*))?}/g, (all, field: string, modifiers = "") =>
-      fillPlaceholder(all, values[field], modifiers),
+    return node.replace(/\{=([^}/]+)(?:\/([^}]*))?}/g, (_all, field: string, modifiers = "") =>
+      fillPlaceholder(field, values[field], modifiers),
     );
   }
   if (Array.isArray(node)) return node.map((child) => injectProperties(child, values));
@@ -249,16 +266,33 @@ function injectProperties(node: unknown, values: Entry): unknown {
 }
 
 /**
+ * The noun a template's base item goes by while none is chosen: the first flag its
+ * `requires` names, in words, such as "arrow" for Arrow of Slaying. `undefined` where
+ * every clause matches on a value, such as a `type` code, rather than a flag.
+ */
+function requiredNoun(requires: unknown): string | undefined {
+  if (!Array.isArray(requires)) return undefined;
+  const flag = requires
+    .filter(isRecord)
+    .flatMap((clause) => Object.entries(clause))
+    .find(([, wanted]) => wanted === true)?.[0];
+  return flag === undefined ? undefined : inWords(flag);
+}
+
+/**
  * A magic variant read on its own rather than expanded: the template's fields with
  * `inherits` over them and the template's name kept, each `{=property}` placeholder filled
  * where `inherits` supplies the value. A placeholder naming the base item, such as
- * `{=baseName}`, stays as written, since no base item is chosen.
+ * `{=baseName}`, reads as the noun its `requires` names, since no base item is chosen.
  */
 export function variantDetail(template: Entry): Entry {
   const { inherits, ...own } = template;
   if (!isRecord(inherits)) throw new Error(`${String(template.name)}: inherits is missing`);
   const detail: Entry = { ...own, ...inherits, name: own.name };
-  if (detail.entries !== undefined) detail.entries = injectProperties(detail.entries, detail);
+  if (detail.entries !== undefined) {
+    const values = { baseName: requiredNoun(own.requires), ...detail };
+    detail.entries = injectProperties(detail.entries, values);
+  }
   return detail;
 }
 

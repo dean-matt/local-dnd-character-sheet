@@ -125,6 +125,22 @@
           "height": 594
         }
       ]
+    },
+    {
+      "name": "Vicious Weapon",
+      "source": "DMG",
+      "images": [
+        {
+          "type": "image",
+          "href": {
+            "type": "internal",
+            "path": "items/DMG/Vicious Weapon.webp"
+          },
+          "title": "Vicious Weapon (Rapier)",
+          "width": 335,
+          "height": 850
+        }
+      ]
     }
   ]
 }

@@ -105,11 +105,11 @@ const STRUCTURAL_FIELDS = [
 const MARKER = "Elided.";
 
 /**
- * Markup a loader reads rather than renders: a `{@tag}` and a version's `{{variable}}`.
- * Both survive elision, because a fixture with no tags cannot exercise tag handling,
- * and neither carries rules text.
+ * Markup a loader reads rather than renders: a `{@tag}`, a version's `{{variable}}` and a
+ * magic variant's `{=property}`. All three survive elision, because a fixture with no tags
+ * cannot exercise tag handling, and none carries rules text.
  */
-const MARKUP = /\{@[^{}]+\}|\{\{[^{}]+\}\}/g;
+const MARKUP = /\{@[^{}]+\}|\{\{[^{}]+\}\}|\{=[^{}]+\}/g;
 
 /**
  * Tags that wrap prose rather than name something. Their body is rules text, so a

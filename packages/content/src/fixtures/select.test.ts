@@ -129,6 +129,7 @@ describe("elide", () => {
     expect(elide("On a hit it takes {@damage 1d10} {{damageType}} damage.")).toBe(
       "Elided. {@damage 1d10} {{damageType}} Elided.",
     );
+    expect(elide("You have a {=bonusWeapon} bonus.")).toBe("Elided. {=bonusWeapon} Elided.");
   });
 
   it("keeps a reference tag whole, because it names something rather than reading", () => {
