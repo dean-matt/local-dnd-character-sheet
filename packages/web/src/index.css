@@ -49,7 +49,7 @@
    * What failed: a rejected value, a request that did not load. Darker than the default
    * accent in light and brighter in dark, so an error reads apart from a red link. A custom
    * accent near either value matches it again; to prevent that, src/accent.ts can refuse one.
-   * Dark mixes 10% white into Tailwind's red-400, which alone measures 4.30:1 on subtle.
+   * Dark mixes 10% white into Tailwind's red-400 in oklab; red-400 alone measures 4.30:1 on subtle.
    */
   --color-error: light-dark(#9f0712, #ff7676);
   /* What restores hit points or shields them: temporary hit points, healing. */
