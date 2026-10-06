@@ -23,7 +23,7 @@ const texts = (values: unknown[]): string[] => values.flatMap((value) => text(va
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
 
-const line = (label: string, value: string | undefined): Entries =>
+export const line = (label: string, value: string | undefined): Entries =>
   value ? [`{@b ${label}} ${value}`] : [];
 
 const SIZES: Record<string, string> = {
@@ -79,7 +79,7 @@ const ALIGNMENT_RANGES: Record<string, string> = {
   "E G L NX NY": "any non-chaotic alignment",
 };
 
-function alignmentWords(letters: string[]): string {
+export function alignmentWords(letters: string[]): string {
   const range = ALIGNMENT_RANGES[[...letters].sort().join(" ")];
   if (range) return range;
   return [...new Set(letters.map((letter) => ALIGNMENT_WORDS[letter] ?? letter))].join(" ");

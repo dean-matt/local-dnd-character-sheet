@@ -231,6 +231,58 @@ describe("CatalogDetail", () => {
     );
   });
 
+  it("renders a deity with no prose by its fields", async () => {
+    stubFetchByUrl({
+      "/api/catalog/deity/Moradin/PHB?qualifier=Nonhuman": {
+        type: "deity",
+        name: "Moradin",
+        source: "PHB",
+        qualifier: "Nonhuman",
+        edition: null,
+        json: {
+          pantheon: "Nonhuman",
+          alignment: ["L", "G"],
+          domains: ["Forge", "Knowledge"],
+          symbol: "Hammer and anvil",
+        },
+      },
+    });
+    renderAt("/catalog/deity/Moradin/PHB/Nonhuman");
+
+    expect(await screen.findByText("Domains")).toBeInTheDocument();
+    expect(screen.getByText("Forge, Knowledge")).toBeInTheDocument();
+    expect(screen.getByText("Lawful good")).toBeInTheDocument();
+    expect(screen.getByText("Hammer and anvil")).toBeInTheDocument();
+    expect(screen.queryByText("Province")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("This row carries no rules text of its own."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a language's fields ahead of its prose", async () => {
+    stubFetchByUrl({
+      "/api/catalog/language/Draconic/PHB": {
+        type: "language",
+        name: "Draconic",
+        source: "PHB",
+        edition: "classic",
+        json: {
+          type: "exotic",
+          script: "Draconic",
+          typicalSpeakers: ["Dragons"],
+          entries: ["An old tongue."],
+        },
+      },
+    });
+    renderAt("/catalog/language/Draconic/PHB");
+
+    expect(await screen.findByText("Exotic")).toBeInTheDocument();
+    expect(screen.getByText("Typical Speakers")).toBeInTheDocument();
+    expect(screen.getByText("Dragons")).toBeInTheDocument();
+    expect(screen.getByText("An old tongue.")).toBeInTheDocument();
+    expect(screen.getByText("Language")).toBeInTheDocument();
+  });
+
   it("renders a table lookup as the table it is", async () => {
     stubFetchByUrl({
       "/api/catalog/table/Art%20Objects/DMG": {

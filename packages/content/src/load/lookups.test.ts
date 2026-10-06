@@ -53,6 +53,7 @@ describe("the lookups loader", () => {
       "action Dash|XPHB one",
       "condition Blinded|PHB classic",
       "condition Blinded|XPHB one",
+      "deity Abbathor|MTF|Dwarven classic",
       "deity Bahgtru|SCAG|Orc classic",
       "deity Bahgtru|VGM|Orc classic",
       "deity Moradin|PHB|Nonhuman classic",

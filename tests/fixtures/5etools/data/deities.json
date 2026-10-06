@@ -82,6 +82,18 @@
           "entries": ["Elided. {@creature aurochs|vgm} Elided."]
         }
       ]
+    },
+    {
+      "name": "Abbathor",
+      "source": "MTF",
+      "page": 73,
+      "pantheon": "Dwarven",
+      "alignment": ["N", "E"],
+      "category": "The Mordinsamman",
+      "domains": ["Trickery"],
+      "province": "Greed",
+      "symbol": "Jeweled dagger, point down",
+      "entries": ["Elided.", "Elided.", "Elided."]
     }
   ]
 }
