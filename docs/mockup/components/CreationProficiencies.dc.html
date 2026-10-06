@@ -82,11 +82,11 @@
         <div style="font-size: 12px; color: {{classCountColor}}; margin-bottom: 8px;">{{classCountLabel}}</div>
         <div style="display: flex; flex-direction: column; gap: 4px;">
           <sc-for list="{{classSkills}}" as="sk" hint-placeholder-count="6">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{sk.color}}; padding: 4px 2px;">
-              <input type="checkbox" checked="{{sk.checked}}" onChange="{{sk.toggle}}">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{sk.color}}; cursor: {{sk.cursor}}; padding: 4px 2px;">
+              <input type="checkbox" checked="{{sk.checked}}" disabled="{{sk.granted}}" onChange="{{sk.toggle}}">
               {{sk.name}}
-              <sc-if value="{{sk.duplicate}}" hint-placeholder-val="{{false}}">
-                <span style="font-size: 11px; color: {{accent}};">— already granted by Background, choose another</span>
+              <sc-if value="{{sk.granted}}" hint-placeholder-val="{{false}}">
+                <span style="font-size: 11px; color: #6b7280;">— granted by Background</span>
               </sc-if>
             </label>
           </sc-for>
@@ -135,7 +135,7 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.state = {
-      checkedSkills: { Arcana: true, Religion: true },
+      checkedSkills: { Insight: true, Religion: true },
       useGold: false,
       equipmentPicks: { weapon: 'a quarterstaff', focus: 'a component pouch' }
     };
@@ -147,13 +147,17 @@ class Component extends DCLogic {
     const CLASS_SKILL_COUNT = 2;
     const { checkedSkills, useGold, equipmentPicks } = this.state;
     const checkedCount = Object.values(checkedSkills).filter(Boolean).length;
-    const classSkills = CLASS_SKILL_OPTIONS.map((name) => ({
-      name,
-      checked: !!checkedSkills[name],
-      duplicate: !!checkedSkills[name] && grantedSkills.indexOf(name) !== -1,
-      color: grantedSkills.indexOf(name) !== -1 && checkedSkills[name] ? accent : '#1f2430',
-      toggle: () => this.setState({ checkedSkills: { ...checkedSkills, [name]: !checkedSkills[name] } })
-    }));
+    const classSkills = CLASS_SKILL_OPTIONS.map((name) => {
+      const granted = grantedSkills.indexOf(name) !== -1;
+      return {
+        name,
+        granted,
+        checked: granted || !!checkedSkills[name],
+        color: granted ? '#6b7280' : '#1f2430',
+        cursor: granted ? 'not-allowed' : 'pointer',
+        toggle: () => { if (!granted) this.setState({ checkedSkills: { ...checkedSkills, [name]: !checkedSkills[name] } }); }
+      };
+    });
     const EQUIPMENT_CHOICES = [
       { name: 'weapon', label: 'Choose a weapon', options: ['a quarterstaff', 'a dagger'] },
       { name: 'focus', label: 'Choose a spellcasting focus', options: ['a component pouch', 'an arcane focus'] }

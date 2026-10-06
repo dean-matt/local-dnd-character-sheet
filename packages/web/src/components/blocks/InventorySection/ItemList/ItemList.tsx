@@ -87,7 +87,7 @@ export function ItemList({
   return (
     <>
       {update.isError && (
-        <p role="alert" className="text-row">
+        <p role="alert" className="text-error text-row">
           The grip was not saved: {update.error.message}
         </p>
       )}

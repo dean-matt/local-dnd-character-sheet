@@ -210,7 +210,11 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
             {group("Characters", characterResults, 0)}
             {group("Compendium", compendiumResults, characterResults.length)}
           </div>
-          <p aria-hidden className="shrink-0 px-2.5 py-1.5 text-body text-muted empty:hidden">
+          <p
+            aria-hidden
+            data-failed={Boolean(compendium.error)}
+            className="shrink-0 px-2.5 py-1.5 text-body text-muted empty:hidden data-[failed=true]:text-error"
+          >
             {showPanel ? status() : undefined}
           </p>
           <div className="mt-1 shrink-0 border-t border-border pt-1">

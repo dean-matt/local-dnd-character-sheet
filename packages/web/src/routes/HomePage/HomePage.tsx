@@ -95,7 +95,7 @@ export function HomePage() {
             />
           </li>
         </ul>
-        {types.isError && <p className="text-body text-muted">The catalog's types did not load.</p>}
+        {types.isError && <p className="text-body text-error">The catalog's types did not load.</p>}
         {catalogTypes.length > 0 && (
           <>
             <h3

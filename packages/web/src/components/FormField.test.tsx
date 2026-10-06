@@ -28,6 +28,7 @@ describe("FormField", () => {
     expect(select).toHaveAttribute("aria-invalid", "true");
     expect(select).toHaveAccessibleDescription("Pick an alignment.");
     expect(screen.getByRole("alert")).toHaveTextContent("Pick an alignment.");
+    expect(screen.getByRole("alert")).toHaveClass("text-error");
   });
 
   it("leaves a valid control undescribed and keeps an empty live region mounted", () => {

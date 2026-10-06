@@ -61,7 +61,7 @@ export function SourcesSettings() {
       {data && !catalogSources.isPending && (
         <>
           {catalogSources.isError && (
-            <p className="text-label text-muted">
+            <p className="text-label text-error">
               Titles and groups did not load, so every source sits under Other.
             </p>
           )}

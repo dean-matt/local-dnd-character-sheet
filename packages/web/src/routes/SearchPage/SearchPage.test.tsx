@@ -340,4 +340,21 @@ describe("SearchPage", () => {
       expect.stringMatching(/^\/api\/search\?/),
     );
   });
+
+  it("draws the prompt, not the error color, once a failed query is cleared", async () => {
+    renderAt("/search?q=zzz", {});
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Search failed"));
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search the compendium" }), {
+      target: { value: "" },
+    });
+
+    const prompt = screen.getByText(
+      "Type a name to search the compendium, or pick a type or source.",
+      {
+        selector: "[aria-hidden]",
+      },
+    );
+    expect(prompt).toHaveAttribute("data-failed", "false");
+  });
 });
