@@ -3,6 +3,7 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type { FormFieldProps } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
+import { SaveFailure } from "../SaveFailure.tsx";
 
 /** `invalid` is text the parse or schema refused, which a retry would refuse again;
  * `failed` is a write that did not land, which a retry can. */
@@ -24,8 +25,6 @@ export type EditableFieldProps<T> = {
   debounceMs?: number;
   labelHidden?: boolean;
   inputClassName?: string;
-  /** A `<datalist>` id: suggestions the input offers without restricting it to them. */
-  list?: string;
   placeholder?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
   messageSlot?: FormFieldProps["messageSlot"];
@@ -46,7 +45,6 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     debounceMs = DEFAULT_DEBOUNCE_MS,
     labelHidden,
     inputClassName,
-    list,
     placeholder,
     inputMode,
     messageSlot,
@@ -158,7 +156,6 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       labelHidden={labelHidden}
       className={inputClassName}
       type="text"
-      list={list}
       placeholder={placeholder}
       inputMode={inputMode}
       messageSlot={messageSlot}
@@ -170,12 +167,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
         status === "invalid" ? (
           error
         ) : status === "failed" ? (
-          <>
-            {error ?? "Save failed."}
-            <button type="button" onClick={retry} className="underline">
-              Retry
-            </button>
-          </>
+          <SaveFailure message={error ?? "Save failed."} onRetry={retry} />
         ) : undefined
       }
     />
