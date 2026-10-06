@@ -214,6 +214,16 @@ describe("ClassStep", () => {
     expect(values.levels?.some((level) => level.subclass)).toBe(false);
   });
 
+  it("says a typed level must be 1 to 20, and keeps the stored one", async () => {
+    renderStep();
+
+    await pickClass("fig", /^Fighter/);
+    setLevel(25);
+
+    expect(screen.getByText("A level is a whole number from 1 to 20.")).toBeVisible();
+    expect(values.levels).toHaveLength(1);
+  });
+
   it("takes the average or rolls each level after the first, as the player chooses", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.99);
     renderStep();
@@ -260,6 +270,7 @@ describe("ClassStep", () => {
     renderStep();
 
     click("Not listed? Type a class");
+    expect(screen.getByRole("textbox", { name: "Class name" })).toHaveFocus();
     fireEvent.change(screen.getByRole("textbox", { name: "Class name" }), {
       target: { value: "Blood Hunter" },
     });
@@ -277,7 +288,7 @@ describe("ClassStep", () => {
     expect(values.departures).toEqual([
       {
         field: "levels",
-        note: expect.stringContaining("Blood Hunter is not a class the catalog holds"),
+        note: expect.stringContaining("Blood Hunter is a homebrew class"),
       },
     ]);
     expect(screen.getByRole("button", { name: "Clear class, Blood Hunter" })).toBeVisible();
@@ -287,6 +298,22 @@ describe("ClassStep", () => {
 
     expect(values.levels).toEqual([]);
     expect(values.departures).toEqual([]);
+  });
+
+  it("reuses a stored homebrew class of the same name, edition and die", async () => {
+    ROWS["/api/homebrew/classes"] = [BLOOD_HUNTER];
+    const fetchMock = stubCatalog();
+    renderStep();
+
+    click("Not listed? Type a class");
+    fireEvent.change(screen.getByRole("textbox", { name: "Class name" }), {
+      target: { value: "blood hunter" },
+    });
+    click("d10");
+    click("Use");
+
+    await waitFor(() => expect(values.levels).toEqual([{ class: { homebrewId: "hb-1" } }]));
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
   });
 
   it("refuses to reuse a stored homebrew class on another die than the one named", async () => {

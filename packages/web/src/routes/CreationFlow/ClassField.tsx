@@ -54,7 +54,7 @@ export function ClassField() {
                 onSuccess: (record) =>
                   choose(
                     { homebrewId: record.id },
-                    `${record.name} is not a class the catalog holds, so the sheet takes its d${record.hitDie} hit die and derives no features from it.`,
+                    `${record.name} is a homebrew class, so the sheet takes its d${record.hitDie} hit die and derives no features from it.`,
                   ),
               },
             )

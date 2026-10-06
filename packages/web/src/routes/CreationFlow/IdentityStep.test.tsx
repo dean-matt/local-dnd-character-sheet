@@ -173,6 +173,7 @@ describe("IdentityStep", () => {
     renderStep();
 
     click("Not listed? Type a race");
+    expect(screen.getByRole("textbox", { name: "Race name" })).toHaveFocus();
     fireEvent.change(screen.getByRole("textbox", { name: "Race name" }), {
       target: { value: "Warforged" },
     });

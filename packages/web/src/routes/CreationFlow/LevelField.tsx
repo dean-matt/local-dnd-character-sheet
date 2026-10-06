@@ -5,6 +5,11 @@ import { InputField } from "../../components/InputField.tsx";
 import { levelsIn, subclassOf, withSubclass } from "./classLevels.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
 
+const isLevel = (text: string) => {
+  const count = Number(text);
+  return text.trim() !== "" && Number.isInteger(count) && count >= 1 && count <= 20;
+};
+
 /**
  * The level the character starts at, 1 to 20. A level lowered past the one that grants
  * the subclass drops it; every roll a kept level holds stays.
@@ -27,11 +32,16 @@ export function LevelField() {
       min={1}
       max={20}
       value={typing ?? String(levels.length)}
+      error={
+        typing !== undefined && !isLevel(typing)
+          ? "A level is a whole number from 1 to 20."
+          : undefined
+      }
       className="w-20"
       onChange={(event) => {
         setTyping(event.target.value);
+        if (!isLevel(event.target.value)) return;
         const count = Number(event.target.value);
-        if (!Number.isInteger(count) || count < 1 || count > 20) return;
         const subclass = count >= at ? chosen : undefined;
         setValue("levels", withSubclass(levelsIn(cls, count, levels), subclass, at), {
           shouldDirty: true,
