@@ -76,6 +76,13 @@ const ROWS: Record<string, unknown> = {
     edition: "classic",
     json: PHB("Oghma"),
   },
+  "/api/catalog/deity/Oghma/PHB?qualifier=Forgotten%20Realms": {
+    type: "deity",
+    ...PHB("Oghma"),
+    qualifier: "Forgotten Realms",
+    edition: null,
+    json: PHB("Oghma"),
+  },
 };
 
 const SEARCHES: Record<string, unknown[]> = {
@@ -280,7 +287,7 @@ describe("IdentityStep", () => {
       ]),
     );
     expect(status).toHaveTextContent(
-      "Not in the 2024 rules. Each stays as chosen until you clear it",
+      "Not in the 2024 rules. Each stays until you clear it, or the race or class it belongs to",
     );
     expect(values.race).toEqual(PHB("Elf"));
     expect(values.subrace).toEqual(PHB("High"));
@@ -316,6 +323,27 @@ describe("IdentityStep", () => {
         "Deity: Oghma · Celtic",
       ]),
     );
+  });
+
+  it("never names a deity both editions share", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        deity: { ...PHB("Oghma"), pantheon: "Forgotten Realms" },
+      }),
+    );
+    renderStep();
+    const url = "/api/catalog/deity/Oghma/PHB?qualifier=Forgotten%20Realms";
+    await waitFor(() =>
+      expect(vi.mocked(fetch).mock.calls.map(([input]) => String(input))).toContain(url),
+    );
+
+    click("2024 rules");
+
+    // The row has no visible effect to wait on, so give its query time to settle.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByRole("status", { name: "Choices outside the rules" })).toBeEmptyDOMElement();
   });
 
   it("sets the name and the alignment", async () => {

@@ -29,7 +29,8 @@ export function EditionField() {
         {mismatches.length > 0 && (
           <div className="mt-2 rounded-card border border-border bg-surface p-3 text-body">
             <p>
-              Not in the {EDITION_LABELS[edition]} rules. Each stays as chosen until you clear it:
+              Not in the {EDITION_LABELS[edition]} rules. Each stays until you clear it, or the race
+              or class it belongs to:
             </p>
             <ul className="mt-1 list-disc pl-5">
               {mismatches.map(({ label, value }) => (
