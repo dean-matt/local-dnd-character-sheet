@@ -22,9 +22,13 @@ export function ClassField() {
   const { edition, levels, cls, homebrew } = useClassCatalog();
   const ensure = useEnsureHomebrewClass();
   const [moved, setMoved] = useState(false);
+  // × empties `levels`, so the level the player set rides here until the next pick.
+  const [count, setCount] = useState(Math.max(levels.length, 1));
 
   function choose(ref: EntryRef | undefined, note?: string) {
-    setValue("levels", ref ? levelsIn(ref, Math.max(levels.length, 1), []) : [], OPTS);
+    const keep = levels.length || count;
+    setCount(keep);
+    setValue("levels", ref ? levelsIn(ref, keep, []) : [], OPTS);
     setValue("departures", withDeparture(getValues("departures"), "levels", note), OPTS);
     setMoved(true);
   }

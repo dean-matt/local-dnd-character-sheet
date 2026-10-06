@@ -238,10 +238,11 @@ describe("ClassStep", () => {
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, undefined, undefined]);
   });
 
-  it("swaps the saves a replaced class granted for the new class's", async () => {
+  it("swaps the saves a replaced class granted for the new class's, keeping the level", async () => {
     renderStep();
 
     await pickClass("cle", /^Cleric/);
+    setLevel(4);
     await waitFor(() => expect(values.proficiencies?.savingThrows).toEqual(["wis", "cha"]));
 
     click("Clear class, Cleric");
@@ -250,6 +251,8 @@ describe("ClassStep", () => {
 
     await waitFor(() => expect(values.proficiencies?.savingThrows).toEqual(["str", "con"]));
     expect(values.proficiencies?.armor).toEqual([]);
+    expect(values.levels).toHaveLength(4);
+    expect(screen.getByRole("spinbutton", { name: "Level" })).toHaveValue(4);
   });
 
   it("takes a class the catalog lacks as a homebrew class with the hit die named, noting the departure", async () => {

@@ -6,21 +6,17 @@ const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const CHAMPION = { name: "Champion", source: "PHB" };
 
 describe("levelsIn", () => {
-  it("keeps each roll at its position, rolls only the levels it adds, and never the first", () => {
+  it("keeps each roll at its position but the first's, and adds levels unrolled", () => {
     const previous = [
       { class: FIGHTER, rolled: 4 },
       { class: FIGHTER, rolled: 7 },
     ];
 
-    expect(levelsIn(BARBARIAN, 3, previous, () => 9)).toEqual([
+    expect(levelsIn(BARBARIAN, 3, previous)).toEqual([
       { class: BARBARIAN },
       { class: BARBARIAN, rolled: 7 },
-      { class: BARBARIAN, rolled: 9 },
+      { class: BARBARIAN },
     ]);
-  });
-
-  it("takes the average for an added level where nothing rolls", () => {
-    expect(levelsIn(FIGHTER, 2, [])).toEqual([{ class: FIGHTER }, { class: FIGHTER }]);
   });
 });
 

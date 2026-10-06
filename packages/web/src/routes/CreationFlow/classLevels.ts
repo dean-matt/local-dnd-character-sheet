@@ -6,18 +6,12 @@ type Level = CharacterDefinition["levels"][number];
 export const rollHitDie = (faces: number): number => rollDice(`1d${faces}`).total;
 
 /**
- * `count` levels in `cls`, keeping each roll the old list held at the same position. A
- * level the old list lacked takes a roll from `roll` where one is given, else the average.
- * The first level takes the die's highest face whatever it holds, so it is never rolled.
+ * `count` levels in `cls`, keeping each roll the old list held at the same position. The
+ * first level takes the die's highest face whatever it holds, so it keeps no roll.
  */
-export function levelsIn(
-  cls: EntryRef,
-  count: number,
-  previous: readonly Level[],
-  roll?: () => number,
-): Level[] {
+export function levelsIn(cls: EntryRef, count: number, previous: readonly Level[]): Level[] {
   return Array.from({ length: count }, (_, index) => {
-    const rolled = index === 0 ? undefined : (previous[index]?.rolled ?? roll?.());
+    const rolled = index === 0 ? undefined : previous[index]?.rolled;
     return rolled === undefined ? { class: cls } : { class: cls, rolled };
   });
 }
