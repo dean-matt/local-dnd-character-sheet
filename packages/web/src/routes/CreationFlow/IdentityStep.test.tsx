@@ -264,17 +264,14 @@ describe("IdentityStep", () => {
 
     const rules = screen.getByRole("group", { name: "Rules" });
     expect(rules.compareDocumentPosition(combobox("Race"))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(screen.getByRole("button", { name: "2014 rules" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    expect(screen.getByRole("button", { name: "2014" })).toHaveAttribute("aria-pressed", "true");
     await pick("Race", "elf", /^Elf/);
     fireEvent.click(await screen.findByRole("button", { name: "High" }));
     await pick("Background", "sa", /Sage/);
     const status = screen.getByRole("status", { name: "Choices outside the rules" });
     expect(status).toBeEmptyDOMElement();
 
-    click("2024 rules");
+    click("2024");
 
     expect(values.edition).toBe("one");
     await waitFor(() =>
@@ -294,7 +291,7 @@ describe("IdentityStep", () => {
     expect(values.background).toEqual(PHB("Sage"));
     expect(values.levels).toEqual([{ class: PHB("Cleric"), subclass: PHB("Life Domain") }]);
 
-    click("2014 rules");
+    click("2014");
 
     await waitFor(() => expect(status).toBeEmptyDOMElement());
   });
@@ -313,7 +310,7 @@ describe("IdentityStep", () => {
     renderStep();
     const status = screen.getByRole("status", { name: "Choices outside the rules" });
 
-    click("2024 rules");
+    click("2024");
 
     await waitFor(() =>
       expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
@@ -339,7 +336,7 @@ describe("IdentityStep", () => {
       expect(vi.mocked(fetch).mock.calls.map(([input]) => String(input))).toContain(url),
     );
 
-    click("2024 rules");
+    click("2024");
 
     // The row has no visible effect to wait on, so give its query time to settle.
     await new Promise((resolve) => setTimeout(resolve, 50));

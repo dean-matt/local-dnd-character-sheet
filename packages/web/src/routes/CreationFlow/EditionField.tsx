@@ -1,7 +1,6 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
-import { ChoicePills } from "./ChoicePills.tsx";
 import { useEditionMismatches } from "./useEditionMismatches.ts";
 
 type Edition = CharacterDefinition["edition"];
@@ -19,12 +18,22 @@ export function EditionField() {
   const mismatches = useEditionMismatches();
   return (
     <div className="flex flex-col">
-      <ChoicePills
-        legend="Rules"
-        options={EDITIONS.map((each) => ({ value: each, label: `${EDITION_LABELS[each]} rules` }))}
-        value={edition}
-        onChange={(value) => setValue("edition", value as Edition, { shouldDirty: true })}
-      />
+      <fieldset className="mt-2 flex flex-col">
+        <legend className="mb-1.5 text-muted text-row">Rules</legend>
+        <div className="flex w-fit gap-0.5 rounded-pill bg-border p-px">
+          {EDITIONS.map((each) => (
+            <button
+              type="button"
+              key={each}
+              aria-pressed={each === edition}
+              onClick={() => setValue("edition", each, { shouldDirty: true })}
+              className="rounded-pill bg-transparent px-3 py-1 font-semibold text-muted text-row hover:text-ink aria-pressed:bg-accent aria-pressed:text-white"
+            >
+              {EDITION_LABELS[each]}
+            </button>
+          ))}
+        </div>
+      </fieldset>
       <div role="status" aria-label="Choices outside the rules">
         {mismatches.length > 0 && (
           <div className="mt-2 rounded-card border border-border bg-surface p-3 text-body">
