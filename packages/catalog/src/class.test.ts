@@ -9,6 +9,7 @@ import {
   preparationRuleSchema,
   preparedSpellCountSchema,
   spellcastingAbilitySchema,
+  subclassLevelSchema,
   subclassRecordSchema,
 } from "./index.ts";
 
@@ -192,5 +193,30 @@ describe("preparationRuleSchema", () => {
   it("reads no rule off a row that prints no formula, or one that counts no level", () => {
     expect(preparationRuleSchema.parse({ name: "Wizard" })).toBeUndefined();
     expect(preparationRuleSchema.parse({ preparedSpells: "<$int_mod$>" })).toBeUndefined();
+  });
+});
+
+describe("subclassLevelSchema", () => {
+  const gains = (classFeature: string) => ({ classFeature, gainSubclassFeature: true });
+
+  it("reads the level of the first feature that grants the subclass", () => {
+    const cleric = {
+      classFeatures: [
+        "Spellcasting|Cleric||1",
+        gains("Divine Domain|Cleric||1"),
+        gains("Channel Divinity|Cleric||2"),
+      ],
+    };
+    expect(subclassLevelSchema.parse(cleric)).toBe(1);
+  });
+
+  it("reads past a trailing feature source", () => {
+    const artificer = { classFeatures: [gains("Artificer Subclass|Artificer|EFA|3|EFA")] };
+    expect(subclassLevelSchema.parse(artificer)).toBe(3);
+  });
+
+  it("is undefined for a class that grants no subclass", () => {
+    expect(subclassLevelSchema.parse({ classFeatures: ["Rage|Barbarian||1"] })).toBeUndefined();
+    expect(subclassLevelSchema.parse({})).toBeUndefined();
   });
 });

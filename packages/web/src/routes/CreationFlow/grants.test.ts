@@ -28,6 +28,13 @@ describe("swapGrants", () => {
     });
   });
 
+  it("swaps the saving throws a replaced class granted", () => {
+    const before = { ...NO_GRANTS, savingThrows: ["int" as const, "wis" as const] };
+    const after = { ...NO_GRANTS, savingThrows: ["str" as const, "con" as const] };
+
+    expect(swapGrants(held, before, after).savingThrows).toEqual(["str", "con"]);
+  });
+
   it("keeps a held proficiency's level when a grant names it again", () => {
     const after = { ...NO_GRANTS, skills: [skill("Arcana")], languages: [ref("Common")] };
 
@@ -51,6 +58,23 @@ describe("resolveGrants", () => {
       skills: [skill("Perception")],
       languages: [ref("Common")],
       tools: [{ name: "Thieves' Tools", level: "proficient" }],
+    });
+  });
+
+  it("takes the saving throws a class grants, and its weapons and armor as a sheet prints them", () => {
+    const none = { skills: [], languages: [], tools: [], weapons: [], armor: [] };
+    const fighter = {
+      ...none,
+      savingThrows: ["str" as const, "con" as const],
+      weapons: ["martial"],
+    };
+    const race = { ...none, armor: ["light"] };
+
+    expect(resolveGrants([race, fighter], [], "classic")).toEqual({
+      ...NO_GRANTS,
+      savingThrows: ["str", "con"],
+      weapons: ["Martial"],
+      armor: ["Light"],
     });
   });
 });

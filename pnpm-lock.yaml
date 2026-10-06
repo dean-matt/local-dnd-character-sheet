@@ -153,6 +153,9 @@ importers:
       '@dnd/character':
         specifier: workspace:*
         version: link:../character
+      '@dnd/dice':
+        specifier: workspace:*
+        version: link:../dice
       '@dnd/tags':
         specifier: workspace:*
         version: link:../tags

@@ -88,6 +88,28 @@ export const castingStartLevelSchema = z
     return levels.length === 0 ? undefined : Math.min(...levels);
   });
 
+/**
+ * The class level that grants a subclass, read off the first `classFeatures` entry marked
+ * `gainSubclassFeature`, `undefined` where none is. It differs by edition as well as by
+ * class: `Cleric` (PHB) takes its domain at 1st level, `Cleric` (XPHB) at 3rd. The entry
+ * names its feature `name|class|classSource|level`, with an optional feature source after.
+ */
+export const subclassLevelSchema = z
+  .looseObject({ classFeatures: z.array(z.unknown()).optional().catch(undefined) })
+  .transform((entry) => {
+    const gain = (entry.classFeatures ?? []).find(
+      (feature): feature is { classFeature: string } =>
+        typeof feature === "object" &&
+        feature !== null &&
+        "gainSubclassFeature" in feature &&
+        feature.gainSubclassFeature === true &&
+        "classFeature" in feature &&
+        typeof feature.classFeature === "string",
+    );
+    const level = Number(gain?.classFeature.split("|")[3]);
+    return Number.isInteger(level) && level >= 1 && level <= 20 ? level : undefined;
+  });
+
 /** A class row from `content.db`'s `classes` table, addressed by `(name, source)`. */
 export const classRecordSchema = z.strictObject({
   name: z.string().min(1),

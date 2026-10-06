@@ -41,6 +41,7 @@ export {
   preparationRuleSchema,
   preparedSpellCountSchema,
   spellcastingAbilitySchema,
+  subclassLevelSchema,
   subclassRecordSchema,
 } from "./class.ts";
 export { defenseTraitSchema } from "./defense.ts";
@@ -72,8 +73,11 @@ export {
 } from "./item.ts";
 export type { ItemHitFacts, ItemKind } from "./item-kind.ts";
 export { ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
-export type { ProficiencyGrants } from "./proficiency-grants.ts";
-export { proficiencyGrantsSchema } from "./proficiency-grants.ts";
+export type { ClassProficiencyGrants, ProficiencyGrants } from "./proficiency-grants.ts";
+export {
+  classProficiencyGrantsSchema,
+  proficiencyGrantsSchema,
+} from "./proficiency-grants.ts";
 export type {
   HomebrewRaceInput,
   HomebrewRaceRecord,

@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 import { Link } from "react-router";
 import { CREATION_STEPS, type CreationStep, stepLink } from "./creationSteps.ts";
+import { useClassDone } from "./useClassDone.ts";
 import { useIdentityDone } from "./useIdentityDone.ts";
 
 /**
@@ -16,7 +17,12 @@ export function CreationRail({
   onCancel: () => void;
 }) {
   const currentIndex = CREATION_STEPS.indexOf(current);
-  const done = new Set<CreationStep["slug"]>(useIdentityDone() ? ["identity"] : []);
+  const identityDone = useIdentityDone();
+  const classDone = useClassDone();
+  const done = new Set<CreationStep["slug"]>([
+    ...(identityDone ? ["identity" as const] : []),
+    ...(classDone ? ["class" as const] : []),
+  ]);
   return (
     <div className="flex h-full w-sidebar flex-col gap-1.5 overflow-y-auto border-r border-border bg-surface px-4 py-5">
       <p className="px-2.5 pb-1.5 font-semibold text-label text-muted uppercase tracking-label">

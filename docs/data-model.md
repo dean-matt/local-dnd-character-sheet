@@ -48,9 +48,9 @@ spell. Rebuilding the catalog updates every character; copying would freeze it a
 **A reference can stop resolving when the pin moves.** Upstream renames a row, merges a
 source or drops an entry, and the stored `(name, source)` names nothing. The sheet keeps
 showing the stored name and source, marked unresolved; only the derived block answers 422,
-for a class or race that does not resolve, since it cannot guess a hit die or a size. A race
-typed past the catalog at creation takes source `Custom` and a `departures` entry, and
-resolves nothing by design. `GET /characters/{id}/references` checks every catalog
+for a class or race that does not resolve, since it cannot guess a hit die or a size. Typed
+past the catalog at creation, a race takes source `Custom` and resolves nothing by design; a
+class becomes homebrew with the hit die the player names. Each writes a `departures` entry. `GET /characters/{id}/references` checks every catalog
 reference in a definition and its state, on demand, and names each miss by its field; a
 magic variant misses where its base item no longer takes it. Where `tag_redirects` sends a miss to a row of the same table, the report
 carries that row as `renamedTo`, and the sheet names it on the unresolved row without
