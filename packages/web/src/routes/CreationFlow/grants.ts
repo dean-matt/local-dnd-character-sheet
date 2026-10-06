@@ -1,12 +1,22 @@
-import type { ProficiencyGrants, SearchHit } from "@dnd/catalog";
+import type { ClassProficiencyGrants, ProficiencyGrants, SearchHit } from "@dnd/catalog";
 import { type CharacterDefinition, refKey } from "@dnd/character";
 
 type Proficiencies = CharacterDefinition["proficiencies"];
 
-/** What a race and a background grant outright, in the shape the definition stores it. */
-export type Granted = Omit<Proficiencies, "savingThrows">;
+/** What a race, a background and a class grant outright, in the shape the definition stores it. */
+export type Granted = Proficiencies;
 
-export const NO_GRANTS: Granted = { skills: [], languages: [], tools: [], weapons: [], armor: [] };
+export const NO_GRANTS: Granted = {
+  savingThrows: [],
+  skills: [],
+  languages: [],
+  tools: [],
+  weapons: [],
+  armor: [],
+};
+
+/** A row's grants, with the saving throws a class row adds. */
+type RowGrants = ProficiencyGrants | ClassProficiencyGrants;
 
 /** The book whose skill or language row a grant names where several books print one. */
 const CORE_SOURCE = { classic: "PHB", one: "XPHB" } as const;
@@ -45,7 +55,7 @@ const toolKey = (tool: Granted["tools"][number]) => lower(tool.name);
  * row answers grants nothing, since a reference must name a row.
  */
 export function resolveGrants(
-  grants: readonly ProficiencyGrants[],
+  grants: readonly RowGrants[],
   hits: readonly SearchHit[],
   edition: CharacterDefinition["edition"],
 ): Granted {
@@ -57,8 +67,11 @@ export function resolveGrants(
     );
     return matches.find((ref) => ref.source === CORE_SOURCE[edition]) ?? matches[0];
   };
-  const all = (pick: (grant: ProficiencyGrants) => string[]) => [...new Set(grants.flatMap(pick))];
+  const all = <T extends string>(pick: (grant: RowGrants) => T[]) => [
+    ...new Set(grants.flatMap(pick)),
+  ];
   return {
+    savingThrows: all((grant) => ("savingThrows" in grant ? grant.savingThrows : [])),
     skills: all((grant) => grant.skills).flatMap((name) => {
       const ref = row("skill", name);
       return ref ? [{ ref, level: "proficient" as const }] : [];
@@ -86,7 +99,7 @@ function swap<T>(
 }
 
 /**
- * The proficiencies once a race or background change replaces what `before` granted with
+ * The proficiencies once a race, background or class change replaces what `before` granted with
  * what `after` grants. What the player added by hand stays, and a proficiency already held
  * keeps its level, so expertise in a granted skill survives the grant arriving again.
  */
@@ -95,9 +108,9 @@ export function swapGrants(
   before: Granted,
   after: Granted,
 ): Proficiencies {
-  const held = current ?? { savingThrows: [], ...NO_GRANTS };
+  const held = current ?? NO_GRANTS;
   return {
-    savingThrows: held.savingThrows,
+    savingThrows: swap(held.savingThrows, before.savingThrows, after.savingThrows, String),
     skills: swap(held.skills, before.skills, after.skills, skillKey),
     languages: swap(held.languages, before.languages, after.languages, refKey),
     tools: swap(held.tools, before.tools, after.tools, toolKey),

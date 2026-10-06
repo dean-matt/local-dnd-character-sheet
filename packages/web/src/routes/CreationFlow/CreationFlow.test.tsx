@@ -189,6 +189,43 @@ describe("CreationFlow", () => {
     await waitFor(() => expect(identity).not.toHaveTextContent("done"));
   });
 
+  it("marks Class done until a level reaches the subclass with none chosen", async () => {
+    const warlock = { name: "Warlock", source: "XPHB" };
+    const gains = { classFeature: "Warlock Subclass|Warlock|XPHB|3", gainSubclassFeature: true };
+    stubApi(undefined, {
+      "/api/classes/Warlock/XPHB": {
+        ...warlock,
+        edition: "one",
+        hitDie: 8,
+        json: { ...warlock, classFeatures: [gains] },
+      },
+      "/api/classes/Warlock/XPHB/subclasses?edition=one&limit=200": page([
+        {
+          name: "Fiend Patron",
+          source: "XPHB",
+          shortName: "Fiend",
+          className: "Warlock",
+          classSource: "XPHB",
+          edition: "one",
+          json: { name: "Fiend Patron", source: "XPHB" },
+        },
+      ]),
+    });
+    localStorage.setItem(KEY, JSON.stringify(vex.definition));
+    renderFlow("class");
+
+    const step = within(rail()).getByRole("link", { name: /Class/ });
+    await waitFor(() => expect(step).toHaveTextContent("Class, done"));
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Level" }), {
+      target: { value: "3" },
+    });
+    await waitFor(() => expect(step).not.toHaveTextContent("done"));
+
+    click("Fiend Patron");
+    await waitFor(() => expect(step).toHaveTextContent("Class, done"));
+  });
+
   it("discards the draft on leaving, so New Character opens empty", async () => {
     renderFlow();
     const name = await screen.findByRole("textbox", { name: "Name" });

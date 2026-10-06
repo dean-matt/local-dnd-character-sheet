@@ -7,8 +7,8 @@ import { ChoicePills } from "./ChoicePills.tsx";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { withDeparture } from "./departures.ts";
 import { grantNames, titleCase } from "./grants.ts";
-import { RaceEscape } from "./RaceEscape.tsx";
 import { raceChoices } from "./raceChoices.ts";
+import { TypedEscape } from "./TypedEscape.tsx";
 import { CUSTOM_RACE_SOURCE, useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 const OPTS = { shouldDirty: true } as const;
@@ -58,7 +58,8 @@ export function RaceField() {
           focusOnMount={moved}
           onPick={(ref) => choose(ref)}
         />
-        <RaceEscape
+        <TypedEscape
+          noun="race"
           onUse={(name) =>
             choose(
               { name, source: CUSTOM_RACE_SOURCE },

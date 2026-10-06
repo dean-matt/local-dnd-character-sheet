@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
+import { ClassStep } from "./ClassStep.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
+import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
-import { IdentityGrants } from "./IdentityGrants.tsx";
 import { IdentityStep } from "./IdentityStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
 import { StepPending } from "./StepPending.tsx";
@@ -67,8 +68,14 @@ export function CreationFlow() {
               <h1 className="font-bold text-[22px]">{step.label}</h1>
             </div>
             <CreationErrors />
-            <IdentityGrants />
-            {step.slug === "identity" ? <IdentityStep /> : <StepPending />}
+            <CreationGrants />
+            {step.slug === "identity" ? (
+              <IdentityStep />
+            ) : step.slug === "class" ? (
+              <ClassStep />
+            ) : (
+              <StepPending />
+            )}
             <StepDepartures step={step} />
             <div className="flex justify-between border-t border-border pt-3">
               <button

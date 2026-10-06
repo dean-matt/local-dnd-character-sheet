@@ -16,7 +16,7 @@
  * row loses nothing and says so. The derived tree is assembled rather than stored, and
  * strict for the plainer reason: a key nothing named means the caller built it wrong.
  */
-export { ABILITIES, ABILITY_LABEL } from "@dnd/rules";
+export { ABILITIES, ABILITY_LABEL, averageHitPoints, HIT_DICE, type HitDie } from "@dnd/rules";
 export type {
   ArmorTrait,
   CasterTable,

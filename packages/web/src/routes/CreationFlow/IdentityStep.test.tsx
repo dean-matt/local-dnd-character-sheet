@@ -3,8 +3,8 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
+import { CreationGrants } from "./CreationGrants.tsx";
 import { creationForm } from "./creationForm.ts";
-import { IdentityGrants } from "./IdentityGrants.tsx";
 import { IdentityStep } from "./IdentityStep.tsx";
 
 const PHB = (name: string) => ({ name, source: "PHB" });
@@ -91,7 +91,7 @@ function renderStep() {
     <creationForm.FormShell onSubmit={() => {}}>
       {() => (
         <>
-          <IdentityGrants />
+          <CreationGrants />
           <IdentityStep />
           <Values />
         </>
@@ -173,6 +173,7 @@ describe("IdentityStep", () => {
     renderStep();
 
     click("Not listed? Type a race");
+    expect(screen.getByRole("textbox", { name: "Race name" })).toHaveFocus();
     fireEvent.change(screen.getByRole("textbox", { name: "Race name" }), {
       target: { value: "Warforged" },
     });
