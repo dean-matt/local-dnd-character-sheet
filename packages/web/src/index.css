@@ -236,6 +236,11 @@ dialog::backdrop {
 }
 
 @layer base {
+  /* Preflight's placeholder is ink at half strength, under AA; a utility still overrides this. */
+  ::placeholder {
+    color: var(--color-placeholder);
+  }
+
   @media print {
     /*
      * Preflight hides `[hidden]` with `!important` in this layer, and an important
