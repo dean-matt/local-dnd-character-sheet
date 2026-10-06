@@ -160,10 +160,10 @@ widget, panel, or nav element:
   Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
   Equipment, Spells) are the wizard "+ New Character" opens: the step rail, Back/Next
   (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
-  race with subraces blocks progress until one is picked, a proficiency granted twice is
-  flagged rather than silently dropped, point buy shows an overspend rather than
-  refusing it, a non-caster skips the spells step. Nothing behind any of these six
-  exists yet, and #224 (whether the flow validates as it goes or all at once) is still
+  race with subraces blocks progress until one is picked, a class skill the background
+  already grants shows disabled rather than pickable twice, point buy shows an overspend
+  rather than refusing it, a non-caster skips the spells step. Nothing behind any of these
+  six exists yet, and #224 (whether the flow validates as it goes or all at once) is still
   undecided — these are the step content and the interaction shape, not that answer.
   Creation 2/5 supports starting multiclassed — add more than one class, each with its
   own level and subclass — even though #235's own "out of scope" line names a second
