@@ -1,0 +1,274 @@
+import type { CharacterDefinition } from "@dnd/character";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { useWatch } from "react-hook-form";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithClient } from "../../test/renderWithClient.tsx";
+import { AbilityScoresStep } from "./AbilityScoresStep.tsx";
+import { CreationIncreases } from "./CreationIncreases.tsx";
+import { creationForm } from "./creationForm.ts";
+import { useAbilitiesDone } from "./useAbilitiesDone.ts";
+
+const PHB = (name: string) => ({ name, source: "PHB" });
+const XPHB = (name: string) => ({ name, source: "XPHB" });
+const page = (items: unknown[]) => ({ items, total: items.length, limit: 200, offset: 0 });
+
+const ELF = { ...PHB("Elf"), ability: [{ dex: 2 }] };
+const HIGH_ELF = { ...ELF, name: "High", ability: [{ dex: 2, int: 1 }] };
+const HALF_ELF = {
+  ...PHB("Half-Elf"),
+  ability: [{ cha: 2, choose: { from: ["str", "dex", "con", "int", "wis"], count: 2 } }],
+};
+const from = ["str", "con", "cha"];
+const SOLDIER = {
+  ...XPHB("Soldier"),
+  edition: "one",
+  json: {
+    ...XPHB("Soldier"),
+    ability: [
+      { choose: { weighted: { from, weights: [2, 1] } } },
+      { choose: { weighted: { from, weights: [1, 1, 1] } } },
+    ],
+  },
+};
+
+const ROWS: Record<string, unknown> = {
+  "/api/races/Elf/PHB": { ...PHB("Elf"), edition: "classic", json: ELF },
+  "/api/races/Elf/PHB/subraces?edition=classic&limit=200": page([
+    { ...PHB("High"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: HIGH_ELF },
+  ]),
+  "/api/races/Half-Elf/PHB": { ...PHB("Half-Elf"), edition: "classic", json: HALF_ELF },
+  "/api/races/Half-Elf/PHB/subraces?edition=classic&limit=200": page([]),
+  "/api/backgrounds?edition=classic&limit=200": page([]),
+  "/api/backgrounds?edition=one&limit=200": page([SOLDIER]),
+};
+
+function stubCatalog() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const body = url.startsWith("/api/search?") ? page([]) : ROWS[url];
+      return body === undefined
+        ? new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 })
+        : new Response(JSON.stringify(body), { status: 200 });
+    }),
+  );
+}
+
+let values: Partial<CharacterDefinition> = {};
+let done = false;
+
+function Probe() {
+  values = useWatch<CharacterDefinition>() as Partial<CharacterDefinition>;
+  done = useAbilitiesDone();
+  return null;
+}
+
+function renderStep(draft: object = {}) {
+  localStorage.setItem("draft:creation", JSON.stringify({ edition: "classic", ...draft }));
+  renderWithClient(
+    <creationForm.FormShell onSubmit={() => {}}>
+      {() => (
+        <>
+          <CreationIncreases />
+          <AbilityScoresStep />
+          <Probe />
+        </>
+      )}
+    </creationForm.FormShell>,
+  );
+}
+
+const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
+const row = (label: string) => within(screen.getByRole("group", { name: label }));
+const type = (label: string, score: string) =>
+  fireEvent.change(screen.getByRole("spinbutton", { name: `${label} base score` }), {
+    target: { value: score },
+  });
+const scoresDeparture = () =>
+  values.departures?.find((departure) => departure.field === "abilityScores")?.note;
+
+function assign(label: string, score: number) {
+  fireEvent.click(screen.getByRole("combobox", { name: `${label} base score` }));
+  fireEvent.click(screen.getByRole("option", { name: String(score) }));
+}
+
+const ARRAY = { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
+
+describe("AbilityScoresStep", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    stubCatalog();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("assigns the standard array, and notes a value assigned twice without refusing it", async () => {
+    renderStep();
+    expect(screen.getByRole("button", { name: "Standard Array" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    assign("Strength", 15);
+    assign("Dexterity", 15);
+
+    expect(values.abilityScores).toEqual({ str: 15, dex: 15 });
+    expect(scoresDeparture()).toBe("Standard array: 15 assigned more than once.");
+
+    assign("Dexterity", 14);
+    expect(scoresDeparture()).toBeUndefined();
+    for (const [label, score] of [
+      ["Constitution", 13],
+      ["Intelligence", 12],
+      ["Wisdom", 10],
+      ["Charisma", 8],
+    ] as const)
+      assign(label, score);
+
+    expect(values.abilityScores).toEqual(ARRAY);
+    expect(row("Strength").getByText("+2")).toBeVisible();
+    await waitFor(() => expect(done).toBe(true));
+  });
+
+  it("counts point buy's spend, and keeps an overspend while noting it", () => {
+    renderStep();
+    click("Point Buy");
+
+    expect(values.abilityScores).toMatchObject({ str: 8, cha: 8 });
+    expect(screen.getByText("0 of 27 points spent, 27 remaining")).toBeVisible();
+
+    type("Strength", "15");
+    type("Dexterity", "15");
+    type("Constitution", "15");
+    type("Intelligence", "16");
+
+    expect(screen.getByText("36 of 27 points spent, over budget by 9")).toBeVisible();
+    expect(values.abilityScores?.int).toBe(16);
+    expect(scoresDeparture()).toBe(
+      "Point buy spends 36 of 27 points; takes scores from 8 to 15, past which Intelligence is 16.",
+    );
+
+    type("Intelligence", "8");
+    type("Constitution", "8");
+    expect(scoresDeparture()).toBeUndefined();
+  });
+
+  it("rolls 4d6 dropping the lowest for each ability, and shows every die", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    renderStep();
+    click("Roll");
+
+    expect(values.abilityScores).toEqual({ str: 12, dex: 12, con: 12, int: 12, wis: 12, cha: 12 });
+    expect(row("Strength").getByText("dropped")).toBeInTheDocument();
+    expect(row("Strength").getAllByText(/^4/)).toHaveLength(4);
+    expect(scoresDeparture()).toBeUndefined();
+
+    click("Reroll all (4d6kh3)");
+    expect(Math.random).toHaveBeenCalledTimes(48);
+  });
+
+  it("notes typed-in scores as a departure, and drops the note on returning to a method", () => {
+    renderStep({ abilityScores: ARRAY });
+    expect(screen.getByRole("button", { name: "Standard Array" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    click("Custom");
+    type("Strength", "18");
+
+    expect(values.abilityScores?.str).toBe(18);
+    expect(scoresDeparture()).toMatch(/^Ability scores typed in/);
+
+    click("Point Buy");
+    expect(scoresDeparture()).toBeUndefined();
+  });
+
+  it("lands a race's fixed increases as terms beside the base, not inside it", async () => {
+    renderStep({ race: PHB("Elf"), subrace: PHB("High"), abilityScores: ARRAY });
+
+    await waitFor(() =>
+      expect(values.abilityIncreases).toEqual([
+        { ability: "dex", amount: 2, grantedBy: "race" },
+        { ability: "int", amount: 1, grantedBy: "race" },
+      ]),
+    );
+    expect(values.abilityScores?.dex).toBe(14);
+    expect(row("Dexterity").getByText("+2 race")).toBeVisible();
+    expect(row("Dexterity").getByText("16")).toBeVisible();
+    expect(row("Dexterity").getByText("+3")).toBeVisible();
+    expect(screen.getByText("+2 Dexterity, +1 Intelligence")).toBeVisible();
+    await waitFor(() => expect(done).toBe(true));
+  });
+
+  it("asks where a race's free increases go, never twice to one ability", async () => {
+    renderStep({ race: PHB("Half-Elf"), abilityScores: ARRAY });
+
+    const first = await screen.findByRole("group", { name: "Race +1, 1 of 2 — choose one" });
+    await waitFor(() => expect(done).toBe(false));
+    fireEvent.click(within(first).getByRole("button", { name: "Strength" }));
+
+    const second = screen.getByRole("group", { name: "Race +1, 2 of 2 — choose one" });
+    expect(within(second).queryByRole("button", { name: "Strength" })).toBeNull();
+    fireEvent.click(within(second).getByRole("button", { name: "Constitution" }));
+
+    expect(values.abilityIncreases).toEqual([
+      { ability: "cha", amount: 2, grantedBy: "race" },
+      { ability: "str", amount: 1, grantedBy: "race" },
+      { ability: "con", amount: 1, grantedBy: "race" },
+    ]);
+    await waitFor(() => expect(done).toBe(true));
+  });
+
+  it("takes a 2024 background's increases either way it offers them", async () => {
+    renderStep({ edition: "one", background: XPHB("Soldier"), abilityScores: ARRAY });
+
+    fireEvent.click(
+      within(
+        await screen.findByRole("group", { name: "Background +2, 1 of 2 — choose one" }),
+      ).getByRole("button", { name: "Strength" }),
+    );
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Background +1, 2 of 2 — choose one" })).getByRole(
+        "button",
+        { name: "Constitution" },
+      ),
+    );
+    expect(values.abilityIncreases).toEqual([
+      { ability: "str", amount: 2, grantedBy: "background" },
+      { ability: "con", amount: 1, grantedBy: "background" },
+    ]);
+    expect(row("Strength").getByText("+2 background")).toBeVisible();
+
+    click("+1 and +1 and +1");
+    expect(values.abilityIncreases).toEqual([]);
+    for (const [index, name] of ["Strength", "Constitution", "Charisma"].entries())
+      fireEvent.click(
+        within(
+          screen.getByRole("group", { name: `Background +1, ${index + 1} of 3 — choose one` }),
+        ).getByRole("button", { name }),
+      );
+
+    expect(values.abilityIncreases).toHaveLength(3);
+    expect(screen.getByRole("button", { name: "+1 and +1 and +1" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await waitFor(() => expect(done).toBe(true));
+  });
+
+  it("takes back an increase the race no longer grants", async () => {
+    renderStep({
+      race: PHB("Half-Elf"),
+      abilityScores: ARRAY,
+      abilityIncreases: [{ ability: "dex", amount: 2, grantedBy: "race" }],
+    });
+
+    await waitFor(() =>
+      expect(values.abilityIncreases).toEqual([{ ability: "cha", amount: 2, grantedBy: "race" }]),
+    );
+  });
+});

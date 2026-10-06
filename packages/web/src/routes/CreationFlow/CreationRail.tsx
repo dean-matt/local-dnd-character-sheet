@@ -1,6 +1,7 @@
 import { Rail } from "../Rail.tsx";
 import { CREATION_STEPS, type CreationStep } from "./creationSteps.ts";
 import { StepRow } from "./StepRow.tsx";
+import { useAbilitiesDone } from "./useAbilitiesDone.ts";
 import { useClassDone } from "./useClassDone.ts";
 import { useIdentityDone } from "./useIdentityDone.ts";
 
@@ -14,9 +15,11 @@ export function CreationRail({ current }: { current: CreationStep }) {
   const currentIndex = CREATION_STEPS.indexOf(current);
   const identityDone = useIdentityDone();
   const classDone = useClassDone();
+  const abilitiesDone = useAbilitiesDone();
   const done = new Set<CreationStep["slug"]>([
     ...(identityDone ? ["identity" as const] : []),
     ...(classDone ? ["class" as const] : []),
+    ...(abilitiesDone ? ["abilities" as const] : []),
   ]);
   return (
     <Rail>

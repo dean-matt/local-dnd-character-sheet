@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
+import { AbilityScoresStep } from "./AbilityScoresStep.tsx";
 import { ClassStep } from "./ClassStep.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
+import { CreationIncreases } from "./CreationIncreases.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
@@ -70,10 +72,13 @@ export function CreationFlow() {
             </div>
             <CreationErrors />
             <CreationGrants />
+            <CreationIncreases />
             {step.slug === "identity" ? (
               <IdentityStep />
             ) : step.slug === "class" ? (
               <ClassStep />
+            ) : step.slug === "abilities" ? (
+              <AbilityScoresStep />
             ) : (
               <StepPending />
             )}

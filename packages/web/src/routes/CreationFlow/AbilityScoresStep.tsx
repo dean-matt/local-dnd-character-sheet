@@ -1,0 +1,222 @@
+import {
+  ABILITIES,
+  ABILITY_LABEL,
+  type Ability,
+  abilityModifier,
+  abilityScoreBreakdown,
+  type CharacterDefinition,
+  proficiencyBonus,
+} from "@dnd/character";
+import { rollDice } from "@dnd/dice";
+import { useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
+import { signed } from "../../components/blocks/signed.ts";
+import { FormField } from "../../components/FormField.tsx";
+import { InputField } from "../../components/InputField.tsx";
+import { Select } from "../../components/Select.tsx";
+import { AbilityIncreasesField } from "./AbilityIncreasesField.tsx";
+import {
+  METHODS,
+  type Method,
+  methodDeparture,
+  methodOf,
+  POINT_BUDGET,
+  POINT_BUY_START,
+  pointsSpent,
+  SCORES_FIELD,
+  type Scores,
+  STANDARD_ARRAY,
+} from "./abilityMethods.ts";
+import { ChoicePills } from "./ChoicePills.tsx";
+import { withDeparture } from "./departures.ts";
+import { useIncreaseOptions } from "./useIncreaseOptions.ts";
+
+type Dice = ReturnType<typeof rollDice>["dice"];
+
+const ROLL = "4d6kh3";
+
+const UNSET = Object.fromEntries(ABILITIES.map((ability) => [ability, 0])) as Record<
+  Ability,
+  number
+>;
+
+const STANDARD_OPTIONS = [
+  { value: "", label: "—" },
+  ...STANDARD_ARRAY.map((value) => ({ value: String(value), label: String(value) })),
+];
+
+/** Digits only, so a half-typed or cleared score leaves the ability unset. */
+const parseScore = (raw: string) => (/^\d+$/.test(raw.trim()) ? Number(raw.trim()) : undefined);
+
+/**
+ * The six scores, by the standard array, point buy, a roll of 4d6 dropping the lowest, or
+ * typed in, then the race's and background's increases on top as terms of their own. A
+ * value the method does not allow is kept and noted as a departure rather than refused.
+ * Changing method starts its scores afresh: the array unassigned, point buy at 8 across,
+ * a fresh roll; typing keeps whatever was there.
+ */
+export function AbilityScoresStep() {
+  const { setValue, getValues } = useFormContext<CharacterDefinition>();
+  const [stored, increases, proficiencies, levels] = useWatch<
+    CharacterDefinition,
+    ["abilityScores", "abilityIncreases", "proficiencies", "levels"]
+  >({ name: ["abilityScores", "abilityIncreases", "proficiencies", "levels"] });
+  const scores: Scores = stored ?? {};
+  const sources = useIncreaseOptions();
+  const [method, setMethod] = useState<Method>(() =>
+    methodOf(getValues("abilityScores") ?? {}, getValues("departures")),
+  );
+  const [rolls, setRolls] = useState<Partial<Record<Ability, Dice>>>({});
+
+  const write = (next: Scores, as: Method) => {
+    setValue("abilityScores", next as CharacterDefinition["abilityScores"], { shouldDirty: true });
+    setValue(
+      "departures",
+      withDeparture(getValues("departures"), SCORES_FIELD, methodDeparture(as, next)),
+      { shouldDirty: true },
+    );
+  };
+  const setScore = (ability: Ability, score: number | undefined) => {
+    const { [ability]: _, ...rest } = scores;
+    write(score === undefined ? rest : { ...rest, [ability]: score }, method);
+  };
+  const rollAll = () => {
+    const rolled = ABILITIES.map((ability) => [ability, rollDice(ROLL)] as const);
+    setRolls(Object.fromEntries(rolled.map(([ability, roll]) => [ability, roll.dice])));
+    write(Object.fromEntries(rolled.map(([ability, roll]) => [ability, roll.total])), "roll");
+  };
+
+  const bonus = proficiencyBonus(Math.min(Math.max(levels?.length ?? 1, 1), 20));
+  const spent = pointsSpent(scores);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <ChoicePills
+        legend="Method"
+        options={METHODS}
+        value={method}
+        onChange={(value) => {
+          const next = value as Method;
+          setMethod(next);
+          setRolls({});
+          if (next === "roll") rollAll();
+          else
+            write(next === "standard" ? {} : next === "pointBuy" ? POINT_BUY_START : scores, next);
+        }}
+      />
+      {method === "standard" && (
+        <p className="text-muted text-row">Assign each value once: {STANDARD_ARRAY.join(", ")}.</p>
+      )}
+      {method === "pointBuy" && (
+        <p
+          aria-live="polite"
+          className={`font-semibold text-row ${spent > POINT_BUDGET ? "text-error" : "text-muted"}`}
+        >
+          {spent} of {POINT_BUDGET} points spent,{" "}
+          {spent > POINT_BUDGET
+            ? `over budget by ${spent - POINT_BUDGET}`
+            : `${POINT_BUDGET - spent} remaining`}
+        </p>
+      )}
+      {method === "roll" && (
+        <button
+          type="button"
+          onClick={rollAll}
+          className="w-fit rounded-control border border-border bg-surface px-3 py-1 font-semibold text-body"
+        >
+          Reroll all ({ROLL})
+        </button>
+      )}
+      <div className="grid gap-2 sm:grid-cols-2">
+        {ABILITIES.map((ability) => {
+          const base = scores[ability];
+          const { total, terms } = abilityScoreBreakdown(
+            { abilityScores: { ...UNSET, ...scores }, abilityIncreases: increases ?? [] },
+            ability,
+          );
+          const modifier = abilityModifier(total);
+          const proficient = proficiencies?.savingThrows.includes(ability) ?? false;
+          const label = ABILITY_LABEL[ability];
+          return (
+            <fieldset
+              key={ability}
+              aria-label={label}
+              className="flex items-center gap-3 rounded-control bg-subtle px-3 py-2"
+            >
+              <span aria-hidden="true" className="w-9 font-bold text-muted text-row uppercase">
+                {ability}
+              </span>
+              {method === "standard" ? (
+                <FormField label={`${label} base score`} labelHidden>
+                  {(control) => (
+                    <Select
+                      {...control}
+                      options={STANDARD_OPTIONS}
+                      value={base === undefined ? "" : String(base)}
+                      onChange={(value) => setScore(ability, parseScore(value))}
+                    />
+                  )}
+                </FormField>
+              ) : method === "roll" ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-8 text-center font-semibold">{base ?? "—"}</span>
+                  {rolls[ability] && (
+                    <span className="text-muted text-row">
+                      <span className="sr-only">rolled </span>
+                      {rolls[ability].map((die, index) => (
+                        <span
+                          // biome-ignore lint/suspicious/noArrayIndexKey: a die is its position in the roll.
+                          key={index}
+                          className={die.kept ? "mr-1" : "mr-1 line-through"}
+                        >
+                          {die.value}
+                          {!die.kept && <span className="sr-only"> dropped</span>}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <InputField
+                  label={`${label} base score`}
+                  labelHidden
+                  type="number"
+                  inputMode="numeric"
+                  value={base ?? ""}
+                  onChange={(event) => setScore(ability, parseScore(event.target.value))}
+                  className="w-16 text-center"
+                />
+              )}
+              <span className="text-muted text-row">
+                {terms
+                  .slice(1)
+                  .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`)
+                  .join(", ")}
+              </span>
+              <span className="ml-auto flex items-baseline gap-3">
+                {base === undefined ? (
+                  <span className="text-muted">—</span>
+                ) : (
+                  <>
+                    <span className="font-bold text-[15px]">
+                      <span className="sr-only">Score </span>
+                      {total}
+                    </span>
+                    <span className="font-bold text-accent-text text-row">
+                      <span className="sr-only">Modifier </span>
+                      {signed(modifier)}
+                    </span>
+                    <span className="text-muted text-row">
+                      Save {signed(modifier + (proficient ? bonus : 0))}
+                    </span>
+                  </>
+                )}
+              </span>
+            </fieldset>
+          );
+        })}
+      </div>
+      {sources && <AbilityIncreasesField sources={sources} />}
+    </div>
+  );
+}
