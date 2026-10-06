@@ -2,11 +2,13 @@ import {
   ABILITIES,
   ABILITY_LABEL,
   abilityScore,
+  abilityScoreBreakdown,
   abilityScoresSchema,
   type CharacterDerived,
   type CharacterRecord,
 } from "@dnd/character";
 import { useState } from "react";
+import { z } from "zod";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
@@ -15,6 +17,19 @@ import { ABILITY_RULES, editionRules } from "./abilityRules.ts";
 import { StatTile } from "./StatTile.tsx";
 
 const ABILITY_LABEL_CLASS = "text-[10px] tracking-[0.06em]";
+
+/**
+ * The scores the player may type where increases of `raised` sit on the base, so the base
+ * an edit saves stays inside the 1 to 30 the definition takes.
+ */
+function scoreSchema(raised: number) {
+  if (raised === 0) return abilityScoresSchema.valueType;
+  const error = `With ${signed(raised)} from increases, a score is a whole number from ${1 + raised} to ${30 + raised}.`;
+  return z
+    .int({ error })
+    .min(1 + raised, { error })
+    .max(30 + raised, { error });
+}
 
 /** Digits only: `Number` reads "1e1" and "0x1E" as scores the user never typed. */
 const parseScore = (raw: string) => (/^\d+$/.test(raw.trim()) ? Number(raw.trim()) : Number.NaN);
@@ -34,7 +49,11 @@ export function AbilityScores({
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {ABILITIES.map((ability) => {
-          const score = abilityScore(definition, ability);
+          const { total: score, terms } = abilityScoreBreakdown(definition, ability);
+          const raised = score - definition.abilityScores[ability];
+          const increases = terms
+            .slice(1)
+            .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`);
           return (
             <StatTile
               key={ability}
@@ -43,7 +62,10 @@ export function AbilityScores({
               labelClassName={ABILITY_LABEL_CLASS}
               detail={{
                 title: ABILITY_LABEL[ability],
-                meta: `Score ${score}`,
+                meta:
+                  increases.length === 0
+                    ? `Score ${score}`
+                    : `Score ${score}: base ${definition.abilityScores[ability]}, ${increases.join(", ")}`,
                 value: derived.abilityModifiers[ability],
                 rules: editionRules(definition, ABILITY_RULES),
               }}
@@ -55,7 +77,7 @@ export function AbilityScores({
                 current={score}
                 format={String}
                 parse={parseScore}
-                schema={abilityScoresSchema.valueType}
+                schema={scoreSchema(raised)}
                 inputClassName="w-12 text-center"
                 inputMode="numeric"
                 messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}

@@ -203,7 +203,7 @@ describe("AbilitiesSection", () => {
     expect(slot?.querySelectorAll("[role='status']")).toHaveLength(6);
   });
 
-  it("shows a score through its increases, and saves an edit to the base beneath them", async () => {
+  it("shows a score through its increases, and saves an edit to the base beneath them, kept within 1 to 30", async () => {
     const base = warlock();
     const record: CharacterRecord = {
       ...base,
@@ -230,6 +230,13 @@ describe("AbilitiesSection", () => {
 
     const score = screen.getByRole("textbox", { name: "Strength score" });
     expect(score).toHaveValue("10");
+    fireEvent.change(score, { target: { value: "2" } });
+    fireEvent.blur(score);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Strength: With +2 from increases, a score is a whole number from 3 to 32.",
+    );
+    expect(saved).toBeUndefined();
+
     fireEvent.change(score, { target: { value: "13" } });
     fireEvent.blur(score);
 

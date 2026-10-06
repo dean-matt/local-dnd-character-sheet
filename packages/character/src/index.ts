@@ -23,7 +23,7 @@ export {
   averageHitPoints,
   HIT_DICE,
   type HitDie,
-  proficiencyBonus,
+  proficiencyContribution,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {

@@ -15,7 +15,7 @@ export function derivedValue<T>(field: Derived<T>): T {
  * printed value with `undefined`.
  */
 export function houseRule<K extends HouseRule>(
-  definition: CharacterDefinition,
+  definition: Pick<CharacterDefinition, "houseRules">,
   rule: K,
 ): Required<HouseRules>[K] {
   // Both sides of the `??` index one mapped type through this annotation. Indexing
