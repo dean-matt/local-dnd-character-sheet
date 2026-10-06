@@ -142,8 +142,9 @@ widget, panel, or nav element:
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the
   page background, as the character sheet's does. Each creation step puts the five steps
-  in a left rail shaped like Sidebar — done, current, and not-yet-reached, with Cancel
-  at its foot — and its own two-column content beside it. The app's home page and Top Bar
+  in a left rail shaped like Sidebar — done, current, and not-yet-reached, collapsing to
+  the step numbers by the same toggle at its foot — and its own two-column content beside
+  it, with Cancel on the left of the bar under the content and Back beside Next on the right. The app's home page and Top Bar
   Navigation's Character menu are how both are reached: "See all characters →" opens the list, and
   "+ New Character" opens creation — a menu that jumps straight to one character is a
   different action from either.

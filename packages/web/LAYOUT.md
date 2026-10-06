@@ -11,8 +11,10 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   window too short to hold them, with its scrollbar hidden so the collapsed icons stay
   centered and `scroll-shadow` shading the clipped edge instead. Its widths are
   `--spacing-sidebar` and `--spacing-sidebar-collapsed`.
-  The character sheet and Settings share one rail, `Sidebar` in `src/routes/Sidebar/Sidebar.tsx`, one
-  collapsed state, and one row around it, `SidebarFrame` in `src/routes/SidebarFrame.tsx`.
+  The character sheet, Settings and the creation flow share one collapsible rail, `Rail` in
+  `src/routes/Rail.tsx`, one collapsed state, and one row around it, `SidebarFrame` in
+  `src/routes/SidebarFrame.tsx`. The first two fill it with `Sidebar` in
+  `src/routes/Sidebar/Sidebar.tsx`.
 - **Character header** fills the content column, so it grows and shrinks with the side
   panels. Its height is `--spacing-header`, which the name and subtitle hold by truncating.
   It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in
