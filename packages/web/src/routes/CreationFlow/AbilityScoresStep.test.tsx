@@ -109,7 +109,7 @@ const scoresDeparture = () =>
 
 function assign(label: string, score: number) {
   fireEvent.click(screen.getByRole("combobox", { name: `${label} base score` }));
-  fireEvent.click(screen.getByRole("option", { name: String(score) }));
+  fireEvent.click(screen.getByRole("option", { name: new RegExp(`^${score}( |$)`) }));
 }
 
 const ARRAY = { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
@@ -132,6 +132,10 @@ describe("AbilityScoresStep", () => {
     );
 
     assign("Strength", 15);
+    fireEvent.click(screen.getByRole("combobox", { name: "Dexterity base score" }));
+    expect(screen.getByRole("option", { name: "15 — used by STR" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "14" })).toBeVisible();
+    fireEvent.click(screen.getByRole("combobox", { name: "Dexterity base score" }));
     assign("Dexterity", 15);
 
     expect(values.abilityScores).toEqual({ str: 15, dex: 15 });

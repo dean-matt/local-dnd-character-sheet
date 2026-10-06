@@ -42,9 +42,17 @@ const UNSET = Object.fromEntries(ABILITIES.map((ability) => [ability, 0])) as Re
   number
 >;
 
-const STANDARD_OPTIONS = [
+/** The array's values for one ability, each marked with the abilities already holding it. */
+const standardOptions = (scores: Scores, ability: Ability) => [
   { value: "", label: "—" },
-  ...STANDARD_ARRAY.map((value) => ({ value: String(value), label: String(value) })),
+  ...STANDARD_ARRAY.map((value) => {
+    const holders = ABILITIES.filter((other) => other !== ability && scores[other] === value);
+    return {
+      value: String(value),
+      label: String(value),
+      hint: holders.length > 0 ? `used by ${holders.join(", ").toUpperCase()}` : undefined,
+    };
+  }),
 ];
 
 /** Digits only, so a half-typed or cleared score leaves the ability unset. */
@@ -177,7 +185,7 @@ export function AbilityScoresStep({
                     {(control) => (
                       <Select
                         {...control}
-                        options={STANDARD_OPTIONS}
+                        options={standardOptions(scores, ability)}
                         value={base === undefined ? "" : String(base)}
                         onChange={(value) => setScore(ability, parseScore(value))}
                       />
