@@ -84,6 +84,71 @@ describe("IdentitySection", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("shows each appearance field, an unset one reading as not set", () => {
+    const record = identityRecord();
+    record.definition.appearance = { age: "24", eyes: "green" };
+    renderSeeded(<IdentitySection character={record} />, record);
+
+    const field = (label: string) => screen.getByRole("textbox", { name: label });
+    expect(field("Age")).toHaveValue("24");
+    expect(field("Eyes")).toHaveValue("green");
+    for (const label of ["Height", "Weight", "Skin", "Hair"]) {
+      expect(field(label)).toHaveValue("");
+      expect(field(label)).toHaveAttribute("placeholder", "Not set");
+    }
+  });
+
+  it("saves an appearance field, trimmed, beside the others", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(identityRecord()), { status: 200 }));
+    const record = identityRecord();
+    record.definition.appearance = { age: "24" };
+    renderSeeded(<IdentitySection character={record} />, record);
+
+    const hair = screen.getByRole("textbox", { name: "Hair" });
+    fireEvent.change(hair, { target: { value: " black " } });
+    fireEvent.blur(hair);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.appearance).toEqual({ age: "24", hair: "black" });
+  });
+
+  it("clears an appearance field to unset rather than to an empty string", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(identityRecord()), { status: 200 }));
+    const record = identityRecord();
+    record.definition.appearance = { age: "24", hair: "black" };
+    renderSeeded(<IdentitySection character={record} />, record);
+
+    const hair = screen.getByRole("textbox", { name: "Hair" });
+    fireEvent.change(hair, { target: { value: "  " } });
+    fireEvent.blur(hair);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.appearance).toEqual({ age: "24" });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows an appearance value an undo restores, and unsets one an undo removes", () => {
+    const client = new QueryClient();
+    const at = (appearance: Record<string, string>) => {
+      const record = identityRecord();
+      record.definition.appearance = appearance;
+      return (
+        <QueryClientProvider client={client}>
+          <IdentitySection character={record} />
+        </QueryClientProvider>
+      );
+    };
+    const { rerender } = render(at({ hair: "black" }));
+    rerender(at({ hair: "red", age: "24" }));
+    expect(screen.getByRole("textbox", { name: "Hair" })).toHaveValue("red");
+    expect(screen.getByRole("textbox", { name: "Age" })).toHaveValue("24");
+
+    rerender(at({ hair: "red" }));
+    expect(screen.getByRole("textbox", { name: "Age" })).toHaveValue("");
+  });
+
   it("waits on the character", () => {
     render(
       <QueryClientProvider client={new QueryClient()}>

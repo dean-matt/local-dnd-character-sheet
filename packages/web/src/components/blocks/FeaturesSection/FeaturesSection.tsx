@@ -57,7 +57,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
           placeholder="Search features…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="w-full rounded-control border border-border bg-surface px-3 py-2 text-body placeholder:text-muted"
+          className="w-full rounded-control border border-border bg-surface px-3 py-2 text-body"
         />
       </div>
       {/* Rendered even while empty: a live region added with its text is often not announced. */}

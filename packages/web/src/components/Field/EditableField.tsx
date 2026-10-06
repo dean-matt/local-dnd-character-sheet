@@ -13,8 +13,8 @@ type SaveStatus = "idle" | "saving" | "saved" | "invalid" | "failed";
 /**
  * `Field`'s edit state. A derived `value` writes its manual half, and clearing it saves
  * `null`, which drops the override. A plain `current` value is the definition's own: an
- * empty input goes through `parse` and `schema` like any other text, so the schema refuses
- * it on the field.
+ * empty input goes through `parse` and `schema` like any other text, so the schema decides
+ * whether it saves.
  */
 export type EditableFieldProps<T> = {
   mode: "edit";
@@ -27,6 +27,7 @@ export type EditableFieldProps<T> = {
   labelHidden?: boolean;
   inputClassName?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
+  placeholder?: string;
   messageSlot?: FormFieldProps["messageSlot"];
 } & (
   | { value: Derived<T>; onSave: (next: T | null) => Promise<void> }
@@ -45,6 +46,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     labelHidden,
     inputClassName,
     inputMode,
+    placeholder,
     messageSlot,
   } = props;
   const current = "current" in props ? props.current : derivedValue(props.value);
@@ -156,6 +158,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       className={inputClassName}
       type="text"
       inputMode={inputMode}
+      placeholder={placeholder}
       messageSlot={messageSlot}
       value={text}
       onChange={(event) => handleChange(event.target.value)}
