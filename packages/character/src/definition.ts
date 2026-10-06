@@ -256,6 +256,17 @@ const appearanceSchema = z
   })
   .prefault({});
 
+/**
+ * A value the character holds against the rules as printed, and why, noted where the
+ * player took a path the rules do not offer. `field` is the value's path through the
+ * definition — `abilityScores.str`, `race` — so a sheet can mark the value it names.
+ * The schema never judges legality; a departure records one rather than refusing it.
+ */
+const departureSchema = z.strictObject({
+  field: z.string().min(1),
+  note: z.string().min(1),
+});
+
 export const characterDefinitionSchema = z.strictObject({
   name: z.string().min(1, { error: "A character needs a name." }),
   edition: editionSchema,
@@ -310,6 +321,7 @@ export const characterDefinitionSchema = z.strictObject({
   /** Whatever the player writes down, unbounded and stored verbatim. */
   notes: z.string().default(""),
   houseRules: houseRulesSchema,
+  departures: z.array(departureSchema).default([]),
   /**
    * What the user typed over a derived field, keyed by the field's path through the
    * derived block — `armorClass`, `abilityModifiers.dex`, `skills.Stealth|XPHB.modifier`

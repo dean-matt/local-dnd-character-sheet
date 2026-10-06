@@ -5,6 +5,7 @@ import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.
 import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { ContentLayout } from "./routes/ContentLayout.tsx";
+import { CreationFlow } from "./routes/CreationFlow/CreationFlow.tsx";
 import { DisplaySettings } from "./routes/DisplaySettings.tsx";
 import { HomePage } from "./routes/HomePage/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
@@ -25,6 +26,7 @@ export const routeConfig: RouteObject[] = [
           { path: "*", element: <NotFoundPanel /> },
         ],
       },
+      { path: "characters/new/:step?", element: <CreationFlow /> },
       {
         path: "characters/:id",
         element: <CharacterLayout />,

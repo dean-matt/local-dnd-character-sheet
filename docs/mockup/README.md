@@ -162,9 +162,9 @@ widget, panel, or nav element:
   (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
   race with subraces blocks progress until one is picked, a class skill the background
   already grants shows checked and disabled rather than pickable twice, point buy shows an overspend
-  rather than refusing it, a non-caster skips the spells step. Nothing behind any of these
-  six exists yet, and #224 (whether the flow validates as it goes or all at once) is still
-  undecided — these are the step content and the interaction shape, not that answer.
+  rather than refusing it, a non-caster skips the spells step. The app builds the rail,
+  Back, Next and Finish. Its Next validates nothing, since the schema is checked only at
+  Finish, and every step in its rail is a link rather than locked until reached.
   Creation 2/5 supports starting multiclassed — add more than one class, each with its
   own level and subclass — even though #235's own "out of scope" line names a second
   class as #240's job. Real tables commonly build a multiclass character in one pass
@@ -332,11 +332,11 @@ says how much of the artboard the app builds today.
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | read-only |
-| `CreationIdentity` | #233, #234 | nothing |
-| `CreationClass` | #233, #235, #240 | nothing |
-| `CreationAbilityScores` | #233, #236 | nothing |
-| `CreationProficiencies` | #233, #237 | nothing |
-| `CreationSpells` | #233, #238 | nothing |
+| `CreationIdentity` | #233, #234 | the step rail, Back, Next and Finish |
+| `CreationClass` | #233, #235, #240 | the step rail, Back, Next and Finish |
+| `CreationAbilityScores` | #233, #236 | the step rail, Back, Next and Finish |
+| `CreationProficiencies` | #233, #237 | the step rail, Back, Next and Finish |
+| `CreationSpells` | #233, #238 | the step rail, Back, Next and Finish |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
 

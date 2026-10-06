@@ -173,6 +173,12 @@ persists to `localStorage` keyed by flow, and by character for level-up, so it s
 reload; it clears on finish or cancel. Each form is bound once through `createForm` in
 `packages/web/src/lib/createForm.ts`.
 
+**Creation guides and never refuses.** Each step offers the rules' path and an escape
+from it. Next moves on without checking the schema; Finish checks it whole, naming each
+fault and linking the step that holds it. A value taken off the rules is stored in the definition's
+`departures` with the field it names and why, and the sheet's Notes page lists them, so a
+character records what it is rather than passing for legal.
+
 ## Deliberately absent
 
 Listed so they do not get added back by reflex:

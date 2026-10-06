@@ -71,6 +71,17 @@ describe("FormShell", () => {
     expect(localStorage.getItem(KEY)).toBeNull();
   });
 
+  it("keeps the draft when onSubmit rejects, without an unhandled rejection", async () => {
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
+    const onSubmit = vi.fn().mockRejectedValue(new Error("the API is down"));
+    renderShell({ onSubmit });
+
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(storedDraft()).toEqual({ name: "Vex" });
+  });
+
   it("types a button without a type as type=button, including one rendered later", async () => {
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
     const { onSubmit, rerender } = renderShell(

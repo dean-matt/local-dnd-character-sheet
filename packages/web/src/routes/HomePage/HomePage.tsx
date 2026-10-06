@@ -1,12 +1,12 @@
 import { ChevronRight, Search, Settings } from "lucide-react";
 import { Link } from "react-router";
+import { CharacterActions } from "../../components/CharacterActions.tsx";
 import { CharacterTile } from "../../components/CharacterTile.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCharacters } from "../../hooks/useCharacters.ts";
 import { useSearchTypes } from "../../hooks/useSearchTypes.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import { MECHANICS_ENTRIES, mechanicsHref } from "../../lib/mechanicsEntries.ts";
-import { CharacterActions } from "./CharacterActions.tsx";
 import { HomeQuickLink } from "./HomeQuickLink.tsx";
 
 const RECENT_LIMIT = 4;
