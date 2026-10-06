@@ -138,7 +138,7 @@ widget, panel, or nav element:
   ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
   confirmation notes why it is unusual. Races, classes and
   subclasses carry no "Add to…", since creation and level-up own them.
-- Character List and Creation 1/5 through 5/5 are full pages, not modals over the sheet
+- Character List and Creation 2/5 through 5/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the
   page background, as the character sheet's does. Each creation step puts the five steps
@@ -157,14 +157,15 @@ widget, panel, or nav element:
   the `race_summary` and `class_summary` columns #206 now reads, alongside `name`,
   `edition`, and `level`, so the list still never parses a character's `definition` blob
   per row.
-  Creation 1/5 through 5/5 (Identity, Class, Ability Scores, Proficiencies &
-  Equipment, Spells) are the wizard "+ New Character" opens: the step rail, Back/Next
-  (Finish on the last step), and the acceptance criteria #234-#238 already settled — a
-  race with subraces blocks progress until one is picked, a class skill the background
-  already grants shows checked and disabled rather than pickable twice, point buy shows an overspend
-  rather than refusing it, a non-caster skips the spells step. The app builds the rail,
-  Back, Next and Finish. Its Next validates nothing, since the schema is checked only at
-  Finish, and every step in its rail is a link rather than locked until reached.
+  Creation 2/5 through 5/5 (Class, Ability Scores, Proficiencies & Equipment, Spells)
+  are the wizard steps after Identity, which the app builds and leads, so each rail draws
+  step 1 without a link and "+ New Character" opens Class here. They carry the
+  step rail, Back/Next (Finish on the last step), and the acceptance criteria #235-#238
+  already settled — a class skill the background already grants shows checked and
+  disabled rather than pickable twice, point buy shows an overspend rather than refusing
+  it, a non-caster skips the spells step. The app builds the rail, Back, Next and Finish.
+  Its Next validates nothing, since the schema is checked only at Finish, and every step
+  in its rail is a link rather than locked until reached.
   Creation 2/5 supports starting multiclassed — add more than one class, each with its
   own level and subclass — even though #235's own "out of scope" line names a second
   class as #240's job. Real tables commonly build a multiclass character in one pass
@@ -173,7 +174,7 @@ widget, panel, or nav element:
   the character's very first level is always the first class's hit die at max, and
   every level after — in that class or a later one — rolls or averages against
   whichever class it belongs to.
-  Every picker in these six pages searches a small in-file array, the same convention
+  Every picker in these five pages searches a small in-file array, the same convention
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search; Top Bar Navigation's global search is the one place that already spans both
   characters and a sample compendium.
@@ -305,9 +306,9 @@ says how much of the artboard the app builds today.
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |
-| `Race` | #234, #488 | read-only |
+| `Race` | #488 | read-only |
 | `Class` | #235, #240 | read-only |
-| `Background` | #234, #488 | read-only |
+| `Background` | #488 | read-only |
 | `Level` | #239, #393 | read-only |
 | `LevelUpModal` | #239, #240 | nothing |
 | `Languages` | #488 | read-only |
@@ -332,7 +333,6 @@ says how much of the artboard the app builds today.
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | read-only |
-| `CreationIdentity` | #233, #234 | the step rail, Back, Next and Finish |
 | `CreationClass` | #233, #235, #240 | the step rail, Back, Next and Finish |
 | `CreationAbilityScores` | #233, #236 | the step rail, Back, Next and Finish |
 | `CreationProficiencies` | #233, #237 | the step rail, Back, Next and Finish |

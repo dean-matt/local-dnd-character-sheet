@@ -102,7 +102,7 @@ describe("CatalogPicker", () => {
     expect(first).toHaveAttribute("aria-selected", "true");
 
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(onPick).toHaveBeenCalledWith({ name: "Fireball", source: "PHB" });
+    expect(onPick).toHaveBeenCalledWith({ name: "Fireball", source: "PHB" }, FIREBALL);
     expect(input).toHaveValue("");
     expect(input).toHaveAttribute("aria-expanded", "false");
   });
@@ -117,7 +117,7 @@ describe("CatalogPicker", () => {
     fireEvent.keyDown(input, { key: "ArrowUp" });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(onPick).toHaveBeenCalledWith({ homebrewId: "7" });
+    expect(onPick).toHaveBeenCalledWith({ homebrewId: "7" }, EMBERLASH);
   });
 
   it("picks on click", async () => {
@@ -127,7 +127,7 @@ describe("CatalogPicker", () => {
     fireEvent.change(input, { target: { value: "fire" } });
     fireEvent.click(await screen.findByRole("option", { name: /Fireball/ }));
 
-    expect(onPick).toHaveBeenCalledWith({ name: "Fireball", source: "PHB" });
+    expect(onPick).toHaveBeenCalledWith({ name: "Fireball", source: "PHB" }, FIREBALL);
   });
 
   it("offers an unavailable row with its reason and refuses to pick it", async () => {
@@ -149,7 +149,7 @@ describe("CatalogPicker", () => {
 
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(onPick).toHaveBeenCalledWith({ name: "Fire Bolt", source: "PHB" });
+    expect(onPick).toHaveBeenCalledWith({ name: "Fire Bolt", source: "PHB" }, FIRE_BOLT);
   });
 
   it("closes on Escape, then clears the query on a second", async () => {
@@ -227,6 +227,41 @@ describe("CatalogPicker", () => {
     fireEvent.blur(input);
 
     expect(input).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("names a deity's pantheon, so two gods sharing a name and source read apart", async () => {
+    const oghma = (pantheon: string): SearchHit => ({
+      type: "deity",
+      name: "Oghma",
+      source: "PHB",
+      qualifier: pantheon,
+      edition: "classic",
+    });
+    stubFetch(page([oghma("Celtic"), oghma("Forgotten Realms")]));
+    const { input, onPick } = renderPicker({ type: "deity" });
+
+    fireEvent.change(input, { target: { value: "oghma" } });
+    expect(await screen.findByRole("option", { name: /Oghma · Celtic/ })).toBeVisible();
+    fireEvent.click(screen.getByRole("option", { name: /Oghma · Forgotten Realms/ }));
+
+    expect(onPick).toHaveBeenCalledWith(
+      { name: "Oghma", source: "PHB" },
+      oghma("Forgotten Realms"),
+    );
+  });
+
+  it("adds the caller's line under a row, and takes focus when asked", async () => {
+    stubFetch(page([FIREBALL, FIRE_BOLT]));
+    const { input } = renderPicker({
+      focusOnMount: true,
+      describe: (hit) => (hit.name === "Fireball" ? "8d6 fire" : undefined),
+    });
+
+    expect(input).toHaveFocus();
+    fireEvent.change(input, { target: { value: "fire" } });
+
+    expect(await screen.findByRole("option", { name: /Fireball.*8d6 fire/ })).toBeVisible();
+    expect(screen.getByRole("option", { name: /Fire Bolt/ })).not.toHaveTextContent("8d6");
   });
 
   it("reports a failed search", async () => {

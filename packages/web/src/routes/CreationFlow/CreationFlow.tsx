@@ -5,6 +5,8 @@ import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS } from "./creationSteps.ts";
+import { IdentityGrants } from "./IdentityGrants.tsx";
+import { IdentityStep } from "./IdentityStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
 import { StepPending } from "./StepPending.tsx";
 
@@ -51,7 +53,8 @@ export function CreationFlow() {
               <h1 className="font-bold text-[22px]">{step.label}</h1>
             </div>
             <CreationErrors />
-            <StepPending />
+            <IdentityGrants />
+            {step.slug === "identity" ? <IdentityStep /> : <StepPending />}
             <StepDepartures step={step} />
             <div className="flex justify-between border-t border-border pt-3">
               <button

@@ -1,0 +1,231 @@
+import type { CharacterDefinition } from "@dnd/character";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { useWatch } from "react-hook-form";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderWithClient } from "../../test/renderWithClient.tsx";
+import { creationForm } from "./creationForm.ts";
+import { IdentityGrants } from "./IdentityGrants.tsx";
+import { IdentityStep } from "./IdentityStep.tsx";
+
+const PHB = (name: string) => ({ name, source: "PHB" });
+const page = (items: unknown[]) => ({ items, total: items.length, limit: 200, offset: 0 });
+const hit = (type: string, name: string, source = "PHB", qualifier?: string) => ({
+  type,
+  name,
+  source,
+  edition: "classic",
+  ...(qualifier && { qualifier }),
+});
+
+const ELF = {
+  ...PHB("Elf"),
+  size: ["M"],
+  speed: 30,
+  skillProficiencies: [{ perception: true }],
+  languageProficiencies: [{ common: true, elvish: true }],
+  entries: [{ type: "entries", name: "Darkvision", entries: [] }],
+};
+const HIGH_ELF = { ...ELF, name: "High", weaponProficiencies: [{ "longsword|phb": true }] };
+const VERDAN = {
+  name: "Verdan",
+  source: "AI",
+  size: ["V"],
+  speed: 30,
+  resist: [{ choose: { from: ["acid", "fire"] } }],
+};
+const background = (name: string, skills: Record<string, true>) => ({
+  ...PHB(name),
+  edition: "classic",
+  json: { ...PHB(name), skillProficiencies: [skills] },
+});
+
+const ROWS: Record<string, unknown> = {
+  "/api/races/Elf/PHB": { ...PHB("Elf"), edition: "classic", json: ELF },
+  "/api/races/Elf/PHB/subraces?edition=classic&limit=200": page([
+    { ...PHB("High"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: HIGH_ELF },
+    { ...PHB("Wood"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: ELF },
+  ]),
+  "/api/races/Verdan/AI": { name: "Verdan", source: "AI", edition: "classic", json: VERDAN },
+  "/api/backgrounds?edition=classic&limit=200": page([
+    background("Sage", { arcana: true, history: true }),
+    background("Acolyte", { insight: true, religion: true }),
+  ]),
+};
+
+const SEARCHES: Record<string, unknown[]> = {
+  race: [hit("race", "Elf"), hit("race", "Verdan", "AI")],
+  background: [hit("background", "Sage"), hit("background", "Acolyte")],
+  deity: [hit("deity", "Oghma", "PHB", "Celtic"), hit("deity", "Oghma", "PHB", "Forgotten Realms")],
+  "skill,language": [
+    ...["Perception", "Arcana", "History", "Insight", "Religion"].map((name) => hit("skill", name)),
+    hit("language", "Common", "ERLW"),
+    hit("language", "Common"),
+    hit("language", "Elvish"),
+  ],
+};
+
+function stubCatalog() {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const type = new URL(url, "http://local").searchParams.get("type");
+      const body = url.startsWith("/api/search?") ? page(SEARCHES[type ?? ""] ?? []) : ROWS[url];
+      return body === undefined
+        ? new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 })
+        : new Response(JSON.stringify(body), { status: 200 });
+    }),
+  );
+}
+
+let values: Partial<CharacterDefinition> = {};
+
+function Values() {
+  // The draft holds a partial definition, which the probe reads only field by field.
+  values = useWatch<CharacterDefinition>() as Partial<CharacterDefinition>;
+  return null;
+}
+
+function renderStep() {
+  renderWithClient(
+    <creationForm.FormShell onSubmit={() => {}}>
+      {() => (
+        <>
+          <IdentityGrants />
+          <IdentityStep />
+          <Values />
+        </>
+      )}
+    </creationForm.FormShell>,
+  );
+}
+
+const combobox = (name: string) => screen.getByRole("combobox", { name });
+
+async function pick(field: string, query: string, option: RegExp) {
+  fireEvent.change(combobox(field), { target: { value: query } });
+  fireEvent.click(await screen.findByRole("option", { name: option }));
+}
+
+const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
+
+describe("IdentityStep", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem("draft:creation", JSON.stringify({ edition: "classic" }));
+    stubCatalog();
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("asks for a subrace, and lands what the race grants from the core book's rows", async () => {
+    renderStep();
+
+    await pick("Race", "elf", /^Elf/);
+
+    expect(screen.getByRole("button", { name: "Clear race, Elf" })).toHaveFocus();
+    expect(await screen.findByText("Elf has subraces — choose one")).toBeVisible();
+    expect(screen.getByText("Traits: Darkvision")).toBeVisible();
+    await waitFor(() =>
+      expect(values.proficiencies).toMatchObject({
+        skills: [{ ref: PHB("Perception"), level: "proficient" }],
+        languages: [PHB("Common"), PHB("Elvish")],
+        weapons: [],
+      }),
+    );
+
+    click("High");
+
+    expect(values.subrace).toEqual(PHB("High"));
+    expect(screen.getByRole("button", { name: "High" })).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => expect(values.proficiencies?.weapons).toEqual(["Longsword"]));
+  });
+
+  it("says what a background grants before it is chosen, and swaps the grant on a change", async () => {
+    renderStep();
+
+    fireEvent.change(combobox("Background"), { target: { value: "sa" } });
+    expect(
+      await screen.findByRole("option", { name: /Sage.*Grants Arcana, History/ }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("option", { name: /Sage/ }));
+
+    expect(screen.getByText("Grants: Arcana, History")).toBeVisible();
+    await waitFor(() =>
+      expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toEqual([
+        "Arcana",
+        "History",
+      ]),
+    );
+
+    click("Clear background, Sage");
+    expect(combobox("Background")).toHaveFocus();
+    await pick("Background", "aco", /Acolyte/);
+
+    await waitFor(() =>
+      expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toEqual([
+        "Insight",
+        "Religion",
+      ]),
+    );
+  });
+
+  it("takes a race the catalog lacks, noting the departure, and drops the note with it", async () => {
+    renderStep();
+
+    click("Not listed? Type a race");
+    fireEvent.change(screen.getByRole("textbox", { name: "Race name" }), {
+      target: { value: "Warforged" },
+    });
+    click("Use");
+
+    expect(values.race).toEqual({ name: "Warforged", source: "Custom" });
+    expect(values.departures).toEqual([
+      { field: "race", note: expect.stringContaining("Warforged is not a race the catalog holds") },
+    ]);
+
+    click("Clear race, Warforged");
+
+    expect(values.race).toBeUndefined();
+    expect(values.departures).toEqual([]);
+  });
+
+  it("asks the size and the resistance a race leaves open", async () => {
+    renderStep();
+
+    await pick("Race", "verdan", /^Verdan/);
+    expect(await screen.findByRole("group", { name: "Size — choose one" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Medium" }));
+    expect(screen.getByRole("group", { name: "Size" })).toBeVisible();
+    click("Fire");
+
+    expect(values.size).toBe("medium");
+    expect(values.raceResistance).toBe("fire");
+    expect(screen.getByRole("button", { name: "Small" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("stores a deity with its pantheon, and clears it back to none", async () => {
+    renderStep();
+
+    fireEvent.change(combobox("Deity (optional)"), { target: { value: "oghma" } });
+    expect(await screen.findByRole("option", { name: /Oghma · Forgotten Realms/ })).toBeVisible();
+    fireEvent.click(screen.getByRole("option", { name: /Oghma · Celtic/ }));
+
+    expect(values.deity).toEqual({ name: "Oghma", source: "PHB", pantheon: "Celtic" });
+
+    click("Clear deity, Oghma · Celtic");
+
+    expect(values.deity).toBeUndefined();
+    expect(combobox("Deity (optional)")).toHaveFocus();
+  });
+
+  it("sets the name and the alignment", async () => {
+    renderStep();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), { target: { value: "Vex" } });
+    fireEvent.click(combobox("Alignment"));
+    fireEvent.click(screen.getByRole("option", { name: "Chaotic Good" }));
+
+    expect(values.name).toBe("Vex");
+    expect(values.alignment).toBe("Chaotic Good");
+  });
+});

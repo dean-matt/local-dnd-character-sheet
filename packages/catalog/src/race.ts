@@ -3,7 +3,8 @@
  * only what a renderer needs to walk — `name`, `source` and `entries` — since neither
  * table derives a column from anything deeper; everything else upstream carries, such as
  * ability score increases, passes through unparsed. `raceTraitsSchema` reads sizes and
- * speed off the same entry for a derived block.
+ * speed off the same entry for a derived block, and `proficiencyGrantsSchema` what it
+ * grants.
  *
  * A homebrew race's `json` reuses this same shape rather than one of its own — see
  * `homebrewRaceInputSchema` below.

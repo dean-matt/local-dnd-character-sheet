@@ -3,7 +3,6 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../test/records.ts";
-import { stubFetch } from "../../test/stubFetch.ts";
 import { CreationFlow } from "./CreationFlow.tsx";
 
 const KEY = "draft:creation";
@@ -27,12 +26,41 @@ function renderFlow(path = "/characters/new") {
   );
 }
 
+const page = (items: unknown[]) => ({ items, total: items.length, limit: 200, offset: 0 });
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+/**
+ * Stubs the API the flow reads: `write` answers the POST that creates the character, each
+ * URL in `catalog` its own body, and any other list an empty page. A row read no URL names
+ * is a 404.
+ */
+function stubApi(
+  write = () => json({ error: "no write expected" }, 500),
+  catalog: Record<string, unknown> = {},
+) {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    if (init?.method === "POST") return write();
+    if (url in catalog) return json(catalog[url]);
+    if (/\/(search|backgrounds)\?|\/subraces\?/.test(url)) return json(page([]));
+    return json({ error: `nothing at ${url}` }, 404);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+const writes = (fetchMock: ReturnType<typeof stubApi>) =>
+  fetchMock.mock.calls.filter(([, init]) => init?.method === "POST");
+
 const location = () => screen.getByTestId("location").textContent;
 const rail = () => screen.getByRole("navigation", { name: "Creation steps" });
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
 
 describe("CreationFlow", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    stubApi();
+  });
   afterEach(() => vi.unstubAllGlobals());
 
   it("opens on the first step and walks forward and back, the rail marking where you are", async () => {
@@ -65,7 +93,7 @@ describe("CreationFlow", () => {
   });
 
   it("refuses an unfinished character at Finish, naming each fault and the step that holds it", async () => {
-    const fetchMock = stubFetch(new Response(null, { status: 500 }));
+    const fetchMock = stubApi();
     renderFlow("/characters/new/spells");
 
     click("Finish →");
@@ -73,7 +101,7 @@ describe("CreationFlow", () => {
     const faults = await screen.findByRole("alert");
     expect(within(faults).getByText(/A character needs a name\./)).toBeVisible();
     const [toIdentity] = within(faults).getAllByRole("link", { name: "Go to Identity" });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(writes(fetchMock)).toEqual([]);
 
     fireEvent.click(toIdentity as HTMLElement);
     expect(await screen.findByRole("heading", { level: 1, name: "Identity" })).toBeVisible();
@@ -81,21 +109,21 @@ describe("CreationFlow", () => {
 
   it("creates the character the draft holds, opens its sheet and clears the draft", async () => {
     localStorage.setItem(KEY, JSON.stringify(vex.definition));
-    const fetchMock = stubFetch(new Response(JSON.stringify(vex), { status: 201 }));
+    const fetchMock = stubApi(() => json(vex, 201));
     renderFlow("/characters/new/spells");
 
     click("Finish →");
 
     await waitFor(() => expect(location()).toBe("/characters/7"));
-    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    const [url, init] = writes(fetchMock)[0] ?? [];
     expect(url).toBe("/api/characters");
-    expect(JSON.parse(init.body)).toEqual(vex.definition);
+    expect(JSON.parse(String(init?.body))).toEqual(vex.definition);
     expect(localStorage.getItem(KEY)).toBeNull();
   });
 
   it("keeps the draft and says why when the write fails", async () => {
     localStorage.setItem(KEY, JSON.stringify(vex.definition));
-    stubFetch(new Response(JSON.stringify({ error: "the disk is full" }), { status: 500 }));
+    stubApi(() => json({ error: "the disk is full" }, 500));
     renderFlow("/characters/new/spells");
 
     click("Finish →");
@@ -120,7 +148,7 @@ describe("CreationFlow", () => {
 
   it("says so when the draft holds what no character can store", async () => {
     localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, retired: true }));
-    const fetchMock = stubFetch(new Response(null, { status: 500 }));
+    const fetchMock = stubApi();
     renderFlow("/characters/new/spells");
 
     click("Finish →");
@@ -128,7 +156,30 @@ describe("CreationFlow", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The draft holds something a character cannot store.",
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(writes(fetchMock)).toEqual([]);
+  });
+
+  it("marks Identity done while its choices are complete, and not once an edit undoes one", async () => {
+    const halfElf = { name: "Half-Elf", source: "XPHB" };
+    stubApi(undefined, {
+      "/api/races/Half-Elf/XPHB": {
+        ...halfElf,
+        edition: "one",
+        json: { ...halfElf, size: ["M"], speed: 30 },
+      },
+    });
+    localStorage.setItem(KEY, JSON.stringify(vex.definition));
+    renderFlow("/characters/new/class");
+
+    const identity = within(rail()).getByRole("link", { name: /Identity/ });
+    await waitFor(() => expect(identity).toHaveTextContent("Identity, done"));
+    expect(within(rail()).getByRole("link", { name: /Class/ })).not.toHaveTextContent("done");
+
+    fireEvent.click(identity);
+    fireEvent.change(await screen.findByRole("textbox", { name: "Name" }), {
+      target: { value: "" },
+    });
+    await waitFor(() => expect(identity).not.toHaveTextContent("done"));
   });
 
   it("discards the draft on Cancel and returns to the list", async () => {

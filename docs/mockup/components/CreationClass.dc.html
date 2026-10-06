@@ -235,11 +235,11 @@ class Component extends DCLogic {
       stepNum: 2,
       steps: ['Identity', 'Class', 'Ability Scores', 'Proficiencies & Equipment', 'Spells'].map((label, i) => {
         const n = i + 1;
-        const files = ['CreationIdentity.dc.html', 'CreationClass.dc.html', 'CreationAbilityScores.dc.html', 'CreationProficiencies.dc.html', 'CreationSpells.dc.html'];
+        const files = [null, 'CreationClass.dc.html', 'CreationAbilityScores.dc.html', 'CreationProficiencies.dc.html', 'CreationSpells.dc.html'];
         const current = n === 2;
         const done = n < 2;
         return {
-          label, mark: String(n), href: files[i], reachable: n <= 2, locked: n > 2,
+          label, mark: String(n), href: files[i], reachable: files[i] !== null && n <= 2, locked: files[i] === null || n > 2,
           ariaCurrent: current ? 'step' : 'false',
           rowBg: current ? '#f3e3e0' : 'none',
           textWeight: current ? '600' : '500',

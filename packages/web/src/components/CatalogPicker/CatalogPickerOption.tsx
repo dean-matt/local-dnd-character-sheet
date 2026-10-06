@@ -8,6 +8,7 @@ export interface CatalogPickerOptionProps {
   hit: SearchHit;
   /** Why this row cannot be picked; absent where it can. */
   reason: string | undefined;
+  detail: string | undefined;
   active: boolean;
   onPick: () => void;
   onPoint: () => void;
@@ -17,6 +18,7 @@ export function CatalogPickerOption({
   id,
   hit,
   reason,
+  detail,
   active,
   onPick,
   onPoint,
@@ -42,13 +44,17 @@ export function CatalogPickerOption({
         active ? "bg-accent-tint" : ""
       } ${reason === undefined ? "cursor-pointer" : "cursor-not-allowed text-muted"}`}
     >
-      <span>{hit.name}</span>
+      <span>
+        {hit.name}
+        {"qualifier" in hit && hit.qualifier !== undefined && ` · ${hit.qualifier}`}
+      </span>
       <SourceChip
         source={"source" in hit ? hit.source : undefined}
         edition={hit.edition}
         of={searchHitTypeLabel(hit.type).toLowerCase()}
       />
       {reason !== undefined && <span className="text-row">{reason}</span>}
+      {detail !== undefined && <span className="basis-full text-muted text-row">{detail}</span>}
     </div>
   );
 }

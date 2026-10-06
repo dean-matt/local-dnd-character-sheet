@@ -25,3 +25,4 @@ export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 export type EntryRef = z.infer<typeof entryRefSchema>;
 export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
+export type DeityRef = z.infer<typeof deityRefSchema>;
