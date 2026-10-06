@@ -532,8 +532,8 @@ describe("deriveCharacter", () => {
         ...defended,
         raceDefenses: { ...noDefenses, resist: ["poison"], resistChoice: ["acid", "fire"] },
       };
-      const picking = (resistance?: string) =>
-        deriveCharacter({ ...hillDwarf([]), resistance }, choosing).defenses.computed;
+      const picking = (raceResistance?: string) =>
+        deriveCharacter({ ...hillDwarf([]), raceResistance }, choosing).defenses.computed;
 
       expect(picking("fire")).toMatchObject({
         resistances: [

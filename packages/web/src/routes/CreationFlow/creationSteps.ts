@@ -21,7 +21,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   race: "identity",
   subrace: "identity",
   size: "identity",
-  resistance: "identity",
+  raceResistance: "identity",
   background: "identity",
   alignment: "identity",
   deity: "identity",

@@ -515,11 +515,11 @@ describe("derivedRoutes", () => {
   });
 
   it("grants the resistance a Dragonborn picks, and offers the choice until one is picked", async () => {
-    const dragonborn = (resistance?: string) =>
+    const dragonborn = (raceResistance?: string) =>
       definitionWith({
         race: { name: "Dragonborn", source: "PHB" },
         subrace: undefined,
-        resistance,
+        raceResistance,
       });
 
     store(dragonborn());

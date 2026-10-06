@@ -305,7 +305,7 @@ export const characterDefinitionSchema = z.strictObject({
    * as `fire` for `Dragonborn` (PHB). A pick the race does not offer grants nothing, so a
    * race change ignores it rather than clearing it, as `size` does.
    */
-  resistance: z.string().trim().toLowerCase().min(1).optional(),
+  raceResistance: z.string().trim().toLowerCase().min(1).optional(),
   background: entryRefSchema,
   abilityScores: abilityScoresSchema,
   proficiencies: proficienciesSchema,

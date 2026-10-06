@@ -301,7 +301,7 @@ function derivedDefenses(
 ): ComputedField<Defenses> {
   const { resistChoice, ...race } = catalog.raceDefenses;
   const from = raceLabel(definition);
-  const pick = definition.resistance;
+  const pick = definition.raceResistance;
   const picked = pick !== undefined && resistChoice.includes(pick) ? pick : undefined;
   const grants: Grant[] = [
     { ...race, resist: picked ? [...race.resist, picked] : race.resist, from },
