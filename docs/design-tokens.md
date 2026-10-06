@@ -62,6 +62,7 @@ role rather than the shade:
 | `color-accent-text` | `--accent` | `--accent`, with `--accent-text-lift` of white | The accent as text under the large-text size — a link, the wordmark, an override mark, the top bar's current section |
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
+| `color-error` | `#9f0712` | `#ff7676` | What failed — a field's rejected value, a request that did not load. Never the accent, so an error reads apart from a red link. `docs/mockup/` carries the light value |
 | `color-money` / `color-money-tint` / `color-money-border` | `#7a5b00` on `#fbf3dc`, edged `#e5cf8f` | `#e5cf8f` on `#7a5b00` 30% into `gray-800`, edged at 70% | A list row's price chip |
 | `color-type-spell`, `-item`, `-feat`, `-race`, `-feature`, `-monster` | `#3a4f7a`, `#8a6a2e`, `#6b4f7a`, `#5b5f66`, `#4f6b6b`, `#7a3b2e` | each 85% into `gray-900` | A type chip's fill under white text. `TypeChip` maps a type to its fill, and a type with none takes the neutral `Tag` |
 
@@ -97,6 +98,7 @@ holds every pair in both themes and fails a repalette that regresses one:
   AA for normal text
 - `color-secondary` on `color-surface` and `color-subtle`: AA for normal text
 - `color-accent-text` on `color-canvas`, `color-surface` and `color-subtle`: AA for normal text
+- `color-error` on `color-canvas`, `color-surface` and `color-subtle`: AA for normal text
 - `color-accent` on `color-accent-tint`: AA for text in light, 3:1 in dark
 - The focus ring in each accent shade on `color-canvas`: 3:1
 - White on every `color-type-*` fill: AA for normal text

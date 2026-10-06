@@ -86,7 +86,7 @@
               <input type="checkbox" checked="{{sk.checked}}" onChange="{{sk.toggle}}">
               {{sk.name}}
               <sc-if value="{{sk.duplicate}}" hint-placeholder-val="{{false}}">
-                <span style="font-size: 11px; color: {{accent}};">— already granted by Background, choose another</span>
+                <span style="font-size: 11px; color: {{error}};">— already granted by Background, choose another</span>
               </sc-if>
             </label>
           </sc-for>
@@ -142,6 +142,7 @@ class Component extends DCLogic {
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
+    const error = '#9f0712';
     const grantedSkills = ['Arcana', 'History'];
     const CLASS_SKILL_OPTIONS = ['Arcana', 'History', 'Insight', 'Investigation', 'Medicine', 'Religion'];
     const CLASS_SKILL_COUNT = 2;
@@ -151,7 +152,7 @@ class Component extends DCLogic {
       name,
       checked: !!checkedSkills[name],
       duplicate: !!checkedSkills[name] && grantedSkills.indexOf(name) !== -1,
-      color: grantedSkills.indexOf(name) !== -1 && checkedSkills[name] ? accent : '#1f2430',
+      color: grantedSkills.indexOf(name) !== -1 && checkedSkills[name] ? error : '#1f2430',
       toggle: () => this.setState({ checkedSkills: { ...checkedSkills, [name]: !checkedSkills[name] } })
     }));
     const EQUIPMENT_CHOICES = [
@@ -169,6 +170,7 @@ class Component extends DCLogic {
     }));
     return {
       accent,
+      error,
       stepNum: 4,
       steps: ['Identity', 'Class', 'Ability Scores', 'Proficiencies & Equipment', 'Spells'].map((label, i) => {
         const n = i + 1;

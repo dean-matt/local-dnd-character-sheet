@@ -37,12 +37,14 @@ const placeholderLight = mutedLight;
 const borderLight = hex("#dde1e6");
 const accentLight = hex(DEFAULT_ACCENT);
 const positiveLight = hex("#2f6b4f");
+const errorLight = hex("#9f0712");
 
 const inkDark = gray100;
 const secondaryDark = gray300;
 const mutedDark = gray400;
 const placeholderDark = mutedDark;
 const positiveDark = mixOklab(positiveLight, white, 0.5);
+const errorDark = hex("#ff7676");
 const moneyLight = hex("#7a5b00");
 const moneyTintLight = hex("#fbf3dc");
 const moneyDark = hex("#e5cf8f");
@@ -72,6 +74,9 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   { name: "placeholder on subtle, light", fg: placeholderLight, bg: subtleLight, minimum: AA_TEXT },
   ...lightPairs(accentLight),
   { name: "positive on surface, light", fg: positiveLight, bg: white, minimum: AA_TEXT },
+  { name: "error on canvas, light", fg: errorLight, bg: canvasLight, minimum: AA_TEXT },
+  { name: "error on surface, light", fg: errorLight, bg: white, minimum: AA_TEXT },
+  { name: "error on subtle, light", fg: errorLight, bg: subtleLight, minimum: AA_TEXT },
   { name: "money on money-tint, light", fg: moneyLight, bg: moneyTintLight, minimum: AA_TEXT },
   {
     name: "spinner arc on its track, light",
@@ -94,6 +99,9 @@ const cases: { name: string; fg: Vec3; bg: Vec3; minimum: number }[] = [
   ...darkTextPairs(mixOklab(accentLight, white, 0.6)),
   ...darkRingPairs(mixOklab(accentLight, white, 0.9)),
   { name: "positive on surface, dark", fg: positiveDark, bg: gray800, minimum: AA_TEXT },
+  { name: "error on canvas, dark", fg: errorDark, bg: gray900, minimum: AA_TEXT },
+  { name: "error on surface, dark", fg: errorDark, bg: gray800, minimum: AA_TEXT },
+  { name: "error on subtle, dark", fg: errorDark, bg: subtleDark, minimum: AA_TEXT },
   { name: "money on money-tint, dark", fg: moneyDark, bg: moneyTintDark, minimum: AA_TEXT },
   { name: "spinner arc on its track, dark", fg: mutedDark, bg: gray700, minimum: AA_NON_TEXT },
   ...Object.entries(TYPE_FILLS).flatMap(([type, fill]) => [

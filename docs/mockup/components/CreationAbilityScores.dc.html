@@ -155,6 +155,7 @@ class Component extends DCLogic {
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
+    const error = '#9f0712';
     const ABILITIES = [
       { key: 'str', label: 'STR' }, { key: 'dex', label: 'DEX' }, { key: 'con', label: 'CON' },
       { key: 'int', label: 'INT' }, { key: 'wis', label: 'WIS' }, { key: 'cha', label: 'CHA' }
@@ -221,7 +222,7 @@ class Component extends DCLogic {
       isPointBuy: method === 'pointbuy',
       isRoll: method === 'roll',
       pointsLabel: pointsRemaining >= 0 ? pointsRemaining + ' of 27 points remaining' : 'Over budget by ' + -pointsRemaining + ' points',
-      pointsColor: pointsRemaining >= 0 ? '#6b7280' : accent,
+      pointsColor: pointsRemaining >= 0 ? '#6b7280' : error,
       rerollAll: () => this.setState({
         rolled: ABILITIES.reduce((acc, a) => {
           const dice = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1).sort((x, y) => y - x);

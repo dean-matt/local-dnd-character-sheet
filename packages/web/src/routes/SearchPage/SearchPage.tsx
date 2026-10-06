@@ -121,7 +121,11 @@ export function SearchPage() {
           />
         </div>
 
-        <p aria-hidden className="text-row text-muted">
+        <p
+          aria-hidden
+          data-failed={search.isError}
+          className="text-row text-muted data-[failed=true]:text-error"
+        >
           {status()}
         </p>
         {/* Rendered even while empty: a live region added with its text is often not announced. */}

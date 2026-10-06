@@ -47,7 +47,7 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
           <div className="fixed inset-0 z-40" onClick={onClose} />
           <div className="absolute left-0 top-full z-50 mt-2 grid max-h-[calc(100dvh-var(--spacing-topbar)-1rem)] w-160 grid-cols-3 gap-0.5 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover">
             {types.isError && (
-              <p className="col-span-3 px-2.5 py-2 text-body text-muted">
+              <p className="col-span-3 px-2.5 py-2 text-body text-error">
                 The catalog's types did not load.
               </p>
             )}

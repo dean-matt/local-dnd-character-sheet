@@ -48,7 +48,7 @@ export function FormField({ label, error, status, children }: FormFieldProps) {
         <span
           id={errorId}
           role="alert"
-          className="mt-1 flex items-center gap-2 text-accent-text text-row"
+          className="mt-1 flex items-center gap-2 text-error text-row"
         >
           {error}
         </span>
