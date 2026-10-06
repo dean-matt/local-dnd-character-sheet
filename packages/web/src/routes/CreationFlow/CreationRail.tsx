@@ -1,11 +1,12 @@
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Link } from "react-router";
 import { CREATION_STEPS, type CreationStep } from "./creationSteps.ts";
+import { useIdentityDone } from "./useIdentityDone.ts";
 
 /**
  * The flow's step list, the current step marked. Every step is a link, because the flow
- * refuses nothing — a later step is open before the earlier ones are finished — and no
- * step reads as done, since reaching a step past it says nothing about what it holds.
+ * refuses nothing — a later step is open before the earlier ones are finished. A step reads
+ * as done only while its own choices are complete, never for having been passed.
  */
 export function CreationRail({
   current,
@@ -15,6 +16,7 @@ export function CreationRail({
   onCancel: () => void;
 }) {
   const currentIndex = CREATION_STEPS.indexOf(current);
+  const done = new Set<CreationStep["slug"]>(useIdentityDone() ? ["identity"] : []);
   return (
     <div className="flex h-full w-sidebar flex-col gap-1.5 overflow-y-auto border-r border-border bg-surface px-4 py-5">
       <p className="px-2.5 pb-1.5 font-semibold text-label text-muted uppercase tracking-label">
@@ -24,6 +26,7 @@ export function CreationRail({
         <ol className="flex flex-col gap-0.5">
           {CREATION_STEPS.map((step, index) => {
             const isCurrent = index === currentIndex;
+            const isDone = done.has(step.slug);
             return (
               <li key={step.slug}>
                 <Link
@@ -40,12 +43,15 @@ export function CreationRail({
                     className={`flex size-5.5 shrink-0 items-center justify-center rounded-full border font-bold text-label ${
                       isCurrent
                         ? "border-accent bg-accent text-white"
-                        : "border-border bg-surface text-muted"
+                        : isDone
+                          ? "border-accent bg-accent-tint text-accent-text"
+                          : "border-border bg-surface text-muted"
                     }`}
                   >
-                    {index + 1}
+                    {isDone && !isCurrent ? <Check size={12} /> : index + 1}
                   </span>
                   <span>{step.label}</span>
+                  {isDone && <span className="sr-only">, done</span>}
                 </Link>
               </li>
             );

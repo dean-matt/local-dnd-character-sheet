@@ -4,13 +4,16 @@
  * `(name, source)` or a homebrew id — and never the row, so a caller cannot copy one into a
  * character.
  *
+ * A deity's pantheon or a card's deck shows beside its name, since two rows can share the
+ * rest of their key, and `describe` adds a line the caller writes, such as what a row grants.
+ *
  * Whether a row may be picked belongs to the caller, through `unavailableReason`. An
  * unavailable row stays in the list with its reason, reachable by arrow so a screen reader
  * hears why, and Enter or a click on it does nothing.
  */
 import type { SearchHit } from "@dnd/catalog";
 import type { CharacterRecord, EntryRef } from "@dnd/character";
-import { type KeyboardEvent, useId, useState } from "react";
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
@@ -27,8 +30,13 @@ export interface CatalogPickerProps {
   type: string;
   /** Why `hit` cannot be picked here, or `undefined` where it can. */
   unavailableReason?: (hit: SearchHit) => string | undefined;
-  onPick: (ref: EntryRef) => void;
+  /** A line under `hit`'s name, or `undefined` for none. */
+  describe?: (hit: SearchHit) => string | undefined;
+  /** `hit` carries what a reference does not, such as a deity's pantheon. */
+  onPick: (ref: EntryRef, hit: SearchHit) => void;
   placeholder?: string;
+  /** Moves focus to the input on mount, as where a cleared choice gave way to it. */
+  focusOnMount?: boolean;
 }
 
 function toRef(hit: SearchHit): EntryRef {
@@ -51,9 +59,16 @@ export function CatalogPicker({
   edition,
   type,
   unavailableReason,
+  describe,
   onPick,
   placeholder,
+  focusOnMount = false,
 }: CatalogPickerProps) {
+  const input = useRef<HTMLInputElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: focus moves once, on mount.
+  useEffect(() => {
+    if (focusOnMount) input.current?.focus();
+  }, []);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -68,7 +83,7 @@ export function CatalogPicker({
 
   function pick(hit: SearchHit) {
     if (unavailableReason?.(hit) !== undefined) return;
-    onPick(toRef(hit));
+    onPick(toRef(hit), hit);
     setQuery("");
     setOpen(false);
     setActive(-1);
@@ -109,6 +124,7 @@ export function CatalogPicker({
         <div className="flex flex-col gap-1">
           <input
             {...control}
+            ref={input}
             type="text"
             role="combobox"
             autoComplete="off"
@@ -139,10 +155,15 @@ export function CatalogPicker({
           >
             {hits.map((hit, index) => (
               <CatalogPickerOption
-                key={"id" in hit ? `homebrew:${hit.id}` : `${hit.name}|${hit.source}`}
+                key={
+                  "id" in hit
+                    ? `homebrew:${hit.id}`
+                    : `${hit.name}|${hit.source}|${hit.qualifier ?? ""}`
+                }
                 id={optionId(index)}
                 hit={hit}
                 reason={unavailableReason?.(hit)}
+                detail={describe?.(hit)}
                 active={index === activeIndex}
                 onPick={() => pick(hit)}
                 onPoint={() => setActive(index)}
