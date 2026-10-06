@@ -31,6 +31,7 @@
       "passive": 9,
       "languages": ["Common", "Goblin"],
       "cr": "1/4",
+      "gear": ["leather armor|xphb", "scimitar|xphb", "shield|xphb", "shortbow|xphb"],
       "action": [
         {
           "name": "Scimitar",
@@ -49,6 +50,52 @@
         {
           "name": "Nimble Escape",
           "entries": ["Elided. {@action Disengage|XPHB} Elided. {@action Hide|XPHB} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Bandit Deceiver",
+      "source": "XMM",
+      "page": 28,
+      "size": ["S", "M"],
+      "type": "humanoid",
+      "alignment": ["N"],
+      "ac": [16],
+      "hp": {
+        "average": 130,
+        "formula": "20d8 + 40"
+      },
+      "speed": {
+        "walk": 30
+      },
+      "initiative": {
+        "proficiency": 1
+      },
+      "dex": 16,
+      "cr": "7",
+      "gear": [
+        {
+          "item": "dagger|xphb",
+          "quantity": 6
+        },
+        "wand|xphb"
+      ],
+      "action": [
+        {
+          "name": "Multiattack",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Dagger",
+          "entries": [
+            "{@atkr m,r} {@hit 6} Elided. {@h} Elided. {@damage 2d4 + 3} Elided. {@damage 3d6} Elided."
+          ]
+        },
+        {
+          "name": "Blinding Flash {@recharge 4}",
+          "entries": [
+            "{@actSave con} {@dc 14} Elided. {@variantrule Sphere [Area of Effect]|XPHB|Sphere} Elided. {@actSaveFail} Elided. {@damage 3d6 + 3} Elided. {@condition Blinded|XPHB} Elided. {@actSaveSuccess} Elided."
+          ]
         }
       ]
     }

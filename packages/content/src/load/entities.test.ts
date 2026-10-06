@@ -72,6 +72,7 @@ describe("the Tier C entity loaders", () => {
       "legendaryGroup Aboleth|XMM one",
       "monster Archmage|MM classic",
       "monster Archmage (Familiar)|MM classic",
+      "monster Bandit Deceiver|XMM one",
       "monster Feonor|BGDIA classic",
       "monster Goblin|MM classic",
       "monster Goblin Warrior|XMM one",

@@ -220,7 +220,11 @@ export const FIXTURES: Fixture[] = [
           items: [
             {
               id: "Goblin Warrior|XMM",
-              fields: [...MONSTER_FIELDS, ...STAT_BLOCK_FIELDS, "bonus"],
+              fields: [...MONSTER_FIELDS, ...STAT_BLOCK_FIELDS, "bonus", "gear"],
+            },
+            {
+              id: "Bandit Deceiver|XMM",
+              fields: [...MONSTER_FIELDS, "dex", "initiative", "gear"],
             },
           ],
         },
