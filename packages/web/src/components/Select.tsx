@@ -5,6 +5,8 @@ import { Dropdown } from "./Dropdown.tsx";
 interface SelectOption {
   value: string;
   label: string;
+  /** Drawn muted after the label, with the option muted too: why it is a poor pick, without refusing it. */
+  hint?: string;
 }
 
 /** `id` and the ARIA attributes are `FormField`'s, which name and describe the button. */
@@ -99,7 +101,9 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
           aria-labelledby={buttonId}
           // Keeps focus on the button, which owns the keys and the active option.
           onMouseDown={(event) => event.preventDefault()}
-          className={panelClassName}
+          // At least the button's width, and wider where an option needs it: a narrow button
+          // would otherwise wrap even a two-digit option onto two lines.
+          className={`${panelClassName} w-max! min-w-full!`}
         >
           {options.map((option, index) => (
             // biome-ignore lint/a11y/useKeyWithClickEvents: the button handles the keys, pointing at this option.
@@ -119,7 +123,10 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
                 aria-hidden
                 className={`shrink-0 text-accent-text ${index === chosen ? "" : "invisible"}`}
               />
-              <span className="min-w-0 break-words">{option.label}</span>
+              <span className={`min-w-0 break-words ${option.hint ? "text-muted" : ""}`}>
+                {option.label}
+                {option.hint && ` — ${option.hint}`}
+              </span>
             </div>
           ))}
         </div>

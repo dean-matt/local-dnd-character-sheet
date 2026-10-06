@@ -47,6 +47,18 @@ export const abilityScoresSchema = z.record(
   z.int({ error: SCORE_RANGE }).min(1, { error: SCORE_RANGE }).max(30, { error: SCORE_RANGE }),
 );
 
+/**
+ * An increase a race or a background grants, kept beside the score it raises rather than
+ * added into it, so a race change takes back exactly what the old race gave. `grantedBy`
+ * names the definition's own `race` or `background`, which a subrace merges into. Some
+ * old races lower a score, so `amount` may be negative.
+ */
+const abilityIncreaseSchema = z.strictObject({
+  ability: abilitySchema,
+  amount: z.int().refine((amount) => amount !== 0, { error: "an increase of 0 raises nothing" }),
+  grantedBy: z.enum(["race", "background"]),
+});
+
 const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 
 /** One skill, and how proficient the character is in it. */
@@ -307,7 +319,9 @@ export const characterDefinitionSchema = z.strictObject({
    */
   raceResistance: z.string().trim().toLowerCase().min(1).optional(),
   background: entryRefSchema,
+  /** The scores before any increase: what the array, point buy, roll or the player set. */
   abilityScores: abilityScoresSchema,
+  abilityIncreases: z.array(abilityIncreaseSchema).default([]),
   proficiencies: proficienciesSchema,
   inventory: z.array(inventoryEntrySchema),
   spells: z.array(spellEntrySchema),

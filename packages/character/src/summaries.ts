@@ -2,7 +2,8 @@ import type { CharacterDefinition } from "./definition.ts";
 import { entryKey } from "./keys.ts";
 import type { ContentRef, EntryRef } from "./refs.ts";
 
-export const totalLevel = (definition: CharacterDefinition): number => definition.levels.length;
+export const totalLevel = (definition: Pick<CharacterDefinition, "levels">): number =>
+  definition.levels.length;
 
 /**
  * `race` and `levels[].class` carry only a `homebrewId` for a homebrew choice, and no

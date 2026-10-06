@@ -203,6 +203,47 @@ describe("AbilitiesSection", () => {
     expect(slot?.querySelectorAll("[role='status']")).toHaveLength(6);
   });
 
+  it("shows a score through its increases, and saves an edit to the base beneath them, kept within 1 to 30", async () => {
+    const base = warlock();
+    const record: CharacterRecord = {
+      ...base,
+      definition: {
+        ...base.definition,
+        abilityIncreases: [{ ability: "str", amount: 2, grantedBy: "race" }],
+      },
+    };
+    stubRules([]);
+    const reads = fetch;
+    let saved: CharacterRecord["definition"] | undefined;
+    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method !== "PUT") return reads(url, init);
+      saved = JSON.parse(String(init.body));
+      return new Response(JSON.stringify({ ...record, definition: saved }));
+    });
+    const client = new QueryClient();
+    client.setQueryData(characterKey(record.id), record);
+    render(
+      <QueryClientProvider client={client}>
+        <AbilitiesSection character={record} derived={derivedFor(record)} />
+      </QueryClientProvider>,
+    );
+
+    const score = screen.getByRole("textbox", { name: "Strength score" });
+    expect(score).toHaveValue("10");
+    fireEvent.change(score, { target: { value: "2" } });
+    fireEvent.blur(score);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Strength: With +2 from race and background, a score is a whole number from 3 to 32.",
+    );
+    expect(saved).toBeUndefined();
+
+    fireEvent.change(score, { target: { value: "13" } });
+    fireEvent.blur(score);
+
+    await waitFor(() => expect(saved?.abilityScores.str).toBe(11));
+    expect(saved?.abilityIncreases).toEqual(record.definition.abilityIncreases);
+  });
+
   it("takes each modifier from the derived block, not from the score", () => {
     const record = warlock();
     const derived = derivedFor(record);

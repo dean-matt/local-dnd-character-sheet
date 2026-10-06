@@ -28,6 +28,12 @@ export const houseRulesSchema = z
      * pick on the definition.
      */
     optionalClassFeatures: z.boolean().optional(),
+    /**
+     * Tasha's custom origin applies: a classic race's increases keep their amounts, and
+     * the player places each on any ability. Absent, an increase goes where the race
+     * prints it. A 2024 race grants none, so the option changes nothing there.
+     */
+    customOrigin: z.boolean().optional(),
   })
   .prefault({});
 
@@ -42,4 +48,5 @@ export type HouseRule = keyof HouseRules;
 export const PRINTED_RULE: Required<HouseRules> = {
   encumbrance: false,
   optionalClassFeatures: false,
+  customOrigin: false,
 };

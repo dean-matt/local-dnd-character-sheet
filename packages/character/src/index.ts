@@ -16,7 +16,15 @@
  * row loses nothing and says so. The derived tree is assembled rather than stored, and
  * strict for the plainer reason: a key nothing named means the caller built it wrong.
  */
-export { ABILITIES, ABILITY_LABEL, averageHitPoints, HIT_DICE, type HitDie } from "@dnd/rules";
+export {
+  ABILITIES,
+  ABILITY_LABEL,
+  abilityModifier,
+  averageHitPoints,
+  HIT_DICE,
+  type HitDie,
+} from "@dnd/rules";
+export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {
   ArmorTrait,
   CasterTable,
@@ -43,6 +51,8 @@ export {
   deriveCharacter,
   hitPointMaximum,
   passiveSkill,
+  savingThrowModifier,
+  skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
 export { deityKey, entryKey, itemKey, refKey } from "./keys.ts";

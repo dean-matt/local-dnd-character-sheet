@@ -79,6 +79,7 @@ export const definition: CharacterDefinition = {
   race: { name: "Half-Elf", source: "XPHB" },
   background: CHARLATAN,
   abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },
+  abilityIncreases: [],
   proficiencies: {
     savingThrows: ["wis", "cha"],
     skills: [

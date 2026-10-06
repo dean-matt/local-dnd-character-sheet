@@ -1,3 +1,5 @@
+export type { IncreaseAlternative } from "./ability-increases.ts";
+export { abilityIncreasesSchema, customOrigin } from "./ability-increases.ts";
 export { catalogRowRecordSchema } from "./catalog-row.ts";
 export { catalogRowEntries } from "./catalog-row-entries.ts";
 export type {

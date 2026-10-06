@@ -19,7 +19,7 @@ export const NO_GRANTS: Granted = {
 type RowGrants = ProficiencyGrants | ClassProficiencyGrants;
 
 /** The book whose skill or language row a grant names where several books print one. */
-const CORE_SOURCE = { classic: "PHB", one: "XPHB" } as const;
+export const CORE_SOURCE = { classic: "PHB", one: "XPHB" } as const;
 
 /** A name as a sheet prints it: `thieves' tools` as `Thieves' Tools`. */
 export const titleCase = (name: string): string =>

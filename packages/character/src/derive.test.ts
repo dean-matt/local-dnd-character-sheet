@@ -295,6 +295,21 @@ describe("deriveCharacter", () => {
     expect(derived.abilityModifiers.cha.computed).toBe(3);
   });
 
+  it("reads every score through its increases, so a racial +2 moves the modifier and the save", () => {
+    const raised = deriveCharacter(
+      {
+        ...equipped,
+        abilityIncreases: [
+          { ability: "str", amount: 2, grantedBy: "race" },
+          { ability: "str", amount: 1, grantedBy: "background" },
+        ],
+      },
+      catalog,
+    );
+    expect(raised.abilityModifiers.str.terms).toEqual([{ label: "Score 11", value: 0 }]);
+    expect(raised.savingThrows.str.computed).toBe(0);
+  });
+
   it("pools hit dice by die size, so two d8 classes share one pool", () => {
     expect(derived.hitDice).toEqual([{ die: 8, total: { computed: 5, manual: null, terms: [] } }]);
   });
