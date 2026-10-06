@@ -293,6 +293,7 @@ describe("CreationFlow", () => {
     const toggle = screen.getByRole("button", { name: "Expand sidebar" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(rail().previousElementSibling).toBeNull();
+    expect(rail().firstElementChild?.tagName).toBe("OL");
     expect(within(rail()).getByRole("link", { name: "Class" })).toHaveTextContent("2");
 
     fireEvent.click(toggle);
@@ -302,6 +303,7 @@ describe("CreationFlow", () => {
       "true",
     );
     expect(rail().previousElementSibling).toBeNull();
+    expect(rail().firstElementChild?.tagName).toBe("OL");
     expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
   });
 
