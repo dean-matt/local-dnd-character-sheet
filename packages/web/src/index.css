@@ -32,9 +32,15 @@
    * indicator, 3:1 minimum) falls to 2.51:1 against --color-surface. The hover and
    * active shades mix from var(--color-accent), so they follow.
    */
-  --color-accent: light-dark(#c1272d, color-mix(in oklab, #c1272d 90%, white));
+  --color-accent: light-dark(
+    var(--accent),
+    color-mix(in oklab, var(--accent), white var(--accent-ring-lift))
+  );
   /* Accent as small text: the dark accent measures 3.10:1 on surface, under AA. */
-  --color-accent-text: light-dark(#c1272d, color-mix(in oklab, #c1272d 60%, white));
+  --color-accent-text: light-dark(
+    var(--accent),
+    color-mix(in oklab, var(--accent), white var(--accent-text-lift))
+  );
   --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
   --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
   /* Mixed into canvas, not surface: on the dark surface the accent tops out near 3:1. */
@@ -118,6 +124,16 @@
     100% 0.75rem;
   background-repeat: no-repeat;
   background-attachment: local, local, scroll, scroll;
+}
+
+/*
+ * The default accent and the white the dark theme mixes into it. A chosen accent overrides
+ * all three on the root element, with lifts src/accent.ts derives for that color.
+ */
+:root {
+  --accent: #c1272d;
+  --accent-ring-lift: 10%;
+  --accent-text-lift: 40%;
 }
 
 /*

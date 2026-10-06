@@ -39,3 +39,31 @@ for (const { stored, system, scheme, palette } of cases) {
     );
   });
 }
+
+for (const { system, accent, text } of [
+  { system: "light", accent: "#3a4f7a", text: "#3a4f7a" },
+  {
+    system: "dark",
+    accent: "color-mix(in oklab, #3a4f7a, white 21%)",
+    text: "color-mix(in oklab, #3a4f7a, white 46%)",
+  },
+] as const) {
+  test(`a chosen accent survives a reload and paints its ${system} shades`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: system });
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "Blue accent" }).click();
+    await page.reload();
+
+    await expect(page.getByRole("button", { name: "Blue accent" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    for (const [token, expected] of [
+      ["--color-accent", accent],
+      ["--color-accent-text", text],
+      ["--color-accent-hover", `color-mix(in oklab, ${accent} 85%, black)`],
+    ] as const) {
+      expect(await computedColor(page, `var(${token})`)).toBe(await computedColor(page, expected));
+    }
+  });
+}
