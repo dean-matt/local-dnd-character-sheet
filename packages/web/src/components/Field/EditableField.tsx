@@ -1,5 +1,5 @@
 import { type Derived, derivedValue } from "@dnd/character";
-import { useEffect, useRef, useState } from "react";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type { FormFieldProps } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
@@ -27,6 +27,7 @@ export type EditableFieldProps<T> = {
   /** A `<datalist>` id: suggestions the input offers without restricting it to them. */
   list?: string;
   placeholder?: string;
+  inputMode?: ComponentProps<"input">["inputMode"];
   messageSlot?: FormFieldProps["messageSlot"];
 } & (
   | { value: Derived<T>; required?: never; onSave: (next: T | null) => Promise<void> }
@@ -47,6 +48,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     inputClassName,
     list,
     placeholder,
+    inputMode,
     messageSlot,
   } = props;
   const current = "current" in props ? props.current : derivedValue(props.value);
@@ -158,6 +160,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       type="text"
       list={list}
       placeholder={placeholder}
+      inputMode={inputMode}
       messageSlot={messageSlot}
       value={text}
       onChange={(event) => handleChange(event.target.value)}

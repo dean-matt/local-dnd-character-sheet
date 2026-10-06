@@ -55,6 +55,7 @@ export function AbilityScores({
               parse={parseScore}
               schema={abilityScoresSchema.valueType}
               inputClassName="w-12 text-center"
+              inputMode="numeric"
               messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
               onSave={async (score) => {
                 await update.mutateAsync((latest) => ({

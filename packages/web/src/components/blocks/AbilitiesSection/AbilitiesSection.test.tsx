@@ -119,6 +119,10 @@ describe("AbilitiesSection", () => {
     renderSection();
 
     expect(screen.getByRole("textbox", { name: "Strength score" })).toHaveValue("8");
+    expect(screen.getByRole("textbox", { name: "Strength score" })).toHaveAttribute(
+      "inputmode",
+      "numeric",
+    );
     expect(spoken(tile("Ability Scores", "Strength"))).toContain("modifier-1");
     expect(screen.getByRole("textbox", { name: "Charisma score" })).toHaveValue("17");
     expect(spoken(tile("Ability Scores", "Charisma"))).toContain("modifier+3");
