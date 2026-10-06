@@ -296,8 +296,8 @@ export const characterDefinitionSchema = z.strictObject({
   /**
    * The size the player picked where the race offers more than one, such as Small or
    * Medium for `Human` (XPHB). Where it is absent or names a size the race does not
-   * offer, the derived block takes the race's largest, so a race change leaves no stale
-   * size behind.
+   * offer, the derived block takes the race's largest: a race change ignores a pick
+   * rather than clearing it, so changing back restores it.
    */
   size: z.enum(SIZES).optional(),
   background: entryRefSchema,
