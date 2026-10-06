@@ -12,6 +12,20 @@ export const CREATION_STEPS = [
 export type CreationStep = (typeof CREATION_STEPS)[number];
 
 /**
+ * The link to a step. The flow keeps one URL and carries the step in the history entry's
+ * state, which a reload keeps; replacing the entry leaves browser Back one step out of
+ * the flow rather than back through its steps.
+ */
+export const stepLink = (slug: CreationStep["slug"]) =>
+  ({ to: "/characters/new", replace: true, state: { step: slug } }) as const;
+
+/** The step a history entry's state names, or `undefined` for an entry the flow never marked. */
+export function stepIn(state: unknown): CreationStep | undefined {
+  const slug = (state as { step?: unknown } | null)?.step;
+  return CREATION_STEPS.find((step) => step.slug === slug);
+}
+
+/**
  * The step that sets each part of the definition, or `null` for a part creation leaves at
  * its default. Exhaustive, so a field added to the definition fails to compile until it
  * names the step that owns it.

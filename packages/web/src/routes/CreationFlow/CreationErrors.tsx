@@ -1,7 +1,7 @@
 import { type CharacterDefinition, SECTION_LABEL } from "@dnd/character";
 import { type FieldErrors, useFormState } from "react-hook-form";
 import { Link } from "react-router";
-import { stepOf } from "./creationSteps.ts";
+import { stepLink, stepOf } from "./creationSteps.ts";
 
 /** The first message anywhere under an error, which a nested field carries rather than its parent. */
 function firstMessage(error: unknown): string | undefined {
@@ -48,10 +48,7 @@ export function CreationErrors() {
               {step && (
                 <>
                   {" "}
-                  <Link
-                    to={`/characters/new/${step.slug}`}
-                    className="font-semibold text-accent-text"
-                  >
+                  <Link {...stepLink(step.slug)} className="font-semibold text-accent-text">
                     Go to {step.label}
                   </Link>
                 </>

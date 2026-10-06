@@ -1,27 +1,34 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { createMemoryRouter, Link, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../test/records.ts";
 import { CreationFlow } from "./CreationFlow.tsx";
+import type { CreationStep } from "./creationSteps.ts";
 
 const KEY = "draft:creation";
 const vex = characterRecord("7", "Vex");
 
-function Location() {
-  return <p data-testid="location">{useLocation().pathname}</p>;
-}
+/**
+ * Mounts the flow beside a stand-in list, reached first so browser Back has somewhere to
+ * go. `step` marks the flow's entry as a reload of that step would find it.
+ */
+let router: ReturnType<typeof createMemoryRouter>;
 
-function renderFlow(path = "/characters/new") {
+function renderFlow(step?: CreationStep["slug"]) {
+  router = createMemoryRouter(
+    [
+      { path: "/characters/new", element: <CreationFlow /> },
+      { path: "/characters", element: <Link to="/characters/new">New Character</Link> },
+      { path: "*", element: null },
+    ],
+    {
+      initialEntries: ["/characters", { pathname: "/characters/new", state: step && { step } }],
+    },
+  );
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter initialEntries={[path]}>
-        <Routes>
-          <Route path="/characters/new/:step?" element={<CreationFlow />} />
-          <Route path="*" element={null} />
-        </Routes>
-        <Location />
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   );
 }
@@ -52,7 +59,7 @@ function stubApi(
 const writes = (fetchMock: ReturnType<typeof stubApi>) =>
   fetchMock.mock.calls.filter(([, init]) => init?.method === "POST");
 
-const location = () => screen.getByTestId("location").textContent;
+const location = () => router.state.location.pathname;
 const rail = () => screen.getByRole("navigation", { name: "Creation steps" });
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
 
@@ -76,7 +83,7 @@ describe("CreationFlow", () => {
 
     click("Next: Class →");
     expect(await screen.findByRole("heading", { level: 1, name: "Class" })).toBeVisible();
-    expect(location()).toBe("/characters/new/class");
+    expect(location()).toBe("/characters/new");
 
     click("Back");
     expect(await screen.findByRole("heading", { level: 1, name: "Identity" })).toBeVisible();
@@ -94,7 +101,7 @@ describe("CreationFlow", () => {
 
   it("refuses an unfinished character at Finish, naming each fault and the step that holds it", async () => {
     const fetchMock = stubApi();
-    renderFlow("/characters/new/spells");
+    renderFlow("spells");
 
     click("Finish →");
 
@@ -110,7 +117,7 @@ describe("CreationFlow", () => {
   it("creates the character the draft holds, opens its sheet and clears the draft", async () => {
     localStorage.setItem(KEY, JSON.stringify(vex.definition));
     const fetchMock = stubApi(() => json(vex, 201));
-    renderFlow("/characters/new/spells");
+    renderFlow("spells");
 
     click("Finish →");
 
@@ -124,19 +131,19 @@ describe("CreationFlow", () => {
   it("keeps the draft and says why when the write fails", async () => {
     localStorage.setItem(KEY, JSON.stringify(vex.definition));
     stubApi(() => json({ error: "the disk is full" }, 500));
-    renderFlow("/characters/new/spells");
+    renderFlow("spells");
 
     click("Finish →");
 
     expect(await screen.findByText("the disk is full")).toBeVisible();
-    expect(location()).toBe("/characters/new/spells");
+    expect(location()).toBe("/characters/new");
     expect(JSON.parse(localStorage.getItem(KEY) ?? "null")).toEqual(vex.definition);
   });
 
   it("shows a departure from the rules on the step that sets the value", async () => {
     const departure = { field: "abilityScores.str", note: "20 at level 1, past point buy" };
     localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, departures: [departure] }));
-    renderFlow("/characters/new/identity");
+    renderFlow("identity");
 
     await screen.findByRole("heading", { level: 1, name: "Identity" });
     expect(screen.queryByRole("region", { name: "Off the rules" })).not.toBeInTheDocument();
@@ -149,7 +156,7 @@ describe("CreationFlow", () => {
   it("says so when the draft holds what no character can store", async () => {
     localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, retired: true }));
     const fetchMock = stubApi();
-    renderFlow("/characters/new/spells");
+    renderFlow("spells");
 
     click("Finish →");
 
@@ -169,7 +176,7 @@ describe("CreationFlow", () => {
       },
     });
     localStorage.setItem(KEY, JSON.stringify(vex.definition));
-    renderFlow("/characters/new/class");
+    renderFlow("class");
 
     const identity = within(rail()).getByRole("link", { name: /Identity/ });
     await waitFor(() => expect(identity).toHaveTextContent("Identity, done"));
@@ -182,9 +189,69 @@ describe("CreationFlow", () => {
     await waitFor(() => expect(identity).not.toHaveTextContent("done"));
   });
 
-  it("discards the draft on Cancel and returns to the list", async () => {
+  it("discards the draft on leaving, so New Character opens empty", async () => {
+    renderFlow();
+    const name = await screen.findByRole("textbox", { name: "Name" });
+    fireEvent.change(name, { target: { value: "Vex" } });
+
+    await act(() => router.navigate("/characters"));
+    expect(localStorage.getItem(KEY)).toBeNull();
+    fireEvent.click(screen.getByRole("link", { name: "New Character" }));
+
+    expect(await screen.findByRole("textbox", { name: "Name" })).toHaveValue("");
+    expect(screen.getByText("Step 1 of 5")).toBeVisible();
+  });
+
+  it("starts empty over a draft a full-page departure left behind", async () => {
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
     renderFlow();
+
+    expect(await screen.findByRole("textbox", { name: "Name" })).toHaveValue("");
+  });
+
+  it("keeps the draft and the step across a reload", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { unmount } = renderFlow();
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), {
+      target: { value: "Vex" },
+    });
+    click("Next: Class →");
+    fireEvent(window, new Event("pagehide"));
+    const entry = router.state.location;
+    const draft = localStorage.getItem(KEY);
+    vi.useRealTimers();
+
+    // A reload unloads the page without unmounting it, so the unmount's discard is undone.
+    unmount();
+    localStorage.setItem(KEY, draft ?? "");
+    router = createMemoryRouter([{ path: "/characters/new", element: <CreationFlow /> }], {
+      initialEntries: [entry],
+    });
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Class" })).toBeVisible();
+    fireEvent.click(within(rail()).getByRole("link", { name: /Identity/ }));
+    expect(await screen.findByRole("textbox", { name: "Name" })).toHaveValue("Vex");
+  });
+
+  it("leaves the flow on browser Back rather than stepping back through it", async () => {
+    renderFlow();
+    click("Next: Class →");
+    click("Next: Ability Scores →");
+    await screen.findByRole("heading", { level: 1, name: "Ability Scores" });
+
+    await act(() => router.navigate(-1));
+
+    expect(location()).toBe("/characters");
+  });
+
+  it("discards the draft on Cancel and returns to the list", async () => {
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
+    renderFlow("identity");
 
     click("Cancel");
 

@@ -170,7 +170,8 @@ need deleting on cancel. The resolver binds to the schemas in `packages/characte
 form holds a second definition of a legal character. A choice an earlier one invalidates,
 such as a subclass after a class change, is cleared, and its field says why. The draft
 persists to `localStorage` keyed by flow, and by character for level-up, so it survives a
-reload; it clears on finish or cancel. Each form is bound once through `createForm` in
+reload; it clears on finish, cancel, or leaving the form. Creation keeps one URL and
+holds its step in the history entry, so browser Back leaves the flow. Each form is bound once through `createForm` in
 `packages/web/src/lib/createForm.ts`.
 
 **Creation guides and never refuses.** Each step offers the rules' path and an escape

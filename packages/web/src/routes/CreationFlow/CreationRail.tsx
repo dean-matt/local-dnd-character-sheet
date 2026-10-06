@@ -1,6 +1,6 @@
 import { Check, X } from "lucide-react";
 import { Link } from "react-router";
-import { CREATION_STEPS, type CreationStep } from "./creationSteps.ts";
+import { CREATION_STEPS, type CreationStep, stepLink } from "./creationSteps.ts";
 import { useIdentityDone } from "./useIdentityDone.ts";
 
 /**
@@ -30,7 +30,7 @@ export function CreationRail({
             return (
               <li key={step.slug}>
                 <Link
-                  to={`/characters/new/${step.slug}`}
+                  {...stepLink(step.slug)}
                   aria-current={isCurrent ? "step" : undefined}
                   className={`flex items-center gap-3 rounded-control px-2.5 py-2 text-sm ${
                     isCurrent

@@ -26,7 +26,7 @@ export const routeConfig: RouteObject[] = [
           { path: "*", element: <NotFoundPanel /> },
         ],
       },
-      { path: "characters/new/:step?", element: <CreationFlow /> },
+      { path: "characters/new", element: <CreationFlow /> },
       {
         path: "characters/:id",
         element: <CharacterLayout />,
