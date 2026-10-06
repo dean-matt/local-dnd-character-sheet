@@ -1,6 +1,7 @@
 import { type Derived, derivedValue } from "@dnd/character";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
+import { useFleeting } from "../../hooks/useFleeting.ts";
 import type { FormFieldProps } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
 import { SaveFailure } from "../SaveFailure.tsx";
@@ -62,6 +63,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   const echo = useRef<string | undefined>(undefined);
   const textRef = useRef(text);
   const queue = useRef(Promise.resolve());
+  const showSaved = useFleeting(status === "saved");
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -158,7 +160,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       value={text}
       onChange={(event) => handleChange(event.target.value)}
       onBlur={handleBlur}
-      status={status === "saving" ? "Saving…" : status === "saved" ? "Saved" : undefined}
+      status={status === "saving" ? "Saving…" : showSaved ? "Saved" : undefined}
       error={
         status === "invalid" ? (
           error

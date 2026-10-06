@@ -1,5 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useState } from "react";
+import { useFleeting } from "../../hooks/useFleeting.ts";
 import { useUpdateCharacterDefinition } from "../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../Card.tsx";
 import { FormField } from "../FormField.tsx";
@@ -32,6 +33,9 @@ export function AlignmentSection({ character }: { character: CharacterRecord | u
   // The last pick, which Retry writes again; "Saved" shows only while it is the value shown,
   // so an undo after a save clears it.
   const [picked, setPicked] = useState<string>();
+  const showSaved = useFleeting(
+    update.isSuccess && picked === (character?.definition.alignment ?? ""),
+  );
   if (!character) return <SectionUnavailable page="Alignment" />;
 
   const current = character.definition.alignment ?? "";
@@ -50,9 +54,7 @@ export function AlignmentSection({ character }: { character: CharacterRecord | u
       <FormField
         label="Alignment"
         labelHidden
-        status={
-          update.isPending ? "Saving…" : update.isSuccess && picked === current ? "Saved" : null
-        }
+        status={update.isPending ? "Saving…" : showSaved ? "Saved" : null}
         error={
           update.isError && (
             <SaveFailure

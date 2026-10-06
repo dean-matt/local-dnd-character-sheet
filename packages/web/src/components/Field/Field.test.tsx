@@ -1,6 +1,7 @@
 import { characterDefinitionSchema, characterDerivedSchema } from "@dnd/character";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SAVED_STATUS_MS } from "../../hooks/useFleeting.ts";
 import { Field } from "./Field.tsx";
 
 /** The real schema a hit point maximum field validates against, not a stand-in. */
@@ -445,5 +446,60 @@ describe("Field, edit mode, a plain value", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("A character needs a name.");
     expect(onSave).not.toHaveBeenCalled();
+  });
+});
+
+describe("Field, edit mode, the status after a save", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const edit = (onSave: () => Promise<void>) =>
+    render(
+      <Field
+        mode="edit"
+        label="Hit points"
+        value={{ computed: 8, manual: null }}
+        format={format}
+        schema={schema}
+        parse={parse}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+  const typeAndSettle = async (value: string) => {
+    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), { target: { value } });
+    await act(() => vi.advanceTimersByTimeAsync(DEBOUNCE_MS));
+  };
+
+  it("clears Saved after a moment, leaving the live region mounted", async () => {
+    vi.useFakeTimers();
+    edit(vi.fn().mockResolvedValue(undefined));
+
+    await typeAndSettle("12");
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS - 1));
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    await act(() => vi.advanceTimersByTimeAsync(1));
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  });
+
+  it("restarts the wait for a save that lands while Saved still shows", async () => {
+    vi.useFakeTimers();
+    edit(vi.fn().mockResolvedValue(undefined));
+
+    await typeAndSettle("12");
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS / 2));
+    await typeAndSettle("13");
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS - DEBOUNCE_MS));
+    expect(screen.getByRole("status")).toHaveTextContent("Saved");
+  });
+
+  it("keeps a failed save on screen until it is fixed", async () => {
+    vi.useFakeTimers();
+    edit(vi.fn().mockRejectedValue(new Error("network down")));
+
+    await typeAndSettle("12");
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS * 5));
+    expect(screen.getByRole("alert")).toHaveTextContent("network down");
   });
 });

@@ -4,8 +4,11 @@ import {
   deriveCharacter,
   entryKey,
 } from "@dnd/character";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterKey } from "../../../hooks/characterKeys.ts";
+import { SAVED_STATUS_MS } from "../../../hooks/useFleeting.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
@@ -107,7 +110,10 @@ function stubRules(entries: unknown[]) {
   return fetchMock;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("AbilitiesSection", () => {
   it("degrades until both the character and its derived block have loaded", () => {
@@ -158,6 +164,43 @@ describe("AbilitiesSection", () => {
     expect(score).toHaveValue("31");
     expect(score).toHaveAttribute("aria-invalid", "true");
     expect(score).toHaveAccessibleDescription("Strength: A score is a whole number from 1 to 30.");
+  });
+
+  it("clears each score's Saved after a moment, so saves in a row never stack under the grid", async () => {
+    vi.useFakeTimers();
+    const record = warlock();
+    stubRules([]);
+    const reads = fetch;
+    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
+      init?.method === "PUT"
+        ? new Response(JSON.stringify({ ...record, definition: JSON.parse(String(init.body)) }))
+        : reads(url, init),
+    );
+    const client = new QueryClient();
+    client.setQueryData(characterKey(record.id), record);
+    render(
+      <QueryClientProvider client={client}>
+        <AbilitiesSection character={record} derived={derivedFor(record)} />
+      </QueryClientProvider>,
+    );
+    const slot = tile("Ability Scores", "Strength").closest("dl")?.nextElementSibling;
+    const saveScore = async (name: string, value: string) => {
+      const score = screen.getByRole("textbox", { name });
+      fireEvent.change(score, { target: { value } });
+      fireEvent.blur(score);
+      await act(() => vi.advanceTimersByTimeAsync(0));
+    };
+
+    await saveScore("Strength score", "10");
+    expect(slot).toHaveTextContent(/^Strength: Saved$/);
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS));
+    expect(slot).toHaveTextContent(/^$/);
+
+    await saveScore("Dexterity score", "14");
+    expect(slot).toHaveTextContent(/^Dexterity: Saved$/);
+    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS));
+    expect(slot).toHaveTextContent(/^$/);
+    expect(slot?.querySelectorAll("[role='status']")).toHaveLength(6);
   });
 
   it("takes each modifier from the derived block, not from the score", () => {
