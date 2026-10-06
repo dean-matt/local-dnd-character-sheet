@@ -214,7 +214,12 @@ const grantsAny = (trait: DefenseTrait) =>
   trait.resist.length + trait.immune.length + trait.conditionImmune.length > 0;
 
 const raceDefenses = (json: unknown) =>
-  parseJson(defenseTraitSchema, json) ?? { resist: [], immune: [], conditionImmune: [] };
+  parseJson(defenseTraitSchema, json) ?? {
+    resist: [],
+    resistChoice: [],
+    immune: [],
+    conditionImmune: [],
+  };
 
 /** Every entry whose row grants a resistance or an immunity, keyed by `itemKey`. */
 function itemDefenses(
@@ -227,7 +232,9 @@ function itemDefenses(
     const trait = row && parseJson(defenseTraitSchema, row.json);
     if (!trait || !grantsAny(trait)) return;
     defenses.set(itemKey(entry), {
-      ...trait,
+      resist: trait.resist,
+      immune: trait.immune,
+      conditionImmune: trait.conditionImmune,
       name: row.name,
       requiresAttunement: row.requiresAttunement,
     });

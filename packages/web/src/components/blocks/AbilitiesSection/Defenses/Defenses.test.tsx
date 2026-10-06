@@ -36,6 +36,17 @@ describe("Defenses", () => {
     expect(within(card).queryByText("None.")).not.toBeInTheDocument();
   });
 
+  it("says a race's choice of resistance is waiting rather than None.", () => {
+    const card = renderDefenses({
+      resistanceChoice: { from: "Dragonborn", options: ["acid", "cold", "fire"] },
+    });
+
+    expect(
+      within(card).getByText("Dragonborn offers acid, cold, or fire, not yet chosen."),
+    ).toBeInTheDocument();
+    expect(within(card).getAllByText("None.")).toHaveLength(1);
+  });
+
   it("names every source that grants a chip", () => {
     renderDefenses({
       resistances: [{ name: "poison", from: ["Dwarf (Hill)", "Ring of Poison Resistance"] }],

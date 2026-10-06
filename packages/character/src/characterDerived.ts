@@ -28,6 +28,10 @@ const defensesSchema = z.strictObject({
   resistances: z.array(defenseSchema),
   damageImmunities: z.array(defenseSchema),
   conditionImmunities: z.array(defenseSchema),
+  /** The race's choice of resistance while the definition stores no pick it offers. */
+  resistanceChoice: z
+    .strictObject({ from: z.string().min(1), options: z.array(z.string().min(1)).min(1) })
+    .nullable(),
 });
 
 /**

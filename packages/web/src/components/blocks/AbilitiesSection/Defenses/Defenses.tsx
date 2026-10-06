@@ -11,6 +11,8 @@ type Defense = CharacterDerived["defenses"]["computed"]["resistances"][number];
 
 type Chip = DefenseChipRowProps["items"][number];
 
+const options = new Intl.ListFormat("en", { type: "disjunction" });
+
 function chips(defenses: readonly Defense[], kind: string, effect: (name: string) => string) {
   return defenses.map(({ name, from }): Chip => {
     const label = capitalize(name);
@@ -19,7 +21,9 @@ function chips(defenses: readonly Defense[], kind: string, effect: (name: string
 }
 
 export function Defenses({ derived }: { derived: CharacterDerived }) {
-  const { resistances, damageImmunities, conditionImmunities } = derivedValue(derived.defenses);
+  const { resistances, damageImmunities, conditionImmunities, resistanceChoice } = derivedValue(
+    derived.defenses,
+  );
   return (
     <Card title="Resistances & Immunities">
       <div className="flex flex-col gap-3">
@@ -30,6 +34,11 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
             "Resistance",
             (name) => `You take half ${name} damage, rounded down.`,
           )}
+          note={
+            resistanceChoice
+              ? `${resistanceChoice.from} offers ${options.format(resistanceChoice.options)}, not yet chosen.`
+              : undefined
+          }
         />
         <DefenseChipRow
           heading="Immunities"

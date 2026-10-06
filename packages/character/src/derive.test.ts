@@ -108,7 +108,7 @@ describe("deriveCharacter", () => {
   const LONGSWORD = { name: "Longsword", source: "XPHB" };
   const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
   const noBonus = { attack: 0, damage: 0 };
-  const noDefenses = { resist: [], immune: [], conditionImmune: [] };
+  const noDefenses = { resist: [], resistChoice: [], immune: [], conditionImmune: [] };
   const DAGGER_TRAIT: WeaponTrait = {
     kind: "melee",
     properties: ["F|XPHB", "L|XPHB", "T|XPHB"],
@@ -495,7 +495,13 @@ describe("deriveCharacter", () => {
       itemDefenses: new Map<string, ItemDefenseTrait>([
         [
           entryKey(RING),
-          { ...noDefenses, resist: ["poison"], name: RING.name, requiresAttunement: true },
+          {
+            resist: ["poison"],
+            immune: [],
+            conditionImmune: [],
+            name: RING.name,
+            requiresAttunement: true,
+          },
         ],
         [
           entryKey(PERIAPT),
@@ -517,6 +523,33 @@ describe("deriveCharacter", () => {
         resistances: [{ name: "poison", from: ["Dwarf (Hill)"] }],
         damageImmunities: [],
         conditionImmunities: [],
+        resistanceChoice: null,
+      });
+    });
+
+    it("grants a race's choice of resistance once the definition picks one it offers", () => {
+      const choosing = {
+        ...defended,
+        raceDefenses: { ...noDefenses, resist: ["poison"], resistChoice: ["acid", "fire"] },
+      };
+      const picking = (raceResistance?: string) =>
+        deriveCharacter({ ...hillDwarf([]), raceResistance }, choosing).defenses.computed;
+
+      expect(picking("fire")).toMatchObject({
+        resistances: [
+          { name: "poison", from: ["Dwarf (Hill)"] },
+          { name: "fire", from: ["Dwarf (Hill)"] },
+        ],
+        resistanceChoice: null,
+      });
+      const waiting = { from: "Dwarf (Hill)", options: ["acid", "fire"] };
+      expect(picking()).toMatchObject({
+        resistances: [{ name: "poison" }],
+        resistanceChoice: waiting,
+      });
+      expect(picking("cold")).toMatchObject({
+        resistances: [{ name: "poison" }],
+        resistanceChoice: waiting,
       });
     });
 

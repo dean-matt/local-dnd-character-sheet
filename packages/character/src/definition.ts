@@ -300,6 +300,12 @@ export const characterDefinitionSchema = z.strictObject({
    * rather than clearing it, so changing back restores it.
    */
   size: z.enum(SIZES).optional(),
+  /**
+   * The damage type the player picked where the race offers a choice of resistance, such
+   * as `fire` for `Dragonborn` (PHB). A pick the race does not offer grants nothing, so a
+   * race change ignores it rather than clearing it, as `size` does.
+   */
+  raceResistance: z.string().trim().toLowerCase().min(1).optional(),
   background: entryRefSchema,
   abilityScores: abilityScoresSchema,
   proficiencies: proficienciesSchema,

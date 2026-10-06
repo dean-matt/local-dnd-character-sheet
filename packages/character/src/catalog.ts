@@ -37,6 +37,9 @@ export type DefenseTrait = {
   conditionImmune: readonly string[];
 };
 
+/** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
+type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
+
 /** An item's grant, the name its chip cites, and whether it waits on attunement. */
 export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement: boolean };
 
@@ -66,7 +69,7 @@ export type CharacterCatalog = {
   /** Absent for an item that is not a weapon. */
   weapons: ReadonlyMap<string, WeaponTrait>;
   /** The race's, or the subrace row's, which already holds its race's. */
-  raceDefenses: DefenseTrait;
+  raceDefenses: RaceDefenseTrait;
   /** Keyed like `weapons`, and absent for an item that grants nothing. */
   itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
 };
