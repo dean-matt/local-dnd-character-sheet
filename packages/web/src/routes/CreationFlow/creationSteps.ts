@@ -40,7 +40,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   alignment: "identity",
   deity: "identity",
   appearance: "identity",
-  edition: "class",
+  edition: "identity",
   levels: "class",
   feats: "class",
   optionalFeatures: "class",

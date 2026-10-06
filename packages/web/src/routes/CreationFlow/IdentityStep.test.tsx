@@ -50,6 +50,39 @@ const ROWS: Record<string, unknown> = {
     background("Sage", { arcana: true, history: true }),
     background("Acolyte", { insight: true, religion: true }),
   ]),
+  "/api/races/Elf/PHB/subraces?edition=one&limit=200": page([]),
+  "/api/backgrounds?edition=one&limit=200": page([]),
+  "/api/classes/Cleric/PHB": {
+    ...PHB("Cleric"),
+    edition: "classic",
+    hitDie: 8,
+    json: { ...PHB("Cleric"), classFeatures: [] },
+  },
+  "/api/classes/Cleric/PHB/subclasses?edition=one&limit=200": page([]),
+  "/api/homebrew/races/hr-1": { id: "hr-1", name: "Kenku", edition: "classic" },
+  "/api/homebrew/backgrounds/hbg-1": { id: "hbg-1", name: "Smuggler", edition: "classic" },
+  "/api/homebrew/classes/hc-1": {
+    id: "hc-1",
+    name: "Blood Hunter",
+    edition: "classic",
+    hitDie: 10,
+    json: { name: "Blood Hunter", source: "Homebrew", hd: { number: 1, faces: 10 } },
+    createdAt: "2026-10-06T00:00:00.000Z",
+  },
+  "/api/catalog/deity/Oghma/PHB?qualifier=Celtic": {
+    type: "deity",
+    ...PHB("Oghma"),
+    qualifier: "Celtic",
+    edition: "classic",
+    json: PHB("Oghma"),
+  },
+  "/api/catalog/deity/Oghma/PHB?qualifier=Forgotten%20Realms": {
+    type: "deity",
+    ...PHB("Oghma"),
+    qualifier: "Forgotten Realms",
+    edition: null,
+    json: PHB("Oghma"),
+  },
 };
 
 const SEARCHES: Record<string, unknown[]> = {
@@ -217,6 +250,97 @@ describe("IdentityStep", () => {
 
     expect(values.deity).toBeUndefined();
     expect(combobox("Deity (optional)")).toHaveFocus();
+  });
+
+  it("asks the rules first, and names each choice a change leaves behind without clearing it", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        levels: [{ class: PHB("Cleric"), subclass: PHB("Life Domain") }],
+      }),
+    );
+    renderStep();
+
+    const rules = screen.getByRole("group", { name: "Rules" });
+    expect(rules.compareDocumentPosition(combobox("Race"))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByRole("button", { name: "2014" })).toHaveAttribute("aria-pressed", "true");
+    await pick("Race", "elf", /^Elf/);
+    fireEvent.click(await screen.findByRole("button", { name: "High" }));
+    await pick("Background", "sa", /Sage/);
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+    expect(status).toBeEmptyDOMElement();
+
+    click("2024");
+
+    expect(values.edition).toBe("one");
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+        "Race: Elf (PHB)",
+        "Subrace: High (PHB)",
+        "Background: Sage (PHB)",
+        "Class: Cleric (PHB)",
+        "Subclass: Life Domain (PHB)",
+      ]),
+    );
+    expect(status).toHaveTextContent(
+      "Not in the 2024 rules. Each stays until you clear it, or the race or class it belongs to",
+    );
+    expect(values.race).toEqual(PHB("Elf"));
+    expect(values.subrace).toEqual(PHB("High"));
+    expect(values.background).toEqual(PHB("Sage"));
+    expect(values.levels).toEqual([{ class: PHB("Cleric"), subclass: PHB("Life Domain") }]);
+
+    click("2014");
+
+    await waitFor(() => expect(status).toBeEmptyDOMElement());
+  });
+
+  it("names a homebrew choice and a deity of the other edition", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        race: { homebrewId: "hr-1" },
+        background: { homebrewId: "hbg-1" },
+        deity: { ...PHB("Oghma"), pantheon: "Celtic" },
+        levels: [{ class: { homebrewId: "hc-1" } }],
+      }),
+    );
+    renderStep();
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+
+    click("2024");
+
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+        "Race: Kenku (homebrew)",
+        "Background: Smuggler (homebrew)",
+        "Class: Blood Hunter (homebrew)",
+        "Deity: Oghma · Celtic",
+      ]),
+    );
+  });
+
+  it("never names a deity both editions share", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        deity: { ...PHB("Oghma"), pantheon: "Forgotten Realms" },
+      }),
+    );
+    renderStep();
+    const url = "/api/catalog/deity/Oghma/PHB?qualifier=Forgotten%20Realms";
+    await waitFor(() =>
+      expect(vi.mocked(fetch).mock.calls.map(([input]) => String(input))).toContain(url),
+    );
+
+    click("2024");
+
+    // The row has no visible effect to wait on, so give its query time to settle.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByRole("status", { name: "Choices outside the rules" })).toBeEmptyDOMElement();
   });
 
   it("sets the name and the alignment", async () => {
