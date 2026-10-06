@@ -74,7 +74,7 @@ describe("CreationFlow", () => {
     renderFlow();
 
     expect(await screen.findByRole("heading", { level: 1, name: "Identity" })).toBeVisible();
-    expect(screen.getByText("Step 1 of 5")).toBeVisible();
+    expect(screen.getByText("New character · Step 1 of 5")).toBeVisible();
     expect(within(rail()).getByRole("link", { name: /Identity/ })).toHaveAttribute(
       "aria-current",
       "step",
@@ -94,7 +94,7 @@ describe("CreationFlow", () => {
 
     fireEvent.click(within(rail()).getByRole("link", { name: /Spells/ }));
 
-    expect(await screen.findByText("Step 5 of 5")).toBeVisible();
+    expect(await screen.findByText("New character · Step 5 of 5")).toBeVisible();
     expect(screen.getByRole("button", { name: "Finish →" })).toHaveAttribute("type", "submit");
     expect(screen.queryByRole("button", { name: /^Next/ })).not.toBeInTheDocument();
   });
@@ -236,7 +236,7 @@ describe("CreationFlow", () => {
     fireEvent.click(screen.getByRole("link", { name: "New Character" }));
 
     expect(await screen.findByRole("textbox", { name: "Name" })).toHaveValue("");
-    expect(screen.getByText("Step 1 of 5")).toBeVisible();
+    expect(screen.getByText("New character · Step 1 of 5")).toBeVisible();
   });
 
   it("starts empty over a draft a full-page departure left behind", async () => {
@@ -286,13 +286,14 @@ describe("CreationFlow", () => {
     expect(location()).toBe("/characters");
   });
 
-  it("collapses the rail to step numbers that keep their names, sharing the sidebar's choice", () => {
+  it("collapses the rail to step numbers that keep their names, with nothing above them, sharing the sidebar's choice", () => {
     localStorage.setItem("sidebar-collapsed", "true");
     renderFlow("identity");
 
     const toggle = screen.getByRole("button", { name: "Expand sidebar" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("New Character")).not.toBeInTheDocument();
+    expect(rail().previousElementSibling).toBeNull();
+    expect(rail().firstElementChild?.tagName).toBe("OL");
     expect(within(rail()).getByRole("link", { name: "Class" })).toHaveTextContent("2");
 
     fireEvent.click(toggle);
@@ -301,7 +302,8 @@ describe("CreationFlow", () => {
       "aria-expanded",
       "true",
     );
-    expect(screen.getByText("New Character")).toBeInTheDocument();
+    expect(rail().previousElementSibling).toBeNull();
+    expect(rail().firstElementChild?.tagName).toBe("OL");
     expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
   });
 

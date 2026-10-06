@@ -68,7 +68,7 @@ export function CreationFlow() {
           <div className="flex min-w-0 flex-1 flex-col gap-4 px-gutter py-6">
             <div>
               <p className="text-muted text-row">
-                Step {index + 1} of {CREATION_STEPS.length}
+                New character · Step {index + 1} of {CREATION_STEPS.length}
               </p>
               <h1 className="font-bold text-[22px]">{step.label}</h1>
             </div>

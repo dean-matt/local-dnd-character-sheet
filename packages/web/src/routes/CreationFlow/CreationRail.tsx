@@ -24,27 +24,20 @@ export function CreationRail({ current }: { current: CreationStep }) {
   return (
     <Rail>
       {(collapsed) => (
-        <div className="flex flex-col gap-1.5">
-          {!collapsed && (
-            <p className="px-2.5 pb-1.5 font-semibold text-label text-muted uppercase tracking-label">
-              New Character
-            </p>
-          )}
-          <nav aria-label="Creation steps">
-            <ol className="flex flex-col gap-0.5">
-              {CREATION_STEPS.map((step, index) => (
-                <StepRow
-                  key={step.slug}
-                  step={step}
-                  number={index + 1}
-                  isCurrent={index === currentIndex}
-                  isDone={done.has(step.slug)}
-                  collapsed={collapsed}
-                />
-              ))}
-            </ol>
-          </nav>
-        </div>
+        <nav aria-label="Creation steps">
+          <ol className="flex flex-col gap-0.5">
+            {CREATION_STEPS.map((step, index) => (
+              <StepRow
+                key={step.slug}
+                step={step}
+                number={index + 1}
+                isCurrent={index === currentIndex}
+                isDone={done.has(step.slug)}
+                collapsed={collapsed}
+              />
+            ))}
+          </ol>
+        </nav>
       )}
     </Rail>
   );
