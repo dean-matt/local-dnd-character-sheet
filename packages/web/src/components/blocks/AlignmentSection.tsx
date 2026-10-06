@@ -55,7 +55,11 @@ export function AlignmentSection({ character }: { character: CharacterRecord | u
         }
         error={
           update.isError && (
-            <SaveFailure message={update.error.message} onRetry={() => save(picked ?? "")} />
+            <SaveFailure
+              // The button shows the stored value again, so the message names the pick.
+              message={`Couldn't save ${options.find((option) => option.value === picked)?.label ?? picked}: ${update.error.message}`}
+              onRetry={() => save(picked ?? "")}
+            />
           )
         }
       >

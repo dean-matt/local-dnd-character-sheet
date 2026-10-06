@@ -122,7 +122,9 @@ describe("AlignmentSection", () => {
 
     fireEvent.click(within(open()).getByRole("option", { name: "Lawful Evil" }));
 
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("disk full"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("Couldn't save Lawful Evil: disk full"),
+    );
     expect(field()).toHaveTextContent("Chaotic Good");
     expect(field()).toHaveAttribute("aria-describedby", screen.getByRole("alert").id);
 
