@@ -9,8 +9,8 @@
  * A control rendered outside `FormField` wires its own `aria-describedby`.
  *
  * `messageSlot` moves the status and error out of the field into an element the caller
- * places, for a control too narrow to hold a sentence: the error names the field there, and
- * the status stays for a screen reader only, so a save never resizes the layout around it.
+ * places, for a control too narrow to hold a sentence, and names the field in each so one
+ * slot can hold several fields' messages.
  */
 import { type ReactNode, useId } from "react";
 import { createPortal } from "react-dom";
@@ -47,17 +47,22 @@ export function FormField({
   const errorId = `${id}-error`;
   // Truthiness, so `error={touched && message}` reads its `false` as valid.
   const invalid = Boolean(error);
+  const named = (message: ReactNode) =>
+    messageSlot && message ? (
+      <>
+        {`${messageSlot.name}: `}
+        {message}
+      </>
+    ) : (
+      message
+    );
   const messages = (
     <>
       {/* Rendered and left in the accessibility tree while empty: a live region added with
           its text is often not announced. A margin rather than the parent's gap spaces it, so
           an empty one takes no room. */}
-      <span
-        role="status"
-        aria-live="polite"
-        className={messageSlot ? "sr-only" : "mt-1 text-muted text-row empty:mt-0"}
-      >
-        {invalid ? null : status}
+      <span role="status" aria-live="polite" className="mt-1 text-muted text-row empty:mt-0">
+        {invalid ? null : named(status)}
       </span>
       {invalid && (
         <span
@@ -65,8 +70,7 @@ export function FormField({
           role="alert"
           className="mt-1 flex items-center gap-2 text-error text-row"
         >
-          {messageSlot && `${messageSlot.name}: `}
-          {error}
+          {named(error)}
         </span>
       )}
     </>

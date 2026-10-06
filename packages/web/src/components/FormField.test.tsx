@@ -66,7 +66,7 @@ describe("FormField", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Pick an alignment.");
   });
 
-  it("puts its messages in the caller's slot, the status for a screen reader only", () => {
+  it("puts its messages in the caller's slot, each naming the field", () => {
     const slot = document.body.appendChild(document.createElement("div"));
     const { rerender } = render(
       <FormField
@@ -79,7 +79,7 @@ describe("FormField", () => {
     );
 
     expect(slot).toContainElement(screen.getByRole("status"));
-    expect(screen.getByRole("status")).toHaveClass("sr-only");
+    expect(screen.getByRole("status")).toHaveTextContent("Strength: Saved");
 
     rerender(
       <FormField

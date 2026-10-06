@@ -7,7 +7,7 @@
  * debounce and on blur, writes `manual` only, and clearing the input reverts to
  * `computed` rather than a parsed empty value: `onSave` receives `null`, never a
  * zero or an empty string. A save's `saving`, `saved` and `failed` status renders
- * beside the field; `failed` keeps the user's text and offers a retry, so a failed
+ * beside the field, or in the caller's `messageSlot`; `failed` keeps the user's text and offers a retry, so a failed
  * write never looks like it went through. Text the parse or schema refuses is marked
  * without a retry, which would only refuse it again.
  *
