@@ -1,6 +1,6 @@
 export interface ChoicePillsProps {
   legend: string;
-  /** Draws the legend in the accent, for a choice the step waits on. */
+  /** Marks a choice the step waits on: the legend in the accent, and "choose one" after it. */
   prompting?: boolean;
   options: readonly { value: string; label: string }[];
   /** The chosen option's value, or `undefined` where none is. */
@@ -21,7 +21,7 @@ export function ChoicePills({
       <legend
         className={`mb-1.5 text-row ${prompting ? "font-semibold text-accent-text" : "text-muted"}`}
       >
-        {legend}
+        {prompting ? `${legend} — choose one` : legend}
       </legend>
       <div className="flex flex-wrap gap-1.5">
         {options.map((option) => (

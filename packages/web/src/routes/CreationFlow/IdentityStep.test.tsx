@@ -123,7 +123,7 @@ describe("IdentityStep", () => {
     await pick("Race", "elf", /^Elf/);
 
     expect(screen.getByRole("button", { name: "Clear race, Elf" })).toHaveFocus();
-    expect(await screen.findByText("Elf has subraces — choose one to continue")).toBeVisible();
+    expect(await screen.findByText("Elf has subraces — choose one")).toBeVisible();
     expect(screen.getByText("Traits: Darkvision")).toBeVisible();
     await waitFor(() =>
       expect(values.proficiencies).toMatchObject({
@@ -193,7 +193,9 @@ describe("IdentityStep", () => {
     renderStep();
 
     await pick("Race", "verdan", /^Verdan/);
-    fireEvent.click(await screen.findByRole("button", { name: "Medium" }));
+    expect(await screen.findByRole("group", { name: "Size — choose one" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Medium" }));
+    expect(screen.getByRole("group", { name: "Size" })).toBeVisible();
     click("Fire");
 
     expect(values.size).toBe("medium");

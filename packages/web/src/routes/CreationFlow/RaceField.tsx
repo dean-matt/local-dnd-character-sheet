@@ -93,11 +93,7 @@ export function RaceField() {
       )}
       {named.length > 0 && (
         <ChoicePills
-          legend={
-            plain
-              ? `Subrace of ${displayName(race)}`
-              : `${displayName(race)} has subraces — choose one to continue`
-          }
+          legend={plain ? `Subrace of ${displayName(race)}` : `${displayName(race)} has subraces`}
           prompting={!plain && subrace === undefined}
           options={[
             ...(plain ? [{ value: "", label: "None" }] : []),
