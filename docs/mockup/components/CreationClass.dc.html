@@ -147,14 +147,14 @@
     </div>
 
     <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #dde1e6;">
+      <a href="CharacterList.dc.html" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #4b5260; text-decoration: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        Cancel
+      </a>
       <div style="display: flex; align-items: center; gap: 8px;">
         <button onClick="{{back}}" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 13px; font-weight: 600;">← Back</button>
-        <a href="CharacterList.dc.html" style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #4b5260; text-decoration: none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink: 0;" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-          Cancel
-        </a>
+        <button onClick="{{next}}" disabled="{{nextDisabled}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{nextBg}}; color: #ffffff; font-size: 13px; font-weight: 600;">Next: Ability Scores →</button>
       </div>
-      <button onClick="{{next}}" disabled="{{nextDisabled}}" style="padding: 8px 16px; border-radius: 6px; border: none; background: {{nextBg}}; color: #ffffff; font-size: 13px; font-weight: 600;">Next: Ability Scores →</button>
     </div>
   </div>
   </div>

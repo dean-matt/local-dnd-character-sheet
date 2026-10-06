@@ -79,6 +79,14 @@ export function CreationFlow() {
             )}
             <StepDepartures step={step} />
             <div className="flex justify-between border-t border-border pt-3">
+              <button
+                type="button"
+                onClick={cancel}
+                className={`${BUTTON} flex items-center gap-2 text-secondary hover:bg-subtle`}
+              >
+                <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
+                Cancel
+              </button>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -88,39 +96,31 @@ export function CreationFlow() {
                 >
                   Back
                 </button>
-                <button
-                  type="button"
-                  onClick={cancel}
-                  className={`${BUTTON} flex items-center gap-2 text-secondary hover:bg-subtle`}
-                >
-                  <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
-                  Cancel
-                </button>
-              </div>
-              {next ? (
-                <button
-                  type="button"
-                  onClick={() => goTo(next.slug)}
-                  className={`${BUTTON} bg-accent text-white hover:bg-accent-hover`}
-                >
-                  Next: {next.label} →
-                </button>
-              ) : (
-                <div className="flex items-center gap-3">
-                  {create.isError && (
-                    <p role="alert" className="text-body text-error">
-                      {create.error.message}
-                    </p>
-                  )}
+                {next ? (
                   <button
-                    type="submit"
-                    disabled={create.isPending}
-                    className={`${BUTTON} bg-accent text-white hover:bg-accent-hover disabled:opacity-60`}
+                    type="button"
+                    onClick={() => goTo(next.slug)}
+                    className={`${BUTTON} bg-accent text-white hover:bg-accent-hover`}
                   >
-                    Finish →
+                    Next: {next.label} →
                   </button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-3">
+                    {create.isError && (
+                      <p role="alert" className="text-body text-error">
+                        {create.error.message}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={create.isPending}
+                      className={`${BUTTON} bg-accent text-white hover:bg-accent-hover disabled:opacity-60`}
+                    >
+                      Finish →
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </SidebarFrame>
