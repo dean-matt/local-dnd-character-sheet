@@ -173,18 +173,16 @@ export function AbilityScoresStep({
                   {ability}
                 </span>
                 {method === "standard" ? (
-                  <div className="w-24 shrink-0">
-                    <FormField label={`${label} base score`} labelHidden>
-                      {(control) => (
-                        <Select
-                          {...control}
-                          options={STANDARD_OPTIONS}
-                          value={base === undefined ? "" : String(base)}
-                          onChange={(value) => setScore(ability, parseScore(value))}
-                        />
-                      )}
-                    </FormField>
-                  </div>
+                  <FormField label={`${label} base score`} labelHidden>
+                    {(control) => (
+                      <Select
+                        {...control}
+                        options={STANDARD_OPTIONS}
+                        value={base === undefined ? "" : String(base)}
+                        onChange={(value) => setScore(ability, parseScore(value))}
+                      />
+                    )}
+                  </FormField>
                 ) : method === "roll" ? (
                   <span className="flex items-center gap-2">
                     <span className="w-8 text-center font-semibold">{base ?? "—"}</span>

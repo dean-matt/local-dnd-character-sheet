@@ -99,7 +99,9 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
           aria-labelledby={buttonId}
           // Keeps focus on the button, which owns the keys and the active option.
           onMouseDown={(event) => event.preventDefault()}
-          className={panelClassName}
+          // At least the button's width, and wider where an option needs it: a narrow button
+          // would otherwise wrap even a two-digit option onto two lines.
+          className={`${panelClassName} w-max! min-w-full!`}
         >
           {options.map((option, index) => (
             // biome-ignore lint/a11y/useKeyWithClickEvents: the button handles the keys, pointing at this option.
