@@ -1,12 +1,17 @@
 /**
  * A monster's stat block, and its legendary group's lair, as the `entries` a catalog
  * detail renders. The block reads in printed order: size, type and alignment; armor
- * class, hit points and speed; the six abilities as a table; the lines from saving throws
- * to challenge; then a named section per group of traits and actions. A field the
- * monster lacks leaves its line out. Upstream's prose passes through with its `{@tag}`
+ * class, initiative, hit points and speed; the six abilities as a table; the lines from
+ * saving throws to challenge; then a named section per group of traits and actions. A
+ * field the monster lacks leaves its line out. Upstream's prose passes through with its `{@tag}`
  * markup, which the renderer reads.
  */
-import { ABILITIES, abilityModifier } from "@dnd/rules";
+import {
+  ABILITIES,
+  abilityModifier,
+  challengeRatingValue,
+  creatureProficiencyBonus,
+} from "@dnd/rules";
 import { type Entries, entriesSchema } from "./entry.ts";
 
 type Json = Record<string, unknown>;
@@ -134,6 +139,34 @@ function armorClass(ac: unknown): string | undefined {
   );
 }
 
+/** The rating a proficiency bonus comes from: the plain one, not a lair's or a coven's. */
+function rating(cr: unknown): number {
+  const plain = text(isRecord(cr) ? cr.cr : cr);
+  return plain === undefined ? Number.NaN : challengeRatingValue(plain);
+}
+
+const ADVANTAGE: Record<string, [string, number]> = {
+  adv: ["Advantage", 5],
+  dis: ["Disadvantage", -5],
+};
+
+/**
+ * A stated bonus, or the Dexterity modifier plus a multiple of the proficiency bonus,
+ * with the passive score after it. Advantage adds 5 to that score, and Disadvantage takes 5.
+ */
+function initiative(json: Json): string | undefined {
+  const { initiative } = json;
+  if (typeof initiative === "number") return `${signed(initiative)} (${10 + initiative})`;
+  if (!isRecord(initiative) || typeof json.dex !== "number") return undefined;
+  const proficiency = typeof initiative.proficiency === "number" ? initiative.proficiency : 0;
+  const proficient =
+    proficiency === 0 ? 0 : proficiency * creatureProficiencyBonus(rating(json.cr));
+  const bonus = abilityModifier(json.dex) + proficient;
+  if (!Number.isFinite(bonus)) return undefined;
+  const [roll, shift] = ADVANTAGE[`${initiative.advantageMode}`] ?? [];
+  return `${signed(bonus)}${roll ? ` with ${roll}` : ""} (${10 + bonus + (shift ?? 0)})`;
+}
+
 function hitPoints(hp: unknown): string | undefined {
   if (!isRecord(hp)) return undefined;
   if (hp.special !== undefined) return text(hp.special);
@@ -206,6 +239,23 @@ function skills(skill: unknown): string | undefined {
       : [],
   );
   return [...bonuses(skill), ...choices].join(", ") || undefined;
+}
+
+/** Each item linked under the name it prints as, with the count upstream states. */
+function gear(items: unknown): string | undefined {
+  return (
+    list(items)
+      .flatMap((one) => {
+        const item = isRecord(one) ? one : { item: one };
+        const uid = text(item.item);
+        if (!uid) return [];
+        const [name = uid, source] = uid.split("|");
+        const quantity = text(item.quantity);
+        const link = `{@item ${name}|${source ?? ""}|${text(item.displayName) ?? titled(name)}}`;
+        return quantity ? `${link} (${quantity})` : link;
+      })
+      .join(", ") || undefined
+  );
 }
 
 /**
@@ -380,6 +430,7 @@ export function monsterEntries(json: Json): Entries {
   return [
     ...texts([sizeTypeAlignment(json)]),
     ...line("Armor Class", armorClass(json.ac)),
+    ...line("Initiative", initiative(json)),
     ...line("Hit Points", hitPoints(json.hp)),
     ...line("Speed", speed(json.speed)),
     ...abilityTable(json),
@@ -389,6 +440,7 @@ export function monsterEntries(json: Json): Entries {
     ...line("Damage Resistances", defenses(json.resist, "resist")),
     ...line("Damage Immunities", defenses(json.immune, "immune")),
     ...line("Condition Immunities", defenses(json.conditionImmune, "conditionImmune")),
+    ...line("Gear", gear(json.gear)),
     ...line("Senses", senses(json)),
     ...line("Languages", texts(list(json.languages)).join(", ")),
     ...line("Challenge", challenge(json.cr)),

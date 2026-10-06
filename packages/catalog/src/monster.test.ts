@@ -84,7 +84,38 @@ describe("a monster's stat block", () => {
       "{@b Armor Class} 15",
     ]);
     expect(entries).toContain("{@b Senses} Darkvision 60 ft., passive Perception 9");
+    expect(entries).toContain(
+      "{@b Gear} {@item leather armor|xphb|Leather Armor}, {@item scimitar|xphb|Scimitar}, {@item shield|xphb|Shield}, {@item shortbow|xphb|Shortbow}",
+    );
+    expect(entries.some((entry) => `${entry}`.startsWith("{@b Initiative}"))).toBe(false);
     expect(named(entries)).toEqual(["Actions", "Bonus Actions"]);
+  });
+
+  it("adds proficiency to a 2024 monster's initiative, and counts its gear", () => {
+    const entries = monster(fixture("bestiary-xmm.json", "Bandit Deceiver"));
+    expect(entries.slice(1, 4)).toEqual([
+      "{@b Armor Class} 16",
+      "{@b Initiative} +6 (16)",
+      "{@b Hit Points} 130 (20d8 + 40)",
+    ]);
+    expect(entries).toContain("{@b Gear} {@item dagger|xphb|Dagger} (6), {@item wand|xphb|Wand}");
+  });
+
+  it.each([
+    [{ initiative: 0, dex: 14 }, "+0 (10)"],
+    [{ initiative: { advantageMode: "adv" }, dex: 14, cr: "20" }, "+2 with Advantage (17)"],
+    [{ initiative: { advantageMode: "dis" }, dex: 8 }, "-1 with Disadvantage (4)"],
+    [{ initiative: { proficiency: 2 }, dex: 10, cr: { cr: "1/2", lair: "1" } }, "+4 (14)"],
+  ])("reads initiative %j as %s", (json, shown) => {
+    expect(monster(json)[0]).toBe(`{@b Initiative} ${shown}`);
+  });
+
+  it("names gear as upstream displays it, and leaves out a proficient initiative with no rating", () => {
+    const gear = [{ item: "+1 longsword|xdmg", displayName: "Gossamer (+1 Longsword)" }];
+    const lines = monster({ gear, initiative: { proficiency: 1 }, dex: 12 });
+    expect(lines.filter((entry) => typeof entry === "string")).toEqual([
+      "{@b Gear} {@item +1 longsword|xdmg|Gossamer (+1 Longsword)}",
+    ]);
   });
 
   it("heads legendary actions with their uses, and links the legendary group", () => {
