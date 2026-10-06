@@ -10,16 +10,23 @@ export function InputField({
   labelHidden,
   error,
   status,
+  messageSlot,
   className,
   ...input
 }: InputFieldProps) {
   return (
-    <FormField label={label} labelHidden={labelHidden} error={error} status={status}>
+    <FormField
+      label={label}
+      labelHidden={labelHidden}
+      error={error}
+      status={status}
+      messageSlot={messageSlot}
+    >
       {(control) => (
         <input
           {...input}
           {...control}
-          className={`rounded-control border border-border bg-surface px-2 py-1 ${className ?? ""}`}
+          className={`rounded-control border border-border bg-surface px-2 py-1 aria-invalid:border-error ${className ?? ""}`}
         />
       )}
     </FormField>

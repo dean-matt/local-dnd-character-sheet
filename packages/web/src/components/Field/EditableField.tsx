@@ -1,9 +1,12 @@
 import { type Derived, derivedValue } from "@dnd/character";
 import { useEffect, useRef, useState } from "react";
 import type { z } from "zod";
+import type { FormFieldProps } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
 
-type SaveStatus = "idle" | "saving" | "saved" | "failed";
+/** `invalid` is text the parse or schema refused, which a retry would refuse again;
+ * `failed` is a write that did not land, which a retry can. */
+type SaveStatus = "idle" | "saving" | "saved" | "invalid" | "failed";
 
 /**
  * `Field`'s edit state. A derived `value` writes its manual half, and clearing it saves
@@ -24,6 +27,7 @@ export type EditableFieldProps<T> = {
   /** A `<datalist>` id: suggestions the input offers without restricting it to them. */
   list?: string;
   placeholder?: string;
+  messageSlot?: FormFieldProps["messageSlot"];
 } & (
   | { value: Derived<T>; required?: never; onSave: (next: T | null) => Promise<void> }
   | { current: T; required: true; onSave: (next: T) => Promise<void> }
@@ -43,6 +47,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     inputClassName,
     list,
     placeholder,
+    messageSlot,
   } = props;
   const current = "current" in props ? props.current : derivedValue(props.value);
   const incoming = format(current);
@@ -95,13 +100,13 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     try {
       parsed = parse(raw);
     } catch {
-      setStatus("failed");
+      setStatus("invalid");
       setError("Not a valid value.");
       return;
     }
     const result = schema.safeParse(parsed);
     if (!result.success) {
-      setStatus("failed");
+      setStatus("invalid");
       setError(result.error.issues[0]?.message ?? "Invalid value.");
       return;
     }
@@ -153,12 +158,15 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       type="text"
       list={list}
       placeholder={placeholder}
+      messageSlot={messageSlot}
       value={text}
       onChange={(event) => handleChange(event.target.value)}
       onBlur={handleBlur}
       status={status === "saving" ? "Saving…" : status === "saved" ? "Saved" : undefined}
       error={
-        status === "failed" ? (
+        status === "invalid" ? (
+          error
+        ) : status === "failed" ? (
           <>
             {error ?? "Save failed."}
             <button type="button" onClick={retry} className="underline">

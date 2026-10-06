@@ -8,7 +8,8 @@
  * `computed` rather than a parsed empty value: `onSave` receives `null`, never a
  * zero or an empty string. A save's `saving`, `saved` and `failed` status renders
  * beside the field; `failed` keeps the user's text and offers a retry, so a failed
- * write never looks like it went through.
+ * write never looks like it went through. Text the parse or schema refuses is marked
+ * without a retry, which would only refuse it again.
  *
  * Autosave has no confirm step, so the only way back from a bad edit is undo —
  * which is why undo ships alongside editing rather than waiting for play state.

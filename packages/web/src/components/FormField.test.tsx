@@ -65,4 +65,36 @@ describe("FormField", () => {
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
     expect(screen.getByRole("alert")).toHaveTextContent("Pick an alignment.");
   });
+
+  it("puts its messages in the caller's slot, the status for a screen reader only", () => {
+    const slot = document.body.appendChild(document.createElement("div"));
+    const { rerender } = render(
+      <FormField
+        label="Strength score"
+        status="Saved"
+        messageSlot={{ into: slot, name: "Strength" }}
+      >
+        {(control) => <input {...control} />}
+      </FormField>,
+    );
+
+    expect(slot).toContainElement(screen.getByRole("status"));
+    expect(screen.getByRole("status")).toHaveClass("sr-only");
+
+    rerender(
+      <FormField
+        label="Strength score"
+        error="Too high."
+        messageSlot={{ into: slot, name: "Strength" }}
+      >
+        {(control) => <input {...control} />}
+      </FormField>,
+    );
+
+    expect(slot).toContainElement(screen.getByRole("alert"));
+    expect(screen.getByRole("textbox", { name: "Strength score" })).toHaveAccessibleDescription(
+      "Strength: Too high.",
+    );
+    slot.remove();
+  });
 });

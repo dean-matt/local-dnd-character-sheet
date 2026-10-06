@@ -139,18 +139,21 @@ describe("AbilitiesSection", () => {
     },
   );
 
-  it("reports a score the schema refuses on its own field, keeping what was typed", async () => {
+  it("reports a refused score under the grid, naming the ability and keeping what was typed", async () => {
     renderSection();
 
     const score = screen.getByRole("textbox", { name: "Strength score" });
     fireEvent.change(score, { target: { value: "31" } });
     fireEvent.blur(score);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "A score is a whole number from 1 to 30.",
-    );
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Strength: A score is a whole number from 1 to 30.");
+    const grid = tile("Ability Scores", "Strength").closest("dl");
+    expect(grid).not.toContainElement(alert);
+    expect(grid?.nextElementSibling).toContainElement(alert);
     expect(score).toHaveValue("31");
-    expect(score).toHaveAccessibleDescription(/A score is a whole number from 1 to 30/);
+    expect(score).toHaveAttribute("aria-invalid", "true");
+    expect(score).toHaveAccessibleDescription("Strength: A score is a whole number from 1 to 30.");
   });
 
   it("takes each modifier from the derived block, not from the score", () => {

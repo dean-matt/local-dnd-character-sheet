@@ -5,6 +5,7 @@ import {
   type CharacterDerived,
   type CharacterRecord,
 } from "@dnd/character";
+import { useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
@@ -26,6 +27,8 @@ export function AbilityScores({
 }) {
   const { definition } = character;
   const update = useUpdateCharacterDefinition(character.id);
+  // A tile is too narrow for a sentence, so every score's message lands under the grid.
+  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   return (
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -52,6 +55,7 @@ export function AbilityScores({
               parse={parseScore}
               schema={abilityScoresSchema.valueType}
               inputClassName="w-12 text-center"
+              messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
               onSave={async (score) => {
                 await update.mutateAsync((latest) => ({
                   ...latest,
@@ -71,6 +75,7 @@ export function AbilityScores({
           </StatTile>
         ))}
       </dl>
+      <div ref={setMessages} className="flex flex-col" />
     </Card>
   );
 }
