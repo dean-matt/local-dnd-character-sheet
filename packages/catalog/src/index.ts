@@ -72,6 +72,8 @@ export {
 } from "./item.ts";
 export type { ItemHitFacts, ItemKind } from "./item-kind.ts";
 export { ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
+export type { ProficiencyGrants } from "./proficiency-grants.ts";
+export { proficiencyGrantsSchema } from "./proficiency-grants.ts";
 export type {
   HomebrewRaceInput,
   HomebrewRaceRecord,

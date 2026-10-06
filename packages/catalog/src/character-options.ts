@@ -3,8 +3,9 @@
  * `data/feats.json` write an entry — the same "identity, edition, and the whole entry"
  * shape `packages/content/src/load/character-options.ts` loads them with. Models only
  * what a renderer needs to walk — `name`, `source` and `entries` — since neither table
- * derives a column from anything deeper; everything else upstream carries, such as skill
- * proficiencies or a feat's prerequisites, passes through unparsed.
+ * derives a column from anything deeper; everything else upstream carries, such as a
+ * feat's prerequisites, passes through unparsed. `proficiencyGrantsSchema` reads what a
+ * background grants off the same entry.
  *
  * A homebrew background or feat's `json` reuses this same shape rather than one of its
  * own — see `homebrewBackgroundInputSchema` and `homebrewFeatInputSchema` below.
