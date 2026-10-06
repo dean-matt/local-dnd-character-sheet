@@ -1,7 +1,14 @@
-import type { ContentRef, EntryRef } from "./refs.ts";
+import type { ContentRef, DeityRef, EntryRef } from "./refs.ts";
 
-/** The identity of a catalog row, flattened so a Map or a Set can hold it. */
-export const refKey = (ref: ContentRef): string => `${ref.name}|${ref.source}`;
+/**
+ * The identity of a catalog row, flattened so a Map or a Set can hold it. A deity reference
+ * fails to compile here, since its pair alone names two gods; `deityKey` takes it instead.
+ */
+export const refKey = (ref: ContentRef & { pantheon?: never }): string =>
+  `${ref.name}|${ref.source}`;
+
+/** A deity's identity, its pantheon included: `Oghma|PHB` is both the Celtic and the Faerûnian god. */
+export const deityKey = (ref: DeityRef): string => `${ref.name}|${ref.source}|${ref.pantheon}`;
 
 /** Rejects a list naming the same thing twice, where a duplicate would double-count. */
 export const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>

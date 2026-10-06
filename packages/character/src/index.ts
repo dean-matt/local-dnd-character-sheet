@@ -45,7 +45,7 @@ export {
   passiveSkill,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
-export { entryKey, itemKey, refKey } from "./keys.ts";
+export { deityKey, entryKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
   type CharacterPage,
@@ -68,6 +68,7 @@ export {
 export {
   type Ability,
   type ContentRef,
+  type DeityRef,
   type EntryRef,
   entryRefSchema,
 } from "./refs.ts";
