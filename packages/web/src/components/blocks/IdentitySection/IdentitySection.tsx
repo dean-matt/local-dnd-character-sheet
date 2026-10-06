@@ -1,7 +1,8 @@
 /**
- * The Identity page: the name edits in place and saves itself; race, class, background and
- * the proficiency lists are catalog picks and stay read-only here. It shows as unavailable
- * until the character loads, as the Level, Alignment and Notes pages beside it do.
+ * The Identity page: the name and appearance edit in place and save themselves; race,
+ * class, background and the proficiency lists are catalog picks and stay read-only here. It
+ * shows as unavailable until the character loads, as the Level, Alignment and Notes pages
+ * beside it do.
  */
 import {
   type CharacterRecord,
@@ -16,6 +17,7 @@ import { ChipList } from "../../ChipList.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { classChips } from "../classChips.ts";
 import { SectionUnavailable } from "../SectionUnavailable.tsx";
+import { AppearanceCard } from "./AppearanceCard.tsx";
 import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
 
 /** A tool held at `none` grants nothing, so it earns no chip. */
@@ -75,6 +77,15 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
           </ProficiencyGroup>
         </div>
       </Card>
+      <AppearanceCard
+        appearance={definition.appearance}
+        onSave={async (edit) => {
+          await update.mutateAsync((latest) => ({
+            ...latest,
+            appearance: edit(latest.appearance),
+          }));
+        }}
+      />
     </div>
   );
 }
