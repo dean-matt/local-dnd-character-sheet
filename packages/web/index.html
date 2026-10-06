@@ -5,14 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>D&amp;D Character Sheet</title>
     <script>
-      // Blocking and non-module so the override lands before first paint —
-      // src/theme.ts loads too late to prevent the flash, hence the
-      // duplicated storage key.
+      // Blocking and non-module so the overrides land before first paint —
+      // src/theme.ts and src/accent.ts load too late to prevent the flash,
+      // hence the duplicated storage keys and accent checks.
       (() => {
         try {
           const stored = localStorage.getItem("theme");
           if (stored === "light" || stored === "dark") {
             document.documentElement.dataset.theme = stored;
+          }
+        } catch {}
+        try {
+          const accent = JSON.parse(localStorage.getItem("accent"));
+          const percent = (n) => Number.isInteger(n) && n >= 0 && n <= 100;
+          if (/^#[0-9a-f]{6}$/.test(accent?.color) && percent(accent.ring) && percent(accent.text)) {
+            const style = document.documentElement.style;
+            style.setProperty("--accent", accent.color);
+            style.setProperty("--accent-ring-lift", `${accent.ring}%`);
+            style.setProperty("--accent-text-lift", `${accent.text}%`);
           }
         } catch {}
       })();

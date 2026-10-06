@@ -177,9 +177,8 @@ widget, panel, or nav element:
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search; Top Bar Navigation's global search is the one place that already spans both
   characters and a sample compendium.
-- Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Display
-  Settings (theme — light/dark/system — and accent), Homebrew Weapons, Homebrew Armor,
-  Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
+- Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Homebrew
+  Weapons, Homebrew Armor, Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
   5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
   level/school — its real counterpart widget does).
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats follow the same
@@ -324,7 +323,6 @@ says how much of the artboard the app builds today.
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `SettingsSidebar` | #243, #486, #489 | Display and Sources |
-| `DisplaySettings` | #390 | theme only |
 | `HomebrewWeapons` | #243 | nothing |
 | `HomebrewArmor` | #243 | nothing |
 | `HomebrewGear` | #243 | nothing |

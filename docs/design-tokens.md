@@ -58,8 +58,8 @@ role rather than the shade:
 | `color-muted` | `#6b7280` 92%, `color-ink` 8% | `gray-400` | Quiet text — labels, captions |
 | `color-placeholder` | `color-muted` | `color-muted` | Placeholder text |
 | `color-scrim` | `rgb(15 17 21 / 0.5)` | black at 60% | A modal's backdrop |
-| `color-accent` | `#c1272d` | `#c1272d` 90%, white 10% | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
-| `color-accent-text` | `#c1272d` | `#c1272d` 60%, white 40% | The accent as text under the large-text size — a link, the wordmark, an override mark, the top bar's current section |
+| `color-accent` | `--accent` | `--accent`, with `--accent-ring-lift` of white | The one thing the accent means: interactive emphasis — a roll, a primary action, a hover or focus state. Never decoration. |
+| `color-accent-text` | `--accent` | `--accent`, with `--accent-text-lift` of white | The accent as text under the large-text size — a link, the wordmark, an override mark, the top bar's current section |
 | `color-accent-hover` / `color-accent-active` | `color-mix(in oklab, var(--color-accent) 85%/70%, black)` | the same mix | Pressed states for the accent, mixed from it so a future accent change carries through |
 | `color-accent-tint` | `color-mix(in oklab, var(--color-accent) 10%, var(--color-canvas))` | the same mix | The ground of a selected state |
 | `color-money` / `color-money-tint` / `color-money-border` | `#7a5b00` on `#fbf3dc`, edged `#e5cf8f` | `#e5cf8f` on `#7a5b00` 30% into `gray-800`, edged at 70% | A list row's price chip |
@@ -73,9 +73,16 @@ for a visibly lighter gray, so `color-placeholder` aliases `color-muted`.
 measures 3.10:1 on the dark surface already, which is also why small accent text takes
 `color-accent-text` instead.
 
-`color-accent` reuses the default `docs/mockup/` already settled on — every widget's
-accent prop there defaults to the same value. Picking a different one here would leave
-the sheet and the mockup it follows disagreeing on the one color meant to carry meaning.
+`--accent` defaults to `#c1272d`, the accent `docs/mockup/` settled on — every widget's
+accent prop there defaults to it — and its dark lifts to 10% and 40%.
+
+Display Settings changes the accent to one of five presets or a custom color.
+`src/accent.ts` holds a choice to every accent pair below. It refuses a color that fails a
+light pair or that no dark shade clears, and otherwise sets `--accent` and the two lifts on
+the root element, each the least white that clears its dark pairs — the default's fixed
+lifts do not suit every hue. The mockup's
+orange measures 3.00:1 on canvas, so that preset is scaled down to `#9e5409`. A choice is
+stored as the theme is, and `index.html` applies it before first paint.
 
 ## Focus and contrast
 
