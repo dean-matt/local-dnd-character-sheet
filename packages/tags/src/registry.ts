@@ -297,8 +297,8 @@ function buildSpecs(): Map<string, Spec> {
   for (const tag of OUTBOUND_TAGS) specs.set(tag, { kind: "text", display: 0 });
 
   // A deck or a pantheon sits between the name and the source.
-  specs.set("card", { kind: "ref", source: 2, display: 3 });
-  specs.set("deity", { kind: "ref", source: 2, display: 3 });
+  specs.set("card", { kind: "ref", source: 2, display: 3, qualifier: 1 });
+  specs.set("deity", { kind: "ref", source: 2, display: 3, qualifier: 1 });
   specs.set("subclass", { kind: "ref", source: 3, display: 4 });
   specs.set("quickref", { kind: "text", display: 4 });
   // `{@unit <amount>|singular|plural}`. Every amount in the data is an unresolved

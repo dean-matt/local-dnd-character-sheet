@@ -44,6 +44,7 @@ export type Token =
       tag: string;
       name: string;
       source?: string;
+      qualifier?: string;
       owner?: FeatureOwner;
       display: string;
     }
@@ -54,10 +55,12 @@ export type RefToken = Extract<Token, { kind: "ref" }>;
 
 /**
  * Which argument holds what, per tag. The display argument moves: `{@spell a|b|c}`
- * displays `c`, `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`.
+ * displays `c`, `{@dice a|b}` displays `b`, `{@filter a|b|c}` displays `a`. A ref's
+ * `qualifier` holds the key part a deity or a card adds to `(name, source)`: its pantheon
+ * or its deck.
  */
 export type Spec =
-  | { kind: "ref"; source: number; display: number }
+  | { kind: "ref"; source: number; display: number; qualifier?: number }
   | { kind: "roll"; notation: number; display: number }
   | { kind: "text"; display: number }
   | { kind: "style"; style: Emphasis }

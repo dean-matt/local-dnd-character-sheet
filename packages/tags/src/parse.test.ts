@@ -454,12 +454,13 @@ describe("tags whose display is derived", () => {
 });
 
 describe("argument positions that are not name|source|display", () => {
-  it("skips the deck a card sits in", () => {
+  it("carries the deck a card sits in", () => {
     expect(only("{@card Ghost|Tarokka Deck|RHW}")).toEqual({
       kind: "ref",
       tag: "card",
       name: "Ghost",
       source: "RHW",
+      qualifier: "Tarokka Deck",
       display: "Ghost",
     });
   });
@@ -470,17 +471,38 @@ describe("argument positions that are not name|source|display", () => {
       tag: "card",
       name: "Mithral Chain Mail",
       source: "DIP",
+      qualifier: "Magic Item Cards",
       display: "card",
     });
   });
 
-  it("skips the pantheon a deity belongs to", () => {
+  it("carries the pantheon a deity belongs to", () => {
     expect(only("{@deity Umberlee|Faerûnian|SCAG}")).toEqual({
       kind: "ref",
       tag: "deity",
       name: "Umberlee",
       source: "SCAG",
+      qualifier: "Faerûnian",
       display: "Umberlee",
+    });
+  });
+
+  it("leaves a bare deity's pantheon and source to default", () => {
+    expect(only("{@deity Gond}")).toEqual({
+      kind: "ref",
+      tag: "deity",
+      name: "Gond",
+      display: "Gond",
+    });
+  });
+
+  it("keeps a pantheon that names no source", () => {
+    expect(only("{@deity Habbakuk|dragonlance}")).toEqual({
+      kind: "ref",
+      tag: "deity",
+      name: "Habbakuk",
+      qualifier: "dragonlance",
+      display: "Habbakuk",
     });
   });
 
@@ -490,6 +512,7 @@ describe("argument positions that are not name|source|display", () => {
       tag: "deity",
       name: "Corellon Larethian",
       source: "MTF",
+      qualifier: "Elven",
       display: "Corellon",
     });
   });
