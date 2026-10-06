@@ -58,7 +58,8 @@ export type CharacterCatalog = {
    */
   casterTables: ReadonlyMap<string, CasterTable>;
   skills: readonly SkillTrait[];
-  size: Size;
+  /** Every size the race offers, never empty; the definition's `size` picks among them. */
+  sizes: readonly Size[];
   speed: Speed;
   armor: ReadonlyMap<string, ArmorTrait>;
   weights: ReadonlyMap<string, number | null>;

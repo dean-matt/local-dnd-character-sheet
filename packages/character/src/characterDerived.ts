@@ -48,7 +48,7 @@ export const characterDerivedSchema = z.strictObject({
   /**
    * The race's size, in the vocabulary `carryingCapacity` reads, so the two cannot
    * drift. A subrace never states one — all 98 upstream rows leave it to the race — so
-   * a race change moves it and nothing else does.
+   * only a race change or the definition's `size` pick moves it.
    */
   size: derivedSchema(z.enum(SIZES)),
   /**

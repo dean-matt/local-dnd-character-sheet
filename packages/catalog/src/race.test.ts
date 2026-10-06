@@ -92,7 +92,7 @@ describe("homebrewRaceRecordSchema", () => {
 describe("raceTraitsSchema", () => {
   it("reads a bare number as the walking speed", () => {
     expect(raceTraitsSchema.parse({ size: ["M"], speed: 30 })).toEqual({
-      size: "medium",
+      sizes: ["medium"],
       speed: { walk: 30 },
     });
   });
@@ -100,13 +100,19 @@ describe("raceTraitsSchema", () => {
   it("reads a mode written as true as the walking speed", () => {
     expect(
       raceTraitsSchema.parse({ size: ["M"], speed: { walk: 30, fly: true, swim: 20 } }),
-    ).toEqual({ size: "medium", speed: { walk: 30, fly: 30, swim: 20 } });
+    ).toEqual({ sizes: ["medium"], speed: { walk: 30, fly: 30, swim: 20 } });
   });
 
-  it("takes the largest size a race offers, and reads varies as medium", () => {
-    expect(raceTraitsSchema.parse({ size: ["S", "M"], speed: 30 }).size).toBe("medium");
-    expect(raceTraitsSchema.parse({ size: ["S"], speed: 25 }).size).toBe("small");
-    expect(raceTraitsSchema.parse({ size: ["V"], speed: 30 }).size).toBe("medium");
+  it("lists every size a race offers smallest first, and reads varies as small or medium", () => {
+    expect(raceTraitsSchema.parse({ size: ["M", "S"], speed: 30 }).sizes).toEqual([
+      "small",
+      "medium",
+    ]);
+    expect(raceTraitsSchema.parse({ size: ["S"], speed: 25 }).sizes).toEqual(["small"]);
+    expect(raceTraitsSchema.parse({ size: ["V", "M"], speed: 30 }).sizes).toEqual([
+      "small",
+      "medium",
+    ]);
   });
 
   it("rejects a race that states no size or speed", () => {

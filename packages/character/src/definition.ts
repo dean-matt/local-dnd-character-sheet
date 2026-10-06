@@ -1,4 +1,4 @@
-import { GRIPS, HIT_DICE, PROFICIENCY_LEVELS } from "@dnd/rules";
+import { GRIPS, HIT_DICE, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
 import { z } from "zod";
 import { houseRulesSchema } from "./houseRules.ts";
 import { entryKey, isUnique, refKey } from "./keys.ts";
@@ -293,6 +293,13 @@ export const characterDefinitionSchema = z.strictObject({
    * on the empty string, and a reader reaches it from the race.
    */
   subrace: contentRefSchema.optional(),
+  /**
+   * The size the player picked where the race offers more than one, such as Small or
+   * Medium for `Human` (XPHB). Where it is absent or names a size the race does not
+   * offer, the derived block takes the race's largest, so a race change leaves no stale
+   * size behind.
+   */
+  size: z.enum(SIZES).optional(),
   background: entryRefSchema,
   abilityScores: abilityScoresSchema,
   proficiencies: proficienciesSchema,

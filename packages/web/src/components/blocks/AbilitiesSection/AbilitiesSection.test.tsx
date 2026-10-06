@@ -52,7 +52,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
       { ref: PERCEPTION, ability: "wis" },
       { ref: ARCANA, ability: "int" },
     ],
-    size: "medium",
+    sizes: ["medium"],
     speed: { walk: 30, fly: 40 },
     armor: new Map(),
     weights: new Map(),

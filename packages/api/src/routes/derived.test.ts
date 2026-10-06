@@ -555,6 +555,24 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "Race homebrew r states no size or speed" });
   });
 
+  it("takes the size a character picks from those its race offers", async () => {
+    insertHomebrewRace(opened.homebrewDb, "r", {
+      name: "Harengon",
+      edition: "classic",
+      size: ["S", "M"],
+      speed: 30,
+    });
+    const harengon = { race: { homebrewId: "r" }, subrace: undefined } as const;
+    store(definitionWith(harengon));
+    expect((await derived()).size.computed).toBe("medium");
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({ ...harengon, size: "small" }),
+    );
+    expect((await derived()).size.computed).toBe("small");
+  });
+
   it("resolves a homebrew class, race and item", async () => {
     insertHomebrewClass(opened.homebrewDb, "c", {
       name: "Hexblade",

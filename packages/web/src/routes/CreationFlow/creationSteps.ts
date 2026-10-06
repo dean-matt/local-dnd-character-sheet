@@ -20,6 +20,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   name: "identity",
   race: "identity",
   subrace: "identity",
+  size: "identity",
   background: "identity",
   alignment: "identity",
   deity: "identity",

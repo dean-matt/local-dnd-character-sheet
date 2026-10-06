@@ -280,7 +280,7 @@ export function resolveCharacterCatalog(
     spellcastingAbilities,
     casterTables,
     skills,
-    size: race.size,
+    sizes: race.sizes,
     speed: race.speed,
     armor: armorTraits(definition, items),
     weights: itemWeights(definition.inventory, items),

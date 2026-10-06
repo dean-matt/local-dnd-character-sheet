@@ -2,7 +2,7 @@
  * A race or subrace row's `json`, in the shape `data/races.json` writes an entry. Models
  * only what a renderer needs to walk — `name`, `source` and `entries` — since neither
  * table derives a column from anything deeper; everything else upstream carries, such as
- * ability score increases, passes through unparsed. `raceTraitsSchema` reads size and
+ * ability score increases, passes through unparsed. `raceTraitsSchema` reads sizes and
  * speed off the same entry for a derived block.
  *
  * A homebrew race's `json` reuses this same shape rather than one of its own — see
@@ -20,16 +20,19 @@ export const raceEntrySchema = z.looseObject({
 
 export type RaceEntry = z.infer<typeof raceEntrySchema>;
 
-/** `V` is upstream's "varies": Verdan grows from Small to Medium, and nothing records when. */
+/**
+ * `V` is upstream's "varies": Verdan grows from Small to Medium, and nothing records when,
+ * so it offers both and a character picks the one it is at.
+ */
 const SIZE_CODES = {
-  T: "tiny",
-  S: "small",
-  M: "medium",
-  V: "medium",
-  L: "large",
-  H: "huge",
-  G: "gargantuan",
-} as const satisfies Record<string, Size>;
+  T: ["tiny"],
+  S: ["small"],
+  M: ["medium"],
+  V: ["small", "medium"],
+  L: ["large"],
+  H: ["huge"],
+  G: ["gargantuan"],
+} as const satisfies Record<string, readonly Size[]>;
 
 type SizeCode = keyof typeof SIZE_CODES;
 
@@ -67,20 +70,19 @@ function speedOf(stated: z.infer<typeof statedSpeedSchema>): RaceSpeed {
 }
 
 /**
- * The size and speeds a race or subrace row states, read off the same `json` a renderer
+ * The sizes and speeds a race or subrace row states, read off the same `json` a renderer
  * walks. A subrace row is already merged over its race, so either row answers alone.
- *
- * A character stores no size choice, so a race offering several sizes reads as the
- * largest one. The fix is a `size` on the character definition.
+ * `sizes` runs smallest first, each once.
  */
 export const raceTraitsSchema = z
   .looseObject({ size: sizeCodesSchema, speed: statedSpeedSchema })
-  .transform(({ size, speed }) => ({
-    size: size
-      .map((code): Size => SIZE_CODES[code])
-      .reduce((largest, next) => (SIZES.indexOf(next) > SIZES.indexOf(largest) ? next : largest)),
-    speed: speedOf(speed),
-  }));
+  .transform(({ size, speed }) => {
+    const offered = new Set<Size>(size.flatMap((code) => SIZE_CODES[code]));
+    return {
+      sizes: SIZES.filter((each) => offered.has(each)),
+      speed: speedOf(speed),
+    };
+  });
 
 /** A race row from `content.db`'s `races` table, addressed by `(name, source)`. */
 export const raceRecordSchema = z.strictObject({

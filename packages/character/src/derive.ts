@@ -18,6 +18,8 @@ import {
   preparedSpellCount,
   proficiencyBonusBreakdown,
   proficiencyContribution,
+  SIZES,
+  type Size,
   type SpellSlotTotal,
   spellAttackBonus,
   spellSaveDc,
@@ -449,7 +451,7 @@ export function deriveCharacter(
     abilityModifiers,
     hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice)),
     hitDice: hitDicePools(definition, catalog.hitDice),
-    size: { computed: catalog.size, manual: null, terms: [] },
+    size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: catalog.speed, manual: null, terms: [] },
     proficiencyBonus: fromBreakdown(proficiencyBonusBreakdown(level)),
     savingThrows,
@@ -467,17 +469,27 @@ export function deriveCharacter(
   return applyOverrides(block, definition);
 }
 
+/** The definition's pick where the race offers it, otherwise the largest size it offers. */
+function raceSize(definition: CharacterDefinition, catalog: CharacterCatalog): Size {
+  const chosen = definition.size;
+  if (chosen !== undefined && catalog.sizes.includes(chosen)) return chosen;
+  return catalog.sizes.reduce((largest, next) =>
+    SIZES.indexOf(next) > SIZES.indexOf(largest) ? next : largest,
+  );
+}
+
 function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
   const strength = definition.abilityScores.str;
+  const size = raceSize(definition, catalog);
   const weight = carriedWeight(definition, catalog.weights);
   return {
-    carryingCapacity: computed(carryingCapacity(strength, catalog.size)),
+    carryingCapacity: computed(carryingCapacity(strength, size)),
     carriedWeight: weight,
     // The tier reads Strength and size rather than `carryingCapacity`, so an override of
     // the capacity leaves it standing. The way out is thresholds scaled by the overridden
     // capacity, once overrides fold into the block.
     encumbrance: houseRule(definition, "encumbrance")
-      ? encumbranceAt(strength, catalog.size, weight).tier
+      ? encumbranceAt(strength, size, weight).tier
       : null,
   };
 }

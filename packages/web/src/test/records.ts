@@ -120,7 +120,7 @@ export function derivedRecord(
       ],
     ]),
     skills: [],
-    size: "medium",
+    sizes: ["medium"],
     speed: { walk: 30 },
     armor: new Map(),
     weights: new Map(),
