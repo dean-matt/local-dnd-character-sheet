@@ -1,24 +1,23 @@
 import { z } from "zod";
 
-/**
- * One list of damage types or conditions, lowercased. A `{choose: {from}}` element names a
- * pick the character stores nowhere, so it grants nothing: `Dragonborn` (PHB) resists
- * nothing here, and its color versions, such as `Dragonborn (Black)`, state theirs. A
- * subrace's `null` clears what its race granted, as `Draconblood` (EGW) does. A malformed
- * list grants nothing rather than refusing the row.
- */
-const namesSchema = z
-  .array(z.unknown())
-  .nullable()
-  .optional()
-  .catch(undefined)
-  .transform((list) => [
-    ...new Set(
-      (list ?? []).flatMap((name) =>
-        typeof name === "string" && name.trim() ? [name.trim().toLowerCase()] : [],
-      ),
+const lowercased = (names: readonly unknown[]) => [
+  ...new Set(
+    names.flatMap((name) =>
+      typeof name === "string" && name.trim() ? [name.trim().toLowerCase()] : [],
     ),
-  ]);
+  ),
+];
+
+/**
+ * One list of damage types or conditions, lowercased. A subrace's `null` clears what its
+ * race granted, as `Draconblood` (EGW) does. A malformed list grants nothing rather than
+ * refusing the row.
+ */
+const listSchema = z.array(z.unknown()).nullable().optional().catch(undefined);
+
+const choiceSchema = z.looseObject({
+  choose: z.looseObject({ from: z.array(z.unknown()) }),
+});
 
 /**
  * What a race, subrace or item row grants against damage and conditions. A potion's
@@ -27,16 +26,28 @@ const namesSchema = z
  * such as `Muroosa Balm` (EGW), and a deck whose `resist` lists every card's outcome, such
  * as `Deck of Wonder` (BMT) — so those grant while equipped. The way out is an item list
  * that names them.
+ *
+ * A `{choose: {from}}` element in `resist` grants nothing by itself: `resistChoice` holds
+ * what it offers, and the character's pick grants one, as for `Dragonborn` (PHB).
  */
 export const defenseTraitSchema = z
   .looseObject({
     type: z.string().optional().catch(undefined),
-    resist: namesSchema,
-    immune: namesSchema,
-    conditionImmune: namesSchema,
+    resist: listSchema,
+    immune: listSchema,
+    conditionImmune: listSchema,
   })
   .transform(({ type, resist, immune, conditionImmune }) =>
     type?.split("|")[0] === "P"
-      ? { resist: [], immune: [], conditionImmune: [] }
-      : { resist, immune, conditionImmune },
+      ? { resist: [], resistChoice: [], immune: [], conditionImmune: [] }
+      : {
+          resist: lowercased(resist ?? []),
+          resistChoice: lowercased(
+            (resist ?? []).flatMap(
+              (element) => choiceSchema.safeParse(element).data?.choose.from ?? [],
+            ),
+          ),
+          immune: lowercased(immune ?? []),
+          conditionImmune: lowercased(conditionImmune ?? []),
+        },
   );

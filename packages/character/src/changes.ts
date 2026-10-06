@@ -32,6 +32,7 @@ export const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   race: "Race",
   subrace: "Subrace",
   size: "Size",
+  resistance: "Resistance",
   background: "Background",
   abilityScores: "Ability scores",
   proficiencies: "Proficiencies",

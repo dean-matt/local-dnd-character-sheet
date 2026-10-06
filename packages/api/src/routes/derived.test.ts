@@ -34,6 +34,7 @@ const LONGSWORD = { name: "Longsword", source: "PHB" };
 const PLUS_ONE_WEAPON = { name: "+1 Weapon", source: "DMG" };
 const DAGGER_OF_VENOM = { name: "Dagger of Venom", source: "DMG" };
 const DWARF = { name: "Dwarf", source: "PHB" };
+const DRAGONBORN = { name: "Dragonborn", source: "PHB" };
 const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 
@@ -203,6 +204,15 @@ describe("derivedRoutes", () => {
       races: [
         { ...ELF, edition: "classic", json: JSON.stringify({ size: ["M"], speed: 30 }) },
         { ...DWARF, edition: "classic", json: JSON.stringify({ size: ["M"], speed: 25 }) },
+        {
+          ...DRAGONBORN,
+          edition: "classic",
+          json: JSON.stringify({
+            size: ["M"],
+            speed: 30,
+            resist: [{ choose: { from: ["acid", "cold", "fire", "lightning", "poison"] } }],
+          }),
+        },
       ],
       subraces: [
         {
@@ -500,6 +510,31 @@ describe("derivedRoutes", () => {
       ],
       damageImmunities: [{ name: "poison", from: [PERIAPT.name] }],
       conditionImmunities: [{ name: "poisoned", from: [PERIAPT.name] }],
+      resistanceChoice: null,
+    });
+  });
+
+  it("grants the resistance a Dragonborn picks, and offers the choice until one is picked", async () => {
+    const dragonborn = (resistance?: string) =>
+      definitionWith({
+        race: { name: "Dragonborn", source: "PHB" },
+        subrace: undefined,
+        resistance,
+      });
+
+    store(dragonborn());
+    expect((await derived()).defenses.computed).toMatchObject({
+      resistances: [],
+      resistanceChoice: {
+        from: "Dragonborn",
+        options: ["acid", "cold", "fire", "lightning", "poison"],
+      },
+    });
+
+    updateCharacterDefinition(opened.charactersDb, "1", dragonborn("fire"));
+    expect((await derived()).defenses.computed).toMatchObject({
+      resistances: [{ name: "fire", from: ["Dragonborn"] }],
+      resistanceChoice: null,
     });
   });
 

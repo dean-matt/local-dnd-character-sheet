@@ -5,6 +5,7 @@ describe("defenseTraitSchema", () => {
   it("reads a race's resistances and an item's immunities", () => {
     expect(defenseTraitSchema.parse({ name: "Hill", resist: ["poison"] })).toEqual({
       resist: ["poison"],
+      resistChoice: [],
       immune: [],
       conditionImmune: [],
     });
@@ -14,12 +15,15 @@ describe("defenseTraitSchema", () => {
         immune: ["poison"],
         conditionImmune: ["poisoned"],
       }),
-    ).toEqual({ resist: [], immune: ["poison"], conditionImmune: ["poisoned"] });
+    ).toEqual({ resist: [], resistChoice: [], immune: ["poison"], conditionImmune: ["poisoned"] });
   });
 
-  it("grants nothing for a choice the character has not stored", () => {
-    const dragonborn = { resist: [{ choose: { from: ["acid", "cold", "fire"] } }] };
-    expect(defenseTraitSchema.parse(dragonborn).resist).toEqual([]);
+  it("offers a choice of resistance rather than granting it", () => {
+    const dragonborn = { resist: [{ choose: { from: ["acid", "Cold", "fire"] } }] };
+    expect(defenseTraitSchema.parse(dragonborn)).toMatchObject({
+      resist: [],
+      resistChoice: ["acid", "cold", "fire"],
+    });
   });
 
   it("reads a subrace's null as no resistance", () => {
@@ -31,8 +35,8 @@ describe("defenseTraitSchema", () => {
   });
 
   it("grants nothing for a potion, whose effect lasts only as long as the drink", () => {
-    const potion = { type: "P|XPHB", resist: ["fire"] };
-    expect(defenseTraitSchema.parse(potion).resist).toEqual([]);
+    const potion = { type: "P|XPHB", resist: ["fire", { choose: { from: ["cold"] } }] };
+    expect(defenseTraitSchema.parse(potion)).toMatchObject({ resist: [], resistChoice: [] });
   });
 
   it("grants nothing for a malformed list rather than refusing the row", () => {

@@ -290,15 +290,22 @@ function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly st
 }
 
 /**
- * The race's grants, then each equipped item's. An item that requires attunement grants
- * only once it is attuned as well. A resistance stays listed beside an immunity to the
- * same type, since each names a source the reader may want.
+ * The race's grants, its picked resistance among them, then each equipped item's. An
+ * item that requires attunement grants only once it is attuned as well. A resistance
+ * stays listed beside an immunity to the same type, since each names a source the reader
+ * may want.
  */
 function derivedDefenses(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
 ): ComputedField<Defenses> {
-  const grants: Grant[] = [{ ...catalog.raceDefenses, from: raceLabel(definition) }];
+  const { resistChoice, ...race } = catalog.raceDefenses;
+  const from = raceLabel(definition);
+  const pick = definition.resistance;
+  const picked = pick !== undefined && resistChoice.includes(pick) ? pick : undefined;
+  const grants: Grant[] = [
+    { ...race, resist: picked ? [...race.resist, picked] : race.resist, from },
+  ];
   for (const entry of definition.inventory) {
     const item = catalog.itemDefenses.get(itemKey(entry));
     if (item && entry.equipped && (entry.attuned || !item.requiresAttunement)) {
@@ -309,6 +316,8 @@ function derivedDefenses(
     resistances: gathered(grants, (grant) => grant.resist),
     damageImmunities: gathered(grants, (grant) => grant.immune),
     conditionImmunities: gathered(grants, (grant) => grant.conditionImmune),
+    resistanceChoice:
+      picked || resistChoice.length === 0 ? null : { from, options: [...resistChoice] },
   });
 }
 
