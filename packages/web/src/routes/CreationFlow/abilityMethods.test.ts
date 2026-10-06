@@ -15,6 +15,15 @@ describe("methodDeparture", () => {
 });
 
 describe("methodOf", () => {
+  it.each([
+    ["standard", { str: 15, dex: 15 }],
+    ["pointBuy", { str: 15, dex: 15, con: 15, int: 15 }],
+    ["custom", { str: 18 }],
+  ] as const)("reopens on %s from the note its own departure writes", (method, scores) => {
+    const note = methodDeparture(method, scores) ?? "";
+    expect(methodOf(scores, [{ field: "abilityScores", note }])).toBe(method);
+  });
+
   it("reads the method a departure names before the scores", () => {
     const departures = [{ field: "abilityScores", note: "Point buy: 30 of 27 points spent." }];
     expect(methodOf({ str: 15, dex: 15, con: 15 }, departures)).toBe("pointBuy");

@@ -19,9 +19,9 @@ import { StatTile } from "./StatTile.tsx";
 const ABILITY_LABEL_CLASS = "text-[10px] tracking-[0.06em]";
 
 /**
- * The scores the player may type where the race and background move the base by `raised`,
- * so the base an edit saves stays inside the 1 to 30 the definition takes, and so does
- * the score itself.
+ * The scores the player may type where the race and background move the base by `raised`:
+ * the base an edit saves stays within the 1 to 30 the definition takes, and the score
+ * never drops below 1, though an increase may carry it past 30.
  */
 function scoreSchema(raised: number) {
   if (raised === 0) return abilityScoresSchema.valueType;
