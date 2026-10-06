@@ -12,6 +12,12 @@ function changed(id: string, updatedAt: string) {
   return { ...characterRecord(id, `Hero ${id}`), updatedAt };
 }
 
+/** New Character and Import, in the order they are drawn. */
+function actionOrder(scope: Pick<typeof screen, "getByRole">) {
+  const row = scope.getByRole("link", { name: "+ New Character" }).parentElement;
+  return Array.from(row?.children ?? [], (action) => action.textContent);
+}
+
 /** Renders the page with `bodies` as the API's answers, any request it omits failing. */
 function renderHome(
   bodies: Record<string, unknown> = { "/api/characters": [], "/api/search/types": types },
@@ -49,7 +55,7 @@ describe("HomePage", () => {
     const recent = screen.getByRole("region", { name: "Recent characters" });
     const tiles = within(recent)
       .getAllByRole("link")
-      .filter((link) => link.getAttribute("href")?.startsWith("/characters/"));
+      .filter((link) => /^\/characters\/\d+$/.test(link.getAttribute("href") ?? ""));
     expect(tiles.map((tile) => tile.getAttribute("href"))).toEqual([
       "/characters/2",
       "/characters/4",
@@ -60,8 +66,7 @@ describe("HomePage", () => {
       "href",
       "/characters",
     );
-    const actions = within(recent).getAllByRole("button");
-    expect(actions.map((button) => button.textContent)).toEqual(["Import", "+ New Character"]);
+    expect(actionOrder(within(recent))).toEqual(["Import", "+ New Character"]);
   });
 
   it("welcomes a first run with New Character leading, and no list to see", async () => {
@@ -71,13 +76,14 @@ describe("HomePage", () => {
       await screen.findByRole("heading", { level: 1, name: "Welcome to Local D&D" }),
     ).toBeInTheDocument();
     expect(screen.getByText("No characters yet")).toBeInTheDocument();
-    const actions = screen.getAllByRole("button");
-    expect(actions.map((button) => button.textContent)).toEqual(["+ New Character", "Import"]);
-    for (const button of actions) {
-      expect(button).toHaveAttribute("aria-disabled", "true");
-      expect(button).toHaveAccessibleDescription("Not built yet");
-    }
-    expect(screen.getByText("Not built yet")).toBeVisible();
+    expect(actionOrder(screen)).toEqual(["+ New Character", "Import"]);
+    expect(screen.getByRole("link", { name: "+ New Character" })).toHaveAttribute(
+      "href",
+      "/characters/new",
+    );
+    const importButton = screen.getByRole("button", { name: "Import" });
+    expect(importButton).toHaveAttribute("aria-disabled", "true");
+    expect(importButton).toHaveAccessibleDescription("Import is not built yet");
     expect(screen.queryByRole("link", { name: /see all characters/i })).not.toBeInTheDocument();
   });
 
