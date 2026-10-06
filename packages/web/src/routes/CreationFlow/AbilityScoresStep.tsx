@@ -5,8 +5,8 @@ import {
   abilityModifier,
   abilityScoreBreakdown,
   type CharacterDefinition,
-  proficiencyContribution,
-  refKey,
+  savingThrowModifier,
+  skillModifier,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useState } from "react";
@@ -31,6 +31,7 @@ import {
 } from "./abilityMethods.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { withDeparture } from "./departures.ts";
+import { NO_GRANTS } from "./grants.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
 import { useSkillAbilities } from "./useSkillAbilities.ts";
 
@@ -105,7 +106,13 @@ export function AbilityScoresStep({
     write(Object.fromEntries(rolled.map(([ability, roll]) => [ability, roll.total])), "roll");
   };
 
-  const level = Math.min(Math.max(levels?.length ?? 1, 1), 20);
+  const draft = {
+    abilityScores: { ...UNSET, ...scores },
+    abilityIncreases: increases ?? [],
+    proficiencies: proficiencies ?? NO_GRANTS,
+    // A draft with no class yet scores at level 1, as the character will once it has one.
+    levels: levels?.length ? levels : [{ class: { name: "", source: "" } }],
+  };
   const spent = pointsSpent(scores);
 
   return (
@@ -148,21 +155,12 @@ export function AbilityScoresStep({
       <div className="grid gap-2 sm:grid-cols-2">
         {ABILITIES.map((ability) => {
           const base = scores[ability];
-          const { total, terms } = abilityScoreBreakdown(
-            { abilityScores: { ...UNSET, ...scores }, abilityIncreases: increases ?? [] },
-            ability,
-          );
+          const { total, terms } = abilityScoreBreakdown(draft, ability);
           const modifier = abilityModifier(total);
-          const proficient = proficiencies?.savingThrows.includes(ability) ?? false;
-          const save =
-            modifier + proficiencyContribution(level, proficient ? "proficient" : "none");
+          const save = savingThrowModifier(draft, ability).total;
           const governed = skills
             .filter((skill) => skill.ability === ability)
-            .map(({ ref }) => {
-              const held = proficiencies?.skills.find((skill) => refKey(skill.ref) === refKey(ref));
-              const bonus = proficiencyContribution(level, held?.level ?? "none");
-              return `${ref.name} ${signed(modifier + bonus)}`;
-            });
+            .map(({ ref }) => `${ref.name} ${signed(skillModifier(draft, ref, ability).total)}`);
           const label = ABILITY_LABEL[ability];
           return (
             <fieldset

@@ -7,6 +7,16 @@ import { ChoicePills } from "./ChoicePills.tsx";
 import { increasesOf, type Picks, readPicks, withIncreases } from "./increasePicks.ts";
 import type { IncreaseSource } from "./useIncreaseOptions.ts";
 
+type Increase = CharacterDefinition["abilityIncreases"][number];
+
+const tally = (increases: readonly Increase[]) =>
+  increases
+    .map((increase) => `${increase.ability}${increase.amount}`)
+    .sort()
+    .join();
+
+const sameIncreases = (a: readonly Increase[], b: readonly Increase[]) => tally(a) === tally(b);
+
 const amounts = (alternative: IncreaseAlternative) =>
   alternative.slots.map((slot) => signed(slot.amount)).join(" and ");
 
@@ -25,18 +35,19 @@ export function SourceIncreases({ source }: { source: IncreaseSource }) {
   const increases = useWatch<CharacterDefinition, "abilityIncreases">({ name: "abilityIncreases" });
   const { grantedBy, name, alternatives } = source;
   const mine = (increases ?? []).filter((increase) => increase.grantedBy === grantedBy);
-  // An alternative with nothing placed reads as the first, and one partly placed can read
-  // as another, so the one the player chose is held here and read against alone.
-  const [chosen, setChosen] = useState<number>();
-  const only = chosen === undefined ? undefined : alternatives[chosen];
+  // Stored increases say what was placed but not in which slot or which way, so an
+  // alternative with nothing placed reads as the first and a slot filled out of order as
+  // the earlier one. What the player placed is held here while it still matches the store.
+  const [placed, setPlaced] = useState<Picks>();
   const picks: Picks =
-    chosen !== undefined && only !== undefined
-      ? { alternative: chosen, slots: readPicks([only], mine)?.slots ?? [] }
+    placed && sameIncreases(increasesOf(alternatives, placed, grantedBy), mine)
+      ? placed
       : (readPicks(alternatives, mine) ?? { alternative: 0, slots: [] });
   const alternative = alternatives[picks.alternative];
   if (alternative === undefined) return null;
 
-  const store = (next: Picks) =>
+  const store = (next: Picks) => {
+    setPlaced(next);
     setValue(
       "abilityIncreases",
       withIncreases(
@@ -46,6 +57,7 @@ export function SourceIncreases({ source }: { source: IncreaseSource }) {
       ),
       { shouldDirty: true },
     );
+  };
   const label = grantedBy === "race" ? "Race" : "Background";
   const fixed = fixedText(alternative);
 
@@ -64,7 +76,6 @@ export function SourceIncreases({ source }: { source: IncreaseSource }) {
           }))}
           value={String(picks.alternative)}
           onChange={(value) => {
-            setChosen(Number(value));
             store({ alternative: Number(value), slots: [] });
           }}
         />

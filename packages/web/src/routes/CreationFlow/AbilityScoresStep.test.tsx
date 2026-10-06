@@ -280,6 +280,20 @@ describe("AbilityScoresStep", () => {
     await waitFor(() => expect(done).toBe(true));
   });
 
+  it("keeps a pick in the slot it was placed in, though stored increases name no slot", async () => {
+    renderStep({ race: PHB("Half-Elf"), abilityScores: ARRAY });
+
+    const second = await screen.findByRole("group", { name: "Race +1, 2 of 2 — choose one" });
+    fireEvent.click(within(second).getByRole("button", { name: "Wisdom" }));
+
+    expect(
+      within(screen.getByRole("group", { name: "Race +1, 2 of 2" })).getByRole("button", {
+        name: "Wisdom",
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("group", { name: "Race +1, 1 of 2 — choose one" })).toBeVisible();
+  });
+
   it("takes a 2024 background's increases either way it offers them", async () => {
     renderStep({ edition: "one", background: XPHB("Soldier"), abilityScores: ARRAY });
 
