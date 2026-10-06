@@ -124,6 +124,13 @@ describe("routing", () => {
     expect(screen.getByRole("navigation", { name: "Character pages" })).toBeInTheDocument();
   });
 
+  it("treats a creation step's own address as unknown, since the flow keeps one URL", async () => {
+    renderAt("/characters/new/class");
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Page not found" }),
+    ).toBeInTheDocument();
+  });
+
   it("renders the Settings page with its section rail and no character header", async () => {
     renderAt("/settings");
 

@@ -97,7 +97,7 @@ describe("createForm", () => {
     rerender(form("vex"));
 
     expect(nameInput()).toHaveValue("Vex");
-    expect(draftAt(`${KEY}:vex`)).toEqual({ name: "Vex" });
+    expect(draftAt(`${KEY}:vex`)).toMatchObject({ name: "Vex" });
   });
 
   it("refuses a field outside a FormShell", () => {

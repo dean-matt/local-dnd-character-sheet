@@ -2,7 +2,7 @@
  * The form a multi-field flow renders: it owns the `react-hook-form` instance, its
  * provider and the `<form>`, validates against `schema` through the Zod resolver, and
  * keeps the in-progress values as a draft under `flow`. A stored draft wins over
- * `defaultValues` on mount. `lib/createForm.ts` binds a schema and a flow to it once per
+ * `defaultValues` on mount unless `fresh` is set; leaving the form discards it. `lib/createForm.ts` binds a schema and a flow to it once per
  * form.
  *
  * The draft clears once `onSubmit` resolves, or on `cancel`; an `onSubmit` that throws
@@ -23,6 +23,8 @@ export interface FormShellProps<In extends FieldValues, Out extends FieldValues>
   flow: string;
   defaultValues: DefaultValues<In>;
   onSubmit: (values: Out) => void | Promise<void>;
+  /** Starts from `defaultValues`, overwriting any stored draft. */
+  fresh?: boolean;
   /** Runs after `cancel` discards the draft, to leave the flow. */
   onCancel?: () => void;
   children: (actions: { cancel: () => void }) => ReactNode;
@@ -32,16 +34,20 @@ export function FormShell<In extends FieldValues, Out extends FieldValues>({
   schema,
   flow,
   defaultValues,
+  fresh = false,
   onSubmit,
   onCancel,
   children,
 }: FormShellProps<In, Out>) {
-  const [initialValues] = useState(() => ({ ...defaultValues, ...readDraft(flow) }));
+  const [initialValues] = useState(() => ({
+    ...defaultValues,
+    ...(fresh ? undefined : readDraft(flow)),
+  }));
   const form = useForm<In, unknown, Out>({
     resolver: zodResolver(schema),
     defaultValues: initialValues,
   });
-  const discard = useFormDraft(flow, form.watch);
+  const discard = useFormDraft(flow, form.watch, form.getValues);
   const formRef = useRef<HTMLFormElement>(null);
 
   // A layout effect, so the first buttons are typed before paint; the observer's callback

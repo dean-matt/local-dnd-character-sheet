@@ -1,10 +1,11 @@
-import { Navigate, useNavigate, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { creationForm } from "./creationForm.ts";
-import { CREATION_STEPS } from "./creationSteps.ts";
+import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
 import { IdentityGrants } from "./IdentityGrants.tsx";
 import { IdentityStep } from "./IdentityStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
@@ -15,28 +16,41 @@ const { FormShell } = creationForm;
 const BUTTON = "rounded-control px-4 py-2 font-semibold text-body";
 
 /**
- * The `characters/new/:step` route: the step rail, the open step, and Back, Next and
- * Finish. Nothing is written until Finish, which validates the whole definition and
- * creates the character; the draft carries the values between steps and across a reload,
- * and Cancel discards it. Next never validates, because guidance refuses no value — a
- * fault surfaces at Finish, with a link to the step that holds it.
+ * The `characters/new` route: the step rail, the open step, and Back, Next and Finish.
+ * Nothing is written until Finish, which validates the whole definition and creates the
+ * character; the draft carries the values between steps and across a reload, and leaving
+ * the flow by any route discards it. Next never validates, because guidance refuses no
+ * value — a fault surfaces at Finish, with a link to the step that holds it.
+ *
+ * An entry the flow has not marked with a step is a fresh one, reached by a link or the
+ * address bar rather than a reload, so it starts empty over any draft a full-page
+ * departure left behind.
  */
 export function CreationFlow() {
-  const { step: slug } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const create = useCreateCharacter();
-  const step = CREATION_STEPS.find((candidate) => candidate.slug === slug);
-  if (step === undefined) {
-    return <Navigate to={`/characters/new/${CREATION_STEPS[0].slug}`} replace />;
-  }
+  const marked = stepIn(location.state);
+  const [fresh] = useState(marked === undefined);
+  const step = marked ?? CREATION_STEPS[0];
+
+  const goTo = (slug: CreationStep["slug"]) => {
+    const { to, ...options } = stepLink(slug);
+    navigate(to, options);
+  };
+  useEffect(() => {
+    if (!fresh) return;
+    const { to, ...options } = stepLink(CREATION_STEPS[0].slug);
+    navigate(to, options);
+  }, [fresh, navigate]);
 
   const index = CREATION_STEPS.indexOf(step);
   const previous = CREATION_STEPS[index - 1];
   const next = CREATION_STEPS[index + 1];
-  const goTo = (slug: string) => navigate(`/characters/new/${slug}`);
 
   return (
     <FormShell
+      fresh={fresh}
       onSubmit={async (definition) => {
         const record = await create.mutateAsync(definition);
         navigate(`/characters/${record.id}`);

@@ -1,6 +1,6 @@
 import { characterDefinitionSchema } from "@dnd/character";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { type ReactNode, StrictMode } from "react";
 import { useFormContext } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FormShell } from "./FormShell.tsx";
@@ -103,28 +103,52 @@ describe("FormShell", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("writes the draft on a debounce and rehydrates it on mount", () => {
+  it("writes the draft on mount, then on a debounce after each change", () => {
     vi.useFakeTimers();
-    const { unmount } = renderShell();
+    renderShell();
+    expect(storedDraft()).toEqual({ name: "" });
 
     typeName("Vex");
-    expect(localStorage.getItem(KEY)).toBeNull();
+    expect(storedDraft()).toEqual({ name: "" });
     act(() => vi.advanceTimersByTime(300));
     expect(storedDraft()).toEqual({ name: "Vex" });
-
-    unmount();
-    renderShell();
-    expect(nameInput()).toHaveValue("Vex");
   });
 
-  it("writes a pending draft when the form unmounts before the debounce", () => {
+  it("discards the draft and a pending write when the form unmounts", () => {
     vi.useFakeTimers();
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
     const { unmount } = renderShell();
 
-    typeName("Vex");
+    typeName("Vexahlia");
     unmount();
+    act(() => vi.advanceTimersByTime(300));
+
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it("keeps the draft through StrictMode's rehearsal unmount", () => {
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
+    render(
+      <StrictMode>
+        <FormShell schema={SCHEMA} flow={FLOW} defaultValues={{ name: "" }} onSubmit={vi.fn()}>
+          {() => <NameInput />}
+        </FormShell>
+      </StrictMode>,
+    );
 
     expect(storedDraft()).toEqual({ name: "Vex" });
+  });
+
+  it("starts from the defaults when fresh, overwriting a stored draft", () => {
+    localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
+    render(
+      <FormShell schema={SCHEMA} flow={FLOW} defaultValues={{ name: "" }} fresh onSubmit={vi.fn()}>
+        {() => <NameInput />}
+      </FormShell>,
+    );
+
+    expect(nameInput()).toHaveValue("");
+    expect(storedDraft()).toEqual({ name: "" });
   });
 
   it("writes a pending draft on pagehide, before the debounce", () => {
