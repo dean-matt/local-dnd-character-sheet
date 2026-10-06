@@ -51,12 +51,12 @@ interface Target {
 const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/");
 
 /**
- * The address of a row `GET /catalog/{type}/{name}/{source}` reads, absent where its detail
- * would show nothing but its name.
+ * The address of a row `GET /catalog/{type}/{name}/{source}` reads, its qualifier a last
+ * segment where it carries one, absent where its detail would show nothing but its name.
  */
 const catalogPath = (type: string) => (row: Row) =>
   catalogRowEntries(type, JSON.parse(row.json)).length > 0
-    ? `/catalog/${segments(type, row.name, row.source)}`
+    ? `/catalog/${segments(type, row.name, row.source, ...(row.qualifier ? [row.qualifier] : []))}`
     : undefined;
 
 // COLLATE NOCASE cannot use the BINARY primary keys, so each lookup scans its table:
@@ -117,6 +117,28 @@ const race: Omit<Target, "page" | "source"> = {
       : `/races/${segments(row.race_name ?? "", row.race_source ?? "", "subraces", row.subrace ?? "", row.source)}`,
 };
 
+/** A deity reference naming no pantheon means this one, as every such reference in the corpus does. */
+const DEFAULT_PANTHEON = "Forgotten Realms";
+
+/**
+ * A deity is keyed by its pantheon as well, and a card by its deck, both held in
+ * `qualifier`. `fallback` fills a reference naming none; a card has none, because every
+ * card reference in the corpus names its deck.
+ */
+const qualified = (
+  from: "lookups" | "entities",
+  type: string,
+  fallback?: string,
+): Omit<Target, "page" | "source"> => ({
+  sql: `SELECT name, source, qualifier, json FROM ${from}
+        WHERE ${from === "lookups" ? "kind" : "type"} = '${type}'
+        AND name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE
+        AND qualifier = ? COLLATE NOCASE`,
+  bind: ({ name, source, qualifier = fallback }) =>
+    qualifier === undefined ? undefined : [name, source, qualifier],
+  path: catalogPath(type),
+});
+
 /** A class's or a subclass's source, where a feature reference names none. */
 const OWNER_SOURCE = "PHB";
 
@@ -159,9 +181,8 @@ const subclassFeature: Omit<Target, "page" | "source"> = {
 };
 
 /**
- * The tags tier 2 resolves. A tag left out renders unlinked: a card or a deity, whose
- * token lacks its deck or pantheon, and a table, which upstream mostly writes inside
- * another entry.
+ * The tags tier 2 resolves. A tag left out renders unlinked: a table, which upstream
+ * mostly writes inside another entry.
  */
 const TARGETS: Record<string, Target> = {
   spell: { page: "spells.html", source: "PHB", ...flat("spells", "spells") },
@@ -197,6 +218,8 @@ const TARGETS: Record<string, Target> = {
   object: { page: "objects.html", source: "DMG", ...entity("object") },
   reward: { page: "rewards.html", source: "DMG", ...entity("reward") },
   deck: { page: "decks.html", source: "DMG", ...entity("deck") },
+  card: { source: "DMG", ...qualified("entities", "card") },
+  deity: { source: "PHB", ...qualified("lookups", "deity", DEFAULT_PANTHEON) },
   vehicle: { page: "vehicles.html", source: "GoS", ...entity("vehicle") },
   vehupgrade: { page: "vehicles.html", source: "GoS", ...entity("vehicleUpgrade") },
   cult: { page: "cultsboons.html", source: "MTF", ...entity("cult") },

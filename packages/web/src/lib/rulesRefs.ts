@@ -4,7 +4,7 @@ import { parseTags, type Token } from "@dnd/tags";
 import { isRecord } from "./entryGuards.ts";
 
 export const refKey = (ref: RefQuery) =>
-  JSON.stringify([ref.tag, ref.name, ref.source ?? null, ref.owner ?? null]);
+  JSON.stringify([ref.tag, ref.name, ref.source ?? null, ref.qualifier ?? null, ref.owner ?? null]);
 
 function collectRefs(tokens: Token[], into: Map<string, RefQuery>) {
   for (const token of tokens) {
@@ -12,6 +12,7 @@ function collectRefs(tokens: Token[], into: Map<string, RefQuery>) {
     if (token.kind !== "ref") continue;
     const ref: RefQuery = { tag: token.tag, name: token.name };
     if (token.source !== undefined) ref.source = token.source;
+    if (token.qualifier !== undefined) ref.qualifier = token.qualifier;
     if (token.owner !== undefined) ref.owner = token.owner;
     into.set(refKey(ref), ref);
   }

@@ -18,11 +18,15 @@ const featureOwnerSchema = z.strictObject({
   level: z.int().min(1).max(20),
 });
 
-/** One `ref` token's key. An absent `source` means the tag's default, never `""`. */
+/**
+ * One `ref` token's key. An absent `source` or `qualifier` — a deity's pantheon, a card's
+ * deck — means the tag's default, never `""`.
+ */
 const refQuerySchema = z.strictObject({
   tag: z.string().min(1),
   name: z.string().min(1),
   source: z.string().min(1).optional(),
+  qualifier: z.string().min(1).optional(),
   owner: featureOwnerSchema.optional(),
 });
 

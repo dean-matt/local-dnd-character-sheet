@@ -23,6 +23,14 @@ const row = (name: string, source: string, entries: unknown[] = []) => ({
   json: JSON.stringify({ name, source, entries }),
 });
 
+const deity = (name: string, source: string, pantheon: string) => ({
+  kind: "deity",
+  qualifier: pantheon,
+  name,
+  source,
+  json: JSON.stringify({ name, source, pantheon }),
+});
+
 const fighter = { class_name: "Fighter", class_source: "PHB" };
 
 const berserker = (source: string) => ({
@@ -138,6 +146,9 @@ describe("refsRoutes", () => {
         { kind: "variantrule", qualifier: "", ...row("Unarmed Strike", "XPHB", ["Punch."]) },
         { kind: "condition", qualifier: "", ...row("Blinded", "XPHB") },
         { kind: "deity", qualifier: "Greek", ...row("Zeus", "PHB") },
+        deity("Tyr", "PHB", "Forgotten Realms"),
+        deity("Tyr", "PHB", "Norse"),
+        deity("Umberlee", "SCAG", "Faerûnian"),
         {
           kind: "language",
           qualifier: "",
@@ -157,6 +168,9 @@ describe("refsRoutes", () => {
           json: JSON.stringify({ name: "Goblin", source: "MM", size: ["S"], cr: "1/4" }),
         },
         { type: "legendaryGroup", qualifier: "", ...row("Aboleth", "MM") },
+        { type: "card", qualifier: "Deck of Many Things", ...row("Vizier", "DMG", ["Know."]) },
+        { type: "card", qualifier: "Tarokka Deck", ...row("Ghost", "CoS", ["Haunt."]) },
+        { type: "card", qualifier: "Tarokka Deck", ...row("Mists", "CoS") },
         {
           type: "legendaryGroup",
           qualifier: "",
@@ -305,6 +319,66 @@ describe("refsRoutes", () => {
         { tag: "variantrule", name: "Unarmed Strike", source: "XPHB" },
       ]),
     ).toEqual([null, null, null, expect.objectContaining({ name: "Unarmed Strike" })]);
+  });
+
+  describe("deity", () => {
+    it("tells apart deities of one name and source by pantheon, ignoring case", async () => {
+      const [realms, norse] = await resolveOk([
+        { tag: "deity", name: "tyr", source: "phb", qualifier: "forgotten realms" },
+        { tag: "deity", name: "Tyr", source: "PHB", qualifier: "norse" },
+      ]);
+      expect(realms).toEqual({
+        name: "Tyr",
+        source: "PHB",
+        entries: [],
+        path: "/catalog/deity/Tyr/PHB/Forgotten%20Realms",
+      });
+      expect(norse.path).toBe("/catalog/deity/Tyr/PHB/Norse");
+    });
+
+    it("defaults the pantheon to the Forgotten Realms and the source to PHB", async () => {
+      const [bare, pantheonOnly] = await resolveOk([
+        { tag: "deity", name: "Tyr" },
+        { tag: "deity", name: "Tyr", qualifier: "Norse" },
+      ]);
+      expect(bare.path).toBe("/catalog/deity/Tyr/PHB/Forgotten%20Realms");
+      expect(pantheonOnly.path).toBe("/catalog/deity/Tyr/PHB/Norse");
+    });
+
+    it("answers null for a deity outside the pantheon named", async () => {
+      expect(
+        await resolveOk([
+          { tag: "deity", name: "Umberlee", source: "SCAG", qualifier: "Norse" },
+          { tag: "deity", name: "Umberlee", source: "SCAG" },
+        ]),
+      ).toEqual([null, null]);
+    });
+  });
+
+  describe("card", () => {
+    it("resolves a card by its deck, with the deck's default source", async () => {
+      const [vizier, ghost] = await resolveOk([
+        { tag: "card", name: "vizier", qualifier: "deck of many things" },
+        { tag: "card", name: "Ghost", source: "CoS", qualifier: "Tarokka Deck" },
+      ]);
+      expect(vizier).toEqual({
+        name: "Vizier",
+        source: "DMG",
+        entries: ["Know."],
+        path: "/catalog/card/Vizier/DMG/Deck%20of%20Many%20Things",
+      });
+      expect(ghost.path).toBe("/catalog/card/Ghost/CoS/Tarokka%20Deck");
+    });
+
+    it("leaves a card without prose unlinked, and answers null for one naming no deck or another deck", async () => {
+      const [mists, deckless, elsewhere] = await resolveOk([
+        { tag: "card", name: "Mists", source: "CoS", qualifier: "Tarokka Deck" },
+        { tag: "card", name: "Ghost", source: "CoS" },
+        { tag: "card", name: "Ghost", source: "CoS", qualifier: "Deck of Many Things" },
+      ]);
+      expect(mists).not.toHaveProperty("path");
+      expect([deckless, elsewhere]).toEqual([null, null]);
+    });
   });
 
   it("links a subclass under the class printed in its own source", async () => {

@@ -49,7 +49,7 @@ plain text, instead of the tag parser treating it as a tag.
 ```ts
 type Token =
   | { kind: "text"; value: string }
-  | { kind: "ref"; tag: string; name: string; source?: string; owner?: FeatureOwner; display: string }
+  | { kind: "ref"; tag: string; name: string; source?: string; qualifier?: string; owner?: FeatureOwner; display: string }
   | { kind: "roll"; notation: string; display: string; rollable: boolean }
   | { kind: "style"; style: Emphasis; children: Token[] };
 ```
@@ -79,7 +79,9 @@ the `shortName` — `Berserker`, where the row reads `Path of the Berserker` —
 resolver matches `short_name` for that tag. `{@race}` may name a subrace as
 `Human (Keldon)`, so the resolver also matches a subrace row on that merged name. A
 feature's token carries an `owner` — its class, subclass and level — because its key
-needs them, and a feature tag missing one degrades to text.
+needs them, and a feature tag missing one degrades to text. A deity's or a card's token
+carries its pantheon or deck as `qualifier`; a deity naming none means the Forgotten
+Realms, and a card naming none stays unresolved.
 
 ## Resolving
 

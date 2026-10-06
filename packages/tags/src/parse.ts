@@ -15,7 +15,7 @@
 import { isRollable } from "@dnd/dice";
 import { expandPromptTemplates } from "./prompt-template.ts";
 import { SPECS } from "./registry.ts";
-import { arg, type RefToken, type Token, text } from "./token.ts";
+import { arg, type RefToken, type Spec, type Token, text } from "./token.ts";
 
 /**
  * Upstream nests two or three levels deep. The cap is how `parseTags` can promise it
@@ -139,6 +139,24 @@ function splitArgs(body: string): string[] {
   return args;
 }
 
+function ref(tag: string, spec: Extract<Spec, { kind: "ref" }>, args: string[], depth: number) {
+  const name = arg(args, 0);
+  // Without a name there is nothing to resolve, and a ref carrying prose as its
+  // source is a guaranteed miss. The words still render.
+  if (name === undefined) return text(display(args, spec.display, depth));
+  const token: RefToken = {
+    kind: "ref",
+    tag,
+    name: plain(name, depth),
+    display: display(args, spec.display, depth),
+  };
+  const source = arg(args, spec.source);
+  if (source !== undefined) token.source = source;
+  const qualifier = spec.qualifier === undefined ? undefined : arg(args, spec.qualifier);
+  if (qualifier !== undefined) token.qualifier = qualifier;
+  return token;
+}
+
 /** Turns the inside of one `{@…}` into tokens. An unknown tag becomes its display text. */
 function expand(inner: string, depth: number): Token[] {
   const boundary = inner.search(/[\s|]/);
@@ -155,21 +173,8 @@ function expand(inner: string, depth: number): Token[] {
   if (spec === undefined) return [unknown(tag, args, depth)];
 
   switch (spec.kind) {
-    case "ref": {
-      const name = arg(args, 0);
-      // Without a name there is nothing to resolve, and a ref carrying prose as its
-      // source is a guaranteed miss. The words still render.
-      if (name === undefined) return [text(display(args, spec.display, depth))];
-      const token: RefToken = {
-        kind: "ref",
-        tag,
-        name: plain(name, depth),
-        display: display(args, spec.display, depth),
-      };
-      const source = arg(args, spec.source);
-      if (source !== undefined) token.source = source;
-      return [token];
-    }
+    case "ref":
+      return [ref(tag, spec, args, depth)];
     case "roll": {
       const notation = arg(args, spec.notation) ?? "";
       return [
