@@ -226,6 +226,20 @@ describe("notes", () => {
   });
 });
 
+describe("departures", () => {
+  const strength = { field: "abilityScores.str", note: "20 at level 1, past point buy's 15" };
+
+  it("keeps the field and the note a departure names", () => {
+    const parsed = characterDefinitionSchema.parse({ ...definition, departures: [strength] });
+    expect(parsed.departures).toEqual([strength]);
+  });
+
+  it("rejects a departure with no note, which records nothing", () => {
+    const silent = { ...definition, departures: [{ ...strength, note: "" }] };
+    expect(characterDefinitionSchema.safeParse(silent).success).toBe(false);
+  });
+});
+
 describe("deity", () => {
   /** Upstream writes this pair twice, one god in each pantheon. */
   const celtic = { name: "Oghma", source: "PHB", pantheon: "Celtic" };
@@ -267,6 +281,7 @@ describe("a character stored before these fields existed", () => {
       feats: _feats,
       optionalFeatures: _optionalFeatures,
       houseRules: _houseRules,
+      departures: _departures,
       ...older
     } = definition;
     const parsed = characterDefinitionSchema.parse(structuredClone(older));
@@ -283,6 +298,7 @@ describe("a character stored before these fields existed", () => {
     expect(parsed.appearance).toEqual({});
     expect(parsed.houseRules).toEqual({});
     expect(parsed.notes).toBe("");
+    expect(parsed.departures).toEqual([]);
     expect(parsed).toMatchObject(older);
   });
 });

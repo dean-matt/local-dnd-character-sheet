@@ -25,7 +25,7 @@ export const undoLogSchema = z
   .max(UNDO_LOG_LIMIT);
 
 /** Exhaustive, so a field added to the definition fails to compile until it has a label. */
-const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
+export const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   name: "Name",
   edition: "Edition",
   levels: "Levels",
@@ -44,6 +44,7 @@ const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   appearance: "Appearance",
   notes: "Notes",
   houseRules: "House rules",
+  departures: "Departures from the rules",
   overrides: "Overrides",
 };
 

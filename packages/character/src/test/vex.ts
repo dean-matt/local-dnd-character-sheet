@@ -121,6 +121,7 @@ export const definition: CharacterDefinition = {
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
   houseRules: { encumbrance: true },
   overrides: {},
+  departures: [],
   notes: "Owes the Clasp a favor.",
 };
 

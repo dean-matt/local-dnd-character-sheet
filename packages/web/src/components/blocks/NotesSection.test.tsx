@@ -14,4 +14,22 @@ describe("NotesSection", () => {
     render(<NotesSection character={characterRecord("1", "Vex")} />);
     expect(screen.getByText("No notes yet.")).toBeInTheDocument();
   });
+
+  it("lists what the character holds off the rules, and draws nothing where it holds nothing", () => {
+    const record = characterRecord("1", "Vex");
+    const departure = { field: "abilityScores.str", note: "20 at level 1" };
+    const { unmount } = render(
+      <NotesSection
+        character={{ ...record, definition: { ...record.definition, departures: [departure] } }}
+      />,
+    );
+    const offBook = screen.getByRole("region", { name: "Off the rules" });
+    expect(within(offBook).getByRole("listitem")).toHaveTextContent(
+      "Ability scores — 20 at level 1",
+    );
+    unmount();
+
+    render(<NotesSection character={record} />);
+    expect(screen.queryByRole("region", { name: "Off the rules" })).not.toBeInTheDocument();
+  });
 });
