@@ -407,7 +407,6 @@ describe("Field, edit mode, a plain value", () => {
       <Field
         mode="edit"
         label="Name"
-        required
         current={current}
         format={(value: string) => value}
         parse={(raw) => raw.trim()}
@@ -433,7 +432,6 @@ describe("Field, edit mode, a plain value", () => {
       <Field
         mode="edit"
         label="Name"
-        required
         current="Vex"
         format={(value: string) => value}
         parse={(raw) => raw.trim()}

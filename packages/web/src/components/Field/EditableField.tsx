@@ -11,9 +11,9 @@ type SaveStatus = "idle" | "saving" | "saved" | "invalid" | "failed";
 
 /**
  * `Field`'s edit state. A derived `value` writes its manual half, and clearing it saves
- * `null`, which drops the override. A plain `current` value is the definition's own:
- * `required` sends an empty input through `parse` and `schema` like any other text, so the
- * schema refuses it on the field; without it, clearing saves `null`.
+ * `null`, which drops the override. A plain `current` value is the definition's own: an
+ * empty input goes through `parse` and `schema` like any other text, so the schema refuses
+ * it on the field.
  */
 export type EditableFieldProps<T> = {
   mode: "edit";
@@ -25,13 +25,11 @@ export type EditableFieldProps<T> = {
   debounceMs?: number;
   labelHidden?: boolean;
   inputClassName?: string;
-  placeholder?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
   messageSlot?: FormFieldProps["messageSlot"];
 } & (
-  | { value: Derived<T>; required?: never; onSave: (next: T | null) => Promise<void> }
-  | { current: T; required: true; onSave: (next: T) => Promise<void> }
-  | { current: T; required?: false; onSave: (next: T | null) => Promise<void> }
+  | { value: Derived<T>; onSave: (next: T | null) => Promise<void> }
+  | { current: T; onSave: (next: T) => Promise<void> }
 );
 
 const DEFAULT_DEBOUNCE_MS = 500;
@@ -45,7 +43,6 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     debounceMs = DEFAULT_DEBOUNCE_MS,
     labelHidden,
     inputClassName,
-    placeholder,
     inputMode,
     messageSlot,
   } = props;
@@ -90,7 +87,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     clearTimeout(timer.current);
     if (raw === savedText.current) return;
 
-    if (raw.trim() === "" && !props.required) {
+    if (raw.trim() === "" && "value" in props) {
       const { onSave } = props;
       await save(raw, undefined, () => onSave(null));
       return;
@@ -156,7 +153,6 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       labelHidden={labelHidden}
       className={inputClassName}
       type="text"
-      placeholder={placeholder}
       inputMode={inputMode}
       messageSlot={messageSlot}
       value={text}

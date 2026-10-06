@@ -49,7 +49,6 @@ export function AbilityScores({
               mode="edit"
               label={`${ABILITY_LABEL[ability]} score`}
               labelHidden
-              required
               current={definition.abilityScores[ability]}
               format={String}
               parse={parseScore}
@@ -57,7 +56,7 @@ export function AbilityScores({
               inputClassName="w-12 text-center"
               inputMode="numeric"
               messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
-              onSave={async (score) => {
+              onSave={async (score: number) => {
                 await update.mutateAsync((latest) => ({
                   ...latest,
                   abilityScores: { ...latest.abilityScores, [ability]: score },

@@ -37,12 +37,11 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
           mode="edit"
           label="Name"
           labelHidden
-          required
           current={definition.name}
           format={(name) => name}
           parse={(raw) => raw.trim()}
           schema={characterDefinitionSchema.shape.name}
-          onSave={async (name) => {
+          onSave={async (name: string) => {
             await update.mutateAsync((latest) => ({ ...latest, name }));
           }}
         />
