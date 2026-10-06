@@ -14,7 +14,8 @@ import { StatTile } from "./StatTile.tsx";
 
 const ABILITY_LABEL_CLASS = "text-[10px] tracking-[0.06em]";
 
-const parseScore = (raw: string) => Number(raw.trim());
+/** Digits only: `Number` reads "1e1" and "0x1E" as scores the user never typed. */
+const parseScore = (raw: string) => (/^\d+$/.test(raw.trim()) ? Number(raw.trim()) : Number.NaN);
 
 export function AbilityScores({
   character,

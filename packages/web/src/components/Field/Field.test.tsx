@@ -1,4 +1,4 @@
-import { characterDerivedSchema } from "@dnd/character";
+import { characterDefinitionSchema, characterDerivedSchema } from "@dnd/character";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Field } from "./Field.tsx";
@@ -395,5 +395,55 @@ describe("Field, edit mode, a value changed from outside", () => {
     rerender(edit(15));
 
     expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveValue("20");
+  });
+});
+
+describe("Field, edit mode, a plain value", () => {
+  it("keeps the text being typed when its own save reads back normalized", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const name = (current: string) => (
+      <Field
+        mode="edit"
+        label="Name"
+        required
+        current={current}
+        format={(value: string) => value}
+        parse={(raw) => raw.trim()}
+        schema={characterDefinitionSchema.shape.name}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />
+    );
+    const { rerender } = render(name("Ve"));
+    const input = screen.getByRole("textbox", { name: "Name" });
+
+    fireEvent.change(input, { target: { value: "Vex " } });
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith("Vex"));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    rerender(name("Vex"));
+
+    expect(input).toHaveValue("Vex ");
+  });
+
+  it("refuses a name of spaces alone", async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    render(
+      <Field
+        mode="edit"
+        label="Name"
+        required
+        current="Vex"
+        format={(value: string) => value}
+        parse={(raw) => raw.trim()}
+        schema={characterDefinitionSchema.shape.name}
+        onSave={onSave}
+        debounceMs={DEBOUNCE_MS}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Name" }), { target: { value: "   " } });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("A character needs a name.");
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

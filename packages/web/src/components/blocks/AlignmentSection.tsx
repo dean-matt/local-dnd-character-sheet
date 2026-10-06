@@ -18,8 +18,6 @@ const ALIGNMENTS = [
   "Chaotic Evil",
 ];
 
-const same = (text: string) => text;
-
 export function AlignmentSection({ character }: { character: CharacterRecord | undefined }) {
   const update = useUpdateCharacterDefinition(character?.id ?? "");
   const listId = useId();
@@ -31,8 +29,8 @@ export function AlignmentSection({ character }: { character: CharacterRecord | u
         label="Alignment"
         labelHidden
         current={character.definition.alignment ?? ""}
-        format={same}
-        parse={same}
+        format={(alignment) => alignment}
+        parse={(raw) => raw.trim()}
         schema={characterDefinitionSchema.shape.alignment.unwrap()}
         list={listId}
         placeholder="No alignment set"

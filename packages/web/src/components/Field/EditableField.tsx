@@ -55,6 +55,9 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   // check against `status`, which a keystroke resets on every change and so
   // cannot reliably say whether the current text was ever saved.
   const savedText = useRef<string>(incoming);
+  // How the last save reads back once formatted: "Vex " saves as "Vex", and that echo
+  // must not replace the text the user is still typing.
+  const echo = useRef<string | undefined>(undefined);
   const textRef = useRef(text);
   const queue = useRef(Promise.resolve());
 
@@ -63,7 +66,9 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   // A value set from outside the field, such as by undo, replaces the text only while
   // the field holds no unsaved edit: the user's own typing outranks it.
   useEffect(() => {
-    if (incoming === savedText.current || textRef.current !== savedText.current) return;
+    if (incoming === savedText.current || incoming === echo.current) return;
+    if (textRef.current !== savedText.current) return;
+    echo.current = undefined;
     savedText.current = incoming;
     textRef.current = incoming;
     setText(incoming);
@@ -82,7 +87,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
 
     if (raw.trim() === "" && !props.required) {
       const { onSave } = props;
-      await save(raw, () => onSave(null));
+      await save(raw, undefined, () => onSave(null));
       return;
     }
 
@@ -101,19 +106,20 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       return;
     }
     const { onSave } = props;
-    await save(raw, () => onSave(result.data));
+    await save(raw, format(result.data), () => onSave(result.data));
   }
 
   // Chained on `queue` rather than fired directly: a commit that lands while a
   // prior save is still in flight waits for it, so the status shown always
   // reflects the most recently attempted write rather than whichever settles first.
-  async function save(raw: string, write: () => Promise<void>) {
+  async function save(raw: string, formatted: string | undefined, write: () => Promise<void>) {
     const run = async () => {
       setStatus("saving");
       setError(undefined);
       try {
         await write();
         savedText.current = raw;
+        echo.current = formatted;
         setStatus("saved");
       } catch (err) {
         setStatus("failed");

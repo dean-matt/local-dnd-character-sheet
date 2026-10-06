@@ -12,7 +12,7 @@ import {
   charactersKey,
 } from "./characterKeys.ts";
 
-export type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
+type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
 
 /**
  * Applies an edit to a character's definition and writes the result. The edit runs when

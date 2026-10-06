@@ -21,8 +21,6 @@ import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
 /** A tool held at `none` grants nothing, so it earns no chip. */
 const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertise: " (expertise)" };
 
-const same = (text: string) => text;
-
 export function IdentitySection({ character }: { character: CharacterRecord | undefined }) {
   const update = useUpdateCharacterDefinition(character?.id ?? "");
   if (!character) return <SectionUnavailable page="Identity" />;
@@ -41,8 +39,8 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
           labelHidden
           required
           current={definition.name}
-          format={same}
-          parse={same}
+          format={(name) => name}
+          parse={(raw) => raw.trim()}
           schema={characterDefinitionSchema.shape.name}
           onSave={async (name) => {
             await update.mutateAsync((latest) => ({ ...latest, name }));

@@ -124,6 +124,21 @@ describe("AbilitiesSection", () => {
     expect(spoken(tile("Ability Scores", "Charisma"))).toContain("modifier+3");
   });
 
+  it.each(["1e1", "0x1E", "+5"])(
+    "refuses %s rather than saving the number it spells",
+    async (raw) => {
+      renderSection();
+
+      const score = screen.getByRole("textbox", { name: "Strength score" });
+      fireEvent.change(score, { target: { value: raw } });
+      fireEvent.blur(score);
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "A score is a whole number from 1 to 30.",
+      );
+    },
+  );
+
   it("reports a score the schema refuses on its own field, keeping what was typed", async () => {
     renderSection();
 
