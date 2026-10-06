@@ -13,8 +13,8 @@ type SaveStatus = "idle" | "saving" | "saved" | "invalid" | "failed";
 /**
  * `Field`'s edit state. A derived `value` writes its manual half, and clearing it saves
  * `null`, which drops the override. A plain `current` value is the definition's own: an
- * empty input goes through `parse` and `schema` like any other text, so the schema refuses
- * it on the field.
+ * empty input goes through `parse` and `schema` like any other text, so the schema decides
+ * whether it saves.
  */
 export type EditableFieldProps<T> = {
   mode: "edit";
