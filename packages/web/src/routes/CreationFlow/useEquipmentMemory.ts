@@ -9,8 +9,18 @@ const KEY = "draft:creation:equipment";
  * The stored picks' outline, so a key an older build wrote in another shape reads as no
  * picks rather than throwing on the reload it exists for.
  */
+const sourcePicksSchema = z.object({
+  row: z.string(),
+  options: z.record(z.string(), z.string()),
+  slots: z.record(z.string(), z.unknown()),
+});
+
 const storedSchema = z.object({
-  picks: z.record(z.string(), z.unknown()),
+  picks: z.object({
+    Class: sourcePicksSchema.optional(),
+    Background: sourcePicksSchema.optional(),
+  }),
+  gold: z.object({ row: z.string(), gp: z.number() }).optional(),
   landed: characterDefinitionSchema.shape.inventory,
   names: z.record(z.string(), z.string()),
 });
