@@ -21,8 +21,8 @@ import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
 
 // An unavailable row still counts against this bound, so a broad query can fill the page
-// with rows the caller rejects. The way out is a narrowing filter on `/search`, such as
-// spell level or class list, passed through beside `type`.
+// with rows the caller rejects. The way out is a narrowing filter on `/search`, passed
+// through `filters`.
 const RESULT_LIMIT = 20;
 
 export interface CatalogPickerProps {
@@ -30,6 +30,8 @@ export interface CatalogPickerProps {
   edition: CharacterRecord["edition"];
   /** The one kind of row offered, such as `spell` or `feat`. */
   type: string;
+  /** Any further `/search` parameter narrowing the rows offered, such as an item `kind`. */
+  filters?: Record<string, string>;
   /** Why `hit` cannot be picked here, or `undefined` where it can. */
   unavailableReason?: (hit: SearchHit) => string | undefined;
   /** A line under `hit`'s name, or `undefined` for none. */
@@ -60,6 +62,7 @@ export function CatalogPicker({
   label,
   edition,
   type,
+  filters,
   unavailableReason,
   describe,
   onPick,
@@ -76,7 +79,14 @@ export function CatalogPicker({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   // An open picker with no text lists every row, so a player can browse before typing.
-  const search = useCatalogSearch({ edition, type, query, limit: RESULT_LIMIT, listAll: open });
+  const search = useCatalogSearch({
+    edition,
+    type,
+    query,
+    limit: RESULT_LIMIT,
+    listAll: open,
+    filters,
+  });
   const id = useId();
   const listboxId = `${id}-listbox`;
   const optionId = (index: number) => `${id}-option-${index}`;

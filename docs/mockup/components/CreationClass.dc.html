@@ -249,7 +249,7 @@ class Component extends DCLogic {
       toggleRail: () => this.setState({ railCollapsed: !this.state.railCollapsed }),
       steps: ['Identity', 'Class', 'Ability Scores', 'Proficiencies & Equipment', 'Spells'].map((label, i) => {
         const n = i + 1;
-        const files = [null, 'CreationClass.dc.html', null, 'CreationProficiencies.dc.html', 'CreationSpells.dc.html'];
+        const files = [null, 'CreationClass.dc.html', null, null, 'CreationSpells.dc.html'];
         const current = n === 2;
         const done = n < 2;
         return {
