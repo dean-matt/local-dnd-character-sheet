@@ -71,7 +71,7 @@ export function tally<T>(
 }
 
 /** How many of the offers' picks the things nothing grants can fill at most. */
-export function fillable<T>(
+function fillable<T>(
   offers: readonly Offer<T>[],
   granted: ReadonlySet<string>,
   key: Key<T>,
@@ -103,4 +103,41 @@ export function spent<T>(
     0,
   );
   return filled >= fillable(offers, granted, key);
+}
+
+/**
+ * The 2014 rule's replacement: a character who would gain the same proficiency from two
+ * sources picks any other of its kind instead. That is each thing two grants give, and each
+ * pick the offers cannot fill once the grants are counted. `count` is how many picks, `name`
+ * what they replace, and `noun` the kind `name` speaks of. `undefined` where nothing is
+ * gained twice.
+ */
+export function duplicates<T>(
+  offers: readonly (Offer<T> & { name: string })[],
+  granted: readonly { item: T; by: string }[],
+  key: Key<T>,
+  label: (item: T) => string,
+  noun: string,
+): { count: number; name: string } | undefined {
+  const bys = new Map<string, { item: T; by: string[] }>();
+  for (const grant of granted) {
+    const each = bys.get(key(grant.item)) ?? { item: grant.item, by: [] };
+    each.by.push(grant.by);
+    bys.set(key(grant.item), each);
+  }
+  const twice = [...bys.values()].filter((each) => each.by.length > 1);
+  const unfilled =
+    offers.reduce((sum, offer) => sum + offer.count, 0) -
+    fillable(offers, new Set(bys.keys()), key);
+  const count = twice.reduce((sum, each) => sum + each.by.length - 1, 0) + unfilled;
+  if (count === 0) return undefined;
+  const reasons = [
+    ...twice.map((each) => `${label(each.item)}, granted by both ${each.by.join(" and ")}`),
+    ...(unfilled > 0
+      ? [
+          `${unfilled === 1 ? "a pick" : `${unfilled} picks`} the ${new Intl.ListFormat("en").format(offers.map((offer) => offer.name))} ${offers.length === 1 ? "list has" : "lists have"} no ${noun} left for`,
+        ]
+      : []),
+  ];
+  return { count, name: reasons.join("; ") };
 }

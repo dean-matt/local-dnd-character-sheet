@@ -70,6 +70,25 @@ const GUILD_ARTISAN = {
   json: { ...PHB("Guild Artisan"), toolProficiencies: [{ anyArtisansTool: 1 }] },
 };
 
+const ROGUE = {
+  ...PHB("Rogue"),
+  edition: "classic",
+  hitDie: 8,
+  json: {
+    ...PHB("Rogue"),
+    startingProficiencies: {
+      skills: [{ choose: { from: ["stealth", "insight"], count: 1 } }],
+      toolProficiencies: [{ "thieves' tools": true }],
+    },
+  },
+};
+
+const CRIMINAL = {
+  ...PHB("Criminal"),
+  edition: "classic",
+  json: { ...PHB("Criminal"), toolProficiencies: [{ "thieves' tools": true }] },
+};
+
 const HALF_ORC = {
   ...PHB("Half-Orc"),
   edition: "classic",
@@ -91,12 +110,17 @@ const LEONIN = {
 
 const ROWS: Record<string, unknown> = {
   "/api/classes/Wizard/PHB": WIZARD,
+  "/api/classes/Rogue/PHB": ROGUE,
   "/api/races/Half-Orc/PHB": HALF_ORC,
   "/api/races/Leonin/MOT": LEONIN,
   ...Object.fromEntries(
     ["classic", "one"].flatMap((edition) => [
       [`/api/classes/Wizard/PHB/subclasses?edition=${edition}&limit=200`, page([])],
-      [`/api/backgrounds?edition=${edition}&limit=200`, page([SAGE, SOLDIER, GUILD_ARTISAN])],
+      [`/api/classes/Rogue/PHB/subclasses?edition=${edition}&limit=200`, page([])],
+      [
+        `/api/backgrounds?edition=${edition}&limit=200`,
+        page([SAGE, SOLDIER, GUILD_ARTISAN, CRIMINAL]),
+      ],
       [`/api/races/Half-Orc/PHB/subraces?edition=${edition}&limit=200`, page([])],
       [`/api/races/Leonin/MOT/subraces?edition=${edition}&limit=200`, page([])],
     ]),
@@ -420,6 +444,53 @@ describe("ProficienciesStep", () => {
       expect(
         await screen.findByRole("group", { name: "Any skill, in place of a duplicate" }),
       ).toBeVisible();
+    });
+  });
+
+  describe("a tool the class and the background both grant", () => {
+    const draft = (more: object) =>
+      localStorage.setItem(
+        "draft:creation",
+        JSON.stringify({
+          edition: "classic",
+          background: PHB("Criminal"),
+          levels: [{ class: PHB("Rogue") }],
+          ...more,
+        }),
+      );
+    const NAME = "Any tool, in place of a duplicate";
+
+    it("earns a classic character a pick of any tool in its place, which departs from nothing", async () => {
+      draft({});
+      renderStep({ keepDraft: true });
+
+      const group = await screen.findByRole("group", { name: NAME });
+      expect(
+        within(group).getByText(
+          "In place of Thieves' Tools, granted by both Background and Class.",
+        ),
+      ).toBeVisible();
+      expect(within(group).getByText("Choose 1 — 0 selected")).toBeVisible();
+      fireEvent.click(within(group).getByRole("checkbox", { name: "Lute" }));
+
+      await waitFor(() =>
+        expect(values.proficiencies?.tools.map((tool) => tool.name)).toContain("Lute"),
+      );
+      expect(within(group).getByText("Choose 1 — 1 selected")).toBeVisible();
+      expect(screen.queryByRole("group", { name: "Other tools" })).toBeNull();
+      expect(values.departures ?? []).toEqual([]);
+    });
+
+    it("earns a 2024 character nothing, unless the table plays the 2014 replacement", async () => {
+      draft({ edition: "one" });
+      const { unmount } = renderStep({ keepDraft: true });
+      await screen.findByRole("group", { name: "From Class: Rogue" });
+      expect(screen.queryByRole("group", { name: NAME })).toBeNull();
+      unmount();
+
+      draft({ edition: "one", houseRules: { duplicateToolReplacement: true } });
+      renderStep({ keepDraft: true });
+      expect(await screen.findByRole("group", { name: NAME })).toBeVisible();
     });
   });
 
