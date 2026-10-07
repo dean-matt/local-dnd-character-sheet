@@ -41,7 +41,7 @@ for (const height of [800, 360]) {
     await input.scrollIntoViewIfNeeded();
     const before = await pageHeight(page);
 
-    await input.fill("Race");
+    await input.focus();
     const list = page.getByRole("listbox", { name: "Race" });
     await expect(list.getByRole("option")).toHaveCount(20);
     await expectInsideViewport(page, list);
