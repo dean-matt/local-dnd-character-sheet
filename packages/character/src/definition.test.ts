@@ -752,6 +752,14 @@ describe("invariants a duplicate row would break", () => {
     expect(characterDefinitionSchema.safeParse(typed(0)).success).toBe(true);
     expect(characterDefinitionSchema.safeParse(typed(1.5)).success).toBe(false);
   });
+
+  it("bounds a gain at 999 either way, so a summed maximum stays a safe integer", () => {
+    const typed = (rolled: number) => ({ ...definition, levels: [{ class: ROGUE, rolled }] });
+    expect(characterDefinitionSchema.safeParse(typed(999)).success).toBe(true);
+    expect(characterDefinitionSchema.safeParse(typed(-999)).success).toBe(true);
+    expect(characterDefinitionSchema.safeParse(typed(1000)).success).toBe(false);
+    expect(characterDefinitionSchema.safeParse(typed(-1000)).success).toBe(false);
+  });
 });
 
 describe("a key the schema does not name", () => {

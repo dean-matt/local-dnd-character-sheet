@@ -48,6 +48,7 @@ export {
   type CharacterRecord,
   characterDefinitionSchema,
   characterRecordSchema,
+  MAX_HIT_POINT_GAIN,
 } from "./definition.ts";
 export {
   deriveCharacter,

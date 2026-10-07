@@ -1,4 +1,9 @@
-import { type CharacterDefinition, type HitDie, hitPointSource } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  type HitDie,
+  hitPointSource,
+  MAX_HIT_POINT_GAIN,
+} from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
 type Departures = CharacterDefinition["departures"];
@@ -49,10 +54,10 @@ export function hitPointMethodOf(levels: readonly Level[], die: number): HitPoin
   return "roll";
 }
 
-/** A typed gain, or `null` for text that is not a whole number; an empty field is `undefined`. */
+/** A typed gain, or `null` for text that is not a whole number the definition can hold; an empty field is `undefined`. */
 export function parseGain(text: string): number | undefined | null {
   const trimmed = text.trim();
   if (trimmed === "") return undefined;
   const gain = Number(trimmed);
-  return /^-?\d+$/.test(trimmed) && Number.isSafeInteger(gain) ? gain : null;
+  return /^-?\d+$/.test(trimmed) && Math.abs(gain) <= MAX_HIT_POINT_GAIN ? gain : null;
 }
