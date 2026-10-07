@@ -1,5 +1,5 @@
 import type { ClassProficiencyGrants, ProficiencyGrants, SearchHit } from "@dnd/catalog";
-import { type CharacterDefinition, refKey } from "@dnd/character";
+import { type CharacterDefinition, type ContentRef, refKey } from "@dnd/character";
 
 type Proficiencies = CharacterDefinition["proficiencies"];
 
@@ -50,23 +50,34 @@ const skillKey = (skill: Granted["skills"][number]) => refKey(skill.ref);
 const toolKey = (tool: Granted["tools"][number]) => lower(tool.name);
 
 /**
- * `grants` resolved against the skill and language rows in `hits`, preferring the core
- * book's row where several books print one, as `Common` is printed seven times. A name no
- * row answers grants nothing, since a reference must name a row.
+ * The skill or language row in `hits` that `name` names, lowercased as upstream writes it,
+ * preferring the core book's row where several books print one, as `Common` is printed
+ * seven times. `undefined` where no row answers.
+ */
+export function catalogRow(
+  hits: readonly SearchHit[],
+  type: "skill" | "language",
+  name: string,
+  edition: CharacterDefinition["edition"],
+): ContentRef | undefined {
+  const matches = hits.flatMap((hit) =>
+    hit.type === type && "source" in hit && lower(hit.name) === name
+      ? [{ name: hit.name, source: hit.source }]
+      : [],
+  );
+  return matches.find((ref) => ref.source === CORE_SOURCE[edition]) ?? matches[0];
+}
+
+/**
+ * `grants` resolved against the skill and language rows in `hits`. A name no row answers
+ * grants nothing, since a reference must name a row.
  */
 export function resolveGrants(
   grants: readonly RowGrants[],
   hits: readonly SearchHit[],
   edition: CharacterDefinition["edition"],
 ): Granted {
-  const row = (type: "skill" | "language", name: string) => {
-    const matches = hits.flatMap((hit) =>
-      hit.type === type && "source" in hit && lower(hit.name) === name
-        ? [{ name: hit.name, source: hit.source }]
-        : [],
-    );
-    return matches.find((ref) => ref.source === CORE_SOURCE[edition]) ?? matches[0];
-  };
+  const row = (type: "skill" | "language", name: string) => catalogRow(hits, type, name, edition);
   const all = <T extends string>(pick: (grant: RowGrants) => T[]) => [
     ...new Set(grants.flatMap(pick)),
   ];

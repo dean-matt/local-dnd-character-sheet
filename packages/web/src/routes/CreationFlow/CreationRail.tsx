@@ -1,9 +1,11 @@
 import { Rail } from "../Rail.tsx";
 import { CREATION_STEPS, type CreationStep } from "./creationSteps.ts";
+import type { EquipmentMemory } from "./equipmentPicks.ts";
 import { StepRow } from "./StepRow.tsx";
 import { useAbilitiesDone } from "./useAbilitiesDone.ts";
 import { useClassDone } from "./useClassDone.ts";
 import { useIdentityDone } from "./useIdentityDone.ts";
+import { useProficienciesDone } from "./useProficienciesDone.ts";
 
 /**
  * The flow's step list, the current step marked. Every step is a link, because the flow
@@ -11,15 +13,24 @@ import { useIdentityDone } from "./useIdentityDone.ts";
  * as done only while its own choices are complete, never for having been passed. Collapsed,
  * it shows the step numbers alone, each label kept for a screen reader.
  */
-export function CreationRail({ current }: { current: CreationStep }) {
+export function CreationRail({
+  current,
+  equipment,
+}: {
+  current: CreationStep;
+  /** The starting-equipment picks the flow holds, which the step's done mark reads. */
+  equipment: EquipmentMemory;
+}) {
   const currentIndex = CREATION_STEPS.indexOf(current);
   const identityDone = useIdentityDone();
   const classDone = useClassDone();
   const abilitiesDone = useAbilitiesDone();
+  const proficienciesDone = useProficienciesDone(equipment);
   const done = new Set<CreationStep["slug"]>([
     ...(identityDone ? ["identity" as const] : []),
     ...(classDone ? ["class" as const] : []),
     ...(abilitiesDone ? ["abilities" as const] : []),
+    ...(proficienciesDone ? ["equipment" as const] : []),
   ]);
   return (
     <Rail>

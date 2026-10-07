@@ -1,4 +1,4 @@
-import { defenseTraitSchema, type RaceEntry, raceTraitsSchema } from "@dnd/catalog";
+import { defenseTraitSchema, raceTraitsSchema } from "@dnd/catalog";
 import type { CharacterDefinition } from "@dnd/character";
 
 type Size = NonNullable<CharacterDefinition["size"]>;
@@ -8,7 +8,7 @@ type Size = NonNullable<CharacterDefinition["size"]>;
  * than one, and a damage type where it offers a choice of resistance. Each list is empty
  * where the row decides for itself.
  */
-export function raceChoices(json: RaceEntry | undefined): {
+export function raceChoices(json: object | undefined): {
   sizes: readonly Size[];
   resistances: readonly string[];
 } {

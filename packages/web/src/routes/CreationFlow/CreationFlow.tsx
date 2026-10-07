@@ -6,16 +6,20 @@ import { SidebarFrame } from "../SidebarFrame.tsx";
 import { AbilityScoresStep } from "./AbilityScoresStep.tsx";
 import type { AbilitiesMemory } from "./abilityMethods.ts";
 import { ClassStep } from "./ClassStep.tsx";
+import { CreationEquipment } from "./CreationEquipment.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationIncreases } from "./CreationIncreases.tsx";
 import { CreationRail } from "./CreationRail.tsx";
+import { CreationSkills } from "./CreationSkills.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
 import type { HitPointMethod } from "./hitPointGains.ts";
 import { IdentityStep } from "./IdentityStep.tsx";
+import { ProficienciesStep } from "./ProficienciesStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
 import { StepPending } from "./StepPending.tsx";
+import { useEquipmentMemory } from "./useEquipmentMemory.ts";
 
 const { FormShell } = creationForm;
 
@@ -40,6 +44,7 @@ export function CreationFlow() {
   const [fresh] = useState(marked === undefined);
   const [abilities, setAbilities] = useState<AbilitiesMemory>();
   const [hitPoints, setHitPoints] = useState<HitPointMethod>();
+  const [equipment, setEquipment] = useEquipmentMemory(fresh);
   const step = marked ?? CREATION_STEPS[0];
   const footer = useRef<HTMLDivElement>(null);
   useFooterHeight(footer);
@@ -53,6 +58,19 @@ export function CreationFlow() {
     const { to, ...options } = stepLink(CREATION_STEPS[0].slug);
     navigate(to, options);
   }, [fresh, navigate]);
+
+  const body =
+    step.slug === "identity" ? (
+      <IdentityStep />
+    ) : step.slug === "class" ? (
+      <ClassStep memory={hitPoints} onMemory={setHitPoints} />
+    ) : step.slug === "abilities" ? (
+      <AbilityScoresStep memory={abilities} onMemory={setAbilities} />
+    ) : step.slug === "equipment" ? (
+      <ProficienciesStep memory={equipment} onMemory={setEquipment} />
+    ) : (
+      <StepPending />
+    );
 
   const index = CREATION_STEPS.indexOf(step);
   const previous = CREATION_STEPS[index - 1];
@@ -68,7 +86,7 @@ export function CreationFlow() {
       onCancel={() => navigate("/characters")}
     >
       {({ cancel }) => (
-        <SidebarFrame rail={<CreationRail current={step} />}>
+        <SidebarFrame rail={<CreationRail current={step} equipment={equipment} />}>
           <div className="flex min-w-0 flex-1 flex-col">
             <div data-creation-step className="flex flex-1 flex-col gap-4 px-gutter py-6">
               <div>
@@ -80,15 +98,9 @@ export function CreationFlow() {
               <CreationErrors />
               <CreationGrants />
               <CreationIncreases />
-              {step.slug === "identity" ? (
-                <IdentityStep />
-              ) : step.slug === "class" ? (
-                <ClassStep memory={hitPoints} onMemory={setHitPoints} />
-              ) : step.slug === "abilities" ? (
-                <AbilityScoresStep memory={abilities} onMemory={setAbilities} />
-              ) : (
-                <StepPending />
-              )}
+              <CreationSkills />
+              <CreationEquipment memory={equipment} onMemory={setEquipment} />
+              {body}
               <StepDepartures step={step} />
             </div>
             <div

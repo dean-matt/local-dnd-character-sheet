@@ -34,6 +34,13 @@ export const houseRulesSchema = z
      * prints it. A 2024 race grants none, so the option changes nothing there.
      */
     customOrigin: z.boolean().optional(),
+    /**
+     * A 2024 character who would gain the same skill from two sources picks any other
+     * skill in its place, as the 2014 rules give. The 2024 rules print no such
+     * replacement, so absent, the second source earns nothing there. A classic
+     * character earns it either way.
+     */
+    duplicateSkillReplacement: z.boolean().optional(),
   })
   .prefault({});
 
@@ -49,4 +56,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   encumbrance: false,
   optionalClassFeatures: false,
   customOrigin: false,
+  duplicateSkillReplacement: false,
 };

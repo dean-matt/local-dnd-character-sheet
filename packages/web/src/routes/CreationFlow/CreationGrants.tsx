@@ -2,6 +2,7 @@ import { type ProficiencyGrants, proficiencyGrantsSchema } from "@dnd/catalog";
 import type { CharacterDefinition } from "@dnd/character";
 import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
+import { setRefValue } from "../../lib/setRefValue.ts";
 import { type Granted, NO_GRANTS, resolveGrants, swapGrants } from "./grants.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
@@ -42,9 +43,14 @@ export function CreationGrants() {
     const before = landed.current;
     landed.current = granted;
     if (JSON.stringify(before) === key) return;
-    setValue("proficiencies", swapGrants(getValues("proficiencies"), before, granted), {
-      shouldDirty: true,
-    });
+    setRefValue(
+      setValue,
+      "proficiencies",
+      swapGrants(getValues("proficiencies"), before, granted),
+      {
+        shouldDirty: true,
+      },
+    );
   }, [key]);
 
   return null;
