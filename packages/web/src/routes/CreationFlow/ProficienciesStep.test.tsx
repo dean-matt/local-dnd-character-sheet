@@ -7,6 +7,7 @@ import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { CreationEquipment } from "./CreationEquipment.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationSkills } from "./CreationSkills.tsx";
+import { CreationTools } from "./CreationTools.tsx";
 import { creationForm } from "./creationForm.ts";
 import { type EquipmentMemory, NO_EQUIPMENT } from "./equipmentPicks.ts";
 import { ProficienciesStep } from "./ProficienciesStep.tsx";
@@ -17,7 +18,7 @@ const page = (items: unknown[]) => ({ items, total: items.length, limit: 200, of
 const hit = (
   type: string,
   name: string,
-  item?: { kinds: string[]; rarity: string | null; category: string | null },
+  item?: { kinds: string[]; rarity: string | null; category: string | null; tool?: string },
 ) => ({
   type,
   ...PHB(name),
@@ -63,6 +64,12 @@ const SOLDIER = {
   json: { ...PHB("Soldier"), skillProficiencies: [{ athletics: true, intimidation: true }] },
 };
 
+const GUILD_ARTISAN = {
+  ...PHB("Guild Artisan"),
+  edition: "classic",
+  json: { ...PHB("Guild Artisan"), toolProficiencies: [{ anyArtisansTool: 1 }] },
+};
+
 const HALF_ORC = {
   ...PHB("Half-Orc"),
   edition: "classic",
@@ -75,7 +82,7 @@ const ROWS: Record<string, unknown> = {
   ...Object.fromEntries(
     ["classic", "one"].flatMap((edition) => [
       [`/api/classes/Wizard/PHB/subclasses?edition=${edition}&limit=200`, page([])],
-      [`/api/backgrounds?edition=${edition}&limit=200`, page([SAGE, SOLDIER])],
+      [`/api/backgrounds?edition=${edition}&limit=200`, page([SAGE, SOLDIER, GUILD_ARTISAN])],
       [`/api/races/Half-Orc/PHB/subraces?edition=${edition}&limit=200`, page([])],
     ]),
   ),
@@ -98,6 +105,14 @@ const ITEMS: Record<string, ReturnType<typeof hit>[]> = {
     hit("item", "Wand of Magic Missiles", { kinds: ["focus"], rarity: "uncommon", category: null }),
   ],
 };
+const tool = (name: string, kind: string) =>
+  hit("item", name, { kinds: ["tool"], rarity: null, category: null, tool: kind });
+ITEMS.tool = [
+  tool("Smith's Tools", "artisan"),
+  tool("Carpenter's Tools", "artisan"),
+  tool("Lute", "instrument"),
+  tool("Thieves' Tools", "other"),
+];
 const CATALOG = [
   ...["Quarterstaff", "Dagger", "Component Pouch", "Spellbook", "Pouch"].map(PHB),
   { name: "Ink", source: "XPHB" },
@@ -153,19 +168,20 @@ function Step() {
   return (
     <>
       <CreationSkills />
+      <CreationTools />
       <CreationEquipment memory={memory} onMemory={setMemory} />
       <ProficienciesStep memory={memory} onMemory={setMemory} />
     </>
   );
 }
 
-function renderStep({ keepDraft = false } = {}) {
+function renderStep({ keepDraft = false, background = "Sage" } = {}) {
   if (!keepDraft)
     localStorage.setItem(
       "draft:creation",
       JSON.stringify({
         edition: "classic",
-        background: PHB("Sage"),
+        background: PHB(background),
         levels: [{ class: PHB("Wizard") }],
       }),
     );
@@ -487,5 +503,57 @@ describe("ProficienciesStep", () => {
 
     fireEvent.click(checkbox(/^Religion/));
     await waitFor(() => expect(done).toBe(false));
+  });
+
+  it("asks a background's pick of any artisan's tool, and lands the tool picked", async () => {
+    renderStep({ background: "Guild Artisan" });
+
+    const group = await screen.findByRole("group", {
+      name: "Tools from Background: Guild Artisan (artisan's tools)",
+    });
+    expect(
+      within(group)
+        .getAllByRole("checkbox")
+        .map((box) => box.closest("label")?.textContent),
+    ).toEqual(["Carpenter's Tools", "Smith's Tools"]);
+    expect(within(group).getByText("Choose 1 — 0 selected")).toBeVisible();
+
+    fireEvent.click(within(group).getByRole("checkbox", { name: "Smith's Tools" }));
+
+    await waitFor(() =>
+      expect(values.proficiencies?.tools).toEqual([{ name: "Smith's Tools", level: "proficient" }]),
+    );
+    expect(within(group).getByText("Choose 1 — 1 selected")).toBeVisible();
+    expect(values.departures ?? []).toEqual([]);
+  });
+
+  it("notes a tool pick past the count rather than refusing it", async () => {
+    renderStep({ background: "Guild Artisan" });
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Smith's Tools" }));
+    fireEvent.click(checkbox(/^Carpenter's Tools/));
+
+    await waitFor(() =>
+      expect(values.departures).toEqual([
+        {
+          field: "proficiencies.tools",
+          note: "2 tools taken from the Guild Artisan list of artisan's tools, which offers 1.",
+        },
+      ]),
+    );
+    fireEvent.click(checkbox(/^Carpenter's Tools/));
+    await waitFor(() => expect(values.departures).toEqual([]));
+  });
+
+  it("reads as done only once the tool pick is made too", async () => {
+    renderStep({ background: "Guild Artisan" });
+    fireEvent.click(await screen.findByRole("checkbox", { name: /^Insight/ }));
+    fireEvent.click(checkbox(/^Religion/));
+    fireEvent.click(radio(/\(a\) Quarterstaff/));
+    fireEvent.click(radio(/\(a\) Component Pouch/));
+    await waitFor(() => expect(values.proficiencies?.skills).toHaveLength(2));
+    expect(done).toBe(false);
+
+    fireEvent.click(checkbox(/^Smith's Tools/));
+    await waitFor(() => expect(done).toBe(true));
   });
 });

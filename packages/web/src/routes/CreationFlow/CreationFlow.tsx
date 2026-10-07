@@ -12,6 +12,7 @@ import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationIncreases } from "./CreationIncreases.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { CreationSkills } from "./CreationSkills.tsx";
+import { CreationTools } from "./CreationTools.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
 import type { HitPointMethod } from "./hitPointGains.ts";
@@ -99,6 +100,7 @@ export function CreationFlow() {
               <CreationGrants />
               <CreationIncreases />
               <CreationSkills />
+              <CreationTools />
               <CreationEquipment memory={equipment} onMemory={setEquipment} />
               {body}
               <StepDepartures step={step} />

@@ -73,7 +73,7 @@ export {
   itemRecordSchema,
   weaponTraitSchema,
 } from "./item.ts";
-export type { ItemHitFacts, ItemKind } from "./item-kind.ts";
+export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
 export { ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
 export type { ClassProficiencyGrants, ProficiencyGrants } from "./proficiency-grants.ts";
 export {
@@ -138,3 +138,5 @@ export {
   backgroundStartingEquipmentSchema,
   classStartingEquipmentSchema,
 } from "./starting-equipment.ts";
+export type { ToolChoice } from "./tool-choice.ts";
+export { backgroundToolChoicesSchema, classToolChoicesSchema } from "./tool-choice.ts";
