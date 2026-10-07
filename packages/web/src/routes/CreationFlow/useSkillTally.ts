@@ -15,7 +15,7 @@ export function useSkillTally() {
   const skills = (proficiencies ?? NO_GRANTS).skills;
   const tally = tallySkills(
     found.offers,
-    found.granted.map((grant) => grant.ref),
+    found.granted,
     skills.map((skill) => skill.ref),
   );
   return { ...found, skills, tally };

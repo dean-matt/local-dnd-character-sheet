@@ -12,16 +12,18 @@ const byName = (a: ContentRef, b: ContentRef) => a.name.localeCompare(b.name);
 /**
  * The skills the race and background grant, and a checkbox list for each pick the class
  * and the background offer. A skill a grant already covers shows checked and disabled, so
- * it cannot be picked twice and wasted. The count each list allows is a note rather than
- * a fence: a pick past it is kept, and `CreationSkills` notes it as a departure, as it
- * does a skill no list offers any more, such as one a changed class left behind, which
- * stays listed here so it can be cleared.
+ * it cannot be picked twice and wasted; where the rules give a pick of any skill in place
+ * of one gained twice, a list of every skill offers it. The count each list allows is a
+ * note rather than a fence: a pick past it is kept, and `CreationSkills` notes it as a
+ * departure, as it does a skill no list offers any more, such as one a changed class left
+ * behind, which stays listed here so it can be cleared.
  */
 export function SkillChoicesField() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const found = useSkillTally();
   if (found === undefined) return null;
   const { granted, offers, skills, tally } = found;
+  const replacement = offers.some((offer) => offer.by === "Replacement");
   const grantedBy = new Map(granted.map((grant) => [refKey(grant.ref), grant.by]));
   const held = new Set(skills.map((skill) => refKey(skill.ref)));
   const toggle = (ref: ContentRef) => {
@@ -70,22 +72,23 @@ export function SkillChoicesField() {
       )}
       {offers.map((offer, index) => {
         const taken = tally.picked[index]?.length ?? 0;
-        const wanted = needed(
-          offer,
-          granted.map((grant) => grant.ref),
-        );
+        const wanted = needed(offer, granted);
+        const replaces = offer.by === "Replacement";
         return (
           <fieldset key={offer.by} className="flex flex-col gap-1">
             <legend className={HEADING}>
-              From {offer.by}: {offer.name}
+              {replaces ? "Any skill, in place of a duplicate" : `From ${offer.by}: ${offer.name}`}
             </legend>
             <p
               aria-live="polite"
               className={`mt-1 text-row ${taken === wanted ? "text-muted" : "font-semibold text-accent-text"}`}
             >
               Choose {offer.count} — {taken} selected
-              {wanted < offer.count && `, all the list has left once the grants are counted`}
+              {!replaces &&
+                wanted < offer.count &&
+                `, all the list has left once the grants are counted${replacement ? ", so any skill below makes up the rest" : ""}`}
             </p>
+            {replaces && <p className="text-muted text-row">In place of {offer.name}.</p>}
             {[...offer.options].sort(byName).map(checkbox)}
           </fieldset>
         );

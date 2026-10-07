@@ -1,5 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useState } from "react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -53,15 +53,40 @@ const SAGE = {
   },
 };
 
-const ROWS: Record<string, unknown> = {
-  "/api/classes/Wizard/PHB": WIZARD,
-  "/api/classes/Wizard/PHB/subclasses?edition=classic&limit=200": page([]),
-  "/api/backgrounds?edition=classic&limit=200": page([SAGE]),
+const SOLDIER = {
+  ...PHB("Soldier"),
+  edition: "classic",
+  json: { ...PHB("Soldier"), skillProficiencies: [{ athletics: true, intimidation: true }] },
 };
 
-const SKILLS = ["Arcana", "History", "Insight", "Medicine", "Religion"].map((name) =>
-  hit("skill", name),
-);
+const HALF_ORC = {
+  ...PHB("Half-Orc"),
+  edition: "classic",
+  json: { ...PHB("Half-Orc"), skillProficiencies: [{ intimidation: true }] },
+};
+
+const ROWS: Record<string, unknown> = {
+  "/api/classes/Wizard/PHB": WIZARD,
+  "/api/races/Half-Orc/PHB": HALF_ORC,
+  ...Object.fromEntries(
+    ["classic", "one"].flatMap((edition) => [
+      [`/api/classes/Wizard/PHB/subclasses?edition=${edition}&limit=200`, page([])],
+      [`/api/backgrounds?edition=${edition}&limit=200`, page([SAGE, SOLDIER])],
+      [`/api/races/Half-Orc/PHB/subraces?edition=${edition}&limit=200`, page([])],
+    ]),
+  ),
+};
+
+const SKILLS = [
+  "Arcana",
+  "Athletics",
+  "History",
+  "Insight",
+  "Intimidation",
+  "Medicine",
+  "Religion",
+  "Stealth",
+].map((name) => hit("skill", name));
 const ITEMS: Record<string, unknown[]> = {
   "": [hit("item", "Rope", { kinds: ["gear"], rarity: null, category: null })],
   focus: [hit("item", "Wand", { kinds: ["focus"], rarity: null, category: null })],
@@ -133,7 +158,7 @@ function renderStep({ keepDraft = false } = {}) {
         levels: [{ class: PHB("Wizard") }],
       }),
     );
-  renderWithClient(
+  return renderWithClient(
     <creationForm.FormShell onSubmit={() => {}}>
       {() => (
         <>
@@ -235,6 +260,56 @@ describe("ProficienciesStep", () => {
 
     await waitFor(() => expect(values.departures).toEqual([]));
     expect(screen.queryByRole("group", { name: "Other skills" })).toBeNull();
+  });
+
+  describe("a skill the race and the background both grant", () => {
+    const draft = (more: object) =>
+      localStorage.setItem(
+        "draft:creation",
+        JSON.stringify({
+          edition: "classic",
+          race: PHB("Half-Orc"),
+          background: PHB("Soldier"),
+          levels: [{ class: PHB("Wizard") }],
+          ...more,
+        }),
+      );
+    const replacement = () =>
+      screen.queryByRole("group", { name: "Any skill, in place of a duplicate" });
+
+    it("earns a classic character a pick of any skill in its place, which departs from nothing", async () => {
+      draft({});
+      renderStep({ keepDraft: true });
+
+      const group = await screen.findByRole("group", {
+        name: "Any skill, in place of a duplicate",
+      });
+      expect(
+        within(group).getByText("In place of Intimidation, granted by both Race and Background."),
+      ).toBeVisible();
+      fireEvent.click(within(group).getByRole("checkbox", { name: "Stealth" }));
+
+      await waitFor(() =>
+        expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toContain("Stealth"),
+      );
+      expect(within(group).getByText("Choose 1 — 1 selected")).toBeVisible();
+      expect(screen.queryByRole("group", { name: "Other skills" })).toBeNull();
+      expect(values.departures ?? []).toEqual([]);
+    });
+
+    it("earns a 2024 character nothing, unless the table plays the 2014 replacement", async () => {
+      draft({ edition: "one" });
+      const { unmount } = renderStep({ keepDraft: true });
+      await screen.findByRole("group", { name: "From Class: Wizard" });
+      expect(replacement()).toBeNull();
+      unmount();
+
+      draft({ edition: "one", houseRules: { duplicateSkillReplacement: true } });
+      renderStep({ keepDraft: true });
+      expect(
+        await screen.findByRole("group", { name: "Any skill, in place of a duplicate" }),
+      ).toBeVisible();
+    });
   });
 
   it("lands what the lists give outright, then a pick, and takes back the pick it replaces", async () => {

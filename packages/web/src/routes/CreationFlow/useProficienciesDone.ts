@@ -2,7 +2,7 @@ import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/charac
 import { useWatch } from "react-hook-form";
 import { stepOf } from "./creationSteps.ts";
 import { type EquipmentMemory, isComplete } from "./equipmentPicks.ts";
-import { needed } from "./skillPicks.ts";
+import { skillsSpent } from "./skillPicks.ts";
 import { useHeldEquipment } from "./useHeldEquipment.ts";
 import { useSkillTally } from "./useSkillTally.ts";
 
@@ -20,9 +20,5 @@ export function useProficienciesDone(memory: EquipmentMemory): boolean {
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "equipment",
   );
   if (faulted || skills === undefined || sources === undefined) return false;
-  const granted = skills.granted.map((grant) => grant.ref);
-  const spent = skills.offers.every(
-    (offer, index) => (skills.tally.picked[index]?.length ?? 0) >= needed(offer, granted),
-  );
-  return spent && isComplete(sources, memory);
+  return skillsSpent(skills.offers, skills.granted, skills.tally) && isComplete(sources, memory);
 }
