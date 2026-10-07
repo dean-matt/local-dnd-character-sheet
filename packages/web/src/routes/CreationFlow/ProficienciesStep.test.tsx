@@ -460,6 +460,21 @@ describe("ProficienciesStep", () => {
     expect(values.money).toMatchObject({ gold: 10 });
   });
 
+  it("does not read as done before a class is chosen, though the background leaves nothing to pick", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({ edition: "classic", background: PHB("Sage") }),
+    );
+    renderStep({ keepDraft: true });
+
+    await waitFor(() => expect(inventoryNames()).toEqual(["Pouch", "Ink"]));
+    expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toEqual([
+      "Arcana",
+      "History",
+    ]);
+    expect(done).toBe(false);
+  });
+
   it("reads as done once every skill and equipment choice is made, and not after one is undone", async () => {
     renderStep();
     fireEvent.click(await screen.findByRole("checkbox", { name: /^Insight/ }));
