@@ -153,9 +153,9 @@ the class side alone is short by whatever their feats granted.
 **A spell's grantors are joins, not entities.** `spell_classes` collapses `sources.json`'s
 `class` and `classVariant` into one fact. `spell_grants` resolves the `additionalSpells` of a
 subclass, race, subrace, feat or optional feature — a spell or a filter such as
-`level=0|class=Wizard` — at build time, one row per spell it may give; a class's or a
-background's own is not read. The player's pick is character state. A filter names no class
-source, so it reaches both editions and a picker filters on edition.
+`level=0|class=Wizard` — at build time, one row per spell it may give; a class's,
+background's or reward's own is not read. The player's pick is character state. A filter
+names no class source, so it reaches both editions and a picker filters on edition.
 
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates. The pool a
