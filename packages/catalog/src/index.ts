@@ -109,6 +109,8 @@ export {
   searchHitSchema,
   searchResponseSchema,
 } from "./search.ts";
+export type { SkillChoice } from "./skill-choice.ts";
+export { backgroundSkillChoiceSchema, classSkillChoiceSchema } from "./skill-choice.ts";
 export type { CatalogSource } from "./source.ts";
 export {
   catalogSourcesResponseSchema,
@@ -131,3 +133,8 @@ export {
   spellEntrySchema,
   spellRecordSchema,
 } from "./spell.ts";
+export type { EquipmentItem, StartingEquipment } from "./starting-equipment.ts";
+export {
+  backgroundStartingEquipmentSchema,
+  classStartingEquipmentSchema,
+} from "./starting-equipment.ts";
