@@ -1,12 +1,12 @@
 import { ClassField } from "./ClassField.tsx";
 import { ClassGrantsSummary } from "./ClassGrantsSummary.tsx";
-import { HitPointsField } from "./HitPointsField.tsx";
+import { HitPointsField, type HitPointsFieldProps } from "./HitPointsField.tsx";
 import { LevelField } from "./LevelField.tsx";
 import { SubclassField } from "./SubclassField.tsx";
 import { useClassCatalog } from "./useClassCatalog.ts";
 
 /** What the character does: class, level and subclass on the left, hit points on the right. */
-export function ClassStep() {
+export function ClassStep(hitPoints: HitPointsFieldProps) {
   const { cls } = useClassCatalog();
   return (
     <div className="grid gap-7 sm:grid-cols-2">
@@ -20,7 +20,7 @@ export function ClassStep() {
           </>
         )}
       </div>
-      <HitPointsField />
+      <HitPointsField {...hitPoints} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   type HitDie,
   type HitPointLevel,
   hitDiceRecovered,
+  hitPointSource,
   maxHitPoints,
 } from "./index.ts";
 
@@ -83,12 +84,32 @@ describe("maxHitPoints", () => {
     expect(() => maxHitPoints([{ die: die as HitDie }], 0)).toThrow(RangeError);
   });
 
-  it.each([0, 9, 1.5])("rejects %s as a roll of a d8", (rolled) => {
-    expect(() => maxHitPoints([{ die: 8 }, { die: 8, rolled }], 0)).toThrow(RangeError);
+  it("counts a gain a d8 cannot roll as given, still at least 1 a level", () => {
+    const result = maxHitPoints([{ die: 8 }, { die: 8, rolled: 15 }, { die: 8, rolled: -3 }], 0);
+    expect(result.total).toBe(8 + 15 + 1);
+    expect(result.terms.map((term) => term.label)).toEqual([
+      "Level 1: d8 highest 8 +0 Con",
+      "Level 2: d8 typed 15 +0 Con",
+      "Level 3: d8 typed -3 +0 Con (min 1)",
+    ]);
   });
 
-  it("rejects a corrupt roll on the first level, which otherwise discards it", () => {
-    expect(() => maxHitPoints([{ die: 8, rolled: 40 }], 0)).toThrow(RangeError);
+  it("rejects a fractional gain", () => {
+    expect(() => maxHitPoints([{ die: 8 }, { die: 8, rolled: 1.5 }], 0)).toThrow(RangeError);
+  });
+
+  it("rejects a corrupt gain on the first level, which otherwise discards it", () => {
+    expect(() => maxHitPoints([{ die: 8, rolled: 1.5 }], 0)).toThrow(RangeError);
+  });
+});
+
+describe("hitPointSource", () => {
+  it("names the first level highest, an unset gain average, and a gain past the die typed", () => {
+    expect(hitPointSource({ die: 8, rolled: 3 }, true)).toBe("highest");
+    expect(hitPointSource({ die: 8 }, false)).toBe("average");
+    expect(hitPointSource({ die: 8, rolled: 8 }, false)).toBe("rolled");
+    expect(hitPointSource({ die: 8, rolled: 9 }, false)).toBe("typed");
+    expect(hitPointSource({ die: 8, rolled: 0 }, false)).toBe("typed");
   });
 });
 

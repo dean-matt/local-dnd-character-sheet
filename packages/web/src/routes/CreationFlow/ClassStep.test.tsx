@@ -148,6 +148,12 @@ async function pickClass(query: string, option: RegExp) {
 }
 
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
+/** Each grid cell after the first level, as its term and value read. */
+const cells = () =>
+  screen
+    .getAllByRole("term")
+    .map((term) => `${term.textContent}: ${term.nextElementSibling?.textContent}`);
+
 const setLevel = (level: number) =>
   fireEvent.change(screen.getByRole("spinbutton", { name: "Level" }), {
     target: { value: String(level) },
@@ -230,7 +236,7 @@ describe("ClassStep", () => {
 
     await pickClass("fig", /^Fighter/);
     setLevel(3);
-    expect(await screen.findByText("Level 2: 6")).toBeVisible();
+    await waitFor(() => expect(cells()).toEqual(["Level 2: 6", "Level 3: 6"]));
     expect(screen.getByText("22")).toBeVisible();
 
     click("Roll");
@@ -246,6 +252,73 @@ describe("ClassStep", () => {
 
     click("Average");
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("takes a typed gain for each level after the first, noting one the die cannot roll", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    renderStep();
+    const gain = (level: number) => screen.getByRole("textbox", { name: `Level ${level} gain` });
+    const type = (level: number, value: string) =>
+      fireEvent.change(gain(level), { target: { value } });
+
+    await pickClass("fig", /^Fighter/);
+    setLevel(4);
+    fireEvent.click(await screen.findByRole("button", { name: "Roll" }));
+    await waitFor(() =>
+      expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 10, 10, 10]),
+    );
+
+    click("Custom");
+    expect(gain(2)).toHaveValue("10");
+    type(2, "7");
+    type(3, "15");
+    type(4, "");
+    expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, undefined]);
+    expect(screen.getByText("38")).toBeVisible();
+    type(4, "-10");
+    expect(screen.getByText("33")).toBeVisible();
+    type(4, "");
+    await waitFor(() =>
+      expect(values.departures).toEqual([
+        {
+          field: "levels.2.rolled",
+          note: "Level 3 gains 15 hit points, outside the d10's 1 to 10.",
+        },
+      ]),
+    );
+
+    type(3, "-");
+    expect(
+      screen.queryByText("Level 3: A hit point gain is a whole number from -999 to 999."),
+    ).not.toBeInTheDocument();
+    for (const text of ["1.5", "ten", "1000"]) {
+      type(3, text);
+      expect(
+        screen.getByText("Level 3: A hit point gain is a whole number from -999 to 999."),
+      ).toBeVisible();
+      expect(gain(3)).toHaveAccessibleDescription(
+        "Level 3: A hit point gain is a whole number from -999 to 999.",
+      );
+    }
+    fireEvent.blur(gain(3));
+    expect(gain(3)).toHaveValue("1000");
+    expect(gain(3)).toHaveAccessibleDescription(
+      "Level 3: A hit point gain is a whole number from -999 to 999.",
+    );
+    expect(values.levels?.[2]?.rolled).toBe(15);
+
+    click("Roll");
+    await waitFor(() =>
+      expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, 10]),
+    );
+    expect(cells()).toEqual(["Level 2: 7", "Level 3: 15typed", "Level 4: 10"]);
+
+    setLevel(2);
+    await waitFor(() => expect(values.departures).toEqual([]));
+
+    click("Custom");
+    click("Average");
+    expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, undefined]);
   });
 
   it("swaps the saves a replaced class granted for the new class's, keeping the level", async () => {

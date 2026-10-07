@@ -14,7 +14,10 @@ export const HIT_DICE = [6, 8, 10, 12] as const;
 
 export type HitDie = (typeof HIT_DICE)[number];
 
-/** One level's hit die, and the roll taken in place of the fixed value. */
+/**
+ * One level's hit die, and the gain taken in place of the fixed value: a roll, or a number
+ * the table chose. Any whole-number gain counts as given, even one the die cannot make.
+ */
 export type HitPointLevel = {
   die: HitDie;
   rolled?: number;
@@ -34,17 +37,24 @@ function assertHitDie(die: number): asserts die is HitDie {
 
 function faceRolled(level: HitPointLevel, isFirstLevel: boolean): number {
   assertHitDie(level.die);
-  // Checked even where the first level discards it, so a corrupt stored roll cannot
+  // Checked even where the first level discards it, so a corrupt stored gain cannot
   // round-trip at the one position that ignores it.
-  if (level.rolled !== undefined) {
-    if (!Number.isInteger(level.rolled) || level.rolled < 1 || level.rolled > level.die) {
-      throw new RangeError(`A d${level.die} rolls 1-${level.die}, got ${level.rolled}`);
-    }
+  if (level.rolled !== undefined && !Number.isInteger(level.rolled)) {
+    throw new RangeError(`A hit point gain is a whole number, got ${level.rolled}`);
   }
   if (isFirstLevel) {
     return level.die;
   }
   return level.rolled ?? averageHitPoints(level.die);
+}
+
+type HitPointSource = "highest" | "average" | "rolled" | "typed";
+
+/** Where a level's hit points come from; a gain the die cannot roll was typed. */
+export function hitPointSource(level: HitPointLevel, isFirstLevel: boolean): HitPointSource {
+  if (isFirstLevel) return "highest";
+  if (level.rolled === undefined) return "average";
+  return level.rolled > level.die || level.rolled < 1 ? "typed" : "rolled";
 }
 
 /**
@@ -66,7 +76,7 @@ export function maxHitPoints<Ref = unknown>(
   return breakdown(
     levels.map((level, index) => {
       const face = faceRolled(level, index === 0);
-      const source = index === 0 ? "highest" : level.rolled === undefined ? "average" : "rolled";
+      const source = hitPointSource(level, index === 0);
       const con = `${constitutionModifier < 0 ? "-" : "+"}${Math.abs(constitutionModifier)}`;
       const value = Math.max(1, face + constitutionModifier);
       const floor = value === face + constitutionModifier ? "" : " (min 1)";
