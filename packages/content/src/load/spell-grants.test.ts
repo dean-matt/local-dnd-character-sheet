@@ -269,6 +269,11 @@ describe("the spell grants loader", () => {
       /names spell wish, which no row holds/,
     ],
     [
+      "holds a kind no rule reads",
+      [{ granted: { _: ["light"] } }],
+      /holds granted, which no rule reads/,
+    ],
+    [
       "filters on a key no rule reads",
       [{ known: { _: [{ choose: "range=self" }] } }],
       /has no rule for range=self/,

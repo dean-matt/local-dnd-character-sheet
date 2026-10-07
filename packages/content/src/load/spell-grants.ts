@@ -28,7 +28,10 @@ import { SOURCES_FILE, SPELL_FILES, spellClassRows } from "./spells.ts";
 
 const FEATS_FILE = "data/feats.json";
 const RACES_FILE = "data/races.json";
-const KINDS = ["innate", "known", "prepared", "expanded"] as const;
+const KINDS = new Set(["innate", "known", "prepared", "expanded"]);
+
+/** Block keys that describe a grant rather than hold spells. */
+const DESCRIBING = new Set(["ability", "name", "resourceName"]);
 
 /** 5etools reads a spell named without a source as the 2014 Player's Handbook's. */
 const DEFAULT_SOURCE = "phb";
@@ -42,6 +45,8 @@ type Spell = {
   attacks: string[];
   classes: Set<string>;
 };
+
+type Catalog = { spells: Spell[]; byKey: Map<string, Spell> };
 
 type Grantor = {
   granted_by: string;
@@ -100,7 +105,7 @@ function spellFilter(expression: string, where: string): (spell: Spell) => boole
   return (spell) => tests.every((test) => test(spell));
 }
 
-function spellsOf(sources: Map<string, unknown>): Spell[] {
+function catalogOf(sources: Map<string, unknown>): Catalog {
   const spells: Spell[] = [];
   for (const [path, parsed] of sources) {
     if (!path.startsWith("data/spells/spells-")) continue;
@@ -130,7 +135,7 @@ function spellsOf(sources: Map<string, unknown>): Spell[] {
       .get(spellKey(String(row.spell_name), String(row.spell_source)))
       ?.classes.add(fold(String(row.class_name)));
   }
-  return spells;
+  return { spells, byKey };
 }
 
 function grantorsOf(sources: Map<string, unknown>): Grantor[] {
@@ -185,7 +190,6 @@ function grantorsOf(sources: Map<string, unknown>): Grantor[] {
   return grantors;
 }
 
-type Catalog = { spells: Spell[]; byKey: Map<string, Spell> };
 type Give = (spell: Spell, chosen: boolean) => void;
 
 function namedSpell(value: string, catalog: Catalog, where: string): Spell {
@@ -244,15 +248,10 @@ function grantsOf(grantor: Grantor, catalog: Catalog): Map<Spell, boolean> {
   for (const [index, block] of blocks.entries()) {
     const where = `${grantor.context} additionalSpells[${index}]`;
     if (!isRecord(block)) throw new Error(`${where} is not an object`);
-    for (const kind of KINDS) {
-      if (block[kind] === undefined) continue;
-      visit(
-        block[kind],
-        blocks.length > 1 || kind === "expanded",
-        `${where}.${kind}`,
-        catalog,
-        give,
-      );
+    for (const [key, value] of Object.entries(block)) {
+      if (DESCRIBING.has(key)) continue;
+      if (!KINDS.has(key)) throw new Error(`${where} holds ${key}, which no rule reads`);
+      visit(value, blocks.length > 1 || key === "expanded", `${where}.${key}`, catalog, give);
     }
   }
   return granted;
@@ -263,11 +262,7 @@ export const spellGrants: Loader = {
   files: [SPELL_FILES, SOURCES_FILE, CLASS_FILES, FEATS_FILE, OPTIONAL_FEATURES_FILE, RACES_FILE],
   prepare: races.prepare,
   rows: (sources) => {
-    const spells = spellsOf(sources);
-    const catalog = {
-      spells,
-      byKey: new Map(spells.map((spell) => [spellKey(spell.name, spell.source), spell])),
-    };
+    const catalog = catalogOf(sources);
     const rows: Row[] = [];
     for (const grantor of grantorsOf(sources)) {
       const { entry: _entry, context: _context, ...identity } = grantor;
