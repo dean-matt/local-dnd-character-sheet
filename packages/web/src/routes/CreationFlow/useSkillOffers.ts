@@ -14,13 +14,15 @@ import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 export type GrantedSkill = { ref: ContentRef; by: "Race" | "Background" };
 
 /**
- * The skills the race and the background grant outright, and the picks the class and the
- * background offer, each resolved against the edition's skill rows. A classic character
+ * The skills the race and the background grant outright, the picks the class and the
+ * background offer, and every skill, each resolved against the edition's skill rows. A classic character
  * who would gain a skill twice gets a pick of any skill in its place, as does a 2024 one
  * under the house rule. `undefined` while a row they read has not loaded, a failed read
  * included, so a half-read never reads as an offer of nothing.
  */
-export function useSkillOffers(): { granted: GrantedSkill[]; offers: SkillOffer[] } | undefined {
+export function useSkillOffers():
+  | { granted: GrantedSkill[]; offers: SkillOffer[]; everySkill: ContentRef[] }
+  | undefined {
   const { edition, catalogRace, raceRow, subraces, raceJson, backgroundRow, backgrounds, names } =
     useIdentityCatalog();
   const { catalogClass, classRow } = useClassCatalog();
@@ -30,9 +32,10 @@ export function useSkillOffers(): { granted: GrantedSkill[]; offers: SkillOffer[
   if (!(raceRead && classRead && backgrounds.isSuccess && names.isSuccess)) return undefined;
   const hits = names.data.items;
   const row = (name: string) => catalogRow(hits, "skill", name, edition);
-  const everySkill = [
+  const skillNames = [
     ...new Set(hits.flatMap((hit) => (hit.type === "skill" ? [hit.name.toLowerCase()] : []))),
   ];
+  const everySkill = skillNames.flatMap((skill) => row(skill) ?? []);
 
   const granted = (
     [
@@ -54,7 +57,7 @@ export function useSkillOffers(): { granted: GrantedSkill[]; offers: SkillOffer[
     choice: SkillChoice | undefined,
   ): SkillOffer[] => {
     if (choice === undefined) return [];
-    const options = (choice.from ?? everySkill).flatMap((skill) => row(skill) ?? []);
+    const options = (choice.from ?? skillNames).flatMap((skill) => row(skill) ?? []);
     const unique = [...new Map(options.map((ref) => [refKey(ref), ref])).values()];
     return [{ by, name, count: choice.count, options: unique }];
   };
@@ -74,12 +77,6 @@ export function useSkillOffers(): { granted: GrantedSkill[]; offers: SkillOffer[
   const replaces =
     edition === "classic" ||
     houseRule({ houseRules: houseRules ?? {} }, "duplicateSkillReplacement");
-  const replacement =
-    replaces &&
-    replacementOffer(
-      offers,
-      granted,
-      everySkill.flatMap((skill) => row(skill) ?? []),
-    );
-  return { granted, offers: replacement ? [...offers, replacement] : offers };
+  const replacement = replaces && replacementOffer(offers, granted, everySkill);
+  return { granted, offers: replacement ? [...offers, replacement] : offers, everySkill };
 }

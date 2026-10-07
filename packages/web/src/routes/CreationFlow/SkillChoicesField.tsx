@@ -1,6 +1,8 @@
 import { type CharacterDefinition, type ContentRef, refKey } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
 import { ChipList } from "../../components/ChipList.tsx";
+import { FormField } from "../../components/FormField.tsx";
+import { Select } from "../../components/Select.tsx";
 import { NO_GRANTS } from "./grants.ts";
 import { needed } from "./skillPicks.ts";
 import { useSkillTally } from "./useSkillTally.ts";
@@ -15,17 +17,20 @@ const byName = (a: ContentRef, b: ContentRef) => a.name.localeCompare(b.name);
  * it cannot be picked twice and wasted; where the rules give a pick of any skill in place
  * of one gained twice, a list of every skill offers it. The count each list allows is a
  * note rather than a fence: a pick past it is kept, and `CreationSkills` notes it as a
- * departure, as it does a skill no list offers any more, such as one a changed class left
- * behind, which stays listed here so it can be cleared.
+ * departure, as it does a skill no list offers, whether added past the lists or left
+ * behind by a changed class, which stays listed here so it can be cleared.
  */
 export function SkillChoicesField() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const found = useSkillTally();
   if (found === undefined) return null;
-  const { granted, offers, skills, tally } = found;
+  const { granted, offers, everySkill, skills, tally } = found;
   const replacement = offers.some((offer) => offer.by === "Replacement");
   const grantedBy = new Map(granted.map((grant) => [refKey(grant.ref), grant.by]));
   const held = new Set(skills.map((skill) => refKey(skill.ref)));
+  const addable = everySkill
+    .filter((ref) => !held.has(refKey(ref)) && !grantedBy.has(refKey(ref)))
+    .sort(byName);
   const toggle = (ref: ContentRef) => {
     const current = getValues("proficiencies") ?? NO_GRANTS;
     const key = refKey(ref);
@@ -93,13 +98,37 @@ export function SkillChoicesField() {
           </fieldset>
         );
       })}
-      {tally.outside.length > 0 && (
+      {(tally.outside.length > 0 || addable.length > 0) && (
         <fieldset className="flex flex-col gap-1">
           <legend className={HEADING}>Other skills</legend>
-          <p className="mt-1 text-muted text-row">
-            Neither the class nor the background offers these.
-          </p>
-          {[...tally.outside].sort(byName).map(checkbox)}
+          {tally.outside.length > 0 && (
+            <>
+              <p className="mt-1 text-muted text-row">
+                Neither the class nor the background offers these.
+              </p>
+              {[...tally.outside].sort(byName).map(checkbox)}
+            </>
+          )}
+          {addable.length > 0 && (
+            <div className="mt-1">
+              <FormField label="Add a skill not on the lists">
+                {(control) => (
+                  <Select
+                    {...control}
+                    options={[
+                      { value: "", label: "Choose a skill" },
+                      ...addable.map((ref) => ({ value: refKey(ref), label: ref.name })),
+                    ]}
+                    value=""
+                    onChange={(key) => {
+                      const ref = addable.find((each) => refKey(each) === key);
+                      if (ref) toggle(ref);
+                    }}
+                  />
+                )}
+              </FormField>
+            </div>
+          )}
         </fieldset>
       )}
     </div>

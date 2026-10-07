@@ -270,7 +270,65 @@ describe("ProficienciesStep", () => {
     fireEvent.click(stealth);
 
     await waitFor(() => expect(values.departures).toEqual([]));
-    expect(screen.queryByRole("group", { name: "Other skills" })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "Stealth" })).toBeNull();
+  });
+
+  it("adds by keyboard any skill not held or granted, past what the background and class offer", async () => {
+    renderStep();
+    const add = await screen.findByRole("combobox", { name: "Add a skill not on the lists" });
+
+    fireEvent.keyDown(add, { key: "ArrowDown" });
+    const offered = screen.getAllByRole("option").map((option) => option.textContent);
+    expect(offered).toEqual([
+      "Choose a skill",
+      "Athletics",
+      "Insight",
+      "Intimidation",
+      "Medicine",
+      "Religion",
+      "Stealth",
+    ]);
+    fireEvent.keyDown(add, { key: "End" });
+    fireEvent.keyDown(add, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toEqual([
+        "Arcana",
+        "History",
+        "Stealth",
+      ]),
+    );
+    const stealth = within(screen.getByRole("group", { name: "Other skills" })).getByRole(
+      "checkbox",
+      { name: "Stealth" },
+    );
+    expect(stealth).toBeChecked();
+
+    fireEvent.click(stealth);
+    await waitFor(() =>
+      expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toEqual([
+        "Arcana",
+        "History",
+      ]),
+    );
+  });
+
+  it("notes a skill added past the lists as a departure, and drops the note once it is removed", async () => {
+    renderStep();
+    fireEvent.click(await screen.findByRole("combobox", { name: "Add a skill not on the lists" }));
+    fireEvent.click(screen.getByRole("option", { name: "Athletics" }));
+
+    await waitFor(() =>
+      expect(values.departures).toEqual([
+        {
+          field: "proficiencies.skills",
+          note: "Athletics taken outside what the class and background offer.",
+        },
+      ]),
+    );
+
+    fireEvent.click(checkbox(/^Athletics/));
+    await waitFor(() => expect(values.departures).toEqual([]));
   });
 
   describe("a skill the race and the background both grant", () => {
@@ -304,7 +362,9 @@ describe("ProficienciesStep", () => {
         expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toContain("Stealth"),
       );
       expect(within(group).getByText("Choose 1 — 1 selected")).toBeVisible();
-      expect(screen.queryByRole("group", { name: "Other skills" })).toBeNull();
+      expect(
+        within(screen.getByRole("group", { name: "Other skills" })).queryByRole("checkbox"),
+      ).toBeNull();
       expect(values.departures ?? []).toEqual([]);
     });
 
