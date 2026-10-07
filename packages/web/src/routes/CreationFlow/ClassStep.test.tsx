@@ -289,13 +289,22 @@ describe("ClassStep", () => {
 
     type(3, "-");
     expect(
-      screen.queryByText("Level 3: A hit point gain is a whole number."),
+      screen.queryByText("Level 3: A hit point gain is a whole number from -999 to 999."),
     ).not.toBeInTheDocument();
-    for (const text of ["1.5", "ten"]) {
+    for (const text of ["1.5", "ten", "1000"]) {
       type(3, text);
-      expect(screen.getByText("Level 3: A hit point gain is a whole number.")).toBeVisible();
-      expect(gain(3)).toHaveAccessibleDescription("Level 3: A hit point gain is a whole number.");
+      expect(
+        screen.getByText("Level 3: A hit point gain is a whole number from -999 to 999."),
+      ).toBeVisible();
+      expect(gain(3)).toHaveAccessibleDescription(
+        "Level 3: A hit point gain is a whole number from -999 to 999.",
+      );
     }
+    fireEvent.blur(gain(3));
+    expect(gain(3)).toHaveValue("1000");
+    expect(gain(3)).toHaveAccessibleDescription(
+      "Level 3: A hit point gain is a whole number from -999 to 999.",
+    );
     expect(values.levels?.[2]?.rolled).toBe(15);
 
     click("Roll");
