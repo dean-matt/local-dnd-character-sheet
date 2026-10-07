@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
@@ -39,6 +39,8 @@ export function CreationFlow() {
   const [fresh] = useState(marked === undefined);
   const [abilities, setAbilities] = useState<AbilitiesMemory>();
   const step = marked ?? CREATION_STEPS[0];
+  const footer = useRef<HTMLDivElement>(null);
+  useFooterHeight(footer);
 
   const goTo = (slug: CreationStep["slug"]) => {
     const { to, ...options } = stepLink(slug);
@@ -65,27 +67,33 @@ export function CreationFlow() {
     >
       {({ cancel }) => (
         <SidebarFrame rail={<CreationRail current={step} />}>
-          <div className="flex min-w-0 flex-1 flex-col gap-4 px-gutter py-6">
-            <div>
-              <p className="text-muted text-row">
-                New character · Step {index + 1} of {CREATION_STEPS.length}
-              </p>
-              <h1 className="font-bold text-[22px]">{step.label}</h1>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div data-creation-step className="flex flex-1 flex-col gap-4 px-gutter py-6">
+              <div>
+                <p className="text-muted text-row">
+                  New character · Step {index + 1} of {CREATION_STEPS.length}
+                </p>
+                <h1 className="font-bold text-[22px]">{step.label}</h1>
+              </div>
+              <CreationErrors />
+              <CreationGrants />
+              <CreationIncreases />
+              {step.slug === "identity" ? (
+                <IdentityStep />
+              ) : step.slug === "class" ? (
+                <ClassStep />
+              ) : step.slug === "abilities" ? (
+                <AbilityScoresStep memory={abilities} onMemory={setAbilities} />
+              ) : (
+                <StepPending />
+              )}
+              <StepDepartures step={step} />
             </div>
-            <CreationErrors />
-            <CreationGrants />
-            <CreationIncreases />
-            {step.slug === "identity" ? (
-              <IdentityStep />
-            ) : step.slug === "class" ? (
-              <ClassStep />
-            ) : step.slug === "abilities" ? (
-              <AbilityScoresStep memory={abilities} onMemory={setAbilities} />
-            ) : (
-              <StepPending />
-            )}
-            <StepDepartures step={step} />
-            <div className="flex justify-between border-t border-border pt-3">
+            <div
+              ref={footer}
+              data-creation-footer
+              className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-3 print:hidden"
+            >
               <button
                 type="button"
                 onClick={cancel}
@@ -94,7 +102,7 @@ export function CreationFlow() {
                 <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
                 Cancel
               </button>
-              <div className="flex items-center gap-2">
+              <div className="ml-auto flex items-center gap-2">
                 <button
                   type="button"
                   disabled={previous === undefined}
@@ -134,4 +142,25 @@ export function CreationFlow() {
       )}
     </FormShell>
   );
+}
+
+/**
+ * Publishes the footer's height as `--creation-footer-height` on the root, which
+ * `scroll-padding-bottom` reads so focus lands above the footer. Measured, not a token,
+ * because the footer wraps to a second row in a narrow column.
+ */
+function useFooterHeight(footer: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const element = footer.current;
+    if (!element) return;
+    const root = document.documentElement.style;
+    const observer = new ResizeObserver(() =>
+      root.setProperty("--creation-footer-height", `${element.getBoundingClientRect().height}px`),
+    );
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      root.removeProperty("--creation-footer-height");
+    };
+  }, [footer]);
 }

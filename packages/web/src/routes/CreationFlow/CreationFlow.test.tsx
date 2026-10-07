@@ -307,6 +307,19 @@ describe("CreationFlow", () => {
     expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
   });
 
+  it("puts Cancel, Back and Next in a footer of their own, after the step's content", () => {
+    renderFlow("identity");
+
+    const footer = screen.getByRole("button", { name: "Cancel" }).parentElement;
+    expect(footer).toHaveAttribute("data-creation-footer");
+    expect(within(footer as HTMLElement).getByRole("button", { name: "Back" })).toBeVisible();
+    expect(within(footer as HTMLElement).getByRole("button", { name: /^Next/ })).toBeVisible();
+    expect(footer?.previousElementSibling).toContainElement(
+      screen.getByRole("heading", { level: 1, name: "Identity" }),
+    );
+    expect(footer?.nextElementSibling).toBeNull();
+  });
+
   it("discards the draft on Cancel and returns to the list", async () => {
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
     renderFlow("identity");

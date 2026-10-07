@@ -150,8 +150,9 @@
  */
 :root {
   color-scheme: light dark;
-  /* Keeps focus and anchor scrolls clear of the pinned top bar and character header. */
+  /* Keeps focus and anchor scrolls clear of the pinned top bar, character header and creation footer. */
   scroll-padding-top: calc(var(--spacing-topbar) + var(--pinned-header-height, 0px));
+  scroll-padding-bottom: var(--creation-footer-height, 0px);
 
   @variant tall {
     &:has([data-character-header]) {
