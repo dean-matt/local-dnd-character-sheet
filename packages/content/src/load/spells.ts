@@ -19,9 +19,8 @@
  *
  * `subclass`, `feat`, `race` and `optionalfeature` keys do not exist in
  * `sources.json` at the pinned tag — every grantor is one of the nine base
- * classes that cast spells. What those four would name instead is a
- * filter-and-choose expression on `additionalSpells`, not a named spell, and
- * is a different mechanism than this table holds.
+ * classes that cast spells. Those four grant through `additionalSpells`
+ * instead, which `spell-grants.ts` reads.
  */
 import { CLASS_FILES, classIdentities } from "./classes.ts";
 import { EDITION_FILES, type Edition, editions, ownFiles } from "./edition.ts";
@@ -29,7 +28,8 @@ import { collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, isRecord, text } from "./json.ts";
 
-const SOURCES_FILE = "data/spells/sources.json";
+export const SOURCES_FILE = "data/spells/sources.json";
+export const SPELL_FILES = "data/spells/spells-*.json";
 const SPELLS_FLUFF = "data/spells/fluff-spells-*.json";
 
 function toRow(
@@ -104,7 +104,7 @@ function grantRows(
   return rows;
 }
 
-function spellClassRows(
+export function spellClassRows(
   parsed: unknown,
   knownSpells: ReadonlySet<string>,
   knownClasses: ReadonlySet<string>,
@@ -128,7 +128,7 @@ function spellClassRows(
 
 export const spells: Loader = {
   name: "spells",
-  files: ["data/spells/spells-*.json", SPELLS_FLUFF, SOURCES_FILE, CLASS_FILES, ...EDITION_FILES],
+  files: [SPELL_FILES, SPELLS_FLUFF, SOURCES_FILE, CLASS_FILES, ...EDITION_FILES],
   rows: (sources) => {
     const editionOf = editions(sources);
     const fluffFiles = [...sources].filter(([path]) => isFluffPath(path));

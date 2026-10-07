@@ -45,6 +45,146 @@
       "savingThrow": ["dexterity"]
     },
     {
+      "name": "Command",
+      "source": "XPHB",
+      "page": 251,
+      "level": 1,
+      "school": "E",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Approach",
+              "entries": ["Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Drop",
+              "entries": ["Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Flee",
+              "entries": ["Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Grovel",
+              "entries": ["Elided. {@condition Prone|XPHB} Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Halt",
+              "entries": ["Elided. {@variantrule Bonus Action|XPHB} Elided."]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dancing Lights",
+      "source": "XPHB",
+      "page": 259,
+      "level": 0,
+      "school": "I",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 120
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true,
+        "m": "a bit of phosphorus"
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@variantrule Dim Light|XPHB} Elided.",
+        "Elided. {@variantrule Bonus Action|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Darkness",
+      "source": "XPHB",
+      "page": 260,
+      "level": 2,
+      "school": "V",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "m": "bat fur and a piece of coal"
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 10
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@variantrule Darkness|XPHB} Elided. {@variantrule Sphere [Area of Effect]|XPHB|Sphere} Elided. {@sense Darkvision|XPHB} Elided.",
+        "Elided. {@variantrule Darkness|XPHB} Elided. {@variantrule Emanation [Area of Effect]|XPHB|Emanation} Elided. {@variantrule Darkness|XPHB} Elided.",
+        "Elided. {@variantrule Bright Light|XPHB} Elided. {@variantrule Dim Light|XPHB} Elided."
+      ]
+    },
+    {
       "name": "Detect Magic",
       "source": "XPHB",
       "page": 262,
@@ -84,6 +224,337 @@
       "entries": [
         "Elided. {@action Magic|XPHB} Elided. {@book school of magic|XPHB|7|Schools of Magic} Elided.",
         "Elided."
+      ]
+    },
+    {
+      "name": "Druidcraft",
+      "source": "XPHB",
+      "page": 266,
+      "level": 0,
+      "school": "T",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Weather Sensor",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Bloom",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Sensory Effect",
+          "entries": ["Elided. {@variantrule Cube [Area of Effect]|XPHB|Cube} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Fire Play",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Faerie Fire",
+      "source": "XPHB",
+      "page": 271,
+      "level": 1,
+      "school": "V",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@variantrule Cube [Area of Effect]|XPHB|Cube} Elided. {@variantrule Cube [Area of Effect]|XPHB|Cube} Elided. {@variantrule Dim Light|XPHB} Elided. {@condition Invisible|XPHB} Elided.",
+        "{@action Attack|XPHB} Elided. {@variantrule Advantage|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Gentle Repose",
+      "source": "XPHB",
+      "page": 278,
+      "level": 2,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "touch"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true,
+        "m": {
+          "text": "2 Copper Pieces, which the spell consumes",
+          "consume": true
+        }
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "day",
+            "amount": 10
+          }
+        }
+      ],
+      "entries": ["Elided.", "Elided. {@spell Raise Dead|XPHB} Elided."]
+    },
+    {
+      "name": "Heroism",
+      "source": "XPHB",
+      "page": 285,
+      "level": 1,
+      "school": "E",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "touch"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@condition Frightened|XPHB} Elided. {@variantrule Temporary Hit Points|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Longstrider",
+      "source": "XPHB",
+      "page": 293,
+      "level": 1,
+      "school": "T",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "touch"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true,
+        "m": "a pinch of dirt"
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 1
+          }
+        }
+      ],
+      "entries": ["Elided. {@variantrule Speed|XPHB} Elided."]
+    },
+    {
+      "name": "Misty Step",
+      "source": "XPHB",
+      "page": 299,
+      "level": 2,
+      "school": "C",
+      "time": [
+        {
+          "number": 1,
+          "unit": "bonus"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "self"
+        }
+      },
+      "components": {
+        "v": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Pass without Trace",
+      "source": "XPHB",
+      "page": 303,
+      "level": 2,
+      "school": "A",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "emanation",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true,
+        "m": "ashes from burned mistletoe"
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@variantrule Emanation [Area of Effect]|XPHB|Emanation} Elided. {@skill Stealth|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Silence",
+      "source": "XPHB",
+      "page": 316,
+      "level": 2,
+      "school": "I",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 120
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 10
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@variantrule Sphere [Area of Effect]|XPHB|Sphere} Elided. {@variantrule Sphere [Area of Effect]|XPHB|Sphere} Elided. {@variantrule Immunity|XPHB} Elided. {@condition Deafened|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Starry Wisp",
+      "source": "XPHB",
+      "page": 320,
+      "level": 0,
+      "school": "V",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": [
+        "Elided. {@damage 1d8} Elided. {@variantrule Dim Light|XPHB} Elided. {@condition Invisible|XPHB} Elided."
       ]
     }
   ]

@@ -14,6 +14,7 @@ import { entityLoaders } from "./entities.ts";
 import { items } from "./items.ts";
 import { lookups } from "./lookups.ts";
 import { races } from "./races.ts";
+import { spellGrants } from "./spell-grants.ts";
 import { spells } from "./spells.ts";
 import { tagRedirects } from "./tag-redirects.ts";
 
@@ -48,6 +49,7 @@ export type Loader = {
 
 export const LOADERS: Loader[] = [
   spells,
+  spellGrants,
   classes,
   characterOptions,
   races,

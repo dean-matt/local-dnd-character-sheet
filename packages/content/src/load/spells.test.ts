@@ -31,7 +31,8 @@ describe("the spells loader", () => {
     const db = open();
     const rows = db
       .prepare(
-        "SELECT name, source, edition, level, school, concentration, ritual FROM spells ORDER BY source, name",
+        "SELECT name, source, edition, level, school, concentration, ritual FROM spells " +
+          "WHERE name IN ('Acid Splash', 'Detect Magic') ORDER BY source, name",
       )
       .all();
     db.close();
