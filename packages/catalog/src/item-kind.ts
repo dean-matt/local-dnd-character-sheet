@@ -82,13 +82,31 @@ export function ofWantedKind(kinds: readonly ItemKind[], wanted?: readonly strin
 }
 
 /**
- * What a search hit says of an item beyond its name: its kinds, its rarity, and whether a
- * weapon is simple or martial. A row with none of a field carries `null` for it.
+ * The kinds of tool a pick can ask for, each one of upstream's tool type codes, so a pick
+ * of any artisan's tool never offers a lute. `other` is a tool of none of them, such as
+ * thieves' tools.
+ */
+const TOOL_TYPES = ["artisan", "instrument", "gaming", "other"] as const;
+
+export type ToolType = (typeof TOOL_TYPES)[number];
+
+const TOOL_OF_TYPE: Record<string, ToolType> = {
+  AT: "artisan",
+  INS: "instrument",
+  GS: "gaming",
+  T: "other",
+};
+
+/**
+ * What a search hit says of an item beyond its name: its kinds, its rarity, whether a
+ * weapon is simple or martial, and which kind of tool a tool is. A row with none of
+ * `rarity` or `category` carries `null` for it; `tool` is absent from every row but a tool.
  */
 export const itemHitFactsSchema = z.strictObject({
   kinds: z.array(z.enum(ITEM_KINDS)).min(1),
   rarity: z.string().min(1).nullable(),
   category: z.enum(["simple", "martial"]).nullable(),
+  tool: z.enum(TOOL_TYPES).optional(),
 });
 
 export type ItemHitFacts = z.infer<typeof itemHitFactsSchema>;
@@ -102,9 +120,12 @@ export function itemHitFacts(item: {
   weaponCategory?: unknown;
 }): ItemHitFacts {
   const { rarity, weaponCategory } = item;
+  const code = typeof item.type === "string" ? item.type.split("|")[0] : undefined;
+  const tool = code === undefined ? undefined : TOOL_OF_TYPE[code];
   return {
     kinds: itemKinds(item),
     rarity: typeof rarity === "string" && rarity !== "" ? rarity : null,
     category: weaponCategory === "simple" || weaponCategory === "martial" ? weaponCategory : null,
+    ...(tool && { tool }),
   };
 }

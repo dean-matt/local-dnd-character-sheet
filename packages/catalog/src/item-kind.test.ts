@@ -56,6 +56,24 @@ describe("itemHitFacts", () => {
       category: null,
     });
   });
+
+  it.each([
+    ["AT|XPHB", "artisan"],
+    ["INS", "instrument"],
+    ["GS", "gaming"],
+    ["T", "other"],
+  ])("reads a %s tool as %s", (type, tool) => {
+    expect(itemHitFacts({ type, rarity: "none" })).toEqual({
+      kinds: ["tool"],
+      rarity: "none",
+      category: null,
+      tool,
+    });
+  });
+
+  it("names no kind of tool on an item that is not one", () => {
+    expect(itemHitFacts({ type: "G" })).not.toHaveProperty("tool");
+  });
 });
 
 describe("ofWantedKind", () => {

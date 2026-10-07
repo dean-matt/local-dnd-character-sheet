@@ -3,10 +3,10 @@ import type { SearchHit } from "@dnd/catalog";
 /**
  * Upstream's `equipmentType` codes, each with what a slot of it is called and the items a
  * search for it offers. `kind` narrows the search to the kinds `/search` knows, and
- * `category` narrows a weapon slot further among them. A focus kind holds every focus and
- * a tool kind every tool, so a druidic focus slot offers an arcane focus too, and a
- * gaming set slot an artisan's tool: telling them apart needs upstream's `scfType` and
- * item type code on a search hit, which carries neither.
+ * `category` narrows a weapon slot further among them. A focus kind holds every focus, so
+ * a druidic focus slot offers an arcane focus too: telling them apart needs upstream's
+ * `scfType` on a search hit, which carries none. A tool kind holds every tool, so a gaming
+ * set slot offers an artisan's tool too.
  */
 const TYPES: Record<string, { label: string; kind: string; category?: "simple" | "martial" }> = {
   weaponSimple: { label: "a simple weapon", kind: "melee,ranged", category: "simple" },
