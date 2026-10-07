@@ -339,6 +339,7 @@ describe("ClassStep", () => {
     expect(fixed).toHaveAttribute("readonly");
     expect(within(first()).getByText("max")).toBeVisible();
     fireEvent.change(fixed, { target: { value: "4" } });
+    expect(fixed).toHaveValue("10");
     expect(values.levels?.[0]?.rolled).toBeUndefined();
     expect(screen.queryByText(/highest face/)).not.toBeInTheDocument();
   });
@@ -388,6 +389,7 @@ describe("ClassStep", () => {
     ]);
     expect(screen.getByRole("button", { name: "Clear class, Blood Hunter" })).toBeVisible();
     expect(await screen.findByRole("term")).toHaveTextContent("Level 1");
+    expect(screen.getByRole("term").nextElementSibling).toHaveTextContent(/^10/);
 
     click("Clear class, Blood Hunter");
 

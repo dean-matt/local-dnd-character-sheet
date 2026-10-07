@@ -127,7 +127,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
           Reroll
         </button>
       )}
-      <p className="mt-2 text-muted text-row">Gain at each level</p>
+      <p className="mt-2 text-muted text-row">Hit points at each level</p>
       <dl className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1 text-body">
         {faces.map((face, index) => {
           const level = index + 1;
