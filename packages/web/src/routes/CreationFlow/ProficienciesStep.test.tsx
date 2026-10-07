@@ -49,7 +49,7 @@ const SAGE = {
   json: {
     ...PHB("Sage"),
     skillProficiencies: [{ arcana: true, history: true }],
-    startingEquipment: [{ _: [{ item: "pouch|phb", containsValue: 1000 }] }],
+    startingEquipment: [{ _: [{ item: "pouch|phb", containsValue: 1000 }, { special: "ink" }] }],
   },
 };
 
@@ -66,7 +66,10 @@ const ITEMS: Record<string, unknown[]> = {
   "": [hit("item", "Rope", { kinds: ["gear"], rarity: null, category: null })],
   focus: [hit("item", "Wand", { kinds: ["focus"], rarity: null, category: null })],
 };
-const CATALOG = ["Quarterstaff", "Dagger", "Component Pouch", "Spellbook", "Pouch"];
+const CATALOG = [
+  ...["Quarterstaff", "Dagger", "Component Pouch", "Spellbook", "Pouch"].map(PHB),
+  { name: "Ink", source: "XPHB" },
+];
 
 function stubCatalog() {
   vi.stubGlobal(
@@ -76,11 +79,16 @@ function stubCatalog() {
       const params = new URL(url, "http://local").searchParams;
       let body: unknown = ROWS[url];
       if (url === "/api/refs/resolve") {
-        const { refs } = JSON.parse(String(init?.body)) as { refs: { name: string }[] };
+        const { refs } = JSON.parse(String(init?.body)) as {
+          refs: { name: string; source: string }[];
+        };
+        const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
         body = {
-          refs: refs.map(({ name }) => {
-            const row = CATALOG.find((each) => each.toLowerCase() === name.toLowerCase());
-            return row ? { ...PHB(row), entries: [] } : null;
+          refs: refs.map((ref) => {
+            const row = CATALOG.find(
+              (each) => same(each.name, ref.name) && same(each.source, ref.source),
+            );
+            return row ? { ...row, entries: [] } : null;
           }),
         };
       } else if (url.startsWith("/api/search?"))
@@ -232,15 +240,17 @@ describe("ProficienciesStep", () => {
   it("lands what the lists give outright, then a pick, and takes back the pick it replaces", async () => {
     renderStep();
 
-    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Ink"]));
     expect(values.money).toMatchObject({ gold: 10 });
     expect(screen.getByText("Spellbook, quill (not in the catalog)")).toBeVisible();
 
     fireEvent.click(radio(/\(b\) Dagger/));
-    await waitFor(() => expect(inventoryNames()).toEqual(["Dagger", "Spellbook", "Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Dagger", "Spellbook", "Pouch", "Ink"]));
 
     fireEvent.click(radio(/\(a\) Quarterstaff/));
-    await waitFor(() => expect(inventoryNames()).toEqual(["Quarterstaff", "Spellbook", "Pouch"]));
+    await waitFor(() =>
+      expect(inventoryNames()).toEqual(["Quarterstaff", "Spellbook", "Pouch", "Ink"]),
+    );
     expect(values.inventory?.[0]).toEqual({
       ref: PHB("Quarterstaff"),
       quantity: 1,
@@ -267,25 +277,25 @@ describe("ProficienciesStep", () => {
 
   it("adds an item past the lists, and notes it as a departure", async () => {
     renderStep();
-    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Ink"]));
 
     const picker = screen.getByRole("combobox", { name: "Add an item not on the lists" });
     fireEvent.focus(picker);
     fireEvent.click(await screen.findByRole("option", { name: /Rope/ }));
 
-    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Rope"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Ink", "Rope"]));
     expect(values.departures).toEqual([
       { field: "inventory", note: "Added beyond the starting equipment: Rope." },
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Rope" }));
-    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Ink"]));
     expect(values.departures).toEqual([]);
   });
 
   it("takes the gold alternative in place of the class's and the background's equipment", async () => {
     renderStep();
-    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Ink"]));
 
     fireEvent.click(
       checkbox(/Take 4d4 × 10 gp instead of the class's and the background's equipment/),
@@ -298,7 +308,7 @@ describe("ProficienciesStep", () => {
     expect(screen.queryAllByRole("radio")).toEqual([]);
 
     fireEvent.click(checkbox(/Take 4d4 × 10 gp instead/));
-    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch", "Ink"]));
     expect(values.money).toMatchObject({ gold: 10 });
   });
 
