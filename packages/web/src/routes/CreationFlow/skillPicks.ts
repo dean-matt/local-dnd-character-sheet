@@ -2,12 +2,12 @@ import { type ContentRef, refKey } from "@dnd/character";
 import { fillable, needed as neededOf, spent, type Tally, tally } from "./pickTally.ts";
 
 /**
- * The skills a class or a background lets the player pick, and how many. A `Replacement`
+ * The skills a class, a background or a race lets the player pick, and how many. A `Replacement`
  * offer is the 2014 rule's pick of any skill in place of one the character would gain
  * twice, and its `name` says which.
  */
 export type SkillOffer = {
-  by: "Class" | "Background" | "Replacement";
+  by: "Class" | "Background" | "Race" | "Replacement";
   /** The row's name, for saying whose list it is, or what a replacement replaces. */
   name: string;
   count: number;
@@ -17,7 +17,7 @@ export type SkillOffer = {
 /** A skill granted outright, and what grants it. */
 export type SkillGrant = { ref: ContentRef; by: string };
 
-/** Where `departures` notes the skills taken against what the class and background offer. */
+/** Where `departures` notes the skills taken against what the race, class, and background offer. */
 export const SKILLS_FIELD = "proficiencies.skills";
 
 export type SkillTally = Tally<ContentRef>;
@@ -42,7 +42,7 @@ export const needed = (offer: SkillOffer, granted: readonly SkillGrant[]): numbe
 /**
  * The 2014 rule's replacement: a character who would gain the same skill from two sources
  * picks any other skill instead. That is each skill granted twice, and each pick the
- * class and background lists cannot fill once the grants are counted. `undefined` where
+ * class, background and race lists cannot fill once the grants are counted. `undefined` where
  * nothing is gained twice.
  */
 export function replacementOffer(
@@ -66,7 +66,7 @@ export function replacementOffer(
     ...twice.map((each) => `${each.ref.name}, granted by both ${each.by.join(" and ")}`),
     ...(unfilled > 0
       ? [
-          `${unfilled === 1 ? "a pick" : `${unfilled} picks`} the ${offers.map((offer) => offer.name).join(" and ")} ${offers.length === 1 ? "list has" : "lists have"} no skill left for`,
+          `${unfilled === 1 ? "a pick" : `${unfilled} picks`} the ${new Intl.ListFormat("en").format(offers.map((offer) => offer.name))} ${offers.length === 1 ? "list has" : "lists have"} no skill left for`,
         ]
       : []),
   ];
@@ -95,7 +95,7 @@ export function skillDeparture(
     }),
     ...(outside.length > 0
       ? [
-          `${outside.map((skill) => skill.name).join(", ")} taken outside what the class and background offer`,
+          `${outside.map((skill) => skill.name).join(", ")} taken outside what the race, class, and background offer`,
         ]
       : []),
   ];

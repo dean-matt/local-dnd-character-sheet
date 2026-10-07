@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { backgroundSkillChoiceSchema, classSkillChoiceSchema } from "./index.ts";
+import { classSkillChoiceSchema, skillProficienciesChoiceSchema } from "./index.ts";
 
 describe("classSkillChoiceSchema", () => {
   it("reads the skills a class offers and how many", () => {
@@ -27,22 +27,36 @@ describe("classSkillChoiceSchema", () => {
   });
 });
 
-describe("backgroundSkillChoiceSchema", () => {
+describe("skillProficienciesChoiceSchema", () => {
   it("reads a pick of one where the background states no count", () => {
     const row = { skillProficiencies: [{ choose: { from: ["arcana", "history"] } }] };
-    expect(backgroundSkillChoiceSchema.parse(row)).toEqual({
+    expect(skillProficienciesChoiceSchema.parse(row)).toEqual({
       from: ["arcana", "history"],
+      count: 1,
+    });
+  });
+
+  it("reads the pick a race offers", () => {
+    const halfElf = { name: "Half-Elf", source: "PHB", skillProficiencies: [{ any: 2 }] };
+    expect(skillProficienciesChoiceSchema.parse(halfElf)).toEqual({ from: null, count: 2 });
+    const elf = {
+      name: "Elf",
+      source: "XPHB",
+      skillProficiencies: [{ choose: { from: ["insight", "perception", "survival"] } }],
+    };
+    expect(skillProficienciesChoiceSchema.parse(elf)).toEqual({
+      from: ["insight", "perception", "survival"],
       count: 1,
     });
   });
 
   it("offers nothing where the background grants its skills outright", () => {
     const sage = { skillProficiencies: [{ arcana: true, history: true }] };
-    expect(backgroundSkillChoiceSchema.parse(sage)).toBeUndefined();
+    expect(skillProficienciesChoiceSchema.parse(sage)).toBeUndefined();
   });
 
   it("offers nothing from a list of alternatives", () => {
     const row = { skillProficiencies: [{ any: 1 }, { any: 2 }] };
-    expect(backgroundSkillChoiceSchema.parse(row)).toBeUndefined();
+    expect(skillProficienciesChoiceSchema.parse(row)).toBeUndefined();
   });
 });

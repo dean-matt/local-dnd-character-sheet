@@ -1,8 +1,8 @@
 import {
-  backgroundSkillChoiceSchema,
   classSkillChoiceSchema,
   proficiencyGrantsSchema,
   type SkillChoice,
+  skillProficienciesChoiceSchema,
 } from "@dnd/catalog";
 import { type CharacterDefinition, type ContentRef, houseRule, refKey } from "@dnd/character";
 import { useWatch } from "react-hook-form";
@@ -14,8 +14,9 @@ import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 export type GrantedSkill = { ref: ContentRef; by: "Race" | "Background" };
 
 /**
- * The skills the race and the background grant outright, the picks the class and the
- * background offer, and every skill, each resolved against the edition's skill rows. A classic character
+ * The skills the race and the background grant outright, the picks the class, the
+ * background and the race or subrace offer, and every skill, each resolved against the
+ * edition's skill rows. A classic character
  * who would gain a skill twice gets a pick of any skill in its place, as does a 2024 one
  * under the house rule. `undefined` while a row they read has not loaded, a failed read
  * included, so a half-read never reads as an offer of nothing.
@@ -70,8 +71,11 @@ export function useSkillOffers():
       ? offer(
           "Background",
           backgroundRow.name,
-          backgroundSkillChoiceSchema.parse(backgroundRow.json),
+          skillProficienciesChoiceSchema.parse(backgroundRow.json),
         )
+      : []),
+    ...(catalogRace && raceJson
+      ? offer("Race", catalogRace.name, skillProficienciesChoiceSchema.parse(raceJson))
       : []),
   ];
   const replaces =

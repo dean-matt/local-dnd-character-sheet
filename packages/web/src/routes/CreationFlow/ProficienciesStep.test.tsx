@@ -76,14 +76,29 @@ const HALF_ORC = {
   json: { ...PHB("Half-Orc"), skillProficiencies: [{ intimidation: true }] },
 };
 
+const LEONIN = {
+  name: "Leonin",
+  source: "MOT",
+  edition: "classic",
+  json: {
+    name: "Leonin",
+    source: "MOT",
+    skillProficiencies: [
+      { choose: { from: ["athletics", "intimidation", "perception", "survival"] } },
+    ],
+  },
+};
+
 const ROWS: Record<string, unknown> = {
   "/api/classes/Wizard/PHB": WIZARD,
   "/api/races/Half-Orc/PHB": HALF_ORC,
+  "/api/races/Leonin/MOT": LEONIN,
   ...Object.fromEntries(
     ["classic", "one"].flatMap((edition) => [
       [`/api/classes/Wizard/PHB/subclasses?edition=${edition}&limit=200`, page([])],
       [`/api/backgrounds?edition=${edition}&limit=200`, page([SAGE, SOLDIER, GUILD_ARTISAN])],
       [`/api/races/Half-Orc/PHB/subraces?edition=${edition}&limit=200`, page([])],
+      [`/api/races/Leonin/MOT/subraces?edition=${edition}&limit=200`, page([])],
     ]),
   ),
 };
@@ -175,12 +190,17 @@ function Step() {
   );
 }
 
-function renderStep({ keepDraft = false, background = "Sage" } = {}) {
+function renderStep({
+  keepDraft = false,
+  background = "Sage",
+  race = undefined as { name: string; source: string } | undefined,
+} = {}) {
   if (!keepDraft)
     localStorage.setItem(
       "draft:creation",
       JSON.stringify({
         edition: "classic",
+        ...(race && { race }),
         background: PHB(background),
         levels: [{ class: PHB("Wizard") }],
       }),
@@ -278,7 +298,7 @@ describe("ProficienciesStep", () => {
       expect(values.departures).toEqual([
         {
           field: "proficiencies.skills",
-          note: "Stealth taken outside what the class and background offer.",
+          note: "Stealth taken outside what the race, class, and background offer.",
         },
       ]),
     );
@@ -338,7 +358,7 @@ describe("ProficienciesStep", () => {
       expect(values.departures).toEqual([
         {
           field: "proficiencies.skills",
-          note: "Athletics taken outside what the class and background offer.",
+          note: "Athletics taken outside what the race, class, and background offer.",
         },
       ]),
     );
@@ -395,6 +415,62 @@ describe("ProficienciesStep", () => {
       renderStep({ keepDraft: true });
       expect(
         await screen.findByRole("group", { name: "Any skill, in place of a duplicate" }),
+      ).toBeVisible();
+    });
+  });
+
+  describe("a skill pick the race offers", () => {
+    const LEONIN_REF = { name: "Leonin", source: "MOT" };
+    const raceGroup = () => screen.findByRole("group", { name: "From Race: Leonin" });
+
+    it("is asked beside the class's, lands the skill picked, and notes a pick past the count", async () => {
+      renderStep({ race: LEONIN_REF });
+      const group = await raceGroup();
+      expect(screen.getByRole("group", { name: "From Class: Wizard" })).toBeVisible();
+      expect(within(group).getByText("Choose 1 — 0 selected")).toBeVisible();
+
+      fireEvent.click(within(group).getByRole("checkbox", { name: "Athletics" }));
+      await waitFor(() =>
+        expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toContain("Athletics"),
+      );
+      expect(within(group).getByText("Choose 1 — 1 selected")).toBeVisible();
+      expect(values.departures ?? []).toEqual([]);
+
+      fireEvent.click(within(group).getByRole("checkbox", { name: "Intimidation" }));
+      await waitFor(() =>
+        expect(values.departures).toEqual([
+          {
+            field: "proficiencies.skills",
+            note: "2 skills taken from the Leonin list, which offers 1.",
+          },
+        ]),
+      );
+    });
+
+    it("reads as done only once the race's pick is made", async () => {
+      renderStep({ race: LEONIN_REF });
+      await raceGroup();
+      fireEvent.click(checkbox(/^Insight/));
+      fireEvent.click(checkbox(/^Religion/));
+      fireEvent.click(radio(/\(a\) Quarterstaff/));
+      fireEvent.click(radio(/\(a\) Component Pouch/));
+      await waitFor(() => expect(inventoryNames()).toContain("Component Pouch"));
+      expect(done).toBe(false);
+
+      fireEvent.click(checkbox(/^Athletics/));
+      await waitFor(() => expect(done).toBe(true));
+    });
+
+    it("earns a classic character any skill where the grants cover the race's list", async () => {
+      renderStep({ race: LEONIN_REF, background: "Soldier" });
+
+      const group = await screen.findByRole("group", {
+        name: "Any skill, in place of a duplicate",
+      });
+      expect(
+        within(group).getByText(
+          "In place of a pick the Wizard and Leonin lists have no skill left for.",
+        ),
       ).toBeVisible();
     });
   });
