@@ -10,6 +10,13 @@ const GAIN_FIELD = /^levels\.\d+\.rolled$/;
 const outside = (gain: number | undefined, die: number) =>
   gain !== undefined && (gain < 1 || gain > die);
 
+/** Where a level's hit points come from, as the step lists them; a gain the die cannot roll was typed. */
+export function gainSource(index: number, gain: number | undefined, die: number): string {
+  if (index === 0) return "highest face";
+  if (gain === undefined) return "average";
+  return outside(gain, die) ? "typed" : "rolled";
+}
+
 /**
  * `departures` with one entry for each level after the first whose gain a d`die` cannot
  * roll, replacing every such entry it held, so a level dropped or brought back in range

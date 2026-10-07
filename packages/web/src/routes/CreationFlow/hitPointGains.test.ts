@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hitPointMethodOf, parseGain, withGainDepartures } from "./hitPointGains.ts";
+import { gainSource, hitPointMethodOf, parseGain, withGainDepartures } from "./hitPointGains.ts";
 
 const FIGHTER = { name: "Fighter", source: "PHB" };
 const levels = (...gains: (number | undefined)[]) =>
@@ -30,6 +30,16 @@ describe("hitPointMethodOf", () => {
     expect(hitPointMethodOf(levels(undefined, 3, 15), 10)).toBe("custom");
     expect(hitPointMethodOf(levels(undefined, 3), 10)).toBe("roll");
     expect(hitPointMethodOf(levels(undefined, undefined), 10)).toBe("average");
+  });
+});
+
+describe("gainSource", () => {
+  it("names the first level's highest face, an unset gain the average, and one past the die typed", () => {
+    expect([gainSource(0, 4, 10), gainSource(1, undefined, 10)]).toEqual([
+      "highest face",
+      "average",
+    ]);
+    expect([gainSource(1, 10, 10), gainSource(1, 11, 10)]).toEqual(["rolled", "typed"]);
   });
 });
 

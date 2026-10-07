@@ -251,7 +251,7 @@ describe("ClassStep", () => {
   it("takes a typed gain for each level after the first, noting one the die cannot roll", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0.99);
     renderStep();
-    const gain = (level: number) => screen.getByRole("spinbutton", { name: `Level ${level} gain` });
+    const gain = (level: number) => screen.getByRole("textbox", { name: `Level ${level} gain` });
     const type = (level: number, value: string) =>
       fireEvent.change(gain(level), { target: { value } });
 
@@ -263,7 +263,7 @@ describe("ClassStep", () => {
     );
 
     click("Custom");
-    expect(gain(2)).toHaveValue(10);
+    expect(gain(2)).toHaveValue("10");
     type(2, "7");
     type(3, "15");
     type(4, "");
@@ -278,14 +278,17 @@ describe("ClassStep", () => {
       ]),
     );
 
-    type(3, "1.5");
-    expect(screen.getByText("A hit point gain is a whole number.")).toBeVisible();
-    expect(values.levels?.[2]?.rolled).toBe(15);
+    for (const text of ["1.5", "-", "ten"]) {
+      type(3, text);
+      expect(screen.getByText("A hit point gain is a whole number.")).toBeVisible();
+      expect(values.levels?.[2]?.rolled).toBe(15);
+    }
 
     click("Roll");
     await waitFor(() =>
       expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, 10]),
     );
+    expect(screen.getByText("(typed)")).toBeVisible();
 
     setLevel(2);
     await waitFor(() => expect(values.departures).toEqual([]));

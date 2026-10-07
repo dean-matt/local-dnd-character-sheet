@@ -18,8 +18,7 @@ export function GainInput({
   return (
     <InputField
       label={`Level ${level} gain`}
-      type="number"
-      inputMode="numeric"
+      type="text"
       placeholder={String(average)}
       value={typing ?? (gain === undefined ? "" : String(gain))}
       error={

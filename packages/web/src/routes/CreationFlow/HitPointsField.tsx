@@ -4,7 +4,12 @@ import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { rerolled, rollHitDie } from "./classLevels.ts";
 import { GainInput } from "./GainInput.tsx";
-import { type HitPointMethod, hitPointMethodOf, withGainDepartures } from "./hitPointGains.ts";
+import {
+  gainSource,
+  type HitPointMethod,
+  hitPointMethodOf,
+  withGainDepartures,
+} from "./hitPointGains.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
 
 const METHODS = [
@@ -122,11 +127,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
               <>
                 Level {index + 1}: {face}{" "}
                 <span className="text-muted">
-                  {index === 0
-                    ? "(highest face)"
-                    : levels[index]?.rolled === undefined
-                      ? "(average)"
-                      : "(rolled)"}
+                  ({gainSource(index, levels[index]?.rolled, die)})
                 </span>
               </>
             )}
