@@ -6,7 +6,7 @@ import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx"
 import { ChoicePills } from "./ChoicePills.tsx";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
-import { withDeparture } from "./departures.ts";
+import { RACE_FIELD, withDeparture } from "./departures.ts";
 import { grantNames, titleCase } from "./grants.ts";
 import { raceChoices } from "./raceChoices.ts";
 import { TypedEscape } from "./TypedEscape.tsx";
@@ -44,7 +44,7 @@ export function RaceField() {
   function choose(ref: EntryRef | undefined, note?: string) {
     setValue("race", ref as EntryRef, OPTS);
     setValue("subrace", undefined, OPTS);
-    setValue("departures", withDeparture(getValues("departures"), "race", note), OPTS);
+    setValue("departures", withDeparture(getValues("departures"), RACE_FIELD, note), OPTS);
     setMoved(true);
   }
 
@@ -87,7 +87,7 @@ export function RaceField() {
         focusOnMount={moved}
         onClear={() => choose(undefined)}
       />
-      <DepartureMark field="race" className="mt-1.5" />
+      <DepartureMark field={RACE_FIELD} className="mt-1.5" />
       {catalogRace && grants && grants.length > 0 && (
         <p className="mt-1.5 text-muted text-row">Grants: {grants.join(", ")}</p>
       )}

@@ -1,8 +1,6 @@
-import type { CharacterDefinition } from "@dnd/character";
 import { TriangleAlert } from "lucide-react";
 import { useId, useRef, useState } from "react";
-
-type Departure = CharacterDefinition["departures"][number];
+import type { Departure } from "./departures.ts";
 
 /** The count's button and the list it opens above the footer, which positions it. */
 export function DepartureCount({ departures }: { departures: Departure[] }) {

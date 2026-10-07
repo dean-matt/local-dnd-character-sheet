@@ -2,8 +2,7 @@ import type { CharacterDefinition } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { type CreationStep, stepOf } from "./creationSteps.ts";
 import { DepartureCount } from "./DepartureCount.tsx";
-
-type Departure = CharacterDefinition["departures"][number];
+import type { Departure } from "./departures.ts";
 
 /**
  * The footer's count of what this step's values depart from the rules in, which opens the

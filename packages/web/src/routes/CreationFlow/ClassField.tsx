@@ -7,7 +7,7 @@ import { ChosenChip } from "./ChosenChip.tsx";
 import { ClassEscape } from "./ClassEscape.tsx";
 import { levelsIn } from "./classLevels.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
-import { withDeparture } from "./departures.ts";
+import { CLASS_FIELD, withDeparture } from "./departures.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
 
 const OPTS = { shouldDirty: true } as const;
@@ -30,7 +30,7 @@ export function ClassField() {
     const keep = levels.length || count;
     setCount(keep);
     setValue("levels", ref ? levelsIn(ref, keep, []) : [], OPTS);
-    setValue("departures", withDeparture(getValues("departures"), "levels", note), OPTS);
+    setValue("departures", withDeparture(getValues("departures"), CLASS_FIELD, note), OPTS);
     setMoved(true);
   }
 
@@ -74,7 +74,7 @@ export function ClassField() {
         focusOnMount={moved}
         onClear={() => choose(undefined)}
       />
-      <DepartureMark field="levels" />
+      <DepartureMark field={CLASS_FIELD} />
     </div>
   );
 }
