@@ -7,7 +7,7 @@ import {
   type EquipmentSource,
   type OfferedOption,
   type SourcePicks,
-  slotKey,
+  slotKeys,
 } from "./equipmentPicks.ts";
 
 const HEADING = "font-semibold text-label text-muted uppercase tracking-label";
@@ -35,25 +35,28 @@ export function EquipmentSourceField({
   const id = useId();
 
   const slots = (option: OfferedOption, index: number) =>
-    option.items.map((item, at) => {
-      if (item.kind !== "type") return null;
-      const key = slotKey(index, option.key, at);
-      const slot = picks.slots[key];
-      return (
-        <EquipmentSlotField
-          key={key}
-          edition={edition}
-          types={item.types}
-          picked={slot && pickedName(slot, names)}
-          onPick={(ref, hit) =>
-            onPicks({ ...picks, slots: { ...picks.slots, [key]: ref } }, { ref, name: hit.name })
-          }
-          onClear={() => {
-            const { [key]: _, ...rest } = picks.slots;
-            onPicks({ ...picks, slots: rest });
-          }}
-        />
-      );
+    option.items.flatMap((item, at) => {
+      if (item.kind !== "type") return [];
+      const keys = slotKeys(index, option.key, at, item.quantity);
+      return keys.map((key, copy) => {
+        const slot = picks.slots[key];
+        return (
+          <EquipmentSlotField
+            key={key}
+            edition={edition}
+            types={item.types}
+            copy={keys.length > 1 ? { of: keys.length, at: copy + 1 } : undefined}
+            picked={slot && pickedName(slot, names)}
+            onPick={(ref, hit) =>
+              onPicks({ ...picks, slots: { ...picks.slots, [key]: ref } }, { ref, name: hit.name })
+            }
+            onClear={() => {
+              const { [key]: _, ...rest } = picks.slots;
+              onPicks({ ...picks, slots: rest });
+            }}
+          />
+        );
+      });
     });
 
   return (

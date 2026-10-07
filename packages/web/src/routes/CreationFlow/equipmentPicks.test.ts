@@ -30,7 +30,7 @@ const fighter: EquipmentSource = {
       { key: "b", items: [item("Leather Armor"), item("Arrows (20)")] },
     ],
     [
-      { key: "a", items: [{ kind: "type", types: ["weaponMartial"], quantity: 1 }] },
+      { key: "a", items: [{ kind: "type", types: ["weaponMartial"], quantity: 2 }] },
       { key: "b", items: [item("Handaxe", 2)] },
     ],
     [{ key: "_", items: [item("Explorer's Pack"), { kind: "money", copper: 1050 }] }],
@@ -44,12 +44,12 @@ const memory = (picks: EquipmentMemory["picks"]): EquipmentMemory => ({
 });
 
 describe("landing", () => {
-  it("lands the chosen options, a slot's pick and what is given outright", () => {
+  it("lands the chosen options, each copy's slot pick and what is given outright", () => {
     const picks = memory({
       Class: {
         row: "Fighter|PHB",
         options: { 0: "b", 1: "a" },
-        slots: { "1:a:0": PHB("Longsword") },
+        slots: { "1:a:0:0": PHB("Longsword"), "1:a:0:1": PHB("Battleaxe") },
       },
     });
     expect(landing([fighter], picks)).toEqual({
@@ -57,6 +57,7 @@ describe("landing", () => {
         held("Leather Armor"),
         held("Arrows (20)"),
         held("Longsword"),
+        held("Battleaxe"),
         held("Explorer's Pack"),
       ],
       copper: 1050,
@@ -99,7 +100,19 @@ describe("isComplete", () => {
       isComplete(
         [fighter],
         memory({
-          Class: { row, options: { 0: "a", 1: "a" }, slots: { "1:a:0": PHB("Longsword") } },
+          Class: { row, options: { 0: "a", 1: "a" }, slots: { "1:a:0:0": PHB("Longsword") } },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isComplete(
+        [fighter],
+        memory({
+          Class: {
+            row,
+            options: { 0: "a", 1: "a" },
+            slots: { "1:a:0:0": PHB("Longsword"), "1:a:0:1": PHB("Battleaxe") },
+          },
         }),
       ),
     ).toBe(true);

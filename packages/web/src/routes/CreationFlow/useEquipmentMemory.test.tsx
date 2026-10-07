@@ -34,4 +34,12 @@ describe("useEquipmentMemory", () => {
     expect(fresh.result.current[0]).toEqual(NO_EQUIPMENT);
     expect(JSON.parse(localStorage.getItem(KEY) ?? "null")).toEqual(NO_EQUIPMENT);
   });
+
+  it("reads a key of another shape as no picks", () => {
+    localStorage.setItem(KEY, JSON.stringify({ picks: {} }));
+
+    const reloaded = renderHook(() => useEquipmentMemory(false));
+
+    expect(reloaded.result.current[0]).toEqual(NO_EQUIPMENT);
+  });
 });

@@ -30,7 +30,7 @@ export type SourcePicks = {
   row: string;
   /** Each group's chosen option key, by the group's index. */
   options: Record<number, string>;
-  /** Each slot's pick, by `slotKey`. */
+  /** Each slot's pick, by one of `slotKeys`. */
   slots: Record<string, EntryRef>;
 };
 
@@ -51,8 +51,12 @@ export type EquipmentMemory = {
   names: Record<string, string>;
 };
 
-export const slotKey = (group: number, option: string, item: number) =>
-  `${group}:${option}:${item}`;
+/**
+ * The slots a `type` item opens, one per copy, so two martial weapons can be a longsword
+ * and a battleaxe.
+ */
+export const slotKeys = (group: number, option: string, item: number, quantity: number) =>
+  Array.from({ length: quantity }, (_, copy) => `${group}:${option}:${item}:${copy}`);
 
 export const NO_EQUIPMENT: EquipmentMemory = { picks: {}, landed: [], names: {} };
 
@@ -87,8 +91,11 @@ const entry = (ref: EntryRef, quantity: number): InventoryEntry => ({
 function optionLanding(option: OfferedOption, index: number, picks: SourcePicks) {
   const inventory = option.items.flatMap((item, at) => {
     if (item.kind === "money") return [];
-    const ref = item.kind === "item" ? item.ref : picks.slots[slotKey(index, option.key, at)];
-    return ref ? [entry(ref, item.quantity)] : [];
+    if (item.kind === "item") return item.ref ? [entry(item.ref, item.quantity)] : [];
+    return slotKeys(index, option.key, at, item.quantity).flatMap((key) => {
+      const slot = picks.slots[key];
+      return slot ? [entry(slot, 1)] : [];
+    });
   });
   const copper = option.items.reduce(
     (sum, item) => sum + (item.kind === "money" ? item.copper : 0),
@@ -153,7 +160,9 @@ export function isComplete(sources: readonly EquipmentSource[], memory: Equipmen
       const option = chosenOption(group, index, picks);
       return (
         option?.items.every(
-          (item, at) => item.kind !== "type" || picks.slots[slotKey(index, option.key, at)],
+          (item, at) =>
+            item.kind !== "type" ||
+            slotKeys(index, option.key, at, item.quantity).every((key) => picks.slots[key]),
         ) === true
       );
     });

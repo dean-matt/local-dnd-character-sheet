@@ -7,6 +7,8 @@ import { typeFilters, typeLabel, typeMismatch } from "./equipmentTypes.ts";
 export interface EquipmentSlotFieldProps {
   edition: CharacterDefinition["edition"];
   types: string[];
+  /** Which copy this slot fills where the option asks for more than one, such as two martial weapons. */
+  copy?: { at: number; of: number };
   /** The picked item's name, or `undefined` while the slot is empty. */
   picked: string | undefined;
   onPick: (ref: EntryRef, hit: SearchHit) => void;
@@ -17,11 +19,12 @@ export interface EquipmentSlotFieldProps {
 export function EquipmentSlotField({
   edition,
   types,
+  copy,
   picked,
   onPick,
   onClear,
 }: EquipmentSlotFieldProps) {
-  const label = `Choose ${typeLabel(types)}`;
+  const label = `Choose ${typeLabel(types)}${copy ? ` (${copy.at} of ${copy.of})` : ""}`;
   return picked === undefined ? (
     <CatalogPicker
       label={label}

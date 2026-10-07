@@ -1,12 +1,25 @@
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { type EquipmentMemory, NO_EQUIPMENT } from "./equipmentPicks.ts";
 
 const KEY = "draft:creation:equipment";
 
+/**
+ * The stored picks' outline, so a key an older build wrote in another shape reads as no
+ * picks rather than throwing on the reload it exists for.
+ */
+const storedSchema = z.object({
+  picks: z.record(z.string(), z.unknown()),
+  landed: z.array(z.unknown()),
+  names: z.record(z.string(), z.string()),
+});
+
 function stored(): EquipmentMemory | undefined {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw === null ? undefined : (JSON.parse(raw) as EquipmentMemory);
+    if (raw === null) return undefined;
+    const parsed: unknown = JSON.parse(raw);
+    return storedSchema.safeParse(parsed).success ? (parsed as EquipmentMemory) : undefined;
   } catch {
     return undefined;
   }
