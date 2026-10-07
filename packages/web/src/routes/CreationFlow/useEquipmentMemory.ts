@@ -1,4 +1,4 @@
-import { characterDefinitionSchema } from "@dnd/character";
+import { characterDefinitionSchema, entryRefSchema } from "@dnd/character";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { type EquipmentMemory, NO_EQUIPMENT } from "./equipmentPicks.ts";
@@ -12,7 +12,7 @@ const KEY = "draft:creation:equipment";
 const sourcePicksSchema = z.object({
   row: z.string(),
   options: z.record(z.string(), z.string()),
-  slots: z.record(z.string(), z.unknown()),
+  slots: z.record(z.string(), entryRefSchema),
 });
 
 const storedSchema = z.object({

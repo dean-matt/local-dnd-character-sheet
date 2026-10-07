@@ -39,6 +39,11 @@ describe("useEquipmentMemory", () => {
     { picks: {} },
     { picks: {}, landed: [null], names: {} },
     { picks: { Class: { row: "Fighter|PHB" } }, landed: [], names: {} },
+    {
+      picks: { Class: { row: "Fighter|PHB", options: {}, slots: { "0": "x" } } },
+      landed: [],
+      names: {},
+    },
   ])("reads a key of another shape as no picks: %j", (shape) => {
     localStorage.setItem(KEY, JSON.stringify(shape));
 
