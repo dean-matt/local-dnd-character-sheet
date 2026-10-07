@@ -148,6 +148,12 @@ async function pickClass(query: string, option: RegExp) {
 }
 
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
+/** Each grid cell after the first level, as its term and value read. */
+const cells = () =>
+  screen
+    .getAllByRole("term")
+    .map((term) => `${term.textContent}: ${term.nextElementSibling?.textContent}`);
+
 const setLevel = (level: number) =>
   fireEvent.change(screen.getByRole("spinbutton", { name: "Level" }), {
     target: { value: String(level) },
@@ -230,7 +236,7 @@ describe("ClassStep", () => {
 
     await pickClass("fig", /^Fighter/);
     setLevel(3);
-    expect(await screen.findByText("Level 2: 6")).toBeVisible();
+    await waitFor(() => expect(cells()).toEqual(["Level 2: 6", "Level 3: 6"]));
     expect(screen.getByText("22")).toBeVisible();
 
     click("Roll");
@@ -282,10 +288,13 @@ describe("ClassStep", () => {
     );
 
     type(3, "-");
-    expect(screen.queryByText("A hit point gain is a whole number.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Level 3: A hit point gain is a whole number."),
+    ).not.toBeInTheDocument();
     for (const text of ["1.5", "ten"]) {
       type(3, text);
-      expect(screen.getByText("A hit point gain is a whole number.")).toBeVisible();
+      expect(screen.getByText("Level 3: A hit point gain is a whole number.")).toBeVisible();
+      expect(gain(3)).toHaveAccessibleDescription("Level 3: A hit point gain is a whole number.");
     }
     expect(values.levels?.[2]?.rolled).toBe(15);
 
@@ -293,7 +302,7 @@ describe("ClassStep", () => {
     await waitFor(() =>
       expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, 10]),
     );
-    expect(screen.getByText("(typed)")).toBeVisible();
+    expect(cells()).toEqual(["Level 2: 7", "Level 3: 15typed", "Level 4: 10"]);
 
     setLevel(2);
     await waitFor(() => expect(values.departures).toEqual([]));

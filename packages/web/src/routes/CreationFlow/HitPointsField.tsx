@@ -37,6 +37,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
   const { levels, hitDie } = useClassCatalog();
   const known = HIT_DICE.includes(hitDie as HitDie);
   const [method, setMethod] = useState<HitPointMethod | undefined>(memory);
+  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   useEffect(() => {
     // The guess waits on the die, since a gain reads as typed only against the die it beats.
     if (method === undefined && known) setMethod(hitPointMethodOf(levels, hitDie as number));
@@ -114,29 +115,50 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
           Reroll
         </button>
       )}
-      <ol className="mt-2 flex flex-col gap-0.5 text-body">
-        {faces.map((face, index) => (
-          <li // biome-ignore lint/suspicious/noArrayIndexKey: a level is its position.
-            key={index}
-          >
-            {method === "custom" && index > 0 ? (
-              <GainInput
-                level={index + 1}
-                gain={levels[index]?.rolled}
-                average={average}
-                onGain={(gain) => type(index, gain)}
-              />
-            ) : (
-              <>
-                Level {index + 1}: {face}{" "}
-                <span className="text-muted">
-                  ({gainSource(index, levels[index]?.rolled, die)})
-                </span>
-              </>
-            )}
-          </li>
-        ))}
-      </ol>
+      <p className="mt-2 text-body">
+        Level 1: {die} <span className="text-muted">({gainSource(0, undefined, die)})</span>
+      </p>
+      {levels.length > 1 && (
+        <>
+          <p className="text-muted text-row">Gain at each later level</p>
+          <dl className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1 text-body">
+            {faces.slice(1).map((face, offset) => {
+              const index = offset + 1;
+              const gain = levels[index]?.rolled;
+              return (
+                <div
+                  key={index}
+                  className="flex flex-col items-center rounded-control border border-border p-1"
+                >
+                  <dt className="text-muted text-row">
+                    <span className="sr-only">Level </span>
+                    {index + 1}
+                  </dt>
+                  <dd className="w-full text-center">
+                    {method === "custom" ? (
+                      <GainInput
+                        level={index + 1}
+                        gain={gain}
+                        average={average}
+                        messages={messages}
+                        onGain={(next) => type(index, next)}
+                      />
+                    ) : (
+                      <>
+                        {face}
+                        {gainSource(index, gain, die) === "typed" && (
+                          <span className="block text-muted text-row">typed</span>
+                        )}
+                      </>
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </>
+      )}
+      <div ref={setMessages} className="flex flex-col" />
       <p className="mt-1 text-body">
         Total: <strong>{total}</strong>{" "}
         <span className="text-muted">plus your Constitution modifier at each level</span>
