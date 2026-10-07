@@ -59,5 +59,5 @@ export function parseGain(text: string): number | undefined | null {
   const trimmed = text.trim();
   if (trimmed === "") return undefined;
   const gain = Number(trimmed);
-  return /^-?\d+$/.test(trimmed) && Math.abs(gain) <= MAX_HIT_POINT_GAIN ? gain : null;
+  return /^[-+]?\d+$/.test(trimmed) && Math.abs(gain) <= MAX_HIT_POINT_GAIN ? gain : null;
 }

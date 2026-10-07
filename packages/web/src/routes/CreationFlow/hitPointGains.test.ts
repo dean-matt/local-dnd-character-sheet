@@ -38,6 +38,7 @@ describe("parseGain", () => {
   it("takes a whole number from -999 to 999, leaves an empty field unset, and refuses the rest", () => {
     expect(parseGain(" 15 ")).toBe(15);
     expect(parseGain("-2")).toBe(-2);
+    expect(parseGain("+5")).toBe(5);
     expect(parseGain("")).toBeUndefined();
     expect(parseGain("1.5")).toBeNull();
     expect(parseGain("999")).toBe(999);

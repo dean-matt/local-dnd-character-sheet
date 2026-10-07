@@ -5,8 +5,8 @@ import { parseGain } from "./hitPointGains.ts";
 
 /**
  * One level's typed gain, which keeps what the player types, and its error, until it is a
- * whole number the definition can hold. A
- * grid cell is too narrow for its error, so the error renders in `messages`, named by level.
+ * whole number the definition can hold. A grid cell is too narrow for its error, so the
+ * error renders in `messages`, named by level.
  */
 export function GainInput({
   level,
