@@ -9,14 +9,14 @@ import { useResolvedRefs } from "../../hooks/useResolvedRefs.ts";
 import type { EquipmentSource, OfferedItem } from "./equipmentPicks.ts";
 import { CORE_SOURCE, titleCase } from "./grants.ts";
 
+import { useClassCatalog } from "./useClassCatalog.ts";
+import { useIdentityCatalog } from "./useIdentityCatalog.ts";
+
 /** The edition's core book, then the other edition's, which prints what it leaves out. */
 const coreBooks = (edition: keyof typeof CORE_SOURCE) =>
   edition === "one"
     ? [CORE_SOURCE.one, CORE_SOURCE.classic]
     : [CORE_SOURCE.classic, CORE_SOURCE.one];
-
-import { useClassCatalog } from "./useClassCatalog.ts";
-import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 type Unresolved = Omit<EquipmentSource, "groups"> & { equipment: StartingEquipment };
 
