@@ -1,9 +1,8 @@
 @import "tailwindcss";
 
 /*
- * A window tall enough to pin the character header under the top bar, or creation's footer
- * at its foot. In a shorter one, as at high zoom, the pinned chrome would leave only a strip
- * of page to read.
+ * A window tall enough to pin the character header under the top bar. In a shorter one,
+ * as at high zoom, the pinned pair would leave only a strip of sheet to read.
  */
 @custom-variant tall (@media (min-height: 36rem));
 
@@ -153,14 +152,11 @@
   color-scheme: light dark;
   /* Keeps focus and anchor scrolls clear of the pinned top bar, character header and creation footer. */
   scroll-padding-top: calc(var(--spacing-topbar) + var(--pinned-header-height, 0px));
-  scroll-padding-bottom: var(--pinned-footer-height, 0px);
+  scroll-padding-bottom: var(--creation-footer-height, 0px);
 
   @variant tall {
     &:has([data-character-header]) {
       --pinned-header-height: var(--spacing-header);
-    }
-    &:has([data-creation-footer]) {
-      --pinned-footer-height: var(--creation-footer-height, 0px);
     }
   }
 }

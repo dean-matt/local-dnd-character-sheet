@@ -92,7 +92,7 @@ export function CreationFlow() {
             <div
               ref={footer}
               data-creation-footer
-              className="bottom-0 z-20 flex tall:sticky flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-3 print:hidden"
+              className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-3 print:hidden"
             >
               <button
                 type="button"

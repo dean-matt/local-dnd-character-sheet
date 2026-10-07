@@ -20,7 +20,7 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in
   `src/index.css`. Character sheet only; Settings skips it.
 - **Creation footer** holds Cancel, Back and Next or Finish, pinned to the foot of the
-  viewport in a `tall` window while the step's content scrolls above it. It wraps to a
+  viewport at every height, since a step grows with the choices on it. It wraps to a
   second row in a narrow column, so `CreationFlow` measures its height into
   `--creation-footer-height` rather than holding a token.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on

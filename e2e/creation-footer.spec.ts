@@ -25,6 +25,10 @@ async function pinned(page: Page, height: number) {
     ).toBeLessThanOrEqual(right);
   }
   expect((await edges(content.locator("> :last-child"))).bottom).toBeLessThanOrEqual(footerBox.top);
+  // At the end of the page a footer in flow lands at the window's foot too; only a pinned
+  // one is still there at the top.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  near((await edges(footer)).bottom, height);
   return footerBox;
 }
 
@@ -50,7 +54,7 @@ async function focusClears(page: Page, footerBox: { top: number; bottom: number 
   await probe.evaluate((element) => element.remove());
 }
 
-test("creation's Cancel, Back and Next stay pinned at the window's foot in a tall window while the step scrolls, and focus lands above them", async ({
+test("creation's Cancel, Back and Next stay pinned at the window's foot at every height while the step scrolls, and focus lands above them", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -69,10 +73,10 @@ test("creation's Cancel, Back and Next stay pinned at the window's foot in a tal
   expect(narrow.bottom - narrow.top).toBeGreaterThan(wide.bottom - wide.top);
   await focusClears(page, narrow);
 
-  // Below the `tall` variant's 36rem the footer scrolls with the step.
+  // Below the `tall` variant's 36rem, where the character header stops pinning.
   await page.setViewportSize({ width: 1280, height: 240 });
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await expect
-    .poll(async () => (await edges(page.locator("[data-creation-footer]"))).top)
-    .toBeGreaterThan(240);
+  // A shrunk emulated viewport keeps the rail's old `100vh` until the page reloads,
+  // and the step grows as its catalog answers, which would move the padding off the end.
+  await page.reload({ waitUntil: "networkidle" });
+  await focusClears(page, await pinned(page, 240));
 });
