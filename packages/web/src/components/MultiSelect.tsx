@@ -98,6 +98,7 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
       open={open}
       onClose={() => setOpen(false)}
       onKeyDown={onKeyDown}
+      panelRef={list}
       value={summary(options, selected, noun)}
       valueId={`${id}-value`}
       button={{
@@ -131,14 +132,15 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
         </div>
       }
     >
-      {(panelClassName) => (
+      {(panel) => (
         <fieldset
           ref={list}
           id={`${id}-list`}
           // A press on a label's text focuses nothing, and Safari never focuses a clicked
           // checkbox, so the dropdown's blur would close the list before the click toggled it.
           tabIndex={-1}
-          className={panelClassName}
+          className={panel.className}
+          style={panel.style}
         >
           <legend className="sr-only">{capitalize(noun)} to search</legend>
           {filterable && (

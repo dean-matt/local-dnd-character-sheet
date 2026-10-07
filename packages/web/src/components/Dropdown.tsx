@@ -1,5 +1,14 @@
 import { ChevronDown } from "lucide-react";
-import type { ComponentProps, KeyboardEvent, ReactNode, RefObject } from "react";
+import {
+  type ComponentProps,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+  useId,
+} from "react";
+import { useTopLayer } from "../hooks/useTopLayer.ts";
+import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../lib/anchoredList.ts";
 
 export interface DropdownProps {
   open: boolean;
@@ -15,16 +24,17 @@ export interface DropdownProps {
   header?: ReactNode;
   /** Keys bubbling from the button and the panel, after Escape has been handled. */
   onKeyDown?: (event: KeyboardEvent) => void;
-  /** The panel, rendered only while open, given the classes that place it under the button. */
-  children: (panelClassName: string) => ReactNode;
+  /** The panel's element, which floats in the top layer while open. */
+  panelRef: RefObject<HTMLElement | null>;
+  /** The panel, rendered only while open, given the class and style that place it under the button. */
+  children: (panel: { className: string; style: CSSProperties }) => ReactNode;
 }
 
-const PANEL =
-  "absolute top-full left-0 z-30 mt-1 flex max-h-80 w-full min-w-0 flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none";
+const PANEL = `${ANCHORED_LIST_CLASSES} flex flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none`;
 
 /**
  * The shell `MultiSelect` and `Select` share: a button naming the value with a chevron, and
- * a panel below it no wider than the button. Escape closes the panel and returns focus to
+ * a panel floating below it, or above where the viewport has more room there. Escape closes the panel and returns focus to
  * the button; focus leaving the whole closes it.
  */
 export function Dropdown({
@@ -35,8 +45,11 @@ export function Dropdown({
   valueId,
   header,
   onKeyDown,
+  panelRef,
   children,
 }: DropdownProps) {
+  const anchor = anchorName(useId());
+  useTopLayer(panelRef, open);
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Escape, the arrow keys and focusout bubbling from the button and the panel.
     <div
@@ -59,6 +72,7 @@ export function Dropdown({
         {...button}
         type="button"
         aria-expanded={open}
+        style={{ anchorName: anchor }}
         className="flex w-full min-w-0 items-center justify-between gap-2 rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink aria-invalid:border-error"
       >
         <span id={valueId} className="truncate">
@@ -71,7 +85,7 @@ export function Dropdown({
           style={{ transform: open ? "rotate(180deg)" : undefined }}
         />
       </button>
-      {open && children(PANEL)}
+      {open && children({ className: PANEL, style: anchoredListStyle(anchor) })}
     </div>
   );
 }
