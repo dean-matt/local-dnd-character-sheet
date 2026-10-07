@@ -20,8 +20,9 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in
   `src/index.css`. Character sheet only; Settings skips it.
 - **Creation footer** holds Cancel, Back and Next or Finish, pinned to the foot of the
-  viewport in a `tall` window while the step's content scrolls above it. Its height is
-  `--spacing-footer`, a floor: in a column too narrow for one row it wraps and grows.
+  viewport in a `tall` window while the step's content scrolls above it. It wraps to a
+  second row in a narrow column, so `CreationFlow` measures its height into
+  `--creation-footer-height` rather than holding a token.
 - **Page content** sits below the header with `px-gutter py-6`, on character pages, on
   Settings, and in `ContentLayout` in `src/routes/ContentLayout.tsx`, which the homepage, list and 404 pages use.
 
@@ -35,7 +36,7 @@ right-docked collapsible rail, is the first one expected.
   backdrop cover the character header at `z-20`, which covers the sheet. Chrome pinned below
   the top bar adds its height to `scroll-padding-top` in `src/index.css`, as the character
   header does with `--spacing-header`, and chrome pinned to the foot adds its height to
-  `scroll-padding-bottom`, or focus lands under it.
+  `scroll-padding-bottom`, as the creation footer does, or focus lands under it.
 - **New chrome opts out of print.** Print hides every bar with `print:hidden` and renders
   `PrintSheet` and `PrintTitle`, in `src/routes/CharacterLayout/PrintSheet/`, instead.
 

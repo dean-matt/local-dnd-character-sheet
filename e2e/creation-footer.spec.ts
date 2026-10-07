@@ -4,13 +4,16 @@ import { scrollToBottom } from "./character";
 
 async function pinned(page: Page, height: number) {
   const footer = page.locator("[data-creation-footer]");
-  const content = footer.locator("xpath=preceding-sibling::div");
+  const content = page.locator("[data-creation-step]");
   await scrollToBottom(page, content);
   const barBox = await edges(page.getByRole("banner"));
   expect(barBox.top).toBe(0);
-  expect((await edges(page.locator("aside"))).top).toBe(barBox.bottom);
+  // A wrapped footer's height lands on a half pixel, and scrolling stops on a whole one.
+  const near = (actual: number, expected: number) =>
+    expect(Math.abs(actual - expected)).toBeLessThanOrEqual(0.5);
+  near((await edges(page.locator("aside"))).top, barBox.bottom);
   const footerBox = await edges(footer);
-  expect(footerBox.bottom).toBe(height);
+  near(footerBox.bottom, height);
   const right = await footer.evaluate((element) => element.getBoundingClientRect().right);
   for (const name of ["Cancel", "Back", /^Next/]) {
     const button = footer.getByRole("button", { name });
@@ -22,7 +25,29 @@ async function pinned(page: Page, height: number) {
     ).toBeLessThanOrEqual(right);
   }
   expect((await edges(content.locator("> :last-child"))).bottom).toBeLessThanOrEqual(footerBox.top);
-  return { content, footerBox };
+  return footerBox;
+}
+
+/**
+ * Chrome centers a focus target that sits wholly outside the padded viewport, so the probe
+ * starts just above the footer's top edge and mostly under it. Focus then aligns its bottom
+ * with the padding, and only a padding as tall as the footer clears it.
+ */
+async function focusClears(page: Page, footerBox: { top: number; bottom: number }) {
+  await page.locator("[data-creation-step]").evaluate((element) => {
+    const probe = document.createElement("button");
+    probe.textContent = "Probe";
+    probe.style.marginTop = "1000px";
+    element.prepend(probe);
+  });
+  const probe = page.getByRole("button", { name: "Probe" });
+  await probe.evaluate((element, y) => {
+    window.scrollBy(0, element.getBoundingClientRect().top - y);
+  }, footerBox.top - 4);
+  expect((await edges(probe)).bottom).toBeGreaterThan(footerBox.top);
+  await probe.focus();
+  expect((await edges(probe)).bottom).toBeLessThanOrEqual(footerBox.top);
+  await probe.evaluate((element) => element.remove());
 }
 
 test("creation's Cancel, Back and Next stay pinned at the window's foot while the step scrolls, and focus lands above them", async ({
@@ -34,26 +59,13 @@ test("creation's Cancel, Back and Next stay pinned at the window's foot while th
   await page.evaluate(() => localStorage.removeItem("sidebar-collapsed"));
   await page.reload();
   await expect(page.getByRole("heading", { level: 1, name: "Identity" })).toBeVisible();
-
-  const { content, footerBox } = await pinned(page, 720);
-
-  // Chrome centers a focus target that sits off screen, so the probe starts on screen and
-  // under the footer, where only `scroll-padding-bottom` tells focus to move it.
-  await content.evaluate((element) => {
-    const probe = document.createElement("button");
-    probe.textContent = "Probe";
-    probe.style.marginTop = "1000px";
-    element.prepend(probe);
-  });
-  const probe = page.getByRole("button", { name: "Probe" });
-  await probe.evaluate((element, y) => {
-    window.scrollBy(0, element.getBoundingClientRect().bottom - y);
-  }, footerBox.bottom - 10);
-  expect((await edges(probe)).top).toBeGreaterThanOrEqual(footerBox.top);
-  await probe.focus();
-  expect((await edges(probe)).bottom).toBeLessThanOrEqual(footerBox.top);
+  const wide = await pinned(page, 720);
+  await focusClears(page, wide);
 
   await page.getByRole("button", { name: "Collapse sidebar" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
-  await pinned(page, 844);
+  const narrow = await pinned(page, 844);
+  // Wrapped to a second row, so a fixed height would fall short.
+  expect(narrow.bottom - narrow.top).toBeGreaterThan(wide.bottom - wide.top);
+  await focusClears(page, narrow);
 });

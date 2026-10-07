@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useCreateCharacter } from "../../hooks/useCreateCharacter.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
@@ -39,6 +39,8 @@ export function CreationFlow() {
   const [fresh] = useState(marked === undefined);
   const [abilities, setAbilities] = useState<AbilitiesMemory>();
   const step = marked ?? CREATION_STEPS[0];
+  const footer = useRef<HTMLDivElement>(null);
+  useFooterHeight(footer);
 
   const goTo = (slug: CreationStep["slug"]) => {
     const { to, ...options } = stepLink(slug);
@@ -66,7 +68,7 @@ export function CreationFlow() {
       {({ cancel }) => (
         <SidebarFrame rail={<CreationRail current={step} />}>
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex flex-1 flex-col gap-4 px-gutter py-6">
+            <div data-creation-step className="flex flex-1 flex-col gap-4 px-gutter py-6">
               <div>
                 <p className="text-muted text-row">
                   New character · Step {index + 1} of {CREATION_STEPS.length}
@@ -88,8 +90,9 @@ export function CreationFlow() {
               <StepDepartures step={step} />
             </div>
             <div
+              ref={footer}
               data-creation-footer
-              className="bottom-0 z-20 flex min-h-footer tall:sticky flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-2 print:hidden"
+              className="bottom-0 z-20 flex tall:sticky flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-3 print:hidden"
             >
               <button
                 type="button"
@@ -139,4 +142,25 @@ export function CreationFlow() {
       )}
     </FormShell>
   );
+}
+
+/**
+ * Publishes the footer's height as `--creation-footer-height` on the root, which
+ * `scroll-padding-bottom` reads so focus lands above the footer. Measured, not a token,
+ * because the footer wraps to a second row in a narrow column.
+ */
+function useFooterHeight(footer: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const element = footer.current;
+    if (!element) return;
+    const root = document.documentElement.style;
+    const observer = new ResizeObserver(() =>
+      root.setProperty("--creation-footer-height", `${element.offsetHeight}px`),
+    );
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      root.removeProperty("--creation-footer-height");
+    };
+  }, [footer]);
 }

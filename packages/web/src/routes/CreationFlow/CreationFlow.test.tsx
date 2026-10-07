@@ -312,7 +312,6 @@ describe("CreationFlow", () => {
 
     const footer = screen.getByRole("button", { name: "Cancel" }).parentElement;
     expect(footer).toHaveAttribute("data-creation-footer");
-    expect(footer).toHaveClass("tall:sticky", "bottom-0", "bg-canvas");
     expect(within(footer as HTMLElement).getByRole("button", { name: "Back" })).toBeVisible();
     expect(within(footer as HTMLElement).getByRole("button", { name: /^Next/ })).toBeVisible();
     expect(footer?.previousElementSibling).toContainElement(
