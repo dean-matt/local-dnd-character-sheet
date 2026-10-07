@@ -24,10 +24,11 @@ import {
   useContext,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
+import { useTopLayer } from "../hooks/useTopLayer.ts";
+import { anchorName as toAnchorName } from "../lib/anchoring.ts";
 import { InModal } from "./inModalContext.ts";
 
 const MAX_DEPTH = 1;
@@ -63,7 +64,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
   const open = transientOpen || pinned;
   const id = useId();
   const contentId = `${id}-content`;
-  const anchorName = `--popover${id.replace(/[^\w-]/g, "")}`;
+  const anchorName = toAnchorName(id);
   const contentRef = useRef<HTMLSpanElement>(null);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const ownTriggerRef = useRef<HTMLButtonElement>(null);
@@ -75,15 +76,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
 
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
 
-  // Set here rather than as a prop: jsdom has no showPopover, and hides a `popover` it
-  // cannot show. A second run under StrictMode finds it already showing.
-  useLayoutEffect(() => {
-    const content = contentRef.current;
-    if (!inModal || !open || !content || typeof content.showPopover !== "function") return;
-    if (content.hasAttribute("popover")) return;
-    content.setAttribute("popover", "manual");
-    content.showPopover();
-  }, [inModal, open]);
+  useTopLayer(contentRef, inModal && open);
 
   // A pointer down anywhere outside the trigger and its content closes it —
   // the only way a mouse user dismisses one opened by hover, since it never

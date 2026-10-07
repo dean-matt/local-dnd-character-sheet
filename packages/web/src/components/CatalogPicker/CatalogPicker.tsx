@@ -15,6 +15,8 @@ import type { SearchHit } from "@dnd/catalog";
 import type { CharacterRecord, EntryRef } from "@dnd/character";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
+import { useTopLayer } from "../../hooks/useTopLayer.ts";
+import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../../lib/anchoring.ts";
 import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
 
@@ -65,6 +67,7 @@ export function CatalogPicker({
   focusOnMount = false,
 }: CatalogPickerProps) {
   const input = useRef<HTMLInputElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: focus moves once, on mount.
   useEffect(() => {
     if (focusOnMount) input.current?.focus();
@@ -80,6 +83,9 @@ export function CatalogPicker({
   const hits = search.data?.items ?? [];
   const showList = open && query.trim().length > 0 && search.data !== undefined;
   const activeIndex = showList && active < hits.length ? active : -1;
+  const listShown = showList && hits.length > 0;
+  const anchor = anchorName(id);
+  useTopLayer(list, listShown);
 
   function pick(hit: SearchHit) {
     if (unavailableReason?.(hit) !== undefined) return;
@@ -129,7 +135,7 @@ export function CatalogPicker({
             role="combobox"
             autoComplete="off"
             aria-autocomplete="list"
-            aria-expanded={showList && hits.length > 0}
+            aria-expanded={listShown}
             aria-controls={listboxId}
             aria-activedescendant={activeIndex === -1 ? undefined : optionId(activeIndex)}
             placeholder={placeholder}
@@ -141,17 +147,20 @@ export function CatalogPicker({
             }}
             onKeyDown={handleKeyDown}
             onBlur={() => setOpen(false)}
+            style={{ anchorName: anchor }}
             className="rounded-control border border-border bg-surface px-2 py-1"
           />
           {/* A mousedown on a row or the scrollbar is cancelled so it never blurs the input,
               which closes the list. */}
           <div
+            ref={list}
             id={listboxId}
             role="listbox"
             onMouseDown={(event) => event.preventDefault()}
             aria-label={label}
-            hidden={!showList || hits.length === 0}
-            className="max-h-64 overflow-y-auto rounded-card border border-border bg-surface p-1 shadow-popover"
+            hidden={!listShown}
+            style={anchoredListStyle(anchor)}
+            className={`${ANCHORED_LIST_CLASSES} overflow-y-auto rounded-card border border-border bg-surface p-1 shadow-popover`}
           >
             {hits.map((hit, index) => (
               <CatalogPickerOption

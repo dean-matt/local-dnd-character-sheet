@@ -94,16 +94,18 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
         },
       }}
     >
-      {(panelClassName) => (
+      {(panel) => (
         <div
+          ref={panel.ref}
           id={`${id}-list`}
           role="listbox"
           aria-labelledby={buttonId}
           // Keeps focus on the button, which owns the keys and the active option.
           onMouseDown={(event) => event.preventDefault()}
+          className={panel.className}
           // At least the button's width, and wider where an option needs it: a narrow button
           // would otherwise wrap even a two-digit option onto two lines.
-          className={`${panelClassName} w-max! min-w-full!`}
+          style={{ ...panel.style, width: "max-content" }}
         >
           {options.map((option, index) => (
             // biome-ignore lint/a11y/useKeyWithClickEvents: the button handles the keys, pointing at this option.
