@@ -84,9 +84,13 @@ describe("maxHitPoints", () => {
   });
 
   it("counts a gain a d8 cannot roll as given, still at least 1 a level", () => {
-    expect(
-      maxHitPoints([{ die: 8 }, { die: 8, rolled: 15 }, { die: 8, rolled: -3 }], 0).total,
-    ).toBe(8 + 15 + 1);
+    const result = maxHitPoints([{ die: 8 }, { die: 8, rolled: 15 }, { die: 8, rolled: -3 }], 0);
+    expect(result.total).toBe(8 + 15 + 1);
+    expect(result.terms.map((term) => term.label)).toEqual([
+      "Level 1: d8 highest 8 +0 Con",
+      "Level 2: d8 typed 15 +0 Con",
+      "Level 3: d8 typed -3 +0 Con (min 1)",
+    ]);
   });
 
   it("rejects a fractional gain", () => {

@@ -68,7 +68,14 @@ export function maxHitPoints<Ref = unknown>(
   return breakdown(
     levels.map((level, index) => {
       const face = faceRolled(level, index === 0);
-      const source = index === 0 ? "highest" : level.rolled === undefined ? "average" : "rolled";
+      const source =
+        index === 0
+          ? "highest"
+          : level.rolled === undefined
+            ? "average"
+            : face > level.die || face < 1
+              ? "typed"
+              : "rolled";
       const con = `${constitutionModifier < 0 ? "-" : "+"}${Math.abs(constitutionModifier)}`;
       const value = Math.max(1, face + constitutionModifier);
       const floor = value === face + constitutionModifier ? "" : " (min 1)";
