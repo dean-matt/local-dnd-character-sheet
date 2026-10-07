@@ -141,10 +141,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
                   key={index}
                   className="flex flex-col items-center rounded-control border border-border p-1"
                 >
-                  <dt className="text-muted text-row">
-                    <span className="sr-only">Level </span>
-                    {index + 1}
-                  </dt>
+                  <dt className="whitespace-nowrap text-muted text-row">Level {index + 1}</dt>
                   <dd className="w-full text-center">
                     {method === "custom" ? (
                       <GainInput
