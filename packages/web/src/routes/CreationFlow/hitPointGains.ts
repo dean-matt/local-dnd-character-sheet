@@ -1,4 +1,4 @@
-import type { CharacterDefinition } from "@dnd/character";
+import { type CharacterDefinition, type HitDie, hitPointSource } from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
 type Departures = CharacterDefinition["departures"];
@@ -7,15 +7,9 @@ export type HitPointMethod = "average" | "roll" | "custom";
 
 const GAIN_FIELD = /^levels\.\d+\.rolled$/;
 
-const outside = (gain: number | undefined, die: number) =>
-  gain !== undefined && (gain < 1 || gain > die);
-
-/** Where a level's hit points come from, as the step lists them; a gain the die cannot roll was typed. */
-export function gainSource(index: number, gain: number | undefined, die: number): string {
-  if (index === 0) return "highest face";
-  if (gain === undefined) return "average";
-  return outside(gain, die) ? "typed" : "rolled";
-}
+/** Whether a d`die` cannot roll `gain`, which the step marks typed and notes as a departure. */
+export const outsideDie = (gain: number | undefined, die: number) =>
+  hitPointSource({ die: die as HitDie, rolled: gain }, false) === "typed";
 
 /**
  * `departures` with one entry for each level after the first whose gain a d`die` cannot
@@ -29,7 +23,7 @@ export function withGainDepartures(
 ): Departures {
   const others = (departures ?? []).filter((departure) => !GAIN_FIELD.test(departure.field));
   const gains = levels.flatMap((level, index) =>
-    index > 0 && outside(level.rolled, die)
+    index > 0 && outsideDie(level.rolled, die)
       ? [
           {
             field: `levels.${index}.rolled`,
@@ -51,7 +45,7 @@ export function hitPointMethodOf(levels: readonly Level[], die: number): HitPoin
   const gains = levels.slice(1).map((level) => level.rolled);
   const set = gains.filter((gain) => gain !== undefined);
   if (set.length === 0) return "average";
-  if (set.length < gains.length || set.some((gain) => outside(gain, die))) return "custom";
+  if (set.length < gains.length || set.some((gain) => outsideDie(gain, die))) return "custom";
   return "roll";
 }
 

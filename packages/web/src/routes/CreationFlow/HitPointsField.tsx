@@ -1,13 +1,19 @@
-import { averageHitPoints, type CharacterDefinition, HIT_DICE, type HitDie } from "@dnd/character";
+import {
+  averageHitPoints,
+  type CharacterDefinition,
+  HIT_DICE,
+  type HitDie,
+  maxHitPoints,
+} from "@dnd/character";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { rerolled, rollHitDie } from "./classLevels.ts";
 import { GainInput } from "./GainInput.tsx";
 import {
-  gainSource,
   type HitPointMethod,
   hitPointMethodOf,
+  outsideDie,
   withGainDepartures,
 } from "./hitPointGains.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
@@ -71,8 +77,11 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
   const die = hitDie as HitDie;
   const average = averageHitPoints(die);
   const faces = levels.map((level, index) => (index === 0 ? die : (level.rolled ?? average)));
-  // The sheet floors each level at 1 after Constitution; with none set yet, that floors the face.
-  const total = faces.reduce((sum, face) => sum + Math.max(1, face), 0);
+  // Constitution is set on a later step, so the sheet's own sum runs at a modifier of 0.
+  const { total } = maxHitPoints(
+    levels.map((level) => ({ die, rolled: level.rolled })),
+    0,
+  );
   const choose = (value: HitPointMethod) => {
     setMethod(value);
     onMemory?.(value);
@@ -116,7 +125,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
         </button>
       )}
       <p className="mt-2 text-body">
-        Level 1: {die} <span className="text-muted">({gainSource(0, undefined, die)})</span>
+        Level 1: {die} <span className="text-muted">(highest face)</span>
       </p>
       {levels.length > 1 && (
         <>
@@ -146,7 +155,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
                     ) : (
                       <>
                         {face}
-                        {gainSource(index, gain, die) === "typed" && (
+                        {outsideDie(gain, die) && (
                           <span className="block text-muted text-row">typed</span>
                         )}
                       </>
@@ -161,7 +170,9 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
       <div ref={setMessages} className="flex flex-col" />
       <p className="mt-1 text-body">
         Total: <strong>{total}</strong>{" "}
-        <span className="text-muted">plus your Constitution modifier at each level</span>
+        <span className="text-muted">
+          before your Constitution modifier, which the sheet adds to each level
+        </span>
       </p>
     </section>
   );

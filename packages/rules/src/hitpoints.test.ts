@@ -4,6 +4,7 @@ import {
   type HitDie,
   type HitPointLevel,
   hitDiceRecovered,
+  hitPointSource,
   maxHitPoints,
 } from "./index.ts";
 
@@ -99,6 +100,16 @@ describe("maxHitPoints", () => {
 
   it("rejects a corrupt gain on the first level, which otherwise discards it", () => {
     expect(() => maxHitPoints([{ die: 8, rolled: 1.5 }], 0)).toThrow(RangeError);
+  });
+});
+
+describe("hitPointSource", () => {
+  it("names the first level highest, an unset gain average, and a gain past the die typed", () => {
+    expect(hitPointSource({ die: 8, rolled: 3 }, true)).toBe("highest");
+    expect(hitPointSource({ die: 8 }, false)).toBe("average");
+    expect(hitPointSource({ die: 8, rolled: 8 }, false)).toBe("rolled");
+    expect(hitPointSource({ die: 8, rolled: 9 }, false)).toBe("typed");
+    expect(hitPointSource({ die: 8, rolled: 0 }, false)).toBe("typed");
   });
 });
 

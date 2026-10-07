@@ -48,6 +48,15 @@ function faceRolled(level: HitPointLevel, isFirstLevel: boolean): number {
   return level.rolled ?? averageHitPoints(level.die);
 }
 
+type HitPointSource = "highest" | "average" | "rolled" | "typed";
+
+/** Where a level's hit points come from; a gain the die cannot roll was typed. */
+export function hitPointSource(level: HitPointLevel, isFirstLevel: boolean): HitPointSource {
+  if (isFirstLevel) return "highest";
+  if (level.rolled === undefined) return "average";
+  return level.rolled > level.die || level.rolled < 1 ? "typed" : "rolled";
+}
+
 /**
  * Levels in the order they were taken. The first takes its die's highest face and
  * ignores any roll on it, because 5e grants level 1 hit points once, to the class
@@ -67,14 +76,7 @@ export function maxHitPoints<Ref = unknown>(
   return breakdown(
     levels.map((level, index) => {
       const face = faceRolled(level, index === 0);
-      const source =
-        index === 0
-          ? "highest"
-          : level.rolled === undefined
-            ? "average"
-            : face > level.die || face < 1
-              ? "typed"
-              : "rolled";
+      const source = hitPointSource(level, index === 0);
       const con = `${constitutionModifier < 0 ? "-" : "+"}${Math.abs(constitutionModifier)}`;
       const value = Math.max(1, face + constitutionModifier);
       const floor = value === face + constitutionModifier ? "" : " (min 1)";

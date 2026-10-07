@@ -23,6 +23,8 @@ export {
   averageHitPoints,
   HIT_DICE,
   type HitDie,
+  hitPointSource,
+  maxHitPoints,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {
