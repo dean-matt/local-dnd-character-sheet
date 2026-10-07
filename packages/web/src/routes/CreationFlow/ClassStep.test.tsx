@@ -1,5 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
@@ -152,6 +152,7 @@ const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("butto
 const cells = () =>
   screen
     .getAllByRole("term")
+    .slice(1)
     .map((term) => `${term.textContent}: ${term.nextElementSibling?.textContent}`);
 
 const setLevel = (level: number) =>
@@ -321,6 +322,27 @@ describe("ClassStep", () => {
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, undefined]);
   });
 
+  it("holds 1st level at the die's maximum in the grid's first cell, under every method", async () => {
+    renderStep();
+    const first = () => screen.getAllByRole("term")[0]?.nextElementSibling as HTMLElement;
+
+    await pickClass("fig", /^Fighter/);
+    setLevel(2);
+    await waitFor(() => expect(screen.getAllByRole("term")[0]).toHaveTextContent("Level 1"));
+    expect(first()).toHaveTextContent(/^10/);
+    expect(within(first()).getByText("max")).toBeVisible();
+    expect(within(first()).getByText(", the die's maximum")).toHaveClass("sr-only");
+
+    click("Custom");
+    const fixed = screen.getByRole("textbox", { name: "Level 1, the die's maximum" });
+    expect(fixed).toHaveValue("10");
+    expect(fixed).toHaveAttribute("readonly");
+    expect(within(first()).getByText("max")).toBeVisible();
+    fireEvent.change(fixed, { target: { value: "4" } });
+    expect(values.levels?.[0]?.rolled).toBeUndefined();
+    expect(screen.queryByText(/highest face/)).not.toBeInTheDocument();
+  });
+
   it("swaps the saves a replaced class granted for the new class's, keeping the level", async () => {
     renderStep();
 
@@ -365,7 +387,7 @@ describe("ClassStep", () => {
       },
     ]);
     expect(screen.getByRole("button", { name: "Clear class, Blood Hunter" })).toBeVisible();
-    expect(await screen.findByText("Level 1: 10")).toBeVisible();
+    expect(await screen.findByRole("term")).toHaveTextContent("Level 1");
 
     click("Clear class, Blood Hunter");
 
