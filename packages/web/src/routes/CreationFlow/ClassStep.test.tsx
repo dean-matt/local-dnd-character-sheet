@@ -278,11 +278,13 @@ describe("ClassStep", () => {
       ]),
     );
 
-    for (const text of ["1.5", "-", "ten"]) {
+    type(3, "-");
+    expect(screen.queryByText("A hit point gain is a whole number.")).not.toBeInTheDocument();
+    for (const text of ["1.5", "ten"]) {
       type(3, text);
       expect(screen.getByText("A hit point gain is a whole number.")).toBeVisible();
-      expect(values.levels?.[2]?.rolled).toBe(15);
     }
+    expect(values.levels?.[2]?.rolled).toBe(15);
 
     click("Roll");
     await waitFor(() =>

@@ -22,7 +22,7 @@ export function GainInput({
       placeholder={String(average)}
       value={typing ?? (gain === undefined ? "" : String(gain))}
       error={
-        typing !== undefined && parseGain(typing) === null
+        typing !== undefined && typing.trim() !== "-" && parseGain(typing) === null
           ? "A hit point gain is a whole number."
           : undefined
       }

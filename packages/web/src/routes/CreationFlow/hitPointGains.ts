@@ -43,13 +43,16 @@ export function withGainDepartures(
 
 /**
  * The method a draft's gains were most likely set by, for a step opened on gains it did not
- * set this visit: Custom where a gain lies outside the die, a roll where any is stored, and
- * the average otherwise. A typed gain the die could have rolled reads as a roll.
+ * set this visit: Custom where a gain lies outside the die or sits beside a blank level,
+ * which a roll never leaves, a roll where every level holds one, and the average where
+ * none does. Typed gains the die could have rolled, filling every level, read as a roll.
  */
 export function hitPointMethodOf(levels: readonly Level[], die: number): HitPointMethod {
   const gains = levels.slice(1).map((level) => level.rolled);
-  if (gains.some((gain) => outside(gain, die))) return "custom";
-  return gains.some((gain) => gain !== undefined) ? "roll" : "average";
+  const set = gains.filter((gain) => gain !== undefined);
+  if (set.length === 0) return "average";
+  if (set.length < gains.length || set.some((gain) => outside(gain, die))) return "custom";
+  return "roll";
 }
 
 /** A typed gain, or `null` for text that is not a whole number; an empty field is `undefined`. */

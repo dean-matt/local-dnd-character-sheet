@@ -244,6 +244,22 @@ describe("CreationFlow", () => {
     );
   });
 
+  it("reopens a reloaded draft's gain beside a blank level as Custom, rolling nothing", async () => {
+    const warlock = { name: "Warlock", source: "XPHB" };
+    stubApi(undefined, {
+      "/api/classes/Warlock/XPHB": { ...warlock, edition: "one", hitDie: 8, json: warlock },
+    });
+    const levels = [{ class: warlock }, { class: warlock, rolled: 5 }, { class: warlock }];
+    localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, levels }));
+    renderFlow("class");
+
+    expect(await screen.findByRole("button", { name: "Custom" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("textbox", { name: "Level 3 gain" })).toHaveValue("");
+  });
+
   it("discards the draft on leaving, so New Character opens empty", async () => {
     renderFlow();
     const name = await screen.findByRole("textbox", { name: "Name" });

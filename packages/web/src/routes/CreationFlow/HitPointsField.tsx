@@ -36,9 +36,11 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const { levels, hitDie } = useClassCatalog();
   const known = HIT_DICE.includes(hitDie as HitDie);
-  const [method, setMethod] = useState<HitPointMethod>(
-    () => memory ?? hitPointMethodOf(levels, known ? (hitDie as number) : Math.max(...HIT_DICE)),
-  );
+  const [method, setMethod] = useState<HitPointMethod | undefined>(memory);
+  useEffect(() => {
+    // The guess waits on the die, since a gain reads as typed only against the die it beats.
+    if (method === undefined && known) setMethod(hitPointMethodOf(levels, hitDie as number));
+  }, [method, known, levels, hitDie]);
   const unrolled = levels.some((level, index) => index > 0 && level.rolled === undefined);
 
   useEffect(() => {

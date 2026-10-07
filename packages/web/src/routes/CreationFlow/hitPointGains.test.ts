@@ -26,9 +26,10 @@ describe("withGainDepartures", () => {
 });
 
 describe("hitPointMethodOf", () => {
-  it("reads Custom off a gain outside the die, a roll off any other, and the average off none", () => {
+  it("reads Custom off a gain outside the die or beside a blank, a roll off a full set, and the average off none", () => {
     expect(hitPointMethodOf(levels(undefined, 3, 15), 10)).toBe("custom");
-    expect(hitPointMethodOf(levels(undefined, 3), 10)).toBe("roll");
+    expect(hitPointMethodOf(levels(undefined, 5, undefined), 10)).toBe("custom");
+    expect(hitPointMethodOf(levels(undefined, 3, 4), 10)).toBe("roll");
     expect(hitPointMethodOf(levels(undefined, undefined), 10)).toBe("average");
   });
 });
