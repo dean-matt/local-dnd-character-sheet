@@ -148,6 +148,7 @@ export function CatalogPicker({
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => setOpen(true)}
+            onClick={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             style={{ anchorName: anchor }}
             className="rounded-control border border-border bg-surface px-2 py-1"

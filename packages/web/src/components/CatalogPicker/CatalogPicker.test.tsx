@@ -212,6 +212,19 @@ describe("CatalogPicker", () => {
     expect(input).toHaveValue("");
   });
 
+  it("reopens on a click after Escape closed it", async () => {
+    stubFetch(page([FIREBALL]));
+    const { input } = renderPicker();
+
+    fireEvent.focus(input);
+    await screen.findByRole("option", { name: /Fireball/ });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(input).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(input);
+    expect(input).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("keeps Enter from submitting an enclosing form while the list is open", async () => {
     stubFetch(page([FIREBALL]));
     const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
