@@ -39,7 +39,7 @@ describe("subraceRecordSchema", () => {
       raceName: "Human",
       raceSource: "PHB",
       edition: "classic",
-      json: { name: "Human", source: "PHB" },
+      json: { source: "PHB" },
     };
     expect(subraceRecordSchema.parse(record)).toEqual(record);
   });

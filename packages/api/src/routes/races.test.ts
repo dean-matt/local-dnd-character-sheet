@@ -28,6 +28,15 @@ const HIGH_ELF = {
   json: JSON.stringify({ name: "High", source: "PHB" }),
 };
 
+const BASE_HUMAN = {
+  name: "",
+  source: "PHB",
+  race_name: "Human",
+  race_source: "PHB",
+  edition: "classic",
+  json: JSON.stringify({ source: "PHB" }),
+};
+
 describe("racesRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof racesRoutes>;
@@ -78,7 +87,7 @@ describe("racesRoutes", () => {
 
     beforeAll(() => {
       subraceDataDir = mkdtempSync(join(tmpdir(), "races-routes-subraces-"));
-      publishSubraces(subraceDataDir, [HIGH_ELF]);
+      publishSubraces(subraceDataDir, [HIGH_ELF, BASE_HUMAN]);
       subraceRoutes = racesRoutes(subraceDataDir);
     });
 
@@ -94,6 +103,14 @@ describe("racesRoutes", () => {
       expect(body).toMatchObject({ total: 1, limit: 50, offset: 0 });
       expect(body.items).toEqual([
         expect.objectContaining({ name: "High", raceName: "Elf", raceSource: "PHB" }),
+      ]);
+    });
+
+    it("lists a base variant whose row names no subrace of its own", async () => {
+      const res = await subraceRoutes.request("/races/Human/PHB/subraces?edition=classic");
+      expect(res.status).toBe(200);
+      expect((await res.json()).items).toEqual([
+        expect.objectContaining({ name: "", raceName: "Human", json: { source: "PHB" } }),
       ]);
     });
 

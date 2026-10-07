@@ -97,9 +97,10 @@ export type RaceRecord = z.infer<typeof raceRecordSchema>;
 
 /**
  * A subrace row from `content.db`'s `subraces` table — the race and the subrace already
- * merged by the ETL, not a delta a caller applies. `name` allows the empty string: five
- * `PHB` base variants (Dragonborn, Half-Elf, Half-Orc, Human, Tiefling) have no subrace
- * name of their own. See `docs/data-model.md` for why the key carries the race too.
+ * merged by the ETL, not a delta a caller applies. `name` allows the empty string, and
+ * `json` no name at all: five `PHB` base variants (Dragonborn, Half-Elf, Half-Orc, Human,
+ * Tiefling) have no subrace name of their own. See `docs/data-model.md` for why the key
+ * carries the race too.
  */
 export const subraceRecordSchema = z.strictObject({
   name: z.string(),
@@ -107,7 +108,7 @@ export const subraceRecordSchema = z.strictObject({
   raceName: z.string().min(1),
   raceSource: z.string().min(1),
   edition: z.enum(EDITIONS),
-  json: raceEntrySchema,
+  json: raceEntrySchema.extend({ name: z.string().min(1).optional() }),
 });
 
 export type SubraceRecord = z.infer<typeof subraceRecordSchema>;
