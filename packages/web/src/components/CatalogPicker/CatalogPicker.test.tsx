@@ -44,14 +44,55 @@ describe("CatalogPicker", () => {
     );
   });
 
-  it("fetches nothing for a blank query", () => {
+  it("fetches nothing until the input takes focus", () => {
     const fetchMock = stubFetch(page([]));
-    const { input } = renderPicker();
-
-    fireEvent.change(input, { target: { value: "   " } });
+    renderPicker();
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(input).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("lists every row, bounded, as soon as an empty input takes focus", async () => {
+    const fetchMock = stubFetch(page([FIREBALL, FIRE_BOLT], 312));
+    const { input } = renderPicker();
+
+    fireEvent.focus(input);
+
+    expect(await screen.findByRole("option", { name: /Fireball/ })).toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByText("Showing 2 of 312 matches — keep typing to narrow"),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/search?edition=classic&limit=20&type=spell",
+      undefined,
+    );
+  });
+
+  it("returns to the unfiltered list when the text is cleared", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url.includes("q=fire") ? page([FIREBALL]) : page([EMBERLASH, FIREBALL]),
+      ),
+    );
+    const { input } = renderPicker();
+
+    fireEvent.change(input, { target: { value: "fire" } });
+    await screen.findByRole("option", { name: /Fireball/ });
+    fireEvent.change(input, { target: { value: "" } });
+
+    expect(await screen.findByRole("option", { name: /Emberlash/ })).toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("opens a closed, empty picker on Arrow Down", async () => {
+    stubFetch(page([FIREBALL]));
+    const { input } = renderPicker();
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+
+    expect(await screen.findByRole("option", { name: /Fireball/ })).toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-expanded", "true");
   });
 
   it("marks a homebrew row as homebrew and a catalog row with its source", async () => {
@@ -171,6 +212,19 @@ describe("CatalogPicker", () => {
     expect(input).toHaveValue("");
   });
 
+  it("reopens on a click after Escape closed it", async () => {
+    stubFetch(page([FIREBALL]));
+    const { input } = renderPicker();
+
+    fireEvent.focus(input);
+    await screen.findByRole("option", { name: /Fireball/ });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(input).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(input);
+    expect(input).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("keeps Enter from submitting an enclosing form while the list is open", async () => {
     stubFetch(page([FIREBALL]));
     const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
@@ -251,7 +305,10 @@ describe("CatalogPicker", () => {
   });
 
   it("adds the caller's line under a row, and takes focus when asked", async () => {
-    stubFetch(page([FIREBALL, FIRE_BOLT]));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => page([FIREBALL, FIRE_BOLT])),
+    );
     const { input } = renderPicker({
       focusOnMount: true,
       describe: (hit) => (hit.name === "Fireball" ? "8d6 fire" : undefined),

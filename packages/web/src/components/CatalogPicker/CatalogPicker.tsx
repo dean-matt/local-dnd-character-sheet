@@ -75,13 +75,14 @@ export function CatalogPicker({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
-  const search = useCatalogSearch({ edition, type, query, limit: RESULT_LIMIT });
+  // An open picker with no text lists every row, so a player can browse before typing.
+  const search = useCatalogSearch({ edition, type, query, limit: RESULT_LIMIT, listAll: open });
   const id = useId();
   const listboxId = `${id}-listbox`;
   const optionId = (index: number) => `${id}-option-${index}`;
 
   const hits = search.data?.items ?? [];
-  const showList = open && query.trim().length > 0 && search.data !== undefined;
+  const showList = open && search.data !== undefined;
   const activeIndex = showList && active < hits.length ? active : -1;
   const listShown = showList && hits.length > 0;
   const anchor = anchorName(id);
@@ -146,6 +147,8 @@ export function CatalogPicker({
               setActive(-1);
             }}
             onKeyDown={handleKeyDown}
+            onFocus={() => setOpen(true)}
+            onClick={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             style={{ anchorName: anchor }}
             className="rounded-control border border-border bg-surface px-2 py-1"
