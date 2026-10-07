@@ -14,7 +14,11 @@ import { useProficienciesDone } from "./useProficienciesDone.ts";
 
 const PHB = (name: string) => ({ name, source: "PHB" });
 const page = (items: unknown[]) => ({ items, total: items.length, limit: 200, offset: 0 });
-const hit = (type: string, name: string, item?: object) => ({
+const hit = (
+  type: string,
+  name: string,
+  item?: { kinds: string[]; rarity: string | null; category: string | null },
+) => ({
   type,
   ...PHB(name),
   edition: "classic",
@@ -87,9 +91,12 @@ const SKILLS = [
   "Religion",
   "Stealth",
 ].map((name) => hit("skill", name));
-const ITEMS: Record<string, unknown[]> = {
+const ITEMS: Record<string, ReturnType<typeof hit>[]> = {
   "": [hit("item", "Rope", { kinds: ["gear"], rarity: null, category: null })],
-  focus: [hit("item", "Wand", { kinds: ["focus"], rarity: null, category: null })],
+  focus: [
+    hit("item", "Wand", { kinds: ["focus"], rarity: null, category: null }),
+    hit("item", "Wand of Magic Missiles", { kinds: ["focus"], rarity: "uncommon", category: null }),
+  ],
 };
 const CATALOG = [
   ...["Quarterstaff", "Dagger", "Component Pouch", "Spellbook", "Pouch"].map(PHB),
@@ -118,7 +125,11 @@ function stubCatalog() {
         };
       } else if (url.startsWith("/api/search?"))
         body = page(
-          params.get("type") === "item" ? (ITEMS[params.get("kind") ?? ""] ?? []) : SKILLS,
+          params.get("type") === "item"
+            ? (ITEMS[params.get("kind") ?? ""] ?? []).filter(
+                (each) => params.get("rarity") !== "none" || each.item?.rarity === null,
+              )
+            : SKILLS,
         );
       return body === undefined
         ? new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 })
@@ -341,7 +352,9 @@ describe("ProficienciesStep", () => {
     fireEvent.click(await screen.findByRole("radio", { name: /\(b\) an arcane focus/ }));
     const picker = screen.getByRole("combobox", { name: "Choose an arcane focus" });
     fireEvent.focus(picker);
-    fireEvent.click(await screen.findByRole("option", { name: /Wand/ }));
+    const wand = await screen.findByRole("option", { name: /^Wand/ });
+    expect(screen.queryByRole("option", { name: /Wand of Magic Missiles/ })).toBeNull();
+    fireEvent.click(wand);
 
     await waitFor(() => expect(inventoryNames()).toContain("Wand"));
     expect(

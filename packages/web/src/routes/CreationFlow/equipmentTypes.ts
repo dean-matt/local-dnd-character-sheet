@@ -25,11 +25,18 @@ const TYPES: Record<string, { label: string; kind: string; category?: "simple" |
 export const typeLabel = (types: readonly string[]): string =>
   types.map((type) => TYPES[type]?.label ?? "an item of your choice").join(" or ");
 
-/** The `/search` filter a slot of `types` narrows to, or none where a code is one this does not know. */
+/**
+ * The `/search` filter a slot of `types` narrows to, or none where a code is one this does
+ * not know. Mundane items only: upstream's `none` rarity, so a martial weapon slot never
+ * offers a Sun Blade.
+ */
 export function typeFilters(types: readonly string[]): Record<string, string> | undefined {
   const known = types.map((type) => TYPES[type]);
   if (known.some((type) => type === undefined)) return undefined;
-  return { kind: [...new Set(known.flatMap((type) => type?.kind.split(",") ?? []))].join(",") };
+  return {
+    kind: [...new Set(known.flatMap((type) => type?.kind.split(",") ?? []))].join(","),
+    rarity: "none",
+  };
 }
 
 /** Why `hit` cannot fill a slot of `types`, or `undefined` where it can. */
