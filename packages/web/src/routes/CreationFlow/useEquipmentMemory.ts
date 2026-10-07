@@ -1,3 +1,4 @@
+import { characterDefinitionSchema } from "@dnd/character";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { type EquipmentMemory, NO_EQUIPMENT } from "./equipmentPicks.ts";
@@ -10,7 +11,7 @@ const KEY = "draft:creation:equipment";
  */
 const storedSchema = z.object({
   picks: z.record(z.string(), z.unknown()),
-  landed: z.array(z.unknown()),
+  landed: characterDefinitionSchema.shape.inventory,
   names: z.record(z.string(), z.string()),
 });
 
