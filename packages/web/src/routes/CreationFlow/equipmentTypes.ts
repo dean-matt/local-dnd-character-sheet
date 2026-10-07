@@ -46,15 +46,12 @@ export function typeFilters(types: readonly string[]): Record<string, string> | 
  * type with neither a weapon category nor a kind of tool, such as a focus, refuses nothing.
  */
 export function typeMismatch(types: readonly string[], hit: SearchHit): string | undefined {
-  const known = types.map((type) => TYPES[type]);
-  if (known.some((type) => type?.category === undefined && type?.tool === undefined)) {
+  const fits = types.map((type) => {
+    const { category, tool } = TYPES[type] ?? {};
+    if (category) return hit.item?.category === category;
+    if (tool) return hit.item?.tool === tool;
     return undefined;
-  }
-  return known.some((type) =>
-    type?.category === undefined
-      ? hit.item?.tool === type?.tool
-      : hit.item?.category === type.category,
-  )
-    ? undefined
-    : `not ${typeLabel(types)}`;
+  });
+  if (fits.includes(undefined)) return undefined;
+  return fits.includes(true) ? undefined : `not ${typeLabel(types)}`;
 }
