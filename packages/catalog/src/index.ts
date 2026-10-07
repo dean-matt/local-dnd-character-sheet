@@ -110,7 +110,7 @@ export {
   searchResponseSchema,
 } from "./search.ts";
 export type { SkillChoice } from "./skill-choice.ts";
-export { backgroundSkillChoiceSchema, classSkillChoiceSchema } from "./skill-choice.ts";
+export { classSkillChoiceSchema, skillProficienciesChoiceSchema } from "./skill-choice.ts";
 export type { CatalogSource } from "./source.ts";
 export {
   catalogSourcesResponseSchema,

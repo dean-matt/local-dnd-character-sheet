@@ -6,7 +6,7 @@ import { SKILLS_FIELD, skillDeparture } from "./skillPicks.ts";
 import { useSkillTally } from "./useSkillTally.ts";
 
 /**
- * Keeps the note on skills taken against the class's and background's lists in step with
+ * Keeps the note on skills taken against the race's, class's and background's lists in step with
  * them, on every step, so a class changed on Class notes the picks its list no longer
  * offers without a visit back to the step that made them.
  */

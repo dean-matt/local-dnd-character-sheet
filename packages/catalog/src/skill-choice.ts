@@ -21,8 +21,8 @@ const offerSchema = z.union([
 
 /**
  * The pick a `skillProficiencies`-shaped list offers. Upstream writes a list of
- * alternatives, and no class or background at the pinned tag offers more than one, so
- * only a one-element list offers a pick. A list offering none, or a malformed one, offers
+ * alternatives, and no class, race or background at the pinned tag offers more than one,
+ * so only a one-element list offers a pick. A list offering none, or a malformed one, offers
  * nothing rather than refusing the row.
  */
 const choiceSchema = z
@@ -41,7 +41,10 @@ export const classSkillChoiceSchema = z
   })
   .transform((row) => row.startingProficiencies?.skills);
 
-/** The skills a background row lets the player pick, beside the ones it grants outright. */
-export const backgroundSkillChoiceSchema = z
+/**
+ * The skills a race, subrace or background row lets the player pick, beside the ones it
+ * grants outright.
+ */
+export const skillProficienciesChoiceSchema = z
   .looseObject({ skillProficiencies: choiceSchema })
   .transform((row) => row.skillProficiencies);

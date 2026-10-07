@@ -95,6 +95,23 @@ describe("replacementOffer", () => {
     });
   });
 
+  it("counts a race's pick the grants cover as the class's and background's", () => {
+    const elf: SkillOffer = {
+      by: "Race",
+      name: "Elf",
+      count: 1,
+      options: ["Insight", "Perception", "Survival"].map(PHB),
+    };
+    const narrow: SkillOffer = { ...background, options: [PHB("Religion")] };
+    const granted = ["Arcana", "History", "Insight", "Perception", "Survival"].map((name) =>
+      grant(name, "Background"),
+    );
+    expect(replacementOffer([wizard, narrow, elf], granted, EVERY)).toMatchObject({
+      name: "3 picks the Wizard, Scribe, and Elf lists have no skill left for",
+      count: 3,
+    });
+  });
+
   it("offers nothing where a grant leaves the list room to pick around it", () => {
     expect(replacementOffer([wizard], [grant("Arcana", "Background")], EVERY)).toBeUndefined();
   });
@@ -131,7 +148,7 @@ describe("skillDeparture", () => {
       outside: [PHB("Stealth")],
     };
     expect(skillDeparture([wizard], tally)).toBe(
-      "3 skills taken from the Wizard list, which offers 2; Stealth taken outside what the class and background offer.",
+      "3 skills taken from the Wizard list, which offers 2; Stealth taken outside what the race, class and background offer.",
     );
   });
 

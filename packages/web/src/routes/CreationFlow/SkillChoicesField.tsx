@@ -12,8 +12,8 @@ const HEADING = "font-semibold text-label text-muted uppercase tracking-label";
 const byName = (a: ContentRef, b: ContentRef) => a.name.localeCompare(b.name);
 
 /**
- * The skills the race and background grant, and a checkbox list for each pick the class
- * and the background offer. A skill a grant already covers shows checked and disabled, so
+ * The skills the race and background grant, and a checkbox list for each pick the class,
+ * the background and the race offer. A skill a grant already covers shows checked and disabled, so
  * it cannot be picked twice and wasted; where the rules give a pick of any skill in place
  * of one gained twice, a list of every skill offers it. The count each list allows is a
  * note rather than a fence: a pick past it is kept, and `CreationSkills` notes it as a
@@ -104,7 +104,7 @@ export function SkillChoicesField() {
           {tally.outside.length > 0 && (
             <>
               <p className="mt-1 text-muted text-row">
-                Neither the class nor the background offers these.
+                No race, class or background list offers these.
               </p>
               {[...tally.outside].sort(byName).map(checkbox)}
             </>
