@@ -37,10 +37,13 @@ export function TopBar() {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full w-full items-center gap-1.5 border-b border-border bg-surface px-6"
+      className="relative flex h-full w-full items-center gap-1.5 border-b border-border bg-surface px-3 sm:px-6"
     >
-      <Link to="/" className="mr-3.5 shrink-0 rounded-control text-lg font-bold text-accent-text">
-        Local D&D
+      <Link
+        to="/"
+        className="mr-1 shrink-0 rounded-control text-lg font-bold text-accent-text sm:mr-3.5"
+      >
+        <span className="max-sm:sr-only">Local</span> D&D
       </Link>
 
       <div className="relative shrink-0">
@@ -120,7 +123,7 @@ export function TopBar() {
       >
         {({ isActive }) => (
           <>
-            Settings
+            <span className="max-sm:sr-only">Settings</span>
             <Settings size={16} className={isActive ? undefined : "text-muted"} />
           </>
         )}
