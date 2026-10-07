@@ -104,7 +104,7 @@ export function SkillChoicesField() {
           {tally.outside.length > 0 && (
             <>
               <p className="mt-1 text-muted text-row">
-                No race, class or background list offers these.
+                No race, class, or background list offers these.
               </p>
               {[...tally.outside].sort(byName).map(checkbox)}
             </>

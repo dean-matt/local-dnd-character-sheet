@@ -17,7 +17,7 @@ export type SkillOffer = {
 /** A skill granted outright, and what grants it. */
 export type SkillGrant = { ref: ContentRef; by: string };
 
-/** Where `departures` notes the skills taken against what the race, class and background offer. */
+/** Where `departures` notes the skills taken against what the race, class, and background offer. */
 export const SKILLS_FIELD = "proficiencies.skills";
 
 export type SkillTally = Tally<ContentRef>;
@@ -95,7 +95,7 @@ export function skillDeparture(
     }),
     ...(outside.length > 0
       ? [
-          `${outside.map((skill) => skill.name).join(", ")} taken outside what the race, class and background offer`,
+          `${outside.map((skill) => skill.name).join(", ")} taken outside what the race, class, and background offer`,
         ]
       : []),
   ];

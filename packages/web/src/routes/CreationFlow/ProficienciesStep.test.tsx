@@ -298,7 +298,7 @@ describe("ProficienciesStep", () => {
       expect(values.departures).toEqual([
         {
           field: "proficiencies.skills",
-          note: "Stealth taken outside what the race, class and background offer.",
+          note: "Stealth taken outside what the race, class, and background offer.",
         },
       ]),
     );
@@ -358,7 +358,7 @@ describe("ProficienciesStep", () => {
       expect(values.departures).toEqual([
         {
           field: "proficiencies.skills",
-          note: "Athletics taken outside what the race, class and background offer.",
+          note: "Athletics taken outside what the race, class, and background offer.",
         },
       ]),
     );

@@ -148,7 +148,7 @@ describe("skillDeparture", () => {
       outside: [PHB("Stealth")],
     };
     expect(skillDeparture([wizard], tally)).toBe(
-      "3 skills taken from the Wizard list, which offers 2; Stealth taken outside what the race, class and background offer.",
+      "3 skills taken from the Wizard list, which offers 2; Stealth taken outside what the race, class, and background offer.",
     );
   });
 
