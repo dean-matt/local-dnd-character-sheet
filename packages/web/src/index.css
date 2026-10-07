@@ -93,6 +93,7 @@
   --spacing-row: 2rem;
   --spacing-topbar: 4rem;
   --spacing-header: 3.25rem;
+  --spacing-footer: 3.75rem;
   --spacing-gutter: 2.5rem;
   /* The narrowest width at which a search filter's two-name summary, up to MultiSelect's
      SHORT_SUMMARY characters, still shows in full. Narrower needs a shorter limit. */
@@ -150,12 +151,16 @@
  */
 :root {
   color-scheme: light dark;
-  /* Keeps focus and anchor scrolls clear of the pinned top bar and character header. */
+  /* Keeps focus and anchor scrolls clear of the pinned top bar, character header and creation footer. */
   scroll-padding-top: calc(var(--spacing-topbar) + var(--pinned-header-height, 0px));
+  scroll-padding-bottom: var(--pinned-footer-height, 0px);
 
   @variant tall {
     &:has([data-character-header]) {
       --pinned-header-height: var(--spacing-header);
+    }
+    &:has([data-creation-footer]) {
+      --pinned-footer-height: var(--spacing-footer);
     }
   }
 }

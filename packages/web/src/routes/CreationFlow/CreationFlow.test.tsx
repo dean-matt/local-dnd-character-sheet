@@ -307,6 +307,20 @@ describe("CreationFlow", () => {
     expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
   });
 
+  it("pins Cancel, Back and Next in a footer below the step's content, which scrolls alone", () => {
+    renderFlow("identity");
+
+    const footer = screen.getByRole("button", { name: "Cancel" }).parentElement;
+    expect(footer).toHaveAttribute("data-creation-footer");
+    expect(footer).toHaveClass("tall:sticky", "bottom-0", "bg-canvas");
+    expect(within(footer as HTMLElement).getByRole("button", { name: "Back" })).toBeVisible();
+    expect(within(footer as HTMLElement).getByRole("button", { name: /^Next/ })).toBeVisible();
+    expect(footer?.previousElementSibling).toContainElement(
+      screen.getByRole("heading", { level: 1, name: "Identity" }),
+    );
+    expect(footer?.nextElementSibling).toBeNull();
+  });
+
   it("discards the draft on Cancel and returns to the list", async () => {
     localStorage.setItem(KEY, JSON.stringify({ name: "Vex" }));
     renderFlow("identity");
