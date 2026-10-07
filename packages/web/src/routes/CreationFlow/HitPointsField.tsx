@@ -9,8 +9,10 @@ import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { rerolled, rollHitDie } from "./classLevels.ts";
+import { DepartureMark } from "./DepartureMark.tsx";
 import { GainInput } from "./GainInput.tsx";
 import {
+  GAIN_FIELD,
   type HitPointMethod,
   hitPointMethodOf,
   outsideDie,
@@ -168,6 +170,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
         </>
       )}
       <div ref={setMessages} className="flex flex-col" />
+      <DepartureMark field={GAIN_FIELD} />
       <p className="mt-1 text-body">
         Total: <strong>{total}</strong>{" "}
         <span className="text-muted">

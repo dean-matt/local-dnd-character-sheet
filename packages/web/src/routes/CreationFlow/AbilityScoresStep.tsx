@@ -30,6 +30,7 @@ import {
   STANDARD_ARRAY,
 } from "./abilityMethods.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
+import { DepartureMark } from "./DepartureMark.tsx";
 import { withDeparture } from "./departures.ts";
 import { NO_GRANTS } from "./grants.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
@@ -160,6 +161,7 @@ export function AbilityScoresStep({
           Reroll all ({ROLL})
         </button>
       )}
+      <DepartureMark field={SCORES_FIELD} />
       <div className="grid gap-2 sm:grid-cols-2">
         {ABILITIES.map((ability) => {
           const base = scores[ability];

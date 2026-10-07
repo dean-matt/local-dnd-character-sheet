@@ -1,8 +1,15 @@
 import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
+import { DepartureMark } from "./DepartureMark.tsx";
 import { EquipmentSourceField } from "./EquipmentSourceField.tsx";
 import { ExtraItemsField } from "./ExtraItemsField.tsx";
-import { type EquipmentMemory, goldTaken, picksFor, withoutLanded } from "./equipmentPicks.ts";
+import {
+  type EquipmentMemory,
+  goldTaken,
+  INVENTORY_FIELD,
+  picksFor,
+  withoutLanded,
+} from "./equipmentPicks.ts";
 import { GoldAlternativeField } from "./GoldAlternativeField.tsx";
 import { useHeldEquipment } from "./useHeldEquipment.ts";
 
@@ -83,6 +90,7 @@ export function StartingEquipmentField({ memory, onMemory }: StartingEquipmentFi
           });
         }}
       />
+      <DepartureMark field={INVENTORY_FIELD} />
     </div>
   );
 }

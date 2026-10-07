@@ -5,6 +5,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { ChosenChip } from "./ChosenChip.tsx";
+import { DepartureMark } from "./DepartureMark.tsx";
 import { withDeparture } from "./departures.ts";
 import { grantNames, titleCase } from "./grants.ts";
 import { raceChoices } from "./raceChoices.ts";
@@ -86,6 +87,7 @@ export function RaceField() {
         focusOnMount={moved}
         onClear={() => choose(undefined)}
       />
+      <DepartureMark field="race" className="mt-1.5" />
       {catalogRace && grants && grants.length > 0 && (
         <p className="mt-1.5 text-muted text-row">Grants: {grants.join(", ")}</p>
       )}

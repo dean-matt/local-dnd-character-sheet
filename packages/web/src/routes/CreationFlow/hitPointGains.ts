@@ -10,7 +10,8 @@ type Departures = CharacterDefinition["departures"];
 
 export type HitPointMethod = "average" | "roll" | "custom";
 
-const GAIN_FIELD = /^levels\.\d+\.rolled$/;
+/** Where `departures` notes each level's gain, such as `levels.2.rolled`. */
+export const GAIN_FIELD = /^levels\.\d+\.rolled$/;
 
 /** Whether a d`die` cannot roll `gain`, which the step marks typed and notes as a departure. */
 export const outsideDie = (gain: number | undefined, die: number) =>

@@ -3,8 +3,9 @@ import { useFormContext } from "react-hook-form";
 import { ChipList } from "../../components/ChipList.tsx";
 import { FormField } from "../../components/FormField.tsx";
 import { Select } from "../../components/Select.tsx";
+import { DepartureMark } from "./DepartureMark.tsx";
 import { NO_GRANTS } from "./grants.ts";
-import { needed } from "./skillPicks.ts";
+import { needed, SKILLS_FIELD } from "./skillPicks.ts";
 import { useSkillTally } from "./useSkillTally.ts";
 
 const HEADING = "font-semibold text-label text-muted uppercase tracking-label";
@@ -131,6 +132,7 @@ export function SkillChoicesField() {
           )}
         </fieldset>
       )}
+      <DepartureMark field={SKILLS_FIELD} />
     </div>
   );
 }
