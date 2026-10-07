@@ -155,7 +155,7 @@ function useFooterHeight(footer: RefObject<HTMLDivElement | null>) {
     if (!element) return;
     const root = document.documentElement.style;
     const observer = new ResizeObserver(() =>
-      root.setProperty("--creation-footer-height", `${element.offsetHeight}px`),
+      root.setProperty("--creation-footer-height", `${element.getBoundingClientRect().height}px`),
     );
     observer.observe(element);
     return () => {
