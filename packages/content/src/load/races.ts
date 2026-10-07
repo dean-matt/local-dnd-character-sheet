@@ -232,7 +232,7 @@ function adopt(parsed: unknown, path: string): unknown {
  * be NULL, so the empty string is the only way to write "this one has no name",
  * the same reading `lookups.qualifier` gives it.
  */
-function subraceName(entry: Entry, where: string): string {
+export function subraceName(entry: Entry, where: string): string {
   return entry.name === undefined ? "" : text(entry, "name", where);
 }
 

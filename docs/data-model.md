@@ -150,12 +150,11 @@ feature grants as readily as a feat does. A character's total for a type is all 
 tables summed, which [`optional-features.md`](optional-features.md) spells out; reading
 the class side alone is short by whatever their feats granted.
 
-**A spell's class list is a join, not an entity.** `spell_classes` is keyed
-`(spell_name, spell_source, class_name, class_source)` — a spell answers to several
-classes and a class to hundreds of spells, so neither pair identifies the row alone.
-`data/spells/sources.json`'s `class` and `classVariant` both contribute, collapsed into
-one row each: a class either grants a spell or it doesn't, and upstream's split between
-the two carries no meaning a query needs.
+**A spell's grantors are joins, not entities.** `spell_classes` collapses `sources.json`'s
+`class` and `classVariant` into one fact. `spell_grants` resolves every other grantor's
+`additionalSpells` — a named spell or a filter such as `level=0|class=Wizard` — at build
+time, one row per spell it may give; the player's pick is character state. A filter names
+no class source, so it reaches both editions and a picker filters on edition.
 
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates. The pool a

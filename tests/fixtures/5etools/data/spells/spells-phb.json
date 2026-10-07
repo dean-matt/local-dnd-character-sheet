@@ -38,6 +38,211 @@
       "savingThrow": ["dexterity"]
     },
     {
+      "name": "Animate Dead",
+      "source": "PHB",
+      "page": 212,
+      "level": 3,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "minute"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 10
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true,
+        "m": "a drop of blood, a piece of flesh, and a pinch of bone dust"
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": [
+        "Elided. {@creature skeleton} Elided. {@creature zombie} Elided.",
+        "Elided.",
+        "Elided."
+      ]
+    },
+    {
+      "name": "Antilife Shell",
+      "source": "PHB",
+      "page": 213,
+      "level": 5,
+      "school": "A",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "radius",
+        "distance": {
+          "type": "feet",
+          "amount": 10
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": ["Elided.", "Elided.", "Elided."]
+    },
+    {
+      "name": "Blight",
+      "source": "PHB",
+      "page": 219,
+      "level": 4,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": ["Elided. {@damage 8d8} Elided.", "Elided.", "Elided."]
+    },
+    {
+      "name": "Blindness/Deafness",
+      "source": "PHB",
+      "page": 219,
+      "level": 2,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 30
+        }
+      },
+      "components": {
+        "v": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          }
+        }
+      ],
+      "entries": ["Elided. {@condition blinded} Elided. {@condition deafened} Elided."]
+    },
+    {
+      "name": "Cloudkill",
+      "source": "PHB",
+      "page": 222,
+      "level": 5,
+      "school": "C",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 120
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 10
+          },
+          "concentration": true
+        }
+      ],
+      "entries": [
+        "Elided. {@quickref Vision and Light|PHB|2||heavily obscured} Elided.",
+        "Elided. {@damage 5d8} Elided.",
+        "Elided."
+      ]
+    },
+    {
+      "name": "Death Ward",
+      "source": "PHB",
+      "page": 230,
+      "level": 4,
+      "school": "A",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "touch"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 8
+          }
+        }
+      ],
+      "entries": ["Elided.", "Elided.", "Elided."]
+    },
+    {
       "name": "Detect Magic",
       "source": "PHB",
       "page": 231,
@@ -75,6 +280,172 @@
         "ritual": true
       },
       "entries": ["Elided. {@book school of magic|PHB|10|The Schools of Magic} Elided.", "Elided."]
+    },
+    {
+      "name": "False Life",
+      "source": "PHB",
+      "page": 239,
+      "level": 1,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "self"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true,
+        "m": "a small amount of alcohol or distilled spirits"
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 1
+          }
+        }
+      ],
+      "entries": ["Elided. {@dice 1d4 + 4} Elided."]
+    },
+    {
+      "name": "Light",
+      "source": "PHB",
+      "page": 255,
+      "level": 0,
+      "school": "V",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "touch"
+        }
+      },
+      "components": {
+        "v": true,
+        "m": "a firefly or phosphorescent moss"
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "hour",
+            "amount": 1
+          }
+        }
+      ],
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Ray of Enfeeblement",
+      "source": "PHB",
+      "page": 271,
+      "level": 2,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Ray of Sickness",
+      "source": "PHB",
+      "page": 271,
+      "level": 1,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "feet",
+          "amount": 60
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "instant"
+        }
+      ],
+      "entries": ["Elided. {@damage 2d8} Elided. {@condition poisoned} Elided."]
+    },
+    {
+      "name": "Vampiric Touch",
+      "source": "PHB",
+      "page": 285,
+      "level": 3,
+      "school": "N",
+      "time": [
+        {
+          "number": 1,
+          "unit": "action"
+        }
+      ],
+      "range": {
+        "type": "point",
+        "distance": {
+          "type": "self"
+        }
+      },
+      "components": {
+        "v": true,
+        "s": true
+      },
+      "duration": [
+        {
+          "type": "timed",
+          "duration": {
+            "type": "minute",
+            "amount": 1
+          },
+          "concentration": true
+        }
+      ],
+      "entries": ["Elided. {@damage 3d6} Elided."]
     }
   ]
 }
