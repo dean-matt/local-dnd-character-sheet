@@ -1,5 +1,5 @@
 import { type ContentRef, refKey } from "@dnd/character";
-import { fillable, needed as neededOf, spent, type Tally, tally } from "./pickTally.ts";
+import { duplicates, needed as neededOf, spent, type Tally, tally } from "./pickTally.ts";
 
 /**
  * The skills a class, a background or a race lets the player pick, and how many. A `Replacement`
@@ -40,37 +40,22 @@ export const needed = (offer: SkillOffer, granted: readonly SkillGrant[]): numbe
   neededOf(offer, grantedKeys(granted), refKey);
 
 /**
- * The 2014 rule's replacement: a character who would gain the same skill from two sources
- * picks any other skill instead. That is each skill granted twice, and each pick the
- * class, background and race lists cannot fill once the grants are counted. `undefined` where
- * nothing is gained twice.
+ * The 2014 rule's pick of any skill in place of one gained twice, or of a pick the lists
+ * cannot fill once the grants are counted. `undefined` where nothing is gained twice.
  */
 export function replacementOffer(
   offers: readonly SkillOffer[],
   granted: readonly SkillGrant[],
   everySkill: readonly ContentRef[],
 ): SkillOffer | undefined {
-  const bys = new Map<string, { ref: ContentRef; by: string[] }>();
-  for (const grant of granted) {
-    const each = bys.get(refKey(grant.ref)) ?? { ref: grant.ref, by: [] };
-    each.by.push(grant.by);
-    bys.set(refKey(grant.ref), each);
-  }
-  const twice = [...bys.values()].filter((each) => each.by.length > 1);
-  const unfilled =
-    offers.reduce((sum, offer) => sum + offer.count, 0) -
-    fillable(offers, grantedKeys(granted), refKey);
-  const count = twice.reduce((sum, each) => sum + each.by.length - 1, 0) + unfilled;
-  if (count === 0) return undefined;
-  const reasons = [
-    ...twice.map((each) => `${each.ref.name}, granted by both ${each.by.join(" and ")}`),
-    ...(unfilled > 0
-      ? [
-          `${unfilled === 1 ? "a pick" : `${unfilled} picks`} the ${new Intl.ListFormat("en").format(offers.map((offer) => offer.name))} ${offers.length === 1 ? "list has" : "lists have"} no skill left for`,
-        ]
-      : []),
-  ];
-  return { by: "Replacement", name: reasons.join("; "), count, options: [...everySkill] };
+  const twice = duplicates(
+    offers,
+    granted.map((grant) => ({ item: grant.ref, by: grant.by })),
+    refKey,
+    (ref) => ref.name,
+    "skill",
+  );
+  return twice && { by: "Replacement", ...twice, options: [...everySkill] };
 }
 
 /** Whether the held skills fill as many picks as the skills nothing grants can. */

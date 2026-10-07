@@ -41,6 +41,12 @@ export const houseRulesSchema = z
      * character earns it either way.
      */
     duplicateSkillReplacement: z.boolean().optional(),
+    /**
+     * A 2024 character who would gain the same tool from two sources picks any other tool
+     * in its place, as the 2014 rules give. Absent, the second source earns nothing there,
+     * and a classic character earns it either way, as for skills.
+     */
+    duplicateToolReplacement: z.boolean().optional(),
   })
   .prefault({});
 
@@ -57,4 +63,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   optionalClassFeatures: false,
   customOrigin: false,
   duplicateSkillReplacement: false,
+  duplicateToolReplacement: false,
 };

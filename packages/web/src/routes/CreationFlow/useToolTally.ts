@@ -5,11 +5,17 @@ import {
   type ToolChoice,
   type ToolType,
 } from "@dnd/catalog";
-import type { CharacterDefinition } from "@dnd/character";
+import { type CharacterDefinition, houseRule } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { titleCase } from "./grants.ts";
-import { holdsTool, type ToolGrant, type ToolOffer, tallyTools } from "./toolPicks.ts";
+import {
+  holdsTool,
+  type ToolGrant,
+  type ToolOffer,
+  tallyTools,
+  toolReplacementOffer,
+} from "./toolPicks.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
@@ -23,7 +29,8 @@ const KIND_LABEL: Record<ToolType, string> = {
 /**
  * The tools the race, the background and the class grant outright, the picks the class
  * and the background offer, each tool named as the edition's catalog names it, and which
- * offer each held tool spends. A tool no catalog row answers, such as `vehicles (land)`,
+ * offer each held tool spends. A classic character who would gain a tool twice gets a pick
+ * of any tool in its place, as does a 2024 one under the house rule. A tool no catalog row answers, such as `vehicles (land)`,
  * keeps upstream's name. `undefined` while a row they read has not loaded, a failed read
  * included, so a half-read never reads as an offer of nothing.
  */
@@ -32,6 +39,7 @@ export function useToolTally() {
     useIdentityCatalog();
   const { catalogClass, classRow, grants: classGrants } = useClassCatalog();
   const proficiencies = useWatch<CharacterDefinition, "proficiencies">({ name: "proficiencies" });
+  const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
   // One edition holds some fifty mundane tools, under the route's 200. Past that, a pick
   // of a kind leaves out the tools beyond the page.
   const tools = useCatalogSearch({
@@ -77,7 +85,7 @@ export function useToolTally() {
     return { by, name, count: choice.count, options, ...(kind && { kind }) };
   };
   const classJson = classRow.data?.json;
-  const offers = [
+  const listed = [
     ...(catalogClass && classJson
       ? classToolChoicesSchema
           .parse(classJson)
@@ -89,6 +97,17 @@ export function useToolTally() {
           .map((choice) => offer("Background", backgroundRow.name, choice))
       : []),
   ];
+  const replaces =
+    edition === "classic" ||
+    houseRule({ houseRules: houseRules ?? {} }, "duplicateToolReplacement");
+  const replacement =
+    replaces &&
+    toolReplacementOffer(
+      listed,
+      granted,
+      hits.map((hit) => hit.name),
+    );
+  const offers = replacement ? [...listed, replacement] : listed;
   const held = (proficiencies?.tools ?? []).map((tool) => tool.name);
   return { granted, offers, held, tally: tallyTools(offers, granted, held) };
 }
