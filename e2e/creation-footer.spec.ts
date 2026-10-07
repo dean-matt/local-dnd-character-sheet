@@ -50,7 +50,7 @@ async function focusClears(page: Page, footerBox: { top: number; bottom: number 
   await probe.evaluate((element) => element.remove());
 }
 
-test("creation's Cancel, Back and Next stay pinned at the window's foot while the step scrolls, and focus lands above them", async ({
+test("creation's Cancel, Back and Next stay pinned at the window's foot in a tall window while the step scrolls, and focus lands above them", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -68,4 +68,11 @@ test("creation's Cancel, Back and Next stay pinned at the window's foot while th
   // Wrapped to a second row, so a fixed height would fall short.
   expect(narrow.bottom - narrow.top).toBeGreaterThan(wide.bottom - wide.top);
   await focusClears(page, narrow);
+
+  // Below the `tall` variant's 36rem the footer scrolls with the step.
+  await page.setViewportSize({ width: 1280, height: 240 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect
+    .poll(async () => (await edges(page.locator("[data-creation-footer]"))).top)
+    .toBeGreaterThan(240);
 });

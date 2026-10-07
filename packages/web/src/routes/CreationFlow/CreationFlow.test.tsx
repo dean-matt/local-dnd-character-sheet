@@ -307,7 +307,7 @@ describe("CreationFlow", () => {
     expect(localStorage.getItem("sidebar-collapsed")).toBe("false");
   });
 
-  it("pins Cancel, Back and Next in a footer below the step's content, which scrolls alone", () => {
+  it("puts Cancel, Back and Next in a footer of their own, after the step's content", () => {
     renderFlow("identity");
 
     const footer = screen.getByRole("button", { name: "Cancel" }).parentElement;
