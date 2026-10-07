@@ -269,6 +269,9 @@ describe("ClassStep", () => {
     type(4, "");
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, undefined]);
     expect(screen.getByText("38")).toBeVisible();
+    type(4, "-10");
+    expect(screen.getByText("33")).toBeVisible();
+    type(4, "");
     await waitFor(() =>
       expect(values.departures).toEqual([
         {

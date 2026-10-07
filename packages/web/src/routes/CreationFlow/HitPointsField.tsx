@@ -70,7 +70,8 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
   const die = hitDie as HitDie;
   const average = averageHitPoints(die);
   const faces = levels.map((level, index) => (index === 0 ? die : (level.rolled ?? average)));
-  const total = faces.reduce((sum, face) => sum + face, 0);
+  // The sheet floors each level at 1 after Constitution; with none set yet, that floors the face.
+  const total = faces.reduce((sum, face) => sum + Math.max(1, face), 0);
   const choose = (value: HitPointMethod) => {
     setMethod(value);
     onMemory?.(value);
