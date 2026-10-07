@@ -10,6 +10,7 @@ import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { rerolled, rollHitDie } from "./classLevels.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
+import { FirstLevel } from "./FirstLevel.tsx";
 import { GainInput } from "./GainInput.tsx";
 import {
   type HitPointMethod,
@@ -126,49 +127,41 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
           Reroll
         </button>
       )}
-      <p className="mt-2 text-body">
-        Level 1: {die} <span className="text-muted">(highest face)</span>
-      </p>
-      {levels.length > 1 && (
-        <>
-          <p className="text-muted text-row">Gain at each later level</p>
-          <dl className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1 text-body">
-            {faces.slice(1).map((face, offset) => {
-              const index = offset + 1;
-              const gain = levels[index]?.rolled;
-              return (
-                <div
-                  key={index}
-                  className="flex flex-col items-center rounded-control border border-border p-1"
-                >
-                  <dt className="text-muted text-row">
-                    <span className="sr-only">Level </span>
-                    {index + 1}
-                  </dt>
-                  <dd className="w-full text-center">
-                    {method === "custom" ? (
-                      <GainInput
-                        level={index + 1}
-                        gain={gain}
-                        average={average}
-                        messages={messages}
-                        onGain={(next) => type(index, next)}
-                      />
-                    ) : (
-                      <>
-                        {face}
-                        {outsideDie(gain, die) && (
-                          <span className="block text-muted text-row">typed</span>
-                        )}
-                      </>
+      <p className="mt-2 text-muted text-row">Hit points at each level</p>
+      <dl className="grid grid-cols-[repeat(auto-fill,minmax(4rem,1fr))] gap-1 text-body">
+        {faces.map((face, index) => {
+          const level = index + 1;
+          const gain = levels[index]?.rolled;
+          return (
+            <div
+              key={level}
+              className="flex flex-col items-center rounded-control border border-border p-1"
+            >
+              <dt className="whitespace-nowrap text-muted text-row">Level {level}</dt>
+              <dd className="w-full text-center">
+                {index === 0 ? (
+                  <FirstLevel die={die} custom={method === "custom"} />
+                ) : method === "custom" ? (
+                  <GainInput
+                    level={level}
+                    gain={gain}
+                    average={average}
+                    messages={messages}
+                    onGain={(next) => type(index, next)}
+                  />
+                ) : (
+                  <>
+                    {face}
+                    {outsideDie(gain, die) && (
+                      <span className="block text-muted text-row">typed</span>
                     )}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
-        </>
-      )}
+                  </>
+                )}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
       <div ref={setMessages} className="flex flex-col" />
       <DepartureMark field={isGainField} />
       <p className="mt-1 text-body">
