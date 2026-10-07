@@ -248,6 +248,53 @@ describe("ClassStep", () => {
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, undefined, undefined]);
   });
 
+  it("takes a typed gain for each level after the first, noting one the die cannot roll", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    renderStep();
+    const gain = (level: number) => screen.getByRole("spinbutton", { name: `Level ${level} gain` });
+    const type = (level: number, value: string) =>
+      fireEvent.change(gain(level), { target: { value } });
+
+    await pickClass("fig", /^Fighter/);
+    setLevel(4);
+    fireEvent.click(await screen.findByRole("button", { name: "Roll" }));
+    await waitFor(() =>
+      expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 10, 10, 10]),
+    );
+
+    click("Custom");
+    expect(gain(2)).toHaveValue(10);
+    type(2, "7");
+    type(3, "15");
+    type(4, "");
+    expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, undefined]);
+    expect(screen.getByText("38")).toBeVisible();
+    await waitFor(() =>
+      expect(values.departures).toEqual([
+        {
+          field: "levels.2.rolled",
+          note: "Level 3 gains 15 hit points, outside the d10's 1 to 10.",
+        },
+      ]),
+    );
+
+    type(3, "1.5");
+    expect(screen.getByText("A hit point gain is a whole number.")).toBeVisible();
+    expect(values.levels?.[2]?.rolled).toBe(15);
+
+    click("Roll");
+    await waitFor(() =>
+      expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, 10]),
+    );
+
+    setLevel(2);
+    await waitFor(() => expect(values.departures).toEqual([]));
+
+    click("Custom");
+    click("Average");
+    expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, undefined]);
+  });
+
   it("swaps the saves a replaced class granted for the new class's, keeping the level", async () => {
     renderStep();
 

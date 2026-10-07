@@ -12,6 +12,7 @@ import { CreationIncreases } from "./CreationIncreases.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
+import type { HitPointMethod } from "./hitPointGains.ts";
 import { IdentityStep } from "./IdentityStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
 import { StepPending } from "./StepPending.tsx";
@@ -38,6 +39,7 @@ export function CreationFlow() {
   const marked = stepIn(location.state);
   const [fresh] = useState(marked === undefined);
   const [abilities, setAbilities] = useState<AbilitiesMemory>();
+  const [hitPoints, setHitPoints] = useState<HitPointMethod>();
   const step = marked ?? CREATION_STEPS[0];
   const footer = useRef<HTMLDivElement>(null);
   useFooterHeight(footer);
@@ -81,7 +83,7 @@ export function CreationFlow() {
               {step.slug === "identity" ? (
                 <IdentityStep />
               ) : step.slug === "class" ? (
-                <ClassStep />
+                <ClassStep memory={hitPoints} onMemory={setHitPoints} />
               ) : step.slug === "abilities" ? (
                 <AbilityScoresStep memory={abilities} onMemory={setAbilities} />
               ) : (

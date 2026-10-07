@@ -3,28 +3,37 @@ import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { rerolled, rollHitDie } from "./classLevels.ts";
+import { GainInput } from "./GainInput.tsx";
+import { type HitPointMethod, hitPointMethodOf, withGainDepartures } from "./hitPointGains.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
-
-type Method = "average" | "roll";
 
 const METHODS = [
   { value: "average", label: "Average" },
   { value: "roll", label: "Roll" },
+  { value: "custom", label: "Custom" },
 ] as const;
 
+export interface HitPointsFieldProps {
+  /** The method the flow held from an earlier visit, which a reload loses. */
+  memory?: HitPointMethod;
+  onMemory?: (method: HitPointMethod) => void;
+}
+
 /**
- * How hit points grow past 1st level: the class table's fixed value, or a roll of the hit
- * die, as the player chooses. Roll fills every level after the first that holds no roll,
- * including one a raised level or a class change adds; Reroll rolls them all again.
- * Constitution is set on a later step, so the total here stops short of it.
+ * How hit points grow past 1st level: the class table's fixed value, a roll of the hit die,
+ * or a number typed for each level, as the player chooses. Roll fills every level after the
+ * first that holds no gain, including one a raised level or a class change adds, and keeps
+ * a typed one; Reroll rolls them all again. Average drops every gain. Custom keeps them, and
+ * a level left blank takes the average. A gain the die cannot roll is kept and noted as a
+ * departure. Constitution is set on a later step, so the total here stops short of it.
  */
-export function HitPointsField() {
-  const { setValue } = useFormContext<CharacterDefinition>();
+export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
+  const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const { levels, hitDie } = useClassCatalog();
-  const [method, setMethod] = useState<Method>(() =>
-    levels.some((level) => level.rolled !== undefined) ? "roll" : "average",
-  );
   const known = HIT_DICE.includes(hitDie as HitDie);
+  const [method, setMethod] = useState<HitPointMethod>(
+    () => memory ?? hitPointMethodOf(levels, known ? (hitDie as number) : Math.max(...HIT_DICE)),
+  );
   const unrolled = levels.some((level, index) => index > 0 && level.rolled === undefined);
 
   useEffect(() => {
@@ -40,12 +49,36 @@ export function HitPointsField() {
     );
   }, [method, known, hitDie, unrolled, levels, setValue]);
 
+  useEffect(() => {
+    // Until the die loads, a stored gain cannot be judged, so its note stands.
+    if (levels.length > 0 && !known) return;
+    const departures = getValues("departures");
+    const next = withGainDepartures(departures, levels, hitDie ?? 0);
+    if (JSON.stringify(next) !== JSON.stringify(departures ?? []))
+      setValue("departures", next, { shouldDirty: true });
+  }, [levels, known, hitDie, getValues, setValue]);
+
   // The sheet counts no hit points on another die, so neither does this step.
   if (!known || levels.length === 0) return null;
   const die = hitDie as HitDie;
   const average = averageHitPoints(die);
   const faces = levels.map((level, index) => (index === 0 ? die : (level.rolled ?? average)));
   const total = faces.reduce((sum, face) => sum + face, 0);
+  const choose = (value: HitPointMethod) => {
+    setMethod(value);
+    onMemory?.(value);
+    if (value === "average") setValue("levels", rerolled(levels), { shouldDirty: true });
+  };
+  const type = (at: number, gain: number | undefined) =>
+    setValue(
+      "levels",
+      levels.map((level, index) => {
+        if (index !== at) return level;
+        const { rolled: _, ...rest } = level;
+        return gain === undefined ? rest : { ...rest, rolled: gain };
+      }),
+      { shouldDirty: true },
+    );
 
   return (
     <section aria-labelledby="hit-points" className="flex flex-col gap-1">
@@ -56,10 +89,7 @@ export function HitPointsField() {
         legend={`Each level after the first, on a d${die}`}
         options={METHODS}
         value={method}
-        onChange={(value) => {
-          setMethod(value as Method);
-          if (value === "average") setValue("levels", rerolled(levels), { shouldDirty: true });
-        }}
+        onChange={(value) => choose(value as HitPointMethod)}
       />
       {method === "roll" && levels.length > 1 && (
         <button
@@ -81,14 +111,25 @@ export function HitPointsField() {
           <li // biome-ignore lint/suspicious/noArrayIndexKey: a level is its position.
             key={index}
           >
-            Level {index + 1}: {face}{" "}
-            <span className="text-muted">
-              {index === 0
-                ? "(highest face)"
-                : levels[index]?.rolled === undefined
-                  ? "(average)"
-                  : "(rolled)"}
-            </span>
+            {method === "custom" && index > 0 ? (
+              <GainInput
+                level={index + 1}
+                gain={levels[index]?.rolled}
+                average={average}
+                onGain={(gain) => type(index, gain)}
+              />
+            ) : (
+              <>
+                Level {index + 1}: {face}{" "}
+                <span className="text-muted">
+                  {index === 0
+                    ? "(highest face)"
+                    : levels[index]?.rolled === undefined
+                      ? "(average)"
+                      : "(rolled)"}
+                </span>
+              </>
+            )}
           </li>
         ))}
       </ol>

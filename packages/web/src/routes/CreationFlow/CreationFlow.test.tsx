@@ -226,6 +226,24 @@ describe("CreationFlow", () => {
     await waitFor(() => expect(step).toHaveTextContent("Class, done"));
   });
 
+  it("keeps Custom hit points across a step away, where the gains alone would read as a roll", async () => {
+    const warlock = { name: "Warlock", source: "XPHB" };
+    stubApi(undefined, {
+      "/api/classes/Warlock/XPHB": { ...warlock, edition: "one", hitDie: 8, json: warlock },
+    });
+    localStorage.setItem(KEY, JSON.stringify(vex.definition));
+    renderFlow("class");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Custom" }));
+    click("Next: Ability Scores →");
+    click("Back");
+
+    expect(await screen.findByRole("button", { name: "Custom" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
   it("discards the draft on leaving, so New Character opens empty", async () => {
     renderFlow();
     const name = await screen.findByRole("textbox", { name: "Name" });
