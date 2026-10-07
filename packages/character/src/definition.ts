@@ -1,4 +1,4 @@
-import { GRIPS, HIT_DICE, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
+import { GRIPS, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
 import { z } from "zod";
 import { houseRulesSchema } from "./houseRules.ts";
 import { entryKey, isUnique, refKey } from "./keys.ts";
@@ -28,15 +28,11 @@ const levelEntrySchema = z.strictObject({
    */
   subclass: contentRefSchema.optional(),
   /**
-   * The roll taken in place of the class table's fixed value. Bounded here by the
-   * largest hit die, because the schema cannot reach the catalog for this class's own
-   * die — `maxHitPoints` rejects a roll the die cannot make.
+   * The hit point gain taken in place of the class table's fixed value: a roll of the hit
+   * die, or a number the player typed. Unbounded, because a gain the die cannot make is a
+   * departure to record rather than a value to refuse.
    */
-  rolled: z
-    .int()
-    .min(1)
-    .max(Math.max(...HIT_DICE))
-    .optional(),
+  rolled: z.int().optional(),
 });
 
 const SCORE_RANGE = "A score is a whole number from 1 to 30.";

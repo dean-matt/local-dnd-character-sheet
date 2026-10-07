@@ -83,12 +83,18 @@ describe("maxHitPoints", () => {
     expect(() => maxHitPoints([{ die: die as HitDie }], 0)).toThrow(RangeError);
   });
 
-  it.each([0, 9, 1.5])("rejects %s as a roll of a d8", (rolled) => {
-    expect(() => maxHitPoints([{ die: 8 }, { die: 8, rolled }], 0)).toThrow(RangeError);
+  it("counts a gain a d8 cannot roll as given, still at least 1 a level", () => {
+    expect(
+      maxHitPoints([{ die: 8 }, { die: 8, rolled: 15 }, { die: 8, rolled: -3 }], 0).total,
+    ).toBe(8 + 15 + 1);
   });
 
-  it("rejects a corrupt roll on the first level, which otherwise discards it", () => {
-    expect(() => maxHitPoints([{ die: 8, rolled: 40 }], 0)).toThrow(RangeError);
+  it("rejects a fractional gain", () => {
+    expect(() => maxHitPoints([{ die: 8 }, { die: 8, rolled: 1.5 }], 0)).toThrow(RangeError);
+  });
+
+  it("rejects a corrupt gain on the first level, which otherwise discards it", () => {
+    expect(() => maxHitPoints([{ die: 8, rolled: 1.5 }], 0)).toThrow(RangeError);
   });
 });
 

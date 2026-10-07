@@ -746,9 +746,11 @@ describe("invariants a duplicate row would break", () => {
     expect(characterDefinitionSchema.safeParse(twice).success).toBe(false);
   });
 
-  it("rejects a roll no hit die can make", () => {
-    const impossible = { ...definition, levels: [{ class: ROGUE, rolled: 13 }] };
-    expect(characterDefinitionSchema.safeParse(impossible).success).toBe(false);
+  it("keeps a gain no hit die can make, and rejects a fractional one", () => {
+    const typed = (rolled: number) => ({ ...definition, levels: [{ class: ROGUE, rolled }] });
+    expect(characterDefinitionSchema.safeParse(typed(13)).success).toBe(true);
+    expect(characterDefinitionSchema.safeParse(typed(0)).success).toBe(true);
+    expect(characterDefinitionSchema.safeParse(typed(1.5)).success).toBe(false);
   });
 });
 
