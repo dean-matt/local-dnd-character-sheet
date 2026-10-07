@@ -63,7 +63,6 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
   // The values chosen when the list opened, which lead it; ticking one does not move its row.
   const [leading, setLeading] = useState<string[]>([]);
   const button = useRef<HTMLButtonElement>(null);
-  const list = useRef<HTMLFieldSetElement>(null);
   const filter = useRef<HTMLInputElement>(null);
   const id = useId();
   const filterable = options.length > FILTER_ABOVE;
@@ -86,7 +85,7 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
   function onKeyDown(event: KeyboardEvent) {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     const boxes = [
-      ...(list.current?.querySelectorAll<HTMLInputElement>("input[type=checkbox]") ?? []),
+      ...event.currentTarget.querySelectorAll<HTMLInputElement>("input[type=checkbox]"),
     ];
     if (boxes.length === 0) return;
     event.preventDefault();
@@ -98,7 +97,6 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
       open={open}
       onClose={() => setOpen(false)}
       onKeyDown={onKeyDown}
-      panelRef={list}
       value={summary(options, selected, noun)}
       valueId={`${id}-value`}
       button={{
@@ -134,7 +132,7 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
     >
       {(panel) => (
         <fieldset
-          ref={list}
+          ref={panel.ref}
           id={`${id}-list`}
           // A press on a label's text focuses nothing, and Safari never focuses a clicked
           // checkbox, so the dropdown's blur would close the list before the click toggled it.

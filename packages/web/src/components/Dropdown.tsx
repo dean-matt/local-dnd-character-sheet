@@ -6,9 +6,10 @@ import {
   type ReactNode,
   type RefObject,
   useId,
+  useRef,
 } from "react";
 import { useTopLayer } from "../hooks/useTopLayer.ts";
-import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../lib/anchoredList.ts";
+import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../lib/anchoring.ts";
 
 export interface DropdownProps {
   open: boolean;
@@ -24,17 +25,19 @@ export interface DropdownProps {
   header?: ReactNode;
   /** Keys bubbling from the button and the panel, after Escape has been handled. */
   onKeyDown?: (event: KeyboardEvent) => void;
-  /** The panel's element, which floats in the top layer while open. */
-  panelRef: RefObject<HTMLElement | null>;
-  /** The panel, rendered only while open, given the class and style that place it under the button. */
-  children: (panel: { className: string; style: CSSProperties }) => ReactNode;
+  /** The panel, rendered only while open, given the ref, class and style that float it under the button. */
+  children: (panel: {
+    ref: (element: HTMLElement | null) => void;
+    className: string;
+    style: CSSProperties;
+  }) => ReactNode;
 }
 
 const PANEL = `${ANCHORED_LIST_CLASSES} flex flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none`;
 
 /**
  * The shell `MultiSelect` and `Select` share: a button naming the value with a chevron, and
- * a panel floating below it, or above where the viewport has more room there. Escape closes the panel and returns focus to
+ * a panel floating below it, or above where the viewport has more room. Escape closes the panel and returns focus to
  * the button; focus leaving the whole closes it.
  */
 export function Dropdown({
@@ -45,11 +48,11 @@ export function Dropdown({
   valueId,
   header,
   onKeyDown,
-  panelRef,
   children,
 }: DropdownProps) {
   const anchor = anchorName(useId());
-  useTopLayer(panelRef, open);
+  const panel = useRef<HTMLElement>(null);
+  useTopLayer(panel, open);
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Escape, the arrow keys and focusout bubbling from the button and the panel.
     <div
@@ -85,7 +88,14 @@ export function Dropdown({
           style={{ transform: open ? "rotate(180deg)" : undefined }}
         />
       </button>
-      {open && children({ className: PANEL, style: anchoredListStyle(anchor) })}
+      {open &&
+        children({
+          ref: (element) => {
+            panel.current = element;
+          },
+          className: PANEL,
+          style: anchoredListStyle(anchor),
+        })}
     </div>
   );
 }

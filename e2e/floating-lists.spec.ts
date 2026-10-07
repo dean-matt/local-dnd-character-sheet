@@ -51,6 +51,8 @@ for (const height of [800, 360]) {
     await expect(input).toHaveAttribute("aria-activedescendant", /option-0$/);
     await input.press("Escape");
     await expect(list).toBeHidden();
+    // Out of the top layer, not just hidden, or a modal opened later would draw over it.
+    await expect(page.locator(":popover-open")).toHaveCount(0);
   });
 
   test(`an open alignment list floats inside a ${height}px window without growing the page`, async ({

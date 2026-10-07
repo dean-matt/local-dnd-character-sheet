@@ -30,7 +30,6 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const button = useRef<HTMLButtonElement>(null);
-  const list = useRef<HTMLDivElement>(null);
   const id = useId();
   const buttonId = control.id ?? `${id}-button`;
   const chosen = options.findIndex((option) => option.value === value);
@@ -79,7 +78,6 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
       open={open}
       onClose={() => setOpen(false)}
       onKeyDown={onKeyDown}
-      panelRef={list}
       value={options[chosen]?.label ?? value}
       button={{
         ...control,
@@ -98,7 +96,7 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
     >
       {(panel) => (
         <div
-          ref={list}
+          ref={panel.ref}
           id={`${id}-list`}
           role="listbox"
           aria-labelledby={buttonId}

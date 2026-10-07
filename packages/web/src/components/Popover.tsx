@@ -28,7 +28,7 @@ import {
   useState,
 } from "react";
 import { useTopLayer } from "../hooks/useTopLayer.ts";
-import { anchorName as toAnchorName } from "../lib/anchoredList.ts";
+import { anchorName as toAnchorName } from "../lib/anchoring.ts";
 import { InModal } from "./inModalContext.ts";
 
 const MAX_DEPTH = 1;

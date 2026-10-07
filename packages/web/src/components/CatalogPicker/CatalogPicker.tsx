@@ -16,7 +16,7 @@ import type { CharacterRecord, EntryRef } from "@dnd/character";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { useTopLayer } from "../../hooks/useTopLayer.ts";
-import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../../lib/anchoredList.ts";
+import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../../lib/anchoring.ts";
 import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
 

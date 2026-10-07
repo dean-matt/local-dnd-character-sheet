@@ -253,13 +253,16 @@ describe("Popover", () => {
   it.each([
     { where: "inside a modal", inModal: true, promoted: true },
     { where: "on the page", inModal: false, promoted: false },
-  ])("draws in the top layer only $where", ({ inModal, promoted }) => {
+  ])("draws in the top layer only $where, and leaves it on close", ({ inModal, promoted }) => {
     const shown: Element[] = [];
     HTMLElement.prototype.showPopover = function showPopover(this: HTMLElement) {
       shown.push(this);
     };
+    HTMLElement.prototype.hidePopover = function hidePopover(this: HTMLElement) {
+      shown.splice(shown.indexOf(this), 1);
+    };
     try {
-      render(
+      const { unmount } = render(
         <InModal.Provider value={inModal ? { titleId: "title", open: () => {} } : null}>
           <Popover trigger="+3" label="Strength modifier">
             Base 16, modifier +3
@@ -272,8 +275,14 @@ describe("Popover", () => {
       const content = document.getElementById(trigger.getAttribute("aria-controls") ?? "");
       expect(content?.getAttribute("popover")).toBe(promoted ? "manual" : null);
       expect(shown).toEqual(promoted ? [content] : []);
+
+      fireEvent.click(trigger);
+      expect(content?.hasAttribute("popover")).toBe(false);
+      expect(shown).toEqual([]);
+      unmount();
     } finally {
       Reflect.deleteProperty(HTMLElement.prototype, "showPopover");
+      Reflect.deleteProperty(HTMLElement.prototype, "hidePopover");
     }
   });
 
