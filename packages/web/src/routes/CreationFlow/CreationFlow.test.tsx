@@ -144,6 +144,7 @@ describe("CreationFlow", () => {
     const departures = [
       { field: "abilityScores.str", note: "20 at level 1, past point buy" },
       { field: "abilityScores.dex", note: "19 at level 1, past point buy" },
+      { field: "levels.1.rolled", note: "Level 2 gains 12 hit points" },
     ];
     localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, departures }));
     renderFlow("identity");
@@ -167,6 +168,17 @@ describe("CreationFlow", () => {
     fireEvent.keyDown(list, { key: "Escape" });
     expect(screen.queryByRole("region", { name: "Off the rules" })).toBeNull();
     expect(count).toHaveFocus();
+
+    fireEvent.click(count);
+    fireEvent.blur(count, { relatedTarget: within(rail()).getByRole("link", { name: /Class/ }) });
+    expect(screen.queryByRole("region", { name: "Off the rules" })).toBeNull();
+
+    fireEvent.click(count);
+    fireEvent.click(within(rail()).getByRole("link", { name: /Class/ }));
+    expect(await footer().findByRole("button", { name: "1 off the rules" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
   it("says so when the draft holds what no character can store", async () => {

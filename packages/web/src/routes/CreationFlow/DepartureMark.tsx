@@ -12,14 +12,14 @@ export function DepartureMark({
   field,
   className = "",
 }: {
-  field: string | RegExp;
+  field: string | ((field: string) => boolean);
   className?: string;
 }) {
   const departures: Departure[] | undefined = useWatch<CharacterDefinition, "departures">({
     name: "departures",
   });
   const mine = (departures ?? []).filter((departure) =>
-    typeof field === "string" ? departure.field === field : field.test(departure.field),
+    typeof field === "string" ? departure.field === field : field(departure.field),
   );
   if (mine.length === 0) return null;
   return (

@@ -10,8 +10,8 @@ type Departures = CharacterDefinition["departures"];
 
 export type HitPointMethod = "average" | "roll" | "custom";
 
-/** Where `departures` notes each level's gain, such as `levels.2.rolled`. */
-export const GAIN_FIELD = /^levels\.\d+\.rolled$/;
+/** Whether `departures` notes a level's gain at `field`, such as `levels.2.rolled`. */
+export const isGainField = (field: string) => /^levels\.\d+\.rolled$/.test(field);
 
 /** Whether a d`die` cannot roll `gain`, which the step marks typed and notes as a departure. */
 export const outsideDie = (gain: number | undefined, die: number) =>
@@ -27,7 +27,7 @@ export function withGainDepartures(
   levels: readonly Level[],
   die: number,
 ): Departures {
-  const others = (departures ?? []).filter((departure) => !GAIN_FIELD.test(departure.field));
+  const others = (departures ?? []).filter((departure) => !isGainField(departure.field));
   const gains = levels.flatMap((level, index) =>
     index > 0 && outsideDie(level.rolled, die)
       ? [

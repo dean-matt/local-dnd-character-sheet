@@ -118,7 +118,7 @@ export function CreationFlow() {
                 Cancel
               </button>
               <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                <StepDepartures step={step} />
+                <StepDepartures key={step.slug} step={step} />
                 <button
                   type="button"
                   disabled={previous === undefined}
