@@ -11,18 +11,18 @@ import { useSkillTally } from "./useSkillTally.ts";
  * value it sets, every skill pick is spent as far as the grants leave room, and every
  * starting-equipment choice is made.
  */
-export function useProficienciesDone(memory: EquipmentMemory | undefined): boolean {
+export function useProficienciesDone(memory: EquipmentMemory): boolean {
   const values = useWatch<CharacterDefinition>();
   const skills = useSkillTally();
-  const { sources, held } = useHeldEquipment(memory);
+  const { sources } = useHeldEquipment(memory);
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "equipment",
   );
-  if (faulted || skills === undefined || sources === undefined || held === undefined) return false;
+  if (faulted || skills === undefined || sources === undefined) return false;
   const granted = skills.granted.map((grant) => grant.ref);
   const spent = skills.offers.every(
     (offer, index) => (skills.tally.picked[index]?.length ?? 0) >= needed(offer, granted),
   );
-  return spent && isComplete(sources, held);
+  return spent && isComplete(sources, memory);
 }

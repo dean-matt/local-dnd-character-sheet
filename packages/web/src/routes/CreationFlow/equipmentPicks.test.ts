@@ -3,7 +3,6 @@ import {
   coins,
   type EquipmentMemory,
   type EquipmentSource,
-  inferMemory,
   isComplete,
   landing,
   withoutLanded,
@@ -64,11 +63,17 @@ describe("landing", () => {
     });
   });
 
-  it("lands the gold alternative alone where it is taken", () => {
-    const picks = memory({
-      Class: { row: "Fighter|PHB", options: { 0: "a" }, slots: {}, gold: 120 },
-    });
-    expect(landing([fighter], picks)).toEqual({ inventory: [], copper: 12000 });
+  it("lands the gold alternative in place of the class's and the background's equipment", () => {
+    const sage: EquipmentSource = {
+      by: "Background",
+      row: "Sage|PHB",
+      name: "Sage",
+      groups: [[{ key: "_", items: [item("Pouch"), { kind: "money", copper: 1000 }] }]],
+    };
+    const taken = { ...memory({}), gold: { row: "Fighter|PHB", gp: 120 } };
+    expect(landing([fighter, sage], taken)).toEqual({ inventory: [], copper: 12000 });
+    const otherClass = { ...memory({}), gold: { row: "Fighter|XPHB", gp: 120 } };
+    expect(landing([fighter, sage], otherClass).copper).toBe(2050);
   });
 
   it("reads no pick made under another row", () => {
@@ -81,17 +86,6 @@ describe("withoutLanded", () => {
   it("takes out one entry for each landed, leaving the player's own", () => {
     const inventory = [held("Rope"), held("Dagger"), held("Dagger")];
     expect(withoutLanded(inventory, [held("Dagger")])).toEqual([held("Rope"), held("Dagger")]);
-  });
-});
-
-describe("inferMemory", () => {
-  it("reads each group's option back off the inventory, and counts as landed only what is held", () => {
-    const inventory = [held("Leather Armor"), held("Arrows (20)"), held("Rope")];
-    expect(inferMemory([fighter], inventory)).toEqual({
-      picks: { Class: { row: "Fighter|PHB", options: { 0: "b" }, slots: {} } },
-      landed: [held("Leather Armor"), held("Arrows (20)")],
-      names: {},
-    });
   });
 });
 
@@ -109,9 +103,7 @@ describe("isComplete", () => {
         }),
       ),
     ).toBe(true);
-    expect(
-      isComplete([fighter], memory({ Class: { row, options: {}, slots: {}, gold: 90 } })),
-    ).toBe(true);
+    expect(isComplete([fighter], { ...memory({}), gold: { row, gp: 90 } })).toBe(true);
   });
 });
 

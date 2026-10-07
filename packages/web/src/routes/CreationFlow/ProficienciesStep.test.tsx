@@ -1,5 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,7 +8,7 @@ import { CreationEquipment } from "./CreationEquipment.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationSkills } from "./CreationSkills.tsx";
 import { creationForm } from "./creationForm.ts";
-import type { EquipmentMemory } from "./equipmentPicks.ts";
+import { type EquipmentMemory, NO_EQUIPMENT } from "./equipmentPicks.ts";
 import { ProficienciesStep } from "./ProficienciesStep.tsx";
 import { useProficienciesDone } from "./useProficienciesDone.ts";
 
@@ -104,7 +104,7 @@ function Values() {
 let done = false;
 
 function Step() {
-  const [memory, setMemory] = useState<EquipmentMemory>();
+  const [memory, setMemory] = useState<EquipmentMemory>(NO_EQUIPMENT);
   done = useProficienciesDone(memory);
   return (
     <>
@@ -283,19 +283,23 @@ describe("ProficienciesStep", () => {
     expect(values.departures).toEqual([]);
   });
 
-  it("takes the gold alternative in place of the class's equipment", async () => {
+  it("takes the gold alternative in place of the class's and the background's equipment", async () => {
     renderStep();
     await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
 
-    fireEvent.click(checkbox(/Take 4d4 × 10 gp instead/));
+    fireEvent.click(
+      checkbox(/Take 4d4 × 10 gp instead of the class's and the background's equipment/),
+    );
 
-    await waitFor(() => expect(inventoryNames()).toEqual(["Pouch"]));
+    await waitFor(() => expect(inventoryNames()).toEqual([]));
     const gold = values.money?.gold ?? 0;
-    expect(gold).toBeGreaterThanOrEqual(10 + 40);
-    expect(gold).toBeLessThanOrEqual(10 + 160);
-    expect(
-      within(screen.getByRole("region", { name: /From Class/ })).queryAllByRole("radio"),
-    ).toEqual([]);
+    expect(gold).toBeGreaterThanOrEqual(40);
+    expect(gold).toBeLessThanOrEqual(160);
+    expect(screen.queryAllByRole("radio")).toEqual([]);
+
+    fireEvent.click(checkbox(/Take 4d4 × 10 gp instead/));
+    await waitFor(() => expect(inventoryNames()).toEqual(["Spellbook", "Pouch"]));
+    expect(values.money).toMatchObject({ gold: 10 });
   });
 
   it("reads as done once every skill and equipment choice is made, and not after one is undone", async () => {

@@ -1,16 +1,13 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { type EquipmentMemory, inferMemory, withoutLanded } from "./equipmentPicks.ts";
+import { type EquipmentMemory, withoutLanded } from "./equipmentPicks.ts";
 import { useEquipmentSources } from "./useEquipmentSources.ts";
 
 /**
- * The starting equipment on offer, the picks the flow holds — read off the inventory
- * where it holds none, as after a reload — and the inventory entries no pick landed.
- * `sources` and `held` are `undefined` while a row they read has not loaded.
+ * The starting equipment on offer, `undefined` while a row it reads has not loaded, and
+ * the inventory entries no pick in `memory` landed.
  */
-export function useHeldEquipment(memory: EquipmentMemory | undefined) {
+export function useHeldEquipment(memory: EquipmentMemory) {
   const inventory = useWatch<CharacterDefinition, "inventory">({ name: "inventory" }) ?? [];
-  const sources = useEquipmentSources();
-  const held = memory ?? (sources && inferMemory(sources, inventory));
-  return { sources, held, extras: held ? withoutLanded(inventory, held.landed) : [] };
+  return { sources: useEquipmentSources(), extras: withoutLanded(inventory, memory.landed) };
 }

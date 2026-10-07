@@ -11,8 +11,7 @@ import { useHeldEquipment } from "./useHeldEquipment.ts";
 const INVENTORY_FIELD = "inventory";
 
 export interface CreationEquipmentProps {
-  /** The picks the flow holds, which a reload loses. */
-  memory: EquipmentMemory | undefined;
+  memory: EquipmentMemory;
   onMemory: (memory: EquipmentMemory) => void;
 }
 
@@ -26,28 +25,28 @@ export interface CreationEquipmentProps {
  */
 export function CreationEquipment({ memory, onMemory }: CreationEquipmentProps) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const { sources, held, extras } = useHeldEquipment(memory);
-  const key = JSON.stringify([sources, held]);
-  const ready = held !== undefined;
+  const { sources, extras } = useHeldEquipment(memory);
+  const key = JSON.stringify([sources, memory]);
+  const ready = sources !== undefined;
   const note =
     extras.length > 0
-      ? `Added beyond the starting equipment: ${extras.map((extra) => pickedName(extra.ref, held?.names ?? {})).join(", ")}.`
+      ? `Added beyond the starting equipment: ${extras.map((extra) => pickedName(extra.ref, memory.names)).join(", ")}.`
       : undefined;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for `sources` and `held`, rebuilt each render.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for `sources` and `memory`, rebuilt each render.
   useEffect(() => {
-    if (sources === undefined || held === undefined) return;
-    const target = landing(sources, held);
-    if (JSON.stringify(target.inventory) !== JSON.stringify(held.landed)) {
+    if (sources === undefined) return;
+    const target = landing(sources, memory);
+    if (JSON.stringify(target.inventory) !== JSON.stringify(memory.landed)) {
       const current = getValues("inventory") ?? [];
       setRefValue(
         setValue,
         "inventory",
-        [...target.inventory, ...withoutLanded(current, held.landed)],
+        [...target.inventory, ...withoutLanded(current, memory.landed)],
         { shouldDirty: true },
       );
-      onMemory({ ...held, landed: target.inventory });
-    } else if (memory === undefined) onMemory(held);
+      onMemory({ ...memory, landed: target.inventory });
+    }
     const purse = coins(target.copper);
     if (JSON.stringify(purse) !== JSON.stringify(getValues("money")))
       setValue("money", purse, { shouldDirty: true });

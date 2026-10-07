@@ -19,7 +19,7 @@ export function CreationRail({
 }: {
   current: CreationStep;
   /** The starting-equipment picks the flow holds, which the step's done mark reads. */
-  equipment: EquipmentMemory | undefined;
+  equipment: EquipmentMemory;
 }) {
   const currentIndex = CREATION_STEPS.indexOf(current);
   const identityDone = useIdentityDone();

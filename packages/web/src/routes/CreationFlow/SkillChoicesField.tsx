@@ -84,6 +84,7 @@ export function SkillChoicesField() {
               className={`mt-1 text-row ${taken === wanted ? "text-muted" : "font-semibold text-accent-text"}`}
             >
               Choose {offer.count} — {taken} selected
+              {wanted < offer.count && `, all the list has left once the grants are counted`}
             </p>
             {[...offer.options].sort(byName).map(checkbox)}
           </fieldset>

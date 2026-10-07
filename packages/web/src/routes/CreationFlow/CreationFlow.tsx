@@ -14,12 +14,12 @@ import { CreationRail } from "./CreationRail.tsx";
 import { CreationSkills } from "./CreationSkills.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
-import type { EquipmentMemory } from "./equipmentPicks.ts";
 import type { HitPointMethod } from "./hitPointGains.ts";
 import { IdentityStep } from "./IdentityStep.tsx";
 import { ProficienciesStep } from "./ProficienciesStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
 import { StepPending } from "./StepPending.tsx";
+import { useEquipmentMemory } from "./useEquipmentMemory.ts";
 
 const { FormShell } = creationForm;
 
@@ -44,7 +44,7 @@ export function CreationFlow() {
   const [fresh] = useState(marked === undefined);
   const [abilities, setAbilities] = useState<AbilitiesMemory>();
   const [hitPoints, setHitPoints] = useState<HitPointMethod>();
-  const [equipment, setEquipment] = useState<EquipmentMemory>();
+  const [equipment, setEquipment] = useEquipmentMemory(fresh);
   const step = marked ?? CREATION_STEPS[0];
   const footer = useRef<HTMLDivElement>(null);
   useFooterHeight(footer);
