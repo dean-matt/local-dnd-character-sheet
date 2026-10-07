@@ -269,8 +269,12 @@ describe("ProficienciesStep", () => {
         },
       ]),
     );
+    const note = screen.getByText("3 skills taken from the Wizard list, which offers 2.");
+    expect(note).toBeVisible();
+    expect(note.previousElementSibling).toHaveTextContent("Off the rules");
     fireEvent.click(checkbox(/^Medicine/));
     await waitFor(() => expect(values.departures).toEqual([]));
+    expect(screen.queryByText("Off the rules")).toBeNull();
   });
 
   it("notes a skill no list offers, which stays listed so it can be cleared", async () => {

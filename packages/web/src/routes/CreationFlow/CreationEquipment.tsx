@@ -4,11 +4,14 @@ import { useFormContext } from "react-hook-form";
 import { setRefValue } from "../../lib/setRefValue.ts";
 import { withDeparture } from "./departures.ts";
 import { pickedName } from "./equipmentLabels.ts";
-import { coins, type EquipmentMemory, landing, withoutLanded } from "./equipmentPicks.ts";
+import {
+  coins,
+  type EquipmentMemory,
+  INVENTORY_FIELD,
+  landing,
+  withoutLanded,
+} from "./equipmentPicks.ts";
 import { useHeldEquipment } from "./useHeldEquipment.ts";
-
-/** Where `departures` notes the items added past what the lists offer. */
-const INVENTORY_FIELD = "inventory";
 
 export interface CreationEquipmentProps {
   memory: EquipmentMemory;

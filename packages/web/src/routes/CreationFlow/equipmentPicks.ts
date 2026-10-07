@@ -58,6 +58,9 @@ export type EquipmentMemory = {
 export const slotKeys = (group: number, option: string, item: number, quantity: number) =>
   Array.from({ length: quantity }, (_, copy) => `${group}:${option}:${item}:${copy}`);
 
+/** Where `departures` notes the items added past what the lists offer. */
+export const INVENTORY_FIELD = "inventory";
+
 export const NO_EQUIPMENT: EquipmentMemory = { picks: {}, landed: [], names: {} };
 
 /** The gold `memory` takes in place of all the equipment, or `undefined` where the class offers no such gold or it is not taken. */

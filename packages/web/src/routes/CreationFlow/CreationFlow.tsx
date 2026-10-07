@@ -103,7 +103,6 @@ export function CreationFlow() {
               <CreationTools />
               <CreationEquipment memory={equipment} onMemory={setEquipment} />
               {body}
-              <StepDepartures step={step} />
             </div>
             <div
               ref={footer}
@@ -118,7 +117,8 @@ export function CreationFlow() {
                 <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
                 Cancel
               </button>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                <StepDepartures key={step.slug} step={step} />
                 <button
                   type="button"
                   disabled={previous === undefined}

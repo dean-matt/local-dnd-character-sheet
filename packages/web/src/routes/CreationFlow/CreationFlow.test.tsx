@@ -140,17 +140,45 @@ describe("CreationFlow", () => {
     expect(JSON.parse(localStorage.getItem(KEY) ?? "null")).toEqual(vex.definition);
   });
 
-  it("shows a departure from the rules on the step that sets the value", async () => {
-    const departure = { field: "abilityScores.str", note: "20 at level 1, past point buy" };
-    localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, departures: [departure] }));
+  it("counts the step's departures from the rules in the footer, which opens their notes", async () => {
+    const departures = [
+      { field: "abilityScores.str", note: "20 at level 1, past point buy" },
+      { field: "abilityScores.dex", note: "19 at level 1, past point buy" },
+      { field: "levels.1.rolled", note: "Level 2 gains 12 hit points" },
+    ];
+    localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, departures }));
     renderFlow("identity");
 
     await screen.findByRole("heading", { level: 1, name: "Identity" });
-    expect(screen.queryByRole("region", { name: "Off the rules" })).not.toBeInTheDocument();
+    const footer = () => within(document.querySelector("[data-creation-footer]") as HTMLElement);
+    expect(footer().queryByRole("button", { name: /off the rules/ })).toBeNull();
 
     fireEvent.click(within(rail()).getByRole("link", { name: /Ability Scores/ }));
-    const offBook = await screen.findByRole("region", { name: "Off the rules" });
-    expect(within(offBook).getByText(departure.note)).toBeVisible();
+    const count = await footer().findByRole("button", { name: "2 off the rules" });
+    expect(count).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("region", { name: "Off the rules" })).toBeNull();
+
+    fireEvent.click(count);
+    const list = screen.getByRole("region", { name: "Off the rules" });
+    expect(count).toHaveAttribute("aria-expanded", "true");
+    expect(count).toHaveAttribute("aria-controls", list.id);
+    expect(within(list).getByText(departures[0]?.note ?? "")).toBeVisible();
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+
+    fireEvent.keyDown(list, { key: "Escape" });
+    expect(screen.queryByRole("region", { name: "Off the rules" })).toBeNull();
+    expect(count).toHaveFocus();
+
+    fireEvent.click(count);
+    fireEvent.blur(count, { relatedTarget: within(rail()).getByRole("link", { name: /Class/ }) });
+    expect(screen.queryByRole("region", { name: "Off the rules" })).toBeNull();
+
+    fireEvent.click(count);
+    fireEvent.click(within(rail()).getByRole("link", { name: /Class/ }));
+    expect(await footer().findByRole("button", { name: "1 off the rules" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
   it("says so when the draft holds what no character can store", async () => {

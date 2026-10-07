@@ -1,7 +1,8 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
+import { DepartureMark } from "./DepartureMark.tsx";
 import { NO_GRANTS } from "./grants.ts";
-import { holdsTool, toolsNeeded } from "./toolPicks.ts";
+import { holdsTool, TOOLS_FIELD, toolsNeeded } from "./toolPicks.ts";
 import { useToolTally } from "./useToolTally.ts";
 
 const HEADING = "font-semibold text-label text-muted uppercase tracking-label";
@@ -86,6 +87,7 @@ export function ToolChoicesField() {
           {[...tally.outside].sort(byName).map(checkbox)}
         </fieldset>
       )}
+      <DepartureMark field={TOOLS_FIELD} />
     </div>
   );
 }

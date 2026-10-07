@@ -6,7 +6,8 @@ import { useEnsureHomebrewClass } from "../../hooks/useEnsureHomebrewClass.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { ClassEscape } from "./ClassEscape.tsx";
 import { levelsIn } from "./classLevels.ts";
-import { withDeparture } from "./departures.ts";
+import { DepartureMark } from "./DepartureMark.tsx";
+import { CLASS_FIELD, withDeparture } from "./departures.ts";
 import { useClassCatalog } from "./useClassCatalog.ts";
 
 const OPTS = { shouldDirty: true } as const;
@@ -29,7 +30,7 @@ export function ClassField() {
     const keep = levels.length || count;
     setCount(keep);
     setValue("levels", ref ? levelsIn(ref, keep, []) : [], OPTS);
-    setValue("departures", withDeparture(getValues("departures"), "levels", note), OPTS);
+    setValue("departures", withDeparture(getValues("departures"), CLASS_FIELD, note), OPTS);
     setMoved(true);
   }
 
@@ -66,11 +67,14 @@ export function ClassField() {
 
   const value = "homebrewId" in cls ? (homebrew.data?.name ?? displayName(cls)) : cls.name;
   return (
-    <ChosenChip
-      label="Class"
-      value={value}
-      focusOnMount={moved}
-      onClear={() => choose(undefined)}
-    />
+    <div className="flex flex-col gap-1.5">
+      <ChosenChip
+        label="Class"
+        value={value}
+        focusOnMount={moved}
+        onClear={() => choose(undefined)}
+      />
+      <DepartureMark field={CLASS_FIELD} />
+    </div>
   );
 }
