@@ -16,8 +16,7 @@ export type HitDie = (typeof HIT_DICE)[number];
 
 /**
  * One level's hit die, and the gain taken in place of the fixed value: a roll, or a number
- * the table chose. A gain the die cannot make counts as given, since a character records
- * that departure rather than refusing it.
+ * the table chose. Any whole-number gain counts as given, even one the die cannot make.
  */
 export type HitPointLevel = {
   die: HitDie;
