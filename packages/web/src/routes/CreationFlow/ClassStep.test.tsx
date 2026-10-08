@@ -509,6 +509,19 @@ describe("ClassStep", () => {
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 6, 6]);
   });
 
+  it("closes an opened class picker unpicked on Cancel, handing focus back", async () => {
+    renderStep();
+
+    await pickClass("fig", /^Fighter/);
+    click("Add another class");
+    expect(screen.getByRole("combobox", { name: "Another class" })).toHaveFocus();
+    click("Cancel");
+
+    expect(screen.queryByRole("combobox", { name: "Another class" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add another class" })).toHaveFocus();
+    expect(classesOf()).toEqual(["Fighter"]);
+  });
+
   it("holds the classes' levels to 20 between them", async () => {
     renderStep();
 

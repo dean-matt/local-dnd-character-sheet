@@ -17,18 +17,24 @@ const refOf = (hit: SearchHit): EntryRef =>
   "id" in hit ? { homebrewId: hit.id } : { name: hit.name, source: hit.source };
 
 /**
- * "Add another class", which opens a picker for a further class at 1st level in it. A
- * class the character already holds stays listed and cannot be picked, and a character at
- * the highest level takes no further class.
+ * "Add another class", which opens a picker for a further class at 1st level in it, and
+ * Cancel to close it unpicked. A class the character already holds stays listed and cannot
+ * be picked, and a character at the highest level takes no further class.
  */
 export function AddClassField({ edition, focusRequest, onAdded }: AddClassFieldProps) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const levels = useWatch<CharacterDefinition, "levels">({ name: "levels" }) ?? [];
   const [adding, setAdding] = useState(false);
+  // Cancel hands focus back to the button it replaced.
+  const [returning, setReturning] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (focusRequest > 0) button.current?.focus();
   }, [focusRequest]);
+  useEffect(() => {
+    if (returning && !adding) button.current?.focus();
+    setReturning(false);
+  }, [returning, adding]);
 
   if (levels.length >= HIGHEST_LEVEL) {
     return (
@@ -38,25 +44,38 @@ export function AddClassField({ edition, focusRequest, onAdded }: AddClassFieldP
     );
   }
   const held = new Set(levels.map((level) => entryKey(level.class)));
+  const close = () => {
+    setAdding(false);
+    setReturning(true);
+  };
   if (adding) {
     return (
-      <CatalogPicker
-        label="Another class"
-        edition={edition}
-        type="class"
-        placeholder="Choose a class…"
-        focusOnMount
-        unavailableReason={(hit) =>
-          held.has(entryKey(refOf(hit))) ? "Already one of the character's classes" : undefined
-        }
-        onPick={(ref) => {
-          setValue("levels", withClassCount(getValues("levels") ?? [], ref, 1), {
-            shouldDirty: true,
-          });
-          setAdding(false);
-          onAdded(ref);
-        }}
-      />
+      <div className="flex flex-col gap-2">
+        <CatalogPicker
+          label="Another class"
+          edition={edition}
+          type="class"
+          placeholder="Choose a class…"
+          focusOnMount
+          unavailableReason={(hit) =>
+            held.has(entryKey(refOf(hit))) ? "Already one of the character's classes" : undefined
+          }
+          onPick={(ref) => {
+            setValue("levels", withClassCount(getValues("levels") ?? [], ref, 1), {
+              shouldDirty: true,
+            });
+            setAdding(false);
+            onAdded(ref);
+          }}
+        />
+        <button
+          type="button"
+          onClick={close}
+          className="w-fit rounded-control px-3 py-1 font-semibold text-body text-secondary hover:bg-subtle"
+        >
+          Cancel
+        </button>
+      </div>
     );
   }
   return (

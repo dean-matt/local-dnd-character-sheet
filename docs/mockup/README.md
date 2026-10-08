@@ -162,7 +162,8 @@ widget, panel, or nav element:
   Equipment and Spells, which the app builds and leads, so its rail draws steps 1, 3, 4
   and 5 without a link and "+ New Character" opens Class here. It carries the step rail,
   Back/Next, and the acceptance criteria #235 already settled. The app builds the whole
-  step, starting multiclassed included.
+  step, starting multiclassed included, but types a custom gain for each level where the
+  artboard types one hit point total.
   Its Next validates nothing, since the schema is checked only at Finish, and every step
   in its rail is a link rather than locked until reached.
   Creation 2/5 supports starting multiclassed — add more than one class, each with its
@@ -332,7 +333,7 @@ says how much of the artboard the app builds today.
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | read-only |
-| `CreationClass` | #233, #235, #240, #604 | all but one typed hit point total in place of each level's gain |
+| `CreationClass` | #233, #235, #240, #604 | all, with a typed gain per level for its one typed total |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
 
