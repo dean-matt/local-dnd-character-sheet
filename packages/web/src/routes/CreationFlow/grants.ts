@@ -93,9 +93,17 @@ function languageRow(
   );
 }
 
+/** Each language `grants` names that no row in `hits` lands, as a sheet prints it. */
+export const unlandedLanguages = (
+  grants: ProficiencyGrants,
+  hits: readonly SearchHit[],
+  edition: CharacterDefinition["edition"],
+): string[] => grants.languages.filter((name) => !languageRow(hits, name, edition)).map(titleCase);
+
 /**
  * `grants` resolved against the skill and language rows in `hits`. A name no row answers
- * grants nothing, since a reference must name a row.
+ * grants nothing, since a reference must name a row; `unlandedLanguages` reports a language
+ * that falls out this way.
  */
 export function resolveGrants(
   grants: readonly RowGrants[],

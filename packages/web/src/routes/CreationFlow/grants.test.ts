@@ -2,7 +2,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { proficiencyGrantsSchema } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import { DIALECT_OF, NO_GRANTS, resolveGrants, swapGrants, titleCase } from "./grants.ts";
+import {
+  DIALECT_OF,
+  NO_GRANTS,
+  resolveGrants,
+  swapGrants,
+  titleCase,
+  unlandedLanguages,
+} from "./grants.ts";
 
 type Row = { name: string; source: string; dialects?: string[] };
 const fixture = (file: string): Record<string, Row[]> =>
@@ -125,17 +132,16 @@ describe("dialect grants", () => {
     const grants = proficiencyGrantsSchema.parse(row);
 
     expect(grants.languages.length).toBeGreaterThan(0);
-    expect(resolveGrants([grants], hits, "classic").languages).toHaveLength(
-      grants.languages.length,
-    );
+    expect(unlandedLanguages(grants, hits, "classic")).toEqual([]);
     expect(resolveGrants([grants], hits, "classic").languages).toContainEqual(ref("Primordial"));
   });
 
-  it("lands a dialect and its language once", () => {
+  it("lands a dialect and its language once, and reports a language no row answers", () => {
     const none = { skills: [], tools: [], weapons: [], armor: [] };
-    const grants = { ...none, languages: ["aquan", "primordial"] };
+    const grants = { ...none, languages: ["aquan", "primordial", "kraul"] };
 
     expect(resolveGrants([grants], hits, "classic").languages).toEqual([ref("Primordial")]);
+    expect(unlandedLanguages(grants, hits, "classic")).toEqual(["Kraul"]);
   });
 });
 

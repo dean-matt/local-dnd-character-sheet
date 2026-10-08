@@ -32,6 +32,7 @@ const VERDAN = {
   size: ["V"],
   speed: 30,
   resist: [{ choose: { from: ["acid", "fire"] } }],
+  languageProficiencies: [{ common: true, goblin: true }],
 };
 const background = (name: string, skills: Record<string, true>) => ({
   ...PHB(name),
@@ -46,6 +47,7 @@ const ROWS: Record<string, unknown> = {
     { ...PHB("Wood"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: ELF },
   ]),
   "/api/races/Verdan/AI": { name: "Verdan", source: "AI", edition: "classic", json: VERDAN },
+  "/api/races/Verdan/AI/subraces?edition=classic&limit=200": page([]),
   "/api/backgrounds?edition=classic&limit=200": page([
     background("Sage", { arcana: true, history: true }),
     background("Acolyte", { insight: true, religion: true }),
@@ -221,6 +223,19 @@ describe("IdentityStep", () => {
 
     expect(values.race).toBeUndefined();
     expect(values.departures).toEqual([]);
+  });
+
+  it("names a granted language no row answers, and lands the rest", async () => {
+    renderStep();
+
+    await pick("Race", "verdan", /^Verdan/);
+
+    expect(
+      await screen.findByText(
+        "No language in this edition answers Goblin, so the character does not gain it.",
+      ),
+    ).toBeVisible();
+    await waitFor(() => expect(values.proficiencies?.languages).toEqual([PHB("Common")]));
   });
 
   it("asks the size and the resistance a race leaves open", async () => {
