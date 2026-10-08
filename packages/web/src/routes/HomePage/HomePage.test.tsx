@@ -81,9 +81,10 @@ describe("HomePage", () => {
       "href",
       "/characters/new",
     );
-    const importButton = screen.getByRole("button", { name: "Import" });
-    expect(importButton).toHaveAttribute("aria-disabled", "true");
-    expect(importButton).toHaveAccessibleDescription("Import is not built yet");
+    expect(screen.getByRole("button", { name: "Import" })).toHaveAttribute(
+      "aria-disabled",
+      "false",
+    );
     expect(screen.queryByRole("link", { name: /see all characters/i })).not.toBeInTheDocument();
   });
 

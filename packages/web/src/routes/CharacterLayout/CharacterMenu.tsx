@@ -3,14 +3,15 @@ import { EllipsisVertical } from "lucide-react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useDuplicateCharacter } from "../../hooks/useDuplicateCharacter.ts";
+import { useExportCharacter } from "../../hooks/useExportCharacter.ts";
 import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
 import { DeleteCharacterDialog } from "./DeleteCharacterDialog.tsx";
 
 const ITEM = "block w-full rounded-control px-2.5 py-2 text-left text-row hover:bg-subtle";
 
 /**
- * The header's Character menu: Duplicate opens the copy once it lands, and Delete opens
- * the confirmation. Arrow keys move between items, Escape closes and returns focus to the
+ * The header's Character menu: Duplicate opens the copy once it lands, Export downloads the
+ * character's file, and Delete opens the confirmation. Arrow keys move between items, Escape closes and returns focus to the
  * button, and focus leaving the menu closes it.
  */
 export function CharacterMenu({ character }: { character: CharacterRecord }) {
@@ -19,6 +20,7 @@ export function CharacterMenu({ character }: { character: CharacterRecord }) {
   const trigger = useReturnFocus<HTMLButtonElement>(deleting);
   const menu = useRef<HTMLDivElement>(null);
   const duplicate = useDuplicateCharacter(character.id);
+  const exportFile = useExportCharacter(character);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,6 +67,11 @@ export function CharacterMenu({ character }: { character: CharacterRecord }) {
             Duplicate failed: {duplicate.error.message}
           </p>
         )}
+        {exportFile.isError && (
+          <p role="alert" className="text-error text-row">
+            Export failed: {exportFile.error.message}
+          </p>
+        )}
         <button
           ref={trigger}
           type="button"
@@ -72,6 +79,7 @@ export function CharacterMenu({ character }: { character: CharacterRecord }) {
           aria-expanded={menuOpen}
           onClick={() => {
             if (!menuOpen && !duplicate.isPending) duplicate.reset();
+            if (!menuOpen && !exportFile.isPending) exportFile.reset();
             setMenuOpen(!menuOpen);
           }}
           title="Character menu"
@@ -102,6 +110,20 @@ export function CharacterMenu({ character }: { character: CharacterRecord }) {
               className={`${ITEM} text-ink aria-disabled:cursor-wait aria-disabled:opacity-60`}
             >
               Duplicate character
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              aria-disabled={exportFile.isPending}
+              onClick={() => {
+                if (exportFile.isPending) return;
+                closeMenu();
+                exportFile.mutate();
+              }}
+              className={`${ITEM} text-ink aria-disabled:cursor-wait aria-disabled:opacity-60`}
+            >
+              Export character
             </button>
             <button
               type="button"

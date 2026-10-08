@@ -318,7 +318,7 @@ says how much of the artboard the app builds today.
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |
 | `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
-| `CharacterHeader` | #227, #241, #281, #391, #394, #396, #452 | the Character menu, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452 | the Character menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `SettingsSidebar` | #243, #486, #489 | Display and Sources |
@@ -332,7 +332,7 @@ says how much of the artboard the app builds today.
 | `HomebrewFeats` | #489 | nothing |
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
-| `CharacterList` | #233, #391, #395 | read-only |
+| `CharacterList` | #233, #391, #395 | all but the portraits |
 | `CreationClass` | #233, #235, #240, #604 | all, with a typed gain per level for its one typed total |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
