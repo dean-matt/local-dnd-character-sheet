@@ -133,6 +133,13 @@ export {
   spellEntrySchema,
   spellRecordSchema,
 } from "./spell.ts";
+export type { SpellGrantor, SpellLookup, SpellLookupRequest } from "./spell-choice.ts";
+export {
+  grantedSpellsSchema,
+  SPELL_GRANTORS,
+  spellLookupRequestSchema,
+  spellLookupResponseSchema,
+} from "./spell-choice.ts";
 export type { EquipmentItem, StartingEquipment } from "./starting-equipment.ts";
 export {
   backgroundStartingEquipmentSchema,

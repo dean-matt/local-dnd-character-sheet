@@ -358,3 +358,29 @@ export type ReferencesFixture = {
 export function publishReferencesFixture(dataDir: string, fixture: ReferencesFixture): void {
   publishContent(dataDir, fixture);
 }
+
+/** The rows a class's spell list and a grantor's spells are read from. */
+export type SpellListFixture = {
+  spells?: SpellFixtureRow[];
+  spellClasses?: {
+    spell_name: string;
+    spell_source: string;
+    class_name: string;
+    class_source: string;
+  }[];
+  spellGrants?: {
+    spell_name: string;
+    spell_source: string;
+    granted_by: string;
+    name: string;
+    source: string;
+    parent_name?: string;
+    parent_source?: string;
+    chosen: 0 | 1;
+    level: number;
+  }[];
+};
+
+export function publishSpellLists(dataDir: string, fixture: SpellListFixture): void {
+  publishContent(dataDir, fixture);
+}

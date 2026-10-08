@@ -65,6 +65,20 @@ const csv = (description: string, example: string) =>
 
 const spellLevel = z.coerce.number().int().min(0).max(9).optional();
 
+/** A `Name|Source` parameter as the reference it spells, `undefined` where absent. */
+function nameSource(param: string | undefined) {
+  if (param === undefined) return undefined;
+  const at = param.lastIndexOf("|");
+  return { name: param.slice(0, at), source: param.slice(at + 1) };
+}
+
+const refParam = (description: string, example: string) =>
+  z
+    .string()
+    .regex(/^[^|]+\|[^|]+$/, "Must be Name|Source")
+    .optional()
+    .openapi({ description, example });
+
 /** A comma-separated parameter's values, or `undefined` where it names none. */
 function list(param: string | undefined): string[] | undefined {
   const values = param?.split(",").filter((value) => value !== "");
@@ -94,6 +108,11 @@ const listQuery = z.object({
       description: `Comma-separated kinds of item to narrow items to, of ${ITEM_KINDS.join(", ")}`,
       example: "melee,ranged",
     }),
+  class: refParam("A class, as Name|Source, whose spell list to narrow spells to", "Wizard|XPHB"),
+  subclass: refParam(
+    "A subclass of that class, as Name|Source, whose added spells widen the list",
+    "Eldritch Knight|XPHB",
+  ),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
@@ -155,6 +174,8 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
     const term = query.q ?? "";
     const typeList = list(query.type);
     const narrowTo = list(query.source);
+    const cls = nameSource(query.class);
+    const subclass = nameSource(query.subclass);
     const filter: SearchFilter = {
       edition: query.edition,
       term,
@@ -166,6 +187,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
         query.minLevel === undefined && query.maxLevel === undefined
           ? undefined
           : levelRange(query.minLevel ?? 0, query.maxLevel ?? 9),
+      ...(cls && { classList: { class: cls, ...(subclass && { subclass }) } }),
     };
     const reads = (type: string) => typeList === undefined || typeList.includes(type);
 
@@ -178,7 +200,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
         ? searchHomebrewItems(homebrewDb, filter).map(toHomebrewItemHit)
         : [];
     const homebrewSpellHits =
-      !narrowTo && reads("spell")
+      !narrowTo && !cls && reads("spell")
         ? searchHomebrewSpells(homebrewDb, filter).map(toHomebrewSpellHit)
         : [];
 

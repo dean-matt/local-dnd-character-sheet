@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishSearchFixture } from "../db/queries/contentFixture.ts";
+import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem, insertHomebrewSpell } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { searchRoutes } from "./search.ts";
@@ -265,5 +265,90 @@ describe("searchRoutes", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ sources: ["MM", "PHB"] });
+  });
+});
+
+describe("searchRoutes, narrowed to a class's spell list", () => {
+  let dataDir: string;
+  let opened: ReturnType<typeof openTestDatabases>;
+
+  const spell = (name: string, level: number) => ({
+    ...FIREBALL,
+    name,
+    level,
+    json: JSON.stringify({ name, source: "PHB", level, school: "V" }),
+  });
+  const listed = (spell_name: string, class_name: string) => ({
+    spell_name,
+    spell_source: "PHB",
+    class_name,
+    class_source: "PHB",
+  });
+
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "search-class-list-"));
+    publishSpellLists(dataDir, {
+      spells: [spell("Fireball", 3), spell("Shield", 1), spell("Bless", 1)],
+      spellClasses: [
+        listed("Fireball", "Wizard"),
+        listed("Shield", "Wizard"),
+        listed("Bless", "Cleric"),
+      ],
+      spellGrants: [
+        {
+          spell_name: "Shield",
+          spell_source: "PHB",
+          granted_by: "subclasses",
+          name: "Eldritch Knight",
+          source: "PHB",
+          parent_name: "Fighter",
+          parent_source: "PHB",
+          chosen: 1,
+          level: 3,
+        },
+      ],
+    });
+  });
+
+  afterAll(() => rmSync(dataDir, { recursive: true, force: true }));
+
+  beforeEach(() => {
+    opened = openTestDatabases();
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+  });
+
+  const names = async (query: string) => {
+    const res = await searchRoutes(dataDir, opened.homebrewDb).request(
+      `/search?type=spell&${query}`,
+    );
+    expect(res.status).toBe(200);
+    return ((await res.json()).items as { name: string }[]).map((hit) => hit.name);
+  };
+
+  it("offers the class's own list, within the levels asked, and no homebrew spell", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", {
+      name: "Brewed Bolt",
+      edition: "classic",
+      level: 1,
+      school: "V",
+      duration: [{ type: "instant" }],
+    });
+    expect(await names("class=Wizard%7CPHB")).toEqual(["Fireball", "Shield"]);
+    expect(await names("class=Wizard%7CPHB&maxLevel=1")).toEqual(["Shield"]);
+    expect(await names("minLevel=1&maxLevel=1")).toContain("Brewed Bolt");
+  });
+
+  it("widens a class's list by what its subclass adds", async () => {
+    expect(await names("class=Fighter%7CPHB")).toEqual([]);
+    expect(await names("class=Fighter%7CPHB&subclass=Eldritch%20Knight%7CPHB")).toEqual(["Shield"]);
+  });
+
+  it("refuses a class not written as Name|Source", async () => {
+    const res = await searchRoutes(dataDir, opened.homebrewDb).request("/search?class=Wizard");
+    expect(res.status).toBe(400);
   });
 });

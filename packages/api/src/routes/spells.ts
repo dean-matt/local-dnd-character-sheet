@@ -5,19 +5,31 @@
  * difference is how a caller tells the two apart, without inspecting `source`.
  *
  * Creating, renaming or deleting a homebrew spell stays with `/homebrew/spells`; this
- * only reads.
+ * only reads. It also answers what choosing spells needs beside the picker: what a grantor
+ * gives outright by a level, and where each spell picked sits.
  */
 import {
+  grantedSpellsSchema,
   type HomebrewSpellRecord,
   homebrewSpellRecordSchema,
+  SPELL_GRANTORS,
+  type SpellLookup,
   type SpellRecord,
+  spellLookupRequestSchema,
+  spellLookupResponseSchema,
   spellRecordSchema,
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
-import { listHomebrewSpells } from "../db/queries/homebrew.ts";
-import { getSpell, listSpells, type SpellRow } from "../db/queries/spells.ts";
+import { getHomebrewSpell, listHomebrewSpells } from "../db/queries/homebrew.ts";
+import {
+  getGrantedSpells,
+  getSpell,
+  listSpells,
+  lookupCatalogSpells,
+  type SpellRow,
+} from "../db/queries/spells.ts";
 import { notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
@@ -84,6 +96,53 @@ const read = createRoute({
   },
 });
 
+const grantedQuery = z.object({
+  grantor: z.enum(SPELL_GRANTORS),
+  name: z.string().min(1),
+  source: z.string().min(1),
+  parentName: z.string().min(1).optional().openapi({
+    description: "A subclass's class or a subrace's race, which the grantor's key carries",
+  }),
+  parentSource: z.string().min(1).optional(),
+  level: z.coerce.number().int().min(1).max(20).openapi({
+    description: "The class level for a class or subclass, the character level for the rest",
+  }),
+});
+
+const granted = createRoute({
+  method: "get",
+  path: "/spells/granted",
+  tags: ["spells"],
+  summary: "List the spells one grantor gives outright by a level",
+  description:
+    "A spell the grantor leaves to the player's pick stays out. A grantor no row answers gives nothing, not a 404.",
+  request: { query: grantedQuery },
+  responses: {
+    200: {
+      description: "The spells given, sorted by name",
+      content: { "application/json": { schema: grantedSpellsSchema } },
+    },
+  },
+});
+
+const lookup = createRoute({
+  method: "post",
+  path: "/spells/lookup",
+  tags: ["spells"],
+  summary: "Read each spell's level, and whether a class's list holds it, in order",
+  description:
+    "A POST because the batch is a body a query string would have to encode; it writes nothing.",
+  request: {
+    body: { required: true, content: { "application/json": { schema: spellLookupRequestSchema } } },
+  },
+  responses: {
+    200: {
+      description: "Each spell's level and standing, or null where no row answers",
+      content: { "application/json": { schema: spellLookupResponseSchema } },
+    },
+  },
+});
+
 const SPELL_NOT_FOUND = "No spell with that name and source";
 
 export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
@@ -102,6 +161,32 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       limit,
       offset,
     });
+  });
+
+  routes.openapi(granted, (c) => {
+    const { grantor, name, source, parentName, parentSource, level } = c.req.valid("query");
+    const parent =
+      parentName && parentSource ? { parent: { name: parentName, source: parentSource } } : {};
+    return c.json(
+      { spells: getGrantedSpells(dataDir, { kind: grantor, name, source, ...parent }, level) },
+      200,
+    );
+  });
+
+  routes.openapi(lookup, (c) => {
+    const { spells, list } = c.req.valid("json");
+    const catalog = lookupCatalogSpells(
+      dataDir,
+      spells.flatMap((ref) => ("homebrewId" in ref ? [] : [ref])),
+      list,
+    ).values();
+    const looked: (SpellLookup | null)[] = spells.map((ref) => {
+      if (!("homebrewId" in ref)) return catalog.next().value ?? null;
+      const row = getHomebrewSpell(homebrewDb, ref.homebrewId);
+      if (!row) return null;
+      return list ? { level: row.level, listed: false } : { level: row.level };
+    });
+    return c.json({ spells: looked }, 200);
   });
 
   routes.openapi(read, (c) => {
