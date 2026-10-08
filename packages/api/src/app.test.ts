@@ -76,9 +76,11 @@ describe("/openapi.json", () => {
     const body = await res.json();
     expect(Object.keys(body.paths).sort()).toEqual([
       "/characters",
+      "/characters/import",
       "/characters/{id}",
       "/characters/{id}/derived",
       "/characters/{id}/duplicate",
+      "/characters/{id}/export",
       "/characters/{id}/features",
       "/characters/{id}/inventory",
       "/characters/{id}/pages",

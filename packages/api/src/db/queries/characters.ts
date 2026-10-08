@@ -7,10 +7,12 @@
  */
 import {
   type CharacterDefinition,
+  type CharacterFile,
   type CharacterState,
   characterDefinitionSchema,
   classSummary,
   defaultCharacterState,
+  PRESET_PAGES,
   raceSummary,
   totalLevel,
 } from "@dnd/character";
@@ -31,11 +33,12 @@ export function getCharacter(db: CharactersDb, id: string) {
   return db.select().from(characters).where(eq(characters.id, id)).get();
 }
 
-/** The `characters` row and the default `character_state` row every character starts with. */
+/** The `characters` row and the `character_state` row every character starts with. */
 function insertCharacterRows(
   tx: Pick<CharactersDb, "insert">,
   id: string,
   definition: CharacterDefinition,
+  state: CharacterState = defaultCharacterState(),
 ) {
   const row = tx
     .insert(characters)
@@ -50,13 +53,13 @@ function insertCharacterRows(
     })
     .returning()
     .get();
-  tx.insert(characterState).values({ characterId: id, state: defaultCharacterState() }).run();
+  tx.insert(characterState).values({ characterId: id, state }).run();
   return row;
 }
 
 /**
  * Creates the character's `character_state` row and its preset pages alongside it, so
- * every read finds both. Import and creation are the same route, so both seed here.
+ * every read finds both.
  */
 export function insertCharacter(
   db: CharactersDb,
@@ -90,6 +93,29 @@ export function duplicateCharacter(db: CharactersDb, sourceId: string, id: strin
         .values(pages.map((page) => ({ ...page, characterId: id })))
         .run();
     }
+    return row;
+  });
+}
+
+/**
+ * Writes `file` as a new character under `id`, never over an existing one. A page whose
+ * slug a preset seeds is marked preset, since the file never says; the schema has
+ * already checked every preset is there.
+ */
+export function importCharacter(db: CharactersDb, id: string, file: CharacterFile) {
+  const presets = new Set(PRESET_PAGES.map((page) => page.slug));
+  return db.transaction((tx) => {
+    const row = insertCharacterRows(tx, id, file.definition, file.state);
+    tx.insert(characterPages)
+      .values(
+        file.pages.map((page, position) => ({
+          ...page,
+          characterId: id,
+          position,
+          preset: presets.has(page.slug),
+        })),
+      )
+      .run();
     return row;
   });
 }

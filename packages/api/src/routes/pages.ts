@@ -29,7 +29,7 @@ function degradeBlocks(blocks: unknown): unknown[] {
 }
 
 /** Validates rows read back from SQLite against the same schema their write went through. */
-function toRecords(rows: PageRow[]): CharacterPageRecord[] {
+export function toPageRecords(rows: PageRow[]): CharacterPageRecord[] {
   return rows.map((row) =>
     characterPageRecordSchema.parse({
       slug: row.slug,
@@ -99,7 +99,7 @@ export function pagesRoutes(db: CharactersDb) {
   routes.openapi(list, (c) => {
     const rows = listCharacterPages(db, c.req.valid("param").id);
     if (!rows) return c.json({ error: NOT_FOUND }, 404);
-    return c.json(toRecords(rows), 200);
+    return c.json(toPageRecords(rows), 200);
   });
 
   routes.openapi(replace, (c) => {
@@ -109,13 +109,13 @@ export function pagesRoutes(db: CharactersDb) {
       const slugs = result.missingPresets.join(", ");
       return c.json({ error: `A preset can be hidden but not deleted: ${slugs}` }, 409);
     }
-    return c.json(toRecords(result.pages), 200);
+    return c.json(toPageRecords(result.pages), 200);
   });
 
   routes.openapi(restore, (c) => {
     const rows = restoreDefaultPages(db, c.req.valid("param").id);
     if (!rows) return c.json({ error: NOT_FOUND }, 404);
-    return c.json(toRecords(rows), 200);
+    return c.json(toPageRecords(rows), 200);
   });
 
   return routes;

@@ -1,17 +1,19 @@
 /**
- * List, read, create, duplicate, update and delete for `characters.db`'s `characters` table, plus
- * read and replace for the `character_state` row each one owns, and the undo log a
- * definition update writes. `name`, `level`,
- * `edition`, `raceSummary` and `classSummary` are never accepted from a request body —
+ * List, read, create, duplicate, import, export, update and delete for `characters.db`'s
+ * `characters` table, plus read and replace for the `character_state` row each one owns,
+ * and the undo log a definition update writes. `name`, `level`, `edition`, `raceSummary`
+ * and `classSummary` are never accepted from a request body —
  * the query layer derives all five from `definition` on every write, and a state write
  * never reaches that table. A delete runs `backup` first and deletes nothing where it
  * throws, since that snapshot is the only way back.
  */
 import { randomUUID } from "node:crypto";
 import {
+  type CharacterFile,
   type CharacterRecord,
   type CharacterStateRecord,
   characterDefinitionSchema,
+  characterFileSchema,
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
@@ -25,14 +27,17 @@ import {
   duplicateCharacter,
   getCharacter,
   getCharacterState,
+  importCharacter,
   insertCharacter,
   listCharacters,
   undoLastChange,
   updateCharacterDefinition,
   updateCharacterState,
 } from "../db/queries/characters.ts";
+import { listCharacterPages } from "../db/queries/pages.ts";
 import { listUndoEntries } from "../db/queries/undo.ts";
 import { errorSchema, notFound } from "./errors.ts";
+import { toPageRecords } from "./pages.ts";
 
 type CharacterRow = NonNullable<ReturnType<typeof getCharacter>>;
 type CharacterStateRow = NonNullable<ReturnType<typeof getCharacterState>>;
@@ -126,6 +131,53 @@ const duplicate = createRoute({
     404: notFound("character"),
   },
 });
+
+const exportFile = createRoute({
+  method: "get",
+  path: "/characters/{id}/export",
+  tags: ["characters"],
+  summary: "Export a character as one file",
+  description:
+    "The definition, state and pages, with every catalog and homebrew reference as " +
+    "stored. The roll and undo logs stay behind.",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The character file",
+      content: { "application/json": { schema: characterFileSchema } },
+    },
+    404: notFound("character"),
+  },
+});
+
+const importFile = createRoute({
+  method: "post",
+  path: "/characters/import",
+  tags: ["characters"],
+  summary: "Import a character file as a new character",
+  description:
+    "Always creates a character under a new id. A reference that resolves to nothing " +
+    "here imports as written.",
+  request: {
+    body: { content: { "application/json": { schema: characterFileSchema } } },
+  },
+  responses: {
+    201: {
+      description: "The imported character",
+      content: { "application/json": { schema: characterRecordSchema } },
+    },
+    422: {
+      description: "The file fails the schema, so nothing was written",
+      content: { "application/json": { schema: errorSchema } },
+    },
+  },
+});
+
+/** Names each field a file fails on, so the person importing it can find the line. */
+function describeIssues(error: z.ZodError): string {
+  const issues = error.issues.map((issue) => `${issue.path.join(".") || "file"}: ${issue.message}`);
+  return `Not a character file this build can read. ${issues.join("; ")}`;
+}
 
 const update = createRoute({
   method: "put",
@@ -263,6 +315,33 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
     if (!row) return c.json({ error: NOT_FOUND }, 404);
     return c.json(toRecord(row), 201);
   });
+
+  routes.openapi(exportFile, (c) => {
+    const { id } = c.req.valid("param");
+    const row = getCharacter(db, id);
+    const state = getCharacterState(db, id);
+    const pages = listCharacterPages(db, id);
+    if (!row || !state || !pages) return c.json({ error: NOT_FOUND }, 404);
+    const file: CharacterFile = {
+      format: "local-dnd-character-sheet/character",
+      version: 1,
+      definition: toRecord(row).definition,
+      state: toStateRecord(state).state,
+      pages: toPageRecords(pages).map(({ preset: _, ...page }) => page),
+    };
+    return c.json(characterFileSchema.parse(file), 200);
+  });
+
+  routes.openapi(
+    importFile,
+    (c) => {
+      const row = importCharacter(db, randomUUID(), c.req.valid("json"));
+      return c.json(toRecord(row), 201);
+    },
+    (result, c) => {
+      if (!result.success) return c.json({ error: describeIssues(result.error) }, 422);
+    },
+  );
 
   routes.openapi(update, (c) => {
     const { id } = c.req.valid("param");

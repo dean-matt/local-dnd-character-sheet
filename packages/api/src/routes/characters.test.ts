@@ -2,11 +2,13 @@ import {
   type CharacterDefinition,
   characterDefinitionSchema,
   defaultCharacterState,
+  PRESET_PAGES,
 } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters, undoLog } from "../db/characters.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
+import { pagesRoutes } from "./pages.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 
@@ -75,29 +77,6 @@ describe("charactersRoutes", () => {
     expect(body.success).toBe(false);
     const issues = JSON.parse(body.error.message);
     expect(issues).toContainEqual(expect.objectContaining({ path: ["race"] }));
-  });
-
-  it("creates a second, distinct character when the same definition is imported twice", async () => {
-    const definition = baseDefinition();
-    const first = await (await routes.request("/characters", json(definition))).json();
-    const second = await (await routes.request("/characters", json(definition))).json();
-
-    expect(second.id).not.toBe(first.id);
-    const res = await routes.request("/characters");
-    expect((await res.json()).map((row: { id: string }) => row.id).sort()).toEqual(
-      [first.id, second.id].sort(),
-    );
-  });
-
-  it("imports a character whose catalog reference resolves against nothing", async () => {
-    const renamed = baseDefinition({
-      levels: [{ class: WARLOCK, subclass: { name: "Renamed Patron", source: "XPHB" } }],
-    });
-    const res = await routes.request("/characters", json(renamed));
-
-    expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body.definition.levels[0].subclass).toEqual({ name: "Renamed Patron", source: "XPHB" });
   });
 
   it("reads a character it just created", async () => {
@@ -239,6 +218,105 @@ describe("charactersRoutes", () => {
       method: "PUT",
     });
     expect(putRes.status).toBe(404);
+  });
+});
+
+describe("the character file", () => {
+  let opened: ReturnType<typeof openTestDatabases>;
+  let routes: ReturnType<typeof charactersRoutes>;
+  let pages: ReturnType<typeof pagesRoutes>;
+
+  beforeEach(() => {
+    opened = openTestDatabases();
+    routes = charactersRoutes(opened.charactersDb, () => {});
+    pages = pagesRoutes(opened.charactersDb);
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+  });
+
+  const create = async (definition = baseDefinition()) =>
+    (await routes.request("/characters", json(definition))).json();
+  const exportOf = async (id: string) => (await routes.request(`/characters/${id}/export`)).json();
+  const importFile = (file: unknown) => routes.request("/characters/import", json(file));
+
+  it("carries definition, state and pages through an export and an import, under a new id", async () => {
+    const created = await create();
+    const hurt = { ...defaultCharacterState(), hitPoints: { current: 4, temporary: 2 } };
+    await routes.request(`/characters/${created.id}/state`, { ...json(hurt), method: "PUT" });
+    const grapple = { slug: "grapple", title: "Grapple", hidden: false, blocks: [] };
+    const edited = [
+      grapple,
+      ...PRESET_PAGES.map((page) => ({ ...page, hidden: page.slug === "notes" })),
+    ];
+    await pages.request(`/characters/${created.id}/pages`, { ...json(edited), method: "PUT" });
+
+    const exported = await exportOf(created.id);
+    expect(exported).toMatchObject({ format: "local-dnd-character-sheet/character", version: 1 });
+    expect(exported.state).toEqual(hurt);
+
+    const res = await importFile(exported);
+    expect(res.status).toBe(201);
+    const imported = await res.json();
+    expect(imported.id).not.toBe(created.id);
+    expect(imported.definition).toEqual(created.definition);
+    expect(await exportOf(imported.id)).toEqual(exported);
+
+    const importedPages = await (await pages.request(`/characters/${imported.id}/pages`)).json();
+    expect(importedPages.map((page: { preset: boolean }) => page.preset)).toEqual([
+      false,
+      ...PRESET_PAGES.map(() => true),
+    ]);
+  });
+
+  it("creates a second character when one file is imported twice, leaving the first", async () => {
+    const created = await create();
+    const file = await exportOf(created.id);
+    const first = await (await importFile(file)).json();
+    const second = await (await importFile(file)).json();
+
+    expect(second.id).not.toBe(first.id);
+    const ids = (await (await routes.request("/characters")).json()).map(
+      (row: { id: string }) => row.id,
+    );
+    expect(ids.sort()).toEqual([created.id, first.id, second.id].sort());
+  });
+
+  it("imports catalog and homebrew references that resolve against nothing as written", async () => {
+    const created = await create(
+      baseDefinition({
+        levels: [{ class: WARLOCK, subclass: { name: "Renamed Patron", source: "XPHB" } }],
+        background: { homebrewId: "not-here" },
+      }),
+    );
+    const res = await importFile(await exportOf(created.id));
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.definition.levels[0].subclass).toEqual({ name: "Renamed Patron", source: "XPHB" });
+    expect(body.definition.background).toEqual({ homebrewId: "not-here" });
+  });
+
+  it("refuses a file that fails the schema, naming the field and writing nothing", async () => {
+    const file = await exportOf((await create()).id);
+    const before = await (await routes.request("/characters")).json();
+    file.definition.abilityScores.str = 31;
+
+    const res = await importFile(file);
+    expect(res.status).toBe(422);
+    const { error } = await res.json();
+    expect(error).toContain(
+      "definition.abilityScores.str: A score is a whole number from 1 to 30.",
+    );
+    expect(await (await routes.request("/characters")).json()).toEqual(before);
+  });
+
+  it("404s exporting an id that does not exist", async () => {
+    const res = await routes.request("/characters/missing/export");
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "No character with that id" });
   });
 });
 

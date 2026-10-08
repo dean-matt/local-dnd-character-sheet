@@ -43,6 +43,7 @@ export {
   type CharacterDerived,
   characterDerivedSchema,
 } from "./characterDerived.ts";
+export { type CharacterFile, characterFileSchema } from "./characterFile.ts";
 export {
   abilityScoresSchema,
   type CharacterDefinition,
