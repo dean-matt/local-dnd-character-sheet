@@ -140,15 +140,21 @@ describe("spellsFilled", () => {
 });
 
 describe("otherPicks", () => {
-  const offer = (grantor: string, cantrips: number, spells: number, alternatives = false) => ({
-    grantor,
-    picks: { cantrips, spells, alternatives },
-  });
+  const offer = (
+    grantor: string,
+    cantrips: number,
+    spells: number,
+    { alternatives = false, learned = 0 } = {},
+  ) => ({ grantor, picks: { cantrips, spells, learned, alternatives } });
   const states = { cantrips: false, spells: false };
 
   it("sums every row but the class, owing only the rows with one block", () => {
-    const offers = [offer("class", 9, 9), offer("race", 1, 0), offer("feat", 2, 1, true)];
-    expect(otherPicks(offers, states)).toEqual({
+    const offers = [
+      offer("class", 9, 9),
+      offer("race", 1, 0),
+      offer("feat", 2, 1, { alternatives: true }),
+    ];
+    expect(otherPicks(offers, states, false)).toEqual({
       cantrips: 3,
       spells: 1,
       owed: { cantrips: 1, spells: 0 },
@@ -157,10 +163,20 @@ describe("otherPicks", () => {
 
   it("counts a subclass's picks only where its own table states no count of that kind", () => {
     const arcana = [offer("subclass", 2, 0)];
-    expect(otherPicks(arcana, states).owed).toEqual({ cantrips: 2, spells: 0 });
-    expect(otherPicks(arcana, { cantrips: true, spells: true }).owed).toEqual({
+    expect(otherPicks(arcana, states, true).owed).toEqual({ cantrips: 2, spells: 0 });
+    expect(otherPicks(arcana, { cantrips: true, spells: true }, true).owed).toEqual({
       cantrips: 0,
       spells: 0,
     });
+  });
+
+  it("leaves out the spells a row has a preparer learn, as a 2024 Evoker's Savant picks", () => {
+    const evoker = [offer("subclass", 0, 2, { learned: 2 })];
+    expect(otherPicks(evoker, states, true)).toEqual({
+      cantrips: 0,
+      spells: 0,
+      owed: { cantrips: 0, spells: 0 },
+    });
+    expect(otherPicks(evoker, states, false).owed.spells).toBe(2);
   });
 });

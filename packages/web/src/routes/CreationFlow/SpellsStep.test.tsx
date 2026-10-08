@@ -48,7 +48,7 @@ const SPELLS: Record<string, { level: number; lists: string[] }> = {
 };
 
 /** The picks the draft's race offers, which a test widens. */
-let raceOffers = { cantrips: 0, spells: 0, alternatives: false };
+let raceOffers = { cantrips: 0, spells: 0, learned: 0, alternatives: false };
 
 function stubCatalog() {
   vi.stubGlobal(
@@ -61,7 +61,7 @@ function stubCatalog() {
         const race = params.get("grantor") === "race";
         body = {
           spells: race ? [PHB("Thaumaturgy")] : [],
-          picks: race ? raceOffers : { cantrips: 0, spells: 0, alternatives: false },
+          picks: race ? raceOffers : { cantrips: 0, spells: 0, learned: 0, alternatives: false },
         };
       } else if (url === "/api/spells/lookup") {
         const request = JSON.parse(String(init?.body)) as {
@@ -146,7 +146,7 @@ const picks = () => (values.spells ?? []).filter((entry) => !entry.granted);
 describe("SpellsStep", () => {
   beforeEach(() => {
     localStorage.clear();
-    raceOffers = { cantrips: 0, spells: 0, alternatives: false };
+    raceOffers = { cantrips: 0, spells: 0, learned: 0, alternatives: false };
     stubCatalog();
   });
   afterEach(() => {
@@ -219,7 +219,7 @@ describe("SpellsStep", () => {
   });
 
   it("excuses a pick the race offers from the class's count and list", async () => {
-    raceOffers = { cantrips: 1, spells: 0, alternatives: false };
+    raceOffers = { cantrips: 1, spells: 0, learned: 0, alternatives: false };
     renderStep();
     await screen.findByRole("region", { name: "Cantrips" });
 
@@ -248,7 +248,7 @@ describe("SpellsStep", () => {
   });
 
   it("offers a class that casts nothing the picks its race offers, done once they are made", async () => {
-    raceOffers = { cantrips: 1, spells: 0, alternatives: false };
+    raceOffers = { cantrips: 1, spells: 0, learned: 0, alternatives: false };
     renderStep("Fighter");
 
     expect(

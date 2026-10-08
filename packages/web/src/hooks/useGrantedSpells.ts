@@ -38,7 +38,10 @@ export function useGrantedSpells(grantors: readonly SpellGrantorRef[]) {
       lists: results.every((result) => result.data !== undefined)
         ? results.map(
             (result) =>
-              result.data ?? { spells: [], picks: { cantrips: 0, spells: 0, alternatives: false } },
+              result.data ?? {
+                spells: [],
+                picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
+              },
           )
         : undefined,
       failed: results.some((result) => result.isError),

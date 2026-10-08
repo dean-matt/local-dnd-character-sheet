@@ -86,17 +86,20 @@ type Counts = { cantrips: number; spells: number };
 export type OtherPicks = Counts & { owed: Counts };
 
 /** One row's offer, as `GET /spells/granted` counts it, and what kind of row it is. */
-type Offer = { grantor: string; picks: Counts & { alternatives: boolean } };
+type Offer = { grantor: string; picks: Counts & { learned: number; alternatives: boolean } };
 
 /**
  * The picks every row but the class offers, a subclass's only where its own table states no
  * count of that kind, as the Eldritch Knight's does and the Arcana Domain's does not. A
  * row offering alternatives, as Magic Initiate or a 2024 elf's lineages do, widens the
  * counts by its largest block and owes none, since which block is the player's choice.
+ * A class that `prepares` takes none of the spells a row has it learn, which go into a
+ * spellbook rather than among the prepared.
  */
 export function otherPicks(
   offers: readonly Offer[],
   subclassStates: { cantrips: boolean; spells: boolean },
+  prepares: boolean,
 ): OtherPicks {
   const sum = { cantrips: 0, spells: 0, owed: { cantrips: 0, spells: 0 } };
   for (const { grantor, picks } of offers) {
@@ -104,8 +107,9 @@ export function otherPicks(
     const skips = (kind: keyof Counts) => grantor === "subclass" && subclassStates[kind];
     for (const kind of ["cantrips", "spells"] as const) {
       if (skips(kind)) continue;
-      sum[kind] += picks[kind];
-      if (!picks.alternatives) sum.owed[kind] += picks[kind];
+      const count = picks[kind] - (kind === "spells" && prepares ? picks.learned : 0);
+      sum[kind] += count;
+      if (!picks.alternatives) sum.owed[kind] += count;
     }
   }
   return sum;

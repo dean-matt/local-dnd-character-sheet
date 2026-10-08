@@ -161,9 +161,8 @@ const MAGIC_INITIATE = {
   name: "Magic Initiate",
   source: "XPHB",
   additionalSpells: ["Cleric", "Wizard"].map((cls) => ({
-    known: {
-      _: [{ choose: `level=0|class=${cls}`, count: 2 }, { choose: `level=1|class=${cls}` }],
-    },
+    innate: { _: { daily: { "1": [{ choose: `level=1|class=${cls}` }] } } },
+    known: { _: [{ choose: `level=0|class=${cls}`, count: 2 }] },
   })),
 };
 
@@ -240,13 +239,13 @@ describe("spellsRoutes, choosing spells", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       spells: [{ name: "Shield", source: "PHB" }],
-      picks: { cantrips: 0, spells: 0, alternatives: false },
+      picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
     });
 
     const early = await routes.request(`/spells/granted?${eldritchKnight}&level=2`);
     expect(await early.json()).toEqual({
       spells: [],
-      picks: { cantrips: 0, spells: 0, alternatives: false },
+      picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
     });
 
     const later = await routes.request(`/spells/granted?${eldritchKnight}&level=13`);
@@ -262,7 +261,7 @@ describe("spellsRoutes, choosing spells", () => {
     );
     expect(await res.json()).toEqual({
       spells: [],
-      picks: { cantrips: 2, spells: 1, alternatives: true },
+      picks: { cantrips: 2, spells: 1, learned: 0, alternatives: true },
     });
   });
 
@@ -272,7 +271,7 @@ describe("spellsRoutes, choosing spells", () => {
     );
     expect(await res.json()).toEqual({
       spells: [],
-      picks: { cantrips: 0, spells: 0, alternatives: false },
+      picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
     });
   });
 

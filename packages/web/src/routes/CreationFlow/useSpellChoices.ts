@@ -14,7 +14,7 @@ export function useSpellChoices() {
   const caster = useCasterFacts();
   const { picked, loading, failed: lookupFailed } = usePickedSpells(caster.list);
   const { granted, offers, failed: grantsFailed } = useGrantedBy();
-  const others = otherPicks(offers, caster.subclassStates);
+  const others = otherPicks(offers, caster.subclassStates, caster.facts?.prepares ?? false);
   const ready = caster.ready && !loading && granted !== undefined;
   return {
     ...caster,

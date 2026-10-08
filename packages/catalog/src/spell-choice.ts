@@ -33,6 +33,7 @@ export const grantedSpellsSchema = z.strictObject({
   picks: z.strictObject({
     cantrips: z.int().min(0),
     spells: z.int().min(0),
+    learned: z.int().min(0),
     alternatives: z.boolean(),
   }),
 });
@@ -96,9 +97,16 @@ export type SpellLookup = z.infer<typeof spellLookupResponseSchema>["spells"][nu
 
 /**
  * How many cantrips and leveled spells a row leaves to the player's pick, and whether it
- * offers its blocks as alternatives, which the counts then take the largest of.
+ * offers its blocks as alternatives, which the counts then take the largest of. `learned`
+ * is how many of `spells` a `known` key offers, which a class that prepares its spells
+ * learns rather than prepares, as a 2024 Evoker adds its Savant picks to its spellbook.
  */
-export type OfferedPicks = { cantrips: number; spells: number; alternatives: boolean };
+export type OfferedPicks = {
+  cantrips: number;
+  spells: number;
+  learned: number;
+  alternatives: boolean;
+};
 
 type Choose = { filter?: string; count: number };
 
@@ -136,20 +144,22 @@ export function offeredPicks(json: unknown, level: number): OfferedPicks {
   const each = blocks.map((block) => {
     const chooses = Object.entries(isRecord(block) ? block : {})
       .filter(([kind]) => ["innate", "known", "prepared"].includes(kind))
-      .flatMap(([, byLevel]) =>
+      .flatMap(([kind, byLevel]) =>
         Object.entries(isRecord(byLevel) ? byLevel : {})
           .filter(([key]) => !/^\d+$/.test(key) || Number(key) <= level)
-          .flatMap(([, value]) => choosesIn(value)),
+          .flatMap(([, value]) => choosesIn(value).map((choose) => ({ ...choose, kind }))),
       );
-    const total = (cantrip: boolean) =>
-      chooses
-        .filter((choose) => picksCantrip(choose) === cantrip)
-        .reduce((sum, choose) => sum + choose.count, 0);
-    return { cantrips: total(true), spells: total(false) };
+    const total = (keep: (choose: (typeof chooses)[number]) => boolean) =>
+      chooses.filter(keep).reduce((sum, choose) => sum + choose.count, 0);
+    return {
+      cantrips: total(picksCantrip),
+      spells: total((choose) => !picksCantrip(choose)),
+      learned: total((choose) => !picksCantrip(choose) && choose.kind === "known"),
+    };
   });
   const largest = each.reduce(
     (best, block) => (block.cantrips + block.spells > best.cantrips + best.spells ? block : best),
-    { cantrips: 0, spells: 0 },
+    { cantrips: 0, spells: 0, learned: 0 },
   );
   return { ...largest, alternatives: blocks.length > 1 };
 }

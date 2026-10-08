@@ -12,7 +12,10 @@ export type GrantedSpell = { ref: ContentRef; by: string };
  */
 export function useGrantedBy(): {
   granted?: GrantedSpell[];
-  offers: { grantor: string; picks: { cantrips: number; spells: number; alternatives: boolean } }[];
+  offers: {
+    grantor: string;
+    picks: { cantrips: number; spells: number; learned: number; alternatives: boolean };
+  }[];
   failed: boolean;
 } {
   const grantors = useSpellGrantors();
