@@ -48,8 +48,10 @@ function useCatalogCaster(
     classGrants.data !== undefined &&
     (!subclass || subclassGrants.data !== undefined);
   const tables = [classGrants.data, subclassGrants.data].flatMap((table) => table ?? []);
+  const failed = classGrants.isError || subclassGrants.isError;
   return {
     ready,
+    failed,
     facts: ready ? casterFacts(tables, rule && { rule, modifier, level }) : undefined,
   };
 }
@@ -57,7 +59,8 @@ function useCatalogCaster(
 /**
  * What the draft's class casts at its level, read off its table and its subclass's, with
  * the class's list as `/search` narrows by it. `facts` is `undefined` for a class that
- * casts nothing, and `ready` false until the rows it reads have loaded.
+ * casts nothing, `ready` false until the rows it reads have loaded, and `failed` true once
+ * one of them fails to.
  */
 export function useCasterFacts() {
   const { cls, catalogClass, classRow, subclasses, homebrew, levels } = useClassCatalog();
@@ -79,6 +82,7 @@ export function useCasterFacts() {
     : { ready: homebrewJson !== undefined, facts: homebrewJson && homebrewFacts(homebrewJson) };
   return {
     ready: cls !== undefined && ready,
+    failed: catalog.failed || classRow.isError || homebrew.isError,
     classless: cls === undefined,
     className: catalogClass?.name ?? homebrew.data?.name ?? "The class",
     level,

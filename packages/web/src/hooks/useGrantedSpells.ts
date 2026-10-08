@@ -14,8 +14,9 @@ export type SpellGrantorRef = {
 };
 
 /**
- * The spells each grantor gives outright by its level, in the order `grantors` lists them,
- * or `undefined` until every one has loaded.
+ * The spells each grantor gives outright by its level and whether it offers a pick, in the
+ * order `grantors` lists them, or `undefined` until every one has loaded, and whether any
+ * request failed.
  */
 export function useGrantedSpells(grantors: readonly SpellGrantorRef[]) {
   return useQueries({
@@ -33,9 +34,11 @@ export function useGrantedSpells(grantors: readonly SpellGrantorRef[]) {
         retry: retryUnlessClientError,
       };
     }),
-    combine: (results) =>
-      results.every((result) => result.data !== undefined)
-        ? results.map((result) => result.data?.spells ?? [])
+    combine: (results) => ({
+      lists: results.every((result) => result.data !== undefined)
+        ? results.map((result) => result.data ?? { spells: [], offersPicks: false })
         : undefined,
+      failed: results.some((result) => result.isError),
+    }),
   });
 }

@@ -55,8 +55,17 @@ export function casterFacts(
   return { cantrips, spells: resource(tables, "spells_known") ?? 0, prepares: false, maxLevel };
 }
 
-/** A spell picked, with what the lookup found: no level where no row answers. */
-export type PickedSpell = { ref: EntryRef; name: string; level?: number; listed?: boolean };
+/**
+ * A spell picked, with what the lookup found: no level where no row answers, and `offered`
+ * where a race, background, feat or option offers it as a pick of its own.
+ */
+export type PickedSpell = {
+  ref: EntryRef;
+  name: string;
+  level?: number;
+  listed?: boolean;
+  offered?: boolean;
+};
 
 const isCantrip = (spell: PickedSpell) => spell.level === 0;
 
@@ -68,28 +77,40 @@ export const spellsOf = (picked: readonly PickedSpell[]) =>
 
 const names = (spells: readonly PickedSpell[]) => spells.map((spell) => spell.name).join(", ");
 
+const overspent = (picks: readonly PickedSpell[], count: number | undefined) =>
+  count !== undefined && picks.length > count + picks.filter((spell) => spell.offered).length;
+
 /**
  * The note on picks the rules would refuse: past a count, off the class's list, or of a
  * level no slot casts. `undefined` where every pick holds. `className` names the list.
+ *
+ * A pick another row offers, such as a High Elf's wizard cantrip, is excused from all
+ * three. Its own count is not read, so each such pick widens the class's count by one and
+ * an overspend of the row's count goes unnoted; the way out is the `choose` count as a
+ * `spell_grants` column.
  */
 export function spellDeparture(
   facts: CasterFacts | undefined,
   picked: readonly PickedSpell[],
   className: string,
 ): string | undefined {
-  if (picked.length === 0) return undefined;
-  if (!facts) return `${names(picked)} picked for a class that casts no spells at its level.`;
+  const own = picked.filter((spell) => !spell.offered);
+  if (!facts) {
+    return own.length > 0
+      ? `${names(own)} picked for a class that casts no spells at its level.`
+      : undefined;
+  }
   const cantrips = cantripsOf(picked);
   const spells = spellsOf(picked);
-  const offList = picked.filter((spell) => spell.listed === false);
-  const tooHigh = spells.filter(
+  const offList = own.filter((spell) => spell.listed === false);
+  const tooHigh = spellsOf(own).filter(
     (spell) => spell.level !== undefined && spell.level > facts.maxLevel,
   );
   const notes = [
-    ...(facts.cantrips !== undefined && cantrips.length > facts.cantrips
+    ...(overspent(cantrips, facts.cantrips)
       ? [`${cantrips.length} cantrips picked, where the class knows ${facts.cantrips}`]
       : []),
-    ...(facts.spells !== undefined && spells.length > facts.spells
+    ...(overspent(spells, facts.spells)
       ? [
           `${spells.length} spells ${facts.prepares ? "prepared" : "known"}, where the class allows ${facts.spells}`,
         ]

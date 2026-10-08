@@ -55,18 +55,26 @@ function stubCatalog() {
       const params = new URL(url, "http://local").searchParams;
       let body: unknown = ROWS[url];
       if (url.startsWith("/api/spells/granted?")) {
-        body = { spells: params.get("grantor") === "race" ? [PHB("Thaumaturgy")] : [] };
+        const race = params.get("grantor") === "race";
+        body = { spells: race ? [PHB("Thaumaturgy")] : [], offersPicks: race };
       } else if (url === "/api/spells/lookup") {
         const request = JSON.parse(String(init?.body)) as {
           spells: { name: string }[];
           list?: { class: { name: string } };
+          offeredBy?: unknown[];
         };
         body = {
           spells: request.spells.map(({ name }) => {
             const spell = SPELLS[name];
             if (!spell) return null;
             const listed = request.list && spell.lists.includes(request.list.class.name);
-            return { name, level: spell.level, ...(request.list && { listed }) };
+            const offered = request.offeredBy && name === "Sacred Flame";
+            return {
+              name,
+              level: spell.level,
+              ...(request.list && { listed }),
+              ...(request.offeredBy && { offered }),
+            };
           }),
         };
       } else if (url.startsWith("/api/search?")) {
@@ -192,24 +200,41 @@ describe("SpellsStep", () => {
     expect(values.departures ?? []).toEqual([]);
 
     fireEvent.click(screen.getByRole("checkbox", { name: /Offer spells off the Wizard list/ }));
-    await pick("Add a cantrip", "Sacred Flame");
+    await pick("Add a spell", "Cure Wounds");
 
     const note =
-      "2 cantrips picked, where the class knows 1; Sacred Flame picked off the Wizard spell list.";
+      "3 spells prepared, where the class allows 2; Cure Wounds picked off the Wizard spell list.";
     await waitFor(() => expect(values.departures).toEqual([{ field: "spells", note }]));
     expect(screen.getByText(note).previousElementSibling).toHaveTextContent("Off the rules");
 
-    fireEvent.click(screen.getByRole("button", { name: "Remove Sacred Flame" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Cure Wounds" }));
     await waitFor(() => expect(values.departures).toEqual([]));
   });
 
-  it("says a class that casts nothing at its level has nothing to choose, and counts the step done", async () => {
+  it("excuses a pick the race offers from the class's count and list", async () => {
+    renderStep();
+    await screen.findByRole("region", { name: "Cantrips" });
+
+    await pick("Add a cantrip", "Fire Bolt");
+    fireEvent.click(screen.getByRole("checkbox", { name: /Offer spells off the Wizard list/ }));
+    await pick("Add a cantrip", "Sacred Flame");
+
+    await waitFor(() =>
+      expect(picks().map((entry) => ("name" in entry.ref ? entry.ref.name : ""))).toEqual([
+        "Fire Bolt",
+        "Sacred Flame",
+      ]),
+    );
+    await waitFor(() => expect(section("Cantrips")).toHaveTextContent("2 selected"));
+    expect(values.departures ?? []).toEqual([]);
+  });
+
+  it("says a class that casts nothing at its level picks only what other rows offer, and counts the step done", async () => {
     renderStep("Fighter");
 
     expect(
-      await screen.findByText(/Fighter doesn't cast spells at level 1\. Nothing to choose here/),
+      await screen.findByText(/Fighter doesn't cast spells at level 1\. Pick here only the spells/),
     ).toBeVisible();
-    expect(screen.queryByRole("combobox")).toBeNull();
     await waitFor(() => expect(done).toBe(true));
   });
 });

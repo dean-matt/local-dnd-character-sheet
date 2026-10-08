@@ -73,6 +73,16 @@ describe("spellDeparture", () => {
     );
   });
 
+  it("excuses a pick another row offers, from the counts, the list and the slots", () => {
+    const offered = (name: string, level: number) => ({
+      ...pick(name, level, false),
+      offered: true,
+    });
+    const picked = [pick("Light", 0, true), offered("Thaumaturgy", 0), offered("Fireball", 3)];
+    expect(spellDeparture(knower, picked, "Wizard")).toBe(undefined);
+    expect(spellDeparture(undefined, [offered("Thaumaturgy", 0)], "Fighter")).toBe(undefined);
+  });
+
   it("notes any pick for a class that casts nothing yet", () => {
     expect(spellDeparture(undefined, [pick("Bless", 1)], "Paladin")).toBe(
       "Bless picked for a class that casts no spells at its level.",

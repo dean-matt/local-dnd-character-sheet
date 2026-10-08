@@ -3,11 +3,12 @@ import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/characte
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
+import { ErrorState } from "../../ErrorState.tsx";
 import { LoadingState } from "../../LoadingState.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
 import { SpellPickField } from "./SpellPickField.tsx";
-import { cantripsOf, SPELLS_FIELD, spellsOf } from "./spellPicks.ts";
+import { type CasterFacts, cantripsOf, SPELLS_FIELD, spellsOf } from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
 const hitKey = (hit: SearchHit) =>
@@ -23,6 +24,22 @@ const listFilters = (list: ReturnType<typeof useSpellChoices>["list"], offList: 
         ...(list.subclass && { subclass: nameSource(list.subclass) }),
       }
     : {};
+
+/**
+ * Which pick lists to draw: those the class casts from, those another row offers picks
+ * for, and any already holding a pick, so it can be cleared.
+ */
+function sectionsShown(
+  facts: CasterFacts | undefined,
+  othersOffer: boolean,
+  cantrips: number,
+  spells: number,
+) {
+  return {
+    cantrips: othersOffer || cantrips > 0 || (facts !== undefined && facts.cantrips !== 0),
+    spells: othersOffer || spells > 0 || (facts !== undefined && facts.maxLevel > 0),
+  };
+}
 
 /** Adds a pick to the draft's spells, and takes one out. */
 function useSpellEdits() {
@@ -49,11 +66,22 @@ function useSpellEdits() {
 export function SpellsStep() {
   const { add, remove } = useSpellEdits();
   const edition = useWatch<CharacterDefinition, "edition">({ name: "edition" }) ?? "one";
-  const { tablesReady, classless, className, level, facts, list, granted, picked } =
-    useSpellChoices();
+  const {
+    tablesReady,
+    failed,
+    classless,
+    className,
+    level,
+    facts,
+    list,
+    granted,
+    picked,
+    othersOffer,
+  } = useSpellChoices();
   const [beyond, setBeyond] = useState(false);
 
   if (classless) return <EmptyNote>Choose a class first, and its spells follow.</EmptyNote>;
+  if (failed) return <ErrorState message="The spells this step reads failed to load." />;
   if (!tablesReady || !granted) return <LoadingState label="Loading spells…" />;
 
   const cantrips = cantripsOf(picked);
@@ -66,22 +94,22 @@ export function SpellsStep() {
   };
   const offList = beyond || !facts;
   const filters = listFilters(list, offList);
-  const maxLevel = offList ? 9 : Math.max(1, facts.maxLevel);
   const field = { edition, unavailableReason, onRemove: remove };
-  const castsCantrips = (facts !== undefined && facts.cantrips !== 0) || cantrips.length > 0;
-  const castsSpells = (facts !== undefined && facts.maxLevel > 0) || spells.length > 0;
+  const shown = sectionsShown(facts, othersOffer, cantrips.length, spells.length);
 
   return (
     <div className="flex flex-col gap-5">
       {!facts && (
         <p className="text-muted text-row">
-          {className} doesn't cast spells at level {level}. Nothing to choose here — select Finish
-          to create the character.
+          {className} doesn't cast spells at level {level}.{" "}
+          {othersOffer
+            ? "Pick here only the spells a race, background or feat offers."
+            : "Nothing to choose here — select Finish to create the character."}
         </p>
       )}
       <div className="grid gap-7 sm:grid-cols-2">
         <div className="flex flex-col gap-5">
-          {castsCantrips && (
+          {shown.cantrips && (
             <SpellPickField
               {...field}
               heading="Cantrips"
@@ -94,14 +122,18 @@ export function SpellsStep() {
           )}
           <GrantedSpells granted={granted} />
         </div>
-        {castsSpells && (
+        {shown.spells && (
           <SpellPickField
             {...field}
             heading={facts?.prepares ? "Spells Prepared" : "Spells Known"}
             noun="spell"
             count={facts?.spells}
             picked={spells}
-            filters={{ minLevel: "1", maxLevel: String(maxLevel), ...filters }}
+            filters={{
+              minLevel: "1",
+              maxLevel: String(offList ? 9 : Math.max(1, facts.maxLevel)),
+              ...filters,
+            }}
             onPick={(ref) => add(ref, facts?.prepares ?? false)}
           />
         )}
