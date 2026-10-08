@@ -1,7 +1,7 @@
-import { type CharacterDefinition, type ContentRef, entryKey } from "@dnd/character";
+import type { CharacterDefinition, ContentRef } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
-import { subclassOf } from "./classLevels.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 import { CUSTOM_RACE_SOURCE } from "./useIdentityCatalog.ts";
 
 const catalogRef = (ref: CharacterDefinition["race"] | undefined): ContentRef | undefined =>
@@ -33,12 +33,10 @@ export function useSpellGrantors(): SpellGrantorRef[] {
     typeof WATCHED
   >({ name: WATCHED });
   const level = Math.max(1, levels.length);
-  const first = levels[0]?.class;
-  const cls = catalogRef(first);
-  const classLevel = levels.filter(
-    (each) => first && entryKey(each.class) === entryKey(first),
-  ).length;
-  const subclass = first && subclassOf(levels, first);
+  const first = useClassEntries().entries[0];
+  const cls = first?.catalogClass;
+  const classLevel = first?.level ?? level;
+  const subclass = first?.subclass;
   const catalogRace = catalogRef(race);
   const catalogBackground = catalogRef(background);
   const at = (

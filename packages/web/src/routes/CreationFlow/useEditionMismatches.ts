@@ -64,8 +64,9 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
 /**
  * Each choice made so far that the character's edition does not hold: a race, class or
  * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
- * background or subclass absent from the edition's list, for every class the draft holds. A choice counts only once its row
- * loads, so one still loading is never named, and a deity both editions share never is.
+ * background or subclass absent from the edition's list. Each class the draft holds is
+ * checked. A choice counts only once its row loads, so one still loading is never named,
+ * and a deity both editions share never is.
  */
 export function useEditionMismatches(): EditionMismatch[] {
   const [race, subrace, background, deity] = useWatch<

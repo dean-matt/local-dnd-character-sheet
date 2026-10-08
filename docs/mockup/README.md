@@ -332,7 +332,7 @@ says how much of the artboard the app builds today.
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | read-only |
-| `CreationClass` | #233, #235, #240, #604 | all but a custom hit point total |
+| `CreationClass` | #233, #235, #240, #604 | all but one typed hit point total in place of each level's gain |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
 

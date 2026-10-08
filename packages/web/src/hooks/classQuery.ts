@@ -1,6 +1,6 @@
 import { classRecordSchema } from "@dnd/catalog";
 import type { ContentRef } from "@dnd/character";
-import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
+import { queryOptions, skipToken } from "@tanstack/react-query";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
@@ -17,6 +17,3 @@ export const classQuery = (ref: ContentRef | undefined) =>
       : skipToken,
     retry: retryUnlessClientError,
   });
-
-/** One catalog class, or nothing fetched while `ref` is absent. */
-export const useClass = (ref: ContentRef | undefined) => useQuery(classQuery(ref));

@@ -45,7 +45,7 @@ export function ClassRow({
           focusOnMount={focusOnMount}
           onClear={onRemove}
         />
-        {"homebrewId" in entry.cls && <DepartureMark field={CLASS_FIELD} />}
+        {first && "homebrewId" in entry.cls && <DepartureMark field={CLASS_FIELD} />}
       </div>
       <LevelField entry={entry} label={multiclassed ? `${entry.name} level` : "Level"} max={max} />
       <SubclassField entry={entry} legend={multiclassed ? `${entry.name} subclass` : "Subclass"} />

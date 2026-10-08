@@ -1,5 +1,5 @@
 import { homebrewClassRecordSchema } from "@dnd/catalog";
-import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
+import { queryOptions, skipToken } from "@tanstack/react-query";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
@@ -14,6 +14,3 @@ export const homebrewClassQuery = (id: string | undefined) =>
       : skipToken,
     retry: retryUnlessClientError,
   });
-
-/** One homebrew class, or nothing fetched while `id` is absent. */
-export const useHomebrewClass = (id: string | undefined) => useQuery(homebrewClassQuery(id));

@@ -15,9 +15,9 @@ import {
 } from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
 import { useWatch } from "react-hook-form";
-import { classQuery } from "../../hooks/useClass.ts";
-import { homebrewClassQuery } from "../../hooks/useHomebrewClass.ts";
-import { subclassesQuery } from "../../hooks/useSubclasses.ts";
+import { classQuery } from "../../hooks/classQuery.ts";
+import { homebrewClassQuery } from "../../hooks/homebrewClassQuery.ts";
+import { subclassesQuery } from "../../hooks/subclassesQuery.ts";
 import { subclassOf } from "./classLevels.ts";
 
 type Level = CharacterDefinition["levels"][number];
@@ -37,6 +37,8 @@ export interface ClassEntry {
   subclasses: readonly (ContentRef & { json: unknown })[] | undefined;
   hitDie: number | undefined;
   subclassLevel: number | undefined;
+  /** The class's own row, from the catalog or from homebrew, `undefined` until it loads. */
+  json: unknown;
   /**
    * The row in the shape the starting grant and choice schemas read: the class's own for
    * the first class, its multiclass gains for every later one.
@@ -92,10 +94,12 @@ export function useClassEntries() {
     const homebrew = homebrews[index];
     const subclasses = subclassLists[index];
     const json = classRow?.data?.json;
+    const own = json ?? homebrew?.data?.json;
     const start = json && (index === 0 ? json : multiclassEntrySchema.parse(json));
     return {
       ...group,
       catalogClass,
+      json: own,
       name: catalogClass?.name ?? homebrew?.data?.name ?? displayName(group.cls),
       subclass: subclassOf(levels, group.cls),
       subclasses: subclasses?.data?.items,

@@ -1,6 +1,6 @@
 import { subclassRecordSchema } from "@dnd/catalog";
 import type { CharacterRecord, ContentRef } from "@dnd/character";
-import { queryOptions, skipToken, useQuery } from "@tanstack/react-query";
+import { queryOptions, skipToken } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
@@ -23,7 +23,3 @@ export const subclassesQuery = (cls: ContentRef | undefined, edition: CharacterR
       : skipToken,
     retry: retryUnlessClientError,
   });
-
-/** Every subclass of one catalog class in one edition. */
-export const useSubclasses = (cls: ContentRef | undefined, edition: CharacterRecord["edition"]) =>
-  useQuery(subclassesQuery(cls, edition));

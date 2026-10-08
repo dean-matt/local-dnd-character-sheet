@@ -585,4 +585,24 @@ describe("ClassStep", () => {
     click("Clear class, Wizard");
     await waitFor(() => expect(values.departures).toEqual([]));
   });
+  it("notes a typed first class under its own row, and drops the note when it leaves", async () => {
+    renderStep();
+
+    click("Not listed? Type a class");
+    fireEvent.change(screen.getByRole("textbox", { name: "Class name" }), {
+      target: { value: "Blood Hunter" },
+    });
+    click("d10");
+    click("Use");
+    await screen.findByRole("button", { name: "Clear class, Blood Hunter" });
+    await addClass("fig", /^Fighter/);
+
+    expect(screen.getAllByText("Off the rules")).toHaveLength(1);
+
+    click("Clear class, Blood Hunter");
+
+    expect(values.levels).toEqual([{ class: { name: "Fighter", source: "PHB" } }]);
+    expect(values.departures).toEqual([]);
+    expect(screen.queryByText("Off the rules")).not.toBeInTheDocument();
+  });
 });

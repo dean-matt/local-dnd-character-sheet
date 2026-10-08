@@ -14,7 +14,8 @@ const OPTS = { shouldDirty: true } as const;
 /**
  * What the character does: each class with its level and subclass on the left, the
  * character level they sum to, and hit points on the right. Clearing the only class keeps
- * its level for the class picked next.
+ * its level for the class picked next. Only a first class can be typed past the picker, so
+ * the departure that notes it leaves with the first class.
  */
 export function ClassStep(hitPoints: HitPointsFieldProps) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
@@ -26,11 +27,10 @@ export function ClassStep(hitPoints: HitPointsFieldProps) {
   const multiclassed = entries.length > 1;
 
   const picked = (ref: EntryRef) => setFocus(entryKey(ref));
-  function remove(cls: EntryRef, level: number) {
+  function remove(cls: EntryRef, level: number, first: boolean) {
     const next = withClassCount(getValues("levels") ?? [], cls, 0);
     setValue("levels", next, OPTS);
-    if (!next.some((each) => "homebrewId" in each.class))
-      setValue("departures", withDeparture(getValues("departures"), CLASS_FIELD), OPTS);
+    if (first) setValue("departures", withDeparture(getValues("departures"), CLASS_FIELD), OPTS);
     if (next.length > 0) setAddFocus((request) => request + 1);
     else {
       setCount(level);
@@ -58,7 +58,7 @@ export function ClassStep(hitPoints: HitPointsFieldProps) {
                 multiclassed={multiclassed}
                 max={HIGHEST_LEVEL - (levels.length - entry.level)}
                 focusOnMount={focus === entryKey(entry.cls)}
-                onRemove={() => remove(entry.cls, entry.level)}
+                onRemove={() => remove(entry.cls, entry.level, index === 0)}
               />
             ))}
             <AddClassField edition={edition} focusRequest={addFocus} onAdded={picked} />

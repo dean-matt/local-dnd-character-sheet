@@ -2,7 +2,7 @@ import { type HomebrewClassInput, homebrewClassRecordSchema } from "@dnd/catalog
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet, apiMutate } from "../lib/api.ts";
-import { homebrewClassKey } from "./useHomebrewClass.ts";
+import { homebrewClassKey } from "./homebrewClassQuery.ts";
 
 /**
  * The homebrew class of `input`'s name and edition: the one already stored, else a new
