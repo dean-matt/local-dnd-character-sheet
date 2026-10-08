@@ -110,7 +110,7 @@ const listQuery = z.object({
     }),
   class: refParam("A class, as Name|Source, whose spell list to narrow spells to", "Wizard|XPHB"),
   subclass: refParam(
-    "A subclass of that class, as Name|Source, whose added spells widen the list",
+    "A subclass of that class, as Name|Source, whose added spells widen the list; ignored without class",
     "Eldritch Knight|XPHB",
   ),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),

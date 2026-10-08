@@ -119,7 +119,7 @@ const granted = createRoute({
   request: { query: grantedQuery },
   responses: {
     200: {
-      description: "The spells given, sorted by name",
+      description: "The spells given, sorted by name, and whether the grantor offers a pick",
       content: { "application/json": { schema: grantedSpellsSchema } },
     },
   },
@@ -129,7 +129,8 @@ const lookup = createRoute({
   method: "post",
   path: "/spells/lookup",
   tags: ["spells"],
-  summary: "Read each spell's name and level, and whether a class's list holds it, in order",
+  summary:
+    "Read each spell's name and level, whether a class's list holds it, and whether another row offers it, in order",
   description:
     "A POST because the batch is a body a query string would have to encode; it writes nothing.",
   request: {
@@ -168,24 +169,34 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
     const parent =
       parentName && parentSource ? { parent: { name: parentName, source: parentSource } } : {};
     return c.json(
-      { spells: getGrantedSpells(dataDir, { kind: grantor, name, source, ...parent }, level) },
+      getGrantedSpells(dataDir, { kind: grantor, name, source, ...parent }, level),
       200,
     );
   });
 
   routes.openapi(lookup, (c) => {
-    const { spells, list } = c.req.valid("json");
+    const { spells, list, offeredBy } = c.req.valid("json");
+    const grantors = offeredBy?.map(({ grantor, ref, parent }) => ({
+      kind: grantor,
+      ...ref,
+      ...(parent && { parent }),
+    }));
     const catalog = lookupCatalogSpells(
       dataDir,
       spells.flatMap((ref) => ("homebrewId" in ref ? [] : [ref])),
       list,
+      grantors,
     ).values();
     const looked: (SpellLookup | null)[] = spells.map((ref) => {
       if (!("homebrewId" in ref)) return catalog.next().value ?? null;
       const row = getHomebrewSpell(homebrewDb, ref.homebrewId);
       if (!row) return null;
-      const spell = { name: row.name, level: row.level };
-      return list ? { ...spell, listed: false } : spell;
+      return {
+        name: row.name,
+        level: row.level,
+        ...(list && { listed: false }),
+        ...(grantors?.length && { offered: false }),
+      };
     });
     return c.json({ spells: looked }, 200);
   });

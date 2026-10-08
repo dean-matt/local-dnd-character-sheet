@@ -98,53 +98,92 @@ export type Grantor = {
   parent?: { name: string; source: string };
 };
 
-/** The spells `grantor` gives outright by `level`, by name. */
+/** The spells `grantor` gives outright by `level`, by name, and whether it offers a pick by then. */
 export function getGrantedSpells(
   dataDir: string,
   grantor: Grantor,
   level: number,
-): { name: string; source: string }[] {
+): { spells: { name: string; source: string }[]; offersPicks: boolean } {
   const db = openContentDb(dataDir);
   try {
-    return db
+    const key = [
+      GRANTOR_TABLES[grantor.kind],
+      grantor.name,
+      grantor.source,
+      grantor.parent?.name ?? "",
+      grantor.parent?.source ?? "",
+      level,
+    ];
+    const where = `granted_by = ? AND name = ? AND source = ? AND parent_name = ? AND parent_source = ?
+      AND level <= ?`;
+    const spells = db
       .prepare(
         `SELECT spell_name AS name, spell_source AS source FROM spell_grants
-         WHERE granted_by = ? AND name = ? AND source = ? AND parent_name = ? AND parent_source = ?
-         AND chosen = 0 AND level <= ? ORDER BY spell_name, spell_source`,
+         WHERE ${where} AND chosen = 0 ORDER BY spell_name, spell_source`,
       )
-      .all(
-        GRANTOR_TABLES[grantor.kind],
-        grantor.name,
-        grantor.source,
-        grantor.parent?.name ?? "",
-        grantor.parent?.source ?? "",
-        level,
-      ) as { name: string; source: string }[];
+      .all(...key) as { name: string; source: string }[];
+    const offersPicks =
+      db.prepare(`SELECT 1 FROM spell_grants WHERE ${where} AND chosen = 1 LIMIT 1`).get(...key) !==
+      undefined;
+    return { spells, offersPicks };
   } finally {
     db.close();
   }
 }
 
-/** Each catalog spell's name and level and, where `list` is named, whether it holds the spell. */
+/** A `spells` row any of `grantors` offers as a pick, and the parameters it binds. */
+function offeredClause(grantors: readonly Grantor[]): { clause: string; params: string[] } {
+  const each = grantors.map(
+    () =>
+      "(g.granted_by = ? AND g.name = ? AND g.source = ? AND g.parent_name = ? AND g.parent_source = ?)",
+  );
+  return {
+    clause: `EXISTS (SELECT 1 FROM spell_grants g
+      WHERE g.spell_name = spells.name AND g.spell_source = spells.source AND g.chosen = 1
+      AND (${each.join(" OR ")}))`,
+    params: grantors.flatMap((grantor) => [
+      GRANTOR_TABLES[grantor.kind],
+      grantor.name,
+      grantor.source,
+      grantor.parent?.name ?? "",
+      grantor.parent?.source ?? "",
+    ]),
+  };
+}
+
+type Standing = { name: string; level: number; listed?: boolean; offered?: boolean };
+
+/**
+ * Each catalog spell's name and level and, where `list` is named, whether it holds the
+ * spell, and where `offeredBy` names rows, whether any of them offers it as a pick.
+ */
 export function lookupCatalogSpells(
   dataDir: string,
   refs: readonly { name: string; source: string }[],
   list: ClassList | undefined,
-): ({ name: string; level: number; listed?: boolean } | undefined)[] {
+  offeredBy: readonly Grantor[] = [],
+): (Standing | undefined)[] {
   if (refs.length === 0) return [];
   const db = openContentDb(dataDir);
   try {
     const held = list && classListClause(list);
+    const offered = offeredBy.length > 0 ? offeredClause(offeredBy) : undefined;
     const select = db.prepare(
-      `SELECT name, level${held ? `, ${held.clause} AS listed` : ""} FROM spells WHERE name = ? AND source = ?`,
+      `SELECT name, level${held ? `, ${held.clause} AS listed` : ""}${offered ? `, ${offered.clause} AS offered` : ""}
+       FROM spells WHERE name = ? AND source = ?`,
     );
+    const params = [...(held?.params ?? []), ...(offered?.params ?? [])];
     return refs.map((ref) => {
-      const row = select.get(...(held?.params ?? []), ref.name, ref.source) as
-        | { name: string; level: number; listed?: 0 | 1 }
+      const row = select.get(...params, ref.name, ref.source) as
+        | { name: string; level: number; listed?: 0 | 1; offered?: 0 | 1 }
         | undefined;
       if (!row) return undefined;
-      const { listed, ...spell } = row;
-      return listed === undefined ? spell : { ...spell, listed: listed === 1 };
+      const { listed, offered: offers, ...spell } = row;
+      return {
+        ...spell,
+        ...(listed !== undefined && { listed: listed === 1 }),
+        ...(offers !== undefined && { offered: offers === 1 }),
+      };
     });
   } finally {
     db.close();

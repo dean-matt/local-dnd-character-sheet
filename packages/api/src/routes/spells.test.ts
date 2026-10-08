@@ -187,7 +187,18 @@ describe("spellsRoutes, choosing spells", () => {
       spellClasses: [
         { spell_name: "Bless", spell_source: "PHB", class_name: "Cleric", class_source: "PHB" },
       ],
-      spellGrants: [grant("Shield", 3), grant("Fireball", 13), grant("Light", 3, 1)],
+      spellGrants: [
+        grant("Shield", 3),
+        grant("Fireball", 13),
+        grant("Light", 3, 1),
+        {
+          ...grant("Bless", 0, 1),
+          granted_by: "races",
+          name: "Elf",
+          parent_name: "",
+          parent_source: "",
+        },
+      ],
     });
   });
 
@@ -206,10 +217,16 @@ describe("spellsRoutes, choosing spells", () => {
   const eldritchKnight =
     "grantor=subclass&name=Eldritch%20Knight&source=PHB&parentName=Fighter&parentSource=PHB";
 
-  it("lists what a grantor gives outright by a level, leaving out its picks and later grants", async () => {
+  it("lists what a grantor gives outright by a level, and whether it offers a pick by then", async () => {
     const res = await routes.request(`/spells/granted?${eldritchKnight}&level=3`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ spells: [{ name: "Shield", source: "PHB" }] });
+    expect(await res.json()).toEqual({
+      spells: [{ name: "Shield", source: "PHB" }],
+      offersPicks: true,
+    });
+
+    const early = await routes.request(`/spells/granted?${eldritchKnight}&level=2`);
+    expect(await early.json()).toEqual({ spells: [], offersPicks: false });
 
     const later = await routes.request(`/spells/granted?${eldritchKnight}&level=13`);
     expect((await later.json()).spells).toEqual([
@@ -222,7 +239,7 @@ describe("spellsRoutes, choosing spells", () => {
     const res = await routes.request(
       "/spells/granted?grantor=subclass&name=Eldritch%20Knight&source=PHB&level=20",
     );
-    expect(await res.json()).toEqual({ spells: [] });
+    expect(await res.json()).toEqual({ spells: [], offersPicks: false });
   });
 
   it("looks up each spell's name, level and standing on a list, in order", async () => {
@@ -261,6 +278,17 @@ describe("spellsRoutes, choosing spells", () => {
       { name: "Bless", level: 1 },
       { name: "Light", level: 0 },
       { name: "Acid Splash", level: 0 },
+      null,
+    ]);
+
+    const offered = await lookup({
+      spells,
+      offeredBy: [{ grantor: "race", ref: { name: "Elf", source: "PHB" } }],
+    });
+    expect((await offered.json()).spells).toEqual([
+      { name: "Bless", level: 1, offered: true },
+      { name: "Light", level: 0, offered: false },
+      { name: "Acid Splash", level: 0, offered: false },
       null,
     ]);
   });
