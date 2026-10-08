@@ -30,6 +30,10 @@ Every lookup table is doubled as a result — `skills.json` lists Acrobatics twi
 per edition. Filtering by edition is not optional; without it every picker shows
 duplicates.
 
+`Primordial` lists Auran, Aquan, Ignan and Terran as `dialects`, none of them a row, yet
+nine classic races grant one by name. Creation lands `Primordial` for it, through
+`DIALECT_OF` in `packages/web/src/routes/CreationFlow/grants.ts`.
+
 Deities are the one exception to the two-part key: `{@deity Ioun|dawn war|dmg}` names a
 pantheon because five `PHB` gods share a name with a god of another one — Oghma,
 Silvanus, Surtur, Thrym and Tyr. `lookups.qualifier` holds it.

@@ -1,4 +1,4 @@
-import { proficiencyGrantsSchema, type SubraceRecord } from "@dnd/catalog";
+import type { SubraceRecord } from "@dnd/catalog";
 import { type CharacterDefinition, displayName, type EntryRef } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -7,7 +7,8 @@ import { ChoicePills } from "./ChoicePills.tsx";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { RACE_FIELD, withDeparture } from "./departures.ts";
-import { grantNames, titleCase } from "./grants.ts";
+import { titleCase } from "./grants.ts";
+import { RaceGrants } from "./RaceGrants.tsx";
 import { raceChoices } from "./raceChoices.ts";
 import { TypedEscape } from "./TypedEscape.tsx";
 import { CUSTOM_RACE_SOURCE, useIdentityCatalog } from "./useIdentityCatalog.ts";
@@ -76,7 +77,6 @@ export function RaceField() {
   const plain = rows.some((row) => row.name === "");
   const named = rows.filter((row) => row.name !== "");
   const { sizes, resistances } = raceChoices(raceJson);
-  const grants = raceJson && grantNames(proficiencyGrantsSchema.parse(raceJson));
   const traits = traitNames(raceJson);
 
   return (
@@ -88,9 +88,7 @@ export function RaceField() {
         onClear={() => choose(undefined)}
       />
       <DepartureMark field={RACE_FIELD} className="mt-1.5" />
-      {catalogRace && grants && grants.length > 0 && (
-        <p className="mt-1.5 text-muted text-row">Grants: {grants.join(", ")}</p>
-      )}
+      {catalogRace && raceJson && <RaceGrants json={raceJson} />}
       {catalogRace && traits.length > 0 && (
         <p className="mt-1 text-muted text-row">Traits: {traits.join(", ")}</p>
       )}

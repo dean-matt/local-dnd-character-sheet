@@ -1,5 +1,24 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { proficiencyGrantsSchema } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import { NO_GRANTS, resolveGrants, swapGrants, titleCase } from "./grants.ts";
+import {
+  DIALECT_OF,
+  NO_GRANTS,
+  resolveGrants,
+  swapGrants,
+  titleCase,
+  unlandedLanguages,
+} from "./grants.ts";
+
+type Row = { name: string; source: string; dialects?: string[] };
+const fixture = (file: string): Record<string, Row[]> =>
+  JSON.parse(
+    readFileSync(
+      join(import.meta.dirname, "../../../../../tests/fixtures/5etools/data", file),
+      "utf8",
+    ),
+  );
 
 const ref = (name: string, source = "PHB") => ({ name, source });
 const skill = (name: string, level: "proficient" | "expertise" = "proficient") => ({
@@ -76,6 +95,53 @@ describe("resolveGrants", () => {
       weapons: ["Martial"],
       armor: ["Light"],
     });
+  });
+});
+
+describe("dialect grants", () => {
+  const { language = [] } = fixture("languages.json");
+  const { race = [], subrace = [] } = fixture("races.json");
+  const hits = language.map((row) => ({
+    type: "language",
+    name: row.name,
+    source: row.source,
+    edition: "classic" as const,
+  }));
+  const DIALECT_ROWS = [
+    "Aarakocra|DMG",
+    "Aarakocra|EEPC",
+    "Kenku|DMG",
+    "Kenku|VGM",
+    "Locathah|LR",
+    "Merfolk|DMG",
+    "Tortle|TTP",
+    "Sea|MTF",
+    "Gnome (Deep)|DMG",
+  ];
+
+  it("names every dialect `Primordial` (PHB) lists, and no other", () => {
+    const primordial = language.find((row) => row.name === "Primordial" && row.source === "PHB");
+
+    expect(Object.keys(DIALECT_OF).sort()).toEqual(
+      (primordial?.dialects ?? []).map((name) => name.toLowerCase()).sort(),
+    );
+  });
+
+  it.each(DIALECT_ROWS)("lands every language %s grants", (id) => {
+    const row = [...race, ...subrace].find((each) => `${each.name}|${each.source}` === id);
+    const grants = proficiencyGrantsSchema.parse(row);
+
+    expect(grants.languages.length).toBeGreaterThan(0);
+    expect(unlandedLanguages(grants, hits, "classic")).toEqual([]);
+    expect(resolveGrants([grants], hits, "classic").languages).toContainEqual(ref("Primordial"));
+  });
+
+  it("lands a dialect and its language once, and reports a language no row answers", () => {
+    const none = { skills: [], tools: [], weapons: [], armor: [] };
+    const grants = { ...none, languages: ["aquan", "primordial", "kraul"] };
+
+    expect(resolveGrants([grants], hits, "classic").languages).toEqual([ref("Primordial")]);
+    expect(unlandedLanguages(grants, hits, "classic")).toEqual(["Kraul"]);
   });
 });
 

@@ -69,6 +69,15 @@ describe("resolveVersions", () => {
         "Dragonborn (Chromatic)|FTD",
         "Dragonborn (Chromatic; Black)|FTD",
         "Dragonborn (Chromatic; Blue)|FTD",
+        "Aarakocra|DMG",
+        "Aarakocra|EEPC",
+        "Kenku|DMG",
+        "Kenku|VGM",
+        "Locathah|LR",
+        "Merfolk|DMG",
+        "Tortle|TTP",
+        "Gnome (Deep)|DMG",
+        "Elf|PHB",
         "Elf (Kaladesh)|PSK",
       ]);
     });
