@@ -868,7 +868,18 @@ export const FIXTURES: Fixture[] = [
     file: "data/languages.json",
     keep: {
       within: {
-        language: { items: ["Common|PHB", "Draconic|PHB", "Common|XPHB"] },
+        language: {
+          items: [
+            "Common|PHB",
+            "Draconic|PHB",
+            "Common|XPHB",
+            ...["Elvish|PHB", "Gnomish|PHB", "Undercommon|PHB"].map((id) => ({
+              id,
+              fields: ["name", "source", "page", "type"],
+            })),
+            { id: "Primordial|PHB", fields: ["name", "source", "page", "type", "dialects"] },
+          ],
+        },
         languageScript: { items: ["Draconic|PHB"] },
       },
     },
@@ -1124,6 +1135,17 @@ export const FIXTURES: Fixture[] = [
                 },
               },
             },
+            ...[
+              "Aarakocra|DMG",
+              "Aarakocra|EEPC",
+              "Kenku|DMG",
+              "Kenku|VGM",
+              "Locathah|LR",
+              "Merfolk|DMG",
+              "Tortle|TTP",
+              "Gnome (Deep)|DMG",
+              "Elf|PHB",
+            ].map((id) => ({ id, fields: ["name", "source", "languageProficiencies"] })),
             {
               // A race that is itself a named variant, whose subrace fluff
               // reopens its closing paren rather than nesting a second — see
@@ -1180,6 +1202,10 @@ export const FIXTURES: Fixture[] = [
                 "entries",
               ],
               within: { entries: { items: ["Languages"] } },
+            },
+            {
+              id: "Sea|MTF|Elf|PHB",
+              fields: ["name", "source", "raceName", "raceSource", "languageProficiencies"],
             },
             {
               id: "Draconblood|EGW|Dragonborn|PHB",

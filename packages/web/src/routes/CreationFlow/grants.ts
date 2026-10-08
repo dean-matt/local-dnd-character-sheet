@@ -69,6 +69,31 @@ export function catalogRow(
 }
 
 /**
+ * The language each dialect belongs to, as the `dialects` of `Primordial` (PHB) lists them.
+ * A classic race grants a dialect by name, which no row carries. The PHB lets a speaker of
+ * one dialect understand the rest, so the grant lands the language holding it.
+ */
+export const DIALECT_OF: Readonly<Record<string, string>> = {
+  auran: "primordial",
+  aquan: "primordial",
+  ignan: "primordial",
+  terran: "primordial",
+};
+
+/** The language row a granted `name` lands, its language's where `name` is a dialect. */
+function languageRow(
+  hits: readonly SearchHit[],
+  name: string,
+  edition: CharacterDefinition["edition"],
+): ContentRef | undefined {
+  const dialectOf = DIALECT_OF[name];
+  return (
+    catalogRow(hits, "language", name, edition) ??
+    (dialectOf === undefined ? undefined : catalogRow(hits, "language", dialectOf, edition))
+  );
+}
+
+/**
  * `grants` resolved against the skill and language rows in `hits`. A name no row answers
  * grants nothing, since a reference must name a row.
  */
@@ -77,17 +102,19 @@ export function resolveGrants(
   hits: readonly SearchHit[],
   edition: CharacterDefinition["edition"],
 ): Granted {
-  const row = (type: "skill" | "language", name: string) => catalogRow(hits, type, name, edition);
   const all = <T extends string>(pick: (grant: RowGrants) => T[]) => [
     ...new Set(grants.flatMap(pick)),
   ];
   return {
     savingThrows: all((grant) => ("savingThrows" in grant ? grant.savingThrows : [])),
     skills: all((grant) => grant.skills).flatMap((name) => {
-      const ref = row("skill", name);
+      const ref = catalogRow(hits, "skill", name, edition);
       return ref ? [{ ref, level: "proficient" as const }] : [];
     }),
-    languages: all((grant) => grant.languages).flatMap((name) => row("language", name) ?? []),
+    languages: firstOfEach(
+      all((grant) => grant.languages).flatMap((name) => languageRow(hits, name, edition) ?? []),
+      refKey,
+    ),
     tools: all((grant) => grant.tools).map((name) => ({
       name: titleCase(name),
       level: "proficient" as const,

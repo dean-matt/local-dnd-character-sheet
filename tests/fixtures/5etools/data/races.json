@@ -771,6 +771,97 @@
       ]
     },
     {
+      "name": "Aarakocra",
+      "source": "DMG",
+      "languageProficiencies": [
+        {
+          "auran": true
+        }
+      ]
+    },
+    {
+      "name": "Aarakocra",
+      "source": "EEPC",
+      "languageProficiencies": [
+        {
+          "common": true,
+          "other": true,
+          "auran": true
+        }
+      ]
+    },
+    {
+      "name": "Kenku",
+      "source": "DMG",
+      "languageProficiencies": [
+        {
+          "common": true,
+          "auran": true
+        }
+      ]
+    },
+    {
+      "name": "Kenku",
+      "source": "VGM",
+      "languageProficiencies": [
+        {
+          "common": true,
+          "auran": true
+        }
+      ]
+    },
+    {
+      "name": "Locathah",
+      "source": "LR",
+      "languageProficiencies": [
+        {
+          "aquan": true,
+          "common": true
+        }
+      ]
+    },
+    {
+      "name": "Merfolk",
+      "source": "DMG",
+      "languageProficiencies": [
+        {
+          "common": true,
+          "aquan": true
+        }
+      ]
+    },
+    {
+      "name": "Tortle",
+      "source": "TTP",
+      "languageProficiencies": [
+        {
+          "aquan": true,
+          "common": true
+        }
+      ]
+    },
+    {
+      "name": "Gnome (Deep)",
+      "source": "DMG",
+      "languageProficiencies": [
+        {
+          "gnomish": true,
+          "terran": true,
+          "undercommon": true
+        }
+      ]
+    },
+    {
+      "name": "Elf",
+      "source": "PHB",
+      "languageProficiencies": [
+        {
+          "common": true,
+          "elvish": true
+        }
+      ]
+    },
+    {
       "name": "Elf (Kaladesh)",
       "source": "PSK",
       "page": 20,
@@ -944,6 +1035,19 @@
           "data": {
             "overwrite": "Languages"
           }
+        }
+      ]
+    },
+    {
+      "name": "Sea",
+      "source": "MTF",
+      "raceName": "Elf",
+      "raceSource": "PHB",
+      "languageProficiencies": [
+        {
+          "common": true,
+          "elvish": true,
+          "aquan": true
         }
       ]
     },

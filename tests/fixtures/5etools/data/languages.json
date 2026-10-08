@@ -39,6 +39,31 @@
       "basicRules2024": true,
       "type": "standard",
       "origin": "Sigil"
+    },
+    {
+      "name": "Elvish",
+      "source": "PHB",
+      "page": 123,
+      "type": "standard"
+    },
+    {
+      "name": "Gnomish",
+      "source": "PHB",
+      "page": 123,
+      "type": "standard"
+    },
+    {
+      "name": "Undercommon",
+      "source": "PHB",
+      "page": 123,
+      "type": "exotic"
+    },
+    {
+      "name": "Primordial",
+      "dialects": ["Auran", "Aquan", "Ignan", "Terran"],
+      "source": "PHB",
+      "page": 123,
+      "type": "exotic"
     }
   ],
   "languageScript": [
