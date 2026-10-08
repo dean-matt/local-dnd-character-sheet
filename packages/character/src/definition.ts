@@ -148,6 +148,8 @@ const inventoryEntrySchema = z
 const spellEntrySchema = z.strictObject({
   ref: entryRefSchema,
   prepared: z.boolean().default(false),
+  /** Set where a class, subclass, race, background or feat gives it, and absent on a pick. */
+  granted: z.literal(true).optional(),
   /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
   origin: contentRefSchema.optional(),
 });

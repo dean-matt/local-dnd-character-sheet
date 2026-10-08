@@ -99,6 +99,27 @@ describe("CreationFlow", () => {
     expect(screen.queryByRole("button", { name: /^Next/ })).not.toBeInTheDocument();
   });
 
+  it("skips Spells for a class that casts nothing at its level, Finish moving to the step before", async () => {
+    const fighter = { name: "Fighter", source: "PHB" };
+    stubApi(undefined, {
+      "/api/classes/Fighter/PHB": { ...fighter, edition: "classic", hitDie: 10, json: fighter },
+      "/api/classes/Fighter/PHB/at/1": {
+        level: 1,
+        resources: [],
+        spellSlots: [],
+        optionalFeatures: [],
+        features: [],
+      },
+      "/api/spells/granted?grantor=class&name=Fighter&source=PHB&level=1": { spells: [] },
+    });
+    localStorage.setItem(KEY, JSON.stringify({ edition: "classic", levels: [{ class: fighter }] }));
+    renderFlow("equipment");
+
+    expect(await screen.findByText("New character · Step 4 of 4")).toBeVisible();
+    expect(within(rail()).queryByRole("link", { name: /Spells/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Finish →" })).toBeVisible();
+  });
+
   it("refuses an unfinished character at Finish, naming each fault and the step that holds it", async () => {
     const fetchMock = stubApi();
     renderFlow("spells");

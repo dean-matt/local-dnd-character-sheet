@@ -12,14 +12,16 @@ import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationIncreases } from "./CreationIncreases.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { CreationSkills } from "./CreationSkills.tsx";
+import { CreationSpells } from "./CreationSpells.tsx";
+import { CreationSteps } from "./CreationSteps.tsx";
 import { CreationTools } from "./CreationTools.tsx";
 import { creationForm } from "./creationForm.ts";
 import { CREATION_STEPS, type CreationStep, stepIn, stepLink } from "./creationSteps.ts";
 import type { HitPointMethod } from "./hitPointGains.ts";
 import { IdentityStep } from "./IdentityStep.tsx";
 import { ProficienciesStep } from "./ProficienciesStep.tsx";
+import { SpellsStep } from "./SpellsStep.tsx";
 import { StepDepartures } from "./StepDepartures.tsx";
-import { StepPending } from "./StepPending.tsx";
 import { useEquipmentMemory } from "./useEquipmentMemory.ts";
 
 const { FormShell } = creationForm;
@@ -70,12 +72,8 @@ export function CreationFlow() {
     ) : step.slug === "equipment" ? (
       <ProficienciesStep memory={equipment} onMemory={setEquipment} />
     ) : (
-      <StepPending />
+      <SpellsStep />
     );
-
-  const index = CREATION_STEPS.indexOf(step);
-  const previous = CREATION_STEPS[index - 1];
-  const next = CREATION_STEPS[index + 1];
 
   return (
     <FormShell
@@ -87,74 +85,86 @@ export function CreationFlow() {
       onCancel={() => navigate("/characters")}
     >
       {({ cancel }) => (
-        <SidebarFrame rail={<CreationRail current={step} equipment={equipment} />}>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div data-creation-step className="flex flex-1 flex-col gap-4 px-gutter py-6">
-              <div>
-                <p className="text-muted text-row">
-                  New character · Step {index + 1} of {CREATION_STEPS.length}
-                </p>
-                <h1 className="font-bold text-[22px]">{step.label}</h1>
-              </div>
-              <CreationErrors />
-              <CreationGrants />
-              <CreationIncreases />
-              <CreationSkills />
-              <CreationTools />
-              <CreationEquipment memory={equipment} onMemory={setEquipment} />
-              {body}
-            </div>
-            <div
-              ref={footer}
-              data-creation-footer
-              className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-3 print:hidden"
-            >
-              <button
-                type="button"
-                onClick={cancel}
-                className={`${BUTTON} flex items-center gap-2 text-secondary hover:bg-subtle`}
+        <CreationSteps current={step}>
+          {(steps) => {
+            const index = steps.indexOf(step);
+            const previous = steps[index - 1];
+            const next = steps[index + 1];
+            return (
+              <SidebarFrame
+                rail={<CreationRail steps={steps} current={step} equipment={equipment} />}
               >
-                <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
-                Cancel
-              </button>
-              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-                <StepDepartures key={step.slug} step={step} />
-                <button
-                  type="button"
-                  disabled={previous === undefined}
-                  onClick={() => previous && goTo(previous.slug)}
-                  className={`${BUTTON} border border-border bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-60`}
-                >
-                  Back
-                </button>
-                {next ? (
-                  <button
-                    type="button"
-                    onClick={() => goTo(next.slug)}
-                    className={`${BUTTON} bg-accent text-white hover:bg-accent-hover`}
-                  >
-                    Next: {next.label} →
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    {create.isError && (
-                      <p role="alert" className="text-body text-error">
-                        {create.error.message}
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div data-creation-step className="flex flex-1 flex-col gap-4 px-gutter py-6">
+                    <div>
+                      <p className="text-muted text-row">
+                        New character · Step {index + 1} of {steps.length}
                       </p>
-                    )}
-                    <button
-                      type="submit"
-                      disabled={create.isPending}
-                      className={`${BUTTON} bg-accent text-white hover:bg-accent-hover disabled:opacity-60`}
-                    >
-                      Finish →
-                    </button>
+                      <h1 className="font-bold text-[22px]">{step.label}</h1>
+                    </div>
+                    <CreationErrors />
+                    <CreationGrants />
+                    <CreationIncreases />
+                    <CreationSkills />
+                    <CreationTools />
+                    <CreationSpells />
+                    <CreationEquipment memory={equipment} onMemory={setEquipment} />
+                    {body}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </SidebarFrame>
+                  <div
+                    ref={footer}
+                    data-creation-footer
+                    className="sticky bottom-0 z-20 flex flex-wrap items-center justify-between gap-2 border-t border-border bg-canvas px-gutter py-3 print:hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={cancel}
+                      className={`${BUTTON} flex items-center gap-2 text-secondary hover:bg-subtle`}
+                    >
+                      <X aria-hidden="true" size={16} className="shrink-0 text-muted" />
+                      Cancel
+                    </button>
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                      <StepDepartures key={step.slug} step={step} />
+                      <button
+                        type="button"
+                        disabled={previous === undefined}
+                        onClick={() => previous && goTo(previous.slug)}
+                        className={`${BUTTON} border border-border bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-60`}
+                      >
+                        Back
+                      </button>
+                      {next ? (
+                        <button
+                          type="button"
+                          onClick={() => goTo(next.slug)}
+                          className={`${BUTTON} bg-accent text-white hover:bg-accent-hover`}
+                        >
+                          Next: {next.label} →
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          {create.isError && (
+                            <p role="alert" className="text-body text-error">
+                              {create.error.message}
+                            </p>
+                          )}
+                          <button
+                            type="submit"
+                            disabled={create.isPending}
+                            className={`${BUTTON} bg-accent text-white hover:bg-accent-hover disabled:opacity-60`}
+                          >
+                            Finish →
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </SidebarFrame>
+            );
+          }}
+        </CreationSteps>
       )}
     </FormShell>
   );

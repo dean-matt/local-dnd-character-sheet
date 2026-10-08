@@ -25,6 +25,7 @@ export {
   type HitDie,
   hitPointSource,
   maxHitPoints,
+  preparedSpellCount,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {
