@@ -20,7 +20,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import Database from "better-sqlite3";
 import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
-import { backupDatabase } from "./backup.ts";
+import { backupDatabase, backupDirFor } from "./backup.ts";
 import * as charactersSchema from "./characters.ts";
 import * as homebrewSchema from "./homebrew.ts";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
@@ -56,7 +56,7 @@ function openMigrated<Schema extends Record<string, unknown>>(
  * neither this function nor its caller returns them on that path, so nothing else can.
  */
 export function openDatabases(dataDir: string) {
-  const backupDir = join(dataDir, "backups");
+  const backupDir = backupDirFor(dataDir);
   const opened: Database.Database[] = [];
 
   try {

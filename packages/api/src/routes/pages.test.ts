@@ -62,7 +62,7 @@ describe("pagesRoutes", () => {
 
   beforeEach(() => {
     opened = openTestDatabases();
-    characters = charactersRoutes(opened.charactersDb);
+    characters = charactersRoutes(opened.charactersDb, () => {});
     pages = pagesRoutes(opened.charactersDb);
   });
 

@@ -62,6 +62,45 @@ rm -f data/characters.db-wal data/characters.db-shm
 The `-wal` and `-shm` sidecars belong to the file you just replaced, not the backup, so
 delete rather than keep them — SQLite recreates them from the restored file on next open.
 
+## Get a deleted character back
+
+Undo does not reach a deleted character. Deleting one first snapshots `characters.db` to
+`data/backups/`, so a snapshot there still holds it — but not always the newest, since the
+API snapshots again on every start. Copying a snapshot back would also lose every edit
+made since, so find the newest one holding the character and copy its rows out, with the
+API stopped:
+
+```bash
+name='Vex'   # double any ' inside the name
+for backup in $(ls -r data/backups/characters-*.db); do
+  id=$(sqlite3 "$backup" "SELECT id FROM characters WHERE name = '$name'")
+  [ -n "$id" ] && break
+done
+echo "$backup holds $id"
+```
+
+An empty id means no snapshot holds that name; two ids mean two characters share it, so
+set `id` to the one you want. Then copy the rows:
+
+```bash
+sqlite3 data/characters.db <<SQL
+.bail on
+ATTACH '$backup' AS backup;
+BEGIN;
+INSERT INTO characters SELECT * FROM backup.characters WHERE id = '$id';
+INSERT INTO character_state SELECT * FROM backup.character_state WHERE character_id = '$id';
+INSERT INTO character_pages SELECT * FROM backup.character_pages WHERE character_id = '$id';
+INSERT INTO roll_log SELECT * FROM backup.roll_log WHERE character_id = '$id';
+INSERT INTO undo_log SELECT * FROM backup.undo_log WHERE character_id = '$id';
+COMMIT;
+SQL
+```
+
+`SELECT *` holds because the snapshot shares the live file's schema. A backup taken before
+a migration may not: list its columns with `.schema characters` and name them instead.
+Every delete, and every start after a change, adds a snapshot, and `data/backups/` keeps
+only the ten newest. Ten of those after the delete push the character out for good.
+
 ## Run it
 
 ```bash

@@ -5,6 +5,7 @@ import { useCharacterPages } from "../../hooks/useCharacterPages.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CharacterHeader } from "./CharacterHeader.tsx";
 import { CharacterSidebar } from "./CharacterSidebar.tsx";
+import { DeleteCharacter } from "./DeleteCharacter.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
 import { UndoButton } from "./UndoButton.tsx";
@@ -38,7 +39,15 @@ export function CharacterLayout() {
       >
         <div className="min-w-0 flex-1">
           {character.data && (
-            <CharacterHeader character={character.data} actions={<UndoButton characterId={id} />} />
+            <CharacterHeader
+              character={character.data}
+              actions={
+                <>
+                  <UndoButton characterId={id} />
+                  <DeleteCharacter character={character.data} />
+                </>
+              }
+            />
           )}
           <div className="px-gutter py-6">
             <Outlet />

@@ -4,7 +4,8 @@
  * definition update writes. `name`, `level`,
  * `edition`, `raceSummary` and `classSummary` are never accepted from a request body —
  * the query layer derives all five from `definition` on every write, and a state write
- * never reaches that table.
+ * never reaches that table. A delete runs `backup` first and deletes nothing where it
+ * throws, since that snapshot is the only way back.
  */
 import { randomUUID } from "node:crypto";
 import {
@@ -130,10 +131,18 @@ const remove = createRoute({
   path: "/characters/{id}",
   tags: ["characters"],
   summary: "Delete a character",
+  description:
+    "Deletes the character with its state, pages, roll log and undo log, after a " +
+    "snapshot of `characters.db` lands in `data/backups/`. Undo does not reach a " +
+    "deleted character; the snapshot is the only way back.",
   request: { params: idParam },
   responses: {
     204: { description: "The character was deleted" },
     404: notFound("character"),
+    500: {
+      description: "The snapshot failed, so nothing was deleted",
+      content: { "application/json": { schema: errorSchema } },
+    },
   },
 });
 
@@ -214,7 +223,7 @@ const undo = createRoute({
   },
 });
 
-export function charactersRoutes(db: CharactersDb) {
+export function charactersRoutes(db: CharactersDb, backup: () => void) {
   const routes = new OpenAPIHono();
 
   routes.openapi(list, (c) => c.json(listCharacters(db).map(toRecord)));
@@ -239,7 +248,17 @@ export function charactersRoutes(db: CharactersDb) {
 
   routes.openapi(remove, (c) => {
     const { id } = c.req.valid("param");
-    if (!deleteCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
+    if (!getCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
+    try {
+      backup();
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      return c.json(
+        { error: `Could not back up characters.db, so nothing was deleted: ${reason}` },
+        500,
+      );
+    }
+    deleteCharacter(db, id);
     return c.body(null, 204);
   });
 

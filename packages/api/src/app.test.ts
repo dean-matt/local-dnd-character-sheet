@@ -47,7 +47,10 @@ describe("/openapi.json", () => {
 
   it("documents every character, page, homebrew and spell route", async () => {
     const app = new OpenAPIHono();
-    app.route("/", charactersRoutes(opened.charactersDb));
+    app.route(
+      "/",
+      charactersRoutes(opened.charactersDb, () => {}),
+    );
     app.route("/", pagesRoutes(opened.charactersDb));
     app.route("/", derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
     app.route("/", featuresRoutes(opened.charactersDb, dataDir, opened.homebrewDb));

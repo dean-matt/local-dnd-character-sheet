@@ -29,7 +29,9 @@ describe("UndoButton", () => {
     renderWithClient(<UndoButton characterId="1" />);
 
     const button = await screen.findByRole("button", { name: "Undo Charisma 17 to 18" });
-    expect(button).toHaveAccessibleDescription(/does not reach play state, page layout/);
+    expect(button).toHaveAccessibleDescription(
+      /does not reach play state, page layout or a deleted character/,
+    );
     expect(button).toHaveAttribute("aria-keyshortcuts", "Control+Z Meta+Z");
   });
 

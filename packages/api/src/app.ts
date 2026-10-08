@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { charactersDb, DATA_DIR, homebrewDb } from "./db/singleton.ts";
+import { backupCharactersDb, charactersDb, DATA_DIR, homebrewDb } from "./db/singleton.ts";
 import { backgroundsRoutes } from "./routes/backgrounds.ts";
 import { catalogRoutes } from "./routes/catalog.ts";
 import { characterInventoryRoutes } from "./routes/character-inventory.ts";
@@ -26,7 +26,7 @@ import { spellsRoutes } from "./routes/spells.ts";
 
 export const app = new OpenAPIHono();
 
-app.route("/", charactersRoutes(charactersDb));
+app.route("/", charactersRoutes(charactersDb, backupCharactersDb));
 app.route("/", pagesRoutes(charactersDb));
 app.route("/", derivedRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", featuresRoutes(charactersDb, DATA_DIR, homebrewDb));

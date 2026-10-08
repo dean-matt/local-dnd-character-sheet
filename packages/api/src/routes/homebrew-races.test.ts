@@ -101,7 +101,7 @@ describe("homebrewRacesRoutes", () => {
 
       expect((await routes.request(`/homebrew/races/${created.id}`)).status).toBe(200);
 
-      const sheet = charactersRoutes(opened.charactersDb);
+      const sheet = charactersRoutes(opened.charactersDb, () => {});
       expect((await sheet.request(`/characters/${character.id}`)).status).toBe(200);
     });
   });
