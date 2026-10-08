@@ -77,42 +77,74 @@ export const spellsOf = (picked: readonly PickedSpell[]) =>
 
 const names = (spells: readonly PickedSpell[]) => spells.map((spell) => spell.name).join(", ");
 
-const overspent = (picks: readonly PickedSpell[], count: number | undefined) =>
-  count !== undefined && picks.length > count + picks.filter((spell) => spell.offered).length;
+/** The picks the draft's other rows offer, a race's, background's or feat's. */
+export type OtherPicks = { cantrips: number; spells: number };
+
+/**
+ * The picks of one kind the class's list and slots would refuse, less those another row
+ * offers, up to the `credit` that row leaves.
+ */
+function unexcused(
+  picks: readonly PickedSpell[],
+  refused: (spell: PickedSpell) => boolean,
+  credit: number,
+) {
+  let left = credit;
+  return picks.filter((spell) => {
+    if (!refused(spell)) return false;
+    if (spell.offered && left > 0) {
+      left -= 1;
+      return false;
+    }
+    return true;
+  });
+}
+
+const allowing = (count: number, others: number) =>
+  others > 0 ? `${count}, and other rows offer ${others}` : `${count}`;
 
 /**
  * The note on picks the rules would refuse: past a count, off the class's list, or of a
  * level no slot casts. `undefined` where every pick holds. `className` names the list.
  *
- * A pick another row offers, such as a High Elf's wizard cantrip, is excused from all
- * three. Its own count is not read, so each such pick widens the class's count by one and
- * an overspend of the row's count goes unnoted; the way out is the `choose` count as a
- * `spell_grants` column.
+ * `others` widens each count by the picks a race, background or feat offers, and excuses
+ * that many of its kind from the list and the slots where the row offers the spell.
+ * Credit goes by kind rather than by row, so a pick one row offers can spend another's.
  */
 export function spellDeparture(
   facts: CasterFacts | undefined,
   picked: readonly PickedSpell[],
   className: string,
+  others: OtherPicks,
 ): string | undefined {
-  const own = picked.filter((spell) => !spell.offered);
-  if (!facts) {
-    return own.length > 0
-      ? `${names(own)} picked for a class that casts no spells at its level.`
-      : undefined;
-  }
   const cantrips = cantripsOf(picked);
   const spells = spellsOf(picked);
-  const offList = own.filter((spell) => spell.listed === false);
-  const tooHigh = spellsOf(own).filter(
-    (spell) => spell.level !== undefined && spell.level > facts.maxLevel,
-  );
+  if (!facts) {
+    const stray = [
+      ...unexcused(cantrips, () => true, others.cantrips),
+      ...unexcused(spells, () => true, others.spells),
+    ];
+    return stray.length > 0
+      ? `${names(stray)} picked for a class that casts no spells at its level.`
+      : undefined;
+  }
+  const refused = (spell: PickedSpell) =>
+    spell.listed === false || (spell.level !== undefined && spell.level > facts.maxLevel);
+  const stray = [
+    ...unexcused(cantrips, refused, others.cantrips),
+    ...unexcused(spells, refused, others.spells),
+  ];
+  const offList = stray.filter((spell) => spell.listed === false);
+  const tooHigh = stray.filter((spell) => spell.listed !== false);
   const notes = [
-    ...(overspent(cantrips, facts.cantrips)
-      ? [`${cantrips.length} cantrips picked, where the class knows ${facts.cantrips}`]
-      : []),
-    ...(overspent(spells, facts.spells)
+    ...(facts.cantrips !== undefined && cantrips.length > facts.cantrips + others.cantrips
       ? [
-          `${spells.length} spells ${facts.prepares ? "prepared" : "known"}, where the class allows ${facts.spells}`,
+          `${cantrips.length} cantrips picked, where the class knows ${allowing(facts.cantrips, others.cantrips)}`,
+        ]
+      : []),
+    ...(facts.spells !== undefined && spells.length > facts.spells + others.spells
+      ? [
+          `${spells.length} spells ${facts.prepares ? "prepared" : "known"}, where the class allows ${allowing(facts.spells, others.spells)}`,
         ]
       : []),
     ...(offList.length > 0 ? [`${names(offList)} picked off the ${className} spell list`] : []),
@@ -121,11 +153,17 @@ export function spellDeparture(
   return notes.length > 0 ? `${notes.join("; ")}.` : undefined;
 }
 
-/** Whether the picks fill every count the class states, an overspend counting as filled. */
-export function spellsFilled(facts: CasterFacts | undefined, picked: readonly PickedSpell[]) {
-  if (!facts) return true;
+/**
+ * Whether the picks fill every count the class states and every pick the other rows offer,
+ * an overspend counting as filled.
+ */
+export function spellsFilled(
+  facts: CasterFacts | undefined,
+  picked: readonly PickedSpell[],
+  others: OtherPicks,
+) {
   return (
-    cantripsOf(picked).length >= (facts.cantrips ?? 0) &&
-    spellsOf(picked).length >= (facts.spells ?? 0)
+    cantripsOf(picked).length >= (facts?.cantrips ?? 0) + others.cantrips &&
+    spellsOf(picked).length >= (facts?.spells ?? 0) + others.spells
   );
 }

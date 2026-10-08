@@ -112,7 +112,7 @@ describe("CreationFlow", () => {
       },
       "/api/spells/granted?grantor=class&name=Fighter&source=PHB&level=1": {
         spells: [],
-        offersPicks: false,
+        picks: { cantrips: 0, spells: 0 },
       },
     });
     localStorage.setItem(KEY, JSON.stringify({ edition: "classic", levels: [{ class: fighter }] }));

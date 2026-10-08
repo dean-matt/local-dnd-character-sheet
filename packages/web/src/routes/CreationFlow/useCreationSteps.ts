@@ -8,11 +8,11 @@ import { useSpellChoices } from "./useSpellChoices.ts";
  * clearing, or the flow already stands on it.
  */
 export function useCreationSteps(current: CreationStep): readonly CreationStep[] {
-  const { tablesReady, facts, picked, othersOffer } = useSpellChoices();
+  const { tablesReady, facts, picked, others } = useSpellChoices();
   const skipsSpells =
     tablesReady &&
     facts === undefined &&
-    !othersOffer &&
+    others.cantrips + others.spells === 0 &&
     picked.length === 0 &&
     current.slug !== "spells";
   return skipsSpells ? CREATION_STEPS.filter((step) => step.slug !== "spells") : CREATION_STEPS;

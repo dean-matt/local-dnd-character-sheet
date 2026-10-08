@@ -13,7 +13,7 @@ import { usePickedSpells } from "./usePickedSpells.ts";
 export function useSpellChoices() {
   const caster = useCasterFacts();
   const { picked, loading, failed: lookupFailed } = usePickedSpells(caster.list);
-  const { granted, othersOffer, failed: grantsFailed } = useGrantedBy();
+  const { granted, others, failed: grantsFailed } = useGrantedBy();
   const ready = caster.ready && !loading && granted !== undefined;
   return {
     ...caster,
@@ -21,8 +21,8 @@ export function useSpellChoices() {
     failed: caster.failed || lookupFailed || grantsFailed,
     ready,
     granted,
-    othersOffer,
+    others,
     picked,
-    note: ready ? spellDeparture(caster.facts, picked, caster.className) : undefined,
+    note: ready ? spellDeparture(caster.facts, picked, caster.className, others) : undefined,
   };
 }

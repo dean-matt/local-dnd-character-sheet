@@ -8,7 +8,13 @@ import { LoadingState } from "../../LoadingState.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
 import { SpellPickField } from "./SpellPickField.tsx";
-import { type CasterFacts, cantripsOf, SPELLS_FIELD, spellsOf } from "./spellPicks.ts";
+import {
+  type CasterFacts,
+  cantripsOf,
+  type OtherPicks,
+  SPELLS_FIELD,
+  spellsOf,
+} from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
 const hitKey = (hit: SearchHit) =>
@@ -31,15 +37,19 @@ const listFilters = (list: ReturnType<typeof useSpellChoices>["list"], offList: 
  */
 function sectionsShown(
   facts: CasterFacts | undefined,
-  othersOffer: boolean,
+  others: OtherPicks,
   cantrips: number,
   spells: number,
 ) {
   return {
-    cantrips: othersOffer || cantrips > 0 || (facts !== undefined && facts.cantrips !== 0),
-    spells: othersOffer || spells > 0 || (facts !== undefined && facts.maxLevel > 0),
+    cantrips: others.cantrips > 0 || cantrips > 0 || (facts !== undefined && facts.cantrips !== 0),
+    spells: others.spells > 0 || spells > 0 || (facts !== undefined && facts.maxLevel > 0),
   };
 }
+
+/** A class's count widened by the picks other rows offer, `undefined` where none is stated. */
+const countOf = (own: number | undefined, others: number, casts: boolean) =>
+  casts ? (own === undefined ? undefined : own + others) : others;
 
 /** Adds a pick to the draft's spells, and takes one out. */
 function useSpellEdits() {
@@ -66,18 +76,8 @@ function useSpellEdits() {
 export function SpellsStep() {
   const { add, remove } = useSpellEdits();
   const edition = useWatch<CharacterDefinition, "edition">({ name: "edition" }) ?? "one";
-  const {
-    tablesReady,
-    failed,
-    classless,
-    className,
-    level,
-    facts,
-    list,
-    granted,
-    picked,
-    othersOffer,
-  } = useSpellChoices();
+  const { tablesReady, failed, classless, className, level, facts, list, granted, picked, others } =
+    useSpellChoices();
   const [beyond, setBeyond] = useState(false);
 
   if (classless) return <EmptyNote>Choose a class first, and its spells follow.</EmptyNote>;
@@ -95,14 +95,14 @@ export function SpellsStep() {
   const offList = beyond || !facts;
   const filters = listFilters(list, offList);
   const field = { edition, unavailableReason, onRemove: remove };
-  const shown = sectionsShown(facts, othersOffer, cantrips.length, spells.length);
+  const shown = sectionsShown(facts, others, cantrips.length, spells.length);
 
   return (
     <div className="flex flex-col gap-5">
       {!facts && (
         <p className="text-muted text-row">
           {className} doesn't cast spells at level {level}.{" "}
-          {othersOffer
+          {others.cantrips + others.spells > 0
             ? "Pick here only the spells a race, background or feat offers."
             : "Nothing to choose here — select Finish to create the character."}
         </p>
@@ -114,7 +114,7 @@ export function SpellsStep() {
               {...field}
               heading="Cantrips"
               noun="cantrip"
-              count={facts?.cantrips}
+              count={countOf(facts?.cantrips, others.cantrips, facts !== undefined)}
               picked={cantrips}
               filters={{ minLevel: "0", maxLevel: "0", ...filters }}
               onPick={(ref) => add(ref, false)}
@@ -127,7 +127,7 @@ export function SpellsStep() {
             {...field}
             heading={facts?.prepares ? "Spells Prepared" : "Spells Known"}
             noun="spell"
-            count={facts?.spells}
+            count={countOf(facts?.spells, others.spells, facts !== undefined)}
             picked={spells}
             filters={{
               minLevel: "1",

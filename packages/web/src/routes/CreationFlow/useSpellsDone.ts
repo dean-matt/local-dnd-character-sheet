@@ -6,16 +6,17 @@ import { useSpellChoices } from "./useSpellChoices.ts";
 
 /**
  * Whether the Spells step is finished: a class is chosen, Finish would find no fault in a
- * value it sets, and the picks fill every count the class states. A class that casts
- * nothing at its level has nothing to choose, so it is finished once its rows load.
+ * value it sets, and the picks fill every count the class states and every pick another
+ * row offers. A class that casts nothing, beside rows that offer nothing, has nothing to
+ * choose, so it is finished once its rows load.
  */
 export function useSpellsDone(): boolean {
   const values = useWatch<CharacterDefinition>();
-  const { ready, facts, picked } = useSpellChoices();
+  const { ready, facts, picked, others } = useSpellChoices();
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "spells",
   );
   if (!ready || faulted) return false;
-  return spellsFilled(facts, picked);
+  return spellsFilled(facts, picked, others);
 }
