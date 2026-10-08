@@ -50,7 +50,13 @@ export type SpellLookupRequest = z.infer<typeof spellLookupRequestSchema>;
  */
 export const spellLookupResponseSchema = z.strictObject({
   spells: z.array(
-    z.strictObject({ level: z.int().min(0).max(9), listed: z.boolean().optional() }).nullable(),
+    z
+      .strictObject({
+        name: z.string().min(1),
+        level: z.int().min(0).max(9),
+        listed: z.boolean().optional(),
+      })
+      .nullable(),
   ),
 });
 
