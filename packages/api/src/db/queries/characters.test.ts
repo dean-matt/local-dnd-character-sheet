@@ -10,6 +10,7 @@ import { openTestDatabases } from "../testDatabases.ts";
 import {
   charactersReferencingHomebrew,
   deleteCharacter,
+  duplicateCharacter,
   getCharacter,
   getCharacterState,
   insertCharacter,
@@ -129,6 +130,59 @@ describe("characters queries", () => {
         expect(owners.length).toBeGreaterThan(0);
         expect(owners.every((row) => row.id === "2")).toBe(true);
       }
+    });
+  });
+
+  describe("duplicateCharacter", () => {
+    it("copies the definition and pages under the new id, with fresh state and empty logs", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+      db.update(characterPages)
+        .set({ title: "Renamed", hidden: true })
+        .where(eq(characterPages.slug, "notes"))
+        .run();
+      db.insert(characterPages)
+        .values({ characterId: "1", slug: "grapple", title: "Grapple", position: 8, blocks: [] })
+        .run();
+      updateCharacterState(db, "1", {
+        ...defaultCharacterState(),
+        hitPoints: { current: 3, temporary: 2 },
+        spellSlots: [{ level: 1, total: 2, expended: 2 }],
+        conditions: [{ name: "Poisoned", source: "XPHB" }],
+      });
+      db.insert(rollLog)
+        .values({ characterId: "1", label: "Stealth", notation: "1d20", result: 12, detail: {} })
+        .run();
+      updateCharacterDefinition(db, "1", baseDefinition({ name: "Vex the Bold" }));
+
+      const copy = duplicateCharacter(db, "1", "2");
+
+      expect(copy).toMatchObject({ id: "2", name: "Vex the Bold (copy)", level: 1 });
+      expect(copy?.definition).toEqual(baseDefinition({ name: "Vex the Bold (copy)" }));
+      const pagesOf = (id: string) =>
+        db
+          .select()
+          .from(characterPages)
+          .where(eq(characterPages.characterId, id))
+          .all()
+          .map(({ characterId: _, ...page }) => page);
+      expect(pagesOf("2")).toEqual(pagesOf("1"));
+      expect(pagesOf("2")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ slug: "notes", title: "Renamed", hidden: true }),
+          expect.objectContaining({ slug: "grapple", preset: false }),
+        ]),
+      );
+      expect(getCharacterState(db, "2")?.state).toEqual(defaultCharacterState());
+      for (const table of [rollLog, undoLog]) {
+        const owners = db.select({ id: table.characterId }).from(table).all();
+        expect(owners.map((row) => row.id)).not.toContain("2");
+      }
+      expect(getCharacter(db, "1")).toMatchObject({ name: "Vex the Bold" });
+    });
+
+    it("returns undefined and writes nothing for an id that does not exist", () => {
+      expect(duplicateCharacter(db, "missing", "2")).toBeUndefined();
+      expect(listCharacters(db)).toEqual([]);
     });
   });
 
