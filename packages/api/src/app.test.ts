@@ -96,6 +96,8 @@ describe("/openapi.json", () => {
       "/homebrew/spells",
       "/homebrew/spells/{id}",
       "/spells",
+      "/spells/granted",
+      "/spells/lookup",
       "/spells/{name}/{source}",
     ]);
 
