@@ -1,21 +1,25 @@
-import { useId } from "react";
-import { Link } from "react-router";
+import { useRef } from "react";
+import { Link, useNavigate } from "react-router";
+import { useImportCharacter } from "../hooks/useImportCharacter.ts";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-body";
 
 /**
- * New Character and Import, on the dashboard and the character list. Import has no flow
- * behind it yet, so it is a disabled button with the reason shown beside it, rather than a
- * link to nothing.
+ * New Character and Import, on the dashboard and the character list. Import picks a
+ * character file and opens the character it creates, or says why the file was refused.
  */
 export function CharacterActions({ newFirst = false }: { newFirst?: boolean }) {
-  const noteId = useId();
+  const picker = useRef<HTMLInputElement>(null);
+  const importCharacter = useImportCharacter();
+  const navigate = useNavigate();
   const importButton = (
     <button
       type="button"
-      aria-disabled="true"
-      aria-describedby={noteId}
-      className={`${BUTTON} border border-border bg-surface text-ink aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+      aria-disabled={importCharacter.isPending}
+      onClick={() => {
+        if (!importCharacter.isPending) picker.current?.click();
+      }}
+      className={`${BUTTON} border border-border bg-surface text-ink hover:bg-subtle aria-disabled:cursor-wait aria-disabled:opacity-60`}
     >
       Import
     </button>
@@ -31,9 +35,26 @@ export function CharacterActions({ newFirst = false }: { newFirst?: boolean }) {
         {newFirst ? newLink : importButton}
         {newFirst ? importButton : newLink}
       </div>
-      <p id={noteId} className="text-muted text-row">
-        Import is not built yet
-      </p>
+      <input
+        ref={picker}
+        type="file"
+        accept=".json,application/json"
+        aria-label="Character file"
+        hidden
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          event.currentTarget.value = "";
+          if (!file) return;
+          importCharacter.mutate(file, {
+            onSuccess: (record) => navigate(`/characters/${record.id}`),
+          });
+        }}
+      />
+      {importCharacter.isError && (
+        <p role="alert" className="max-w-md text-error text-row">
+          Import failed: {importCharacter.error.message}
+        </p>
+      )}
     </div>
   );
 }

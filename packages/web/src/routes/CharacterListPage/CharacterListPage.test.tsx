@@ -89,6 +89,10 @@ describe("CharacterListPage", () => {
       "href",
       "/characters/new",
     );
+    expect(screen.getByRole("button", { name: "Import" })).toHaveAttribute(
+      "aria-disabled",
+      "false",
+    );
     expect(screen.queryByText(/POST/)).not.toBeInTheDocument();
   });
 

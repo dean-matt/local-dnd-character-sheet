@@ -1,3 +1,4 @@
+import { defaultCharacterState, PRESET_PAGES } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -17,6 +18,9 @@ function stubFetch(status: number) {
         ? new Response(null, { status })
         : new Response(JSON.stringify({ error: "Could not back up characters.db" }), { status });
     }
+    if (String(input) === "/api/characters/1/export" && status !== 500) {
+      return new Response(JSON.stringify(characterFile()), { status: 200 });
+    }
     return String(input) === "/api/characters/1/pages"
       ? new Response(JSON.stringify(presetPageRecords()), { status: 200 })
       : new Response(JSON.stringify({ error: "nothing here" }), { status: 404 });
@@ -24,6 +28,14 @@ function stubFetch(status: number) {
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
+
+const characterFile = () => ({
+  format: "local-dnd-character-sheet/character",
+  version: 1,
+  definition: characterRecord("1", "Vex").definition,
+  state: defaultCharacterState(),
+  pages: PRESET_PAGES,
+});
 
 const deletes = (fetchMock: ReturnType<typeof stubFetch>) =>
   fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE");
@@ -62,7 +74,7 @@ afterEach(() => {
 });
 
 describe("CharacterMenu", () => {
-  it("holds Duplicate and Delete, moves between them by arrow key, and closes on Escape", () => {
+  it("holds Duplicate, Export and Delete, moves between them by arrow key, and closes on Escape", () => {
     stubFetch(204);
     renderMenu();
     const trigger = screen.getByRole("button", { name: "Character menu" });
@@ -71,11 +83,14 @@ describe("CharacterMenu", () => {
     openMenu();
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    const [duplicate, remove] = screen.getAllByRole("menuitem");
+    const [duplicate, exportItem, remove] = screen.getAllByRole("menuitem");
     expect(duplicate).toHaveTextContent("Duplicate character");
+    expect(exportItem).toHaveTextContent("Export character");
     expect(remove).toHaveTextContent("Delete character");
     expect(duplicate).toHaveFocus();
     fireEvent.keyDown(duplicate as HTMLElement, { key: "ArrowDown" });
+    expect(exportItem).toHaveFocus();
+    fireEvent.keyDown(exportItem as HTMLElement, { key: "ArrowDown" });
     expect(remove).toHaveFocus();
     fireEvent.keyDown(remove as HTMLElement, { key: "ArrowDown" });
     expect(duplicate).toHaveFocus();
@@ -88,7 +103,8 @@ describe("CharacterMenu", () => {
     stubFetch(204);
     renderMenu();
     openMenu();
-    const [duplicate, remove] = screen.getAllByRole("menuitem") as HTMLElement[];
+    const items = screen.getAllByRole("menuitem");
+    const [duplicate, remove] = [items[0], items.at(-1)];
 
     fireEvent.keyDown(duplicate as HTMLElement, { key: "ArrowUp" });
     expect(remove).toHaveFocus();
@@ -126,6 +142,44 @@ describe("CharacterMenu", () => {
 
     openMenu();
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("downloads the character's file, named for the character", async () => {
+    const fetchMock = stubFetch(204);
+    const createObjectURL = vi.fn((_blob: Blob) => "blob:vex");
+    vi.stubGlobal(
+      "URL",
+      class extends URL {
+        static override createObjectURL = createObjectURL;
+        static override revokeObjectURL = vi.fn();
+      },
+    );
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    renderMenu();
+
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Export character" }));
+
+    await waitFor(() => expect(click).toHaveBeenCalledOnce());
+    const link = click.mock.contexts[0] as HTMLAnchorElement;
+    expect(link.download).toBe("Vex.json");
+    expect(link.href).toBe("blob:vex");
+    const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
+    expect(JSON.parse(await blob.text())).toEqual(characterFile());
+    expect(fetchMock.mock.calls.map(([input]) => String(input))).toContain(
+      "/api/characters/1/export",
+    );
+    click.mockRestore();
+  });
+
+  it("stays on the character and says why when the export fails", async () => {
+    stubFetch(500);
+    renderMenu();
+
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Export character" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Export failed: nothing here");
   });
 
   it("names what goes with the character and that undo cannot bring it back", async () => {
