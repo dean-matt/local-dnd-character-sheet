@@ -30,7 +30,11 @@ export type SpellGrantor = (typeof SPELL_GRANTORS)[number];
  */
 export const grantedSpellsSchema = z.strictObject({
   spells: z.array(catalogRefSchema),
-  picks: z.strictObject({ cantrips: z.int().min(0), spells: z.int().min(0) }),
+  picks: z.strictObject({
+    cantrips: z.int().min(0),
+    spells: z.int().min(0),
+    alternatives: z.boolean(),
+  }),
 });
 
 /** Past this a request is refused, a bound on one character rather than a count any reaches. */
@@ -42,6 +46,8 @@ const spellGrantorSchema = z.strictObject({
   ref: catalogRefSchema,
   /** A subclass's class or a subrace's race. */
   parent: catalogRefSchema.optional(),
+  /** The level its picks are read at, every level where absent. */
+  level: z.int().min(1).max(20).optional(),
 });
 
 /** Past this a request is refused, more rows than one character names. */
@@ -55,7 +61,12 @@ const MAX_GRANTORS_PER_LOOKUP = 50;
 export const spellLookupRequestSchema = z.strictObject({
   spells: z.array(spellRefSchema).max(MAX_SPELLS_PER_LOOKUP),
   list: z
-    .strictObject({ class: catalogRefSchema, subclass: catalogRefSchema.optional() })
+    .strictObject({
+      class: catalogRefSchema,
+      subclass: catalogRefSchema.optional(),
+      /** The class level the subclass's additions are read at, every level where absent. */
+      level: z.int().min(1).max(20).optional(),
+    })
     .optional(),
   offeredBy: z.array(spellGrantorSchema).max(MAX_GRANTORS_PER_LOOKUP).optional(),
 });
@@ -83,8 +94,11 @@ export const spellLookupResponseSchema = z.strictObject({
 
 export type SpellLookup = z.infer<typeof spellLookupResponseSchema>["spells"][number];
 
-/** How many cantrips and leveled spells a row leaves to the player's pick. */
-export type OfferedPicks = { cantrips: number; spells: number };
+/**
+ * How many cantrips and leveled spells a row leaves to the player's pick, and whether it
+ * offers its blocks as alternatives, which the counts then take the largest of.
+ */
+export type OfferedPicks = { cantrips: number; spells: number; alternatives: boolean };
 
 type Choose = { filter?: string; count: number };
 
@@ -112,13 +126,14 @@ const picksCantrip = ({ filter }: Choose) =>
  * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
  * level key at or below it, a key naming no level arriving with the row. An `expanded`
  * block only widens a list, so it offers none. A row offering several blocks offers them
- * as alternatives, as Magic Initiate offers six classes, so the largest block counts. A
+ * as alternatives, as Magic Initiate offers six classes or an elf its lineages, so the
+ * largest block counts and `alternatives` says the counts are a ceiling rather than owed. A
  * `choose` from a list of names reads as a spell, since the names carry no level.
  */
 export function offeredPicks(json: unknown, level: number): OfferedPicks {
   const blocks =
     isRecord(json) && Array.isArray(json.additionalSpells) ? json.additionalSpells : [];
-  const each = blocks.map((block): OfferedPicks => {
+  const each = blocks.map((block) => {
     const chooses = Object.entries(isRecord(block) ? block : {})
       .filter(([kind]) => ["innate", "known", "prepared"].includes(kind))
       .flatMap(([, byLevel]) =>
@@ -132,8 +147,9 @@ export function offeredPicks(json: unknown, level: number): OfferedPicks {
         .reduce((sum, choose) => sum + choose.count, 0);
     return { cantrips: total(true), spells: total(false) };
   });
-  return each.reduce(
+  const largest = each.reduce(
     (best, block) => (block.cantrips + block.spells > best.cantrips + best.spells ? block : best),
     { cantrips: 0, spells: 0 },
   );
+  return { ...largest, alternatives: blocks.length > 1 };
 }

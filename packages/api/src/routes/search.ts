@@ -113,6 +113,9 @@ const listQuery = z.object({
     "A subclass of that class, as Name|Source, whose added spells widen the list; ignored without class",
     "Eldritch Knight|XPHB",
   ),
+  classLevel: z.coerce.number().int().min(1).max(20).optional().openapi({
+    description: "The class level a subclass's added spells are read at; absent reads every level",
+  }),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
@@ -187,7 +190,13 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
         query.minLevel === undefined && query.maxLevel === undefined
           ? undefined
           : levelRange(query.minLevel ?? 0, query.maxLevel ?? 9),
-      ...(cls && { classList: { class: cls, ...(subclass && { subclass }) } }),
+      ...(cls && {
+        classList: {
+          class: cls,
+          ...(subclass && { subclass }),
+          ...(query.classLevel && { level: query.classLevel }),
+        },
+      }),
     };
     const reads = (type: string) => typeList === undefined || typeList.includes(type);
 

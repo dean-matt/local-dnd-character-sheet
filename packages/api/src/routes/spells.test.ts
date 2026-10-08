@@ -240,11 +240,14 @@ describe("spellsRoutes, choosing spells", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       spells: [{ name: "Shield", source: "PHB" }],
-      picks: { cantrips: 0, spells: 0 },
+      picks: { cantrips: 0, spells: 0, alternatives: false },
     });
 
     const early = await routes.request(`/spells/granted?${eldritchKnight}&level=2`);
-    expect(await early.json()).toEqual({ spells: [], picks: { cantrips: 0, spells: 0 } });
+    expect(await early.json()).toEqual({
+      spells: [],
+      picks: { cantrips: 0, spells: 0, alternatives: false },
+    });
 
     const later = await routes.request(`/spells/granted?${eldritchKnight}&level=13`);
     expect((await later.json()).spells).toEqual([
@@ -257,14 +260,20 @@ describe("spellsRoutes, choosing spells", () => {
     const res = await routes.request(
       "/spells/granted?grantor=feat&name=Magic%20Initiate&source=XPHB&level=1",
     );
-    expect(await res.json()).toEqual({ spells: [], picks: { cantrips: 2, spells: 1 } });
+    expect(await res.json()).toEqual({
+      spells: [],
+      picks: { cantrips: 2, spells: 1, alternatives: true },
+    });
   });
 
   it("gives nothing for a grantor whose parent the request leaves off", async () => {
     const res = await routes.request(
       "/spells/granted?grantor=subclass&name=Eldritch%20Knight&source=PHB&level=20",
     );
-    expect(await res.json()).toEqual({ spells: [], picks: { cantrips: 0, spells: 0 } });
+    expect(await res.json()).toEqual({
+      spells: [],
+      picks: { cantrips: 0, spells: 0, alternatives: false },
+    });
   });
 
   it("looks up each spell's name, level and standing on a list, in order", async () => {
@@ -297,6 +306,19 @@ describe("spellsRoutes, choosing spells", () => {
         null,
       ],
     });
+
+    const early = await lookup({
+      spells: [{ name: "Light", source: "PHB" }],
+      list: {
+        class: { name: "Fighter", source: "PHB" },
+        subclass: { name: "Eldritch Knight", source: "PHB" },
+        level: 2,
+      },
+      offeredBy: [{ grantor: "race", ref: { name: "Elf", source: "PHB" }, level: 1 }],
+    });
+    expect((await early.json()).spells).toEqual([
+      { name: "Light", level: 0, listed: false, offered: false },
+    ]);
 
     const bare = await lookup({ spells });
     expect((await bare.json()).spells).toEqual([

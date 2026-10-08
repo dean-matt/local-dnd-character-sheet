@@ -342,9 +342,12 @@ describe("searchRoutes, narrowed to a class's spell list", () => {
     expect(await names("minLevel=1&maxLevel=1")).toContain("Brewed Bolt");
   });
 
-  it("widens a class's list by what its subclass adds", async () => {
+  it("widens a class's list by what its subclass adds by the class level", async () => {
     expect(await names("class=Fighter%7CPHB")).toEqual([]);
     expect(await names("class=Fighter%7CPHB&subclass=Eldritch%20Knight%7CPHB")).toEqual(["Shield"]);
+    expect(
+      await names("class=Fighter%7CPHB&subclass=Eldritch%20Knight%7CPHB&classLevel=2"),
+    ).toEqual([]);
   });
 
   it("refuses a class not written as Name|Source", async () => {

@@ -176,10 +176,11 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
 
   routes.openapi(lookup, (c) => {
     const { spells, list, offeredBy } = c.req.valid("json");
-    const grantors = offeredBy?.map(({ grantor, ref, parent }) => ({
+    const grantors = offeredBy?.map(({ grantor, ref, parent, level }) => ({
       kind: grantor,
       ...ref,
       ...(parent && { parent }),
+      ...(level && { level }),
     }));
     const catalog = lookupCatalogSpells(
       dataDir,

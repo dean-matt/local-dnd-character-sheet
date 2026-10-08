@@ -55,15 +55,20 @@ export function getSpells(
 export type ClassList = {
   class: { name: string; source: string };
   subclass?: { name: string; source: string };
+  /** The class level the subclass's additions are read at, every level where absent. */
+  level?: number;
 };
 
 /**
  * A `WHERE` clause holding a `spells` row on `list`, and the parameters it binds: the
  * class's own list, and the spells its subclass adds to it or offers from another, as the
- * Eldritch Knight offers the wizard's. A class's own picks stay out, since the 2014 bard's
- * Magical Secrets offers every spell there is.
+ * Eldritch Knight offers the wizard's, from the levels they arrive at. A class's own picks
+ * stay out, since the 2014 bard's Magical Secrets offers every spell there is.
  */
-export function classListClause(list: ClassList): { clause: string; params: string[] } {
+export function classListClause(list: ClassList): {
+  clause: string;
+  params: (string | number)[];
+} {
   const own = `EXISTS (SELECT 1 FROM spell_classes sc
     WHERE sc.spell_name = spells.name AND sc.spell_source = spells.source
     AND sc.class_name = ? AND sc.class_source = ?)`;
@@ -72,10 +77,10 @@ export function classListClause(list: ClassList): { clause: string; params: stri
   const added = `EXISTS (SELECT 1 FROM spell_grants g
     WHERE g.spell_name = spells.name AND g.spell_source = spells.source
     AND g.granted_by = 'subclasses' AND g.chosen = 1 AND g.name = ? AND g.source = ?
-    AND g.parent_name = ? AND g.parent_source = ?)`;
+    AND g.parent_name = ? AND g.parent_source = ? AND g.level <= ?)`;
   return {
     clause: `(${own} OR ${added})`,
-    params: [...params, list.subclass.name, list.subclass.source, ...params],
+    params: [...params, list.subclass.name, list.subclass.source, ...params, list.level ?? 20],
   };
 }
 
@@ -96,6 +101,8 @@ export type Grantor = {
   source: string;
   /** A subclass's class or a subrace's race, which the row's key carries. */
   parent?: { name: string; source: string };
+  /** The level the grantor's picks are read at, every level where absent. */
+  level?: number;
 };
 
 /** The column pair each grantor table keys a parent on, for those that carry one. */
@@ -143,10 +150,13 @@ export function getGrantedSpells(
 }
 
 /** A `spells` row any of `grantors` offers as a pick, and the parameters it binds. */
-function offeredClause(grantors: readonly Grantor[]): { clause: string; params: string[] } {
+function offeredClause(grantors: readonly Grantor[]): {
+  clause: string;
+  params: (string | number)[];
+} {
   const each = grantors.map(
     () =>
-      "(g.granted_by = ? AND g.name = ? AND g.source = ? AND g.parent_name = ? AND g.parent_source = ?)",
+      "(g.granted_by = ? AND g.name = ? AND g.source = ? AND g.parent_name = ? AND g.parent_source = ? AND g.level <= ?)",
   );
   return {
     clause: `EXISTS (SELECT 1 FROM spell_grants g
@@ -158,6 +168,7 @@ function offeredClause(grantors: readonly Grantor[]): { clause: string; params: 
       grantor.source,
       grantor.parent?.name ?? "",
       grantor.parent?.source ?? "",
+      grantor.level ?? 20,
     ]),
   };
 }
