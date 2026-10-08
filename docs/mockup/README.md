@@ -138,7 +138,7 @@ widget, panel, or nav element:
   ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
   confirmation notes why it is unusual. Races, classes and
   subclasses carry no "Add to…", since creation and level-up own them.
-- Character List and Creation 2/5 and 5/5 are full pages, not modals over the sheet
+- Character List and Creation 2/5 are full pages, not modals over the sheet
   — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
   bar with Character marked active. Neither boxes its content in a panel: it sits on the
   page background, as the character sheet's does. Each creation step puts the five steps
@@ -158,11 +158,11 @@ widget, panel, or nav element:
   the `race_summary` and `class_summary` columns #206 now reads, alongside `name`,
   `edition`, and `level`, so the list still never parses a character's `definition` blob
   per row.
-  Creation 2/5 and 5/5 (Class, Spells) are the wizard steps beside Identity, Ability
-  Scores and Proficiencies & Equipment, which the app builds and leads, so each rail draws
-  steps 1, 3 and 4 without a link and "+ New Character" opens Class here. They carry the
-  step rail, Back/Next (Finish on the last step), and the acceptance criteria #235 and
-  #238 already settled — a non-caster skips the spells step. The app builds the rail, Back, Next and Finish.
+  Creation 2/5 (Class) is the wizard step beside Identity, Ability Scores, Proficiencies &
+  Equipment and Spells, which the app builds and leads, so its rail draws steps 1, 3, 4
+  and 5 without a link and "+ New Character" opens Class here. It carries the step rail,
+  Back/Next, and the acceptance criteria #235 already settled. The app builds the rail,
+  Back, Next and Finish.
   Its Next validates nothing, since the schema is checked only at Finish, and every step
   in its rail is a link rather than locked until reached.
   Creation 2/5 supports starting multiclassed — add more than one class, each with its
@@ -333,7 +333,6 @@ says how much of the artboard the app builds today.
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | read-only |
 | `CreationClass` | #233, #235, #240 | the step rail, Back, Next and Finish |
-| `CreationSpells` | #233, #238 | the step rail, Back, Next and Finish |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
 

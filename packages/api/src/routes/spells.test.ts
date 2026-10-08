@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HomebrewSpellInput } from "@dnd/catalog";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishSpells } from "../db/queries/contentFixture.ts";
+import { publishSpellLists, publishSpells } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { spellsRoutes } from "./spells.ts";
@@ -154,5 +154,163 @@ describe("spellsRoutes", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ name: "Antipathy/Sympathy" });
     });
+  });
+});
+
+const MAGIC_INITIATE = {
+  name: "Magic Initiate",
+  source: "XPHB",
+  additionalSpells: ["Cleric", "Wizard"].map((cls) => ({
+    innate: { _: { daily: { "1": [{ choose: `level=1|class=${cls}` }] } } },
+    known: { _: [{ choose: `level=0|class=${cls}`, count: 2 }] },
+  })),
+};
+
+describe("spellsRoutes, choosing spells", () => {
+  let dataDir: string;
+  let opened: ReturnType<typeof openTestDatabases>;
+  let routes: ReturnType<typeof spellsRoutes>;
+
+  const spell = (name: string, level: number) => ({
+    ...FIREBALL,
+    name,
+    level,
+    json: JSON.stringify({ name, source: "PHB", level, school: "V" }),
+  });
+  const grant = (spell_name: string, level: number, chosen: 0 | 1 = 0) => ({
+    spell_name,
+    spell_source: "PHB",
+    granted_by: "subclasses",
+    name: "Eldritch Knight",
+    source: "PHB",
+    parent_name: "Fighter",
+    parent_source: "PHB",
+    chosen,
+    level,
+  });
+
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "spells-choosing-"));
+    publishSpellLists(dataDir, {
+      feats: [
+        {
+          name: "Magic Initiate",
+          source: "XPHB",
+          edition: "one",
+          json: JSON.stringify(MAGIC_INITIATE),
+        },
+      ],
+      spells: [spell("Fireball", 3), spell("Shield", 1), spell("Light", 0), spell("Bless", 1)],
+      spellClasses: [
+        { spell_name: "Bless", spell_source: "PHB", class_name: "Cleric", class_source: "PHB" },
+      ],
+      spellGrants: [grant("Shield", 3), grant("Fireball", 13), grant("Light", 3, 1)],
+    });
+  });
+
+  afterAll(() => rmSync(dataDir, { recursive: true, force: true }));
+
+  beforeEach(() => {
+    opened = openTestDatabases();
+    routes = spellsRoutes(dataDir, opened.homebrewDb);
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+  });
+
+  const eldritchKnight =
+    "grantor=subclass&name=Eldritch%20Knight&source=PHB&parentName=Fighter&parentSource=PHB";
+
+  it("lists what a grantor gives outright by a level, leaving out its picks and later grants", async () => {
+    const res = await routes.request(`/spells/granted?${eldritchKnight}&level=3`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      spells: [{ name: "Shield", source: "PHB" }],
+      picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
+    });
+
+    const early = await routes.request(`/spells/granted?${eldritchKnight}&level=2`);
+    expect(await early.json()).toEqual({
+      spells: [],
+      picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
+    });
+
+    const later = await routes.request(`/spells/granted?${eldritchKnight}&level=13`);
+    expect((await later.json()).spells).toEqual([
+      { name: "Fireball", source: "PHB" },
+      { name: "Shield", source: "PHB" },
+    ]);
+  });
+
+  it("counts the picks a row offers, its alternative blocks read as one", async () => {
+    const res = await routes.request(
+      "/spells/granted?grantor=feat&name=Magic%20Initiate&source=XPHB&level=1",
+    );
+    expect(await res.json()).toEqual({
+      spells: [],
+      picks: { cantrips: 2, spells: 1, learned: 0, alternatives: true },
+    });
+  });
+
+  it("gives nothing for a grantor whose parent the request leaves off", async () => {
+    const res = await routes.request(
+      "/spells/granted?grantor=subclass&name=Eldritch%20Knight&source=PHB&level=20",
+    );
+    expect(await res.json()).toEqual({
+      spells: [],
+      picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
+    });
+  });
+
+  it("looks up each spell's name, level and standing on a list, in order", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", acidSplash());
+    const lookup = (body: unknown) =>
+      routes.request("/spells/lookup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    const spells = [
+      { name: "Bless", source: "PHB" },
+      { name: "Light", source: "PHB" },
+      { homebrewId: "1" },
+      { name: "Wish", source: "PHB" },
+    ];
+
+    const listed = await lookup({
+      spells,
+      list: {
+        class: { name: "Fighter", source: "PHB" },
+        subclass: { name: "Eldritch Knight", source: "PHB" },
+      },
+    });
+    expect(await listed.json()).toEqual({
+      spells: [
+        { name: "Bless", level: 1, listed: false },
+        { name: "Light", level: 0, listed: true },
+        { name: "Acid Splash", level: 0, listed: false },
+        null,
+      ],
+    });
+
+    const early = await lookup({
+      spells: [{ name: "Light", source: "PHB" }],
+      list: {
+        class: { name: "Fighter", source: "PHB" },
+        subclass: { name: "Eldritch Knight", source: "PHB" },
+        level: 2,
+      },
+    });
+    expect((await early.json()).spells).toEqual([{ name: "Light", level: 0, listed: false }]);
+
+    const bare = await lookup({ spells });
+    expect((await bare.json()).spells).toEqual([
+      { name: "Bless", level: 1 },
+      { name: "Light", level: 0 },
+      { name: "Acid Splash", level: 0 },
+      null,
+    ]);
   });
 });

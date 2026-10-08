@@ -13,11 +13,12 @@
  * when every clause holds one of its values. Six keys appear at the pinned tag;
  * a seventh fails the build rather than matching nothing.
  *
- * The ceiling: a row records whether a grantor can ever give a spell, not when
- * or how. The level a grant arrives at, whether it is innate, known, prepared
- * or only added to a class list, and how many a `choose` takes all stay in the
- * grantor's `json`. A picker reads them there until a query needs one as a
- * column here.
+ * A row records the level its reading arrives at: the grantor's lowest level
+ * that gives the spell outright, or, for a pick, the lowest that offers it. A
+ * key naming no level, such as `_` or the spell level `s1`, arrives with the
+ * grantor and records 0. Whether a grant is innate, known, prepared or only
+ * added to a class list, and how many a `choose` takes, stay in the grantor's
+ * `json`.
  */
 import { BACKGROUNDS_FILE, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { entriesOf as classEntriesOf } from "./class-rows.ts";
@@ -208,6 +209,22 @@ function grantorsOf(sources: Map<string, unknown>): Grantor[] {
 
 type Give = (spell: Spell, chosen: boolean) => void;
 
+type Grant = { chosen: boolean; level: number };
+
+/**
+ * An outright grant wins over a pick; between two of the same kind, the lower level wins.
+ * The ceiling: a spell offered at one level and given outright at a later one keeps only
+ * the later, so below it the row reads as neither. A row per reading is the way out.
+ */
+function merged(held: Grant | undefined, next: Grant): Grant {
+  if (held === undefined || (held.chosen && !next.chosen)) return next;
+  if (held.chosen !== next.chosen) return held;
+  return { chosen: held.chosen, level: Math.min(held.level, next.level) };
+}
+
+/** A block's top key as the level it arrives at, 0 for one naming no level. */
+const arrival = (key: string): number => (/^\d+$/.test(key) ? Number(key) : 0);
+
 function namedSpell(value: string, catalog: Catalog, where: string): Spell {
   const [name = "", source = ""] = (value.split("#")[0] ?? "").split("|");
   const spell = catalog.byKey.get(spellKey(name, source || DEFAULT_SOURCE));
@@ -246,6 +263,26 @@ function visitRecord(value: Entry, chosen: boolean, where: string, catalog: Cata
   }
 }
 
+/** One `additionalSpells` block, each kind keyed by the level its spells arrive at. */
+function visitBlock(
+  block: unknown,
+  alternative: boolean,
+  where: string,
+  catalog: Catalog,
+  giveAt: (level: number) => Give,
+) {
+  if (!isRecord(block)) throw new Error(`${where} is not an object`);
+  for (const [kind, byLevel] of Object.entries(block)) {
+    if (DESCRIBING.has(kind)) continue;
+    if (!KINDS.has(kind)) throw new Error(`${where} holds ${kind}, which no rule reads`);
+    if (!isRecord(byLevel)) throw new Error(`${where}.${kind} is not keyed by level`);
+    const chosen = alternative || kind === "expanded";
+    for (const [key, value] of Object.entries(byLevel)) {
+      visit(value, chosen, `${where}.${kind}.${key}`, catalog, giveAt(arrival(key)));
+    }
+  }
+}
+
 /**
  * Every spell one grantor may give, and whether the player picks it. A pick is
  * a `choose`, an `expanded` spell — added to a class list, still to be learned
@@ -253,22 +290,20 @@ function visitRecord(value: Entry, chosen: boolean, where: string, catalog: Cata
  * blocks, which upstream writes as alternatives: Magic Initiate's six classes.
  * A spell one grant gives outright and another offers is given outright.
  */
-function grantsOf(grantor: Grantor, catalog: Catalog): Map<Spell, boolean> {
-  const granted = new Map<Spell, boolean>();
+function grantsOf(grantor: Grantor, catalog: Catalog): Map<Spell, Grant> {
+  const granted = new Map<Spell, Grant>();
   const blocks = grantor.entry.additionalSpells;
   // A `_versions` entry un-sets an inherited field with null: one Kobold version drops the
   // race's spells.
   if (blocks === undefined || blocks === null) return granted;
   if (!Array.isArray(blocks)) throw new Error(`${grantor.context}: additionalSpells is not a list`);
-  const give: Give = (spell, chosen) => granted.set(spell, chosen && (granted.get(spell) ?? true));
+  const giveAt =
+    (level: number): Give =>
+    (spell, chosen) =>
+      granted.set(spell, merged(granted.get(spell), { chosen, level }));
   for (const [index, block] of blocks.entries()) {
     const where = `${grantor.context} additionalSpells[${index}]`;
-    if (!isRecord(block)) throw new Error(`${where} is not an object`);
-    for (const [key, value] of Object.entries(block)) {
-      if (DESCRIBING.has(key)) continue;
-      if (!KINDS.has(key)) throw new Error(`${where} holds ${key}, which no rule reads`);
-      visit(value, blocks.length > 1 || key === "expanded", `${where}.${key}`, catalog, give);
-    }
+    visitBlock(block, blocks.length > 1, where, catalog, giveAt);
   }
   return granted;
 }
@@ -290,12 +325,13 @@ export const spellGrants: Loader = {
     const rows: Row[] = [];
     for (const grantor of grantorsOf(sources)) {
       const { entry: _entry, context: _context, ...identity } = grantor;
-      for (const [spell, chosen] of grantsOf(grantor, catalog)) {
+      for (const [spell, { chosen, level }] of grantsOf(grantor, catalog)) {
         rows.push({
           spell_name: spell.name,
           spell_source: spell.source,
           ...identity,
           chosen: chosen ? 1 : 0,
+          level,
         });
       }
     }

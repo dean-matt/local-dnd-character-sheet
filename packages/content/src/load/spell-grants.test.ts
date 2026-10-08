@@ -94,7 +94,7 @@ describe("the spell grants loader", () => {
     const db = new Database(resolveContentDb(contentDir), { readonly: true });
     const rows = db
       .prepare(
-        "SELECT spell_name, spell_source, granted_by, name, source, parent_name, parent_source, chosen " +
+        "SELECT spell_name, spell_source, granted_by, name, source, parent_name, parent_source, chosen, level " +
           "FROM spell_grants ORDER BY granted_by, name, spell_name",
       )
       .all();
@@ -227,6 +227,7 @@ describe("the spell grants loader", () => {
         parent_name: "",
         parent_source: "",
         chosen: 0,
+        level: 0,
       },
       {
         spell_name: "Light",
@@ -237,6 +238,7 @@ describe("the spell grants loader", () => {
         parent_name: "",
         parent_source: "",
         chosen: 0,
+        level: 1,
       },
       {
         spell_name: "Shield",
@@ -247,6 +249,7 @@ describe("the spell grants loader", () => {
         parent_name: "Wizard",
         parent_source: "PHB",
         chosen: 0,
+        level: 3,
       },
       {
         spell_name: "Light",
@@ -257,7 +260,28 @@ describe("the spell grants loader", () => {
         parent_name: "Elf",
         parent_source: "PHB",
         chosen: 0,
+        level: 1,
       },
+    ]);
+  });
+
+  it("records the lowest level giving a spell outright, else the lowest offering it", () => {
+    const levels = grants(
+      feat([
+        {
+          prepared: { "5": ["shield"], "1": [{ choose: "level=1|class=Wizard" }] },
+          known: { "3": ["shield"], _: ["light"] },
+        },
+      ]),
+    ).map((row) => {
+      const { spell_name, chosen, level } = row as Record<string, unknown>;
+      return [spell_name, chosen, level];
+    });
+
+    expect(levels).toEqual([
+      ["Detect Magic", 1, 1],
+      ["Light", 0, 0],
+      ["Shield", 0, 3],
     ]);
   });
 
@@ -297,6 +321,7 @@ describe("the spell grants loader", () => {
         parent_name: "",
         parent_source: "",
         chosen: 1,
+        level: 0,
       },
       {
         spell_name: "Shield",
@@ -307,6 +332,7 @@ describe("the spell grants loader", () => {
         parent_name: "",
         parent_source: "",
         chosen: 0,
+        level: 2,
       },
     ]);
   });

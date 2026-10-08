@@ -8,6 +8,7 @@ import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 import { variantKinds } from "./item-variant.ts";
 import { escapeLikeTerm, ftsPrefixQuery } from "./search-terms.ts";
+import { type ClassList, classListClause } from "./spells.ts";
 
 export type CatalogSearchRow = {
   type: string;
@@ -84,7 +85,8 @@ const SEARCH_LOOKUP_KINDS = [
  * is upstream's word, such as `very rare` or `none`. `itemKinds` narrows items too, to those
  * `@dnd/catalog`'s `itemKinds` places in any one of the kinds named — a magic variant by
  * the base items it admits — and an item hit carries its kinds, rarity and weapon category
- * as `item`.
+ * as `item`. `classList` narrows spells to those a class's list holds, and leaves homebrew
+ * spells out, since no class list holds one.
  */
 export type SearchFilter = {
   edition?: Edition;
@@ -94,6 +96,7 @@ export type SearchFilter = {
   schools?: readonly string[];
   rarities?: readonly string[];
   itemKinds?: readonly string[];
+  classList?: ClassList;
 };
 
 const placeholders = (values: readonly unknown[]) => values.map(() => "?").join(", ");
@@ -140,6 +143,10 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
   if (term) conditions.add("name LIKE ? ESCAPE '!'", `%${escapeLikeTerm(term)}%`);
   if (entry.type === "spell" && spellLevels !== undefined) {
     conditions.add("level BETWEEN ? AND ?", spellLevels.min, spellLevels.max);
+  }
+  if (entry.type === "spell" && filter.classList) {
+    const { clause, params } = classListClause(filter.classList);
+    conditions.add(clause, ...params);
   }
   if (entry.type === "spell" && schools?.length) {
     conditions.add(`school IN (${placeholders(schools)})`, ...schools);
