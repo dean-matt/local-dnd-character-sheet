@@ -84,6 +84,22 @@ describe("CharacterMenu", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("reaches the last item by ArrowUp and End, the first by Home, and closes when focus leaves", () => {
+    stubFetch(204);
+    renderMenu();
+    openMenu();
+    const [duplicate, remove] = screen.getAllByRole("menuitem") as HTMLElement[];
+
+    fireEvent.keyDown(duplicate as HTMLElement, { key: "ArrowUp" });
+    expect(remove).toHaveFocus();
+    fireEvent.keyDown(remove as HTMLElement, { key: "Home" });
+    expect(duplicate).toHaveFocus();
+    fireEvent.keyDown(duplicate as HTMLElement, { key: "End" });
+    expect(remove).toHaveFocus();
+    fireEvent.blur(remove as HTMLElement, { relatedTarget: document.body });
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
   it("duplicates the character, then opens the copy", async () => {
     const fetchMock = stubFetch(201);
     const { router, queryClient } = renderMenu();
@@ -107,6 +123,9 @@ describe("CharacterMenu", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Duplicate failed: disk full");
     expect(router.state.location.pathname).toBe("/characters/1");
+
+    openMenu();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("names what goes with the character and that undo cannot bring it back", async () => {

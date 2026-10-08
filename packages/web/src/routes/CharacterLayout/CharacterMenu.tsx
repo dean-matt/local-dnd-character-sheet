@@ -70,7 +70,10 @@ export function CharacterMenu({ character }: { character: CharacterRecord }) {
           type="button"
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => {
+            if (!menuOpen && !duplicate.isPending) duplicate.reset();
+            setMenuOpen(!menuOpen);
+          }}
           title="Character menu"
           className="flex size-8 shrink-0 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle"
         >
