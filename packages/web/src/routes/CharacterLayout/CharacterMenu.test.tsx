@@ -3,10 +3,15 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, presetPageRecords } from "../../test/records.ts";
-import { DeleteCharacter } from "./DeleteCharacter.tsx";
+import { CharacterMenu } from "./CharacterMenu.tsx";
 
-function stubDelete(status: number) {
+function stubFetch(status: number) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (init?.method === "POST") {
+      return status === 201
+        ? new Response(JSON.stringify(characterRecord("2", "Vex (copy)")), { status })
+        : new Response(JSON.stringify({ error: "disk full" }), { status });
+    }
     if (init?.method === "DELETE") {
       return status === 204
         ? new Response(null, { status })
@@ -20,18 +25,26 @@ function stubDelete(status: number) {
   return fetchMock;
 }
 
-const deletes = (fetchMock: ReturnType<typeof stubDelete>) =>
+const deletes = (fetchMock: ReturnType<typeof stubFetch>) =>
   fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE");
 
-function renderDelete(name = "Vex") {
+const openMenu = () => fireEvent.click(screen.getByRole("button", { name: "Character menu" }));
+
+function openDelete() {
+  openMenu();
+  fireEvent.click(screen.getByRole("menuitem", { name: "Delete character" }));
+}
+
+function renderMenu(name = "Vex") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(["characters"], [characterRecord("1", name)]);
   const router = createMemoryRouter(
     [
       {
         path: "/characters/:id",
-        element: <DeleteCharacter character={characterRecord("1", name)} />,
+        element: <CharacterMenu character={characterRecord("1", name)} />,
       },
+      { path: "/characters/2", element: <p>copy</p> },
       { path: "/characters", element: <p>list</p> },
     ],
     { initialEntries: ["/characters/1"] },
@@ -48,12 +61,59 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("DeleteCharacter", () => {
-  it("names what goes with the character and that undo cannot bring it back", async () => {
-    stubDelete(204);
-    renderDelete();
+describe("CharacterMenu", () => {
+  it("holds Duplicate and Delete, moves between them by arrow key, and closes on Escape", () => {
+    stubFetch(204);
+    renderMenu();
+    const trigger = screen.getByRole("button", { name: "Character menu" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete character" }));
+    openMenu();
+
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    const [duplicate, remove] = screen.getAllByRole("menuitem");
+    expect(duplicate).toHaveTextContent("Duplicate character");
+    expect(remove).toHaveTextContent("Delete character");
+    expect(duplicate).toHaveFocus();
+    fireEvent.keyDown(duplicate as HTMLElement, { key: "ArrowDown" });
+    expect(remove).toHaveFocus();
+    fireEvent.keyDown(remove as HTMLElement, { key: "ArrowDown" });
+    expect(duplicate).toHaveFocus();
+    fireEvent.keyDown(duplicate as HTMLElement, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("duplicates the character, then opens the copy", async () => {
+    const fetchMock = stubFetch(201);
+    const { router, queryClient } = renderMenu();
+
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Duplicate character" }));
+
+    await screen.findByText("copy");
+    expect(router.state.location.pathname).toBe("/characters/2");
+    const posts = fetchMock.mock.calls.filter(([, init]) => init?.method === "POST");
+    expect(posts.map(([input]) => String(input))).toEqual(["/api/characters/1/duplicate"]);
+    expect(queryClient.getQueryData(["characters", "2"])).toMatchObject({ name: "Vex (copy)" });
+  });
+
+  it("stays on the character and says why when the duplicate fails", async () => {
+    stubFetch(500);
+    const { router } = renderMenu();
+
+    openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Duplicate character" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Duplicate failed: disk full");
+    expect(router.state.location.pathname).toBe("/characters/1");
+  });
+
+  it("names what goes with the character and that undo cannot bring it back", async () => {
+    stubFetch(204);
+    renderMenu();
+
+    openDelete();
 
     const dialog = screen.getByRole("dialog", { name: "Delete Vex?" });
     expect(dialog).toHaveTextContent(/its play state, .*its roll log and its undo history/);
@@ -65,9 +125,9 @@ describe("DeleteCharacter", () => {
   });
 
   it("deletes nothing until the name is typed back", () => {
-    const fetchMock = stubDelete(204);
-    renderDelete();
-    fireEvent.click(screen.getByRole("button", { name: "Delete character" }));
+    const fetchMock = stubFetch(204);
+    renderMenu();
+    openDelete();
 
     const confirm = screen.getByRole("button", { name: "Delete" });
     expect(confirm).toHaveAttribute("aria-disabled", "true");
@@ -79,17 +139,17 @@ describe("DeleteCharacter", () => {
   });
 
   it("asks for a whitespace name to be typed too, rather than taking an empty field", () => {
-    stubDelete(204);
-    renderDelete("  ");
-    fireEvent.click(screen.getByRole("button", { name: "Delete character" }));
+    stubFetch(204);
+    renderMenu("  ");
+    openDelete();
 
     expect(screen.getByRole("button", { name: "Delete" })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("deletes once the name matches, then leaves for the list without the character", async () => {
-    const fetchMock = stubDelete(204);
-    const { router, queryClient } = renderDelete();
-    fireEvent.click(screen.getByRole("button", { name: "Delete character" }));
+    const fetchMock = stubFetch(204);
+    const { router, queryClient } = renderMenu();
+    openDelete();
 
     fireEvent.change(screen.getByLabelText("Type Vex to confirm"), { target: { value: "Vex" } });
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -102,9 +162,9 @@ describe("DeleteCharacter", () => {
   });
 
   it("stays open and says why when the delete fails", async () => {
-    stubDelete(500);
-    const { router } = renderDelete();
-    fireEvent.click(screen.getByRole("button", { name: "Delete character" }));
+    stubFetch(500);
+    const { router } = renderMenu();
+    openDelete();
 
     fireEvent.change(screen.getByLabelText("Type Vex to confirm"), { target: { value: "Vex" } });
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
