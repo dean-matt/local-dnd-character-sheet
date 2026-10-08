@@ -537,7 +537,7 @@ describe("ClassStep", () => {
     ).toBeVisible();
   });
 
-  it("grants a later class its multiclass proficiencies and no saves, and takes them back on removal", async () => {
+  it("grants a later class its multiclass proficiencies and no saves, and its starting ones once it is first", async () => {
     renderStep();
 
     await pickClass("cle", /^Cleric/);
@@ -565,6 +565,19 @@ describe("ClassStep", () => {
         armor: ["Light"],
       }),
     );
+
+    await addClass("fig", /^Fighter/);
+    await waitFor(() => expect(values.proficiencies?.armor).toEqual(["Light", "Medium", "Shield"]));
+    click("Clear class, Cleric");
+
+    await waitFor(() =>
+      expect(values.proficiencies).toMatchObject({
+        savingThrows: ["str", "con"],
+        weapons: ["Simple", "Martial"],
+        armor: [],
+      }),
+    );
+    expect(screen.queryByText(/^Multiclassing grants/)).not.toBeInTheDocument();
   });
 
   it("names each class's multiclass prerequisite, and notes one the scores miss as a departure", async () => {
