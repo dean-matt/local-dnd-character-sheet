@@ -91,7 +91,7 @@ export type OfferedPicks = {
   alternatives: boolean;
 };
 
-type Choose = { filter?: string; count: number };
+type Choose = { filter?: string; from?: unknown[]; count: number };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -104,14 +104,22 @@ function choosesIn(value: unknown): Choose[] {
   const picks = typeof count === "number" ? count : 1;
   if (typeof choose === "string") return [{ filter: choose, count: picks }];
   if (isRecord(choose)) {
-    return [{ count: typeof choose.count === "number" ? choose.count : 1 }];
+    const from = Array.isArray(choose.from) ? choose.from : [];
+    return [{ from, count: typeof choose.count === "number" ? choose.count : 1 }];
   }
   return Object.values(value).flatMap(choosesIn);
 }
 
-/** A filter that names spell level 0 alone picks a cantrip; anything else, a spell. */
-const picksCantrip = ({ filter }: Choose) =>
-  filter !== undefined && /(^|\|)level=0(\||$)/.test(filter);
+/**
+ * A filter that names spell level 0 alone picks a cantrip, as does a list whose every name
+ * carries upstream's `#c` cantrip mark; anything else, a spell.
+ */
+const picksCantrip = ({ filter, from }: Choose) =>
+  filter !== undefined
+    ? /(^|\|)level=0(\||$)/.test(filter)
+    : from !== undefined &&
+      from.length > 0 &&
+      from.every((name) => typeof name === "string" && name.endsWith("#c"));
 
 /**
  * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
@@ -119,7 +127,7 @@ const picksCantrip = ({ filter }: Choose) =>
  * block only widens a list, so it offers none. A row offering several blocks offers them
  * as alternatives, as Magic Initiate offers six classes or an elf its lineages, so the
  * largest block counts and `alternatives` says the counts are a ceiling rather than owed. A
- * `choose` from a list of names reads as a spell, since the names carry no level.
+ * `choose` from a list of names reads as a spell unless every name is marked a cantrip.
  */
 export function offeredPicks(json: unknown, level: number): OfferedPicks {
   const blocks =

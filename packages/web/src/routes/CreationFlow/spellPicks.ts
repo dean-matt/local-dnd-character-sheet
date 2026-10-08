@@ -116,7 +116,9 @@ const allowing = (count: number, subclass: number) =>
 /**
  * The note on picks the rules would refuse: past a count, off the class's list, or of a
  * level no slot casts. `undefined` where every pick holds. `className` names the list,
- * and `subclass` widens each count by the picks the subclass offers.
+ * and `subclass` widens each count by the picks the subclass offers. A class that casts
+ * nothing at its level may still make those: the first of each kind stand, and the rest
+ * are noted.
  */
 export function spellDeparture(
   facts: CasterFacts | undefined,
@@ -128,8 +130,9 @@ export function spellDeparture(
   const spells = spellsOf(picked);
   const ordered = [...cantrips, ...spells];
   if (!facts) {
-    return ordered.length > 0
-      ? `${names(ordered)} picked for a class that casts no spells at its level.`
+    const stray = [...cantrips.slice(subclass.cantrips), ...spells.slice(subclass.spells)];
+    return stray.length > 0
+      ? `${names(stray)} picked for a class that casts no spells at its level.`
       : undefined;
   }
   const offList = ordered.filter((spell) => spell.listed === false);

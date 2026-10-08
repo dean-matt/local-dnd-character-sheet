@@ -92,10 +92,15 @@ describe("spellDeparture", () => {
     );
   });
 
-  it("notes any pick for a class that casts nothing yet", () => {
+  it("notes any pick for a class that casts nothing yet, past what its subclass offers", () => {
     expect(spellDeparture(undefined, [pick("Bless", 1)], "Paladin", NONE)).toBe(
       "Bless picked for a class that casts no spells at its level.",
     );
+    const scion = { cantrips: 1, spells: 0 };
+    expect(spellDeparture(undefined, [pick("Blade Ward", 0)], "Rogue", scion)).toBe(undefined);
+    expect(
+      spellDeparture(undefined, [pick("Blade Ward", 0), pick("Light", 0)], "Rogue", scion),
+    ).toBe("Light picked for a class that casts no spells at its level.");
   });
 
   it("never overspends a count no table states", () => {

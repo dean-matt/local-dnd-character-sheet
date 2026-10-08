@@ -38,6 +38,17 @@ describe("offeredPicks", () => {
     expect(offeredPicks(nested, 1)).toMatchObject({ cantrips: 0, spells: 3, learned: 0 });
   });
 
+  it("reads a list whose every name is marked a cantrip as a cantrip, as Scion of the Three's", () => {
+    const scion = row({
+      innate: {
+        "3": [{ choose: { from: ["minor illusion|xphb#c", "blade ward|xphb#c"], count: 1 } }],
+      },
+    });
+    expect(offeredPicks(scion, 3)).toMatchObject({ cantrips: 1, spells: 0 });
+    const mixed = row({ known: { _: [{ choose: { from: ["light#c", "shield"] } }] } });
+    expect(offeredPicks(mixed, 1)).toMatchObject({ cantrips: 0, spells: 1 });
+  });
+
   it("offers none from an expanded list", () => {
     const expanded = row({ expanded: { s1: [{ choose: "level=1|class=Wizard" }] } });
     expect(offeredPicks(expanded, 20)).toMatchObject({ cantrips: 0, spells: 0 });
