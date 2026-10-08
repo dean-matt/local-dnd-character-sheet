@@ -26,11 +26,11 @@ export type SpellGrantor = (typeof SPELL_GRANTORS)[number];
 
 /**
  * The spells one grantor gives outright by a level, never one it leaves to a pick, and
- * whether it offers any pick by that level.
+ * how many picks it offers by that level, as `offeredPicks` counts them.
  */
 export const grantedSpellsSchema = z.strictObject({
   spells: z.array(catalogRefSchema),
-  offersPicks: z.boolean(),
+  picks: z.strictObject({ cantrips: z.int().min(0), spells: z.int().min(0) }),
 });
 
 /** Past this a request is refused, a bound on one character rather than a count any reaches. */
@@ -82,3 +82,58 @@ export const spellLookupResponseSchema = z.strictObject({
 });
 
 export type SpellLookup = z.infer<typeof spellLookupResponseSchema>["spells"][number];
+
+/** How many cantrips and leveled spells a row leaves to the player's pick. */
+export type OfferedPicks = { cantrips: number; spells: number };
+
+type Choose = { filter?: string; count: number };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Every `choose` under one grant, however deep its frequency and use-count nesting. */
+function choosesIn(value: unknown): Choose[] {
+  if (Array.isArray(value)) return value.flatMap(choosesIn);
+  if (!isRecord(value)) return [];
+  const { choose, count } = value;
+  const picks = typeof count === "number" ? count : 1;
+  if (typeof choose === "string") return [{ filter: choose, count: picks }];
+  if (isRecord(choose)) {
+    return [{ count: typeof choose.count === "number" ? choose.count : 1 }];
+  }
+  return Object.values(value).flatMap(choosesIn);
+}
+
+/** A filter that names spell level 0 alone picks a cantrip; anything else, a spell. */
+const picksCantrip = ({ filter }: Choose) =>
+  filter !== undefined && /(^|\|)level=0(\||$)/.test(filter);
+
+/**
+ * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
+ * level key at or below it, a key naming no level arriving with the row. An `expanded`
+ * block only widens a list, so it offers none. A row offering several blocks offers them
+ * as alternatives, as Magic Initiate offers six classes, so the largest block counts. A
+ * `choose` from a list of names reads as a spell, since the names carry no level.
+ */
+export function offeredPicks(json: unknown, level: number): OfferedPicks {
+  const blocks =
+    isRecord(json) && Array.isArray(json.additionalSpells) ? json.additionalSpells : [];
+  const each = blocks.map((block): OfferedPicks => {
+    const chooses = Object.entries(isRecord(block) ? block : {})
+      .filter(([kind]) => ["innate", "known", "prepared"].includes(kind))
+      .flatMap(([, byLevel]) =>
+        Object.entries(isRecord(byLevel) ? byLevel : {})
+          .filter(([key]) => !/^\d+$/.test(key) || Number(key) <= level)
+          .flatMap(([, value]) => choosesIn(value)),
+      );
+    const total = (cantrip: boolean) =>
+      chooses
+        .filter((choose) => picksCantrip(choose) === cantrip)
+        .reduce((sum, choose) => sum + choose.count, 0);
+    return { cantrips: total(true), spells: total(false) };
+  });
+  return each.reduce(
+    (best, block) => (block.cantrips + block.spells > best.cantrips + best.spells ? block : best),
+    { cantrips: 0, spells: 0 },
+  );
+}

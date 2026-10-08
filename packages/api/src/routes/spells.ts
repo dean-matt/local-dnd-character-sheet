@@ -119,7 +119,7 @@ const granted = createRoute({
   request: { query: grantedQuery },
   responses: {
     200: {
-      description: "The spells given, sorted by name, and whether the grantor offers a pick",
+      description: "The spells given, sorted by name, and the picks the grantor offers",
       content: { "application/json": { schema: grantedSpellsSchema } },
     },
   },

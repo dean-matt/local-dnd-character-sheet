@@ -1,4 +1,4 @@
-import type { SpellGrantor } from "@dnd/catalog";
+import { type OfferedPicks, offeredPicks, type SpellGrantor } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 
@@ -98,34 +98,45 @@ export type Grantor = {
   parent?: { name: string; source: string };
 };
 
-/** The spells `grantor` gives outright by `level`, by name, and whether it offers a pick by then. */
+/** The column pair each grantor table keys a parent on, for those that carry one. */
+const PARENT_COLUMNS: Partial<Record<SpellGrantor, string>> = {
+  subclass: "class_name = ? AND class_source = ?",
+  subrace: "race_name = ? AND race_source = ?",
+};
+
+/**
+ * The spells `grantor` gives outright by `level`, by name, and the picks its row offers by
+ * then. A grantor no row answers gives nothing and offers nothing.
+ */
 export function getGrantedSpells(
   dataDir: string,
   grantor: Grantor,
   level: number,
-): { spells: { name: string; source: string }[]; offersPicks: boolean } {
+): { spells: { name: string; source: string }[]; picks: OfferedPicks } {
   const db = openContentDb(dataDir);
   try {
-    const key = [
-      GRANTOR_TABLES[grantor.kind],
-      grantor.name,
-      grantor.source,
-      grantor.parent?.name ?? "",
-      grantor.parent?.source ?? "",
-      level,
-    ];
-    const where = `granted_by = ? AND name = ? AND source = ? AND parent_name = ? AND parent_source = ?
-      AND level <= ?`;
+    const parent = [grantor.parent?.name ?? "", grantor.parent?.source ?? ""];
     const spells = db
       .prepare(
         `SELECT spell_name AS name, spell_source AS source FROM spell_grants
-         WHERE ${where} AND chosen = 0 ORDER BY spell_name, spell_source`,
+         WHERE granted_by = ? AND name = ? AND source = ? AND parent_name = ? AND parent_source = ?
+         AND chosen = 0 AND level <= ? ORDER BY spell_name, spell_source`,
       )
-      .all(...key) as { name: string; source: string }[];
-    const offersPicks =
-      db.prepare(`SELECT 1 FROM spell_grants WHERE ${where} AND chosen = 1 LIMIT 1`).get(...key) !==
-      undefined;
-    return { spells, offersPicks };
+      .all(GRANTOR_TABLES[grantor.kind], grantor.name, grantor.source, ...parent, level) as {
+      name: string;
+      source: string;
+    }[];
+    const parentColumns = PARENT_COLUMNS[grantor.kind];
+    const json = db
+      .prepare(
+        `SELECT json FROM ${GRANTOR_TABLES[grantor.kind]} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""}`,
+      )
+      .pluck()
+      .get(grantor.name, grantor.source, ...(parentColumns ? parent : [])) as string | undefined;
+    return {
+      spells,
+      picks: offeredPicks(json === undefined ? undefined : JSON.parse(json), level),
+    };
   } finally {
     db.close();
   }

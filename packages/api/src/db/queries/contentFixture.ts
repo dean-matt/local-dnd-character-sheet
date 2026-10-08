@@ -362,6 +362,7 @@ export function publishReferencesFixture(dataDir: string, fixture: ReferencesFix
 /** The rows a class's spell list and a grantor's spells are read from. */
 export type SpellListFixture = {
   spells?: SpellFixtureRow[];
+  feats?: FeatFixtureRow[];
   spellClasses?: {
     spell_name: string;
     spell_source: string;

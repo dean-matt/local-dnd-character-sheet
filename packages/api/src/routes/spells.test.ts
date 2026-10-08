@@ -157,6 +157,16 @@ describe("spellsRoutes", () => {
   });
 });
 
+const MAGIC_INITIATE = {
+  name: "Magic Initiate",
+  source: "XPHB",
+  additionalSpells: ["Cleric", "Wizard"].map((cls) => ({
+    known: {
+      _: [{ choose: `level=0|class=${cls}`, count: 2 }, { choose: `level=1|class=${cls}` }],
+    },
+  })),
+};
+
 describe("spellsRoutes, choosing spells", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
@@ -183,6 +193,14 @@ describe("spellsRoutes, choosing spells", () => {
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "spells-choosing-"));
     publishSpellLists(dataDir, {
+      feats: [
+        {
+          name: "Magic Initiate",
+          source: "XPHB",
+          edition: "one",
+          json: JSON.stringify(MAGIC_INITIATE),
+        },
+      ],
       spells: [spell("Fireball", 3), spell("Shield", 1), spell("Light", 0), spell("Bless", 1)],
       spellClasses: [
         { spell_name: "Bless", spell_source: "PHB", class_name: "Cleric", class_source: "PHB" },
@@ -217,16 +235,16 @@ describe("spellsRoutes, choosing spells", () => {
   const eldritchKnight =
     "grantor=subclass&name=Eldritch%20Knight&source=PHB&parentName=Fighter&parentSource=PHB";
 
-  it("lists what a grantor gives outright by a level, and whether it offers a pick by then", async () => {
+  it("lists what a grantor gives outright by a level, leaving out its picks and later grants", async () => {
     const res = await routes.request(`/spells/granted?${eldritchKnight}&level=3`);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       spells: [{ name: "Shield", source: "PHB" }],
-      offersPicks: true,
+      picks: { cantrips: 0, spells: 0 },
     });
 
     const early = await routes.request(`/spells/granted?${eldritchKnight}&level=2`);
-    expect(await early.json()).toEqual({ spells: [], offersPicks: false });
+    expect(await early.json()).toEqual({ spells: [], picks: { cantrips: 0, spells: 0 } });
 
     const later = await routes.request(`/spells/granted?${eldritchKnight}&level=13`);
     expect((await later.json()).spells).toEqual([
@@ -235,11 +253,18 @@ describe("spellsRoutes, choosing spells", () => {
     ]);
   });
 
+  it("counts the picks a row offers, its alternative blocks read as one", async () => {
+    const res = await routes.request(
+      "/spells/granted?grantor=feat&name=Magic%20Initiate&source=XPHB&level=1",
+    );
+    expect(await res.json()).toEqual({ spells: [], picks: { cantrips: 2, spells: 1 } });
+  });
+
   it("gives nothing for a grantor whose parent the request leaves off", async () => {
     const res = await routes.request(
       "/spells/granted?grantor=subclass&name=Eldritch%20Knight&source=PHB&level=20",
     );
-    expect(await res.json()).toEqual({ spells: [], offersPicks: false });
+    expect(await res.json()).toEqual({ spells: [], picks: { cantrips: 0, spells: 0 } });
   });
 
   it("looks up each spell's name, level and standing on a list, in order", async () => {
