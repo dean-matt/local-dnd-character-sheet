@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   casterFacts,
-  otherPicks,
   type PickedSpell,
   spellDeparture,
   spellsFilled,
+  subclassPicks,
 } from "./spellPicks.ts";
 
 const table = (resources: Record<string, string>, slots: number[] = []) => ({
@@ -60,10 +60,6 @@ const NONE = { cantrips: 0, spells: 0 };
 
 describe("spellDeparture", () => {
   const knower = { cantrips: 1, spells: 1, prepares: false, maxLevel: 1 };
-  const offered = (name: string, level: number) => ({
-    ...pick(name, level, false),
-    offered: true,
-  });
 
   it("notes nothing while every pick holds", () => {
     const picked = [pick("Light", 0, true), pick("Shield", 1, true)];
@@ -84,30 +80,22 @@ describe("spellDeparture", () => {
     );
   });
 
-  it("excuses as many picks another row offers as it leaves room for, and no more", () => {
-    const others = { cantrips: 2, spells: 1 };
-    const fits = [
-      pick("Light", 0, true),
-      offered("Guidance", 0),
-      offered("Sacred Flame", 0),
-      offered("Bless", 1),
-    ];
-    expect(spellDeparture(knower, fits, "Wizard", others)).toBe(undefined);
+  it("widens a count by the subclass's picks, and still notes a pick off the list", () => {
+    const arcana = { cantrips: 2, spells: 0 };
+    const fits = [pick("Light", 0, true), pick("Guidance", 0, true), pick("Mage Hand", 0, true)];
+    expect(spellDeparture(knower, fits, "Wizard", arcana)).toBe(undefined);
 
-    const past = [...fits, offered("Thaumaturgy", 0)];
-    expect(spellDeparture(knower, past, "Wizard", others)).toBe(
-      "4 cantrips picked, where the class knows 1, and other rows offer 2; " +
-        "Thaumaturgy picked off the Wizard spell list.",
+    const past = [...fits, pick("Sacred Flame", 0, false)];
+    expect(spellDeparture(knower, past, "Wizard", arcana)).toBe(
+      "4 cantrips picked, where the class knows 1, and the subclass offers 2; " +
+        "Sacred Flame picked off the Wizard spell list.",
     );
   });
 
-  it("notes any pick for a class that casts nothing yet, past what other rows offer", () => {
+  it("notes any pick for a class that casts nothing yet", () => {
     expect(spellDeparture(undefined, [pick("Bless", 1)], "Paladin", NONE)).toBe(
       "Bless picked for a class that casts no spells at its level.",
     );
-    expect(
-      spellDeparture(undefined, [offered("Light", 0)], "Fighter", { cantrips: 1, spells: 0 }),
-    ).toBe(undefined);
   });
 
   it("never overspends a count no table states", () => {
@@ -128,18 +116,18 @@ describe("spellsFilled", () => {
     expect(spellsFilled(facts, [...filled, pick("Sleep", 1)], owing(0))).toBe(true);
   });
 
-  it("asks for the picks other rows owe as well as the class's", () => {
+  it("asks for the picks the subclass owes as well as the class's", () => {
     const filled = [pick("Light", 0), pick("Bless", 1), pick("Shield", 1)];
     expect(spellsFilled(facts, filled, owing(1))).toBe(false);
     expect(spellsFilled(facts, [...filled, pick("Guidance", 0)], owing(1))).toBe(true);
   });
 
-  it("finds a class that casts nothing, beside rows that owe nothing, filled", () => {
+  it("finds a class that casts nothing, beside a subclass that owes nothing, filled", () => {
     expect(spellsFilled(undefined, [], owing(0))).toBe(true);
   });
 });
 
-describe("otherPicks", () => {
+describe("subclassPicks", () => {
   const offer = (
     grantor: string,
     cantrips: number,
@@ -148,23 +136,24 @@ describe("otherPicks", () => {
   ) => ({ grantor, picks: { cantrips, spells, learned, alternatives } });
   const states = { cantrips: false, spells: false };
 
-  it("sums every row but the class, owing only the rows with one block", () => {
+  it("counts the subclass alone, owing none of its alternative blocks", () => {
     const offers = [
       offer("class", 9, 9),
       offer("race", 1, 0),
-      offer("feat", 2, 1, { alternatives: true }),
+      offer("feat", 2, 1),
+      offer("subclass", 1, 0, { alternatives: true }),
     ];
-    expect(otherPicks(offers, states, false)).toEqual({
-      cantrips: 3,
-      spells: 1,
-      owed: { cantrips: 1, spells: 0 },
+    expect(subclassPicks(offers, states, false)).toEqual({
+      cantrips: 1,
+      spells: 0,
+      owed: { cantrips: 0, spells: 0 },
     });
   });
 
   it("counts a subclass's picks only where its own table states no count of that kind", () => {
     const arcana = [offer("subclass", 2, 0)];
-    expect(otherPicks(arcana, states, true).owed).toEqual({ cantrips: 2, spells: 0 });
-    expect(otherPicks(arcana, { cantrips: true, spells: true }, true).owed).toEqual({
+    expect(subclassPicks(arcana, states, true).owed).toEqual({ cantrips: 2, spells: 0 });
+    expect(subclassPicks(arcana, { cantrips: true, spells: true }, true).owed).toEqual({
       cantrips: 0,
       spells: 0,
     });
@@ -172,11 +161,11 @@ describe("otherPicks", () => {
 
   it("leaves out the spells a row has a preparer learn, as a 2024 Evoker's Savant picks", () => {
     const evoker = [offer("subclass", 0, 2, { learned: 2 })];
-    expect(otherPicks(evoker, states, true)).toEqual({
+    expect(subclassPicks(evoker, states, true)).toEqual({
       cantrips: 0,
       spells: 0,
       owed: { cantrips: 0, spells: 0 },
     });
-    expect(otherPicks(evoker, states, false).owed.spells).toBe(2);
+    expect(subclassPicks(evoker, states, false).owed.spells).toBe(2);
   });
 });

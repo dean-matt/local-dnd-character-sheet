@@ -3,16 +3,16 @@ import { useSpellChoices } from "./useSpellChoices.ts";
 
 /**
  * The steps the rail lists and Next walks for this draft. A class that casts nothing at
- * its level skips Spells, so Finish moves to the step before it — unless another row, such
- * as a High Elf's race or Magic Initiate, offers a pick there, a pick a changed class left behind needs
- * clearing, or the flow already stands on it.
+ * its level skips Spells, so Finish moves to the step before it — unless its subclass
+ * offers a pick there, a pick a changed class left behind needs clearing, or the flow
+ * already stands on it. A pick a race, background or feat offers keeps no step.
  */
 export function useCreationSteps(current: CreationStep): readonly CreationStep[] {
-  const { tablesReady, facts, picked, others } = useSpellChoices();
+  const { tablesReady, facts, picked, subclass } = useSpellChoices();
   const skipsSpells =
     tablesReady &&
     facts === undefined &&
-    others.cantrips + others.spells === 0 &&
+    subclass.cantrips + subclass.spells === 0 &&
     picked.length === 0 &&
     current.slug !== "spells";
   return skipsSpells ? CREATION_STEPS.filter((step) => step.slug !== "spells") : CREATION_STEPS;

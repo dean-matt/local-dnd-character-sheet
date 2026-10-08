@@ -11,8 +11,8 @@ import { SpellPickField } from "./SpellPickField.tsx";
 import {
   type CasterFacts,
   cantripsOf,
-  type OtherPicks,
   SPELLS_FIELD,
+  type SubclassPicks,
   spellsOf,
 } from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
@@ -33,24 +33,25 @@ const listFilters = (list: ReturnType<typeof useSpellChoices>["list"], offList: 
     : {};
 
 /**
- * Which pick lists to draw: those the class casts from, those another row offers picks
+ * Which pick lists to draw: those the class casts from, those the subclass offers picks
  * for, and any already holding a pick, so it can be cleared.
  */
 function sectionsShown(
   facts: CasterFacts | undefined,
-  others: OtherPicks,
+  subclass: SubclassPicks,
   cantrips: number,
   spells: number,
 ) {
   return {
-    cantrips: others.cantrips > 0 || cantrips > 0 || (facts !== undefined && facts.cantrips !== 0),
-    spells: others.spells > 0 || spells > 0 || (facts !== undefined && facts.maxLevel > 0),
+    cantrips:
+      subclass.cantrips > 0 || cantrips > 0 || (facts !== undefined && facts.cantrips !== 0),
+    spells: subclass.spells > 0 || spells > 0 || (facts !== undefined && facts.maxLevel > 0),
   };
 }
 
-/** A class's count widened by the picks other rows offer, `undefined` where none is stated. */
-const countOf = (own: number | undefined, others: number, casts: boolean) =>
-  casts ? (own === undefined ? undefined : own + others) : others;
+/** A class's count widened by the subclass's picks, `undefined` where none is stated. */
+const countOf = (own: number | undefined, subclass: number, casts: boolean) =>
+  casts ? (own === undefined ? undefined : own + subclass) : subclass;
 
 /** Adds a pick to the draft's spells, and takes one out. */
 function useSpellEdits() {
@@ -77,8 +78,18 @@ function useSpellEdits() {
 export function SpellsStep() {
   const { add, remove } = useSpellEdits();
   const edition = useWatch<CharacterDefinition, "edition">({ name: "edition" }) ?? "one";
-  const { tablesReady, failed, classless, className, level, facts, list, granted, picked, others } =
-    useSpellChoices();
+  const {
+    tablesReady,
+    failed,
+    classless,
+    className,
+    level,
+    facts,
+    list,
+    granted,
+    picked,
+    subclass,
+  } = useSpellChoices();
   const [beyond, setBeyond] = useState(false);
 
   if (classless) return <EmptyNote>Choose a class first, and its spells follow.</EmptyNote>;
@@ -96,15 +107,15 @@ export function SpellsStep() {
   const offList = beyond || !facts;
   const filters = listFilters(list, offList);
   const field = { edition, unavailableReason, onRemove: remove };
-  const shown = sectionsShown(facts, others, cantrips.length, spells.length);
+  const shown = sectionsShown(facts, subclass, cantrips.length, spells.length);
 
   return (
     <div className="flex flex-col gap-5">
       {!facts && (
         <p className="text-muted text-row">
           {className} doesn't cast spells at level {level}.{" "}
-          {others.cantrips + others.spells > 0
-            ? "Pick here only the spells a race, background or feat offers."
+          {subclass.cantrips + subclass.spells > 0
+            ? "Pick here only the spells the subclass offers."
             : "Nothing to choose here — select Finish to create the character."}
         </p>
       )}
@@ -115,7 +126,7 @@ export function SpellsStep() {
               {...field}
               heading="Cantrips"
               noun="cantrip"
-              count={countOf(facts?.cantrips, others.cantrips, facts !== undefined)}
+              count={countOf(facts?.cantrips, subclass.cantrips, facts !== undefined)}
               picked={cantrips}
               filters={{ minLevel: "0", maxLevel: "0", ...filters }}
               onPick={(ref) => add(ref, false)}
@@ -128,7 +139,7 @@ export function SpellsStep() {
             {...field}
             heading={facts?.prepares ? "Spells Prepared" : "Spells Known"}
             noun="spell"
-            count={countOf(facts?.spells, others.spells, facts !== undefined)}
+            count={countOf(facts?.spells, subclass.spells, facts !== undefined)}
             picked={spells}
             filters={{
               minLevel: "1",

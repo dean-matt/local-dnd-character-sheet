@@ -204,18 +204,7 @@ describe("spellsRoutes, choosing spells", () => {
       spellClasses: [
         { spell_name: "Bless", spell_source: "PHB", class_name: "Cleric", class_source: "PHB" },
       ],
-      spellGrants: [
-        grant("Shield", 3),
-        grant("Fireball", 13),
-        grant("Light", 3, 1),
-        {
-          ...grant("Bless", 0, 1),
-          granted_by: "races",
-          name: "Elf",
-          parent_name: "",
-          parent_source: "",
-        },
-      ],
+      spellGrants: [grant("Shield", 3), grant("Fireball", 13), grant("Light", 3, 1)],
     });
   });
 
@@ -313,28 +302,14 @@ describe("spellsRoutes, choosing spells", () => {
         subclass: { name: "Eldritch Knight", source: "PHB" },
         level: 2,
       },
-      offeredBy: [{ grantor: "race", ref: { name: "Elf", source: "PHB" }, level: 1 }],
     });
-    expect((await early.json()).spells).toEqual([
-      { name: "Light", level: 0, listed: false, offered: false },
-    ]);
+    expect((await early.json()).spells).toEqual([{ name: "Light", level: 0, listed: false }]);
 
     const bare = await lookup({ spells });
     expect((await bare.json()).spells).toEqual([
       { name: "Bless", level: 1 },
       { name: "Light", level: 0 },
       { name: "Acid Splash", level: 0 },
-      null,
-    ]);
-
-    const offered = await lookup({
-      spells,
-      offeredBy: [{ grantor: "race", ref: { name: "Elf", source: "PHB" } }],
-    });
-    expect((await offered.json()).spells).toEqual([
-      { name: "Bless", level: 1, offered: true },
-      { name: "Light", level: 0, offered: false },
-      { name: "Acid Splash", level: 0, offered: false },
       null,
     ]);
   });

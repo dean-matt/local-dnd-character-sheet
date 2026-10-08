@@ -5,11 +5,10 @@ import { apiMutate } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
 /**
- * Each spell's name and level, whether `context`'s list holds it and whether its rows
- * offer it, in the order `spells` lists them — `null` where no row answers, `undefined`
- * while it loads — and whether any request failed. One request a spell, so a pick added
- * or removed leaves the others' answers cached. A `POST` that writes nothing, so it is a
- * query.
+ * Each spell's name and level and whether `context`'s list holds it, in the order `spells`
+ * lists them — `null` where no row answers, `undefined` while it loads — and whether any
+ * request failed. One request a spell, so a pick added or removed leaves the others'
+ * answers cached. A `POST` that writes nothing, so it is a query.
  */
 export function useSpellLookup(
   spells: SpellLookupRequest["spells"],

@@ -101,8 +101,6 @@ export type Grantor = {
   source: string;
   /** A subclass's class or a subrace's race, which the row's key carries. */
   parent?: { name: string; source: string };
-  /** The level the grantor's picks are read at, every level where absent. */
-  level?: number;
 };
 
 /** The column pair each grantor table keys a parent on, for those that carry one. */
@@ -149,63 +147,29 @@ export function getGrantedSpells(
   }
 }
 
-/** A `spells` row any of `grantors` offers as a pick, and the parameters it binds. */
-function offeredClause(grantors: readonly Grantor[]): {
-  clause: string;
-  params: (string | number)[];
-} {
-  const each = grantors.map(
-    () =>
-      "(g.granted_by = ? AND g.name = ? AND g.source = ? AND g.parent_name = ? AND g.parent_source = ? AND g.level <= ?)",
-  );
-  return {
-    clause: `EXISTS (SELECT 1 FROM spell_grants g
-      WHERE g.spell_name = spells.name AND g.spell_source = spells.source AND g.chosen = 1
-      AND (${each.join(" OR ")}))`,
-    params: grantors.flatMap((grantor) => [
-      GRANTOR_TABLES[grantor.kind],
-      grantor.name,
-      grantor.source,
-      grantor.parent?.name ?? "",
-      grantor.parent?.source ?? "",
-      grantor.level ?? 20,
-    ]),
-  };
-}
+type Standing = { name: string; level: number; listed?: boolean };
 
-type Standing = { name: string; level: number; listed?: boolean; offered?: boolean };
-
-/**
- * Each catalog spell's name and level and, where `list` is named, whether it holds the
- * spell, and where `offeredBy` names rows, whether any of them offers it as a pick.
- */
+/** Each catalog spell's name and level and, where `list` is named, whether it holds the spell. */
 export function lookupCatalogSpells(
   dataDir: string,
   refs: readonly { name: string; source: string }[],
   list: ClassList | undefined,
-  offeredBy: readonly Grantor[] = [],
 ): (Standing | undefined)[] {
   if (refs.length === 0) return [];
   const db = openContentDb(dataDir);
   try {
     const held = list && classListClause(list);
-    const offered = offeredBy.length > 0 ? offeredClause(offeredBy) : undefined;
     const select = db.prepare(
-      `SELECT name, level${held ? `, ${held.clause} AS listed` : ""}${offered ? `, ${offered.clause} AS offered` : ""}
+      `SELECT name, level${held ? `, ${held.clause} AS listed` : ""}
        FROM spells WHERE name = ? AND source = ?`,
     );
-    const params = [...(held?.params ?? []), ...(offered?.params ?? [])];
     return refs.map((ref) => {
-      const row = select.get(...params, ref.name, ref.source) as
-        | { name: string; level: number; listed?: 0 | 1; offered?: 0 | 1 }
+      const row = select.get(...(held?.params ?? []), ref.name, ref.source) as
+        | { name: string; level: number; listed?: 0 | 1 }
         | undefined;
       if (!row) return undefined;
-      const { listed, offered: offers, ...spell } = row;
-      return {
-        ...spell,
-        ...(listed !== undefined && { listed: listed === 1 }),
-        ...(offers !== undefined && { offered: offers === 1 }),
-      };
+      const { listed, ...spell } = row;
+      return { ...spell, ...(listed !== undefined && { listed: listed === 1 }) };
     });
   } finally {
     db.close();

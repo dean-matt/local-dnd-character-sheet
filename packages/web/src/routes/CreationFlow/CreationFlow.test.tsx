@@ -99,8 +99,9 @@ describe("CreationFlow", () => {
     expect(screen.queryByRole("button", { name: /^Next/ })).not.toBeInTheDocument();
   });
 
-  it("skips Spells for a class that casts nothing at its level, Finish moving to the step before", async () => {
+  it("skips Spells for a class that casts nothing at its level, though a feat offers picks", async () => {
     const fighter = { name: "Fighter", source: "PHB" };
+    const initiate = { name: "Magic Initiate", source: "PHB" };
     stubApi(undefined, {
       "/api/classes/Fighter/PHB": { ...fighter, edition: "classic", hitDie: 10, json: fighter },
       "/api/classes/Fighter/PHB/at/1": {
@@ -114,8 +115,19 @@ describe("CreationFlow", () => {
         spells: [],
         picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
       },
+      "/api/spells/granted?grantor=feat&name=Magic+Initiate&source=PHB&level=1": {
+        spells: [],
+        picks: { cantrips: 2, spells: 1, learned: 0, alternatives: true },
+      },
     });
-    localStorage.setItem(KEY, JSON.stringify({ edition: "classic", levels: [{ class: fighter }] }));
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        edition: "classic",
+        levels: [{ class: fighter }],
+        feats: [{ ref: initiate }],
+      }),
+    );
     renderFlow("equipment");
 
     expect(await screen.findByText("New character · Step 4 of 4")).toBeVisible();
