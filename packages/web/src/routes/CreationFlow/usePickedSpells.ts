@@ -9,7 +9,7 @@ import { useSpellGrantors } from "./useSpellGrantors.ts";
 function useOfferedBy() {
   return useSpellGrantors()
     .filter(({ grantor }) => grantor !== "class" && grantor !== "subclass")
-    .map(({ grantor, ref, parent }) => ({ grantor, ref, ...(parent && { parent }) }));
+    .map(({ grantor, ref, parent, level }) => ({ grantor, ref, level, ...(parent && { parent }) }));
 }
 
 /**

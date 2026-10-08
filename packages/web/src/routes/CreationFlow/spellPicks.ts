@@ -77,8 +77,39 @@ export const spellsOf = (picked: readonly PickedSpell[]) =>
 
 const names = (spells: readonly PickedSpell[]) => spells.map((spell) => spell.name).join(", ");
 
-/** The picks the draft's other rows offer, a race's, background's or feat's. */
-export type OtherPicks = { cantrips: number; spells: number };
+type Counts = { cantrips: number; spells: number };
+
+/**
+ * The picks the draft's rows offer beside the class's table: how many each count widens by,
+ * and how many of those are owed rather than a ceiling.
+ */
+export type OtherPicks = Counts & { owed: Counts };
+
+/** One row's offer, as `GET /spells/granted` counts it, and what kind of row it is. */
+type Offer = { grantor: string; picks: Counts & { alternatives: boolean } };
+
+/**
+ * The picks every row but the class offers, a subclass's only where its own table states no
+ * count of that kind, as the Eldritch Knight's does and the Arcana Domain's does not. A
+ * row offering alternatives, as Magic Initiate or a 2024 elf's lineages do, widens the
+ * counts by its largest block and owes none, since which block is the player's choice.
+ */
+export function otherPicks(
+  offers: readonly Offer[],
+  subclassStates: { cantrips: boolean; spells: boolean },
+): OtherPicks {
+  const sum = { cantrips: 0, spells: 0, owed: { cantrips: 0, spells: 0 } };
+  for (const { grantor, picks } of offers) {
+    if (grantor === "class") continue;
+    const skips = (kind: keyof Counts) => grantor === "subclass" && subclassStates[kind];
+    for (const kind of ["cantrips", "spells"] as const) {
+      if (skips(kind)) continue;
+      sum[kind] += picks[kind];
+      if (!picks.alternatives) sum.owed[kind] += picks[kind];
+    }
+  }
+  return sum;
+}
 
 /**
  * The picks of one kind the class's list and slots would refuse, less those another row
@@ -115,7 +146,7 @@ export function spellDeparture(
   facts: CasterFacts | undefined,
   picked: readonly PickedSpell[],
   className: string,
-  others: OtherPicks,
+  others: Counts,
 ): string | undefined {
   const cantrips = cantripsOf(picked);
   const spells = spellsOf(picked);
@@ -154,16 +185,16 @@ export function spellDeparture(
 }
 
 /**
- * Whether the picks fill every count the class states and every pick the other rows offer,
+ * Whether the picks fill every count the class states and every pick the other rows owe,
  * an overspend counting as filled.
  */
 export function spellsFilled(
   facts: CasterFacts | undefined,
   picked: readonly PickedSpell[],
-  others: OtherPicks,
+  { owed }: OtherPicks,
 ) {
   return (
-    cantripsOf(picked).length >= (facts?.cantrips ?? 0) + others.cantrips &&
-    spellsOf(picked).length >= (facts?.spells ?? 0) + others.spells
+    cantripsOf(picked).length >= (facts?.cantrips ?? 0) + owed.cantrips &&
+    spellsOf(picked).length >= (facts?.spells ?? 0) + owed.spells
   );
 }

@@ -28,6 +28,7 @@ const listFilters = (list: ReturnType<typeof useSpellChoices>["list"], offList: 
     ? {
         class: nameSource(list.class),
         ...(list.subclass && { subclass: nameSource(list.subclass) }),
+        classLevel: String(list.level),
       }
     : {};
 

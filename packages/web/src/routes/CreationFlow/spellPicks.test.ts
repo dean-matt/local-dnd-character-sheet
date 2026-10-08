@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { casterFacts, type PickedSpell, spellDeparture, spellsFilled } from "./spellPicks.ts";
+import {
+  casterFacts,
+  otherPicks,
+  type PickedSpell,
+  spellDeparture,
+  spellsFilled,
+} from "./spellPicks.ts";
 
 const table = (resources: Record<string, string>, slots: number[] = []) => ({
   resources: Object.entries(resources).map(([resourceKey, value]) => ({ resourceKey, value })),
@@ -113,23 +119,48 @@ describe("spellDeparture", () => {
 
 describe("spellsFilled", () => {
   const facts = { cantrips: 1, spells: 2, prepares: true, maxLevel: 1 };
+  const owing = (cantrips: number) => ({ cantrips, spells: 0, owed: { cantrips, spells: 0 } });
 
   it("asks for every count filled, an overspend counting", () => {
-    expect(spellsFilled(facts, [pick("Light", 0), pick("Bless", 1)], NONE)).toBe(false);
+    expect(spellsFilled(facts, [pick("Light", 0), pick("Bless", 1)], owing(0))).toBe(false);
     const filled = [pick("Light", 0), pick("Bless", 1), pick("Shield", 1)];
-    expect(spellsFilled(facts, filled, NONE)).toBe(true);
-    expect(spellsFilled(facts, [...filled, pick("Sleep", 1)], NONE)).toBe(true);
+    expect(spellsFilled(facts, filled, owing(0))).toBe(true);
+    expect(spellsFilled(facts, [...filled, pick("Sleep", 1)], owing(0))).toBe(true);
   });
 
-  it("asks for the picks other rows offer as well as the class's", () => {
+  it("asks for the picks other rows owe as well as the class's", () => {
     const filled = [pick("Light", 0), pick("Bless", 1), pick("Shield", 1)];
-    expect(spellsFilled(facts, filled, { cantrips: 1, spells: 0 })).toBe(false);
-    expect(spellsFilled(facts, [...filled, pick("Guidance", 0)], { cantrips: 1, spells: 0 })).toBe(
-      true,
-    );
+    expect(spellsFilled(facts, filled, owing(1))).toBe(false);
+    expect(spellsFilled(facts, [...filled, pick("Guidance", 0)], owing(1))).toBe(true);
   });
 
-  it("finds a class that casts nothing, beside rows that offer nothing, filled", () => {
-    expect(spellsFilled(undefined, [], NONE)).toBe(true);
+  it("finds a class that casts nothing, beside rows that owe nothing, filled", () => {
+    expect(spellsFilled(undefined, [], owing(0))).toBe(true);
+  });
+});
+
+describe("otherPicks", () => {
+  const offer = (grantor: string, cantrips: number, spells: number, alternatives = false) => ({
+    grantor,
+    picks: { cantrips, spells, alternatives },
+  });
+  const states = { cantrips: false, spells: false };
+
+  it("sums every row but the class, owing only the rows with one block", () => {
+    const offers = [offer("class", 9, 9), offer("race", 1, 0), offer("feat", 2, 1, true)];
+    expect(otherPicks(offers, states)).toEqual({
+      cantrips: 3,
+      spells: 1,
+      owed: { cantrips: 1, spells: 0 },
+    });
+  });
+
+  it("counts a subclass's picks only where its own table states no count of that kind", () => {
+    const arcana = [offer("subclass", 2, 0)];
+    expect(otherPicks(arcana, states).owed).toEqual({ cantrips: 2, spells: 0 });
+    expect(otherPicks(arcana, { cantrips: true, spells: true }).owed).toEqual({
+      cantrips: 0,
+      spells: 0,
+    });
   });
 });
