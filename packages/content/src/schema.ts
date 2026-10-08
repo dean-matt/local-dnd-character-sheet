@@ -200,13 +200,14 @@ CREATE INDEX spell_classes_by_class ON spell_classes (class_name, class_source);
 -- Every spell a grantor's additionalSpells may give, its filters resolved
 -- against the catalog. granted_by names the table the grantor is in;
 -- parent_name and parent_source hold a subclass's class or a subrace's race,
--- and the empty string for the other three, since a STRICT key cannot be NULL.
+-- and the empty string for every other grantor, since a STRICT key cannot be NULL.
 -- chosen is 1 where the spell reaches a character only by the player's pick.
 CREATE TABLE spell_grants (
   spell_name    TEXT NOT NULL,
   spell_source  TEXT NOT NULL,
   granted_by    TEXT NOT NULL CHECK (granted_by IN
-                  ('subclasses', 'races', 'subraces', 'feats', 'optional_features')),
+                  ('classes', 'subclasses', 'races', 'subraces', 'backgrounds', 'feats',
+                   'optional_features')),
   name          TEXT NOT NULL,
   source        TEXT NOT NULL,
   parent_name   TEXT NOT NULL,

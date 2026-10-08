@@ -40,6 +40,8 @@ const SOURCES = {
 };
 
 type Grantors = {
+  background?: unknown[];
+  class?: unknown[];
   feat?: unknown[];
   optionalfeature?: unknown[];
   race?: unknown[];
@@ -71,9 +73,10 @@ describe("the spell grants loader", () => {
       "data/spells/spells-phb.json": { spell: SPELLS },
       "data/spells/sources.json": SOURCES,
       "data/class/class-test.json": {
-        class: [WIZARD, CLERIC],
+        class: [WIZARD, CLERIC, ...(grantors.class ?? [])],
         subclass: grantors.subclass ?? [],
       },
+      "data/backgrounds.json": { background: grantors.background ?? [] },
       "data/feats.json": { feat: grantors.feat ?? [] },
       "data/optionalfeatures.json": { optionalfeature: grantors.optionalfeature ?? [] },
       "data/races.json": { race: grantors.race ?? [], subrace: grantors.subrace ?? [] },
@@ -253,6 +256,56 @@ describe("the spell grants loader", () => {
         source: "PHB",
         parent_name: "Elf",
         parent_source: "PHB",
+        chosen: 0,
+      },
+    ]);
+  });
+
+  it("reads an empty filter as every spell", () => {
+    expect(offered(feat([{ known: { "18": [{ choose: "" }] } }])).map(([name]) => name)).toEqual(
+      SPELLS.map(({ name }) => name).sort(),
+    );
+  });
+
+  it("reads a class's and a background's grants, and skips a sidekick class", () => {
+    const rows = grants({
+      class: [
+        { name: "Paladin", source: "XPHB", additionalSpells: [{ prepared: { "2": ["shield"] } }] },
+        {
+          name: "Spellcaster",
+          source: "TCE",
+          isSidekick: true,
+          additionalSpells: [{ prepared: { "1": ["light"] } }],
+        },
+      ],
+      background: [
+        {
+          name: "Izzet Engineer",
+          source: "GGR",
+          additionalSpells: [{ expanded: { s1: ["detect magic"] } }],
+        },
+      ],
+    });
+
+    expect(rows).toEqual([
+      {
+        spell_name: "Detect Magic",
+        spell_source: "PHB",
+        granted_by: "backgrounds",
+        name: "Izzet Engineer",
+        source: "GGR",
+        parent_name: "",
+        parent_source: "",
+        chosen: 1,
+      },
+      {
+        spell_name: "Shield",
+        spell_source: "PHB",
+        granted_by: "classes",
+        name: "Paladin",
+        source: "XPHB",
+        parent_name: "",
+        parent_source: "",
         chosen: 0,
       },
     ]);

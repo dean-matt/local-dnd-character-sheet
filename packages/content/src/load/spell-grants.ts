@@ -1,6 +1,7 @@
 /**
- * `additionalSpells` on subclasses, races, subraces, feats and optional
- * features into `spell_grants`: every spell each of them may give a character.
+ * `additionalSpells` on classes, subclasses, races, subraces, backgrounds, feats
+ * and optional features into `spell_grants`: every spell each of them may give
+ * a character.
  *
  * A grant names a spell outright — `"misty step|xphb"` — or states a filter
  * over the catalog, `{ "choose": "level=0|class=Wizard", "count": 2 }`. Both
@@ -18,7 +19,7 @@
  * grantor's `json`. A picker reads them there until a query needs one as a
  * column here.
  */
-import { OPTIONAL_FEATURES_FILE } from "./character-options.ts";
+import { BACKGROUNDS_FILE, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { entriesOf as classEntriesOf } from "./class-rows.ts";
 import { CLASS_FILES, classIdentities } from "./classes.ts";
 import type { Loader, Row } from "./index.ts";
@@ -87,6 +88,8 @@ const CLAUSES: Record<string, (values: string[], where: string) => (spell: Spell
 };
 
 function spellFilter(expression: string, where: string): (spell: Spell) => boolean {
+  // The 2014 Bard's Magical Secrets writes its 18th-level pick, any spell at all, as "".
+  if (expression === "") return () => true;
   const tests = expression.split("|").map((clause) => {
     const at = clause.indexOf("=");
     const key = fold(clause.slice(0, at));
@@ -138,14 +141,35 @@ function catalogOf(sources: Map<string, unknown>): Catalog {
   return { spells, byKey };
 }
 
+type Add = (
+  granted_by: string,
+  entry: Entry,
+  context: string,
+  parent?: [name: string, source: string],
+) => void;
+
+function addClassGrantors(sources: Map<string, unknown>, add: Add) {
+  const classes = classIdentities(sources);
+  for (const [path, parsed] of sources) {
+    if (!path.startsWith("data/class/")) continue;
+    for (const [index, entry] of classEntriesOf(parsed, "class", path).entries()) {
+      const context = `${path} class[${index}]`;
+      const key = `${text(entry, "name", context)}|${text(entry, "source", context)}`;
+      if (classes.has(key)) add("classes", entry, context);
+    }
+    for (const [index, entry] of classEntriesOf(parsed, "subclass", path).entries()) {
+      const context = `${path} subclass[${index}]`;
+      add("subclasses", entry, context, [
+        text(entry, "className", context),
+        text(entry, "classSource", context),
+      ]);
+    }
+  }
+}
+
 function grantorsOf(sources: Map<string, unknown>): Grantor[] {
   const grantors: Grantor[] = [];
-  const add = (
-    granted_by: string,
-    entry: Entry,
-    context: string,
-    parent: [name: string, source: string] = ["", ""],
-  ) =>
+  const add: Add = (granted_by, entry, context, parent = ["", ""]) => {
     grantors.push({
       granted_by,
       name: granted_by === "subraces" ? subraceName(entry, context) : text(entry, "name", context),
@@ -155,18 +179,10 @@ function grantorsOf(sources: Map<string, unknown>): Grantor[] {
       entry,
       context,
     });
-  for (const [path, parsed] of sources) {
-    if (path.startsWith("data/class/")) {
-      for (const [index, entry] of classEntriesOf(parsed, "subclass", path).entries()) {
-        const context = `${path} subclass[${index}]`;
-        add("subclasses", entry, context, [
-          text(entry, "className", context),
-          text(entry, "classSource", context),
-        ]);
-      }
-    }
-  }
+  };
+  addClassGrantors(sources, add);
   const files: [string, string, string][] = [
+    [BACKGROUNDS_FILE, "background", "backgrounds"],
     [FEATS_FILE, "feat", "feats"],
     [OPTIONAL_FEATURES_FILE, "optionalfeature", "optional_features"],
     [RACES_FILE, "race", "races"],
@@ -259,7 +275,15 @@ function grantsOf(grantor: Grantor, catalog: Catalog): Map<Spell, boolean> {
 
 export const spellGrants: Loader = {
   name: "spell grants",
-  files: [SPELL_FILES, SOURCES_FILE, CLASS_FILES, FEATS_FILE, OPTIONAL_FEATURES_FILE, RACES_FILE],
+  files: [
+    SPELL_FILES,
+    SOURCES_FILE,
+    CLASS_FILES,
+    BACKGROUNDS_FILE,
+    FEATS_FILE,
+    OPTIONAL_FEATURES_FILE,
+    RACES_FILE,
+  ],
   prepare: races.prepare,
   rows: (sources) => {
     const catalog = catalogOf(sources);
