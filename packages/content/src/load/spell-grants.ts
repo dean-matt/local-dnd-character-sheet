@@ -211,7 +211,7 @@ type Give = (spell: Spell, chosen: boolean) => void;
 
 type Grant = { chosen: boolean; level: number };
 
-/** The grant an outright gift wins over a pick by, else the earlier of the two. */
+/** An outright grant wins over a pick; between two of the same kind, the lower level wins. */
 function merged(held: Grant | undefined, next: Grant): Grant {
   if (held === undefined || (held.chosen && !next.chosen)) return next;
   if (held.chosen !== next.chosen) return held;
