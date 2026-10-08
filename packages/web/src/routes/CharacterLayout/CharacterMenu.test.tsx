@@ -6,6 +6,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, presetPageRecords } from "../../test/records.ts";
 import { CharacterMenu } from "./CharacterMenu.tsx";
 
+function exportResponse(status: number) {
+  return status === 500
+    ? new Response(JSON.stringify({ error: "characters.db is locked" }), { status })
+    : new Response(JSON.stringify(characterFile()), { status: 200 });
+}
+
 function stubFetch(status: number) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     if (init?.method === "POST") {
@@ -18,9 +24,7 @@ function stubFetch(status: number) {
         ? new Response(null, { status })
         : new Response(JSON.stringify({ error: "Could not back up characters.db" }), { status });
     }
-    if (String(input) === "/api/characters/1/export" && status !== 500) {
-      return new Response(JSON.stringify(characterFile()), { status: 200 });
-    }
+    if (String(input) === "/api/characters/1/export") return exportResponse(status);
     return String(input) === "/api/characters/1/pages"
       ? new Response(JSON.stringify(presetPageRecords()), { status: 200 })
       : new Response(JSON.stringify({ error: "nothing here" }), { status: 404 });
@@ -174,12 +178,15 @@ describe("CharacterMenu", () => {
 
   it("stays on the character and says why when the export fails", async () => {
     stubFetch(500);
-    renderMenu();
+    const { router } = renderMenu();
 
     openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Export character" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Export failed: nothing here");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Export failed: characters.db is locked",
+    );
+    expect(router.state.location.pathname).toBe("/characters/1");
   });
 
   it("names what goes with the character and that undo cannot bring it back", async () => {

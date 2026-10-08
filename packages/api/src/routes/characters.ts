@@ -173,7 +173,7 @@ const importFile = createRoute({
   },
 });
 
-/** Names each field a file fails on, so the person importing it can find the line. */
+/** Names each field a file fails on, so the person importing it can find the field. */
 function describeIssues(error: z.ZodError): string {
   const issues = error.issues.map((issue) => `${issue.path.join(".") || "file"}: ${issue.message}`);
   return `Not a character file this build can read. ${issues.join("; ")}`;
