@@ -211,7 +211,11 @@ type Give = (spell: Spell, chosen: boolean) => void;
 
 type Grant = { chosen: boolean; level: number };
 
-/** An outright grant wins over a pick; between two of the same kind, the lower level wins. */
+/**
+ * An outright grant wins over a pick; between two of the same kind, the lower level wins.
+ * The ceiling: a spell offered at one level and given outright at a later one keeps only
+ * the later, so below it the row reads as neither. A row per reading is the way out.
+ */
 function merged(held: Grant | undefined, next: Grant): Grant {
   if (held === undefined || (held.chosen && !next.chosen)) return next;
   if (held.chosen !== next.chosen) return held;
