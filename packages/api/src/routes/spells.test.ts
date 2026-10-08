@@ -225,7 +225,7 @@ describe("spellsRoutes, choosing spells", () => {
     expect(await res.json()).toEqual({ spells: [] });
   });
 
-  it("looks up each spell's level and standing on a list, in order", async () => {
+  it("looks up each spell's name, level and standing on a list, in order", async () => {
     insertHomebrewSpell(opened.homebrewDb, "1", acidSplash());
     const lookup = (body: unknown) =>
       routes.request("/spells/lookup", {
@@ -249,14 +249,19 @@ describe("spellsRoutes, choosing spells", () => {
     });
     expect(await listed.json()).toEqual({
       spells: [
-        { level: 1, listed: false },
-        { level: 0, listed: true },
-        { level: 0, listed: false },
+        { name: "Bless", level: 1, listed: false },
+        { name: "Light", level: 0, listed: true },
+        { name: "Acid Splash", level: 0, listed: false },
         null,
       ],
     });
 
     const bare = await lookup({ spells });
-    expect((await bare.json()).spells).toEqual([{ level: 1 }, { level: 0 }, { level: 0 }, null]);
+    expect((await bare.json()).spells).toEqual([
+      { name: "Bless", level: 1 },
+      { name: "Light", level: 0 },
+      { name: "Acid Splash", level: 0 },
+      null,
+    ]);
   });
 });

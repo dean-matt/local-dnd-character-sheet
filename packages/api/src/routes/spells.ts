@@ -129,7 +129,7 @@ const lookup = createRoute({
   method: "post",
   path: "/spells/lookup",
   tags: ["spells"],
-  summary: "Read each spell's level, and whether a class's list holds it, in order",
+  summary: "Read each spell's name and level, and whether a class's list holds it, in order",
   description:
     "A POST because the batch is a body a query string would have to encode; it writes nothing.",
   request: {
@@ -184,7 +184,8 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       if (!("homebrewId" in ref)) return catalog.next().value ?? null;
       const row = getHomebrewSpell(homebrewDb, ref.homebrewId);
       if (!row) return null;
-      return list ? { level: row.level, listed: false } : { level: row.level };
+      const spell = { name: row.name, level: row.level };
+      return list ? { ...spell, listed: false } : spell;
     });
     return c.json({ spells: looked }, 200);
   });

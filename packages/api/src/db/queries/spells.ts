@@ -125,25 +125,26 @@ export function getGrantedSpells(
   }
 }
 
-/** Each catalog spell's level and, where `list` is named, whether it holds the spell. */
+/** Each catalog spell's name and level and, where `list` is named, whether it holds the spell. */
 export function lookupCatalogSpells(
   dataDir: string,
   refs: readonly { name: string; source: string }[],
   list: ClassList | undefined,
-): ({ level: number; listed?: boolean } | undefined)[] {
+): ({ name: string; level: number; listed?: boolean } | undefined)[] {
   if (refs.length === 0) return [];
   const db = openContentDb(dataDir);
   try {
     const held = list && classListClause(list);
     const select = db.prepare(
-      `SELECT level${held ? `, ${held.clause} AS listed` : ""} FROM spells WHERE name = ? AND source = ?`,
+      `SELECT name, level${held ? `, ${held.clause} AS listed` : ""} FROM spells WHERE name = ? AND source = ?`,
     );
     return refs.map((ref) => {
       const row = select.get(...(held?.params ?? []), ref.name, ref.source) as
-        | { level: number; listed?: 0 | 1 }
+        | { name: string; level: number; listed?: 0 | 1 }
         | undefined;
       if (!row) return undefined;
-      return row.listed === undefined ? { level: row.level } : { ...row, listed: row.listed === 1 };
+      const { listed, ...spell } = row;
+      return listed === undefined ? spell : { ...spell, listed: listed === 1 };
     });
   } finally {
     db.close();

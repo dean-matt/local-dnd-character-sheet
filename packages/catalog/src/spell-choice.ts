@@ -44,8 +44,8 @@ export const spellLookupRequestSchema = z.strictObject({
 export type SpellLookupRequest = z.infer<typeof spellLookupRequestSchema>;
 
 /**
- * Positional: each spell's level and whether the list holds it, `null` where no row
- * answers. `listed` is absent where the request named no list, and false for a homebrew
+ * Positional: each spell's name, level and whether the list holds it, `null` where no
+ * row answers. `listed` is absent where the request named no list, and false for a homebrew
  * spell, which no class list holds.
  */
 export const spellLookupResponseSchema = z.strictObject({
