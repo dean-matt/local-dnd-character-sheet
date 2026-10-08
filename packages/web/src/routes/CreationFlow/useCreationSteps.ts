@@ -8,9 +8,9 @@ import { useSpellChoices } from "./useSpellChoices.ts";
  * already stands on it. A pick a race, background or feat offers keeps no step.
  */
 export function useCreationSteps(current: CreationStep): readonly CreationStep[] {
-  const { tablesReady, facts, picked, subclass } = useSpellChoices();
+  const { ready, facts, picked, subclass } = useSpellChoices();
   const skipsSpells =
-    tablesReady &&
+    ready &&
     facts === undefined &&
     subclass.cantrips + subclass.spells === 0 &&
     picked.length === 0 &&
