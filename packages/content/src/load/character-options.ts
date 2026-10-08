@@ -17,6 +17,9 @@ type FromSource = (source: string) => Edition;
 /** The pool a class progression's `featureType` reaches, named for the loaders that borrow it. */
 export const OPTIONAL_FEATURES_FILE = "data/optionalfeatures.json";
 
+/** Shared with `spell-grants.ts`, which reads a background's `additionalSpells`. */
+export const BACKGROUNDS_FILE = "data/backgrounds.json";
+
 /**
  * The array key each file carries, and the table its entries become. A table
  * named here is also a `granted_by` value, so adding one widens that column's
@@ -24,13 +27,13 @@ export const OPTIONAL_FEATURES_FILE = "data/optionalfeatures.json";
  * rebuild naming neither the entry nor the column.
  */
 const FILES: Record<string, { key: string; table: string }> = {
-  "data/backgrounds.json": { key: "background", table: "backgrounds" },
+  [BACKGROUNDS_FILE]: { key: "background", table: "backgrounds" },
   "data/feats.json": { key: "feat", table: "feats" },
   [OPTIONAL_FEATURES_FILE]: { key: "optionalfeature", table: "optional_features" },
 };
 
 const FLUFF: Record<string, { file: string; key: string }> = {
-  "data/backgrounds.json": { file: "data/fluff-backgrounds.json", key: "backgroundFluff" },
+  [BACKGROUNDS_FILE]: { file: "data/fluff-backgrounds.json", key: "backgroundFluff" },
   "data/feats.json": { file: "data/fluff-feats.json", key: "featFluff" },
   [OPTIONAL_FEATURES_FILE]: {
     file: "data/fluff-optionalfeatures.json",

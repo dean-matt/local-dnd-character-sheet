@@ -19,7 +19,7 @@
  * grantor's `json`. A picker reads them there until a query needs one as a
  * column here.
  */
-import { OPTIONAL_FEATURES_FILE } from "./character-options.ts";
+import { BACKGROUNDS_FILE, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { entriesOf as classEntriesOf } from "./class-rows.ts";
 import { CLASS_FILES, classIdentities } from "./classes.ts";
 import type { Loader, Row } from "./index.ts";
@@ -27,7 +27,6 @@ import { type Entry, entriesOf, isRecord, text } from "./json.ts";
 import { races, subraceName } from "./races.ts";
 import { SOURCES_FILE, SPELL_FILES, spellClassRows } from "./spells.ts";
 
-const BACKGROUNDS_FILE = "data/backgrounds.json";
 const FEATS_FILE = "data/feats.json";
 const RACES_FILE = "data/races.json";
 const KINDS = new Set(["innate", "known", "prepared", "expanded"]);
@@ -150,10 +149,13 @@ type Add = (
 ) => void;
 
 function addClassGrantors(sources: Map<string, unknown>, add: Add) {
+  const classes = classIdentities(sources);
   for (const [path, parsed] of sources) {
     if (!path.startsWith("data/class/")) continue;
     for (const [index, entry] of classEntriesOf(parsed, "class", path).entries()) {
-      if (entry.isSidekick !== true) add("classes", entry, `${path} class[${index}]`);
+      const context = `${path} class[${index}]`;
+      const key = `${text(entry, "name", context)}|${text(entry, "source", context)}`;
+      if (classes.has(key)) add("classes", entry, context);
     }
     for (const [index, entry] of classEntriesOf(parsed, "subclass", path).entries()) {
       const context = `${path} subclass[${index}]`;
