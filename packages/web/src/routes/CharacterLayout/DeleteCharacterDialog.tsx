@@ -25,7 +25,7 @@ export function DeleteCharacterDialog({
   const navigate = useNavigate();
   const [typed, setTyped] = useState("");
   const formId = useId();
-  const confirmed = typed.trim() === character.name.trim();
+  const confirmed = typed === character.name;
   const ready = confirmed && !remove.isPending;
   const pageCount = pages ? `all ${pages.length} of its pages` : "its pages";
 

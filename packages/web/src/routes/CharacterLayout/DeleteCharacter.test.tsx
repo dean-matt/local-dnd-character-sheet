@@ -23,14 +23,14 @@ function stubDelete(status: number) {
 const deletes = (fetchMock: ReturnType<typeof stubDelete>) =>
   fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE");
 
-function renderDelete() {
+function renderDelete(name = "Vex") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  queryClient.setQueryData(["characters"], [characterRecord("1", "Vex")]);
+  queryClient.setQueryData(["characters"], [characterRecord("1", name)]);
   const router = createMemoryRouter(
     [
       {
         path: "/characters/:id",
-        element: <DeleteCharacter character={characterRecord("1", "Vex")} />,
+        element: <DeleteCharacter character={characterRecord("1", name)} />,
       },
       { path: "/characters", element: <p>list</p> },
     ],
@@ -76,6 +76,14 @@ describe("DeleteCharacter", () => {
     fireEvent.click(confirm);
 
     expect(deletes(fetchMock)).toHaveLength(0);
+  });
+
+  it("asks for a whitespace name to be typed too, rather than taking an empty field", () => {
+    stubDelete(204);
+    renderDelete("  ");
+    fireEvent.click(screen.getByRole("button", { name: "Delete character" }));
+
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("deletes once the name matches, then leaves for the list without the character", async () => {
