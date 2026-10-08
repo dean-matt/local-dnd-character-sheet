@@ -31,6 +31,29 @@ export function getCharacter(db: CharactersDb, id: string) {
   return db.select().from(characters).where(eq(characters.id, id)).get();
 }
 
+/** The `characters` row and the default `character_state` row every character starts with. */
+function insertCharacterRows(
+  tx: Pick<CharactersDb, "insert">,
+  id: string,
+  definition: CharacterDefinition,
+) {
+  const row = tx
+    .insert(characters)
+    .values({
+      id,
+      name: definition.name,
+      edition: definition.edition,
+      level: totalLevel(definition),
+      raceSummary: raceSummary(definition),
+      classSummary: classSummary(definition),
+      definition,
+    })
+    .returning()
+    .get();
+  tx.insert(characterState).values({ characterId: id, state: defaultCharacterState() }).run();
+  return row;
+}
+
 /**
  * Creates the character's `character_state` row and its preset pages alongside it, so
  * every read finds both. Import and creation are the same route, so both seed here.
@@ -40,23 +63,33 @@ export function insertCharacter(
   input: { id: string; definition: CharacterDefinition },
 ) {
   return db.transaction((tx) => {
-    const row = tx
-      .insert(characters)
-      .values({
-        id: input.id,
-        name: input.definition.name,
-        edition: input.definition.edition,
-        level: totalLevel(input.definition),
-        raceSummary: raceSummary(input.definition),
-        classSummary: classSummary(input.definition),
-        definition: input.definition,
-      })
-      .returning()
-      .get();
-    tx.insert(characterState)
-      .values({ characterId: input.id, state: defaultCharacterState() })
-      .run();
+    const row = insertCharacterRows(tx, input.id, input.definition);
     tx.insert(characterPages).values(presetPageRows(input.id)).run();
+    return row;
+  });
+}
+
+/**
+ * Copies `sourceId`'s definition and pages under `id`, naming the copy "<name> (copy)".
+ * State starts at the default, and the roll and undo logs start empty, since a copy has
+ * played nothing yet. `undefined` where `sourceId` names no character.
+ */
+export function duplicateCharacter(db: CharactersDb, sourceId: string, id: string) {
+  return db.transaction((tx) => {
+    const source = tx.select().from(characters).where(eq(characters.id, sourceId)).get();
+    if (!source) return undefined;
+    const parsed = characterDefinitionSchema.parse(source.definition);
+    const row = insertCharacterRows(tx, id, { ...parsed, name: `${parsed.name} (copy)` });
+    const pages = tx
+      .select()
+      .from(characterPages)
+      .where(eq(characterPages.characterId, sourceId))
+      .all();
+    if (pages.length > 0) {
+      tx.insert(characterPages)
+        .values(pages.map((page) => ({ ...page, characterId: id })))
+        .run();
+    }
     return row;
   });
 }

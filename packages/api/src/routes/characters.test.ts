@@ -149,6 +149,20 @@ describe("charactersRoutes", () => {
     expect(body).toMatchObject({ id: created.id, name: "Vex the Bold", level: 2 });
   });
 
+  it("duplicates a character under a new id, and 404s for a miss", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+
+    const res = await routes.request(`/characters/${created.id}/duplicate`, { method: "POST" });
+    expect(res.status).toBe(201);
+    const copy = await res.json();
+    expect(copy).toMatchObject({ name: "Vex (copy)", level: 1 });
+    expect(copy.id).not.toBe(created.id);
+    expect((await routes.request(`/characters/${copy.id}`)).status).toBe(200);
+
+    const miss = await routes.request("/characters/missing/duplicate", { method: "POST" });
+    expect(miss.status).toBe(404);
+  });
+
   it("deletes a character, after which it 404s", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
 

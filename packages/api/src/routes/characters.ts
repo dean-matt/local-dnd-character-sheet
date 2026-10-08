@@ -1,5 +1,5 @@
 /**
- * List, read, create, update and delete for `characters.db`'s `characters` table, plus
+ * List, read, create, duplicate, update and delete for `characters.db`'s `characters` table, plus
  * read and replace for the `character_state` row each one owns, and the undo log a
  * definition update writes. `name`, `level`,
  * `edition`, `raceSummary` and `classSummary` are never accepted from a request body —
@@ -22,6 +22,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import {
   deleteCharacter,
+  duplicateCharacter,
   getCharacter,
   getCharacterState,
   insertCharacter,
@@ -105,6 +106,24 @@ const create = createRoute({
       description: "The created character",
       content: { "application/json": { schema: characterRecordSchema } },
     },
+  },
+});
+
+const duplicate = createRoute({
+  method: "post",
+  path: "/characters/{id}/duplicate",
+  tags: ["characters"],
+  summary: "Duplicate a character",
+  description:
+    'Copies the definition and pages under a new id, with " (copy)" after the name. ' +
+    "The copy starts with the default state and empty roll and undo logs.",
+  request: { params: idParam },
+  responses: {
+    201: {
+      description: "The copy",
+      content: { "application/json": { schema: characterRecordSchema } },
+    },
+    404: notFound("character"),
   },
 });
 
@@ -236,6 +255,12 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
 
   routes.openapi(create, (c) => {
     const row = insertCharacter(db, { id: randomUUID(), definition: c.req.valid("json") });
+    return c.json(toRecord(row), 201);
+  });
+
+  routes.openapi(duplicate, (c) => {
+    const row = duplicateCharacter(db, c.req.valid("param").id, randomUUID());
+    if (!row) return c.json({ error: NOT_FOUND }, 404);
     return c.json(toRecord(row), 201);
   });
 
