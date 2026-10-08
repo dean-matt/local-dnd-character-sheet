@@ -182,6 +182,9 @@ describe("charactersRoutes", () => {
 
     const res = await failing.request(`/characters/${created.id}`, { method: "DELETE" });
     expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({
+      error: "Could not back up characters.db, so nothing was deleted: disk full",
+    });
     expect((await routes.request(`/characters/${created.id}`)).status).toBe(200);
   });
 

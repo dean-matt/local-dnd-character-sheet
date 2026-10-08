@@ -139,6 +139,10 @@ const remove = createRoute({
   responses: {
     204: { description: "The character was deleted" },
     404: notFound("character"),
+    500: {
+      description: "The snapshot failed, so nothing was deleted",
+      content: { "application/json": { schema: errorSchema } },
+    },
   },
 });
 
@@ -245,7 +249,15 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
   routes.openapi(remove, (c) => {
     const { id } = c.req.valid("param");
     if (!getCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
-    backup();
+    try {
+      backup();
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      return c.json(
+        { error: `Could not back up characters.db, so nothing was deleted: ${reason}` },
+        500,
+      );
+    }
     deleteCharacter(db, id);
     return c.body(null, 204);
   });

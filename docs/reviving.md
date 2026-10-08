@@ -65,15 +65,26 @@ delete rather than keep them — SQLite recreates them from the restored file on
 ## Get a deleted character back
 
 Undo does not reach a deleted character. Deleting one first snapshots `characters.db` to
-`data/backups/`, so the newest `characters-*.db` there still holds it. Copying that file
-back would also lose every edit made since, so copy the one character's rows out of it
-instead, with the API stopped:
+`data/backups/`, so a snapshot there still holds it — but not always the newest, since the
+API snapshots again on every start. Copying a snapshot back would also lose every edit
+made since, so find the newest one holding the character and copy its rows out, with the
+API stopped:
 
 ```bash
-backup=$(ls data/backups/characters-*.db | tail -1)
-sqlite3 "$backup" 'SELECT id, name FROM characters'   # find the id
-id=<the id>
+name='Vex'   # double any ' inside the name
+for backup in $(ls -r data/backups/characters-*.db); do
+  id=$(sqlite3 "$backup" "SELECT id FROM characters WHERE name = '$name'")
+  [ -n "$id" ] && break
+done
+echo "$backup holds $id"
+```
+
+An empty id means no snapshot holds that name; two ids mean two characters share it, so
+set `id` to the one you want. Then copy the rows:
+
+```bash
 sqlite3 data/characters.db <<SQL
+.bail on
 ATTACH '$backup' AS backup;
 BEGIN;
 INSERT INTO characters SELECT * FROM backup.characters WHERE id = '$id';
@@ -87,8 +98,8 @@ SQL
 
 `SELECT *` holds because the snapshot shares the live file's schema. A backup taken before
 a migration may not: list its columns with `.schema characters` and name them instead.
-`data/backups/` keeps only the ten newest, so ten more deletes or restarts after a change
-push the character out for good.
+Every delete, and every start after a change, adds a snapshot, and `data/backups/` keeps
+only the ten newest. Ten of those after the delete push the character out for good.
 
 ## Run it
 

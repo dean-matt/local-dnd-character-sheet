@@ -10,7 +10,7 @@ function stubDelete(status: number) {
     if (init?.method === "DELETE") {
       return status === 204
         ? new Response(null, { status })
-        : new Response(JSON.stringify({ error: "disk full" }), { status });
+        : new Response(JSON.stringify({ error: "Could not back up characters.db" }), { status });
     }
     return String(input) === "/api/characters/1/pages"
       ? new Response(JSON.stringify(presetPageRecords()), { status: 200 })
@@ -101,7 +101,10 @@ describe("DeleteCharacter", () => {
     fireEvent.change(screen.getByLabelText("Type Vex to confirm"), { target: { value: "Vex" } });
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Delete failed: disk full");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Delete failed: Could not back up characters.db",
+    );
+    expect(screen.getByLabelText("Type Vex to confirm")).toHaveAttribute("aria-invalid", "false");
     expect(router.state.location.pathname).toBe("/characters/1");
   });
 });

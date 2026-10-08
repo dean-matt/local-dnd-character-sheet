@@ -34,7 +34,10 @@ export function DeleteCharacterDialog({
       <ModalEntry
         title={`Delete ${character.name}?`}
         footer={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <p role="alert" className="text-error text-row">
+              {remove.isError && `Delete failed: ${remove.error.message}`}
+            </p>
             <button
               type="button"
               onClick={onClose}
@@ -76,7 +79,6 @@ export function DeleteCharacterDialog({
             onChange={(event) => setTyped(event.target.value)}
             autoComplete="off"
             spellCheck={false}
-            error={remove.isError ? `Delete failed: ${remove.error.message}` : undefined}
           />
         </form>
       </ModalEntry>

@@ -51,7 +51,7 @@ test("the top bar, character header and sidebar stay pinned in a tall window, th
     await probe.focus();
     expect((await edges(probe)).top).toBeGreaterThanOrEqual(headerBox.bottom);
 
-    await page.getByRole("button", { name: "Character" }).click();
+    await page.getByRole("button", { name: "Character", exact: true }).click();
     const covering = await page.evaluate(
       (y) => document.elementFromPoint(window.innerWidth - 20, y)?.closest("header") !== null,
       headerBox.top + 10,
