@@ -62,6 +62,34 @@ rm -f data/characters.db-wal data/characters.db-shm
 The `-wal` and `-shm` sidecars belong to the file you just replaced, not the backup, so
 delete rather than keep them — SQLite recreates them from the restored file on next open.
 
+## Get a deleted character back
+
+Undo does not reach a deleted character. Deleting one first snapshots `characters.db` to
+`data/backups/`, so the newest `characters-*.db` there still holds it. Copying that file
+back would also lose every edit made since, so copy the one character's rows out of it
+instead, with the API stopped:
+
+```bash
+backup=$(ls data/backups/characters-*.db | tail -1)
+sqlite3 "$backup" 'SELECT id, name FROM characters'   # find the id
+id=<the id>
+sqlite3 data/characters.db <<SQL
+ATTACH '$backup' AS backup;
+BEGIN;
+INSERT INTO characters SELECT * FROM backup.characters WHERE id = '$id';
+INSERT INTO character_state SELECT * FROM backup.character_state WHERE character_id = '$id';
+INSERT INTO character_pages SELECT * FROM backup.character_pages WHERE character_id = '$id';
+INSERT INTO roll_log SELECT * FROM backup.roll_log WHERE character_id = '$id';
+INSERT INTO undo_log SELECT * FROM backup.undo_log WHERE character_id = '$id';
+COMMIT;
+SQL
+```
+
+`SELECT *` holds because the snapshot shares the live file's schema. A backup taken before
+a migration may not: list its columns with `.schema characters` and name them instead.
+`data/backups/` keeps only the ten newest, so ten more deletes or restarts after a change
+push the character out for good.
+
 ## Run it
 
 ```bash

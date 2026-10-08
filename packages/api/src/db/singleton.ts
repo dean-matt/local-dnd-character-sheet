@@ -13,8 +13,12 @@
  * shared connection this module holds.
  */
 import { resolve } from "node:path";
+import { backupDatabase, backupDirFor } from "./backup.ts";
 import { openDatabases } from "./client.ts";
 
 export const DATA_DIR = resolve(import.meta.dirname, "../../../../data");
 
 export const { charactersDb, homebrewDb } = openDatabases(DATA_DIR);
+
+export const backupCharactersDb = () =>
+  backupDatabase(charactersDb.$client, backupDirFor(DATA_DIR), "characters");

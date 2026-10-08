@@ -43,7 +43,7 @@ describe("charactersRoutes", () => {
 
   beforeEach(() => {
     opened = openTestDatabases();
-    routes = charactersRoutes(opened.charactersDb);
+    routes = charactersRoutes(opened.charactersDb, () => {});
   });
 
   afterEach(() => {
@@ -158,6 +158,33 @@ describe("charactersRoutes", () => {
     expect((await routes.request(`/characters/${created.id}`)).status).toBe(404);
   });
 
+  it("snapshots the database while the character is still in it, and not for a miss", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+    const seen: number[] = [];
+    const backed = charactersRoutes(opened.charactersDb, () => {
+      seen.push(opened.charactersDb.select().from(characters).all().length);
+    });
+
+    await backed.request("/characters/missing", { method: "DELETE" });
+    expect(seen).toEqual([]);
+
+    expect((await backed.request(`/characters/${created.id}`, { method: "DELETE" })).status).toBe(
+      204,
+    );
+    expect(seen).toEqual([1]);
+  });
+
+  it("keeps the character when the snapshot fails", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+    const failing = charactersRoutes(opened.charactersDb, () => {
+      throw new Error("disk full");
+    });
+
+    const res = await failing.request(`/characters/${created.id}`, { method: "DELETE" });
+    expect(res.status).toBe(500);
+    expect((await routes.request(`/characters/${created.id}`)).status).toBe(200);
+  });
+
   it("reads the default state a character is created with", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
 
@@ -213,7 +240,7 @@ describe("the undo log", () => {
 
   beforeEach(async () => {
     opened = openTestDatabases();
-    routes = charactersRoutes(opened.charactersDb);
+    routes = charactersRoutes(opened.charactersDb, () => {});
     id = (await (await routes.request("/characters", json(baseDefinition()))).json()).id;
   });
 

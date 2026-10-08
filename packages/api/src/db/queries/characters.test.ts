@@ -5,7 +5,7 @@ import {
 } from "@dnd/character";
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { characters } from "../characters.ts";
+import { characterPages, characterState, characters, rollLog, undoLog } from "../characters.ts";
 import { openTestDatabases } from "../testDatabases.ts";
 import {
   charactersReferencingHomebrew,
@@ -109,6 +109,26 @@ describe("characters queries", () => {
 
     it("reports false for an id that does not exist", () => {
       expect(deleteCharacter(db, "missing")).toBe(false);
+    });
+
+    it("takes the character's state, pages, roll log and undo log with it, and no one else's", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+      insertCharacter(db, { id: "2", definition: baseDefinition({ name: "Rian" }) });
+      for (const id of ["1", "2"]) {
+        db.insert(rollLog)
+          .values({ characterId: id, label: "Stealth", notation: "1d20", result: 12, detail: {} })
+          .run();
+      }
+      updateCharacterDefinition(db, "1", baseDefinition({ name: "Vex the Bold" }));
+      updateCharacterDefinition(db, "2", baseDefinition({ name: "Rian the Bold" }));
+
+      deleteCharacter(db, "1");
+
+      for (const table of [characterState, characterPages, rollLog, undoLog]) {
+        const owners = db.select({ id: table.characterId }).from(table).all();
+        expect(owners.length).toBeGreaterThan(0);
+        expect(owners.every((row) => row.id === "2")).toBe(true);
+      }
     });
   });
 

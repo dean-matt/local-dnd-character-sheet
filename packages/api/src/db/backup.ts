@@ -1,5 +1,5 @@
 /**
- * Snapshots a live SQLite database before a migration touches it.
+ * Snapshots a live SQLite database before a migration or a character delete touches it.
  *
  * `VACUUM INTO` produces a consistent single file from an open database, unlike a file
  * copy of the main path, which misses commits still sitting in the `-wal` sidecar and
@@ -9,7 +9,7 @@
  * so it is dropped rather than counted — a database restored to a prior state round-trips
  * as a no-op too, harmlessly. Retention is bounded at `RETAINED_BACKUPS` per database,
  * oldest pruned first, for the same reason `roll_log` and `undo_log` are bounded: this
- * is a way back from the last few migrations, not an archive.
+ * is a way back from the last few migrations and deletes, not an archive.
  */
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync } from "node:fs";
@@ -17,6 +17,9 @@ import { join } from "node:path";
 import type Database from "better-sqlite3";
 
 export const RETAINED_BACKUPS = 10;
+
+/** Where `openDatabases` and a character delete both write their snapshots. */
+export const backupDirFor = (dataDir: string) => join(dataDir, "backups");
 
 function hash(path: string) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
