@@ -10,6 +10,7 @@ import { CreationEquipment } from "./CreationEquipment.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
 import { CreationIncreases } from "./CreationIncreases.tsx";
+import { CreationPrerequisites } from "./CreationPrerequisites.tsx";
 import { CreationRail } from "./CreationRail.tsx";
 import { CreationSkills } from "./CreationSkills.tsx";
 import { CreationSpells } from "./CreationSpells.tsx";
@@ -105,6 +106,7 @@ export function CreationFlow() {
                     <CreationErrors />
                     <CreationGrants />
                     <CreationIncreases />
+                    <CreationPrerequisites />
                     <CreationSkills />
                     <CreationTools />
                     <CreationSpells />

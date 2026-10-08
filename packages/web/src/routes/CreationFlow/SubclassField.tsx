@@ -1,40 +1,41 @@
 import type { CharacterDefinition, ContentRef } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "./ChoicePills.tsx";
-import { subclassOf, withSubclass } from "./classLevels.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { withSubclass } from "./classLevels.ts";
+import type { ClassEntry } from "./useClassEntries.ts";
 
 const subclassKey = (row: ContentRef) => `${row.name}|${row.source}`;
 
 /**
- * The subclass, offered once the level reaches the one the class grants it at — 1st for
- * `Cleric` (PHB), 3rd for `Cleric` (XPHB) — and named before then as the level it waits on.
- * It is stored on that level.
+ * A class's subclass, offered once its level reaches the one the class grants it at — 1st
+ * for `Cleric` (PHB), 3rd for `Cleric` (XPHB) — and named before then as the level it waits
+ * on. It is stored on that level of the class.
  */
-export function SubclassField() {
-  const { setValue } = useFormContext<CharacterDefinition>();
-  const { levels, catalogClass, subclassLevel, subclasses } = useClassCatalog();
+export function SubclassField({ entry, legend }: { entry: ClassEntry; legend: string }) {
+  const { setValue, getValues } = useFormContext<CharacterDefinition>();
+  const { catalogClass, subclassLevel, level, subclass } = entry;
   if (catalogClass === undefined || subclassLevel === undefined) return null;
-  if (levels.length < subclassLevel) {
+  if (level < subclassLevel) {
     return (
       <p className="text-muted text-row">
         {catalogClass.name} chooses a subclass at level {subclassLevel}.
       </p>
     );
   }
-  const rows = subclasses.data?.items ?? [];
+  const rows = entry.subclasses ?? [];
   if (rows.length === 0) return null;
-  const chosen = subclassOf(levels);
   return (
     <ChoicePills
-      legend="Subclass"
-      prompting={!rows.some((row) => chosen && subclassKey(row) === subclassKey(chosen))}
+      legend={legend}
+      prompting={!rows.some((row) => subclass && subclassKey(row) === subclassKey(subclass))}
       options={rows.map((row) => ({ value: subclassKey(row), label: row.name }))}
-      value={chosen && subclassKey(chosen)}
+      value={subclass && subclassKey(subclass)}
       onChange={(value) => {
         const row = rows.find((each) => subclassKey(each) === value);
         const ref = row && { name: row.name, source: row.source };
-        setValue("levels", withSubclass(levels, ref, subclassLevel), { shouldDirty: true });
+        setValue("levels", withSubclass(getValues("levels"), entry.cls, ref, subclassLevel), {
+          shouldDirty: true,
+        });
       }}
     />
   );

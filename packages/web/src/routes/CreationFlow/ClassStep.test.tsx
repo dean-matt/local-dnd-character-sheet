@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { ClassStep } from "./ClassStep.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
+import { CreationPrerequisites } from "./CreationPrerequisites.tsx";
 import { creationForm } from "./creationForm.ts";
 
 const page = (items: unknown[]) => ({ items, total: items.length, limit: 200, offset: 0 });
@@ -33,7 +34,19 @@ const CLERIC_2024 = classRow("Cleric", "XPHB", 8, {
 const FIGHTER = classRow("Fighter", "PHB", 10, {
   proficiency: ["str", "con"],
   startingProficiencies: { weapons: ["simple", "martial"] },
+  multiclassing: {
+    requirements: { or: [{ str: 13, dex: 13 }] },
+    proficienciesGained: {
+      weapons: ["simple", "martial"],
+      armorProficiencies: [{ light: true, medium: true, shield: true }],
+    },
+  },
   classFeatures: [gains("Martial Archetype", "Fighter", "", 3)],
+});
+const WIZARD = classRow("Wizard", "PHB", 6, {
+  proficiency: ["int", "wis"],
+  multiclassing: { requirements: { int: 13 } },
+  classFeatures: [gains("Arcane Tradition", "Wizard", "", 2)],
 });
 
 const subclass = (name: string, cls: { name: string; source: string; edition: string }) => ({
@@ -73,6 +86,10 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Cleric/PHB": CLERIC,
   "/api/classes/Cleric/XPHB": CLERIC_2024,
   "/api/classes/Fighter/PHB": FIGHTER,
+  "/api/classes/Wizard/PHB": WIZARD,
+  "/api/classes/Wizard/PHB/subclasses?edition=classic&limit=200": page([
+    subclass("School of Evocation", WIZARD),
+  ]),
   "/api/classes/Cleric/PHB/subclasses?edition=classic&limit=200": page([
     subclass("Life Domain", CLERIC),
     subclass("War Domain", CLERIC),
@@ -107,9 +124,12 @@ function stubCatalog() {
     const params = new URL(url, "http://local").searchParams;
     const search =
       params.get("type") === "class"
-        ? [hit("Cleric", "PHB"), hit("Fighter", "PHB"), hit("Cleric", "XPHB")].filter(
-            (each) => each.edition === params.get("edition"),
-          )
+        ? [
+            hit("Cleric", "PHB"),
+            hit("Fighter", "PHB"),
+            hit("Wizard", "PHB"),
+            hit("Cleric", "XPHB"),
+          ].filter((each) => each.edition === params.get("edition"))
         : [];
     const body = url.startsWith("/api/search?") ? page(search) : ROWS[url];
     return body === undefined
@@ -127,13 +147,17 @@ function Values() {
   return null;
 }
 
-function renderStep(edition: CharacterDefinition["edition"] = "classic") {
-  localStorage.setItem("draft:creation", JSON.stringify({ edition }));
+function renderStep(
+  edition: CharacterDefinition["edition"] = "classic",
+  draft: Partial<CharacterDefinition> = {},
+) {
+  localStorage.setItem("draft:creation", JSON.stringify({ edition, ...draft }));
   renderWithClient(
     <creationForm.FormShell onSubmit={() => {}}>
       {() => (
         <>
           <CreationGrants />
+          <CreationPrerequisites />
           <ClassStep />
           <Values />
         </>
@@ -142,9 +166,14 @@ function renderStep(edition: CharacterDefinition["edition"] = "classic") {
   );
 }
 
-async function pickClass(query: string, option: RegExp) {
-  fireEvent.change(screen.getByRole("combobox", { name: "Class" }), { target: { value: query } });
+async function pickClass(query: string, option: RegExp, label = "Class") {
+  fireEvent.change(screen.getByRole("combobox", { name: label }), { target: { value: query } });
   fireEvent.click(await screen.findByRole("option", { name: option }));
+}
+
+async function addClass(query: string, option: RegExp) {
+  click("Add another class");
+  await pickClass(query, option, "Another class");
 }
 
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole("button", { name }));
@@ -155,10 +184,13 @@ const cells = () =>
     .slice(1)
     .map((term) => `${term.textContent}: ${term.nextElementSibling?.textContent}`);
 
-const setLevel = (level: number) =>
-  fireEvent.change(screen.getByRole("spinbutton", { name: "Level" }), {
+const setLevel = (level: number, label = "Level") =>
+  fireEvent.change(screen.getByRole("spinbutton", { name: label }), {
     target: { value: String(level) },
   });
+
+const classesOf = () =>
+  values.levels?.map((level) => ("name" in level.class ? level.class.name : ""));
 
 describe("ClassStep", () => {
   beforeEach(() => {
@@ -430,5 +462,127 @@ describe("ClassStep", () => {
     );
     expect(values.levels).toEqual([]);
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+  it("starts a character in two classes, summing their levels, each level on its own die", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    renderStep();
+
+    await pickClass("fig", /^Fighter/);
+    setLevel(3);
+    await addClass("wiz", /^Wizard/);
+
+    expect(screen.getByRole("button", { name: "Clear class, Wizard" })).toHaveFocus();
+    setLevel(2, "Wizard level");
+    expect(classesOf()).toEqual(["Fighter", "Fighter", "Fighter", "Wizard", "Wizard"]);
+    expect(screen.getByText("Character level").parentElement).toHaveTextContent(
+      "Character level 5",
+    );
+    await waitFor(() =>
+      expect(cells()).toEqual([
+        "Level 2 d10: 6",
+        "Level 3 d10: 6",
+        "Level 4 d6: 4",
+        "Level 5 d6: 4",
+      ]),
+    );
+    expect(screen.getByText("30")).toBeVisible();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Champion" }));
+    fireEvent.click(await screen.findByRole("button", { name: "School of Evocation" }));
+    expect(values.levels?.map((level) => level.subclass?.name)).toEqual([
+      undefined,
+      undefined,
+      "Champion",
+      undefined,
+      "School of Evocation",
+    ]);
+
+    click("Roll");
+    await waitFor(() =>
+      expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 10, 10, 6, 6]),
+    );
+    expect(screen.getByText("42")).toBeVisible();
+
+    setLevel(1, "Fighter level");
+    expect(classesOf()).toEqual(["Fighter", "Wizard", "Wizard"]);
+    expect(values.levels?.some((level) => level.subclass?.name === "Champion")).toBe(false);
+    expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 6, 6]);
+  });
+
+  it("holds the classes' levels to 20 between them", async () => {
+    renderStep();
+
+    await pickClass("fig", /^Fighter/);
+    setLevel(19);
+    await addClass("wiz", /^Wizard/);
+    setLevel(2, "Wizard level");
+
+    expect(screen.getByText("A level is a whole number from 1 to 1.")).toBeVisible();
+    expect(values.levels).toHaveLength(20);
+    expect(
+      screen.getByText("The character is at level 20, so takes no further class."),
+    ).toBeVisible();
+  });
+
+  it("grants a later class its multiclass proficiencies and no saves, and takes them back on removal", async () => {
+    renderStep();
+
+    await pickClass("cle", /^Cleric/);
+    await waitFor(() => expect(values.proficiencies?.armor).toEqual(["Light"]));
+    await addClass("fig", /^Fighter/);
+
+    expect(
+      await screen.findByText("Multiclassing grants: Simple, Martial, Light, Medium, Shield"),
+    ).toBeVisible();
+    await waitFor(() =>
+      expect(values.proficiencies).toMatchObject({
+        savingThrows: ["wis", "cha"],
+        weapons: ["Simple", "Martial"],
+        armor: ["Light", "Medium", "Shield"],
+      }),
+    );
+
+    click("Clear class, Fighter");
+
+    expect(screen.getByRole("button", { name: "Add another class" })).toHaveFocus();
+    await waitFor(() =>
+      expect(values.proficiencies).toMatchObject({
+        savingThrows: ["wis", "cha"],
+        weapons: ["Simple"],
+        armor: ["Light"],
+      }),
+    );
+  });
+
+  it("names each class's multiclass prerequisite, and notes one the scores miss as a departure", async () => {
+    renderStep();
+
+    await pickClass("fig", /^Fighter/);
+    await addClass("wiz", /^Wizard/);
+
+    expect(
+      await screen.findByText("Multiclassing in or out of Wizard needs Intelligence 13."),
+    ).toBeVisible();
+    expect(
+      screen.getByText("Multiclassing in or out of Fighter needs Strength 13 or Dexterity 13."),
+    ).toBeVisible();
+    expect(values.departures).toEqual([]);
+  });
+
+  it("records a class taken without its prerequisite as a departure, never refusing it", async () => {
+    const abilityScores = { str: 15, dex: 10, con: 14, int: 8, wis: 12, cha: 10 };
+    renderStep("classic", { abilityScores });
+
+    await pickClass("fig", /^Fighter/);
+    await addClass("wiz", /^Wizard/);
+
+    const note = "Multiclassing in or out of Wizard needs Intelligence 13.";
+    await waitFor(() => expect(values.departures).toEqual([{ field: "levels.1.class", note }]));
+    expect(screen.getByText(note)).toBeVisible();
+    expect(screen.getByText("Off the rules")).toBeVisible();
+    expect(classesOf()).toEqual(["Fighter", "Wizard"]);
+
+    click("Clear class, Wizard");
+    await waitFor(() => expect(values.departures).toEqual([]));
   });
 });

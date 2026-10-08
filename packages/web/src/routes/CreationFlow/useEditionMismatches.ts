@@ -5,8 +5,7 @@ import { useWatch } from "react-hook-form";
 import { z } from "zod";
 import { apiGet } from "../../lib/api.ts";
 import { retryUnlessClientError } from "../../lib/retryUnlessClientError.ts";
-import { subclassOf } from "./classLevels.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 export interface EditionMismatch {
@@ -65,7 +64,7 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
 /**
  * Each choice made so far that the character's edition does not hold: a race, class or
  * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
- * background or subclass absent from the edition's list. A choice counts only once its row
+ * background or subclass absent from the edition's list, for every class the draft holds. A choice counts only once its row
  * loads, so one still loading is never named, and a deity both editions share never is.
  */
 export function useEditionMismatches(): EditionMismatch[] {
@@ -74,7 +73,7 @@ export function useEditionMismatches(): EditionMismatch[] {
     ["race", "subrace", "background", "deity"]
   >({ name: ["race", "subrace", "background", "deity"] });
   const { edition, catalogRace, raceRow, subraces, backgrounds } = useIdentityCatalog();
-  const { catalogClass, classRow, homebrew, levels, subclasses } = useClassCatalog();
+  const { entries } = useClassEntries();
   const homebrewRace = useRowAt(homebrewPath("races", race));
   const homebrewBackground = useRowAt(homebrewPath("backgrounds", background));
   const deityRow = useRowAt(
@@ -89,9 +88,14 @@ export function useEditionMismatches(): EditionMismatch[] {
     missingFrom("Subrace", subrace, subraces.data?.items),
     missingFrom("Background", catalogBackground, backgrounds.data?.items),
     other("Background", homebrewName(homebrewBackground), homebrewBackground?.edition),
-    other("Class", catalogClass && named(catalogClass), classRow.data?.edition),
-    other("Class", homebrewName(homebrew.data), homebrew.data?.edition),
-    missingFrom("Subclass", subclassOf(levels), subclasses.data?.items),
+    ...entries.flatMap((entry) => [
+      other(
+        "Class",
+        entry.catalogClass ? named(entry.catalogClass) : homebrewName(entry),
+        entry.rowEdition,
+      ),
+      missingFrom("Subclass", entry.subclass, entry.subclasses),
+    ]),
     other("Deity", deity && `${deity.name} · ${deity.pantheon}`, deityRow?.edition),
   ].filter((mismatch) => mismatch !== undefined);
 }

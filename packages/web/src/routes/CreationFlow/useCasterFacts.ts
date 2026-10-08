@@ -4,6 +4,7 @@ import {
   abilityScore,
   type CharacterDefinition,
   type ContentRef,
+  entryKey,
 } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { useClassGrants } from "../../hooks/useClassGrants.ts";
@@ -63,15 +64,18 @@ function useCatalogCaster(
 }
 
 /**
- * What the draft's class casts at its level, read off its table and its subclass's, with
+ * What the draft's first class casts at its own level, read off its table and its subclass's, with
  * the class's list as `/search` narrows by it. `facts` is `undefined` for a class that
  * casts nothing, `ready` false until the rows it reads have loaded, and `failed` true once
  * one of them fails to. `subclassStates` says which counts the subclass's table states.
  */
 export function useCasterFacts() {
   const { cls, catalogClass, classRow, subclasses, homebrew, levels } = useClassCatalog();
-  const level = Math.max(1, levels.length);
-  const subclass = subclassOf(levels);
+  const level = Math.max(
+    1,
+    levels.filter((each) => cls && entryKey(each.class) === entryKey(cls)).length,
+  );
+  const subclass = cls && subclassOf(levels, cls);
   const subclassRow = subclasses.data?.items.find(
     (row) => subclass && row.name === subclass.name && row.source === subclass.source,
   );
