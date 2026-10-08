@@ -232,7 +232,7 @@ describe("IdentityStep", () => {
 
     expect(
       await screen.findByText(
-        "No language in this edition answers Goblin, so the character does not gain it.",
+        "The character does not gain Goblin: no language in this edition matches.",
       ),
     ).toBeVisible();
     await waitFor(() => expect(values.proficiencies?.languages).toEqual([PHB("Common")]));
