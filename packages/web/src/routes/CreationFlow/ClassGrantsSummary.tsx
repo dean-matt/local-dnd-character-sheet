@@ -1,15 +1,15 @@
 import { ABILITY_LABEL } from "@dnd/character";
 import { useClassGrants } from "../../hooks/useClassGrants.ts";
 import { grantNames } from "./grants.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import type { ClassEntry } from "./useClassEntries.ts";
 
 /**
- * What the class gives the character at the chosen level: the saving throws and
- * proficiencies it lands, and the features the sheet lists from it.
+ * What one class gives the character at its level: the saving throws and proficiencies it
+ * lands, a later class's multiclass gains alone, and the features the sheet lists from it.
  */
-export function ClassGrantsSummary() {
-  const { catalogClass, levels, grants } = useClassCatalog();
-  const byLevel = useClassGrants(catalogClass, Math.max(levels.length, 1));
+export function ClassGrantsSummary({ entry, first }: { entry: ClassEntry; first: boolean }) {
+  const { catalogClass, level, grants } = entry;
+  const byLevel = useClassGrants(catalogClass, Math.max(level, 1));
   if (catalogClass === undefined || grants === undefined) return null;
   const proficiencies = grantNames(grants);
   const features = [...new Set(byLevel.data?.features.map((feature) => feature.name))];
@@ -20,10 +20,14 @@ export function ClassGrantsSummary() {
           Saving throws: {grants.savingThrows.map((ability) => ABILITY_LABEL[ability]).join(", ")}
         </p>
       )}
-      {proficiencies.length > 0 && <p>Grants: {proficiencies.join(", ")}</p>}
+      {proficiencies.length > 0 && (
+        <p>
+          {first ? "Grants" : "Multiclassing grants"}: {proficiencies.join(", ")}
+        </p>
+      )}
       {features.length > 0 && (
         <p>
-          Features by level {levels.length}: {features.join(", ")}
+          Features by level {level}: {features.join(", ")}
         </p>
       )}
     </div>

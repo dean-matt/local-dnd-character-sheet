@@ -9,7 +9,7 @@ import { useResolvedRefs } from "../../hooks/useResolvedRefs.ts";
 import type { EquipmentSource, OfferedItem } from "./equipmentPicks.ts";
 import { CORE_SOURCE, titleCase } from "./grants.ts";
 
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 /** The edition's core book, then the other edition's, which prints what it leaves out. */
@@ -31,8 +31,9 @@ type Unresolved = Omit<EquipmentSource, "groups"> & { equipment: StartingEquipme
  */
 export function useEquipmentSources(): EquipmentSource[] | undefined {
   const { edition, backgroundRow, backgrounds } = useIdentityCatalog();
-  const { catalogClass, classRow } = useClassCatalog();
-  const classJson = classRow.data?.json;
+  const first = useClassEntries().entries[0];
+  const catalogClass = first?.catalogClass;
+  const classJson = catalogClass && first.json;
   const unresolved: Unresolved[] = [
     ...(catalogClass && classJson
       ? [
@@ -65,7 +66,7 @@ export function useEquipmentSources(): EquipmentSource[] | undefined {
     equipment.groups.flatMap((group) => group.flatMap((option) => option.items.flatMap(named))),
   );
   const resolved = useResolvedRefs(queries);
-  const classRead = catalogClass === undefined || classRow.isSuccess;
+  const classRead = catalogClass === undefined || first?.read === true;
   if (!classRead || !backgrounds.isSuccess || (queries.length > 0 && !resolved.isSuccess))
     return undefined;
 

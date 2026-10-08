@@ -1,7 +1,7 @@
 import type { CharacterDefinition, ContentRef } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
-import { subclassOf } from "./classLevels.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 import { CUSTOM_RACE_SOURCE } from "./useIdentityCatalog.ts";
 
 const catalogRef = (ref: CharacterDefinition["race"] | undefined): ContentRef | undefined =>
@@ -23,9 +23,9 @@ const WATCHED = [
 ] as const satisfies readonly (keyof CharacterDefinition)[];
 
 /**
- * Every catalog row the draft names that can grant a spell, each at its level — the class
- * level for a class and subclass, the character level for the rest, which in a draft of one
- * class are the same number.
+ * Every catalog row the draft names that can grant a spell, each at its level — the first
+ * class's own level for it and its subclass, the character level for the rest. A later
+ * class grants none here, since starting spells come from the first class alone.
  */
 export function useSpellGrantors(): SpellGrantorRef[] {
   const [levels = [], race, subrace, background, feats, optionalFeatures] = useWatch<
@@ -33,19 +33,26 @@ export function useSpellGrantors(): SpellGrantorRef[] {
     typeof WATCHED
   >({ name: WATCHED });
   const level = Math.max(1, levels.length);
-  const cls = catalogRef(levels[0]?.class);
-  const subclass = subclassOf(levels);
+  const first = useClassEntries().entries[0];
+  const cls = first?.catalogClass;
+  const classLevel = first?.level ?? level;
+  const subclass = first?.subclass;
   const catalogRace = catalogRef(race);
   const catalogBackground = catalogRef(background);
-  const at = (grantor: SpellGrantorRef["grantor"], ref: ContentRef, parent?: ContentRef) => ({
+  const at = (
+    grantor: SpellGrantorRef["grantor"],
+    ref: ContentRef,
+    parent?: ContentRef,
+    atLevel = level,
+  ) => ({
     grantor,
     ref,
-    level,
+    level: atLevel,
     ...(parent && { parent }),
   });
   return [
-    ...(cls ? [at("class", cls)] : []),
-    ...(cls && subclass ? [at("subclass", subclass, cls)] : []),
+    ...(cls ? [at("class", cls, undefined, classLevel)] : []),
+    ...(cls && subclass ? [at("subclass", subclass, cls, classLevel)] : []),
     // A subrace's grants already hold its race's.
     ...(catalogRace
       ? [subrace ? at("subrace", subrace, catalogRace) : at("race", catalogRace)]

@@ -8,9 +8,8 @@ import {
 import { useWatch } from "react-hook-form";
 import { useClassGrants } from "../../hooks/useClassGrants.ts";
 import { useSubclassGrants } from "../../hooks/useSubclassGrants.ts";
-import { subclassOf } from "./classLevels.ts";
 import { type CasterFacts, casterFacts } from "./spellPicks.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 
 /** The modifier of `ability` the draft's scores give, 0 before any score is set. */
 function useModifier(ability: Parameters<typeof abilityScore>[1] | undefined): number {
@@ -63,16 +62,17 @@ function useCatalogCaster(
 }
 
 /**
- * What the draft's class casts at its level, read off its table and its subclass's, with
- * the class's list as `/search` narrows by it. `facts` is `undefined` for a class that
- * casts nothing, `ready` false until the rows it reads have loaded, and `failed` true once
+ * What the draft's first class casts at its own level, read off its table and its
+ * subclass's, with the class's list as `/search` narrows by it. `facts` is `undefined` for a
+ * class that casts nothing, `ready` false until the rows it reads have loaded, and `failed` true once
  * one of them fails to. `subclassStates` says which counts the subclass's table states.
  */
 export function useCasterFacts() {
-  const { cls, catalogClass, classRow, subclasses, homebrew, levels } = useClassCatalog();
-  const level = Math.max(1, levels.length);
-  const subclass = subclassOf(levels);
-  const subclassRow = subclasses.data?.items.find(
+  const first = useClassEntries().entries[0];
+  const catalogClass = first?.catalogClass;
+  const level = Math.max(1, first?.level ?? 0);
+  const subclass = first?.subclass;
+  const subclassRow = first?.subclasses?.find(
     (row) => subclass && row.name === subclass.name && row.source === subclass.source,
   );
   const catalog = useCatalogCaster(
@@ -80,18 +80,20 @@ export function useCasterFacts() {
     subclass,
     level,
     subclassRow?.json,
-    classRow.data?.json,
+    catalogClass && first.json,
   );
-  const homebrewJson = homebrew.data?.json;
   const { ready, facts } = catalogClass
     ? catalog
-    : { ready: homebrewJson !== undefined, facts: homebrewJson && homebrewFacts(homebrewJson) };
+    : {
+        ready: first?.json !== undefined,
+        facts: first?.json === undefined ? undefined : homebrewFacts(first.json),
+      };
   return {
     subclassStates: catalog.subclassStates,
-    ready: cls !== undefined && ready,
-    failed: catalog.failed || classRow.isError || homebrew.isError,
-    classless: cls === undefined,
-    className: catalogClass?.name ?? homebrew.data?.name ?? "The class",
+    ready: first !== undefined && ready,
+    failed: catalog.failed || first?.failed === true,
+    classless: first === undefined,
+    className: first?.name ?? "The class",
     level,
     facts,
     list: catalogClass && { class: catalogClass, ...(subclass && { subclass }), level },

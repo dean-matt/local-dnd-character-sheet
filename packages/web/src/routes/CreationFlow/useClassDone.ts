@@ -1,28 +1,33 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { subclassOf } from "./classLevels.ts";
 import { stepOf } from "./creationSteps.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { type ClassEntry, useClassEntries } from "./useClassEntries.ts";
+
+/** A class resolves, and a level that has reached its subclass names one of the class's own. */
+function classDone(entry: ClassEntry): boolean {
+  if (!entry.read) return false;
+  if (entry.catalogClass === undefined) return true;
+  const { subclasses, subclass, subclassLevel, level } = entry;
+  if (subclasses === undefined) return false;
+  if (subclassLevel === undefined || level < subclassLevel) return true;
+  return (
+    subclasses.length === 0 ||
+    subclasses.some(
+      (row) => subclass && row.name === subclass.name && row.source === subclass.source,
+    )
+  );
+}
 
 /**
- * Whether the Class step is finished: Finish would find no fault in a value it sets, the
- * class resolves, and a level that has reached the subclass names one of the class's own.
+ * Whether the Class step is finished: Finish would find no fault in a value it sets, and
+ * the draft holds a class, each of which `classDone` passes.
  */
 export function useClassDone(): boolean {
   const values = useWatch<CharacterDefinition>();
-  const { catalogClass, classRow, homebrew, levels, subclassLevel, subclasses } = useClassCatalog();
+  const { entries } = useClassEntries();
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "class",
   );
-  if (faulted) return false;
-  if (catalogClass === undefined) return homebrew.isSuccess;
-  if (!classRow.isSuccess || subclasses.data === undefined) return false;
-  if (subclassLevel === undefined || levels.length < subclassLevel) return true;
-  const rows = subclasses.data.items;
-  const chosen = subclassOf(levels);
-  return (
-    rows.length === 0 ||
-    rows.some((row) => chosen && row.name === chosen.name && row.source === chosen.source)
-  );
+  return !faulted && entries.length > 0 && entries.every(classDone);
 }

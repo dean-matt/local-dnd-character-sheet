@@ -16,7 +16,7 @@ import {
   tallyTools,
   toolReplacementOffer,
 } from "./toolPicks.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 const KIND_LABEL: Record<ToolType, string> = {
@@ -27,17 +27,18 @@ const KIND_LABEL: Record<ToolType, string> = {
 };
 
 /**
- * The tools the race, the background and the class grant outright, the picks the class
- * and the background offer, each tool named as the edition's catalog names it, and which
- * offer each held tool spends. A classic character who would gain a tool twice gets a pick
- * of any tool in its place, as does a 2024 one under the house rule. A tool no catalog row answers, such as `vehicles (land)`,
+ * The tools the race, the background and the classes grant outright, the picks the classes
+ * and the background offer — a later class's from its multiclass gains — each tool named as
+ * the edition's catalog names it, and which offer each held tool spends. A classic
+ * character who would gain a tool twice gets a pick of any tool in its place, as does a
+ * 2024 one under the house rule. A tool no catalog row answers, such as `vehicles (land)`,
  * keeps upstream's name. `undefined` while a row they read has not loaded, a failed read
  * included, so a half-read never reads as an offer of nothing.
  */
 export function useToolTally() {
   const { edition, catalogRace, raceRow, subraces, raceJson, backgroundRow, backgrounds } =
     useIdentityCatalog();
-  const { catalogClass, classRow, grants: classGrants } = useClassCatalog();
+  const { entries } = useClassEntries();
   const proficiencies = useWatch<CharacterDefinition, "proficiencies">({ name: "proficiencies" });
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
   // One edition holds some fifty mundane tools, under the route's 200. Past that, a pick
@@ -51,7 +52,7 @@ export function useToolTally() {
     filters: { kind: "tool", rarity: "none" },
   });
   const raceRead = catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess);
-  const classRead = catalogClass === undefined || classRow.isSuccess;
+  const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
   if (!(raceRead && classRead && backgrounds.isSuccess && tools.isSuccess)) return undefined;
   const hits = tools.data.items;
   const named = (name: string) =>
@@ -68,7 +69,9 @@ export function useToolTally() {
         ? proficiencyGrantsSchema.parse(json).tools.map((name) => ({ name: named(name), by }))
         : [],
     ),
-    ...(classGrants?.tools ?? []).map((name) => ({ name: named(name), by: "Class" as const })),
+    ...entries.flatMap((entry) =>
+      (entry.grants?.tools ?? []).map((name) => ({ name: named(name), by: "Class" as const })),
+    ),
   ];
 
   const offer = (by: ToolOffer["by"], name: string, choice: ToolChoice): ToolOffer => {
@@ -84,13 +87,14 @@ export function useToolTally() {
         : undefined;
     return { by, name, count: choice.count, options, ...(kind && { kind }) };
   };
-  const classJson = classRow.data?.json;
   const listed = [
-    ...(catalogClass && classJson
-      ? classToolChoicesSchema
-          .parse(classJson)
-          .map((choice) => offer("Class", catalogClass.name, choice))
-      : []),
+    ...entries.flatMap(({ catalogClass, start }) =>
+      catalogClass && start
+        ? classToolChoicesSchema
+            .parse(start)
+            .map((choice) => offer("Class", catalogClass.name, choice))
+        : [],
+    ),
     ...(backgroundRow
       ? backgroundToolChoicesSchema
           .parse(backgroundRow.json)

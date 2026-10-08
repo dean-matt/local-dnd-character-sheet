@@ -81,7 +81,7 @@ export function SkillChoicesField() {
         const wanted = needed(offer, granted);
         const replaces = offer.by === "Replacement";
         return (
-          <fieldset key={offer.by} className="flex flex-col gap-1">
+          <fieldset key={`${offer.by}-${offer.name}`} className="flex flex-col gap-1">
             <legend className={HEADING}>
               {replaces ? "Any skill, in place of a duplicate" : `From ${offer.by}: ${offer.name}`}
             </legend>

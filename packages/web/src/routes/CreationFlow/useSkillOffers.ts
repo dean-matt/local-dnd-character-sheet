@@ -8,28 +8,28 @@ import { type CharacterDefinition, type ContentRef, houseRule, refKey } from "@d
 import { useWatch } from "react-hook-form";
 import { catalogRow } from "./grants.ts";
 import { replacementOffer, type SkillOffer } from "./skillPicks.ts";
-import { useClassCatalog } from "./useClassCatalog.ts";
+import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 export type GrantedSkill = { ref: ContentRef; by: "Race" | "Background" };
 
 /**
- * The skills the race and the background grant outright, the picks the class, the
- * background and the race or subrace offer, and every skill, each resolved against the
- * edition's skill rows. A classic character
- * who would gain a skill twice gets a pick of any skill in its place, as does a 2024 one
- * under the house rule. `undefined` while a row they read has not loaded, a failed read
- * included, so a half-read never reads as an offer of nothing.
+ * The skills the race and the background grant outright, the picks the classes, the
+ * background and the race or subrace offer — a later class its multiclass pick — and every
+ * skill, each resolved against the edition's skill rows. A classic character who would gain
+ * a skill twice gets a pick of any skill in its place, as does a 2024 one under the house
+ * rule. `undefined` while a row they read has not loaded, a failed read included, so a
+ * half-read never reads as an offer of nothing.
  */
 export function useSkillOffers():
   | { granted: GrantedSkill[]; offers: SkillOffer[]; everySkill: ContentRef[] }
   | undefined {
   const { edition, catalogRace, raceRow, subraces, raceJson, backgroundRow, backgrounds, names } =
     useIdentityCatalog();
-  const { catalogClass, classRow } = useClassCatalog();
+  const { entries } = useClassEntries();
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
   const raceRead = catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess);
-  const classRead = catalogClass === undefined || classRow.isSuccess;
+  const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
   if (!(raceRead && classRead && backgrounds.isSuccess && names.isSuccess)) return undefined;
   const hits = names.data.items;
   const row = (name: string) => catalogRow(hits, "skill", name, edition);
@@ -62,11 +62,12 @@ export function useSkillOffers():
     const unique = [...new Map(options.map((ref) => [refKey(ref), ref])).values()];
     return [{ by, name, count: choice.count, options: unique }];
   };
-  const classJson = classRow.data?.json;
   const offers = [
-    ...(catalogClass && classJson
-      ? offer("Class", catalogClass.name, classSkillChoiceSchema.parse(classJson))
-      : []),
+    ...entries.flatMap(({ catalogClass, start }) =>
+      catalogClass && start
+        ? offer("Class", catalogClass.name, classSkillChoiceSchema.parse(start))
+        : [],
+    ),
     ...(backgroundRow
       ? offer(
           "Background",

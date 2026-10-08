@@ -9,7 +9,7 @@ describe("withGainDepartures", () => {
   const homebrew = { field: "levels", note: "a homebrew class" };
 
   it("notes each gain after the first the die cannot roll, keeping other departures", () => {
-    expect(withGainDepartures([homebrew], levels(undefined, 11, 10, 0), 10)).toEqual([
+    expect(withGainDepartures([homebrew], levels(undefined, 11, 10, 0), [10, 10, 10, 10])).toEqual([
       homebrew,
       {
         field: "levels.1.rolled",
@@ -20,17 +20,24 @@ describe("withGainDepartures", () => {
   });
 
   it("drops a note whose level is gone or back in range", () => {
-    const stale = withGainDepartures([], levels(undefined, 11, 12), 10);
-    expect(withGainDepartures(stale, levels(undefined, 4), 10)).toEqual([]);
+    const stale = withGainDepartures([], levels(undefined, 11, 12), [10, 10, 10]);
+    expect(withGainDepartures(stale, levels(undefined, 4), [10, 10])).toEqual([]);
+  });
+
+  it("judges each level against its own die", () => {
+    expect(withGainDepartures([], levels(undefined, 8, 8), [10, 10, 6])).toEqual([
+      { field: "levels.2.rolled", note: "Level 3 gains 8 hit points, outside the d6's 1 to 6." },
+    ]);
   });
 });
 
 describe("hitPointMethodOf", () => {
   it("reads Custom off a gain outside the die or beside a blank, a roll off a full set, and the average off none", () => {
-    expect(hitPointMethodOf(levels(undefined, 3, 15), 10)).toBe("custom");
-    expect(hitPointMethodOf(levels(undefined, 5, undefined), 10)).toBe("custom");
-    expect(hitPointMethodOf(levels(undefined, 3, 4), 10)).toBe("roll");
-    expect(hitPointMethodOf(levels(undefined, undefined), 10)).toBe("average");
+    expect(hitPointMethodOf(levels(undefined, 3, 15), [10, 10, 10])).toBe("custom");
+    expect(hitPointMethodOf(levels(undefined, 5, undefined), [10, 10, 10])).toBe("custom");
+    expect(hitPointMethodOf(levels(undefined, 3, 4), [10, 10, 10])).toBe("roll");
+    expect(hitPointMethodOf(levels(undefined, undefined), [10, 10])).toBe("average");
+    expect(hitPointMethodOf(levels(undefined, 8, 8), [10, 10, 6])).toBe("custom");
   });
 });
 
