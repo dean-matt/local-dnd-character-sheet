@@ -58,7 +58,6 @@ export function CurrencyCard({
               coin={coin}
               name={name}
               abbreviation={abbreviation}
-              total={money[coin]}
               messages={messages}
             />
           </div>

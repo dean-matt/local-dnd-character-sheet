@@ -8,23 +8,25 @@ type Coin = keyof CharacterDefinition["money"];
 
 const SIGNED = /^[+-]?\d[\d,]*$/;
 
+/** Refuses the edit before its write, so the total stays as it was. */
+class Shortfall extends Error {}
+
 /**
  * A field that adds a signed amount to one coin's total, or takes from it. Enter applies
- * it; a subtraction past the total is refused here, before any write.
+ * it. The shortfall check reads the definition the queued write starts from, not the
+ * rendered total, which lags a write still in flight.
  */
 export function CoinAdjustment({
   characterId,
   coin,
   name,
   abbreviation,
-  total,
   messages,
 }: {
   characterId: string;
   coin: Coin;
   name: string;
   abbreviation: string;
-  total: number;
   messages: Element | null;
 }) {
   const update = useUpdateCharacterDefinition(characterId);
@@ -35,10 +37,12 @@ export function CoinAdjustment({
 
   function apply(delta: number) {
     setSent(delta);
-    update.mutate((latest) => ({
-      ...latest,
-      money: { ...latest.money, [coin]: latest.money[coin] + delta },
-    }));
+    update.mutate((latest) => {
+      const held = latest.money[coin];
+      if (held + delta < 0)
+        throw new Shortfall(`Short by ${coins(-delta - held)}; the total stays ${coins(held)}.`);
+      return { ...latest, money: { ...latest.money, [coin]: held + delta } };
+    });
   }
 
   function submit(event: FormEvent) {
@@ -47,10 +51,6 @@ export function CoinAdjustment({
     const delta = Number(text.replaceAll(",", ""));
     if (!SIGNED.test(text) || !Number.isSafeInteger(delta) || delta === 0) {
       setRefusal("Enter an amount such as +25 or -37.");
-      return;
-    }
-    if (total + delta < 0) {
-      setRefusal(`Short by ${coins(-delta - total)}; the total stays ${coins(total)}.`);
       return;
     }
     setRefusal(null);
@@ -75,12 +75,14 @@ export function CoinAdjustment({
         status={update.isPending ? "Saving…" : null}
         error={
           refusal ??
-          (update.isError && (
-            <SaveFailure
-              message={`Couldn't save ${sent > 0 ? "+" : ""}${coins(sent)}: ${update.error.message}`}
-              onRetry={() => apply(sent)}
-            />
-          ))
+          (update.error instanceof Shortfall
+            ? update.error.message
+            : update.isError && (
+                <SaveFailure
+                  message={`Couldn't save ${sent > 0 ? "+" : ""}${coins(sent)}: ${update.error.message}`}
+                  onRetry={() => apply(sent)}
+                />
+              ))
         }
         className="w-[70px]"
       />

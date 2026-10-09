@@ -377,7 +377,7 @@ describe("InventorySection", () => {
   });
 
   describe("a coin adjustment", () => {
-    const putBodies = (fetchMock: ReturnType<typeof renderSection>) =>
+    const putBodies = (fetchMock: ReturnType<typeof vi.fn>) =>
       fetchMock.mock.calls
         .filter(([url]) => url === "/api/characters/1")
         .map(([, init]) => JSON.parse(String(init?.body)));
@@ -420,6 +420,38 @@ describe("InventorySection", () => {
       );
       expect(putBodies(fetchMock)).toHaveLength(0);
       expect(card("Currency").getByRole("textbox", { name: "Gold (gp)" })).toHaveValue("1,250");
+    });
+
+    it("checks the shortfall against a write still settling, not the rendered total", async () => {
+      const fetchMock = renderSection();
+      const writes = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === "/api/characters/1"
+          ? new Response(JSON.stringify({ ...vex(), definition: JSON.parse(String(init?.body)) }))
+          : fetchMock(input, init),
+      );
+      vi.stubGlobal("fetch", writes);
+
+      adjustGold("-1,000");
+      await waitFor(() => expect(putBodies(writes)).toHaveLength(1));
+      adjustGold("-1,000");
+
+      expect(await card("Currency").findByRole("alert")).toHaveTextContent(
+        "Gold: Short by 750 gp; the total stays 250 gp.",
+      );
+      expect(putBodies(writes)).toHaveLength(1);
+    });
+
+    it("retries a write that failed, unsigned amount and all", async () => {
+      const fetchMock = renderSection();
+
+      adjustGold("25");
+      expect(await card("Currency").findByRole("alert")).toHaveTextContent(
+        "Gold: Couldn't save +25 gp",
+      );
+      fireEvent.click(card("Currency").getByRole("button", { name: "Retry" }));
+
+      await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(2));
+      expect(putBodies(fetchMock).map((body) => body.money.gold)).toEqual([1275, 1275]);
     });
 
     it("refuses text that is not a whole amount", async () => {
