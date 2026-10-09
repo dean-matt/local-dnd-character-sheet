@@ -24,7 +24,7 @@ export const ITEM_STARTERS: HomebrewStarters = [
       reqAttune: true,
       weight: 3,
       value: 150000,
-      baseItem: "longsword|phb",
+      baseItem: "longsword|xphb",
       weaponCategory: "martial",
       property: ["V"],
       dmg1: "1d8",
@@ -33,7 +33,7 @@ export const ITEM_STARTERS: HomebrewStarters = [
       bonusWeapon: "+1",
       entries: [
         "You gain a +1 bonus to attack and damage rolls made with this magic weapon, and a hit with it deals an extra {@damage 1d6} fire damage.",
-        "While you hold it, the blade sheds bright light in a 20-foot radius. A creature that starts its turn in that light can't be {@condition invisible}.",
+        "While you hold it, the blade sheds bright light in a 20-foot radius. A creature that starts its turn in that light can't be {@condition Invisible|XPHB}.",
       ],
     },
   },
@@ -52,7 +52,7 @@ export const ITEM_STARTERS: HomebrewStarters = [
       immune: ["fire"],
       conditionImmune: ["frightened"],
       entries: [
-        "While wearing this armor, you gain a +1 bonus to AC, you have resistance to cold damage and immunity to fire damage, and you can't be {@condition frightened}.",
+        "While wearing this armor, you gain a +1 bonus to AC, you have resistance to cold damage and immunity to fire damage, and you can't be {@condition Frightened|XPHB}.",
       ],
     },
   },
@@ -65,7 +65,7 @@ export const ITEM_STARTERS: HomebrewStarters = [
       weight: 2,
       value: 500,
       entries: [
-        "This hooded lantern burns for 6 hours on one {@item Oil (flask)|PHB|flask of oil}, casting bright light in a 30-foot radius and dim light for an additional 30 feet.",
+        "This hooded lantern burns for 6 hours on one {@item Oil|XPHB|flask of oil}, casting bright light in a 30-foot radius and dim light for an additional 30 feet.",
       ],
     },
   },
@@ -84,7 +84,7 @@ export const SPELL_STARTERS: HomebrewStarters = [
       duration: [{ type: "timed", duration: { type: "minute", amount: 1 }, concentration: true }],
       meta: { ritual: false },
       entries: [
-        "A lash of seawater strikes a creature you can see within range. The target makes a Strength saving throw, taking {@damage 2d6} cold damage and falling {@condition prone} on a failed save, or half as much damage on a successful one.",
+        "A lash of seawater strikes a creature you can see within range. The target makes a Strength saving throw, taking {@damage 2d6} cold damage and falling {@condition Prone|XPHB} on a failed save, or half as much damage on a successful one.",
         "Until the spell ends, you can use a bonus action on each of your turns to strike again.",
       ],
       entriesHigherLevel: [
