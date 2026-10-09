@@ -56,10 +56,10 @@
     "RollsPanelFilter.dc.html": { "x": 4040, "y": 6025, "w": 220, "h": 320, "title": "Filter — Rolls Panel", "is_interactive": true },
 
     "SettingsSidebar.dc.html": { "x": 0, "y": 7525, "w": 300, "h": 1180, "title": "Settings Sidebar", "is_interactive": true },
-    "HomebrewRaces.dc.html": { "x": 3760, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Races — pending #306", "is_interactive": true },
-    "HomebrewClasses.dc.html": { "x": 4340, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Classes — pending #307", "is_interactive": true },
-    "HomebrewBackgrounds.dc.html": { "x": 4920, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Backgrounds — pending #308", "is_interactive": true },
-    "HomebrewFeats.dc.html": { "x": 5500, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Feats — pending #309", "is_interactive": true },
+    "HomebrewRaces.dc.html": { "x": 3760, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Races — pending #489", "is_interactive": true },
+    "HomebrewClasses.dc.html": { "x": 4340, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Classes — pending #489", "is_interactive": true },
+    "HomebrewBackgrounds.dc.html": { "x": 4920, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Backgrounds — pending #489", "is_interactive": true },
+    "HomebrewFeats.dc.html": { "x": 5500, "y": 7525, "w": 480, "h": 440, "title": "Homebrew Feats — pending #489", "is_interactive": true },
 
     "WidgetPicker.dc.html": { "x": 0, "y": 9025, "w": 680, "h": 620, "title": "Add Widget Picker — Custom Tab", "is_interactive": true },
     "CustomTab.dc.html": { "x": 780, "y": 9025, "w": 1200, "h": 860, "title": "Custom Tab — Widget Canvas", "is_interactive": true },

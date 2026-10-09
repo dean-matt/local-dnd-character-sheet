@@ -154,7 +154,7 @@ describe("HomebrewSettings", () => {
         {
           url: "/api/homebrew/spells",
           method: "POST",
-          body: { ...ward, source: "PHB", edition: "classic" },
+          body: { ...ward, edition: "classic" },
         },
       ]),
     );

@@ -5,7 +5,7 @@ import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { Select } from "../../components/Select.tsx";
 import { useDebounce } from "../../hooks/useDebounce.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
-import { readHomebrewDraft } from "../../lib/homebrewDraft.ts";
+import { readHomebrewDraft } from "./homebrewDraft.ts";
 import type { HomebrewKind, HomebrewRow } from "./homebrewKinds.ts";
 
 type Edition = CharacterRecord["edition"];

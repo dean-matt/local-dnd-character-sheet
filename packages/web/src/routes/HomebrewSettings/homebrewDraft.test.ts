@@ -18,6 +18,10 @@ describe("readHomebrewDraft", () => {
     expect(read(spell)).toEqual({ input: { ...spell, edition: "one" } });
   });
 
+  it("drops a pasted source, which the server stamps", () => {
+    expect(read({ ...spell, source: "PHB" })).toEqual({ input: { ...spell, edition: "one" } });
+  });
+
   it("names the field a rejected value sits in, down to its index", () => {
     const draft = read({ ...spell, level: 12, entries: ["fine", 7] });
     expect(draft).toEqual({
