@@ -6,6 +6,8 @@ import { SaveFailure } from "../../SaveFailure.tsx";
 
 const MAX_LEVEL = 20;
 
+const xp = (points: number) => `${points.toLocaleString("en-US")} XP`;
+
 /**
  * The experience total against its level's band, and a field that adds to the total or,
  * given a negative amount, takes from it. Enough experience earns a note, never a level.
@@ -30,7 +32,7 @@ export function ExperienceTracker({ character }: { character: CharacterRecord })
       ? `Level ${MAX_LEVEL} — no further experience needed.`
       : experience >= next
         ? "Enough XP to level up."
-        : `${next - experience} XP to Level ${level + 1}`;
+        : `${xp(next - experience)} to Level ${level + 1}`;
 
   function apply(delta: number) {
     setSent(delta);
@@ -50,8 +52,8 @@ export function ExperienceTracker({ character }: { character: CharacterRecord })
   return (
     <div className="flex flex-col gap-1">
       <div className="flex justify-between text-label text-muted">
-        <span>{experience} XP</span>
-        <span>{next === undefined ? "Max level" : `${next} XP`}</span>
+        <span>{xp(experience)}</span>
+        <span>{next === undefined ? "Max level" : xp(next)}</span>
       </div>
       <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-pill bg-subtle">
         <div className="h-full bg-accent" style={{ width: `${filled}%` }} />
@@ -71,7 +73,7 @@ export function ExperienceTracker({ character }: { character: CharacterRecord })
             error={
               update.isError && (
                 <SaveFailure
-                  message={`Couldn't save ${sent > 0 ? "+" : ""}${sent} XP: ${update.error.message}`}
+                  message={`Couldn't save ${sent > 0 ? "+" : ""}${xp(sent)}: ${update.error.message}`}
                   onRetry={() => apply(sent)}
                 />
               )

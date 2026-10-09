@@ -60,9 +60,9 @@ describe("LevelSection", () => {
     renderSeeded(record({ experience: 1500 }));
 
     expect(screen.getByRole("combobox", { name: "Leveling" })).toHaveTextContent("Experience");
-    expect(within(card()).getByText("1500 XP")).toBeInTheDocument();
-    expect(within(card()).getByText("2700 XP")).toBeInTheDocument();
-    expect(within(card()).getByText("1200 XP to Level 4")).toBeInTheDocument();
+    expect(within(card()).getByText("1,500 XP")).toBeInTheDocument();
+    expect(within(card()).getByText("2,700 XP")).toBeInTheDocument();
+    expect(within(card()).getByText("1,200 XP to Level 4")).toBeInTheDocument();
   });
 
   it("says a character at the threshold can level up, and leaves the level alone", () => {
@@ -86,7 +86,7 @@ describe("LevelSection", () => {
     renderSeeded(record({ leveling: "milestone", experience: 1500 }));
 
     expect(within(card()).getByText(/Milestone leveling — the DM says/)).toBeInTheDocument();
-    expect(within(card()).queryByText("1500 XP")).not.toBeInTheDocument();
+    expect(within(card()).queryByText("1,500 XP")).not.toBeInTheDocument();
     expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe("LevelSection", () => {
     applyXp("250");
 
     expect(adjust()).toHaveValue(null);
-    await waitFor(() => expect(within(card()).getByText("1750 XP")).toBeInTheDocument());
+    await waitFor(() => expect(within(card()).getByText("1,750 XP")).toBeInTheDocument());
     expect(sentBody(fetchMock).experience).toBe(1750);
   });
 
@@ -140,12 +140,12 @@ describe("LevelSection", () => {
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("Couldn't save +250 XP: disk full"),
     );
-    expect(within(card()).getByText("1500 XP")).toBeInTheDocument();
+    expect(within(card()).getByText("1,500 XP")).toBeInTheDocument();
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(record({ experience: 1750 }))));
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
-    await waitFor(() => expect(within(card()).getByText("1750 XP")).toBeInTheDocument());
+    await waitFor(() => expect(within(card()).getByText("1,750 XP")).toBeInTheDocument());
     expect(sentBody(fetchMock).experience).toBe(1750);
   });
 });
