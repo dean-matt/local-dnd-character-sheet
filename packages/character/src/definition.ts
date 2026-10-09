@@ -50,16 +50,27 @@ export const abilityScoresSchema = z.record(
 );
 
 /**
- * An increase a race or a background grants, kept beside the score it raises rather than
- * added into it, so a race change takes back exactly what the old race gave. `grantedBy`
- * names the definition's own `race` or `background`, which a subrace merges into. Some
- * old races lower a score, so `amount` may be negative.
+ * An increase kept beside the score it raises rather than added into it, so a race change
+ * takes back exactly what the old race gave. `grantedBy` names the definition's own `race`
+ * or `background`, which a subrace merges into, or an Ability Score Improvement taken at
+ * the character level `level`: `class` where a classic character raised scores with it,
+ * `feat` where the feat taken there raised them. A grant at creation states no level, so
+ * an increase stored before improvements were recorded reads as it always did. Some old
+ * races lower a score, so `amount` may be negative.
  */
-const abilityIncreaseSchema = z.strictObject({
-  ability: abilitySchema,
-  amount: z.int().refine((amount) => amount !== 0, { error: "an increase of 0 raises nothing" }),
-  grantedBy: z.enum(["race", "background"]),
-});
+const abilityIncreaseSchema = z
+  .strictObject({
+    ability: abilitySchema,
+    amount: z.int().refine((amount) => amount !== 0, { error: "an increase of 0 raises nothing" }),
+    grantedBy: z.enum(["race", "background", "class", "feat"]),
+    level: z.int().min(1).max(20).optional(),
+  })
+  .refine(
+    (increase) =>
+      (increase.level === undefined) ===
+      (increase.grantedBy === "race" || increase.grantedBy === "background"),
+    { error: "an improvement's increase names its level, and a race's or background's none" },
+  );
 
 const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 

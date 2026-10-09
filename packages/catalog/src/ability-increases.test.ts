@@ -30,6 +30,29 @@ describe("abilityIncreasesSchema", () => {
     ).toEqual([{ fixed: {}, slots: [{ from: ["str"], amount: 2 }] }]);
   });
 
+  it("reads a feat's alternatives and the score it raises an ability to", () => {
+    expect(
+      abilityIncreasesSchema.parse({
+        ability: [
+          { choose: { from: ["str", "dex"], amount: 2 }, hidden: true },
+          { choose: { from: ["str", "dex"], count: 2 }, hidden: true },
+        ],
+      }),
+    ).toEqual([
+      { fixed: {}, slots: [{ from: ["str", "dex"], amount: 2 }] },
+      {
+        fixed: {},
+        slots: [
+          { from: ["str", "dex"], amount: 1 },
+          { from: ["str", "dex"], amount: 1 },
+        ],
+      },
+    ]);
+    expect(
+      abilityIncreasesSchema.parse({ ability: [{ choose: { from: ["wis"] }, max: 30 }] }),
+    ).toEqual([{ fixed: {}, slots: [{ from: ["wis"], amount: 1 }], max: 30 }]);
+  });
+
   it("keeps a decrease an old race prints", () => {
     expect(abilityIncreasesSchema.parse({ ability: [{ str: 2, int: -2 }] })).toEqual([
       { fixed: { str: 2, int: -2 }, slots: [] },

@@ -23,6 +23,12 @@ export const ABILITY_LABEL: Record<Ability, string> = {
   cha: "Charisma",
 };
 
+/**
+ * The highest score an increase from an Ability Score Improvement or a feat raises an
+ * ability to, in both rulesets, unless what grants it names another: an Epic Boon names 30.
+ */
+export const IMPROVEMENT_CAP = 20;
+
 /** Ability scores below 1 or above 30 are outside the rules; callers clamp before display. */
 export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);

@@ -1,17 +1,13 @@
 import type { IncreaseAlternative } from "@dnd/catalog";
 import { ABILITIES } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { increasesOf, isComplete, readPicks } from "./increasePicks.ts";
+import { isComplete, raisesOf, readPicks } from "./increasePicks.ts";
 
 const TASHA: IncreaseAlternative[] = [
   { fixed: {}, slots: [2, 1].map((amount) => ({ from: ABILITIES, amount })) },
   { fixed: {}, slots: [1, 1, 1].map((amount) => ({ from: ABILITIES, amount })) },
 ];
-const plus = (ability: (typeof ABILITIES)[number], amount: number) => ({
-  ability,
-  amount,
-  grantedBy: "race" as const,
-});
+const plus = (ability: (typeof ABILITIES)[number], amount: number) => ({ ability, amount });
 
 describe("readPicks", () => {
   it("reads three +1s as the second alternative, complete", () => {
@@ -34,12 +30,12 @@ describe("readPicks", () => {
   });
 });
 
-describe("increasesOf", () => {
+describe("raisesOf", () => {
   it("stores the fixed increases and each filled slot", () => {
     const halfElf: IncreaseAlternative[] = [
       { fixed: { cha: 2 }, slots: [{ from: ["str", "dex"], amount: 1 }] },
     ];
-    expect(increasesOf(halfElf, { alternative: 0, slots: ["dex"] }, "race")).toEqual([
+    expect(raisesOf(halfElf, { alternative: 0, slots: ["dex"] })).toEqual([
       plus("cha", 2),
       plus("dex", 1),
     ]);

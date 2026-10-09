@@ -17,6 +17,7 @@ export {
   abilityModifier,
   abilityModifierBreakdown,
   experienceThreshold,
+  IMPROVEMENT_CAP,
   PROFICIENCY_LEVELS,
   passiveScore,
   proficiencyBonus,

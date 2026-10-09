@@ -19,14 +19,14 @@ import { StatTile } from "./StatTile.tsx";
 const ABILITY_LABEL_CLASS = "text-[10px] tracking-[0.06em]";
 
 /**
- * The scores the player may type where the race and background move the base by `raised`:
+ * The scores the player may type where increases move the base by `raised`:
  * the base an edit saves stays within the 1 to 30 the definition takes, and the score
  * never drops below 1, though an increase may carry it past 30.
  */
 function scoreSchema(raised: number) {
   if (raised === 0) return abilityScoresSchema.valueType;
   const low = Math.max(1, 1 + raised);
-  const error = `With ${signed(raised)} from race and background, a score is a whole number from ${low} to ${30 + raised}.`;
+  const error = `With ${signed(raised)} from increases, a score is a whole number from ${low} to ${30 + raised}.`;
   return z
     .int({ error })
     .min(low, { error })
