@@ -237,6 +237,32 @@ describe("migrations", () => {
     expect(pages("2").slice(1).map(shape)).toEqual(seeded(1));
   });
 
+  it("names the race beside its subrace in a race summary saved before", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0007_drop_field_overrides");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insert = sqlite.prepare(
+      "INSERT INTO characters (id, name, edition, level, race_summary, class_summary, definition) VALUES (?, 'Vex', 'one', 1, ?, '', ?)",
+    );
+    const high = { name: "High", source: "PHB" };
+    for (const [id, summary, definition] of [
+      ["1", "High", { race: { name: "Elf", source: "PHB" }, subrace: high }],
+      ["2", "High", { race: { homebrewId: "hb_07" }, subrace: high }],
+      ["3", "Half-Elf", { race: { name: "Half-Elf", source: "PHB" } }],
+    ] as const) {
+      insert.run(id, summary, JSON.stringify(definition));
+    }
+
+    migrateCharacters(db);
+
+    expect(
+      sqlite.prepare("SELECT race_summary AS summary FROM characters ORDER BY id").all(),
+    ).toEqual([{ summary: "Elf (High)" }, { summary: "Homebrew (High)" }, { summary: "Half-Elf" }]);
+  });
+
   it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {
     sqlite = new Database(join(workspace, "homebrew.db"));
     const db = drizzle(sqlite);

@@ -116,7 +116,6 @@ export {
   classLevels,
   classSummary,
   displayName,
-  raceLabel,
   raceSummary,
   totalLevel,
 } from "./summaries.ts";

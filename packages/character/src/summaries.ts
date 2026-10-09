@@ -12,13 +12,8 @@ export const totalLevel = (definition: Pick<CharacterDefinition, "levels">): num
  */
 export const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
 
-/** The subrace's own name where one is chosen, the race's otherwise — `High`, not `Elf (High)`. */
+/** The race with any subrace beside it — `Elf (High)`, or `Half-Elf` taken plain. */
 export function raceSummary(definition: CharacterDefinition): string {
-  return displayName(definition.subrace ?? definition.race);
-}
-
-/** The race with any subrace beside it — `Elf (High)`, where `raceSummary` gives `High`. */
-export function raceLabel(definition: CharacterDefinition): string {
   const subrace = definition.subrace ? ` (${definition.subrace.name})` : "";
   return `${displayName(definition.race)}${subrace}`;
 }
