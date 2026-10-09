@@ -2,8 +2,8 @@
  * The Inventory page: what the character carries against what they can, the attunement
  * slots in use, their coins, then every item split into Weapons, Armor and Gear by its
  * type. The load and each weapon's attack come off the derived block and every item off
- * `/characters/{id}/inventory`, so the page does no rules arithmetic of its own. A
- * versatile weapon's grip is the one thing it writes, back into the definition.
+ * `/characters/{id}/inventory`, so the page does no rules arithmetic of its own. Every edit
+ * it makes, from a coin to an attunement, writes the definition, so undo reaches each one.
  */
 import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { EmptyState } from "../../../EmptyState.tsx";
@@ -26,7 +26,7 @@ export function InventorySection({
         {derived && <CarryingCard character={character} derived={derived} />}
         {derived && <AttunementCard definition={character.definition} derived={derived} />}
         <div className="sm:col-span-2">
-          <CurrencyCard money={character.definition.money} />
+          <CurrencyCard characterId={character.id} money={character.definition.money} />
         </div>
       </div>
       <ItemList character={character} derived={derived} />

@@ -31,7 +31,7 @@ widget, panel, or nav element:
   Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
   opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
   2024, switched by the artboard's Edition tweak.
-- Inventory: Currency, Weapons, Armor, Gear. A price is a gold chip with a coin icon,
+- Inventory: Weapons, Armor, Gear. A price is a gold chip with a coin icon,
   read aloud as its cost. A versatile weapon's row has a 1h/2h grip toggle beside its
   Equip button, a gray pill track with the chosen grip on an accent-red thumb; the
   toggle picks the damage die the chip and formula show. 2h is unavailable while that
@@ -281,12 +281,11 @@ says how much of the artboard the app builds today.
 | `Defenses` | #387, #488 | read-only |
 | `ShortRestModal` | #281 | nothing |
 | `LongRestModal` | #281 | nothing |
-| `Currency` | #229 | read-only |
-| `Weapons` | #229, #311, #398, #400 | read-only, and the grip toggle |
+| `Weapons` | #311, #398, #400 | all but the filter, its own search and Equip's proficiency check |
 | `WeaponsFilter` | #311 | nothing |
-| `Armor` | #229, #311, #400 | read-only |
+| `Armor` | #311, #400 | all but the filter, its own search and Equip's proficiency check |
 | `ArmorFilter` | #311 | nothing |
-| `Gear` | #229, #311 | read-only |
+| `Gear` | #311 | all but the filter and its own search |
 | `GearFilter` | #311 | nothing |
 | `SpellSlots` | #230, #278 | read-only |
 | `SpellList` | #230, #311 | read-only |
@@ -324,7 +323,7 @@ says how much of the artboard the app builds today.
 | `CharacterList` | #233, #391, #395 | all but the portraits |
 | `CreationClass` | #233, #235, #240, #604 | all, with a typed gain per level for its one typed total |
 | `ConfirmDialog` | #241, #242 | nothing |
-| `ListItem` | #229, #230, #231, #279, #398 | read-only |
+| `ListItem` | #230, #231, #279, #398 | an item row's controls, the rest read-only |
 
 ## Changing a mockup
 

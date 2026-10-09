@@ -10,6 +10,7 @@ import { SourceChip } from "../SourceChip.tsx";
  * action chips, with its controls at the right. A row with neither actions nor controls
  * has no third line. A row with `detail` opens it in a modal from its name; one without is
  * plain text, since there is nothing to open. `source` is absent on a homebrew row.
+ * `remove` sits at the end of the first line, such as the button taking the row off a list.
  */
 export function ListRow({
   name,
@@ -19,6 +20,7 @@ export function ListRow({
   preview,
   actions,
   controls,
+  remove,
   detail,
 }: {
   name: string;
@@ -28,6 +30,7 @@ export function ListRow({
   preview?: string;
   actions?: ReactNode;
   controls?: ReactNode;
+  remove?: ReactNode;
   detail?: { meta?: ReactNode; children: ReactNode };
 }) {
   const nameClass = "min-w-0 truncate font-semibold print:overflow-visible print:whitespace-normal";
@@ -59,6 +62,7 @@ export function ListRow({
             {price}
           </span>
         )}
+        {remove && <span className="ml-auto flex shrink-0 print:hidden">{remove}</span>}
       </div>
       {preview && <div className="truncate text-label text-muted print:hidden">{preview}</div>}
       {(actions || controls) && (

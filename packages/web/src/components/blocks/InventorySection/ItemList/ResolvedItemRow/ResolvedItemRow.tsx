@@ -1,4 +1,5 @@
 import type { SheetItem } from "@dnd/catalog";
+import type { ReactNode } from "react";
 import { firstLine } from "../../../../../lib/rulesProse.ts";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
@@ -6,8 +7,10 @@ import { Tag } from "../../../../Tag.tsx";
 import type { Attack, Grip } from "../../../attack.ts";
 import { capitalize } from "../../../capitalize.ts";
 import { pounds } from "../../pounds.ts";
-import { ItemMarks } from "../ItemMarks.tsx";
+import { RemoveItemButton } from "../RemoveItemButton.tsx";
 import { AttackChips } from "./AttackChips/AttackChips.tsx";
+import { AttuneToggle } from "./AttuneToggle.tsx";
+import { EquipToggle } from "./EquipToggle.tsx";
 import { GripToggle } from "./GripToggle.tsx";
 import { ItemTypeChips } from "./ItemTypeChips.tsx";
 
@@ -24,14 +27,28 @@ function price(copper: number): string {
   return `${(copper / per).toLocaleString("en-US")} ${coin}`;
 }
 
+/**
+ * `quantity` is the control that edits the count. `attuneRefusal` says why no slot is free,
+ * and is `undefined` where one is.
+ */
 export function ResolvedItemRow({
   item,
   attack,
+  quantity,
+  attuneRefusal,
   onGrip,
+  onEquip,
+  onAttune,
+  onRemove,
 }: {
   item: ResolvedItem;
   attack: Attack | undefined;
+  quantity: ReactNode;
+  attuneRefusal: string | undefined;
   onGrip: (grip: Grip) => void;
+  onEquip: (equipped: boolean) => void;
+  onAttune: (attuned: boolean) => void;
+  onRemove: () => void;
 }) {
   const rarity = item.rarity && item.rarity !== "none" ? capitalize(item.rarity) : undefined;
   return (
@@ -41,7 +58,6 @@ export function ResolvedItemRow({
       chips={
         <>
           <ItemTypeChips item={item} attacks={attack !== undefined} />
-          {item.quantity > 1 && <Tag>×{item.quantity}</Tag>}
           {rarity && <Tag>{rarity}</Tag>}
           {item.weight !== null && (
             <Tag>
@@ -49,14 +65,27 @@ export function ResolvedItemRow({
               {pounds(item.weight * item.quantity)}
             </Tag>
           )}
-          <ItemMarks item={item} />
+          {!item.carried && <Tag>Not carried</Tag>}
         </>
       }
+      remove={<RemoveItemButton name={item.name} onRemove={onRemove} />}
       price={item.value === null ? undefined : price(item.value * item.quantity)}
       preview={firstLine(item.entries)}
       actions={attack && <AttackChips name={item.name} attack={attack} />}
       controls={
-        attack?.grip && <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} />
+        <>
+          {attack?.grip && <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} />}
+          {(item.requiresAttunement || item.attuned) && (
+            <AttuneToggle
+              name={item.name}
+              attuned={item.attuned}
+              refusal={attuneRefusal}
+              onChange={onAttune}
+            />
+          )}
+          {quantity}
+          <EquipToggle item={item} onChange={onEquip} />
+        </>
       }
       detail={{
         meta: rarity ?? "Item",
