@@ -1,31 +1,63 @@
-import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
+import { type CharacterDefinition, characterDefinitionSchema, improvementAt } from "@dnd/character";
 import { useWatch } from "react-hook-form";
+import { useFeats } from "../../hooks/useFeats.ts";
+import { useImprovementGrants } from "../../hooks/useImprovementGrants.ts";
+import { isMade } from "../../lib/improvementChoice.ts";
+import { candidateAt } from "../../lib/improvementFeats.ts";
+import { isComplete, readPicks } from "../../lib/increasePicks.ts";
 import { stepOf } from "./creationSteps.ts";
-import { isComplete, readPicks } from "./increasePicks.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
 
 /**
  * Whether the Ability Scores step is finished: Finish would find no fault in a value it
- * sets, and every increase the race and the background offer is placed.
+ * sets, every increase the race and the background offer is placed, and every
+ * improvement the classes grant is made.
  */
 export function useAbilitiesDone(): boolean {
   const values = useWatch<CharacterDefinition>();
-  const increases = useWatch<CharacterDefinition, "abilityIncreases">({ name: "abilityIncreases" });
+  const [increases, levels = [], edition = "one", held = [], houseRules] = useWatch<
+    CharacterDefinition,
+    ["abilityIncreases", "levels", "edition", "feats", "houseRules"]
+  >({ name: ["abilityIncreases", "levels", "edition", "feats", "houseRules"] });
   const sources = useIncreaseOptions();
+  const { grants, read } = useImprovementGrants(levels);
+  const feats = useFeats(edition);
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "abilities",
   );
   if (faulted || values.abilityScores === undefined || sources === undefined) return false;
-  return sources.every(
-    ({ grantedBy, alternatives }) =>
-      alternatives.length === 0 ||
-      isComplete(
-        alternatives,
-        readPicks(
+  const draft = {
+    edition,
+    levels,
+    feats: held,
+    abilityIncreases: increases ?? [],
+    abilityScores: values.abilityScores,
+    houseRules,
+  };
+  const improved =
+    read &&
+    (grants.length === 0 ||
+      (feats.isSuccess &&
+        grants.every((grant) =>
+          isMade(
+            improvementAt(draft, grant.level),
+            feats.data.items,
+            candidateAt(draft, grant).totals,
+          ),
+        )));
+  return (
+    improved &&
+    sources.every(
+      ({ grantedBy, alternatives }) =>
+        alternatives.length === 0 ||
+        isComplete(
           alternatives,
-          (increases ?? []).filter((increase) => increase.grantedBy === grantedBy),
+          readPicks(
+            alternatives,
+            (increases ?? []).filter((increase) => increase.grantedBy === grantedBy),
+          ),
         ),
-      ),
+    )
   );
 }

@@ -6,10 +6,15 @@ type Ability = (typeof ABILITIES)[number];
 /** One increase the player places: `amount` to an ability from `from`, distinct from the other slots. */
 type IncreaseSlot = { from: readonly Ability[]; amount: number };
 
-/** One way to take a row's increases: some fixed, the rest placed by the player. */
+/**
+ * One way to take a row's increases: some fixed, the rest placed by the player. `max` is
+ * the highest score they raise an ability to where the row names one, as an Epic Boon
+ * names 30.
+ */
 export type IncreaseAlternative = {
   fixed: Partial<Record<Ability, number>>;
   slots: IncreaseSlot[];
+  max?: number;
 };
 
 const abilitySchema = z.enum(ABILITIES);
@@ -29,21 +34,22 @@ const chooseSchema = z.union([
 ]);
 
 const alternativeSchema = z
-  .looseObject({ choose: chooseSchema.optional() })
-  .transform(({ choose, ...rest }): IncreaseAlternative => {
+  .looseObject({ choose: chooseSchema.optional(), max: z.int().optional() })
+  .transform(({ choose, max, ...rest }): IncreaseAlternative => {
     const fixed = Object.fromEntries(
       Object.entries(rest).filter(
         (entry): entry is [Ability, number] =>
           abilitySchema.safeParse(entry[0]).success && typeof entry[1] === "number",
       ),
     );
-    if (choose === undefined) return { fixed, slots: [] };
+    const capped = max === undefined ? {} : { max };
+    if (choose === undefined) return { fixed, slots: [], ...capped };
     if ("weighted" in choose) {
       const { from, weights } = choose.weighted;
-      return { fixed, slots: weights.map((amount) => ({ from, amount })) };
+      return { fixed, slots: weights.map((amount) => ({ from, amount })), ...capped };
     }
     const slot = { from: choose.from, amount: choose.amount ?? 1 };
-    return { fixed, slots: Array.from({ length: choose.count ?? 1 }, () => slot) };
+    return { fixed, slots: Array.from({ length: choose.count ?? 1 }, () => slot), ...capped };
   });
 
 /**

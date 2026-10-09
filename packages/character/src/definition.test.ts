@@ -743,6 +743,18 @@ describe("ability scores", () => {
     ).toBe(false);
   });
 
+  it("ties an improvement's increase to its level, and a race's to none", () => {
+    const parses = (increase: object) =>
+      characterDefinitionSchema.safeParse({
+        ...definition,
+        abilityIncreases: [{ ability: "str", amount: 1, ...increase }],
+      }).success;
+    expect(parses({ grantedBy: "class", level: 4 })).toBe(true);
+    expect(parses({ grantedBy: "feat", level: 8 })).toBe(true);
+    expect(parses({ grantedBy: "class" })).toBe(false);
+    expect(parses({ grantedBy: "race", level: 4 })).toBe(false);
+  });
+
   it("names a missing name in words a sheet can show", () => {
     const result = characterDefinitionSchema.safeParse({ ...definition, name: "" });
     expect(result.error?.issues[0]?.message).toBe("A character needs a name.");

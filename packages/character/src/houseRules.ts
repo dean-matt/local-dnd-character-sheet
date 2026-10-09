@@ -47,6 +47,12 @@ export const houseRulesSchema = z
      * and a classic character earns it either way, as for skills.
      */
     duplicateToolReplacement: z.boolean().optional(),
+    /**
+     * A classic character may take a feat in place of an Ability Score Improvement. The
+     * 2014 rules print feats as an option the table opts into, so absent, a classic
+     * improvement raises scores. The 2024 rules offer feats either way.
+     */
+    feats: z.boolean().optional(),
   })
   .prefault({});
 
@@ -64,4 +70,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   customOrigin: false,
   duplicateSkillReplacement: false,
   duplicateToolReplacement: false,
+  feats: false,
 };

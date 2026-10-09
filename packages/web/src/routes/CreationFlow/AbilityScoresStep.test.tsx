@@ -33,7 +33,27 @@ const SOLDIER = {
   },
 };
 
+const FIGHTER = PHB("Fighter");
+const feat = (name: string, json: object = {}) => ({
+  ...PHB(name),
+  edition: "classic",
+  json: { ...PHB(name), ...json },
+});
+
 const ROWS: Record<string, unknown> = {
+  "/api/classes/Fighter/PHB/at/4": {
+    level: 4,
+    resources: [],
+    spellSlots: [],
+    optionalFeatures: [],
+    features: [
+      { ...PHB("Ability Score Improvement"), level: 4, json: PHB("Ability Score Improvement") },
+    ],
+  },
+  "/api/feats?edition=classic&limit=200": page([
+    feat("Actor", { ability: [{ cha: 1 }] }),
+    feat("Grappler", { prerequisite: [{ ability: [{ str: 13 }] }] }),
+  ]),
   "/api/races/Elf/PHB": { ...PHB("Elf"), edition: "classic", json: ELF },
   "/api/races/Elf/PHB/subraces?edition=classic&limit=200": page([
     { ...PHB("High"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: HIGH_ELF },
@@ -345,5 +365,46 @@ describe("AbilityScoresStep", () => {
     await waitFor(() =>
       expect(values.abilityIncreases).toEqual([{ ability: "cha", amount: 2, grantedBy: "race" }]),
     );
+  });
+
+  it("asks a level 4 character for its improvement, scores or a feat, and is done once it is made", async () => {
+    renderStep({
+      levels: Array.from({ length: 4 }, () => ({ class: FIGHTER })),
+      abilityScores: { ...ARRAY, str: 19, dex: 12 },
+      houseRules: { feats: true },
+    });
+    const choose = (label: string, option: string) => {
+      fireEvent.click(screen.getByRole("combobox", { name: label }));
+      fireEvent.click(screen.getByRole("option", { name: option }));
+    };
+
+    expect(await screen.findByText("Level 4 · Fighter 4 — choose")).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Level 4 choice" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("combobox", { name: "Level 4 choice" }));
+    expect(screen.getByRole("option", { name: "Grappler" })).toBeVisible();
+    fireEvent.click(screen.getByRole("option", { name: "Raise ability scores" }));
+    expect(done).toBe(false);
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Level 4 +2" }));
+    expect(screen.queryByRole("option", { name: "+2 Strength" })).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: "+2 Dexterity" }));
+
+    expect(values.abilityIncreases).toEqual([
+      { ability: "dex", amount: 2, grantedBy: "class", level: 4 },
+    ]);
+    expect(values.feats ?? []).toEqual([]);
+    expect(row("Dexterity").getByText(/\+2 ability score improvement \(level 4\)/)).toBeVisible();
+    await waitFor(() => expect(done).toBe(true));
+
+    choose("Level 4 choice", "Actor");
+    expect(values.feats).toEqual([
+      { ref: PHB("Actor"), grantedBy: { kind: "class", ref: FIGHTER }, level: 4 },
+    ]);
+    expect(values.abilityIncreases).toEqual([
+      { ability: "cha", amount: 1, grantedBy: "feat", level: 4 },
+    ]);
+    await waitFor(() => expect(done).toBe(true));
   });
 });

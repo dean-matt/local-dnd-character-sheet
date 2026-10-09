@@ -1,7 +1,8 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { increasesOf, readPicks, withIncreases } from "./increasePicks.ts";
+import { readPicks } from "../../lib/increasePicks.ts";
+import { increasesOf, withIncreases } from "./grantorIncreases.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
 
 /**

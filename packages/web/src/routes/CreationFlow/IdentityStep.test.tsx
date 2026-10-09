@@ -53,6 +53,14 @@ const ROWS: Record<string, unknown> = {
     background("Acolyte", { insight: true, religion: true }),
   ]),
   "/api/races/Elf/PHB/subraces?edition=one&limit=200": page([]),
+  "/api/feats?edition=one&limit=200": page([
+    {
+      name: "Grappler",
+      source: "XPHB",
+      edition: "one",
+      json: { name: "Grappler", source: "XPHB" },
+    },
+  ]),
   "/api/backgrounds?edition=one&limit=200": page([]),
   "/api/classes/Cleric/PHB": {
     ...PHB("Cleric"),
@@ -334,6 +342,28 @@ describe("IdentityStep", () => {
         "Class: Blood Hunter (homebrew)",
         "Deity: Oghma · Celtic",
       ]),
+    );
+  });
+
+  it("names a feat taken at an improvement that the new edition lacks", async () => {
+    const fighter = PHB("Fighter");
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        levels: Array.from({ length: 4 }, () => ({ class: fighter })),
+        feats: [{ ref: PHB("Grappler"), grantedBy: { kind: "class", ref: fighter }, level: 4 }],
+      }),
+    );
+    renderStep();
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+
+    click("2024");
+
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toContain(
+        "Feat: Grappler (PHB)",
+      ),
     );
   });
 

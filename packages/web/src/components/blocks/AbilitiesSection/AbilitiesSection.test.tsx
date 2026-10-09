@@ -93,7 +93,8 @@ const nameButton = (region: string, name: string) =>
 
 /**
  * Answers the rules lookups a modal makes, and apart from them the state read `Vitals`
- * makes and the inventory read `Attacks` makes.
+ * makes, the inventory read `Attacks` makes, and the class and feat reads `Improvements`
+ * makes, which find no improvement at level 3.
  */
 function stubRules(entries: unknown[]) {
   const fetchMock = vi.fn(
@@ -104,9 +105,14 @@ function stubRules(entries: unknown[]) {
     "/api/characters/1/state": stateRecord(),
     "/api/characters/1/inventory": { items: [] },
   };
-  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
-    String(url) in reads ? new Response(JSON.stringify(reads[String(url)])) : fetchMock(url, init),
-  );
+  const grants = { level: 3, resources: [], spellSlots: [], optionalFeatures: [], features: [] };
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(url);
+    if (path.startsWith("/api/classes/")) return new Response(JSON.stringify(grants));
+    if (path.startsWith("/api/feats?"))
+      return new Response(JSON.stringify({ items: [], total: 0 }));
+    return path in reads ? new Response(JSON.stringify(reads[path])) : fetchMock(url, init);
+  });
   return fetchMock;
 }
 
@@ -233,7 +239,7 @@ describe("AbilitiesSection", () => {
     fireEvent.change(score, { target: { value: "2" } });
     fireEvent.blur(score);
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Strength: With +2 from race and background, a score is a whole number from 3 to 32.",
+      "Strength: With +2 from increases, a score is a whole number from 3 to 32.",
     );
     expect(saved).toBeUndefined();
 

@@ -9,6 +9,7 @@ import { ClassStep } from "./ClassStep.tsx";
 import { CreationEquipment } from "./CreationEquipment.tsx";
 import { CreationErrors } from "./CreationErrors.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
+import { CreationImprovements } from "./CreationImprovements.tsx";
 import { CreationIncreases } from "./CreationIncreases.tsx";
 import { CreationPrerequisites } from "./CreationPrerequisites.tsx";
 import { CreationRail } from "./CreationRail.tsx";
@@ -106,6 +107,7 @@ export function CreationFlow() {
                     <CreationErrors />
                     <CreationGrants />
                     <CreationIncreases />
+                    <CreationImprovements />
                     <CreationPrerequisites />
                     <CreationSkills />
                     <CreationTools />

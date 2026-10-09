@@ -1,8 +1,9 @@
+/**
+ * Increases a row offers in alternatives — a race's, a background's, a feat's — read and
+ * placed by slot: which alternative they take, and the ability each slot holds.
+ */
 import type { IncreaseAlternative } from "@dnd/catalog";
-import type { Ability, CharacterDefinition } from "@dnd/character";
-
-type Increase = CharacterDefinition["abilityIncreases"][number];
-export type Grantor = Increase["grantedBy"];
+import type { Ability, Raise } from "@dnd/character";
 
 /** Which alternative a grantor's increases take, and the ability each of its slots holds. */
 export type Picks = { alternative: number; slots: (Ability | undefined)[] };
@@ -15,11 +16,11 @@ export type Picks = { alternative: number; slots: (Ability | undefined)[] };
  */
 export function readPicks(
   alternatives: readonly IncreaseAlternative[],
-  stored: readonly Increase[],
+  stored: readonly Raise[],
 ): Picks | undefined {
   for (const [index, alternative] of alternatives.entries()) {
     const rest = [...stored];
-    const take = (match: (increase: Increase) => boolean) => {
+    const take = (match: (increase: Raise) => boolean) => {
       const at = rest.findIndex(match);
       return at === -1 ? undefined : rest.splice(at, 1)[0];
     };
@@ -48,33 +49,18 @@ export const isComplete = (alternatives: readonly IncreaseAlternative[], picks?:
   alternatives[picks.alternative] !== undefined &&
   picks.slots.every((slot) => slot !== undefined);
 
-/** The increases `picks` stores for `grantedBy`: the alternative's fixed ones and each filled slot. */
-export function increasesOf(
-  alternatives: readonly IncreaseAlternative[],
-  picks: Picks,
-  grantedBy: Grantor,
-): Increase[] {
+/** The increases `picks` places: the alternative's fixed ones and each filled slot. */
+export function raisesOf(alternatives: readonly IncreaseAlternative[], picks: Picks): Raise[] {
   const alternative = alternatives[picks.alternative];
   if (alternative === undefined) return [];
   return [
     ...Object.entries(alternative.fixed).map(([ability, amount]) => ({
       ability: ability as Ability,
       amount,
-      grantedBy,
     })),
     ...alternative.slots.flatMap((slot, index) => {
       const ability = picks.slots[index];
-      return ability === undefined ? [] : [{ ability, amount: slot.amount, grantedBy }];
+      return ability === undefined ? [] : [{ ability, amount: slot.amount }];
     }),
   ];
 }
-
-/** `increases` with `grantedBy`'s replaced by `mine`. */
-export const withIncreases = (
-  increases: readonly Increase[] | undefined,
-  grantedBy: Grantor,
-  mine: readonly Increase[],
-): Increase[] => [
-  ...(increases ?? []).filter((increase) => increase.grantedBy !== grantedBy),
-  ...mine,
-];

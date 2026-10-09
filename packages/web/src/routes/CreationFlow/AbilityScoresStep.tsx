@@ -33,6 +33,7 @@ import { ChoicePills } from "./ChoicePills.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { withDeparture } from "./departures.ts";
 import { NO_GRANTS } from "./grants.ts";
+import { ImprovementsField } from "./ImprovementsField.tsx";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
 import { useSkillAbilities } from "./useSkillAbilities.ts";
 
@@ -61,7 +62,8 @@ const parseScore = (raw: string) => (/^\d+$/.test(raw.trim()) ? Number(raw.trim(
 
 /**
  * The six scores, by the standard array, point buy, a roll of 4d6 dropping the lowest, or
- * typed in, then the race's and background's increases on top as terms of their own. A
+ * typed in, then the race's and background's increases on top as terms of their own, and
+ * below them the choice each Ability Score Improvement the classes grant asks for. A
  * value the method does not allow is kept and noted as a departure rather than refused.
  * Changing method starts its scores afresh: the array unassigned, point buy at 8 across,
  * a fresh roll; typing keeps whatever was there. A step the flow holds no memory for, as
@@ -75,10 +77,10 @@ export function AbilityScoresStep({
   onMemory: (memory: AbilitiesMemory) => void;
 }) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const [stored, increases, proficiencies, levels, edition = "one"] = useWatch<
+  const [stored, increases, proficiencies, levels, edition = "one", feats] = useWatch<
     CharacterDefinition,
-    ["abilityScores", "abilityIncreases", "proficiencies", "levels", "edition"]
-  >({ name: ["abilityScores", "abilityIncreases", "proficiencies", "levels", "edition"] });
+    ["abilityScores", "abilityIncreases", "proficiencies", "levels", "edition", "feats"]
+  >({ name: ["abilityScores", "abilityIncreases", "proficiencies", "levels", "edition", "feats"] });
   const skills = useSkillAbilities(edition);
   const scores: Scores = stored ?? {};
   const sources = useIncreaseOptions();
@@ -118,6 +120,7 @@ export function AbilityScoresStep({
   const draft = {
     abilityScores: { ...UNSET, ...scores },
     abilityIncreases: increases ?? [],
+    feats: feats ?? [],
     proficiencies: proficiencies ?? NO_GRANTS,
     // A draft with no class yet scores at level 1, as the character will once it has one.
     levels: levels?.length ? levels : [{ class: { name: "", source: "" } }],
@@ -255,6 +258,7 @@ export function AbilityScoresStep({
         })}
       </div>
       {sources && <AbilityIncreasesField sources={sources} />}
+      <ImprovementsField />
     </div>
   );
 }

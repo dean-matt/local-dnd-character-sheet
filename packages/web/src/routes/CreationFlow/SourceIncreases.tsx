@@ -3,8 +3,9 @@ import { ABILITY_LABEL, type Ability, type CharacterDefinition } from "@dnd/char
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { signed } from "../../components/blocks/signed.ts";
+import { type Picks, readPicks } from "../../lib/increasePicks.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
-import { increasesOf, type Picks, readPicks, withIncreases } from "./increasePicks.ts";
+import { increasesOf, withIncreases } from "./grantorIncreases.ts";
 import type { IncreaseSource } from "./useIncreaseOptions.ts";
 
 type Increase = CharacterDefinition["abilityIncreases"][number];

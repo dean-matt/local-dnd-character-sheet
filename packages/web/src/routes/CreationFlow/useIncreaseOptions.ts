@@ -1,7 +1,7 @@
 import { abilityIncreasesSchema, customOrigin, type IncreaseAlternative } from "@dnd/catalog";
 import { type CharacterDefinition, houseRule } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import type { Grantor } from "./increasePicks.ts";
+import type { Grantor } from "./grantorIncreases.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 export type IncreaseSource = {

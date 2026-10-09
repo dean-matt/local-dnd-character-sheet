@@ -19,6 +19,7 @@ import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CombatStats } from "./CombatStats.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
+import { Improvements } from "./Improvements.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
@@ -43,6 +44,7 @@ export function AbilitiesSection({
   return (
     <div className="flex flex-col gap-4">
       <AbilityScores character={character} derived={derived} />
+      <Improvements character={character} />
       <CombatStats derived={derived} />
       <Vitals characterId={character.id} derived={derived} />
       <Attacks character={character} derived={derived} />

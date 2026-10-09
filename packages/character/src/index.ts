@@ -25,6 +25,7 @@ export {
   HIT_DICE,
   type HitDie,
   hitPointSource,
+  IMPROVEMENT_CAP,
   maxHitPoints,
   preparedSpellCount,
 } from "@dnd/rules";
@@ -61,6 +62,15 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
+export {
+  IMPROVEMENT_FEAT,
+  type Improvement,
+  improvementAt,
+  improvementGrantor,
+  type Raise,
+  withImprovement,
+  withoutImprovement,
+} from "./improvements.ts";
 export { deityKey, entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
