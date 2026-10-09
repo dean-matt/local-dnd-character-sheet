@@ -338,14 +338,20 @@ describe("IdentityStep", () => {
     expect(screen.queryByRole("checkbox", { name: "Allow feats" })).toBeNull();
   });
 
-  it("names a feat taken at an improvement once feats are no longer allowed", async () => {
+  it("names a feat taken at an improvement once 2014 feats are off, and not under 2024", async () => {
     const fighter = PHB("Fighter");
     localStorage.setItem(
       "draft:creation",
       JSON.stringify({
         edition: "classic",
         levels: Array.from({ length: 4 }, () => ({ class: fighter })),
-        feats: [{ ref: PHB("Grappler"), grantedBy: { kind: "class", ref: fighter }, level: 4 }],
+        feats: [
+          {
+            ref: { name: "Grappler", source: "XPHB" },
+            grantedBy: { kind: "class", ref: fighter },
+            level: 4,
+          },
+        ],
       }),
     );
     renderStep();
@@ -356,10 +362,14 @@ describe("IdentityStep", () => {
 
     await waitFor(() =>
       expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
-        "Feat: Grappler (PHB)",
+        "Feat: Grappler (XPHB)",
       ]),
     );
     expect(values.feats).toHaveLength(1);
+
+    click("2024");
+
+    await waitFor(() => expect(status).toBeEmptyDOMElement());
   });
 
   it("names a homebrew choice and a deity of the other edition", async () => {
