@@ -236,6 +236,17 @@ dialog::backdrop {
   }
 }
 
+@layer components {
+  /*
+   * The box a single-line control draws. A text or number input and a select's button both
+   * take it, so the two stand one height side by side; in this layer, a utility the caller
+   * adds, such as a larger text size, still wins.
+   */
+  .control {
+    @apply rounded-control border border-border bg-surface px-2 py-1.5 text-row aria-invalid:border-error;
+  }
+}
+
 @layer base {
   /* Preflight's placeholder is ink at half strength, under AA; a utility still overrides this. */
   ::placeholder {

@@ -1,6 +1,6 @@
 import type { CharacterDerived } from "@dnd/character";
+import { levelLabel, ORDINAL } from "../../../../lib/spellLevel.ts";
 import { Card } from "../../../Card.tsx";
-import { levelLabel, ORDINAL } from "../spellLevel.ts";
 import { SpellSlotRow } from "./SpellSlotRow.tsx";
 
 export function SpellSlots({ derived }: { derived: CharacterDerived }) {

@@ -131,6 +131,7 @@ export {
   characterSpellsSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
+  spellCastingFacts,
   spellCastingFactsSchema,
   spellEntrySchema,
   spellRecordSchema,

@@ -3,7 +3,6 @@
  * a new entry and leaves every other field as it found it, so a field no control shows
  * survives an edit through the form.
  */
-import { type Entries, entriesSchema } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
 import type { ReactNode } from "react";
 import { isRecord } from "../../lib/entryGuards.ts";
@@ -94,7 +93,3 @@ export function withChosen(list: unknown[], chosen: string[]): unknown[] | undef
   const next = [...list.filter((value) => typeof value !== "string"), ...chosen];
   return next.length > 0 ? next : undefined;
 }
-
-/** `value` where it is rules text a preview can render. */
-export const previewOf = (value: unknown): Entries | undefined =>
-  entriesSchema.safeParse(value).data;

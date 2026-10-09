@@ -194,7 +194,7 @@ describe("HomebrewSettings", () => {
     expect(within(items()).queryByRole("combobox", { name: "Start from" })).toBeNull();
   });
 
-  it("previews rules text beside it as it renders, its markup a roll", async () => {
+  it("previews the whole spell as its catalog detail shows it, and no rules text alone", async () => {
     stubApi({});
     renderPage();
 
@@ -203,11 +203,69 @@ describe("HomebrewSettings", () => {
       target: { value: "Brine deals {@damage 3d4} cold damage.\n\nIt stings." },
     });
 
-    const preview = within(spells()).getByRole("region", { name: "Rules text preview" });
+    const preview = within(spells()).getByRole("tabpanel", { name: "Preview" });
     const roll = await within(preview).findByText("3d4");
     expect(roll).toHaveAttribute("data-rollable", "true");
+    expect(within(preview).getByRole("heading", { name: "Brinelash" })).toBeInTheDocument();
+    expect(preview).toHaveTextContent("Homebrew");
+    expect(preview).toHaveTextContent("Level: 2nd");
+    expect(preview).toHaveTextContent("School: Evocation");
+    expect(preview).toHaveTextContent("Casting time: 1 action");
+    expect(preview).toHaveTextContent("Range: 60 feet");
+    expect(preview).toHaveTextContent("Components: V, S, M (a pinch of sea salt)");
+    expect(preview).toHaveTextContent("Duration: Concentration, up to 1 minute");
     expect(preview).not.toHaveTextContent("{@damage");
     expect(preview).toHaveTextContent("It stings.");
+    expect(preview).toHaveTextContent("Using a Higher-Level Spell Slot");
+    expect(within(spells()).queryAllByRole("tabpanel", { name: /preview/i })).toHaveLength(1);
+  });
+
+  it("keeps the last valid entry in the preview while a field holds a problem, and follows the JSON view", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    const preview = within(items()).getByRole("tabpanel", { name: "Preview" });
+    expect(within(preview).getByRole("heading", { name: "Sunfire Blade" })).toBeInTheDocument();
+    expect(preview).toHaveTextContent("Attack bonus: +1");
+    expect(preview).toHaveTextContent("Damage: 1d8 + 1 slashing (1d10 + 1 versatile)");
+    expect(preview).toHaveTextContent("Value: 1500 gp");
+
+    const name = within(items()).getByRole("textbox", { name: "Name" });
+    fireEvent.change(name, { target: { value: "Starfire Blade" } });
+    fireEvent.change(name, { target: { value: "" } });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(within(preview).getByRole("heading", { name: "Starfire Blade" })).toBeInTheDocument();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
+    const box = within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement;
+    fireEvent.change(box, {
+      target: { value: JSON.stringify({ ...JSON.parse(box.value), name: "Moonfire Blade" }) },
+    });
+    expect(
+      await within(preview).findByRole("heading", { name: "Moonfire Blade" }),
+    ).toBeInTheDocument();
+  });
+
+  it("switches between the form and the preview by a labelled tab, by keyboard too", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    const tabs = within(spells()).getByRole("tablist", { name: "Spell view" });
+    const edit = within(tabs).getByRole("tab", { name: "Edit" });
+    const preview = within(tabs).getByRole("tab", { name: "Preview" });
+    expect(edit).toHaveAttribute("aria-selected", "true");
+
+    fireEvent.keyDown(edit, { key: "ArrowRight" });
+    expect(preview).toHaveAttribute("aria-selected", "true");
+    expect(preview).toHaveFocus();
+
+    fireEvent.change(within(spells()).getByRole("textbox", { name: "Name" }), {
+      target: { value: "" },
+    });
+    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
+    expect(edit).toHaveAttribute("aria-selected", "true");
   });
 
   it("fills the form from a pasted entry, and creates it with the chosen edition, leaving its source to the server", async () => {

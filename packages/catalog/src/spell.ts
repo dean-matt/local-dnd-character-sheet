@@ -118,6 +118,17 @@ export const spellCastingFactsSchema = z.strictObject({
   duration: z.array(spellDurationSchema).min(1).optional(),
 });
 
+/** A spell entry's casting facts, each parsed alone, so one malformed field leaves the others standing. */
+export function spellCastingFacts(json: Record<string, unknown>) {
+  const { shape } = spellCastingFactsSchema;
+  return {
+    time: shape.time.safeParse(json.time).data,
+    range: shape.range.safeParse(json.range).data,
+    components: shape.components.safeParse(json.components).data,
+    duration: shape.duration.safeParse(json.duration).data,
+  };
+}
+
 /**
  * `source` is absent on a homebrew spell, which stores an id and no source — the same
  * shape difference that tells a homebrew row from a catalog one everywhere else.

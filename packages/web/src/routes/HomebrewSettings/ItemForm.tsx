@@ -13,7 +13,6 @@ import {
   listAt,
   numberAt,
   paragraphsOf,
-  previewOf,
   signed,
   textAt,
   typedInteger,
@@ -22,6 +21,7 @@ import {
   withChosen,
   withField,
 } from "./homebrewEntry.ts";
+import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
 import {
   CONDITIONS,
   DAMAGE_TYPE_CODES,
@@ -34,7 +34,6 @@ import {
 } from "./homebrewVocabulary.ts";
 
 const NOT_STATED = { value: "", label: "Not stated" };
-const GRID = "grid gap-3 sm:grid-cols-2";
 
 /** A weapon property's code: `V` for `V|XPHB`, and for Lance's `{uid: "V|XPHB", note}`. */
 function propertyCode(property: unknown): string | undefined {
@@ -87,14 +86,16 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className={GRID}>
+    <div className={FORM_GRID}>
+      <div className={TEXT}>
         <InputField
           label="Name"
           value={textAt(entry, "name")}
           onChange={(event) => set("name", event.target.value)}
           error={errorFor("name")}
         />
+      </div>
+      <div className={SHORT}>
         <FormField label="Type" error={errorFor("type")}>
           {(control) => (
             <Select
@@ -112,6 +113,8 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
             />
           )}
         </FormField>
+      </div>
+      <div className={SHORT}>
         <FormField label="Rarity" error={errorFor("rarity")}>
           {(control) => (
             <Select
@@ -122,14 +125,8 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
             />
           )}
         </FormField>
-        <div className="flex items-end pb-1.5">
-          <HomebrewCheckbox
-            label="Requires attunement"
-            checked={Boolean(entry.reqAttune)}
-            onChange={(checked) => set("reqAttune", checked || undefined)}
-            error={errorFor("reqAttune")}
-          />
-        </div>
+      </div>
+      <div className={SHORT}>
         <InputField
           label="Weight (lb.)"
           type="number"
@@ -138,6 +135,8 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
           value={numberAt(entry.weight) ?? ""}
           onChange={(event) => set("weight", typedNumber(event.target.value))}
         />
+      </div>
+      <div className={SHORT}>
         <InputField
           label="Value (gp)"
           type="number"
@@ -150,45 +149,72 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
           }}
         />
       </div>
+      <div className={WHOLE}>
+        <HomebrewCheckbox
+          label="Requires attunement"
+          checked={Boolean(entry.reqAttune)}
+          onChange={(checked) => set("reqAttune", checked || undefined)}
+          error={errorFor("reqAttune")}
+        />
+      </div>
       {group === "weapon" && (
-        <div className={GRID}>
-          <FormField label="Weapon category">
-            {(control) => (
-              <Select
-                {...control}
-                options={[NOT_STATED, ...WEAPON_CATEGORIES]}
-                value={textAt(entry, "weaponCategory")}
-                onChange={(next) => set("weaponCategory", next || undefined)}
-              />
-            )}
-          </FormField>
-          <InputField
-            label="Base weapon"
-            placeholder="longsword"
-            value={baseItem[0] ?? ""}
-            onChange={(event) =>
-              set(
-                "baseItem",
-                event.target.value === ""
-                  ? undefined
-                  : [event.target.value, ...baseItem.slice(1)].join("|"),
-              )
-            }
-          />
-          <InputField label="Damage" placeholder="1d8" {...text("dmg1")} />
-          <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
-          <FormField label="Damage type">
-            {(control) => (
-              <Select
-                {...control}
-                options={withCurrent([NOT_STATED, ...DAMAGE_TYPE_CODES], textAt(entry, "dmgType"))}
-                value={textAt(entry, "dmgType")}
-                onChange={(next) => set("dmgType", next || undefined)}
-              />
-            )}
-          </FormField>
-          <InputField label="Magic bonus" step={1} {...integer("bonusWeapon", unsigned, signed)} />
-          <div className="sm:col-span-2">
+        <>
+          <div className={SHORT}>
+            <FormField label="Weapon category">
+              {(control) => (
+                <Select
+                  {...control}
+                  options={[NOT_STATED, ...WEAPON_CATEGORIES]}
+                  value={textAt(entry, "weaponCategory")}
+                  onChange={(next) => set("weaponCategory", next || undefined)}
+                />
+              )}
+            </FormField>
+          </div>
+          <div className={SHORT}>
+            <FormField label="Damage type">
+              {(control) => (
+                <Select
+                  {...control}
+                  options={withCurrent(
+                    [NOT_STATED, ...DAMAGE_TYPE_CODES],
+                    textAt(entry, "dmgType"),
+                  )}
+                  value={textAt(entry, "dmgType")}
+                  onChange={(next) => set("dmgType", next || undefined)}
+                />
+              )}
+            </FormField>
+          </div>
+          <div className={TEXT}>
+            <InputField
+              label="Base weapon"
+              placeholder="longsword"
+              value={baseItem[0] ?? ""}
+              onChange={(event) =>
+                set(
+                  "baseItem",
+                  event.target.value === ""
+                    ? undefined
+                    : [event.target.value, ...baseItem.slice(1)].join("|"),
+                )
+              }
+            />
+          </div>
+          <div className={TEXT}>
+            <InputField label="Damage" placeholder="1d8" {...text("dmg1")} />
+          </div>
+          <div className={TEXT}>
+            <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
+          </div>
+          <div className={SHORT}>
+            <InputField
+              label="Magic bonus"
+              step={1}
+              {...integer("bonusWeapon", unsigned, signed)}
+            />
+          </div>
+          <div className={WHOLE}>
             <HomebrewCheckboxGroup
               legend="Properties"
               options={WEAPON_PROPERTIES}
@@ -206,28 +232,33 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
               }}
             />
           </div>
-        </div>
+        </>
       )}
       {group === "armor" && (
-        <div className={GRID}>
-          <InputField label="Armor class" min={0} step={1} {...integer("ac")} />
-          <InputField
-            label="Magic bonus to AC"
-            step={1}
-            {...integer("bonusAc", unsigned, signed)}
-          />
-        </div>
+        <>
+          <div className={SHORT}>
+            <InputField label="Armor class" min={0} step={1} {...integer("ac")} />
+          </div>
+          <div className={SHORT}>
+            <InputField
+              label="Magic bonus to AC"
+              step={1}
+              {...integer("bonusAc", unsigned, signed)}
+            />
+          </div>
+        </>
       )}
-      {defenses("resist", "Resistances", DAMAGE_TYPE_NAMES)}
-      {defenses("immune", "Damage immunities", DAMAGE_TYPE_NAMES)}
-      {defenses("conditionImmune", "Condition immunities", CONDITIONS)}
-      <HomebrewRulesText
-        label="Rules text"
-        text={paragraphsOf(entry.entries)}
-        onText={(next) => set("entries", entriesOf(next))}
-        preview={previewOf(entry.entries)}
-        error={errorFor("entries")}
-      />
+      <div className={WHOLE}>{defenses("resist", "Resistances", DAMAGE_TYPE_NAMES)}</div>
+      <div className={WHOLE}>{defenses("immune", "Damage immunities", DAMAGE_TYPE_NAMES)}</div>
+      <div className={WHOLE}>{defenses("conditionImmune", "Condition immunities", CONDITIONS)}</div>
+      <div className={WHOLE}>
+        <HomebrewRulesText
+          label="Rules text"
+          text={paragraphsOf(entry.entries)}
+          onText={(next) => set("entries", entriesOf(next))}
+          error={errorFor("entries")}
+        />
+      </div>
     </div>
   );
 }

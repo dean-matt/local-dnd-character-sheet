@@ -13,7 +13,6 @@ import {
   listAt,
   numberAt,
   paragraphsOf,
-  previewOf,
   recordAt,
   textAt,
   typedInteger,
@@ -21,6 +20,7 @@ import {
   withChosen,
   withField,
 } from "./homebrewEntry.ts";
+import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
 import {
   CASTING_UNITS,
   DAMAGE_TYPE_NAMES,
@@ -32,7 +32,6 @@ import {
 } from "./homebrewVocabulary.ts";
 import { upcastName, upcastSection, upcastText, withUpcastNameFor } from "./spellUpcast.ts";
 
-const GRID = "grid gap-3 sm:grid-cols-2";
 const SCHOOL_OPTIONS = Object.entries(SCHOOLS).map(([value, label]) => ({ value, label }));
 const DISTANCES = new Set(["feet", "miles"]);
 
@@ -79,14 +78,16 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className={GRID}>
+    <div className={FORM_GRID}>
+      <div className={TEXT}>
         <InputField
           label="Name"
           value={textAt(entry, "name")}
           onChange={(event) => set("name", event.target.value)}
           error={errorFor("name")}
         />
+      </div>
+      <div className={SHORT}>
         <FormField label="Level" error={errorFor("level")}>
           {(control) => (
             <Select
@@ -99,6 +100,8 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             />
           )}
         </FormField>
+      </div>
+      <div className={SHORT}>
         <FormField label="School" error={errorFor("school")}>
           {(control) => (
             <Select
@@ -109,35 +112,39 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             />
           )}
         </FormField>
-        <div className="grid grid-cols-[5rem_1fr] gap-2">
-          <InputField
-            label="Casting time"
-            type="number"
-            min={1}
-            step={1}
-            status={
-              listAt(entry, "time").length > 0 &&
-              numberAt(time.number) === undefined &&
-              "Give it a number, or the sheet shows no casting time"
-            }
-            value={numberAt(time.number) ?? ""}
-            onChange={(event) =>
-              setTime(
-                withField({ unit: "action", ...time }, "number", typedInteger(event.target.value)),
-              )
-            }
-          />
-          <FormField label="Unit">
-            {(control) => (
-              <Select
-                {...control}
-                options={CASTING_UNITS}
-                value={textAt(time, "unit") || "action"}
-                onChange={(next) => setTime({ number: 1, ...time, unit: next })}
-              />
-            )}
-          </FormField>
-        </div>
+      </div>
+      <div className={SHORT}>
+        <InputField
+          label="Casting time"
+          type="number"
+          min={1}
+          step={1}
+          status={
+            listAt(entry, "time").length > 0 &&
+            numberAt(time.number) === undefined &&
+            "Give it a number, or the sheet shows no casting time"
+          }
+          value={numberAt(time.number) ?? ""}
+          onChange={(event) =>
+            setTime(
+              withField({ unit: "action", ...time }, "number", typedInteger(event.target.value)),
+            )
+          }
+        />
+      </div>
+      <div className={SHORT}>
+        <FormField label="Unit">
+          {(control) => (
+            <Select
+              {...control}
+              options={CASTING_UNITS}
+              value={textAt(time, "unit") || "action"}
+              onChange={(next) => setTime({ number: 1, ...time, unit: next })}
+            />
+          )}
+        </FormField>
+      </div>
+      <div className={SHORT}>
         <FormField label="Range">
           {(control) => (
             <Select
@@ -154,8 +161,10 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             />
           )}
         </FormField>
-        {DISTANCES.has(rangeKind) && (
-          <div className="grid grid-cols-[5rem_1fr] gap-2">
+      </div>
+      {DISTANCES.has(rangeKind) && (
+        <>
+          <div className={SHORT}>
             <InputField
               label="Distance"
               type="number"
@@ -165,6 +174,8 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
                 setRange(rangeKind, typedNumber(event.target.value), textAt(range, "type"))
               }
             />
+          </div>
+          <div className={SHORT}>
             <FormField label="Area">
               {(control) => (
                 <Select
@@ -176,42 +187,9 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
               )}
             </FormField>
           </div>
-        )}
-      </div>
-      <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-muted text-row">Components</legend>
-        <div className="flex flex-wrap items-end gap-4">
-          {(["v", "s"] as const).map((key) => (
-            <HomebrewCheckbox
-              key={key}
-              label={key === "v" ? "Verbal" : "Somatic"}
-              checked={components[key] === true}
-              onChange={(checked) =>
-                set("components", withKey(components, key, checked || undefined))
-              }
-            />
-          ))}
-          <div className="min-w-48 flex-1">
-            <InputField
-              label="Material"
-              placeholder="a pinch of salt"
-              value={
-                typeof material === "string"
-                  ? material
-                  : isRecord(material)
-                    ? textAt(material, "text")
-                    : ""
-              }
-              onChange={(event) => {
-                const said = event.target.value;
-                const next = isRecord(material) ? { ...material, text: said } : said;
-                set("components", withKey(components, "m", said === "" ? undefined : next));
-              }}
-            />
-          </div>
-        </div>
-      </fieldset>
-      <div className={GRID}>
+        </>
+      )}
+      <div className={SHORT}>
         <FormField label="Duration" error={errorFor("duration")}>
           {(control) => (
             <Select
@@ -230,8 +208,10 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             />
           )}
         </FormField>
-        {span.type === "timed" && (
-          <div className="grid grid-cols-[5rem_1fr] gap-2">
+      </div>
+      {span.type === "timed" && (
+        <>
+          <div className={SHORT}>
             <InputField
               label="Lasts"
               type="number"
@@ -244,6 +224,8 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
                 })
               }
             />
+          </div>
+          <div className={SHORT}>
             <FormField label="Unit">
               {(control) => (
                 <Select
@@ -255,9 +237,40 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
               )}
             </FormField>
           </div>
-        )}
+        </>
+      )}
+      <fieldset className={`${WHOLE} flex min-w-0 flex-wrap gap-4`}>
+        <legend className="mb-1 text-muted text-row">Components</legend>
+        {(["v", "s"] as const).map((key) => (
+          <HomebrewCheckbox
+            key={key}
+            label={key === "v" ? "Verbal" : "Somatic"}
+            checked={components[key] === true}
+            onChange={(checked) =>
+              set("components", withKey(components, key, checked || undefined))
+            }
+          />
+        ))}
+      </fieldset>
+      <div className={TEXT}>
+        <InputField
+          label="Material component"
+          placeholder="a pinch of salt"
+          value={
+            typeof material === "string"
+              ? material
+              : isRecord(material)
+                ? textAt(material, "text")
+                : ""
+          }
+          onChange={(event) => {
+            const said = event.target.value;
+            const next = isRecord(material) ? { ...material, text: said } : said;
+            set("components", withKey(components, "m", said === "" ? undefined : next));
+          }}
+        />
       </div>
-      <div className="flex flex-wrap gap-4">
+      <div className={`${WHOLE} flex flex-wrap gap-4`}>
         {span.type === "timed" && (
           <HomebrewCheckbox
             label="Concentration"
@@ -272,33 +285,37 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
           error={errorFor("meta")}
         />
       </div>
-      <HomebrewCheckboxGroup
-        legend="Damage types"
-        options={DAMAGE_TYPE_NAMES}
-        chosen={chosenIn(listAt(entry, "damageInflict"))}
-        onChange={(chosen) =>
-          set("damageInflict", withChosen(listAt(entry, "damageInflict"), chosen))
-        }
-      />
-      <HomebrewRulesText
-        label="Rules text"
-        text={paragraphsOf(entry.entries)}
-        onText={(next) => set("entries", entriesOf(next))}
-        preview={previewOf(entry.entries)}
-        error={errorFor("entries")}
-      />
-      <HomebrewRulesText
-        label={entry.level === 0 ? "Cantrip upgrade" : "At higher levels"}
-        text={upcastText(entry.entriesHigherLevel)}
-        onText={(next) => {
-          const paragraphs = entriesOf(next);
-          set(
-            "entriesHigherLevel",
-            paragraphs && [upcastSection(higher, paragraphs, upcastName(edition, entry.level))],
-          );
-        }}
-        preview={previewOf(entry.entriesHigherLevel)}
-      />
+      <div className={WHOLE}>
+        <HomebrewCheckboxGroup
+          legend="Damage types"
+          options={DAMAGE_TYPE_NAMES}
+          chosen={chosenIn(listAt(entry, "damageInflict"))}
+          onChange={(chosen) =>
+            set("damageInflict", withChosen(listAt(entry, "damageInflict"), chosen))
+          }
+        />
+      </div>
+      <div className={WHOLE}>
+        <HomebrewRulesText
+          label="Rules text"
+          text={paragraphsOf(entry.entries)}
+          onText={(next) => set("entries", entriesOf(next))}
+          error={errorFor("entries")}
+        />
+      </div>
+      <div className={WHOLE}>
+        <HomebrewRulesText
+          label={entry.level === 0 ? "Cantrip upgrade" : "At higher levels"}
+          text={upcastText(entry.entriesHigherLevel)}
+          onText={(next) => {
+            const paragraphs = entriesOf(next);
+            set(
+              "entriesHigherLevel",
+              paragraphs && [upcastSection(higher, paragraphs, upcastName(edition, entry.level))],
+            );
+          }}
+        />
+      </div>
     </div>
   );
 }

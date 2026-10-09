@@ -13,7 +13,7 @@ export function HomebrewCheckboxGroup({
   onChange,
 }: HomebrewCheckboxGroupProps) {
   return (
-    <fieldset className="flex flex-col gap-1">
+    <fieldset className="flex min-w-0 flex-col gap-1">
       <legend className="mb-1 text-muted text-row">{legend}</legend>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-3 gap-y-1">
         {options.map((option) => (

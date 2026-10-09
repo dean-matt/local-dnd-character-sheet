@@ -161,7 +161,7 @@ export function CatalogPicker({
             onClick={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             style={{ anchorName: anchor }}
-            className="rounded-control border border-border bg-surface px-2 py-1"
+            className="control"
           />
           {/* A mousedown on a row or the scrollbar is cancelled so it never blurs the input,
               which closes the list. */}

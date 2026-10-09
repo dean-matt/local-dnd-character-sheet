@@ -28,8 +28,7 @@ export interface SearchFilterPanelProps {
 }
 
 const heading = "text-label font-semibold uppercase tracking-label text-muted";
-const levelInput =
-  "w-14 rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink";
+const levelInput = "control w-14 text-ink";
 
 /**
  * The search page's filter rail: type, source and edition, then spell level and school once
