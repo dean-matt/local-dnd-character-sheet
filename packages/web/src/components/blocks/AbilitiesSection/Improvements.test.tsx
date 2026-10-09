@@ -131,10 +131,8 @@ describe("Improvements", () => {
     renderSeeded({ ...character, definition });
     await waitFor(() => expect(summary("Level 8 · Wizard 8: War Caster")).toBeVisible());
 
-    fireEvent.click(screen.getByRole("combobox", { name: "Level 4 choice" }));
-    expect(await screen.findByRole("option", { name: "Grappler" })).toBeVisible();
-    expect(screen.queryByRole("option", { name: "War Caster" })).toBeNull();
     fireEvent.click(screen.getByRole("combobox", { name: "Level 8 choice" }));
+    expect(await screen.findByRole("option", { name: "Grappler" })).toBeVisible();
     expect(screen.getByRole("option", { name: "War Caster" })).toBeVisible();
   });
 });

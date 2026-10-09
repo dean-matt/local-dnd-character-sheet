@@ -124,10 +124,11 @@ const prerequisiteSchema = z
  * and its prerequisites as alternatives, any one of which qualifies. An empty list needs
  * nothing.
  *
- * A campaign, a background, a feat category, a race given as a size (`small race`) and
- * free text go unread, so an alternative needing only those reads as met: `Rune Shaper`
- * (BGG) is open to everyone through its `Rune Carver` background. Reading each against
- * the definition is the way out. A malformed field reads as absent rather than refusing
+ * A campaign, a background, a feat category held (`featCategory`) or not held
+ * (`exclusiveFeatCategory`), a race given as a size (`small race`) and free text go
+ * unread, so an alternative needing only those reads as met: `Rune Shaper` (BGG) is open
+ * to everyone through its `Rune Carver` background. Reading each against the definition
+ * is the way out. A malformed field reads as absent rather than refusing
  * the row.
  */
 export const featTermsSchema = z

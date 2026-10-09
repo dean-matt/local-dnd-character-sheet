@@ -89,7 +89,7 @@ export function improvementFeats(feats: readonly FeatRecord[], candidate: Candid
 function meets(prerequisite: FeatPrerequisite, candidate: Candidate): boolean {
   const { level, className, scores, races, proficiencies, feats, features, spell } = prerequisite;
   const { race, armor, weapons } = candidate;
-  const casts = candidate.knowsSpells || ["Spellcasting", "Pact Magic"].some(held(candidate));
+  const casts = candidate.knowsSpells || ["Spellcasting", "Pact Magic"].some(hasFeature(candidate));
   return (
     (level === undefined || level <= candidate.level) &&
     (className === undefined || candidate.classNames.includes(className)) &&
@@ -110,12 +110,13 @@ function meets(prerequisite: FeatPrerequisite, candidate: Candidate): boolean {
           (needed.weapon === undefined || weapons.includes(proficiencyKey(needed.weapon))),
       )) &&
     (feats.length === 0 || feats.some((feat) => candidate.earlier.includes(feat))) &&
-    features.every((group) => group.some(held(candidate))) &&
+    features.every((group) => group.some(hasFeature(candidate))) &&
     (!spell || casts)
   );
 }
 
-const held = (candidate: Candidate) => (feature: string) => candidate.features.includes(feature);
+const hasFeature = (candidate: Candidate) => (feature: string) =>
+  candidate.features.includes(feature);
 
 /**
  * Whether the race a feat names is `race`. A feat names a race by its base name, so

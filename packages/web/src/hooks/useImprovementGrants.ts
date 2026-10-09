@@ -1,6 +1,6 @@
-import { type CharacterDefinition, type ContentRef, entryKey } from "@dnd/character";
+import { type CharacterDefinition, classLevels, entryKey } from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
-import { classLevels, type ImprovementGrant, improvementGrants } from "../lib/improvementGrants.ts";
+import { type ImprovementGrant, improvementGrants } from "../lib/improvementGrants.ts";
 import { classGrantsQuery } from "./classGrantsQuery.ts";
 import { subclassGrantsQuery } from "./subclassGrantsQuery.ts";
 
@@ -16,8 +16,8 @@ export function useImprovementGrants(levels: readonly Level[]): {
   grants: ImprovementGrant[];
   read: boolean;
 } {
-  const classes = classLevels(levels).flatMap(({ cls, level }) =>
-    "name" in cls ? [{ cls, level, subclass: subclassOf(levels, cls) }] : [],
+  const classes = classLevels({ levels }).flatMap(({ class: cls, level, subclass }) =>
+    "name" in cls ? [{ cls, level, subclass }] : [],
   );
   const results = useQueries({
     queries: classes.map(({ cls, level }) => classGrantsQuery(cls, level)),
@@ -36,6 +36,3 @@ export function useImprovementGrants(levels: readonly Level[]): {
     read: results.every((result) => result.isSuccess),
   };
 }
-
-const subclassOf = (levels: readonly Level[], cls: ContentRef) =>
-  levels.find((level) => entryKey(level.class) === entryKey(cls) && level.subclass)?.subclass;

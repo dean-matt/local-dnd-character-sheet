@@ -1,4 +1,10 @@
-import { type CharacterDefinition, displayName, type EntryRef, entryKey } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  classLevels,
+  displayName,
+  type EntryRef,
+  entryKey,
+} from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -43,23 +49,13 @@ export function improvementGrants(
     );
     if (feature === undefined) return [];
     const boon = IMPROVEMENT_FEATURES[feature.name] === true;
-    const features = classLevels(levels.slice(0, index + 1)).flatMap(({ cls: held, level: at }) =>
-      featuresOf(held)
-        .filter(({ level }) => level <= at)
+    const features = classLevels({ levels: levels.slice(0, index + 1) }).flatMap((group) =>
+      featuresOf(group.class)
+        .filter(({ level }) => level <= group.level)
         .map(({ name }) => name),
     );
     return [{ level: index + 1, cls, classLevel, boon, features }];
   });
-}
-
-/** Each class `levels` holds, with the class level it reaches. */
-export function classLevels(levels: readonly Level[]): { cls: EntryRef; level: number }[] {
-  const reached = new Map<string, { cls: EntryRef; level: number }>();
-  for (const { class: cls } of levels) {
-    const key = entryKey(cls);
-    reached.set(key, { cls, level: (reached.get(key)?.level ?? 0) + 1 });
-  }
-  return [...reached.values()];
 }
 
 /** Names `grant` where a sheet lists it: `Level 4 · Wizard 4`, a boon saying so. */
