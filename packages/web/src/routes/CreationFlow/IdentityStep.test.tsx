@@ -319,6 +319,23 @@ describe("IdentityStep", () => {
     await waitFor(() => expect(status).toBeEmptyDOMElement());
   });
 
+  it("allows feats under the 2014 rules until unticked, and asks nothing under the 2024 rules", () => {
+    renderStep();
+
+    const allow = screen.getByRole("checkbox", { name: "Allow feats" });
+    expect(allow).toBeChecked();
+    expect(allow).toHaveAccessibleDescription("A feat may replace an Ability Score Improvement.");
+    expect(values.houseRules).toEqual({ feats: true });
+
+    fireEvent.click(allow);
+
+    expect(values.houseRules).toEqual({ feats: false });
+
+    click("2024");
+
+    expect(screen.queryByRole("checkbox", { name: "Allow feats" })).toBeNull();
+  });
+
   it("names a homebrew choice and a deity of the other edition", async () => {
     localStorage.setItem(
       "draft:creation",

@@ -8,6 +8,7 @@ describe("houseRules", () => {
     const parsed = characterDefinitionSchema.parse({ ...definition, houseRules: {} });
     expect(houseRule(parsed, "encumbrance")).toBe(false);
     expect(houseRule(parsed, "optionalClassFeatures")).toBe(false);
+    expect(houseRule(parsed, "feats")).toBe(false);
   });
 
   it("falls back to the printed rule for an option stored as undefined", () => {
