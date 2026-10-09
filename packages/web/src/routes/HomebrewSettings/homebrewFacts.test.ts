@@ -16,6 +16,16 @@ describe("homebrew facts", () => {
     ]);
   });
 
+  it("adds a magic bonus to armor class, and counts a value in its largest whole coin", () => {
+    expect(
+      itemFacts({ name: "Plate", edition: "one", type: "HA", ac: 18, bonusAc: "+2", value: 1550 }),
+    ).toEqual([
+      ["Type", "Heavy armor"],
+      ["Armor class", "20"],
+      ["Value", "155 sp"],
+    ]);
+  });
+
   it("names a ritual cantrip, and drops a malformed fact while keeping the rest", () => {
     expect(
       spellFacts({

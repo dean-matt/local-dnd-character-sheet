@@ -227,7 +227,9 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     const preview = within(items()).getByRole("tabpanel", { name: "Preview" });
     expect(within(preview).getByRole("heading", { name: "Sunfire Blade" })).toBeInTheDocument();
-    expect(preview).toHaveTextContent("Damage: 1d8 slashing (1d10 versatile)");
+    expect(preview).toHaveTextContent("Attack bonus: +1");
+    expect(preview).toHaveTextContent("Damage: 1d8 + 1 slashing (1d10 + 1 versatile)");
+    expect(preview).toHaveTextContent("Value: 1500 gp");
 
     fireEvent.change(within(items()).getByRole("textbox", { name: "Name" }), {
       target: { value: "" },

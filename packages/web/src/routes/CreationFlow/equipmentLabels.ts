@@ -1,12 +1,7 @@
 import { type EntryRef, entryKey } from "@dnd/character";
+import { copperLabel } from "../../lib/coins.ts";
 import type { OfferedItem, OfferedOption } from "./equipmentPicks.ts";
 import { typeLabel } from "./equipmentTypes.ts";
-
-/** Coins as the largest denomination that counts them whole: `5 gp`, `15 sp`. */
-function copperLabel(copper: number): string {
-  if (copper % 100 === 0) return `${copper / 100} gp`;
-  return copper % 10 === 0 ? `${copper / 10} sp` : `${copper} cp`;
-}
 
 /** One thing an option hands over, as the list prints it, marked where no row answers it. */
 function itemLabel(item: OfferedItem): string {

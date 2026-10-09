@@ -28,7 +28,6 @@ export interface HomebrewRow {
   json: { entries?: Entries };
 }
 
-/** A kind of homebrew the Homebrew settings page edits: its route, its schemas and its chips. */
 /** What every kind's input schema accepts, whichever kind it is. */
 export interface HomebrewInput {
   name: string;
@@ -36,6 +35,7 @@ export interface HomebrewInput {
   entries?: Entries;
 }
 
+/** A kind of homebrew the Homebrew settings page edits: its route, its schemas and its chips. */
 export interface HomebrewKind<
   R extends HomebrewRow = HomebrewRow,
   I extends HomebrewInput = HomebrewInput,

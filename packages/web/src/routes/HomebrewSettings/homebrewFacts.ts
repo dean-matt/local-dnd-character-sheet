@@ -4,17 +4,19 @@
  * out is left out, never shown empty.
  */
 import {
-  DAMAGE_TYPES,
+  armorTraitSchema,
   type HomebrewItemInput,
   type HomebrewSpellInput,
   itemHitFacts,
-  spellCastingFactsSchema,
+  spellCastingFacts,
+  weaponTraitSchema,
 } from "@dnd/catalog";
-import type { ZodType } from "zod";
+import type { z } from "zod";
+import { copperLabel } from "../../lib/coins.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { castingTime, spellComponents, spellDuration, spellRange } from "../../lib/spellFacts.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
-import { numberAt, textAt } from "./homebrewEntry.ts";
+import { numberAt, signed } from "./homebrewEntry.ts";
 
 export type Fact = [label: string, value: string];
 
@@ -27,41 +29,50 @@ function attunement(reqAttune: HomebrewItemInput["reqAttune"]): string | undefin
   return reqAttune === "optional" ? "Optional" : `Required ${reqAttune}`;
 }
 
-function damage(item: HomebrewItemInput): string | undefined {
-  const dice = textAt(item, "dmg1");
-  if (!dice) return undefined;
-  const type = DAMAGE_TYPES[textAt(item, "dmgType")];
-  const versatile = textAt(item, "dmg2");
-  return [dice, type, versatile && `(${versatile} versatile)`].filter(Boolean).join(" ");
+const withBonus = (dice: string, bonus: number) =>
+  bonus === 0 ? dice : `${dice} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)}`;
+
+/** A weapon's damage as its attack deals it, a magic bonus added to each die. */
+function damage(weapon: z.output<typeof weaponTraitSchema>): string | undefined {
+  if (!weapon?.damage) return undefined;
+  const { dice, type } = weapon.damage;
+  const versatile = weapon.versatileDamage;
+  return [
+    withBonus(dice, weapon.bonus.damage),
+    type,
+    versatile && `(${withBonus(versatile, weapon.bonus.damage)} versatile)`,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function itemFacts(item: HomebrewItemInput): Fact[] {
   const weight = numberAt(item.weight);
   const value = numberAt(item.value);
+  const weapon = weaponTraitSchema.safeParse(item).data;
+  const attack = weapon?.bonus.attack ?? 0;
   return stated([
     ["Type", itemMeta(itemHitFacts(item))],
     ["Attunement", attunement(item.reqAttune)],
-    ["Damage", damage(item)],
-    ["Armor class", numberAt(item.ac)?.toString()],
+    ["Attack bonus", attack === 0 ? undefined : signed(attack)],
+    ["Damage", damage(weapon)],
+    ["Armor class", armorTraitSchema.safeParse(item).data?.armorClass.toString()],
     ["Weight", weight === undefined ? undefined : `${weight} lb.`],
-    ["Value", value === undefined ? undefined : `${value / 100} gp`],
+    ["Value", value === undefined ? undefined : copperLabel(value)],
   ]);
 }
 
-const pick = <T>(schema: ZodType<T>, value: unknown): T | undefined => schema.safeParse(value).data;
-
-/** Each casting fact parses alone, so one malformed field leaves the others standing. */
 export function spellFacts(spell: HomebrewSpellInput): Fact[] {
-  const { shape } = spellCastingFactsSchema;
-  const time = castingTime(pick(shape.time, spell.time));
-  const duration = spellDuration(pick(shape.duration, spell.duration));
+  const facts = spellCastingFacts(spell);
+  const time = castingTime(facts.time);
+  const duration = spellDuration(facts.duration);
   const concentration = spell.duration.some((span) => span.concentration === true);
   return stated([
     ["Level", spell.level === 0 ? "Cantrip" : String(spell.level)],
     ["School", schoolName(spell.school)],
     ["Casting time", time && spell.meta?.ritual ? `${time} or ritual` : time],
-    ["Range", spellRange(pick(shape.range, spell.range))],
-    ["Components", spellComponents(pick(shape.components, spell.components))],
+    ["Range", spellRange(facts.range)],
+    ["Components", spellComponents(facts.components)],
     [
       "Duration",
       duration && concentration
