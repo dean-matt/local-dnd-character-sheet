@@ -45,6 +45,7 @@ describe("the class, subclass and feature rows", () => {
           `${name}|${source} (${short_name}) ${class_name}|${class_source} ${edition}`,
       ),
     ).toEqual([
+      "Path of the Storm Herald|XGE (Storm Herald) Barbarian|PHB classic",
       "Path of the Totem Warrior|PHB (Totem Warrior) Barbarian|PHB classic",
       "Death Domain|DMG (Death) Cleric|PHB classic",
       "Death Domain|DMG (Death) Cleric|XPHB classic",
@@ -116,6 +117,13 @@ describe("the class, subclass and feature rows", () => {
     // that lost class_source would file both under whichever came first.
     expect(rows).toEqual([
       { name: "Death Domain", short_name: "Death", class_source: "PHB", level: 2, features: 1 },
+      ...[3, 6].map((level) => ({
+        name: "Path of the Storm Herald",
+        short_name: "Storm Herald",
+        class_source: "PHB",
+        level,
+        features: 4,
+      })),
       {
         name: "Path of the Totem Warrior",
         short_name: "Totem Warrior",

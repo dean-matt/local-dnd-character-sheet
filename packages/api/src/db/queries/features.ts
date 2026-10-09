@@ -102,7 +102,9 @@ const sameRef = (a: ContentRef) => (b: ContentRef) => a.name === b.name && a.sou
  * feature that offers a choice carries its key, count and every option, so the sheet can
  * change it, and the option taken follows it in place of its own sorted position; the
  * options not taken drop out. A stored option no row answers is listed unresolved after
- * its feature rather than dropped.
+ * its feature rather than dropped. A feature that follows another's choice, such as
+ * Storm Soul (XGE), carries no choice of its own and lists the option whose name
+ * matches the one taken there.
  */
 function withChoices(
   rows: ClassFeatureRow[],
@@ -118,22 +120,34 @@ function withChoices(
   const taken = (offering: FeatureKey) =>
     definition.featureChoices.find((choice) => featureKey(choice.feature) === featureKey(offering))
       ?.options ?? [];
+  const followed = (row: ClassFeatureRow) => {
+    const leader = rows.find(
+      (each) =>
+        each.choose !== null &&
+        each.name === row.follows_name &&
+        each.source === row.follows_source,
+    );
+    return leader ? taken(offerOf(leader)).map(({ name }) => name) : [];
+  };
   return rows.flatMap((row): SheetFeature[] => {
     if (row.offered_by_name !== null) return [];
     const placement = { level: row.level };
     const feature = rowFeature(row.json, row, placement);
-    if (row.choose === null) return [feature];
+    if (row.choose === null && row.follows_name === null) return [feature];
     const optionRows = rows
       .filter((each) => each.level === row.level && each.offered_by_name === row.name)
       .filter((each) => each.offered_by_source === row.source);
+    const listed = (each: ClassFeatureRow) => rowFeature(each.json, each, placement);
+    if (row.choose === null) {
+      const names = followed(row);
+      return [feature, ...optionRows.filter(({ name }) => names.includes(name)).map(listed)];
+    }
     const options = optionRows.map(({ name, source }) => ({ name, source }));
     const offering = offerOf(row);
     const chosen = taken(offering);
     return [
       { ...feature, choice: { feature: offering, count: row.choose, options } },
-      ...optionRows
-        .filter((each) => chosen.some(sameRef(each)))
-        .map((each) => rowFeature(each.json, each, placement)),
+      ...optionRows.filter((each) => chosen.some(sameRef(each))).map(listed),
       ...chosen
         .filter((ref) => !options.some(sameRef(ref)))
         .map((ref) => unresolved(ref, placement)),

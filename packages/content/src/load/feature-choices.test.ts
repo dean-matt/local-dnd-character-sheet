@@ -33,6 +33,50 @@ describe("the features that offer a choice of features", () => {
     ]);
   });
 
+  it("marks Storm Aura a choice though upstream gives it no count, and Storm Soul as following it", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT name, level, choose, offered_by_name, follows_name, follows_source " +
+          "FROM subclass_features WHERE subclass_short_name = 'Storm Herald' " +
+          "AND offered_by_name IS NULL ORDER BY level",
+      )
+      .all();
+    const options = db
+      .prepare(
+        "SELECT level, offered_by_name, COUNT(*) AS count FROM subclass_features " +
+          "WHERE subclass_short_name = 'Storm Herald' AND offered_by_name IS NOT NULL " +
+          "GROUP BY level, offered_by_name ORDER BY level",
+      )
+      .all();
+    db.close();
+
+    expect(rows).toEqual([
+      {
+        name: "Storm Aura",
+        level: 3,
+        choose: 1,
+        offered_by_name: null,
+        follows_name: null,
+        follows_source: null,
+      },
+      {
+        name: "Storm Soul",
+        level: 6,
+        choose: null,
+        offered_by_name: null,
+        follows_name: "Storm Aura",
+        follows_source: "XGE",
+      },
+    ]);
+    expect(options).toEqual([
+      { level: 3, offered_by_name: "Storm Aura", count: 3 },
+      { level: 6, offered_by_name: "Storm Soul", count: 3 },
+    ]);
+  });
+
   it("reads a class feature's choice nested below its prose", () => {
     build(FIXTURE_VENDOR);
 
@@ -96,6 +140,56 @@ describe("the features that offer a choice of features", () => {
     expect(refusal(vendorHolding("class-bard.json", offering(block, "Mobile")))).toMatch(
       /Flourish: option Mobile\|Bard\|\|6\|XGE names no feature beside it/,
     );
+  });
+
+  const stormHerald = (aura: Record<string, unknown>, soulOptions = ["Desert"]) => {
+    const subclassFeature = (name: string, level: number, entries: unknown[] = ["Elided."]) => ({
+      name,
+      source: "XGE",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclassShortName: "Storm Herald",
+      subclassSource: "XGE",
+      level,
+      entries,
+    });
+    const refs = (level: number, names: string[]) => ({
+      type: "options",
+      entries: names.map((name) => ({
+        type: "refSubclassFeature",
+        subclassFeature: `${name}|Barbarian|PHB|Storm Herald|XGE|${level}`,
+      })),
+    });
+    return {
+      class: [{ name: "Barbarian", source: "PHB", hd: { number: 1, faces: 12 } }],
+      subclass: [
+        {
+          name: "Path of the Storm Herald",
+          shortName: "Storm Herald",
+          source: "XGE",
+          className: "Barbarian",
+          classSource: "PHB",
+        },
+      ],
+      subclassFeature: [
+        subclassFeature("Storm Aura", 3, [{ ...refs(3, ["Desert"]), ...aura }]),
+        subclassFeature("Desert", 3),
+        subclassFeature("Storm Soul", 6, [refs(6, soulOptions)]),
+        ...soulOptions.map((name) => subclassFeature(name, 6)),
+      ],
+    };
+  };
+
+  it("refuses Storm Aura once upstream gives its block a count, so the listing is revisited", () => {
+    expect(refusal(vendorHolding("class-barbarian.json", stormHerald({ count: 1 })))).toMatch(
+      /Storm Aura: names no options block without a count/,
+    );
+  });
+
+  it("refuses a following option the choice it follows does not offer", () => {
+    expect(
+      refusal(vendorHolding("class-barbarian.json", stormHerald({}, ["Desert", "Storm"]))),
+    ).toMatch(/Storm Soul: option Storm matches none Storm Aura offers/);
   });
 
   it("refuses a count other than 1, so a new one surfaces rather than being offered as one", () => {

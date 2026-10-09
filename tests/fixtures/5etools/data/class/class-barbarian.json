@@ -26,6 +26,20 @@
         "Spirit Walker|Barbarian||Totem Warrior||10",
         "Totemic Attunement|Barbarian||Totem Warrior||14"
       ]
+    },
+    {
+      "name": "Path of the Storm Herald",
+      "shortName": "Storm Herald",
+      "source": "XGE",
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "page": 10,
+      "subclassFeatures": [
+        "Path of the Storm Herald|Barbarian||Storm Herald|XGE|3",
+        "Storm Soul|Barbarian||Storm Herald|XGE|6",
+        "Shielding Storm|Barbarian||Storm Herald|XGE|10",
+        "Raging Storm|Barbarian||Storm Herald|XGE|14"
+      ]
     }
   ],
   "subclassFeature": [
@@ -123,6 +137,138 @@
       "subclassShortName": "Totem Warrior",
       "subclassSource": "PHB",
       "level": 3,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Storm Aura",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 3,
+      "header": 1,
+      "entries": [
+        "Elided. {@quickref Cover||3||total cover} Elided.",
+        "Elided.",
+        "Elided.",
+        {
+          "type": "options",
+          "entries": [
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Desert|Barbarian|PHB|Storm Herald|XGE|3"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Sea|Barbarian|PHB|Storm Herald|XGE|3"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Tundra|Barbarian|PHB|Storm Herald|XGE|3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Desert",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 3,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Sea",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 3,
+      "entries": [
+        "Elided. {@damage 1d6} Elided. {@damage 2d6} Elided. {@damage 3d6} Elided. {@damage 4d6} Elided."
+      ]
+    },
+    {
+      "name": "Tundra",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 3,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Storm Soul",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 6,
+      "header": 2,
+      "entries": [
+        "Elided.",
+        {
+          "type": "options",
+          "entries": [
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Desert|Barbarian|PHB|Storm Herald|XGE|6"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Sea|Barbarian|PHB|Storm Herald|XGE|6"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Tundra|Barbarian|PHB|Storm Herald|XGE|6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Desert",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 6,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Sea",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 6,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Tundra",
+      "source": "XGE",
+      "page": 10,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Storm Herald",
+      "subclassSource": "XGE",
+      "level": 6,
       "entries": ["Elided."]
     }
   ]

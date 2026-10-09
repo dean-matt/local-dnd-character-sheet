@@ -473,8 +473,8 @@ export const FIXTURES: Fixture[] = [
         },
         subclass: {
           items: [
-            {
-              id: "Path of the Totem Warrior|PHB|Barbarian|PHB",
+            ...["Path of the Totem Warrior|PHB", "Path of the Storm Herald|XGE"].map((id) => ({
+              id: `${id}|Barbarian|PHB`,
               fields: [
                 "name",
                 "shortName",
@@ -484,7 +484,7 @@ export const FIXTURES: Fixture[] = [
                 "page",
                 "subclassFeatures",
               ],
-            },
+            })),
           ],
         },
         subclassFeature: {
@@ -495,6 +495,14 @@ export const FIXTURES: Fixture[] = [
             "Elk|SCAG|Barbarian|PHB|Totem Warrior|PHB|3",
             "Tiger|SCAG|Barbarian|PHB|Totem Warrior|PHB|3",
             "Wolf|PHB|Barbarian|PHB|Totem Warrior|PHB|3",
+            "Storm Aura|XGE|Barbarian|PHB|Storm Herald|XGE|3",
+            "Desert|XGE|Barbarian|PHB|Storm Herald|XGE|3",
+            "Sea|XGE|Barbarian|PHB|Storm Herald|XGE|3",
+            "Tundra|XGE|Barbarian|PHB|Storm Herald|XGE|3",
+            "Storm Soul|XGE|Barbarian|PHB|Storm Herald|XGE|6",
+            "Desert|XGE|Barbarian|PHB|Storm Herald|XGE|6",
+            "Sea|XGE|Barbarian|PHB|Storm Herald|XGE|6",
+            "Tundra|XGE|Barbarian|PHB|Storm Herald|XGE|6",
           ],
         },
       },
