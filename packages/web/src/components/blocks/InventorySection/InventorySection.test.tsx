@@ -473,6 +473,40 @@ describe("InventorySection", () => {
       expect(putBodies(fetchMock).map((body) => body.money.gold)).toEqual([1275, 1275]);
     });
 
+    it("keeps a write's Retry when the next amount is typed while it saves", async () => {
+      const fetchMock = renderSection();
+      let fail = () => {};
+      const writes = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === "/api/characters/1"
+          ? new Promise<Response>((resolve) => {
+              fail = () =>
+                resolve(new Response(JSON.stringify({ error: "down" }), { status: 500 }));
+            })
+          : fetchMock(input, init),
+      );
+      vi.stubGlobal("fetch", writes);
+
+      const field = adjustGold("+25");
+      await waitFor(() => expect(putBodies(writes)).toHaveLength(1));
+      fireEvent.change(field, { target: { value: "-3" } });
+      fail();
+
+      expect(await card("Currency").findByRole("button", { name: "Retry" })).toBeInTheDocument();
+    });
+
+    it("applies the amount from its button as well as Enter", async () => {
+      const fetchMock = renderSection();
+
+      fireEvent.change(
+        card("Currency").getByRole("textbox", { name: "Adjust gold, negative to remove" }),
+        { target: { value: "+5" } },
+      );
+      fireEvent.click(card("Currency").getByRole("button", { name: "Apply gold adjustment" }));
+
+      await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(1));
+      expect(putBodies(fetchMock)[0].money).toMatchObject({ gold: 1255 });
+    });
+
     it("refuses text that is not a whole amount", async () => {
       const fetchMock = renderSection();
 

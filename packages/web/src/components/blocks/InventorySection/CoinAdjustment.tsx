@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
+import { Check } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
@@ -59,18 +60,20 @@ export function CoinAdjustment({
   }
 
   return (
-    <form noValidate onSubmit={submit}>
+    <form noValidate onSubmit={submit} className="flex items-start gap-1">
       <InputField
         label={`Adjust ${name.toLowerCase()}, negative to remove`}
         labelHidden
         type="text"
         enterKeyHint="done"
-        placeholder="±"
+        placeholder={`± ${abbreviation}`}
         value={draft}
         onChange={(event) => {
           setDraft(event.target.value);
           setRefusal(null);
-          update.reset();
+          // Only a shortfall: a reset during a write in flight would detach its Saving
+          // status and any failure's Retry.
+          if (update.error instanceof Shortfall) update.reset();
         }}
         messageSlot={{ into: messages, name }}
         status={update.isPending ? "Saving…" : null}
@@ -87,6 +90,14 @@ export function CoinAdjustment({
         }
         className="w-[70px]"
       />
+      <button
+        type="submit"
+        aria-label={`Apply ${name.toLowerCase()} adjustment`}
+        title="Apply"
+        className="flex size-8 shrink-0 items-center justify-center rounded-control text-muted hover:bg-subtle hover:text-ink"
+      >
+        <Check aria-hidden="true" size={16} />
+      </button>
     </form>
   );
 }
