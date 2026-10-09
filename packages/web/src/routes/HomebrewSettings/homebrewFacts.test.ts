@@ -34,6 +34,9 @@ describe("homebrew facts", () => {
       ],
     );
     expect(
+      itemFacts({ name: "Cracked Shield", edition: "one", type: "S", ac: 0, bonusAc: "-1" }),
+    ).toContainEqual(["Armor class", "-1"]);
+    expect(
       itemFacts({
         name: "Blunted Sword",
         edition: "one",

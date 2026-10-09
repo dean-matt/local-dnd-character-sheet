@@ -51,7 +51,7 @@ function damage(weapon: z.output<typeof weaponTraitSchema>): string | undefined 
 function armorClass(item: HomebrewItemInput): string | undefined {
   const armor = armorTraitSchema.safeParse(item).data;
   if (!armor) return undefined;
-  return armor.category === "shield" ? `+${armor.armorClass}` : String(armor.armorClass);
+  return armor.category === "shield" ? signed(armor.armorClass) : String(armor.armorClass);
 }
 
 export function itemFacts(item: HomebrewItemInput): Fact[] {
