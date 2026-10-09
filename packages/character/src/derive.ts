@@ -42,7 +42,7 @@ import { carriedWeight } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
 import type { Ability, ContentRef, EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
-import { classLevels, raceLabel, totalLevel } from "./summaries.ts";
+import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
 
 /**
  * The hit point maximum for a stored character.
@@ -308,7 +308,7 @@ function derivedDefenses(
   catalog: CharacterCatalog,
 ): ComputedField<Defenses> {
   const { resistChoice, ...race } = catalog.raceDefenses;
-  const from = raceLabel(definition);
+  const from = raceSummary(definition);
   const pick = definition.raceResistance;
   const picked = pick !== undefined && resistChoice.includes(pick) ? pick : undefined;
   const grants: Grant[] = [

@@ -8,7 +8,7 @@ import {
   type CharacterRecord,
   characterDefinitionSchema,
   displayName,
-  raceLabel,
+  raceSummary,
   totalLevel,
 } from "@dnd/character";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
@@ -49,7 +49,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
         />
       </Card>
       <Card title="Race">
-        <ChipList labels={[raceLabel(definition)]} />
+        <ChipList labels={[raceSummary(definition)]} />
       </Card>
       <Card title="Class">
         <div className="flex flex-col gap-2">

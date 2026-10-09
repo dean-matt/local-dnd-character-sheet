@@ -57,6 +57,13 @@
       "when": 1790952343347,
       "tag": "0007_drop_field_overrides",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791576989299,
+      "tag": "0008_race_summary_with_subrace",
+      "breakpoints": true
     }
   ]
 }
