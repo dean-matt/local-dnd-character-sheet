@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
 import { afterEach, describe, expect, it } from "vitest";
 import { getCatalogMeta, getCatalogSources, getCatalogVersion } from "./catalog-meta.ts";
 import { publishMeta, publishSearchFixture } from "./contentFixture.ts";
@@ -21,6 +22,7 @@ describe("getCatalogMeta", () => {
 
     expect(getCatalogMeta(dataDir)).toEqual([
       { key: "built_at", value: "2026-01-01T00:00:00.000Z" },
+      SCHEMA_STAMP,
       { key: "upstream_tag", value: "v2.34.1" },
     ]);
   });

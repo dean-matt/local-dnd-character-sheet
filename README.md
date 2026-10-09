@@ -110,6 +110,7 @@ data/               the three SQLite databases, gitignored
 | `pnpm check` fails with `typos not installed` | The spellchecker is a separate binary. | `brew install typos-cli` |
 | `Error: Could not locate the bindings file` | `better-sqlite3` was built for a different Node major. | `pnpm rebuild better-sqlite3` |
 | Port 5173 or 8787 already in use | An earlier dev server is still running. | macOS/Linux `lsof -ti tcp:8787 \| xargs kill`; Windows `npx kill-port 8787` |
+| `The catalog was built from an older schema` | A pull changed `schema.ts` since the last build. | `pnpm content:build` |
 | Empty search results after a rebuild | The catalog was rebuilt but never populated. | Check `SELECT * FROM meta` in `data/content/$(cat data/content/current)` |
 
 ## Further reading

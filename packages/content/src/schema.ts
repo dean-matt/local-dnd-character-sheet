@@ -9,6 +9,7 @@
  *   B  thin lookup tables that resolve {@tag} references and fill pickers
  *   C  one generic table for everything else, so no tag ever dangles
  */
+import { createHash } from "node:crypto";
 import { EDITIONS } from "@dnd/rules";
 
 const EDITION_LIST = EDITIONS.map((edition) => `'${edition}'`).join(", ");
@@ -449,3 +450,13 @@ CREATE TABLE tag_redirects (
   PRIMARY KEY (tag, from_key)
 ) STRICT;
 `;
+
+/**
+ * The `meta` row `pnpm content:build` writes, naming the DDL the database was built from.
+ * Hashed from `CONTENT_SCHEMA` itself, so no schema change can leave it unbumped; the API
+ * compares it to its own and refuses a catalog built from another.
+ */
+export const SCHEMA_STAMP = {
+  key: "schema_fingerprint",
+  value: createHash("sha256").update(CONTENT_SCHEMA).digest("hex").slice(0, 16),
+} as const;

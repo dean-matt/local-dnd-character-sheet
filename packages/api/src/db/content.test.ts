@@ -1,10 +1,15 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CONTENT_SCHEMA } from "@dnd/content/schema";
+import { CONTENT_SCHEMA, SCHEMA_STAMP } from "@dnd/content/schema";
 import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
-import { openContentDb } from "./content.ts";
+import {
+  CATALOG_OUT_OF_DATE,
+  CatalogOutOfDateError,
+  catalogSchemaWarning,
+  openContentDb,
+} from "./content.ts";
 
 /**
  * Mirrors `build-db.ts`'s publish step: write a versioned database under its own
@@ -12,7 +17,11 @@ import { openContentDb } from "./content.ts";
  * file itself, so this never touches a path a reader might have open — the property
  * that makes the scheme work identically on Windows.
  */
-function publish(contentDir: string, value: string): string {
+function publish(
+  contentDir: string,
+  value: string,
+  stamp: string | null = SCHEMA_STAMP.value,
+): string {
   mkdirSync(contentDir, { recursive: true });
   const name = `content-${value}.db`;
   const target = join(contentDir, name);
@@ -20,6 +29,7 @@ function publish(contentDir: string, value: string): string {
   const db = new Database(staging);
   db.exec(CONTENT_SCHEMA);
   db.prepare("INSERT INTO meta (key, value) VALUES ('version', ?)").run(value);
+  if (stamp) db.prepare("INSERT INTO meta (key, value) VALUES (?, ?)").run(SCHEMA_STAMP.key, stamp);
   db.pragma("journal_mode = DELETE");
   db.close();
   for (const sidecar of ["-wal", "-shm"]) rmSync(`${staging}${sidecar}`, { force: true });
@@ -44,7 +54,9 @@ describe("openContentDb", () => {
     const v1 = publish(contentDir, "v1");
 
     const reader = openContentDb(dataDir);
-    expect(reader.prepare("SELECT value FROM meta").get()).toEqual({ value: "v1" });
+    expect(reader.prepare("SELECT value FROM meta WHERE key = 'version'").get()).toEqual({
+      value: "v1",
+    });
 
     // Stand-ins for sidecars an older build could have left behind — the rebuild
     // never touches this reader's file at all, since it only ever writes a new
@@ -55,11 +67,15 @@ describe("openContentDb", () => {
 
     publish(contentDir, "v2");
 
-    expect(reader.prepare("SELECT value FROM meta").get()).toEqual({ value: "v1" });
+    expect(reader.prepare("SELECT value FROM meta WHERE key = 'version'").get()).toEqual({
+      value: "v1",
+    });
     reader.close();
 
     const fresh = openContentDb(dataDir);
-    expect(fresh.prepare("SELECT value FROM meta").get()).toEqual({ value: "v2" });
+    expect(fresh.prepare("SELECT value FROM meta WHERE key = 'version'").get()).toEqual({
+      value: "v2",
+    });
     fresh.close();
   });
 
@@ -73,8 +89,37 @@ describe("openContentDb", () => {
 
     // The version the still-open reader holds is untouched: nothing was renamed
     // over it, only a new file was added and the tiny pointer file rewritten.
-    expect(reader.prepare("SELECT value FROM meta").get()).toEqual({ value: "v1" });
+    expect(reader.prepare("SELECT value FROM meta WHERE key = 'version'").get()).toEqual({
+      value: "v1",
+    });
     expect(() => new Database(v1, { readonly: true }).close()).not.toThrow();
     reader.close();
+  });
+
+  it("refuses a catalog stamped by another schema, or not stamped at all", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-db-"));
+    const contentDir = join(dataDir, "content");
+
+    publish(contentDir, "older", "0000000000000000");
+    expect(() => openContentDb(dataDir)).toThrow(CatalogOutOfDateError);
+    expect(catalogSchemaWarning(dataDir)).toBe(CATALOG_OUT_OF_DATE);
+
+    publish(contentDir, "unstamped", null);
+    expect(() => openContentDb(dataDir)).toThrow(CATALOG_OUT_OF_DATE);
+
+    publish(contentDir, "rebuilt");
+    expect(catalogSchemaWarning(dataDir)).toBeUndefined();
+    openContentDb(dataDir).close();
+  });
+
+  it("checks again once current moves off a catalog that passed", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-db-"));
+    const contentDir = join(dataDir, "content");
+
+    publish(contentDir, "current");
+    openContentDb(dataDir).close();
+    publish(contentDir, "older", "0000000000000000");
+
+    expect(() => openContentDb(dataDir)).toThrow(CatalogOutOfDateError);
   });
 });

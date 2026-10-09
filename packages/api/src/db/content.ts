@@ -17,10 +17,55 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
 import Database from "better-sqlite3";
 
+export const CATALOG_OUT_OF_DATE =
+  "The catalog was built from an older schema. Run `pnpm content:build` to rebuild it.";
+
+/** Thrown by `openContentDb` for a catalog whose schema stamp is not this build's. */
+export class CatalogOutOfDateError extends Error {
+  constructor() {
+    super(CATALOG_OUT_OF_DATE);
+    this.name = "CatalogOutOfDateError";
+  }
+}
+
+// A versioned database never changes once published, so a path that matched once always will.
+let matchedPath: string | undefined;
+
+function stampMatches(db: Database.Database): boolean {
+  try {
+    return (
+      db.prepare("SELECT value FROM meta WHERE key = ?").pluck().get(SCHEMA_STAMP.key) ===
+      SCHEMA_STAMP.value
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Throws `CatalogOutOfDateError` where the database `current` names was built from another schema. */
 export function openContentDb(dataDir: string): Database.Database {
   const contentDir = join(dataDir, "content");
   const current = readFileSync(join(contentDir, "current"), "utf8").trim();
-  return new Database(join(contentDir, current), { readonly: true });
+  const path = join(contentDir, current);
+  const db = new Database(path, { readonly: true });
+  if (path === matchedPath) return db;
+  if (!stampMatches(db)) {
+    db.close();
+    throw new CatalogOutOfDateError();
+  }
+  matchedPath = path;
+  return db;
+}
+
+/** `CATALOG_OUT_OF_DATE` where the live catalog fails the stamp check, for a warning at start. */
+export function catalogSchemaWarning(dataDir: string): string | undefined {
+  try {
+    openContentDb(dataDir).close();
+  } catch (error) {
+    if (error instanceof CatalogOutOfDateError) return error.message;
+  }
+  return undefined;
 }
