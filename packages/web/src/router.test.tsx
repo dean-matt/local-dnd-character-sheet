@@ -146,6 +146,17 @@ describe("routing", () => {
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("aria-current", "page");
   });
 
+  it("renders Homebrew as a Settings section", () => {
+    renderAt("/settings/homebrew");
+
+    const nav = screen.getByRole("navigation", { name: "Settings sections" });
+    expect(within(nav).getByRole("link", { name: "Homebrew" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Homebrew" })).toBeInTheDocument();
+  });
+
   it("shows the not-found state for an address catalog detail used to have", async () => {
     renderAt("/catalog/spells/Fireball/PHB");
     await screen.findByRole("heading", { level: 1, name: "Page not found" });

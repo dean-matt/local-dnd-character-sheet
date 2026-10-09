@@ -107,7 +107,7 @@ describe("HomePage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("nothing at /api/characters");
   });
 
-  it("links to Search, Settings and each catalog type the search returns", async () => {
+  it("links to Search, Settings, Homebrew and each catalog type the search returns", async () => {
     renderHome();
 
     const explore = screen.getByRole("region", { name: "Explore" });
@@ -118,6 +118,10 @@ describe("HomePage", () => {
     expect(within(explore).getByRole("link", { name: /^Settings/ })).toHaveAttribute(
       "href",
       "/settings",
+    );
+    expect(within(explore).getByRole("link", { name: /^Homebrew/ })).toHaveAttribute(
+      "href",
+      "/settings/homebrew",
     );
     const compendium = await within(explore).findByRole("list", { name: "Compendium" });
     expect(

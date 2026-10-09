@@ -7,12 +7,16 @@ import type { z } from "zod";
 
 const BASE_URL = "/api";
 
-/** `status` is `0` for a network-level failure, where no HTTP response ever arrived. */
+/**
+ * `status` is `0` for a network-level failure, where no HTTP response ever arrived. `body`
+ * is the failure's parsed JSON, for a route whose error carries more than its message.
+ */
 export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
     options?: ErrorOptions,
+    public readonly body?: unknown,
   ) {
     super(message, options);
     this.name = "ApiError";
@@ -36,8 +40,13 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
     throw new ApiError(message, 0, { cause });
   }
   if (!response.ok) {
-    const message = readErrorMessage(await response.json().catch(() => undefined));
-    throw new ApiError(message ?? response.statusText, response.status);
+    const body: unknown = await response.json().catch(() => undefined);
+    throw new ApiError(
+      readErrorMessage(body) ?? response.statusText,
+      response.status,
+      undefined,
+      body,
+    );
   }
   return response;
 }

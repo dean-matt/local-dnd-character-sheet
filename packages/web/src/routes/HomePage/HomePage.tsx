@@ -1,4 +1,4 @@
-import { ChevronRight, Search, Settings } from "lucide-react";
+import { ChevronRight, FlaskConical, Search, Settings } from "lucide-react";
 import { Link } from "react-router";
 import { CharacterActions } from "../../components/CharacterActions.tsx";
 import { CharacterTile } from "../../components/CharacterTile.tsx";
@@ -16,7 +16,7 @@ const CATALOG_TYPES = MECHANICS_ENTRIES.filter((entry) => entry.kind === undefin
 
 /**
  * The index route's dashboard: the most recently changed characters, then quick links to
- * Search, Settings and each catalog type the search can return.
+ * Search, Settings, Homebrew and each catalog type the search can return.
  */
 export function HomePage() {
   const characters = useCharacters();
@@ -92,6 +92,14 @@ export function HomePage() {
               icon={Settings}
               label="Settings"
               description="Theme, accent and which sources to search"
+            />
+          </li>
+          <li className="min-w-0">
+            <HomeQuickLink
+              to="/settings/homebrew"
+              icon={FlaskConical}
+              label="Homebrew"
+              description="Your own items and spells, written as 5etools entries"
             />
           </li>
         </ul>
