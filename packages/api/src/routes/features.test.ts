@@ -337,12 +337,12 @@ describe("featuresRoutes", () => {
     const totemFeatures = async () =>
       (await features()).groups.find(({ origin }) => origin === "subclass")?.features;
 
-    it("lists the option taken and leaves out the rest", async () => {
+    it("lists the option taken right after its feature, and leaves out the rest", async () => {
       store(barbarian([{ feature: totemSpirit, options: [{ name: "Elk", source: "SCAG" }] }]));
 
       expect((await totemFeatures())?.map(({ name, source }) => [name, source])).toEqual([
-        ["Elk", "SCAG"],
         ["Totem Spirit", "PHB"],
+        ["Elk", "SCAG"],
       ]);
     });
 

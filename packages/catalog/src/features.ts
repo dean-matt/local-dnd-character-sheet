@@ -11,11 +11,6 @@
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
-/**
- * `level` is the class level a class or subclass feature arrives at, or the character
- * level a feat was taken at. `featureType` is the code an optional feature was picked
- * under — `FS:F`, `MV:B` — since one option can be offered under several.
- */
 const refSchema = z.strictObject({ name: z.string().min(1), source: z.string().min(1) });
 
 /**
@@ -37,6 +32,11 @@ const featureChoiceSchema = z.strictObject({
   options: z.array(refSchema),
 });
 
+/**
+ * `level` is the class level a class or subclass feature arrives at, or the character
+ * level a feat was taken at. `featureType` is the code an optional feature was picked
+ * under — `FS:F`, `MV:B` — since one option can be offered under several.
+ */
 const featureFields = {
   name: z.string().min(1),
   source: z
