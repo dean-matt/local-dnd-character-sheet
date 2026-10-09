@@ -50,6 +50,8 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   inventory: "equipment",
   money: "equipment",
   spells: "spells",
+  leveling: null,
+  experience: null,
   notes: null,
   houseRules: null,
   overrides: null,
