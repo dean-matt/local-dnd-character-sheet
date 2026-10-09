@@ -57,6 +57,14 @@ describe("a feat's fixed increase", () => {
     expect(alternativesOf({ feat: ACTOR, increases: [] }, feats, totals(20))[0]?.fixed).toEqual({});
     expect(isMade({ feat: ACTOR, increases: [] }, feats, totals(20))).toBe(true);
   });
+
+  it("offers a slot only the abilities with room, and needs nothing where none has", () => {
+    const capped = { ...totals(10), str: 20, dex: 19 };
+    const offered = alternativesOf({ feat: GRAPPLER, increases: [] }, FEATS, capped);
+    expect(offered[0]?.slots).toEqual([{ from: ["dex"], amount: 1 }]);
+    const full = { ...capped, dex: 20 };
+    expect(isMade({ feat: GRAPPLER, increases: [] }, FEATS, full)).toBe(true);
+  });
 });
 
 describe("improvementText", () => {

@@ -71,8 +71,9 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
 /**
  * Each choice made so far that the character's edition does not hold: a race, class or
  * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
- * background, subclass or feat absent from the edition's list. `Ability Score Improvement`
- * (XPHB) is never named: an edition change converts the scores it raised. Each class the draft holds is
+ * background or subclass absent from the edition's list, or a feat a class granted at an
+ * improvement absent from it. `Ability Score Improvement` (XPHB) is never named: an
+ * edition change converts the scores it raised. Each class the draft holds is
  * checked. A choice counts only once its row loads, so one still loading is never named,
  * and a deity both editions share never is.
  */
@@ -106,8 +107,8 @@ export function useEditionMismatches(): EditionMismatch[] {
       ),
       missingFrom("Subclass", entry.subclass, entry.subclasses),
     ]),
-    ...feats.map(({ ref }) =>
-      "name" in ref && refKey(ref) !== refKey(IMPROVEMENT_FEAT)
+    ...feats.map(({ ref, grantedBy }) =>
+      grantedBy?.kind === "class" && "name" in ref && refKey(ref) !== refKey(IMPROVEMENT_FEAT)
         ? missingFrom("Feat", ref, featRows)
         : undefined,
     ),

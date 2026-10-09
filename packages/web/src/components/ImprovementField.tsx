@@ -5,7 +5,6 @@ import {
   displayName,
   type EntryRef,
   entryKey,
-  IMPROVEMENT_CAP,
   IMPROVEMENT_FEAT,
   type Improvement,
 } from "@dnd/character";
@@ -89,9 +88,6 @@ export function ImprovementField({
     setPlaced(next);
     onChange({ ...current, increases: raisesOf(alternatives, next) });
   };
-  const cap = alternative?.max ?? IMPROVEMENT_CAP;
-  const fits = (ability: Ability, amount: number) =>
-    candidate.totals === undefined || candidate.totals[ability] + amount <= cap;
 
   return (
     <div className="flex flex-wrap items-end gap-2">
@@ -138,11 +134,7 @@ export function ImprovementField({
               <Select
                 {...control}
                 options={slot.from
-                  .filter(
-                    (ability) =>
-                      ability === held ||
-                      (!elsewhere.includes(ability) && fits(ability, slot.amount)),
-                  )
+                  .filter((ability) => ability === held || !elsewhere.includes(ability))
                   .map((ability) => ({
                     value: ability,
                     label: `${signed(slot.amount)} ${ABILITY_LABEL[ability]}`,

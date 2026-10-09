@@ -41,17 +41,23 @@ export const featRow = (feats: readonly FeatRecord[], feat: EntryRef): FeatRecor
 type Totals = Record<Ability, number> | undefined;
 
 /**
- * `alternative` with each fixed increase cut to what the cap leaves above `totals`, and
- * dropped where it leaves nothing: `Actor` (PHB) at 20 Charisma raises nothing.
+ * `alternative` held under the cap above `totals`: each fixed increase cut to what the cap
+ * leaves, and dropped where it leaves nothing — `Actor` (PHB) at 20 Charisma raises
+ * nothing — and each slot offering only the abilities with room for it, dropped where none
+ * has, as `Athlete` (PHB) at 20 Strength and 20 Dexterity.
  */
 function capped(alternative: IncreaseAlternative, totals: Totals): IncreaseAlternative {
   if (totals === undefined) return alternative;
-  const cap = alternative.max ?? IMPROVEMENT_CAP;
+  const room = (ability: Ability) => (alternative.max ?? IMPROVEMENT_CAP) - totals[ability];
   const fixed = Object.entries(alternative.fixed).flatMap(([ability, amount = 0]) => {
-    const room = amount > 0 ? Math.min(amount, cap - totals[ability as Ability]) : amount;
-    return room === 0 || (amount > 0 && room < 0) ? [] : [[ability, room]];
+    const raised = amount > 0 ? Math.min(amount, room(ability as Ability)) : amount;
+    return raised === 0 || (amount > 0 && raised < 0) ? [] : [[ability, raised]];
   });
-  return { ...alternative, fixed: Object.fromEntries(fixed) };
+  const slots = alternative.slots.flatMap((slot) => {
+    const from = slot.from.filter((ability) => room(ability) >= slot.amount);
+    return from.length === 0 ? [] : [{ ...slot, from }];
+  });
+  return { ...alternative, fixed: Object.fromEntries(fixed), slots };
 }
 
 /**
@@ -64,7 +70,8 @@ export function alternativesOf(
   feats: readonly FeatRecord[],
   totals: Totals,
 ): IncreaseAlternative[] {
-  if (raisesScores(improvement)) return RAISE_ALTERNATIVES;
+  if (raisesScores(improvement))
+    return RAISE_ALTERNATIVES.map((alternative) => capped(alternative, totals));
   const row = improvement.feat && featRow(feats, improvement.feat);
   return row
     ? abilityIncreasesSchema.parse(row.json).map((alternative) => capped(alternative, totals))
