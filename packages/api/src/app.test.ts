@@ -3,17 +3,22 @@
  * than the real `data/` — `app.ts` itself opens the user's real databases on
  * import, which a test must never touch.
  */
+
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { CATALOG_OUT_OF_DATE } from "@dnd/catalog";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { publishMeta } from "./db/queries/contentFixture.ts";
 import { openTestDatabases } from "./db/testDatabases.ts";
 import { characterInventoryRoutes } from "./routes/character-inventory.ts";
 import { characterReferencesRoutes } from "./routes/character-references.ts";
 import { characterSpellsRoutes } from "./routes/character-spells.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { derivedRoutes } from "./routes/derived.ts";
+import { onAppError } from "./routes/errors.ts";
 import { featuresRoutes } from "./routes/features.ts";
 import { homebrewBackgroundsRoutes } from "./routes/homebrew-backgrounds.ts";
 import { homebrewClassesRoutes } from "./routes/homebrew-classes.ts";
@@ -109,6 +114,8 @@ describe("/openapi.json", () => {
 
     const description = body.paths["/spells/{name}/{source}"].get.responses["404"].description;
     expect(description).toBe("No spell with that name and source");
+    expect(body.paths["/spells/{name}/{source}"].get.responses["503"]).toBeDefined();
+    expect(body.paths["/characters"].get.responses["503"]).toBeUndefined();
   });
 
   /**
@@ -128,5 +135,42 @@ describe("/openapi.json", () => {
     const itemSchema =
       body.paths["/homebrew/items"].post.requestBody.content["application/json"].schema;
     expect(itemSchema.properties.entries).toEqual({ $ref: "#/components/schemas/Entries" });
+  });
+});
+
+describe("a catalog built from another schema", () => {
+  let dataDir: string;
+  let opened: ReturnType<typeof openTestDatabases>;
+
+  beforeEach(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "app-out-of-date-"));
+    opened = openTestDatabases();
+    publishMeta(dataDir, [{ key: SCHEMA_STAMP.key, value: "built-from-another-schema" }]);
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("answers 503 naming the rebuild on a catalog route, and leaves character routes working", async () => {
+    const app = new OpenAPIHono();
+    app.onError(onAppError);
+    app.route(
+      "/",
+      charactersRoutes(opened.charactersDb, () => {}),
+    );
+    app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
+
+    const spells = await app.request("/spells/Fireball/PHB");
+    expect(spells.status).toBe(503);
+    expect(await spells.json()).toEqual({
+      error: CATALOG_OUT_OF_DATE,
+      code: "catalog_out_of_date",
+    });
+    expect(CATALOG_OUT_OF_DATE).toContain("pnpm content:build");
+
+    expect((await app.request("/characters")).status).toBe(200);
   });
 });

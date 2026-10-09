@@ -62,8 +62,9 @@ reads `current` and opens one connection fresh per query rather than holding a h
 its lifetime: a query already reading the version it opened keeps reading it even after
 a rebuild moves `current` on, and the next query opens whatever `current` names by then.
 A version stays on disk for one build after it stops being current, so an in-flight query
-never loses the file out from under it. Mixing user data into it would make all of this
-false.
+never loses the file out from under it. Each build stamps `meta` with a fingerprint of
+`schema.ts`; where it differs from the API's, every catalog read answers a 503 naming
+the rebuild rather than a bare 500. Mixing user data into it would make all of this false.
 
 Characters store *references* to catalog rows — `{name, source}` — never copies. A
 rebuilt catalog therefore updates every character automatically. Only homebrew is stored

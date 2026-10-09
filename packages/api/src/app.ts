@@ -8,6 +8,7 @@ import { characterSpellsRoutes } from "./routes/character-spells.ts";
 import { charactersRoutes } from "./routes/characters.ts";
 import { classesRoutes } from "./routes/classes.ts";
 import { derivedRoutes } from "./routes/derived.ts";
+import { onAppError } from "./routes/errors.ts";
 import { featsRoutes } from "./routes/feats.ts";
 import { featuresRoutes } from "./routes/features.ts";
 import { healthRoutes } from "./routes/health.ts";
@@ -25,6 +26,8 @@ import { searchRoutes } from "./routes/search.ts";
 import { spellsRoutes } from "./routes/spells.ts";
 
 export const app = new OpenAPIHono();
+
+app.onError(onAppError);
 
 app.route("/", charactersRoutes(charactersDb, backupCharactersDb));
 app.route("/", pagesRoutes(charactersDb));

@@ -6,6 +6,7 @@ import { ErrorState } from "../../ErrorState.tsx";
 import { useCharacters } from "../../hooks/useCharacters.ts";
 import { useSearchTypes } from "../../hooks/useSearchTypes.ts";
 import { LoadingState } from "../../LoadingState.tsx";
+import { isCatalogOutOfDate } from "../../lib/api.ts";
 import { MECHANICS_ENTRIES, mechanicsHref } from "../../lib/mechanicsEntries.ts";
 import { HomeQuickLink } from "./HomeQuickLink.tsx";
 
@@ -52,7 +53,7 @@ export function HomePage() {
           {hasCharacters && <CharacterActions />}
         </div>
         {characters.isPending && <LoadingState label="Loading characters…" />}
-        {characters.isError && <ErrorState message={characters.error.message} />}
+        {characters.isError && <ErrorState error={characters.error} />}
         {hasCharacters && (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {recent.map((character) => (
@@ -103,7 +104,9 @@ export function HomePage() {
             />
           </li>
         </ul>
-        {types.isError && <p className="text-body text-error">The catalog's types did not load.</p>}
+        {types.isError && !isCatalogOutOfDate(types.error) && (
+          <p className="text-body text-error">The catalog's types did not load.</p>
+        )}
         {catalogTypes.length > 0 && (
           <>
             <h3

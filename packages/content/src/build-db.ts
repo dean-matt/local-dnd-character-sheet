@@ -29,7 +29,7 @@ import { resolveCopies } from "./load/copy.ts";
 import { drainUnmatchedFluff } from "./load/fluff.ts";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
 import { resolveVersions } from "./load/versions.ts";
-import { CONTENT_SCHEMA } from "./schema.ts";
+import { CONTENT_SCHEMA, SCHEMA_STAMP } from "./schema.ts";
 import { posix, verifyVendor } from "./sync.ts";
 
 const ROOT = resolve(import.meta.dirname, "../../..");
@@ -211,6 +211,7 @@ export function buildContent({
     const stamp = db.prepare("INSERT INTO meta (key, value) VALUES (?, ?)");
     db.transaction(() => {
       for (const [key, value] of Object.entries(meta)) stamp.run(key, value);
+      stamp.run(SCHEMA_STAMP.key, SCHEMA_STAMP.value);
       for (const loader of loaders) {
         try {
           for (const [table, rows] of Object.entries(loader.rows(readSources(vendorDir, loader)))) {

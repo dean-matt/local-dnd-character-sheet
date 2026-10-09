@@ -28,7 +28,7 @@ import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { listHomebrewItems } from "../db/queries/homebrew.ts";
 import { getExpandedItem, variantDetail } from "../db/queries/item-variant.ts";
 import { getItem, type ItemRow, listItems } from "../db/queries/items.ts";
-import { errorSchema, notFound } from "./errors.ts";
+import { catalogOutOfDate, errorSchema, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -79,6 +79,7 @@ const list = createRoute({
       description: "A page of items, bounded by limit and offset",
       content: { "application/json": { schema: itemListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -96,6 +97,7 @@ const read = createRoute({
       content: { "application/json": { schema: itemRecordSchema } },
     },
     404: notFound("item", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -122,6 +124,7 @@ const expand = createRoute({
       description: "The base item does not meet the variant's requirements",
       content: { "application/json": { schema: errorSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -139,12 +142,15 @@ export function itemsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       .filter((row) => row.edition === edition)
       .map(toHomebrewItemRecord);
     const merged = [...catalog, ...homebrew].sort((a, b) => a.name.localeCompare(b.name));
-    return c.json({
-      items: merged.slice(offset, offset + limit),
-      total: merged.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: merged.slice(offset, offset + limit),
+        total: merged.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(read, (c) => {

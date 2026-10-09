@@ -9,7 +9,7 @@ export function CharacterRedirect() {
   const { data, isPending, isError, error } = useCharacterPages(id);
 
   if (isPending) return <LoadingState label="Loading pages…" />;
-  if (isError) return <ErrorState message={error.message} />;
+  if (isError) return <ErrorState error={error} />;
 
   const first = data.find((page) => !page.hidden);
   if (!first) return <NotFoundPanel />;

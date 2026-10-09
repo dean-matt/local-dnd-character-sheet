@@ -30,6 +30,7 @@ import {
 } from "../db/queries/catalog-search.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { searchHomebrewItems, searchHomebrewSpells } from "../db/queries/homebrew.ts";
+import { catalogOutOfDate } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -138,6 +139,7 @@ const search = createRoute({
       description: "A page of hits, bounded by limit and offset",
       content: { "application/json": { schema: searchResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -152,6 +154,7 @@ const sources = createRoute({
       description: "Each source abbreviation, sorted",
       content: { "application/json": { schema: searchSourcesResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -165,6 +168,7 @@ const types = createRoute({
       description: "Each type, sorted",
       content: { "application/json": { schema: searchTypesResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -217,12 +221,15 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       compareSearchHits(term),
     );
 
-    return c.json({
-      items: merged.slice(offset, offset + limit),
-      total: merged.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: merged.slice(offset, offset + limit),
+        total: merged.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(sources, (c) => c.json({ sources: listSearchSources(dataDir) }, 200));

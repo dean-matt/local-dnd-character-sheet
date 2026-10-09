@@ -2,8 +2,10 @@ import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { CatalogUnavailable } from "../../CatalogUnavailable.tsx";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
+import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
@@ -91,8 +93,10 @@ export function SpellsStep() {
     subclass,
   } = useSpellChoices();
   const [beyond, setBeyond] = useState(false);
+  const catalogOutOfDate = useCatalogOutOfDate();
 
   if (classless) return <EmptyNote>Choose a class first, and its spells follow.</EmptyNote>;
+  if (failed && catalogOutOfDate) return <CatalogUnavailable />;
   if (failed) return <ErrorState message="The spells this step reads failed to load." />;
   if (!tablesReady || !granted) return <LoadingState label="Loading spells…" />;
 

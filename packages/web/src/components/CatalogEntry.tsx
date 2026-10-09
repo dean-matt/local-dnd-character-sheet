@@ -27,7 +27,7 @@ export function CatalogEntry({ address }: { address: string }) {
     const lookedFor = match ? match.target.lookedFor(match.key) : address;
     return entry("Not found", <p className="text-muted">Nothing answers to {lookedFor}.</p>);
   }
-  if (row.isError) return entry("Could not load", <ErrorState message={row.error.message} />);
+  if (row.isError) return entry("Could not load", <ErrorState error={row.error} />);
   if (row.isPending) return entry("Loading…", <LoadingState />);
 
   const { name, source, edition, qualifier, entries } = row.data;

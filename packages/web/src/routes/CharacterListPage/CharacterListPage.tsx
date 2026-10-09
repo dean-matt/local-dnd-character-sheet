@@ -22,7 +22,7 @@ export function CharacterListPage() {
         {loaded && data.length > 0 && <CharacterActions />}
       </div>
       {isPending && <LoadingState label="Loading characters…" />}
-      {isError && <ErrorState message={error.message} />}
+      {isError && <ErrorState error={error} />}
       {loaded && data.length === 0 && (
         <div className="flex flex-col items-center gap-2.5 rounded-card border-2 border-border border-dashed px-3 py-24 text-center">
           <p className="font-semibold text-sm">No characters yet</p>

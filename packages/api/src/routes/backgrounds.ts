@@ -7,7 +7,7 @@ import { type BackgroundRecord, backgroundRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { type BackgroundRow, getBackground, listBackgrounds } from "../db/queries/backgrounds.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -40,6 +40,7 @@ const list = createRoute({
       description: "A page of backgrounds, bounded by limit and offset",
       content: { "application/json": { schema: backgroundListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -57,6 +58,7 @@ const read = createRoute({
       content: { "application/json": { schema: backgroundRecordSchema } },
     },
     404: notFound("background", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -68,12 +70,15 @@ export function backgroundsRoutes(dataDir: string) {
   routes.openapi(list, (c) => {
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
     const backgrounds = listBackgrounds(dataDir, edition).map(toBackgroundRecord);
-    return c.json({
-      items: backgrounds.slice(offset, offset + limit),
-      total: backgrounds.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: backgrounds.slice(offset, offset + limit),
+        total: backgrounds.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(read, (c) => {

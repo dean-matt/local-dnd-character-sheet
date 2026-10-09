@@ -29,7 +29,7 @@ import {
   listSubclasses,
   type SubclassRow,
 } from "../db/queries/classes.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -107,6 +107,7 @@ const listClassesRoute = createRoute({
       description: "A page of classes, bounded by limit and offset",
       content: { "application/json": { schema: classListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -124,6 +125,7 @@ const readClassRoute = createRoute({
       content: { "application/json": { schema: classRecordSchema } },
     },
     404: notFound("class", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -146,6 +148,7 @@ const readClassGrantsRoute = createRoute({
       content: { "application/json": { schema: classGrantsSchema } },
     },
     404: notFound("class", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -161,6 +164,7 @@ const readPreparedSpellCountRoute = createRoute({
       content: { "application/json": { schema: preparedSpellCountSchema } },
     },
     404: notFound("class", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -184,6 +188,7 @@ const listSubclassesRoute = createRoute({
       description: "A page of subclasses, bounded by limit and offset",
       content: { "application/json": { schema: subclassListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -206,6 +211,7 @@ const readSubclassRoute = createRoute({
       content: { "application/json": { schema: subclassRecordSchema } },
     },
     404: notFound("subclass", "name, source, class name and class source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -230,6 +236,7 @@ const readSubclassGrantsRoute = createRoute({
       content: { "application/json": { schema: classGrantsSchema } },
     },
     404: notFound("subclass", "name, source, class name and class source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -242,12 +249,15 @@ export function classesRoutes(dataDir: string) {
   routes.openapi(listClassesRoute, (c) => {
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
     const classes = listClasses(dataDir, edition).map(toClassRecord);
-    return c.json({
-      items: classes.slice(offset, offset + limit),
-      total: classes.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: classes.slice(offset, offset + limit),
+        total: classes.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(readClassRoute, (c) => {
@@ -275,12 +285,15 @@ export function classesRoutes(dataDir: string) {
     const subclasses = listSubclasses(dataDir, className, classSource, edition).map(
       toSubclassRecord,
     );
-    return c.json({
-      items: subclasses.slice(offset, offset + limit),
-      total: subclasses.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: subclasses.slice(offset, offset + limit),
+        total: subclasses.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(readSubclassRoute, (c) => {

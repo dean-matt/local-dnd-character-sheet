@@ -62,6 +62,9 @@ importers:
       '@dnd/character':
         specifier: workspace:*
         version: link:../character
+      '@dnd/content':
+        specifier: workspace:*
+        version: link:../content
       '@dnd/rules':
         specifier: workspace:*
         version: link:../rules
@@ -84,9 +87,6 @@ importers:
         specifier: ^4.5.4
         version: 4.5.4
     devDependencies:
-      '@dnd/content':
-        specifier: workspace:*
-        version: link:../content
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13

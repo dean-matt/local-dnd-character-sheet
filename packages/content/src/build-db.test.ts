@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildContent, resolveContentDb } from "./build-db.ts";
 import { byNameSource, collectFluff } from "./load/fluff.ts";
 import type { Loader } from "./load/index.ts";
-import { CONTENT_SCHEMA } from "./schema.ts";
+import { CONTENT_SCHEMA, SCHEMA_STAMP } from "./schema.ts";
 
 /**
  * Fences the loader framework: the registry runs in order inside one
@@ -67,6 +67,9 @@ describe("buildContent", () => {
     const db = open();
     expect(db.prepare("SELECT value FROM meta WHERE key = 'upstream_tag'").pluck().get()).toBe(
       "v2.34.1",
+    );
+    expect(db.prepare("SELECT value FROM meta WHERE key = ?").pluck().get(SCHEMA_STAMP.key)).toBe(
+      SCHEMA_STAMP.value,
     );
     expect(db.prepare("SELECT kind, name FROM lookups ORDER BY rowid").all()).toEqual([
       { kind: "condition", name: "Blinded" },

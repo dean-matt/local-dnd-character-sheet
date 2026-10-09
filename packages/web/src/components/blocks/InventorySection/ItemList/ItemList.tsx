@@ -95,7 +95,7 @@ export function ItemList({
     </p>
   );
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
-  if (inventory.isError) return <ErrorState message={inventory.error.message} />;
+  if (inventory.isError) return <ErrorState error={inventory.error} />;
   if (inventory.data.items.length === 0) {
     return (
       <>

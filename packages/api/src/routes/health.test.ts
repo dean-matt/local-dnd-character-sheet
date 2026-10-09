@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { publishMeta } from "../db/queries/contentFixture.ts";
 import { healthRoutes } from "./health.ts";
@@ -27,6 +28,17 @@ describe("healthRoutes", () => {
   });
 
   it("reports a null version rather than crashing when no catalog has been built", async () => {
+    const res = await routes.request("/health");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: "ok", version: null });
+  });
+
+  it("stays up with a null version while the catalog predates the schema", async () => {
+    publishMeta(dataDir, [
+      { key: "upstream_tag", value: "v2.34.1" },
+      { key: SCHEMA_STAMP.key, value: "built-from-another-schema" },
+    ]);
+
     const res = await routes.request("/health");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ status: "ok", version: null });

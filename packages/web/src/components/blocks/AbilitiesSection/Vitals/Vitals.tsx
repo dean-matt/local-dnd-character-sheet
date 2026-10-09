@@ -19,7 +19,7 @@ export function Vitals({
 }) {
   const state = useCharacterState(characterId);
   if (state.isPending) return <LoadingState label="Loading hit points and conditions…" />;
-  if (state.isError) return <ErrorState message={state.error.message} />;
+  if (state.isError) return <ErrorState error={state.error} />;
 
   return (
     <div className="grid gap-4 md:grid-cols-2">

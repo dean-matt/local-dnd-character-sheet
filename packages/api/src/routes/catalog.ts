@@ -3,19 +3,25 @@
  * it holds — and the rows of each type no route of its own reads.
  */
 
-import { catalogRowRecordSchema, catalogSourcesResponseSchema } from "@dnd/catalog";
+import {
+  catalogOutOfDateSchema,
+  catalogRowRecordSchema,
+  catalogSourcesResponseSchema,
+} from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { getCatalogMeta, getCatalogSources } from "../db/queries/catalog-meta.ts";
 import { type CatalogRow, getCatalogRow } from "../db/queries/catalog-row.ts";
-import { errorSchema, notFound } from "./errors.ts";
+import { catalogOutOfDate, errorSchema, notFound } from "./errors.ts";
 
 const catalogMetaRowSchema = z.object({ key: z.string(), value: z.string() });
 
 const catalogMetaResponseSchema = z.object({ meta: z.array(catalogMetaRowSchema) });
 
 const notBuilt = {
-  description: "No catalog has been built yet",
-  content: { "application/json": { schema: errorSchema } },
+  description: "No catalog has been built yet, or it was built from a different schema",
+  content: {
+    "application/json": { schema: z.union([errorSchema, catalogOutOfDateSchema]) },
+  },
 };
 
 const meta = createRoute({
@@ -72,6 +78,7 @@ const read = createRoute({
       content: { "application/json": { schema: catalogRowRecordSchema } },
     },
     404: notFound("row", "type, name, source and qualifier"),
+    503: catalogOutOfDate,
   },
 });
 

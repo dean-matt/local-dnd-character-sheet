@@ -29,7 +29,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
 
   if (!character) return <EmptyState>Features isn't available yet.</EmptyState>;
   if (features.isPending) return <LoadingState label="Loading features…" />;
-  if (features.isError) return <ErrorState message={features.error.message} />;
+  if (features.isError) return <ErrorState error={features.error} />;
 
   if (features.data.groups.length === 0) {
     return <EmptyState>{character.name} has no features yet.</EmptyState>;

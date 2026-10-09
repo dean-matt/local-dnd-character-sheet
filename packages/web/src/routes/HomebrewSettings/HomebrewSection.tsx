@@ -67,7 +67,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
         </button>
       </div>
       {list.isPending && <LoadingState label={`Loading homebrew ${kind.heading.toLowerCase()}…`} />}
-      {list.isError && <ErrorState message={list.error.message} />}
+      {list.isError && <ErrorState error={list.error} />}
       {list.isSuccess && rows.length === 0 && editing === undefined && (
         <EmptyState>No homebrew {kind.heading.toLowerCase()} yet.</EmptyState>
       )}

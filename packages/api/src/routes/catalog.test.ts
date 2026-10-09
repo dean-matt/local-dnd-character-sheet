@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { publishMeta, publishSearchFixture } from "../db/queries/contentFixture.ts";
 import { catalogRoutes } from "./catalog.ts";
@@ -29,6 +30,7 @@ describe("catalogRoutes", () => {
     expect(await res.json()).toEqual({
       meta: [
         { key: "built_at", value: "2026-01-01T00:00:00.000Z" },
+        SCHEMA_STAMP,
         { key: "upstream_tag", value: "v2.34.1" },
       ],
     });

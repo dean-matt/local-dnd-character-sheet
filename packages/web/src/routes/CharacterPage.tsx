@@ -19,7 +19,7 @@ export function CharacterPage() {
   const derived = useCharacterDerived(id);
 
   if (pages.isPending) return <LoadingState label="Loading pages…" />;
-  if (pages.isError) return <ErrorState message={pages.error.message} />;
+  if (pages.isError) return <ErrorState error={pages.error} />;
 
   const page = pages.data.find((candidate) => candidate.slug === slug);
   if (!page) return <NotFoundPanel />;
@@ -27,9 +27,9 @@ export function CharacterPage() {
   return (
     <section aria-label={page.title}>
       <div className="flex flex-col gap-4">
-        {character.isError && <ErrorState message={character.error.message} />}
+        {character.isError && <ErrorState error={character.error} />}
         {derived.isPending && <LoadingState label="Loading derived values…" />}
-        {derived.isError && <ErrorState message={derived.error.message} />}
+        {derived.isError && <ErrorState error={derived.error} />}
         <PageBlocks blocks={page.blocks} character={character.data} derived={derived.data} />
       </div>
     </section>

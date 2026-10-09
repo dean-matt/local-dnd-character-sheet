@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
+import { isCatalogOutOfDate } from "../../../lib/api.ts";
 import { MECHANICS_ENTRIES, mechanicsHref } from "../../../lib/mechanicsEntries.ts";
 import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
@@ -46,7 +47,7 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
           <div className="fixed inset-0 z-40" onClick={onClose} />
           <div className="absolute left-0 top-full z-50 mt-2 grid max-h-[calc(100dvh-var(--spacing-topbar)-1rem)] w-160 grid-cols-3 gap-0.5 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover">
-            {types.isError && (
+            {types.isError && !isCatalogOutOfDate(types.error) && (
               <p className="col-span-3 px-2.5 py-2 text-body text-error">
                 The catalog's types did not load.
               </p>

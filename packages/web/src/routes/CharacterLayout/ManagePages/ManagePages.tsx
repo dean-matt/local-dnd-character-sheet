@@ -127,7 +127,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
           Reorder or show/hide any page.
         </p>
 
-        {error && <ErrorState message={error.message} />}
+        {error && <ErrorState error={error} />}
 
         <ol className="flex flex-col gap-1">
           {pages.map((page, index) => {

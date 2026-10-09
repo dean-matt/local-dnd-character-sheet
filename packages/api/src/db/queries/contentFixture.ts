@@ -1,6 +1,6 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { CONTENT_SCHEMA } from "@dnd/content/schema";
+import { CONTENT_SCHEMA, SCHEMA_STAMP } from "@dnd/content/schema";
 import { EDITIONS } from "@dnd/rules";
 import Database from "better-sqlite3";
 
@@ -60,6 +60,8 @@ function placeholder(column: { name: string; type: string }): string | number {
  * Windows refuses. Each key is a table in camel case, `classResources` for
  * `class_resources`, and a read spanning tables finds them all in one connection.
  *
+ * Stamped with this schema's fingerprint, as a build is, so `openContentDb` accepts it,
+ * unless the `meta` rows name a stamp of their own.
  * A row names only the columns its test cares about. Each NOT NULL column it leaves out
  * gets the first edition, 1 for an integer or an empty string, which the edition and
  * range CHECK constraints accept. Rows stay small, a value no real build could hold fails
@@ -91,6 +93,10 @@ function publishContent(dataDir: string, tables: Record<string, object[] | undef
       ).run(filled);
     }
   }
+  db.prepare("INSERT OR IGNORE INTO meta (key, value) VALUES (?, ?)").run(
+    SCHEMA_STAMP.key,
+    SCHEMA_STAMP.value,
+  );
   writeFileSync(join(contentDir, name), db.serialize());
   db.close();
   writeFileSync(join(contentDir, "current.tmp"), name);

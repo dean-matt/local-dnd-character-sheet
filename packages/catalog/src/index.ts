@@ -77,6 +77,8 @@ export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
 export { ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
 export type { ScoreMinimums } from "./multiclass.ts";
 export { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
+export type { CatalogOutOfDate } from "./out-of-date.ts";
+export { CATALOG_OUT_OF_DATE, catalogOutOfDateSchema } from "./out-of-date.ts";
 export type { ClassProficiencyGrants, ProficiencyGrants } from "./proficiency-grants.ts";
 export {
   classProficiencyGrantsSchema,
