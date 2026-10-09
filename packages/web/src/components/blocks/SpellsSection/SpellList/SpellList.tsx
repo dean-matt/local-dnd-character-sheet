@@ -4,8 +4,8 @@ import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { useCharacterSpells } from "../../../../hooks/useCharacterSpells.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
+import { levelLabel } from "../../../../lib/spellLevel.ts";
 import { Card } from "../../../Card.tsx";
-import { levelLabel } from "../spellLevel.ts";
 import { SpellRow } from "./SpellRow/SpellRow.tsx";
 
 /** `index` is the spell's place in the definition. */

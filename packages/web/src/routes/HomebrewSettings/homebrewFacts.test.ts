@@ -26,6 +26,30 @@ describe("homebrew facts", () => {
     ]);
   });
 
+  it("adds a shield to armor class, and takes a negative bonus off each damage roll", () => {
+    expect(itemFacts({ name: "Buckler", edition: "one", type: "S", ac: 1, bonusAc: "+1" })).toEqual(
+      [
+        ["Type", "Shield"],
+        ["Armor class", "+2"],
+      ],
+    );
+    expect(
+      itemFacts({
+        name: "Blunted Sword",
+        edition: "one",
+        type: "M",
+        dmg1: "1d8",
+        dmg2: "1d10",
+        dmgType: "S",
+        bonusWeapon: "-1",
+      }),
+    ).toEqual([
+      ["Type", "Melee weapon"],
+      ["Attack bonus", "-1"],
+      ["Damage", "1d8 - 1 slashing (1d10 - 1 versatile)"],
+    ]);
+  });
+
   it("names a ritual cantrip, and drops a malformed fact while keeping the rest", () => {
     expect(
       spellFacts({
@@ -41,8 +65,23 @@ describe("homebrew facts", () => {
     ).toEqual([
       ["Level", "Cantrip"],
       ["School", "Evocation"],
-      ["Casting time", "1 action or ritual"],
+      ["Casting time", "1 action or Ritual"],
       ["Duration", "Instantaneous"],
+    ]);
+    expect(
+      spellFacts({
+        name: "Alarm",
+        edition: "classic",
+        level: 1,
+        school: "A",
+        time: [{ number: 1, unit: "minute" }],
+        duration: [{ type: "instant" }],
+        meta: { ritual: true },
+      }).slice(0, 3),
+    ).toEqual([
+      ["Level", "1st"],
+      ["School", "Abjuration"],
+      ["Casting time", "1 minute (ritual)"],
     ]);
   });
 });

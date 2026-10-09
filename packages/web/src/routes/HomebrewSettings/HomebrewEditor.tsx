@@ -1,12 +1,15 @@
 import type { CharacterRecord } from "@dnd/character";
-import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { capitalize } from "../../components/blocks/capitalize.ts";
 import { FormField } from "../../components/FormField.tsx";
 import { Select } from "../../components/Select.tsx";
+import { useDebounce } from "../../hooks/useDebounce.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import { HomebrewPreview } from "./HomebrewPreview.tsx";
+import { HomebrewViewTabs, type HomebrewViewTabsProps } from "./HomebrewViewTabs.tsx";
 import {
   checkHomebrewEntry,
+  type HomebrewDraft,
   type HomebrewEntry,
   type HomebrewProblem,
   parseHomebrewEntry,
@@ -18,7 +21,6 @@ type Edition = CharacterRecord["edition"];
 
 const EDITIONS = Object.entries(EDITION_LABELS).map(([value, label]) => ({ value, label }));
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
-type View = "Edit" | "Preview";
 
 /** Long enough that a burst of typing resolves the preview's references once, not per keystroke. */
 const PREVIEW_DELAY_MS = 400;
@@ -31,10 +33,17 @@ function editable(entry: Record<string, unknown>): HomebrewEntry {
 
 const asText = (entry: HomebrewEntry) => JSON.stringify(entry, null, 2);
 
-const previewFor = (kind: HomebrewKind, input: HomebrewInput) => ({
-  input,
-  facts: kind.facts(input),
-});
+/**
+ * The preview of the last entry the schema accepted, once edits have held still. An entry
+ * that fails to parse keeps the one before it showing, even one accepted a moment earlier.
+ */
+function useLastValid(kind: HomebrewKind, draft: HomebrewDraft<HomebrewInput>) {
+  const valid = "input" in draft ? draft.input : undefined;
+  const [lastValid, setLastValid] = useState(valid);
+  if (valid && valid !== lastValid) setLastValid(valid);
+  const settled = useDebounce(lastValid, PREVIEW_DELAY_MS);
+  return useMemo(() => settled && { input: settled, facts: kind.facts(settled) }, [settled, kind]);
+}
 
 const problemList = (problems: HomebrewProblem[]) => (
   <ul className="flex flex-col gap-0.5">
@@ -96,30 +105,8 @@ export function HomebrewEditor({
       "entry" in parsed ? checkHomebrewEntry(parsed.entry, edition, kind.inputSchema) : parsed,
     [parsed, edition, kind],
   );
-  const [shown, setShown] = useState(() =>
-    "input" in draft ? previewFor(kind, draft.input) : undefined,
-  );
-  useEffect(() => {
-    if (!("input" in draft)) return;
-    const timer = setTimeout(() => setShown(previewFor(kind, draft.input)), PREVIEW_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [draft, kind]);
-  const [view, setView] = useState<View>("Edit");
-  const tabs = useRef<Partial<Record<View, HTMLButtonElement | null>>>({});
-  const onTabKey = (event: KeyboardEvent) => {
-    const other = view === "Edit" ? "Preview" : "Edit";
-    const keys: Record<string, View> = {
-      ArrowLeft: other,
-      ArrowRight: other,
-      Home: "Edit",
-      End: "Preview",
-    };
-    const next = keys[event.key];
-    if (!next) return;
-    event.preventDefault();
-    setView(next);
-    tabs.current[next]?.focus();
-  };
+  const shown = useLastValid(kind, draft);
+  const [view, setView] = useState<HomebrewViewTabsProps["view"]>("Edit");
   const problems = tried && "problems" in draft ? draft.problems : [];
   const unplaced =
     text === undefined ? problems.filter(({ key }) => !kind.formKeys.includes(key)) : problems;
@@ -140,8 +127,8 @@ export function HomebrewEditor({
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (!("input" in draft)) setView("Edit");
-        else if (!saving) onSave(draft.input);
+        if ("input" in draft && !saving) onSave(draft.input);
+        else setView("Edit");
       }}
       className="@container flex flex-col gap-3 border-border border-t pt-3"
     >
@@ -153,27 +140,7 @@ export function HomebrewEditor({
         paste a 5etools-shaped one over it. Saving replaces the whole entry, and the source is
         always Homebrew.
       </p>
-      <div role="tablist" aria-label={`${noun} view`} className="flex gap-1 @3xl:hidden">
-        {(["Edit", "Preview"] as const).map((each) => (
-          <button
-            key={each}
-            ref={(button) => {
-              tabs.current[each] = button;
-            }}
-            type="button"
-            role="tab"
-            id={`${id}-${each}-tab`}
-            aria-controls={`${id}-${each}`}
-            aria-selected={view === each}
-            tabIndex={view === each ? 0 : -1}
-            onClick={() => setView(each)}
-            onKeyDown={onTabKey}
-            className="rounded-control px-3 py-1.5 font-semibold text-muted text-row hover:bg-subtle aria-selected:bg-subtle aria-selected:text-ink"
-          >
-            {each}
-          </button>
-        ))}
-      </div>
+      <HomebrewViewTabs label={`${noun} view`} idPrefix={id} view={view} onView={setView} />
       <div className="flex flex-col gap-3 @3xl:grid @3xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @3xl:items-start @3xl:gap-6">
         <div
           id={`${id}-Edit`}

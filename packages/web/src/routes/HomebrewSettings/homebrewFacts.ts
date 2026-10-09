@@ -15,6 +15,7 @@ import type { z } from "zod";
 import { copperLabel } from "../../lib/coins.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { castingTime, spellComponents, spellDuration, spellRange } from "../../lib/spellFacts.ts";
+import { ORDINAL } from "../../lib/spellLevel.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
 import { numberAt, signed } from "./homebrewEntry.ts";
 
@@ -32,7 +33,7 @@ function attunement(reqAttune: HomebrewItemInput["reqAttune"]): string | undefin
 const withBonus = (dice: string, bonus: number) =>
   bonus === 0 ? dice : `${dice} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)}`;
 
-/** A weapon's damage as its attack deals it, a magic bonus added to each die. */
+/** A weapon's damage as its attack deals it, a magic bonus added to the roll and to its versatile roll. */
 function damage(weapon: z.output<typeof weaponTraitSchema>): string | undefined {
   if (!weapon?.damage) return undefined;
   const { dice, type } = weapon.damage;
@@ -46,6 +47,13 @@ function damage(weapon: z.output<typeof weaponTraitSchema>): string | undefined 
     .join(" ");
 }
 
+/** A shield adds to the wearer's armor class rather than setting it. */
+function armorClass(item: HomebrewItemInput): string | undefined {
+  const armor = armorTraitSchema.safeParse(item).data;
+  if (!armor) return undefined;
+  return armor.category === "shield" ? `+${armor.armorClass}` : String(armor.armorClass);
+}
+
 export function itemFacts(item: HomebrewItemInput): Fact[] {
   const weight = numberAt(item.weight);
   const value = numberAt(item.value);
@@ -56,11 +64,15 @@ export function itemFacts(item: HomebrewItemInput): Fact[] {
     ["Attunement", attunement(item.reqAttune)],
     ["Attack bonus", attack === 0 ? undefined : signed(attack)],
     ["Damage", damage(weapon)],
-    ["Armor class", armorTraitSchema.safeParse(item).data?.armorClass.toString()],
+    ["Armor class", armorClass(item)],
     ["Weight", weight === undefined ? undefined : `${weight} lb.`],
     ["Value", value === undefined ? undefined : copperLabel(value)],
   ]);
 }
+
+/** As each edition's header prints a ritual: `1 action (ritual)`, `1 action or Ritual`. */
+const ritual = (time: string, edition: HomebrewSpellInput["edition"]) =>
+  edition === "classic" ? `${time} (ritual)` : `${time} or Ritual`;
 
 export function spellFacts(spell: HomebrewSpellInput): Fact[] {
   const facts = spellCastingFacts(spell);
@@ -68,9 +80,9 @@ export function spellFacts(spell: HomebrewSpellInput): Fact[] {
   const duration = spellDuration(facts.duration);
   const concentration = spell.duration.some((span) => span.concentration === true);
   return stated([
-    ["Level", spell.level === 0 ? "Cantrip" : String(spell.level)],
+    ["Level", spell.level === 0 ? "Cantrip" : ORDINAL[spell.level]],
     ["School", schoolName(spell.school)],
-    ["Casting time", time && spell.meta?.ritual ? `${time} or ritual` : time],
+    ["Casting time", time && spell.meta?.ritual ? ritual(time, spell.edition) : time],
     ["Range", spellRange(facts.range)],
     ["Components", spellComponents(facts.components)],
     [

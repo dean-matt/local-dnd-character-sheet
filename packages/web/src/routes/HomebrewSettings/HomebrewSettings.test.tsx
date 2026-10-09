@@ -208,7 +208,7 @@ describe("HomebrewSettings", () => {
     expect(roll).toHaveAttribute("data-rollable", "true");
     expect(within(preview).getByRole("heading", { name: "Brinelash" })).toBeInTheDocument();
     expect(preview).toHaveTextContent("Homebrew");
-    expect(preview).toHaveTextContent("Level: 2");
+    expect(preview).toHaveTextContent("Level: 2nd");
     expect(preview).toHaveTextContent("School: Evocation");
     expect(preview).toHaveTextContent("Casting time: 1 action");
     expect(preview).toHaveTextContent("Range: 60 feet");
@@ -231,11 +231,11 @@ describe("HomebrewSettings", () => {
     expect(preview).toHaveTextContent("Damage: 1d8 + 1 slashing (1d10 + 1 versatile)");
     expect(preview).toHaveTextContent("Value: 1500 gp");
 
-    fireEvent.change(within(items()).getByRole("textbox", { name: "Name" }), {
-      target: { value: "" },
-    });
+    const name = within(items()).getByRole("textbox", { name: "Name" });
+    fireEvent.change(name, { target: { value: "Starfire Blade" } });
+    fireEvent.change(name, { target: { value: "" } });
     await new Promise((resolve) => setTimeout(resolve, 500));
-    expect(within(preview).getByRole("heading", { name: "Sunfire Blade" })).toBeInTheDocument();
+    expect(within(preview).getByRole("heading", { name: "Starfire Blade" })).toBeInTheDocument();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
     const box = within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement;
