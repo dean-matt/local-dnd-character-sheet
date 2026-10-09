@@ -36,9 +36,6 @@ export function CharacterHeader({
           {character.name}
         </h1>
         <EditionTag edition={character.edition} />
-        <span aria-hidden="true" className="shrink-0 text-body text-muted">
-          ·
-        </span>
         {/* The mockup's 160px floor, capped at half the name block so a narrow window splits the line rather than overflowing. */}
         <p
           title={subtitle}
