@@ -61,7 +61,7 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
-export { deityKey, entryKey, itemKey, refKey } from "./keys.ts";
+export { deityKey, entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
   type CharacterPage,
@@ -87,6 +87,7 @@ export {
   type DeityRef,
   type EntryRef,
   entryRefSchema,
+  type FeatureKey,
 } from "./refs.ts";
 export { derivedValue, houseRule } from "./resolve.ts";
 export {

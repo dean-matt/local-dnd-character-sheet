@@ -22,6 +22,8 @@ import {
   classLevels,
   displayName,
   type EntryRef,
+  type FeatureKey,
+  featureKey,
   houseRule,
 } from "@dnd/character";
 import { getBackground } from "./backgrounds.ts";
@@ -91,6 +93,54 @@ function inPlay(definition: CharacterDefinition): (row: ClassFeatureRow) => bool
   return (row) => parseJson(classFeatureVariantSchema, row.json) !== true;
 }
 
+type FeatureOwner = Omit<FeatureKey, "name" | "source" | "level">;
+
+const sameRef = (a: ContentRef) => (b: ContentRef) => a.name === b.name && a.source === b.source;
+
+/**
+ * A class's or subclass's feature rows as sheet features, with the choices folded in: an
+ * option the character did not take drops out, and a feature that offers a choice carries
+ * its key, count and every option, so the sheet can change it. A stored option no row
+ * answers is listed unresolved after its feature rather than dropped.
+ */
+function withChoices(
+  rows: ClassFeatureRow[],
+  owner: FeatureOwner,
+  definition: CharacterDefinition,
+): SheetFeature[] {
+  const offerOf = (row: ClassFeatureRow): FeatureKey => ({
+    ...owner,
+    name: row.name,
+    source: row.source,
+    level: row.level,
+  });
+  const taken = (offering: FeatureKey) =>
+    definition.featureChoices.find((choice) => featureKey(choice.feature) === featureKey(offering))
+      ?.options ?? [];
+  return rows.flatMap((row): SheetFeature[] => {
+    const placement = { level: row.level };
+    if (row.offered_by_name !== null && row.offered_by_source !== null) {
+      const offering = offerOf({
+        ...row,
+        name: row.offered_by_name,
+        source: row.offered_by_source,
+      });
+      return taken(offering).some(sameRef(row)) ? [rowFeature(row.json, row, placement)] : [];
+    }
+    const feature = rowFeature(row.json, row, placement);
+    if (row.choose === null) return [feature];
+    const options = rows
+      .filter((each) => each.level === row.level && each.offered_by_name === row.name)
+      .filter((each) => each.offered_by_source === row.source)
+      .map(({ name, source }) => ({ name, source }));
+    const offering = offerOf(row);
+    const missing = taken(offering)
+      .filter((ref) => !options.some(sameRef(ref)))
+      .map((ref) => unresolved(ref, placement));
+    return [{ ...feature, choice: { feature: offering, count: row.choose, options } }, ...missing];
+  });
+}
+
 function classGroups(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -106,9 +156,11 @@ function classGroups(
     if (!getClass(dataDir, ref.name, ref.source)) {
       return [{ origin: "class", name, features: [unresolved(ref)] }];
     }
-    const features = getClassFeatures(dataDir, ref.name, ref.source, level)
-      .filter(inPlay(definition))
-      .map((row) => rowFeature(row.json, row, { level: row.level }));
+    const features = withChoices(
+      getClassFeatures(dataDir, ref.name, ref.source, level).filter(inPlay(definition)),
+      { className: ref.name, classSource: ref.source },
+      definition,
+    );
     const groups: FeatureGroup[] = [{ origin: "class", name, features }];
     if (subclass) groups.push(subclassGroup(dataDir, definition, ref, subclass, level));
     return groups;
@@ -124,16 +176,22 @@ function subclassGroup(
 ): FeatureGroup {
   const row = getSubclass(dataDir, subclass.name, subclass.source, classRef.name, classRef.source);
   const features = row
-    ? getSubclassFeatures(
-        dataDir,
-        classRef.name,
-        classRef.source,
-        row.short_name,
-        row.source,
-        level,
+    ? withChoices(
+        getSubclassFeatures(
+          dataDir,
+          classRef.name,
+          classRef.source,
+          row.short_name,
+          row.source,
+          level,
+        ).filter(inPlay(definition)),
+        {
+          className: classRef.name,
+          classSource: classRef.source,
+          subclass: { shortName: row.short_name, source: row.source },
+        },
+        definition,
       )
-        .filter(inPlay(definition))
-        .map((feature) => rowFeature(feature.json, feature, { level: feature.level }))
     : [unresolved(subclass)];
   return { origin: "subclass", name: subclass.name, features };
 }

@@ -116,6 +116,20 @@ describe("classesRoutes", () => {
           level: 1,
           edition: "classic",
           json: JSON.stringify({ name: "Disciple of Life", source: "PHB" }),
+          choose: 1,
+        },
+        {
+          name: "Mercy",
+          source: "PHB",
+          class_name: "Cleric",
+          class_source: "PHB",
+          subclass_short_name: "Life",
+          subclass_source: "PHB",
+          level: 1,
+          edition: "classic",
+          json: JSON.stringify({ name: "Mercy", source: "PHB" }),
+          offered_by_name: "Disciple of Life",
+          offered_by_source: "PHB",
         },
       ],
     });
@@ -270,7 +284,7 @@ describe("classesRoutes", () => {
       });
     });
 
-    it("assembles what a subclass grants at a level, keyed by its own resources", async () => {
+    it("assembles what a subclass grants at a level, a choice it offers included", async () => {
       const res = await routes.request(
         `/classes/Cleric/PHB/subclasses/${encodeURIComponent("Life Domain")}/PHB/at/1`,
       );
@@ -286,6 +300,14 @@ describe("classesRoutes", () => {
             source: "PHB",
             level: 1,
             json: { name: "Disciple of Life", source: "PHB" },
+            choose: 1,
+          },
+          {
+            name: "Mercy",
+            source: "PHB",
+            level: 1,
+            json: { name: "Mercy", source: "PHB" },
+            offeredBy: { name: "Disciple of Life", source: "PHB" },
           },
         ],
       });

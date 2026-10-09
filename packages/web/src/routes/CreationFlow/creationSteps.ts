@@ -44,6 +44,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   levels: "class",
   feats: "class",
   optionalFeatures: "class",
+  featureChoices: "class",
   abilityScores: "abilities",
   abilityIncreases: "abilities",
   proficiencies: "equipment",

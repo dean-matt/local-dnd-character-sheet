@@ -286,6 +286,64 @@
       "entries": [
         "Elided. {@feat Ability Score Improvement|XPHB} Elided. {@5etools feat|feats.html} Elided."
       ]
+    },
+    {
+      "name": "Divine Order",
+      "source": "XPHB",
+      "page": 70,
+      "srd52": true,
+      "basicRules2024": true,
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "level": 1,
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "options",
+              "count": 1,
+              "entries": [
+                {
+                  "type": "refClassFeature",
+                  "classFeature": "Protector|Cleric|XPHB|1|XPHB"
+                },
+                {
+                  "type": "refClassFeature",
+                  "classFeature": "Thaumaturge|Cleric|XPHB|1|XPHB"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Protector",
+      "source": "XPHB",
+      "page": 70,
+      "srd52": true,
+      "basicRules2024": true,
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "level": 1,
+      "entries": [
+        "Elided. {@filter Martial weapons|items|type=martial weapon} Elided. {@filter Heavy armor|items|type=Heavy Armor} Elided."
+      ]
+    },
+    {
+      "name": "Thaumaturge",
+      "source": "XPHB",
+      "page": 70,
+      "srd52": true,
+      "basicRules2024": true,
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "level": 1,
+      "entries": [
+        "Elided. {@filter Cleric spell list|spells|class=Cleric} Elided. {@skill Arcana|XPHB} Elided. {@skill Religion|XPHB} Elided."
+      ]
     }
   ],
   "subclassFeature": [

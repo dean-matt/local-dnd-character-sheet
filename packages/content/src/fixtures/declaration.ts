@@ -438,6 +438,9 @@ export const FIXTURES: Fixture[] = [
             "Ability Score Improvement|PHB|Cleric|PHB|4",
             "Ability Score Improvement|PHB|Cleric|PHB|8",
             "Ability Score Improvement|XPHB|Cleric|XPHB|4",
+            "Divine Order|XPHB|Cleric|XPHB|1",
+            "Protector|XPHB|Cleric|XPHB|1",
+            "Thaumaturge|XPHB|Cleric|XPHB|1",
           ],
         },
       },
@@ -451,6 +454,49 @@ export const FIXTURES: Fixture[] = [
         // Keyed without `classSource`: the one subclass is offered under both
         // Cleric printings, and its fluff names only the classic one.
         subclassFluff: { items: ["Death Domain|DMG|Cleric|PHB"] },
+      },
+    },
+  },
+  {
+    file: "data/class/class-barbarian.json",
+    keep: {
+      fields: ["class", "subclass", "subclassFeature"],
+      within: {
+        class: {
+          items: [
+            {
+              id: "Barbarian|PHB",
+              fields: ["name", "source", "page", "edition", "hd", "classFeatures"],
+              within: { classFeatures: { items: [] } },
+            },
+          ],
+        },
+        subclass: {
+          items: [
+            {
+              id: "Path of the Totem Warrior|PHB|Barbarian|PHB",
+              fields: [
+                "name",
+                "shortName",
+                "source",
+                "className",
+                "classSource",
+                "page",
+                "subclassFeatures",
+              ],
+            },
+          ],
+        },
+        subclassFeature: {
+          items: [
+            "Totem Spirit|PHB|Barbarian|PHB|Totem Warrior|PHB|3",
+            "Bear|PHB|Barbarian|PHB|Totem Warrior|PHB|3",
+            "Eagle|PHB|Barbarian|PHB|Totem Warrior|PHB|3",
+            "Elk|SCAG|Barbarian|PHB|Totem Warrior|PHB|3",
+            "Tiger|SCAG|Barbarian|PHB|Totem Warrior|PHB|3",
+            "Wolf|PHB|Barbarian|PHB|Totem Warrior|PHB|3",
+          ],
+        },
       },
     },
   },

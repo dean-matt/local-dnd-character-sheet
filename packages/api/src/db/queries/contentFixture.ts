@@ -202,6 +202,9 @@ type ClassFeatureFixtureRow = {
   level: number;
   edition: string;
   json: string;
+  choose?: number;
+  offered_by_name?: string;
+  offered_by_source?: string;
 };
 
 type SubclassResourceFixtureRow = ClassResourceFixtureRow & {
@@ -219,16 +222,9 @@ type SubclassOptionalFeatureFixtureRow = ClassOptionalFeatureFixtureRow & {
   subclass_source: string;
 };
 
-type SubclassFeatureFixtureRow = {
-  name: string;
-  source: string;
-  class_name: string;
-  class_source: string;
+type SubclassFeatureFixtureRow = ClassFeatureFixtureRow & {
   subclass_short_name: string;
   subclass_source: string;
-  level: number;
-  edition: string;
-  json: string;
 };
 
 export type ClassFixture = {

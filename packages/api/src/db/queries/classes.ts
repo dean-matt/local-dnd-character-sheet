@@ -90,7 +90,17 @@ export function getSubclass(
 type ClassResourceRow = { resource_key: string; value: string };
 type SpellSlotRow = { slot_level: number; slots: number };
 type ClassOptionalFeatureRow = { feature_type: string; known: number };
-export type ClassFeatureRow = { name: string; source: string; level: number; json: string };
+export type ClassFeatureRow = {
+  name: string;
+  source: string;
+  level: number;
+  json: string;
+  choose: number | null;
+  offered_by_name: string | null;
+  offered_by_source: string | null;
+};
+
+const FEATURE_COLUMNS = "name, source, level, json, choose, offered_by_name, offered_by_source";
 
 export type ClassGrantsRow = {
   resources: ClassResourceRow[];
@@ -140,7 +150,7 @@ function selectClassFeatures(
 ): ClassFeatureRow[] {
   return db
     .prepare(
-      `SELECT name, source, level, json FROM class_features
+      `SELECT ${FEATURE_COLUMNS} FROM class_features
        WHERE class_name = ? AND class_source = ? AND level <= ?
        ORDER BY level, name`,
     )
@@ -157,7 +167,7 @@ function selectSubclassFeatures(
 ): ClassFeatureRow[] {
   return db
     .prepare(
-      `SELECT name, source, level, json FROM subclass_features
+      `SELECT ${FEATURE_COLUMNS} FROM subclass_features
        WHERE class_name = ? AND class_source = ?
          AND subclass_short_name = ? AND subclass_source = ? AND level <= ?
        ORDER BY level, name`,
