@@ -1,7 +1,7 @@
 import type { FeatRecord } from "@dnd/catalog";
 import { IMPROVEMENT_FEAT } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { improvementText, isMade } from "./improvementChoice.ts";
+import { alternativesOf, improvementText, isMade } from "./improvementChoice.ts";
 
 const GRAPPLER = { name: "Grappler", source: "XPHB" };
 const ALERT = { name: "Alert", source: "XPHB" };
@@ -16,10 +16,10 @@ const FEATS: FeatRecord[] = [
 
 describe("isMade", () => {
   it("waits on scores until +2 or +1 and +1 are placed", () => {
-    expect(isMade(undefined, FEATS)).toBe(false);
-    expect(isMade({ feat: IMPROVEMENT_FEAT, increases: [] }, FEATS)).toBe(false);
-    expect(isMade({ increases: [{ ability: "str", amount: 1 }] }, FEATS)).toBe(false);
-    expect(isMade({ increases: [{ ability: "str", amount: 2 }] }, FEATS)).toBe(true);
+    expect(isMade(undefined, FEATS, undefined)).toBe(false);
+    expect(isMade({ feat: IMPROVEMENT_FEAT, increases: [] }, FEATS, undefined)).toBe(false);
+    expect(isMade({ increases: [{ ability: "str", amount: 1 }] }, FEATS, undefined)).toBe(false);
+    expect(isMade({ increases: [{ ability: "str", amount: 2 }] }, FEATS, undefined)).toBe(true);
     expect(
       isMade(
         {
@@ -29,16 +29,33 @@ describe("isMade", () => {
           ],
         },
         FEATS,
+        undefined,
       ),
     ).toBe(true);
   });
 
   it("waits on a feat's own increase, and on nothing for a feat that offers none", () => {
-    expect(isMade({ feat: GRAPPLER, increases: [] }, FEATS)).toBe(false);
-    expect(isMade({ feat: GRAPPLER, increases: [{ ability: "dex", amount: 1 }] }, FEATS)).toBe(
-      true,
-    );
-    expect(isMade({ feat: ALERT, increases: [] }, FEATS)).toBe(true);
+    expect(isMade({ feat: GRAPPLER, increases: [] }, FEATS, undefined)).toBe(false);
+    expect(
+      isMade({ feat: GRAPPLER, increases: [{ ability: "dex", amount: 1 }] }, FEATS, undefined),
+    ).toBe(true);
+    expect(isMade({ feat: ALERT, increases: [] }, FEATS, undefined)).toBe(true);
+  });
+});
+
+describe("a feat's fixed increase", () => {
+  const ACTOR = { name: "Actor", source: "PHB" };
+  const feats: FeatRecord[] = [
+    { ...ACTOR, edition: "classic", json: { ...ACTOR, ability: [{ cha: 1 }] } },
+  ];
+  const totals = (cha: number) => ({ str: 10, dex: 10, con: 10, int: 10, wis: 10, cha });
+
+  it("raises nothing past the cap, and needs nothing placed there", () => {
+    expect(alternativesOf({ feat: ACTOR, increases: [] }, feats, totals(19))[0]?.fixed).toEqual({
+      cha: 1,
+    });
+    expect(alternativesOf({ feat: ACTOR, increases: [] }, feats, totals(20))[0]?.fixed).toEqual({});
+    expect(isMade({ feat: ACTOR, increases: [] }, feats, totals(20))).toBe(true);
   });
 });
 

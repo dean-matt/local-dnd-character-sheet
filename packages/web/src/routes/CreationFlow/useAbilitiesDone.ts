@@ -3,6 +3,7 @@ import { useWatch } from "react-hook-form";
 import { useFeats } from "../../hooks/useFeats.ts";
 import { useImprovementGrants } from "../../hooks/useImprovementGrants.ts";
 import { isMade } from "../../lib/improvementChoice.ts";
+import { candidateAt } from "../../lib/improvementFeats.ts";
 import { isComplete, readPicks } from "../../lib/increasePicks.ts";
 import { stepOf } from "./creationSteps.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
@@ -14,10 +15,10 @@ import { useIncreaseOptions } from "./useIncreaseOptions.ts";
  */
 export function useAbilitiesDone(): boolean {
   const values = useWatch<CharacterDefinition>();
-  const [increases, levels = [], edition = "one", held = []] = useWatch<
+  const [increases, levels = [], edition = "one", held = [], houseRules] = useWatch<
     CharacterDefinition,
-    ["abilityIncreases", "levels", "edition", "feats"]
-  >({ name: ["abilityIncreases", "levels", "edition", "feats"] });
+    ["abilityIncreases", "levels", "edition", "feats", "houseRules"]
+  >({ name: ["abilityIncreases", "levels", "edition", "feats", "houseRules"] });
   const sources = useIncreaseOptions();
   const { grants, read } = useImprovementGrants(levels);
   const feats = useFeats(edition);
@@ -26,12 +27,25 @@ export function useAbilitiesDone(): boolean {
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "abilities",
   );
   if (faulted || values.abilityScores === undefined || sources === undefined) return false;
-  const taken = { feats: held, abilityIncreases: increases ?? [] };
+  const draft = {
+    edition,
+    levels,
+    feats: held,
+    abilityIncreases: increases ?? [],
+    abilityScores: values.abilityScores,
+    houseRules,
+  };
   const improved =
     read &&
     (grants.length === 0 ||
       (feats.isSuccess &&
-        grants.every((grant) => isMade(improvementAt(taken, grant.level), feats.data.items))));
+        grants.every((grant) =>
+          isMade(
+            improvementAt(draft, grant.level),
+            feats.data.items,
+            candidateAt(draft, grant).totals,
+          ),
+        )));
   return (
     improved &&
     sources.every(

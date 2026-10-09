@@ -60,7 +60,7 @@ export function ImprovementField({
   const current = improvement ?? (raising ? scores : undefined);
   const offered = improvementFeats(feats, candidate);
   const taken = current?.feat && !raisesScores(current) ? current.feat : undefined;
-  const alternatives = current ? alternativesOf(current, feats) : [];
+  const alternatives = current ? alternativesOf(current, feats, candidate.totals) : [];
   const read = current && readPicks(alternatives, current.increases);
   const picks: Picks =
     placed && read && alternatives[placed.alternative] && sameRaises(placed, read, alternatives)
@@ -78,7 +78,7 @@ export function ImprovementField({
     const row = offered.find((feat) => featKey(feat) === value);
     const feat = row ? { name: row.name, source: row.source } : taken;
     if (!feat) return;
-    const fixed = row ? alternativesOf({ feat, increases: [] }, feats) : [];
+    const fixed = row ? alternativesOf({ feat, increases: [] }, feats, candidate.totals) : [];
     onChange({
       feat,
       increases: fixed.length === 1 ? raisesOf(fixed, { alternative: 0, slots: [] }) : [],

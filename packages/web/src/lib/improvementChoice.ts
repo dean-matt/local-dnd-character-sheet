@@ -7,8 +7,10 @@ import { abilityIncreasesSchema, type FeatRecord, type IncreaseAlternative } fro
 import {
   ABILITIES,
   ABILITY_LABEL,
+  type Ability,
   displayName,
   type EntryRef,
+  IMPROVEMENT_CAP,
   IMPROVEMENT_FEAT,
   type Improvement,
   refKey,
@@ -36,20 +38,47 @@ export const raisesScores = (improvement: Improvement): boolean =>
 export const featRow = (feats: readonly FeatRecord[], feat: EntryRef): FeatRecord | undefined =>
   "name" in feat ? feats.find((row) => refKey(row) === refKey(feat)) : undefined;
 
-/** The increases `improvement` offers to place; a feat the catalog lacks offers none. */
+type Totals = Record<Ability, number> | undefined;
+
+/**
+ * `alternative` with each fixed increase cut to what the cap leaves above `totals`, and
+ * dropped where it leaves nothing: `Actor` (PHB) at 20 Charisma raises nothing.
+ */
+function capped(alternative: IncreaseAlternative, totals: Totals): IncreaseAlternative {
+  if (totals === undefined) return alternative;
+  const cap = alternative.max ?? IMPROVEMENT_CAP;
+  const fixed = Object.entries(alternative.fixed).flatMap(([ability, amount = 0]) => {
+    const room = amount > 0 ? Math.min(amount, cap - totals[ability as Ability]) : amount;
+    return room === 0 || (amount > 0 && room < 0) ? [] : [[ability, room]];
+  });
+  return { ...alternative, fixed: Object.fromEntries(fixed) };
+}
+
+/**
+ * The increases `improvement` offers to place, a feat's fixed ones held under the cap
+ * above `totals`, the scores bar this improvement's own; a feat the catalog lacks offers
+ * none.
+ */
 export function alternativesOf(
   improvement: Improvement,
   feats: readonly FeatRecord[],
+  totals: Totals,
 ): IncreaseAlternative[] {
   if (raisesScores(improvement)) return RAISE_ALTERNATIVES;
   const row = improvement.feat && featRow(feats, improvement.feat);
-  return row ? abilityIncreasesSchema.parse(row.json) : [];
+  return row
+    ? abilityIncreasesSchema.parse(row.json).map((alternative) => capped(alternative, totals))
+    : [];
 }
 
 /** Whether `improvement` is made: chosen, with every increase it offers placed. */
-export function isMade(improvement: Improvement | undefined, feats: readonly FeatRecord[]) {
+export function isMade(
+  improvement: Improvement | undefined,
+  feats: readonly FeatRecord[],
+  totals: Totals,
+) {
   if (improvement === undefined) return false;
-  const alternatives = alternativesOf(improvement, feats);
+  const alternatives = alternativesOf(improvement, feats, totals);
   return (
     alternatives.length === 0 ||
     isComplete(alternatives, readPicks(alternatives, improvement.increases))

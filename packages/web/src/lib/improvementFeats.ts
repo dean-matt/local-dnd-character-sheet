@@ -6,6 +6,7 @@ import {
   type CharacterDefinition,
   type ContentRef,
   displayName,
+  houseRule,
   IMPROVEMENT_FEAT,
   refKey,
   withoutImprovement,
@@ -22,6 +23,8 @@ const OFFERED_CATEGORIES = ["G", "O", "EB"];
 /** What a feat's prerequisites are read against, at the level the improvement arrives. */
 export type Candidate = {
   edition: CharacterDefinition["edition"];
+  /** Whether the character may take a feat at all, which a classic one may by house rule alone. */
+  takesFeats: boolean;
   level: number;
   classNames: readonly string[];
   /**
@@ -41,6 +44,7 @@ export type Candidate = {
  * not yet set refuse no feat.
  */
 export function improvementFeats(feats: readonly FeatRecord[], candidate: Candidate): FeatRecord[] {
+  if (!candidate.takesFeats) return [];
   const held = new Set(candidate.held.map(refKey));
   return feats.filter((feat) => {
     if (refKey(feat) === refKey(IMPROVEMENT_FEAT)) return false;
@@ -67,7 +71,8 @@ export function improvementFeats(feats: readonly FeatRecord[], candidate: Candid
 
 /** The parts of a definition a candidate reads, whose scores a creation draft may hold unset. */
 type Drafted = Pick<CharacterDefinition, "edition" | "levels" | "feats" | "abilityIncreases"> & {
-  abilityScores: Partial<Record<Ability, number>>;
+  abilityScores: Partial<Record<Ability, number>> | undefined;
+  houseRules: CharacterDefinition["houseRules"] | undefined;
 };
 
 /**
@@ -76,7 +81,7 @@ type Drafted = Pick<CharacterDefinition, "edition" | "levels" | "feats" | "abili
  */
 export function candidateAt(definition: Drafted, grant: ImprovementGrant): Candidate {
   const { feats, abilityIncreases } = withoutImprovement(definition, grant.level);
-  const base = definition.abilityScores;
+  const base = definition.abilityScores ?? {};
   const set = ABILITIES.every((ability) => Number.isInteger(base[ability]));
   const scored = (increases: typeof abilityIncreases) =>
     set
@@ -92,6 +97,9 @@ export function candidateAt(definition: Drafted, grant: ImprovementGrant): Candi
       : undefined;
   return {
     edition: definition.edition,
+    takesFeats:
+      definition.edition === "one" ||
+      houseRule({ houseRules: definition.houseRules ?? {} }, "feats"),
     level: grant.level,
     classNames: definition.levels.slice(0, grant.level).map((level) => displayName(level.class)),
     scores: scored(abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level)),

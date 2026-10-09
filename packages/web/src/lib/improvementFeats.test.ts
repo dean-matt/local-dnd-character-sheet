@@ -31,6 +31,7 @@ const FEATS = [
 const SCORES = { str: 10, dex: 14, con: 10, int: 10, wis: 10, cha: 10 };
 const at4: Candidate = {
   edition: "one",
+  takesFeats: true,
   level: 4,
   classNames: ["Wizard"],
   scores: SCORES,
@@ -68,6 +69,9 @@ describe("improvementFeats", () => {
     expect(
       improvementFeats(classic, { ...at4, edition: "classic", scores }).map(({ name }) => name),
     ).toEqual(["Ritual Caster", "Tough"]);
+    expect(improvementFeats(classic, { ...at4, edition: "classic", takesFeats: false })).toEqual(
+      [],
+    );
   });
 });
 
@@ -81,9 +85,16 @@ describe("candidateAt", () => {
       increases: [{ ability: "str", amount: 2 }],
     });
     const candidate = candidateAt(
-      { edition: "classic", levels, abilityScores: { ...SCORES, str: 12 }, ...raised },
+      {
+        edition: "classic",
+        levels,
+        abilityScores: { ...SCORES, str: 12 },
+        houseRules: { feats: true },
+        ...raised,
+      },
       { level: 4, cls: WIZARD, classLevel: 4, boon: false },
     );
+    expect(candidate.takesFeats).toBe(true);
     expect(candidate.scores?.str).toBe(12);
     expect(candidate.totals?.str).toBe(14);
     expect(candidate.classNames).toEqual(["Wizard", "Wizard", "Wizard", "Wizard"]);

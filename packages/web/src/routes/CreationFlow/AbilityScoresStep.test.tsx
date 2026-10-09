@@ -371,6 +371,7 @@ describe("AbilityScoresStep", () => {
     renderStep({
       levels: Array.from({ length: 4 }, () => ({ class: FIGHTER })),
       abilityScores: { ...ARRAY, str: 19, dex: 12 },
+      houseRules: { feats: true },
     });
     const choose = (label: string, option: string) => {
       fireEvent.click(screen.getByRole("combobox", { name: label }));

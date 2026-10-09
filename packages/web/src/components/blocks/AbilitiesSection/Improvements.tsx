@@ -30,7 +30,12 @@ export function Improvements({ character }: { character: CharacterRecord }) {
   if (grants.length === 0) return null;
   const catalog = feats.data?.items ?? [];
   const missing = grants.filter(
-    (grant) => !isMade(improvementAt(definition, grant.level), catalog),
+    (grant) =>
+      !isMade(
+        improvementAt(definition, grant.level),
+        catalog,
+        candidateAt(definition, grant).totals,
+      ),
   ).length;
 
   function save(grant: ImprovementGrant, next: Improvement) {

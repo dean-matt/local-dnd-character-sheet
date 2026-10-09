@@ -15,15 +15,21 @@ const OPTS = { shouldDirty: true } as const;
  */
 export function ImprovementsField() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const [levels = [], edition = "one", feats = [], abilityIncreases = [], abilityScores = {}] =
-    useWatch<
-      CharacterDefinition,
-      ["levels", "edition", "feats", "abilityIncreases", "abilityScores"]
-    >({ name: ["levels", "edition", "feats", "abilityIncreases", "abilityScores"] });
+  const [
+    levels = [],
+    edition = "one",
+    feats = [],
+    abilityIncreases = [],
+    abilityScores,
+    houseRules,
+  ] = useWatch<
+    CharacterDefinition,
+    ["levels", "edition", "feats", "abilityIncreases", "abilityScores", "houseRules"]
+  >({ name: ["levels", "edition", "feats", "abilityIncreases", "abilityScores", "houseRules"] });
   const { grants } = useImprovementGrants(levels);
   const catalog = useFeats(edition).data?.items ?? [];
   if (grants.length === 0) return null;
-  const draft = { edition, levels, feats, abilityIncreases, abilityScores };
+  const draft = { edition, levels, feats, abilityIncreases, abilityScores, houseRules };
 
   return (
     <section aria-labelledby="ability-improvements" className="flex flex-col gap-3">
@@ -35,7 +41,8 @@ export function ImprovementsField() {
       </h2>
       {grants.map((grant) => {
         const improvement = improvementAt(draft, grant.level);
-        const made = isMade(improvement, catalog);
+        const candidate = candidateAt(draft, grant);
+        const made = isMade(improvement, catalog, candidate.totals);
         return (
           <div key={grant.level} className="flex flex-col gap-1">
             <h3
@@ -48,7 +55,7 @@ export function ImprovementsField() {
               name={`Level ${grant.level}`}
               improvement={improvement}
               feats={catalog}
-              candidate={candidateAt(draft, grant)}
+              candidate={candidate}
               onChange={(next) => {
                 const held = {
                   feats: getValues("feats") ?? [],

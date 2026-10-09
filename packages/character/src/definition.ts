@@ -54,8 +54,8 @@ export const abilityScoresSchema = z.record(
  * takes back exactly what the old race gave. `grantedBy` names the definition's own `race`
  * or `background`, which a subrace merges into, or an Ability Score Improvement taken at
  * the character level `level`: `class` where a classic character raised scores with it,
- * `feat` where the feat taken there raised them. A grant at creation states no level, so
- * an increase stored before improvements were recorded reads as it always did. Some old
+ * `feat` where the feat taken there raised them. A race's or background's increase states
+ * no level, so one stored before improvements were recorded reads as it always did. Some old
  * races lower a score, so `amount` may be negative.
  */
 const abilityIncreaseSchema = z
