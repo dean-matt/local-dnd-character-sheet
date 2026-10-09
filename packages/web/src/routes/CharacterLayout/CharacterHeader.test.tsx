@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { avatarColor } from "../../lib/avatarColor.ts";
 import { warlockRecord } from "../../test/records.ts";
 import { CharacterHeader } from "./CharacterHeader.tsx";
-import { characterSubtitle } from "./characterSubtitle.ts";
 
 describe("CharacterHeader", () => {
   it("capitalizes the initial of a lowercase name and keeps a whole astral character", () => {
@@ -20,7 +19,7 @@ describe("CharacterHeader", () => {
     render(<CharacterHeader character={warlockRecord()} />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Vex" })).toBeInTheDocument();
-    expect(screen.getByText(/^Half-Elf Warlock 3/)).toBeInTheDocument();
+    expect(screen.getByText("Lv. 3 · Half-Elf · Warlock")).toBeInTheDocument();
   });
 
   it("draws the initial in a color derived from the id, hidden from a screen reader", () => {
@@ -35,9 +34,9 @@ describe("CharacterHeader", () => {
     render(<CharacterHeader character={warlockRecord()} />);
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveAttribute("title", "Vex");
-    expect(screen.getByText(/^Half-Elf Warlock 3/)).toHaveAttribute(
+    expect(screen.getByText("Lv. 3 · Half-Elf · Warlock")).toHaveAttribute(
       "title",
-      characterSubtitle(warlockRecord()),
+      "Lv. 3 · Half-Elf · Warlock",
     );
   });
 

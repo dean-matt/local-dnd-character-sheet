@@ -2,7 +2,7 @@ import type { CharacterRecord } from "@dnd/character";
 import type { ReactNode } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { avatarColor } from "../../lib/avatarColor.ts";
-import { characterSubtitle } from "./characterSubtitle.ts";
+import { headerSubtitle } from "./characterSubtitle.ts";
 
 /**
  * Sits above every page of a character on screen, pinned under the top bar in a `tall`
@@ -18,7 +18,7 @@ export function CharacterHeader({
   character: CharacterRecord;
   actions?: ReactNode;
 }) {
-  const subtitle = characterSubtitle(character);
+  const subtitle = headerSubtitle(character);
   return (
     <div
       data-character-header
@@ -36,9 +36,6 @@ export function CharacterHeader({
           {character.name}
         </h1>
         <EditionTag edition={character.edition} />
-        <span aria-hidden="true" className="shrink-0 text-body text-muted">
-          ·
-        </span>
         {/* The mockup's 160px floor, capped at half the name block so a narrow window splits the line rather than overflowing. */}
         <p
           title={subtitle}
