@@ -27,7 +27,9 @@ export function raceLabel(definition: CharacterDefinition): string {
 type ClassLevels = { class: EntryRef; level: number; subclass?: ContentRef };
 
 /** `levels` grouped by class, in the order each class was first taken. */
-export function classLevels(definition: CharacterDefinition): ClassLevels[] {
+export function classLevels(definition: {
+  levels: readonly CharacterDefinition["levels"][number][];
+}): ClassLevels[] {
   const groups = new Map<string, ClassLevels>();
   for (const level of definition.levels) {
     const key = entryKey(level.class);

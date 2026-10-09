@@ -212,25 +212,26 @@ function derivedArmorClass(
 }
 
 /**
- * The typed form of a weapon or category name, folded so the spellings the book prints
- * (`Simple weapons`, `Longswords`) meet the bare ones (`Simple`, `Longsword`). Both sides
- * pass through it, so a name that ends in `s` still meets itself. Only these spellings fold
- * until a catalog picker writes `proficiencies.weapons`.
+ * The typed form of an armor, weapon or category name, folded so the spellings the book
+ * prints (`Simple weapons`, `Longswords`, `Heavy Armor`) meet the bare ones (`Simple`,
+ * `Longsword`, `heavy`). Both sides pass through it, so a name that ends in `s` still
+ * meets itself. Only these spellings fold until a catalog picker writes
+ * `proficiencies.weapons`.
  */
-function weaponKey(name: string): string {
+export function proficiencyKey(name: string): string {
   return name
     .trim()
     .toLowerCase()
-    .replace(/\s+weapons?$/, "")
+    .replace(/\s+(armor|weapons?)$/, "")
     .replace(/s$/, "");
 }
 
 /** A weapon proficiency names a category or one weapon: `Simple`, `Longsword`. */
 function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait): boolean {
-  const held = new Set(definition.proficiencies.weapons.map(weaponKey));
+  const held = new Set(definition.proficiencies.weapons.map(proficiencyKey));
   return (
-    (weapon.category !== null && held.has(weaponKey(weapon.category))) ||
-    held.has(weaponKey(weapon.name))
+    (weapon.category !== null && held.has(proficiencyKey(weapon.category))) ||
+    held.has(proficiencyKey(weapon.name))
   );
 }
 

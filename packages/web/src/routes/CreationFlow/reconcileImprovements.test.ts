@@ -6,7 +6,7 @@ const WIZARD = { name: "Wizard", source: "XPHB" };
 const FIGHTER = { name: "Fighter", source: "XPHB" };
 const GRAPPLER = { name: "Grappler", source: "XPHB" };
 const none = { feats: [], abilityIncreases: [] };
-const at4 = { level: 4, cls: WIZARD, classLevel: 4, boon: false };
+const at4 = { level: 4, cls: WIZARD, classLevel: 4, boon: false, features: [] };
 
 const raised = withImprovement(none, 4, WIZARD, {
   feat: IMPROVEMENT_FEAT,

@@ -49,7 +49,7 @@ export {
 export { defenseTraitSchema } from "./defense.ts";
 export type { Entries } from "./entry.ts";
 export { entriesSchema, rowEntries } from "./entry.ts";
-export { featTermsSchema } from "./feat-terms.ts";
+export { type FeatPrerequisite, featTermsSchema, type RacePrerequisite } from "./feat-terms.ts";
 export type {
   CharacterFeatures,
   FeatureGroup,

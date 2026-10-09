@@ -1,4 +1,10 @@
-import { type CharacterDefinition, displayName, type EntryRef, entryKey } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  classLevels,
+  displayName,
+  type EntryRef,
+  entryKey,
+} from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -14,6 +20,8 @@ export type ImprovementGrant = {
   classLevel: number;
   /** An Epic Boon, which offers the boons beside the other feats. */
   boon: boolean;
+  /** The name of every class and subclass feature the character holds by `level`. */
+  features: string[];
 };
 
 /** The class features that grant an improvement, in both editions, and whether each is a boon. */
@@ -24,7 +32,8 @@ const IMPROVEMENT_FEATURES: Record<string, boolean> = {
 
 /**
  * Every improvement `levels` reaches, in level order: each level in a class whose features,
- * from `featuresOf`, include an improvement at that class level.
+ * from `featuresOf`, include an improvement at that class level. `featuresOf` gives a
+ * class's features and its subclass's, each at the class level it arrives.
  */
 export function improvementGrants(
   levels: readonly Level[],
@@ -40,7 +49,12 @@ export function improvementGrants(
     );
     if (feature === undefined) return [];
     const boon = IMPROVEMENT_FEATURES[feature.name] === true;
-    return [{ level: index + 1, cls, classLevel, boon }];
+    const features = classLevels({ levels: levels.slice(0, index + 1) }).flatMap((group) =>
+      featuresOf(group.class)
+        .filter(({ level }) => level <= group.level)
+        .map(({ name }) => name),
+    );
+    return [{ level: index + 1, cls, classLevel, boon, features }];
   });
 }
 
