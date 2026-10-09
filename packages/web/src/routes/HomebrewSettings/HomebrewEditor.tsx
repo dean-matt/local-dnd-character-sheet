@@ -1,25 +1,36 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useEffect, useId, useRef, useState } from "react";
 import { FormField } from "../../components/FormField.tsx";
-import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { Select } from "../../components/Select.tsx";
-import { useDebounce } from "../../hooks/useDebounce.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
-import { readHomebrewDraft } from "./homebrewDraft.ts";
+import {
+  checkHomebrewEntry,
+  type HomebrewEntry,
+  type HomebrewProblem,
+  parseHomebrewEntry,
+} from "./homebrewDraft.ts";
 import type { HomebrewKind, HomebrewRow } from "./homebrewKinds.ts";
 
 type Edition = CharacterRecord["edition"];
 
 const EDITIONS = Object.entries(EDITION_LABELS).map(([value, label]) => ({ value, label }));
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
-/** Long enough that a burst of typing resolves its references once, not per keystroke. */
-const PREVIEW_DELAY_MS = 400;
 
-/** The entry as a user edits it: pretty-printed, without the `source` the server stamps. */
-function editableText(entry: Record<string, unknown>): string {
+/** The entry as a user edits it, without the `source` the server stamps. */
+function editable(entry: Record<string, unknown>): HomebrewEntry {
   const { source: _source, ...rest } = entry;
-  return JSON.stringify(rest, null, 2);
+  return rest;
 }
+
+const asText = (entry: HomebrewEntry) => JSON.stringify(entry, null, 2);
+
+const problemList = (problems: HomebrewProblem[]) => (
+  <ul className="flex flex-col gap-0.5">
+    {problems.map(({ field, message }) => (
+      <li key={`${field}: ${message}`}>{`${field}: ${message}`}</li>
+    ))}
+  </ul>
+);
 
 export interface HomebrewEditorProps {
   kind: HomebrewKind;
@@ -33,9 +44,11 @@ export interface HomebrewEditorProps {
 }
 
 /**
- * A homebrew entry pasted or typed as 5etools-shaped JSON, with its edition beside it. Each
- * problem names its field, and the rules text previews as the sheet renders it once the
- * entry holds together. Saving replaces the whole entry.
+ * A homebrew entry edited through its kind's form, or as the 5etools-shaped JSON it is
+ * stored as, with its edition beside it. Both views edit one entry, so a change in either
+ * shows in the other and a field the form has no control for survives it. The JSON view
+ * takes a pasted entry whole; leaving it waits until the text parses. Each problem shows
+ * beside its field once a save is tried. Saving replaces the whole entry.
  */
 export function HomebrewEditor({
   kind,
@@ -46,27 +59,37 @@ export function HomebrewEditor({
   onCancel,
 }: HomebrewEditorProps) {
   const [starter, setStarter] = useState(kind.starters[0]);
-  const [text, setText] = useState(() =>
-    editableText(record ? (record.json as Record<string, unknown>) : starter.entry),
-  );
+  const [entry, setEntry] = useState(() => editable(record ? record.json : starter.entry));
+  /** Set while the JSON view is open: the text as typed, which may not parse yet. */
+  const [text, setText] = useState<string>();
+  /** Bumped when the entry is replaced whole, so the form's own text areas reread it. */
+  const [revision, setRevision] = useState(0);
   const [edition, setEdition] = useState<Edition>(record?.edition ?? "one");
   const [tried, setTried] = useState(false);
-  const box = useRef<HTMLTextAreaElement>(null);
+  const form = useRef<HTMLFormElement>(null);
   // The editor mounts below the whole list, so a keyboard user would otherwise tab past it.
   useEffect(() => {
-    box.current?.focus();
+    form.current?.querySelector<HTMLElement>("input, textarea")?.focus();
   }, []);
   const id = useId();
-  const draft = readHomebrewDraft(text, edition, kind.inputSchema);
-  const settled = readHomebrewDraft(useDebounce(text, PREVIEW_DELAY_MS), edition, kind.inputSchema);
-  const entries =
-    "input" in settled
-      ? (settled.input as { entries?: HomebrewRow["json"]["entries"] }).entries
-      : undefined;
+  const parsed = text === undefined ? { entry } : parseHomebrewEntry(text);
+  const draft =
+    "entry" in parsed ? checkHomebrewEntry(parsed.entry, edition, kind.inputSchema) : parsed;
+  const problems = tried && "problems" in draft ? draft.problems : [];
+  const unplaced =
+    text === undefined ? problems.filter(({ key }) => !kind.formKeys.includes(key)) : problems;
   const title = record ? `Edit ${record.name}` : `New ${kind.noun}`;
+  const noun = `${kind.noun.charAt(0).toUpperCase()}${kind.noun.slice(1)}`;
+
+  const replace = (next: HomebrewEntry) => {
+    setEntry(next);
+    setRevision((count) => count + 1);
+    if (text !== undefined) setText(asText(next));
+  };
 
   return (
     <form
+      ref={form}
       aria-labelledby={`${id}-title`}
       noValidate
       onSubmit={(event) => {
@@ -80,12 +103,11 @@ export function HomebrewEditor({
         {title}
       </h3>
       <p className="text-label text-muted">
-        {record
-          ? `Edit the ${kind.noun}'s 5etools-shaped entry.`
-          : `Edit this example ${kind.noun}, or paste a 5etools-shaped one over it.`}{" "}
-        Saving replaces the whole entry, and the source is always Homebrew.
+        {record ? `Edit the ${kind.noun}` : `Edit this example ${kind.noun}`}, or switch to JSON to
+        paste a 5etools-shaped one over it. Saving replaces the whole entry, and the source is
+        always Homebrew.
       </p>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <div className="w-32">
           <FormField label="Rules">
             {(control) => (
@@ -110,55 +132,64 @@ export function HomebrewEditor({
                     const picked = kind.starters.find(({ label }) => label === next);
                     if (!picked) return;
                     setStarter(picked);
-                    setText(editableText(picked.entry));
+                    replace(editable(picked.entry));
                   }}
                 />
               )}
             </FormField>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => {
+            if (text === undefined) return setText(asText(entry));
+            if ("entry" in parsed) {
+              replace(parsed.entry);
+              setText(undefined);
+            } else setTried(true);
+          }}
+          className={`${BUTTON} ml-auto border border-border bg-surface text-ink hover:bg-subtle`}
+        >
+          {text === undefined ? "Edit as JSON" : "Edit as form"}
+        </button>
       </div>
-      <FormField
-        label={`${kind.noun.charAt(0).toUpperCase()}${kind.noun.slice(1)} JSON`}
-        error={
-          tried &&
-          "problems" in draft && (
-            <ul className="flex flex-col gap-0.5">
-              {draft.problems.map((problem) => (
-                <li key={problem}>{problem}</li>
-              ))}
-            </ul>
-          )
-        }
-      >
-        {(control) => (
-          <textarea
-            {...control}
-            ref={box}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            spellCheck={false}
-            rows={12}
-            className="resize-y rounded-control border border-border bg-surface px-2 py-1 font-mono text-row aria-invalid:border-error"
-          />
-        )}
-      </FormField>
-      <section aria-labelledby={`${id}-preview`} className="flex flex-col gap-1.5">
-        <h4 id={`${id}-preview`} className="text-muted text-row">
-          Preview
-        </h4>
-        <div className="rounded-control border border-border bg-surface p-3 text-body">
-          {entries && entries.length > 0 ? (
-            <RulesEntries entries={entries} headingLevel={5} />
-          ) : (
-            <p className="text-muted">
-              {"input" in settled
-                ? "This entry carries no rules text."
-                : "The rules text shows here once the entry holds together."}
-            </p>
+      {text === undefined ? (
+        <kind.Form
+          key={revision}
+          entry={entry}
+          edition={edition}
+          onChange={setEntry}
+          errorFor={(key) => {
+            const own = problems.filter((problem) => problem.key === key);
+            if (own.length === 0) return undefined;
+            return own
+              .map(({ field, message }) => (field === key ? message : `${field}: ${message}`))
+              .join("; ");
+          }}
+        />
+      ) : (
+        <FormField label={`${noun} JSON`} error={unplaced.length > 0 && problemList(unplaced)}>
+          {(control) => (
+            <textarea
+              {...control}
+              value={text}
+              onChange={(event) => {
+                setText(event.target.value);
+                const read = parseHomebrewEntry(event.target.value);
+                if ("entry" in read) setEntry(read.entry);
+              }}
+              spellCheck={false}
+              rows={16}
+              className="resize-y rounded-control border border-border bg-surface px-2 py-1 font-mono text-row aria-invalid:border-error"
+            />
           )}
+        </FormField>
+      )}
+      {text === undefined && unplaced.length > 0 && (
+        <div role="alert" className="text-error text-row">
+          {problemList(unplaced)}
         </div>
-      </section>
+      )}
       <div className="flex items-center justify-end gap-2">
         <p role="alert" className="mr-auto text-error text-row">
           {failure && `Save failed: ${failure}`}

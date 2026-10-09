@@ -96,9 +96,9 @@ catalog and homebrew alike, `{@tag}` markup in homebrew text works by constructi
 the query-time merge with catalog rows is a union of like things. The schema accepts the
 subset the content loaders and a renderer read — `name`, `source`, `entries`, and the few
 fields each entity type derives a row column from — and passes every other field through
-unvalidated. A homebrew item or spell is written once and displayed, never edited field
-by field, so it needs none of the round-trip guarantee `characterDefinitionSchema`'s
-strict objects give a character.
+unvalidated. The homebrew editor holds the whole entry and writes back unchanged every
+field its form has no control for, so homebrew needs none of the round-trip guarantee
+`characterDefinitionSchema`'s strict objects give a character.
 
 **A merged list tells a homebrew row from a catalog row by shape, not by reading
 `source`.** A catalog record carries `source` and no `id`; a homebrew record carries `id`

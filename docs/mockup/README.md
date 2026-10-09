@@ -180,8 +180,8 @@ widget, panel, or nav element:
   characters and a sample compendium.
 - Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size).
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats each paste the
-  entry's 5etools-shaped JSON, the shape the app's Homebrew settings page already takes for
-  items and spells. They're forward design for #489, not a page a build currently renders.
+  entry's 5etools-shaped JSON, as the app's Homebrew settings page takes items and spells
+  beside their form. They're forward design for #489, not a page a build currently renders.
 - Overlays: Confirm Dialog, Add Widget Picker.
 - Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
   with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own
