@@ -343,7 +343,8 @@ describe("InventorySection", () => {
     expect(
       currency
         .getAllByRole("textbox")
-        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
+        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent)
+        .filter((label) => !label?.startsWith("Adjust")),
     ).toEqual(["Platinum (pp)", "Gold (gp)", "Electrum (ep)", "Silver (sp)", "Copper (cp)"]);
     expect(currency.getByRole("textbox", { name: "Gold (gp)" })).toHaveValue("1,250");
     expect(currency.getByRole("textbox", { name: "Silver (sp)" })).toHaveValue("3");
@@ -373,6 +374,64 @@ describe("InventorySection", () => {
     );
     const init = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1")?.[1];
     expect(JSON.parse(String(init?.body)).money).toMatchObject({ gold: 1300, silver: 3 });
+  });
+
+  describe("a coin adjustment", () => {
+    const putBodies = (fetchMock: ReturnType<typeof renderSection>) =>
+      fetchMock.mock.calls
+        .filter(([url]) => url === "/api/characters/1")
+        .map(([, init]) => JSON.parse(String(init?.body)));
+
+    function adjustGold(amount: string) {
+      const field = card("Currency").getByRole("textbox", {
+        name: "Adjust gold, negative to remove",
+      }) as HTMLInputElement;
+      fireEvent.change(field, { target: { value: amount } });
+      fireEvent.submit(field.form as HTMLFormElement);
+      return field;
+    }
+
+    it("adds a signed amount to the coin's total in one write", async () => {
+      const fetchMock = renderSection();
+
+      const field = adjustGold("+25");
+
+      await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(1));
+      expect(putBodies(fetchMock)[0].money).toMatchObject({ gold: 1275, silver: 3 });
+      expect(field).toHaveValue("");
+    });
+
+    it("takes a negative amount, commas and all, from the total", async () => {
+      const fetchMock = renderSection();
+
+      adjustGold("-1,000");
+
+      await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(1));
+      expect(putBodies(fetchMock)[0].money).toMatchObject({ gold: 250 });
+    });
+
+    it("refuses a subtraction past the total and names the shortfall", async () => {
+      const fetchMock = renderSection();
+
+      adjustGold("-1,300");
+
+      expect(await card("Currency").findByRole("alert")).toHaveTextContent(
+        "Gold: Short by 50 gp; the total stays 1,250 gp.",
+      );
+      expect(putBodies(fetchMock)).toHaveLength(0);
+      expect(card("Currency").getByRole("textbox", { name: "Gold (gp)" })).toHaveValue("1,250");
+    });
+
+    it("refuses text that is not a whole amount", async () => {
+      const fetchMock = renderSection();
+
+      adjustGold("2.5");
+
+      expect(await card("Currency").findByRole("alert")).toHaveTextContent(
+        "Enter an amount such as +25 or -37.",
+      );
+      expect(putBodies(fetchMock)).toHaveLength(0);
+    });
   });
 
   it("still lists items and coins where the derived block failed", async () => {
