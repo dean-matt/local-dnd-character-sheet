@@ -130,6 +130,29 @@ describe("HomebrewSettings", () => {
     expect(writesOf(fetchMock)).toEqual([]);
   });
 
+  it("opens a new item on a weapon example, and swaps it for the type picked", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    const box = () => within(items()).getByRole("textbox", { name: "Item JSON" });
+    expect(JSON.parse((box() as HTMLTextAreaElement).value)).toMatchObject({ type: "M" });
+
+    fireEvent.click(within(items()).getByRole("combobox", { name: "Start from" }));
+    fireEvent.click(screen.getByRole("option", { name: "Armor" }));
+    expect(JSON.parse((box() as HTMLTextAreaElement).value)).toMatchObject({ type: "MA" });
+  });
+
+  it("offers no example to pick for a spell or a row being edited", async () => {
+    stubApi({ items: [sunblade] });
+    renderPage();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    expect(within(spells()).queryByRole("combobox", { name: "Start from" })).toBeNull();
+    fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+    expect(within(items()).queryByRole("combobox", { name: "Start from" })).toBeNull();
+  });
+
   it("previews rules text as it renders, its markup a roll", async () => {
     stubApi({});
     renderPage();

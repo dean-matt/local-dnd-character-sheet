@@ -10,6 +10,7 @@ import type { CharacterRecord } from "@dnd/character";
 import type { z } from "zod";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
+import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
 
 /** What every homebrew record carries, whichever kind it is. */
 export interface HomebrewRow {
@@ -28,7 +29,8 @@ export interface HomebrewKind<R extends HomebrewRow = HomebrewRow> {
   inputSchema: z.ZodType<unknown>;
   /** A method, so a kind of a narrower record still counts as a `HomebrewKind`. */
   chips(record: R): string[];
-  placeholder: string;
+  /** What a new entry opens with; the editor offers a choice where there is more than one. */
+  starters: HomebrewStarters;
 }
 
 const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>> = {
@@ -38,8 +40,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>> = {
   recordSchema: homebrewItemRecordSchema,
   inputSchema: homebrewItemInputSchema,
   chips: (record) => [itemMeta(itemHitFacts(record.json))],
-  placeholder:
-    '{\n  "name": "Sunfire Blade",\n  "type": "M",\n  "rarity": "rare",\n  "weaponCategory": "martial",\n  "dmg1": "1d8",\n  "dmgType": "S",\n  "entries": ["This blade deals an extra {@damage 1d6} fire damage."]\n}',
+  starters: ITEM_STARTERS,
 };
 
 const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>> = {
@@ -54,8 +55,7 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>> = {
     ...(record.concentration ? ["Concentration"] : []),
     ...(record.ritual ? ["Ritual"] : []),
   ],
-  placeholder:
-    '{\n  "name": "Coastal Ward",\n  "level": 2,\n  "school": "A",\n  "duration": [{ "type": "timed", "duration": { "type": "minute", "amount": 1 } }],\n  "entries": ["A wave of brine hardens into a barrier for {@dice 1d4} rounds."]\n}',
+  starters: SPELL_STARTERS,
 };
 
 /** The kinds in the order the page lists them. */

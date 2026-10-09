@@ -16,10 +16,9 @@ const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 const PREVIEW_DELAY_MS = 400;
 
 /** The entry as a user edits it: pretty-printed, without the `source` the server stamps. */
-function editableText(record: HomebrewRow | undefined): string {
-  if (!record) return "";
-  const { source: _source, ...entry } = record.json as Record<string, unknown>;
-  return JSON.stringify(entry, null, 2);
+function editableText(entry: Record<string, unknown>): string {
+  const { source: _source, ...rest } = entry;
+  return JSON.stringify(rest, null, 2);
 }
 
 export interface HomebrewEditorProps {
@@ -46,7 +45,10 @@ export function HomebrewEditor({
   onSave,
   onCancel,
 }: HomebrewEditorProps) {
-  const [text, setText] = useState(() => editableText(record));
+  const [starter, setStarter] = useState(kind.starters[0]);
+  const [text, setText] = useState(() =>
+    editableText(record ? (record.json as Record<string, unknown>) : starter.entry),
+  );
   const [edition, setEdition] = useState<Edition>(record?.edition ?? "one");
   const [tried, setTried] = useState(false);
   const box = useRef<HTMLTextAreaElement>(null);
@@ -78,20 +80,43 @@ export function HomebrewEditor({
         {title}
       </h3>
       <p className="text-label text-muted">
-        Paste the {kind.noun}'s 5etools-shaped entry. Saving replaces the whole entry, and the
-        source is always Homebrew.
+        {record
+          ? `Edit the ${kind.noun}'s 5etools-shaped entry.`
+          : `Edit this example ${kind.noun}, or paste a 5etools-shaped one over it.`}{" "}
+        Saving replaces the whole entry, and the source is always Homebrew.
       </p>
-      <div className="w-32">
-        <FormField label="Rules">
-          {(control) => (
-            <Select
-              {...control}
-              options={EDITIONS}
-              value={edition}
-              onChange={(next) => setEdition(next as Edition)}
-            />
-          )}
-        </FormField>
+      <div className="flex gap-3">
+        <div className="w-32">
+          <FormField label="Rules">
+            {(control) => (
+              <Select
+                {...control}
+                options={EDITIONS}
+                value={edition}
+                onChange={(next) => setEdition(next as Edition)}
+              />
+            )}
+          </FormField>
+        </div>
+        {!record && kind.starters.length > 1 && (
+          <div className="w-32">
+            <FormField label="Start from">
+              {(control) => (
+                <Select
+                  {...control}
+                  options={kind.starters.map(({ label }) => ({ value: label, label }))}
+                  value={starter.label}
+                  onChange={(next) => {
+                    const picked = kind.starters.find(({ label }) => label === next);
+                    if (!picked) return;
+                    setStarter(picked);
+                    setText(editableText(picked.entry));
+                  }}
+                />
+              )}
+            </FormField>
+          </div>
+        )}
       </div>
       <FormField
         label={`${kind.noun.charAt(0).toUpperCase()}${kind.noun.slice(1)} JSON`}
@@ -112,7 +137,6 @@ export function HomebrewEditor({
             ref={box}
             value={text}
             onChange={(event) => setText(event.target.value)}
-            placeholder={kind.placeholder}
             spellCheck={false}
             rows={12}
             className="resize-y rounded-control border border-border bg-surface px-2 py-1 font-mono text-row aria-invalid:border-error"
