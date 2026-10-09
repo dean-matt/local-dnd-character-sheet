@@ -8,6 +8,7 @@ import { HIGHEST_LEVEL, withClassCount } from "./classLevels.ts";
 import { CLASS_FIELD, withDeparture } from "./departures.ts";
 import { HitPointsField, type HitPointsFieldProps } from "./HitPointsField.tsx";
 import { useClassEntries } from "./useClassEntries.ts";
+import { useFeatureOfferings } from "./useFeatureOfferings.ts";
 
 const OPTS = { shouldDirty: true } as const;
 
@@ -20,6 +21,7 @@ const OPTS = { shouldDirty: true } as const;
 export function ClassStep(hitPoints: HitPointsFieldProps) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const { edition, levels, entries } = useClassEntries();
+  const { offerings } = useFeatureOfferings(entries);
   const [count, setCount] = useState(Math.max(levels.length, 1));
   // What takes focus once it mounts: a class's row, or the picker a cleared class gave way to.
   const [focus, setFocus] = useState<string>();
@@ -54,6 +56,7 @@ export function ClassStep(hitPoints: HitPointsFieldProps) {
               <ClassRow
                 key={entryKey(entry.cls)}
                 entry={entry}
+                offerings={offerings[index] ?? []}
                 first={index === 0}
                 multiclassed={multiclassed}
                 max={HIGHEST_LEVEL - (levels.length - entry.level)}

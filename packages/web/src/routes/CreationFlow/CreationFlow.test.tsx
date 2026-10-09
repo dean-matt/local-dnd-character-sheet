@@ -290,6 +290,42 @@ describe("CreationFlow", () => {
     await waitFor(() => expect(step).toHaveTextContent("Class, done"));
   });
 
+  it("marks Class done only once each choice a feature offers is made", async () => {
+    const cleric = { name: "Cleric", source: "XPHB" };
+    const feature = (name: string, extra: object = {}) => ({
+      name,
+      source: "XPHB",
+      level: 1,
+      json: { name, source: "XPHB" },
+      ...extra,
+    });
+    const offeredBy = { offeredBy: { name: "Divine Order", source: "XPHB" } };
+    stubApi(undefined, {
+      "/api/classes/Cleric/XPHB": { ...cleric, edition: "one", hitDie: 8, json: cleric },
+      "/api/classes/Cleric/XPHB/subclasses?edition=one&limit=200": page([]),
+      "/api/classes/Cleric/XPHB/at/1": {
+        level: 1,
+        resources: [],
+        spellSlots: [],
+        optionalFeatures: [],
+        features: [
+          feature("Divine Order", { choose: 1 }),
+          feature("Protector", offeredBy),
+          feature("Thaumaturge", offeredBy),
+        ],
+      },
+    });
+    localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, levels: [{ class: cleric }] }));
+    renderFlow("class");
+
+    const step = within(rail()).getByRole("link", { name: /Class/ });
+    expect(await screen.findByRole("group", { name: "Divine Order — choose one" })).toBeVisible();
+    expect(step).not.toHaveTextContent("done");
+
+    click("Protector");
+    await waitFor(() => expect(step).toHaveTextContent("Class, done"));
+  });
+
   it("keeps Custom hit points across a step away, where the gains alone would read as a roll", async () => {
     const warlock = { name: "Warlock", source: "XPHB" };
     stubApi(undefined, {

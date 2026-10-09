@@ -2,6 +2,7 @@ import type { CharacterDefinition } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setDisabledSources } from "../../lib/disabledSources.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { ClassStep } from "./ClassStep.tsx";
 import { CreationGrants } from "./CreationGrants.tsx";
@@ -73,6 +74,20 @@ const atLevel = (level: number, features: unknown[]) => ({
   features,
 });
 
+const BARBARIAN = classRow("Barbarian", "PHB", 12, {
+  proficiency: ["str", "con"],
+  classFeatures: [gains("Primal Path", "Barbarian", "", 3)],
+});
+const TOTEM_WARRIOR = {
+  ...subclass("Path of the Totem Warrior", BARBARIAN),
+  shortName: "Totem Warrior",
+};
+const totem = (name: string, source = "PHB") => ({
+  ...feature(name, 3),
+  source,
+  offeredBy: { name: "Totem Spirit", source: "PHB" },
+});
+
 const BLOOD_HUNTER = {
   id: "hb-1",
   name: "Blood Hunter",
@@ -103,6 +118,17 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Cleric/PHB/at/1": atLevel(1, [
     feature("Spellcasting", 1),
     feature("Divine Domain", 1),
+  ]),
+  "/api/classes/Barbarian/PHB": BARBARIAN,
+  "/api/classes/Barbarian/PHB/subclasses?edition=classic&limit=200": page([TOTEM_WARRIOR]),
+  "/api/classes/Barbarian/PHB/at/3": atLevel(3, []),
+  "/api/classes/Barbarian/PHB/subclasses/Path%20of%20the%20Totem%20Warrior/PHB/at/3": atLevel(3, [
+    { ...feature("Totem Spirit", 3), choose: 1 },
+    totem("Bear"),
+    totem("Eagle"),
+    totem("Elk", "SCAG"),
+    totem("Tiger", "SCAG"),
+    totem("Wolf"),
   ]),
   "/api/backgrounds?edition=classic&limit=200": page([]),
   "/api/backgrounds?edition=one&limit=200": page([]),
@@ -230,6 +256,62 @@ describe("ClassStep", () => {
         subclass: { name: "Life Domain", source: "PHB" },
       },
     ]);
+  });
+
+  describe("a feature that offers a choice of features", () => {
+    const barbarian = {
+      levels: [
+        { class: { name: "Barbarian", source: "PHB" } },
+        { class: { name: "Barbarian", source: "PHB" } },
+        {
+          class: { name: "Barbarian", source: "PHB" },
+          subclass: { name: "Path of the Totem Warrior", source: "PHB" },
+        },
+      ],
+    };
+    const totemSpirit = {
+      name: "Totem Spirit",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    };
+
+    afterEach(() => setDisabledSources([]));
+
+    it("asks for Totem Spirit's totem beside the subclass, and stores the one taken", async () => {
+      renderStep("classic", barbarian);
+
+      const group = await screen.findByRole("group", { name: "Totem Spirit — choose one" });
+      expect(
+        within(group)
+          .getAllByRole("button")
+          .map((pill) => pill.textContent),
+      ).toEqual(["Bear", "Eagle", "Elk", "Tiger", "Wolf"]);
+
+      click("Elk");
+
+      expect(values.featureChoices).toEqual([
+        { feature: totemSpirit, options: [{ name: "Elk", source: "SCAG" }] },
+      ]);
+      expect(screen.getByRole("group", { name: "Totem Spirit" })).toBeVisible();
+    });
+
+    it("leaves out a totem from a source the reader turned off, unless it is the one taken", async () => {
+      setDisabledSources(["SCAG"]);
+      renderStep("classic", {
+        ...barbarian,
+        featureChoices: [{ feature: totemSpirit, options: [{ name: "Tiger", source: "SCAG" }] }],
+      });
+
+      const group = await screen.findByRole("group", { name: "Totem Spirit" });
+      expect(
+        within(group)
+          .getAllByRole("button")
+          .map((pill) => pill.textContent),
+      ).toEqual(["Bear", "Eagle", "Tiger", "Wolf"]);
+    });
   });
 
   it("waits until 3rd level for a 2024 cleric's subclass, and drops it below that", async () => {
