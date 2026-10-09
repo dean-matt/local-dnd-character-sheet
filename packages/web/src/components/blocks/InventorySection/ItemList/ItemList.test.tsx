@@ -291,7 +291,7 @@ describe("ItemList", () => {
     ]);
   });
 
-  it("refuses a row's edit while its rows wait on a refetch, rather than edit the entry that moved up", async () => {
+  it("drops a row's edit while its rows wait on a refetch, rather than edit the entry that moved up", async () => {
     const fetchMock = stubApi({ refetch: false });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(characterKey("1"), vex());
@@ -309,11 +309,52 @@ describe("ItemList", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
     await written(fetchMock);
+    expect(screen.getByText("Saving…")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Remove Cloak of Protection" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("the inventory changed");
     const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
     expect(puts).toHaveLength(1);
+  });
+
+  it("removes one of two entries holding the same item on a double click", async () => {
+    const fetchMock = stubApi({ inventory: [ITEMS[0], ITEMS[0]] as SheetItem[] });
+    const record = vex();
+    const sword = { ref: { name: "Longsword", source: "PHB" }, ...flags };
+    const character = {
+      ...record,
+      definition: { ...record.definition, inventory: [sword, sword] },
+    };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), character);
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={character} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
+
+    const [remove] = await screen.findAllByRole("button", { name: "Remove Longsword" });
+    fireEvent.click(remove as HTMLElement);
+    fireEvent.click(remove as HTMLElement);
+
+    expect((await written(fetchMock)).inventory).toHaveLength(1);
+    await waitFor(() => expect(screen.queryByText("Saving…")).toBeNull());
+    const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
+    expect(puts).toHaveLength(1);
+  });
+
+  it("leaves attuning open where the derived block failed, with no slot count to refuse by", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    stubApi();
+    client.setQueryData(characterKey("1"), vex());
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={vex()} derived={undefined} />
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Attuned, Ring of Warmth" }),
+    ).toBeInTheDocument();
   });
 
   it("changes an item's quantity", async () => {

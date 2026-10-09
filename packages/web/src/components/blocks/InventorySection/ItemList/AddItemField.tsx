@@ -31,6 +31,7 @@ export function AddItemField({
 }) {
   const [variant, setVariant] = useState<PendingVariant>();
   const [refusal, setRefusal] = useState<string>();
+  const [checking, setChecking] = useState<string>();
 
   if (!variant) {
     return (
@@ -46,9 +47,11 @@ export function AddItemField({
     );
   }
 
+  // One check at a time, so a second pick while the first is in flight cannot add twice.
   async function pickBase(base: ContentRef, name: string) {
-    if (!variant) return;
+    if (!variant || checking) return;
     setRefusal(undefined);
+    setChecking(name);
     try {
       await apiGet(
         path(base.name, base.source, "variants", variant.ref.name, variant.ref.source),
@@ -62,6 +65,8 @@ export function AddItemField({
           : `${name} as ${variant.ref.name} could not be checked: ${reason}`,
       );
       return;
+    } finally {
+      setChecking(undefined);
     }
     onAdd({ ref: base, variant: variant.ref });
     setVariant(undefined);
@@ -92,6 +97,9 @@ export function AddItemField({
           Cancel
         </button>
       </div>
+      <p role="status" className="text-muted text-row">
+        {checking ? `Checking ${checking} as ${variant.ref.name}…` : ""}
+      </p>
       {refusal && (
         <p role="alert" className="text-error text-row">
           {refusal}
