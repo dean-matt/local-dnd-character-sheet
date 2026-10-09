@@ -135,7 +135,14 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
           noun={kind.noun}
           deleting={remove.isPending}
           error={remove.error}
-          onConfirm={() => remove.mutate(deleting.id, { onSuccess: closeDelete })}
+          onConfirm={() =>
+            remove.mutate(deleting.id, {
+              onSuccess: () => {
+                if (deleting.id === editing) setEditing(undefined);
+                closeDelete();
+              },
+            })
+          }
           onClose={closeDelete}
         />
       )}

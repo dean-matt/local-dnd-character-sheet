@@ -286,4 +286,21 @@ describe("HomebrewSettings", () => {
       { url: "/api/homebrew/items/i1", method: "DELETE", body: undefined },
     ]);
   });
+  it("closes the editor of a row once that row is deleted, and says the list is empty", async () => {
+    const lists: { items: unknown[] } = { items: [sunblade] };
+    stubApi(lists, [{ status: 204 }]);
+    renderPage();
+
+    fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+    fireEvent.click(within(items()).getByRole("button", { name: "Delete Sunblade" }));
+    lists.items = [];
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Delete Sunblade?" })).getByRole("button", {
+        name: "Delete",
+      }),
+    );
+
+    expect(await within(items()).findByText("No homebrew items yet.")).toBeInTheDocument();
+    expect(within(items()).queryByRole("textbox", { name: "Item JSON" })).toBeNull();
+  });
 });
