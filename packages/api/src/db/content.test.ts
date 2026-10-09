@@ -1,15 +1,11 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { CATALOG_OUT_OF_DATE } from "@dnd/catalog";
 import { CONTENT_SCHEMA, SCHEMA_STAMP } from "@dnd/content/schema";
 import Database from "better-sqlite3";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  CATALOG_OUT_OF_DATE,
-  CatalogOutOfDateError,
-  catalogSchemaWarning,
-  openContentDb,
-} from "./content.ts";
+import { CatalogOutOfDateError, catalogSchemaWarning, openContentDb } from "./content.ts";
 
 /**
  * Mirrors `build-db.ts`'s publish step: write a versioned database under its own

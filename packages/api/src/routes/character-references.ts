@@ -8,7 +8,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import { getCharacter, getCharacterState } from "../db/queries/characters.ts";
 import { checkCharacterReferences } from "../db/queries/references.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const read = createRoute({
   method: "get",
@@ -26,6 +26,7 @@ const read = createRoute({
       content: { "application/json": { schema: characterReferencesSchema } },
     },
     404: notFound("character"),
+    503: catalogOutOfDate,
   },
 });
 

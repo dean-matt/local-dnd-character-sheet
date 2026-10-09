@@ -6,7 +6,7 @@ import { resolveCharacterSpells } from "../db/queries/character-spells.ts";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import { getCharacter } from "../db/queries/characters.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const read = createRoute({
   method: "get",
@@ -24,6 +24,7 @@ const read = createRoute({
       content: { "application/json": { schema: characterSpellsSchema } },
     },
     404: notFound("character"),
+    503: catalogOutOfDate,
   },
 });
 

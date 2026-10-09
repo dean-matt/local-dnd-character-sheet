@@ -12,6 +12,7 @@ import {
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { type ResolvedRow, resolveRefs } from "../db/queries/refs.ts";
+import { catalogOutOfDate } from "./errors.ts";
 
 function toResolvedRef(row: ResolvedRow): ResolvedRef {
   return {
@@ -36,6 +37,7 @@ const resolve = createRoute({
         "The row each reference names, or null where neither the catalog nor homebrew has one",
       content: { "application/json": { schema: refResolveResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 

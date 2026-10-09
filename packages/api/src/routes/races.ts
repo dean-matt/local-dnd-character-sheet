@@ -24,7 +24,7 @@ import {
   type RaceRow,
   type SubraceRow,
 } from "../db/queries/races.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -68,6 +68,7 @@ const listRacesRoute = createRoute({
       description: "A page of races, bounded by limit and offset",
       content: { "application/json": { schema: raceListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -85,6 +86,7 @@ const readRace = createRoute({
       content: { "application/json": { schema: raceRecordSchema } },
     },
     404: notFound("race", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -108,6 +110,7 @@ const listSubracesRoute = createRoute({
       description: "A page of subraces, bounded by limit and offset",
       content: { "application/json": { schema: subraceListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -130,6 +133,7 @@ const readSubrace = createRoute({
       content: { "application/json": { schema: subraceRecordSchema } },
     },
     404: notFound("subrace", "name, source, race name and race source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -142,12 +146,15 @@ export function racesRoutes(dataDir: string) {
   routes.openapi(listRacesRoute, (c) => {
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
     const races = listRaces(dataDir, edition).map(toRaceRecord);
-    return c.json({
-      items: races.slice(offset, offset + limit),
-      total: races.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: races.slice(offset, offset + limit),
+        total: races.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(readRace, (c) => {
@@ -161,12 +168,15 @@ export function racesRoutes(dataDir: string) {
     const { raceName, raceSource } = c.req.valid("param");
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
     const subraces = listSubraces(dataDir, raceName, raceSource, edition).map(toSubraceRecord);
-    return c.json({
-      items: subraces.slice(offset, offset + limit),
-      total: subraces.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: subraces.slice(offset, offset + limit),
+        total: subraces.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(readSubrace, (c) => {

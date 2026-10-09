@@ -30,7 +30,7 @@ import {
   lookupCatalogSpells,
   type SpellRow,
 } from "../db/queries/spells.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -76,6 +76,7 @@ const list = createRoute({
       description: "A page of spells, bounded by limit and offset",
       content: { "application/json": { schema: spellListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -93,6 +94,7 @@ const read = createRoute({
       content: { "application/json": { schema: spellRecordSchema } },
     },
     404: notFound("spell", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -122,6 +124,7 @@ const granted = createRoute({
       description: "The spells given, sorted by name, and the picks the grantor offers",
       content: { "application/json": { schema: grantedSpellsSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -140,6 +143,7 @@ const lookup = createRoute({
       description: "Each spell's level and standing, or null where no row answers",
       content: { "application/json": { schema: spellLookupResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -155,12 +159,15 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       .filter((row) => row.edition === edition)
       .map(toHomebrewSpellRecord);
     const merged = [...catalog, ...homebrew].sort((a, b) => a.name.localeCompare(b.name));
-    return c.json({
-      items: merged.slice(offset, offset + limit),
-      total: merged.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: merged.slice(offset, offset + limit),
+        total: merged.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(granted, (c) => {

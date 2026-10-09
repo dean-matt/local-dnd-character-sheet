@@ -1,5 +1,5 @@
 /** The `{ error: string }` body every route that fails with a message returns, and the handler for what a route throws. */
-import type { CatalogOutOfDate } from "@dnd/catalog";
+import { type CatalogOutOfDate, catalogOutOfDateSchema } from "@dnd/catalog";
 import { z } from "@hono/zod-openapi";
 import type { ErrorHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -11,6 +11,11 @@ export const notFound = (resource: string, identifiedBy = "id") => ({
   description: `No ${resource} with that ${identifiedBy}`,
   content: { "application/json": { schema: errorSchema } },
 });
+
+export const catalogOutOfDate = {
+  description: "The catalog was built from an older schema; `pnpm content:build` rebuilds it",
+  content: { "application/json": { schema: catalogOutOfDateSchema } },
+};
 
 /**
  * The app's error handler: a catalog built from another schema answers 503 naming the

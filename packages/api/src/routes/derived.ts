@@ -5,7 +5,7 @@ import type { CharactersDb } from "../db/queries/characters.ts";
 import { getCharacter } from "../db/queries/characters.ts";
 import { resolveCharacterCatalog, UnresolvedReference } from "../db/queries/derived.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
-import { errorSchema, notFound } from "./errors.ts";
+import { catalogOutOfDate, errorSchema, notFound } from "./errors.ts";
 
 const read = createRoute({
   method: "get",
@@ -26,6 +26,7 @@ const read = createRoute({
       description: "The character names a class or race no catalog or homebrew row answers",
       content: { "application/json": { schema: errorSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 

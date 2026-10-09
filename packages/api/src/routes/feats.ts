@@ -7,7 +7,7 @@ import { type FeatRecord, featRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { type FeatRow, getFeat, listFeats } from "../db/queries/feats.ts";
-import { notFound } from "./errors.ts";
+import { catalogOutOfDate, notFound } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -40,6 +40,7 @@ const list = createRoute({
       description: "A page of feats, bounded by limit and offset",
       content: { "application/json": { schema: featListResponseSchema } },
     },
+    503: catalogOutOfDate,
   },
 });
 
@@ -57,6 +58,7 @@ const read = createRoute({
       content: { "application/json": { schema: featRecordSchema } },
     },
     404: notFound("feat", "name and source"),
+    503: catalogOutOfDate,
   },
 });
 
@@ -68,12 +70,15 @@ export function featsRoutes(dataDir: string) {
   routes.openapi(list, (c) => {
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
     const feats = listFeats(dataDir, edition).map(toFeatRecord);
-    return c.json({
-      items: feats.slice(offset, offset + limit),
-      total: feats.length,
-      limit,
-      offset,
-    });
+    return c.json(
+      {
+        items: feats.slice(offset, offset + limit),
+        total: feats.length,
+        limit,
+        offset,
+      },
+      200,
+    );
   });
 
   routes.openapi(read, (c) => {

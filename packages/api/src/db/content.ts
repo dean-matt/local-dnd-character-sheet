@@ -17,11 +17,9 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { CATALOG_OUT_OF_DATE } from "@dnd/catalog";
 import { SCHEMA_STAMP } from "@dnd/content/schema";
 import Database from "better-sqlite3";
-
-export const CATALOG_OUT_OF_DATE =
-  "The catalog was built from an older schema. Run `pnpm content:build` to rebuild it.";
 
 /** Thrown by `openContentDb` for a catalog whose schema stamp is not this build's. */
 export class CatalogOutOfDateError extends Error {
@@ -35,14 +33,14 @@ export class CatalogOutOfDateError extends Error {
 let matchedPath: string | undefined;
 
 function stampMatches(db: Database.Database): boolean {
-  try {
-    return (
-      db.prepare("SELECT value FROM meta WHERE key = ?").pluck().get(SCHEMA_STAMP.key) ===
-      SCHEMA_STAMP.value
-    );
-  } catch {
-    return false;
-  }
+  const hasMeta = db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'meta'")
+    .get();
+  if (!hasMeta) return false;
+  return (
+    db.prepare("SELECT value FROM meta WHERE key = ?").pluck().get(SCHEMA_STAMP.key) ===
+    SCHEMA_STAMP.value
+  );
 }
 
 /** Throws `CatalogOutOfDateError` where the database `current` names was built from another schema. */

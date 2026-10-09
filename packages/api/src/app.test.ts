@@ -3,13 +3,14 @@
  * than the real `data/` — `app.ts` itself opens the user's real databases on
  * import, which a test must never touch.
  */
+
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { CATALOG_OUT_OF_DATE } from "@dnd/catalog";
 import { SCHEMA_STAMP } from "@dnd/content/schema";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { CATALOG_OUT_OF_DATE } from "./db/content.ts";
 import { publishMeta } from "./db/queries/contentFixture.ts";
 import { openTestDatabases } from "./db/testDatabases.ts";
 import { characterInventoryRoutes } from "./routes/character-inventory.ts";
@@ -113,6 +114,8 @@ describe("/openapi.json", () => {
 
     const description = body.paths["/spells/{name}/{source}"].get.responses["404"].description;
     expect(description).toBe("No spell with that name and source");
+    expect(body.paths["/spells/{name}/{source}"].get.responses["503"]).toBeDefined();
+    expect(body.paths["/characters"].get.responses["503"]).toBeUndefined();
   });
 
   /**
