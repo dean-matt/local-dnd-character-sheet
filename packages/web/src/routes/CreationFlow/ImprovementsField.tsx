@@ -9,6 +9,19 @@ import { grantTitle } from "../../lib/improvementGrants.ts";
 
 const OPTS = { shouldDirty: true } as const;
 
+const WATCHED = [
+  "levels",
+  "edition",
+  "feats",
+  "abilityIncreases",
+  "abilityScores",
+  "houseRules",
+  "race",
+  "subrace",
+  "proficiencies",
+  "spells",
+] as const satisfies readonly (keyof CharacterDefinition)[];
+
 /**
  * A choice for each Ability Score Improvement and Epic Boon the classes grant by the
  * character's level, each marked until it is made.
@@ -22,14 +35,26 @@ export function ImprovementsField() {
     abilityIncreases = [],
     abilityScores,
     houseRules,
-  ] = useWatch<
-    CharacterDefinition,
-    ["levels", "edition", "feats", "abilityIncreases", "abilityScores", "houseRules"]
-  >({ name: ["levels", "edition", "feats", "abilityIncreases", "abilityScores", "houseRules"] });
+    race,
+    subrace,
+    proficiencies,
+    spells,
+  ] = useWatch<CharacterDefinition, typeof WATCHED>({ name: WATCHED });
   const { grants } = useImprovementGrants(levels);
   const catalog = useFeats(edition).data?.items ?? [];
   if (grants.length === 0) return null;
-  const draft = { edition, levels, feats, abilityIncreases, abilityScores, houseRules };
+  const draft = {
+    edition,
+    levels,
+    feats,
+    abilityIncreases,
+    abilityScores,
+    houseRules,
+    race,
+    subrace,
+    proficiencies,
+    spells,
+  };
 
   return (
     <section aria-labelledby="ability-improvements" className="flex flex-col gap-3">

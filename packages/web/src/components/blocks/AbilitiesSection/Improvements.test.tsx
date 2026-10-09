@@ -32,6 +32,7 @@ const FEATS = [
     ],
     ability: [{ choose: { from: ["str", "dex"] } }],
   }),
+  feat("War Caster", { category: "G", prerequisite: [{ level: 4, spellcasting2020: true }] }),
 ];
 
 /** Vex as a level 8 Wizard who raised Intelligence at 4 and has made no choice at 8. */
@@ -116,5 +117,24 @@ describe("Improvements", () => {
       level: 8,
     });
     await waitFor(() => expect(summary("Level 8 · Wizard 8: Grappler")).toBeVisible());
+  });
+
+  it("keeps offering a feat taken where the character no longer qualifies for it", async () => {
+    const character = wizard();
+    const definition = {
+      ...character.definition,
+      ...withImprovement(character.definition, 8, WIZARD, {
+        feat: XPHB("War Caster"),
+        increases: [],
+      }),
+    };
+    renderSeeded({ ...character, definition });
+    await waitFor(() => expect(summary("Level 8 · Wizard 8: War Caster")).toBeVisible());
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Level 4 choice" }));
+    expect(await screen.findByRole("option", { name: "Grappler" })).toBeVisible();
+    expect(screen.queryByRole("option", { name: "War Caster" })).toBeNull();
+    fireEvent.click(screen.getByRole("combobox", { name: "Level 8 choice" }));
+    expect(screen.getByRole("option", { name: "War Caster" })).toBeVisible();
   });
 });
