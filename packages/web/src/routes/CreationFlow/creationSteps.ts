@@ -54,7 +54,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   leveling: null,
   experience: null,
   notes: null,
-  houseRules: null,
+  houseRules: "identity",
   overrides: null,
   departures: null,
 };

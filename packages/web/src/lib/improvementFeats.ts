@@ -126,6 +126,14 @@ const isRace =
     return (name === full || name === base) && (subrace === undefined || subrace === sub);
   };
 
+/** Whether the character may take a feat at an improvement, which a classic one may by house rule alone. */
+export const takesFeats = ({
+  edition,
+  houseRules,
+}: Pick<CharacterDefinition, "edition"> & {
+  houseRules: CharacterDefinition["houseRules"] | undefined;
+}) => edition === "one" || houseRule({ houseRules: houseRules ?? {} }, "feats");
+
 /**
  * The parts of a definition a candidate reads, whose scores, race, proficiencies and spells
  * a creation draft may hold unset.
@@ -161,9 +169,7 @@ export function candidateAt(definition: Drafted, grant: ImprovementGrant): Candi
       : undefined;
   return {
     edition: definition.edition,
-    takesFeats:
-      definition.edition === "one" ||
-      houseRule({ houseRules: definition.houseRules ?? {} }, "feats"),
+    takesFeats: takesFeats(definition),
     level: grant.level,
     classNames: definition.levels.slice(0, grant.level).map((level) => displayName(level.class)),
     scores: scored(abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level)),

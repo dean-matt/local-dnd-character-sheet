@@ -11,6 +11,7 @@ import { useWatch } from "react-hook-form";
 import { z } from "zod";
 import { useFeats } from "../../hooks/useFeats.ts";
 import { apiGet } from "../../lib/api.ts";
+import { takesFeats } from "../../lib/improvementFeats.ts";
 import { retryUnlessClientError } from "../../lib/retryUnlessClientError.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
@@ -72,16 +73,17 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
  * Each choice made so far that the character's edition does not hold: a race, class or
  * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
  * background or subclass absent from the edition's list, or a feat a class granted at an
- * improvement absent from it. `Ability Score Improvement` (XPHB) is never named: an
+ * improvement that the edition's list lacks, or that a 2014 character took with feats not
+ * allowed. `Ability Score Improvement` (XPHB) is never named: an
  * edition change converts the scores it raised. Each class the draft holds is
  * checked. A choice counts only once its row loads, so one still loading is never named,
  * and a deity both editions share never is.
  */
 export function useEditionMismatches(): EditionMismatch[] {
-  const [race, subrace, background, deity, feats = []] = useWatch<
+  const [race, subrace, background, deity, feats = [], houseRules] = useWatch<
     CharacterDefinition,
-    ["race", "subrace", "background", "deity", "feats"]
-  >({ name: ["race", "subrace", "background", "deity", "feats"] });
+    ["race", "subrace", "background", "deity", "feats", "houseRules"]
+  >({ name: ["race", "subrace", "background", "deity", "feats", "houseRules"] });
   const { edition, catalogRace, raceRow, subraces, backgrounds } = useIdentityCatalog();
   const { entries } = useClassEntries();
   const featRows = useFeats(edition).data?.items;
@@ -92,6 +94,7 @@ export function useEditionMismatches(): EditionMismatch[] {
       `/catalog/deity/${encodeURIComponent(deity.name)}/${encodeURIComponent(deity.source)}?qualifier=${encodeURIComponent(deity.pantheon)}`,
   );
   const other = otherThan(edition);
+  const featsAllowed = takesFeats({ edition, houseRules });
   const catalogBackground = background && "name" in background ? background : undefined;
   return [
     other("Race", catalogRace && named(catalogRace), raceRow.data?.edition),
@@ -109,7 +112,9 @@ export function useEditionMismatches(): EditionMismatch[] {
     ]),
     ...feats.map(({ ref, grantedBy }) =>
       grantedBy?.kind === "class" && "name" in ref && refKey(ref) !== refKey(IMPROVEMENT_FEAT)
-        ? missingFrom("Feat", ref, featRows)
+        ? featsAllowed
+          ? missingFrom("Feat", ref, featRows)
+          : { label: "Feat", value: named(ref) }
         : undefined,
     ),
     other("Deity", deity && `${deity.name} · ${deity.pantheon}`, deityRow?.edition),

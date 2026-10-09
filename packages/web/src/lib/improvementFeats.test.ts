@@ -1,7 +1,7 @@
 import type { FeatRecord } from "@dnd/catalog";
 import { withImprovement } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { type Candidate, candidateAt, improvementFeats } from "./improvementFeats.ts";
+import { type Candidate, candidateAt, improvementFeats, takesFeats } from "./improvementFeats.ts";
 
 const feat = (name: string, source: string, json: object = {}): FeatRecord => ({
   name,
@@ -45,6 +45,14 @@ const at4: Candidate = {
   knowsSpells: false,
 };
 const names = (candidate: Candidate) => improvementFeats(FEATS, candidate).map(({ name }) => name);
+
+describe("takesFeats", () => {
+  it("allows feats under the 2024 rules whatever the option says, and under 2014 only by it", () => {
+    expect(takesFeats({ edition: "one", houseRules: { feats: false } })).toBe(true);
+    expect(takesFeats({ edition: "classic", houseRules: undefined })).toBe(false);
+    expect(takesFeats({ edition: "classic", houseRules: { feats: true } })).toBe(true);
+  });
+});
 
 describe("improvementFeats", () => {
   it("offers the general and origin feats a 2024 character qualifies for", () => {

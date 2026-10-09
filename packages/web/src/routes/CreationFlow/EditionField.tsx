@@ -1,4 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
+import { useId } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import { useEditionMismatches } from "./useEditionMismatches.ts";
@@ -10,12 +11,15 @@ const EDITIONS = Object.keys(EDITION_LABELS) as Edition[];
 /**
  * The rules the character is built under, which decide what every later picker offers. A
  * change keeps each choice already made and names those the new rules do not hold, so the
- * player clears them rather than losing them unseen.
+ * player clears them rather than losing them unseen. The 2014 rules also ask whether the
+ * table allows feats, which the 2024 rules always offer.
  */
 export function EditionField() {
   const { setValue } = useFormContext<CharacterDefinition>();
   const edition = useWatch<CharacterDefinition, "edition">({ name: "edition" }) ?? "one";
+  const feats = useWatch<CharacterDefinition, "houseRules.feats">({ name: "houseRules.feats" });
   const mismatches = useEditionMismatches();
+  const featsHint = useId();
   return (
     <div className="flex flex-col">
       <fieldset className="mt-2 flex flex-col">
@@ -38,6 +42,24 @@ export function EditionField() {
             </button>
           ))}
         </div>
+        {edition === "classic" && (
+          <div className="mt-2 flex flex-col">
+            <label className="flex items-center gap-2 text-ink text-row">
+              <input
+                type="checkbox"
+                checked={feats ?? false}
+                aria-describedby={featsHint}
+                onChange={(event) =>
+                  setValue("houseRules.feats", event.target.checked, { shouldDirty: true })
+                }
+              />
+              Allow feats
+            </label>
+            <span id={featsHint} className="text-muted text-row">
+              A feat may replace an Ability Score Improvement.
+            </span>
+          </div>
+        )}
       </fieldset>
       <div role="status" aria-label="Choices outside the rules">
         {mismatches.length > 0 && (
