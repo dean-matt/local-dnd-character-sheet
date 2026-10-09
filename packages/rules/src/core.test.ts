@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   abilityModifier,
   abilityModifierBreakdown,
+  experienceThreshold,
   passiveScore,
   proficiencyBonus,
   proficiencyBonusBreakdown,
@@ -19,6 +20,22 @@ describe("abilityModifier", () => {
     [30, 10],
   ])("score %i gives %i", (score, expected) => {
     expect(abilityModifier(score)).toBe(expected);
+  });
+});
+
+describe("experienceThreshold", () => {
+  it.each([
+    [1, 0],
+    [2, 300],
+    [5, 6500],
+    [11, 85000],
+    [20, 355000],
+  ])("level %i is reached at %i XP", (level, xp) => {
+    expect(experienceThreshold(level)).toBe(xp);
+  });
+
+  it.each([0, 21, 1.5])("refuses level %s", (level) => {
+    expect(() => experienceThreshold(level)).toThrow(RangeError);
   });
 });
 

@@ -21,6 +21,7 @@ export {
   ABILITY_LABEL,
   abilityModifier,
   averageHitPoints,
+  experienceThreshold,
   HIT_DICE,
   type HitDie,
   hitPointSource,

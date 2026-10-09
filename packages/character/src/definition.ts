@@ -38,6 +38,8 @@ const levelEntrySchema = z.strictObject({
   rolled: z.int().min(-MAX_HIT_POINT_GAIN).max(MAX_HIT_POINT_GAIN).optional(),
 });
 
+const LEVELING_MODES = ["xp", "milestone"] as const;
+
 const SCORE_RANGE = "A score is a whole number from 1 to 30.";
 
 /** Exhaustive: a record keyed by an enum requires every ability to be present. */
@@ -295,6 +297,14 @@ export const characterDefinitionSchema = z.strictObject({
         ),
       { error: "a class names a subclass on more than one level" },
     ),
+  /**
+   * How the character advances: by experience points, or by milestone, when the DM says.
+   * Absent reads as experience. A milestone character keeps its
+   * stored total, so switching back restores it.
+   */
+  leveling: z.enum(LEVELING_MODES).default("xp"),
+  /** The experience point total, never the progress toward the next level. */
+  experience: z.int().min(0).default(0),
   race: entryRefSchema,
   /**
    * The subrace's own name — `High`, not `Elf (High)`. The race supplies the other two

@@ -309,7 +309,7 @@ says how much of the artboard the app builds today.
 | `Race` | #488 | read-only |
 | `Class` | #235, #240 | read-only |
 | `Background` | #488 | read-only |
-| `Level` | #239, #393 | read-only |
+| `Level` | #239, #393 | all but Level Up |
 | `LevelUpModal` | #239, #240 | nothing |
 | `Languages` | #488 | read-only |
 | `Proficiencies` | #400, #488 | read-only |

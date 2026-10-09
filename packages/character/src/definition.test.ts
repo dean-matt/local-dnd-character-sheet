@@ -172,6 +172,24 @@ describe("alignment", () => {
   });
 });
 
+describe("leveling", () => {
+  it("reads a definition written before it existed as experience from zero", () => {
+    const { leveling: _mode, experience: _total, ...older } = definition;
+    const parsed = characterDefinitionSchema.parse(older);
+    expect([parsed.leveling, parsed.experience]).toEqual(["xp", 0]);
+  });
+
+  it.each([-1, 1.5])("rejects an experience total of %s", (experience) => {
+    expect(characterDefinitionSchema.safeParse({ ...definition, experience }).success).toBe(false);
+  });
+
+  it("rejects a mode no ruleset prints", () => {
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, leveling: "sessions" }).success,
+    ).toBe(false);
+  });
+});
+
 describe("appearance", () => {
   it("keeps each box the printed sheet has apart from the others", () => {
     const parsed = characterDefinitionSchema.parse(structuredClone(definition));

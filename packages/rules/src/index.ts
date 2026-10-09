@@ -16,6 +16,7 @@ export {
   ABILITY_LABEL,
   abilityModifier,
   abilityModifierBreakdown,
+  experienceThreshold,
   PROFICIENCY_LEVELS,
   passiveScore,
   proficiencyBonus,

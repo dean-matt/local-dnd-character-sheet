@@ -76,6 +76,8 @@ export const definition: CharacterDefinition = {
     { class: ROGUE, rolled: 3 },
     { class: ROGUE },
   ],
+  leveling: "xp",
+  experience: 6500,
   race: { name: "Half-Elf", source: "XPHB" },
   background: CHARLATAN,
   abilityScores: { str: 8, dex: 16, con: 14, int: 10, wis: 12, cha: 17 },

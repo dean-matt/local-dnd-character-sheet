@@ -48,6 +48,21 @@ export function proficiencyBonusBreakdown<Ref = unknown>(totalLevel: number): Br
   return breakdown(terms);
 }
 
+/** The Character Advancement table from level 1; both rulesets print the same column. */
+const EXPERIENCE_THRESHOLDS = [
+  0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000,
+  195000, 225000, 265000, 305000, 355000,
+];
+
+/** The experience points a character needs to reach a total level. */
+export function experienceThreshold(totalLevel: number): number {
+  const threshold = EXPERIENCE_THRESHOLDS[totalLevel - 1];
+  if (threshold === undefined) {
+    throw new RangeError(`Total character level must be 1-20, got ${totalLevel}`);
+  }
+  return threshold;
+}
+
 /**
  * A passive check rolls no die, so the modifiers are the whole score. Proficiency
  * arrives as a number rather than a flag because expertise doubles it and half
