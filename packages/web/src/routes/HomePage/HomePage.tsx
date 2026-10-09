@@ -6,6 +6,7 @@ import { ErrorState } from "../../ErrorState.tsx";
 import { useCharacters } from "../../hooks/useCharacters.ts";
 import { useSearchTypes } from "../../hooks/useSearchTypes.ts";
 import { LoadingState } from "../../LoadingState.tsx";
+import { isCatalogOutOfDate } from "../../lib/api.ts";
 import { MECHANICS_ENTRIES, mechanicsHref } from "../../lib/mechanicsEntries.ts";
 import { HomeQuickLink } from "./HomeQuickLink.tsx";
 
@@ -103,7 +104,9 @@ export function HomePage() {
             />
           </li>
         </ul>
-        {types.isError && <p className="text-body text-error">The catalog's types did not load.</p>}
+        {types.isError && !isCatalogOutOfDate(types.error) && (
+          <p className="text-body text-error">The catalog's types did not load.</p>
+        )}
         {catalogTypes.length > 0 && (
           <>
             <h3

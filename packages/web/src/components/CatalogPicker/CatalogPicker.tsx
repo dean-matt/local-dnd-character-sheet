@@ -17,6 +17,7 @@ import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { useTopLayer } from "../../hooks/useTopLayer.ts";
 import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../../lib/anchoring.ts";
+import { isCatalogOutOfDate } from "../../lib/api.ts";
 import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
 
@@ -135,7 +136,11 @@ export function CatalogPicker({
     <FormField
       label={label}
       status={statusText(showList, open && search.isFetching, hits.length, search.data?.total ?? 0)}
-      error={search.isError && `Search failed: ${search.error.message}`}
+      error={
+        search.isError &&
+        !isCatalogOutOfDate(search.error) &&
+        `Search failed: ${search.error.message}`
+      }
     >
       {(control) => (
         <div className="flex flex-col gap-1">

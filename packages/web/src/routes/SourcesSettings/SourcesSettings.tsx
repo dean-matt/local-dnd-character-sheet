@@ -4,6 +4,7 @@ import { useCatalogSources } from "../../hooks/useCatalogSources.ts";
 import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
 import { useSearchSources } from "../../hooks/useSearchSources.ts";
 import { LoadingState } from "../../LoadingState.tsx";
+import { isCatalogOutOfDate } from "../../lib/api.ts";
 import { setDisabledSources } from "../../lib/disabledSources.ts";
 import { type SourceShelf, shelveSources } from "../../lib/sourceShelves.ts";
 import { SourceBulkSwitches } from "./SourceBulkSwitches.tsx";
@@ -60,7 +61,7 @@ export function SourcesSettings() {
       {isError && <ErrorState error={error} />}
       {data && !catalogSources.isPending && (
         <>
-          {catalogSources.isError && (
+          {catalogSources.isError && !isCatalogOutOfDate(catalogSources.error) && (
             <p className="text-label text-error">
               Titles and groups did not load, so every source sits under Other.
             </p>

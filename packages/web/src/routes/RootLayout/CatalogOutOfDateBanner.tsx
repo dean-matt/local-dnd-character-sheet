@@ -1,16 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
-import { isCatalogOutOfDate } from "../../lib/api.ts";
-
-/** The message of any query in the cache now failing on an out-of-date catalog. */
-function useCatalogOutOfDate(): string | undefined {
-  const cache = useQueryClient().getQueryCache();
-  return useSyncExternalStore(
-    (onChange) => cache.subscribe(onChange),
-    () =>
-      cache.findAll().find((query) => isCatalogOutOfDate(query.state.error))?.state.error?.message,
-  );
-}
+import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
 
 /**
  * One banner for every catalog read refused while `content.db` predates its schema, in place

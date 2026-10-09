@@ -1,3 +1,4 @@
+import { CatalogUnavailable } from "./CatalogUnavailable.tsx";
 import { isCatalogOutOfDate } from "./lib/api.ts";
 import { StateCard } from "./StateCard.tsx";
 
@@ -6,13 +7,7 @@ import { StateCard } from "./StateCard.tsx";
  * reports that once for the page.
  */
 export function ErrorState({ error, message }: { error?: Error; message?: string }) {
-  if (isCatalogOutOfDate(error)) {
-    return (
-      <StateCard>
-        <p>Unavailable until the catalog is rebuilt.</p>
-      </StateCard>
-    );
-  }
+  if (isCatalogOutOfDate(error)) return <CatalogUnavailable />;
   return (
     <StateCard>
       <p role="alert" className="text-error">
