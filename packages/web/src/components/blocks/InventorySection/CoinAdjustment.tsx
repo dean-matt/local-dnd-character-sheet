@@ -6,7 +6,7 @@ import { SaveFailure } from "../../SaveFailure.tsx";
 
 type Coin = keyof CharacterDefinition["money"];
 
-const SIGNED = /^[+-]?\d[\d,]*$/;
+const SIGNED = /^[+-]?(\d{1,3}(,\d{3})*|\d+)$/;
 
 /** Refuses the edit before its write, so the total stays as it was. */
 class Shortfall extends Error {}
@@ -70,6 +70,7 @@ export function CoinAdjustment({
         onChange={(event) => {
           setDraft(event.target.value);
           setRefusal(null);
+          update.reset();
         }}
         messageSlot={{ into: messages, name }}
         status={update.isPending ? "Saving…" : null}

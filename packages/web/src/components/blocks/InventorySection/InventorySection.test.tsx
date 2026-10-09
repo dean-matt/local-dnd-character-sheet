@@ -424,9 +424,17 @@ describe("InventorySection", () => {
 
     it("checks the shortfall against a write still settling, not the rendered total", async () => {
       const fetchMock = renderSection();
-      const writes = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+      let land = () => {};
+      const writes = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
         String(input) === "/api/characters/1"
-          ? new Response(JSON.stringify({ ...vex(), definition: JSON.parse(String(init?.body)) }))
+          ? new Promise<Response>((resolve) => {
+              land = () =>
+                resolve(
+                  new Response(
+                    JSON.stringify({ ...vex(), definition: JSON.parse(String(init?.body)) }),
+                  ),
+                );
+            })
           : fetchMock(input, init),
       );
       vi.stubGlobal("fetch", writes);
@@ -434,11 +442,22 @@ describe("InventorySection", () => {
       adjustGold("-1,000");
       await waitFor(() => expect(putBodies(writes)).toHaveLength(1));
       adjustGold("-1,000");
+      land();
 
       expect(await card("Currency").findByRole("alert")).toHaveTextContent(
         "Gold: Short by 750 gp; the total stays 250 gp.",
       );
       expect(putBodies(writes)).toHaveLength(1);
+    });
+
+    it("clears a refused shortfall once the amount is retyped", async () => {
+      renderSection();
+
+      const field = adjustGold("-1,300");
+      await card("Currency").findByRole("alert");
+      fireEvent.change(field, { target: { value: "-37" } });
+
+      await waitFor(() => expect(card("Currency").queryByRole("alert")).toBeNull());
     });
 
     it("retries a write that failed, unsigned amount and all", async () => {
@@ -457,7 +476,7 @@ describe("InventorySection", () => {
     it("refuses text that is not a whole amount", async () => {
       const fetchMock = renderSection();
 
-      adjustGold("2.5");
+      adjustGold("10,00");
 
       expect(await card("Currency").findByRole("alert")).toHaveTextContent(
         "Enter an amount such as +25 or -37.",
