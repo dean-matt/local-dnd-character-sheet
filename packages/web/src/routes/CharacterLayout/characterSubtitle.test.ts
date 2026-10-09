@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { warlockRecord } from "../../test/records.ts";
-import { characterSubtitle } from "./characterSubtitle.ts";
+import { characterSubtitle, headerSubtitle } from "./characterSubtitle.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const WIZARD = { name: "Wizard", source: "XPHB" };
@@ -41,5 +41,39 @@ describe("characterSubtitle", () => {
     expect(characterSubtitle({ ...record, definition: realms })).toContain(
       "Oghma (Forgotten Realms)",
     );
+  });
+});
+
+describe("headerSubtitle", () => {
+  it("reads the total level, the race and the class, without the class's level or subclass", () => {
+    expect(headerSubtitle(warlockRecord())).toBe("Lv. 3 · Half-Elf · Warlock");
+  });
+
+  it("joins a multiclass character's classes and counts every level", () => {
+    const record = warlockRecord();
+    const levels = [{ class: WIZARD }, { class: WARLOCK }, { class: WIZARD }];
+    expect(headerSubtitle({ ...record, definition: { ...record.definition, levels } })).toBe(
+      "Lv. 3 · Half-Elf · Wizard / Warlock",
+    );
+  });
+
+  it("leaves out the level and the classes for a character with no levels", () => {
+    const record = warlockRecord();
+    const definition = { ...record.definition, levels: [] };
+    expect(headerSubtitle({ ...record, definition })).toBe("Half-Elf");
+  });
+
+  it("leaves out the race where none is summarized", () => {
+    expect(headerSubtitle({ ...warlockRecord(), raceSummary: "" })).toBe("Lv. 3 · Warlock");
+  });
+
+  it("leaves background, alignment and deity to the Identity tab", () => {
+    const record = warlockRecord();
+    const definition = {
+      ...record.definition,
+      alignment: "Chaotic Good" as const,
+      deity: { name: "Oghma", source: "PHB", pantheon: "Celtic" },
+    };
+    expect(headerSubtitle({ ...record, definition })).toBe("Lv. 3 · Half-Elf · Warlock");
   });
 });

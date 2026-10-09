@@ -62,7 +62,7 @@ widget, panel, or nav element:
   underline — and an open menu takes a gray fill instead. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
-  after a `·`, with Inspiration (its icon alone, the label in a tooltip), Rest and the
+  — total level, race and classes — after a `·`, with Inspiration (its icon alone, the label in a tooltip), Rest and the
   character menu as 32px buttons at the right. The name takes the room it needs and
   the subtitle the rest, never under 160px, so some of it always shows. A long name or
   subtitle ends in an ellipsis and keeps its full text in a tooltip; the `longText`
@@ -310,7 +310,7 @@ says how much of the artboard the app builds today.
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |
 | `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
-| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452 | the Character menu, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the Character menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `SettingsSidebar` | #486, #489 | Display, Homebrew and Sources |
