@@ -1,9 +1,18 @@
 import { isCatalogOutOfDate } from "./lib/api.ts";
 import { StateCard } from "./StateCard.tsx";
 
-/** Renders nothing for a catalog out of date, which `CatalogOutOfDateBanner` reports once for the page. */
+/**
+ * For a catalog out of date, a quiet placeholder rather than an alert: `CatalogOutOfDateBanner`
+ * reports that once for the page.
+ */
 export function ErrorState({ error, message }: { error?: Error; message?: string }) {
-  if (isCatalogOutOfDate(error)) return null;
+  if (isCatalogOutOfDate(error)) {
+    return (
+      <StateCard>
+        <p>Unavailable until the catalog is rebuilt.</p>
+      </StateCard>
+    );
+  }
   return (
     <StateCard>
       <p role="alert" className="text-error">
