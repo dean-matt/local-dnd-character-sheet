@@ -62,11 +62,15 @@ export function ItemList({
     const entry = drawn[index];
     if (!entry || !settled()) return;
     writing.current += 1;
-    update.mutate((latest) => editInventoryEntry(latest, index, entry, change), {
-      onSettled: () => {
+    // Released from the write's own promise: `add` calling `mutate` on this observer
+    // detaches it from an earlier write, whose per-call `onSettled` then never runs. The
+    // observer's `error` still carries a failure to the alert, so the rejection is dropped.
+    update
+      .mutateAsync((latest) => editInventoryEntry(latest, index, entry, change))
+      .catch(() => {})
+      .finally(() => {
         writing.current -= 1;
-      },
-    });
+      });
   };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant">) =>
     update.mutate((latest) => ({

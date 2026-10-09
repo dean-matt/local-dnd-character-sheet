@@ -108,22 +108,34 @@ function expansion(status: number) {
 /**
  * Answers the character, its inventory, a search for "+1" or a base item, and a variant's
  * expansion. `refetch: false` holds every inventory read after the first, as a slow
- * refetch would.
+ * refetch would, and `holdFirstPut` the first write until `releasePut` runs.
  */
+let releasePut = () => {};
+
 function stubApi({
   inventory = ITEMS,
   variantStatus = 200,
   refetch = true,
+  holdFirstPut = false,
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
   refetch?: boolean;
+  holdFirstPut?: boolean;
 } = {}) {
   let reads = 0;
   let record = vex();
+  let held = holdFirstPut
+    ? new Promise<void>((resolve) => {
+        releasePut = resolve;
+      })
+    : undefined;
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (init?.method === "PUT") {
+      const wait = held;
+      held = undefined;
+      await wait;
       record = { ...record, definition: JSON.parse(String(init.body)) };
       return json(record);
     }
@@ -340,6 +352,23 @@ describe("ItemList", () => {
     await waitFor(() => expect(screen.queryByText("Saving…")).toBeNull());
     const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
     expect(puts).toHaveLength(1);
+  });
+
+  it("keeps row edits working after an item is added while one is saving", async () => {
+    const fetchMock = renderList(derivedRecord(), undefined, { holdFirstPut: true });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Equipped, Ring of Warmth" }));
+    await pick("Add an item", "rope", /^Rope/);
+    releasePut();
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(2),
+    );
+    await waitFor(() => expect(screen.queryByText("Saving…")).toBeNull());
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove Longsword" }));
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(3),
+    );
   });
 
   it("leaves attuning open where the derived block failed, with no slot count to refuse by", async () => {

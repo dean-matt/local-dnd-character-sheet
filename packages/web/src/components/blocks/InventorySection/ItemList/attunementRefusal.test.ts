@@ -12,6 +12,12 @@ describe("attunementRefusal", () => {
     );
   });
 
+  it("says when more items are attuned than an override leaves slots for", () => {
+    expect(attunementRefusal(1, ["Cloak", "Ring"])).toBe(
+      "Cloak and Ring are attuned, more than the one slot this character has. End attunement to 2 of them first.",
+    );
+  });
+
   it("says when a character has no slots at all", () => {
     expect(attunementRefusal(0, [])).toBe("This character has no attunement slots.");
   });

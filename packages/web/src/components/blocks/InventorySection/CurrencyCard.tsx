@@ -11,6 +11,13 @@ const COINS = [
   ["copper", "Copper (cp)"],
 ] as const;
 
+/** Empty text is refused rather than read as `Number("")`, which is 0. */
+function parseCoins(raw: string): number {
+  const digits = raw.trim().replaceAll(",", "");
+  if (digits === "") throw new Error("no amount");
+  return Number(digits);
+}
+
 const coinShape = characterDefinitionSchema.shape.money.unwrap().shape;
 
 export function CurrencyCard({
@@ -33,7 +40,7 @@ export function CurrencyCard({
             inputClassName="w-[70px] bg-subtle"
             current={money[coin]}
             format={(amount) => amount.toLocaleString("en-US")}
-            parse={(raw) => Number(raw.trim().replaceAll(",", ""))}
+            parse={parseCoins}
             schema={coinShape[coin].unwrap()}
             onSave={async (amount: number) => {
               await update.mutateAsync((latest) => ({

@@ -350,6 +350,17 @@ describe("InventorySection", () => {
     expect(currency.getByRole("textbox", { name: "Platinum (pp)" })).toHaveValue("0");
   });
 
+  it("refuses a cleared coin rather than save it as none", async () => {
+    const fetchMock = renderSection();
+
+    const gold = card("Currency").getByRole("textbox", { name: "Gold (gp)" });
+    fireEvent.change(gold, { target: { value: "" } });
+    fireEvent.blur(gold);
+
+    expect(await card("Currency").findByRole("alert")).toHaveTextContent("Not a valid value.");
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+  });
+
   it("writes an edited coin into the definition", async () => {
     const fetchMock = renderSection();
 
