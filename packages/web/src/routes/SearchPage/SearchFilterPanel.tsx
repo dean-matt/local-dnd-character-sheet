@@ -7,6 +7,7 @@ import { useSearchSources } from "../../hooks/useSearchSources.ts";
 import { useSearchTypes } from "../../hooks/useSearchTypes.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import { ITEM_KIND_OPTIONS } from "../../lib/itemKind.ts";
+import { RARITIES } from "../../lib/rarities.ts";
 import { searchHitTypePlural } from "../../lib/searchHits.ts";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
 import {
@@ -19,20 +20,6 @@ import {
   type SearchFilters,
   spellsShown,
 } from "./searchFilters.ts";
-
-/** Each rarity upstream gives an item, as `/search` takes it, beside the label shown. */
-const RARITIES = [
-  { value: "common", label: "Common" },
-  { value: "uncommon", label: "Uncommon" },
-  { value: "rare", label: "Rare" },
-  { value: "very rare", label: "Very rare" },
-  { value: "legendary", label: "Legendary" },
-  { value: "artifact", label: "Artifact" },
-  { value: "varies", label: "Varies" },
-  { value: "unknown", label: "Unknown" },
-  { value: "unknown (magic)", label: "Unknown (magic)" },
-  { value: "none", label: "None (mundane)" },
-];
 
 export interface SearchFilterPanelProps {
   filters: SearchFilters;

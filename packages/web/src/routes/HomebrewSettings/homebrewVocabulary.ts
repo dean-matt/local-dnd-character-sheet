@@ -60,18 +60,6 @@ export const GROUP_FIELDS: Record<ItemGroup, string[]> = {
   gear: [],
 };
 
-export const RARITIES = [
-  { value: "none", label: "None (mundane)" },
-  { value: "common", label: "Common" },
-  { value: "uncommon", label: "Uncommon" },
-  { value: "rare", label: "Rare" },
-  { value: "very rare", label: "Very rare" },
-  { value: "legendary", label: "Legendary" },
-  { value: "artifact", label: "Artifact" },
-  { value: "varies", label: "Varies" },
-  { value: "unknown", label: "Unknown" },
-];
-
 export const WEAPON_CATEGORIES = [
   { value: "simple", label: "Simple" },
   { value: "martial", label: "Martial" },

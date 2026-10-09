@@ -38,6 +38,11 @@ export function HomebrewRulesText({ label, text, onText, preview, error }: Homeb
           <p className="text-muted text-row">
             This text holds a list, a table or a named section. Edit it as JSON.
           </p>
+          {error && (
+            <span role="alert" className="mt-1 text-error text-row">
+              {error}
+            </span>
+          )}
         </div>
       ) : (
         <FormField label={label} error={error}>

@@ -2,6 +2,7 @@ import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { RARITIES } from "../../lib/rarities.ts";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
 import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
 import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
@@ -15,6 +16,7 @@ import {
   previewOf,
   signed,
   textAt,
+  typedInteger,
   typedNumber,
   unsigned,
   withChosen,
@@ -27,7 +29,6 @@ import {
   GROUP_FIELDS,
   ITEM_TYPES,
   itemGroup,
-  RARITIES,
   WEAPON_CATEGORIES,
   WEAPON_PROPERTIES,
 } from "./homebrewVocabulary.ts";
@@ -66,11 +67,15 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
     onChange: (event: { target: { value: string } }) =>
       set(key, event.target.value === "" ? undefined : event.target.value),
   });
-  const number = (key: string, read = numberAt, write = (n: number | undefined): unknown => n) => ({
+  const integer = (
+    key: string,
+    read = numberAt,
+    write = (n: number | undefined): unknown => n,
+  ) => ({
     type: "number",
     value: read(entry[key]) ?? "",
     onChange: (event: { target: { value: string } }) =>
-      set(key, write(typedNumber(event.target.value))),
+      set(key, write(typedInteger(event.target.value))),
   });
   const defenses = (key: string, legend: string, options: typeof CONDITIONS) => (
     <HomebrewCheckboxGroup
@@ -101,7 +106,8 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
                 const kept = Object.fromEntries(
                   Object.entries(entry).filter(([key]) => !left.includes(key)),
                 );
-                onChange(withField(kept, "type", next || undefined));
+                const suffix = typeof entry.type === "string" ? entry.type.split("|").slice(1) : [];
+                onChange(withField(kept, "type", next ? [next, ...suffix].join("|") : undefined));
               }}
             />
           )}
@@ -124,7 +130,14 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
             error={errorFor("reqAttune")}
           />
         </div>
-        <InputField label="Weight (lb.)" min={0} step="any" {...number("weight")} />
+        <InputField
+          label="Weight (lb.)"
+          type="number"
+          min={0}
+          step="any"
+          value={numberAt(entry.weight) ?? ""}
+          onChange={(event) => set("weight", typedNumber(event.target.value))}
+        />
         <InputField
           label="Value (gp)"
           type="number"
@@ -174,7 +187,7 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
               />
             )}
           </FormField>
-          <InputField label="Magic bonus" step={1} {...number("bonusWeapon", unsigned, signed)} />
+          <InputField label="Magic bonus" step={1} {...integer("bonusWeapon", unsigned, signed)} />
           <div className="sm:col-span-2">
             <HomebrewCheckboxGroup
               legend="Properties"
@@ -197,8 +210,12 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
       )}
       {group === "armor" && (
         <div className={GRID}>
-          <InputField label="Armor class" min={0} step={1} {...number("ac")} />
-          <InputField label="Magic bonus to AC" step={1} {...number("bonusAc", unsigned, signed)} />
+          <InputField label="Armor class" min={0} step={1} {...integer("ac")} />
+          <InputField
+            label="Magic bonus to AC"
+            step={1}
+            {...integer("bonusAc", unsigned, signed)}
+          />
         </div>
       )}
       {defenses("resist", "Resistances", DAMAGE_TYPE_NAMES)}

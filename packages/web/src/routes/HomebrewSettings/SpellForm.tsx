@@ -16,6 +16,7 @@ import {
   previewOf,
   recordAt,
   textAt,
+  typedInteger,
   typedNumber,
   withChosen,
   withField,
@@ -29,7 +30,7 @@ import {
   RANGE_SHAPES,
   SPELL_LEVELS,
 } from "./homebrewVocabulary.ts";
-import { upcastSection, upcastText } from "./spellUpcast.ts";
+import { upcastName, upcastSection, upcastText, withUpcastNameFor } from "./spellUpcast.ts";
 
 const GRID = "grid gap-3 sm:grid-cols-2";
 const SCHOOL_OPTIONS = Object.entries(SCHOOLS).map(([value, label]) => ({ value, label }));
@@ -92,7 +93,9 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
               {...control}
               options={SPELL_LEVELS}
               value={String(entry.level ?? "")}
-              onChange={(next) => set("level", Number(next))}
+              onChange={(next) =>
+                onChange(withUpcastNameFor(withField(entry, "level", Number(next)), edition))
+              }
             />
           )}
         </FormField>
@@ -111,10 +114,16 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             label="Casting time"
             type="number"
             min={1}
+            step={1}
+            error={
+              listAt(entry, "time").length > 0 &&
+              numberAt(time.number) === undefined &&
+              "Give it a number, or the sheet shows no casting time"
+            }
             value={numberAt(time.number) ?? ""}
             onChange={(event) =>
               setTime(
-                withField({ unit: "action", ...time }, "number", typedNumber(event.target.value)),
+                withField({ unit: "action", ...time }, "number", typedInteger(event.target.value)),
               )
             }
           />
@@ -279,11 +288,14 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
         error={errorFor("entries")}
       />
       <HomebrewRulesText
-        label="At higher levels"
+        label={entry.level === 0 ? "Cantrip upgrade" : "At higher levels"}
         text={upcastText(entry.entriesHigherLevel)}
         onText={(next) => {
           const paragraphs = entriesOf(next);
-          set("entriesHigherLevel", paragraphs && [upcastSection(higher, paragraphs, edition)]);
+          set(
+            "entriesHigherLevel",
+            paragraphs && [upcastSection(higher, paragraphs, upcastName(edition, entry.level))],
+          );
         }}
         preview={previewOf(entry.entriesHigherLevel)}
       />

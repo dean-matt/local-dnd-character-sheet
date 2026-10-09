@@ -376,6 +376,29 @@ describe("HomebrewSettings", () => {
     expect(entry.entriesHigherLevel[0].name).toBe("At Higher Levels");
   });
 
+  it("shows a problem in rules text the form leaves to JSON, and names a cantrip's upgrade", async () => {
+    const fetchMock = stubApi({});
+    renderPage();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    fireEvent.click(within(spells()).getByRole("combobox", { name: "Level" }));
+    fireEvent.click(screen.getByRole("option", { name: "Cantrip" }));
+    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
+    const box = within(spells()).getByRole("textbox", {
+      name: "Spell JSON",
+    }) as HTMLTextAreaElement;
+    const entry = JSON.parse(box.value);
+    expect(entry.entriesHigherLevel[0].name).toBe("Cantrip Upgrade");
+
+    fireEvent.change(box, { target: { value: JSON.stringify({ ...entry, entries: "loose" }) } });
+    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as form" }));
+    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
+
+    expect(within(spells()).getByText(/expected array/i)).toBeInTheDocument();
+    expect(within(spells()).getByRole("textbox", { name: "Cantrip upgrade" })).toBeInTheDocument();
+    expect(writesOf(fetchMock)).toEqual([]);
+  });
+
   it("edits a row in place, starting from its entry without the stamped source", async () => {
     const fetchMock = stubApi({ items: [sunblade] }, [{ status: 200, body: sunblade }]);
     renderPage();

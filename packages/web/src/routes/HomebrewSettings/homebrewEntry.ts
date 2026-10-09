@@ -46,6 +46,12 @@ export const numberAt = (value: unknown): number | undefined =>
 export const typedNumber = (text: string): number | undefined =>
   text.trim() === "" || !Number.isFinite(Number(text)) ? undefined : Number(text);
 
+/** A number input's whole number, its fraction dropped, for a field upstream holds as an integer. */
+export const typedInteger = (text: string): number | undefined => {
+  const value = typedNumber(text);
+  return value === undefined ? undefined : Math.trunc(value);
+};
+
 /** `+1` as upstream writes a bonus, from the number `1`. */
 export const signed = (value: number | undefined): string | undefined =>
   value === undefined ? undefined : `${value < 0 ? "-" : "+"}${Math.abs(value)}`;
