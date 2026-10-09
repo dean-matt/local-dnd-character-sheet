@@ -13,6 +13,7 @@ import {
   displayName,
   houseRule,
   IMPROVEMENT_FEAT,
+  proficiencyKey,
   refKey,
   withoutImprovement,
 } from "@dnd/character";
@@ -56,14 +57,6 @@ export type Candidate = {
    */
   knowsSpells: boolean;
 };
-
-/** A proficiency as a feat names it: `Heavy Armor` as `heavy`, `Shields` as `shield`. */
-const proficiencyKey = (name: string): string =>
-  name
-    .trim()
-    .toLowerCase()
-    .replace(/\s+(armor|weapons?)$/, "")
-    .replace(/s$/, "");
 
 /**
  * The feats `candidate` may take at an improvement, beside raising scores, which the

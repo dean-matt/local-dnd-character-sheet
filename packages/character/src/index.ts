@@ -58,6 +58,7 @@ export {
   deriveCharacter,
   hitPointMaximum,
   passiveSkill,
+  proficiencyKey,
   savingThrowModifier,
   skillModifier,
 } from "./derive.ts";
