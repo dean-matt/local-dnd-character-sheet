@@ -43,8 +43,8 @@ export type Candidate = {
   held: readonly ContentRef[];
   /** The feats held before this level, keyed `name|source` lowercased, which a feat may need. */
   earlier: readonly string[];
-  /** The race, and any subrace, lowercased; `null` for a homebrew one, and `undefined` while unset. */
-  race: { name: string; subrace?: string } | null | undefined;
+  /** The race, and any subrace, lowercased; `undefined` while unset or homebrew, which names none. */
+  race: { name: string; subrace?: string } | undefined;
   /** Armor and weapon proficiencies, folded as `proficiencyKey` folds them; `undefined` while unset. */
   armor: readonly string[] | undefined;
   weapons: readonly string[] | undefined;
@@ -100,7 +100,7 @@ function meets(prerequisite: FeatPrerequisite, candidate: Candidate): boolean {
           ([ability, minimum]) => (candidate.scores?.[ability as Ability] ?? 0) >= minimum,
         ),
       )) &&
-    (races.length === 0 || race === undefined || (race !== null && races.some(isRace(race)))) &&
+    (races.length === 0 || race === undefined || races.some(isRace(race))) &&
     (proficiencies.length === 0 ||
       armor === undefined ||
       weapons === undefined ||
@@ -188,8 +188,7 @@ export function candidateAt(definition: Drafted, grant: ImprovementGrant): Candi
 }
 
 function raceOf({ race, subrace }: Drafted): Candidate["race"] {
-  if (race === undefined) return undefined;
-  if (!("name" in race)) return null;
+  if (race === undefined || !("name" in race)) return undefined;
   return {
     name: race.name.toLowerCase(),
     ...(subrace ? { subrace: subrace.name.toLowerCase() } : {}),

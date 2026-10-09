@@ -122,11 +122,11 @@ describe("improvementFeats prerequisites", () => {
       "Svirfneblin Magic",
       ...always,
     ]);
-    expect(offered({ race: null, features: [] })).toEqual(always);
+    expect(offered({ features: [] })).toEqual(always);
   });
 
   it("offers an armor or weapon feat to a character proficient in it", () => {
-    const fighter = { race: null, features: [], armor: ["heavy", "shield"], weapons: ["martial"] };
+    const fighter = { features: [], armor: ["heavy", "shield"], weapons: ["martial"] };
     expect(offered(fighter)).toEqual([
       "Squat Nimbleness",
       "Heavy Armor Master",
@@ -136,7 +136,7 @@ describe("improvementFeats prerequisites", () => {
   });
 
   it("offers a feat that needs another to a character who took it at an earlier level", () => {
-    expect(offered({ race: null, features: [], earlier: ["purple dragon rook|frhof"] })).toEqual([
+    expect(offered({ features: [], earlier: ["purple dragon rook|frhof"] })).toEqual([
       ...always,
       "Purple Dragon Commandant",
     ]);
@@ -144,7 +144,7 @@ describe("improvementFeats prerequisites", () => {
 
   it("reads spellcasting off a feature, Pact Magic or a known spell, as each kind asks", () => {
     const at = (candidate: Partial<Candidate>) =>
-      offered({ race: null, ...candidate }).filter((name) => !always.includes(name));
+      offered({ ...candidate }).filter((name) => !always.includes(name));
     expect(at({ features: ["Spellcasting"] })).toEqual([
       "War Caster",
       "Eldritch Adept",
@@ -200,26 +200,27 @@ describe("candidateAt", () => {
     const levels = Array.from({ length: 8 }, () => ({ class: WIZARD }));
     const rook = { name: "Purple Dragon Rook", source: "FRHoF" };
     const later = { name: "Alert", source: "PHB" };
-    const candidate = candidateAt(
-      {
-        edition: "classic",
-        levels,
-        abilityScores: SCORES,
-        houseRules: { feats: true },
-        abilityIncreases: [],
-        feats: [{ ref: rook }, { ref: later, level: 8 }],
-        race: { name: "Elf", source: "PHB" },
-        subrace: { name: "High", source: "PHB" },
-        proficiencies: { armor: ["Heavy Armor", "Shields"], weapons: ["Martial weapons"] },
-        spells: [],
-      },
-      { level: 4, cls: WIZARD, classLevel: 4, boon: false, features: ["Spellcasting"] },
-    );
+    const definition = {
+      edition: "classic" as const,
+      levels,
+      abilityScores: SCORES,
+      houseRules: { feats: true },
+      abilityIncreases: [],
+      feats: [{ ref: rook }, { ref: later, level: 8 }],
+      race: { name: "Elf", source: "PHB" },
+      subrace: { name: "High", source: "PHB" },
+      proficiencies: { armor: ["Heavy Armor", "Shields"], weapons: ["Martial weapons"] },
+      spells: [],
+    };
+    const grant = { level: 4, cls: WIZARD, classLevel: 4, boon: false, features: ["Spellcasting"] };
+    const candidate = candidateAt(definition, grant);
     expect(candidate.earlier).toEqual(["purple dragon rook|frhof"]);
     expect(candidate.race).toEqual({ name: "elf", subrace: "high" });
     expect(candidate.armor).toEqual(["heavy", "shield"]);
     expect(candidate.weapons).toEqual(["martial"]);
     expect(candidate.features).toEqual(["Spellcasting"]);
     expect(candidate.knowsSpells).toBe(false);
+    const homebrew = { ...definition, race: { homebrewId: "h1" }, subrace: undefined };
+    expect(candidateAt(homebrew, grant).race).toBeUndefined();
   });
 });

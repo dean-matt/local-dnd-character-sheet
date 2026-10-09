@@ -76,7 +76,7 @@ const proficienciesSchema = z
     }),
   );
 
-/** `aberrant dragonmark|efa`, or with a display name after a third bar, as `name|source`. */
+/** `aberrant dragonmark|efa` as itself, and a variant after a third bar dropped. */
 const featsSchema = z
   .array(z.string())
   .optional()
@@ -125,8 +125,8 @@ const prerequisiteSchema = z
  * nothing.
  *
  * A campaign, a background, a feat category held (`featCategory`) or not held
- * (`exclusiveFeatCategory`), a race given as a size (`small race`) and free text go
- * unread, so an alternative needing only those reads as met: `Rune Shaper` (BGG) is open
+ * (`exclusiveFeatCategory`), the variant of a feat (`Strike of the Giants` (BGG) taken as
+ * `Fire Strike`), a race given as a size (`small race`) and free text go unread, so an alternative needing only those reads as met: `Rune Shaper` (BGG) is open
  * to everyone through its `Rune Carver` background. Reading each against the definition
  * is the way out. A malformed field reads as absent rather than refusing
  * the row.
