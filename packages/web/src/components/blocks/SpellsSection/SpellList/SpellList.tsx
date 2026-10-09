@@ -37,7 +37,7 @@ function groupByLevel(spells: readonly SheetSpell[]): Group[] {
 export function SpellList({ character }: { character: CharacterRecord }) {
   const spells = useCharacterSpells(character.id);
   if (spells.isPending) return <LoadingState label="Loading spells…" />;
-  if (spells.isError) return <ErrorState message={spells.error.message} />;
+  if (spells.isError) return <ErrorState error={spells.error} />;
   if (spells.data.spells.length === 0) {
     return <EmptyState>{character.name} has no spells yet.</EmptyState>;
   }

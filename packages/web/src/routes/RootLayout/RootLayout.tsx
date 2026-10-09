@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
+import { CatalogOutOfDateBanner } from "./CatalogOutOfDateBanner.tsx";
 import { ScrollMemory } from "./ScrollMemory.tsx";
 import { TopBar } from "./TopBar/TopBar.tsx";
 
@@ -32,6 +33,7 @@ export function RootLayout() {
       <header className="sticky top-0 z-30 h-topbar shrink-0 print:hidden">
         <TopBar />
       </header>
+      <CatalogOutOfDateBanner />
       <main id="main-content" ref={mainRef} tabIndex={-1} className="print:p-0">
         <Outlet />
       </main>

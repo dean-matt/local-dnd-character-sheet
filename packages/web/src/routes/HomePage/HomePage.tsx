@@ -52,7 +52,7 @@ export function HomePage() {
           {hasCharacters && <CharacterActions />}
         </div>
         {characters.isPending && <LoadingState label="Loading characters…" />}
-        {characters.isError && <ErrorState message={characters.error.message} />}
+        {characters.isError && <ErrorState error={characters.error} />}
         {hasCharacters && (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {recent.map((character) => (

@@ -3,6 +3,7 @@
  * hook parses the response against the same Zod schema its route declares, so the type
  * on this side of the wire is the type the route wrote, never a hand-written duplicate.
  */
+import { catalogOutOfDateSchema } from "@dnd/catalog";
 import type { z } from "zod";
 
 const BASE_URL = "/api";
@@ -21,6 +22,11 @@ export class ApiError extends Error {
     super(message, options);
     this.name = "ApiError";
   }
+}
+
+/** True for the 503 a catalog-reading route answers while `content.db` predates its schema. */
+export function isCatalogOutOfDate(error: unknown): error is ApiError {
+  return error instanceof ApiError && catalogOutOfDateSchema.safeParse(error.body).success;
 }
 
 /** The `{ error: string }` envelope every route in `packages/api` returns on failure. */

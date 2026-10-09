@@ -28,9 +28,9 @@ export function PrintSheet({
   return (
     <div hidden data-print-sheet>
       {character.data && <PrintTitle character={character.data} />}
-      {pagesError && <ErrorState message={pagesError.message} />}
-      {character.isError && <ErrorState message={character.error.message} />}
-      {derived.isError && <ErrorState message={derived.error.message} />}
+      {pagesError && <ErrorState error={pagesError} />}
+      {character.isError && <ErrorState error={character.error} />}
+      {derived.isError && <ErrorState error={derived.error} />}
       {pages.map((page) => (
         <section key={page.slug} className="break-before-page first-of-type:break-before-auto">
           <h1 className="font-semibold text-2xl">{page.title}</h1>

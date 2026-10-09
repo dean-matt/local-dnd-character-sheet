@@ -57,7 +57,7 @@ export function SourcesSettings() {
         </p>
       </div>
       {(isPending || catalogSources.isPending) && <LoadingState label="Loading sources…" />}
-      {isError && <ErrorState message={error.message} />}
+      {isError && <ErrorState error={error} />}
       {data && !catalogSources.isPending && (
         <>
           {catalogSources.isError && (
