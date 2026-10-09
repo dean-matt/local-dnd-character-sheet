@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
+import { useCharacter } from "../../../../hooks/useCharacter.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
 import { ItemList } from "./ItemList.tsx";
 
@@ -67,34 +68,73 @@ const hit = (name: string, source: string, item: object = {}) => ({
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
-/** Answers the inventory, a search for "+1" or a base item, and a variant's expansion. */
-function stubApi({ inventory = ITEMS, refuse = false } = {}) {
+const homebrew = {
+  type: "item",
+  id: "hb-1",
+  name: "Lucky Coin",
+  edition: "one",
+  item: { kinds: ["other"], rarity: null, category: null },
+};
+
+function searchPage(url: string) {
+  const kind = new URL(url, "http://local").searchParams.get("kind");
+  const items = kind
+    ? [hit("Dagger", "XPHB"), hit("+1 Armor", "XDMG", { variant: true })]
+    : [
+        hit("Rope", "XPHB", { kinds: ["gear"] }),
+        hit("+1 Weapon", "XDMG", { variant: true }),
+        homebrew,
+      ];
+  return json({ items, total: items.length, limit: 20, offset: 0 });
+}
+
+/** `+1 Weapon` expanded over a Dagger, or the error a `status` other than 200 answers. */
+function expansion(status: number) {
+  if (status !== 200) {
+    return json({ error: "This base item does not meet the variant's requirements" }, status);
+  }
+  return json({
+    name: "+1 Dagger",
+    source: "XDMG",
+    edition: "one",
+    kind: "baseitem",
+    type: "M|XPHB",
+    rarity: "uncommon",
+    requiresAttunement: false,
+    json: { name: "+1 Dagger", source: "XDMG" },
+  });
+}
+
+/**
+ * Answers the character, its inventory, a search for "+1" or a base item, and a variant's
+ * expansion. `refetch: false` holds every inventory read after the first, as a slow
+ * refetch would.
+ */
+function stubApi({
+  inventory = ITEMS,
+  variantStatus = 200,
+  refetch = true,
+}: {
+  inventory?: SheetItem[];
+  variantStatus?: number;
+  refetch?: boolean;
+} = {}) {
+  let reads = 0;
+  let record = vex();
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (init?.method === "PUT") {
-      return json({ ...vex(), definition: JSON.parse(String(init.body)) });
+      record = { ...record, definition: JSON.parse(String(init.body)) };
+      return json(record);
     }
-    if (url === "/api/characters/1/inventory") return json({ items: inventory });
-    if (url.startsWith("/api/search?")) {
-      const kind = new URL(url, "http://local").searchParams.get("kind");
-      const items = kind
-        ? [hit("Dagger", "XPHB"), hit("+1 Armor", "XDMG", { variant: true })]
-        : [hit("Rope", "XPHB", { kinds: ["gear"] }), hit("+1 Weapon", "XDMG", { variant: true })];
-      return json({ items, total: items.length, limit: 20, offset: 0 });
+    if (url === "/api/characters/1") return json(record);
+    if (url === "/api/characters/1/inventory") {
+      reads += 1;
+      return reads > 1 && !refetch ? new Promise<Response>(() => {}) : json({ items: inventory });
     }
+    if (url.startsWith("/api/search?")) return searchPage(url);
     if (url === "/api/items/Dagger/XPHB/variants/%2B1%20Weapon/XDMG") {
-      return refuse
-        ? json({ error: "This base item does not meet the variant's requirements" }, 409)
-        : json({
-            name: "+1 Dagger",
-            source: "XDMG",
-            edition: "one",
-            kind: "baseitem",
-            type: "M|XPHB",
-            rarity: "uncommon",
-            requiresAttunement: false,
-            json: { name: "+1 Dagger", source: "XDMG" },
-          });
+      return expansion(variantStatus);
     }
     return json({ error: `nothing at ${url}` }, 404);
   });
@@ -105,8 +145,9 @@ function stubApi({ inventory = ITEMS, refuse = false } = {}) {
 function renderList(
   derived: CharacterDerived = derivedRecord(),
   inventory?: CharacterInventory["items"],
+  stub: Parameters<typeof stubApi>[0] = {},
 ) {
-  const fetchMock = stubApi({ inventory });
+  const fetchMock = stubApi({ inventory, ...stub });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const character = vex();
   client.setQueryData(characterKey(character.id), character);
@@ -153,6 +194,18 @@ describe("ItemList", () => {
     });
   });
 
+  it("adds a homebrew item by its id, the same way", async () => {
+    const fetchMock = renderList();
+
+    await screen.findByText("Longsword");
+    await pick("Add an item", "coin", /^Lucky Coin/);
+
+    expect((await written(fetchMock)).inventory[3]).toEqual({
+      ref: { homebrewId: "hb-1" },
+      ...flags,
+    });
+  });
+
   it("offers the picker while the inventory is empty", async () => {
     renderList(derivedRecord(), []);
 
@@ -185,7 +238,7 @@ describe("ItemList", () => {
   });
 
   it("says why a variant refuses the base item picked, and saves nothing", async () => {
-    const fetchMock = stubApi({ refuse: true });
+    const fetchMock = stubApi({ variantStatus: 409 });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(characterKey("1"), vex());
     render(
@@ -206,6 +259,26 @@ describe("ItemList", () => {
     expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
   });
 
+  it("says a variant check that failed was not a refusal", async () => {
+    const fetchMock = stubApi({ variantStatus: 500 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), vex());
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={vex()} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("Longsword");
+    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await pick("Base item for +1 Weapon", "dag", /^Dagger/);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Dagger as +1 Weapon could not be checked",
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+  });
+
   it("removes an item", async () => {
     const fetchMock = renderList();
 
@@ -216,6 +289,31 @@ describe("ItemList", () => {
       "Longsword",
       "Ring of Warmth",
     ]);
+  });
+
+  it("refuses a row's edit while its rows wait on a refetch, rather than edit the entry that moved up", async () => {
+    const fetchMock = stubApi({ refetch: false });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), vex());
+    function Live() {
+      const character = useCharacter("1");
+      return character.data ? (
+        <ItemList character={character.data} derived={derivedRecord()} />
+      ) : null;
+    }
+    render(
+      <QueryClientProvider client={client}>
+        <Live />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
+    await written(fetchMock);
+    fireEvent.click(screen.getByRole("button", { name: "Remove Cloak of Protection" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("the inventory changed");
+    const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
+    expect(puts).toHaveLength(1);
   });
 
   it("changes an item's quantity", async () => {

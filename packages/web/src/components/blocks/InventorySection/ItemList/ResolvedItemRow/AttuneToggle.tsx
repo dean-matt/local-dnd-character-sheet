@@ -21,7 +21,8 @@ export function AttuneToggle({
   if (!attuned && refusal) {
     return (
       <Popover
-        trigger={<span className={`${PILL} border-border text-muted`}>Attune</span>}
+        // Inline-block, so the trigger's dotted underline stops at the pill.
+        trigger={<span className={`${PILL} inline-block border-border text-muted`}>Attune</span>}
         triggerLabel={`Attune ${name}, no slot free`}
         label="Attunement"
       >

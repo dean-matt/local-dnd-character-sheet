@@ -32,7 +32,7 @@ export function CurrencyCard({
             inputMode="numeric"
             inputClassName="w-[70px] bg-subtle"
             current={money[coin]}
-            format={String}
+            format={(amount) => amount.toLocaleString("en-US")}
             parse={(raw) => Number(raw.trim().replaceAll(",", ""))}
             schema={coinShape[coin].unwrap()}
             onSave={async (amount: number) => {

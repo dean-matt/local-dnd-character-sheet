@@ -1,5 +1,6 @@
 import type { SheetItem } from "@dnd/catalog";
 import { type CharacterDerived, type CharacterRecord, derivedValue } from "@dnd/character";
+import { useMemo } from "react";
 import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
@@ -43,7 +44,10 @@ export function ItemList({
   const update = useUpdateCharacterDefinition(character.id);
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
-  const drawn = character.definition.inventory;
+  // The rows draw against the definition the inventory was read from, not the detail
+  // cache: a landed write moves the cache on at once, while the rows wait for the refetch.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new inventory read is what moves the rows.
+  const drawn = useMemo(() => character.definition.inventory, [inventory.data]);
   const edit = (index: number, change: EntryChange) => {
     const entry = drawn[index];
     if (entry) update.mutate((latest) => editInventoryEntry(latest, index, entry, change));

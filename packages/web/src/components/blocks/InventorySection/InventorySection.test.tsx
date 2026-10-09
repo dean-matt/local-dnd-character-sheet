@@ -345,7 +345,7 @@ describe("InventorySection", () => {
         .getAllByRole("textbox")
         .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
     ).toEqual(["Platinum (pp)", "Gold (gp)", "Electrum (ep)", "Silver (sp)", "Copper (cp)"]);
-    expect(currency.getByRole("textbox", { name: "Gold (gp)" })).toHaveValue("1250");
+    expect(currency.getByRole("textbox", { name: "Gold (gp)" })).toHaveValue("1,250");
     expect(currency.getByRole("textbox", { name: "Silver (sp)" })).toHaveValue("3");
     expect(currency.getByRole("textbox", { name: "Platinum (pp)" })).toHaveValue("0");
   });

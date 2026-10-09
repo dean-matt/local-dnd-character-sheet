@@ -1,7 +1,7 @@
 import { itemRecordSchema, type SearchHit } from "@dnd/catalog";
 import type { CharacterRecord, ContentRef } from "@dnd/character";
 import { useState } from "react";
-import { apiGet } from "../../../../lib/api.ts";
+import { ApiError, apiGet } from "../../../../lib/api.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import type { InventoryEntry } from "./editInventoryEntry.ts";
 
@@ -19,8 +19,8 @@ function baseRefusal(hit: SearchHit): string | undefined {
 
 /**
  * Adds any catalog or homebrew item. A magic variant asks for its base item next, offering
- * the kinds the variant reaches, and saves the pair once `/items` expands it — a pair the
- * variant refuses says why and saves nothing.
+ * the kinds the variant reaches, and saves the pair once `/items` expands it. A pair the
+ * variant refuses, or one the check cannot reach, says why and saves nothing.
  */
 export function AddItemField({
   edition,
@@ -55,8 +55,12 @@ export function AddItemField({
         itemRecordSchema,
       );
     } catch (error) {
-      const reason = error instanceof Error ? error.message : "It could not be checked";
-      setRefusal(`${name} cannot take ${variant.ref.name}. ${reason}.`);
+      const reason = error instanceof Error ? error.message : String(error);
+      setRefusal(
+        error instanceof ApiError && error.status === 409
+          ? `${name} cannot take ${variant.ref.name}. ${reason}.`
+          : `${name} as ${variant.ref.name} could not be checked: ${reason}`,
+      );
       return;
     }
     onAdd({ ref: base, variant: variant.ref });
