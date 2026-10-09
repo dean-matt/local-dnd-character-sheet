@@ -7,9 +7,10 @@
  *
  * Passthrough rather than strict, departing from the schemas in `packages/character`:
  * a character definition is read, edited field by field and written back whole, so an
- * open object silently drops an edit on save. Homebrew JSON is written once and
- * displayed, never edited in place — `packages/character` itself only ever *references*
- * a homebrew row by id — so the risk strict guards against does not apply, and it would
+ * open object silently drops an edit on save. The homebrew editor holds the entry it was
+ * given rather than a parsed copy, and writes every field it shows no control for back as
+ * it found it, bar a weapon's or armor's own on a type change — `packages/character` itself only ever *references* a homebrew row by id —
+ * so the risk strict guards against does not apply, and it would
  * instead reject an item pasted straight out of a 5etools-shaped source for carrying a
  * field this schema has not modeled yet.
  */

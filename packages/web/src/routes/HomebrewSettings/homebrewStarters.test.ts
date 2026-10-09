@@ -6,7 +6,7 @@ import {
   weaponTraitSchema,
 } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import { readHomebrewDraft } from "./homebrewDraft.ts";
+import { checkHomebrewEntry } from "./homebrewDraft.ts";
 import { HOMEBREW_KINDS } from "./homebrewKinds.ts";
 import { ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
 
@@ -22,9 +22,7 @@ describe("homebrew starters", () => {
       kind.starters.map(({ label, entry }) => ({ kind, label, entry })),
     ),
   )("saves the $label example as it opens", ({ kind, entry }) => {
-    expect(readHomebrewDraft(JSON.stringify(entry), "one", kind.inputSchema)).toHaveProperty(
-      "input",
-    );
+    expect(checkHomebrewEntry(entry, "one", kind.inputSchema)).toHaveProperty("input");
   });
 
   it("gives the weapon an attack the sheet reads, bonus and versatile die included", () => {

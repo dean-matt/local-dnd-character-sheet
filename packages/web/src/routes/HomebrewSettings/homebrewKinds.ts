@@ -7,10 +7,15 @@ import {
   itemHitFacts,
 } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
+import type { ComponentType } from "react";
 import type { z } from "zod";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
+import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
+import { ItemForm } from "./ItemForm.tsx";
+import { SpellForm } from "./SpellForm.tsx";
+import { withUpcastNameFor } from "./spellUpcast.ts";
 
 /** What every homebrew record carries, whichever kind it is. */
 export interface HomebrewRow {
@@ -31,6 +36,14 @@ export interface HomebrewKind<R extends HomebrewRow = HomebrewRow> {
   chips(record: R): string[];
   /** What a new entry opens with; the editor offers a choice where there is more than one. */
   starters: HomebrewStarters;
+  Form: ComponentType<HomebrewFormProps>;
+  /** The top-level fields `Form` shows a problem beside; the editor lists any other problem itself. */
+  formKeys: string[];
+  /** The entry as the edition picked next would write it, where an edition changes how it reads. */
+  forEdition?(
+    entry: Record<string, unknown>,
+    edition: CharacterRecord["edition"],
+  ): Record<string, unknown>;
 }
 
 const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>> = {
@@ -41,6 +54,8 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>> = {
   inputSchema: homebrewItemInputSchema,
   chips: (record) => [itemMeta(itemHitFacts(record.json))],
   starters: ITEM_STARTERS,
+  Form: ItemForm,
+  formKeys: ["name", "type", "rarity", "reqAttune", "entries"],
 };
 
 const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>> = {
@@ -56,6 +71,9 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>> = {
     ...(record.ritual ? ["Ritual"] : []),
   ],
   starters: SPELL_STARTERS,
+  Form: SpellForm,
+  forEdition: withUpcastNameFor,
+  formKeys: ["name", "level", "school", "duration", "meta", "entries"],
 };
 
 /** The kinds in the order the page lists them. */

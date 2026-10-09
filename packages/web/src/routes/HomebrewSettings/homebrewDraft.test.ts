@@ -1,6 +1,6 @@
 import { homebrewSpellInputSchema } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import { readHomebrewDraft } from "./homebrewDraft.ts";
+import { checkHomebrewEntry, parseHomebrewEntry } from "./homebrewDraft.ts";
 
 const spell = {
   name: "Coastal Ward",
@@ -10,32 +10,42 @@ const spell = {
   entries: ["A wave of brine hardens into a barrier."],
 };
 
-const read = (entry: unknown) =>
-  readHomebrewDraft(JSON.stringify(entry), "one", homebrewSpellInputSchema);
+const check = (entry: Record<string, unknown>) =>
+  checkHomebrewEntry(entry, "one", homebrewSpellInputSchema);
 
-describe("readHomebrewDraft", () => {
-  it("reads a valid entry with the edition beside it", () => {
-    expect(read(spell)).toEqual({ input: { ...spell, edition: "one" } });
-  });
-
+describe("parseHomebrewEntry", () => {
   it("drops a pasted source, which the server stamps", () => {
-    expect(read({ ...spell, source: "PHB" })).toEqual({ input: { ...spell, edition: "one" } });
-  });
-
-  it("names the field a rejected value sits in, down to its index", () => {
-    const draft = read({ ...spell, level: 12, entries: ["fine", 7] });
-    expect(draft).toEqual({
-      problems: [expect.stringMatching(/^level: /), expect.stringMatching(/^entries\[1\]: /)],
+    expect(parseHomebrewEntry(JSON.stringify({ ...spell, source: "PHB" }))).toEqual({
+      entry: spell,
     });
   });
 
-  it("says the text is not JSON before checking any field", () => {
-    expect(readHomebrewDraft("{ name: ", "one", homebrewSpellInputSchema)).toEqual({
-      problems: [expect.stringMatching(/^Not valid JSON: /)],
+  it("says the text is not JSON", () => {
+    expect(parseHomebrewEntry("{ name: ")).toEqual({
+      problems: [
+        { key: "entry", field: "entry", message: expect.stringMatching(/^Not valid JSON: /) },
+      ],
     });
   });
 
   it("refuses an array where one entry belongs", () => {
-    expect(read([spell])).toEqual({ problems: ["entry: Expected one JSON object, in braces"] });
+    expect(parseHomebrewEntry(JSON.stringify([spell]))).toEqual({
+      problems: [{ key: "entry", field: "entry", message: "Expected one JSON object, in braces" }],
+    });
+  });
+});
+
+describe("checkHomebrewEntry", () => {
+  it("reads a valid entry with the edition beside it", () => {
+    expect(check(spell)).toEqual({ input: { ...spell, edition: "one" } });
+  });
+
+  it("names the field a rejected value sits in, down to its index, under its top-level key", () => {
+    expect(check({ ...spell, level: 12, entries: ["fine", 7] })).toEqual({
+      problems: [
+        { key: "level", field: "level", message: expect.any(String) },
+        { key: "entries", field: "entries[1]", message: expect.any(String) },
+      ],
+    });
   });
 });
