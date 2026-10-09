@@ -289,7 +289,7 @@ describe("searchCatalog", () => {
         name: "+1 Weapon",
         source: "DMG",
         edition: "classic",
-        item: { kinds: ["melee", "ranged"], rarity: "uncommon", category: null },
+        item: { kinds: ["melee", "ranged"], rarity: "uncommon", category: null, variant: true },
       },
     ]);
   });

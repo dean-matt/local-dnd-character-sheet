@@ -190,6 +190,7 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
       // checks a search. A content.db column is the way out the day it shows.
       if (itemKind === "magicvariant" && variantJson) {
         item.kinds = variantKinds(JSON.parse(variantJson), baseItems());
+        item.variant = true;
       }
       return ofWantedKind(item.kinds, kinds) ? [{ ...hit, item }] : [];
     },
