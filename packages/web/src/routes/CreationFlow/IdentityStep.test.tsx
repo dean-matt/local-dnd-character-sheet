@@ -1,5 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
@@ -322,7 +322,9 @@ describe("IdentityStep", () => {
   it("allows feats under the 2014 rules until unticked, and asks nothing under the 2024 rules", () => {
     renderStep();
 
-    const allow = screen.getByRole("checkbox", { name: "Allow feats" });
+    const allow = within(screen.getByRole("group", { name: "Rules" })).getByRole("checkbox", {
+      name: "Allow feats",
+    });
     expect(allow).toBeChecked();
     expect(allow).toHaveAccessibleDescription("A feat may replace an Ability Score Improvement.");
     expect(values.houseRules).toEqual({ feats: true });
@@ -334,6 +336,30 @@ describe("IdentityStep", () => {
     click("2024");
 
     expect(screen.queryByRole("checkbox", { name: "Allow feats" })).toBeNull();
+  });
+
+  it("names a feat taken at an improvement once feats are no longer allowed", async () => {
+    const fighter = PHB("Fighter");
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        levels: Array.from({ length: 4 }, () => ({ class: fighter })),
+        feats: [{ ref: PHB("Grappler"), grantedBy: { kind: "class", ref: fighter }, level: 4 }],
+      }),
+    );
+    renderStep();
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+    expect(status).toBeEmptyDOMElement();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Allow feats" }));
+
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
+        "Feat: Grappler (PHB)",
+      ]),
+    );
+    expect(values.feats).toHaveLength(1);
   });
 
   it("names a homebrew choice and a deity of the other edition", async () => {

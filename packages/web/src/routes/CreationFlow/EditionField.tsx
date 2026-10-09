@@ -42,25 +42,25 @@ export function EditionField() {
             </button>
           ))}
         </div>
+        {edition === "classic" && (
+          <div className="mt-2 flex flex-col">
+            <label className="flex items-center gap-2 text-ink text-row">
+              <input
+                type="checkbox"
+                checked={feats ?? false}
+                aria-describedby={featsHint}
+                onChange={(event) =>
+                  setValue("houseRules.feats", event.target.checked, { shouldDirty: true })
+                }
+              />
+              Allow feats
+            </label>
+            <span id={featsHint} className="text-muted text-row">
+              A feat may replace an Ability Score Improvement.
+            </span>
+          </div>
+        )}
       </fieldset>
-      {edition === "classic" && (
-        <div className="mt-2 flex flex-col">
-          <label className="flex items-center gap-2 text-ink text-row">
-            <input
-              type="checkbox"
-              checked={feats ?? false}
-              aria-describedby={featsHint}
-              onChange={(event) =>
-                setValue("houseRules.feats", event.target.checked, { shouldDirty: true })
-              }
-            />
-            Allow feats
-          </label>
-          <span id={featsHint} className="text-muted text-row">
-            A feat may replace an Ability Score Improvement.
-          </span>
-        </div>
-      )}
       <div role="status" aria-label="Choices outside the rules">
         {mismatches.length > 0 && (
           <div className="mt-2 rounded-card border border-border bg-surface p-3 text-body">
