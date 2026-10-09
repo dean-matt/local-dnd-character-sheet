@@ -53,6 +53,9 @@ const ROWS: Record<string, unknown> = {
     background("Acolyte", { insight: true, religion: true }),
   ]),
   "/api/races/Elf/PHB/subraces?edition=one&limit=200": page([]),
+  "/api/feats?edition=classic&limit=200": page([
+    { ...PHB("Grappler"), edition: "classic", json: PHB("Grappler") },
+  ]),
   "/api/feats?edition=one&limit=200": page([
     {
       name: "Grappler",
@@ -338,36 +341,31 @@ describe("IdentityStep", () => {
     expect(screen.queryByRole("checkbox", { name: "Allow feats" })).toBeNull();
   });
 
-  it("names a feat taken at an improvement once 2014 feats are off, and not under 2024", async () => {
+  it("names a feat taken at an improvement once 2014 feats are off", async () => {
     const fighter = PHB("Fighter");
     localStorage.setItem(
       "draft:creation",
       JSON.stringify({
         edition: "classic",
         levels: Array.from({ length: 4 }, () => ({ class: fighter })),
-        feats: [
-          {
-            ref: { name: "Grappler", source: "XPHB" },
-            grantedBy: { kind: "class", ref: fighter },
-            level: 4,
-          },
-        ],
+        feats: [{ ref: PHB("Grappler"), grantedBy: { kind: "class", ref: fighter }, level: 4 }],
       }),
     );
     renderStep();
     const status = screen.getByRole("status", { name: "Choices outside the rules" });
     expect(status).toBeEmptyDOMElement();
+    const allow = screen.getByRole("checkbox", { name: "Allow feats" });
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Allow feats" }));
+    fireEvent.click(allow);
 
     await waitFor(() =>
       expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
-        "Feat: Grappler (XPHB)",
+        "Feat: Grappler (PHB)",
       ]),
     );
     expect(values.feats).toHaveLength(1);
 
-    click("2024");
+    fireEvent.click(allow);
 
     await waitFor(() => expect(status).toBeEmptyDOMElement());
   });
