@@ -4,7 +4,7 @@ import { FormField, type FormFieldProps } from "./FormField.tsx";
 type InputFieldProps = Omit<FormFieldProps, "children"> &
   Omit<ComponentProps<"input">, "id" | "aria-invalid" | "aria-describedby" | "children">;
 
-/** `className` adds to the input's own border and padding rather than replacing them. */
+/** `className` adds utilities over the shared `control` box; one it sets, such as a text size, wins. */
 export function InputField({
   label,
   labelHidden,
@@ -22,13 +22,7 @@ export function InputField({
       status={status}
       messageSlot={messageSlot}
     >
-      {(control) => (
-        <input
-          {...input}
-          {...control}
-          className={`rounded-control border border-border bg-surface px-2 py-1 aria-invalid:border-error ${className ?? ""}`}
-        />
-      )}
+      {(control) => <input {...input} {...control} className={`control ${className ?? ""}`} />}
     </FormField>
   );
 }

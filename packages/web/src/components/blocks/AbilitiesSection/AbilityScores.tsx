@@ -80,7 +80,7 @@ export function AbilityScores({
                 format={String}
                 parse={parseScore}
                 schema={scoreSchema(raised)}
-                inputClassName="w-12 text-center"
+                inputClassName="w-12 py-1 text-center text-number"
                 inputMode="numeric"
                 messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
                 onSave={async (typed: number) => {

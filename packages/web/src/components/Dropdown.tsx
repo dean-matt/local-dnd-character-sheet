@@ -76,7 +76,7 @@ export function Dropdown({
         type="button"
         aria-expanded={open}
         style={{ anchorName: anchor }}
-        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-control border border-border bg-surface px-2 py-1.5 text-row text-ink aria-invalid:border-error"
+        className="control flex w-full min-w-0 items-center justify-between gap-2 text-ink"
       >
         <span id={valueId} className="truncate">
           {value}

@@ -19,7 +19,7 @@ export function QuantityField({
       label={`${name} quantity`}
       labelHidden
       inputMode="numeric"
-      inputClassName="w-12 py-0.5 text-right"
+      inputClassName="w-12 text-right"
       current={quantity}
       format={String}
       parse={(raw) => Number(raw.trim())}

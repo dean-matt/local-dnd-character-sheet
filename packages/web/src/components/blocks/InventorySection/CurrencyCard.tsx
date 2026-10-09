@@ -37,7 +37,7 @@ export function CurrencyCard({
             mode="edit"
             label={label}
             inputMode="numeric"
-            inputClassName="w-[70px] bg-subtle"
+            inputClassName="w-[70px]"
             current={money[coin]}
             format={(amount) => amount.toLocaleString("en-US")}
             parse={parseCoins}
