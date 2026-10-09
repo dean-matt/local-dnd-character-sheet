@@ -1,6 +1,7 @@
 import type { FeatRecord } from "@dnd/catalog";
+import { withImprovement } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { type Candidate, improvementFeats } from "./improvementFeats.ts";
+import { type Candidate, candidateAt, improvementFeats } from "./improvementFeats.ts";
 
 const feat = (name: string, source: string, json: object = {}): FeatRecord => ({
   name,
@@ -33,6 +34,7 @@ const at4: Candidate = {
   level: 4,
   classNames: ["Wizard"],
   scores: SCORES,
+  totals: SCORES,
   held: [],
 };
 const names = (candidate: Candidate) => improvementFeats(FEATS, candidate).map(({ name }) => name);
@@ -66,5 +68,24 @@ describe("improvementFeats", () => {
     expect(
       improvementFeats(classic, { ...at4, edition: "classic", scores }).map(({ name }) => name),
     ).toEqual(["Ritual Caster", "Tough"]);
+  });
+});
+
+describe("candidateAt", () => {
+  it("reads the scores and classes reached by the level, and every other increase for the cap", () => {
+    const WIZARD = { name: "Wizard", source: "XPHB" };
+    const FIGHTER = { name: "Fighter", source: "XPHB" };
+    const levels = [...Array.from({ length: 8 }, () => ({ class: WIZARD })), { class: FIGHTER }];
+    const none = { feats: [], abilityIncreases: [] };
+    const raised = withImprovement(none, 8, WIZARD, {
+      increases: [{ ability: "str", amount: 2 }],
+    });
+    const candidate = candidateAt(
+      { edition: "classic", levels, abilityScores: { ...SCORES, str: 12 }, ...raised },
+      { level: 4, cls: WIZARD, classLevel: 4, boon: false },
+    );
+    expect(candidate.scores?.str).toBe(12);
+    expect(candidate.totals?.str).toBe(14);
+    expect(candidate.classNames).toEqual(["Wizard", "Wizard", "Wizard", "Wizard"]);
   });
 });

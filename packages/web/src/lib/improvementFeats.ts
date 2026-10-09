@@ -24,8 +24,13 @@ export type Candidate = {
   edition: CharacterDefinition["edition"];
   level: number;
   classNames: readonly string[];
-  /** The scores before this improvement's own increases, `undefined` while unset. */
+  /**
+   * The scores the character had reached at this level, which prerequisites read, and
+   * every score bar this improvement's own increases, which an increase may not carry past
+   * its cap. Both `undefined` while a base score is unset.
+   */
   scores: Record<Ability, number> | undefined;
+  totals: Record<Ability, number> | undefined;
   /** The feats the character holds from elsewhere, which a feat that does not repeat leaves out. */
   held: readonly ContentRef[];
 };
@@ -65,26 +70,32 @@ type Drafted = Pick<CharacterDefinition, "edition" | "levels" | "feats" | "abili
   abilityScores: Partial<Record<Ability, number>>;
 };
 
-/** `definition` as a candidate for the feats at `grant`, its choice there set aside. */
+/**
+ * `definition` as a candidate for the feats at `grant`: its scores and classes as they
+ * stood when that level was reached, its choice there set aside.
+ */
 export function candidateAt(definition: Drafted, grant: ImprovementGrant): Candidate {
   const { feats, abilityIncreases } = withoutImprovement(definition, grant.level);
   const base = definition.abilityScores;
   const set = ABILITIES.every((ability) => Number.isInteger(base[ability]));
-  return {
-    edition: definition.edition,
-    level: grant.level,
-    classNames: definition.levels.map((level) => displayName(level.class)),
-    scores: set
+  const scored = (increases: typeof abilityIncreases) =>
+    set
       ? (Object.fromEntries(
           ABILITIES.map((ability) => [
             ability,
             abilityScore(
-              { abilityScores: base as Record<Ability, number>, abilityIncreases },
+              { abilityScores: base as Record<Ability, number>, abilityIncreases: increases },
               ability,
             ),
           ]),
         ) as Record<Ability, number>)
-      : undefined,
+      : undefined;
+  return {
+    edition: definition.edition,
+    level: grant.level,
+    classNames: definition.levels.slice(0, grant.level).map((level) => displayName(level.class)),
+    scores: scored(abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level)),
+    totals: scored(abilityIncreases),
     held: feats.flatMap(({ ref }) => ("name" in ref ? [ref] : [])),
   };
 }

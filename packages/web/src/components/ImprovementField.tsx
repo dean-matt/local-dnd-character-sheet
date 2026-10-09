@@ -91,7 +91,7 @@ export function ImprovementField({
   };
   const cap = alternative?.max ?? IMPROVEMENT_CAP;
   const fits = (ability: Ability, amount: number) =>
-    candidate.scores === undefined || candidate.scores[ability] + amount <= cap;
+    candidate.totals === undefined || candidate.totals[ability] + amount <= cap;
 
   return (
     <div className="flex flex-wrap items-end gap-2">

@@ -14,16 +14,16 @@ export function CreationImprovements() {
     name: ["levels", "edition"],
   });
   const { grants, read } = useImprovementGrants(levels);
-  const key = JSON.stringify([read, grants, edition]);
+  const key = JSON.stringify([read, grants, edition, levels.length]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for `read`, `grants` and `edition`, rebuilt each render.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for `read`, `grants`, `edition` and the level, rebuilt each render.
   useEffect(() => {
     if (!read) return;
     const held = {
       feats: getValues("feats") ?? [],
       abilityIncreases: getValues("abilityIncreases") ?? [],
     };
-    const next = reconcileImprovements(held, grants, edition);
+    const next = reconcileImprovements(held, grants, edition, levels.length);
     if (next.feats !== held.feats) setValue("feats", next.feats, { shouldDirty: true });
     if (next.abilityIncreases !== held.abilityIncreases)
       setValue("abilityIncreases", next.abilityIncreases, { shouldDirty: true });
