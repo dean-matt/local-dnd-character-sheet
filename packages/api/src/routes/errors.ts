@@ -13,7 +13,7 @@ export const notFound = (resource: string, identifiedBy = "id") => ({
 });
 
 export const catalogOutOfDate = {
-  description: "The catalog was built from an older schema; `pnpm content:build` rebuilds it",
+  description: "The catalog was built from a different schema; `pnpm content:build` rebuilds it",
   content: { "application/json": { schema: catalogOutOfDateSchema } },
 };
 

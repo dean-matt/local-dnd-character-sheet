@@ -18,7 +18,7 @@ const catalogMetaRowSchema = z.object({ key: z.string(), value: z.string() });
 const catalogMetaResponseSchema = z.object({ meta: z.array(catalogMetaRowSchema) });
 
 const notBuilt = {
-  description: "No catalog has been built yet, or it was built from an older schema",
+  description: "No catalog has been built yet, or it was built from a different schema",
   content: {
     "application/json": { schema: z.union([errorSchema, catalogOutOfDateSchema]) },
   },
