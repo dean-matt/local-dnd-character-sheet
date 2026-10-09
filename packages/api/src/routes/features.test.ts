@@ -15,6 +15,7 @@ const FIGHTER = { name: "Fighter", source: "PHB" };
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const CHAMPION = { name: "Champion", source: "PHB" };
 const TOTEM_WARRIOR = { name: "Path of the Totem Warrior", source: "PHB" };
+const STORM_HERALD = { name: "Path of the Storm Herald", source: "XGE" };
 const ELF = { name: "Elf", source: "PHB" };
 const ACOLYTE = { name: "Acolyte", source: "PHB" };
 const ALERT = { name: "Alert", source: "PHB" };
@@ -44,6 +45,20 @@ const totem = (name: string, source: string) => ({
   edition: "classic",
   json: json({ name, source }),
 });
+
+const storm = (name: string, level: number) => ({
+  ...totem(name, "XGE"),
+  subclass_short_name: "Storm Herald",
+  subclass_source: "XGE",
+  level,
+});
+
+const environments = (offering: string, level: number) =>
+  ["Desert", "Sea"].map((name) => ({
+    ...storm(name, level),
+    offered_by_name: offering,
+    offered_by_source: "XGE",
+  }));
 
 const definitionWith = (
   overrides: Partial<z.input<typeof characterDefinitionSchema>> = {},
@@ -109,6 +124,14 @@ describe("featuresRoutes", () => {
           json: json(TOTEM_WARRIOR),
         },
         {
+          ...STORM_HERALD,
+          short_name: "Storm Herald",
+          class_name: "Barbarian",
+          class_source: "PHB",
+          edition: "classic",
+          json: json(STORM_HERALD),
+        },
+        {
           ...CHAMPION,
           short_name: "Champion",
           class_name: "Fighter",
@@ -141,6 +164,10 @@ describe("featuresRoutes", () => {
           offered_by_name: "Totem Spirit",
           offered_by_source: "PHB",
         })),
+        { ...storm("Storm Aura", 3), choose: 1 },
+        ...environments("Storm Aura", 3),
+        { ...storm("Storm Soul", 6), follows_name: "Storm Aura", follows_source: "XGE" },
+        ...environments("Storm Soul", 6),
         {
           name: "Improved Critical",
           source: "PHB",
@@ -384,6 +411,57 @@ describe("featuresRoutes", () => {
         source: "PHB",
         level: 3,
       });
+    });
+  });
+
+  describe("a feature that follows another's choice", () => {
+    const stormAura = {
+      name: "Storm Aura",
+      source: "XGE",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Storm Herald", source: "XGE" },
+      level: 3,
+    };
+    const stormHerald = (environment?: string) =>
+      definitionWith({
+        levels: [1, 2, 3, 4, 5, 6].map((level) =>
+          level === 3 ? { class: BARBARIAN, subclass: STORM_HERALD } : { class: BARBARIAN },
+        ),
+        featureChoices: environment
+          ? [{ feature: stormAura, options: [{ name: environment, source: "XGE" }] }]
+          : [],
+      });
+    const stormFeatures = async () =>
+      (await features()).groups
+        .find(({ origin }) => origin === "subclass")
+        ?.features.map(({ name, level }) => `${name} ${level}`);
+
+    it("lists the environment chosen for Storm Aura at Storm Soul, asking nothing again", async () => {
+      store(stormHerald("Sea"));
+
+      expect(await stormFeatures()).toEqual(["Storm Aura 3", "Sea 3", "Storm Soul 6", "Sea 6"]);
+      const soul = (await features()).groups
+        .find(({ origin }) => origin === "subclass")
+        ?.features.find(({ name }) => name === "Storm Soul");
+      expect(soul).not.toHaveProperty("choice");
+    });
+
+    it("carries a changed environment through every feature that follows it", async () => {
+      store(stormHerald("Desert"));
+
+      expect(await stormFeatures()).toEqual([
+        "Storm Aura 3",
+        "Desert 3",
+        "Storm Soul 6",
+        "Desert 6",
+      ]);
+    });
+
+    it("lists no environment at Storm Soul until Storm Aura's is chosen", async () => {
+      store(stormHerald());
+
+      expect(await stormFeatures()).toEqual(["Storm Aura 3", "Storm Soul 6"]);
     });
   });
 

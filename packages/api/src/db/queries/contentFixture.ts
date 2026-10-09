@@ -205,6 +205,8 @@ type ClassFeatureFixtureRow = {
   choose?: number;
   offered_by_name?: string;
   offered_by_source?: string;
+  follows_name?: string;
+  follows_source?: string;
 };
 
 type SubclassResourceFixtureRow = ClassResourceFixtureRow & {

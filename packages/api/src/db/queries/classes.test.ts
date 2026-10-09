@@ -37,6 +37,14 @@ const CLERIC_XPHB = {
   json: JSON.stringify({ name: "Cleric", source: "XPHB" }),
 };
 
+const NO_CHOICE = {
+  choose: null,
+  offered_by_name: null,
+  offered_by_source: null,
+  follows_name: null,
+  follows_source: null,
+};
+
 describe("content class queries", () => {
   let dataDir: string;
 
@@ -135,8 +143,6 @@ describe("class grants at a level", () => {
     edition: "classic",
     json: JSON.stringify({ name: "Fighting Style", source: "PHB" }),
   };
-
-  const NO_CHOICE = { choose: null, offered_by_name: null, offered_by_source: null };
 
   const asFeature = (row: { name: string; source: string; level: number; json: string }) => ({
     name: row.name,
@@ -380,9 +386,7 @@ describe("subclass grants at a level", () => {
           source: "PHB",
           level: 1,
           json: discipleOfLife.json,
-          choose: null,
-          offered_by_name: null,
-          offered_by_source: null,
+          ...NO_CHOICE,
         },
       ],
     });

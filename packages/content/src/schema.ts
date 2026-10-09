@@ -147,7 +147,10 @@ CREATE TABLE subclass_optional_features (
 --
 -- choose marks a feature that offers a choice of the features beside it, such as
 -- Totem Spirit, and offered_by names that feature on each option it offers, at the
--- same class, subclass and level; load/feature-choices.ts writes both.
+-- same class, subclass and level. follows marks a feature that asks no choice of its
+-- own: it takes the option whose name matches the one chosen for the feature it
+-- names, at another level of the same class and subclass, so Storm Soul takes the
+-- environment chosen for Storm Aura. load/feature-choices.ts writes all three.
 
 CREATE TABLE class_features (
   name         TEXT NOT NULL,
@@ -160,6 +163,8 @@ CREATE TABLE class_features (
   choose            INTEGER CHECK (choose >= 1),
   offered_by_name   TEXT,
   offered_by_source TEXT,
+  follows_name      TEXT,
+  follows_source    TEXT,
   PRIMARY KEY (name, source, class_name, class_source, level)
 ) STRICT;
 
@@ -178,6 +183,8 @@ CREATE TABLE subclass_features (
   choose              INTEGER CHECK (choose >= 1),
   offered_by_name     TEXT,
   offered_by_source   TEXT,
+  follows_name        TEXT,
+  follows_source      TEXT,
   PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
 ) STRICT;
 

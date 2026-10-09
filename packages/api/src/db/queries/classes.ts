@@ -98,9 +98,12 @@ export type ClassFeatureRow = {
   choose: number | null;
   offered_by_name: string | null;
   offered_by_source: string | null;
+  follows_name: string | null;
+  follows_source: string | null;
 };
 
-const FEATURE_COLUMNS = "name, source, level, json, choose, offered_by_name, offered_by_source";
+const FEATURE_COLUMNS =
+  "name, source, level, json, choose, offered_by_name, offered_by_source, follows_name, follows_source";
 
 export type ClassGrantsRow = {
   resources: ClassResourceRow[];
