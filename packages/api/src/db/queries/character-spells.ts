@@ -7,7 +7,7 @@ import {
   type CharacterSpells,
   entriesSchema,
   type SheetSpell,
-  spellCastingFactsSchema,
+  spellCastingFacts,
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName } from "@dnd/character";
 import { type ZodType, z } from "zod";
@@ -28,17 +28,6 @@ const pick = <T>(schema: ZodType<T>, value: unknown): T | undefined => {
   const parsed = schema.safeParse(value);
   return parsed.success ? parsed.data : undefined;
 };
-
-/** Each fact parsed alone, so one malformed field leaves the others standing. */
-function castingFacts(json: Record<string, unknown>) {
-  const { shape } = spellCastingFactsSchema;
-  return {
-    time: pick(shape.time, json.time),
-    range: pick(shape.range, json.range),
-    components: pick(shape.components, json.components),
-    duration: pick(shape.duration, json.duration),
-  };
-}
 
 const DAMAGE_TAG = /\{@damage ([^|}]+)/;
 
@@ -98,7 +87,7 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined) {
     school: row.school,
     concentration: row.concentration,
     ritual: row.ritual,
-    ...castingFacts(row.json),
+    ...spellCastingFacts(row.json),
     ...damageFacts(row.json),
     // Upstream keeps the upcast rule apart, and dropping it makes the text read complete.
     entries: [
