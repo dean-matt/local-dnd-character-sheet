@@ -454,7 +454,8 @@ CREATE TABLE tag_redirects (
 /**
  * The `meta` row `pnpm content:build` writes, naming the DDL the database was built from.
  * Hashed from `CONTENT_SCHEMA` itself, so no schema change can leave it unbumped; the API
- * compares it to its own and refuses a catalog built from another.
+ * compares it to its own and refuses a catalog built from another. It covers the DDL only:
+ * a loader that reshapes a `json` column leaves it unchanged, and would need its own bump.
  */
 export const SCHEMA_STAMP = {
   key: "schema_fingerprint",
