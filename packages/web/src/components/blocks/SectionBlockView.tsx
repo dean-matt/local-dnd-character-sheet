@@ -3,7 +3,7 @@ import { AlignmentSection } from "./AlignmentSection.tsx";
 import { FeaturesSection } from "./FeaturesSection/FeaturesSection.tsx";
 import { IdentitySection } from "./IdentitySection/IdentitySection.tsx";
 import { InventorySection } from "./InventorySection/InventorySection.tsx";
-import { LevelSection } from "./LevelSection.tsx";
+import { LevelSection } from "./LevelSection/LevelSection.tsx";
 import { NotesSection } from "./NotesSection.tsx";
 import { SpellsSection } from "./SpellsSection/SpellsSection.tsx";
 import type { BlockViewProps } from "./types.ts";
