@@ -6,7 +6,7 @@ import { HOMEBREW_KINDS } from "./homebrewKinds.ts";
 export function HomebrewSettings() {
   const id = useId();
   return (
-    <section aria-labelledby={`${id}-title`} className="flex max-w-3xl flex-col gap-4">
+    <section aria-labelledby={`${id}-title`} className="flex max-w-6xl flex-col gap-4">
       <div>
         <h1
           id={`${id}-title`}
