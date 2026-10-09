@@ -7,15 +7,31 @@ import {
   type ContentRef,
   type FeatureKey,
   featureKey,
+  refKey,
 } from "@dnd/character";
 
 type Choices = CharacterDefinition["featureChoices"];
 
-/** The options stored for `feature`, none where it has no choice yet. */
-export function chosenOptions(choices: Choices | undefined, feature: FeatureKey): ContentRef[] {
+/** The option of `options` stored for `feature`, `undefined` where none of them is. */
+export function takenOption(
+  choices: Choices | undefined,
+  feature: FeatureKey,
+  options: readonly ContentRef[],
+): ContentRef | undefined {
   const key = featureKey(feature);
-  return choices?.find((choice) => featureKey(choice.feature) === key)?.options ?? [];
+  const taken = (choices?.find((choice) => featureKey(choice.feature) === key)?.options ?? []).map(
+    refKey,
+  );
+  return options.find((option) => taken.includes(refKey(option)));
 }
+
+/** The options a reader sees: each from a source they left on, and `taken` whatever its source. */
+export const shownOptions = (
+  options: readonly ContentRef[],
+  taken: ContentRef | undefined,
+  disabled: readonly string[],
+): ContentRef[] =>
+  options.filter((option) => option === taken || !disabled.includes(option.source));
 
 /** `choices` with `feature`'s options replaced by `options`, or a choice added last. */
 export function withFeatureChoice(

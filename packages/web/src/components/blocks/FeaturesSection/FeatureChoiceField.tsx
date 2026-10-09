@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useDisabledSources } from "../../../hooks/useDisabledSources.ts";
 import { useFleeting } from "../../../hooks/useFleeting.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
-import { chosenOptions, withFeatureChoice } from "../../../lib/featureChoices.ts";
+import { shownOptions, takenOption, withFeatureChoice } from "../../../lib/featureChoices.ts";
 import { FormField } from "../../FormField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
@@ -26,12 +26,11 @@ export function FeatureChoiceField({
   const update = useUpdateCharacterDefinition(character.id);
   const disabled = useDisabledSources();
   const [picked, setPicked] = useState<string>();
-  const taken = chosenOptions(character.definition.featureChoices, choice.feature).map(refKey);
-  const current = choice.options.find((option) => taken.includes(refKey(option)));
-  const showSaved = useFleeting(update.isSuccess && picked !== undefined && picked === taken[0]);
-  const shown = choice.options.filter(
-    (option) => option === current || !disabled.includes(option.source),
+  const current = takenOption(character.definition.featureChoices, choice.feature, choice.options);
+  const showSaved = useFleeting(
+    update.isSuccess && picked !== undefined && current !== undefined && picked === refKey(current),
   );
+  const shown = shownOptions(choice.options, current, disabled);
 
   function save(key: string) {
     const option = choice.options.find((each) => refKey(each) === key);

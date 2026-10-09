@@ -1,6 +1,6 @@
-import { type CharacterDefinition, characterDefinitionSchema, refKey } from "@dnd/character";
+import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { chosenOptions } from "../../lib/featureChoices.ts";
+import { takenOption } from "../../lib/featureChoices.ts";
 import { stepOf } from "./creationSteps.ts";
 import type { FeatureOffering } from "./featureOfferings.ts";
 import { type ClassEntry, useClassEntries } from "./useClassEntries.ts";
@@ -26,10 +26,9 @@ function chosen(
   offerings: readonly FeatureOffering[],
   choices: CharacterDefinition["featureChoices"] | undefined,
 ): boolean {
-  return offerings.every(({ feature, options }) => {
-    const taken = chosenOptions(choices, feature).map(refKey);
-    return options.some((option) => taken.includes(refKey(option)));
-  });
+  return offerings.every(
+    ({ feature, options }) => takenOption(choices, feature, options) !== undefined,
+  );
 }
 
 /**

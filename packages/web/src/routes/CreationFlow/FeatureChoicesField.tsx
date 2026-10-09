@@ -1,7 +1,7 @@
 import { type CharacterDefinition, featureKey, refKey } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
-import { chosenOptions, withFeatureChoice } from "../../lib/featureChoices.ts";
+import { shownOptions, takenOption, withFeatureChoice } from "../../lib/featureChoices.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
 import type { FeatureOffering } from "./featureOfferings.ts";
 
@@ -15,11 +15,8 @@ export function FeatureChoicesField({ offerings }: { offerings: readonly Feature
   const choices = useWatch<CharacterDefinition, "featureChoices">({ name: "featureChoices" });
   const disabled = useDisabledSources();
   return offerings.map(({ feature, options }) => {
-    const taken = chosenOptions(choices, feature).map(refKey);
-    const chosen = options.find((option) => taken.includes(refKey(option)));
-    const shown = options.filter(
-      (option) => option === chosen || !disabled.includes(option.source),
-    );
+    const chosen = takenOption(choices, feature, options);
+    const shown = shownOptions(options, chosen, disabled);
     return (
       <ChoicePills
         key={featureKey(feature)}
