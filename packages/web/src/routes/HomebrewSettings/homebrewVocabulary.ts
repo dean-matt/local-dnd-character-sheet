@@ -4,6 +4,7 @@
  * lists under `itemType` and `itemProperty`.
  */
 import { DAMAGE_TYPES } from "@dnd/catalog";
+import { capitalize } from "../../components/blocks/capitalize.ts";
 
 /** Which fields beyond the common ones an item of a type carries. */
 export type ItemGroup = "weapon" | "armor" | "gear";
@@ -78,8 +79,6 @@ export const WEAPON_PROPERTIES = [
   { value: "2H", label: "Two-handed" },
   { value: "V", label: "Versatile" },
 ];
-
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** `dmgType`'s codes, each beside its name. */
 export const DAMAGE_TYPE_CODES = Object.entries(DAMAGE_TYPES).map(([value, name]) => ({

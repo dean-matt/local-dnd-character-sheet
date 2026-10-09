@@ -97,8 +97,8 @@ the query-time merge with catalog rows is a union of like things. The schema acc
 subset the content loaders and a renderer read — `name`, `source`, `entries`, and the few
 fields each entity type derives a row column from — and passes every other field through
 unvalidated. The homebrew editor holds the whole entry and writes back unchanged every
-field its form has no control for, so homebrew needs none of the round-trip guarantee
-`characterDefinitionSchema`'s strict objects give a character.
+field its form has no control for, bar a weapon's or armor's own on a type change, so
+homebrew needs none of the strict round trip `characterDefinitionSchema` gives a character.
 
 **A merged list tells a homebrew row from a catalog row by shape, not by reading
 `source`.** A catalog record carries `source` and no `id`; a homebrew record carries `id`

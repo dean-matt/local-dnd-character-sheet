@@ -66,7 +66,7 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
 
   const setTime = (next: Record<string, unknown>) => set("time", [next, ...moreTimes]);
   const setSpan = (next: Record<string, unknown> | undefined) =>
-    set("duration", next === undefined ? undefined : [next, ...moreSpans]);
+    set("duration", next ? [next, ...moreSpans] : moreSpans.length > 0 ? moreSpans : undefined);
   const setRange = (kind: string, amount: unknown, shape: string) => {
     if (kind === "") return set("range", undefined);
     if (kind === "special") return set("range", { type: "special" });
@@ -115,7 +115,7 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             type="number"
             min={1}
             step={1}
-            error={
+            status={
               listAt(entry, "time").length > 0 &&
               numberAt(time.number) === undefined &&
               "Give it a number, or the sheet shows no casting time"
@@ -240,7 +240,7 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
               onChange={(event) =>
                 setSpan({
                   ...span,
-                  duration: withField(length, "amount", typedNumber(event.target.value)),
+                  duration: withField(length, "amount", typedInteger(event.target.value)),
                 })
               }
             />

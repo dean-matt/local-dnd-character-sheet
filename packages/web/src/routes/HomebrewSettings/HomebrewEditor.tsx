@@ -1,5 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useEffect, useId, useRef, useState } from "react";
+import { capitalize } from "../../components/blocks/capitalize.ts";
 import { FormField } from "../../components/FormField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
@@ -79,7 +80,7 @@ export function HomebrewEditor({
   const unplaced =
     text === undefined ? problems.filter(({ key }) => !kind.formKeys.includes(key)) : problems;
   const title = record ? `Edit ${record.name}` : `New ${kind.noun}`;
-  const noun = `${kind.noun.charAt(0).toUpperCase()}${kind.noun.slice(1)}`;
+  const noun = capitalize(kind.noun);
 
   const replace = (next: HomebrewEntry) => {
     setEntry(next);

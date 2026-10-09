@@ -164,6 +164,10 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    expect(within(items()).getByRole("spinbutton", { name: "Value (gp)" })).toHaveValue(1500);
+    fireEvent.change(within(items()).getByRole("spinbutton", { name: "Value (gp)" }), {
+      target: { value: "15.5" },
+    });
     fireEvent.click(within(items()).getByRole("combobox", { name: "Type" }));
     fireEvent.click(screen.getByRole("option", { name: "Shield" }));
     fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
@@ -171,7 +175,7 @@ describe("HomebrewSettings", () => {
     const entry = JSON.parse(
       (within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement).value,
     );
-    expect(entry).toMatchObject({ type: "S", name: "Sunfire Blade", rarity: "rare" });
+    expect(entry).toMatchObject({ type: "S", name: "Sunfire Blade", rarity: "rare", value: 1550 });
     expect(entry).not.toHaveProperty("dmg1");
     expect(entry).not.toHaveProperty("weaponCategory");
     expect(entry).not.toHaveProperty("bonusWeapon");
