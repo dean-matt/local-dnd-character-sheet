@@ -144,6 +144,10 @@ CREATE TABLE subclass_optional_features (
 -- Improvement from PHB alone covers 63 rows across twelve classes and five
 -- levels. The key is what the classFeature and subclassFeature tags spell out —
 -- the owning class, the subclass where there is one, and the level.
+--
+-- choose marks a feature that offers a choice of the features beside it, such as
+-- Totem Spirit, and offered_by names that feature on each option it offers, at the
+-- same class, subclass and level; load/feature-choices.ts writes both.
 
 CREATE TABLE class_features (
   name         TEXT NOT NULL,
@@ -153,6 +157,9 @@ CREATE TABLE class_features (
   level        INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
   edition      TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json         TEXT NOT NULL,
+  choose            INTEGER CHECK (choose >= 1),
+  offered_by_name   TEXT,
+  offered_by_source TEXT,
   PRIMARY KEY (name, source, class_name, class_source, level)
 ) STRICT;
 
@@ -168,6 +175,9 @@ CREATE TABLE subclass_features (
   level               INTEGER NOT NULL CHECK (level BETWEEN 1 AND 20),
   edition             TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json                TEXT NOT NULL,
+  choose              INTEGER CHECK (choose >= 1),
+  offered_by_name     TEXT,
+  offered_by_source   TEXT,
   PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
 ) STRICT;
 

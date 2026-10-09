@@ -137,12 +137,19 @@ export const subclassRecordSchema = z.strictObject({
 
 export type SubclassRecord = z.infer<typeof subclassRecordSchema>;
 
-/** A class or subclass feature, scoped to the class or subclass a caller already named. */
+/**
+ * A class or subclass feature, scoped to the class or subclass a caller already named.
+ * `choose` marks a feature that offers a choice of the features beside it, such as
+ * `Totem Spirit` (PHB), and `offeredBy` names that feature on each option it offers, at
+ * the same level.
+ */
 export const classFeatureRecordSchema = z.strictObject({
   name: z.string().min(1),
   source: z.string().min(1),
   level: z.int().min(1).max(20),
   json: classEntrySchema,
+  choose: z.int().min(1).optional(),
+  offeredBy: z.strictObject({ name: z.string().min(1), source: z.string().min(1) }).optional(),
 });
 
 export type ClassFeatureRecord = z.infer<typeof classFeatureRecordSchema>;

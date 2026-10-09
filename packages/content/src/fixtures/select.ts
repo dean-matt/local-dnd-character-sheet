@@ -90,6 +90,7 @@ const STRUCTURAL_FIELDS = [
   "colLabels",
   "colStyles",
   "shortName",
+  "subclassFeature",
   "tableDisplayName",
   "mode",
   "names",

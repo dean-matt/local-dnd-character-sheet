@@ -4,6 +4,8 @@ import { ChosenChip } from "./ChosenChip.tsx";
 import { ClassGrantsSummary } from "./ClassGrantsSummary.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { CLASS_FIELD } from "./departures.ts";
+import { FeatureChoicesField } from "./FeatureChoicesField.tsx";
+import type { FeatureOffering } from "./featureOfferings.ts";
 import { LevelField } from "./LevelField.tsx";
 import { prerequisiteField, prerequisiteText } from "./multiclassPrerequisites.ts";
 import { SubclassField } from "./SubclassField.tsx";
@@ -11,6 +13,8 @@ import type { ClassEntry } from "./useClassEntries.ts";
 
 export interface ClassRowProps {
   entry: ClassEntry;
+  /** The choices the class's and its subclass's features offer by its level. */
+  offerings: readonly FeatureOffering[];
   first: boolean;
   /** The character holds more than one class, so each row names its own fields. */
   multiclassed: boolean;
@@ -27,6 +31,7 @@ export interface ClassRowProps {
  */
 export function ClassRow({
   entry,
+  offerings,
   first,
   multiclassed,
   max,
@@ -49,6 +54,7 @@ export function ClassRow({
       </div>
       <LevelField entry={entry} label={multiclassed ? `${entry.name} level` : "Level"} max={max} />
       <SubclassField entry={entry} legend={multiclassed ? `${entry.name} subclass` : "Subclass"} />
+      <FeatureChoicesField offerings={offerings} />
       <ClassGrantsSummary entry={entry} first={first} />
       {prerequisite && unscored && (
         <p className="text-muted text-row">

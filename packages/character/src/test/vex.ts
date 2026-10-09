@@ -127,6 +127,7 @@ export const definition: CharacterDefinition = {
       grantedBy: { kind: "class", ref: WARLOCK },
     },
   ],
+  featureChoices: [],
   money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
   houseRules: { encumbrance: true },

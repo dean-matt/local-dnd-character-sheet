@@ -4,6 +4,7 @@ import {
   multiclassEntrySchema,
   multiclassPrerequisiteSchema,
   type ScoreMinimums,
+  type SubclassRecord,
   subclassLevelSchema,
 } from "@dnd/catalog";
 import {
@@ -34,7 +35,7 @@ export interface ClassEntry {
   firstIndex: number;
   subclass: ContentRef | undefined;
   /** The subclasses the class offers in the draft's edition, `undefined` until they load. */
-  subclasses: readonly (ContentRef & { json: unknown })[] | undefined;
+  subclasses: readonly SubclassRecord[] | undefined;
   hitDie: number | undefined;
   subclassLevel: number | undefined;
   /** The class's own row, from the catalog or from homebrew, `undefined` until it loads. */

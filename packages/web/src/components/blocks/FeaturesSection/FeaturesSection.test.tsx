@@ -121,6 +121,34 @@ describe("FeaturesSection", () => {
     expect(within(card("Background Features")).getByText("Shelter of the Faithful")).toBeVisible();
   });
 
+  it("offers a change of option on a feature that offers a choice, and on no other", async () => {
+    const offering = {
+      resolved: true as const,
+      name: "Totem Spirit",
+      source: "PHB",
+      level: 3,
+      entries: [],
+      choice: {
+        feature: {
+          name: "Totem Spirit",
+          source: "PHB",
+          className: "Barbarian",
+          classSource: "PHB",
+          subclass: { shortName: "Totem Warrior", source: "PHB" },
+          level: 3,
+        },
+        count: 1,
+        options: [{ name: "Bear", source: "PHB" }],
+      },
+    };
+    renderSection({
+      groups: [{ origin: "subclass", name: "Path of the Totem Warrior", features: [offering] }],
+    });
+
+    expect(await screen.findByRole("combobox", { name: "Totem Spirit choice" })).toBeVisible();
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+  });
+
   it("leaves out a card with nothing in it", async () => {
     renderSection();
 

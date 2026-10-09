@@ -1,0 +1,129 @@
+{
+  "class": [
+    {
+      "name": "Barbarian",
+      "source": "PHB",
+      "page": 46,
+      "edition": "classic",
+      "hd": {
+        "number": 1,
+        "faces": 12
+      },
+      "classFeatures": []
+    }
+  ],
+  "subclass": [
+    {
+      "name": "Path of the Totem Warrior",
+      "shortName": "Totem Warrior",
+      "source": "PHB",
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "page": 50,
+      "subclassFeatures": [
+        "Path of the Totem Warrior|Barbarian||Totem Warrior||3",
+        "Aspect of the Beast|Barbarian||Totem Warrior||6",
+        "Spirit Walker|Barbarian||Totem Warrior||10",
+        "Totemic Attunement|Barbarian||Totem Warrior||14"
+      ]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Totem Spirit",
+      "source": "PHB",
+      "page": 50,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Totem Warrior",
+      "subclassSource": "PHB",
+      "level": 3,
+      "header": 1,
+      "entries": [
+        "Elided.",
+        "Elided.",
+        {
+          "type": "options",
+          "count": 1,
+          "entries": [
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Bear|Barbarian||Totem Warrior||3"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Eagle|Barbarian||Totem Warrior||3"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Elk|Barbarian|PHB|Totem Warrior||3|SCAG"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Tiger|Barbarian|PHB|Totem Warrior||3|SCAG"
+            },
+            {
+              "type": "refSubclassFeature",
+              "subclassFeature": "Wolf|Barbarian||Totem Warrior||3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bear",
+      "source": "PHB",
+      "page": 50,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Totem Warrior",
+      "subclassSource": "PHB",
+      "level": 3,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Eagle",
+      "source": "PHB",
+      "page": 50,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Totem Warrior",
+      "subclassSource": "PHB",
+      "level": 3,
+      "entries": ["Elided. {@action Dash} Elided."]
+    },
+    {
+      "name": "Elk",
+      "source": "SCAG",
+      "page": 122,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Totem Warrior",
+      "subclassSource": "PHB",
+      "level": 3,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Tiger",
+      "source": "SCAG",
+      "page": 122,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Totem Warrior",
+      "subclassSource": "PHB",
+      "level": 3,
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Wolf",
+      "source": "PHB",
+      "page": 50,
+      "className": "Barbarian",
+      "classSource": "PHB",
+      "subclassShortName": "Totem Warrior",
+      "subclassSource": "PHB",
+      "level": 3,
+      "entries": ["Elided."]
+    }
+  ]
+}

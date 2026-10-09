@@ -1,13 +1,14 @@
 import { GRIPS, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
 import { z } from "zod";
 import { houseRulesSchema } from "./houseRules.ts";
-import { entryKey, isUnique, refKey } from "./keys.ts";
+import { entryKey, featureKey, isUnique, refKey } from "./keys.ts";
 import {
   abilitySchema,
   contentRefSchema,
   deityRefSchema,
   editionSchema,
   entryRefSchema,
+  featureKeySchema,
 } from "./refs.ts";
 
 /**
@@ -244,6 +245,19 @@ const optionalFeatureEntrySchema = z.strictObject({
 });
 
 /**
+ * The options taken from a class or subclass feature that offers a choice of the features
+ * beside it — `Bear` (PHB) from `Totem Spirit` (PHB). A choice whose feature the character
+ * no longer has stays stored and applies nothing, so taking the feature back restores it.
+ */
+const featureChoiceSchema = z.strictObject({
+  feature: featureKeySchema,
+  options: z
+    .array(contentRefSchema)
+    .min(1)
+    .refine((options) => isUnique(options, refKey), { error: "the same option is taken twice" }),
+});
+
+/**
  * Coins, counted per denomination. A single converted total would lose which coins the
  * character holds, and a party splitting treasure divides the coins rather than the
  * total. Exchanging denominations is a rule, and belongs in `@dnd/rules` the day
@@ -345,6 +359,12 @@ export const characterDefinitionSchema = z.strictObject({
     .array(optionalFeatureEntrySchema)
     .refine((picks) => isUnique(picks, (pick) => `${pick.featureType}|${entryKey(pick.ref)}`), {
       error: "the same option is picked twice under one feature type",
+    })
+    .default([]),
+  featureChoices: z
+    .array(featureChoiceSchema)
+    .refine((choices) => isUnique(choices, (choice) => featureKey(choice.feature)), {
+      error: "the same feature's choice is stored twice",
     })
     .default([]),
   deity: deityRefSchema.optional(),

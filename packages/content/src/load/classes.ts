@@ -17,6 +17,7 @@ import {
   type Tables,
 } from "./class-rows.ts";
 import { EDITION_FILES, editions, ownFiles } from "./edition.ts";
+import { markFeatureChoices } from "./feature-choices.ts";
 import { isFluffPath } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { text } from "./json.ts";
@@ -72,6 +73,8 @@ export const classes: Loader = {
       addFeatures(out, claims, source, path, fromSource, sidekicks);
     }
     checkFeatureOwners(out, claims);
+    markFeatureChoices(out.class_features, claims);
+    markFeatureChoices(out.subclass_features, claims);
     return out;
   },
 };

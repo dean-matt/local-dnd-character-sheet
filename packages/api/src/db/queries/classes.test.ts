@@ -136,11 +136,14 @@ describe("class grants at a level", () => {
     json: JSON.stringify({ name: "Fighting Style", source: "PHB" }),
   };
 
+  const NO_CHOICE = { choose: null, offered_by_name: null, offered_by_source: null };
+
   const asFeature = (row: { name: string; source: string; level: number; json: string }) => ({
     name: row.name,
     source: row.source,
     level: row.level,
     json: row.json,
+    ...NO_CHOICE,
   });
 
   beforeAll(() => {
@@ -377,6 +380,9 @@ describe("subclass grants at a level", () => {
           source: "PHB",
           level: 1,
           json: discipleOfLife.json,
+          choose: null,
+          offered_by_name: null,
+          offered_by_source: null,
         },
       ],
     });

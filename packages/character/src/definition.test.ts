@@ -298,6 +298,7 @@ describe("a character stored before these fields existed", () => {
       notes: _notes,
       feats: _feats,
       optionalFeatures: _optionalFeatures,
+      featureChoices: _featureChoices,
       houseRules: _houseRules,
       departures: _departures,
       ...older
@@ -306,6 +307,7 @@ describe("a character stored before these fields existed", () => {
 
     expect(parsed.feats).toEqual([]);
     expect(parsed.optionalFeatures).toEqual([]);
+    expect(parsed.featureChoices).toEqual([]);
     expect(parsed.money).toEqual({
       copper: 0,
       silver: 0,
@@ -777,6 +779,43 @@ describe("invariants a duplicate row would break", () => {
     expect(characterDefinitionSchema.safeParse(typed(-999)).success).toBe(true);
     expect(characterDefinitionSchema.safeParse(typed(1000)).success).toBe(false);
     expect(characterDefinitionSchema.safeParse(typed(-1000)).success).toBe(false);
+  });
+});
+
+describe("featureChoices", () => {
+  const totemSpirit = {
+    name: "Totem Spirit",
+    source: "PHB",
+    className: "Barbarian",
+    classSource: "PHB",
+    subclass: { shortName: "Totem Warrior", source: "PHB" },
+    level: 3,
+  };
+  const choosing = (...featureChoices: unknown[]) => ({ ...definition, featureChoices });
+
+  it("keeps the option taken beside the feature that offers it", () => {
+    const choice = { feature: totemSpirit, options: [{ name: "Elk", source: "SCAG" }] };
+    expect(characterDefinitionSchema.parse(choosing(choice)).featureChoices).toEqual([choice]);
+  });
+
+  it("tells one feature's choice from another's by the whole key, level included", () => {
+    const at = (level: number) => ({
+      feature: { ...totemSpirit, level },
+      options: [{ name: "Bear", source: "PHB" }],
+    });
+    expect(characterDefinitionSchema.safeParse(choosing(at(3), at(6))).success).toBe(true);
+    expect(characterDefinitionSchema.safeParse(choosing(at(3), at(3))).success).toBe(false);
+  });
+
+  it("rejects a choice taking nothing, or taking one option twice", () => {
+    const bear = { name: "Bear", source: "PHB" };
+    expect(
+      characterDefinitionSchema.safeParse(choosing({ feature: totemSpirit, options: [] })).success,
+    ).toBe(false);
+    expect(
+      characterDefinitionSchema.safeParse(choosing({ feature: totemSpirit, options: [bear, bear] }))
+        .success,
+    ).toBe(false);
   });
 });
 

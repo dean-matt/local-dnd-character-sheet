@@ -15,6 +15,7 @@ describe("the class, subclass and feature rows", () => {
 
     expect(rows).toEqual([
       { name: "Artificer", source: "TCE", edition: "classic", hit_die: 8 },
+      { name: "Barbarian", source: "PHB", edition: "classic", hit_die: 12 },
       { name: "Cleric", source: "PHB", edition: "classic", hit_die: 8 },
       { name: "Cleric", source: "XPHB", edition: "one", hit_die: 8 },
       { name: "Fighter", source: "XPHB", edition: "one", hit_die: 10 },
@@ -44,6 +45,7 @@ describe("the class, subclass and feature rows", () => {
           `${name}|${source} (${short_name}) ${class_name}|${class_source} ${edition}`,
       ),
     ).toEqual([
+      "Path of the Totem Warrior|PHB (Totem Warrior) Barbarian|PHB classic",
       "Death Domain|DMG (Death) Cleric|PHB classic",
       "Death Domain|DMG (Death) Cleric|XPHB classic",
       "Knowledge Domain|PHB (Knowledge) Cleric|PHB classic",
@@ -87,6 +89,9 @@ describe("the class, subclass and feature rows", () => {
     ).toEqual([
       "Ability Score Improvement|PHB Cleric|PHB 4 classic",
       "Ability Score Improvement|PHB Cleric|PHB 8 classic",
+      "Divine Order|XPHB Cleric|XPHB 1 one",
+      "Protector|XPHB Cleric|XPHB 1 one",
+      "Thaumaturge|XPHB Cleric|XPHB 1 one",
       "Ability Score Improvement|XPHB Cleric|XPHB 4 one",
       "Ability Score Improvement|XPHB Fighter|XPHB 4 one",
     ]);
@@ -111,6 +116,13 @@ describe("the class, subclass and feature rows", () => {
     // that lost class_source would file both under whichever came first.
     expect(rows).toEqual([
       { name: "Death Domain", short_name: "Death", class_source: "PHB", level: 2, features: 1 },
+      {
+        name: "Path of the Totem Warrior",
+        short_name: "Totem Warrior",
+        class_source: "PHB",
+        level: 3,
+        features: 6,
+      },
       { name: "Death Domain", short_name: "Death", class_source: "XPHB", level: 3, features: 1 },
     ]);
   });

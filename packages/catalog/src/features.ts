@@ -11,6 +11,27 @@
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
+const refSchema = z.strictObject({ name: z.string().min(1), source: z.string().min(1) });
+
+/**
+ * What a feature such as `Totem Spirit` (PHB) offers: the key a definition stores the choice
+ * under, which `@dnd/character`'s `featureKeySchema` validates on the way back in, how many
+ * options it lets a character take, and every option, taken or not.
+ */
+const featureChoiceSchema = z.strictObject({
+  feature: z.strictObject({
+    ...refSchema.shape,
+    className: z.string().min(1),
+    classSource: z.string().min(1),
+    subclass: z
+      .strictObject({ shortName: z.string().min(1), source: z.string().min(1) })
+      .optional(),
+    level: z.int().min(1).max(20),
+  }),
+  count: z.int().min(1),
+  options: z.array(refSchema),
+});
+
 /**
  * `level` is the class level a class or subclass feature arrives at, or the character
  * level a feat was taken at. `featureType` is the code an optional feature was picked
@@ -25,6 +46,7 @@ const featureFields = {
     .describe("Absent on a homebrew reference, resolved or not, since homebrew names no source"),
   level: z.int().min(1).max(20).optional(),
   featureType: z.string().min(1).optional(),
+  choice: featureChoiceSchema.optional(),
 };
 
 const sheetFeatureSchema = z.discriminatedUnion("resolved", [

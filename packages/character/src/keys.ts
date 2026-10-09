@@ -1,4 +1,4 @@
-import type { ContentRef, DeityRef, EntryRef } from "./refs.ts";
+import type { ContentRef, DeityRef, EntryRef, FeatureKey } from "./refs.ts";
 
 /**
  * The identity of a catalog row, flattened so a Map or a Set can hold it. A deity reference
@@ -9,6 +9,18 @@ export const refKey = (ref: ContentRef & { pantheon?: never }): string =>
 
 /** A deity's identity, its pantheon included: `Oghma|PHB` is both the Celtic and the Faerûnian god. */
 export const deityKey = (ref: DeityRef): string => `${ref.name}|${ref.source}|${ref.pantheon}`;
+
+/** A feature's whole key, flattened: one name and source recurs across classes and levels. */
+export const featureKey = (key: FeatureKey): string =>
+  [
+    key.name,
+    key.source,
+    key.className,
+    key.classSource,
+    key.subclass?.shortName ?? "",
+    key.subclass?.source ?? "",
+    key.level,
+  ].join("|");
 
 /** Rejects a list naming the same thing twice, where a duplicate would double-count. */
 export const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>

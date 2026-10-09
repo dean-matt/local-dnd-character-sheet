@@ -14,6 +14,7 @@ import { featuresRoutes } from "./features.ts";
 const FIGHTER = { name: "Fighter", source: "PHB" };
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const CHAMPION = { name: "Champion", source: "PHB" };
+const TOTEM_WARRIOR = { name: "Path of the Totem Warrior", source: "PHB" };
 const ELF = { name: "Elf", source: "PHB" };
 const ACOLYTE = { name: "Acolyte", source: "PHB" };
 const ALERT = { name: "Alert", source: "PHB" };
@@ -30,6 +31,18 @@ const classFeature = (name: string, klass: { name: string; source: string }, lev
   level,
   edition: "classic",
   json: json({ name, source: "PHB" }),
+});
+
+const totem = (name: string, source: string) => ({
+  name,
+  source,
+  class_name: "Barbarian",
+  class_source: "PHB",
+  subclass_short_name: "Totem Warrior",
+  subclass_source: "PHB",
+  level: 3,
+  edition: "classic",
+  json: json({ name, source }),
 });
 
 const definitionWith = (
@@ -88,6 +101,14 @@ describe("featuresRoutes", () => {
       ],
       subclasses: [
         {
+          ...TOTEM_WARRIOR,
+          short_name: "Totem Warrior",
+          class_name: "Barbarian",
+          class_source: "PHB",
+          edition: "classic",
+          json: json(TOTEM_WARRIOR),
+        },
+        {
           ...CHAMPION,
           short_name: "Champion",
           class_name: "Fighter",
@@ -111,6 +132,15 @@ describe("featuresRoutes", () => {
         },
       ],
       subclassFeatures: [
+        { ...totem("Totem Spirit", "PHB"), choose: 1 },
+        ...[
+          ["Bear", "PHB"],
+          ["Elk", "SCAG"],
+        ].map(([name = "", source = ""]) => ({
+          ...totem(name, source),
+          offered_by_name: "Totem Spirit",
+          offered_by_source: "PHB",
+        })),
         {
           name: "Improved Critical",
           source: "PHB",
@@ -284,6 +314,77 @@ describe("featuresRoutes", () => {
       "Improved Critical",
       "Tactical Variant",
     ]);
+  });
+
+  describe("a feature that offers a choice of features", () => {
+    const totemSpirit = {
+      name: "Totem Spirit",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    };
+    const barbarian = (featureChoices: CharacterDefinition["featureChoices"]) =>
+      definitionWith({
+        levels: [
+          { class: BARBARIAN },
+          { class: BARBARIAN },
+          { class: BARBARIAN, subclass: TOTEM_WARRIOR },
+        ],
+        featureChoices,
+      });
+    const totemFeatures = async () =>
+      (await features()).groups.find(({ origin }) => origin === "subclass")?.features;
+
+    it("lists the option taken right after its feature, and leaves out the rest", async () => {
+      store(barbarian([{ feature: totemSpirit, options: [{ name: "Elk", source: "SCAG" }] }]));
+
+      expect((await totemFeatures())?.map(({ name, source }) => [name, source])).toEqual([
+        ["Totem Spirit", "PHB"],
+        ["Elk", "SCAG"],
+      ]);
+    });
+
+    it("carries what the feature offers, so the sheet can change the choice", async () => {
+      store(barbarian([]));
+
+      expect(await totemFeatures()).toEqual([
+        {
+          resolved: true,
+          name: "Totem Spirit",
+          source: "PHB",
+          level: 3,
+          entries: ["Totem Spirit text."],
+          choice: {
+            feature: totemSpirit,
+            count: 1,
+            options: [
+              { name: "Bear", source: "PHB" },
+              { name: "Elk", source: "SCAG" },
+            ],
+          },
+        },
+      ]);
+    });
+
+    it("applies a choice only to the feature whose whole key it names", async () => {
+      const elsewhere = { ...totemSpirit, level: 6 };
+      store(barbarian([{ feature: elsewhere, options: [{ name: "Bear", source: "PHB" }] }]));
+
+      expect((await totemFeatures())?.map(({ name }) => name)).toEqual(["Totem Spirit"]);
+    });
+
+    it("marks a stored option the feature no longer offers rather than dropping it", async () => {
+      store(barbarian([{ feature: totemSpirit, options: [{ name: "Owl", source: "PHB" }] }]));
+
+      expect((await totemFeatures())?.find(({ resolved }) => !resolved)).toEqual({
+        resolved: false,
+        name: "Owl",
+        source: "PHB",
+        level: 3,
+      });
+    });
   });
 
   it("marks a reference that resolves to nothing rather than dropping it", async () => {

@@ -62,6 +62,11 @@ function toFeatureRecord(row: ClassFeatureRow): ClassFeatureRecord {
     source: row.source,
     level: row.level,
     json: JSON.parse(row.json),
+    choose: row.choose ?? undefined,
+    offeredBy:
+      row.offered_by_name === null || row.offered_by_source === null
+        ? undefined
+        : { name: row.offered_by_name, source: row.offered_by_source },
   });
 }
 
