@@ -3,16 +3,19 @@ import { renamedAt } from "../../../../lib/renamed.ts";
 import { ListRow } from "../../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../../NotFoundTag.tsx";
 import { ItemMarks } from "./ItemMarks.tsx";
+import { RemoveItemButton } from "./RemoveItemButton.tsx";
 
 /** `index` is the item's place in the definition, which names its field in the report. */
 export function UnresolvedItemRow({
   item,
   index,
   characterId,
+  onRemove,
 }: {
   item: Extract<SheetItem, { resolved: false }>;
   index: number;
   characterId: string;
+  onRemove: () => void;
 }) {
   const variant = item.variant ? `, as ${item.variant.name} (${item.variant.source})` : "";
   return (
@@ -29,6 +32,7 @@ export function UnresolvedItemRow({
           />
         </>
       }
+      remove={<RemoveItemButton name={item.name} onRemove={onRemove} />}
     />
   );
 }

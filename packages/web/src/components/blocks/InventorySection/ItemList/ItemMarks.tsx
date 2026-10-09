@@ -6,7 +6,6 @@ export function ItemMarks({ item }: { item: SheetItem }) {
     <>
       {item.equipped && <Tag>Equipped</Tag>}
       {item.attuned && <Tag>Attuned</Tag>}
-      {item.resolved && item.requiresAttunement && !item.attuned && <Tag>Requires attunement</Tag>}
       {!item.carried && <Tag>Not carried</Tag>}
     </>
   );

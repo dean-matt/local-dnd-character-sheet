@@ -1,0 +1,98 @@
+import { itemRecordSchema, type SearchHit } from "@dnd/catalog";
+import type { CharacterRecord, ContentRef } from "@dnd/character";
+import { useState } from "react";
+import { apiGet } from "../../../../lib/api.ts";
+import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
+import type { InventoryEntry } from "./editInventoryEntry.ts";
+
+interface PendingVariant {
+  ref: ContentRef;
+  kinds: string[];
+}
+
+const path = (...parts: string[]) => `/items/${parts.map(encodeURIComponent).join("/")}`;
+
+function baseRefusal(hit: SearchHit): string | undefined {
+  if ("id" in hit) return "A magic variant takes a catalog base item";
+  return hit.item?.variant ? "Another magic variant, not a base item" : undefined;
+}
+
+/**
+ * Adds any catalog or homebrew item. A magic variant asks for its base item next, offering
+ * the kinds the variant reaches, and saves the pair once `/items` expands it — a pair the
+ * variant refuses says why and saves nothing.
+ */
+export function AddItemField({
+  edition,
+  onAdd,
+}: {
+  edition: CharacterRecord["edition"];
+  onAdd: (entry: Pick<InventoryEntry, "ref" | "variant">) => void;
+}) {
+  const [variant, setVariant] = useState<PendingVariant>();
+  const [refusal, setRefusal] = useState<string>();
+
+  if (!variant) {
+    return (
+      <CatalogPicker
+        label="Add an item"
+        edition={edition}
+        type="item"
+        onPick={(ref, hit) => {
+          if ("name" in ref && hit.item?.variant) setVariant({ ref, kinds: hit.item.kinds });
+          else onAdd({ ref });
+        }}
+      />
+    );
+  }
+
+  async function pickBase(base: ContentRef, name: string) {
+    if (!variant) return;
+    setRefusal(undefined);
+    try {
+      await apiGet(
+        path(base.name, base.source, "variants", variant.ref.name, variant.ref.source),
+        itemRecordSchema,
+      );
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "It could not be checked";
+      setRefusal(`${name} cannot take ${variant.ref.name}. ${reason}.`);
+      return;
+    }
+    onAdd({ ref: base, variant: variant.ref });
+    setVariant(undefined);
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <CatalogPicker
+            label={`Base item for ${variant.ref.name}`}
+            edition={edition}
+            type="item"
+            filters={{ kind: variant.kinds.join(",") }}
+            unavailableReason={baseRefusal}
+            onPick={(ref, hit) => "name" in ref && pickBase(ref, hit.name)}
+            focusOnMount
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setVariant(undefined);
+            setRefusal(undefined);
+          }}
+          className="rounded-control border border-border bg-surface px-2 py-1 text-row"
+        >
+          Cancel
+        </button>
+      </div>
+      {refusal && (
+        <p role="alert" className="text-error text-row">
+          {refusal}
+        </p>
+      )}
+    </div>
+  );
+}

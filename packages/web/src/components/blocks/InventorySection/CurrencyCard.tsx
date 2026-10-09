@@ -1,5 +1,7 @@
-import type { CharacterDefinition } from "@dnd/character";
+import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
+import { Field } from "../../Field/Field.tsx";
 
 const COINS = [
   ["platinum", "Platinum (pp)"],
@@ -9,21 +11,39 @@ const COINS = [
   ["copper", "Copper (cp)"],
 ] as const;
 
-export function CurrencyCard({ money }: { money: CharacterDefinition["money"] }) {
+const coinShape = characterDefinitionSchema.shape.money.unwrap().shape;
+
+export function CurrencyCard({
+  characterId,
+  money,
+}: {
+  characterId: string;
+  money: CharacterDefinition["money"];
+}) {
+  const update = useUpdateCharacterDefinition(characterId);
   return (
     <Card title="Currency">
-      <dl className="flex flex-wrap items-end gap-x-5 gap-y-3">
+      <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
         {COINS.map(([coin, label]) => (
-          <div key={coin}>
-            <dt className="mb-1 font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
-              {label}
-            </dt>
-            <dd className="min-w-[70px] rounded-control border border-border bg-subtle px-2 py-1.5 text-body">
-              {money[coin].toLocaleString("en-US")}
-            </dd>
-          </div>
+          <Field
+            key={coin}
+            mode="edit"
+            label={label}
+            inputMode="numeric"
+            inputClassName="w-[70px] bg-subtle"
+            current={money[coin]}
+            format={String}
+            parse={(raw) => Number(raw.trim().replaceAll(",", ""))}
+            schema={coinShape[coin].unwrap()}
+            onSave={async (amount: number) => {
+              await update.mutateAsync((latest) => ({
+                ...latest,
+                money: { ...latest.money, [coin]: amount },
+              }));
+            }}
+          />
         ))}
-      </dl>
+      </div>
     </Card>
   );
 }

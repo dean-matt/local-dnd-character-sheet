@@ -178,15 +178,15 @@ describe("InventorySection", () => {
     renderSection();
 
     await screen.findByText("+1 Longsword");
-    expect(row("+1 Longsword")).toHaveTextContent("Equipped");
+    const pressed = (name: string) => screen.getByRole("button", { name }).ariaPressed;
+    expect(pressed("Equipped, +1 Longsword")).toBe("true");
     expect(row("+1 Longsword")).toHaveTextContent("Uncommon");
-    expect(row("+1 Longsword")).not.toHaveTextContent("Attuned");
-    expect(row("Cloak of Protection")).toHaveTextContent("Attuned");
-    expect(row("Cloak of Protection")).not.toHaveTextContent("Requires attunement");
-    expect(row("Ring of Warmth")).toHaveTextContent("Requires attunement");
+    expect(within(row("+1 Longsword")).queryByRole("button", { name: /^Attuned/ })).toBeNull();
+    expect(pressed("Attuned, Cloak of Protection")).toBe("true");
+    expect(pressed("Attuned, Ring of Warmth")).toBe("false");
     expect(row("Ring of Warmth")).toHaveTextContent("Not carried");
     expect(row("Ring of Warmth")).toHaveTextContent("Unknown (magic)");
-    expect(row("Arrow")).toHaveTextContent("×20");
+    expect(screen.getByRole("textbox", { name: "Arrow quantity" })).toHaveValue("20");
     expect(row("Arrow")).toHaveTextContent("Weight: 1 lb");
     expect(row("Arrow")).not.toHaveTextContent("none");
   });
@@ -254,7 +254,7 @@ describe("InventorySection", () => {
     const net = (await screen.findByText("Net, as +1 Weapon (DMG)")).closest("li") as HTMLElement;
     expect(net).toHaveTextContent("PHB");
     expect(net).toHaveTextContent("Not found in the catalog");
-    expect(within(net).queryByRole("button")).toBeNull();
+    expect(within(net).queryByRole("button", { name: /^Net/ })).toBeNull();
   });
 
   it("names the variant a renamed one became", async () => {
@@ -340,16 +340,28 @@ describe("InventorySection", () => {
     renderSection();
 
     const currency = card("Currency");
-    expect(currency.getAllByRole("term").map((term) => term.textContent)).toEqual([
-      "Platinum (pp)",
-      "Gold (gp)",
-      "Electrum (ep)",
-      "Silver (sp)",
-      "Copper (cp)",
-    ]);
-    expect(currency.getByText("Gold (gp)").nextSibling).toHaveTextContent("1,250");
-    expect(currency.getByText("Silver (sp)").nextSibling).toHaveTextContent("3");
-    expect(currency.getByText("Platinum (pp)").nextSibling).toHaveTextContent("0");
+    expect(
+      currency
+        .getAllByRole("textbox")
+        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
+    ).toEqual(["Platinum (pp)", "Gold (gp)", "Electrum (ep)", "Silver (sp)", "Copper (cp)"]);
+    expect(currency.getByRole("textbox", { name: "Gold (gp)" })).toHaveValue("1250");
+    expect(currency.getByRole("textbox", { name: "Silver (sp)" })).toHaveValue("3");
+    expect(currency.getByRole("textbox", { name: "Platinum (pp)" })).toHaveValue("0");
+  });
+
+  it("writes an edited coin into the definition", async () => {
+    const fetchMock = renderSection();
+
+    const gold = card("Currency").getByRole("textbox", { name: "Gold (gp)" });
+    fireEvent.change(gold, { target: { value: "1,300" } });
+    fireEvent.blur(gold);
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/characters/1", expect.anything()),
+    );
+    const init = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1")?.[1];
+    expect(JSON.parse(String(init?.body)).money).toMatchObject({ gold: 1300, silver: 3 });
   });
 
   it("still lists items and coins where the derived block failed", async () => {
@@ -449,7 +461,7 @@ describe("InventorySection", () => {
 
       const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
       fireEvent.click(grip.getByRole("button", { name: "2h, two-handed" }));
-      expect(await screen.findByRole("alert")).toHaveTextContent("The grip was not saved");
+      expect(await screen.findByRole("alert")).toHaveTextContent("The change was not saved");
     });
   });
 
