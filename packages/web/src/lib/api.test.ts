@@ -93,4 +93,10 @@ describe("apiDelete", () => {
     stubFetch(new Response(JSON.stringify({ error: "no widget with that id" }), { status: 404 }));
     await expect(apiDelete("/widgets/1")).rejects.toMatchObject({ status: 404 });
   });
+
+  it("keeps the failure's whole body beside its message", async () => {
+    const body = { error: "in use", characters: [{ id: "c1", name: "Vex" }] };
+    stubFetch(new Response(JSON.stringify(body), { status: 409 }));
+    await expect(apiDelete("/widgets/1")).rejects.toMatchObject({ message: "in use", body });
+  });
 });

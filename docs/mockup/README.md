@@ -178,14 +178,10 @@ widget, panel, or nav element:
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search; Top Bar Navigation's global search is the one place that already spans both
   characters and a sample compendium.
-- Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size), Homebrew
-  Weapons, Homebrew Armor, Homebrew Gear, Homebrew Spells (one artboard per category, each pasting the entry's
-  5etools-shaped JSON and showing the same chips — damage die, AC, category, spell
-  level/school — its real counterpart widget does).
-- Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats follow the same
-  paste-and-parse shape as the four shipped Homebrew artboards above, but nothing behind
-  them exists yet — `homebrew.db` only reaches items and spells today. They're forward
-  design for #306, #307, #308, and #309, not a page a build currently renders.
+- Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size).
+- Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats each paste the
+  entry's 5etools-shaped JSON, the shape the app's Homebrew settings page already takes for
+  items and spells. They're forward design for #489, not a page a build currently renders.
 - Overlays: Confirm Dialog, Add Widget Picker.
 - Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
   with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own
@@ -248,9 +244,6 @@ Simplifications specific to these widgets:
   so both the allowed and the proficiency-blocked equip states show up.
 - Race and Background pick from a small fixed sample list, not the real catalog; Class
   is multi-select (chips, each with its own level) to cover multiclassing.
-- Homebrew items and spells edit by replacing the whole pasted entry, per
-  `docs/data-model.md`'s rule that homebrew rows are written once and never edited field
-  by field — there's no per-field form.
 
 ## Known gaps
 
@@ -321,11 +314,7 @@ says how much of the artboard the app builds today.
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452 | the Character menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
-| `SettingsSidebar` | #243, #486, #489 | Display and Sources |
-| `HomebrewWeapons` | #243 | nothing |
-| `HomebrewArmor` | #243 | nothing |
-| `HomebrewGear` | #243 | nothing |
-| `HomebrewSpells` | #243 | nothing |
+| `SettingsSidebar` | #486, #489 | Display, Homebrew and Sources |
 | `HomebrewRaces` | #489 | nothing |
 | `HomebrewClasses` | #489 | nothing |
 | `HomebrewBackgrounds` | #489 | nothing |
@@ -335,7 +324,7 @@ says how much of the artboard the app builds today.
 | `CharacterList` | #233, #391, #395 | all but the portraits |
 | `CreationClass` | #233, #235, #240, #604 | all, with a typed gain per level for its one typed total |
 | `ConfirmDialog` | #241, #242 | nothing |
-| `ListItem` | #229, #230, #231, #243, #279, #398 | read-only |
+| `ListItem` | #229, #230, #231, #279, #398 | read-only |
 
 ## Changing a mockup
 

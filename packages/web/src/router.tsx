@@ -7,6 +7,7 @@ import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { ContentLayout } from "./routes/ContentLayout.tsx";
 import { CreationFlow } from "./routes/CreationFlow/CreationFlow.tsx";
 import { DisplaySettings } from "./routes/DisplaySettings.tsx";
+import { HomebrewSettings } from "./routes/HomebrewSettings/HomebrewSettings.tsx";
 import { HomePage } from "./routes/HomePage/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
@@ -42,6 +43,7 @@ export const routeConfig: RouteObject[] = [
         children: [
           { index: true, element: <DisplaySettings /> },
           { path: "sources", element: <SourcesSettings /> },
+          { path: "homebrew", element: <HomebrewSettings /> },
         ],
       },
     ],
