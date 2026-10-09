@@ -95,6 +95,25 @@ describe("HomebrewSettings", () => {
     expect(await within(spells()).findByText("No homebrew spells yet.")).toBeInTheDocument();
   });
 
+  it("chips a spell row with its level, school, concentration and ritual", async () => {
+    const light = {
+      id: "s2",
+      name: "Glimmer",
+      edition: "one",
+      level: 0,
+      school: "V",
+      concentration: true,
+      ritual: true,
+      json: { ...ward, name: "Glimmer", level: 0, school: "V", source: "HB" },
+      createdAt: CREATED_AT,
+    };
+    stubApi({ spells: [light] });
+    renderPage();
+
+    const row = (await within(spells()).findByText("Glimmer")).closest("li");
+    expect(row).toHaveTextContent(/Cantrip.*Evocation.*Concentration.*Ritual/);
+  });
+
   it("names the field a rejected value sits in, and sends nothing", async () => {
     const fetchMock = stubApi({});
     renderPage();
@@ -167,8 +186,11 @@ describe("HomebrewSettings", () => {
     const fetchMock = stubApi({ items: [sunblade] }, [{ status: 200, body: sunblade }]);
     renderPage();
 
-    fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+    const edit = await within(items()).findByRole("button", { name: "Edit Sunblade" });
+    edit.focus();
+    fireEvent.click(edit);
     const box = within(items()).getByRole("textbox", { name: "Item JSON" });
+    expect(box).toHaveFocus();
     const { source: _source, ...entry } = sunblade.json;
     expect(JSON.parse((box as HTMLTextAreaElement).value)).toEqual(entry);
     fireEvent.click(within(items()).getByRole("button", { name: "Save" }));
@@ -178,6 +200,7 @@ describe("HomebrewSettings", () => {
         { url: "/api/homebrew/items/i1", method: "PUT", body: { ...entry, edition: "one" } },
       ]),
     );
+    await waitFor(() => expect(edit).toHaveFocus());
   });
 
   it("says why a save failed, such as a name another row holds", async () => {

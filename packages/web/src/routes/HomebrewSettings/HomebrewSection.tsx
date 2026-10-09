@@ -1,5 +1,5 @@
 import { Pencil, Plus, X } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { ListRow } from "../../components/ListRow/ListRow.tsx";
 import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
@@ -26,10 +26,20 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
   const rows = list.data ?? [];
   const edited = rows.find((row) => row.id === editing);
 
+  const opener = useRef<HTMLElement | null>(null);
+
   const openEditor = (next: string | undefined) => {
+    if (next !== undefined && document.activeElement instanceof HTMLElement) {
+      opener.current = document.activeElement;
+    }
     save.reset();
     setEditing(next);
   };
+
+  // Runs after the editor unmounts with focus inside it, which would leave focus on the body.
+  useEffect(() => {
+    if (editing === undefined && opener.current?.isConnected) opener.current.focus();
+  }, [editing]);
   const closeDelete = () => {
     remove.reset();
     setDeleting(undefined);

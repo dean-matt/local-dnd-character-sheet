@@ -1,5 +1,5 @@
 import type { CharacterRecord } from "@dnd/character";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { Select } from "../../components/Select.tsx";
@@ -49,6 +49,11 @@ export function HomebrewEditor({
   const [text, setText] = useState(() => editableText(record));
   const [edition, setEdition] = useState<Edition>(record?.edition ?? "one");
   const [tried, setTried] = useState(false);
+  const box = useRef<HTMLTextAreaElement>(null);
+  // The editor mounts below the whole list, so a keyboard user would otherwise tab past it.
+  useEffect(() => {
+    box.current?.focus();
+  }, []);
   const id = useId();
   const draft = readHomebrewDraft(text, edition, kind.inputSchema);
   const settled = readHomebrewDraft(useDebounce(text, PREVIEW_DELAY_MS), edition, kind.inputSchema);
@@ -104,6 +109,7 @@ export function HomebrewEditor({
         {(control) => (
           <textarea
             {...control}
+            ref={box}
             value={text}
             onChange={(event) => setText(event.target.value)}
             placeholder={kind.placeholder}
