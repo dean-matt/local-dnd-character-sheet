@@ -299,7 +299,7 @@ export const characterDefinitionSchema = z.strictObject({
     ),
   /**
    * How the character advances: by experience points, or by milestone, when the DM says.
-   * Absent reads as experience, the rule as printed. A milestone character keeps its
+   * Absent reads as experience. A milestone character keeps its
    * stored total, so switching back restores it.
    */
   leveling: z.enum(LEVELING_MODES).default("xp"),
