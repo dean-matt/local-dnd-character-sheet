@@ -41,8 +41,22 @@ export function itemGroup(type: unknown): ItemGroup {
 
 /** The fields only an item of a group carries, dropped when its type leaves that group. */
 export const GROUP_FIELDS: Record<ItemGroup, string[]> = {
-  weapon: ["weaponCategory", "baseItem", "property", "dmg1", "dmg2", "dmgType", "bonusWeapon"],
-  armor: ["ac", "bonusAc"],
+  weapon: [
+    "weaponCategory",
+    "baseItem",
+    "property",
+    "dmg1",
+    "dmg2",
+    "dmgType",
+    "bonusWeapon",
+    "bonusWeaponAttack",
+    "bonusWeaponDamage",
+    "range",
+    "reload",
+    "ammoType",
+    "mastery",
+  ],
+  armor: ["ac", "bonusAc", "strength", "stealth"],
   gear: [],
 };
 

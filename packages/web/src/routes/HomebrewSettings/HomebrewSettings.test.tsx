@@ -174,6 +174,7 @@ describe("HomebrewSettings", () => {
     expect(entry).toMatchObject({ type: "S", name: "Sunfire Blade", rarity: "rare" });
     expect(entry).not.toHaveProperty("dmg1");
     expect(entry).not.toHaveProperty("weaponCategory");
+    expect(entry).not.toHaveProperty("bonusWeapon");
   });
 
   it("offers no example to pick for a spell or a row being edited", async () => {
@@ -315,6 +316,8 @@ describe("HomebrewSettings", () => {
       target: { value: "15" },
     });
     pick("Area", "Cone");
+    pick("Range", "Miles");
+    pick("Range", "Feet");
     pick("Duration", "Timed");
     pick("Duration", "Instantaneous");
     pick("Duration", "Timed");
@@ -334,6 +337,43 @@ describe("HomebrewSettings", () => {
         { type: "entries", name: "Using a Higher-Level Spell Slot", entries: ["More cold."] },
       ],
     });
+  });
+
+  it("keeps a casting time's trigger, and the rest of the entry's spans, through a cleared number", async () => {
+    const shield = {
+      ...ward,
+      time: [
+        { number: 1, unit: "reaction", condition: "when you are hit" },
+        { number: 1, unit: "minute" },
+      ],
+      meta: { ritual: true },
+      entriesHigherLevel: [
+        { type: "entries", name: "Using a Higher-Level Spell Slot", entries: ["More."] },
+      ],
+    };
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
+    fireEvent.change(within(spells()).getByRole("textbox", { name: "Spell JSON" }), {
+      target: { value: JSON.stringify(shield) },
+    });
+    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as form" }));
+    const time = within(spells()).getByRole("spinbutton", { name: "Casting time" });
+    fireEvent.change(time, { target: { value: "" } });
+    fireEvent.change(time, { target: { value: "1" } });
+    fireEvent.click(within(spells()).getByRole("checkbox", { name: "Ritual" }));
+    fireEvent.click(within(spells()).getByRole("combobox", { name: "Rules" }));
+    fireEvent.click(screen.getByRole("option", { name: "2014" }));
+    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
+
+    const entry = JSON.parse(
+      (within(spells()).getByRole("textbox", { name: "Spell JSON" }) as HTMLTextAreaElement).value,
+    );
+    expect(entry.time).toEqual(shield.time);
+    expect(entry).not.toHaveProperty("meta");
+    expect(entry.entriesHigherLevel[0].name).toBe("At Higher Levels");
   });
 
   it("edits a row in place, starting from its entry without the stamped source", async () => {

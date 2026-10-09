@@ -29,6 +29,7 @@ import {
   RANGE_SHAPES,
   SPELL_LEVELS,
 } from "./homebrewVocabulary.ts";
+import { upcastSection, upcastText } from "./spellUpcast.ts";
 
 const GRID = "grid gap-3 sm:grid-cols-2";
 const SCHOOL_OPTIONS = Object.entries(SCHOOLS).map(([value, label]) => ({ value, label }));
@@ -38,19 +39,6 @@ const DISTANCES = new Set(["feet", "miles"]);
 function withKey(record: Record<string, unknown>, key: string, value: unknown) {
   const next = withField(record, key, value);
   return Object.keys(next).length > 0 ? next : undefined;
-}
-
-/** The section heading upstream gives upcast text in each edition. */
-const HIGHER_LEVEL_NAME = { classic: "At Higher Levels", one: "Using a Higher-Level Spell Slot" };
-
-/**
- * The upcast text as paragraphs, where it is the one named section of plain paragraphs
- * upstream writes; `undefined` for anything else, which the form leaves to the JSON view.
- */
-function higherLevelText(value: unknown): string | undefined {
-  if (value === undefined) return "";
-  if (!Array.isArray(value) || value.length !== 1 || !isRecord(value[0])) return undefined;
-  return paragraphsOf(value[0].entries);
 }
 
 /**
@@ -75,8 +63,7 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
   const meta = recordAt(entry, "meta");
   const higher = listAt(entry, "entriesHigherLevel")[0];
 
-  const setTime = (next: Record<string, unknown>) =>
-    set("time", next.number === undefined ? undefined : [next, ...moreTimes]);
+  const setTime = (next: Record<string, unknown>) => set("time", [next, ...moreTimes]);
   const setSpan = (next: Record<string, unknown> | undefined) =>
     set("duration", next === undefined ? undefined : [next, ...moreSpans]);
   const setRange = (kind: string, amount: unknown, shape: string) => {
@@ -126,7 +113,9 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
             min={1}
             value={numberAt(time.number) ?? ""}
             onChange={(event) =>
-              setTime({ unit: "action", ...time, number: typedNumber(event.target.value) })
+              setTime(
+                withField({ unit: "action", ...time }, "number", typedNumber(event.target.value)),
+              )
             }
           />
           <FormField label="Unit">
@@ -146,7 +135,13 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
               {...control}
               options={RANGE_KINDS}
               value={rangeKind}
-              onChange={(next) => setRange(next, distance.amount, "point")}
+              onChange={(next) =>
+                setRange(
+                  next,
+                  distance.amount,
+                  range.type === "special" ? "point" : textAt(range, "type") || "point",
+                )
+              }
             />
           )}
         </FormField>
@@ -264,7 +259,7 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
         <HomebrewCheckbox
           label="Ritual"
           checked={meta.ritual === true}
-          onChange={(checked) => set("meta", { ...meta, ritual: checked })}
+          onChange={(checked) => set("meta", withKey(meta, "ritual", checked || undefined))}
           error={errorFor("meta")}
         />
       </div>
@@ -285,20 +280,10 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
       />
       <HomebrewRulesText
         label="At higher levels"
-        text={higherLevelText(entry.entriesHigherLevel)}
+        text={upcastText(entry.entriesHigherLevel)}
         onText={(next) => {
           const paragraphs = entriesOf(next);
-          const name = isRecord(higher) && typeof higher.name === "string" ? higher.name : null;
-          set(
-            "entriesHigherLevel",
-            paragraphs && [
-              {
-                ...(isRecord(higher) ? higher : { type: "entries" }),
-                name: name ?? HIGHER_LEVEL_NAME[edition],
-                entries: paragraphs,
-              },
-            ],
-          );
+          set("entriesHigherLevel", paragraphs && [upcastSection(higher, paragraphs, edition)]);
         }}
         preview={previewOf(entry.entriesHigherLevel)}
       />

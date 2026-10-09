@@ -15,6 +15,7 @@ import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
 import { ItemForm } from "./ItemForm.tsx";
 import { SpellForm } from "./SpellForm.tsx";
+import { withUpcastNameFor } from "./spellUpcast.ts";
 
 /** What every homebrew record carries, whichever kind it is. */
 export interface HomebrewRow {
@@ -38,6 +39,11 @@ export interface HomebrewKind<R extends HomebrewRow = HomebrewRow> {
   Form: ComponentType<HomebrewFormProps>;
   /** The top-level fields `Form` shows a problem beside; the editor lists any other problem itself. */
   formKeys: string[];
+  /** The entry as the edition picked next would write it, where an edition changes how it reads. */
+  forEdition?(
+    entry: Record<string, unknown>,
+    edition: CharacterRecord["edition"],
+  ): Record<string, unknown>;
 }
 
 const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>> = {
@@ -66,6 +72,7 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>> = {
   ],
   starters: SPELL_STARTERS,
   Form: SpellForm,
+  forEdition: withUpcastNameFor,
   formKeys: ["name", "level", "school", "duration", "meta", "entries"],
 };
 

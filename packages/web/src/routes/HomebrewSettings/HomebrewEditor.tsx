@@ -115,7 +115,12 @@ export function HomebrewEditor({
                 {...control}
                 options={EDITIONS}
                 value={edition}
-                onChange={(next) => setEdition(next as Edition)}
+                onChange={(next) => {
+                  setEdition(next as Edition);
+                  const renamed =
+                    "entry" in parsed && kind.forEdition?.(parsed.entry, next as Edition);
+                  if (renamed && renamed !== parsed.entry) replace(renamed);
+                }}
               />
             )}
           </FormField>
