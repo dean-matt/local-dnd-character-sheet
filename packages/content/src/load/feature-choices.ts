@@ -19,9 +19,8 @@ const REF_FIELDS = { refClassFeature: "classFeature", refSubclassFeature: "subcl
 
 /**
  * The choices upstream writes in prose alone, as an options block with no `count`, keyed
- * by subclass short name and source, then feature name and source. A feature with
- * `follows` asks nothing: it takes the option whose name matches the one chosen for the
- * feature it names, so a Storm Herald chooses an environment once, at Storm Aura.
+ * by subclass short name and source, then feature name and source. `schema.ts` says what
+ * `follows` means.
  */
 const UNCOUNTED_CHOICES: Record<string, { follows?: { name: string; source: string } }> = {
   "Storm Herald|XGE|Storm Aura|XGE": {},

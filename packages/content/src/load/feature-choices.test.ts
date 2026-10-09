@@ -186,6 +186,20 @@ describe("the features that offer a choice of features", () => {
     );
   });
 
+  it("refuses Storm Aura once its options block is gone", () => {
+    expect(
+      refusal(vendorHolding("class-barbarian.json", stormHerald({ type: "entries" }))),
+    ).toMatch(/Storm Aura: names no options block without a count/);
+  });
+
+  it("refuses a follower whose choice is missing", () => {
+    const vendor = stormHerald({});
+    vendor.subclassFeature = vendor.subclassFeature.filter(({ level }) => level !== 3);
+    expect(refusal(vendorHolding("class-barbarian.json", vendor))).toMatch(
+      /Storm Soul: follows Storm Aura, a choice found 0 times/,
+    );
+  });
+
   it("refuses a following option the choice it follows does not offer", () => {
     expect(
       refusal(vendorHolding("class-barbarian.json", stormHerald({}, ["Desert", "Storm"]))),
