@@ -31,7 +31,8 @@ export type CatalogKind = (typeof CATALOG_KINDS)[number];
  * One `(name, source)` and where the character holds it, as a path into the definition
  * such as `spells[2].ref`, or into the state for `conditions[0]`. `parent` is the rest of
  * a subclass's or a subrace's key, or the base item a magic variant expands, and
- * `pantheon` the rest of a deity's.
+ * `pantheon` the rest of a deity's. `overridden` marks a variant the table holds on a base
+ * item that refuses it.
  */
 export type CatalogReference = {
   field: string;
@@ -39,6 +40,7 @@ export type CatalogReference = {
   ref: ContentRef;
   parent?: ContentRef;
   pantheon?: string;
+  overridden?: true;
 };
 
 const catalog = (ref: EntryRef | undefined): ContentRef | undefined =>
@@ -67,11 +69,23 @@ export function catalogReferences(
   state: CharacterState,
 ): CatalogReference[] {
   const found: CatalogReference[] = [];
-  const add = (field: string, kind: CatalogKind, ref: EntryRef | undefined, parent?: EntryRef) => {
+  const add = (
+    field: string,
+    kind: CatalogKind,
+    ref: EntryRef | undefined,
+    parent?: EntryRef,
+    overridden?: true,
+  ) => {
     const own = catalog(ref);
     const key = catalog(parent);
     if (!own || (parent !== undefined && !key)) return;
-    found.push({ field, kind, ref: own, ...(key && { parent: key }) });
+    found.push({
+      field,
+      kind,
+      ref: own,
+      ...(key && { parent: key }),
+      ...(overridden && { overridden }),
+    });
   };
   const grantor = (field: string, by: Grantor | undefined) => {
     if (!by) return;
@@ -101,7 +115,13 @@ export function catalogReferences(
   });
   definition.inventory.forEach((entry, i) => {
     add(`inventory[${i}].ref`, "item", entry.ref);
-    add(`inventory[${i}].variant`, "item", entry.variant, entry.ref);
+    add(
+      `inventory[${i}].variant`,
+      "item",
+      entry.variant,
+      entry.ref,
+      entry.variantOverride === undefined ? undefined : true,
+    );
   });
   definition.spells.forEach((entry, i) => {
     add(`spells[${i}].ref`, "spell", entry.ref);

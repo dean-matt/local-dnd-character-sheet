@@ -78,6 +78,32 @@ const REVOLVER = {
   json: JSON.stringify({ name: "Revolver", source: "DMG", weapon: true }),
 };
 
+const armor = (name: string, type: string) => ({
+  name,
+  source: "DMG",
+  edition: "classic",
+  kind: "baseitem",
+  type,
+  rarity: null,
+  requires_attunement: 0 as const,
+  json: JSON.stringify({ name, source: "DMG", type, armor: true }),
+});
+
+const MIND_CARAPACE = {
+  name: "Mind Carapace",
+  source: "VGM",
+  edition: "classic",
+  kind: "magicvariant",
+  type: null,
+  rarity: "uncommon",
+  requires_attunement: 0 as const,
+  json: JSON.stringify({
+    name: "Mind Carapace",
+    requires: [{ type: "HA" }],
+    inherits: { nameSuffix: " of Mind Carapace", source: "VGM", rarity: "uncommon" },
+  }),
+};
+
 const DEMON_ARMOR_ONE = {
   name: "Demon Armor",
   source: "XDMG",
@@ -192,7 +218,16 @@ describe("itemsRoutes", () => {
 
     beforeAll(() => {
       variantDataDir = mkdtempSync(join(tmpdir(), "items-routes-variants-"));
-      publishItems(variantDataDir, [LONGSWORD, NET, PLUS_ONE_WEAPON, ADAMANTINE_WEAPON, REVOLVER]);
+      publishItems(variantDataDir, [
+        LONGSWORD,
+        NET,
+        PLUS_ONE_WEAPON,
+        ADAMANTINE_WEAPON,
+        REVOLVER,
+        armor("Half Plate", "MA"),
+        armor("Plate", "HA"),
+        MIND_CARAPACE,
+      ]);
     });
 
     afterAll(() => {
@@ -239,6 +274,22 @@ describe("itemsRoutes", () => {
       expect(await res.json()).toEqual({
         error: "This base item does not meet the variant's requirements",
       });
+    });
+
+    it("expands a refused pair only when the caller asks to override it", async () => {
+      const path = "/items/Half%20Plate/DMG/variants/Mind%20Carapace/VGM";
+      expect((await variantRoutes.request(path)).status).toBe(409);
+      expect((await variantRoutes.request(`${path}?override=false`)).status).toBe(409);
+      const res = await variantRoutes.request(`${path}?override=true`);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ name: "Half Plate of Mind Carapace" });
+    });
+
+    it("keeps a weapon variant off armor even when asked to override", async () => {
+      const res = await variantRoutes.request(
+        "/items/Half%20Plate/DMG/variants/%2B1%20Weapon/DMG?override=true",
+      );
+      expect(res.status).toBe(409);
     });
 
     it("expands a base item with no value into an item with none, rather than crashing", async () => {

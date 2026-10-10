@@ -71,6 +71,8 @@ const sheetItemSchema = z.discriminatedUnion("resolved", [
     weapon: weaponFactsSchema.nullable(),
     armor: armorFactsSchema.nullable(),
     entries: entriesSchema,
+    /** The refusal a table overrode to hold this variant on this base item. */
+    overridden: z.string().min(1).optional(),
   }),
   z.strictObject({
     resolved: z.literal(false),

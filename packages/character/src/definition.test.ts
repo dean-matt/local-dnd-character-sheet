@@ -707,6 +707,19 @@ describe("inventory", () => {
     expect(stored.inventory[0]?.variant).toEqual({ name: "+1 Weapon", source: "XDMG" });
   });
 
+  it("keeps the reason a table held a variant against the rules, and needs a variant for it", () => {
+    const entry = { ref: { name: "Half Plate Armor", source: "XPHB" } };
+    const variant = { name: "Mind Carapace Armor", source: "VGM" };
+    const parse = (item: object) =>
+      characterDefinitionSchema.safeParse({ ...structuredClone(definition), inventory: [item] });
+    const reason = "Half Plate Armor cannot take Mind Carapace Armor.";
+    expect(parse({ ...entry, variant, variantOverride: reason }).data?.inventory[0]).toMatchObject({
+      variantOverride: reason,
+    });
+    expect(parse({ ...entry, variantOverride: reason }).success).toBe(false);
+    expect(parse({ ...entry, variant }).data?.inventory[0]).not.toHaveProperty("variantOverride");
+  });
+
   it("rejects a variant paired with a homebrew ref, which carries no field for inherits to read", () => {
     const homebrewVariant = {
       ...structuredClone(definition),

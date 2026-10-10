@@ -72,7 +72,7 @@ export function ItemList({
         writing.current -= 1;
       });
   };
-  const add = (entry: Pick<InventoryEntry, "ref" | "variant">) =>
+  const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
     update.mutate((latest) => ({
       ...latest,
       inventory: [

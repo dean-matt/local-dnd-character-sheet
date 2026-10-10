@@ -113,6 +113,14 @@ function expansion(status: number) {
   });
 }
 
+function variantReply(url: string, variantStatus: number, overrideStatus: number) {
+  const [path, query] = url.split("?");
+  if (path !== "/api/items/Dagger/XPHB/variants/%2B1%20Weapon/XDMG") {
+    return json({ error: `nothing at ${url}` }, 404);
+  }
+  return expansion(query === "override=true" ? overrideStatus : variantStatus);
+}
+
 /**
  * Answers the character, its inventory, a search for "+1" or a base item, and a variant's
  * expansion. `refetch: false` holds every inventory read after the first, as a slow
@@ -123,11 +131,13 @@ let releasePut = () => {};
 function stubApi({
   inventory = ITEMS,
   variantStatus = 200,
+  overrideStatus = 200,
   refetch = true,
   holdFirstPut = false,
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
+  overrideStatus?: number;
   refetch?: boolean;
   holdFirstPut?: boolean;
 } = {}) {
@@ -153,9 +163,7 @@ function stubApi({
       return reads > 1 && !refetch ? new Promise<Response>(() => {}) : json({ items: inventory });
     }
     if (url.startsWith("/api/search?")) return searchPage(url);
-    if (url === "/api/items/Dagger/XPHB/variants/%2B1%20Weapon/XDMG") {
-      return expansion(variantStatus);
-    }
+    if (url.startsWith("/api/items/")) return variantReply(url, variantStatus, overrideStatus);
     return json({ error: `nothing at ${url}` }, 404);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -246,7 +254,7 @@ describe("ItemList", () => {
     const kinds = fetchMock.mock.calls.map(
       ([url]) => new URL(String(url), "http://local").searchParams.get("kind") ?? undefined,
     );
-    expect(kinds).toContain("melee");
+    expect(kinds).toContain("melee,ranged,ammunition");
     fireEvent.click(screen.getByRole("option", { name: /^Dagger/ }));
 
     const definition = await written(fetchMock);
@@ -277,6 +285,79 @@ describe("ItemList", () => {
     expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
+  });
+
+  it("adds a refused pair of one group anyway, saving the reason beside the entry", async () => {
+    const fetchMock = stubApi({ variantStatus: 409 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), vex());
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={vex()} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("Longsword");
+    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await pick("Base item for +1 Weapon", "dag", /^Dagger/);
+    fireEvent.click(await screen.findByRole("button", { name: "Add anyway" }));
+
+    const definition = await written(fetchMock);
+    expect(definition.inventory[3]).toMatchObject({
+      ref: { name: "Dagger", source: "XPHB" },
+      variant: { name: "+1 Weapon", source: "XDMG" },
+      variantOverride:
+        "Dagger cannot take +1 Weapon. This base item does not meet the variant's requirements.",
+    });
+  });
+
+  it("marks an overridden entry with the reason the check gave, as visible text", async () => {
+    const reason = "Dagger cannot take +1 Weapon. This base item does not meet the requirements.";
+    renderList(derivedRecord(), [{ ...ITEMS[0], overridden: reason }, ITEMS[1]] as SheetItem[]);
+
+    await screen.findByText("Longsword");
+    expect(within(row("Longsword")).getByText("Off the rules")).toBeVisible();
+    expect(within(row("Longsword")).getByText(reason)).toBeVisible();
+    expect(within(row("Cloak of Protection")).queryByText("Off the rules")).toBeNull();
+  });
+
+  it("offers no Add anyway where the server refuses the override too", async () => {
+    stubApi({ variantStatus: 409, overrideStatus: 409 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), vex());
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={vex()} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("Longsword");
+    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await pick("Base item for +1 Weapon", "dag", /^Dagger/);
+    fireEvent.click(await screen.findByRole("button", { name: "Add anyway" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Add anyway" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("cannot take +1 Weapon");
+  });
+
+  it("offers no Add anyway for a check that failed", async () => {
+    stubApi({ variantStatus: 500 });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), vex());
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={vex()} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("Longsword");
+    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await pick("Base item for +1 Weapon", "dag", /^Dagger/);
+
+    await screen.findByRole("alert");
+    expect(screen.queryByRole("button", { name: "Add anyway" })).not.toBeInTheDocument();
   });
 
   it("says a variant check that failed was not a refusal", async () => {

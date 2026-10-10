@@ -106,6 +106,34 @@ const PLUS_ONE_WEAPON_ROW = {
   json: JSON.stringify(PLUS_ONE_WEAPON_FIELDS),
 };
 
+const armorRow = (name: string, type: string) => ({
+  name,
+  source: "XPHB",
+  edition: "one",
+  kind: "baseitem",
+  type,
+  rarity: "none",
+  requires_attunement: 0 as const,
+  json: JSON.stringify({ name, source: "XPHB", type, rarity: "none", armor: true, ac: 15 }),
+});
+
+const MIND_CARAPACE_ROW = {
+  name: "Mind Carapace Armor",
+  source: "VGM",
+  edition: "classic",
+  kind: "magicvariant",
+  type: null,
+  rarity: "uncommon",
+  requires_attunement: 0 as const,
+  json: JSON.stringify({
+    name: "Mind Carapace Armor",
+    source: "VGM",
+    type: "GV|VGM",
+    requires: [{ type: "HA" }],
+    inherits: { nameSuffix: " of Mind Carapace", source: "VGM", rarity: "uncommon" },
+  }),
+};
+
 const ADAMANTINE_WEAPON_FIELDS = {
   name: "Adamantine Weapon",
   type: "GV|DMG",
@@ -402,7 +430,15 @@ describe("getExpandedItem", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "item-variant-"));
-    publishItems(dataDir, [LONGSWORD_ROW, NET_ROW, PLUS_ONE_WEAPON_ROW, ADAMANTINE_WEAPON_ROW]);
+    publishItems(dataDir, [
+      LONGSWORD_ROW,
+      NET_ROW,
+      PLUS_ONE_WEAPON_ROW,
+      ADAMANTINE_WEAPON_ROW,
+      armorRow("Plate Armor", "HA"),
+      armorRow("Half Plate Armor", "MA"),
+      MIND_CARAPACE_ROW,
+    ]);
   });
 
   afterAll(() => {
@@ -459,5 +495,31 @@ describe("getExpandedItem", () => {
       { name: "+1 Weapon", source: "XDMG" },
     );
     expect(row).toBeNull();
+  });
+
+  describe("override", () => {
+    const mindCarapace = { name: "Mind Carapace Armor", source: "VGM" };
+    const halfPlate = { name: "Half Plate Armor", source: "XPHB" };
+
+    it("refuses a pair the variant's requires refuses, unless asked", () => {
+      expect(getExpandedItem(dataDir, halfPlate, mindCarapace)).toBeNull();
+      expect(getExpandedItem(dataDir, halfPlate, mindCarapace, true)).toMatchObject({
+        name: "Half Plate Armor of Mind Carapace",
+      });
+    });
+
+    it("expands a pair the rules allow the same with or without it", () => {
+      const plate = { name: "Plate Armor", source: "XPHB" };
+      expect(getExpandedItem(dataDir, plate, mindCarapace, true)).toEqual(
+        getExpandedItem(dataDir, plate, mindCarapace),
+      );
+    });
+
+    it("keeps a weapon variant off armor and an armor variant off a weapon", () => {
+      const longsword = { name: "Longsword", source: "XPHB" };
+      const plusOne = { name: "+1 Weapon", source: "XDMG" };
+      expect(getExpandedItem(dataDir, halfPlate, plusOne, true)).toBeNull();
+      expect(getExpandedItem(dataDir, longsword, mindCarapace, true)).toBeNull();
+    });
   });
 });
