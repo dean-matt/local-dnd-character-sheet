@@ -39,6 +39,22 @@ const armorFactsSchema = z.strictObject({
   armorClass: z.int(),
 });
 
+/** A price the item does not state, read from the rarity table `table` names. */
+const valueEstimateSchema = z.discriminatedUnion("kind", [
+  z.strictObject({
+    kind: z.literal("amount"),
+    table: z.string().min(1),
+    copper: z.number().min(0),
+  }),
+  z.strictObject({
+    kind: z.literal("range"),
+    table: z.string().min(1),
+    min: z.number().min(0),
+    max: z.number().min(0).nullable(),
+  }),
+  z.strictObject({ kind: z.literal("priceless"), table: z.string().min(1) }),
+]);
+
 const sheetItemSchema = z.discriminatedUnion("resolved", [
   z.strictObject({
     resolved: z.literal(true),
@@ -50,6 +66,8 @@ const sheetItemSchema = z.discriminatedUnion("resolved", [
     weight: z.number().min(0).nullable(),
     /** Copper pieces for one, null for an item that states no price. */
     value: z.number().min(0).nullable(),
+    /** Null where `value` is printed or no table prices the item, so a total never sums it. */
+    estimate: valueEstimateSchema.nullable(),
     weapon: weaponFactsSchema.nullable(),
     armor: armorFactsSchema.nullable(),
     entries: entriesSchema,

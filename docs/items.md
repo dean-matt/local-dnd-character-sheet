@@ -69,6 +69,12 @@ weight, the `_copy` items among them inheriting theirs; the rest state none and 
 nothing to a character. The way out, the day a sum over a whole pack wants an index: the
 column is a rebuild rather than a migration, which this table takes wholesale anyway.
 
+**`value` is copper and almost always absent on a magic item:** 6 of the 1,545 rated common
+through artifact print one. The inventory read keeps it as `value` and, where it is missing,
+adds `estimate` from the rarity tables in `rules`' `magicItemValue`, so a sum over `value`
+never counts a guess. A 2024 Spell Scroll prices by spell level instead, read from the
+scroll's name, since `value` appears only on its cantrip and level 1 rows.
+
 `reqAttune` is not a boolean. It is `true` 601 times, a condition such as `by a wizard`
 248 more, and `optional` on 11 items that work unattuned. `requires_attunement` answers
 the yes-or-no an attunement slot count needs — `optional` is a 0 — and the condition
