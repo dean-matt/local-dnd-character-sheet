@@ -75,9 +75,9 @@ export {
   itemRecordSchema,
   weaponTraitSchema,
 } from "./item.ts";
+export { itemBonusSchema } from "./item-bonus.ts";
 export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
 export { armsGroupKinds, ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
-export { itemBonusSchema } from "./itemBonus.ts";
 export type { ScoreMinimums } from "./multiclass.ts";
 export { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
 export type { CatalogOutOfDate } from "./out-of-date.ts";
