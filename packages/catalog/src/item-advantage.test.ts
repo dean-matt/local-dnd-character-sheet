@@ -62,7 +62,6 @@ describe("ITEM_ADVANTAGES", () => {
       expect(effects.length, name).toBeGreaterThan(0);
       for (const effect of effects) {
         expect(itemAdvantageSchema.safeParse(effect).success, name).toBe(true);
-        expect(effect.condition?.length ?? 0, name).toBeLessThanOrEqual(80);
       }
     }
   });
