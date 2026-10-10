@@ -101,8 +101,13 @@ const PROFICIENCY_MULTIPLIER: Record<ProficiencyLevel, number> = {
  * What a level of proficiency is worth at a character level: the number `passiveScore`
  * takes and a check adds. Rounded here rather than left to the caller, because half
  * proficiency is the only level that can produce a fraction and the rule already says
- * what to do with it — Jack of All Trades adds half the bonus rounded down.
+ * what to do with it — Jack of All Trades adds half the bonus rounded down. `bonus` is
+ * what a magic item adds to the proficiency bonus, so expertise doubles it too.
  */
-export function proficiencyContribution(totalLevel: number, level: ProficiencyLevel): number {
-  return Math.floor(proficiencyBonus(totalLevel) * PROFICIENCY_MULTIPLIER[level]);
+export function proficiencyContribution(
+  totalLevel: number,
+  level: ProficiencyLevel,
+  bonus = 0,
+): number {
+  return Math.floor((proficiencyBonus(totalLevel) + bonus) * PROFICIENCY_MULTIPLIER[level]);
 }

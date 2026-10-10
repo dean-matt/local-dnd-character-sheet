@@ -57,7 +57,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     armor: new Map(),
     weights: new Map(),
     weapons: new Map(),
-    raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [] },
+    raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [], vulnerable: [] },
     itemDefenses: new Map(),
     itemAbilities: new Map(),
     itemBonuses: new Map(),
@@ -377,6 +377,37 @@ describe("AbilitiesSection", () => {
     expect(value("Speed")).toHaveTextContent("fly 40 ft.");
     expect(combat.queryByText(/Hit Point/)).not.toBeInTheDocument();
     expect(combat.queryByText(/Hit Dice/)).not.toBeInTheDocument();
+  });
+
+  it("opens the item terms behind a changed speed, and lists the items granting a proficiency or a language", async () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, {
+      ...derived,
+      speed: {
+        ...derived.speed,
+        terms: [{ label: "Boots of Speed: walk 30 to 60", value: 30 }],
+      },
+      itemGrants: {
+        computed: { proficiencies: ["Bracers of Archery"], languages: ["Belt of Dwarvenkind"] },
+        manual: null,
+        terms: [],
+      },
+    });
+
+    screen.getByRole("button", { name: "Speed 30" }).focus();
+    expect(await screen.findByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
+      "Boots of Speed: walk 30 to 6030",
+    );
+    const granted = card("Granted by items");
+    expect(granted.getByText("Bracers of Archery")).toBeInTheDocument();
+    expect(granted.getByText("Belt of Dwarvenkind")).toBeInTheDocument();
+  });
+
+  it("leaves out the granted-by-items card while no item grants anything", () => {
+    renderSection();
+
+    expect(screen.queryByRole("region", { name: "Granted by items" })).not.toBeInTheDocument();
   });
 
   it("tells an overridden value apart from a computed one", () => {

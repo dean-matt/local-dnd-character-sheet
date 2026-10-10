@@ -91,6 +91,13 @@ describe("proficiencyContribution", () => {
     expect(passiveScore(2, proficiencyBonus(5) / 2)).toBe(13);
   });
 
+  it("adds an item's bonus to the proficiency bonus before the level scales it", () => {
+    expect(proficiencyContribution(5, "proficient", 1)).toBe(4);
+    expect(proficiencyContribution(5, "expertise", 1)).toBe(8);
+    expect(proficiencyContribution(5, "half", 1)).toBe(2);
+    expect(proficiencyContribution(5, "none", 1)).toBe(0);
+  });
+
   it("rejects a level outside 1-20, as the bonus it reads does", () => {
     expect(() => proficiencyContribution(21, "proficient")).toThrow(RangeError);
   });

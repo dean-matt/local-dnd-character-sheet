@@ -623,6 +623,7 @@ describe("InventorySection", () => {
           { label: "Magic", value: 1 },
         ],
       },
+      critThreshold: { computed: 20, manual: null, terms: [] },
       damage: {
         dice: grip?.held === "two-handed" ? "1d10" : "1d8",
         type: "slashing",

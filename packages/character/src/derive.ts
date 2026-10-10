@@ -38,6 +38,7 @@ import type {
 import type { CharacterDerived, Defenses } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
+import { type ProficiencyItem, proficiencyItemTerms, speedWithItems } from "./itemEffects.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
@@ -80,12 +81,12 @@ export function passiveSkill(
   skill: ContentRef,
   ability: Ability,
   grants: readonly AbilityGrant[] = [],
+  bonuses: readonly Term<TermReference>[] = [],
+  proficiencyItems: readonly ProficiencyItem[] = [],
 ): number {
-  const key = refKey(skill);
-  const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
   return passiveScore(
-    abilityModifier(abilityScore(definition, ability, grants)),
-    proficiencyContribution(totalLevel(definition), entry?.level ?? "none"),
+    skillModifier(definition, skill, ability, grants, bonuses, proficiencyItems).total,
+    0,
   );
 }
 
@@ -97,18 +98,23 @@ type Scored = Pick<
 
 /**
  * The check modifier for one skill: the ability modifier and whatever the character's
- * proficiency in that skill is worth. Companion to `passiveSkill`, which takes the same
- * inputs to the passive score instead.
+ * proficiency in that skill is worth, then each of `bonuses` and each of `proficiencyItems`
+ * as its own term. Companion to `passiveSkill`, which takes the same inputs to the passive
+ * score instead.
  */
 export function skillModifier(
   definition: Scored,
   skill: ContentRef,
   ability: Ability,
   grants: readonly AbilityGrant[] = [],
+  bonuses: readonly Term<TermReference>[] = [],
+  proficiencyItems: readonly ProficiencyItem[] = [],
 ): Breakdown<TermReference> {
   const key = refKey(skill);
   const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
-  const contribution = proficiencyContribution(totalLevel(definition), entry?.level ?? "none");
+  const level = totalLevel(definition);
+  const proficiency = entry?.level ?? "none";
+  const contribution = proficiencyContribution(level, proficiency);
   const terms: Term<TermReference>[] = [
     {
       label: ABILITY_LABEL[ability],
@@ -117,12 +123,17 @@ export function skillModifier(
     },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
-  return breakdown(terms);
+  return breakdown([
+    ...terms,
+    ...proficiencyItemTerms(level, proficiency, proficiencyItems),
+    ...bonuses,
+  ]);
 }
 
 /**
  * The saving throw modifier for one ability: its modifier, proficiency where
- * `proficiencies.savingThrows` names it, then each of `bonuses` as its own term. Only the character's first class grants a
+ * `proficiencies.savingThrows` names it, then each of `proficiencyItems` and `bonuses` as
+ * its own term. Only the character's first class grants a
  * saving throw proficiency in 5e, so that choice is already resolved into this list
  * rather than read again from a class row here.
  */
@@ -131,12 +142,13 @@ export function savingThrowModifier(
   ability: Ability,
   grants: readonly AbilityGrant[] = [],
   bonuses: readonly Term<TermReference>[] = [],
+  proficiencyItems: readonly ProficiencyItem[] = [],
 ): Breakdown<TermReference> {
-  const proficient = definition.proficiencies.savingThrows.includes(ability);
-  const contribution = proficiencyContribution(
-    totalLevel(definition),
-    proficient ? "proficient" : "none",
-  );
+  const proficiency = definition.proficiencies.savingThrows.includes(ability)
+    ? "proficient"
+    : "none";
+  const level = totalLevel(definition);
+  const contribution = proficiencyContribution(level, proficiency);
   const terms: Term<TermReference>[] = [
     {
       label: ABILITY_LABEL[ability],
@@ -144,7 +156,11 @@ export function savingThrowModifier(
     },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
-  return breakdown([...terms, ...bonuses]);
+  return breakdown([
+    ...terms,
+    ...proficiencyItemTerms(level, proficiency, proficiencyItems),
+    ...bonuses,
+  ]);
 }
 
 /** A freshly computed derived field, always with its terms — never read back from storage. */
@@ -254,6 +270,7 @@ function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait):
 function derivedAttacks(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
+  bonuses: readonly ItemBonusTrait[],
 ): CharacterDerived["attacks"] {
   const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
   const level = totalLevel(definition);
@@ -263,14 +280,12 @@ function derivedAttacks(
     const twoHandedBlocked = entry.equipped && shield;
     const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
     const { reference } = weapon.bonus;
+    const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
     const result = weaponAttack<TermReference>({
       weapon,
       strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
       dexterityModifier: abilityModifier(scoreOf(definition, catalog, "dex")),
-      proficiency: proficiencyContribution(
-        level,
-        weaponProficient(definition, weapon) ? "proficient" : "none",
-      ),
+      proficiency: proficiencyContribution(level, proficiency),
       attackBonus: { value: weapon.bonus.attack, reference },
       damageBonus: { value: weapon.bonus.damage, reference },
       grip: held,
@@ -279,7 +294,10 @@ function derivedAttacks(
       {
         entry: index,
         ability: result.ability,
-        attackBonus: fromBreakdown(result.attack),
+        attackBonus: fromBreakdown(
+          breakdown([...result.attack.terms, ...proficiencyItemTerms(level, proficiency, bonuses)]),
+        ),
+        critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
         damage: result.damage
           ? {
               dice: result.damage.dice,
@@ -291,6 +309,39 @@ function derivedAttacks(
       },
     ];
   });
+}
+
+/**
+ * The items whose critical threshold applies to the attack at inventory `index`: a weapon
+ * item lowers the threshold of its own attack only, and any other item lowers every attack's.
+ */
+function critItems(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  index: number,
+): ItemBonusTrait[] {
+  return definition.inventory.flatMap((entry, at) => {
+    const item = catalog.itemBonuses.get(itemKey(entry));
+    const worn = item && entry.equipped && (entry.attuned || !item.requiresAttunement);
+    return worn && (at === index || !catalog.weapons.has(itemKey(entry))) ? [item] : [];
+  });
+}
+
+/** 20, less what the best item lowers it by: the lowest result stands rather than adding up. */
+function critThreshold(bonuses: readonly ItemBonusTrait[]): Breakdown<TermReference> {
+  const best = bonuses.reduce<ItemBonusTrait | undefined>(
+    (lowest, item) =>
+      item.critThreshold !== undefined && item.critThreshold < (lowest?.critThreshold ?? 20)
+        ? item
+        : lowest,
+    undefined,
+  );
+  return breakdown([
+    { label: "Base", value: 20 },
+    ...(best?.critThreshold === undefined
+      ? []
+      : [{ label: best.name, value: best.critThreshold - 20 }]),
+  ]);
 }
 
 /** Each worn item's effect on scores, attuned where it must be, in inventory order. */
@@ -365,9 +416,20 @@ function derivedDefenses(
   return computed({
     resistances: gathered(grants, (grant) => grant.resist),
     damageImmunities: gathered(grants, (grant) => grant.immune),
+    vulnerabilities: gathered(grants, (grant) => grant.vulnerable),
     conditionImmunities: gathered(grants, (grant) => grant.conditionImmune),
     resistanceChoice:
       picked || resistChoice.length === 0 ? null : { from, options: [...resistChoice] },
+  });
+}
+
+/** The equipped items, attuned where they must be, that grant a proficiency or a language. */
+function derivedItemGrants(bonuses: readonly ItemBonusTrait[]): CharacterDerived["itemGrants"] {
+  const named = (granted: (item: ItemBonusTrait) => boolean) =>
+    bonuses.filter(granted).map((item) => item.name);
+  return computed({
+    proficiencies: named((item) => item.grantsProficiency),
+    languages: named((item) => item.grantsLanguage),
   });
 }
 
@@ -421,20 +483,16 @@ function spellcastingEntries(
         class: group.class,
         ability,
         saveDc: fromBreakdown(
-          spellSaveDc(
-            ability,
-            modifier,
-            characterLevel,
-            itemTerms(bonuses, (item) => item.spellSaveDc),
-          ),
+          spellSaveDc(ability, modifier, characterLevel, [
+            ...itemTerms(bonuses, (item) => item.proficiencyBonus),
+            ...itemTerms(bonuses, (item) => item.spellSaveDc),
+          ]),
         ),
         attackBonus: fromBreakdown(
-          spellAttackBonus(
-            ability,
-            modifier,
-            characterLevel,
-            itemTerms(bonuses, (item) => item.spellAttack),
-          ),
+          spellAttackBonus(ability, modifier, characterLevel, [
+            ...itemTerms(bonuses, (item) => item.proficiencyBonus),
+            ...itemTerms(bonuses, (item) => item.spellAttack),
+          ]),
         ),
         ...(preparation && { preparedSpells: preparedCount(preparation, modifier, group.level) }),
       },
@@ -495,6 +553,7 @@ export function deriveCharacter(
   const grants = equippedAbilityGrants(definition, catalog);
   const bonuses = equippedBonuses(definition, catalog);
 
+  const speed = speedWithItems(catalog.speed, bonuses);
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
       const { total, terms } = savingThrowModifier(
@@ -502,6 +561,7 @@ export function deriveCharacter(
         ability,
         grants,
         itemTerms(bonuses, (item) => item.save),
+        bonuses,
       );
       return [ability, { computed: total, manual: null, terms }];
     }),
@@ -516,14 +576,22 @@ export function deriveCharacter(
   const spellDamage = itemTerms(bonuses, (item) => item.spellDamage);
   const spellDamageBonus = spellDamage.length === 0 ? null : fromBreakdown(breakdown(spellDamage));
 
+  const checkBonus = itemTerms(bonuses, (item) => item.abilityCheck);
   const skills = catalog.skills.map((skill) => {
-    const { total, terms } = skillModifier(definition, skill.ref, skill.ability, grants);
+    const { total, terms } = skillModifier(
+      definition,
+      skill.ref,
+      skill.ability,
+      grants,
+      checkBonus,
+      bonuses,
+    );
     return {
       ref: skill.ref,
       ability: skill.ability,
       modifier: { computed: total, manual: null, terms },
       passive: {
-        computed: passiveSkill(definition, skill.ref, skill.ability, grants),
+        computed: passiveSkill(definition, skill.ref, skill.ability, grants, checkBonus, bonuses),
         manual: null,
         terms: [],
       },
@@ -547,21 +615,32 @@ export function deriveCharacter(
     hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice, grants)),
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
-    speed: { computed: catalog.speed, manual: null, terms: [] },
-    proficiencyBonus: fromBreakdown(proficiencyBonusBreakdown(level)),
+    speed: { computed: speed.speed, manual: null, terms: speed.terms },
+    proficiencyBonus: fromBreakdown(
+      breakdown([
+        ...proficiencyBonusBreakdown<TermReference>(level).terms,
+        ...itemTerms(bonuses, (item) => item.proficiencyBonus),
+      ]),
+    ),
     savingThrows,
     concentrationSave,
     skills,
     armorClass: derivedArmorClass(definition, catalog),
-    initiative: fromBreakdown(abilityModifierBreakdown(scores.dex.total)),
+    initiative: fromBreakdown(
+      breakdown([
+        ...abilityModifierBreakdown<TermReference>(scores.dex.total).terms,
+        ...checkBonus,
+      ]),
+    ),
     spellcasting: spellcastingEntries(definition, catalog, level, bonuses),
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
     ...load(definition, catalog),
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
-    attacks: derivedAttacks(definition, catalog),
+    attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog),
+    itemGrants: derivedItemGrants(bonuses),
   };
   return applyOverrides(block, definition);
 }

@@ -20,8 +20,8 @@ const choiceSchema = z.looseObject({
 });
 
 /**
- * What a race, subrace or item row grants against damage and conditions. A potion's
- * grant lasts as long as the drink, so a potion row grants nothing here, however it is
+ * What a race, subrace or item row grants against damage and conditions, and the damage
+ * types it makes the wearer vulnerable to. A potion's grant lasts as long as the drink, so a potion row grants nothing here, however it is
  * flagged in an inventory. Other temporary grants carry no type to fence them by — a balm
  * such as `Muroosa Balm` (EGW), and a deck whose `resist` lists every card's outcome, such
  * as `Deck of Wonder` (BMT) — so those grant while equipped. The way out is an item list
@@ -36,10 +36,11 @@ export const defenseTraitSchema = z
     resist: listSchema,
     immune: listSchema,
     conditionImmune: listSchema,
+    vulnerable: listSchema,
   })
-  .transform(({ type, resist, immune, conditionImmune }) =>
+  .transform(({ type, resist, immune, conditionImmune, vulnerable }) =>
     type?.split("|")[0] === "P"
-      ? { resist: [], resistChoice: [], immune: [], conditionImmune: [] }
+      ? { resist: [], resistChoice: [], immune: [], conditionImmune: [], vulnerable: [] }
       : {
           resist: lowercased(resist ?? []),
           resistChoice: lowercased(
@@ -49,5 +50,6 @@ export const defenseTraitSchema = z
           ),
           immune: lowercased(immune ?? []),
           conditionImmune: lowercased(conditionImmune ?? []),
+          vulnerable: lowercased(vulnerable ?? []),
         },
   );

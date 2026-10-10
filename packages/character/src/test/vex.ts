@@ -61,9 +61,11 @@ export const derivedInput = (traits: object = {}) => ({
       resistances: [],
       damageImmunities: [],
       conditionImmunities: [],
+      vulnerabilities: [],
       resistanceChoice: null,
     },
   },
+  itemGrants: { computed: { proficiencies: [], languages: [] } },
   ...raceTraits,
   ...traits,
 });

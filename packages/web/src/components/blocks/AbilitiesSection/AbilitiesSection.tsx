@@ -20,6 +20,7 @@ import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CombatStats } from "./CombatStats.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
 import { Improvements } from "./Improvements.tsx";
+import { ItemGrants } from "./ItemGrants.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
@@ -49,6 +50,7 @@ export function AbilitiesSection({
       <Vitals characterId={character.id} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses derived={derived} />
+      <ItemGrants derived={derived} />
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
           <ul className="flex flex-col gap-1">

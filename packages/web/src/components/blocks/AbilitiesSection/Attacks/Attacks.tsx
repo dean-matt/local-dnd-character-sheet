@@ -3,7 +3,13 @@
  * class's spell attack. Every number comes off the derived block; a weapon's name comes
  * off `/characters/{id}/inventory`, since the derived block keys a weapon by its entry.
  */
-import { type CharacterDerived, type CharacterRecord, displayName, entryKey } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  derivedValue,
+  displayName,
+  entryKey,
+} from "@dnd/character";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { Card } from "../../../Card.tsx";
 import { damageText } from "../../attack.ts";
@@ -17,6 +23,12 @@ const NONE = (
     <span className="sr-only">None</span>
   </>
 );
+
+/** Beside the damage only where an item lowers the number a critical hit needs, so the usual 20 adds nothing. */
+function critRange({ critThreshold }: CharacterDerived["attacks"][number]) {
+  const lowest = derivedValue(critThreshold);
+  return lowest < 20 ? ` · Crit ${lowest}–20` : null;
+}
 
 export function Attacks({
   character,
@@ -65,9 +77,12 @@ export function Attacks({
                   name={name}
                   bonus={<AttackBonus name={`${name} attack bonus`} field={attack.attackBonus} />}
                   damage={
-                    attack.damage
-                      ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
-                      : NONE
+                    <>
+                      {attack.damage
+                        ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
+                        : NONE}
+                      {critRange(attack)}
+                    </>
                   }
                 />
               );
