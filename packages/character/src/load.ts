@@ -95,7 +95,7 @@ export function encumberedSpeed(
     };
   }
   const { speedReduction, disadvantage } = encumbranceAt(
-    derivedValue(derived.abilityScores.str),
+    derived.abilityScores.str.computed,
     derivedValue(derived.size),
     weight,
   );

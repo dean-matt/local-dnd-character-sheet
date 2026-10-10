@@ -52,8 +52,8 @@ export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference, `weights`, `weapons` and `itemDefenses` and `itemAbilities` by
- * `itemKey` of the entry, the way `carriedWeight` reads it.
+ * `entryKey` of an inventory entry's reference, `weights`, `weapons`, `itemDefenses` and
+ * `itemAbilities` by `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;

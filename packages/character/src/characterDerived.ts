@@ -40,7 +40,8 @@ const defensesSchema = z.strictObject({
  * names, `manual` from the definition's `overrides`.
  */
 export const characterDerivedSchema = z.strictObject({
-  /** Base, increases and each worn item's effect as its own term; every modifier below reads it. */
+  /** Base, increases and each worn item's effect as its own term; every number below reads the computed score,
+   * so a manual override shows on the tile and moves nothing else. */
   abilityScores: z.record(abilitySchema, derivedSchema(z.int())),
   abilityModifiers: z.record(abilitySchema, derivedSchema(z.int())),
   hitPointMaximum: derivedSchema(z.int().min(1)),

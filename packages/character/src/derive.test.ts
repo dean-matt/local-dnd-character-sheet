@@ -552,7 +552,7 @@ describe("deriveCharacter", () => {
       );
     });
 
-    it("keeps a manual override beside the computed score", () => {
+    it("keeps a manual override beside the computed score, which downstream numbers still read", () => {
       const overridden = deriveCharacter(
         {
           ...definition,
@@ -562,6 +562,7 @@ describe("deriveCharacter", () => {
         itemCatalog,
       );
       expect(overridden.abilityScores.str).toMatchObject({ computed: 21, manual: 12 });
+      expect(overridden.abilityModifiers.str.computed).toBe(5);
     });
   });
 

@@ -61,4 +61,8 @@ describe("abilityScoreBreakdown with item grants", () => {
     expect(score(grants).total).toBe(23);
     expect(score(grants.reverse()).total).toBe(23);
   });
+
+  it("subtracts a penalty whatever the cap", () => {
+    expect(score([{ name: "Curse", static: {}, bonus: { str: -2 }, max: 12 }]).total).toBe(8);
+  });
 });
