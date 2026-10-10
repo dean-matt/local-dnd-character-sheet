@@ -81,13 +81,12 @@ export function passiveSkill(
   skill: ContentRef,
   ability: Ability,
   grants: readonly AbilityGrant[] = [],
-  bonus = 0,
+  bonuses: readonly Term<TermReference>[] = [],
+  proficiencyItems: readonly ProficiencyItem[] = [],
 ): number {
-  const key = refKey(skill);
-  const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
   return passiveScore(
-    abilityModifier(abilityScore(definition, ability, grants)) + bonus,
-    proficiencyContribution(totalLevel(definition), entry?.level ?? "none"),
+    skillModifier(definition, skill, ability, grants, bonuses, proficiencyItems).total,
+    0,
   );
 }
 
@@ -298,7 +297,7 @@ function derivedAttacks(
         attackBonus: fromBreakdown(
           breakdown([...result.attack.terms, ...proficiencyItemTerms(level, proficiency, bonuses)]),
         ),
-        critThreshold: fromBreakdown(critThreshold(bonuses)),
+        critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
         damage: result.damage
           ? {
               dice: result.damage.dice,
@@ -309,6 +308,22 @@ function derivedAttacks(
         grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
       },
     ];
+  });
+}
+
+/**
+ * The items whose critical threshold applies to the attack at inventory `index`: a weapon
+ * item lowers the threshold of its own attack only, and any other item lowers every attack's.
+ */
+function critItems(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  index: number,
+): ItemBonusTrait[] {
+  return definition.inventory.flatMap((entry, at) => {
+    const item = catalog.itemBonuses.get(itemKey(entry));
+    const worn = item && entry.equipped && (entry.attuned || !item.requiresAttunement);
+    return worn && (at === index || !catalog.weapons.has(itemKey(entry))) ? [item] : [];
   });
 }
 
@@ -576,13 +591,7 @@ export function deriveCharacter(
       ability: skill.ability,
       modifier: { computed: total, manual: null, terms },
       passive: {
-        computed: passiveSkill(
-          definition,
-          skill.ref,
-          skill.ability,
-          grants,
-          total - skillModifier(definition, skill.ref, skill.ability, grants).total,
-        ),
+        computed: passiveSkill(definition, skill.ref, skill.ability, grants, checkBonus, bonuses),
         manual: null,
         terms: [],
       },

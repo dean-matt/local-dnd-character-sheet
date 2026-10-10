@@ -29,8 +29,7 @@ const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
 
 /**
  * What a worn item adds to armor class, saving throws, spellcasting and the rest of the
- * sheet. `ac` is `bonusAc` on an item
- * that is not armor or a shield: armor's own `bonusAc` already sits in `armorTraitSchema`'s
+ * sheet. `ac` is `bonusAc` on an item that is not armor or a shield: armor's own `bonusAc` already sits in `armorTraitSchema`'s
  * number, so reading it here would count it twice. `save` is `bonusSavingThrow`, added to
  * every save, and `concentration` is `bonusSavingThrowConcentration`, added to concentration
  * saves alone. `spellAttack`, `spellSaveDc` and `spellDamage` are the three `bonusSpell*` fields.

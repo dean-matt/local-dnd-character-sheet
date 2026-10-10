@@ -763,6 +763,7 @@ describe("deriveCharacter", () => {
     const BIB = { name: "Butcher's Bib", source: "EGW" };
     const BELT = { name: "Belt of Dwarvenkind", source: "DMG" };
     const BRACERS = { name: "Bracers of Archery", source: "DMG" };
+    const KAS = { name: "Sword of Kas", source: "DMG" };
     const worn = (ref: EntryRef, attuned = true) => ({
       ref,
       quantity: 1,
@@ -788,10 +789,14 @@ describe("deriveCharacter", () => {
         ...effect,
       },
     ];
-    const items = [BOOTS, CLOAK, PENNANT, MASTERY, LUCK, BIB, BELT, BRACERS];
+    const items = [BOOTS, CLOAK, PENNANT, MASTERY, LUCK, BIB, BELT, BRACERS, KAS];
     const itemCatalog = {
       ...catalog,
       weights: new Map([...catalog.weights, ...items.map((ref) => [entryKey(ref), 0] as const)]),
+      weapons: new Map<string, WeaponTrait>([
+        ...catalog.weapons,
+        [entryKey(KAS), { ...LONGSWORD_TRAIT, name: KAS.name }],
+      ]),
       itemDefenses: new Map<string, ItemDefenseTrait>([
         [
           entryKey(BELT),
@@ -805,6 +810,7 @@ describe("deriveCharacter", () => {
         trait(MASTERY, { proficiencyBonus: 1 }),
         trait(LUCK, { abilityCheck: 1, save: 1 }),
         trait(BIB, { critThreshold: 19 }),
+        trait(KAS, { critThreshold: 19 }),
         trait(BELT, { grantsLanguage: true }),
         trait(BRACERS, { grantsProficiency: true }),
       ]),
@@ -892,6 +898,15 @@ describe("deriveCharacter", () => {
           { label: BIB.name, value: -1 },
         ]);
       }
+    });
+
+    it("lowers a weapon item's threshold for its own attack alone", () => {
+      const block = withItems([worn(KAS)]);
+      const sword = block.attacks.find((attack) => attack.entry === equipped.inventory.length);
+      expect(sword?.critThreshold.computed).toBe(19);
+      const others = block.attacks.filter((attack) => attack !== sword);
+      expect(others.length).toBeGreaterThan(0);
+      expect(others.every((attack) => attack.critThreshold.computed === 20)).toBe(true);
     });
 
     it("lists an item's vulnerability and its proficiency and language grants as the item", () => {
