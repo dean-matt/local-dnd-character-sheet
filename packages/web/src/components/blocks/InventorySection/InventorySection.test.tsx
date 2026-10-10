@@ -374,6 +374,28 @@ describe("InventorySection", () => {
     expect(attunement.getByText("Slots").nextSibling).toHaveTextContent("4*");
   });
 
+  it("warns, naming the attuned items, once more are attuned than the limit", async () => {
+    renderSection(load({ attunementSlots: { computed: 3, manual: 1, terms: [] } }), {
+      items: INVENTORY.items.map((item) =>
+        item.name === "Ring of Warmth" ? { ...item, attuned: true } : item,
+      ),
+    } as CharacterInventory);
+
+    await screen.findByText("Ring of Warmth");
+    await waitFor(() =>
+      expect(card("Attunement").getByRole("status")).toHaveTextContent(
+        "2 / 1 attuned, over the limit: Cloak of Protection and Ring of Warmth.",
+      ),
+    );
+  });
+
+  it("shows no warning at or under the limit", async () => {
+    renderSection(load({ attunementSlots: { computed: 2, manual: null, terms: [] } }));
+
+    await screen.findByText("Ring of Warmth");
+    expect(card("Attunement").queryByRole("status")).toBeNull();
+  });
+
   it("shows the load against carrying capacity, naming a tier only under the variant", async () => {
     renderSection(load({ encumbrance: null }));
 

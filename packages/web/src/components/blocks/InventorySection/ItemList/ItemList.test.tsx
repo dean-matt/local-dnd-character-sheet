@@ -460,7 +460,7 @@ describe("ItemList", () => {
     );
   });
 
-  it("leaves attuning open where the derived block failed, with no slot count to refuse by", async () => {
+  it("keeps the attune toggle where the derived block failed", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     stubApi();
     client.setQueryData(characterKey("1"), vex());
@@ -535,19 +535,18 @@ describe("ItemList", () => {
     expect(within(row("Longsword")).queryByRole("button", { name: /^Attuned/ })).toBeNull();
   });
 
-  it("refuses an attunement past the slots, naming the items that hold them", async () => {
+  it("attunes past the slots rather than refusing", async () => {
     const fetchMock = renderList({
       ...derivedRecord(),
       attunementSlots: { computed: 3, manual: 1, terms: [] },
     });
 
     await screen.findByText("Ring of Warmth");
-    const ring = within(row("Ring of Warmth"));
-    fireEvent.click(ring.getByRole("button", { name: "Attune Ring of Warmth, no slot free" }));
-    expect(ring.getByRole("group", { name: "Attunement" })).toHaveTextContent(
-      "The one attunement slot is taken by Cloak of Protection. End attunement to one of them first.",
+    fireEvent.click(
+      within(row("Ring of Warmth")).getByRole("button", { name: "Attuned, Ring of Warmth" }),
     );
-    expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+
+    expect((await written(fetchMock)).inventory[2].attuned).toBe(true);
   });
 
   it("says so when a change fails to save", async () => {
