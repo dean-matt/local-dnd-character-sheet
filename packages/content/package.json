@@ -18,6 +18,7 @@
     "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
+    "@dnd/catalog": "workspace:*",
     "@types/better-sqlite3": "^7.6.13"
   }
 }

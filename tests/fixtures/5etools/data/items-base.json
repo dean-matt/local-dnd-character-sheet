@@ -199,6 +199,32 @@
       "rarity": "none",
       "weight": 1,
       "value": 1000
+    },
+    {
+      "name": "Lance",
+      "source": "PHB",
+      "page": 149,
+      "srd": true,
+      "basicRules": true,
+      "reprintedAs": ["Lance|XPHB"],
+      "edition": "classic",
+      "type": "M",
+      "rarity": "none",
+      "weight": 6,
+      "value": 1000,
+      "weaponCategory": "martial",
+      "property": ["R", "S"],
+      "dmg1": "1d12",
+      "dmgType": "P",
+      "lance": true,
+      "weapon": true,
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Special",
+          "entries": ["Elided."]
+        }
+      ]
     }
   ],
   "itemProperty": [

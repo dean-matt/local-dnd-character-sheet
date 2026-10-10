@@ -265,6 +265,505 @@
           "Elided. {@damage 2d6} {=dmgType} Elided. {@link this is incorrect|https://rpg.stackexchange.com/a/174522/53884} Elided."
         ]
       }
+    },
+    {
+      "name": "Feywrought Armor",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "LA"
+        },
+        {
+          "type": "MA"
+        },
+        {
+          "type": "HA"
+        },
+        {
+          "type": "LA|XPHB"
+        },
+        {
+          "type": "MA|XPHB"
+        },
+        {
+          "type": "HA|XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Feywrought ",
+        "source": "BMT",
+        "page": 67,
+        "rarity": "rare",
+        "reqAttune": true,
+        "recharge": "dawn",
+        "rechargeAmount": "{@dice 1d3}",
+        "charges": 3,
+        "entries": [
+          "Elided.",
+          "Elided. {@condition charmed} Elided.",
+          "Elided. {@spell Compulsion} Elided. {@dc 15} Elided. {@dice 1d3} Elided."
+        ],
+        "attachedSpells": {
+          "charges": {
+            "1": ["compulsion"]
+          }
+        }
+      }
+    },
+    {
+      "name": "Gloomwrought Armor",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "LA"
+        },
+        {
+          "type": "MA"
+        },
+        {
+          "type": "HA"
+        },
+        {
+          "type": "LA|XPHB"
+        },
+        {
+          "type": "MA|XPHB"
+        },
+        {
+          "type": "HA|XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Gloomwrought ",
+        "source": "BMT",
+        "page": 67,
+        "rarity": "rare",
+        "reqAttune": true,
+        "recharge": "dawn",
+        "rechargeAmount": "{@dice 1d3}",
+        "charges": 3,
+        "entries": [
+          "Elided.",
+          "Elided.",
+          "Elided. {@spell Calm Emotions} Elided. {@dc 15} Elided. {@dice 1d3} Elided."
+        ],
+        "attachedSpells": {
+          "charges": {
+            "1": ["calm emotions"]
+          }
+        }
+      }
+    },
+    {
+      "name": "Demon Armor",
+      "type": "GV|XDMG",
+      "requires": [
+        {
+          "type": "LA|XPHB"
+        },
+        {
+          "type": "MA|XPHB"
+        },
+        {
+          "type": "HA|XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Demon ",
+        "source": "XDMG",
+        "page": 252,
+        "srd52": true,
+        "basicRules2024": true,
+        "rarity": "very rare",
+        "reqAttune": true,
+        "curse": true,
+        "grantsLanguage": true,
+        "bonusWeapon": "+1",
+        "bonusAc": "+1",
+        "entries": [
+          "Elided. {=bonusAc} Elided. {@variantrule Armor Class|XPHB} Elided. {@damage 1d8} Elided. {=bonusWeapon} Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": [
+              "Elided. {@spell Remove Curse|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+            ]
+          }
+        ],
+        "lootTables": ["Armaments - Very Rare|XDMG"]
+      }
+    },
+    {
+      "name": "Mind Carapace Armor",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "HA"
+        },
+        {
+          "type": "HA|XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Mind Carapace ",
+        "source": "VGM",
+        "page": 81,
+        "rarity": "uncommon",
+        "reqAttune": "by a specific individual",
+        "entries": ["Elided. {@condition frightened} Elided."]
+      }
+    },
+    {
+      "name": "Zephyr Armor",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "LA"
+        },
+        {
+          "type": "LA|XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Zephyr ",
+        "source": "BGG",
+        "page": 117,
+        "rarity": "rare",
+        "reqAttune": true,
+        "entries": [
+          "Elided.",
+          "Elided. {@skill Acrobatics} Elided.",
+          {
+            "type": "entries",
+            "name": "Invoking the Rune",
+            "entries": ["Elided. {@spell wind wall} Elided. {@dc 15} Elided."]
+          }
+        ],
+        "attachedSpells": {
+          "daily": {
+            "1e": ["wind wall"]
+          }
+        }
+      }
+    },
+    {
+      "name": "Oathbow",
+      "type": "GV|XDMG",
+      "requires": [
+        {
+          "name": "Longbow",
+          "source": "XPHB"
+        },
+        {
+          "name": "Shortbow",
+          "source": "XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Oath ",
+        "source": "XDMG",
+        "page": 282,
+        "srd52": true,
+        "basicRules2024": true,
+        "rarity": "very rare",
+        "reqAttune": true,
+        "entries": [
+          "Elided.",
+          "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Cover|XPHB|Half Cover} Elided. {@variantrule Cover|XPHB|Three-Quarters Cover} Elided. {@variantrule Disadvantage|XPHB} Elided. {@damage 3d6} Elided.",
+          "Elided. {@variantrule Disadvantage|XPHB} Elided."
+        ],
+        "lootTables": ["Armaments - Very Rare|XDMG"]
+      }
+    },
+    {
+      "name": "Berserker Axe",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "axe": true
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Berserker ",
+        "source": "DMG",
+        "page": 155,
+        "srd": true,
+        "reprintedAs": ["Berserker Axe|XDMG"],
+        "tier": "major",
+        "rarity": "rare",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+1",
+        "entries": [
+          "Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": ["Elided."]
+          },
+          "Elided. {@dc 15} Elided. {@action Attack} Elided."
+        ],
+        "lootTables": ["Magic Item Table G"]
+      }
+    },
+    {
+      "name": "Berserker Axe",
+      "type": "GV|XDMG",
+      "requires": [
+        {
+          "name": "Battleaxe",
+          "source": "XPHB"
+        },
+        {
+          "name": "Greataxe",
+          "source": "XPHB"
+        },
+        {
+          "name": "Halberd",
+          "source": "XPHB"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Berserker ",
+        "source": "XDMG",
+        "page": 236,
+        "srd52": true,
+        "basicRules2024": true,
+        "rarity": "rare",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+1",
+        "entries": [
+          "Elided. {@variantrule Hit Points|XPHB|Hit Point} Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": [
+              "Elided. {@variantrule Disadvantage|XPHB} Elided.",
+              "Elided. {@dc 15} Elided.",
+              "Elided. {@action Attack|XPHB} Elided."
+            ]
+          }
+        ],
+        "lootTables": ["Armaments - Rare|XDMG"]
+      }
+    },
+    {
+      "name": "Demonbone Polearm",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "polearm": true
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Demonbone ",
+        "source": "CoA",
+        "page": 268,
+        "rarity": "very rare",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+2",
+        "entries": [
+          "Elided. {=bonusWeapon} Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": [
+              "Elided.",
+              "Elided. {@dc 15} Elided. {@action Attack} Elided.",
+              "Elided. {@dc 15} Elided. {@skill Persuasion} Elided. {@spell Remove Curse} Elided."
+            ]
+          },
+          {
+            "type": "entries",
+            "name": "Corrupting",
+            "entries": [
+              "Elided. {@adventure Infernal Item Corruption|CoA|16|Infernal Item Corruption} Elided."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Stygian Spear",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "spear": true
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Stygian ",
+        "source": "CoA",
+        "page": 270,
+        "rarity": "very rare",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+2",
+        "entries": [
+          "Elided. {=bonusWeapon} Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": [
+              "Elided.",
+              "Elided.",
+              "Elided. {@damage 2d6} Elided. {@spell Remove Curse} Elided."
+            ]
+          },
+          {
+            "type": "entries",
+            "name": "Corrupting",
+            "entries": [
+              "Elided. {@adventure Infernal Item Corruption|CoA|16|Infernal Item Corruption} Elided."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sword of Retribution",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "sword": true
+        }
+      ],
+      "inherits": {
+        "nameSuffix": " of Retribution",
+        "source": "CoA",
+        "page": 270,
+        "rarity": "very rare",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+3",
+        "entries": [
+          "Elided. {=bonusWeapon} Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": ["Elided.", "Elided. {@dc 11} Elided. {@spell Remove Curse} Elided."]
+          },
+          {
+            "type": "entries",
+            "name": "Corrupting",
+            "entries": [
+              "Elided. {@adventure Infernal Item Corruption|CoA|16|Infernal Item Corruption} Elided."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sword of Vengeance",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "sword": true
+        }
+      ],
+      "inherits": {
+        "nameSuffix": " of Vengeance",
+        "source": "DMG",
+        "page": 206,
+        "reprintedAs": ["Sword of Vengeance|XDMG"],
+        "tier": "major",
+        "rarity": "uncommon",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+1",
+        "entries": [
+          "Elided.",
+          {
+            "name": "Curse",
+            "type": "entries",
+            "entries": [
+              "Elided.",
+              "Elided. {@dc 15} Elided.",
+              "Elided. {@spell banishment} Elided."
+            ]
+          }
+        ],
+        "lootTables": ["Magic Item Table F"]
+      }
+    },
+    {
+      "name": "Sword of Vengeance",
+      "type": "GV|XDMG",
+      "requires": [
+        {
+          "name": "Glaive",
+          "source": "XPHB"
+        },
+        {
+          "name": "Greatsword",
+          "source": "XPHB"
+        },
+        {
+          "name": "Longsword",
+          "source": "XPHB"
+        },
+        {
+          "name": "Rapier",
+          "source": "XPHB"
+        },
+        {
+          "name": "Scimitar",
+          "source": "XPHB"
+        },
+        {
+          "name": "Shortsword",
+          "source": "XPHB"
+        }
+      ],
+      "inherits": {
+        "nameSuffix": " of Vengeance",
+        "source": "XDMG",
+        "page": 314,
+        "rarity": "uncommon",
+        "reqAttune": true,
+        "curse": true,
+        "bonusWeapon": "+1",
+        "entries": [
+          "Elided.",
+          {
+            "type": "entries",
+            "name": "Curse",
+            "entries": [
+              "Elided. {@variantrule Disadvantage|XPHB} Elided.",
+              "Elided. {@dc 15} Elided. {@variantrule Hit Points|XPHB} Elided.",
+              "Elided. {@spell Banishment|XPHB} Elided."
+            ]
+          }
+        ],
+        "lootTables": ["Armaments - Uncommon|XDMG"]
+      }
+    },
+    {
+      "name": "Bloodseeker Ammunition",
+      "type": "GV|DMG",
+      "requires": [
+        {
+          "type": "A"
+        },
+        {
+          "type": "AF|DMG"
+        },
+        {
+          "type": "A|XPHB"
+        },
+        {
+          "type": "AF|XDMG"
+        }
+      ],
+      "inherits": {
+        "namePrefix": "Bloodseeker ",
+        "source": "BMT",
+        "page": 66,
+        "rarity": "very rare",
+        "entries": ["Elided."]
+      }
     }
   ]
 }
