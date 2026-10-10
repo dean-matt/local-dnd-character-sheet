@@ -89,6 +89,12 @@ there — read them off disk and GitHub rather than inferring them from where th
 since `issue-to-pr` can leave all three. Name a worktree in particular: the next run's `git
 worktree add` fails on it until the user clears `.claude/worktrees/<n>`.
 
+## Rate limits
+
+A subagent's report of "API rate limit exceeded" ends the run. Wait for the reset before
+the next run; never retry in a loop. `gh api rate_limit` does not show the secondary limit
+that expensive bursts trip, so plenty left there proves nothing.
+
 ## What this skill will not do
 
 **Resolve what stopped it, or skip past it.** A declined finding, a red check and a

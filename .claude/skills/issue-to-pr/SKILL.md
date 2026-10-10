@@ -71,6 +71,12 @@ it took none — stop there.
     mockup file, a declined `critical` or `warning`, or an issue this run filed. With none,
     say "nothing". Never list the merge: `merge-gate` decides it.
 
+## Rate limits
+
+"API rate limit exceeded" means stop, report where the run stopped, and wait for the reset;
+never retry in a loop. `gh api rate_limit` does not show the secondary limit that expensive
+bursts trip, so plenty left there proves nothing.
+
 ## What this skill will not do
 
 **Merge.** Stop at the report, whatever the review found and however small the change.
