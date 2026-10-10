@@ -81,6 +81,20 @@ export function ofWantedKind(kinds: readonly ItemKind[], wanted?: readonly strin
   return !wanted?.length || kinds.some((kind) => wanted.includes(kind));
 }
 
+const ARMS_GROUPS: readonly (readonly string[])[] = [
+  ["melee", "ranged", "ammunition"],
+  ["light", "medium", "heavy", "shield"],
+];
+
+/**
+ * Every kind of the one weapon or armor group that holds all of `kinds`, which is where a
+ * table may put a magic variant its `requires` refuses. `undefined` where `kinds` reach
+ * beyond one group, or past weapons and armor altogether.
+ */
+export function armsGroupKinds(kinds: readonly string[]): readonly string[] | undefined {
+  return ARMS_GROUPS.find((group) => kinds.every((kind) => group.includes(kind)));
+}
+
 /**
  * The kinds of tool a pick can ask for, each one of upstream's tool type codes, so a pick
  * of any artisan's tool never offers a lute. `other` is a tool of none of them, such as

@@ -21,6 +21,8 @@ const HEALING_2024 = { name: "Potion of Greater Healing", source: "XDMG" };
 const SCROLL_2024 = { name: "Spell Scroll (Level 3)", source: "XDMG" };
 const SCROLL_CANTRIP_2024 = { name: "Spell Scroll (Cantrip)", source: "XDMG" };
 const ORB = { name: "Orb of Dragonkind", source: "DMG" };
+const HALF_PLATE = { name: "Half Plate Armor", source: "XPHB" };
+const MIND_CARAPACE = { name: "Mind Carapace Armor", source: "VGM" };
 const MAP = { name: "Map of Nowhere", source: "DMG" };
 
 const row = (
@@ -94,6 +96,11 @@ describe("characterInventoryRoutes", () => {
       }),
       row(NET, "baseitem", { weapon: true, net: true, weight: 3 }),
       row(CHAIN_MAIL, "baseitem", { type: "HA|XPHB", armor: true, ac: 16, value: 7500 }),
+      row(HALF_PLATE, "baseitem", { type: "MA|XPHB", armor: true, ac: 15, weight: 40 }),
+      row(MIND_CARAPACE, "magicvariant", {
+        requires: [{ type: "HA|XPHB" }],
+        inherits: { nameSuffix: " of Mind Carapace", source: "VGM", rarity: "uncommon" },
+      }),
       row(GOLD_BAR, "item", { type: "TB" }),
       row(PLUS_ONE, "magicvariant", {
         requires: [{ weapon: true }],
@@ -279,6 +286,25 @@ describe("characterInventoryRoutes", () => {
         attuned: false,
       },
     ]);
+  });
+
+  it("expands a refused pair the entry overrides, and only that entry", async () => {
+    const reason = "Half Plate Armor cannot take Mind Carapace Armor.";
+    store(
+      withInventory([
+        { ref: HALF_PLATE, variant: MIND_CARAPACE, variantOverride: reason },
+        { ref: HALF_PLATE, variant: MIND_CARAPACE },
+      ]),
+    );
+    const [overridden, printed] = await items();
+    expect(overridden).toMatchObject({
+      resolved: true,
+      name: "Half Plate Armor of Mind Carapace",
+      weight: 40,
+      armor: { category: "medium", armorClass: 15 },
+      overridden: reason,
+    });
+    expect(printed).toMatchObject({ resolved: false, variant: MIND_CARAPACE });
   });
 
   it("resolves a homebrew item with no source, and keeps a missing one listed", async () => {

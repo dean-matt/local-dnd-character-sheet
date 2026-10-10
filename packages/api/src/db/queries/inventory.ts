@@ -37,7 +37,7 @@ export function resolveItemRows(
     "homebrewId" in ref || variant ? [] : [ref],
   );
   const plainRows = getItems(dataDir, plain).values();
-  return inventory.map(({ ref, variant }) => {
+  return inventory.map(({ ref, variant, variantOverride }) => {
     if ("homebrewId" in ref) {
       const row = getHomebrewItem(homebrewDb, ref.homebrewId);
       return (
@@ -52,7 +52,9 @@ export function resolveItemRows(
     }
     // A variant its base item refuses is null, and the sheet lists it as not found.
     const row =
-      (variant ? getExpandedItem(dataDir, ref, variant) : plainRows.next().value) ?? undefined;
+      (variant
+        ? getExpandedItem(dataDir, ref, variant, variantOverride !== undefined)
+        : plainRows.next().value) ?? undefined;
     return (
       row && {
         name: row.name,
@@ -123,7 +125,7 @@ function sheetItem(
   row: ItemFacts | undefined,
   typeNames: ReadonlyMap<string, string>,
 ): SheetItem {
-  const { ref, variant, quantity, carried, equipped, attuned } = entry;
+  const { ref, variant, variantOverride, quantity, carried, equipped, attuned } = entry;
   const flags = { quantity, carried, equipped, attuned };
   if (!row) {
     return {
@@ -152,6 +154,7 @@ function sheetItem(
     weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
     entries: entries.success ? entries.data : [],
+    ...(variantOverride && { overridden: variantOverride }),
   };
 }
 

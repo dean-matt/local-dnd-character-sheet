@@ -108,12 +108,23 @@ const variantParam = z.object({
   variantSource: z.string(),
 });
 
+const variantQuery = z.object({
+  override: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true")
+    .openapi({
+      description:
+        "Expand a pair the variant's requirements refuse, where both are weapons or both armor",
+    }),
+});
+
 const expand = createRoute({
   method: "get",
   path: "/items/{name}/{source}/variants/{variantName}/{variantSource}",
   tags: ["items"],
   summary: "Expand a base item and a magic variant into the specific item they make",
-  request: { params: variantParam },
+  request: { params: variantParam, query: variantQuery },
   responses: {
     200: {
       description: "The expanded item",
@@ -121,7 +132,8 @@ const expand = createRoute({
     },
     404: notFound("base item or magic variant", "name and source"),
     409: {
-      description: "The base item does not meet the variant's requirements",
+      description:
+        "The base item does not meet the variant's requirements, or cannot be overridden",
       content: { "application/json": { schema: errorSchema } },
     },
     503: catalogOutOfDate,
@@ -162,10 +174,12 @@ export function itemsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
 
   routes.openapi(expand, (c) => {
     const { name, source, variantName, variantSource } = c.req.valid("param");
+    const { override } = c.req.valid("query");
     const row = getExpandedItem(
       dataDir,
       { name, source },
       { name: variantName, source: variantSource },
+      override,
     );
     if (row === undefined) return c.json({ error: VARIANT_NOT_FOUND }, 404);
     if (row === null) return c.json({ error: VARIANT_REFUSED }, 409);

@@ -30,7 +30,10 @@ copying it. `GET /items/{name}/{source}/variants/{variantName}/{variantSource}`
 (`packages/api/src/db/queries/item-variant.ts`) expands the pair at read time — the
 variant's `inherits` fields over the base item's own — rather than storing the result, so
 a `content.db` rebuild still updates every character. A base item the variant's `requires`
-or `excludes` refuses is a 409, not an expanded item the rules do not allow. The expansion
+or `excludes` refuses is a 409, not an expanded item the rules do not allow. A caller may ask
+for `?override=true`, which expands a refused pair when the variant and the base item sit
+in one weapon or armor group; an entry saved that way carries `variantOverride`, the reason
+the check gave, and the sheet marks it off the printed rules. The expansion
 also fills the 77 `{=bonusAc}`-style placeholders in the templates' `entries`: they are
 not `{@tag}` markup, so the renderer would print them as written.
 

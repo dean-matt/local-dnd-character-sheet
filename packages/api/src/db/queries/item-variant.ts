@@ -4,7 +4,8 @@
  * and `excludes` gate which base items a variant reaches, and `inherits` states the
  * fields the resulting item carries over the base item's own.
  */
-import { DAMAGE_TYPES, ITEM_KINDS, type ItemKind, itemKinds } from "@dnd/catalog";
+import { armsGroupKinds, DAMAGE_TYPES, ITEM_KINDS, type ItemKind, itemKinds } from "@dnd/catalog";
+import { openContentDb } from "../content.ts";
 import { getItem, type ItemRow } from "./items.ts";
 
 type Entry = Record<string, unknown>;
@@ -327,18 +328,37 @@ function requiresAttunement(fields: Entry): 0 | 1 {
 }
 
 /**
+ * Whether a table may hold `variant` on `base` against the printed rules: both sit in one
+ * weapon or armor group, so a weapon variant never lands on armor. The variant's group is
+ * read off every base item it admits, which is why this scans them all.
+ */
+function overridable(dataDir: string, baseFields: Entry, variantFields: Entry): boolean {
+  const db = openContentDb(dataDir);
+  try {
+    const bases = (
+      db.prepare("SELECT json FROM items WHERE kind = 'baseitem'").pluck().all() as string[]
+    ).map((json) => JSON.parse(json) as Entry);
+    const group = armsGroupKinds(variantKinds(variantFields, bases));
+    return group !== undefined && itemKinds(baseFields).every((kind) => group.includes(kind));
+  } finally {
+    db.close();
+  }
+}
+
+/**
  * The specific item a base item and a magic variant expand into.
  *
  * `undefined` where either `(name, source)` names no row, or names one that is not the
  * kind it must be — a caller who swaps the base and variant path segments gets the same
  * "not found" a genuinely absent row would, not a crash. `null` where the variant's
  * `requires`/`excludes` refuses this base item — a variant is not expanded into an item
- * the rules do not allow.
+ * the rules do not allow, unless `override` is set and both sit in one weapon or armor group.
  */
 export function getExpandedItem(
   dataDir: string,
   base: { name: string; source: string },
   variant: { name: string; source: string },
+  override = false,
 ): ItemRow | undefined | null {
   const baseRow = getItem(dataDir, base.name, base.source);
   const variantRow = getItem(dataDir, variant.name, variant.source);
@@ -347,7 +367,12 @@ export function getExpandedItem(
 
   const variantFields: Entry = JSON.parse(variantRow.json);
   const baseFields: Entry = JSON.parse(baseRow.json);
-  if (!baseItemMatchesVariant(baseFields, variantFields)) return null;
+  if (
+    !baseItemMatchesVariant(baseFields, variantFields) &&
+    !(override && overridable(dataDir, baseFields, variantFields))
+  ) {
+    return null;
+  }
 
   const inherits = variantFields.inherits;
   if (!isRecord(inherits))

@@ -62,11 +62,12 @@ export function checkCharacterReferences(
       return statement;
     };
     const hop = redirects(db);
-    const resolves = ({ kind, ref, parent, pantheon }: CatalogReference) => {
+    const resolves = ({ kind, ref, parent, pantheon, overridden }: CatalogReference) => {
       // The sheet shows a variant only as the item it and its base expand into.
       // getExpandedItem opens content.db twice a call beside this handle: cheap at inventory
       // sizes, and a getItem that takes the open handle is the way out if it ever shows.
-      if (kind === "item" && parent) return Boolean(getExpandedItem(dataDir, parent, ref));
+      if (kind === "item" && parent)
+        return Boolean(getExpandedItem(dataDir, parent, ref, overridden));
       const rest = parent ? [parent.name, parent.source] : pantheon ? [pantheon] : [];
       return prepared(select(kind, "")).get(ref.name, ref.source, ...rest) !== undefined;
     };

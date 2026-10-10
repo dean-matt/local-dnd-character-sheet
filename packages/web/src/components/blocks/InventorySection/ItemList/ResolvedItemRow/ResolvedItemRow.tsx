@@ -56,6 +56,11 @@ export function ResolvedItemRow({
               {pounds(item.weight * item.quantity)}
             </Tag>
           )}
+          {item.overridden && (
+            <Tag>
+              Off the rules<span className="sr-only">: {item.overridden}</span>
+            </Tag>
+          )}
           {!item.carried && <Tag>Not carried</Tag>}
         </>
       }
@@ -89,6 +94,7 @@ export function ResolvedItemRow({
               <p className="text-muted">No description.</p>
             )}
             {cost?.note && <p className="text-muted">{cost.note}.</p>}
+            {item.overridden && <p className="text-muted">{item.overridden}</p>}
           </>
         ),
       }}

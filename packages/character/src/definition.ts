@@ -141,11 +141,16 @@ const proficienciesSchema = z.strictObject({
  * expanded item, so a catalog rebuild still updates it. It pairs only with a catalog
  * `ref`: expansion reads the base item's own fields in the shape `inherits` expects, and
  * a homebrew row does not carry them.
+ *
+ * `variantOverride` is the reason the check gave when the table held the pair anyway, and
+ * absent on a pair the rules allow. It rides on its own entry, so another entry of the same
+ * variant is still checked as printed.
  */
 const inventoryEntrySchema = z
   .strictObject({
     ref: entryRefSchema,
     variant: contentRefSchema.optional(),
+    variantOverride: z.string().min(1).optional(),
     quantity: z.int().min(1).default(1),
     carried: z.boolean().default(true),
     equipped: z.boolean().default(false),
@@ -157,6 +162,9 @@ const inventoryEntrySchema = z
   })
   .refine((entry) => entry.variant === undefined || !("homebrewId" in entry.ref), {
     error: "a magic variant expands a catalog base item, not a homebrew one",
+  })
+  .refine((entry) => entry.variantOverride === undefined || entry.variant !== undefined, {
+    error: "a variant override needs a variant",
   });
 
 const spellEntrySchema = z.strictObject({
