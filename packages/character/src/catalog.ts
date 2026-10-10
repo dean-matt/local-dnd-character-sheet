@@ -47,13 +47,16 @@ export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
 
-/** What an item adds to armor class, every saving throw and concentration saves, and whether it waits on attunement. */
+/** What an item adds to armor class, saves, spell attacks, spell save DCs and spell damage, and whether it waits on attunement. */
 export type ItemBonusTrait = {
   name: string;
   requiresAttunement: boolean;
   ac: number;
   save: number;
   concentration: number;
+  spellAttack: number;
+  spellSaveDc: number;
+  spellDamage: number;
 };
 
 /**
@@ -87,7 +90,7 @@ export type CharacterCatalog = {
   itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
   /** Keyed like `weapons`, and absent for an item that changes no score. */
   itemAbilities: ReadonlyMap<string, ItemAbilityTrait>;
-  /** Keyed like `weapons`, and absent for an item that adds to no armor class or save. */
+  /** Keyed like `weapons`, and absent for an item that adds to no armor class, save or spell number. */
   itemBonuses: ReadonlyMap<string, ItemBonusTrait>;
 };
 

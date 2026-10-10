@@ -570,6 +570,7 @@ describe("deriveCharacter", () => {
   });
 
   describe("armor class and saves from items", () => {
+    const noSpell = { spellAttack: 0, spellSaveDc: 0, spellDamage: 0 };
     const RING = { name: "Ring of Protection", source: "DMG" };
     const ORB = { name: "Orb of Skoraeus", source: "ToA" };
     const worn = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
@@ -585,11 +586,25 @@ describe("deriveCharacter", () => {
       itemBonuses: new Map<string, ItemBonusTrait>([
         [
           entryKey(RING),
-          { name: RING.name, requiresAttunement: true, ac: 1, save: 1, concentration: 0 },
+          {
+            name: RING.name,
+            requiresAttunement: true,
+            ac: 1,
+            save: 1,
+            concentration: 0,
+            ...noSpell,
+          },
         ],
         [
           entryKey(ORB),
-          { name: ORB.name, requiresAttunement: false, ac: 0, save: 0, concentration: 2 },
+          {
+            name: ORB.name,
+            requiresAttunement: false,
+            ac: 0,
+            save: 0,
+            concentration: 2,
+            ...noSpell,
+          },
         ],
       ]),
     };
@@ -641,6 +656,87 @@ describe("deriveCharacter", () => {
         computed: bare.armorClass.computed + 1,
         manual: 20,
       });
+    });
+  });
+
+  describe("spellcasting from items", () => {
+    const WAND = { name: "Wand of the War Mage +2", source: "DMG" };
+    const WOOD = { name: "Imbued Wood", source: "EFA" };
+    const worn = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: flags.equipped ?? false,
+      attuned: flags.attuned ?? false,
+    });
+    const none = { ac: 0, save: 0, concentration: 0 };
+    const itemCatalog = {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(WAND), 0], [entryKey(WOOD), 0]]),
+      itemBonuses: new Map<string, ItemBonusTrait>([
+        [
+          entryKey(WAND),
+          {
+            ...none,
+            name: WAND.name,
+            requiresAttunement: true,
+            spellAttack: 2,
+            spellSaveDc: 1,
+            spellDamage: 0,
+          },
+        ],
+        [
+          entryKey(WOOD),
+          {
+            ...none,
+            name: WOOD.name,
+            requiresAttunement: false,
+            spellAttack: 0,
+            spellSaveDc: 0,
+            spellDamage: 1,
+          },
+        ],
+      ]),
+    };
+    const withItems = (inventory: CharacterDefinition["inventory"]) =>
+      deriveCharacter({ ...definition, inventory }, itemCatalog);
+    const bare = withItems([]);
+
+    it("adds an attuned wand to each class's attack bonus and save DC as a term named for it", () => {
+      const block = withItems([worn(WAND, { equipped: true, attuned: true })]);
+      const [before] = bare.spellcasting;
+      const [after] = block.spellcasting;
+      expect(after?.attackBonus.computed).toBe((before?.attackBonus.computed ?? 0) + 2);
+      expect(after?.attackBonus.terms.at(-1)).toEqual({ label: WAND.name, value: 2 });
+      expect(after?.saveDc.computed).toBe((before?.saveDc.computed ?? 0) + 1);
+      expect(after?.saveDc.terms.at(-1)).toEqual({ label: WAND.name, value: 1 });
+      expect(block.spellDamageBonus).toBeNull();
+    });
+
+    it("waits for equipping, and for attunement where the item requires it", () => {
+      expect(withItems([worn(WAND, { attuned: true })]).spellcasting).toEqual(bare.spellcasting);
+      expect(withItems([worn(WAND, { equipped: true })]).spellcasting).toEqual(bare.spellcasting);
+    });
+
+    it("lists a damage bonus only while an item adds one", () => {
+      expect(bare.spellDamageBonus).toBeNull();
+      expect(withItems([worn(WOOD, { equipped: true })]).spellDamageBonus).toEqual({
+        computed: 1,
+        manual: null,
+        terms: [{ label: WOOD.name, value: 1 }],
+      });
+    });
+
+    it("keeps a manual override beside the computed bonus", () => {
+      const block = deriveCharacter(
+        {
+          ...definition,
+          inventory: [worn(WOOD, { equipped: true })],
+          overrides: { spellDamageBonus: 3 },
+        },
+        itemCatalog,
+      );
+      expect(block.spellDamageBonus).toMatchObject({ computed: 1, manual: 3 });
     });
   });
 

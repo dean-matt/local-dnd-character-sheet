@@ -208,9 +208,7 @@ function derivedArmorClass(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
 ): ComputedField<number> {
-  const bonus = equippedBonuses(definition, catalog)
-    .filter((item) => item.ac !== 0)
-    .map((item) => ({ label: item.name, value: item.ac }));
+  const bonus = itemTerms(equippedBonuses(definition, catalog), (item) => item.ac);
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
@@ -305,6 +303,12 @@ function equippedAbilityGrants(
     return item && entry.equipped && (entry.attuned || !item.requiresAttunement) ? [item] : [];
   });
 }
+
+/** One term per item that `pick` gives a nonzero number, labeled with the item's name. */
+const itemTerms = (bonuses: readonly ItemBonusTrait[], pick: (item: ItemBonusTrait) => number) =>
+  bonuses
+    .filter((item) => pick(item) !== 0)
+    .map((item) => ({ label: item.name, value: pick(item) }));
 
 /** Each worn item's armor class and save bonuses, attuned where it must be, in inventory order. */
 function equippedBonuses(
@@ -404,6 +408,7 @@ function spellcastingEntries(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   characterLevel: number,
+  bonuses: readonly ItemBonusTrait[],
 ): CharacterDerived["spellcasting"] {
   return classLevels(definition).flatMap((group) => {
     const key = entryKey(group.class);
@@ -415,8 +420,22 @@ function spellcastingEntries(
       {
         class: group.class,
         ability,
-        saveDc: fromBreakdown(spellSaveDc(ability, modifier, characterLevel)),
-        attackBonus: fromBreakdown(spellAttackBonus(ability, modifier, characterLevel)),
+        saveDc: fromBreakdown(
+          spellSaveDc(
+            ability,
+            modifier,
+            characterLevel,
+            itemTerms(bonuses, (item) => item.spellSaveDc),
+          ),
+        ),
+        attackBonus: fromBreakdown(
+          spellAttackBonus(
+            ability,
+            modifier,
+            characterLevel,
+            itemTerms(bonuses, (item) => item.spellAttack),
+          ),
+        ),
         ...(preparation && { preparedSpells: preparedCount(preparation, modifier, group.level) }),
       },
     ];
@@ -475,10 +494,6 @@ export function deriveCharacter(
   const casters = castingClasses(definition, catalog);
   const grants = equippedAbilityGrants(definition, catalog);
   const bonuses = equippedBonuses(definition, catalog);
-  const saveBonuses = (pick: (item: ItemBonusTrait) => number) =>
-    bonuses
-      .filter((item) => pick(item) !== 0)
-      .map((item) => ({ label: item.name, value: pick(item) }));
 
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
@@ -486,17 +501,20 @@ export function deriveCharacter(
         definition,
         ability,
         grants,
-        saveBonuses((item) => item.save),
+        itemTerms(bonuses, (item) => item.save),
       );
       return [ability, { computed: total, manual: null, terms }];
     }),
   ) as Record<Ability, ComputedField<number>>;
 
-  const concentration = saveBonuses((item) => item.concentration);
+  const concentration = itemTerms(bonuses, (item) => item.concentration);
   const concentrationSave =
     concentration.length === 0
       ? null
       : fromBreakdown(breakdown([...savingThrows.con.terms, ...concentration]));
+
+  const spellDamage = itemTerms(bonuses, (item) => item.spellDamage);
+  const spellDamageBonus = spellDamage.length === 0 ? null : fromBreakdown(breakdown(spellDamage));
 
   const skills = catalog.skills.map((skill) => {
     const { total, terms } = skillModifier(definition, skill.ref, skill.ability, grants);
@@ -536,7 +554,8 @@ export function deriveCharacter(
     skills,
     armorClass: derivedArmorClass(definition, catalog),
     initiative: fromBreakdown(abilityModifierBreakdown(scores.dex.total)),
-    spellcasting: spellcastingEntries(definition, catalog, level),
+    spellcasting: spellcastingEntries(definition, catalog, level, bonuses),
+    spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
     ...load(definition, catalog),

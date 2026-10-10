@@ -69,6 +69,8 @@ export const characterDerivedSchema = z.strictObject({
   savingThrows: z.record(abilitySchema, derivedSchema(z.int())),
   /** The Constitution save plus what an equipped item adds to concentration saves; null while no item adds any. */
   concentrationSave: derivedSchema(z.int()).nullable(),
+  /** What equipped items add to a spell's damage, one term per item; null while none adds any. */
+  spellDamageBonus: derivedSchema(z.int()).nullable(),
   /**
    * One entry per catalog skill row the caller hands in — every skill of the
    * character's edition, proficient or not, so the sheet has a full list to render
