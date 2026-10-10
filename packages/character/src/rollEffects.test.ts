@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RollEffectEntry } from "./characterDerived.ts";
-import { effectsOnRoll } from "./itemEffects.ts";
+import { effectsOnRoll } from "./rollEffects.ts";
 
 const effect = (rest: Omit<RollEffectEntry, "item">): RollEffectEntry => ({
   item: "Item",

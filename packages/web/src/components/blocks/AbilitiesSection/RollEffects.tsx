@@ -14,15 +14,20 @@ export function RollEffects({
   effects: readonly RollEffectEntry[];
   className?: string;
 }) {
-  if (effects.length === 0) return null;
+  const lines = [
+    ...new Map(
+      effects.map(({ item, mode, condition }) => {
+        const text = `${condition ? `${MODE_LABEL[mode]} ${condition}` : MODE_LABEL[mode]} (${item})`;
+        return [text, { text, plain: !condition }] as const;
+      }),
+    ).values(),
+  ];
+  if (lines.length === 0) return null;
   return (
     <ul className={`text-label ${className}`}>
-      {effects.map(({ item, mode, condition }) => (
-        <li
-          key={`${item}-${mode}-${condition ?? ""}`}
-          className={condition ? "text-muted" : "font-semibold"}
-        >
-          {condition ? `${MODE_LABEL[mode]} ${condition}` : MODE_LABEL[mode]} ({item})
+      {lines.map(({ text, plain }) => (
+        <li key={text} className={plain ? "font-semibold" : "text-muted"}>
+          {text}
         </li>
       ))}
     </ul>

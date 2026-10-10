@@ -76,7 +76,6 @@ export {
   withImprovement,
   withoutImprovement,
 } from "./improvements.ts";
-export { effectsOnRoll } from "./itemEffects.ts";
 export { deityKey, entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
@@ -106,6 +105,7 @@ export {
   type FeatureKey,
 } from "./refs.ts";
 export { derivedValue, houseRule } from "./resolve.ts";
+export { effectsOnRoll } from "./rollEffects.ts";
 export {
   type CharacterState,
   type CharacterStateRecord,

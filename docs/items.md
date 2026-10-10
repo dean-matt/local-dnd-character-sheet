@@ -92,16 +92,16 @@ a condition such as "against spells" where there is one. It holds no upstream pr
 
 The search it was drawn from is every `items` row whose rules text mentions advantage or
 disadvantage, a magic variant's under `inherits`: 336 rows, which
-`packages/content/src/item-advantage.test.ts` repeats against `vendor/` and counts. 160 are
-mapped, 133 distinct names across both editions. The rest are passed over for one of five
+`packages/content/src/item-advantage.test.ts` repeats against `vendor/` and counts. The rest are passed over for one of five
 reasons: the bearer must spend an action, reaction or charge to get the effect; a
 consumable gives it for an hour; it changes another creature's roll, as Cloak of
 Displacement does; it marks initiative or a death saving throw, which the sheet shows as
 neither a save, a skill, a check nor an attack; or it is a trigger such as a Deck of Many
-Things card. A new tag's rows need that reading again, which is why the count is pinned.
+Things card. Those not passed over are mapped. A new tag's rows need that reading again, which is why the count is pinned.
 
 An equipped item, attuned where it requires attunement, lists its effects in
-`rollEffects`, and the sheet notes them beside the save, skill or attack they mark. A
+`rollEffects`, and the sheet notes them beside the save, skill or attack they mark. An attack
+effect marks every attack row, a spell attack included. A
 conditional effect reads as a note, and advantage and disadvantage on one roll are both
 listed, since whether a condition holds is the table's call. A homebrew item states its own
 in an `advantage` array, which the item form edits.
