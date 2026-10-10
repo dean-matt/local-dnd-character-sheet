@@ -10,7 +10,8 @@ import { SourceChip } from "../SourceChip.tsx";
  * action chips, with its controls at the right. A row with neither actions nor controls
  * has no third line. A row with `detail` opens it in a modal from its name; one without is
  * plain text, since there is nothing to open. `source` is absent on a homebrew row.
- * `priceNote` says where an estimated price comes from. `remove` sits at the end of the first line, such as the button taking the row off a list.
+ * `priceNote` says where an estimated price comes from. `remove` sits at the end of the
+ * first line, such as the button taking the row off a list.
  */
 export function ListRow({
   name,
