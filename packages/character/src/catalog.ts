@@ -36,6 +36,7 @@ export type DefenseTrait = {
   resist: readonly string[];
   immune: readonly string[];
   conditionImmune: readonly string[];
+  vulnerable: readonly string[];
 };
 
 /** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
@@ -47,7 +48,26 @@ export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
 
-/** What an item adds to armor class, saves, spell attacks, spell save DCs and spell damage, and whether it waits on attunement. */
+/** A movement mode, as `Speed` names it. */
+export type SpeedMode = keyof Speed;
+
+/**
+ * An item's `modifySpeed`. `static` sets a mode, `equal` makes it match another, `multiply`
+ * scales it and `bonus` adds feet to one mode or, under `*`, to every mode the character has.
+ */
+export type SpeedModifier = {
+  static?: Partial<Record<SpeedMode, number>>;
+  equal?: Partial<Record<SpeedMode, SpeedMode>>;
+  multiply?: Partial<Record<SpeedMode, number>>;
+  bonus?: Partial<Record<SpeedMode | "*", number>>;
+};
+
+/**
+ * What an item adds to armor class, saves, spell numbers, ability checks and the proficiency
+ * bonus, the speeds it changes, the lowest d20 that crits with it, and whether it grants a
+ * proficiency or a language, which upstream flags without naming. Whether it waits on
+ * attunement rides along.
+ */
 export type ItemBonusTrait = {
   name: string;
   requiresAttunement: boolean;
@@ -57,6 +77,12 @@ export type ItemBonusTrait = {
   spellAttack: number;
   spellSaveDc: number;
   spellDamage: number;
+  abilityCheck: number;
+  proficiencyBonus: number;
+  grantsProficiency: boolean;
+  grantsLanguage: boolean;
+  critThreshold?: number;
+  speed?: SpeedModifier;
 };
 
 /**

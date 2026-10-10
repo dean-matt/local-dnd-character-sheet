@@ -1,6 +1,8 @@
 import { type CharacterDerived, derivedValue } from "@dnd/character";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
+import { Popover } from "../../Popover.tsx";
+import { TermList } from "../../TermList.tsx";
 import { DerivedBonus } from "./DerivedBonus.tsx";
 import { StatTile } from "./StatTile.tsx";
 
@@ -9,6 +11,16 @@ const COMBAT_LABEL_CLASS = "text-chip tracking-[0.06em]";
 export function CombatStats({ derived }: { derived: CharacterDerived }) {
   const extraModes = Object.entries(derivedValue(derived.speed)).filter(
     ([mode]) => mode !== "walk",
+  );
+  const speedTerms = derived.speed.terms ?? [];
+  const speed = (
+    <Field
+      mode="read"
+      label=""
+      labelHidden
+      value={derived.speed}
+      format={(value) => String(value.walk)}
+    />
   );
   return (
     <Card title="Combat">
@@ -23,13 +35,17 @@ export function CombatStats({ derived }: { derived: CharacterDerived }) {
           <DerivedBonus named name="Initiative" value={derived.initiative} />
         </StatTile>
         <StatTile label="Speed" name="Speed" labelClassName={COMBAT_LABEL_CLASS}>
-          <Field
-            mode="read"
-            label=""
-            labelHidden
-            value={derived.speed}
-            format={(speed) => String(speed.walk)}
-          />
+          {speedTerms.length === 0 ? (
+            speed
+          ) : (
+            <Popover
+              trigger={speed}
+              triggerLabel={`Speed ${derivedValue(derived.speed).walk}`}
+              label="Speed breakdown"
+            >
+              <TermList terms={speedTerms} />
+            </Popover>
+          )}
           {extraModes.map(([mode, feet]) => (
             <span key={mode} className="font-normal text-label text-muted">
               {mode} {feet} ft.

@@ -32,6 +32,13 @@ import {
   withSkills,
 } from "./test/vex.ts";
 
+const noEffects = {
+  abilityCheck: 0,
+  proficiencyBonus: 0,
+  grantsProficiency: false,
+  grantsLanguage: false,
+};
+
 /** Vex is level 5, so the proficiency bonus is +3; Dexterity 16 and Charisma 17 give +3, Wisdom 12 gives +1. */
 describe("passive scores", () => {
   it("doubles the bonus for expertise and adds it once for proficiency", () => {
@@ -111,7 +118,13 @@ describe("deriveCharacter", () => {
   const LONGSWORD = { name: "Longsword", source: "XPHB" };
   const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
   const noBonus = { attack: 0, damage: 0 };
-  const noDefenses = { resist: [], resistChoice: [], immune: [], conditionImmune: [] };
+  const noDefenses = {
+    resist: [],
+    resistChoice: [],
+    immune: [],
+    conditionImmune: [],
+    vulnerable: [],
+  };
   const DAGGER_TRAIT: WeaponTrait = {
     kind: "melee",
     properties: ["F|XPHB", "L|XPHB", "T|XPHB"],
@@ -389,6 +402,7 @@ describe("deriveCharacter", () => {
             { label: "Proficiency", value: 3, reference: undefined },
           ],
         },
+        critThreshold: { computed: 20, manual: null, terms: [{ label: "Base", value: 20 }] },
         damage: {
           dice: "1d4",
           type: "piercing",
@@ -570,7 +584,7 @@ describe("deriveCharacter", () => {
   });
 
   describe("armor class and saves from items", () => {
-    const noSpell = { spellAttack: 0, spellSaveDc: 0, spellDamage: 0 };
+    const noSpell = { spellAttack: 0, spellSaveDc: 0, spellDamage: 0, ...noEffects };
     const RING = { name: "Ring of Protection", source: "DMG" };
     const ORB = { name: "Orb of Skoraeus", source: "ToA" };
     const worn = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
@@ -669,7 +683,7 @@ describe("deriveCharacter", () => {
       equipped: flags.equipped ?? false,
       attuned: flags.attuned ?? false,
     });
-    const none = { ac: 0, save: 0, concentration: 0 };
+    const none = { ac: 0, save: 0, concentration: 0, ...noEffects };
     const itemCatalog = {
       ...catalog,
       weights: new Map([...catalog.weights, [entryKey(WAND), 0], [entryKey(WOOD), 0]]),
@@ -740,6 +754,181 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("traits from items", () => {
+    const BOOTS = { name: "Boots of Speed", source: "DMG" };
+    const CLOAK = { name: "Cloak of the Manta Ray", source: "DMG" };
+    const PENNANT = { name: "Pennant of the Vind Rune", source: "FRHoF" };
+    const MASTERY = { name: "Ioun Stone, Mastery", source: "DMG" };
+    const LUCK = { name: "Stone of Good Luck", source: "DMG" };
+    const BIB = { name: "Butcher's Bib", source: "EGW" };
+    const BELT = { name: "Belt of Dwarvenkind", source: "DMG" };
+    const BRACERS = { name: "Bracers of Archery", source: "DMG" };
+    const worn = (ref: EntryRef, attuned = true) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: true,
+      attuned,
+    });
+    const trait = (
+      ref: EntryRef & { name: string },
+      effect: Partial<ItemBonusTrait>,
+    ): [string, ItemBonusTrait] => [
+      entryKey(ref),
+      {
+        name: ref.name,
+        requiresAttunement: true,
+        ac: 0,
+        save: 0,
+        concentration: 0,
+        spellAttack: 0,
+        spellSaveDc: 0,
+        spellDamage: 0,
+        ...noEffects,
+        ...effect,
+      },
+    ];
+    const items = [BOOTS, CLOAK, PENNANT, MASTERY, LUCK, BIB, BELT, BRACERS];
+    const itemCatalog = {
+      ...catalog,
+      weights: new Map([...catalog.weights, ...items.map((ref) => [entryKey(ref), 0] as const)]),
+      itemDefenses: new Map<string, ItemDefenseTrait>([
+        [
+          entryKey(BELT),
+          { ...noDefenses, vulnerable: ["fire"], name: BELT.name, requiresAttunement: true },
+        ],
+      ]),
+      itemBonuses: new Map<string, ItemBonusTrait>([
+        trait(BOOTS, { speed: { multiply: { walk: 2 } } }),
+        trait(CLOAK, { speed: { static: { swim: 60 }, equal: { fly: "walk" } } }),
+        trait(PENNANT, { speed: { bonus: { "*": 5 } } }),
+        trait(MASTERY, { proficiencyBonus: 1 }),
+        trait(LUCK, { abilityCheck: 1, save: 1 }),
+        trait(BIB, { critThreshold: 19 }),
+        trait(BELT, { grantsLanguage: true }),
+        trait(BRACERS, { grantsProficiency: true }),
+      ]),
+    };
+    const withItems = (inventory: CharacterDefinition["inventory"]) =>
+      deriveCharacter(
+        { ...equipped, inventory: [...equipped.inventory, ...inventory] },
+        itemCatalog,
+      );
+    const bare = withItems([]);
+
+    it("multiplies, sets and matches speeds, naming the item in each term", () => {
+      const block = withItems([worn(BOOTS), worn(CLOAK)]);
+      expect(block.speed.computed).toEqual({ walk: 60, swim: 60, fly: 60 });
+      expect(block.speed.terms).toEqual([
+        { label: "Boots of Speed: walk 30 to 60", value: 30 },
+        { label: "Cloak of the Manta Ray: swim 0 to 60", value: 60 },
+        { label: "Cloak of the Manta Ray: fly 0 to 60", value: 60 },
+      ]);
+    });
+
+    it("adds a flat bonus to every speed the character has", () => {
+      const block = withItems([worn(CLOAK), worn(PENNANT)]);
+      expect(block.speed.computed).toEqual({ walk: 35, swim: 65, fly: 35 });
+    });
+
+    it("never lowers a speed a static or matching item sets", () => {
+      const fast = { ...itemCatalog, speed: { walk: 40, swim: 80 } };
+      const block = deriveCharacter({ ...equipped, inventory: [worn(CLOAK)] }, fast);
+      expect(block.speed.computed).toEqual({ walk: 40, swim: 80, fly: 40 });
+    });
+
+    it("keeps the speed override beside the computed speeds", () => {
+      const block = deriveCharacter(
+        { ...equipped, inventory: [worn(BOOTS)], overrides: { speed: { walk: 10 } } },
+        itemCatalog,
+      );
+      expect(block.speed).toMatchObject({ computed: { walk: 60 }, manual: { walk: 10 } });
+    });
+
+    it("raises the proficiency bonus and everything it feeds, expertise doubling it", () => {
+      const block = withItems([worn(MASTERY)]);
+      expect(block.proficiencyBonus.computed).toBe(bare.proficiencyBonus.computed + 1);
+      expect(block.proficiencyBonus.terms.at(-1)).toEqual({ label: MASTERY.name, value: 1 });
+      const skill = (name: string) => block.skills.find((row) => row.ref.name === name);
+      const before = (name: string) => bare.skills.find((row) => row.ref.name === name);
+      expect(skill("Stealth")?.modifier.computed).toBe(
+        (before("Stealth")?.modifier.computed ?? 0) + 2,
+      );
+      expect(skill("Stealth")?.modifier.terms.at(-1)).toEqual({ label: MASTERY.name, value: 2 });
+      expect(skill("Stealth")?.passive.computed).toBe(
+        (before("Stealth")?.passive.computed ?? 0) + 2,
+      );
+      expect(skill("Deception")?.modifier.computed).toBe(
+        (before("Deception")?.modifier.computed ?? 0) + 1,
+      );
+      expect(skill("Perception")?.modifier).toEqual(before("Perception")?.modifier);
+      const [after] = block.spellcasting;
+      const [prior] = bare.spellcasting;
+      expect(after?.saveDc.computed).toBe((prior?.saveDc.computed ?? 0) + 1);
+      expect(after?.attackBonus.terms.at(-1)).toEqual({ label: MASTERY.name, value: 1 });
+      expect(block.savingThrows.cha.computed).toBe(bare.savingThrows.cha.computed + 1);
+      expect(block.savingThrows.str.computed).toBe(bare.savingThrows.str.computed);
+    });
+
+    it("adds an ability check bonus to every skill and to initiative, not to the modifiers", () => {
+      const block = withItems([worn(LUCK)]);
+      for (const [index, skill] of block.skills.entries()) {
+        expect(skill.modifier.computed).toBe((bare.skills[index]?.modifier.computed ?? 0) + 1);
+        expect(skill.modifier.terms.at(-1)).toEqual({ label: LUCK.name, value: 1 });
+        expect(skill.passive.computed).toBe((bare.skills[index]?.passive.computed ?? 0) + 1);
+      }
+      expect(block.initiative.computed).toBe(bare.initiative.computed + 1);
+      expect(block.abilityModifiers).toEqual(bare.abilityModifiers);
+    });
+
+    it("lowers the critical threshold of every weapon attack and shows a plain 20 otherwise", () => {
+      expect(bare.attacks.every((attack) => attack.critThreshold.computed === 20)).toBe(true);
+      const block = withItems([worn(BIB)]);
+      expect(block.attacks.length).toBeGreaterThan(0);
+      for (const attack of block.attacks) {
+        expect(attack.critThreshold.computed).toBe(19);
+        expect(attack.critThreshold.terms).toEqual([
+          { label: "Base", value: 20 },
+          { label: BIB.name, value: -1 },
+        ]);
+      }
+    });
+
+    it("lists an item's vulnerability and its proficiency and language grants as the item", () => {
+      const block = withItems([worn(BELT), worn(BRACERS)]);
+      expect(block.defenses.computed.vulnerabilities).toEqual([
+        { name: "fire", from: [BELT.name] },
+      ]);
+      expect(block.itemGrants.computed).toEqual({
+        proficiencies: [BRACERS.name],
+        languages: [BELT.name],
+      });
+    });
+
+    it("waits for equipping, and for attunement where the item requires it", () => {
+      const idle = [
+        worn(BOOTS, false),
+        worn(MASTERY, false),
+        worn(LUCK, false),
+        worn(BIB, false),
+        worn(BELT, false),
+        worn(BRACERS, false),
+      ];
+      expect(withItems(idle)).toEqual({ ...bare, attacks: bare.attacks });
+      const carried = items.map((ref) => ({ ...worn(ref), equipped: false }));
+      expect(withItems(carried).speed).toEqual(bare.speed);
+      expect(withItems(carried).itemGrants).toEqual(bare.itemGrants);
+    });
+
+    it("keeps the proficiency bonus override beside the computed value", () => {
+      const block = deriveCharacter(
+        { ...equipped, inventory: [worn(MASTERY)], overrides: { proficiencyBonus: 9 } },
+        itemCatalog,
+      );
+      expect(block.proficiencyBonus).toMatchObject({ computed: 4, manual: 9 });
+    });
+  });
+
   describe("defenses", () => {
     const DWARF = { name: "Dwarf", source: "PHB" };
     const HILL = { name: "Hill", source: "PHB" };
@@ -769,6 +958,7 @@ describe("deriveCharacter", () => {
             resist: ["poison"],
             immune: [],
             conditionImmune: [],
+            vulnerable: [],
             name: RING.name,
             requiresAttunement: true,
           },
@@ -779,6 +969,7 @@ describe("deriveCharacter", () => {
             resist: [],
             immune: ["poison"],
             conditionImmune: ["poisoned"],
+            vulnerable: [],
             name: PERIAPT.name,
             requiresAttunement: false,
           },
@@ -793,6 +984,7 @@ describe("deriveCharacter", () => {
         resistances: [{ name: "poison", from: ["Dwarf (Hill)"] }],
         damageImmunities: [],
         conditionImmunities: [],
+        vulnerabilities: [],
         resistanceChoice: null,
       });
     });

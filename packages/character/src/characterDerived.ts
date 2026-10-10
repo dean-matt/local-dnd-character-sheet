@@ -28,10 +28,17 @@ const defensesSchema = z.strictObject({
   resistances: z.array(defenseSchema),
   damageImmunities: z.array(defenseSchema),
   conditionImmunities: z.array(defenseSchema),
+  vulnerabilities: z.array(defenseSchema),
   /** The race's choice of resistance while the definition stores no pick it offers. */
   resistanceChoice: z
     .strictObject({ from: z.string().min(1), options: z.array(z.string().min(1)).min(1) })
     .nullable(),
+});
+
+/** The names of the equipped items that grant a proficiency or a language, which upstream flags without naming. */
+const itemGrantsSchema = z.strictObject({
+  proficiencies: z.array(z.string().min(1)),
+  languages: z.array(z.string().min(1)),
 });
 
 /**
@@ -64,7 +71,7 @@ export const characterDerivedSchema = z.strictObject({
    * feet, not the Elf's 30 and 5 more.
    */
   speed: derivedSchema(speedSchema),
-  proficiencyBonus: derivedSchema(z.int().min(2).max(6)),
+  proficiencyBonus: derivedSchema(z.int().min(2)),
   /** Every ability, since an unproficient save is still a number the sheet shows. */
   savingThrows: z.record(abilitySchema, derivedSchema(z.int())),
   /** The Constitution save plus what an equipped item adds to concentration saves; null while no item adds any. */
@@ -130,6 +137,8 @@ export const characterDerivedSchema = z.strictObject({
       entry: z.int().min(0),
       ability: z.enum(["str", "dex"]),
       attackBonus: derivedSchema(z.int()),
+      /** The lowest d20 result that scores a critical hit: 20, or lower while an item says so. */
+      critThreshold: derivedSchema(z.int().min(2).max(20)),
       damage: z
         .strictObject({
           dice: z.string().min(1),
@@ -140,8 +149,10 @@ export const characterDerivedSchema = z.strictObject({
       grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
     }),
   ),
-  /** Resistances and immunities from the race, then from each equipped item, attuned where it must be. */
+  /** Resistances, immunities and vulnerabilities from the race, then from each equipped item, attuned where it must be. */
   defenses: derivedSchema(defensesSchema),
+  /** Which equipped items grant a proficiency or a language, attuned where they must be. */
+  itemGrants: derivedSchema(itemGrantsSchema),
 });
 
 export type CharacterDerived = z.infer<typeof characterDerivedSchema>;

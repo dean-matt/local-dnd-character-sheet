@@ -8,6 +8,7 @@ describe("defenseTraitSchema", () => {
       resistChoice: [],
       immune: [],
       conditionImmune: [],
+      vulnerable: [],
     });
     expect(
       defenseTraitSchema.parse({
@@ -15,7 +16,22 @@ describe("defenseTraitSchema", () => {
         immune: ["poison"],
         conditionImmune: ["poisoned"],
       }),
-    ).toEqual({ resist: [], resistChoice: [], immune: ["poison"], conditionImmune: ["poisoned"] });
+    ).toEqual({
+      resist: [],
+      resistChoice: [],
+      immune: ["poison"],
+      conditionImmune: ["poisoned"],
+      vulnerable: [],
+    });
+  });
+
+  it("reads the damage types an item makes its wearer vulnerable to", () => {
+    expect(
+      defenseTraitSchema.parse({
+        name: "Armor of Vulnerability",
+        vulnerable: ["Piercing", "slashing"],
+      }).vulnerable,
+    ).toEqual(["piercing", "slashing"]);
   });
 
   it("offers a choice of resistance rather than granting it", () => {

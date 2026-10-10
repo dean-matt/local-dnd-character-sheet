@@ -47,6 +47,22 @@ describe("Defenses", () => {
     expect(within(card).getAllByText("None.")).toHaveLength(1);
   });
 
+  it("adds a Vulnerabilities row only where something grants one", () => {
+    expect(within(renderDefenses()).queryByRole("heading", { name: "Vulnerabilities" })).toBeNull();
+  });
+
+  it("lists a vulnerability with the item that causes it", () => {
+    const card = renderDefenses({
+      vulnerabilities: [{ name: "piercing", from: ["Armor of Vulnerability"] }],
+    });
+
+    expect(within(card).getByRole("heading", { name: "Vulnerabilities" })).toBeInTheDocument();
+    fireEvent.click(within(card).getByRole("button", { name: "Piercing Vulnerability" }));
+    const dialog = screen.getByRole("dialog", { name: "Piercing Vulnerability" });
+    expect(dialog).toHaveTextContent("From Armor of Vulnerability");
+    expect(dialog).toHaveTextContent("You take double piercing damage.");
+  });
+
   it("names every source that grants a chip", () => {
     renderDefenses({
       resistances: [{ name: "poison", from: ["Dwarf (Hill)", "Ring of Poison Resistance"] }],

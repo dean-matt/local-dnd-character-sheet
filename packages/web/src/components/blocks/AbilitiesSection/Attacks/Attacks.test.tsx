@@ -23,6 +23,7 @@ const attack = (entry: number, bonus: number): CharacterDerived["attacks"][numbe
   entry,
   ability: "str",
   attackBonus: { computed: bonus, manual: null, terms: [{ label: "Strength", value: bonus }] },
+  critThreshold: { computed: 20, manual: null, terms: [] },
   damage: {
     dice: "1d8",
     type: "slashing",
@@ -55,6 +56,19 @@ describe("Attacks", () => {
       "Longsword+51d8-1 slashing",
       "Warlock spell attack+5—None",
     ]);
+  });
+
+  it("shows the lowered critical threshold beside the damage, and nothing at 20", async () => {
+    const crits = { computed: 19, manual: null, terms: [] };
+    renderAttacks({
+      ...derivedRecord(),
+      attacks: [{ ...attack(0, 5), critThreshold: crits }, attack(1, 2)],
+    });
+
+    expect(await screen.findByRole("rowheader", { name: "Longsword" })).toBeInTheDocument();
+    expect(rows().map((row) => row.textContent)).toContain(
+      "Longsword+51d8-1 slashing · Crit 19–20",
+    );
   });
 
   it("opens a weapon's attack terms from its bonus", async () => {

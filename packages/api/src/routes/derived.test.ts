@@ -39,6 +39,7 @@ const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
 const HILL_BELT = { name: "Belt of Hill Giant Strength", source: "DMG" };
 const RING_OF_PROTECTION = { name: "Ring of Protection", source: "DMG" };
 const WAR_MAGE = { name: "Wand of the War Mage +1", source: "DMG" };
+const BOOTS_OF_SPEED = { name: "Boots of Speed", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
@@ -287,6 +288,13 @@ describe("derivedRoutes", () => {
           bonusSpellAttack: "+1",
           bonusSpellSaveDc: "+1",
         }),
+        item(BOOTS_OF_SPEED, "item", {
+          reqAttune: true,
+          modifySpeed: { multiply: { walk: 2 } },
+          vulnerable: ["fire"],
+          grantsLanguage: true,
+          critThreshold: 19,
+        }),
         item(PERIAPT, "item", { immune: ["poison"], conditionImmune: ["poisoned"] }),
         item(BARDING, "magicvariant", {
           type: "GV",
@@ -523,6 +531,7 @@ describe("derivedRoutes", () => {
       ],
       damageImmunities: [{ name: "poison", from: [PERIAPT.name] }],
       conditionImmunities: [{ name: "poisoned", from: [PERIAPT.name] }],
+      vulnerabilities: [],
       resistanceChoice: null,
     });
   });
@@ -597,6 +606,38 @@ describe("derivedRoutes", () => {
     expect(after?.saveDc.terms.at(-1)).toEqual({ label: WAR_MAGE.name, value: 1 });
     expect(worn.spellDamageBonus?.terms).toEqual([{ label: "Staff of Force", value: 1 }]);
     expect(bare.spellDamageBonus).toBeNull();
+  });
+
+  it("applies an item's speed, vulnerability, grants and critical threshold, catalog or homebrew, while worn", async () => {
+    insertHomebrewItem(opened.homebrewDb, "stone", {
+      name: "Luckstone",
+      edition: "classic",
+      bonusAbilityCheck: "+1",
+      bonusProficiencyBonus: "+1",
+    });
+    store(
+      definitionWith({ inventory: [{ ref: BOOTS_OF_SPEED }, { ref: { homebrewId: "stone" } }] }),
+    );
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        inventory: [
+          { ref: BOOTS_OF_SPEED, equipped: true, attuned: true },
+          { ref: { homebrewId: "stone" }, equipped: true },
+        ],
+      }),
+    );
+    const worn = await derived();
+    expect(worn.speed.computed.walk).toBe(bare.speed.computed.walk * 2);
+    expect(worn.defenses.computed.vulnerabilities).toEqual([
+      { name: "fire", from: [BOOTS_OF_SPEED.name] },
+    ]);
+    expect(worn.itemGrants.computed.languages).toEqual([BOOTS_OF_SPEED.name]);
+    expect(worn.proficiencyBonus.computed).toBe(bare.proficiencyBonus.computed + 1);
+    expect(worn.initiative.terms.at(-1)).toEqual({ label: "Luckstone", value: 1 });
+    expect(bare.speed.terms).toEqual([]);
   });
 
   it("leaves a score alone while the item granting it is not equipped", async () => {

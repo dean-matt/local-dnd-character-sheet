@@ -215,7 +215,11 @@ function weaponTraits(
 }
 
 const grantsAny = (trait: DefenseTrait) =>
-  trait.resist.length + trait.immune.length + trait.conditionImmune.length > 0;
+  trait.resist.length +
+    trait.immune.length +
+    trait.conditionImmune.length +
+    trait.vulnerable.length >
+  0;
 
 const raceDefenses = (json: unknown) =>
   parseJson(defenseTraitSchema, json) ?? {
@@ -223,9 +227,10 @@ const raceDefenses = (json: unknown) =>
     resistChoice: [],
     immune: [],
     conditionImmune: [],
+    vulnerable: [],
   };
 
-/** Every entry whose row grants a resistance or an immunity, keyed by `itemKey`. */
+/** Every entry whose row grants a resistance, an immunity or a vulnerability, keyed by `itemKey`. */
 function itemDefenses(
   definition: CharacterDefinition,
   rows: readonly (ItemFacts | undefined)[],
@@ -239,6 +244,7 @@ function itemDefenses(
       resist: trait.resist,
       immune: trait.immune,
       conditionImmune: trait.conditionImmune,
+      vulnerable: trait.vulnerable,
       name: row.name,
       requiresAttunement: row.requiresAttunement,
     });
@@ -265,7 +271,7 @@ function itemAbilities(
   return abilities;
 }
 
-/** Every entry whose row adds to armor class or saves, keyed by `itemKey`. */
+/** Every entry whose row adds a bonus or changes a trait, keyed by `itemKey`. */
 function itemBonuses(
   definition: CharacterDefinition,
   rows: readonly (ItemFacts | undefined)[],

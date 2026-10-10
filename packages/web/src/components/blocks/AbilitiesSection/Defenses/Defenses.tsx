@@ -21,9 +21,8 @@ function chips(defenses: readonly Defense[], kind: string, effect: (name: string
 }
 
 export function Defenses({ derived }: { derived: CharacterDerived }) {
-  const { resistances, damageImmunities, conditionImmunities, resistanceChoice } = derivedValue(
-    derived.defenses,
-  );
+  const { resistances, damageImmunities, conditionImmunities, vulnerabilities, resistanceChoice } =
+    derivedValue(derived.defenses);
   return (
     <Card title="Resistances & Immunities">
       <div className="flex flex-col gap-3">
@@ -51,6 +50,16 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
             ),
           ]}
         />
+        {vulnerabilities.length > 0 && (
+          <DefenseChipRow
+            heading="Vulnerabilities"
+            items={chips(
+              vulnerabilities,
+              "Vulnerability",
+              (name) => `You take double ${name} damage.`,
+            )}
+          />
+        )}
       </div>
     </Card>
   );

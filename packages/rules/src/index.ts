@@ -11,6 +11,7 @@ export {
   SIZES,
 } from "./carrying.ts";
 export { challengeRatingValue, creatureProficiencyBonus } from "./challenge.ts";
+export type { ProficiencyLevel } from "./core.ts";
 export {
   ABILITIES,
   ABILITY_LABEL,
