@@ -31,6 +31,9 @@ Unarmored Movement · Infused Items · Favored Enemy · Psi Points · Psi Limit
 Spell Slots · Slot Level · Plans Known · Magic Items
 ```
 
+**Weapon Mastery** is a column only on Barbarian and Fighter. Paladin, Ranger and Rogue state
+their two kinds in the feature's text, which `getWeaponMasteryCount` reads.
+
 Four traps in reading a group:
 
 - **Only 6 of 322 subclasses have `subclassTableGroups`** — Eldritch Knight and Arcane

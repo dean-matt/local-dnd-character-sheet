@@ -115,7 +115,8 @@ const TOOL_OF_TYPE: Record<string, ToolType> = {
  * What a search hit says of an item beyond its name: its kinds, its rarity, whether a
  * weapon is simple or martial, and which kind of tool a tool is. A row with none of
  * `rarity` or `category` carries `null` for it; `tool` is absent from every row but a tool.
- * `variant` marks a magic variant, which a character holds only beside a base item.
+ * `variant` marks a magic variant, which a character holds only beside a base item, and
+ * `mastery` a base weapon that carries a mastery property.
  */
 export const itemHitFactsSchema = z.strictObject({
   kinds: z.array(z.enum(ITEM_KINDS)).min(1),
@@ -123,6 +124,7 @@ export const itemHitFactsSchema = z.strictObject({
   category: z.enum(["simple", "martial"]).nullable(),
   tool: z.enum(TOOL_TYPES).optional(),
   variant: z.literal(true).optional(),
+  mastery: z.literal(true).optional(),
 });
 
 export type ItemHitFacts = z.infer<typeof itemHitFactsSchema>;

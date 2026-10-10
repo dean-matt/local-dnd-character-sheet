@@ -269,6 +269,34 @@ function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait):
 }
 
 /**
+ * The mastery properties a chosen weapon kind gives, matched by name the way a weapon
+ * proficiency is: a named magic item answers to its base item. A 2014 character has none.
+ */
+function weaponMastery(definition: CharacterDefinition, weapon: WeaponTrait): ContentRef[] {
+  if (definition.edition !== "one") return [];
+  const name = weapon.name.toLowerCase();
+  const chosen = definition.weaponMasteries.some((kind) => kind.name.toLowerCase() === name);
+  return chosen ? [...(weapon.mastery ?? [])] : [];
+}
+
+/** One term per class whose Weapon Mastery allows kinds at the character's level in it. */
+function weaponMasteryLimit(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): Breakdown<TermReference> {
+  if (definition.edition !== "one") return breakdown([]);
+  const classes = new Map(definition.levels.map(({ class: ref }) => [entryKey(ref), ref]));
+  return breakdown(
+    [...classes].flatMap(([key, ref]) => {
+      const value = catalog.weaponMasteryKinds.get(key) ?? 0;
+      return value > 0 && !("homebrewId" in ref)
+        ? [{ label: ref.name, value, reference: ref }]
+        : [];
+    }),
+  );
+}
+
+/**
  * One attack per carried weapon. A shield counts only while equipped, as armor class reads
  * it. A second die is what makes a weapon versatile: every upstream row with a `dmg2`
  * carries the `V` property, and none carries `V` without one.
@@ -312,6 +340,7 @@ function derivedAttacks(
             }
           : null,
         grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
+        mastery: weaponMastery(definition, weapon),
       },
     ];
   });
@@ -682,6 +711,7 @@ export function deriveCharacter(
     pactSlots: pactSlots(casters),
     ...load(definition, catalog),
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
+    weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog),
     itemGrants: derivedItemGrants(bonuses),

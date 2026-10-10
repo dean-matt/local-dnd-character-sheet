@@ -9,16 +9,19 @@ export function AttackRow({
   bonus,
   damage,
   effects,
+  mastery,
 }: {
   name: string;
   bonus: ReactNode;
   damage: ReactNode;
   effects: readonly RollEffectEntry[];
+  mastery?: ReactNode;
 }) {
   return (
     <tr className="border-border border-t">
       <th scope="row" className={`${CELL} font-normal`}>
         <div className="truncate">{name}</div>
+        {mastery}
         <RollEffects effects={effects} />
       </th>
       <td className={`${CELL} font-semibold`}>{bonus}</td>

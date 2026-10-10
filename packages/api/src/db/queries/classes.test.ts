@@ -1,13 +1,14 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   getClass,
   getClassGrants,
   getPreparedSpellCount,
   getSubclass,
   getSubclassGrants,
+  getWeaponMasteryCount,
   listClasses,
   listSubclasses,
 } from "./classes.ts";
@@ -335,6 +336,80 @@ describe("prepared spell count", () => {
     publishClasses(dataDir, { classes: [FIGHTER_PHB] });
 
     expect(getPreparedSpellCount(dataDir, "Fighter", "PHB", 5)).toEqual({ prepares: false });
+  });
+});
+
+describe("weapon mastery count", () => {
+  let dataDir: string;
+
+  beforeEach(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-weapon-mastery-"));
+  });
+
+  afterEach(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  const feature = (class_name: string, entry: string) => ({
+    name: "Weapon Mastery",
+    source: "XPHB",
+    class_name,
+    class_source: "XPHB",
+    level: 1,
+    edition: "one",
+    json: JSON.stringify({ name: "Weapon Mastery", entries: [entry] }),
+  });
+
+  it("reads the column a class prints at the level in it", () => {
+    publishClasses(dataDir, {
+      classResources: [1, 4].map((level) => ({
+        class_name: "Fighter",
+        class_source: "XPHB",
+        level,
+        resource_key: "weapon_mastery",
+        value: level === 1 ? "3" : "4",
+      })),
+      classFeatures: [feature("Fighter", "the mastery of three kinds of weapons")],
+    });
+
+    expect(getWeaponMasteryCount(dataDir, "Fighter", "XPHB", 1)).toBe(3);
+    expect(getWeaponMasteryCount(dataDir, "Fighter", "XPHB", 4)).toBe(4);
+  });
+
+  it("reads the number a class with no column writes in the feature's text", () => {
+    publishClasses(dataDir, {
+      classFeatures: [
+        feature("Rogue", "the mastery properties of two kinds of weapons of your choice"),
+      ],
+    });
+
+    expect(getWeaponMasteryCount(dataDir, "Rogue", "XPHB", 1)).toBe(2);
+    expect(getWeaponMasteryCount(dataDir, "Rogue", "XPHB", 9)).toBe(2);
+  });
+
+  it("is zero before the feature's level and for a class without it", () => {
+    publishClasses(dataDir, {
+      classFeatures: [{ ...feature("Rogue", "two kinds of weapons"), level: 2 }],
+    });
+
+    expect(getWeaponMasteryCount(dataDir, "Rogue", "XPHB", 1)).toBe(0);
+    expect(getWeaponMasteryCount(dataDir, "Cleric", "XPHB", 20)).toBe(0);
+  });
+
+  it("throws on a printed value that is not a count", () => {
+    publishClasses(dataDir, {
+      classResources: [
+        {
+          class_name: "Fighter",
+          class_source: "XPHB",
+          level: 1,
+          resource_key: "weapon_mastery",
+          value: "many",
+        },
+      ],
+    });
+
+    expect(() => getWeaponMasteryCount(dataDir, "Fighter", "XPHB", 1)).toThrow(/not a count/);
   });
 });
 

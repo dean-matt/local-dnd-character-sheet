@@ -44,6 +44,7 @@ export const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   feats: "Feats",
   optionalFeatures: "Optional features",
   featureChoices: "Feature choices",
+  weaponMasteries: "Weapon masteries",
   deity: "Deity",
   alignment: "Alignment",
   money: "Money",

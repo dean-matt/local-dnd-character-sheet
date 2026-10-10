@@ -199,6 +199,7 @@ describe("deriveCharacter", () => {
     itemBonuses: new Map<string, ItemBonusTrait>(),
     itemAdvantages: new Map<string, ItemAdvantageTrait>(),
     armorBurdens: new Map<string, ArmorBurdenTrait>(),
+    weaponMasteryKinds: new Map<string, number>(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -414,6 +415,7 @@ describe("deriveCharacter", () => {
           modifier: { computed: 3, manual: null, terms: [{ label: "Dexterity", value: 3 }] },
         },
         grip: null,
+        mastery: [],
       });
     });
 
@@ -506,6 +508,86 @@ describe("deriveCharacter", () => {
     it("parses as the derived block's attacks", () => {
       const block = deriveCharacter(withSword({}, equipped), catalog);
       expect(characterDerivedSchema.parse(block).attacks).toHaveLength(2);
+    });
+  });
+
+  describe("weapon mastery", () => {
+    const TOPPLE = { name: "Topple", source: "XPHB" };
+    const FIGHTER = { name: "Fighter", source: "XPHB" };
+    const mastered = {
+      ...catalog,
+      weapons: new Map([
+        ...catalog.weapons,
+        [entryKey(LONGSWORD), { ...LONGSWORD_TRAIT, mastery: [TOPPLE] }],
+        [
+          entryKey({ name: "Dagger", source: "XPHB" }),
+          { ...DAGGER_TRAIT, mastery: [{ name: "Nick", source: "XPHB" }] },
+        ],
+      ]),
+    };
+    const armed = (
+      weaponMasteries: CharacterDefinition["weaponMasteries"],
+      base: CharacterDefinition = equipped,
+    ): CharacterDefinition => ({
+      ...base,
+      weaponMasteries,
+      inventory: [
+        ...base.inventory,
+        { ref: LONGSWORD, quantity: 1, carried: true, equipped: true, attuned: false },
+      ],
+    });
+    const masteryOf = (block: CharacterDerived, entry: number) =>
+      block.attacks.find((attack) => attack.entry === entry)?.mastery;
+
+    it("shows a chosen kind's mastery on its attack, whatever the casing of the name", () => {
+      const block = deriveCharacter(armed([{ name: "longsword", source: "XPHB" }]), mastered);
+
+      expect(masteryOf(block, 4)).toEqual([TOPPLE]);
+      expect(masteryOf(block, 0)).toEqual([]);
+    });
+
+    it("shows none before a kind is chosen, or on a weapon with no mastery to show", () => {
+      expect(masteryOf(deriveCharacter(armed([]), mastered), 4)).toEqual([]);
+      expect(masteryOf(deriveCharacter(armed([LONGSWORD]), catalog), 4)).toEqual([]);
+    });
+
+    it("leaves a 2014 character with no mastery", () => {
+      const classic = { ...armed([LONGSWORD]), edition: "classic" as const };
+      const block = deriveCharacter(classic, {
+        ...mastered,
+        weaponMasteryKinds: new Map([[entryKey(FIGHTER), 3]]),
+      });
+
+      expect(masteryOf(block, 4)).toEqual([]);
+      expect(block.weaponMasteryLimit.computed).toBe(0);
+    });
+
+    it("limits the kinds by what each class allows at its level, one term per class", () => {
+      const multiclass: CharacterDefinition = {
+        ...equipped,
+        levels: [{ class: FIGHTER }, { class: ROGUE }, { class: FIGHTER }],
+      };
+      const block = deriveCharacter(multiclass, {
+        ...catalog,
+        hitDice: new Map([...hitDice, [entryKey(FIGHTER), 10 as const]]),
+        weaponMasteryKinds: new Map([
+          [entryKey(FIGHTER), 3],
+          [entryKey(ROGUE), 2],
+        ]),
+      });
+
+      expect(block.weaponMasteryLimit).toEqual({
+        computed: 5,
+        manual: null,
+        terms: [
+          { label: "Fighter", value: 3, reference: FIGHTER },
+          { label: "Rogue", value: 2, reference: ROGUE },
+        ],
+      });
+    });
+
+    it("limits a character whose classes have no Weapon Mastery to none", () => {
+      expect(deriveCharacter(equipped, catalog).weaponMasteryLimit.computed).toBe(0);
     });
   });
 

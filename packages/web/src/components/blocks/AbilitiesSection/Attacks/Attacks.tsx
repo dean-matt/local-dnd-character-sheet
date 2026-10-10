@@ -13,9 +13,11 @@ import {
 } from "@dnd/character";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { Card } from "../../../Card.tsx";
+import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { damageText } from "../../attack.ts";
 import { AttackBonus } from "./AttackBonus.tsx";
 import { AttackRow } from "./AttackRow.tsx";
+import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
 /** A cell the rules leave empty, shown as a dash and spoken as "none". */
 const NONE = (
@@ -78,6 +80,11 @@ export function Attacks({
                   key={attack.entry}
                   name={name}
                   effects={effects}
+                  mastery={attack.mastery.map((ref) => (
+                    <p key={`${ref.name}|${ref.source}`} className="text-label text-muted">
+                      Mastery: <RulesText text={`{@itemMastery ${ref.name}|${ref.source}}`} />
+                    </p>
+                  ))}
                   bonus={<AttackBonus name={`${name} attack bonus`} field={attack.attackBonus} />}
                   damage={
                     <>
@@ -105,6 +112,7 @@ export function Attacks({
           </tbody>
         </table>
       )}
+      <WeaponMasteryChoice character={character} derived={derived} />
     </Card>
   );
 }

@@ -630,6 +630,7 @@ describe("InventorySection", () => {
         modifier: { computed: 4, manual: null, terms: [{ label: "Strength", value: 3 }] },
       },
       grip,
+      mastery: [],
     });
     const held = { held: "one-handed" as const, twoHandedBlocked: false };
 

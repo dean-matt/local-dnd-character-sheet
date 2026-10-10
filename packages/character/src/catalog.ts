@@ -23,11 +23,13 @@ export type ArmorTrait = { category: "light" | "medium" | "heavy" | "shield"; ar
 
 /**
  * What one weapon row attacks with: the fields `weaponAttack` reads, and the category and
- * name a weapon proficiency matches. `bonus` is a magic weapon's, each roll's summed from
+ * name a weapon proficiency and a weapon mastery match. `bonus` is a magic weapon's, each roll's summed from
  * every field upstream states it in; `reference` is the row that granted it.
  */
 export type WeaponTrait = Weapon & {
   name: string;
+  /** The mastery properties the row states, or its base item's: `Topple` (XPHB). */
+  mastery?: readonly ContentRef[];
   category: "simple" | "martial" | null;
   damageType: string | null;
   bonus: { attack: number; damage: number; reference?: ContentRef };
@@ -127,6 +129,11 @@ export type ItemAdvantageTrait = {
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
+  /**
+   * Keyed like `hitDice`: how many kinds of weapon the class's Weapon Mastery lets the
+   * character use at their level in it, absent for a class without the feature.
+   */
+  weaponMasteryKinds: ReadonlyMap<string, number>;
   /** Absent for a class that grants no spellcasting, such as a Fighter with no casting subclass. */
   spellcastingAbilities: ReadonlyMap<string, Ability>;
   /**

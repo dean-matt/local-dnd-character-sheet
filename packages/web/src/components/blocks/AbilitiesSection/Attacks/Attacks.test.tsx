@@ -30,6 +30,7 @@ const attack = (entry: number, bonus: number): CharacterDerived["attacks"][numbe
     modifier: { computed: -1, manual: null, terms: [{ label: "Strength", value: -1 }] },
   },
   grip: null,
+  mastery: [],
 });
 
 function renderAttacks(derived: CharacterDerived) {
@@ -105,6 +106,44 @@ describe("Attacks", () => {
     expect(screen.getByRole("group", { name: "Longsword attack bonus" })).toHaveTextContent(
       "Strength5",
     );
+  });
+
+  it("names the mastery a chosen weapon has, linked to its rules text", async () => {
+    const topple = { name: "Topple", source: "XPHB" };
+    const fetchMock = stubFetchByUrl({
+      "/api/characters/1/inventory": { items: [{ name: "Longsword" }, { name: "Dagger" }] },
+      "/api/refs/resolve": {
+        refs: [
+          {
+            ...topple,
+            entries: ["Push the target over."],
+            path: "/catalog/itemMastery/Topple/XPHB",
+          },
+        ],
+      },
+    });
+    renderWithClient(
+      <Attacks
+        character={vex()}
+        derived={{ ...derivedRecord(), attacks: [{ ...attack(0, 5), mastery: [topple] }] }}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Topple" }));
+    expect(screen.getByRole("rowheader", { name: /Mastery: Topple/ })).toBeInTheDocument();
+    expect(
+      JSON.parse(
+        String(fetchMock.mock.calls.find(([url]) => url === "/api/refs/resolve")?.[1]?.body),
+      ).refs,
+    ).toEqual([{ tag: "itemMastery", name: "Topple", source: "XPHB" }]);
+    expect(screen.getByText("Push the target over.")).toBeInTheDocument();
+  });
+
+  it("names no mastery on a weapon that has none", async () => {
+    renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5)] });
+
+    expect(await screen.findByRole("rowheader", { name: "Longsword" })).toBeInTheDocument();
+    expect(screen.queryByText(/Mastery/)).not.toBeInTheDocument();
   });
 
   it("opens a class's spell attack terms from its bonus", async () => {

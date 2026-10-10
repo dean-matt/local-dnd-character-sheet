@@ -386,6 +386,18 @@ export const characterDefinitionSchema = z.strictObject({
       error: "the same feature's choice is stored twice",
     })
     .default([]),
+  /**
+   * The base weapons the character has mastery with, such as `Longsword` (XPHB) — a kind
+   * of weapon rather than a weapon held, so a second longsword is covered too. How many the
+   * classes allow is derived, and a count past it stays stored: the sheet warns, as it does
+   * past the attunement limit.
+   */
+  weaponMasteries: z
+    .array(contentRefSchema)
+    .refine((masteries) => isUnique(masteries, refKey), {
+      error: "the same weapon is chosen twice",
+    })
+    .default([]),
   deity: deityRefSchema.optional(),
   /**
    * Free text rather than an enum: the 2024 ruleset drops alignment from character
