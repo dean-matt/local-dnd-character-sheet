@@ -84,7 +84,11 @@ const WITH_BACKGROUND: CharacterFeatures = {
 const card = (title: string) =>
   screen.getByRole("heading", { level: 3, name: title }).closest("section") as HTMLElement;
 
-function renderSection(features: CharacterFeatures = FEATURES, references?: CharacterReferences) {
+function renderSection(
+  features: CharacterFeatures = FEATURES,
+  references?: CharacterReferences,
+  character = characterRecord("1", "Vex"),
+) {
   stubFetchByUrl({
     "/api/characters/1/features": features,
     ...(references && { "/api/characters/1/references": references }),
@@ -92,7 +96,7 @@ function renderSection(features: CharacterFeatures = FEATURES, references?: Char
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <FeaturesSection character={characterRecord("1", "Vex")} />
+      <FeaturesSection character={character} />
     </QueryClientProvider>,
   );
 }
@@ -119,6 +123,72 @@ describe("FeaturesSection", () => {
     expect(within(chosen).getByText("Lucky")).toBeInTheDocument();
     expect(within(chosen).getByText("Archery")).toBeInTheDocument();
     expect(within(card("Background Features")).getByText("Shelter of the Faithful")).toBeVisible();
+  });
+
+  it("lists class and subclass features by the character level they were gained at", async () => {
+    const fighter = { name: "Fighter", source: "PHB" };
+    const record = characterRecord("1", "Vex");
+    const multiclass = {
+      ...record,
+      definition: {
+        ...record.definition,
+        levels: [
+          { class: fighter },
+          { class: { name: "Wizard", source: "PHB" } },
+          { class: fighter },
+          { class: fighter, subclass: { name: "Champion", source: "PHB" } },
+        ],
+      },
+    };
+    const feature = (name: string, level?: number) => ({
+      resolved: true as const,
+      name,
+      source: "PHB",
+      entries: [],
+      ...(level && { level }),
+    });
+    renderSection(
+      {
+        groups: [
+          {
+            origin: "class",
+            name: "Fighter",
+            features: [feature("Second Wind", 1), feature("Action Surge", 2)],
+          },
+          { origin: "subclass", name: "Champion", features: [feature("Improved Critical", 3)] },
+          { origin: "class", name: "Wizard", features: [feature("Arcane Recovery", 1)] },
+          { origin: "feat", features: [feature("Lucky", 4), feature("Alert", 2)] },
+          { origin: "optionalFeature", features: [feature("Archery")] },
+        ],
+      },
+      undefined,
+      multiclass,
+    );
+
+    const names = (title: string) =>
+      within(card(title))
+        .getAllByRole("listitem")
+        .map((row) => row.textContent);
+    await screen.findByText("Second Wind");
+    expect(names("Class Features")).toEqual([
+      expect.stringContaining("Second Wind"),
+      expect.stringContaining("Arcane Recovery"),
+      expect.stringContaining("Action Surge"),
+      expect.stringContaining("Improved Critical"),
+    ]);
+    expect(names("Chosen Features")).toEqual([
+      expect.stringContaining("Alert"),
+      expect.stringContaining("Lucky"),
+      expect.stringContaining("Archery"),
+    ]);
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search features" }), {
+      target: { value: "ca" },
+    });
+    expect(names("Class Features")).toEqual([
+      expect.stringContaining("Arcane Recovery"),
+      expect.stringContaining("Improved Critical"),
+    ]);
   });
 
   it("offers a change of option on a feature that offers a choice, and on no other", async () => {

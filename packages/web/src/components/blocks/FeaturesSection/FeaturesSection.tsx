@@ -14,12 +14,29 @@ import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
 import { FeatureRow } from "./FeatureRow.tsx";
+import { byLevelGained, classFeatureLevel } from "./featureOrder.ts";
 
-const WIDGETS: readonly { title: string; noun: string; origins: readonly FeatureOrigin[] }[] = [
-  { title: "Class Features", noun: "class features", origins: ["class", "subclass"] },
+/** `byLevel` widgets list in the order gained; race and background keep their printed order. */
+const WIDGETS: readonly {
+  title: string;
+  noun: string;
+  origins: readonly FeatureOrigin[];
+  byLevel?: "class" | "taken";
+}[] = [
+  {
+    title: "Class Features",
+    noun: "class features",
+    origins: ["class", "subclass"],
+    byLevel: "class",
+  },
   { title: "Race Features", noun: "race features", origins: ["race"] },
   { title: "Background Features", noun: "background features", origins: ["background"] },
-  { title: "Chosen Features", noun: "chosen features", origins: ["feat", "optionalFeature"] },
+  {
+    title: "Chosen Features",
+    noun: "chosen features",
+    origins: ["feat", "optionalFeature"],
+    byLevel: "taken",
+  },
 ];
 
 export function FeaturesSection({ character }: { character: CharacterRecord | undefined }) {
@@ -37,9 +54,16 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
 
   const needle = query.trim().toLowerCase();
   const widgets = WIDGETS.map((widget) => {
-    const entries = features.data.groups
+    const listed = features.data.groups
       .filter((group) => widget.origins.includes(group.origin))
       .flatMap((group) => group.features.map((feature) => ({ feature, group })));
+    const entries = widget.byLevel
+      ? byLevelGained(listed, (entry) =>
+          widget.byLevel === "class"
+            ? classFeatureLevel(character.definition.levels, entry)
+            : entry.feature.level,
+        )
+      : listed;
     const matches = entries.filter(({ feature }) => feature.name.toLowerCase().includes(needle));
     return { ...widget, entries, matches };
   }).filter((widget) => widget.entries.length > 0);
