@@ -10,6 +10,7 @@
  */
 
 import {
+  abilityGrantSchema,
   armorTraitSchema,
   casterProgressionSchema,
   castingStartLevelSchema,
@@ -29,6 +30,7 @@ import {
   type DefenseTrait,
   type EntryRef,
   entryKey,
+  type ItemAbilityTrait,
   type ItemDefenseTrait,
   itemKey,
   type Preparation,
@@ -242,6 +244,25 @@ function itemDefenses(
   return defenses;
 }
 
+/** Every entry whose row sets or raises a score, keyed by `itemKey`. */
+function itemAbilities(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ItemAbilityTrait> {
+  const abilities = new Map<string, ItemAbilityTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const grant = row && parseJson(abilityGrantSchema, row.json);
+    if (!grant) return;
+    abilities.set(itemKey(entry), {
+      ...grant,
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+    });
+  });
+  return abilities;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -294,5 +315,6 @@ export function resolveCharacterCatalog(
     weapons: weaponTraits(definition, items),
     raceDefenses: raceDefenses(json),
     itemDefenses: itemDefenses(definition, items),
+    itemAbilities: itemAbilities(definition, items),
   };
 }

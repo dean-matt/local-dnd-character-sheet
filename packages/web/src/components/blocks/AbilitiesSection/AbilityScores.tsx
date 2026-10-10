@@ -2,10 +2,10 @@ import {
   ABILITIES,
   ABILITY_LABEL,
   abilityScore,
-  abilityScoreBreakdown,
   abilityScoresSchema,
   type CharacterDerived,
   type CharacterRecord,
+  derivedValue,
 } from "@dnd/character";
 import { useState } from "react";
 import { z } from "zod";
@@ -51,8 +51,10 @@ export function AbilityScores({
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {ABILITIES.map((ability) => {
-          const { total: score, terms } = abilityScoreBreakdown(definition, ability);
+          const { terms } = derived.abilityScores[ability];
+          const score = derivedValue(derived.abilityScores[ability]);
           const raised = score - definition.abilityScores[ability];
+          const fromItems = score - abilityScore(definition, ability);
           const increases = terms
             .slice(1)
             .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`);
@@ -85,13 +87,15 @@ export function AbilityScores({
                 messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
                 onSave={async (typed: number) => {
                   // The player edits the score they see; the base takes the difference, so
-                  // a race's increase stays its own term.
+                  // a race's increase and a worn item's score stay their own terms.
                   await update.mutateAsync((latest) => ({
                     ...latest,
                     abilityScores: {
                       ...latest.abilityScores,
                       [ability]:
-                        latest.abilityScores[ability] + typed - abilityScore(latest, ability),
+                        latest.abilityScores[ability] +
+                        typed -
+                        (abilityScore(latest, ability) + fromItems),
                     },
                   }));
                 }}

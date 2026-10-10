@@ -6,6 +6,7 @@ import type {
   SpellSlotTotal,
   Weapon,
 } from "@dnd/rules";
+import type { AbilityGrant } from "./abilityScore.ts";
 import type { Speed } from "./characterDerived.ts";
 import type { Ability, ContentRef } from "./refs.ts";
 
@@ -43,12 +44,15 @@ type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
 /** An item's grant, the name its chip cites, and whether it waits on attunement. */
 export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement: boolean };
 
+/** An item's effect on scores, and whether it waits on attunement. */
+export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
+
 /**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference, `weights`, `weapons` and `itemDefenses` by
+ * `entryKey` of an inventory entry's reference, `weights`, `weapons` and `itemDefenses` and `itemAbilities` by
  * `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
@@ -72,6 +76,8 @@ export type CharacterCatalog = {
   raceDefenses: RaceDefenseTrait;
   /** Keyed like `weapons`, and absent for an item that grants nothing. */
   itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
+  /** Keyed like `weapons`, and absent for an item that changes no score. */
+  itemAbilities: ReadonlyMap<string, ItemAbilityTrait>;
 };
 
 /**

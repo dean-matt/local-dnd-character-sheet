@@ -35,6 +35,7 @@ export type {
   CasterTable,
   CharacterCatalog,
   DefenseTrait,
+  ItemAbilityTrait,
   ItemDefenseTrait,
   Preparation,
   SkillTrait,

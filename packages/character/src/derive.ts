@@ -26,7 +26,7 @@ import {
   type Term,
   weaponAttack,
 } from "@dnd/rules";
-import { abilityScore } from "./abilityScore.ts";
+import { type AbilityGrant, abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 import type {
   ArmorTrait,
   CharacterCatalog,
@@ -54,6 +54,7 @@ import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
 export function hitPointMaximum(
   definition: CharacterDefinition,
   hitDice: ReadonlyMap<string, HitDie>,
+  grants: readonly AbilityGrant[] = [],
 ): Breakdown<TermReference> {
   const levels = definition.levels.map((level) => {
     const key = entryKey(level.class);
@@ -61,7 +62,7 @@ export function hitPointMaximum(
     if (die === undefined) throw new RangeError(`No hit die for ${key}`);
     return { die, rolled: level.rolled };
   });
-  return maxHitPoints(levels, abilityModifier(abilityScore(definition, "con")));
+  return maxHitPoints(levels, abilityModifier(abilityScore(definition, "con", grants)));
 }
 
 /**
@@ -77,11 +78,12 @@ export function passiveSkill(
   definition: CharacterDefinition,
   skill: ContentRef,
   ability: Ability,
+  grants: readonly AbilityGrant[] = [],
 ): number {
   const key = refKey(skill);
   const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
   return passiveScore(
-    abilityModifier(abilityScore(definition, ability)),
+    abilityModifier(abilityScore(definition, ability, grants)),
     proficiencyContribution(totalLevel(definition), entry?.level ?? "none"),
   );
 }
@@ -101,6 +103,7 @@ export function skillModifier(
   definition: Scored,
   skill: ContentRef,
   ability: Ability,
+  grants: readonly AbilityGrant[] = [],
 ): Breakdown<TermReference> {
   const key = refKey(skill);
   const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
@@ -108,7 +111,7 @@ export function skillModifier(
   const terms: Term<TermReference>[] = [
     {
       label: ABILITY_LABEL[ability],
-      value: abilityModifier(abilityScore(definition, ability)),
+      value: abilityModifier(abilityScore(definition, ability, grants)),
       reference: skill,
     },
   ];
@@ -125,6 +128,7 @@ export function skillModifier(
 export function savingThrowModifier(
   definition: Scored,
   ability: Ability,
+  grants: readonly AbilityGrant[] = [],
 ): Breakdown<TermReference> {
   const proficient = definition.proficiencies.savingThrows.includes(ability);
   const contribution = proficiencyContribution(
@@ -132,7 +136,10 @@ export function savingThrowModifier(
     proficient ? "proficient" : "none",
   );
   const terms: Term<TermReference>[] = [
-    { label: ABILITY_LABEL[ability], value: abilityModifier(abilityScore(definition, ability)) },
+    {
+      label: ABILITY_LABEL[ability],
+      value: abilityModifier(abilityScore(definition, ability, grants)),
+    },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
   return breakdown(terms);
@@ -202,7 +209,7 @@ function derivedArmorClass(
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
-    dexterityModifier: { value: abilityModifier(abilityScore(definition, "dex")) },
+    dexterityModifier: { value: abilityModifier(scoreOf(definition, catalog, "dex")) },
     dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
     shield: shield
       ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
@@ -254,8 +261,8 @@ function derivedAttacks(
     const { reference } = weapon.bonus;
     const result = weaponAttack<TermReference>({
       weapon,
-      strengthModifier: abilityModifier(abilityScore(definition, "str")),
-      dexterityModifier: abilityModifier(abilityScore(definition, "dex")),
+      strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
+      dexterityModifier: abilityModifier(scoreOf(definition, catalog, "dex")),
       proficiency: proficiencyContribution(
         level,
         weaponProficient(definition, weapon) ? "proficient" : "none",
@@ -281,6 +288,20 @@ function derivedAttacks(
     ];
   });
 }
+
+/** Each worn item's effect on scores, attuned where it must be, in inventory order. */
+function equippedAbilityGrants(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): AbilityGrant[] {
+  return definition.inventory.flatMap((entry) => {
+    const item = catalog.itemAbilities.get(itemKey(entry));
+    return item && entry.equipped && (entry.attuned || !item.requiresAttunement) ? [item] : [];
+  });
+}
+
+const scoreOf = (definition: CharacterDefinition, catalog: CharacterCatalog, ability: Ability) =>
+  abilityScore(definition, ability, equippedAbilityGrants(definition, catalog));
 
 type Grant = DefenseTrait & { from: string };
 
@@ -371,7 +392,7 @@ function spellcastingEntries(
     const key = entryKey(group.class);
     const ability = catalog.spellcastingAbilities.get(key);
     if (ability === undefined) return [];
-    const modifier = abilityModifier(abilityScore(definition, ability));
+    const modifier = abilityModifier(scoreOf(definition, catalog, ability));
     const preparation = catalog.casterTables.get(key)?.preparation;
     return [
       {
@@ -435,38 +456,44 @@ export function deriveCharacter(
 ): CharacterDerived {
   const level = totalLevel(definition);
   const casters = castingClasses(definition, catalog);
+  const grants = equippedAbilityGrants(definition, catalog);
 
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
-      const { total, terms } = savingThrowModifier(definition, ability);
+      const { total, terms } = savingThrowModifier(definition, ability, grants);
       return [ability, { computed: total, manual: null, terms }];
     }),
   ) as Record<Ability, ComputedField<number>>;
 
   const skills = catalog.skills.map((skill) => {
-    const { total, terms } = skillModifier(definition, skill.ref, skill.ability);
+    const { total, terms } = skillModifier(definition, skill.ref, skill.ability, grants);
     return {
       ref: skill.ref,
       ability: skill.ability,
       modifier: { computed: total, manual: null, terms },
       passive: {
-        computed: passiveSkill(definition, skill.ref, skill.ability),
+        computed: passiveSkill(definition, skill.ref, skill.ability, grants),
         manual: null,
         terms: [],
       },
     };
   });
 
-  const abilityModifiers = Object.fromEntries(
-    ABILITIES.map((ability): [Ability, ComputedField<number>] => [
-      ability,
-      fromBreakdown(abilityModifierBreakdown(abilityScore(definition, ability))),
-    ]),
-  ) as Record<Ability, ComputedField<number>>;
+  const scores = Object.fromEntries(
+    ABILITIES.map((ability) => [ability, abilityScoreBreakdown(definition, ability, grants)]),
+  ) as Record<Ability, Breakdown<TermReference>>;
+  const perAbility = (field: (ability: Ability) => ComputedField<number>) =>
+    Object.fromEntries(ABILITIES.map((ability) => [ability, field(ability)])) as Record<
+      Ability,
+      ComputedField<number>
+    >;
 
   const block: CharacterDerived = {
-    abilityModifiers,
-    hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice)),
+    abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
+    abilityModifiers: perAbility((ability) =>
+      fromBreakdown(abilityModifierBreakdown(scores[ability].total)),
+    ),
+    hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice, grants)),
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: catalog.speed, manual: null, terms: [] },
@@ -474,7 +501,7 @@ export function deriveCharacter(
     savingThrows,
     skills,
     armorClass: derivedArmorClass(definition, catalog),
-    initiative: fromBreakdown(abilityModifierBreakdown(abilityScore(definition, "dex"))),
+    initiative: fromBreakdown(abilityModifierBreakdown(scores.dex.total)),
     spellcasting: spellcastingEntries(definition, catalog, level),
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
@@ -496,7 +523,7 @@ function raceSize(definition: CharacterDefinition, catalog: CharacterCatalog): S
 }
 
 function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
-  const strength = abilityScore(definition, "str");
+  const strength = scoreOf(definition, catalog, "str");
   const size = raceSize(definition, catalog);
   const weight = carriedWeight(definition, catalog.weights);
   return {

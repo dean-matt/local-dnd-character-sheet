@@ -40,6 +40,8 @@ const defensesSchema = z.strictObject({
  * names, `manual` from the definition's `overrides`.
  */
 export const characterDerivedSchema = z.strictObject({
+  /** Base, increases and each worn item's effect as its own term; every modifier below reads it. */
+  abilityScores: z.record(abilitySchema, derivedSchema(z.int())),
   abilityModifiers: z.record(abilitySchema, derivedSchema(z.int())),
   hitPointMaximum: derivedSchema(z.int().min(1)),
   /**

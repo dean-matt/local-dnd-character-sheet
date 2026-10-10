@@ -127,6 +127,7 @@ export function derivedRecord(
     weapons: new Map(),
     raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [] },
     itemDefenses: new Map(),
+    itemAbilities: new Map(),
   });
 }
 
