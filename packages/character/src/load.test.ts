@@ -50,7 +50,7 @@ describe("carried weight", () => {
       [{ ref: ROPE }, { ref: ARROW, quantity: 20 }, { ref: { homebrewId: "hb_01" }, quantity: 3 }],
       { gold: 50 },
     );
-    expect(carriedWeight(packed, catalog)).toBe(10 + 1 + 3 + 1);
+    expect(carriedWeight(packed, catalog, new Map())).toBe(10 + 1 + 3 + 1);
   });
 
   it("leaves out what is stored elsewhere, equipment and containers alike", () => {
@@ -58,7 +58,7 @@ describe("carried weight", () => {
       [{ ref: ROPE }, { ref: CHEST, carried: false }, { ref: ARROW, quantity: 20, carried: false }],
       {},
     );
-    expect(carriedWeight(packed, catalog)).toBe(10);
+    expect(carriedWeight(packed, catalog, new Map())).toBe(10);
   });
 
   describe("containers", () => {
@@ -168,17 +168,19 @@ describe("carried weight", () => {
 
   it("weighs an item whose row states no weight as nothing", () => {
     const packed = packing([{ ref: VIAL, quantity: 12 }, { ref: ROPE }], {});
-    expect(carriedWeight(packed, catalog)).toBe(10);
+    expect(carriedWeight(packed, catalog, new Map())).toBe(10);
   });
 
   it("rejects a reference neither store names, rather than weighing it zero", () => {
     const packed = packing([{ ref: { name: "Hat of Disguise", source: "XDMG" } }], {});
-    expect(() => carriedWeight(packed, catalog)).toThrow(
+    expect(() => carriedWeight(packed, catalog, new Map())).toThrow(
       "No item row for catalog|Hat of Disguise|XDMG",
     );
 
     const homebrew = packing([{ ref: { homebrewId: "hb_99" } }], {});
-    expect(() => carriedWeight(homebrew, catalog)).toThrow("No item row for homebrew|hb_99");
+    expect(() => carriedWeight(homebrew, catalog, new Map())).toThrow(
+      "No item row for homebrew|hb_99",
+    );
   });
 
   it("sums fractional weights exactly at the quantities a real pack reaches", () => {
@@ -196,7 +198,7 @@ describe("carried weight", () => {
       0.02 * 412,
     );
 
-    expect(carriedWeight(packed, catalog)).toBe(17.24);
+    expect(carriedWeight(packed, catalog, new Map())).toBe(17.24);
     expect(drifting).not.toBe(17.24);
   });
 
@@ -208,18 +210,18 @@ describe("carried weight", () => {
       [itemKey({ ref: CHAIN_MAIL, variant: BARDING }), 110],
     ]);
     const packed = packing([{ ref: CHAIN_MAIL }, { ref: CHAIN_MAIL, variant: BARDING }], {});
-    expect(carriedWeight(packed, weights)).toBe(165);
+    expect(carriedWeight(packed, weights, new Map())).toBe(165);
   });
 
   it("counts every denomination the same, because every coin weighs the same", () => {
     const purse = { copper: 10, silver: 10, electrum: 10, gold: 10, platinum: 10 };
-    expect(carriedWeight(packing([], purse), catalog)).toBe(1);
+    expect(carriedWeight(packing([], purse), catalog, new Map())).toBe(1);
   });
 
   it("feeds the encumbrance thresholds a caller would otherwise invent a weight for", () => {
     const packed = packing([{ ref: ROPE, quantity: 5 }], {});
     const { encumbered } = encumbranceThresholds(packed.abilityScores.str, "medium");
-    expect(carriedWeight(packed, catalog)).toBeGreaterThan(encumbered.atWeight);
+    expect(carriedWeight(packed, catalog, new Map())).toBeGreaterThan(encumbered.atWeight);
   });
 });
 

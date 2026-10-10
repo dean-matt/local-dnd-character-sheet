@@ -44,7 +44,7 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
 export function carriedWeight(
   definition: CharacterDefinition,
   weights: ReadonlyMap<string, number | null>,
-  containers: ReadonlyMap<string, ContainerTrait> = new Map(),
+  containers: ReadonlyMap<string, ContainerTrait>,
 ): number {
   const holders = holdersOf(definition);
   let total = 0;
@@ -81,7 +81,8 @@ type ContainerOverflow = { entry: number; name: string; excess: number; unit: st
 
 /**
  * Each container whose contents pass what its row says it takes, in inventory order. The
- * warning only reports: nothing refuses a full bag. Pounds are checked against the sum of
+ * warning only reports: nothing refuses a full bag. A stacked container (`quantity` above 1)
+ * counts as one, so its capacity is not multiplied. Pounds are checked against the sum of
  * a container's compartments, and a counted thing against the sum of its compartments'
  * limits, so a Quiver of Ehlonna's separate compartments pass as one pool. Weight is read
  * from `weights` and a thing the row names that the contents lack counts as none.
