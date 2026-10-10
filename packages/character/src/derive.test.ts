@@ -1,6 +1,7 @@
 import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import {
+  ABILITIES,
   type CasterTable,
   type CharacterDefinition,
   type CharacterDerived,
@@ -13,6 +14,7 @@ import {
   entryKey,
   hitPointMaximum,
   type ItemAbilityTrait,
+  type ItemBonusTrait,
   type ItemDefenseTrait,
   itemKey,
   passiveSkill,
@@ -178,6 +180,7 @@ describe("deriveCharacter", () => {
     raceDefenses: noDefenses,
     itemDefenses: new Map<string, ItemDefenseTrait>(),
     itemAbilities: new Map<string, ItemAbilityTrait>(),
+    itemBonuses: new Map<string, ItemBonusTrait>(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -563,6 +566,81 @@ describe("deriveCharacter", () => {
       );
       expect(overridden.abilityScores.str).toMatchObject({ computed: 21, manual: 12 });
       expect(overridden.abilityModifiers.str.computed).toBe(5);
+    });
+  });
+
+  describe("armor class and saves from items", () => {
+    const RING = { name: "Ring of Protection", source: "DMG" };
+    const ORB = { name: "Orb of Skoraeus", source: "ToA" };
+    const worn = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: flags.equipped ?? false,
+      attuned: flags.attuned ?? false,
+    });
+    const itemCatalog = {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(RING), 0], [entryKey(ORB), 0]]),
+      itemBonuses: new Map<string, ItemBonusTrait>([
+        [
+          entryKey(RING),
+          { name: RING.name, requiresAttunement: true, ac: 1, save: 1, concentration: 0 },
+        ],
+        [
+          entryKey(ORB),
+          { name: ORB.name, requiresAttunement: false, ac: 0, save: 0, concentration: 2 },
+        ],
+      ]),
+    };
+    const withItems = (inventory: CharacterDefinition["inventory"]) =>
+      deriveCharacter({ ...definition, inventory }, itemCatalog);
+    const bare = withItems([]);
+
+    it("adds a ring's bonus beside the armor, and to every save, as a term named for the item", () => {
+      const block = withItems([worn(RING, { equipped: true, attuned: true })]);
+      expect(block.armorClass.computed).toBe(bare.armorClass.computed + 1);
+      expect(block.armorClass.terms.at(-1)).toEqual({ label: RING.name, value: 1 });
+      for (const ability of ABILITIES) {
+        expect(block.savingThrows[ability].computed).toBe(bare.savingThrows[ability].computed + 1);
+        expect(block.savingThrows[ability].terms.at(-1)).toEqual({ label: RING.name, value: 1 });
+      }
+      expect(block.concentrationSave).toBeNull();
+    });
+
+    it("waits for equipping, and for attunement where the item requires it", () => {
+      expect(withItems([worn(RING, { attuned: true })]).armorClass.computed).toBe(
+        bare.armorClass.computed,
+      );
+      expect(withItems([worn(RING, { equipped: true })]).savingThrows.wis.computed).toBe(
+        bare.savingThrows.wis.computed,
+      );
+    });
+
+    it("adds a concentration bonus to the Constitution save and to no other save", () => {
+      const block = withItems([worn(ORB, { equipped: true })]);
+      expect(block.concentrationSave).toEqual({
+        computed: bare.savingThrows.con.computed + 2,
+        manual: null,
+        terms: [...bare.savingThrows.con.terms, { label: ORB.name, value: 2 }],
+      });
+      expect(block.savingThrows.con.computed).toBe(bare.savingThrows.con.computed);
+      expect(bare.concentrationSave).toBeNull();
+    });
+
+    it("keeps a manual override beside the computed value", () => {
+      const block = deriveCharacter(
+        {
+          ...definition,
+          inventory: [worn(RING, { equipped: true, attuned: true })],
+          overrides: { armorClass: 20 },
+        },
+        itemCatalog,
+      );
+      expect(block.armorClass).toMatchObject({
+        computed: bare.armorClass.computed + 1,
+        manual: 20,
+      });
     });
   });
 

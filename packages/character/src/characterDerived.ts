@@ -67,6 +67,8 @@ export const characterDerivedSchema = z.strictObject({
   proficiencyBonus: derivedSchema(z.int().min(2).max(6)),
   /** Every ability, since an unproficient save is still a number the sheet shows. */
   savingThrows: z.record(abilitySchema, derivedSchema(z.int())),
+  /** The Constitution save plus what an equipped item adds to concentration saves; null while no item adds any. */
+  concentrationSave: derivedSchema(z.int()).nullable(),
   /**
    * One entry per catalog skill row the caller hands in — every skill of the
    * character's edition, proficient or not, so the sheet has a full list to render

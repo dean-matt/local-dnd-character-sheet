@@ -47,13 +47,22 @@ export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
 
+/** What an item adds to armor class, every saving throw and concentration saves, and whether it waits on attunement. */
+export type ItemBonusTrait = {
+  name: string;
+  requiresAttunement: boolean;
+  ac: number;
+  save: number;
+  concentration: number;
+};
+
 /**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference, `weights`, `weapons`, `itemDefenses` and
- * `itemAbilities` by `itemKey` of the entry, the way `carriedWeight` reads it.
+ * `entryKey` of an inventory entry's reference, `weights`, `weapons`, `itemDefenses`,
+ * `itemAbilities` and `itemBonuses` by `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
@@ -78,6 +87,8 @@ export type CharacterCatalog = {
   itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
   /** Keyed like `weapons`, and absent for an item that changes no score. */
   itemAbilities: ReadonlyMap<string, ItemAbilityTrait>;
+  /** Keyed like `weapons`, and absent for an item that adds to no armor class or save. */
+  itemBonuses: ReadonlyMap<string, ItemBonusTrait>;
 };
 
 /**

@@ -15,6 +15,7 @@ import {
   casterProgressionSchema,
   castingStartLevelSchema,
   defenseTraitSchema,
+  itemBonusSchema,
   type PreparedSpellCount,
   preparationRuleSchema,
   raceTraitsSchema,
@@ -31,6 +32,7 @@ import {
   type EntryRef,
   entryKey,
   type ItemAbilityTrait,
+  type ItemBonusTrait,
   type ItemDefenseTrait,
   itemKey,
   type Preparation,
@@ -263,6 +265,25 @@ function itemAbilities(
   return abilities;
 }
 
+/** Every entry whose row adds to armor class or saves, keyed by `itemKey`. */
+function itemBonuses(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ItemBonusTrait> {
+  const bonuses = new Map<string, ItemBonusTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const bonus = row && parseJson(itemBonusSchema, row.json);
+    if (!bonus) return;
+    bonuses.set(itemKey(entry), {
+      ...bonus,
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+    });
+  });
+  return bonuses;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -316,5 +337,6 @@ export function resolveCharacterCatalog(
     raceDefenses: raceDefenses(json),
     itemDefenses: itemDefenses(definition, items),
     itemAbilities: itemAbilities(definition, items),
+    itemBonuses: itemBonuses(definition, items),
   };
 }

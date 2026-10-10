@@ -36,6 +36,7 @@ export type {
   CharacterCatalog,
   DefenseTrait,
   ItemAbilityTrait,
+  ItemBonusTrait,
   ItemDefenseTrait,
   Preparation,
   SkillTrait,
