@@ -1,3 +1,5 @@
+export type { AdvantageMode, AdvantageRoll } from "./advantage.ts";
+export { ADVANTAGE_MODES, ADVANTAGE_ROLLS } from "./advantage.ts";
 export { armorClass } from "./armorclass.ts";
 export { attunementSlots } from "./attunement.ts";
 export type { Size } from "./carrying.ts";

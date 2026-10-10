@@ -181,6 +181,42 @@ describe("HomebrewSettings", () => {
     expect(entry).not.toHaveProperty("bonusWeapon");
   });
 
+  it("states the advantage an item grants through the form, and drops a roll's target when the roll changes", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    fireEvent.click(within(items()).getByRole("button", { name: "Add an effect" }));
+    const picker = (name: string) => within(items()).getByRole("combobox", { name });
+    fireEvent.click(picker("Effect 1 roll"));
+    fireEvent.click(screen.getByRole("option", { name: "Skill" }));
+    fireEvent.click(picker("Effect 1 skill"));
+    fireEvent.click(screen.getByRole("option", { name: "Stealth" }));
+    fireEvent.change(within(items()).getByRole("textbox", { name: "Effect 1 condition" }), {
+      target: { value: "in dim light" },
+    });
+    const entry = () => {
+      fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
+      const text = (
+        within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement
+      ).value;
+      fireEvent.click(within(items()).getByRole("button", { name: "Edit as form" }));
+      return JSON.parse(text);
+    };
+    expect(entry().advantage).toEqual([
+      { mode: "advantage", roll: "skill", target: "Stealth", condition: "in dim light" },
+    ]);
+
+    fireEvent.click(picker("Effect 1 roll"));
+    fireEvent.click(screen.getByRole("option", { name: "Saving throw" }));
+    expect(entry().advantage).toEqual([
+      { mode: "advantage", roll: "save", condition: "in dim light" },
+    ]);
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Remove effect 1" }));
+    expect(entry()).not.toHaveProperty("advantage");
+  });
+
   it("offers no example to pick for a spell or a row being edited", async () => {
     stubApi({ items: [sunblade] });
     renderPage();

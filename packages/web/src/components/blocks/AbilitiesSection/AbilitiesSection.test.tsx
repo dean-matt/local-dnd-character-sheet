@@ -61,6 +61,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     itemDefenses: new Map(),
     itemAbilities: new Map(),
     itemBonuses: new Map(),
+    itemAdvantages: new Map(),
   });
 }
 
@@ -402,6 +403,42 @@ describe("AbilitiesSection", () => {
     const granted = card("Granted by items");
     expect(granted.getByText("Bracers of Archery")).toBeInTheDocument();
     expect(granted.getByText("Belt of Dwarvenkind")).toBeInTheDocument();
+  });
+
+  it("marks the saves and skills an item grants advantage on, and notes a condition instead of stating it", () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, {
+      ...derived,
+      rollEffects: {
+        computed: [
+          {
+            item: "Mantle of Spell Resistance",
+            mode: "advantage",
+            roll: "save",
+            condition: "against spells",
+          },
+          { item: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
+          { item: "Cloak of the Mind", mode: "disadvantage", roll: "check", target: "cha" },
+        ],
+        manual: null,
+        terms: [],
+      },
+    });
+
+    const saves = card("Saving Throws");
+    expect(
+      saves.getAllByText("Advantage against spells (Mantle of Spell Resistance)"),
+    ).toHaveLength(6);
+    const stealth = within(card("Skills").getByText("Stealth").closest("li") as HTMLElement);
+    expect(stealth.getByText("Advantage (Boots of Elvenkind)")).toHaveClass("font-semibold");
+    const deception = within(card("Skills").getByText("Deception").closest("li") as HTMLElement);
+    expect(deception.getByText("Disadvantage (Cloak of the Mind)")).toBeInTheDocument();
+    expect(deception.queryByText(/Boots of Elvenkind/)).not.toBeInTheDocument();
+    expect(
+      within(card("Skills").getByText("Arcana").closest("li") as HTMLElement).queryByRole("list"),
+    ).not.toBeInTheDocument();
+    expect(saves.getAllByText(/Mantle/)[0]).not.toHaveClass("font-semibold");
   });
 
   it("leaves out the granted-by-items card while no item grants anything", () => {

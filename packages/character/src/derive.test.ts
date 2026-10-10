@@ -14,6 +14,7 @@ import {
   entryKey,
   hitPointMaximum,
   type ItemAbilityTrait,
+  type ItemAdvantageTrait,
   type ItemBonusTrait,
   type ItemDefenseTrait,
   itemKey,
@@ -194,6 +195,7 @@ describe("deriveCharacter", () => {
     itemDefenses: new Map<string, ItemDefenseTrait>(),
     itemAbilities: new Map<string, ItemAbilityTrait>(),
     itemBonuses: new Map<string, ItemBonusTrait>(),
+    itemAdvantages: new Map<string, ItemAdvantageTrait>(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -941,6 +943,78 @@ describe("deriveCharacter", () => {
         itemCatalog,
       );
       expect(block.proficiencyBonus).toMatchObject({ computed: 4, manual: 9 });
+    });
+  });
+
+  describe("advantage and disadvantage from items", () => {
+    const MANTLE = { name: "Mantle of Spell Resistance", source: "DMG" };
+    const BOOTS_OF_ELVENKIND = { name: "Boots of Elvenkind", source: "DMG" };
+    const advantages = new Map<string, ItemAdvantageTrait>([
+      [
+        entryKey(MANTLE),
+        {
+          name: MANTLE.name,
+          requiresAttunement: true,
+          effects: [{ mode: "advantage", roll: "save", condition: "against spells" }],
+        },
+      ],
+      [
+        entryKey(BOOTS_OF_ELVENKIND),
+        {
+          name: BOOTS_OF_ELVENKIND.name,
+          requiresAttunement: false,
+          effects: [{ mode: "advantage", roll: "skill", target: "Stealth" }],
+        },
+      ],
+    ]);
+    const entry = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: flags.equipped ?? false,
+      attuned: flags.attuned ?? false,
+    });
+    const effectsOf = (inventory: CharacterDefinition["inventory"], overrides = {}) =>
+      deriveCharacter(
+        { ...equipped, inventory, overrides },
+        {
+          ...catalog,
+          weights: new Map([
+            ...catalog.weights,
+            ...[...advantages.keys()].map((key) => [key, 0] as const),
+          ]),
+          itemAdvantages: advantages,
+        },
+      ).rollEffects;
+
+    it("lists each effect of an equipped, attuned item beside the item that grants it", () => {
+      const worn = [
+        entry(MANTLE, { equipped: true, attuned: true }),
+        entry(BOOTS_OF_ELVENKIND, { equipped: true }),
+      ];
+      expect(effectsOf(worn).computed).toEqual([
+        { item: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
+        { item: BOOTS_OF_ELVENKIND.name, mode: "advantage", roll: "skill", target: "Stealth" },
+      ]);
+    });
+
+    it("waits for equipping, and for attunement where the item requires it", () => {
+      expect(effectsOf([entry(MANTLE, { attuned: true })]).computed).toEqual([]);
+      expect(effectsOf([entry(MANTLE, { equipped: true })]).computed).toEqual([]);
+      expect(effectsOf([entry(BOOTS_OF_ELVENKIND, { attuned: true })]).computed).toEqual([]);
+      expect(effectsOf([entry(BOOTS_OF_ELVENKIND, { equipped: true })]).computed).toHaveLength(1);
+    });
+
+    it("lists nothing for an item the mapping does not name", () => {
+      expect(effectsOf([entry(LONGSWORD, { equipped: true, attuned: true })]).computed).toEqual([]);
+    });
+
+    it("keeps an override beside the computed list", () => {
+      const field = effectsOf([entry(BOOTS_OF_ELVENKIND, { equipped: true })], {
+        rollEffects: [],
+      });
+      expect(field.computed).toHaveLength(1);
+      expect(field.manual).toEqual([]);
     });
   });
 

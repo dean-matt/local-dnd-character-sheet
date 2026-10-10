@@ -1,11 +1,14 @@
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { ITEM_ADVANTAGES } from "@dnd/catalog";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent, resolveContentDb } from "../build-db.ts";
 import { EDITION_FILES } from "./edition.ts";
 import { items } from "./items.ts";
+
+const MAPPED = new Set(ITEM_ADVANTAGES.map(({ name, source }) => `${name}|${source}`));
 
 const FIXTURE_VENDOR = join(import.meta.dirname, "../../../../tests/fixtures/5etools");
 
@@ -34,10 +37,16 @@ describe("the items loader", () => {
         `SELECT name, source, edition, kind, type, rarity, requires_attunement
            FROM items ORDER BY kind, source, name`,
       )
-      .all();
+      .all() as { name: string; source: string }[];
     db.close();
 
-    expect(rows).toEqual([
+    // The items the advantage mapping names, and the parent a mapped copy needs, are checked in
+    // item-advantage.test.ts.
+    const own = rows.filter(
+      ({ name, source }) =>
+        !MAPPED.has(`${name}|${source}`) && `${name}|${source}` !== "Dread Helm|XDMG",
+    );
+    expect(own).toEqual([
       row("Alchemist's Supplies", "PHB", "classic", "baseitem", "AT", "none", 0),
       row("Longsword", "PHB", "classic", "baseitem", "M", "none", 0),
       row("Longbow", "XPHB", "one", "baseitem", "R|XPHB", "none", 0),
@@ -55,17 +64,14 @@ describe("the items loader", () => {
       row("Borderlands Tabard", "HotB", "one", "item", "G|XPHB", "none", 0),
       row("Dragon Thighbone Club", "SKT", "classic", "item", "M", "unknown (magic)", 0),
       row("Charred Wand of Magic Missiles", "WDH", "classic", "item", "WD|DMG", "uncommon", 0),
-      row("Cloak of Billowing", "WttHC", "one", "item", null, "common", 0),
       row("Cloak of Billowing", "XDMG", "one", "item", null, "common", 0),
       row("Arcane Focus", "PHB", "classic", "itemGroup", "SCF", "none", 0),
       row("Vicious +1 Weapon", "AI", "classic", "magicvariant", null, "unknown (magic)", 0),
       row("Arrow of Slaying (*)", "DMG", "classic", "magicvariant", null, "very rare", 0),
-      row("Holy Avenger", "DMG", "classic", "magicvariant", null, "legendary", 1),
       row("Vicious Weapon", "DMG", "classic", "magicvariant", null, "rare", 0),
       row("Armblade", "ERLW", "classic", "magicvariant", null, "common", 1),
       row("Imbued Wood (Fernian Ash)", "ERLW", "classic", "magicvariant", null, "common", 1),
       row("Ammunition of Slaying", "XDMG", "one", "magicvariant", null, "very rare", 0),
-      row("Holy Avenger", "XDMG", "one", "magicvariant", null, "legendary", 1),
     ]);
   });
 
@@ -110,7 +116,7 @@ describe("the items loader", () => {
       .get("Longsword", "PHB");
     const fromDate = db
       .prepare(
-        "SELECT source, edition FROM items WHERE source IN ('HotB', 'WttHC') ORDER BY source",
+        "SELECT source, edition FROM items WHERE name IN ('Borderlands Tabard', 'Cloak of Billowing') AND source IN ('HotB', 'WttHC') ORDER BY source",
       )
       .all();
     db.close();

@@ -41,6 +41,8 @@ const RING_OF_PROTECTION = { name: "Ring of Protection", source: "DMG" };
 const WAR_MAGE = { name: "Wand of the War Mage +1", source: "DMG" };
 const BOOTS_OF_SPEED = { name: "Boots of Speed", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
+const MANTLE = { name: "Mantle of Spell Resistance", source: "DMG" };
+const HOLY_AVENGER = { name: "Holy Avenger", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -296,6 +298,12 @@ describe("derivedRoutes", () => {
           critThreshold: 19,
         }),
         item(PERIAPT, "item", { immune: ["poison"], conditionImmune: ["poisoned"] }),
+        item(MANTLE, "item", { reqAttune: true }),
+        item(HOLY_AVENGER, "magicvariant", {
+          type: "GV",
+          requires: [{ weapon: true }],
+          inherits: { namePrefix: "Holy Avenger ", source: "DMG", reqAttune: true },
+        }),
         item(BARDING, "magicvariant", {
           type: "GV",
           requires: [{ armor: true }],
@@ -638,6 +646,47 @@ describe("derivedRoutes", () => {
     expect(worn.proficiencyBonus.computed).toBe(bare.proficiencyBonus.computed + 1);
     expect(worn.initiative.terms.at(-1)).toEqual({ label: "Luckstone", value: 1 });
     expect(bare.speed.terms).toEqual([]);
+  });
+
+  it("marks the rolls an item grants advantage on, from the mapping or a homebrew item, while worn", async () => {
+    insertHomebrewItem(opened.homebrewDb, "cloak", {
+      name: "Cloak of Shadows",
+      edition: "classic",
+      advantage: [{ mode: "advantage", roll: "skill", target: "Stealth" }],
+    });
+    store(definitionWith({ inventory: [{ ref: MANTLE }, { ref: { homebrewId: "cloak" } }] }));
+    expect((await derived()).rollEffects.computed).toEqual([]);
+
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        inventory: [
+          { ref: MANTLE, equipped: true, attuned: true },
+          { ref: { homebrewId: "cloak" }, equipped: true },
+        ],
+      }),
+    );
+    expect((await derived()).rollEffects.computed).toEqual([
+      { item: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
+      { item: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
+    ]);
+  });
+
+  it("reads a magic variant's effects through the mapping, not its base item's", async () => {
+    store(
+      definitionWith({
+        inventory: [{ ref: LONGSWORD, variant: HOLY_AVENGER, equipped: true, attuned: true }],
+      }),
+    );
+    expect((await derived()).rollEffects.computed).toEqual([
+      {
+        item: "Holy Avenger Longsword",
+        mode: "advantage",
+        roll: "save",
+        condition: "against spells and other magical effects",
+      },
+    ]);
   });
 
   it("leaves a score alone while the item granting it is not equipped", async () => {

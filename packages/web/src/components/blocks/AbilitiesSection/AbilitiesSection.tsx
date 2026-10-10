@@ -10,6 +10,8 @@ import {
   ABILITY_LABEL,
   type CharacterDerived,
   type CharacterRecord,
+  derivedValue,
+  effectsOnRoll,
   refKey,
 } from "@dnd/character";
 import { EmptyState } from "../../../EmptyState.tsx";
@@ -40,6 +42,7 @@ export function AbilitiesSection({
   const skillLevel = new Map(
     definition.proficiencies.skills.map((skill) => [refKey(skill.ref), skill.level]),
   );
+  const rollEffects = derivedValue(derived.rollEffects);
   const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
 
   return (
@@ -63,6 +66,7 @@ export function AbilitiesSection({
                 modifier={derived.savingThrows[ability]}
                 title={`${ABILITY_LABEL[ability]} saving throw`}
                 rules={editionRules(definition, SAVE_RULES)}
+                effects={effectsOnRoll(rollEffects, { roll: "save", ability })}
               />
             ))}
             {derived.concentrationSave && (
@@ -87,6 +91,11 @@ export function AbilitiesSection({
                 modifier={skill.modifier}
                 title={skill.ref.name}
                 rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
+                effects={effectsOnRoll(rollEffects, {
+                  roll: "skill",
+                  skill: skill.ref.name,
+                  ability: skill.ability,
+                })}
               />
             ))}
           </ul>

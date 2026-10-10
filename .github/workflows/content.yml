@@ -66,3 +66,6 @@ jobs:
 
       - name: Audit every tag in the corpus
         run: pnpm tags:audit
+
+      - name: Check the item advantage mapping against the real items
+        run: pnpm exec vitest run packages/content/src/item-advantage.test.ts

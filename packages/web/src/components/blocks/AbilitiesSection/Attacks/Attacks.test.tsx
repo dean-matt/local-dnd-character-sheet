@@ -71,6 +71,33 @@ describe("Attacks", () => {
     );
   });
 
+  it("notes the advantage or disadvantage an item grants on attack rolls beside each attack", async () => {
+    renderAttacks({
+      ...derivedRecord(),
+      attacks: [attack(0, 5)],
+      rollEffects: {
+        computed: [
+          {
+            item: "Oathbow",
+            mode: "disadvantage",
+            roll: "attack",
+            condition: "with all other weapons",
+          },
+          { item: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
+        ],
+        manual: null,
+        terms: [],
+      },
+    });
+
+    const header = await screen.findByRole("rowheader", { name: /^Longsword/ });
+    expect(header).toHaveTextContent("Disadvantage with all other weapons (Oathbow)");
+    expect(header).not.toHaveTextContent("Boots of Elvenkind");
+    expect(screen.getByRole("rowheader", { name: /^Warlock spell attack/ })).toHaveTextContent(
+      "Disadvantage with all other weapons (Oathbow)",
+    );
+  });
+
   it("opens a weapon's attack terms from its bonus", async () => {
     renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5)] });
 

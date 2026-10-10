@@ -1,9 +1,10 @@
-import { ABILITY_LABEL, type Ability, type Derived } from "@dnd/character";
+import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
 import type { Rules } from "./abilityRules.ts";
 import { DerivedBonus } from "./DerivedBonus.tsx";
 import { DetailName } from "./DetailName/DetailName.tsx";
 import { ProficiencyRing } from "./ProficiencyRing.tsx";
 import { PROFICIENCY_MARK, type ProficiencyLevel } from "./proficiencyMark.ts";
+import { RollEffects } from "./RollEffects.tsx";
 
 /** One row of a proficiency list: the ring a reader checks as often as the total, then the total. */
 export function ProficiencyRow({
@@ -14,6 +15,7 @@ export function ProficiencyRow({
   modifier,
   title,
   rules,
+  effects = [],
 }: {
   level: ProficiencyLevel;
   name: string;
@@ -22,9 +24,11 @@ export function ProficiencyRow({
   modifier: Derived<number>;
   title: string;
   rules: Rules | undefined;
+  /** What equipped items grant on this roll. */
+  effects?: readonly RollEffectEntry[];
 }) {
   return (
-    <li className="flex items-center gap-2 py-0.5 text-body">
+    <li className="flex flex-wrap items-center gap-2 py-0.5 text-body">
       <ProficiencyRing level={level} />
       <span className="flex-1">
         <DetailName
@@ -56,6 +60,7 @@ export function ProficiencyRow({
       <span className="flex w-7 justify-end font-semibold">
         <DerivedBonus named name={ability ? `${name} check` : `${name} save`} value={modifier} />
       </span>
+      <RollEffects effects={effects} className="basis-full pl-6" />
     </li>
   );
 }

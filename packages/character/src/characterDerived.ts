@@ -1,4 +1,11 @@
-import { ENCUMBRANCE_TIERS, GRIPS, HIT_DICE, SIZES } from "@dnd/rules";
+import {
+  ADVANTAGE_MODES,
+  ADVANTAGE_ROLLS,
+  ENCUMBRANCE_TIERS,
+  GRIPS,
+  HIT_DICE,
+  SIZES,
+} from "@dnd/rules";
 import { z } from "zod";
 import { derivedSchema } from "./derivedField.ts";
 import { abilitySchema, contentRefSchema, entryRefSchema } from "./refs.ts";
@@ -39,6 +46,15 @@ const defensesSchema = z.strictObject({
 const itemGrantsSchema = z.strictObject({
   proficiencies: z.array(z.string().min(1)),
   languages: z.array(z.string().min(1)),
+});
+
+/** One advantage or disadvantage an equipped item grants, with the item to cite and its condition if it has one. */
+const rollEffectSchema = z.strictObject({
+  item: z.string().min(1),
+  mode: z.enum(ADVANTAGE_MODES),
+  roll: z.enum(ADVANTAGE_ROLLS),
+  target: z.string().min(1).optional(),
+  condition: z.string().min(1).optional(),
 });
 
 /**
@@ -153,8 +169,14 @@ export const characterDerivedSchema = z.strictObject({
   defenses: derivedSchema(defensesSchema),
   /** Which equipped items grant a proficiency or a language, attuned where they must be. */
   itemGrants: derivedSchema(itemGrantsSchema),
+  /**
+   * The advantage and disadvantage equipped items grant, attuned where they must be, in
+   * inventory order. Nothing here cancels a pair: the table decides whether a condition holds.
+   */
+  rollEffects: derivedSchema(z.array(rollEffectSchema)),
 });
 
 export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
 export type Speed = z.infer<typeof speedSchema>;
+export type RollEffectEntry = z.infer<typeof rollEffectSchema>;
 export type Defenses = z.infer<typeof defensesSchema>;

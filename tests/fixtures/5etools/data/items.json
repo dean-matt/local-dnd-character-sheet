@@ -226,6 +226,2771 @@
         }
       },
       "hasFluffImages": true
+    },
+    {
+      "name": "Mantle of Spell Resistance",
+      "source": "DMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Scarab of Protection",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Staff of the Magi",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 4d6 + 2} Elided. {@dice d20} Elided. {@dice 1d12 + 1} Elided.",
+        {
+          "name": "Spell Absorption",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Spells",
+          "type": "entries",
+          "entries": [
+            "Elided. {@spell conjure elemental} Elided. {@spell dispel magic} Elided. {@spell fireball} Elided. {@spell flaming sphere} Elided. {@spell ice storm} Elided. {@spell invisibility} Elided. {@spell knock} Elided. {@spell lightning bolt} Elided. {@spell passwall} Elided. {@spell plane shift} Elided. {@spell telekinesis} Elided. {@spell wall of fire} Elided. {@spell web} Elided.",
+            "Elided. {@spell arcane lock} Elided. {@spell detect magic} Elided. {@spell enlarge/reduce} Elided. {@spell light} Elided. {@spell mage hand} Elided. {@spell protection from evil and good} Elided."
+          ]
+        },
+        {
+          "name": "Retributive Strike",
+          "type": "entries",
+          "entries": ["Elided.", "Elided. {@chance 50} Elided. {@dc 17} Elided."]
+        },
+        {
+          "type": "table",
+          "colLabels": ["Distance from Origin", "Damage"],
+          "colStyles": ["col-3", "col-9"],
+          "rows": [["Elided.", "Elided."], ["Elided.", "Elided."], ["Elided.", "Elided."]]
+        }
+      ]
+    },
+    {
+      "name": "Mantle of Spell Resistance",
+      "source": "XDMG",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Ring of Spell Turning",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Reaction|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Scarab of Protection",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Defense",
+          "entries": ["Elided. {@variantrule Armor Class|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Preservation",
+          "entries": ["Elided. {@variantrule Reaction|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Spell Resistance",
+          "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Staff of the Magi",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Spell Absorption",
+          "entries": [
+            "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Reaction|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spells",
+          "entries": [
+            "Elided.",
+            {
+              "type": "table",
+              "colStyles": ["col-10", "col-2 text-center"],
+              "colLabels": ["Spell", "Charge Cost"],
+              "rows": [
+                ["{@spell Arcane Lock|XPHB}", "Elided."],
+                ["{@spell Conjure Elemental|XPHB}", "Elided."],
+                ["{@spell Detect Magic|XPHB}", "Elided."],
+                ["{@spell Dispel Magic|XPHB}", "Elided."],
+                ["{@spell Enlarge/Reduce|XPHB}", "Elided."],
+                ["{@spell Fireball|XPHB} Elided.", "Elided."],
+                ["{@spell Flaming Sphere|XPHB}", "Elided."],
+                ["{@spell Ice Storm|XPHB}", "Elided."],
+                ["{@spell Invisibility|XPHB}", "Elided."],
+                ["{@spell Knock|XPHB}", "Elided."],
+                ["{@spell Light|XPHB}", "Elided."],
+                ["{@spell Lightning Bolt|XPHB} Elided.", "Elided."],
+                ["{@spell Mage Hand|XPHB}", "Elided."],
+                ["{@spell Passwall|XPHB}", "Elided."],
+                ["{@spell Plane Shift|XPHB}", "Elided."],
+                ["{@spell Protection from Evil and Good|XPHB}", "Elided."],
+                ["{@spell Telekinesis|XPHB}", "Elided."],
+                ["{@spell Wall of Fire|XPHB}", "Elided."],
+                ["{@spell Web|XPHB}", "Elided."]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Regaining Charges",
+          "entries": [
+            "Elided. {@dice 4d6 + 2} Elided. {@dice 1d20} Elided. {@dice 1d12 + 1} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Retributive Strike",
+          "entries": [
+            "Elided. {@action Magic|XPHB} Elided. {@variantrule Emanation [Area of Effect]|XPHB|Emanation} Elided. {@chance 50} Elided. {@dc 17} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Spell Turning",
+      "source": "DMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Ebonbane",
+      "source": "RHW",
+      "entries": [
+        "Elided. {@creature Ebonbane|RHW} Elided.",
+        {
+          "type": "entries",
+          "name": "Bound to the Shadowlands",
+          "entries": ["Elided. {@variantrule Attunement|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Insatiable Rage",
+          "entries": ["Elided. {@damage 8d8} Elided. {@spell Dominate Monster|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Magic Weapon",
+          "entries": [
+            "Elided. {@damage 3d6} Elided.",
+            "Elided. {@variantrule Advantage|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Sentience",
+          "entries": ["Elided. {@sense Truesight|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Personality",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Destroying Ebonbane",
+          "entries": ["Elided. {@variantrule Hit Points|XPHB} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Nepenthe",
+      "source": "VRGR",
+      "entries": [
+        "Elided. {@damage 2d10} Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Sentience",
+          "entries": ["Elided. {@sense darkvision} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Personality",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Nether Scroll of Azumar",
+      "source": "CM",
+      "entries": [
+        "Elided. {@dc 25} Elided. {@skill Arcana} Elided. {@damage 16d10} Elided.",
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided."]
+        },
+        "Elided. {@creature stone golem} Elided."
+      ]
+    },
+    {
+      "name": "Robe of the Archmagi",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided.", "Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Robe of the Archmagi",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Armor",
+          "entries": ["Elided. {@variantrule Armor Class|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Magic Resistance",
+          "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "War Mage",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Spellguard Shield",
+      "source": "DMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Spellguard Shield",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Black Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Blue Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Brass Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Bronze Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Copper Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Gold Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Green Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Red Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Silver Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "White Dragon Scale Mail",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Dragonguard",
+      "source": "LMoP",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Dragonguard",
+      "source": "PaBTSO",
+      "entries": ["Elided.", "Elided.", "Elided."]
+    },
+    {
+      "name": "Dragonstaff of Ahghairon",
+      "source": "WDH",
+      "entries": ["Elided.", "Elided.", "Elided. {@spell command} Elided. {@dice 1d10} Elided."]
+    },
+    {
+      "name": "Amulet of Protection from Turning",
+      "source": "TftYP",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Lost Crown of Besilmer",
+      "source": "PotA",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided.", "Elided. {@dice d6} Elided. {@dice 1d3} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Bracers of Celerity",
+      "source": "PaBTSO",
+      "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Obsidian Flint Dragon Plate",
+      "source": "BGDIA",
+      "entries": ["Elided. {@condition grappled} Elided."]
+    },
+    {
+      "name": "Necklace of Adaptation",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@condition Poisoned|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Periapt of Health",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@action Magic|XPHB} Elided. {@dice 2d4 + 2} {@variantrule Hit Points|XPHB} Elided.",
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@condition Poisoned|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Necklace of Adaptation",
+      "source": "DMG",
+      "entries": ["Elided. {@spell cloudkill} Elided. {@spell stinking cloud} Elided."]
+    },
+    {
+      "name": "Survival Mantle",
+      "source": "VGM",
+      "entries": ["Elided.", "Elided. {@spell cloudkill} Elided. {@spell stinking cloud} Elided."]
+    },
+    {
+      "name": "Ventilating Lungs",
+      "source": "ERLW",
+      "entries": [
+        "Elided.",
+        "Elided. {@spell cloudkill} Elided. {@spell stinking cloud} Elided.",
+        "Elided. {@spell gust of wind} Elided. {@dc 15} Elided.",
+        "Elided."
+      ]
+    },
+    {
+      "name": "Blanket",
+      "source": "XPHB",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@hazard extreme cold|XDMG} Elided. {@book Dungeon Master's Guide|XDMG} Elided."
+      ]
+    },
+    {
+      "name": "Belt of Dwarvenkind",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided. {@skill Persuasion} Elided."]
+        },
+        "Elided. {@chance 50} Elided.",
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided.", "Elided. {@sense darkvision} Elided.", "Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Belt of Dwarvenkind",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Dwarvish",
+              "entries": ["Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Friend of Dwarvenkind",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Persuasion|XPHB} Elided."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Toughness",
+              "entries": ["Elided.", "Elided. {@chance 50} Elided.", "Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Darkvision",
+              "entries": ["Elided. {@sense Darkvision|XPHB} Elided."]
+            },
+            {
+              "type": "item",
+              "name": "Resilience",
+              "entries": [
+                "Elided. {@variantrule Resistance|XPHB} Elided. {@variantrule Advantage|XPHB} Elided. {@condition Poisoned|XPHB} Elided."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Demon Armor",
+      "source": "DMG",
+      "entries": [
+        "Elided. {@dice 1d8} Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided. {@spell remove curse} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Shrieking Greaves",
+      "source": "BMT",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 1d3} Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": [
+            "Elided. {@spell Remove Curse} Elided.",
+            "Elided. {@dc 15} Elided. {@damage 2d8} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Amethyst Lodestone",
+      "source": "FTD",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 1d6} Elided.",
+        {
+          "type": "entries",
+          "name": "Flight",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Gravitational Thrust",
+          "entries": ["Elided. {@dc 18} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Reverse Gravity",
+          "entries": ["Elided. {@spell reverse gravity} Elided. {@dc 18} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Infernal Amulet",
+      "source": "CoA",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided. {@spell Remove Curse} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Corrupting",
+          "entries": [
+            "Elided. {@adventure Infernal Item Corruption|CoA|16|Infernal Item Corruption} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Greater Silver Sword",
+      "source": "MTF",
+      "entries": ["Elided. {@condition charmed} Elided."]
+    },
+    {
+      "name": "Mindguard Crown",
+      "source": "PaBTSO",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Boots of Elvenkind",
+      "source": "DMG",
+      "entries": ["Elided. {@skill Stealth} Elided."]
+    },
+    {
+      "name": "Boots of Elvenkind",
+      "source": "XDMG",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided. {@skill Stealth|XPHB} Elided."]
+    },
+    {
+      "name": "Cloak of the Bat",
+      "source": "DMG",
+      "entries": [
+        "Elided. {@skill Stealth} Elided.",
+        "Elided. {@spell polymorph} Elided. {@creature bat} Elided. {@creature bat} Elided."
+      ]
+    },
+    {
+      "name": "Cloak of the Bat",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Stealth|XPHB} Elided. {@variantrule Dim Light|XPHB} Elided. {@variantrule Darkness|XPHB} Elided. {@variantrule Fly Speed|XPHB} Elided. {@variantrule Dim Light|XPHB} Elided. {@variantrule Darkness|XPHB} Elided. {@variantrule Fly Speed|XPHB} Elided.",
+        "Elided. {@variantrule Dim Light|XPHB} Elided. {@variantrule Darkness|XPHB} Elided. {@spell Polymorph|XPHB} Elided. {@creature Bat|XMM} Elided."
+      ]
+    },
+    {
+      "name": "Cloak of Elvenkind",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@skill Perception|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided. {@variantrule Advantage|XPHB} Elided. {@skill Stealth|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Kagonesti Forest Shroud",
+      "source": "DSotDQ",
+      "entries": ["Elided. {@skill Stealth} Elided."]
+    },
+    {
+      "name": "Shadowfell Brand Tattoo",
+      "source": "TCE",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Tattoo Attunement",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Shadow Essence",
+          "entries": ["Elided. {@sense darkvision} Elided. {@skill Stealth} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Shadowy Defense",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Cloak of Elvenkind",
+      "source": "DMG",
+      "entries": ["Elided. {@skill Perception} Elided. {@skill Stealth} Elided."]
+    },
+    {
+      "name": "Piwafwi (Cloak of Elvenkind)",
+      "source": "OotA",
+      "entries": [
+        "Elided. {@creature drow} Elided. {@item cloak of elvenkind} Elided.",
+        "Elided. {@skill Perception} Elided. {@skill Stealth} Elided."
+      ]
+    },
+    {
+      "name": "Piwafwi of Fire Resistance",
+      "source": "OotA",
+      "entries": [
+        "Elided. {@creature drow} Elided. {@item cloak of elvenkind} Elided.",
+        "Elided. {@skill Perception} Elided. {@skill Stealth} Elided."
+      ]
+    },
+    {
+      "name": "Shard of the Ise Rune",
+      "source": "SKT",
+      "entries": [
+        "Elided.",
+        {
+          "name": "Frigid Touch",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Frost Friend",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Icy Mantle",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Winters Howl",
+          "type": "entries",
+          "entries": ["Elided. {@spell sleet storm} Elided. {@dc 17} Elided."]
+        },
+        {
+          "name": "Gift of Frost",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Cloak",
+                  "entry": "Elided. {@skill Stealth} Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Boots",
+                  "entry": "Elided. {@quickref difficult terrain||3} Elided."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Winter Camouflage",
+      "source": "FRHoF",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided. {@skill Stealth|XPHB} Elided."]
+    },
+    {
+      "name": "Eyes of the Eagle",
+      "source": "DMG",
+      "entries": ["Elided. {@skill Perception} Elided."]
+    },
+    {
+      "name": "Eyes of the Eagle",
+      "source": "XDMG",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided. {@skill Perception|XPHB} Elided."]
+    },
+    {
+      "name": "Knave's Eye Patch",
+      "source": "WDH",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": ["Elided. {@skill Perception} Elided.", "Elided.", "Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Robe of Eyes",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided. {@skill Perception} Elided.",
+            "Elided. {@sense darkvision} Elided.",
+            "Elided. {@condition invisible} Elided."
+          ]
+        },
+        "Elided.",
+        "Elided. {@spell light} Elided. {@spell daylight} Elided. {@condition blinded} Elided. {@dc 11} Elided. {@spell light} Elided. {@dc 15} Elided. {@spell daylight} Elided."
+      ]
+    },
+    {
+      "name": "Robe of Eyes",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "All-Around Vision",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Perception|XPHB} Elided."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Special Senses",
+              "entries": [
+                "Elided. {@sense Darkvision|XPHB} Elided. {@sense Truesight|XPHB} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Drawbacks",
+          "entries": [
+            "Elided. {@spell Light|XPHB} Elided. {@spell Daylight|XPHB} Elided. {@condition Blinded|XPHB} Elided. {@dc 11} Elided. {@dc 15} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Watchful Helm",
+      "source": "CM",
+      "entries": [
+        "Elided. {@skill Perception} Elided.",
+        "Elided. {@spell see invisibility} Elided."
+      ]
+    },
+    {
+      "name": "Rod of Alertness",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        {
+          "name": "Alertness",
+          "type": "entries",
+          "entries": ["Elided. {@skill Perception} Elided."]
+        },
+        {
+          "name": "Spells",
+          "type": "entries",
+          "entries": [
+            "Elided. {@spell detect evil and good} Elided. {@spell detect magic} Elided. {@spell detect poison and disease} Elided. {@spell see invisibility} Elided."
+          ]
+        },
+        {
+          "name": "Protective Aura",
+          "type": "entries",
+          "entries": ["Elided. {@condition invisible} Elided.", "Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Rod of Alertness",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Alertness",
+          "entries": [
+            "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Perception|XPHB} Elided. {@variantrule Initiative|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spells",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "{@spell Detect Evil and Good|XPHB}",
+                "{@spell Detect Magic|XPHB}",
+                "{@spell Detect Poison and Disease|XPHB}",
+                "{@spell See Invisibility|XPHB}"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Protective Aura",
+          "entries": [
+            "Elided. {@action Magic|XPHB} Elided. {@variantrule Bright Light|XPHB} Elided. {@variantrule Dim Light|XPHB} Elided. {@variantrule Bright Light|XPHB} Elided. {@variantrule Armor Class|XPHB} Elided. {@condition Invisible|XPHB} Elided. {@variantrule Bright Light|XPHB} Elided.",
+            "Elided. {@action Magic|XPHB} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sentinel Shield",
+      "source": "DMG",
+      "entries": ["Elided. {@skill Perception} Elided."]
+    },
+    {
+      "name": "Sentinel Shield",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Initiative|XPHB} Elided. {@skill Perception|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Ioun Stone, Awareness",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Initiative|XPHB} Elided. {@skill Perception|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Sorcerous Spyglass",
+      "source": "XMtS",
+      "entries": [
+        "Elided. {@item spyglass|phb} Elided. {@skill Perception} Elided. {@spell detect magic} Elided."
+      ]
+    },
+    {
+      "name": "Verminshroud (Dormant)",
+      "source": "EGW",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Dormant",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided. {@skill Perception} Elided. {@sense darkvision} Elided. {@sense darkvision} Elided. {@sense darkvision} Elided.",
+                "Elided. {@spell polymorph} Elided. {@creature giant rat} Elided. {@creature rat} Elided."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Danoth's Visor (Dormant)",
+      "source": "EGW",
+      "entries": [
+        "Elided. {@condition invisible} Elided.",
+        {
+          "type": "entries",
+          "name": "Dormant",
+          "entries": ["Elided. {@skill Investigation} Elided. {@skill Perception} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Eyes of Minute Seeing",
+      "source": "DMG",
+      "entries": ["Elided. {@skill Investigation} Elided."]
+    },
+    {
+      "name": "Eyes of Minute Seeing",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@sense Darkvision|XPHB} Elided. {@variantrule Advantage|XPHB} Elided. {@skill Investigation|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Stonespeaker Crystal",
+      "source": "OotA",
+      "entries": [
+        "Elided. {@skill Investigation} Elided.",
+        "Elided. {@spell speak with animals} Elided. {@spell speak with dead} Elided. {@spell speak with plants} Elided.",
+        "Elided. {@filter divination|spells|school=D} Elided.",
+        "Elided. {@dice 1d6 + 4} Elided. {@dice d20} Elided."
+      ]
+    },
+    {
+      "name": "Goggles of Object Reading",
+      "source": "EGW",
+      "entries": ["Elided. {@skill Arcana} Elided.", "Elided. {@spell identify} Elided."]
+    },
+    {
+      "name": "Talisman of the Sphere",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Arcana|XPHB} Elided. {@item Sphere of Annihilation|XDMG} Elided. {@item Sphere of Annihilation|XDMG} Elided. {@action Magic|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Ring of Truth Telling",
+      "source": "WDH",
+      "entries": ["Elided. {@skill Insight} Elided."]
+    },
+    {
+      "name": "Grovelthrash (Dormant)",
+      "source": "EGW",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Sentience",
+          "entries": ["Elided. {@sense darkvision} Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Personality",
+          "entries": ["Elided. {@creature ultroloth} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dormant",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided.",
+                "Elided. {@damage 2d6} Elided. {@damage 1d6} Elided.",
+                "Elided. {@skill Insight} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "inset",
+          "name": "Betrayer Artifact Properties",
+          "entries": [
+            "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial} Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental} Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial} Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental} Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sword of Zariel",
+      "source": "BGDIA",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Attunement",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Angelic Language",
+                  "entry": "Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Celestial Resistance",
+                  "entry": "Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Divine Presence",
+                  "entry": "Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Feathered Wings",
+                  "entry": "Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Truesight",
+                  "entry": "Elided. {@condition invisible} Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "New Personality",
+                  "entries": [
+                    "Elided.",
+                    {
+                      "type": "table",
+                      "caption": "Personality Traits",
+                      "colLabels": ["d8", "Personality Trait"],
+                      "colStyles": ["col-2 text-center", "col-10"],
+                      "rows": [
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."]
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "caption": "Ideals",
+                      "colLabels": ["d6", "Ideal"],
+                      "colStyles": ["col-2 text-center", "col-10"],
+                      "rows": [
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."]
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "caption": "Bonds",
+                      "colLabels": ["d6", "Bond"],
+                      "colStyles": ["col-2 text-center", "col-10"],
+                      "rows": [
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."]
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "caption": "Flaws",
+                      "colLabels": ["d6", "Flaw"],
+                      "colStyles": ["col-2 text-center", "col-10"],
+                      "rows": [
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."],
+                        ["Elided.", "Elided."]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Holy Light",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Random Properties",
+          "entries": [
+            "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial properties} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Searing Radiance",
+          "entries": [
+            "Elided. {@damage 2d8} Elided. {@damage 3d10} Elided. {@dc 17} Elided. {@condition blinded} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Sentience",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Truth Seer",
+          "entries": ["Elided. {@skill Insight} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Destroying the Sword",
+          "entries": [
+            "Elided. {@adventure Shattering the Companion|BGDIA|8|shattering the companion} Elided.",
+            "Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "The Bloody End (Dormant)",
+      "source": "EGW",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Sentience",
+          "entries": ["Elided. {@sense darkvision} Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Personality",
+          "entries": ["Elided. {@creature pit fiend} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dormant",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided.",
+                "Elided.",
+                "Elided. {@dc 13} Elided. {@spell charm person} Elided. {@spell dominate person} Elided. {@spell fear} Elided.",
+                "Elided. {@skill Intimidation} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "inset",
+          "name": "Betrayer Artifact Properties",
+          "entries": [
+            "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial} Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental} Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial} Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental} Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Far Gear",
+      "source": "AI",
+      "entries": [
+        "Elided. {@skill Intimidation} Elided.",
+        {
+          "type": "entries",
+          "name": "Aberrant Ally",
+          "entries": ["Elided. {@spell conjure celestial} Elided. {@status concentration} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Unnatural Bane",
+          "entries": ["Elided. {@spell bane} Elided. {@dc 15} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Part of a Whole",
+          "entries": ["Elided. {@item Orrery of the Wanderer|AI} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Pirate's Cutlass",
+      "source": "XMtS",
+      "entries": ["Elided. {@item +1 shortsword} Elided. {@skill Intimidation} Elided."]
+    },
+    {
+      "name": "Dread Helm",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Quarterstaff of the Acrobat",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@variantrule Dim Light|XPHB} Elided. {@variantrule Bonus Action|XPHB} Elided. {@variantrule Initiative|XPHB} Elided. {@variantrule Bonus Action|XPHB} Elided.",
+        "Elided. {@variantrule Bonus Action|XPHB} Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Acrobatic Assist (Quarterstaff and 10-Foot Pole Forms Only)",
+          "entries": [
+            "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Acrobatics|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Attack Deflection (Quarterstaff Form Only)",
+          "entries": [
+            "Elided. {@variantrule Reaction|XPHB} Elided. {@variantrule Armor Class|XPHB} Elided. {@variantrule Short Rest|XPHB|Short} Elided. {@variantrule Long Rest|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Ranged Weapon (Quarterstaff Form Only)",
+          "entries": ["Elided. {@itemProperty T|XPHB|Thrown} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Wayfarer's Boots",
+      "source": "BGG",
+      "entries": [
+        "Elided. {@skill Survival} Elided.",
+        {
+          "type": "entries",
+          "name": "Invoking the Runes",
+          "entries": ["Elided. {@spell expeditious retreat} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Bob",
+      "source": "ToA",
+      "entries": ["Elided. {@skill Athletics} Elided."]
+    },
+    {
+      "name": "Prying Blade",
+      "source": "XMtS",
+      "entries": [
+        "Elided. {@item +1 shortsword} Elided. {@skill Athletics} Elided. {@condition restrained} Elided."
+      ]
+    },
+    {
+      "name": "Pole",
+      "source": "XPHB",
+      "entries": [
+        "Elided. {@skill Athletics|XPHB} Elided. {@variantrule Long Jump|XPHB} Elided. {@variantrule Advantage|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Amulet of Duplicity",
+      "source": "CoA",
+      "entries": [
+        "Elided. {@spell Wish} Elided.",
+        "Elided. {@skill Persuasion} Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided. {@spell Identify} Elided. {@spell Remove Curse} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Teeth of Dahlver-Nar",
+      "source": "TCE",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Using the Teeth",
+          "entries": [
+            "Elided.",
+            "Elided.",
+            "Elided.",
+            {
+              "type": "table",
+              "caption": "Teeth of Dahlver-Nar",
+              "colLabels": ["d20", "Tale and Tooth", "Creatures Summoned", "Implanted Effect"],
+              "colStyles": ["col-2 text-center", "col-2", "col-1", "col-7"],
+              "rows": [
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature cat||cats}",
+                  "Elided. {@spell revivify} Elided. {@spell revivify} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature commoner}",
+                  "Elided. {@spell sanctuary} Elided. {@dc 18} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature goblin||goblins} Elided. {@creature goblin boss}",
+                  "Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature green hag||green hags} Elided.",
+                  "Elided. {@damage 3d10} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature lizard queen||lizardfolk queen} Elided. {@creature lizardfolk}",
+                  "Elided. {@dc 15} Elided. {@condition exhaustion} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature Incubus||incubi}",
+                  "Elided. {@dice d10} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature unicorn}",
+                  "Elided. {@dice 2d8 + 2} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature mind flayer||mind flayers}",
+                  "Elided. {@spell detect thoughts} Elided. {@skill Insight} Elided. {@skill Perception} Elided."
+                ],
+                ["Elided.", "Elided.", "Elided. {@creature giant toad||giant toads}", "Elided."],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature giant octopus} Elided. {@creature mage} Elided. {@creature specter}",
+                  "Elided. {@spell Evard's black tentacles} Elided. {@dc 18} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature vampire}",
+                  "Elided. {@damage 1d6} Elided. {@damage 3d6} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature beholder}",
+                  "Elided. {@spell eyebite} Elided. {@dice d20} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature oni}",
+                  "Elided. {@spell detect magic} Elided. {@condition exhaustion} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature adult red dracolich|tce}",
+                  "Elided. {@spell create undead} Elided. {@creature skeleton} Elided. {@creature zombie} Elided. {@creature ghoul} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature dao} Elided. {@creature djinni} Elided. {@creature efreeti} Elided. {@creature marid}",
+                  "Elided. {@spell counterspell} Elided. {@dice 2d10} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature pit fiend}",
+                  "Elided. {@spell dominate monster} Elided. {@dc 18} Elided."
+                ],
+                ["Elided.", "Elided.", "Elided. {@creature ancient blue dragon}", "Elided."],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature tarrasque} Elided. {@dice 1d4} Elided.",
+                  "Elided. {@dc 18} Elided."
+                ],
+                [
+                  "Elided.",
+                  "Elided.",
+                  "Elided. {@creature ancient red dragon}",
+                  "Elided. {@dc 24} Elided. {@damage 26d6} Elided. {@condition exhaustion} Elided."
+                ],
+                ["Elided.", "Elided.", "Elided. {@creature priest}", "Elided."]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Sowing Teeth",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Implanting Teeth",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Recovering Teeth",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Destroying the Teeth",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Book of Exalted Deeds",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        "Elided. {@damage 24d6} Elided.",
+        "Elided.",
+        {
+          "name": "Random Properties",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial properties}",
+                "Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial properties}"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Increased Wisdom",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Enlightened Magic",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Halo",
+          "type": "entries",
+          "entries": ["Elided. {@skill Persuasion} Elided. {@skill Intimidation} Elided."]
+        },
+        {
+          "name": "Destroying the Book",
+          "type": "entries",
+          "entries": ["Elided. {@dice 1d100} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Book of Exalted Deeds",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        "Elided.",
+        "Elided. {@damage 24d6} Elided. {@variantrule Resistance|XPHB} Elided. {@variantrule Immunity|XPHB} Elided. {@variantrule Hit Points|XPHB} Elided. {@variantrule Attunement|XPHB} Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Celestial Calm",
+          "entries": [
+            "Elided. {@variantrule Immunity|XPHB} Elided. {@condition Charmed|XPHB} Elided. {@condition Frightened|XPHB} Elided. {@variantrule Resistance|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Divine Wisdom",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Enlightened Magic",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Halo",
+          "entries": [
+            "Elided. {@variantrule Bright Light|XPHB} Elided. {@variantrule Dim Light|XPHB} Elided. {@variantrule Bonus Action|XPHB} Elided. {@variantrule Advantage|XPHB} Elided. {@skill Persuasion|XPHB} Elided. {@variantrule Bright Light|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Random Properties",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided. {@table Artifact Properties; Minor Beneficial Properties|XDMG|minor beneficial} Elided.",
+                "Elided. {@table Artifact Properties; Major Beneficial Properties|XDMG|major beneficial} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Destroying the Book",
+          "entries": ["Elided. {@dice 1d100} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Book of Vile Darkness",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        "Elided.",
+        "Elided.",
+        "Elided.",
+        "Elided. {@dc 17} Elided.",
+        "Elided.",
+        {
+          "name": "Random Properties",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial properties}",
+                "Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial property}",
+                "Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental properties}",
+                "Elided. {@table Artifact Properties; Major Detrimental Properties|dmg|major detrimental properties}"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Adjusted Ability Scores",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Mark of Darkness",
+          "type": "entries",
+          "entries": ["Elided. {@skill Persuasion} Elided. {@skill Intimidation} Elided."]
+        },
+        {
+          "name": "Command Evil",
+          "type": "entries",
+          "entries": ["Elided. {@spell dominate monster} Elided. {@dc 18} Elided."]
+        },
+        {
+          "name": "Dark Lore",
+          "type": "entries",
+          "entries": ["Elided."]
+        },
+        {
+          "name": "Dark Speech",
+          "type": "entries",
+          "entries": ["Elided. {@damage 1d12} Elided. {@damage 3d6} Elided."]
+        },
+        {
+          "name": "Destroying the Book",
+          "type": "entries",
+          "entries": [
+            "Elided.",
+            "Elided. {@creature solar} Elided. {@dice 1d100} Elided.",
+            "Elided. {@dice 1d10 × 100} Elided.",
+            "Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Black Dragon Mask",
+      "source": "HotDQ",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Damage Absorption",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Draconic Majesty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Breath",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Sight",
+          "entries": [
+            "Elided. {@sense darkvision} Elided. {@sense darkvision} Elided. {@sense blindsight} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Tongue",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Legendary Resistance",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Water Breathing",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Blue Dragon Mask",
+      "source": "RoTOS",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Damage Absorption",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Draconic Majesty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Breath",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Sight",
+          "entries": ["Elided. {@sense darkvision} Elided. {@sense blindsight} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Tongue",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Legendary Resistance",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Lingering Shock",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Green Dragon Mask",
+      "source": "RoTOS",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Damage Absorption",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Draconic Majesty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Breath",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Sight",
+          "entries": ["Elided. {@sense darkvision} Elided. {@sense blindsight} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Tongue",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Legendary Resistance",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Water Breathing",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Red Dragon Mask",
+      "source": "RoTOS",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Damage Absorption",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Draconic Majesty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Breath",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Sight",
+          "entries": ["Elided. {@sense darkvision} Elided. {@sense blindsight} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Tongue",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Legendary Resistance",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Fire",
+          "entries": ["Elided. {@damage 1d6} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "White Dragon Mask",
+      "source": "RoTOS",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Damage Absorption",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Draconic Majesty",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Breath",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Sight",
+          "entries": ["Elided. {@sense darkvision} Elided. {@sense blindsight} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Dragon Tongue",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Legendary Resistance",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Winter's Fury",
+          "entries": ["Elided. {@damage 1d8} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Orb of the Veil",
+      "source": "EGW",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided.",
+            "Elided. {@sense darkvision} Elided. {@sense darkvision} Elided.",
+            "Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Elder Cartographer's Glossography",
+      "source": "AI",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Akmon, Hammer of Purphoros",
+      "source": "MOT",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Hammer of the Forge",
+          "entries": ["Elided. {@damage 3d10} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Blessing of the Forge",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Piety 10+",
+                  "entry": "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial} Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Piety 25+",
+                  "entry": "Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial} Elided."
+                },
+                {
+                  "type": "item",
+                  "name": "Piety 50+",
+                  "entry": "Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial} Elided."
+                }
+              ]
+            },
+            "Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental} Elided.",
+            "Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Reforged",
+          "entries": ["Elided. {@condition exhaustion} Elided. {@item smith's tools|PHB} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Spells",
+          "entries": [
+            "Elided. {@dc 18} Elided. {@spell animate objects} Elided. {@spell heat metal} Elided. {@spell fabricate} Elided. {@spell magic weapon} Elided. {@spell mending} Elided. {@spell shatter} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Destroying the Hammer",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Baba Yaga's Mortar and Pestle",
+      "source": "TCE",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Random Properties",
+          "entries": [
+            "Elided. {@book Dungeon Master's Guide|DMG} Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided. {@table Artifact Properties; Minor Beneficial Properties|dmg|minor beneficial} Elided.",
+                "Elided. {@table Artifact Properties; Major Beneficial Properties|dmg|major beneficial} Elided.",
+                "Elided. {@table Artifact Properties; Minor Detrimental Properties|dmg|minor detrimental} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Properties of the Mortar",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Properties of the Pestle",
+          "entries": ["Elided.", "Elided. {@damage 1d8} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Perfect Tools",
+          "entries": [
+            "Elided.",
+            "Elided. {@item alchemist's supplies|PHB} Elided. {@item brewer's supplies|PHB} Elided. {@item cook's utensils|PHB} Elided. {@item herbalism kit|PHB} Elided. {@item poisoner's kit|PHB} Elided."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Primal Parts",
+          "entries": ["Elided. {@damage 4d10} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Traverse the Night",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Bones Know Their Home",
+          "entries": ["Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Destroying the Mortar and Pestle",
+          "entries": ["Elided. {@i Elided.} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Infiltrator's Key (Dormant)",
+      "source": "EGW",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Dormant",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "items": [
+                "Elided. {@item thieves' tools|phb} Elided. {@item thieves' tools|PHB} Elided.",
+                "Elided. {@skill Stealth} Elided."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Costume",
+      "source": "XPHB",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Cultist's Robe",
+      "source": "HotB",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Garb of Light and Shadow",
+      "source": "FRHoF",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Genie Robe",
+      "source": "FRHoF",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Crowbar",
+      "source": "PHB",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Crowbar",
+      "source": "XPHB",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Magnifying Glass",
+      "source": "PHB",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Magnifying Glass",
+      "source": "XPHB",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Military Saddle",
+      "source": "PHB",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Military Saddle",
+      "source": "XPHB",
+      "entries": ["Elided. {@variantrule Advantage|XPHB} Elided."]
+    },
+    {
+      "name": "Rope of Climbing",
+      "source": "DMG",
+      "entries": ["Elided.", "Elided.", "Elided."]
+    },
+    {
+      "name": "Rope of Climbing",
+      "source": "XDMG",
+      "entries": [
+        "Elided. {@action Magic|XPHB} Elided.",
+        "Elided. {@variantrule Advantage|XPHB} Elided.",
+        "Elided. {@variantrule Immunity|XPHB} Elided. {@variantrule Hit Points|XPHB|Hit Point} Elided. {@variantrule Hit Points|XPHB|Hit Point} Elided. {@variantrule Hit Points|XPHB} Elided."
+      ]
+    },
+    {
+      "name": "Whelm",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided.",
+        {
+          "name": "Thrown Weapon",
+          "type": "entries",
+          "entries": ["Elided. {@damage 1d8} Elided. {@damage 2d8} Elided."]
+        },
+        {
+          "name": "Shock Wave",
+          "type": "entries",
+          "entries": ["Elided. {@dc 15} Elided. {@condition stunned} Elided."]
+        },
+        {
+          "name": "Supernatural Awareness",
+          "type": "entries",
+          "entries": [
+            "Elided. {@spell detect evil and good} Elided. {@spell locate object} Elided."
+          ]
+        },
+        {
+          "name": "Sentience",
+          "type": "entries",
+          "entries": ["Elided. {@sense darkvision} Elided.", "Elided."]
+        },
+        {
+          "name": "Personality",
+          "type": "entries",
+          "entries": ["Elided. {@creature vampire} Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Oathbow",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@quickref Cover||3||total cover} Elided. {@damage 3d6} Elided.",
+        "Elided."
+      ]
+    },
+    {
+      "name": "Javelin of Backbiting",
+      "source": "TftYP",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided. {@spell remove curse} Elided."]
+        },
+        "Elided."
+      ]
+    },
+    {
+      "name": "Spear of Backbiting",
+      "source": "TftYP",
+      "entries": [
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided. {@spell remove curse} Elided."]
+        },
+        "Elided."
+      ]
+    },
+    {
+      "name": "Tloques' Berserker Battleaxe",
+      "source": "TftYP",
+      "entries": [
+        "Elided.",
+        "Elided. {@spell passwall} Elided. {@spell burning hands} Elided. {@spell gust of wind} Elided.",
+        "Elided. {@dice 1d6 + 4} Elided. {@spell passwall} Elided. {@spell gust of wind} Elided. {@spell burning hands} Elided. {@dc 15} Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Curse",
+          "entries": ["Elided."]
+        },
+        "Elided. {@dc 15} Elided. {@action Attack} Elided."
+      ]
+    },
+    {
+      "name": "Dyrrn's Tentacle Whip",
+      "source": "ERLW",
+      "entries": [
+        "Elided.",
+        "Elided. {@damage 1d6} Elided. {@dice d20} Elided. {@condition stunned} Elided.",
+        "Elided.",
+        {
+          "type": "entries",
+          "name": "Symbiotic Nature",
+          "entries": ["Elided."]
+        }
+      ]
+    },
+    {
+      "name": "Tidecaller Trident",
+      "source": "BMT",
+      "entries": [
+        "Elided.",
+        "Elided. {@spell Control Water} Elided. {@dc 15} Elided. {@spell Tsunami} Elided. {@dc 15} Elided. {@dice 1d3} Elided."
+      ]
+    },
+    {
+      "name": "Ring of Air Elemental Command",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 1d4 + 1} Elided.",
+        "Elided. {@spell dominate monster} Elided. {@creature air elemental} Elided.",
+        "Elided. {@creature air elemental} Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided.",
+            "Elided.",
+            "Elided. {@spell chain lightning} Elided. {@spell gust of wind} Elided. {@spell wind wall} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Earth Elemental Command",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 1d4 + 1} Elided.",
+        "Elided. {@spell dominate monster} Elided. {@creature earth elemental} Elided. {@quickref difficult terrain||3} Elided.",
+        "Elided. {@creature earth elemental} Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided.",
+            "Elided. {@quickref difficult terrain||3} Elided.",
+            "Elided. {@spell stone shape} Elided. {@spell stoneskin} Elided. {@spell wall of stone} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Fire Elemental Command",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 1d4 + 1} Elided.",
+        "Elided. {@spell dominate monster} Elided. {@creature fire elemental} Elided.",
+        "Elided. {@creature fire elemental} Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided.",
+            "Elided. {@spell burning hands} Elided. {@spell fireball} Elided. {@spell wall of fire} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Water Elemental Command",
+      "source": "DMG",
+      "entries": [
+        "Elided.",
+        "Elided. {@dice 1d4 + 1} Elided.",
+        "Elided. {@spell dominate monster} Elided. {@creature water elemental} Elided.",
+        "Elided. {@creature water elemental} Elided.",
+        {
+          "type": "list",
+          "items": [
+            "Elided.",
+            "Elided. {@spell create or destroy water} Elided. {@spell control water} Elided. {@spell ice storm} Elided. {@spell wall of ice} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Elemental Command (Air)",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            {
+              "type": "item",
+              "name": "Elemental Bane",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Elemental Compulsion",
+              "entries": [
+                "Elided. {@action Magic|XPHB} Elided. {@dc 18} Elided. {@condition Charmed|XPHB} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Elemental Focus",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Air",
+                  "entries": [
+                    "Elided. {@variantrule Resistance|XPHB} Elided. {@variantrule Fly Speed|XPHB} Elided. {@variantrule Speed|XPHB} Elided."
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting",
+          "entries": [
+            "Elided. {@dice 1d4 + 1} Elided. {@spell Chain Lightning|XPHB} Elided. {@spell Feather Fall|XPHB} Elided. {@spell Gust of Wind|XPHB} Elided. {@spell Wind Wall|XPHB} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Elemental Command (Earth)",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            {
+              "type": "item",
+              "name": "Elemental Bane",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Elemental Compulsion",
+              "entries": [
+                "Elided. {@action Magic|XPHB} Elided. {@dc 18} Elided. {@condition Charmed|XPHB} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Elemental Focus",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Earth",
+                  "entries": [
+                    "Elided. {@variantrule Resistance|XPHB} Elided. {@variantrule Difficult Terrain|XPHB} Elided. {@variantrule Difficult Terrain|XPHB} Elided."
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting",
+          "entries": [
+            "Elided. {@dice 1d4 + 1} Elided. {@spell Earthquake|XPHB} Elided. {@spell Stone Shape|XPHB} Elided. {@spell Stoneskin|XPHB} Elided. {@spell Wall of Stone|XPHB} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Elemental Command (Fire)",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            {
+              "type": "item",
+              "name": "Elemental Bane",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Elemental Compulsion",
+              "entries": [
+                "Elided. {@action Magic|XPHB} Elided. {@dc 18} Elided. {@condition Charmed|XPHB} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Elemental Focus",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Fire",
+                  "entries": ["Elided. {@variantrule Immunity|XPHB} Elided."]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting",
+          "entries": [
+            "Elided. {@dice 1d4 + 1} Elided. {@spell Burning Hands|XPHB} Elided. {@spell Fireball|XPHB} Elided. {@spell Fire Storm|XPHB} Elided. {@spell Wall of Fire|XPHB} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Ring of Elemental Command (Water)",
+      "source": "XDMG",
+      "entries": [
+        "Elided.",
+        {
+          "type": "list",
+          "items": [
+            {
+              "type": "item",
+              "name": "Elemental Bane",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@variantrule Disadvantage|XPHB} Elided."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Elemental Compulsion",
+              "entries": [
+                "Elided. {@action Magic|XPHB} Elided. {@dc 18} Elided. {@condition Charmed|XPHB} Elided."
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Elemental Focus",
+          "entries": [
+            "Elided.",
+            {
+              "type": "list",
+              "style": "list-hang-notitle",
+              "items": [
+                {
+                  "type": "item",
+                  "name": "Water",
+                  "entries": ["Elided. {@variantrule Swim Speed|XPHB} Elided."]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting",
+          "entries": [
+            "Elided. {@dice 1d4 + 1} Elided. {@spell Create or Destroy Water|XPHB} Elided. {@spell Ice Storm|XPHB} Elided. {@spell Tsunami|XPHB} Elided. {@spell Wall of Ice|XPHB} Elided. {@spell Water Walk|XPHB} Elided."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Verminshroud (Awakened)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Verminshroud (Dormant)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Awakened",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided. {@spell insect plague} Elided. {@dc 15} Elided.",
+                    "Elided. {@spell polymorph} Elided. {@creature giant wasp} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Verminshroud (Exalted)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Verminshroud (Awakened)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Exalted",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided. {@dice 1d6} Elided. {@dc 17} Elided. {@condition poisoned} Elided.",
+                    "Elided. {@spell polymorph} Elided. {@creature giant scorpion} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Danoth's Visor (Awakened)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Danoth's Visor (Dormant)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Awakened",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": ["Elided. {@condition invisible} Elided.", "Elided.", "Elided."]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Danoth's Visor (Exalted)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Danoth's Visor (Awakened)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Exalted",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": ["Elided.", "Elided. {@spell antimagic field} Elided."]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Grovelthrash (Awakened)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Grovelthrash (Dormant)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Awakened",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": ["Elided.", "Elided.", "Elided."]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Grovelthrash (Exalted)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Grovelthrash (Awakened)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Exalted",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided. {@damage 2d6} Elided.",
+                    "Elided. {@dc 17} Elided. {@spell earthquake} Elided. {@spell meld into stone} Elided. {@spell stone shape} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "The Bloody End (Awakened)",
+      "source": "EGW",
+      "_copy": {
+        "name": "The Bloody End (Dormant)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Awakened",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided.",
+                    "Elided. {@dc 15} Elided. {@condition frightened} Elided.",
+                    "Elided. {@damage 1d6} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "The Bloody End (Exalted)",
+      "source": "EGW",
+      "_copy": {
+        "name": "The Bloody End (Awakened)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Exalted",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided. {@spell dominate monster} Elided.",
+                    "Elided. {@condition frightened} Elided.",
+                    "Elided. {@damage 2d6} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Dread Helm",
+      "source": "WttHC",
+      "_copy": {
+        "name": "Dread Helm",
+        "source": "XDMG",
+        "_mod": {
+          "entries": {
+            "mode": "appendArr",
+            "items": {
+              "type": "entries",
+              "name": "Special Use:",
+              "entries": [
+                "Elided. {@variantrule Advantage|XPHB} Elided. {@skill Intimidation|XPHB} Elided."
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Book of Vile Darkness (Variant)",
+      "source": "KftGV",
+      "_copy": {
+        "name": "Book of Vile Darkness",
+        "source": "DMG",
+        "_mod": {
+          "entries": {
+            "mode": "replaceArr",
+            "replace": {
+              "index": 7
+            },
+            "items": [
+              "Elided.",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Circle of Death",
+                    "entries": [
+                      "Elided. {@spell circle of death} Elided. {@dc 20} Elided. {@dice d6} Elided."
+                    ]
+                  },
+                  {
+                    "type": "item",
+                    "name": "Condition Immunities",
+                    "entries": [
+                      "Elided. {@condition charmed} Elided. {@condition frightened} Elided."
+                    ]
+                  },
+                  {
+                    "type": "item",
+                    "name": "Evil Presence",
+                    "entries": ["Elided. {@dc 20} Elided. {@spell dispel evil and good} Elided."]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Infiltrator's Key (Awakened)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Infiltrator's Key (Dormant)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Awakened",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided. {@spell alter self} Elided. {@spell invisibility} Elided. {@spell knock} Elided. {@spell pass without trace} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
+    },
+    {
+      "name": "Infiltrator's Key (Exalted)",
+      "source": "EGW",
+      "_copy": {
+        "name": "Infiltrator's Key (Awakened)",
+        "source": "EGW",
+        "_mod": {
+          "entries": {
+            "mode": "insertArr",
+            "index": -1,
+            "items": {
+              "type": "entries",
+              "name": "Exalted",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "items": [
+                    "Elided.",
+                    "Elided. {@spell dimension door} Elided. {@spell gaseous form} Elided. {@spell mislead} Elided."
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "_preserve": {
+          "page": true,
+          "hasFluffImages": true
+        }
+      }
     }
   ],
   "itemGroup": [

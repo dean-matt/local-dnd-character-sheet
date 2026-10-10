@@ -3,6 +3,7 @@ import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { RARITIES } from "../../lib/rarities.ts";
+import { AdvantageFields } from "./AdvantageFields.tsx";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
 import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
 import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
@@ -251,6 +252,13 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
       <div className={WHOLE}>{defenses("resist", "Resistances", DAMAGE_TYPE_NAMES)}</div>
       <div className={WHOLE}>{defenses("immune", "Damage immunities", DAMAGE_TYPE_NAMES)}</div>
       <div className={WHOLE}>{defenses("conditionImmune", "Condition immunities", CONDITIONS)}</div>
+      <div className={WHOLE}>
+        <AdvantageFields
+          effects={listAt(entry, "advantage")}
+          onChange={(next) => set("advantage", next.length > 0 ? next : undefined)}
+          error={errorFor("advantage")}
+        />
+      </div>
       <div className={WHOLE}>
         <HomebrewRulesText
           label="Rules text"

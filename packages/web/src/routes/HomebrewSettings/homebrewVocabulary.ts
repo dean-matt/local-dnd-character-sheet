@@ -164,3 +164,39 @@ export const DURATION_UNITS = [
   { value: "hour", label: "Hours" },
   { value: "day", label: "Days" },
 ];
+
+/** The two modes of an item's effect on a roll. */
+export const ADVANTAGE_MODE_OPTIONS = [
+  { value: "advantage", label: "Advantage" },
+  { value: "disadvantage", label: "Disadvantage" },
+];
+
+/** The rolls an item's effect can mark. */
+export const ADVANTAGE_ROLL_OPTIONS = [
+  { value: "save", label: "Saving throw" },
+  { value: "skill", label: "Skill" },
+  { value: "check", label: "Ability check" },
+  { value: "attack", label: "Attack roll" },
+];
+
+/** The 18 skills both editions share. */
+export const SKILL_NAMES = [
+  "Acrobatics",
+  "Animal Handling",
+  "Arcana",
+  "Athletics",
+  "Deception",
+  "History",
+  "Insight",
+  "Intimidation",
+  "Investigation",
+  "Medicine",
+  "Nature",
+  "Perception",
+  "Performance",
+  "Persuasion",
+  "Religion",
+  "Sleight of Hand",
+  "Stealth",
+  "Survival",
+];
