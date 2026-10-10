@@ -38,6 +38,7 @@ const DRAGONBORN = { name: "Dragonborn", source: "PHB" };
 const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
 const HILL_BELT = { name: "Belt of Hill Giant Strength", source: "DMG" };
 const RING_OF_PROTECTION = { name: "Ring of Protection", source: "DMG" };
+const WAR_MAGE = { name: "Wand of the War Mage +1", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
@@ -280,6 +281,11 @@ describe("derivedRoutes", () => {
         item(RING_OF_PROTECTION, "item", {
           bonusAc: "+1",
           bonusSavingThrow: "+1",
+        }),
+        item(WAR_MAGE, "item", {
+          reqAttune: true,
+          bonusSpellAttack: "+1",
+          bonusSpellSaveDc: "+1",
         }),
         item(PERIAPT, "item", { immune: ["poison"], conditionImmune: ["poisoned"] }),
         item(BARDING, "magicvariant", {
@@ -564,6 +570,33 @@ describe("derivedRoutes", () => {
     expect(worn.armorClass.terms.at(-1)).toEqual({ label: RING_OF_PROTECTION.name, value: 1 });
     expect(worn.savingThrows.str.computed).toBe(bare.savingThrows.str.computed + 1);
     expect(worn.concentrationSave?.terms.at(-1)).toEqual({ label: "Warding Orb", value: 2 });
+  });
+
+  it("adds an item's spellcasting bonuses, catalog or homebrew, while worn", async () => {
+    insertHomebrewItem(opened.homebrewDb, "staff", {
+      name: "Staff of Force",
+      edition: "classic",
+      bonusSpellDamage: "+1",
+    });
+    store(definitionWith({ inventory: [{ ref: WAR_MAGE }] }));
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        inventory: [
+          { ref: WAR_MAGE, equipped: true, attuned: true },
+          { ref: { homebrewId: "staff" }, equipped: true },
+        ],
+      }),
+    );
+    const worn = await derived();
+    const [before] = bare.spellcasting;
+    const [after] = worn.spellcasting;
+    expect(after?.attackBonus.computed).toBe((before?.attackBonus.computed ?? 0) + 1);
+    expect(after?.saveDc.terms.at(-1)).toEqual({ label: WAR_MAGE.name, value: 1 });
+    expect(worn.spellDamageBonus?.terms).toEqual([{ label: "Staff of Force", value: 1 }]);
+    expect(bare.spellDamageBonus).toBeNull();
   });
 
   it("leaves a score alone while the item granting it is not equipped", async () => {

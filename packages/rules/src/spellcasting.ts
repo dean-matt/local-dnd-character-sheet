@@ -14,21 +14,24 @@
 import { ABILITY_LABEL, type Ability, proficiencyBonus } from "./core.ts";
 import type { Edition } from "./edition.ts";
 import { assertInteger } from "./integer.ts";
-import { type Breakdown, breakdown } from "./term.ts";
+import { type Breakdown, breakdown, type Term } from "./term.ts";
 
 /**
  * Both take the total character level, never a caster level: proficiency comes from
  * the character, so passing `multiclassCasterLevel` here reads as if it works and is
- * wrong by the difference. The ability names the modifier's term.
+ * wrong by the difference. The ability names the modifier's term, and each of `bonuses`
+ * follows as a term of its own.
  */
 export function spellSaveDc<Ref = unknown>(
   ability: Ability,
   spellcastingModifier: number,
   characterLevel: number,
+  bonuses: readonly Term<Ref>[] = [],
 ): Breakdown<Ref> {
   return breakdown([
     { label: "Base", value: 8 },
     ...spellTerms(ability, spellcastingModifier, characterLevel),
+    ...bonuses,
   ]);
 }
 
@@ -36,8 +39,9 @@ export function spellAttackBonus<Ref = unknown>(
   ability: Ability,
   spellcastingModifier: number,
   characterLevel: number,
+  bonuses: readonly Term<Ref>[] = [],
 ): Breakdown<Ref> {
-  return breakdown(spellTerms(ability, spellcastingModifier, characterLevel));
+  return breakdown([...spellTerms(ability, spellcastingModifier, characterLevel), ...bonuses]);
 }
 
 function spellTerms(ability: Ability, spellcastingModifier: number, characterLevel: number) {

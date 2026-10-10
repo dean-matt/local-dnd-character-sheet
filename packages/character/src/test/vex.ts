@@ -44,6 +44,7 @@ export const derivedInput = (traits: object = {}) => ({
   proficiencyBonus: { computed: 2 },
   savingThrows: noSavingThrows,
   concentrationSave: null,
+  spellDamageBonus: null,
   skills: [],
   armorClass: { computed: 10 },
   initiative: { computed: 0 },

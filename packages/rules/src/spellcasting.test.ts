@@ -31,6 +31,12 @@ describe("spell math", () => {
       ],
     });
   });
+
+  it("follows the modifier and proficiency with each bonus as its own term", () => {
+    const wand = { label: "Wand of the War Mage +1", value: 1 };
+    expect(spellSaveDc("int", 4, 5, [wand]).total).toBe(16);
+    expect(spellAttackBonus("int", 4, 5, [wand]).terms.at(-1)).toEqual(wand);
+  });
 });
 
 describe("concentrationSaveDc", () => {

@@ -1,7 +1,7 @@
 import type { CharacterSpells } from "@dnd/catalog";
 import type { CharacterDerived, CharacterReferences } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
@@ -117,6 +117,18 @@ describe("SpellsSection", () => {
       "10",
     );
     expect(card("Wizard · Intelligence").queryByText("Spells Prepared")).toBeNull();
+    await screen.findByText("Hex");
+  });
+
+  it("shows a spell damage card only while an item adds to it", async () => {
+    renderSection(derivedRecord());
+    expect(screen.queryByText("Spell Damage Bonus")).toBeNull();
+    cleanup();
+
+    renderSection({ ...derivedRecord(), spellDamageBonus: computed(1) });
+    expect(card("Spell Damage").getByText("Spell Damage Bonus").nextSibling).toHaveTextContent(
+      "+1",
+    );
     await screen.findByText("Hex");
   });
 
