@@ -53,6 +53,7 @@ export const derivedInput = (traits: object = {}) => ({
   pactSlots: null,
   carryingCapacity: { computed: 120 },
   carriedWeight: 0,
+  containers: [],
   encumbrance: null,
   attunementSlots: { computed: 3 },
   weaponMasteryLimit: { computed: 0 },

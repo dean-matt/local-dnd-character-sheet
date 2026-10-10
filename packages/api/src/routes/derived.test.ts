@@ -29,6 +29,8 @@ const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
 const PLUS_ONE = { name: "+1 Armor", source: "DMG" };
+const BAG = { name: "Bag of Holding", source: "DMG" };
+const BACKPACK = { name: "Backpack", source: "PHB" };
 const BARDING = { name: "Barding", source: "PHB" };
 const LONGSWORD = { name: "Longsword", source: "PHB" };
 const PLUS_ONE_WEAPON = { name: "+1 Weapon", source: "DMG" };
@@ -257,6 +259,8 @@ describe("derivedRoutes", () => {
           strength: "15",
         }),
         item(SHIELD, "baseitem", { type: "S", ac: 2, weight: 6 }),
+        item(BAG, "item", { weight: 15, containerCapacity: { weight: [500], weightless: true } }),
+        item(BACKPACK, "baseitem", { weight: 5, containerCapacity: { weight: [30] } }),
         item(PLUS_ONE, "magicvariant", {
           type: "GV",
           requires: [{ armor: true }],
@@ -498,6 +502,26 @@ describe("derivedRoutes", () => {
     expect(block.carryingCapacity.computed).toBe(16 * 15);
     expect(block.encumbrance).toBe("heavilyEncumbered");
     expect(block.attunementSlots.computed).toBe(3);
+  });
+
+  it("weighs a pack's contents but not a Bag of Holding's, and warns of an overfull pack", async () => {
+    store(
+      definitionWith({
+        inventory: [
+          { ref: BAG, id: "bag" },
+          { ref: PLATE, inside: "bag" },
+          { ref: BACKPACK, id: "pack" },
+          { ref: SHIELD, quantity: 6, inside: "pack" },
+        ],
+      }),
+    );
+    const block = await derived();
+
+    expect(block.carriedWeight).toBe(15 + 5 + 36);
+    expect(block.containers).toEqual([
+      { entry: 0, name: "Bag of Holding", overflow: [] },
+      { entry: 2, name: "Backpack", overflow: [{ excess: 6, unit: "lb" }] },
+    ]);
   });
 
   it("attacks with a magic variant's bonus, tracing it to the variant", async () => {

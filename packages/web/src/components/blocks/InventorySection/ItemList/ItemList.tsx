@@ -10,7 +10,12 @@ import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharact
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
 import { AddItemField } from "./AddItemField.tsx";
-import { editInventoryEntry, type InventoryEntry } from "./editInventoryEntry.ts";
+import {
+  editInventoryEntry,
+  type InventoryEntry,
+  placeInventoryEntry,
+} from "./editInventoryEntry.ts";
+import { PlaceField } from "./PlaceField.tsx";
 import { QuantityField } from "./QuantityField.tsx";
 import { ResolvedItemRow } from "./ResolvedItemRow/ResolvedItemRow.tsx";
 import { UnresolvedItemRow } from "./UnresolvedItemRow.tsx";
@@ -71,6 +76,34 @@ export function ItemList({
         writing.current -= 1;
       });
   };
+  const place = (index: number, holder: number | null) => {
+    const entry = drawn[index];
+    const container = holder === null ? undefined : drawn[holder];
+    if (!entry || (holder !== null && !container) || !settled()) return;
+    writing.current += 1;
+    update
+      .mutateAsync((latest) =>
+        placeInventoryEntry(
+          latest,
+          index,
+          entry,
+          container && holder !== null ? { index: holder, drawn: container } : null,
+        ),
+      )
+      .catch(() => {})
+      .finally(() => {
+        writing.current -= 1;
+      });
+  };
+  // One level deep: a container on offer is not itself inside another, and an item that
+  // holds others is offered none.
+  const holdersFor = (index: number) => {
+    const entry = drawn[index];
+    if (!entry || drawn.some((other) => entry.id && other.inside === entry.id)) return [];
+    return (derived?.containers ?? [])
+      .filter((container) => container.entry !== index && !drawn[container.entry]?.inside)
+      .map(({ entry: at, name }) => ({ index: at, name }));
+  };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
     update.mutate((latest) => ({
       ...latest,
@@ -104,6 +137,20 @@ export function ItemList({
       </>
     );
   }
+  const placementField = (index: number, name: string) => {
+    const holders = holdersFor(index);
+    const inside = drawn[index]?.inside;
+    const current = inside ? drawn.findIndex((entry) => entry.id === inside) : -1;
+    if (holders.length === 0 && current < 0) return null;
+    return (
+      <PlaceField
+        name={name}
+        holders={holders}
+        current={current < 0 ? null : current}
+        onChange={(holder) => place(index, holder)}
+      />
+    );
+  };
   const entries = inventory.data.items.map((item, index) => ({ item, index }));
   const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
@@ -139,6 +186,7 @@ export function ItemList({
                       }}
                     />
                   }
+                  placement={placementField(index, item.name)}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
                   onEquip={(equipped) =>
                     edit(index, (entry) => ({

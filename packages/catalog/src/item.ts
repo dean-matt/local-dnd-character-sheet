@@ -108,6 +108,43 @@ export const armorBurdenSchema = z
     stealth || strength ? { stealth: stealth === true, strength } : undefined,
   );
 
+/**
+ * What an item row holds, `undefined` for one that is no container. `weightless` is a
+ * Bag of Holding's flag: its contents weigh nothing to the carrier. `weight` is the
+ * pounds it takes, the sum of its compartments, and `items` the most it takes of each
+ * named thing, summed across compartments and keyed `name|source` lowercased as upstream
+ * writes it. A capacity stated in cubic feet is dropped, since no item row states a volume.
+ */
+export const containerTraitSchema = z
+  .looseObject({
+    containerCapacity: z
+      .looseObject({
+        weight: z.array(z.number().min(0)).optional().catch(undefined),
+        item: z
+          .array(z.record(z.string(), z.int().min(0)))
+          .optional()
+          .catch(undefined),
+        weightless: z.literal(true).optional().catch(undefined),
+      })
+      .optional()
+      .catch(undefined),
+  })
+  .transform(({ containerCapacity }) => {
+    if (!containerCapacity) return undefined;
+    const { weight, item, weightless } = containerCapacity;
+    const items: Record<string, number> = {};
+    for (const compartment of item ?? []) {
+      for (const [key, count] of Object.entries(compartment)) {
+        items[key.toLowerCase()] = (items[key.toLowerCase()] ?? 0) + count;
+      }
+    }
+    return {
+      weightless: weightless === true,
+      ...(weight && { weight: weight.reduce((sum, pounds) => sum + pounds, 0) }),
+      items,
+    };
+  });
+
 /** Upstream's one-letter `dmgType` codes, spelled out. */
 export const DAMAGE_TYPES: Readonly<Record<string, string>> = {
   A: "acid",

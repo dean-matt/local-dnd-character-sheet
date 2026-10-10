@@ -131,6 +131,7 @@ export function derivedRecord(
     itemBonuses: new Map(),
     itemAdvantages: new Map(),
     armorBurdens: new Map(),
+    containers: new Map(),
     weaponMasteryKinds: new Map(),
   });
 }

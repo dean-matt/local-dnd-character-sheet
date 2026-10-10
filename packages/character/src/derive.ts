@@ -46,7 +46,7 @@ import {
   speedWithItems,
 } from "./itemEffects.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
-import { carriedWeight } from "./load.ts";
+import { carriedWeight, containerOverflows } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
 import type { Ability, ContentRef, EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
@@ -732,10 +732,19 @@ function raceSize(definition: CharacterDefinition, catalog: CharacterCatalog): S
 function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
   const strength = scoreOf(definition, catalog, "str");
   const size = raceSize(definition, catalog);
-  const weight = carriedWeight(definition, catalog.weights);
+  const weight = carriedWeight(definition, catalog.weights, catalog.containers);
+  const overflows = containerOverflows(definition, catalog.weights, catalog.containers);
   return {
     carryingCapacity: computed(carryingCapacity(strength, size)),
     carriedWeight: weight,
+    containers: definition.inventory.flatMap((entry, index) => {
+      const trait = catalog.containers.get(itemKey(entry));
+      if (!trait) return [];
+      const overflow = overflows
+        .filter((over) => over.entry === index)
+        .map(({ excess, unit }) => ({ excess, unit }));
+      return [{ entry: index, name: trait.name, overflow }];
+    }),
     // The tier reads Strength and size rather than `carryingCapacity`, so an override of
     // the capacity leaves it standing. The way out is thresholds scaled by the overridden
     // capacity, once overrides fold into the block.

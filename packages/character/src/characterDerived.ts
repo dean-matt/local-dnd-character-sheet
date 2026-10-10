@@ -139,6 +139,18 @@ export const characterDerivedSchema = z.strictObject({
    * inventory it sums is where a player changes it.
    */
   carriedWeight: z.number().min(0),
+  /**
+   * One per inventory entry that holds things, in inventory order, with the amount by which
+   * its contents pass what it takes. `entry` is the index in the definition's `inventory`;
+   * `unit` is `lb` or the lowercased `name|source` of a counted thing.
+   */
+  containers: z.array(
+    z.strictObject({
+      entry: z.int().min(0),
+      name: z.string().min(1),
+      overflow: z.array(z.strictObject({ excess: z.number().positive(), unit: z.string().min(1) })),
+    }),
+  ),
   /** Null where the table plays without the encumbrance variant. */
   encumbrance: z.enum(ENCUMBRANCE_TIERS).nullable(),
   attunementSlots: derivedSchema(z.int().min(0)),

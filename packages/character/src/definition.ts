@@ -119,12 +119,12 @@ const proficienciesSchema = z.strictObject({
 });
 
 /**
- * `carried` is a flag rather than a reference to a container, because an entry has no
- * identity a reference could name: two rows may hold the same `ref`, so pointing at one
- * means giving every entry an id, and nothing yet reads the grouping that id would buy.
- * The weight sum asks only whether a thing is on the character, and a container that
- * changes the weight it holds is magic-item behavior rather than the carrying rule. A
- * reference stays open the day a sheet groups a pack by the bag it sits in.
+ * `carried` is a flag on the entry, not a reference, so the weight sum asks only whether a
+ * thing is on the character. Two rows may hold the same `ref`, so naming a container means
+ * naming an entry, and an entry carries an `id` only once something is placed in it.
+ * `inside` is that id: the entry sits in a container, one level deep, and an entry stored
+ * before containers existed names none. Whether the contents still weigh anything is the
+ * container item's own rule, read from the catalog by `carriedWeight`.
  *
  * It is not `equipped`, which means worn or wielded: a rope in the pack is carried and
  * unequipped, a sword left in the cart is neither. A wielded sword is always on the
@@ -149,6 +149,8 @@ const proficienciesSchema = z.strictObject({
 const inventoryEntrySchema = z
   .strictObject({
     ref: entryRefSchema,
+    id: z.string().min(1).optional(),
+    inside: z.string().min(1).optional(),
     variant: contentRefSchema.optional(),
     variantOverride: z.string().min(1).optional(),
     quantity: z.int().min(1).default(1),
@@ -367,7 +369,24 @@ export const characterDefinitionSchema = z.strictObject({
   abilityScores: abilityScoresSchema,
   abilityIncreases: z.array(abilityIncreaseSchema).default([]),
   proficiencies: proficienciesSchema,
-  inventory: z.array(inventoryEntrySchema),
+  inventory: z.array(inventoryEntrySchema).superRefine((entries, context) => {
+    const byId = new Map(
+      entries.flatMap((entry) => (entry.id ? [[entry.id, entry] as const] : [])),
+    );
+    if (byId.size !== entries.filter((entry) => entry.id).length) {
+      context.addIssue({ code: "custom", message: "two inventory entries share an id" });
+    }
+    for (const entry of entries) {
+      if (entry.inside === undefined) continue;
+      const holder = byId.get(entry.inside);
+      if (!holder || holder === entry || holder.inside !== undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "an item sits in an entry that is missing, itself, or already inside another",
+        });
+      }
+    }
+  }),
   spells: z.array(spellEntrySchema),
   /**
    * The 2024 ruleset repeats `Ability Score Improvement` (XPHB), so the list accepts a

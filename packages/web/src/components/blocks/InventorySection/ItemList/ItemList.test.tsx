@@ -380,6 +380,21 @@ describe("ItemList", () => {
     expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
   });
 
+  it("places an item in a container and takes it out again", async () => {
+    const fetchMock = renderList({
+      ...derivedRecord(),
+      containers: [{ entry: 1, name: "Cloak of Protection", overflow: [] }],
+    });
+
+    fireEvent.click(await screen.findByRole("combobox", { name: "Kept in, Longsword" }));
+    fireEvent.click(screen.getByRole("option", { name: "In Cloak of Protection" }));
+
+    const definition = await written(fetchMock);
+    expect(definition.inventory[1].id).toBeTruthy();
+    expect(definition.inventory[0].inside).toBe(definition.inventory[1].id);
+    expect(screen.queryByRole("combobox", { name: "Kept in, Cloak of Protection" })).toBeNull();
+  });
+
   it("removes an item", async () => {
     const fetchMock = renderList();
 

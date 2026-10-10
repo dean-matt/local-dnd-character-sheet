@@ -7,6 +7,7 @@ import {
   type CasterTable,
   type CharacterDefinition,
   type CharacterDerived,
+  type ContainerTrait,
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
@@ -199,6 +200,7 @@ describe("deriveCharacter", () => {
     itemBonuses: new Map<string, ItemBonusTrait>(),
     itemAdvantages: new Map<string, ItemAdvantageTrait>(),
     armorBurdens: new Map<string, ArmorBurdenTrait>(),
+    containers: new Map<string, ContainerTrait>(),
     weaponMasteryKinds: new Map<string, number>(),
   };
 
@@ -356,7 +358,7 @@ describe("deriveCharacter", () => {
 
   it("weighs the load, coins included, against what Strength 8 carries", () => {
     expect(derived.carryingCapacity).toEqual({ computed: 120, manual: null, terms: [] });
-    expect(derived.carriedWeight).toBe(carriedWeight(equipped, catalog.weights));
+    expect(derived.carriedWeight).toBe(carriedWeight(equipped, catalog.weights, new Map()));
     expect(derived.carriedWeight).toBe(2 + 13 + 6 + 1);
   });
 
