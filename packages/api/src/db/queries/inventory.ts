@@ -12,6 +12,7 @@ import {
   weaponTraitSchema,
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName, itemKey } from "@dnd/character";
+import { type Edition, type MagicItemValue, magicItemValue, spellScrollValue } from "@dnd/rules";
 import { getHomebrewItem, type HomebrewDb } from "./homebrew.ts";
 import { getExpandedItem } from "./item-variant.ts";
 import { getItems, getItemTypeNames } from "./items.ts";
@@ -20,6 +21,7 @@ type InventoryEntry = CharacterDefinition["inventory"][number];
 
 export type ItemFacts = {
   name: string;
+  edition: Edition;
   rarity: string | null;
   requiresAttunement: boolean;
   json: Record<string, unknown>;
@@ -41,6 +43,7 @@ export function resolveItemRows(
       return (
         row && {
           name: row.name,
+          edition: row.edition,
           rarity: row.rarity,
           requiresAttunement: row.requiresAttunement,
           json: row.json as Record<string, unknown>,
@@ -53,6 +56,7 @@ export function resolveItemRows(
     return (
       row && {
         name: row.name,
+        edition: row.edition,
         rarity: row.rarity,
         requiresAttunement: row.requires_attunement === 1,
         json: JSON.parse(row.json) as Record<string, unknown>,
@@ -93,6 +97,21 @@ const priceOf = (row: ItemFacts): number | null => {
   return typeof value === "number" && value >= 0 ? value : null;
 };
 
+/** A 2024 scroll names its spell level `(Cantrip)` or `(Level 3)`. */
+const SCROLL_LEVEL = /^Spell Scroll \((?:(Cantrip)|Level (\d))\)$/;
+
+/**
+ * The rarity table's price for an item that prints none. A potion or a scroll is a
+ * consumable, except a 2024 Spell Scroll, which prices by its spell level instead.
+ */
+function estimateOf(row: ItemFacts): MagicItemValue | null {
+  if (priceOf(row) !== null || !row.rarity) return null;
+  const abbreviation = typeOf(row)?.split("|")[0];
+  const scroll = SCROLL_LEVEL.exec(row.name);
+  if (row.edition === "one" && scroll) return spellScrollValue(scroll[1] ? 0 : Number(scroll[2]));
+  return magicItemValue(row.rarity, row.edition, abbreviation === "P" || abbreviation === "SC");
+}
+
 /** The category and die a row prints; what an attack reads goes to the derived block instead. */
 function weaponFacts(row: ItemFacts): Extract<SheetItem, { resolved: true }>["weapon"] {
   const weapon = weaponTraitSchema.safeParse(row.json).data;
@@ -129,6 +148,7 @@ function sheetItem(
     requiresAttunement: row.requiresAttunement,
     weight: weightOf(row),
     value: priceOf(row),
+    estimate: estimateOf(row),
     weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
     entries: entries.success ? entries.data : [],

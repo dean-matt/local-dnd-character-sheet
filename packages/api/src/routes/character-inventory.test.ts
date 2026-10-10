@@ -16,15 +16,21 @@ const PLUS_ONE = { name: "+1 Weapon", source: "DMG" };
 const CLOAK = { name: "Cloak of Protection", source: "DMG" };
 const CHAIN_MAIL = { name: "Chain Mail", source: "XPHB" };
 const GOLD_BAR = { name: "Gold Bar", source: "XDMG" };
+const HEALING_2014 = { name: "Potion of Greater Healing", source: "DMG" };
+const HEALING_2024 = { name: "Potion of Greater Healing", source: "XDMG" };
+const SCROLL_2024 = { name: "Spell Scroll (Level 3)", source: "XDMG" };
+const SCROLL_CANTRIP_2024 = { name: "Spell Scroll (Cantrip)", source: "XDMG" };
+const ORB = { name: "Orb of Dragonkind", source: "DMG" };
+const MAP = { name: "Map of Nowhere", source: "DMG" };
 
 const row = (
   ref: { name: string; source: string },
   kind: string,
   json: object,
-  columns: { rarity?: string; requires_attunement?: 0 | 1 } = {},
+  columns: { rarity?: string; requires_attunement?: 0 | 1; edition?: string } = {},
 ) => ({
   ...ref,
-  edition: "classic",
+  edition: columns.edition ?? "classic",
   kind,
   type: null,
   rarity: columns.rarity ?? null,
@@ -105,6 +111,17 @@ describe("characterInventoryRoutes", () => {
         { reqAttune: true, entries: ["A +1 bonus to AC."] },
         { rarity: "uncommon", requires_attunement: 1 },
       ),
+      row(HEALING_2014, "item", { type: "P" }, { rarity: "rare" }),
+      row(HEALING_2024, "item", { type: "P|XPHB" }, { rarity: "rare", edition: "one" }),
+      row(SCROLL_2024, "item", { type: "SC|XPHB" }, { rarity: "uncommon", edition: "one" }),
+      row(
+        SCROLL_CANTRIP_2024,
+        "item",
+        { type: "SC|XPHB", value: 3000 },
+        { rarity: "common", edition: "one" },
+      ),
+      row(ORB, "item", { type: "OTH" }, { rarity: "artifact" }),
+      row(MAP, "item", {}, { rarity: "varies" }),
     ];
     publishDerivedFixture(dataDir, {
       items,
@@ -154,6 +171,12 @@ describe("characterInventoryRoutes", () => {
         requiresAttunement: true,
         weight: null,
         value: null,
+        estimate: {
+          kind: "range",
+          table: "Magic Item Rarity",
+          min: 10100,
+          max: 50000,
+        },
         weapon: null,
         armor: null,
         entries: ["A +1 bonus to AC."],
@@ -176,6 +199,49 @@ describe("characterInventoryRoutes", () => {
       value: 7500,
       weapon: null,
       armor: { category: "heavy", armorClass: 16 },
+    });
+  });
+
+  it("estimates a magic item's price from its rarity, halving a consumable", async () => {
+    store(withInventory([{ ref: HEALING_2014 }, { ref: HEALING_2024 }]));
+    const [classic, one] = await items();
+    expect(classic).toMatchObject({
+      value: null,
+      estimate: { kind: "range", table: "Magic Item Rarity", min: 25050, max: 250000 },
+    });
+    expect(one).toMatchObject({
+      value: null,
+      estimate: { kind: "amount", table: "Magic Item Rarities and Values", copper: 200000 },
+    });
+  });
+
+  it("prices a 2024 Spell Scroll at double its scribing cost, and leaves a printed price alone", async () => {
+    store(withInventory([{ ref: SCROLL_2024 }, { ref: SCROLL_CANTRIP_2024 }]));
+    const [level3, cantrip] = await items();
+    expect(level3).toMatchObject({
+      value: null,
+      estimate: { kind: "amount", table: "Spell Scroll Costs", copper: 30000 },
+    });
+    expect(cantrip).toMatchObject({ value: 3000, estimate: null });
+  });
+
+  it("calls an artifact priceless and leaves an item whose rarity varies unpriced", async () => {
+    store(withInventory([{ ref: ORB }, { ref: MAP }]));
+    const [orb, map] = await items();
+    expect(orb).toMatchObject({ estimate: { kind: "priceless" } });
+    expect(map).toMatchObject({ value: null, estimate: null });
+  });
+
+  it("estimates a homebrew item by its own edition", async () => {
+    insertHomebrewItem(opened.homebrewDb, "i", {
+      name: "Sunfire Blade",
+      edition: "one",
+      rarity: "rare",
+    });
+    store(withInventory([{ ref: { homebrewId: "i" } }]));
+    const [blade] = await items();
+    expect(blade).toMatchObject({
+      estimate: { kind: "amount", table: "Magic Item Rarities and Values", copper: 400000 },
     });
   });
 

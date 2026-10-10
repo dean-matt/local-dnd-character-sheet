@@ -10,13 +10,14 @@ import { SourceChip } from "../SourceChip.tsx";
  * action chips, with its controls at the right. A row with neither actions nor controls
  * has no third line. A row with `detail` opens it in a modal from its name; one without is
  * plain text, since there is nothing to open. `source` is absent on a homebrew row.
- * `remove` sits at the end of the first line, such as the button taking the row off a list.
+ * `priceNote` says where an estimated price comes from. `remove` sits at the end of the first line, such as the button taking the row off a list.
  */
 export function ListRow({
   name,
   source,
   chips,
   price,
+  priceNote,
   preview,
   actions,
   controls,
@@ -27,6 +28,7 @@ export function ListRow({
   source: string | undefined;
   chips?: ReactNode;
   price?: string;
+  priceNote?: string;
   preview?: string;
   actions?: ReactNode;
   controls?: ReactNode;
@@ -55,10 +57,11 @@ export function ListRow({
         {chips}
         {price && (
           <span
+            title={priceNote}
             className={`${CHIP} flex shrink-0 items-center gap-0.75 border-money-border bg-money-tint text-money leading-3`}
           >
             <Coins size={9} strokeWidth={2.5} />
-            <span className="sr-only">Cost </span>
+            <span className="sr-only">{priceNote ? "Estimated cost " : "Cost "}</span>
             {price}
           </span>
         )}

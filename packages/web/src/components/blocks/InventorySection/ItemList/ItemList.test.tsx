@@ -9,7 +9,15 @@ import { characterRecord, derivedRecord } from "../../../../test/records.ts";
 import { ItemList } from "./ItemList.tsx";
 
 const flags = { quantity: 1, carried: true, equipped: false, attuned: false };
-const plain = { type: null, rarity: null, value: null, weapon: null, armor: null, entries: [] };
+const plain = {
+  type: null,
+  rarity: null,
+  value: null,
+  estimate: null,
+  weapon: null,
+  armor: null,
+  entries: [],
+};
 
 const ITEMS: SheetItem[] = [
   {

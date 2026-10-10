@@ -1,4 +1,4 @@
-import type { CharacterInventory } from "@dnd/catalog";
+import type { CharacterInventory, SheetItem } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterReferences,
@@ -13,7 +13,7 @@ import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { InventorySection } from "./InventorySection.tsx";
 
 const flags = { quantity: 1, carried: true, equipped: false, attuned: false };
-const plain = { type: null, value: null, weapon: null, armor: null };
+const plain = { type: null, value: null, estimate: null, weapon: null, armor: null };
 
 const INVENTORY: CharacterInventory = {
   items: [
@@ -28,6 +28,7 @@ const INVENTORY: CharacterInventory = {
       requiresAttunement: false,
       weight: 3,
       value: null,
+      estimate: null,
       weapon: { category: "martial", damage: { dice: "1d8", type: "slashing" } },
       armor: null,
       entries: ["You have a {@b +1 bonus} to attack rolls."],
@@ -94,6 +95,7 @@ const INVENTORY: CharacterInventory = {
       requiresAttunement: false,
       weight: 6,
       value: 1000,
+      estimate: null,
       weapon: null,
       armor: { category: "shield", armorClass: 2 },
       entries: [],
@@ -108,6 +110,7 @@ const INVENTORY: CharacterInventory = {
       requiresAttunement: false,
       weight: 55,
       value: 7500,
+      estimate: null,
       weapon: null,
       armor: { category: "heavy", armorClass: 16 },
       entries: [],
@@ -189,6 +192,59 @@ describe("InventorySection", () => {
     expect(screen.getByRole("textbox", { name: "Arrow quantity" })).toHaveValue("20");
     expect(row("Arrow")).toHaveTextContent("Weight: 1 lb");
     expect(row("Arrow")).not.toHaveTextContent("none");
+  });
+
+  it("marks a price a rarity table estimates, and names the table", async () => {
+    const item = (
+      name: string,
+      estimate: Extract<SheetItem, { resolved: true }>["estimate"],
+      quantity = 1,
+    ) => ({
+      resolved: true as const,
+      name,
+      source: "DMG",
+      ...flags,
+      ...plain,
+      quantity,
+      type: { abbreviation: "W", name: null },
+      rarity: "rare",
+      requiresAttunement: false,
+      weight: null,
+      entries: [],
+      estimate,
+    });
+    renderSection(load(), {
+      items: [
+        item("Wand of Fear", {
+          kind: "amount",
+          table: "Magic Item Rarities and Values",
+          copper: 400000,
+        }),
+        item(
+          "Potion of Climbing",
+          { kind: "range", table: "Magic Item Rarity", min: 2550, max: 5000 },
+          2,
+        ),
+        item("Sovereign Glue", {
+          kind: "range",
+          table: "Magic Item Rarity",
+          min: 5000100,
+          max: null,
+        }),
+        item("Orb of Dragonkind", { kind: "priceless", table: "Magic Item Rarity" }),
+      ],
+    });
+
+    await screen.findByText("Wand of Fear");
+    expect(row("Wand of Fear")).toHaveTextContent("Estimated cost ~4,000 gp");
+    expect(row("Potion of Climbing")).toHaveTextContent("Estimated cost ~51\u2013100 gp");
+    expect(row("Sovereign Glue")).toHaveTextContent("~50,001+ gp");
+    expect(row("Orb of Dragonkind")).toHaveTextContent("Estimated cost Priceless");
+    expect(
+      within(row("Wand of Fear")).getByTitle(
+        "Estimated from the Magic Item Rarities and Values table",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("splits the items into Weapons, Armor and Gear by type, keeping their order", async () => {
