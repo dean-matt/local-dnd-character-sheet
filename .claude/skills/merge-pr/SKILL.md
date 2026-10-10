@@ -99,8 +99,9 @@ open, and prints each issue it clears the label from.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. A failure here, rate limit included, does not
-undo the merge: report the card as still not `Done` and carry on. Then report the merge commit, the issue it
-closed, which issues it unblocked and that the checkout is on `main`.
+undo the merge: report the card as still not `Done` and carry on.
+
+Then report the merge commit, the issue it closed, which issues it unblocked and that the checkout is on `main`.
 
 ## Rate limits
 

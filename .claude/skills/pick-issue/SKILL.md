@@ -11,13 +11,12 @@ decides — not the issue number, not what just merged, not how small it looks.
 ```bash
 gh api graphql -f o=dean-matt -f r=local-dnd-character-sheet -f query='
   query($o:String!,$r:String!){repository(owner:$o,name:$r){issues(states:OPEN,first:100){
-    totalCount nodes{number milestone{title} labels(first:20){nodes{name}}
+    totalCount nodes{number milestone{title}
       projectItems(first:5){nodes{project{number}
         fieldValueByName(name:"Rank"){... on ProjectV2ItemFieldNumberValue{number}}}}}}}}' |
   jq '.data.repository.issues
-    | if .totalCount > (.nodes | length) then error("more than 100 open issues — page it") else . end
-    | [.nodes[] | {number, milestone: .milestone.title, labels: [.labels.nodes[].name],
-        rank: ([.projectItems.nodes[] | select(.project.number == 1) | .fieldValueByName.number] | first)}
+    | if .totalCount > (.nodes | length) then error("more than 100 open issues — add an after cursor") else . end
+    | [.nodes[] | {number, milestone: .milestone.title, rank: ([.projectItems.nodes[] | select(.project.number == 1) | .fieldValueByName.number] | first)}
       | select(.rank and .milestone)]
     | sort_by(.milestone, .rank) | .[0]'
 ```
