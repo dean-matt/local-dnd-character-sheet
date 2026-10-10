@@ -47,6 +47,9 @@ const MANTLE = { name: "Mantle of Spell Resistance", source: "DMG" };
 const HOLY_AVENGER = { name: "Holy Avenger", source: "DMG" };
 const MACE = { name: "Mace", source: "XPHB" };
 const WAND_OF_ORCUS = { name: "Wand of Orcus", source: "XDMG" };
+const SHORTBOW = { name: "Shortbow", source: "PHB" };
+const ARROWS = { name: "Arrows (20)", source: "PHB" };
+const ARROW = { name: "Arrow", source: "PHB" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -284,6 +287,20 @@ describe("derivedRoutes", () => {
           dmgType: "B",
           mastery: ["Sap|XPHB"],
         }),
+        item(SHORTBOW, "baseitem", {
+          type: "R",
+          weaponCategory: "simple",
+          weapon: true,
+          dmg1: "1d6",
+          dmgType: "P",
+          range: "80/320",
+          ammoType: "arrow|phb",
+        }),
+        item(ARROWS, "baseitem", {
+          type: "A",
+          packContents: [{ item: "arrow|phb", quantity: 20 }],
+        }),
+        item(ARROW, "baseitem", { type: "A" }),
         item(WAND_OF_ORCUS, "item", {
           type: "M|XPHB",
           weaponCategory: "simple",
@@ -579,6 +596,25 @@ describe("derivedRoutes", () => {
       [{ name: "Sap", source: "XPHB" }],
       [],
     ]);
+  });
+
+  it("shows a ranged weapon's range and counts the ammunition it fires, a pack by its contents", async () => {
+    store(
+      definitionWith({
+        inventory: [
+          { ref: SHORTBOW, equipped: true },
+          { ref: ARROWS, quantity: 2 },
+          { ref: ARROW, quantity: 3 },
+        ],
+      }),
+    );
+    const [attack] = (await derived()).attacks;
+
+    expect(attack).toMatchObject({
+      range: { normal: 80, long: 320 },
+      ammunition: { type: "arrow|phb", carried: 43 },
+      reload: null,
+    });
   });
 
   it("holds a versatile weapon one-handed while it and a shield are both equipped", async () => {

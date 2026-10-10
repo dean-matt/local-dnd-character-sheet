@@ -179,6 +179,12 @@ export const characterDerivedSchema = z.strictObject({
       grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
       /** The mastery properties the character may use with this weapon: empty unless its kind is among the chosen. */
       mastery: z.array(contentRefSchema),
+      /** Feet, null for a weapon that states no range. */
+      range: z.strictObject({ normal: z.int().min(0), long: z.int().min(0) }).nullable(),
+      /** The ammunition a weapon fires, as the lowercase uid it names, and how many the carried inventory holds. Null for a weapon that fires none. */
+      ammunition: z.strictObject({ type: z.string().min(1), carried: z.int().min(0) }).nullable(),
+      /** A firearm's shots between reloads, null for any other weapon. */
+      reload: z.int().min(1).nullable(),
     }),
   ),
   /** Resistances, immunities and vulnerabilities from the race, then from each equipped item, attuned where it must be. */

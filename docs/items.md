@@ -128,6 +128,17 @@ its classes, of what `getWeaponMasteryCount` reads: the `weapon_mastery` column 
 and Fighter print, or the number Paladin, Ranger and Rogue write into the feature's text.
 Which weapons a class may choose from is prose and stays unchecked.
 
+## Range and ammunition
+
+`range` (`80/320`, in feet) sits on base and named items alike, thrown melee weapons
+included. `ammoType` names the ammunition by uid, lowercase: `arrow|phb`, or `energy cell`
+with no source, which matches any source. `reload` is on base firearms. An attack carries
+all three, and counts the ammunition from the carried inventory: a loose unit is one, and
+a pack such as `Arrows (20)` (PHB) stands for its `packContents`, times the entry's
+quantity. A sourced `ammoType` matches that exact uid, so an XPHB bow does not count PHB
+arrows. Magic ammunition and homebrew ammunition count for nothing, as neither names a uid
+an `ammoType` can match.
+
 ## The five arrays in `items-base.json` that are not items
 
 They are Tier B, so they land in `lookups` beside the conditions and the skills:
