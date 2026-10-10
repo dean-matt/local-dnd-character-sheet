@@ -55,6 +55,7 @@ export const derivedInput = (traits: object = {}) => ({
   carriedWeight: 0,
   encumbrance: null,
   attunementSlots: { computed: 3 },
+  weaponMasteryLimit: { computed: 0 },
   attacks: [],
   defenses: {
     computed: {
@@ -139,6 +140,7 @@ export const definition: CharacterDefinition = {
     },
   ],
   featureChoices: [],
+  weaponMasteries: [],
   money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
   houseRules: { encumbrance: true },

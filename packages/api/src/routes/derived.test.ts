@@ -43,6 +43,8 @@ const BOOTS_OF_SPEED = { name: "Boots of Speed", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 const MANTLE = { name: "Mantle of Spell Resistance", source: "DMG" };
 const HOLY_AVENGER = { name: "Holy Avenger", source: "DMG" };
+const MACE = { name: "Mace", source: "XPHB" };
+const WAND_OF_ORCUS = { name: "Wand of Orcus", source: "XDMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
   ...ref,
@@ -139,6 +141,13 @@ describe("derivedRoutes", () => {
           level: 1,
           resource_key: "prepared_spells",
           value: "2",
+        },
+        {
+          class_name: "Fighter",
+          class_source: "XPHB",
+          level: 3,
+          resource_key: "weapon_mastery",
+          value: "3",
         },
       ],
       spellSlots: [
@@ -262,6 +271,21 @@ describe("derivedRoutes", () => {
           dmg2: "1d10",
           dmgType: "S",
           weight: 3,
+        }),
+        item(MACE, "baseitem", {
+          type: "M|XPHB",
+          weaponCategory: "simple",
+          weapon: true,
+          dmg1: "1d6",
+          dmgType: "B",
+          mastery: ["Sap|XPHB"],
+        }),
+        item(WAND_OF_ORCUS, "item", {
+          type: "M|XPHB",
+          weaponCategory: "simple",
+          baseItem: "mace|xphb",
+          dmg1: "1d6",
+          dmgType: "B",
         }),
         item(DAGGER_OF_VENOM, "item", {
           type: "M",
@@ -509,6 +533,28 @@ describe("derivedRoutes", () => {
 
     expect(attack?.attackBonus.terms).toContainEqual({ label: "Proficiency", value: 2 });
     expect(attack?.attackBonus.computed).toBe(3 + 2 + 1);
+  });
+
+  it("lets a Fighter master three kinds and shows a chosen one's mastery, magic items included", async () => {
+    store(
+      definitionWith({
+        edition: "one",
+        levels: [{ class: FIGHTER_ONE }, { class: FIGHTER_ONE }, { class: FIGHTER_ONE }],
+        weaponMasteries: [MACE],
+        inventory: [{ ref: MACE }, { ref: WAND_OF_ORCUS }, { ref: LONGSWORD }],
+      }),
+    );
+    const block = await derived();
+
+    expect(block.weaponMasteryLimit.computed).toBe(3);
+    expect(block.weaponMasteryLimit.terms).toEqual([
+      { label: "Fighter", value: 3, reference: FIGHTER_ONE },
+    ]);
+    expect(block.attacks.map((attack) => attack.mastery)).toEqual([
+      [{ name: "Sap", source: "XPHB" }],
+      [{ name: "Sap", source: "XPHB" }],
+      [],
+    ]);
   });
 
   it("holds a versatile weapon one-handed while it and a shield are both equipped", async () => {

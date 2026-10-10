@@ -142,6 +142,8 @@ export const characterDerivedSchema = z.strictObject({
   /** Null where the table plays without the encumbrance variant. */
   encumbrance: z.enum(ENCUMBRANCE_TIERS).nullable(),
   attunementSlots: derivedSchema(z.int().min(0)),
+  /** How many kinds of weapon the classes' Weapon Mastery features allow, one term per class; 0 on a 2014 character. */
+  weaponMasteryLimit: derivedSchema(z.int().min(0)),
   /**
    * One per carried weapon, in inventory order. `entry` is the weapon's index in the
    * definition's `inventory`, since two entries may hold the same item. `grip` is null for
@@ -163,6 +165,8 @@ export const characterDerivedSchema = z.strictObject({
         })
         .nullable(),
       grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
+      /** The mastery properties the character may use with this weapon: empty unless its kind is among the chosen. */
+      mastery: z.array(contentRefSchema),
     }),
   ),
   /** Resistances, immunities and vulnerabilities from the race, then from each equipped item, attuned where it must be. */

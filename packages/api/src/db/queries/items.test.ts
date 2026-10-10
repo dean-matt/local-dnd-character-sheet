@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishItems } from "./contentFixture.ts";
-import { getItem, listItems } from "./items.ts";
+import { getBaseItemMasteries, getItem, listItems } from "./items.ts";
 
 const LONGSWORD = {
   name: "Longsword",
@@ -58,5 +58,24 @@ describe("content item queries", () => {
     expect(getItem(dataDir, "Longsword", "PHB")).toEqual(LONGSWORD);
     expect(getItem(dataDir, "Bag of Tricks", "DMG")).toEqual(BAG_OF_TRICKS);
     expect(getItem(dataDir, "Nonexistent", "PHB")).toBeUndefined();
+  });
+
+  it("reads the mastery of a base item by the lowercase uid an item's baseItem writes", () => {
+    const mace = {
+      ...LONGSWORD,
+      name: "Mace",
+      source: "XPHB",
+      edition: "one",
+      json: JSON.stringify({ name: "Mace", mastery: ["Sap|XPHB"] }),
+    };
+    const dataDirWithMace = mkdtempSync(join(tmpdir(), "content-items-"));
+    try {
+      publishItems(dataDirWithMace, [mace, LONGSWORD, DEMON_ARMOR]);
+      expect(
+        getBaseItemMasteries(dataDirWithMace, ["mace|xphb", "longsword|phb", "demon armor|dmg"]),
+      ).toEqual(new Map([["mace|xphb", ["Sap|XPHB"]]]));
+    } finally {
+      rmSync(dataDirWithMace, { recursive: true, force: true });
+    }
   });
 });

@@ -150,6 +150,9 @@ const weaponPropertySchema = z.union([
  * (DMG), so a proficiency in the one weapon covers it. A staff states `staff: true` and no
  * `baseItem` — `Staff of Power` (DMG), and the `Staff` (PHB) focus — and is a quarterstaff.
  *
+ * `mastery` is the row's own `{@itemMastery}` references, such as `Topple|XPHB`; a named
+ * magic item that states none takes its base item's, which the caller looks up from `baseName`.
+ *
  * `kind` is ranged for a type code of `R` and melee otherwise, since a staff (`SCF`) and a
  * claw (`OTH`) that state a die are swung. A malformed property list or bonus degrades to
  * none rather than dropping the weapon.
@@ -164,6 +167,7 @@ export const weaponTraitSchema = z
     dmg2: z.string().min(1).optional().catch(undefined),
     dmgType: z.string().min(1).optional(),
     property: z.array(weaponPropertySchema).optional().catch(undefined),
+    mastery: z.array(z.string().min(1)).optional().catch(undefined),
     bonusWeapon: signedBonus,
     bonusWeaponAttack: signedBonus,
     bonusWeaponDamage: signedBonus,
@@ -180,6 +184,7 @@ export const weaponTraitSchema = z
       ...(item.baseItem && { baseName: item.baseItem.split("|")[0] }),
       ...(!item.baseItem && item.staff && { baseName: "quarterstaff" }),
       ...(item.property && { properties: item.property }),
+      ...(item.mastery?.length && { mastery: item.mastery }),
       ...(dmg2 && { versatileDamage: dmg2 }),
       bonus: {
         attack: both + (item.bonusWeaponAttack ?? 0),

@@ -352,6 +352,54 @@ export function getPreparedSpellCount(
   }
 }
 
+const WEAPON_MASTERY_KEY = "weapon_mastery";
+
+const WORD_COUNTS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+
+/**
+ * How many kinds of weapon a class's Weapon Mastery feature lets a character use at a level
+ * in the class, 0 where the class has none. Barbarian and Fighter print a column; Paladin,
+ * Ranger and Rogue state a fixed number in the feature's text ("two kinds of weapons"),
+ * which a row that names no number reads as 0.
+ */
+export function getWeaponMasteryCount(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+): number {
+  const db = openContentDb(dataDir);
+  try {
+    const printed = db
+      .prepare(
+        `SELECT value FROM class_resources
+         WHERE class_name = ? AND class_source = ? AND level = ? AND resource_key = ?`,
+      )
+      .pluck()
+      .get(className, classSource, level, WEAPON_MASTERY_KEY) as string | undefined;
+    if (printed !== undefined) {
+      const count = Number(printed);
+      if (!Number.isInteger(count) || count < 0) {
+        throw new Error(
+          `${className}|${classSource} level ${level}: weapon_mastery value ${printed} is not a count`,
+        );
+      }
+      return count;
+    }
+    const feature = db
+      .prepare(
+        `SELECT json_extract(json, '$.entries[0]') FROM class_features
+         WHERE name = 'Weapon Mastery' AND class_name = ? AND class_source = ? AND level <= ?`,
+      )
+      .pluck()
+      .get(className, classSource, level) as string | undefined;
+    const word = feature && /\b(one|two|three|four|five|six) kinds of\b/i.exec(feature)?.[1];
+    return word ? (WORD_COUNTS[word.toLowerCase()] ?? 0) : 0;
+  } finally {
+    db.close();
+  }
+}
+
 /**
  * What a casting class's tables print at the character's level in it, read in one
  * connection: its slots and Prepared Spells column, and its subclass's. A `one` third

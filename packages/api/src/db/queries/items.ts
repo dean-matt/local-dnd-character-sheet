@@ -61,6 +61,35 @@ export function getItems(
 }
 
 /**
+ * The mastery each base item states, keyed by the uid as an item's `baseItem` writes it,
+ * lowercase: `mace|xphb`. A uid naming no base item, or one that states no mastery, is absent.
+ */
+export function getBaseItemMasteries(
+  dataDir: string,
+  uids: readonly string[],
+): Map<string, string[]> {
+  const masteries = new Map<string, string[]>();
+  if (uids.length === 0) return masteries;
+  const db = openContentDb(dataDir);
+  try {
+    const select = db
+      .prepare(
+        `SELECT json_extract(json, '$.mastery') FROM items
+         WHERE kind = 'baseitem' AND name = ? COLLATE NOCASE AND source = ? COLLATE NOCASE`,
+      )
+      .pluck();
+    for (const uid of uids) {
+      const [name = "", source = ""] = uid.split("|");
+      const mastery = select.get(name, source) as string | undefined;
+      if (mastery) masteries.set(uid, JSON.parse(mastery) as string[]);
+    }
+    return masteries;
+  } finally {
+    db.close();
+  }
+}
+
+/**
  * Each item `type`'s label, keyed by the type as the item writes it. `HA|XPHB` reads the
  * XPHB row. A bare `HA` names the classic type, whose source varies by code — `G` sits
  * under PHB and `$A` under DMG — so it reads the classic row, and failing that the

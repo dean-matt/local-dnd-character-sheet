@@ -124,6 +124,7 @@ type ItemFields = {
   staff: number | null;
   rarity: string | null;
   weaponCategory: string | null;
+  mastery: string | null;
   itemKind: string;
   variantJson: string | null;
 };
@@ -131,7 +132,7 @@ type ItemFields = {
 const ITEM_FIELDS =
   ", type AS itemType, rarity, json_extract(json, '$.wondrous') AS wondrous," +
   " json_extract(json, '$.staff') AS staff, json_extract(json, '$.weaponCategory') AS weaponCategory," +
-  " kind AS itemKind, CASE kind WHEN 'magicvariant' THEN json END AS variantJson";
+  " json_extract(json, '$.mastery') AS mastery, kind AS itemKind, CASE kind WHEN 'magicvariant' THEN json END AS variantJson";
 type SearchTable = (typeof CATALOG_SEARCH_TABLES)[number];
 
 function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSearchRow[] {
@@ -184,6 +185,7 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
       }
       if (!isItem) return [hit];
       const item = itemHitFacts({ ...fields, type: itemType });
+      if (itemKind === "baseitem" && fields.mastery) item.mastery = true;
       // A variant has no type of its own, so it takes the kinds of the base items it expands
       // against. Kinds are read off each row rather than a column, so this scans every row the
       // WHERE admits and matches every variant against every base item — some fifty thousand

@@ -116,6 +116,18 @@ short, takes 10 feet off walking speed as a term of `speed`. The 2014 and 2024 b
 rule alike. The score counts what an equipped item raises, and the cut applies after the
 items that set or scale a speed. A homebrew item states the same two fields.
 
+## Weapon mastery
+
+`mastery` is a list of `{@itemMastery}` references (`Topple|XPHB`) on 48 base items and 47
+named items at v2.34.1, all of them 2024 weapons; `Wand of Orcus` (XDMG) is the one
+named weapon built on a `baseItem` that states none, so the derived block reads the base
+item's. A character stores the weapon kinds it chose as base-item references in
+`weaponMasteries`, and an attack shows the mastery only when its weapon, matched by
+base-item name as a proficiency is, is among them. How many it may choose is the sum, over
+its classes, of what `getWeaponMasteryCount` reads: the `weapon_mastery` column Barbarian
+and Fighter print, or the number Paladin, Ranger and Rogue write into the feature's text.
+Which weapons a class may choose from is prose and stays unchecked.
+
 ## The five arrays in `items-base.json` that are not items
 
 They are Tier B, so they land in `lookups` beside the conditions and the skills:

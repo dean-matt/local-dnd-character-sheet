@@ -32,6 +32,7 @@ import {
   type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
+  type ContentRef,
   type DefenseTrait,
   type EntryRef,
   entryKey,
@@ -46,9 +47,16 @@ import {
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import { type ZodType, z } from "zod";
-import { getCasterRows, getClass, getFirstSpellSlotLevel, getSubclass } from "./classes.ts";
+import {
+  getCasterRows,
+  getClass,
+  getFirstSpellSlotLevel,
+  getSubclass,
+  getWeaponMasteryCount,
+} from "./classes.ts";
 import { getHomebrewClass, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
+import { getBaseItemMasteries } from "./items.ts";
 import { getRace, getSubrace } from "./races.ts";
 import { listSkills } from "./skills.ts";
 
@@ -187,21 +195,44 @@ function armorTraits(
   return armor;
 }
 
+/** A `{@itemMastery}` reference as an item writes it, `Topple|XPHB`, which is always the 2024 book's. */
+function masteryRef(uid: string): ContentRef {
+  const [name = uid, source = "XPHB"] = uid.split("|");
+  return { name, source };
+}
+
+/** The `baseItem` uid a row names, lowercase as upstream writes it, in a list that is empty for none. */
+function baseUid(row: ItemFacts): string[] {
+  const uid = row.json.baseItem;
+  return typeof uid === "string" ? [uid.toLowerCase()] : [];
+}
+
 /**
  * Every entry whose row states a weapon, keyed by `itemKey`. A proficiency names the base
  * weapon, so a named magic item answers to the `baseItem` it states and a magic variant to
  * its base item's name. A magic bonus traces to the variant that grants it, or to the row
- * itself; a homebrew row has no `(name, source)` to trace to.
+ * itself; a homebrew row has no `(name, source)` to trace to. A magic item that states no
+ * mastery takes its base item's.
  */
 function weaponTraits(
+  dataDir: string,
   definition: CharacterDefinition,
   rows: readonly (ItemFacts | undefined)[],
 ): Map<string, WeaponTrait> {
   const weapons = new Map<string, WeaponTrait>();
+  const traits = rows.map((row) => (row ? parseJson(weaponTraitSchema, row.json) : undefined));
+  const inherited = getBaseItemMasteries(
+    dataDir,
+    rows.flatMap((row, index) => {
+      const trait = traits[index];
+      return row && trait && !trait.mastery ? baseUid(row) : [];
+    }),
+  );
   definition.inventory.forEach((entry, index) => {
     const row = rows[index];
-    const trait = row && parseJson(weaponTraitSchema, row.json);
-    if (!trait) return;
+    const trait = traits[index];
+    if (!row || !trait) return;
+    const mastery = (trait.mastery ?? inherited.get(baseUid(row)[0] ?? "") ?? []).map(masteryRef);
     const { ref, variant } = entry;
     const catalog = "homebrewId" in ref ? undefined : ref;
     const reference = variant ?? catalog;
@@ -210,6 +241,7 @@ function weaponTraits(
       ...(trait.properties && { properties: trait.properties }),
       ...(trait.damage && { damage: trait.damage.dice }),
       ...(trait.versatileDamage && { versatileDamage: trait.versatileDamage }),
+      ...(mastery.length > 0 && { mastery }),
       name: trait.baseName ?? catalog?.name ?? row.name,
       category: trait.category,
       damageType: trait.damage?.type ?? null,
@@ -344,6 +376,21 @@ function itemAdvantages(
   return advantages;
 }
 
+/** Per catalog class, how many kinds of weapon its Weapon Mastery allows at the character's level in it. */
+function weaponMasteryKinds(dataDir: string, definition: CharacterDefinition): Map<string, number> {
+  const kinds = new Map<string, number>();
+  const seen = new Set<string>();
+  for (const { class: ref } of definition.levels) {
+    const key = entryKey(ref);
+    if ("homebrewId" in ref || seen.has(key)) continue;
+    seen.add(key);
+    const level = definition.levels.filter((each) => entryKey(each.class) === key).length;
+    const count = getWeaponMasteryCount(dataDir, ref.name, ref.source, level);
+    if (count > 0) kinds.set(key, count);
+  }
+  return kinds;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -386,6 +433,7 @@ export function resolveCharacterCatalog(
   const items = resolveItemRows(dataDir, homebrewDb, definition.inventory);
   return {
     hitDice,
+    weaponMasteryKinds: weaponMasteryKinds(dataDir, definition),
     spellcastingAbilities,
     casterTables,
     skills,
@@ -393,7 +441,7 @@ export function resolveCharacterCatalog(
     speed: race.speed,
     armor: armorTraits(definition, items),
     weights: itemWeights(definition.inventory, items),
-    weapons: weaponTraits(definition, items),
+    weapons: weaponTraits(dataDir, definition, items),
     raceDefenses: raceDefenses(json),
     itemDefenses: itemDefenses(definition, items),
     itemAbilities: itemAbilities(definition, items),

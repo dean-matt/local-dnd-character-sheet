@@ -294,6 +294,39 @@ describe("searchCatalog", () => {
     ]);
   });
 
+  it("marks a base weapon that carries a mastery, and no magic item built on one", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const row = (name: string, kind: string, fields: object) => ({
+      name,
+      source: "XPHB",
+      edition: "one",
+      kind,
+      type: "M|XPHB",
+      rarity: "none",
+      requires_attunement: 0 as const,
+      json: JSON.stringify({ name, ...fields }),
+    });
+    publishSearchFixture(dataDir, {
+      spells: [],
+      items: [
+        row("Quarterstaff", "baseitem", { mastery: ["Topple|XPHB"] }),
+        row("Quarterstaff Cane", "baseitem", {}),
+        row("Quarterstaff of Doom", "item", { mastery: ["Topple|XPHB"] }),
+      ],
+      entities: [],
+    });
+
+    const marked = searchCatalog(dataDir, { term: "quarterstaff" }).map((hit) => [
+      hit.name,
+      hit.item?.mastery,
+    ]);
+    expect(marked).toEqual([
+      ["Quarterstaff", true],
+      ["Quarterstaff Cane", undefined],
+      ["Quarterstaff of Doom", undefined],
+    ]);
+  });
+
   it("finds each rules lookup a reader looks up by name, and leaves out an abbreviation", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {

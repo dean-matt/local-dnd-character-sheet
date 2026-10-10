@@ -162,6 +162,18 @@ describe("weaponTraitSchema", () => {
     });
   });
 
+  it("reads the mastery references a row states, and none from a malformed list", () => {
+    expect(
+      weaponTraitSchema.parse({ weaponCategory: "martial", mastery: ["Topple|XPHB"] }),
+    ).toMatchObject({ mastery: ["Topple|XPHB"] });
+    expect(weaponTraitSchema.parse({ weaponCategory: "martial", mastery: [] })).not.toHaveProperty(
+      "mastery",
+    );
+    expect(
+      weaponTraitSchema.parse({ weaponCategory: "martial", mastery: "Topple" }),
+    ).not.toHaveProperty("mastery");
+  });
+
   it("keeps a code it does not know, and a die with no type", () => {
     expect(weaponTraitSchema.parse({ dmg1: "1d6", dmgType: "Z" })).toMatchObject({
       category: null,
