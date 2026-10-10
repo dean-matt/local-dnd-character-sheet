@@ -1,35 +1,16 @@
-import { Popover } from "../../../../Popover.tsx";
-
 const PILL =
   "rounded-pill border px-2 py-0.5 font-bold text-chip leading-3 tracking-chip uppercase";
 
-/**
- * Presses to attune and again to end it. Where no slot is free, the pill opens `refusal`
- * in place of pressing, so the player learns which items hold the slots.
- */
+/** Presses to attune and again to end it. */
 export function AttuneToggle({
   name,
   attuned,
-  refusal,
   onChange,
 }: {
   name: string;
   attuned: boolean;
-  refusal: string | undefined;
   onChange: (attuned: boolean) => void;
 }) {
-  if (!attuned && refusal) {
-    return (
-      <Popover
-        // Inline-block, so the trigger's dotted underline stops at the pill.
-        trigger={<span className={`${PILL} inline-block border-border text-muted`}>Attune</span>}
-        triggerLabel={`Attune ${name}, no slot free`}
-        label="Attunement"
-      >
-        {refusal}
-      </Popover>
-    );
-  }
   return (
     <button
       type="button"

@@ -18,14 +18,12 @@ import { itemPrice } from "./itemPrice.ts";
 type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 
 /**
- * `quantity` is the control that edits the count. `attuneRefusal` says why no slot is free,
- * and is `undefined` where one is.
+ * `quantity` is the control that edits the count.
  */
 export function ResolvedItemRow({
   item,
   attack,
   quantity,
-  attuneRefusal,
   onGrip,
   onEquip,
   onAttune,
@@ -34,7 +32,6 @@ export function ResolvedItemRow({
   item: ResolvedItem;
   attack: Attack | undefined;
   quantity: ReactNode;
-  attuneRefusal: string | undefined;
   onGrip: (grip: Grip) => void;
   onEquip: (equipped: boolean) => void;
   onAttune: (attuned: boolean) => void;
@@ -69,12 +66,7 @@ export function ResolvedItemRow({
         <>
           {attack?.grip && <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} />}
           {(item.requiresAttunement || item.attuned) && (
-            <AttuneToggle
-              name={item.name}
-              attuned={item.attuned}
-              refusal={attuneRefusal}
-              onChange={onAttune}
-            />
+            <AttuneToggle name={item.name} attuned={item.attuned} onChange={onAttune} />
           )}
           {quantity}
           <EquipToggle item={item} onChange={onEquip} />

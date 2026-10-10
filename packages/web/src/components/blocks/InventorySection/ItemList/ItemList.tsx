@@ -1,5 +1,5 @@
 import type { SheetItem } from "@dnd/catalog";
-import { type CharacterDerived, type CharacterRecord, derivedValue } from "@dnd/character";
+import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { EmptyState } from "../../../../EmptyState.tsx";
@@ -10,7 +10,6 @@ import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharact
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
 import { AddItemField } from "./AddItemField.tsx";
-import { attunementRefusal } from "./attunementRefusal.ts";
 import { editInventoryEntry, type InventoryEntry } from "./editInventoryEntry.ts";
 import { QuantityField } from "./QuantityField.tsx";
 import { ResolvedItemRow } from "./ResolvedItemRow/ResolvedItemRow.tsx";
@@ -105,10 +104,6 @@ export function ItemList({
       </>
     );
   }
-  const attuned = inventory.data.items.filter((item) => item.attuned).map((item) => item.name);
-  // Without the derived block there is no slot count to refuse against, so attuning stays
-  // open rather than blocked by a failed read.
-  const refusal = derived && attunementRefusal(derivedValue(derived.attunementSlots), attuned);
   const entries = inventory.data.items.map((item, index) => ({ item, index }));
   const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
@@ -123,7 +118,6 @@ export function ItemList({
                   key={index}
                   item={item}
                   attack={derived?.attacks.find((attack) => attack.entry === index)}
-                  attuneRefusal={refusal}
                   quantity={
                     <QuantityField
                       name={item.name}
