@@ -83,6 +83,29 @@ scroll's name, since `value` appears only on its cantrip and level 1 rows.
 the yes-or-no an attunement slot count needs — `optional` is a 0 — and the condition
 stays in `json`, which is where a sheet reads why a character cannot attune.
 
+## Advantage and disadvantage the text grants
+
+No field states them: Mantle of Spell Resistance's advantage against spells exists only in
+its rules text. `ITEM_ADVANTAGES` (`packages/catalog/src/item-advantage.ts`) is a hand-kept
+mapping from `(name, source)` to our own short effects: the roll, the ability or skill, and
+a condition such as "against spells" where there is one. It holds no upstream prose.
+
+The search it was drawn from is every `items` row whose rules text mentions advantage or
+disadvantage, a magic variant's under `inherits`: 336 rows, which
+`packages/content/src/item-advantage.test.ts` repeats against `vendor/` and counts. 160 are
+mapped, 133 distinct names across both editions. The rest are passed over for one of five
+reasons: the bearer must spend an action, reaction or charge to get the effect; a
+consumable gives it for an hour; it changes another creature's roll, as Cloak of
+Displacement does; it marks initiative or a death saving throw, which the sheet shows as
+neither a save, a skill, a check nor an attack; or it is a trigger such as a Deck of Many
+Things card. A new tag's rows need that reading again, which is why the count is pinned.
+
+An equipped item, attuned where it requires attunement, lists its effects in
+`rollEffects`, and the sheet notes them beside the save, skill or attack they mark. A
+conditional effect reads as a note, and advantage and disadvantage on one roll are both
+listed, since whether a condition holds is the table's call. A homebrew item states its own
+in an `advantage` array, which the item form edits.
+
 ## The five arrays in `items-base.json` that are not items
 
 They are Tier B, so they land in `lookups` beside the conditions and the skills:

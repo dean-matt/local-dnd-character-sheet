@@ -433,6 +433,20 @@ function derivedItemGrants(bonuses: readonly ItemBonusTrait[]): CharacterDerived
   });
 }
 
+/** The advantage and disadvantage of each equipped item, attuned where it must be, in inventory order. */
+function derivedRollEffects(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): CharacterDerived["rollEffects"] {
+  return computed(
+    definition.inventory.flatMap((entry) => {
+      const item = catalog.itemAdvantages.get(itemKey(entry));
+      if (!item || !entry.equipped || (item.requiresAttunement && !entry.attuned)) return [];
+      return item.effects.map((effect) => ({ item: item.name, ...effect }));
+    }),
+  );
+}
+
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
 function hitDicePools(
   definition: CharacterDefinition,
@@ -641,6 +655,7 @@ export function deriveCharacter(
     attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog),
     itemGrants: derivedItemGrants(bonuses),
+    rollEffects: derivedRollEffects(definition, catalog),
   };
   return applyOverrides(block, definition);
 }

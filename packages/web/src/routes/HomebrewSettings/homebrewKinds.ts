@@ -71,7 +71,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
   facts: itemFacts,
   starters: ITEM_STARTERS,
   Form: ItemForm,
-  formKeys: ["name", "type", "rarity", "reqAttune", "entries"],
+  formKeys: ["name", "type", "rarity", "reqAttune", "advantage", "entries"],
 };
 
 const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpellInput> = {

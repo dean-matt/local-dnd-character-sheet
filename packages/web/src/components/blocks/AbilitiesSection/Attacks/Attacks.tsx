@@ -8,6 +8,7 @@ import {
   type CharacterRecord,
   derivedValue,
   displayName,
+  effectsOnRoll,
   entryKey,
 } from "@dnd/character";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
@@ -39,6 +40,7 @@ export function Attacks({
 }) {
   const inventory = useCharacterInventory(character.id);
   const { definition } = character;
+  const effects = effectsOnRoll(derivedValue(derived.rollEffects), { roll: "attack" });
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
@@ -75,6 +77,7 @@ export function Attacks({
                 <AttackRow
                   key={attack.entry}
                   name={name}
+                  effects={effects}
                   bonus={<AttackBonus name={`${name} attack bonus`} field={attack.attackBonus} />}
                   damage={
                     <>
@@ -95,6 +98,7 @@ export function Attacks({
                   name={name}
                   bonus={<AttackBonus name={`${name} bonus`} field={caster.attackBonus} />}
                   damage={NONE}
+                  effects={effects}
                 />
               );
             })}

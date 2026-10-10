@@ -129,6 +129,7 @@ export function derivedRecord(
     itemDefenses: new Map(),
     itemAbilities: new Map(),
     itemBonuses: new Map(),
+    itemAdvantages: new Map(),
   });
 }
 

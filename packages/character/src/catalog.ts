@@ -1,4 +1,6 @@
 import type {
+  AdvantageMode,
+  AdvantageRoll,
   CasterProgression,
   HitDie,
   PreparationRule,
@@ -86,12 +88,31 @@ export type ItemBonusTrait = {
 };
 
 /**
+ * One effect an item grants on a roll. `target` is the ability a save or check applies to,
+ * absent for all of them, and a skill's name for a skill; `condition` is the short text of a
+ * conditional effect, absent for one that always applies.
+ */
+type RollEffect = {
+  mode: AdvantageMode;
+  roll: AdvantageRoll;
+  target?: string;
+  condition?: string;
+};
+
+/** An item's advantage and disadvantage effects, whether it waits on attunement. */
+export type ItemAdvantageTrait = {
+  name: string;
+  requiresAttunement: boolean;
+  effects: readonly RollEffect[];
+};
+
+/**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
  * `entryKey` of an inventory entry's reference, `weights`, `weapons`, `itemDefenses`,
- * `itemAbilities` and `itemBonuses` by `itemKey` of the entry, the way `carriedWeight` reads it.
+ * `itemAbilities`, `itemBonuses` and `itemAdvantages` by `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
@@ -118,6 +139,8 @@ export type CharacterCatalog = {
   itemAbilities: ReadonlyMap<string, ItemAbilityTrait>;
   /** Keyed like `weapons`, and absent for an item that adds to no armor class, save or spell number. */
   itemBonuses: ReadonlyMap<string, ItemBonusTrait>;
+  /** Keyed like `weapons`, and absent for an item that grants no advantage or disadvantage. */
+  itemAdvantages: ReadonlyMap<string, ItemAdvantageTrait>;
 };
 
 /**

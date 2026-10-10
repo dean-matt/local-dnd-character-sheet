@@ -36,6 +36,7 @@ export type {
   CharacterCatalog,
   DefenseTrait,
   ItemAbilityTrait,
+  ItemAdvantageTrait,
   ItemBonusTrait,
   ItemDefenseTrait,
   Preparation,
@@ -46,6 +47,7 @@ export { describeChange, SECTION_LABEL, UNDO_LOG_LIMIT, undoLogSchema } from "./
 export {
   type CharacterDerived,
   characterDerivedSchema,
+  type RollEffectEntry,
 } from "./characterDerived.ts";
 export { type CharacterFile, characterFileSchema } from "./characterFile.ts";
 export {
@@ -74,6 +76,7 @@ export {
   withImprovement,
   withoutImprovement,
 } from "./improvements.ts";
+export { effectsOnRoll } from "./itemEffects.ts";
 export { deityKey, entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {

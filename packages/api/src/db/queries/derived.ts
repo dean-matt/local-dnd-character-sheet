@@ -15,6 +15,8 @@ import {
   casterProgressionSchema,
   castingStartLevelSchema,
   defenseTraitSchema,
+  itemAdvantageSchema,
+  itemAdvantagesOf,
   itemBonusSchema,
   type PreparedSpellCount,
   preparationRuleSchema,
@@ -32,6 +34,7 @@ import {
   type EntryRef,
   entryKey,
   type ItemAbilityTrait,
+  type ItemAdvantageTrait,
   type ItemBonusTrait,
   type ItemDefenseTrait,
   itemKey,
@@ -40,7 +43,7 @@ import {
   type WeaponTrait,
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
-import type { ZodType } from "zod";
+import { type ZodType, z } from "zod";
 import { getCasterRows, getClass, getFirstSpellSlotLevel, getSubclass } from "./classes.ts";
 import { getHomebrewClass, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
@@ -290,6 +293,36 @@ function itemBonuses(
   return bonuses;
 }
 
+const advantageListSchema = z.array(itemAdvantageSchema);
+
+/**
+ * Every entry whose item grants advantage or disadvantage, keyed by `itemKey`. A catalog
+ * entry reads the mapping under its magic variant when it names one, since the variant is
+ * where the effect comes from, and under the item itself otherwise; a homebrew item states
+ * its own.
+ */
+function itemAdvantages(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ItemAdvantageTrait> {
+  const advantages = new Map<string, ItemAdvantageTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    if (!row) return;
+    const catalog = "homebrewId" in entry.ref ? undefined : (entry.variant ?? entry.ref);
+    const effects = catalog
+      ? itemAdvantagesOf(catalog.name, catalog.source)
+      : parseJson(advantageListSchema, row.json.advantage);
+    if (!effects?.length) return;
+    advantages.set(itemKey(entry), {
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+      effects,
+    });
+  });
+  return advantages;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -344,5 +377,6 @@ export function resolveCharacterCatalog(
     itemDefenses: itemDefenses(definition, items),
     itemAbilities: itemAbilities(definition, items),
     itemBonuses: itemBonuses(definition, items),
+    itemAdvantages: itemAdvantages(definition, items),
   };
 }

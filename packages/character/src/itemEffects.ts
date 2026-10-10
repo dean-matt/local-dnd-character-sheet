@@ -1,12 +1,13 @@
 /**
- * What equipped items do to a character beyond a flat bonus: they change speeds and
- * raise the proficiency bonus. Each function takes the items that already passed the
+ * What equipped items do to a character beyond a flat bonus: they change speeds, raise
+ * the proficiency bonus and mark rolls with advantage or disadvantage. Each function takes the items that already passed the
  * equipped and attuned test.
  */
 import { type ProficiencyLevel, proficiencyContribution, type Term } from "@dnd/rules";
 import type { ItemBonusTrait, SpeedMode, SpeedModifier } from "./catalog.ts";
-import type { Speed } from "./characterDerived.ts";
+import type { RollEffectEntry, Speed } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
+import type { Ability } from "./refs.ts";
 
 /** The part of an item that raises the proficiency bonus. */
 export type ProficiencyItem = Pick<ItemBonusTrait, "name" | "proficiencyBonus">;
@@ -81,4 +82,32 @@ export function speedWithItems(
     });
   }
   return { speed, terms };
+}
+
+/** The roll a sheet row stands for: a saving throw, a skill (checked with its ability), or an attack. */
+type RollTarget =
+  | { roll: "save"; ability: Ability }
+  | { roll: "skill"; skill: string; ability: Ability }
+  | { roll: "attack" };
+
+/**
+ * The effects that mark `target`. A `check` effect marks every skill that uses its ability,
+ * or every skill when it names none; a `skill` effect marks the skill it names.
+ */
+export function effectsOnRoll(
+  effects: readonly RollEffectEntry[],
+  target: RollTarget,
+): RollEffectEntry[] {
+  return effects.filter((effect) => {
+    if (target.roll === "attack") return effect.roll === "attack";
+    if (target.roll === "save") {
+      return (
+        effect.roll === "save" && (effect.target === undefined || effect.target === target.ability)
+      );
+    }
+    if (effect.roll === "skill") return effect.target === target.skill;
+    return (
+      effect.roll === "check" && (effect.target === undefined || effect.target === target.ability)
+    );
+  });
 }
