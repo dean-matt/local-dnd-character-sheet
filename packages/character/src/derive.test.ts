@@ -7,6 +7,7 @@ import {
   type CasterTable,
   type CharacterDefinition,
   type CharacterDerived,
+  type ContainerTrait,
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
@@ -199,6 +200,7 @@ describe("deriveCharacter", () => {
     itemBonuses: new Map<string, ItemBonusTrait>(),
     itemAdvantages: new Map<string, ItemAdvantageTrait>(),
     armorBurdens: new Map<string, ArmorBurdenTrait>(),
+    containers: new Map<string, ContainerTrait>(),
     weaponMasteryKinds: new Map<string, number>(),
   };
 

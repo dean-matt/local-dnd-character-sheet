@@ -406,6 +406,27 @@ describe("InventorySection", () => {
     expect(await carrying.findByText("Leaves out 1 item not found.")).toBeInTheDocument();
   });
 
+  it("warns of a container holding more than it takes, naming it and the excess", () => {
+    renderSection(
+      load({
+        containers: [
+          {
+            entry: 0,
+            name: "Backpack",
+            overflow: [
+              { excess: 5, unit: "lb" },
+              { excess: 3, unit: "arrow|xphb" },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const carrying = card("Carrying");
+    expect(carrying.getByText("Backpack holds 5 lb more than it can.")).toBeInTheDocument();
+    expect(carrying.getByText("Backpack holds 3 arrow more than it can.")).toBeInTheDocument();
+  });
+
   it("names the encumbrance tier the character is in", () => {
     renderSection(load({ encumbrance: "heavilyEncumbered" }));
 

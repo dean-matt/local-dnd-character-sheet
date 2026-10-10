@@ -15,6 +15,7 @@ import {
   armorTraitSchema,
   casterProgressionSchema,
   castingStartLevelSchema,
+  containerTraitSchema,
   defenseTraitSchema,
   itemAdvantageSchema,
   itemAdvantagesOf,
@@ -32,6 +33,7 @@ import {
   type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
+  type ContainerTrait,
   type ContentRef,
   type DefenseTrait,
   type EntryRef,
@@ -346,6 +348,20 @@ function armorBurdens(
   return burdens;
 }
 
+/** Every entry whose row states a container capacity, keyed by `itemKey`. */
+function containers(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ContainerTrait> {
+  const held = new Map<string, ContainerTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const trait = row && parseJson(containerTraitSchema, row.json);
+    if (trait) held.set(itemKey(entry), { ...trait, name: row.name });
+  });
+  return held;
+}
+
 const advantageListSchema = z.array(itemAdvantageSchema);
 
 /**
@@ -448,5 +464,6 @@ export function resolveCharacterCatalog(
     itemBonuses: itemBonuses(definition, items),
     itemAdvantages: itemAdvantages(definition, items),
     armorBurdens: armorBurdens(definition, items),
+    containers: containers(definition, items),
   };
 }

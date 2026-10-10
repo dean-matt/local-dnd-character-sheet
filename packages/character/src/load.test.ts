@@ -7,6 +7,7 @@ import {
 } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import {
+  type ContainerTrait,
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
@@ -15,6 +16,7 @@ import {
   entryKey,
   itemKey,
 } from "./index.ts";
+import { containerOverflows } from "./load.ts";
 import { definition, derivedInput } from "./test/vex.ts";
 
 describe("carried weight", () => {
@@ -57,6 +59,111 @@ describe("carried weight", () => {
       {},
     );
     expect(carriedWeight(packed, catalog)).toBe(10);
+  });
+
+  describe("containers", () => {
+    const BAG = { name: "Bag of Holding", source: "XDMG" };
+    const BACKPACK = { name: "Backpack", source: "XPHB" };
+    const QUIVER = { name: "Quiver", source: "XPHB" };
+    const stored = new Map<string, number | null>([
+      ...catalog,
+      [entryKey(BAG), 15],
+      [entryKey(BACKPACK), 5],
+      [entryKey(QUIVER), 1],
+    ]);
+    const containers = new Map<string, ContainerTrait>([
+      [entryKey(BAG), { name: "Bag of Holding", weightless: true, weight: 500, items: {} }],
+      [entryKey(BACKPACK), { name: "Backpack", weightless: false, weight: 30, items: {} }],
+      [entryKey(QUIVER), { name: "Quiver", weightless: false, items: { "arrow|xphb": 20 } }],
+    ]);
+    const packedIn = (holder: object, ...contents: object[]) =>
+      packing(
+        [{ ref: BAG, id: "a", ...holder }, ...contents.map((item) => ({ inside: "a", ...item }))],
+        {},
+      );
+
+    it("weighs nothing for what a weightless container holds, and the container itself", () => {
+      const packed = packedIn({}, { ref: ROPE }, { ref: CHEST });
+      expect(carriedWeight(packed, stored, containers)).toBe(15);
+    });
+
+    it("counts what an ordinary container holds", () => {
+      const packed = packing(
+        [
+          { ref: BACKPACK, id: "a" },
+          { ref: ROPE, inside: "a" },
+        ],
+        {},
+      );
+      expect(carriedWeight(packed, stored, containers)).toBe(15);
+    });
+
+    it("leaves out the contents of a container left behind", () => {
+      const packed = packing(
+        [
+          { ref: BACKPACK, id: "a", carried: false },
+          { ref: ROPE, inside: "a" },
+        ],
+        {},
+      );
+      expect(carriedWeight(packed, stored, containers)).toBe(0);
+    });
+
+    it("reads an entry stored without a container as outside any", () => {
+      const parsed = characterDefinitionSchema.parse({
+        ...structuredClone(definition),
+        inventory: [{ ref: ROPE }],
+      });
+      expect(parsed.inventory[0]).not.toHaveProperty("inside");
+    });
+
+    it("refuses a placement in a missing, shared or nested holder", () => {
+      const bad = (inventory: object[]) =>
+        characterDefinitionSchema.safeParse({ ...structuredClone(definition), inventory }).success;
+      expect(bad([{ ref: ROPE, inside: "nowhere" }])).toBe(false);
+      expect(
+        bad([
+          { ref: BAG, id: "a" },
+          { ref: CHEST, id: "a" },
+        ]),
+      ).toBe(false);
+      expect(
+        bad([
+          { ref: BAG, id: "a" },
+          { ref: CHEST, id: "b", inside: "a" },
+          { ref: ROPE, inside: "b" },
+        ]),
+      ).toBe(false);
+    });
+
+    it("names the container and the excess when its contents pass its pounds", () => {
+      const packed = packing(
+        [
+          { ref: BACKPACK, id: "a" },
+          { ref: CHEST, inside: "a" },
+          { ref: ROPE, inside: "a" },
+        ],
+        {},
+      );
+      expect(containerOverflows(packed, stored, containers)).toEqual([
+        { entry: 0, name: "Backpack", excess: 5, unit: "lb" },
+      ]);
+    });
+
+    it("names the excess of a counted thing, and none at the limit", () => {
+      const quiver = (count: number) =>
+        packing(
+          [
+            { ref: QUIVER, id: "a" },
+            { ref: ARROW, quantity: count, inside: "a" },
+          ],
+          {},
+        );
+      expect(containerOverflows(quiver(20), stored, containers)).toEqual([]);
+      expect(containerOverflows(quiver(23), stored, containers)).toEqual([
+        { entry: 0, name: "Quiver", excess: 3, unit: "arrow|xphb" },
+      ]);
+    });
   });
 
   it("weighs an item whose row states no weight as nothing", () => {

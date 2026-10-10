@@ -120,12 +120,23 @@ export type ItemAdvantageTrait = {
 };
 
 /**
+ * What a container item holds. `weight` is the pounds it takes, absent where it states none
+ * in pounds; `items` the most it takes of each thing, keyed `name|source` lowercased.
+ */
+export type ContainerTrait = {
+  name: string;
+  weightless: boolean;
+  weight?: number;
+  items: Readonly<Record<string, number>>;
+};
+
+/**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
  * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
  * `entryKey` of an inventory entry's reference, `weights`, `weapons`, `itemDefenses`,
- * `itemAbilities`, `itemBonuses`, `itemAdvantages` and `armorBurdens` by `itemKey` of the entry, the way `carriedWeight` reads it.
+ * `itemAbilities`, `itemBonuses`, `itemAdvantages` and `armorBurdens` and `containers` by `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {
   hitDice: ReadonlyMap<string, HitDie>;
@@ -161,6 +172,8 @@ export type CharacterCatalog = {
   itemAdvantages: ReadonlyMap<string, ItemAdvantageTrait>;
   /** Keyed like `weapons`, and absent for an item that states neither a Stealth penalty nor a Strength requirement. */
   armorBurdens: ReadonlyMap<string, ArmorBurdenTrait>;
+  /** Keyed like `weapons`, and absent for an item that holds nothing. */
+  containers: ReadonlyMap<string, ContainerTrait>;
 };
 
 /**

@@ -35,6 +35,7 @@ export type {
   ArmorTrait,
   CasterTable,
   CharacterCatalog,
+  ContainerTrait,
   DefenseTrait,
   ItemAbilityTrait,
   ItemAdvantageTrait,

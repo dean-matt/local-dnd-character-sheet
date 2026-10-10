@@ -13,7 +13,9 @@ type Lists = {
  * the skill, class or slot level it was typed over rather than its position. A list
  * added to the block fails to compile until it names one here.
  *
- * An inventory entry carries no id, so a weapon is named by its item and which copy of
+ * A container holds no overridable field, so its name stands in for a key nothing reads.
+ *
+ * An inventory entry carries an id only once it holds something, so a weapon is named by its item and which copy of
  * that item it is. Removing another item leaves the override on its weapon. Reordering
  * two copies of one item swaps theirs, and removing an earlier copy hands its override
  * to the next; only an id per entry fixes that.
@@ -25,6 +27,7 @@ const ELEMENT_KEY: {
   skills: (skill) => refKey(skill.ref),
   spellcasting: (caster) => entryKey(caster.class),
   spellSlots: (slot) => String(slot.level),
+  containers: (container) => container.name,
   attacks: (attack, { inventory }) => {
     const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);
     const item = earlier.pop() ?? "";

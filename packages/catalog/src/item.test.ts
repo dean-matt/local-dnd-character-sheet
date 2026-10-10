@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   armorBurdenSchema,
   armorTraitSchema,
+  containerTraitSchema,
   type HomebrewItem,
   homebrewItemInputSchema,
   homebrewItemRecordSchema,
@@ -116,6 +117,30 @@ describe("armorBurdenSchema", () => {
     expect(armorBurdenSchema.parse({ type: "LA", ac: 11 })).toBeUndefined();
     expect(armorBurdenSchema.parse({ stealth: false, strength: null })).toBeUndefined();
     expect(armorBurdenSchema.parse({ strength: "lots" })).toBeUndefined();
+  });
+});
+
+describe("containerTraitSchema", () => {
+  it("reads a weightless bag and sums its compartments", () => {
+    expect(
+      containerTraitSchema.parse({ containerCapacity: { weight: [20, 20, 80], weightless: true } }),
+    ).toEqual({ weightless: true, weight: 120, items: {} });
+  });
+
+  it("sums the most of each named thing across compartments", () => {
+    expect(
+      containerTraitSchema.parse({
+        containerCapacity: { item: [{ "Arrow|PHB": 60 }, { "arrow|phb": 20, "javelin|phb": 18 }] },
+      }),
+    ).toEqual({ weightless: false, items: { "arrow|phb": 80, "javelin|phb": 18 } });
+  });
+
+  it("is undefined for a row with no capacity, and drops a volume-only one to no limit", () => {
+    expect(containerTraitSchema.parse({ weight: 5 })).toBeUndefined();
+    expect(containerTraitSchema.parse({ containerCapacity: { volume: [4] } })).toEqual({
+      weightless: false,
+      items: {},
+    });
   });
 });
 

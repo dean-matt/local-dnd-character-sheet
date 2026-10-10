@@ -18,12 +18,13 @@ import { itemPrice } from "./itemPrice.ts";
 type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 
 /**
- * `quantity` is the control that edits the count.
+ * `quantity` is the control that edits the count, `placement` the one that picks a container.
  */
 export function ResolvedItemRow({
   item,
   attack,
   quantity,
+  placement,
   onGrip,
   onEquip,
   onAttune,
@@ -32,6 +33,7 @@ export function ResolvedItemRow({
   item: ResolvedItem;
   attack: Attack | undefined;
   quantity: ReactNode;
+  placement: ReactNode;
   onGrip: (grip: Grip) => void;
   onEquip: (equipped: boolean) => void;
   onAttune: (attuned: boolean) => void;
@@ -69,6 +71,7 @@ export function ResolvedItemRow({
             <AttuneToggle name={item.name} attuned={item.attuned} onChange={onAttune} />
           )}
           {quantity}
+          {placement}
           <EquipToggle item={item} onChange={onEquip} />
         </>
       }

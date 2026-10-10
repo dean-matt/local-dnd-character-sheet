@@ -6,10 +6,11 @@ import {
   reducedSpeed,
   type Term,
 } from "@dnd/rules";
+import type { ContainerTrait } from "./catalog.ts";
 import type { CharacterDerived, Speed } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
-import { itemKey } from "./keys.ts";
+import { itemKey, refKey } from "./keys.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 
 /**
@@ -43,10 +44,14 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
 export function carriedWeight(
   definition: CharacterDefinition,
   weights: ReadonlyMap<string, number | null>,
+  containers: ReadonlyMap<string, ContainerTrait> = new Map(),
 ): number {
+  const holders = holdersOf(definition);
   let total = 0;
-  for (const entry of definition.inventory) {
+  for (const [index, entry] of definition.inventory.entries()) {
     if (!entry.carried) continue;
+    const holder = holders.get(index);
+    if (holder && (!holder.carried || containers.get(itemKey(holder))?.weightless)) continue;
     const key = itemKey(entry);
     const weight = weights.get(key);
     if (weight === undefined) throw new RangeError(`No item row for ${key}`);
@@ -54,6 +59,60 @@ export function carriedWeight(
   }
   const coins = Object.values(definition.money).reduce((sum, count) => sum + count, 0);
   return (total + scaled(POUNDS_PER_COIN) * coins) / WEIGHT_SCALE;
+}
+
+type InventoryEntry = CharacterDefinition["inventory"][number];
+
+/** The entry each placed entry sits in, by index; the schema guarantees the holder exists. */
+function holdersOf(definition: CharacterDefinition): Map<number, InventoryEntry> {
+  const byId = new Map(
+    definition.inventory.flatMap((entry) => (entry.id ? [[entry.id, entry]] : [])),
+  );
+  return new Map(
+    definition.inventory.flatMap((entry, index) => {
+      const holder = entry.inside === undefined ? undefined : byId.get(entry.inside);
+      return holder ? [[index, holder]] : [];
+    }),
+  );
+}
+
+/** A container holding more than its capacity states: `unit` is `lb` or the lowercased `name|source` it counts. */
+type ContainerOverflow = { entry: number; name: string; excess: number; unit: string };
+
+/**
+ * Each container whose contents pass what its row says it takes, in inventory order. The
+ * warning only reports: nothing refuses a full bag. Pounds are checked against the sum of
+ * a container's compartments, and a counted thing against the sum of its compartments'
+ * limits, so a Quiver of Ehlonna's separate compartments pass as one pool. Weight is read
+ * from `weights` and a thing the row names that the contents lack counts as none.
+ */
+export function containerOverflows(
+  definition: CharacterDefinition,
+  weights: ReadonlyMap<string, number | null>,
+  containers: ReadonlyMap<string, ContainerTrait>,
+): ContainerOverflow[] {
+  const holders = holdersOf(definition);
+  return definition.inventory.flatMap((container, entry) => {
+    const trait = containers.get(itemKey(container));
+    if (!trait) return [];
+    const contents = definition.inventory.filter((_, index) => holders.get(index) === container);
+    const overflow: ContainerOverflow[] = [];
+    if (trait.weight !== undefined) {
+      const held = contents.reduce(
+        (sum, item) => sum + scaled(weights.get(itemKey(item)) ?? 0) * item.quantity,
+        0,
+      );
+      const excess = (held - scaled(trait.weight)) / WEIGHT_SCALE;
+      if (excess > 0) overflow.push({ entry, name: trait.name, excess, unit: "lb" });
+    }
+    for (const [unit, limit] of Object.entries(trait.items)) {
+      const held = contents
+        .filter((item) => !("homebrewId" in item.ref) && refKey(item.ref).toLowerCase() === unit)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      if (held > limit) overflow.push({ entry, name: trait.name, excess: held - limit, unit });
+    }
+    return overflow;
+  });
 }
 
 /**
