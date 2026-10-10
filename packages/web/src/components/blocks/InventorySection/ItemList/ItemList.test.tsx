@@ -311,13 +311,13 @@ describe("ItemList", () => {
     });
   });
 
-  it("marks an overridden entry with the reason the check gave, for a screen reader too", async () => {
+  it("marks an overridden entry with the reason the check gave, as visible text", async () => {
     const reason = "Dagger cannot take +1 Weapon. This base item does not meet the requirements.";
     renderList(derivedRecord(), [{ ...ITEMS[0], overridden: reason }, ITEMS[1]] as SheetItem[]);
 
     await screen.findByText("Longsword");
-    const marked = within(row("Longsword")).getByText("Off the rules");
-    expect(marked).toHaveTextContent(`Off the rules: ${reason}`);
+    expect(within(row("Longsword")).getByText("Off the rules")).toBeVisible();
+    expect(within(row("Longsword")).getByText(reason)).toBeVisible();
     expect(within(row("Cloak of Protection")).queryByText("Off the rules")).toBeNull();
   });
 

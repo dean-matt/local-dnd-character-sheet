@@ -56,18 +56,14 @@ export function ResolvedItemRow({
               {pounds(item.weight * item.quantity)}
             </Tag>
           )}
-          {item.overridden && (
-            <Tag>
-              Off the rules<span className="sr-only">: {item.overridden}</span>
-            </Tag>
-          )}
+          {item.overridden && <Tag>Off the rules</Tag>}
           {!item.carried && <Tag>Not carried</Tag>}
         </>
       }
       remove={<RemoveItemButton name={item.name} onRemove={onRemove} />}
       price={cost?.text}
       priceNote={cost?.note}
-      preview={firstLine(item.entries)}
+      preview={item.overridden ?? firstLine(item.entries)}
       actions={attack && <AttackChips name={item.name} attack={attack} />}
       controls={
         <>
