@@ -2,6 +2,7 @@ import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import {
   ABILITIES,
+  type AmmunitionTrait,
   type ArmorBurdenTrait,
   type ArmorTrait,
   type CasterTable,
@@ -200,6 +201,7 @@ describe("deriveCharacter", () => {
     itemBonuses: new Map<string, ItemBonusTrait>(),
     itemAdvantages: new Map<string, ItemAdvantageTrait>(),
     armorBurdens: new Map<string, ArmorBurdenTrait>(),
+    ammunition: new Map<string, AmmunitionTrait>(),
     containers: new Map<string, ContainerTrait>(),
     weaponMasteryKinds: new Map<string, number>(),
   };
@@ -418,6 +420,9 @@ describe("deriveCharacter", () => {
         },
         grip: null,
         mastery: [],
+        range: null,
+        ammunition: null,
+        reload: null,
       });
     });
 
@@ -590,6 +595,82 @@ describe("deriveCharacter", () => {
 
     it("limits a character whose classes have no Weapon Mastery to none", () => {
       expect(deriveCharacter(equipped, catalog).weaponMasteryLimit.computed).toBe(0);
+    });
+  });
+
+  describe("range and ammunition", () => {
+    const ARROW = "arrow|phb";
+    const SHORTBOW = { name: "Shortbow", source: "PHB" };
+    const QUIVER = { name: "Arrows (20)", source: "PHB" };
+    const LOOSE = { name: "Arrow", source: "PHB" };
+    const bow = {
+      ...LONGSWORD_TRAIT,
+      range: { normal: 80, long: 320 },
+      ammoType: ARROW,
+      reload: 2,
+    };
+    const held = (ref: typeof SHORTBOW, quantity: number, carried = true) => ({
+      ref,
+      quantity,
+      carried,
+      equipped: false,
+      attuned: false,
+    });
+    const archer = (...rest: ReturnType<typeof held>[]): CharacterDefinition => ({
+      ...equipped,
+      inventory: [{ ...held(SHORTBOW, 1), equipped: true }, ...rest],
+    });
+    const stocked = {
+      ...catalog,
+      weights: new Map<string, number | null>(
+        [SHORTBOW, QUIVER, LOOSE, { name: "Energy Cell", source: "XDMG" }].map((ref) => [
+          entryKey(ref),
+          0,
+        ]),
+      ),
+      weapons: new Map([[entryKey(SHORTBOW), bow]]),
+      ammunition: new Map<string, AmmunitionTrait>([
+        [entryKey(QUIVER), [{ uid: ARROW, count: 20 }]],
+        [entryKey(LOOSE), [{ uid: ARROW, count: 1 }]],
+      ]),
+    };
+    const shot = (definition: CharacterDefinition, catalogue = stocked) =>
+      deriveCharacter(definition, catalogue).attacks[0];
+
+    it("carries the range, the ammunition type and the reload from the weapon", () => {
+      expect(shot(archer())).toMatchObject({
+        range: { normal: 80, long: 320 },
+        ammunition: { type: ARROW, carried: 0 },
+        reload: 2,
+      });
+    });
+
+    it("counts loose ammunition and a pack by its contents, times the quantity held", () => {
+      expect(shot(archer(held(QUIVER, 2), held(LOOSE, 3)))?.ammunition?.carried).toBe(43);
+    });
+
+    it("skips ammunition that is not carried", () => {
+      expect(shot(archer(held(QUIVER, 2, false), held(LOOSE, 3)))?.ammunition?.carried).toBe(3);
+    });
+
+    it("matches a type that names no source against any source", () => {
+      const cell = { name: "Energy Cell", source: "XDMG" };
+      const laser = { ...bow, ammoType: "energy cell" };
+      const block = shot(archer(held(cell, 4)), {
+        ...stocked,
+        weapons: new Map([[entryKey(SHORTBOW), laser]]),
+        ammunition: new Map([[entryKey(cell), [{ uid: "energy cell|xdmg", count: 1 }]]]),
+      });
+
+      expect(block?.ammunition?.carried).toBe(4);
+    });
+
+    it("leaves a weapon that states none with null for each", () => {
+      expect(deriveCharacter(equipped, catalog).attacks[0]).toMatchObject({
+        range: null,
+        ammunition: null,
+        reload: null,
+      });
     });
   });
 

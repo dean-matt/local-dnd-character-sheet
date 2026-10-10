@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
   containerTraitSchema,
@@ -199,6 +200,25 @@ describe("weaponTraitSchema", () => {
     ).not.toHaveProperty("mastery");
   });
 
+  it("reads the range, the ammunition type and the reload, and none from a malformed value", () => {
+    expect(
+      weaponTraitSchema.parse({
+        weaponCategory: "martial",
+        range: "50/150",
+        ammoType: "Modern Bullet",
+        reload: 15,
+      }),
+    ).toMatchObject({ range: { normal: 50, long: 150 }, ammoType: "modern bullet", reload: 15 });
+    const malformed = weaponTraitSchema.parse({
+      weaponCategory: "martial",
+      range: "far",
+      reload: 0,
+    });
+    expect(malformed).not.toHaveProperty("range");
+    expect(malformed).not.toHaveProperty("reload");
+    expect(malformed).not.toHaveProperty("ammoType");
+  });
+
   it("keeps a code it does not know, and a die with no type", () => {
     expect(weaponTraitSchema.parse({ dmg1: "1d6", dmgType: "Z" })).toMatchObject({
       category: null,
@@ -259,5 +279,22 @@ describe("weaponTraitSchema", () => {
 
   it("is undefined for an item that states neither", () => {
     expect(weaponTraitSchema.parse({ type: "G" })).toBeUndefined();
+  });
+});
+
+describe("ammunitionTraitSchema", () => {
+  it("reads a pack's contents, lowercased, and leaves loose ammunition to name itself", () => {
+    expect(
+      ammunitionTraitSchema.parse({
+        type: "A",
+        packContents: [{ item: "Arrow|PHB", quantity: 20 }],
+      }),
+    ).toEqual({ contents: [{ uid: "arrow|phb", count: 20 }] });
+    expect(ammunitionTraitSchema.parse({ type: "AF|DMG" })).toEqual({ contents: undefined });
+  });
+
+  it("reads nothing from a row that is not ammunition", () => {
+    expect(ammunitionTraitSchema.parse({ type: "M" })).toBeUndefined();
+    expect(ammunitionTraitSchema.parse({})).toBeUndefined();
   });
 });

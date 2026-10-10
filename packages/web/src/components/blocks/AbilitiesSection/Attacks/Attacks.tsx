@@ -33,6 +33,27 @@ function critRange({ critThreshold }: CharacterDerived["attacks"][number]) {
   return lowest < 20 ? ` · Crit ${lowest}–20` : null;
 }
 
+/** Range, the ammunition fired with a count of what is carried, and a firearm's reload. */
+function weaponNotes(attack: CharacterDerived["attacks"][number]) {
+  const { range, ammunition, reload } = attack;
+  return (
+    <>
+      {range && (
+        <p className="text-label text-muted">
+          Range {range.normal}/{range.long} ft
+        </p>
+      )}
+      {ammunition && (
+        <p className="text-label text-muted">
+          Ammunition: <RulesText text={`{@item ${ammunition.type}}`} /> ({ammunition.carried}{" "}
+          carried)
+        </p>
+      )}
+      {reload && <p className="text-label text-muted">Reload {reload}</p>}
+    </>
+  );
+}
+
 export function Attacks({
   character,
   derived,
@@ -80,11 +101,16 @@ export function Attacks({
                   key={attack.entry}
                   name={name}
                   effects={effects}
-                  mastery={attack.mastery.map((ref) => (
-                    <p key={`${ref.name}|${ref.source}`} className="text-label text-muted">
-                      Mastery: <RulesText text={`{@itemMastery ${ref.name}|${ref.source}}`} />
-                    </p>
-                  ))}
+                  notes={
+                    <>
+                      {attack.mastery.map((ref) => (
+                        <p key={`${ref.name}|${ref.source}`} className="text-label text-muted">
+                          Mastery: <RulesText text={`{@itemMastery ${ref.name}|${ref.source}}`} />
+                        </p>
+                      ))}
+                      {weaponNotes(attack)}
+                    </>
+                  }
                   bonus={<AttackBonus name={`${name} attack bonus`} field={attack.attackBonus} />}
                   damage={
                     <>

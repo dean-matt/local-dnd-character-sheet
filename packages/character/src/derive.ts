@@ -297,6 +297,44 @@ function weaponMasteryLimit(
 }
 
 /**
+ * How many units of `type` the carried inventory holds, a pack counted by its contents. A
+ * type with no source (`energy cell`) matches any source, as upstream leaves it open.
+ * Walks the inventory once per weapon, which an inventory's size makes free.
+ */
+function ammunitionCarried(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  type: string,
+): number {
+  const sourced = type.includes("|");
+  return definition.inventory.reduce((total, entry) => {
+    const held = entry.carried ? (catalog.ammunition.get(itemKey(entry)) ?? []) : [];
+    return (
+      total +
+      entry.quantity *
+        held
+          .filter(({ uid }) => (sourced ? uid === type : uid.split("|")[0] === type))
+          .reduce((sum, { count }) => sum + count, 0)
+    );
+  }, 0);
+}
+
+/** The range, the ammunition fired with the count carried, and the reload, each null where the weapon states none. */
+function rangedFacts(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  { range, ammoType, reload }: WeaponTrait,
+) {
+  return {
+    range: range ?? null,
+    ammunition: ammoType
+      ? { type: ammoType, carried: ammunitionCarried(definition, catalog, ammoType) }
+      : null,
+    reload: reload ?? null,
+  };
+}
+
+/**
  * One attack per carried weapon. A shield counts only while equipped, as armor class reads
  * it. A second die is what makes a weapon versatile: every upstream row with a `dmg2`
  * carries the `V` property, and none carries `V` without one.
@@ -341,6 +379,7 @@ function derivedAttacks(
           : null,
         grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
         mastery: weaponMastery(definition, weapon),
+        ...rangedFacts(definition, catalog, weapon),
       },
     ];
   });

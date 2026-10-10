@@ -145,6 +145,31 @@ export const containerTraitSchema = z
     };
   });
 
+/**
+ * What an ammunition row counts as when a weapon asks for its ammunition: the uids it
+ * stands for and how many of each. A pack such as `Arrows (20)` stands for its contents,
+ * and any other ammunition stands for itself, which the caller names. `undefined` for a row
+ * that is not ammunition.
+ */
+export const ammunitionTraitSchema = z
+  .looseObject({
+    type: z.string().optional().catch(undefined),
+    packContents: z
+      .array(z.looseObject({ item: z.string().min(1), quantity: z.int().min(1) }))
+      .optional()
+      .catch(undefined),
+  })
+  .transform(({ type, packContents }) =>
+    ["A", "AF"].includes(type?.split("|")[0] ?? "")
+      ? {
+          contents: packContents?.map(({ item, quantity }) => ({
+            uid: item.toLowerCase(),
+            count: quantity,
+          })),
+        }
+      : undefined,
+  );
+
 /** Upstream's one-letter `dmgType` codes, spelled out. */
 export const DAMAGE_TYPES: Readonly<Record<string, string>> = {
   A: "acid",
@@ -176,6 +201,23 @@ const weaponPropertySchema = z.union([
   z.looseObject({ uid: z.string().min(1), note: z.string().optional() }),
 ]);
 
+function rangedTraits({
+  range,
+  ammoType,
+  reload,
+}: {
+  range?: string | undefined;
+  ammoType?: string | undefined;
+  reload?: number | undefined;
+}) {
+  const [normal = 0, long = 0] = range?.split("/").map(Number) ?? [];
+  return {
+    ...(range && { range: { normal, long } }),
+    ...(ammoType && { ammoType: ammoType.toLowerCase() }),
+    ...(reload && { reload }),
+  };
+}
+
 /**
  * A weapon's category, printed damage and what an attack with it reads, `undefined` for an
  * item that states neither a category nor a die. `dice` is `dmg1` as printed: a magic
@@ -189,6 +231,10 @@ const weaponPropertySchema = z.union([
  *
  * `mastery` is the row's own `{@itemMastery}` references, such as `Topple|XPHB`; a named
  * magic item that states none takes its base item's, which the caller looks up from `baseName`.
+ *
+ * `range` is the normal and long range in feet, `80/320` as upstream writes it. `ammoType` is
+ * the ammunition's uid, lowercase and sourceless where upstream names no source: `arrow|phb`,
+ * `energy cell`. `reload` is the shots a firearm holds.
  *
  * `kind` is ranged for a type code of `R` and melee otherwise, since a staff (`SCF`) and a
  * claw (`OTH`) that state a die are swung. A malformed property list or bonus degrades to
@@ -205,6 +251,13 @@ export const weaponTraitSchema = z
     dmgType: z.string().min(1).optional(),
     property: z.array(weaponPropertySchema).optional().catch(undefined),
     mastery: z.array(z.string().min(1)).optional().catch(undefined),
+    range: z
+      .string()
+      .regex(/^\d+\/\d+$/)
+      .optional()
+      .catch(undefined),
+    ammoType: z.string().min(1).optional().catch(undefined),
+    reload: z.int().min(1).optional().catch(undefined),
     bonusWeapon: signedBonus,
     bonusWeaponAttack: signedBonus,
     bonusWeaponDamage: signedBonus,
@@ -222,6 +275,7 @@ export const weaponTraitSchema = z
       ...(!item.baseItem && item.staff && { baseName: "quarterstaff" }),
       ...(item.property && { properties: item.property }),
       ...(item.mastery?.length && { mastery: item.mastery }),
+      ...rangedTraits(item),
       ...(dmg2 && { versatileDamage: dmg2 }),
       bonus: {
         attack: both + (item.bonusWeaponAttack ?? 0),

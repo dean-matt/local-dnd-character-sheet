@@ -31,6 +31,9 @@ const attack = (entry: number, bonus: number): CharacterDerived["attacks"][numbe
   },
   grip: null,
   mastery: [],
+  range: null,
+  ammunition: null,
+  reload: null,
 });
 
 function renderAttacks(derived: CharacterDerived) {
@@ -144,6 +147,32 @@ describe("Attacks", () => {
 
     expect(await screen.findByRole("rowheader", { name: "Longsword" })).toBeInTheDocument();
     expect(screen.queryByText(/Mastery/)).not.toBeInTheDocument();
+  });
+
+  it("shows a ranged weapon's range, its ammunition with the count carried, and a firearm's reload", async () => {
+    renderAttacks({
+      ...derivedRecord(),
+      attacks: [
+        {
+          ...attack(0, 5),
+          range: { normal: 80, long: 320 },
+          ammunition: { type: "arrow|phb", carried: 12 },
+          reload: 2,
+        },
+      ],
+    });
+
+    const row = await screen.findByRole("rowheader", { name: /Longsword/ });
+    expect(row).toHaveTextContent("Range 80/320 ft");
+    expect(row).toHaveTextContent("Ammunition: arrow (12 carried)");
+    expect(row).toHaveTextContent("Reload 2");
+  });
+
+  it("shows no range, ammunition or reload on a weapon that states none", async () => {
+    renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5)] });
+
+    expect(await screen.findByRole("rowheader", { name: "Longsword" })).toBeInTheDocument();
+    expect(screen.queryByText(/Range|Ammunition|Reload/)).not.toBeInTheDocument();
   });
 
   it("opens a class's spell attack terms from its bonus", async () => {

@@ -652,6 +652,9 @@ describe("InventorySection", () => {
       },
       grip,
       mastery: [],
+      range: null,
+      ammunition: null,
+      reload: null,
     });
     const held = { held: "one-handed" as const, twoHandedBlocked: false };
 

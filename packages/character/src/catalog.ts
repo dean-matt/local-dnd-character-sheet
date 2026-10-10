@@ -31,6 +31,11 @@ export type WeaponTrait = Weapon & {
   /** The mastery properties the row states, or its base item's: `Topple` (XPHB). */
   mastery?: readonly ContentRef[];
   category: "simple" | "martial" | null;
+  /** Feet, from the row's `range`; a thrown melee weapon states one too. */
+  range?: { normal: number; long: number };
+  /** The ammunition's uid as upstream writes it, lowercase: `arrow|phb`, or `energy cell` with no source. */
+  ammoType?: string;
+  reload?: number;
   damageType: string | null;
   bonus: { attack: number; damage: number; reference?: ContentRef };
 };
@@ -45,6 +50,9 @@ export type DefenseTrait = {
 
 /** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
 type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
+
+/** The ammunition uids an inventory entry stands for, each with how many one unit of the entry holds. */
+export type AmmunitionTrait = readonly { uid: string; count: number }[];
 
 /** An item's grant, the name its chip cites, and whether it waits on attunement. */
 export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement: boolean };
@@ -172,6 +180,8 @@ export type CharacterCatalog = {
   itemAdvantages: ReadonlyMap<string, ItemAdvantageTrait>;
   /** Keyed like `weapons`, and absent for an item that states neither a Stealth penalty nor a Strength requirement. */
   armorBurdens: ReadonlyMap<string, ArmorBurdenTrait>;
+  /** Keyed like `weapons`, and absent for an entry that is not ammunition. */
+  ammunition: ReadonlyMap<string, AmmunitionTrait>;
   /** Keyed like `weapons`, and absent for an item that holds nothing. */
   containers: ReadonlyMap<string, ContainerTrait>;
 };

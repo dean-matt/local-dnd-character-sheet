@@ -11,6 +11,7 @@
 
 import {
   abilityGrantSchema,
+  ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
   casterProgressionSchema,
@@ -28,6 +29,7 @@ import {
 } from "@dnd/catalog";
 import {
   type Ability,
+  type AmmunitionTrait,
   type ArmorBurdenTrait,
   type ArmorTrait,
   type CasterTable,
@@ -209,6 +211,16 @@ function baseUid(row: ItemFacts): string[] {
   return typeof uid === "string" ? [uid.toLowerCase()] : [];
 }
 
+const ranged = ({
+  range,
+  ammoType,
+  reload,
+}: Pick<WeaponTrait, "range" | "ammoType" | "reload">) => ({
+  ...(range && { range }),
+  ...(ammoType && { ammoType }),
+  ...(reload && { reload }),
+});
+
 /**
  * Every entry whose row states a weapon, keyed by `itemKey`. A proficiency names the base
  * weapon, so a named magic item answers to the `baseItem` it states and a magic variant to
@@ -246,11 +258,34 @@ function weaponTraits(
       ...(mastery.length > 0 && { mastery }),
       name: trait.baseName ?? catalog?.name ?? row.name,
       category: trait.category,
+      ...ranged(trait),
       damageType: trait.damage?.type ?? null,
       bonus: { ...trait.bonus, ...(reference && { reference }) },
     });
   });
   return weapons;
+}
+
+/**
+ * Every entry whose row is ammunition, keyed by `itemKey`: a pack stands for its contents
+ * and any other ammunition for itself. A homebrew row has no `(name, source)` to match.
+ */
+function ammunition(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, AmmunitionTrait> {
+  const held = new Map<string, AmmunitionTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const trait = row && parseJson(ammunitionTraitSchema, row.json);
+    if (!trait || "homebrewId" in entry.ref) return;
+    const { name, source } = entry.ref;
+    held.set(
+      itemKey(entry),
+      trait.contents ?? [{ uid: `${name}|${source}`.toLowerCase(), count: 1 }],
+    );
+  });
+  return held;
 }
 
 const grantsAny = (trait: DefenseTrait) =>
@@ -464,6 +499,7 @@ export function resolveCharacterCatalog(
     itemBonuses: itemBonuses(definition, items),
     itemAdvantages: itemAdvantages(definition, items),
     armorBurdens: armorBurdens(definition, items),
+    ammunition: ammunition(definition, items),
     containers: containers(definition, items),
   };
 }

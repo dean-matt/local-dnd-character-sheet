@@ -31,6 +31,7 @@ export {
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {
+  AmmunitionTrait,
   ArmorBurdenTrait,
   ArmorTrait,
   CasterTable,
