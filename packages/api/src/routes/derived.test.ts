@@ -239,7 +239,14 @@ describe("derivedRoutes", () => {
         },
       ],
       items: [
-        item(PLATE, "baseitem", { type: "HA", ac: 18, armor: true, weight: 65 }),
+        item(PLATE, "baseitem", {
+          type: "HA",
+          ac: 18,
+          armor: true,
+          weight: 65,
+          stealth: true,
+          strength: "15",
+        }),
         item(SHIELD, "baseitem", { type: "S", ac: 2, weight: 6 }),
         item(PLUS_ONE, "magicvariant", {
           type: "GV",
@@ -670,6 +677,44 @@ describe("derivedRoutes", () => {
     expect((await derived()).rollEffects.computed).toEqual([
       { item: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
       { item: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
+    ]);
+  });
+
+  it("marks Stealth and slows a wearer below the armor's Strength, counting a belt toward it, catalog or homebrew", async () => {
+    insertHomebrewItem(opened.homebrewDb, "scale", {
+      name: "Rattling Scale",
+      edition: "classic",
+      type: "MA",
+      ac: 14,
+      stealth: true,
+      strength: 17,
+    });
+    const weak = { str: 12, dex: 14, con: 14, int: 12, wis: 10, cha: 8 };
+    store(definitionWith({ abilityScores: weak, inventory: [{ ref: PLATE, equipped: true }] }));
+    const plate = await derived();
+    expect(plate.speed.computed.walk).toBe(25);
+    expect(plate.speed.terms).toEqual([{ label: "Plate Armor: Strength 15 required", value: -10 }]);
+    expect(plate.rollEffects.computed).toEqual([
+      { item: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
+    ]);
+
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        abilityScores: weak,
+        inventory: [
+          { ref: PLATE, equipped: true },
+          { ref: HILL_BELT, equipped: true },
+          { ref: { homebrewId: "scale" }, equipped: true },
+        ],
+      }),
+    );
+    const belted = await derived();
+    expect(belted.speed.terms).toEqual([]);
+    expect(belted.rollEffects.computed.map((effect) => effect.item)).toEqual([
+      PLATE.name,
+      "Rattling Scale",
     ]);
   });
 

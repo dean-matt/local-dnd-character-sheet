@@ -91,6 +91,23 @@ export const armorTraitSchema = z
     return { category: ARMOR_CATEGORIES[code], armorClass: ac + Number(bonusAc ?? 0) };
   });
 
+/**
+ * What worn armor costs its wearer: `stealth` is disadvantage on Stealth checks, and
+ * `strength` the score below which the armor slows the wearer. Upstream writes the score
+ * as a string; a homebrew row may write a number. `undefined` for a row that states neither.
+ */
+export const armorBurdenSchema = z
+  .looseObject({
+    stealth: z.literal(true).optional().catch(undefined),
+    strength: z
+      .union([z.int().min(1), z.string().regex(/^\d+$/).transform(Number)])
+      .optional()
+      .catch(undefined),
+  })
+  .transform(({ stealth, strength }) =>
+    stealth || strength ? { stealth: stealth === true, strength } : undefined,
+  );
+
 /** Upstream's one-letter `dmgType` codes, spelled out. */
 export const DAMAGE_TYPES: Readonly<Record<string, string>> = {
   A: "acid",

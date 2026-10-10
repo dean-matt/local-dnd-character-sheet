@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  armorBurdenSchema,
   armorTraitSchema,
   type HomebrewItem,
   homebrewItemInputSchema,
@@ -92,6 +93,29 @@ describe("itemRecordSchema", () => {
       json: { name: "Longsword", source: "PHB" },
     };
     expect(itemRecordSchema.parse(record)).toEqual(record);
+  });
+});
+
+describe("armorBurdenSchema", () => {
+  it("reads upstream's string Strength and its Stealth flag", () => {
+    expect(armorBurdenSchema.parse({ type: "HA", stealth: true, strength: "15" })).toEqual({
+      stealth: true,
+      strength: 15,
+    });
+    expect(armorBurdenSchema.parse({ strength: "13" })).toEqual({
+      stealth: false,
+      strength: 13,
+    });
+  });
+
+  it("reads a homebrew row's numeric Strength", () => {
+    expect(armorBurdenSchema.parse({ strength: 13 })).toEqual({ stealth: false, strength: 13 });
+  });
+
+  it("is undefined for a row stating neither, or a malformed value", () => {
+    expect(armorBurdenSchema.parse({ type: "LA", ac: 11 })).toBeUndefined();
+    expect(armorBurdenSchema.parse({ stealth: false, strength: null })).toBeUndefined();
+    expect(armorBurdenSchema.parse({ strength: "lots" })).toBeUndefined();
   });
 });
 

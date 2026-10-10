@@ -4,7 +4,7 @@
  * equipped and attuned test.
  */
 import { type ProficiencyLevel, proficiencyContribution, type Term } from "@dnd/rules";
-import type { ItemBonusTrait, SpeedMode, SpeedModifier } from "./catalog.ts";
+import type { ArmorBurdenTrait, ItemBonusTrait, SpeedMode, SpeedModifier } from "./catalog.ts";
 import type { Speed } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
 
@@ -81,4 +81,31 @@ export function speedWithItems(
     });
   }
   return { speed, terms };
+}
+
+/** Feet of walking speed that armor beyond the wearer's Strength takes off, in both editions. */
+const HEAVY_ARMOR_SLOWING = 10;
+
+/**
+ * The speed after each armor whose Strength requirement exceeds `strength`, with one term
+ * per armor. Only walking slows, as the rule words it; it applies after the items that
+ * set or scale a speed, so Boots of Speed double the walk the armor then cuts. A walk of
+ * under 10 feet falls to 0 rather than below it.
+ */
+export function speedUnderArmor(
+  speed: Speed,
+  armor: readonly ArmorBurdenTrait[],
+  strength: number,
+): { speed: Speed; terms: Term<TermReference>[] } {
+  const terms: Term<TermReference>[] = [];
+  let walk = speed.walk;
+  for (const { name, strength: required } of armor) {
+    if (required === undefined || strength >= required || walk === undefined || walk === 0) {
+      continue;
+    }
+    const cut = Math.min(HEAVY_ARMOR_SLOWING, walk);
+    walk -= cut;
+    terms.push({ label: `${name}: Strength ${required} required`, value: -cut });
+  }
+  return { speed: walk === undefined ? speed : { ...speed, walk }, terms };
 }
