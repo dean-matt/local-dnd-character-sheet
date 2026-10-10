@@ -28,6 +28,7 @@ import {
 } from "@dnd/rules";
 import { type AbilityGrant, abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 import type {
+  ArmorBurdenTrait,
   ArmorTrait,
   CharacterCatalog,
   DefenseTrait,
@@ -38,7 +39,12 @@ import type {
 import type { CharacterDerived, Defenses } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
-import { type ProficiencyItem, proficiencyItemTerms, speedWithItems } from "./itemEffects.ts";
+import {
+  type ProficiencyItem,
+  proficiencyItemTerms,
+  speedUnderArmor,
+  speedWithItems,
+} from "./itemEffects.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
@@ -433,18 +439,39 @@ function derivedItemGrants(bonuses: readonly ItemBonusTrait[]): CharacterDerived
   });
 }
 
-/** The advantage and disadvantage of each equipped item, attuned where it must be, in inventory order. */
+/** The equipped armor, attuned where it must be, that states a Stealth penalty or a Strength requirement. */
+function wornBurdens(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): ArmorBurdenTrait[] {
+  return definition.inventory.flatMap((entry) => {
+    const item = catalog.armorBurdens.get(itemKey(entry));
+    return item && entry.equipped && (entry.attuned || !item.requiresAttunement) ? [item] : [];
+  });
+}
+
+/**
+ * The advantage and disadvantage of each equipped item, attuned where it must be, in
+ * inventory order, then the Stealth disadvantage of worn armor.
+ */
 function derivedRollEffects(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
 ): CharacterDerived["rollEffects"] {
-  return computed(
-    definition.inventory.flatMap((entry) => {
-      const item = catalog.itemAdvantages.get(itemKey(entry));
-      if (!item || !entry.equipped || (item.requiresAttunement && !entry.attuned)) return [];
-      return item.effects.map((effect) => ({ item: item.name, ...effect }));
-    }),
-  );
+  const granted = definition.inventory.flatMap((entry) => {
+    const item = catalog.itemAdvantages.get(itemKey(entry));
+    if (!item || !entry.equipped || (item.requiresAttunement && !entry.attuned)) return [];
+    return item.effects.map((effect) => ({ item: item.name, ...effect }));
+  });
+  const stealth = wornBurdens(definition, catalog)
+    .filter((armor) => armor.stealth)
+    .map((armor) => ({
+      item: armor.name,
+      mode: "disadvantage" as const,
+      roll: "skill" as const,
+      target: "Stealth",
+    }));
+  return computed([...granted, ...stealth]);
 }
 
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
@@ -567,7 +594,10 @@ export function deriveCharacter(
   const grants = equippedAbilityGrants(definition, catalog);
   const bonuses = equippedBonuses(definition, catalog);
 
-  const speed = speedWithItems(catalog.speed, bonuses);
+  const worn = wornBurdens(definition, catalog);
+  const itemSpeed = speedWithItems(catalog.speed, bonuses);
+  const armorSpeed = speedUnderArmor(itemSpeed.speed, worn, scoreOf(definition, catalog, "str"));
+  const speed = { speed: armorSpeed.speed, terms: [...itemSpeed.terms, ...armorSpeed.terms] };
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
       const { total, terms } = savingThrowModifier(

@@ -107,6 +107,15 @@ listed, since whether a condition holds is the table's call. An ability check ma
 skills that use the ability, because the sheet has no row for a bare check. A homebrew item states its own
 in an `advantage` array, which the item form edits.
 
+## Armor's Stealth penalty and Strength requirement
+
+`stealth: true` and `strength` (a string, `"13"` or `"15"`) sit on 15 and 6 base items and
+on 33 and 13 named items at v2.34.1. Worn armor, attuned where it requires attunement, marks
+Stealth with disadvantage in `rollEffects` and, when the wearer's Strength score falls
+short, takes 10 feet off walking speed as a term of `speed`. The 2014 and 2024 books word the
+rule alike. The score counts what an equipped item raises, and the cut applies after the
+items that set or scale a speed. A homebrew item states the same two fields.
+
 ## The five arrays in `items-base.json` that are not items
 
 They are Tier B, so they land in `lookups` beside the conditions and the skills:

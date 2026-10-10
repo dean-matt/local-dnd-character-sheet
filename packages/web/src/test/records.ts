@@ -130,6 +130,7 @@ export function derivedRecord(
     itemAbilities: new Map(),
     itemBonuses: new Map(),
     itemAdvantages: new Map(),
+    armorBurdens: new Map(),
   });
 }
 

@@ -2,6 +2,8 @@ import type { HitDie } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import {
   ABILITIES,
+  type ArmorBurdenTrait,
+  type ArmorTrait,
   type CasterTable,
   type CharacterDefinition,
   type CharacterDerived,
@@ -196,6 +198,7 @@ describe("deriveCharacter", () => {
     itemAbilities: new Map<string, ItemAbilityTrait>(),
     itemBonuses: new Map<string, ItemBonusTrait>(),
     itemAdvantages: new Map<string, ItemAdvantageTrait>(),
+    armorBurdens: new Map<string, ArmorBurdenTrait>(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -943,6 +946,79 @@ describe("deriveCharacter", () => {
         itemCatalog,
       );
       expect(block.proficiencyBonus).toMatchObject({ computed: 4, manual: 9 });
+    });
+  });
+
+  describe("armor's Stealth penalty and Strength requirement", () => {
+    const PLATE = { name: "Plate Armor", source: "XPHB" };
+    const MITHRAL = { name: "Mithral Armor", source: "DMG" };
+    const burdens = new Map<string, ArmorBurdenTrait>([
+      [
+        entryKey(PLATE),
+        { name: PLATE.name, requiresAttunement: false, stealth: true, strength: 15 },
+      ],
+      [
+        entryKey(MITHRAL),
+        { name: MITHRAL.name, requiresAttunement: true, stealth: true, strength: 13 },
+      ],
+    ]);
+    const entry = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean } = {}) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: flags.equipped ?? true,
+      attuned: flags.attuned ?? false,
+    });
+    const withBurdens = {
+      ...catalog,
+      armorBurdens: burdens,
+      armor: new Map<string, ArmorTrait>(),
+      weights: new Map([...catalog.weights, [entryKey(PLATE), 65], [entryKey(MITHRAL), 20]]),
+    };
+    const derive = (inventory: CharacterDefinition["inventory"], abilityScores = {}) =>
+      deriveCharacter(
+        {
+          ...definition,
+          inventory,
+          abilityScores: { ...definition.abilityScores, ...abilityScores },
+        },
+        withBurdens,
+      );
+
+    it("marks Stealth with disadvantage, naming the armor, while it is worn", () => {
+      expect(derive([entry(PLATE)]).rollEffects.computed).toEqual([
+        { item: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
+      ]);
+      expect(derive([entry(PLATE, { equipped: false })]).rollEffects.computed).toEqual([]);
+    });
+
+    it("cuts walking speed by 10 feet below the required Strength, as a term naming the armor", () => {
+      const slowed = derive([entry(PLATE)], { str: 14 }).speed;
+      expect(slowed.computed.walk).toBe(20);
+      expect(slowed.terms).toEqual([{ label: "Plate Armor: Strength 15 required", value: -10 }]);
+    });
+
+    it("leaves speed alone at or above the required Strength", () => {
+      expect(derive([entry(PLATE)], { str: 15 }).speed.terms).toEqual([]);
+      expect(derive([entry(PLATE)], { str: 15 }).speed.computed.walk).toBe(30);
+    });
+
+    it("waits for attunement where the armor requires it", () => {
+      const unattuned = derive([entry(MITHRAL)], { str: 8 });
+      expect(unattuned.speed.computed.walk).toBe(30);
+      expect(unattuned.rollEffects.computed).toEqual([]);
+      const attuned = derive([entry(MITHRAL, { attuned: true })], { str: 8 });
+      expect(attuned.speed.computed.walk).toBe(20);
+      expect(attuned.rollEffects.computed).toHaveLength(1);
+    });
+
+    it("never takes walking speed below zero", () => {
+      const slow = { ...withBurdens, speed: { walk: 5 } };
+      const block = deriveCharacter({ ...definition, inventory: [entry(PLATE)] }, slow);
+      expect(block.speed.computed.walk).toBe(0);
+      expect(block.speed.terms).toEqual([
+        { label: "Plate Armor: Strength 15 required", value: -5 },
+      ]);
     });
   });
 

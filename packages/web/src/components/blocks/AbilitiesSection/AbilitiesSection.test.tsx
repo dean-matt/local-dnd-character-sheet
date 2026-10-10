@@ -62,6 +62,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     itemAbilities: new Map(),
     itemBonuses: new Map(),
     itemAdvantages: new Map(),
+    armorBurdens: new Map(),
   });
 }
 

@@ -67,6 +67,7 @@ export type {
   ItemRecord,
 } from "./item.ts";
 export {
+  armorBurdenSchema,
   armorTraitSchema,
   DAMAGE_TYPES,
   homebrewItemInputSchema,

@@ -11,6 +11,7 @@
 
 import {
   abilityGrantSchema,
+  armorBurdenSchema,
   armorTraitSchema,
   casterProgressionSchema,
   castingStartLevelSchema,
@@ -26,6 +27,7 @@ import {
 } from "@dnd/catalog";
 import {
   type Ability,
+  type ArmorBurdenTrait,
   type ArmorTrait,
   type CasterTable,
   type CharacterCatalog,
@@ -293,6 +295,25 @@ function itemBonuses(
   return bonuses;
 }
 
+/** Every entry whose row states a Stealth penalty or a Strength requirement, keyed by `itemKey`. */
+function armorBurdens(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ArmorBurdenTrait> {
+  const burdens = new Map<string, ArmorBurdenTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const burden = row && parseJson(armorBurdenSchema, row.json);
+    if (!burden) return;
+    burdens.set(itemKey(entry), {
+      ...burden,
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+    });
+  });
+  return burdens;
+}
+
 const advantageListSchema = z.array(itemAdvantageSchema);
 
 /**
@@ -378,5 +399,6 @@ export function resolveCharacterCatalog(
     itemAbilities: itemAbilities(definition, items),
     itemBonuses: itemBonuses(definition, items),
     itemAdvantages: itemAdvantages(definition, items),
+    armorBurdens: armorBurdens(definition, items),
   };
 }
