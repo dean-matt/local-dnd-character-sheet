@@ -94,7 +94,6 @@ export function ResolvedItemRow({
               <p className="text-muted">No description.</p>
             )}
             {cost?.note && <p className="text-muted">{cost.note}.</p>}
-            {item.overridden && <p className="text-muted">{item.overridden}</p>}
           </>
         ),
       }}

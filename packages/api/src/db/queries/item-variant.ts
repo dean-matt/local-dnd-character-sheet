@@ -330,7 +330,8 @@ function requiresAttunement(fields: Entry): 0 | 1 {
 /**
  * Whether a table may hold `variant` on `base` against the printed rules: both sit in one
  * weapon or armor group, so a weapon variant never lands on armor. The variant's group is
- * read off every base item it admits, which is why this scans them all.
+ * read off every base item it admits, which is why this scans them all: one table scan per
+ * overridden entry per read. Caching the group per variant is the way out if it shows.
  */
 function overridable(dataDir: string, baseFields: Entry, variantFields: Entry): boolean {
   const db = openContentDb(dataDir);

@@ -38,7 +38,8 @@ function refusalOf(
   }
   const message = `${name} cannot take ${variant.ref.name}. ${detail}.`;
   const group = armsGroupKinds(variant.kinds);
-  const offer = !overriding && group && baseKinds.every((kind) => group.includes(kind));
+  const offer =
+    !overriding && group && baseKinds.length > 0 && baseKinds.every((kind) => group.includes(kind));
   return offer ? { message, override: { base, reason: message } } : { message };
 }
 
