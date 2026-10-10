@@ -5,7 +5,7 @@ import {
   entryKey,
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { SAVED_STATUS_MS } from "../../../hooks/useFleeting.ts";
@@ -60,6 +60,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [] },
     itemDefenses: new Map(),
     itemAbilities: new Map(),
+    itemBonuses: new Map(),
   });
 }
 
@@ -249,6 +250,24 @@ describe("AbilitiesSection", () => {
 
     await waitFor(() => expect(saved?.abilityScores.str).toBe(11));
     expect(saved?.abilityIncreases).toEqual(record.definition.abilityIncreases);
+  });
+
+  it("lists a concentration save beside the saves only while the derived block has one", () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, derived);
+    expect(card("Saving Throws").queryByText("Concentration")).toBeNull();
+    cleanup();
+
+    renderSection(record, {
+      ...derived,
+      concentrationSave: {
+        computed: 4,
+        manual: null,
+        terms: [{ label: "Constitution", value: 4 }],
+      },
+    });
+    expect(card("Saving Throws").getByText("Concentration")).toBeVisible();
   });
 
   it("takes each modifier from the derived block, not from the score", () => {

@@ -31,6 +31,7 @@ import type {
   ArmorTrait,
   CharacterCatalog,
   DefenseTrait,
+  ItemBonusTrait,
   Preparation,
   WeaponTrait,
 } from "./catalog.ts";
@@ -120,8 +121,8 @@ export function skillModifier(
 }
 
 /**
- * The saving throw modifier for one ability: its modifier, and proficiency where
- * `proficiencies.savingThrows` names it. Only the character's first class grants a
+ * The saving throw modifier for one ability: its modifier, proficiency where
+ * `proficiencies.savingThrows` names it, then each of `bonuses` as its own term. Only the character's first class grants a
  * saving throw proficiency in 5e, so that choice is already resolved into this list
  * rather than read again from a class row here.
  */
@@ -129,6 +130,7 @@ export function savingThrowModifier(
   definition: Scored,
   ability: Ability,
   grants: readonly AbilityGrant[] = [],
+  bonuses: readonly Term<TermReference>[] = [],
 ): Breakdown<TermReference> {
   const proficient = definition.proficiencies.savingThrows.includes(ability);
   const contribution = proficiencyContribution(
@@ -142,7 +144,7 @@ export function savingThrowModifier(
     },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
-  return breakdown(terms);
+  return breakdown([...terms, ...bonuses]);
 }
 
 /** A freshly computed derived field, always with its terms — never read back from storage. */
@@ -206,6 +208,9 @@ function derivedArmorClass(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
 ): ComputedField<number> {
+  const bonus = equippedBonuses(definition, catalog)
+    .filter((item) => item.ac !== 0)
+    .map((item) => ({ label: item.name, value: item.ac }));
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
@@ -214,6 +219,7 @@ function derivedArmorClass(
     shield: shield
       ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
       : undefined,
+    bonus,
   });
   return { computed: result.total, manual: null, terms: result.terms };
 }
@@ -296,6 +302,17 @@ function equippedAbilityGrants(
 ): AbilityGrant[] {
   return definition.inventory.flatMap((entry) => {
     const item = catalog.itemAbilities.get(itemKey(entry));
+    return item && entry.equipped && (entry.attuned || !item.requiresAttunement) ? [item] : [];
+  });
+}
+
+/** Each worn item's armor class and save bonuses, attuned where it must be, in inventory order. */
+function equippedBonuses(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): ItemBonusTrait[] {
+  return definition.inventory.flatMap((entry) => {
+    const item = catalog.itemBonuses.get(itemKey(entry));
     return item && entry.equipped && (entry.attuned || !item.requiresAttunement) ? [item] : [];
   });
 }
@@ -457,13 +474,29 @@ export function deriveCharacter(
   const level = totalLevel(definition);
   const casters = castingClasses(definition, catalog);
   const grants = equippedAbilityGrants(definition, catalog);
+  const bonuses = equippedBonuses(definition, catalog);
+  const saveBonuses = (pick: (item: ItemBonusTrait) => number) =>
+    bonuses
+      .filter((item) => pick(item) !== 0)
+      .map((item) => ({ label: item.name, value: pick(item) }));
 
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
-      const { total, terms } = savingThrowModifier(definition, ability, grants);
+      const { total, terms } = savingThrowModifier(
+        definition,
+        ability,
+        grants,
+        saveBonuses((item) => item.save),
+      );
       return [ability, { computed: total, manual: null, terms }];
     }),
   ) as Record<Ability, ComputedField<number>>;
+
+  const concentration = saveBonuses((item) => item.concentration);
+  const concentrationSave =
+    concentration.length === 0
+      ? null
+      : fromBreakdown(breakdown([...savingThrows.con.terms, ...concentration]));
 
   const skills = catalog.skills.map((skill) => {
     const { total, terms } = skillModifier(definition, skill.ref, skill.ability, grants);
@@ -499,6 +532,7 @@ export function deriveCharacter(
     speed: { computed: catalog.speed, manual: null, terms: [] },
     proficiencyBonus: fromBreakdown(proficiencyBonusBreakdown(level)),
     savingThrows,
+    concentrationSave,
     skills,
     armorClass: derivedArmorClass(definition, catalog),
     initiative: fromBreakdown(abilityModifierBreakdown(scores.dex.total)),

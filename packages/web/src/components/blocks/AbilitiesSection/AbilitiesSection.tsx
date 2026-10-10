@@ -63,6 +63,15 @@ export function AbilitiesSection({
                 rules={editionRules(definition, SAVE_RULES)}
               />
             ))}
+            {derived.concentrationSave && (
+              <ProficiencyRow
+                level={saveProficient.has("con") ? "proficient" : "none"}
+                name="Concentration"
+                modifier={derived.concentrationSave}
+                title="Concentration saving throw"
+                rules={undefined}
+              />
+            )}
           </ul>
         </Card>
         <Card title="Skills">

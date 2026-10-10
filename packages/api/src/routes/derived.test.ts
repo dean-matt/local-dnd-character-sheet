@@ -37,6 +37,7 @@ const DWARF = { name: "Dwarf", source: "PHB" };
 const DRAGONBORN = { name: "Dragonborn", source: "PHB" };
 const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
 const HILL_BELT = { name: "Belt of Hill Giant Strength", source: "DMG" };
+const RING_OF_PROTECTION = { name: "Ring of Protection", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
@@ -276,6 +277,10 @@ describe("derivedRoutes", () => {
           },
         }),
         item(HILL_BELT, "item", { ability: { static: { str: 21 } } }),
+        item(RING_OF_PROTECTION, "item", {
+          bonusAc: "+1",
+          bonusSavingThrow: "+1",
+        }),
         item(PERIAPT, "item", { immune: ["poison"], conditionImmune: ["poisoned"] }),
         item(BARDING, "magicvariant", {
           type: "GV",
@@ -534,6 +539,31 @@ describe("derivedRoutes", () => {
     expect(worn.abilityScores.str.computed).toBe(21);
     expect(worn.abilityScores.str.terms.at(-1)).toEqual({ label: HILL_BELT.name, value: 5 });
     expect(worn.abilityScores.dex.terms.at(-1)).toEqual({ label: "Gloves of Dexterity", value: 2 });
+  });
+
+  it("adds an item's armor class and save bonus, catalog or homebrew, while worn", async () => {
+    insertHomebrewItem(opened.homebrewDb, "orb", {
+      name: "Warding Orb",
+      edition: "classic",
+      bonusSavingThrowConcentration: "+2",
+    });
+    store(definitionWith({ inventory: [{ ref: RING_OF_PROTECTION }] }));
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        inventory: [
+          { ref: RING_OF_PROTECTION, equipped: true },
+          { ref: { homebrewId: "orb" }, equipped: true },
+        ],
+      }),
+    );
+    const worn = await derived();
+    expect(worn.armorClass.computed).toBe(bare.armorClass.computed + 1);
+    expect(worn.armorClass.terms.at(-1)).toEqual({ label: RING_OF_PROTECTION.name, value: 1 });
+    expect(worn.savingThrows.str.computed).toBe(bare.savingThrows.str.computed + 1);
+    expect(worn.concentrationSave?.terms.at(-1)).toEqual({ label: "Warding Orb", value: 2 });
   });
 
   it("leaves a score alone while the item granting it is not equipped", async () => {
