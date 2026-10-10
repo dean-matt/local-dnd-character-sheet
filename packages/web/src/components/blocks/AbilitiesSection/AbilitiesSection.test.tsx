@@ -59,6 +59,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     weapons: new Map(),
     raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [] },
     itemDefenses: new Map(),
+    itemAbilities: new Map(),
   });
 }
 
@@ -262,6 +263,29 @@ describe("AbilitiesSection", () => {
     });
 
     expect(within(tile("Ability Scores", "Dexterity")).getByText("+3")).toBeVisible();
+  });
+
+  it("shows a score an item sets without an input to edit it", () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, {
+      ...derived,
+      abilityScores: {
+        ...derived.abilityScores,
+        str: {
+          computed: 21,
+          manual: null,
+          terms: [
+            { label: "Base", value: 8 },
+            { label: "Belt", value: 13 },
+          ],
+        },
+      },
+    });
+
+    const strength = within(tile("Ability Scores", "Strength"));
+    expect(strength.getByText("21")).toBeVisible();
+    expect(strength.queryByRole("textbox", { name: "Strength score" })).toBeNull();
   });
 
   it("names a save by its abbreviation, and a screen reader by its full name and proficiency", () => {

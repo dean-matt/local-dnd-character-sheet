@@ -36,6 +36,7 @@ const DAGGER_OF_VENOM = { name: "Dagger of Venom", source: "DMG" };
 const DWARF = { name: "Dwarf", source: "PHB" };
 const DRAGONBORN = { name: "Dragonborn", source: "PHB" };
 const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
+const HILL_BELT = { name: "Belt of Hill Giant Strength", source: "DMG" };
 const PERIAPT = { name: "Periapt of Proof against Poison", source: "DMG" };
 
 const item = (ref: { name: string; source: string }, kind: string, json: object) => ({
@@ -274,6 +275,7 @@ describe("derivedRoutes", () => {
             resist: ["fire"],
           },
         }),
+        item(HILL_BELT, "item", { ability: { static: { str: 21 } } }),
         item(PERIAPT, "item", { immune: ["poison"], conditionImmune: ["poisoned"] }),
         item(BARDING, "magicvariant", {
           type: "GV",
@@ -512,6 +514,31 @@ describe("derivedRoutes", () => {
       conditionImmunities: [{ name: "poisoned", from: [PERIAPT.name] }],
       resistanceChoice: null,
     });
+  });
+
+  it("raises a score to an equipped item's, catalog or homebrew", async () => {
+    insertHomebrewItem(opened.homebrewDb, "gloves", {
+      name: "Gloves of Dexterity",
+      edition: "classic",
+      ability: { dex: 2 },
+    });
+    store(
+      definitionWith({
+        inventory: [
+          { ref: HILL_BELT, equipped: true },
+          { ref: { homebrewId: "gloves" }, equipped: true },
+        ],
+      }),
+    );
+    const worn = await derived();
+    expect(worn.abilityScores.str.computed).toBe(21);
+    expect(worn.abilityScores.str.terms.at(-1)).toEqual({ label: HILL_BELT.name, value: 5 });
+    expect(worn.abilityScores.dex.terms.at(-1)).toEqual({ label: "Gloves of Dexterity", value: 2 });
+  });
+
+  it("leaves a score alone while the item granting it is not equipped", async () => {
+    store(definitionWith({ inventory: [{ ref: HILL_BELT }] }));
+    expect((await derived()).abilityScores.str.computed).toBe(16);
   });
 
   it("grants the resistance a Dragonborn picks, and offers the choice until one is picked", async () => {

@@ -12,6 +12,7 @@ import {
   type EntryRef,
   entryKey,
   hitPointMaximum,
+  type ItemAbilityTrait,
   type ItemDefenseTrait,
   itemKey,
   passiveSkill,
@@ -176,6 +177,7 @@ describe("deriveCharacter", () => {
     ]),
     raceDefenses: noDefenses,
     itemDefenses: new Map<string, ItemDefenseTrait>(),
+    itemAbilities: new Map<string, ItemAbilityTrait>(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -482,6 +484,85 @@ describe("deriveCharacter", () => {
     it("parses as the derived block's attacks", () => {
       const block = deriveCharacter(withSword({}, equipped), catalog);
       expect(characterDerivedSchema.parse(block).attacks).toHaveLength(2);
+    });
+  });
+
+  describe("ability scores from items", () => {
+    const BELT = { name: "Belt of Hill Giant Strength", source: "DMG" };
+    const AMULET = { name: "Amulet of Health", source: "DMG" };
+    const worn = (ref: EntryRef, flags: { equipped?: boolean; attuned?: boolean }) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: flags.equipped ?? false,
+      attuned: flags.attuned ?? false,
+    });
+    const abilities = new Map<string, ItemAbilityTrait>([
+      [
+        entryKey(BELT),
+        { name: BELT.name, requiresAttunement: false, static: { str: 21 }, bonus: {} },
+      ],
+      [
+        entryKey(AMULET),
+        { name: AMULET.name, requiresAttunement: true, static: { con: 19 }, bonus: {} },
+      ],
+    ]);
+    const itemCatalog = {
+      ...catalog,
+      itemAbilities: abilities,
+      weights: new Map([...catalog.weights, [entryKey(BELT), 0], [entryKey(AMULET), 0]]),
+    };
+    const withItems = (inventory: CharacterDefinition["inventory"]) =>
+      deriveCharacter({ ...definition, inventory }, itemCatalog);
+
+    it("raises a lower score to the item's, naming the item as the term", () => {
+      const block = withItems([worn(BELT, { equipped: true })]);
+      expect(block.abilityScores.str).toEqual({
+        computed: 21,
+        manual: null,
+        terms: [
+          { label: "Base", value: 8 },
+          { label: BELT.name, value: 13 },
+        ],
+      });
+      expect(block.abilityModifiers.str.computed).toBe(5);
+      expect(block.carryingCapacity.computed).toBe(315);
+    });
+
+    it("leaves a higher score alone", () => {
+      const strong = deriveCharacter(
+        {
+          ...definition,
+          abilityScores: { ...definition.abilityScores, str: 22 },
+          inventory: [worn(BELT, { equipped: true })],
+        },
+        itemCatalog,
+      );
+      expect(strong.abilityScores.str.terms).toEqual([{ label: "Base", value: 22 }]);
+    });
+
+    it("waits for equipping, and for attunement where the item requires it", () => {
+      expect(withItems([worn(BELT, {})]).abilityScores.str.computed).toBe(8);
+      expect(withItems([worn(AMULET, { equipped: true })]).abilityScores.con.computed).toBe(14);
+      const attuned = withItems([worn(AMULET, { equipped: true, attuned: true })]);
+      expect(attuned.abilityScores.con.computed).toBe(19);
+      expect(attuned.savingThrows.con.computed).toBe(4);
+      expect(attuned.hitPointMaximum.computed).toBeGreaterThan(
+        withItems([]).hitPointMaximum.computed,
+      );
+    });
+
+    it("keeps a manual override beside the computed score, which downstream numbers still read", () => {
+      const overridden = deriveCharacter(
+        {
+          ...definition,
+          inventory: [worn(BELT, { equipped: true })],
+          overrides: { "abilityScores.str": 12 },
+        },
+        itemCatalog,
+      );
+      expect(overridden.abilityScores.str).toMatchObject({ computed: 21, manual: 12 });
+      expect(overridden.abilityModifiers.str.computed).toBe(5);
     });
   });
 

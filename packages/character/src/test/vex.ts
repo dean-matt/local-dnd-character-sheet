@@ -32,6 +32,12 @@ const noSavingThrows = Object.fromEntries(
 
 /** The derived tree as the endpoint assembles it, with the traits under test swapped in. */
 export const derivedInput = (traits: object = {}) => ({
+  abilityScores: Object.fromEntries(
+    Object.entries(definition.abilityScores).map(([ability, score]) => [
+      ability,
+      { computed: score },
+    ]),
+  ),
   abilityModifiers: noSavingThrows,
   hitPointMaximum: { computed: 37 },
   hitDice: [],

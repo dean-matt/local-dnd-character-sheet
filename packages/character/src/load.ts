@@ -6,7 +6,6 @@ import {
   reducedSpeed,
   type Term,
 } from "@dnd/rules";
-import { abilityScore } from "./abilityScore.ts";
 import type { CharacterDerived, Speed } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
@@ -96,7 +95,7 @@ export function encumberedSpeed(
     };
   }
   const { speedReduction, disadvantage } = encumbranceAt(
-    abilityScore(definition, "str"),
+    derived.abilityScores.str.computed,
     derivedValue(derived.size),
     weight,
   );

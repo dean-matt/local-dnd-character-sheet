@@ -1,3 +1,4 @@
+export { abilityGrantSchema } from "./ability.ts";
 export type { IncreaseAlternative } from "./ability-increases.ts";
 export { abilityIncreasesSchema, customOrigin } from "./ability-increases.ts";
 export { catalogRowRecordSchema } from "./catalog-row.ts";

@@ -2,10 +2,10 @@ import {
   ABILITIES,
   ABILITY_LABEL,
   abilityScore,
-  abilityScoreBreakdown,
   abilityScoresSchema,
   type CharacterDerived,
   type CharacterRecord,
+  derivedValue,
 } from "@dnd/character";
 import { useState } from "react";
 import { z } from "zod";
@@ -51,8 +51,14 @@ export function AbilityScores({
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {ABILITIES.map((ability) => {
-          const { total: score, terms } = abilityScoreBreakdown(definition, ability);
+          const { terms } = derived.abilityScores[ability];
+          const score = derivedValue(derived.abilityScores[ability]);
           const raised = score - definition.abilityScores[ability];
+          // A static or capped item is not a fixed offset, so no base the player types can
+          // reach a score it sets; the tile reads only until the item comes off.
+          const editable =
+            derived.abilityScores[ability].manual === null &&
+            derived.abilityScores[ability].computed === abilityScore(definition, ability);
           const increases = terms
             .slice(1)
             .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`);
@@ -72,30 +78,40 @@ export function AbilityScores({
                 rules: editionRules(definition, ABILITY_RULES),
               }}
             >
-              <Field
-                mode="edit"
-                label={`${ABILITY_LABEL[ability]} score`}
-                labelHidden
-                current={score}
-                format={String}
-                parse={parseScore}
-                schema={scoreSchema(raised)}
-                inputClassName="w-12 py-1 text-center text-number"
-                inputMode="numeric"
-                messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
-                onSave={async (typed: number) => {
-                  // The player edits the score they see; the base takes the difference, so
-                  // a race's increase stays its own term.
-                  await update.mutateAsync((latest) => ({
-                    ...latest,
-                    abilityScores: {
-                      ...latest.abilityScores,
-                      [ability]:
-                        latest.abilityScores[ability] + typed - abilityScore(latest, ability),
-                    },
-                  }));
-                }}
-              />
+              {editable ? (
+                <Field
+                  mode="edit"
+                  label={`${ABILITY_LABEL[ability]} score`}
+                  labelHidden
+                  current={score}
+                  format={String}
+                  parse={parseScore}
+                  schema={scoreSchema(raised)}
+                  inputClassName="w-12 py-1 text-center text-number"
+                  inputMode="numeric"
+                  messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
+                  onSave={async (typed: number) => {
+                    // The player edits the score they see; the base takes the difference, so
+                    // a race's increase stays its own term.
+                    await update.mutateAsync((latest) => ({
+                      ...latest,
+                      abilityScores: {
+                        ...latest.abilityScores,
+                        [ability]:
+                          latest.abilityScores[ability] + typed - abilityScore(latest, ability),
+                      },
+                    }));
+                  }}
+                />
+              ) : (
+                <Field
+                  mode="read"
+                  label={`${ABILITY_LABEL[ability]} score`}
+                  labelHidden
+                  value={derived.abilityScores[ability]}
+                  format={String}
+                />
+              )}
               <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
                 <Field
                   mode="read"
