@@ -1,9 +1,9 @@
 /**
  * The numbers a player reads constantly. Every computed number comes off the derived
- * block; the definition supplies only what a player chose — the scores and which saves
- * and skills they are proficient in — and `Vitals` reads what play has spent from
- * state. A value with terms opens them in a popover; an ability, a save or a skill opens
- * its terms and the catalog's rules text in a modal.
+ * block; the definition supplies only what a player chose — the scores, which saves and
+ * skills they are proficient in, and the skills they added — and `Vitals` reads what play
+ * has spent from state. A value with terms opens them in a popover; an ability, a save or
+ * a skill opens its terms and the catalog's rules text in a modal.
  */
 import {
   ABILITIES,
@@ -20,6 +20,7 @@ import { AbilityScores } from "./AbilityScores.tsx";
 import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CombatStats } from "./CombatStats.tsx";
+import { CustomSkills } from "./CustomSkills.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
 import { Improvements } from "./Improvements.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
@@ -99,6 +100,7 @@ export function AbilitiesSection({
               />
             ))}
           </ul>
+          <CustomSkills character={character} derived={derived} />
           <PassiveScores derived={derived} />
         </Card>
       </div>

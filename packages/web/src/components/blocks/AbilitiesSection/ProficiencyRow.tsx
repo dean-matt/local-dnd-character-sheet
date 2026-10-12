@@ -1,4 +1,5 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
+import { X } from "lucide-react";
 import type { Rules } from "./abilityRules.ts";
 import { DerivedBonus } from "./DerivedBonus.tsx";
 import { DetailName } from "./DetailName/DetailName.tsx";
@@ -16,6 +17,8 @@ export function ProficiencyRow({
   title,
   rules,
   effects = [],
+  onCycleLevel,
+  onRemove,
 }: {
   level: ProficiencyLevel;
   name: string;
@@ -26,10 +29,24 @@ export function ProficiencyRow({
   rules: Rules | undefined;
   /** What equipped items grant on this roll. */
   effects?: readonly RollEffectEntry[];
+  /** Makes the ring a button that moves to the next level, for a row the character owns. */
+  onCycleLevel?: () => void;
+  onRemove?: () => void;
 }) {
   return (
     <li className="flex flex-wrap items-center gap-2 py-0.5 text-body">
-      <ProficiencyRing level={level} />
+      {onCycleLevel ? (
+        <button
+          type="button"
+          aria-label={`${name} proficiency: ${PROFICIENCY_MARK[level].text}`}
+          onClick={onCycleLevel}
+          className="flex"
+        >
+          <ProficiencyRing level={level} />
+        </button>
+      ) : (
+        <ProficiencyRing level={level} />
+      )}
       <span className="flex-1">
         <DetailName
           title={title}
@@ -60,6 +77,16 @@ export function ProficiencyRow({
       <span className="flex w-7 justify-end font-semibold">
         <DerivedBonus named name={ability ? `${name} check` : `${name} save`} value={modifier} />
       </span>
+      {onRemove && (
+        <button
+          type="button"
+          aria-label={`Remove ${name}`}
+          onClick={onRemove}
+          className="text-muted hover:text-ink"
+        >
+          <X aria-hidden="true" size={10} strokeWidth={2} />
+        </button>
+      )}
       <RollEffects effects={effects} className="basis-full pl-6" />
     </li>
   );
