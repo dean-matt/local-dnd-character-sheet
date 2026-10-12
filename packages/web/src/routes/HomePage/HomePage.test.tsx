@@ -135,6 +135,15 @@ describe("HomePage", () => {
     ]);
   });
 
+  it("stretches each Explore card to its row, so a wrapped description leaves none taller", () => {
+    renderHome();
+
+    const explore = screen.getByRole("region", { name: "Explore" });
+    for (const name of [/^Search/, /^Settings/, /^Homebrew/]) {
+      expect(within(explore).getByRole("link", { name })).toHaveClass("h-full", "items-center");
+    }
+  });
+
   it("says so in Explore when the catalog's types fail to load, keeping Search and Settings", async () => {
     renderHome({ "/api/characters": [] });
 

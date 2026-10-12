@@ -12,7 +12,7 @@ export function HomeQuickLink({ to, icon: Icon, label, description }: HomeQuickL
   return (
     <Link
       to={to}
-      className="flex items-center gap-3.5 rounded-card border border-border bg-surface px-4.5 py-4 hover:bg-subtle"
+      className="flex h-full items-center gap-3.5 rounded-card border border-border bg-surface px-4.5 py-4 hover:bg-subtle"
     >
       <span
         aria-hidden="true"
