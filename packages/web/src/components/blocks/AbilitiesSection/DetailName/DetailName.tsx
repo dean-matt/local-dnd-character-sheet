@@ -11,6 +11,7 @@ export function DetailName({
   meta,
   value,
   rules,
+  footer,
   className,
   children,
 }: {
@@ -18,6 +19,7 @@ export function DetailName({
   meta?: string;
   value: Derived<number>;
   rules: Rules | undefined;
+  footer?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
@@ -31,6 +33,7 @@ export function DetailName({
           {rules && <CatalogRules {...rules} />}
         </>
       }
+      footer={footer}
       className={className}
     >
       {children}

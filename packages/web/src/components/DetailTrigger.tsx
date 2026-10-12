@@ -11,12 +11,14 @@ export function DetailTrigger({
   title,
   meta,
   detail,
+  footer,
   className,
   children,
 }: {
   title: string;
   meta?: ReactNode;
   detail: ReactNode;
+  footer?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
@@ -36,7 +38,7 @@ export function DetailTrigger({
       </button>
       {open && (
         <Modal onClose={() => setOpen(false)}>
-          <ModalEntry title={title} meta={meta}>
+          <ModalEntry title={title} meta={meta} footer={footer}>
             {detail}
           </ModalEntry>
         </Modal>

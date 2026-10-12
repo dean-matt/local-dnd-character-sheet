@@ -8,7 +8,7 @@ import {
   effectsOnRoll,
   flatSkillBonusSchema,
 } from "@dnd/character";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
@@ -17,6 +17,7 @@ import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
+import { RemoveCustomSkill } from "./RemoveCustomSkill.tsx";
 
 type CustomSkill = CharacterDefinition["customSkills"][number];
 
@@ -49,17 +50,15 @@ export function CustomSkills({
   const save = (customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
     update.mutate((latest) => ({ ...latest, customSkills: customSkills(latest.customSkills) }));
 
-  /** Drops the skill's overrides too, so a new skill taking its name starts computed. */
-  function remove(skill: string) {
-    const prefix = `customSkills.${skill}.`;
-    update.mutate((latest) => ({
-      ...latest,
-      customSkills: latest.customSkills.filter((each) => each.name !== skill),
-      overrides: Object.fromEntries(
-        Object.entries(latest.overrides).filter(([key]) => !key.startsWith(prefix)),
-      ),
-    }));
-  }
+  const addField = useRef<HTMLInputElement>(null);
+  const [removed, setRemoved] = useState<string>();
+
+  // Waits for the render that drops the row: until then its modal holds the page inert.
+  useEffect(() => {
+    if (removed === undefined || stored.some((each) => each.name === removed)) return;
+    setRemoved(undefined);
+    addField.current?.focus();
+  }, [removed, stored]);
 
   function add(event: FormEvent) {
     event.preventDefault();
@@ -85,7 +84,9 @@ export function CustomSkills({
         <ul aria-label="Custom skills" className="mt-1 grid gap-x-5 gap-y-1 sm:grid-cols-2">
           {derived.customSkills.map((skill) => {
             const own = stored.find((each) => each.name === skill.name);
-            const level = own?.level ?? "none";
+            // The stored list drops a removed skill before the derived block refetches.
+            if (!own) return null;
+            const level = own.level;
             return (
               <ProficiencyRow
                 key={skill.name}
@@ -96,7 +97,6 @@ export function CustomSkills({
                 title={skill.name}
                 rules={undefined}
                 field={
-                  own &&
                   "flat" in own && (
                     <Field
                       mode="edit"
@@ -130,7 +130,13 @@ export function CustomSkills({
                     ),
                   )
                 }
-                onRemove={() => remove(skill.name)}
+                detailFooter={
+                  <RemoveCustomSkill
+                    characterId={character.id}
+                    name={skill.name}
+                    onRemoved={() => setRemoved(skill.name)}
+                  />
+                }
               />
             );
           })}
@@ -139,6 +145,7 @@ export function CustomSkills({
       <form noValidate onSubmit={add} className="mt-2 flex items-start gap-1.5">
         <div className="min-w-0 grow">
           <InputField
+            ref={addField}
             label="Custom skill"
             labelHidden
             placeholder="Custom skill"
