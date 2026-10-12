@@ -52,6 +52,7 @@ export function CustomSkills({
 
   const addField = useRef<HTMLInputElement>(null);
   const [removed, setRemoved] = useState<string>();
+  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
 
   // Waits for the render that drops the row: until then its modal holds the page inert.
   useEffect(() => {
@@ -97,12 +98,13 @@ export function CustomSkills({
                 title={skill.name}
                 rules={undefined}
                 field={
-                  "flat" in own && (
+                  "flat" in own ? (
                     <Field
                       mode="edit"
                       label={`${skill.name} flat bonus`}
                       labelHidden
-                      inputClassName="w-10 text-right"
+                      inputClassName="w-10 py-0 text-right"
+                      messageSlot={{ into: messages, name: skill.name }}
                       current={own.flat}
                       format={String}
                       parse={(raw) => Number(raw.trim())}
@@ -116,7 +118,7 @@ export function CustomSkills({
                         }));
                       }}
                     />
-                  )
+                  ) : undefined
                 }
                 effects={effectsOnRoll(rollEffects, {
                   roll: "skill",
@@ -142,6 +144,7 @@ export function CustomSkills({
           })}
         </ul>
       )}
+      <div ref={setMessages} className="flex flex-col" />
       <form noValidate onSubmit={add} className="mt-2 flex items-start gap-1.5">
         <div className="min-w-0 grow">
           <InputField

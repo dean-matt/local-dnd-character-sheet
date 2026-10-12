@@ -107,13 +107,31 @@ describe("CustomSkills", () => {
     );
   });
 
-  it("shows FLAT where an ability skill shows its ability, and its value plus proficiency", () => {
+  it("shows FLAT and the value box on a flat skill's row, and its total in the modal", () => {
     renderSeeded(holding([CARTOGRAPHY]));
 
-    const row = screen.getByRole("list", { name: "Custom skills" });
+    const row = screen.getByRole("listitem");
     expect(row).toHaveTextContent("flat");
     expect(row).toHaveTextContent("Flat bonus");
-    expect(row).toHaveTextContent("+5");
+    expect(within(row).getByRole("textbox", { name: "Cartography flat bonus" })).toHaveValue("3");
+    expect(row).not.toHaveTextContent("+5");
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
+    expect(modal.getByText("+5")).toBeVisible();
+    expect(modal.getByText("Flat bonus")).toBeVisible();
+    expect(modal.getByText("Proficiency")).toBeVisible();
+  });
+
+  it("says a flat value saved outside its row, so the row keeps its height", async () => {
+    stubServer(holding([CARTOGRAPHY]));
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    const input = screen.getByRole("textbox", { name: "Cartography flat bonus" });
+    fireEvent.change(input, { target: { value: "4" } });
+    fireEvent.blur(input);
+
+    await waitFor(() => expect(screen.getByText(/Cartography: Saved/)).toBeVisible());
+    expect(screen.getByRole("listitem")).not.toHaveTextContent("Saved");
   });
 
   it("saves an edit to a flat skill's value", async () => {

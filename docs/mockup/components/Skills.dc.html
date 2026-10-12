@@ -29,7 +29,12 @@
           <button aria-label="Toggle {{sk.label}} proficiency" onClick="{{sk.toggle}}" style="width: 13px; height: 13px; padding: 0; border-radius: 50%; border: 1.5px solid {{sk.dotBorder}}; background: {{sk.dotFill}}; flex-shrink: 0;"></button>
           <button aria-label="View {{sk.label}} details" onClick="{{sk.openDetail}}" style="all: unset; cursor: pointer; color: #1f2430;">{{sk.label}}</button>
           <div style="color: #6b7280; font-size: 11px;">{{sk.abilityLabel}}</div>
-          <button aria-label="Roll {{sk.label}} check" onClick="{{sk.roll}}" onMouseEnter="{{sk.showCalc}}" onMouseLeave="{{sk.hideCalc}}" onFocus="{{sk.showCalc}}" onBlur="{{sk.hideCalc}}" aria-describedby="{{sk.calcId}}" style="margin-left: auto; font-weight: 600; color: #1f2430; width: 28px; text-align: right; background: none; border: none; padding: 0;">{{sk.bonus}}</button>
+          <sc-if value="{{sk.notFlat}}" hint-placeholder-val="{{true}}">
+            <button aria-label="Roll {{sk.label}} check" onClick="{{sk.roll}}" onMouseEnter="{{sk.showCalc}}" onMouseLeave="{{sk.hideCalc}}" onFocus="{{sk.showCalc}}" onBlur="{{sk.hideCalc}}" aria-describedby="{{sk.calcId}}" style="margin-left: auto; font-weight: 600; color: #1f2430; width: 28px; text-align: right; background: none; border: none; padding: 0;">{{sk.bonus}}</button>
+          </sc-if>
+          <sc-if value="{{sk.isFlat}}" hint-placeholder-val="{{false}}">
+            <input type="text" aria-label="{{sk.label}} flat bonus" value="{{sk.flatValue}}" onChange="{{sk.onFlatChange}}" style="margin-left: auto; width: 40px; padding: 0 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; line-height: 16px; text-align: right; background: #ffffff; color: #1f2430;">
+          </sc-if>
           <sc-if value="{{sk.calcOpen}}" hint-placeholder-val="{{false}}">
             <div role="tooltip" id="{{sk.calcId}}" style="position: absolute; top: calc(100% + 2px); right: 0; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; max-width: 220px; white-space: normal; pointer-events: none;">
               <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">{{sk.calcLabel}}</div>
@@ -73,7 +78,10 @@
         <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalCalcText}}</div>
         <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalDesc}}</div>
         <sc-if value="{{modalRemovable}}" hint-placeholder-val="{{false}}">
-          <div style="display: flex; justify-content: flex-end; margin-top: 14px; padding-top: 12px; border-top: 1px solid #dde1e6;">
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #dde1e6;">
+            <sc-if value="{{modalRollable}}" hint-placeholder-val="{{false}}">
+              <button onClick="{{modalRoll}}" style="padding: 8px 14px; border-radius: 4px; border: 1px solid #dde1e6; background: #ffffff; color: #1f2430; font-size: 12px; font-weight: 600;">Roll {{modalTitle}} check</button>
+            </sc-if>
             <button onClick="{{modalRemove}}" style="padding: 8px 14px; border-radius: 4px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Remove {{modalTitle}}</button>
           </div>
         </sc-if>
@@ -132,6 +140,8 @@ class Component extends DCLogic {
         key: sd.key,
         label: sd.label,
         abilityLabel: sd.ability.toUpperCase(),
+        isFlat: false,
+        notFlat: true,
         bonus: fmt(bonus),
         calcId: 'sk-calc-' + sd.key,
         calcOpen: this.state.hoverKey === sd.key,
@@ -155,6 +165,10 @@ class Component extends DCLogic {
         key: cs.id,
         label: cs.label,
         abilityLabel: isFlat ? 'FLAT' : cs.ability.toUpperCase(),
+        isFlat,
+        notFlat: !isFlat,
+        flatValue: cs.flatText ?? String(cs.flatBonus || 0),
+        onFlatChange: (e) => this.setState({ customSkills: customSkills.map((x) => (x.id === cs.id ? { ...x, flatText: e.target.value, flatBonus: parseInt(e.target.value, 10) || 0 } : x)) }),
         bonus: fmt(bonus),
         calcId: 'sk-calc-' + cs.id,
         calcOpen: this.state.hoverKey === cs.id,
@@ -166,7 +180,7 @@ class Component extends DCLogic {
         dotBorder: cs.proficient ? accent : '#c7ccd3',
         roll: () => {},
         toggle: () => this.setState({ customSkills: customSkills.map((x) => (x.id === cs.id ? { ...x, proficient: !x.proficient } : x)) }),
-        openDetail: () => this.setState({ modalItem: { label: cs.label, bonus: fmt(bonus), calcText, desc: 'Custom skill added to this sheet.', remove: () => this.setState({ customSkills: this.state.customSkills.filter((x) => x.id !== cs.id), modalItem: null }) } })
+        openDetail: () => this.setState({ modalItem: { label: cs.label, bonus: fmt(bonus), calcText, desc: 'Custom skill added to this sheet.', roll: isFlat ? () => {} : null, remove: () => this.setState({ customSkills: this.state.customSkills.filter((x) => x.id !== cs.id), modalItem: null }) } })
       };
     });
     const skillRows = standardSkillRows.concat(customSkillRows);
@@ -200,6 +214,8 @@ class Component extends DCLogic {
       modalCalcText: modalItem ? modalItem.calcText : '',
       modalDesc: modalItem ? modalItem.desc : '',
       modalRemovable: !!(modalItem && modalItem.remove),
+      modalRollable: !!(modalItem && modalItem.roll),
+      modalRoll: () => modalItem && modalItem.roll && modalItem.roll(),
       modalRemove: () => modalItem && modalItem.remove && modalItem.remove(),
       closeModal: () => this.setState({ modalItem: null }),
       stopPropagation: (e) => e.stopPropagation()
