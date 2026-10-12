@@ -382,18 +382,34 @@ describe("InventorySection", () => {
     } as CharacterInventory);
 
     await screen.findByText("Ring of Warmth");
-    await waitFor(() =>
-      expect(card("Attunement").getByRole("status")).toHaveTextContent(
-        "2 / 1 attuned, over the limit: Cloak of Protection and Ring of Warmth.",
-      ),
+    const attunement = card("Attunement");
+    const warning = "2 / 1 attuned, over the limit: Cloak of Protection and Ring of Warmth.";
+    await waitFor(() => expect(attunement.getByRole("status")).toHaveTextContent(warning));
+    expect(attunement.getByText("Attuned").nextSibling?.firstChild).toHaveClass("text-error");
+
+    fireEvent.click(attunement.getByRole("button", { name: "Over the attunement limit" }));
+    expect(attunement.getByRole("group", { name: "Over the attunement limit" })).toHaveTextContent(
+      warning,
     );
+  });
+
+  it("warns inside the Attuned row, adding no line to the card", async () => {
+    renderSection(load({ attunementSlots: { computed: 3, manual: 1, terms: [] } }));
+
+    await screen.findByText("Ring of Warmth");
+    const attunement = card("Attunement");
+    expect(attunement.getByRole("status")).toHaveClass("sr-only");
+    expect(attunement.getByText("Attuned").closest(".flex-col")?.children).toHaveLength(3);
   });
 
   it("shows no warning at or under the limit", async () => {
     renderSection(load({ attunementSlots: { computed: 2, manual: null, terms: [] } }));
 
     await screen.findByText("Ring of Warmth");
-    expect(card("Attunement").queryByRole("status")).toBeNull();
+    const attunement = card("Attunement");
+    expect(attunement.getByRole("status")).toBeEmptyDOMElement();
+    expect(attunement.queryByRole("button", { name: "Over the attunement limit" })).toBeNull();
+    expect(attunement.getByText("Attuned").nextSibling?.firstChild).not.toHaveClass("text-error");
   });
 
   it("shows the load against carrying capacity, naming a tier only under the variant", async () => {
