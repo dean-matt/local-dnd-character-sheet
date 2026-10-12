@@ -72,7 +72,9 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     if (textRef.current !== savedText.current) commit(textRef.current);
   };
   // A field can unmount mid-edit, as one in a modal does when Escape closes it, with no
-  // blur to commit the text; saving it here keeps the edit rather than dropping it.
+  // blur to commit the text; saving it here keeps the edit rather than dropping it. With
+  // no field left to show a refusal or a failure, refused text is dropped and the caller's
+  // mutation reports a failed write.
   useEffect(
     () => () => {
       clearTimeout(timer.current);

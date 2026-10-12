@@ -109,9 +109,9 @@ export function CustomSkills({
                   )
                 }
                 detailFooter={
-                  <div className="flex flex-1 items-start justify-between gap-3">
+                  <div className="flex flex-1 items-start justify-end gap-3">
                     {"flat" in own && (
-                      <div className="flex items-baseline gap-2">
+                      <div className="me-auto flex items-baseline gap-2">
                         <span aria-hidden="true" className="text-muted text-row">
                           Flat bonus
                         </span>

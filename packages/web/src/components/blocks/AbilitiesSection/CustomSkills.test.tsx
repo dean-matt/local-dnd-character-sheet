@@ -131,7 +131,8 @@ describe("CustomSkills", () => {
     const field = modal.getByRole("textbox", { name: "Cartography flat bonus" });
     expect(field).toHaveValue("3");
     const remove = modal.getByRole("button", { name: "Remove Cartography" });
-    expect(field.closest(".flex-1")).toContainElement(remove);
+    expect(terms.queryByRole("button", { name: "Remove Cartography" })).toBeNull();
+    expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it("saves a negative base from the modal as one write, and the row and terms follow", async () => {
