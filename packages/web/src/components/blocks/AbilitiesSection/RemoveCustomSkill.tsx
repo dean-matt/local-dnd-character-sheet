@@ -18,7 +18,8 @@ export function RemoveCustomSkill({
   const update = useUpdateCharacterDefinition(characterId);
   const prefix = `customSkills.${name}.`;
 
-  // The failure renders from the mutation's own state, so the rejection needs no handler.
+  // The modal shows a failure from the mutation's state; the empty handler only keeps the
+  // rejection from going unhandled.
   function remove() {
     if (update.isPending) return;
     update
