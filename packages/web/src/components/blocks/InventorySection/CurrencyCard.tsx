@@ -34,7 +34,7 @@ export function CurrencyCard({
   const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   return (
     <Card title="Currency">
-      <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
+      <div className="flex flex-wrap items-start gap-x-5 gap-y-2">
         {COINS.map(([coin, name, abbreviation]) => (
           <div key={coin} className="flex flex-col gap-1">
             <Field

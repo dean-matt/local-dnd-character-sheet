@@ -22,10 +22,12 @@ export function InventorySection({
   if (!character) return <EmptyState>Inventory isn't available yet.</EmptyState>;
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+      {/* Currency's track sizes to its five coins unwrapped, so it joins the row only at xl,
+          where the two narrower cards still fit their longest label and value. */}
+      <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         {derived && <CarryingCard character={character} derived={derived} />}
         {derived && <AttunementCard character={character} derived={derived} />}
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 xl:col-span-1">
           <CurrencyCard characterId={character.id} money={character.definition.money} />
         </div>
       </div>
