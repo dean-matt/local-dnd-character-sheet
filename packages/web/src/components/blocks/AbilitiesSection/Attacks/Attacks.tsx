@@ -77,7 +77,7 @@ export function Attacks({
         <table className="w-full table-fixed text-body">
           <colgroup>
             <col />
-            <col className="w-[60px]" />
+            <col className="w-[88px]" />
             <col />
           </colgroup>
           <thead className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">

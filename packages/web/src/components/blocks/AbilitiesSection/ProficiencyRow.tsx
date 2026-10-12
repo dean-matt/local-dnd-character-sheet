@@ -5,7 +5,7 @@ import { DerivedBonus } from "./DerivedBonus.tsx";
 import { DetailName } from "./DetailName/DetailName.tsx";
 import { ProficiencyRing } from "./ProficiencyRing.tsx";
 import { PROFICIENCY_MARK, type ProficiencyLevel } from "./proficiencyMark.ts";
-import { RollEffects } from "./RollEffects.tsx";
+import { RollEffectChip } from "./RollEffectChip.tsx";
 
 /** One row of a proficiency list: the ring a reader checks as often as the total, then the total. */
 export function ProficiencyRow({
@@ -33,8 +33,9 @@ export function ProficiencyRow({
   onCycleLevel?: () => void;
   onRemove?: () => void;
 }) {
+  const roll = ability ? `${name} check` : `${name} save`;
   return (
-    <li className="flex flex-wrap items-center gap-2 py-0.5 text-body">
+    <li className="flex items-center gap-2 py-0.5 text-body">
       {onCycleLevel ? (
         <button
           type="button"
@@ -75,10 +76,10 @@ export function ProficiencyRow({
         </span>
       )}
       <span className="flex w-7 justify-end font-semibold">
-        <DerivedBonus named name={ability ? `${name} check` : `${name} save`} value={modifier} />
+        <DerivedBonus named name={roll} value={modifier} />
       </span>
+      <RollEffectChip roll={roll} effects={effects} />
       {onRemove && <RemoveButton name={name} onRemove={onRemove} />}
-      <RollEffects effects={effects} className="basis-full pl-6" />
     </li>
   );
 }

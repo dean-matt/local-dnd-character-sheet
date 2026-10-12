@@ -75,7 +75,7 @@ describe("Attacks", () => {
     );
   });
 
-  it("notes the advantage or disadvantage an item grants on attack rolls beside each attack", async () => {
+  it("marks each attack bonus with the advantage or disadvantage an item grants on attack rolls", async () => {
     renderAttacks({
       ...derivedRecord(),
       attacks: [attack(0, 5)],
@@ -94,12 +94,20 @@ describe("Attacks", () => {
       },
     });
 
-    const header = await screen.findByRole("rowheader", { name: /^Longsword/ });
-    expect(header).toHaveTextContent("Disadvantage with all other weapons (Oathbow)");
-    expect(header).not.toHaveTextContent("Boots of Elvenkind");
-    expect(screen.getByRole("rowheader", { name: /^Warlock spell attack/ })).toHaveTextContent(
-      "Disadvantage with all other weapons (Oathbow)",
+    fireEvent.focus(
+      await screen.findByRole("button", {
+        name: "Longsword: Disadvantage if every condition holds",
+      }),
     );
+    expect(
+      screen.getByRole("group", { name: "Longsword advantage and disadvantage" }),
+    ).toHaveTextContent("Disadvantage with all other weapons (Oathbow)");
+    expect(screen.getByRole("rowheader", { name: /^Longsword/ })).not.toHaveTextContent("Oathbow");
+    expect(
+      screen.getByRole("button", {
+        name: "Warlock spell attack: Disadvantage if every condition holds",
+      }),
+    ).toHaveTextContent(/^DIS\*$/);
   });
 
   it("opens a weapon's attack terms from its bonus", async () => {
