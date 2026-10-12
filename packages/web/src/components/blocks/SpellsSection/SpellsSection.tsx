@@ -26,7 +26,7 @@ export function SpellsSection({
   if (!casts) return <EmptyState>{character.name} doesn't cast spells.</EmptyState>;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <CasterNumbers derived={derived} />
       <SpellSlots derived={derived} />
       <SpellList character={character} />

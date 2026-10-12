@@ -70,7 +70,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
   const noMatches = widgets.every((widget) => widget.matches.length === 0);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <div className="print:hidden">
         <label htmlFor={inputId} className="sr-only">
           Search features
