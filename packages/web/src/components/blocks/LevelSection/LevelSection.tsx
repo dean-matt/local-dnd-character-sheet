@@ -6,6 +6,7 @@ import { SectionUnavailable } from "../SectionUnavailable.tsx";
 import { ExperienceTracker } from "./ExperienceTracker.tsx";
 import { Improvements } from "./Improvements.tsx";
 import { LevelingField } from "./LevelingField.tsx";
+import { LevelUp } from "./LevelUp/LevelUp.tsx";
 
 export function LevelSection({ character }: { character: CharacterRecord | undefined }) {
   if (!character) return <SectionUnavailable page="Level" />;
@@ -29,6 +30,7 @@ export function LevelSection({ character }: { character: CharacterRecord | undef
               Milestone leveling — the DM says when you level; no experience points tracked.
             </p>
           )}
+          <LevelUp character={character} />
         </div>
       </Card>
       <Improvements character={character} />

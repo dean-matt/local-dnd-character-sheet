@@ -28,14 +28,23 @@ export function createForm<In extends FieldValues, Out extends FieldValues>(
 ) {
   function BoundFormShell({
     draftScope,
+    defaultValues = config.defaultValues,
     ...props
   }: Omit<FormShellProps<In, Out>, keyof FormConfig<In, Out>> & {
     /** Splits the flow's draft per instance, such as by character for level-up. */
     draftScope?: string;
+    /** Replaces the form's own defaults for one instance, such as the character a level-up starts from. */
+    defaultValues?: DefaultValues<In>;
   }) {
     const flow = draftScope === undefined ? config.flow : `${config.flow}:${draftScope}`;
     // FormShell reads its draft once on mount, so a new scope needs a fresh instance.
-    return createElement(FormShell<In, Out>, { ...config, ...props, flow, key: flow });
+    return createElement(FormShell<In, Out>, {
+      ...config,
+      ...props,
+      defaultValues,
+      flow,
+      key: flow,
+    });
   }
 
   function useField(name: Path<In>): UseFormRegisterReturn & { error?: string } {
