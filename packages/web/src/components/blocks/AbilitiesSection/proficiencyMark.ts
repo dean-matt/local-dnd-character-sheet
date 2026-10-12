@@ -15,8 +15,12 @@ export const PROFICIENCY_MARK: Record<ProficiencyLevel, { text: string; classNam
   },
 };
 
-/** Half proficiency comes from a feature rather than a pick, so the ring skips it and a stored half moves on to none. */
-const LEVEL_CYCLE: ProficiencyLevel[] = ["none", "proficient", "expertise"];
+/** A feature grants half proficiency rather than the player picking it, so the ring replaces it with the first pick, proficient. */
+const NEXT_LEVEL: Record<ProficiencyLevel, ProficiencyLevel> = {
+  none: "proficient",
+  half: "proficient",
+  proficient: "expertise",
+  expertise: "none",
+};
 
-export const nextLevel = (level: ProficiencyLevel) =>
-  LEVEL_CYCLE[(LEVEL_CYCLE.indexOf(level) + 1) % LEVEL_CYCLE.length] ?? "none";
+export const nextLevel = (level: ProficiencyLevel) => NEXT_LEVEL[level];

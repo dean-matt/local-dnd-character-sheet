@@ -97,17 +97,23 @@ describe("CatalogSkills", () => {
     await waitFor(() => expect(written(fetchMock)).toEqual([{ ref: ARCANA, level: "expertise" }]));
   });
 
-  it.each(["expertise", "half"] as const)(
-    "drops a skill held at %s once its ring steps to none",
-    async (level) => {
-      const fetchMock = stubServer(new Response(JSON.stringify(holding([]))));
-      renderSeeded(holding([{ ref: ARCANA, level }]));
+  it("drops a skill held at expertise once its ring steps to none", async () => {
+    const fetchMock = stubServer(new Response(JSON.stringify(holding([]))));
+    renderSeeded(holding([{ ref: ARCANA, level: "expertise" }]));
 
-      fireEvent.click(screen.getByRole("button", { name: /^Arcana proficiency/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Expertise" }));
 
-      await waitFor(() => expect(written(fetchMock)).toEqual([]));
-    },
-  );
+    await waitFor(() => expect(written(fetchMock)).toEqual([]));
+  });
+
+  it("replaces a feature's half proficiency with proficient", async () => {
+    const fetchMock = stubServer(new Response(JSON.stringify(holding([]))));
+    renderSeeded(holding([{ ref: ARCANA, level: "half" }]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Half proficiency" }));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual([{ ref: ARCANA, level: "proficient" }]));
+  });
 
   it("says when the change fails to save", async () => {
     stubServer(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
