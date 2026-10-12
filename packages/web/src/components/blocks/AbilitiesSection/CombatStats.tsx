@@ -24,7 +24,7 @@ export function CombatStats({ derived }: { derived: CharacterDerived }) {
   );
   return (
     <Card title="Combat">
-      <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile label="Prof." name="Proficiency Bonus" labelClassName={COMBAT_LABEL_CLASS}>
           <DerivedBonus named name="Proficiency Bonus" value={derived.proficiencyBonus} />
         </StatTile>

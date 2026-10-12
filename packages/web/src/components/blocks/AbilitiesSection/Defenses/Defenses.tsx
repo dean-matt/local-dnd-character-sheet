@@ -25,7 +25,7 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
     derivedValue(derived.defenses);
   return (
     <Card title="Resistances & Immunities">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <DefenseChipRow
           heading="Resistances"
           items={chips(

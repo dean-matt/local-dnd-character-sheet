@@ -82,13 +82,13 @@ export function Attacks({
           </colgroup>
           <thead className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
             <tr>
-              <th scope="col" className="px-0.5 pb-1 text-left">
+              <th scope="col" className="px-0.5 pb-0.5 text-left">
                 Name
               </th>
-              <th scope="col" className="px-0.5 pb-1 text-left">
+              <th scope="col" className="px-0.5 pb-0.5 text-left">
                 Bonus
               </th>
-              <th scope="col" className="px-0.5 pb-1 text-left">
+              <th scope="col" className="px-0.5 pb-0.5 text-left">
                 Damage / Type
               </th>
             </tr>

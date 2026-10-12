@@ -30,7 +30,7 @@ export function WeaponMasteryChoice({
   };
 
   return (
-    <div className="mt-3 flex flex-col gap-1.5 border-border border-t pt-2.5">
+    <div className="mt-2 flex flex-col gap-1.5 border-border border-t pt-2">
       <h4 className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
         Weapon mastery
       </h4>

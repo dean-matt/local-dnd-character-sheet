@@ -26,7 +26,7 @@ export function HitPoints({
 
   return (
     <Card title="Hit Points">
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-1.5">
           <span className="font-bold text-[26px] leading-none">
             {current}

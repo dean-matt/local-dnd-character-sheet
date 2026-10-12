@@ -5,7 +5,7 @@ import { EmptyNote } from "./EmptyNote.tsx";
 export function ChipList({ labels, empty }: { labels: readonly string[]; empty?: string }) {
   if (labels.length === 0) return empty ? <EmptyNote>{empty}</EmptyNote> : null;
   return (
-    <ul className="flex flex-wrap gap-1.5">
+    <ul className="flex flex-wrap gap-1">
       {labels.map((label, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: two chips can share a label, and the list is redrawn whole.
         <li key={index} className={PILL}>

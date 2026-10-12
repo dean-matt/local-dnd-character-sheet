@@ -57,7 +57,7 @@ export function AbilitiesSection({
       <ItemGrants derived={derived} />
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-0.5">
             {ABILITIES.map((ability) => (
               <ProficiencyRow
                 key={ability}
@@ -82,7 +82,7 @@ export function AbilitiesSection({
           </ul>
         </Card>
         <Card title="Skills">
-          <ul className="grid gap-x-5 gap-y-1 sm:grid-cols-2">
+          <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
             {skills.map((skill) => (
               <ProficiencyRow
                 key={refKey(skill.ref)}

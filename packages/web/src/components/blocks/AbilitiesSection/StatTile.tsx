@@ -23,7 +23,7 @@ export function StatTile({
     </>
   );
   return (
-    <div className="flex flex-col items-center gap-0.5 rounded-control bg-subtle px-1 py-2">
+    <div className="flex flex-col items-center gap-0.5 rounded-control bg-subtle px-1 py-1.5">
       <dt className={`font-semibold text-muted uppercase ${labelClassName}`}>
         {detail ? (
           <DetailName {...detail} className="uppercase hover:underline">
