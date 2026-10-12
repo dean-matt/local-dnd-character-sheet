@@ -1,5 +1,6 @@
 import type { FeatureGroup, FeatureOrigin, SheetFeature } from "@dnd/catalog";
 import type { CatalogKind, CharacterRecord } from "@dnd/character";
+import { featureTypeLabel } from "../../../lib/featureTypeLabel.ts";
 import { renamedRef } from "../../../lib/renamed.ts";
 import { firstLine } from "../../../lib/rulesProse.ts";
 import { ListRow } from "../../ListRow/ListRow.tsx";
@@ -16,22 +17,6 @@ const ORIGIN_LABEL: Record<FeatureOrigin, string> = {
   background: "Background",
   feat: "Feat",
   optionalFeature: "Optional feature",
-};
-
-/** Upstream's names for the codes an option is picked under. A code not listed shows as itself. */
-const FEATURE_TYPE_LABEL: Record<string, string> = {
-  AI: "Artificer Infusion",
-  AS: "Arcane Shot",
-  ED: "Elemental Discipline",
-  EI: "Eldritch Invocation",
-  "FS:B": "Fighting Style (Bard)",
-  "FS:F": "Fighting Style (Fighter)",
-  "FS:P": "Fighting Style (Paladin)",
-  "FS:R": "Fighting Style (Ranger)",
-  MM: "Metamagic",
-  "MV:B": "Maneuver (Battle Master)",
-  PB: "Pact Boon",
-  RN: "Rune Knight Rune",
 };
 
 type Entry = { feature: SheetFeature; group: FeatureGroup };
@@ -52,9 +37,7 @@ const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
  */
 export function FeatureRow({ feature, group, character }: Entry & { character: CharacterRecord }) {
   const type =
-    feature.featureType === undefined
-      ? undefined
-      : (FEATURE_TYPE_LABEL[feature.featureType] ?? feature.featureType);
+    feature.featureType === undefined ? undefined : featureTypeLabel(feature.featureType);
   const level = feature.level;
   const chips = (
     <>

@@ -1,7 +1,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { classGrantsQuery } from "../../hooks/classGrantsQuery.ts";
 import { subclassGrantsQuery } from "../../hooks/subclassGrantsQuery.ts";
-import { type FeatureOffering, featureOfferings } from "./featureOfferings.ts";
+import { type FeatureOffering, featureOfferings } from "../../lib/featureOfferings.ts";
 import type { ClassEntry } from "./useClassEntries.ts";
 
 /**
