@@ -8,7 +8,7 @@ export function SpellSlots({ derived }: { derived: CharacterDerived }) {
   if (spellSlots.length === 0 && !pactSlots) return null;
   return (
     <Card title="Spell Slots">
-      <ul className="flex flex-col gap-2.5">
+      <ul className="flex flex-col gap-1.5">
         {spellSlots.map((slot) => (
           <SpellSlotRow key={slot.level} label={levelLabel(slot.level)} total={slot.total} />
         ))}

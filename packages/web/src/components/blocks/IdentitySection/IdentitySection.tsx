@@ -33,7 +33,9 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
     return suffix === undefined ? [] : [`${name}${suffix}`];
   });
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    // Proficiencies spans two rows at lg so Appearance, two columns wide, rises beside it
+    // rather than under its full height.
+    <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <Card title="Name">
         <Field
           mode="edit"
@@ -52,7 +54,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
         <ChipList labels={[raceSummary(definition)]} />
       </Card>
       <Card title="Class">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <ChipList labels={classChips(definition)} />
           <p className="text-label text-muted">Total level: {totalLevel(definition)}</p>
         </div>
@@ -63,29 +65,33 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
       <Card title="Languages">
         <ChipList labels={proficiencies.languages.map((ref) => ref.name)} empty="No languages." />
       </Card>
-      <Card title="Proficiencies">
-        {/* Armor and weapons are categories, and `Light` names one of each, so each keeps a heading. */}
-        <div className="flex flex-col gap-2.5">
-          <ProficiencyGroup heading="Armor">
-            <ChipList labels={proficiencies.armor} empty="No armor." />
-          </ProficiencyGroup>
-          <ProficiencyGroup heading="Weapons">
-            <ChipList labels={proficiencies.weapons} empty="No weapons." />
-          </ProficiencyGroup>
-          <ProficiencyGroup heading="Tools">
-            <ChipList labels={tools} empty="No tools." />
-          </ProficiencyGroup>
-        </div>
-      </Card>
-      <AppearanceCard
-        appearance={definition.appearance}
-        onSave={async (edit) => {
-          await update.mutateAsync((latest) => ({
-            ...latest,
-            appearance: edit(latest.appearance),
-          }));
-        }}
-      />
+      <div className="lg:row-span-2">
+        <Card title="Proficiencies">
+          {/* Armor and weapons are categories, and `Light` names one of each, so each keeps a heading. */}
+          <div className="flex flex-col gap-2">
+            <ProficiencyGroup heading="Armor">
+              <ChipList labels={proficiencies.armor} empty="No armor." />
+            </ProficiencyGroup>
+            <ProficiencyGroup heading="Weapons">
+              <ChipList labels={proficiencies.weapons} empty="No weapons." />
+            </ProficiencyGroup>
+            <ProficiencyGroup heading="Tools">
+              <ChipList labels={tools} empty="No tools." />
+            </ProficiencyGroup>
+          </div>
+        </Card>
+      </div>
+      <div className="lg:col-span-2">
+        <AppearanceCard
+          appearance={definition.appearance}
+          onSave={async (edit) => {
+            await update.mutateAsync((latest) => ({
+              ...latest,
+              appearance: edit(latest.appearance),
+            }));
+          }}
+        />
+      </div>
     </div>
   );
 }

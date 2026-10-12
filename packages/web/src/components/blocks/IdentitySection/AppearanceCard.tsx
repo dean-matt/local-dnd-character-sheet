@@ -31,7 +31,7 @@ export function AppearanceCard({
 }) {
   return (
     <Card title="Appearance">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
         {FIELDS.map(({ key, label }) => (
           <Field
             key={key}

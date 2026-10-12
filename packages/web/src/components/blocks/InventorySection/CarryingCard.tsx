@@ -31,7 +31,7 @@ export function CarryingCard({
   );
   return (
     <Card title="Carrying">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         <LabeledValue label="Carried">{pounds(derived.carriedWeight)}</LabeledValue>
         <Field
           mode="read"

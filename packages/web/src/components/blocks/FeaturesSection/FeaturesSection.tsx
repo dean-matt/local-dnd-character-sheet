@@ -98,7 +98,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
                 No {widget.noun} match “{query.trim()}”.
               </p>
             ) : (
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-1.5">
                 {widget.matches.map((entry, index) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: one name can recur at several levels, and nothing reorders the list.
                   <FeatureRow key={index} {...entry} character={character} />

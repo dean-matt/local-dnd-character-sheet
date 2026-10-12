@@ -23,7 +23,7 @@ export function AttunementCard({
   const attuned = (inventory.data?.items ?? []).filter((item) => item.attuned);
   return (
     <Card title="Attunement">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
         <LabeledValue label="Attuned">{used}</LabeledValue>
         <Field mode="read" label="Slots" value={derived.attunementSlots} format={String} />
         {used > limit && (

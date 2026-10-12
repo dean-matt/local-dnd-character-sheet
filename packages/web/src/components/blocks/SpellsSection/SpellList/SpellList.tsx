@@ -43,10 +43,10 @@ export function SpellList({ character }: { character: CharacterRecord }) {
   }
   return (
     <Card title="Known Spells">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {groupByLevel(spells.data.spells).map((group) => (
           <div key={group.key}>
-            <h4 className="mb-2 font-semibold text-label text-muted uppercase tracking-label">
+            <h4 className="mb-1.5 font-semibold text-label text-muted uppercase tracking-label">
               {group.title}
             </h4>
             <ul className="flex flex-col gap-1.5">
