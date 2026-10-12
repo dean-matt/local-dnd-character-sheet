@@ -15,7 +15,7 @@ export function ItemGrants({ derived }: { derived: CharacterDerived }) {
   ] as const;
   return (
     <Card title="Granted by items">
-      <dl className="flex flex-col gap-1 text-body">
+      <dl className="flex flex-col gap-0.5 text-body">
         {rows.map(([kind, items]) =>
           items.length === 0 ? null : (
             <div key={kind} className="flex gap-2">
