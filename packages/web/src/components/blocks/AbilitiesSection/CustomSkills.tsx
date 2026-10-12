@@ -6,14 +6,15 @@ import {
   type CharacterRecord,
   derivedValue,
   effectsOnRoll,
+  flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
 import { InputField } from "../../InputField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
-import { FlatSkillBase } from "./FlatSkillBase.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
 import { RemoveCustomSkill } from "./RemoveCustomSkill.tsx";
@@ -110,7 +111,31 @@ export function CustomSkills({
                 detailFooter={
                   <div className="flex flex-1 items-start justify-between gap-3">
                     {"flat" in own && (
-                      <FlatSkillBase characterId={character.id} name={skill.name} flat={own.flat} />
+                      <div className="flex items-baseline gap-2">
+                        <span aria-hidden="true" className="text-muted text-row">
+                          Flat bonus
+                        </span>
+                        <Field
+                          mode="edit"
+                          label={`${skill.name} flat bonus`}
+                          labelHidden
+                          inputClassName="w-12 text-right"
+                          current={own.flat}
+                          format={String}
+                          parse={(raw) => Number(raw.trim())}
+                          schema={flatSkillBonusSchema}
+                          onSave={async (flat: number) => {
+                            await update.mutateAsync((latest) => ({
+                              ...latest,
+                              customSkills: latest.customSkills.map((each) =>
+                                each.name === skill.name && "flat" in each
+                                  ? { ...each, flat }
+                                  : each,
+                              ),
+                            }));
+                          }}
+                        />
+                      </div>
                     )}
                     <RemoveCustomSkill
                       characterId={character.id}

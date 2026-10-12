@@ -4,7 +4,7 @@
  *
  * A value is `manual ?? computed` — `packages/character`'s `Derived<T>` shape.
  * Read mode shows that value, marked where `manual` is set. Edit mode commits on a
- * debounce and on blur. A derived value writes `manual` only, and clearing the input
+ * debounce, on blur and on unmount. A derived value writes `manual` only, and clearing the input
  * reverts to `computed` rather than a parsed empty value: `onSave` receives `null`,
  * never a zero or an empty string. A plain `current` value is the definition's own;
  * `EditableFieldProps` says how clearing one saves. A save's `saving`, `saved` and

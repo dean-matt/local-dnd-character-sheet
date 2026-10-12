@@ -67,7 +67,19 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   const queue = useRef(Promise.resolve());
   const showSaved = useFleeting(status === "saved");
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const flush = useRef(() => {});
+  flush.current = () => {
+    if (textRef.current !== savedText.current) commit(textRef.current);
+  };
+  // A field can unmount mid-edit, as one in a modal does when Escape closes it, with no
+  // blur to commit the text; saving it here keeps the edit rather than dropping it.
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current);
+      flush.current();
+    },
+    [],
+  );
 
   // A value set from outside the field, such as by undo, replaces the text only while
   // the field holds no unsaved edit: the user's own typing outranks it.

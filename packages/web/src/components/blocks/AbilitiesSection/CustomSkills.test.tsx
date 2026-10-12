@@ -74,7 +74,10 @@ function addSkill(name: string, ability?: string) {
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("CustomSkills", () => {
   it("adds a skill with its ability, unproficient", async () => {
@@ -117,17 +120,22 @@ describe("CustomSkills", () => {
     expect(within(row).queryByRole("textbox")).toBeNull();
   });
 
-  it("sets a flat skill's base in its modal, beside Remove and under the terms", () => {
+  it("sets a flat skill's base in its modal's footer beside Remove, below the terms", () => {
     renderSeeded(holding([CARTOGRAPHY]));
 
     fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
     const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
-    expect(modal.getByText("Proficiency")).toBeVisible();
-    expect(modal.getByRole("textbox", { name: "Cartography flat bonus" })).toHaveValue("3");
-    expect(modal.getByRole("button", { name: "Remove Cartography" })).toBeVisible();
+    const terms = within(modal.getByRole("region", { name: "Cartography" }));
+    expect(terms.getByText("Proficiency")).toBeVisible();
+    expect(terms.queryByRole("textbox")).toBeNull();
+    const field = modal.getByRole("textbox", { name: "Cartography flat bonus" });
+    expect(field).toHaveValue("3");
+    const remove = modal.getByRole("button", { name: "Remove Cartography" });
+    expect(field.closest(".flex-1")).toContainElement(remove);
   });
 
   it("saves a negative base from the modal as one write, and the row and terms follow", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const fetchMock = stubServer(holding([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]));
     renderSeeded(holding([JUGGLING, CARTOGRAPHY]));
 
@@ -139,6 +147,7 @@ describe("CustomSkills", () => {
 
     await waitFor(() => expect(modal.getByText("+0")).toBeVisible());
     expect(screen.getByRole("button", { name: "Cartography check +0" })).toBeInTheDocument();
+    await vi.advanceTimersByTimeAsync(1000);
     const writes = fetchMock.mock.calls.filter(([url]) => url === "/api/characters/1");
     expect(writes).toHaveLength(1);
     expect(written(fetchMock)).toEqual([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]);
@@ -158,6 +167,37 @@ describe("CustomSkills", () => {
     fireEvent.blur(input);
 
     expect(await modal.findByRole("button", { name: "Retry" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
+  });
+
+  it("saves a base typed just before Escape closes the modal", async () => {
+    const fetchMock = stubServer(holding([{ ...CARTOGRAPHY, flat: 7 }]));
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Cartography flat bonus" }), {
+      target: { value: "7" },
+    });
+    fireEvent(screen.getByRole("dialog"), new Event("cancel"));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(written(fetchMock)).toEqual([{ ...CARTOGRAPHY, flat: 7 }]));
+  });
+
+  it("says a base save that failed after the modal closed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "disk full" }), { status: 500 })),
+    );
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Cartography flat bonus" }), {
+      target: { value: "7" },
+    });
+    fireEvent(screen.getByRole("dialog"), new Event("cancel"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save the custom skills");
     expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
   });
 
