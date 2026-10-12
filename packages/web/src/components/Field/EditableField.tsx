@@ -67,9 +67,12 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   const queue = useRef(Promise.resolve());
   const showSaved = useFleeting(status === "saved");
 
+  // The text of the latest write handed to `queue`, so an unmount does not send it twice.
+  const queued = useRef<string | undefined>(undefined);
   const flush = useRef(() => {});
   flush.current = () => {
-    if (textRef.current !== savedText.current) commit(textRef.current);
+    const raw = textRef.current;
+    if (raw !== savedText.current && raw !== queued.current) commit(raw);
   };
   // A field can unmount mid-edit, as one in a modal does when Escape closes it, with no
   // blur to commit the text; saving it here keeps the edit rather than dropping it. With
@@ -146,6 +149,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
         setError(err instanceof Error ? err.message : "Save failed.");
       }
     };
+    queued.current = raw;
     queue.current = queue.current.then(run);
     await queue.current;
   }

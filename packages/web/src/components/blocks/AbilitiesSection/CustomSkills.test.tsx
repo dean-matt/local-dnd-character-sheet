@@ -185,6 +185,21 @@ describe("CustomSkills", () => {
     await waitFor(() => expect(written(fetchMock)).toEqual([{ ...CARTOGRAPHY, flat: 7 }]));
   });
 
+  it("sends a base committed on blur once when the modal then closes", async () => {
+    const fetchMock = stubServer(holding([{ ...CARTOGRAPHY, flat: 7 }]));
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const input = screen.getByRole("textbox", { name: "Cartography flat bonus" });
+    fireEvent.change(input, { target: { value: "7" } });
+    fireEvent.blur(input);
+    fireEvent(screen.getByRole("dialog"), new Event("cancel"));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual([{ ...CARTOGRAPHY, flat: 7 }]));
+    const writes = fetchMock.mock.calls.filter(([url]) => url === "/api/characters/1");
+    expect(writes).toHaveLength(1);
+  });
+
   it("says a base save that failed after the modal closed", async () => {
     vi.stubGlobal(
       "fetch",
