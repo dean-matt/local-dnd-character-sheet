@@ -20,6 +20,9 @@ import {
  */
 export const MAX_HIT_POINT_GAIN = 999;
 
+/** The most levels a character holds, across every class. */
+export const MAX_LEVEL = 20;
+
 const levelEntrySchema = z.strictObject({
   class: entryRefSchema,
   /**
@@ -326,7 +329,7 @@ export const characterDefinitionSchema = z.strictObject({
   levels: z
     .array(levelEntrySchema)
     .min(1)
-    .max(20)
+    .max(MAX_LEVEL)
     .refine(
       (levels) =>
         isUnique(

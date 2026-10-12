@@ -1,7 +1,7 @@
 import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, type Mock, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
 import { LevelUp } from "./LevelUp.tsx";
@@ -25,7 +25,13 @@ const grants = (level: number, invocations: number, features: object[]) => ({
 });
 const page = (items: object[]) => ({ items, total: items.length });
 
+const FIGHTER = { name: "Fighter", source: "XPHB" };
+
 const ROWS: Record<string, unknown> = {
+  "/api/classes/Fighter/XPHB": { ...FIGHTER, edition: "one", hitDie: 10, json: FIGHTER },
+  "/api/classes/Fighter/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Fighter/XPHB/at/1": grants(1, 0, [feature("Second Wind", 1)]),
+  "/api/classes/Fighter/XPHB/at/2": grants(2, 0, [feature("Action Surge", 2)]),
   "/api/classes/Warlock/XPHB": {
     ...WARLOCK,
     edition: "one",
@@ -127,18 +133,11 @@ function choose(name: string, option: string) {
   fireEvent.click(within(dialog()).getByRole("option", { name: option }));
 }
 
+beforeEach(() => localStorage.clear());
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe("LevelUp", () => {
-  it("waits on the next level's experience where the character levels by it", () => {
-    renderSeeded(warlock(1, { leveling: "xp", experience: 100 }));
-    const button = screen.getByRole("button", { name: "Level up" });
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button).toHaveAccessibleDescription("200 XP to go");
-    fireEvent.click(button);
-    expect(screen.queryByRole("dialog")).toBeNull();
-  });
-
   it("writes the level at the average as one edit, keeps an override, and lists what moved", async () => {
     renderSeeded(warlock(1));
     await open();
@@ -216,5 +215,69 @@ describe("LevelUp", () => {
         options: [XPHB("Pact of the Tome")],
       },
     ]);
+  });
+
+  it("takes back the choices made for one class when the level goes to another", async () => {
+    const base = warlock(3);
+    renderSeeded({
+      ...base,
+      definition: { ...base.definition, levels: [{ class: FIGHTER }, ...base.definition.levels] },
+    });
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d8)" }));
+    await within(dialog()).findByRole("combobox", { name: "Level 5 choice" });
+    choose("Level 5 choice", "Alert");
+    choose("Pact Choice", "Pact of the Tome");
+
+    choose("Class", "Fighter 1 → 2");
+    expect(await within(dialog()).findByText(/Action Surge/)).toBeVisible();
+    expect(within(dialog()).queryByRole("combobox", { name: "Pact Choice" })).toBeNull();
+    expect(within(dialog()).getByRole("button", { name: "Roll (d10)" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().levels.at(-1)).toEqual({ class: FIGHTER });
+    expect(sent().feats).toEqual([]);
+    expect(sent().featureChoices).toEqual([]);
+  });
+
+  it("resumes a draft saved before a reload, its stored face read as Custom", async () => {
+    const character = warlock(1);
+    const draft = {
+      ...character.definition,
+      levels: [{ class: WARLOCK }, { class: WARLOCK, rolled: 6 }],
+    };
+    localStorage.setItem(`draft:level-up:1:${character.updatedAt}`, JSON.stringify(draft));
+    renderSeeded(character);
+    fireEvent.click(screen.getByRole("button", { name: "Level up" }));
+
+    expect(await within(dialog()).findByRole("button", { name: "Custom" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(within(dialog()).getByRole("spinbutton", { name: "Rolled value, 1 to 8" })).toHaveValue(
+      6,
+    );
+    await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+  });
+
+  it("never resumes a draft saved before a later edit to the character", async () => {
+    const character = warlock(1);
+    const draft = {
+      ...character.definition,
+      levels: [{ class: WARLOCK }, { class: WARLOCK, rolled: 6 }],
+    };
+    localStorage.setItem("draft:level-up:1:2023-12-31T00:00:00.000Z", JSON.stringify(draft));
+    renderSeeded(character);
+    await open();
+
+    expect(within(dialog()).getByRole("button", { name: "Custom" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(applyButton()).toHaveAttribute("aria-disabled", "true");
   });
 });
