@@ -100,10 +100,11 @@ neither a save, a skill, a check nor an attack; or it is a trigger such as a Dec
 Things card. The rest are mapped. The count is pinned so that a new tag's rows get read.
 
 An equipped item, attuned where it requires attunement, lists its effects in
-`rollEffects`, and the sheet notes them beside the save, skill or attack they mark. An attack
-effect marks every attack row, a spell attack included. A
-conditional effect reads as a note, and advantage and disadvantage on one roll are both
-listed, since whether a condition holds is the table's call. An ability check marks the
+`rollEffects`, and the sheet marks the save, skill or attack they apply to with one chip
+after its bonus. An attack effect marks every attack row, a spell attack included.
+Advantage and disadvantage on one roll cancel, and the chip strikes them through. A
+conditional effect draws the chip in outline with an asterisk, since whether a condition
+holds is the table's call; the chip's popover lists each effect and the net result. An ability check marks the
 skills that use the ability, because the sheet has no row for a bare check. A homebrew item states its own
 in an `advantage` array, which the item form edits.
 

@@ -404,7 +404,7 @@ describe("AbilitiesSection", () => {
     expect(granted.getByText("Belt of Dwarvenkind")).toBeInTheDocument();
   });
 
-  it("marks the saves and skills an item grants advantage on, and notes a condition instead of stating it", () => {
+  it("marks the saves and skills an item grants advantage on with a chip, and flags a condition instead of stating it", () => {
     const record = warlock();
     const derived = derivedFor(record);
     renderSection(record, {
@@ -427,17 +427,16 @@ describe("AbilitiesSection", () => {
 
     const saves = card("Saving Throws");
     expect(
-      saves.getAllByText("Advantage against spells (Mantle of Spell Resistance)"),
+      saves.getAllByRole("button", { name: /save: Advantage if every condition holds$/ }),
     ).toHaveLength(6);
-    const stealth = within(card("Skills").getByText("Stealth").closest("li") as HTMLElement);
-    expect(stealth.getByText("Advantage (Boots of Elvenkind)")).toHaveClass("font-semibold");
-    const deception = within(card("Skills").getByText("Deception").closest("li") as HTMLElement);
-    expect(deception.getByText("Disadvantage (Cloak of the Mind)")).toBeInTheDocument();
-    expect(deception.queryByText(/Boots of Elvenkind/)).not.toBeInTheDocument();
-    expect(
-      within(card("Skills").getByText("Arcana").closest("li") as HTMLElement).queryByRole("list"),
-    ).not.toBeInTheDocument();
-    expect(saves.getAllByText(/Mantle/)[0]).not.toHaveClass("font-semibold");
+    const skills = card("Skills");
+    expect(skills.getByRole("button", { name: "Stealth check: Advantage" })).toHaveTextContent(
+      /^ADV$/,
+    );
+    expect(skills.getByRole("button", { name: "Deception check: Disadvantage" })).toHaveTextContent(
+      /^DIS$/,
+    );
+    expect(skills.queryByRole("button", { name: /^Arcana check: / })).not.toBeInTheDocument();
   });
 
   it("leaves out the granted-by-items card while no item grants anything", () => {

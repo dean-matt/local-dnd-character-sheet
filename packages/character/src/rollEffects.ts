@@ -1,4 +1,5 @@
 /** Which of the equipped items' advantage and disadvantage marks a given roll on the sheet. */
+import type { AdvantageMode } from "@dnd/rules";
 import type { RollEffectEntry } from "./characterDerived.ts";
 import type { Ability } from "./refs.ts";
 
@@ -28,4 +29,20 @@ export function effectsOnRoll(
       effect.roll === "check" && (effect.target === undefined || effect.target === target.ability)
     );
   });
+}
+
+/**
+ * What the effects on one roll come to, as if every condition holds: advantage and
+ * disadvantage together cancel however many of each apply. `conditional` says some effect
+ * carries a condition the sheet cannot judge. Undefined where no effect applies.
+ */
+export function netRollEffect(
+  effects: readonly RollEffectEntry[],
+): { mode: AdvantageMode | "cancel"; conditional: boolean } | undefined {
+  const [first] = effects;
+  if (!first) return undefined;
+  return {
+    mode: effects.every((effect) => effect.mode === first.mode) ? first.mode : "cancel",
+    conditional: effects.some((effect) => effect.condition !== undefined),
+  };
 }

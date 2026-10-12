@@ -1,6 +1,6 @@
 import type { RollEffectEntry } from "@dnd/character";
 import type { ReactNode } from "react";
-import { RollEffects } from "../RollEffects.tsx";
+import { RollEffectChip } from "../RollEffectChip.tsx";
 
 const CELL = "px-0.5 py-1.5 text-left align-top";
 
@@ -22,9 +22,13 @@ export function AttackRow({
       <th scope="row" className={`${CELL} font-normal`}>
         <div className="truncate">{name}</div>
         {notes}
-        <RollEffects effects={effects} />
       </th>
-      <td className={`${CELL} font-semibold`}>{bonus}</td>
+      <td className={`${CELL} font-semibold`}>
+        <span className="flex items-center gap-1">
+          {bonus}
+          <RollEffectChip roll={name} effects={effects} />
+        </span>
+      </td>
       <td className={`${CELL} text-muted`}>{damage}</td>
     </tr>
   );
