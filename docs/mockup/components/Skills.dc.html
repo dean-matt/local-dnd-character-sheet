@@ -27,9 +27,9 @@
       <sc-for list="{{skillRows}}" as="sk" hint-placeholder-count="18">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 2px 0; position: relative;">
           <button aria-label="Toggle {{sk.label}} proficiency" onClick="{{sk.toggle}}" style="width: 13px; height: 13px; padding: 0; border-radius: 50%; border: 1.5px solid {{sk.dotBorder}}; background: {{sk.dotFill}}; flex-shrink: 0;"></button>
-          <button aria-label="View {{sk.label}} details" onClick="{{sk.openDetail}}" style="all: unset; cursor: pointer; color: #1f2430; flex-grow: 1;">{{sk.label}}</button>
-          <div style="color: #6b7280; font-size: 11px; width: 26px;">{{sk.abilityLabel}}</div>
-          <button aria-label="Roll {{sk.label}} check" onClick="{{sk.roll}}" onMouseEnter="{{sk.showCalc}}" onMouseLeave="{{sk.hideCalc}}" onFocus="{{sk.showCalc}}" onBlur="{{sk.hideCalc}}" aria-describedby="{{sk.calcId}}" style="font-weight: 600; color: #1f2430; width: 28px; text-align: right; background: none; border: none; padding: 0;">{{sk.bonus}}</button>
+          <button aria-label="View {{sk.label}} details" onClick="{{sk.openDetail}}" style="all: unset; cursor: pointer; color: #1f2430;">{{sk.label}}</button>
+          <div style="color: #6b7280; font-size: 11px;">{{sk.abilityLabel}}</div>
+          <button aria-label="Roll {{sk.label}} check" onClick="{{sk.roll}}" onMouseEnter="{{sk.showCalc}}" onMouseLeave="{{sk.hideCalc}}" onFocus="{{sk.showCalc}}" onBlur="{{sk.hideCalc}}" aria-describedby="{{sk.calcId}}" style="margin-left: auto; font-weight: 600; color: #1f2430; width: 28px; text-align: right; background: none; border: none; padding: 0;">{{sk.bonus}}</button>
           <sc-if value="{{sk.removable}}" hint-placeholder-val="{{false}}">
             <button aria-label="Remove {{sk.label}}" onClick="{{sk.remove}}" style="width: 16px; height: 16px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
           </sc-if>

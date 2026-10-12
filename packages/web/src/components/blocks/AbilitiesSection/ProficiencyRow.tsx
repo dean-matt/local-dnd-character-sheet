@@ -8,7 +8,10 @@ import { ProficiencyRing } from "./ProficiencyRing.tsx";
 import { PROFICIENCY_MARK, type ProficiencyLevel } from "./proficiencyMark.ts";
 import { RollEffectChip } from "./RollEffectChip.tsx";
 
-/** One row of a proficiency list: the ring a reader checks as often as the total, then the total. */
+/**
+ * One row of a proficiency list: the ring a reader checks as often as the total, the name
+ * and what it rolls on, then the chip and the total in a column every row shares.
+ */
 export function ProficiencyRow({
   level,
   name,
@@ -32,7 +35,7 @@ export function ProficiencyRow({
   rules: Rules | undefined;
   /** What equipped items grant on this roll. */
   effects?: readonly RollEffectEntry[];
-  /** An input the character's owner edits in place, set before the total. */
+  /** An input the character's owner edits in place, set just after the ability. */
   field?: ReactNode;
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
@@ -53,7 +56,7 @@ export function ProficiencyRow({
       ) : (
         <ProficiencyRing level={level} />
       )}
-      <span className="flex-1">
+      <span className="min-w-0">
         <DetailName
           title={title}
           meta={PROFICIENCY_MARK[level].text}
@@ -75,7 +78,7 @@ export function ProficiencyRow({
         )}
       </span>
       {ability && (
-        <span className="w-6.5 text-label text-muted uppercase">
+        <span className="text-label text-muted uppercase">
           <span aria-hidden="true">{ability}</span>
           <span className="sr-only">
             {ability === "flat" ? "Flat bonus" : ABILITY_LABEL[ability]}
@@ -83,10 +86,12 @@ export function ProficiencyRow({
         </span>
       )}
       {field}
-      <span className="flex w-7 justify-end font-semibold">
-        <DerivedBonus named name={roll} value={modifier} />
+      <span className="ms-auto flex items-center gap-2">
+        <RollEffectChip roll={roll} effects={effects} />
+        <span className="flex w-7 justify-end font-semibold">
+          <DerivedBonus named name={roll} value={modifier} />
+        </span>
       </span>
-      <RollEffectChip roll={roll} effects={effects} />
       {onRemove && <RemoveButton name={name} onRemove={onRemove} />}
     </li>
   );
