@@ -73,7 +73,13 @@
         <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{modalCalcText}}</div>
         <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">{{modalDesc}}</div>
         <sc-if value="{{modalRemovable}}" hint-placeholder-val="{{false}}">
-          <div style="display: flex; justify-content: flex-end; margin-top: 14px; padding-top: 12px; border-top: 1px solid #dde1e6;">
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #dde1e6;">
+            <sc-if value="{{modalFlat}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; align-items: center; gap: 8px; margin-right: auto;">
+                <span aria-hidden="true" style="font-size: 12px; color: #6b7280;">Flat bonus</span>
+                <input type="text" aria-label="{{modalTitle}} flat bonus" value="{{modalFlatValue}}" onChange="{{modalFlatChange}}" style="width: 48px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; text-align: right; background: #ffffff; color: #1f2430;">
+              </div>
+            </sc-if>
             <button onClick="{{modalRemove}}" style="padding: 8px 14px; border-radius: 4px; border: none; background: {{accent}}; color: #ffffff; font-size: 12px; font-weight: 600;">Remove {{modalTitle}}</button>
           </div>
         </sc-if>
@@ -166,14 +172,25 @@ class Component extends DCLogic {
         dotBorder: cs.proficient ? accent : '#c7ccd3',
         roll: () => {},
         toggle: () => this.setState({ customSkills: customSkills.map((x) => (x.id === cs.id ? { ...x, proficient: !x.proficient } : x)) }),
-        openDetail: () => this.setState({ modalItem: { label: cs.label, bonus: fmt(bonus), calcText, desc: 'Custom skill added to this sheet.', remove: () => this.setState({ customSkills: this.state.customSkills.filter((x) => x.id !== cs.id), modalItem: null }) } })
+        detail: {
+          label: cs.label,
+          bonus: fmt(bonus),
+          calcText,
+          desc: 'Custom skill added to this sheet.',
+          flat: isFlat,
+          flatValue: cs.flatText ?? String(cs.flatBonus || 0),
+          flatChange: (e) => this.setState({ customSkills: this.state.customSkills.map((x) => (x.id === cs.id ? { ...x, flatText: e.target.value, flatBonus: parseInt(e.target.value, 10) || 0 } : x)) }),
+          remove: () => this.setState({ customSkills: this.state.customSkills.filter((x) => x.id !== cs.id), modalItem: null })
+        },
+        openDetail: () => this.setState({ modalItem: { customId: cs.id } })
       };
     });
     const skillRows = standardSkillRows.concat(customSkillRows);
     const perceptionRow = skillRows.filter((s) => s.key === 'perception')[0];
     const perceptionBonus = perceptionRow ? parseInt(perceptionRow.bonus, 10) : 0;
     const passivePerception = 10 + perceptionBonus;
-    const modalItem = this.state.modalItem;
+    const openCustom = this.state.modalItem && this.state.modalItem.customId ? customSkillRows.filter((r) => r.key === this.state.modalItem.customId)[0] : null;
+    const modalItem = openCustom ? openCustom.detail : this.state.modalItem;
     return {
       accent,
       skillRows,
@@ -200,6 +217,9 @@ class Component extends DCLogic {
       modalCalcText: modalItem ? modalItem.calcText : '',
       modalDesc: modalItem ? modalItem.desc : '',
       modalRemovable: !!(modalItem && modalItem.remove),
+      modalFlat: !!(modalItem && modalItem.flat),
+      modalFlatValue: modalItem && modalItem.flat ? modalItem.flatValue : '',
+      modalFlatChange: (e) => modalItem && modalItem.flatChange && modalItem.flatChange(e),
       modalRemove: () => modalItem && modalItem.remove && modalItem.remove(),
       closeModal: () => this.setState({ modalItem: null }),
       stopPropagation: (e) => e.stopPropagation()

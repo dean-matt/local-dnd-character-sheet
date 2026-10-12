@@ -96,28 +96,6 @@ export function CustomSkills({
                 modifier={skill.modifier}
                 title={skill.name}
                 rules={undefined}
-                field={
-                  "flat" in own && (
-                    <Field
-                      mode="edit"
-                      label={`${skill.name} flat bonus`}
-                      labelHidden
-                      inputClassName="w-10 text-right"
-                      current={own.flat}
-                      format={String}
-                      parse={(raw) => Number(raw.trim())}
-                      schema={flatSkillBonusSchema}
-                      onSave={async (flat: number) => {
-                        await update.mutateAsync((latest) => ({
-                          ...latest,
-                          customSkills: latest.customSkills.map((each) =>
-                            each.name === skill.name && "flat" in each ? { ...each, flat } : each,
-                          ),
-                        }));
-                      }}
-                    />
-                  )
-                }
                 effects={effectsOnRoll(rollEffects, {
                   roll: "skill",
                   skill: skill.name,
@@ -131,11 +109,40 @@ export function CustomSkills({
                   )
                 }
                 detailFooter={
-                  <RemoveCustomSkill
-                    characterId={character.id}
-                    name={skill.name}
-                    onRemoved={() => setRemoved(skill.name)}
-                  />
+                  <div className="flex flex-1 items-start justify-end gap-3">
+                    {"flat" in own && (
+                      <div className="me-auto flex items-baseline gap-2">
+                        <span aria-hidden="true" className="text-muted text-row">
+                          Flat bonus
+                        </span>
+                        <Field
+                          mode="edit"
+                          label={`${skill.name} flat bonus`}
+                          labelHidden
+                          inputClassName="w-12 text-right"
+                          current={own.flat}
+                          format={String}
+                          parse={(raw) => Number(raw.trim())}
+                          schema={flatSkillBonusSchema}
+                          onSave={async (flat: number) => {
+                            await update.mutateAsync((latest) => ({
+                              ...latest,
+                              customSkills: latest.customSkills.map((each) =>
+                                each.name === skill.name && "flat" in each
+                                  ? { ...each, flat }
+                                  : each,
+                              ),
+                            }));
+                          }}
+                        />
+                      </div>
+                    )}
+                    <RemoveCustomSkill
+                      characterId={character.id}
+                      name={skill.name}
+                      onRemoved={() => setRemoved(skill.name)}
+                    />
+                  </div>
                 }
               />
             );

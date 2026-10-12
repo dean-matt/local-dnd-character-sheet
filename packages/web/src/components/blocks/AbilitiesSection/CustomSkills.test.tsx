@@ -74,7 +74,10 @@ function addSkill(name: string, ability?: string) {
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 describe("CustomSkills", () => {
   it("adds a skill with its ability, unproficient", async () => {
@@ -107,27 +110,119 @@ describe("CustomSkills", () => {
     );
   });
 
-  it("shows FLAT where an ability skill shows its ability, and its value plus proficiency", () => {
+  it("shows FLAT and the bonus on a flat skill's row, with no field there", () => {
     renderSeeded(holding([CARTOGRAPHY]));
 
-    const row = screen.getByRole("list", { name: "Custom skills" });
+    const row = screen.getByRole("listitem");
     expect(row).toHaveTextContent("flat");
     expect(row).toHaveTextContent("Flat bonus");
     expect(row).toHaveTextContent("+5");
+    expect(within(row).queryByRole("textbox")).toBeNull();
   });
 
-  it("saves an edit to a flat skill's value", async () => {
-    const fetchMock = stubServer(holding([]));
+  it("sets a flat skill's base in its modal's footer beside Remove, below the terms", () => {
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
+    const terms = within(modal.getByRole("region", { name: "Cartography" }));
+    expect(terms.getByText("Proficiency")).toBeVisible();
+    expect(terms.queryByRole("textbox")).toBeNull();
+    const field = modal.getByRole("textbox", { name: "Cartography flat bonus" });
+    expect(field).toHaveValue("3");
+    const remove = modal.getByRole("button", { name: "Remove Cartography" });
+    expect(terms.queryByRole("button", { name: "Remove Cartography" })).toBeNull();
+    expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("saves a negative base from the modal as one write, and the row and terms follow", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = stubServer(holding([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]));
     renderSeeded(holding([JUGGLING, CARTOGRAPHY]));
 
-    const input = screen.getByRole("textbox", { name: "Cartography flat bonus" });
-    expect(input).toHaveValue("3");
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
+    const input = modal.getByRole("textbox", { name: "Cartography flat bonus" });
     fireEvent.change(input, { target: { value: "-2" } });
     fireEvent.blur(input);
 
-    await waitFor(() =>
-      expect(written(fetchMock)).toEqual([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]),
+    await waitFor(() => expect(modal.getByText("+0")).toBeVisible());
+    expect(screen.getByRole("button", { name: "Cartography check +0" })).toBeInTheDocument();
+    await vi.advanceTimersByTimeAsync(1000);
+    const writes = fetchMock.mock.calls.filter(([url]) => url === "/api/characters/1");
+    expect(writes).toHaveLength(1);
+    expect(written(fetchMock)).toEqual([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]);
+  });
+
+  it("shows a failed base save in the modal and keeps the old base", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "disk full" }), { status: 500 })),
     );
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
+    const input = modal.getByRole("textbox", { name: "Cartography flat bonus" });
+    fireEvent.change(input, { target: { value: "7" } });
+    fireEvent.blur(input);
+
+    expect(await modal.findByRole("button", { name: "Retry" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
+  });
+
+  it("saves a base typed just before Escape closes the modal", async () => {
+    const fetchMock = stubServer(holding([{ ...CARTOGRAPHY, flat: 7 }]));
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Cartography flat bonus" }), {
+      target: { value: "7" },
+    });
+    fireEvent(screen.getByRole("dialog"), new Event("cancel"));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() => expect(written(fetchMock)).toEqual([{ ...CARTOGRAPHY, flat: 7 }]));
+  });
+
+  it("sends a base committed on blur once when the modal then closes", async () => {
+    const fetchMock = stubServer(holding([{ ...CARTOGRAPHY, flat: 7 }]));
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const input = screen.getByRole("textbox", { name: "Cartography flat bonus" });
+    fireEvent.change(input, { target: { value: "7" } });
+    fireEvent.blur(input);
+    fireEvent(screen.getByRole("dialog"), new Event("cancel"));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual([{ ...CARTOGRAPHY, flat: 7 }]));
+    const writes = fetchMock.mock.calls.filter(([url]) => url === "/api/characters/1");
+    expect(writes).toHaveLength(1);
+  });
+
+  it("says a base save that failed after the modal closed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "disk full" }), { status: 500 })),
+    );
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Cartography flat bonus" }), {
+      target: { value: "7" },
+    });
+    fireEvent(screen.getByRole("dialog"), new Event("cancel"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save the custom skills");
+    expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
+  });
+
+  it("gives an ability-based skill's modal no flat field", () => {
+    renderSeeded(holding([JUGGLING]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Juggling" }));
+    const modal = within(screen.getByRole("dialog", { name: "Juggling" }));
+    expect(modal.queryByRole("textbox")).toBeNull();
   });
 
   it("refuses a name a catalog skill or another custom skill holds, saying why", () => {

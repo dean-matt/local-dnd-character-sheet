@@ -67,7 +67,24 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   const queue = useRef(Promise.resolve());
   const showSaved = useFleeting(status === "saved");
 
-  useEffect(() => () => clearTimeout(timer.current), []);
+  // The text of the latest write handed to `queue`, so an unmount does not send it twice.
+  const queued = useRef<string | undefined>(undefined);
+  const flush = useRef(() => {});
+  flush.current = () => {
+    const raw = textRef.current;
+    if (raw !== savedText.current && raw !== queued.current) commit(raw);
+  };
+  // A field can unmount mid-edit, as one in a modal does when Escape closes it, with no
+  // blur to commit the text; saving it here keeps the edit rather than dropping it. With
+  // no field left to show a refusal or a failure, refused text is dropped and the caller's
+  // mutation reports a failed write.
+  useEffect(
+    () => () => {
+      clearTimeout(timer.current);
+      flush.current();
+    },
+    [],
+  );
 
   // A value set from outside the field, such as by undo, replaces the text only while
   // the field holds no unsaved edit: the user's own typing outranks it.
@@ -132,6 +149,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
         setError(err instanceof Error ? err.message : "Save failed.");
       }
     };
+    queued.current = raw;
     queue.current = queue.current.then(run);
     await queue.current;
   }

@@ -20,7 +20,6 @@ export function ProficiencyRow({
   title,
   rules,
   effects = [],
-  field,
   onCycleLevel,
   detailFooter,
 }: {
@@ -34,8 +33,6 @@ export function ProficiencyRow({
   rules: Rules | undefined;
   /** What equipped items grant on this roll. */
   effects?: readonly RollEffectEntry[];
-  /** An input the character's owner edits in place, set just after the ability. */
-  field?: ReactNode;
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
   /** The foot of the modal the name opens, for an action on the row itself. */
@@ -86,7 +83,6 @@ export function ProficiencyRow({
           </span>
         </span>
       )}
-      {field}
       <span className="ms-auto flex items-center gap-2">
         <RollEffectChip roll={roll} effects={effects} />
         <span className="flex w-7 justify-end font-semibold">

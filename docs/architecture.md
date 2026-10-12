@@ -141,11 +141,12 @@ play state, pages or a deleted character.
 component that renders a computed-versus-manual value. M4 uses its read mode, which marks
 an override and names the computed value it replaced; M5 turns on
 its edit mode without rewriting the view already rendering it. Edit mode commits on a
-debounce and on blur, writes `manual` and never `computed`, and clears an override by
+debounce, on blur and on unmount, writes `manual` and never `computed`, and clears an override by
 writing `null` rather than a parsed empty value. A failed save keeps the user's text and
 offers a retry, because autosave has no confirm step — the only way back from a bad edit
 is undo, which is why undo ships alongside editing rather than waiting for M6's play
-state.
+state. A field that unmounts can show neither, so it drops text the schema refuses and
+leaves a failed write for the caller's mutation to report.
 
 **One chrome for every control.** `packages/web/src/components/FormField.tsx` gives a
 control its label, status and error, and `Field`'s edit mode renders through it. Its
