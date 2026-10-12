@@ -3,15 +3,18 @@ import type { AdvantageMode } from "@dnd/rules";
 import type { RollEffectEntry } from "./characterDerived.ts";
 import type { Ability } from "./refs.ts";
 
-/** The roll a sheet row stands for: a saving throw, a skill (checked with its ability), or an attack. */
+/**
+ * The roll a sheet row stands for: a saving throw, a skill (checked with its ability, or
+ * with none where a flat value stands in for it), or an attack.
+ */
 type RollTarget =
   | { roll: "save"; ability: Ability }
-  | { roll: "skill"; skill: string; ability: Ability }
+  | { roll: "skill"; skill: string; ability: Ability | null }
   | { roll: "attack" };
 
 /**
  * The effects that mark `target`. A `check` effect marks every skill that uses its ability,
- * or every skill when it names none; a `skill` effect marks the skill it names.
+ * or every skill when it names none, flat skills included; a `skill` effect marks the skill it names.
  */
 export function effectsOnRoll(
   effects: readonly RollEffectEntry[],

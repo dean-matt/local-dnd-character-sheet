@@ -59,6 +59,7 @@ export {
   type CharacterRecord,
   characterDefinitionSchema,
   characterRecordSchema,
+  flatSkillBonusSchema,
   MAX_HIT_POINT_GAIN,
 } from "./definition.ts";
 export {

@@ -9,6 +9,7 @@ import { CustomSkills } from "./CustomSkills.tsx";
 type CustomSkill = CharacterDefinition["customSkills"][number];
 
 const JUGGLING: CustomSkill = { name: "Juggling", ability: "dex", level: "none" };
+const CARTOGRAPHY: CustomSkill = { name: "Cartography", flat: 3, level: "proficient" };
 
 const holding = (customSkills: CustomSkill[]): CharacterRecord => {
   const record = characterRecord("1", "Vex");
@@ -67,7 +68,7 @@ function addSkill(name: string, ability?: string) {
     target: { value: name },
   });
   if (ability) {
-    fireEvent.click(screen.getByRole("combobox", { name: "New skill ability" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "New skill base" }));
     fireEvent.click(screen.getByRole("option", { name: ability }));
   }
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
@@ -93,6 +94,40 @@ describe("CustomSkills", () => {
     expect(row).toHaveTextContent("Juggling");
     expect(row).toHaveTextContent("Dexterity");
     expect(row).toHaveTextContent("+3");
+  });
+
+  it("adds a flat skill starting at zero", async () => {
+    const fetchMock = stubServer(holding([]));
+    renderSeeded(holding([]));
+
+    addSkill("Cartography", "Flat bonus");
+
+    await waitFor(() =>
+      expect(written(fetchMock)).toEqual([{ name: "Cartography", flat: 0, level: "none" }]),
+    );
+  });
+
+  it("shows FLAT where an ability skill shows its ability, and its value plus proficiency", () => {
+    renderSeeded(holding([CARTOGRAPHY]));
+
+    const row = screen.getByRole("list", { name: "Custom skills" });
+    expect(row).toHaveTextContent("flat");
+    expect(row).toHaveTextContent("Flat bonus");
+    expect(row).toHaveTextContent("+5");
+  });
+
+  it("saves an edit to a flat skill's value", async () => {
+    const fetchMock = stubServer(holding([]));
+    renderSeeded(holding([JUGGLING, CARTOGRAPHY]));
+
+    const input = screen.getByRole("textbox", { name: "Cartography flat bonus" });
+    expect(input).toHaveValue("3");
+    fireEvent.change(input, { target: { value: "-2" } });
+    fireEvent.blur(input);
+
+    await waitFor(() =>
+      expect(written(fetchMock)).toEqual([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]),
+    );
   });
 
   it("refuses a name a catalog skill or another custom skill holds, saying why", () => {

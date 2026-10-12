@@ -131,7 +131,10 @@ export function skillModifier(
 /** A skill check's terms, whether the skill is a catalog row or one of the character's own. */
 function checkModifier(
   definition: Scored,
-  skill: { ability: Ability; level: ProficiencyLevel; reference?: ContentRef },
+  skill: { level: ProficiencyLevel; reference?: ContentRef } & (
+    | { ability: Ability }
+    | { flat: number }
+  ),
   grants: readonly AbilityGrant[],
   bonuses: readonly Term<TermReference>[],
   proficiencyItems: readonly ProficiencyItem[],
@@ -139,11 +142,13 @@ function checkModifier(
   const level = totalLevel(definition);
   const contribution = proficiencyContribution(level, skill.level);
   const terms: Term<TermReference>[] = [
-    {
-      label: ABILITY_LABEL[skill.ability],
-      value: abilityModifier(abilityScore(definition, skill.ability, grants)),
-      ...(skill.reference && { reference: skill.reference }),
-    },
+    "ability" in skill
+      ? {
+          label: ABILITY_LABEL[skill.ability],
+          value: abilityModifier(abilityScore(definition, skill.ability, grants)),
+          ...(skill.reference && { reference: skill.reference }),
+        }
+      : { label: "Flat bonus", value: skill.flat },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
   return breakdown([
@@ -729,7 +734,7 @@ export function deriveCharacter(
 
   const customSkills = definition.customSkills.map((skill) => ({
     name: skill.name,
-    ability: skill.ability,
+    ability: "ability" in skill ? skill.ability : null,
     modifier: fromBreakdown(checkModifier(definition, skill, grants, checkBonus, bonuses)),
   }));
 

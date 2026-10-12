@@ -32,6 +32,13 @@ describe("effectsOnRoll", () => {
     ]);
   });
 
+  it("marks a flat skill with its own effects and the checks that name no ability", () => {
+    expect(effectsOnRoll(all, { roll: "skill", skill: "Stealth", ability: null })).toEqual([
+      STEALTH,
+      ANY_CHECK,
+    ]);
+  });
+
   it("marks an attack with the attack effects alone", () => {
     expect(effectsOnRoll(all, { roll: "attack" })).toEqual([ATTACK]);
   });
