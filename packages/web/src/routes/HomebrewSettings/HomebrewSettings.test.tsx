@@ -276,11 +276,20 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
     const box = within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement;
     fireEvent.change(box, {
-      target: { value: JSON.stringify({ ...JSON.parse(box.value), name: "Moonfire Blade" }) },
+      target: {
+        value: JSON.stringify({
+          ...JSON.parse(box.value),
+          name: "Moonfire Blade",
+          optionalfeatures: ["replicate magic item|tce"],
+        }),
+      },
     });
     expect(
       await within(preview).findByRole("heading", { name: "Moonfire Blade" }),
     ).toBeInTheDocument();
+    expect(preview).toHaveTextContent(
+      "An Artificer can replicate this item with the Replicate Magic Item infusion.",
+    );
   });
 
   it("switches between the form and the preview by a labelled tab, by keyboard too", () => {

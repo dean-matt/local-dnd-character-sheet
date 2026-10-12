@@ -42,7 +42,10 @@ function useLastValid(kind: HomebrewKind, draft: HomebrewDraft<HomebrewInput>) {
   const [lastValid, setLastValid] = useState(valid);
   if (valid && valid !== lastValid) setLastValid(valid);
   const settled = useDebounce(lastValid, PREVIEW_DELAY_MS);
-  return useMemo(() => settled && { input: settled, facts: kind.facts(settled) }, [settled, kind]);
+  return useMemo(
+    () => settled && { input: settled, facts: kind.facts(settled), entries: kind.entries(settled) },
+    [settled, kind],
+  );
 }
 
 const problemList = (problems: HomebrewProblem[]) => (
