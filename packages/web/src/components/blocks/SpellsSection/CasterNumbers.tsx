@@ -6,7 +6,7 @@ import { signed } from "../signed.ts";
 /** One card per casting class, since a multiclassed caster has a DC and a bonus per class, and a card for what equipped items add to spell damage when they add any. */
 export function CasterNumbers({ derived }: { derived: CharacterDerived }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-2">
       {derived.spellDamageBonus && (
         <Card title="Spell Damage">
           <Field

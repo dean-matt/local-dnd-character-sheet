@@ -22,7 +22,7 @@ export function Vitals({
   if (state.isError) return <ErrorState error={state.error} />;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-3 md:grid-cols-2">
       <HitPoints derived={derived} state={state.data.state} />
       <StatusEffects state={state.data.state} />
     </div>
