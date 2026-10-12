@@ -68,7 +68,7 @@ function addSkill(name: string, ability?: string) {
     target: { value: name },
   });
   if (ability) {
-    fireEvent.click(screen.getByRole("combobox", { name: "New skill ability" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "New skill base" }));
     fireEvent.click(screen.getByRole("option", { name: ability }));
   }
   fireEvent.click(screen.getByRole("button", { name: "Add" }));

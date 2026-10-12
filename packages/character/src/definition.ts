@@ -74,6 +74,9 @@ const abilityIncreaseSchema = z
 
 const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 
+/** A custom skill's base where no ability governs it: a number the player sets. */
+export const flatSkillBonusSchema = z.int();
+
 /** One skill, and how proficient the character is in it. */
 const skillProficiencySchema = z.strictObject({
   ref: contentRefSchema,
@@ -386,7 +389,7 @@ export const characterDefinitionSchema = z.strictObject({
         }),
         z.strictObject({
           name: z.string().trim().min(1),
-          flat: z.int(),
+          flat: flatSkillBonusSchema,
           level: proficiencyLevelSchema,
         }),
       ]),

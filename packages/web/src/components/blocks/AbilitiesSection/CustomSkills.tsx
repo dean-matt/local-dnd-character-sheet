@@ -4,9 +4,9 @@ import {
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterRecord,
-  characterDefinitionSchema,
   derivedValue,
   effectsOnRoll,
+  flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
@@ -32,9 +32,6 @@ const BASE_OPTIONS = [
   ...ABILITIES.map((ability) => ({ value: ability, label: ability.toUpperCase() })),
   { value: "flat", label: "Flat bonus" },
 ];
-
-const flatSchema =
-  characterDefinitionSchema.shape.customSkills.unwrap().element.options[1].shape.flat;
 
 /**
  * The skills a character adds beyond the catalog's, each change saved at once as an undo
@@ -111,12 +108,11 @@ export function CustomSkills({
                       mode="edit"
                       label={`${skill.name} flat bonus`}
                       labelHidden
-                      inputMode="numeric"
                       inputClassName="w-10 text-right"
                       current={own.flat}
                       format={String}
                       parse={(raw) => Number(raw.trim())}
-                      schema={flatSchema}
+                      schema={flatSkillBonusSchema}
                       onSave={async (flat: number) => {
                         await update.mutateAsync((latest) => ({
                           ...latest,
@@ -160,7 +156,7 @@ export function CustomSkills({
             error={refusal}
           />
         </div>
-        <FormField label="New skill ability" labelHidden>
+        <FormField label="New skill base" labelHidden>
           {(control) => (
             <Select
               {...control}
