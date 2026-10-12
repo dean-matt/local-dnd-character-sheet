@@ -84,6 +84,7 @@ export {
   itemAdvantagesOf,
 } from "./item-advantage.ts";
 export { itemBonusSchema } from "./item-bonus.ts";
+export { itemEntries } from "./item-entries.ts";
 export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
 export { armsGroupKinds, ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
 export type { ScoreMinimums } from "./multiclass.ts";

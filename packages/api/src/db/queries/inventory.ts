@@ -7,7 +7,7 @@
 import {
   armorTraitSchema,
   type CharacterInventory,
-  entriesSchema,
+  itemEntries,
   type SheetItem,
   weaponTraitSchema,
 } from "@dnd/catalog";
@@ -136,7 +136,6 @@ function sheetItem(
       ...(variant && { variant }),
     };
   }
-  const entries = entriesSchema.safeParse(row.json.entries);
   const source = row.json.source;
   const type = typeOf(row);
   const abbreviation = type?.split("|")[0];
@@ -153,7 +152,7 @@ function sheetItem(
     estimate: estimateOf(row),
     weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
-    entries: entries.success ? entries.data : [],
+    entries: itemEntries(row.json),
     ...(variantOverride && { overridden: variantOverride }),
   };
 }

@@ -110,6 +110,7 @@ describe("characterInventoryRoutes", () => {
           source: "DMG",
           rarity: "uncommon",
           entries: ["A +1 bonus to attack and damage rolls."],
+          classFeatures: ["replicate magic item|artificer|efa|2|efa"],
         },
       }),
       row(
@@ -271,6 +272,19 @@ describe("characterInventoryRoutes", () => {
       weight: 3,
       weapon: { category: "martial", damage: { dice: "1d8", type: "slashing" } },
     });
+  });
+
+  it("notes on a variant's item what an Artificer replicates it with, after its text", async () => {
+    store(withInventory([{ ref: LONGSWORD, variant: PLUS_ONE }, { ref: CLOAK }]));
+    const [sword, cloak] = await items();
+    expect(sword).toMatchObject({
+      entries: [
+        "A +1 bonus to attack and damage rolls.",
+        "A {@b sharp} blade.",
+        "An Artificer can replicate this item with {@classFeature replicate magic item|artificer|efa|2|efa|Replicate Magic Item}.",
+      ],
+    });
+    expect(cloak).toMatchObject({ entries: ["A +1 bonus to AC."] });
   });
 
   it("lists a variant its base item refuses as unresolved, naming both", async () => {
