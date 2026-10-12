@@ -1,6 +1,6 @@
 import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { identityRecord } from "../../../test/records.ts";
@@ -121,6 +121,31 @@ describe("LevelSection", () => {
     expect(
       within(card()).getByText("Level 20 — no further experience needed."),
     ).toBeInTheDocument();
+  });
+
+  it("holds Level up until the next threshold, citing the experience caption", () => {
+    renderSeeded(record({ experience: 1500 }));
+
+    const button = within(card()).getByRole("button", { name: "Level up" });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button).toHaveAccessibleDescription("1,200 XP to Level 4");
+  });
+
+  it("offers Level up in milestone mode, and says why it stops at level 20", () => {
+    const fighter = { class: FIGHTER };
+    renderSeeded(record({ leveling: "milestone" }));
+    expect(within(card()).getByRole("button", { name: "Level up" })).toHaveAttribute(
+      "aria-disabled",
+      "false",
+    );
+
+    cleanup();
+    renderSeeded(
+      record({ leveling: "milestone", levels: Array.from({ length: 20 }, () => fighter) }),
+    );
+    expect(within(card()).getByRole("button", { name: "Level up" })).toHaveAccessibleDescription(
+      "Level 20 is the highest level.",
+    );
   });
 
   it("shows the milestone copy and no experience in milestone mode", () => {

@@ -170,8 +170,8 @@ draft, and the list never shows a half-made character, because a row saved part 
 need deleting on cancel. The resolver binds to the schemas in `packages/character`, so no
 form holds a second definition of a legal character. A choice an earlier one invalidates,
 such as a subclass after a class change, is cleared, and its field says why. The draft
-persists to `localStorage` keyed by flow, and by character for level-up, so it survives a
-reload; it clears on finish, cancel, or leaving the form. Creation keeps one URL and
+persists to `localStorage` keyed by flow, and by character and its last save for level-up,
+so it survives a reload and never resumes over a later edit; it clears on finish, cancel, or leaving the form. Creation keeps one URL and
 holds its step in the history entry, which a reload keeps, and replaces that entry on each
 step, so browser Back leaves the flow. Each form is bound once through `createForm` in
 `packages/web/src/lib/createForm.ts`.

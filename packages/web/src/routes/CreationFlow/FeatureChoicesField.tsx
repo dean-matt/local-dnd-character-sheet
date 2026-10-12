@@ -2,8 +2,8 @@ import { type CharacterDefinition, featureKey, refKey } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
 import { shownOptions, takenOption, withFeatureChoice } from "../../lib/featureChoices.ts";
+import type { FeatureOffering } from "../../lib/featureOfferings.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
-import type { FeatureOffering } from "./featureOfferings.ts";
 
 /**
  * A choice for each feature a class or its subclass offers one from by the class's level —

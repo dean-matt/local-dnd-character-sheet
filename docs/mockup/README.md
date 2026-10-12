@@ -50,8 +50,7 @@ widget, panel, or nav element:
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Backstory, Notes.
 - Identity: Race, Class, Background, Languages, Proficiencies — each its own
-  widget. Level (level, leveling mode, experience) is its own sidebar tab, not part of
-  Identity. Level Up is the modal a level-up button on Level opens —
+  widget. Level Up is the modal the Level tab's level-up button opens —
   pick an existing class or multiclass into a new one, Hit Points by average, roll, or
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
   and new spells for a class that gains them, all gating Apply until every open choice
@@ -301,8 +300,7 @@ says how much of the artboard the app builds today.
 | `Race` | #488 | read-only |
 | `Class` | #235, #240 | read-only |
 | `Background` | #488 | read-only |
-| `Level` | #239, #393 | all but Level Up |
-| `LevelUpModal` | #239, #240 | nothing |
+| `LevelUpModal` | #239, #240, #733 | all but multiclassing into a new class and the spell picks |
 | `Languages` | #488 | read-only |
 | `Proficiencies` | #400, #488 | read-only |
 | `Sidebar` | #242, #470, #486 | read-only |

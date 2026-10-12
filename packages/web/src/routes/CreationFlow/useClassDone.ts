@@ -1,8 +1,8 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { takenOption } from "../../lib/featureChoices.ts";
+import type { FeatureOffering } from "../../lib/featureOfferings.ts";
 import { stepOf } from "./creationSteps.ts";
-import type { FeatureOffering } from "./featureOfferings.ts";
 import { type ClassEntry, useClassEntries } from "./useClassEntries.ts";
 import { useFeatureOfferings } from "./useFeatureOfferings.ts";
 

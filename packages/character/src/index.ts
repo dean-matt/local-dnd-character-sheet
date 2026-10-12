@@ -61,6 +61,7 @@ export {
   characterRecordSchema,
   flatSkillBonusSchema,
   MAX_HIT_POINT_GAIN,
+  MAX_LEVEL,
 } from "./definition.ts";
 export {
   deriveCharacter,

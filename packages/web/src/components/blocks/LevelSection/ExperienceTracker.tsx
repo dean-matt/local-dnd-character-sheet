@@ -1,10 +1,8 @@
-import { type CharacterRecord, experienceThreshold, totalLevel } from "@dnd/character";
+import { type CharacterRecord, experienceThreshold, MAX_LEVEL, totalLevel } from "@dnd/character";
 import { type FormEvent, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
-
-const MAX_LEVEL = 20;
 
 const xp = (points: number) => `${points.toLocaleString("en-US")} XP`;
 
@@ -12,7 +10,14 @@ const xp = (points: number) => `${points.toLocaleString("en-US")} XP`;
  * The experience total against its level's band, and a field that adds to the total or,
  * given a negative amount, takes from it. Enough experience earns a note, never a level.
  */
-export function ExperienceTracker({ character }: { character: CharacterRecord }) {
+export function ExperienceTracker({
+  character,
+  captionId,
+}: {
+  character: CharacterRecord;
+  /** Names the caption, which the Level up button cites while it waits on experience. */
+  captionId?: string;
+}) {
   const update = useUpdateCharacterDefinition(character.id);
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState(0);
@@ -58,7 +63,9 @@ export function ExperienceTracker({ character }: { character: CharacterRecord })
       <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-pill bg-subtle">
         <div className="h-full bg-accent" style={{ width: `${filled}%` }} />
       </div>
-      <p className="text-label text-muted">{caption}</p>
+      <p id={captionId} className="text-label text-muted">
+        {caption}
+      </p>
       <form noValidate onSubmit={submit} className="mt-1 flex items-start gap-1.5">
         <div className="grow">
           <InputField
