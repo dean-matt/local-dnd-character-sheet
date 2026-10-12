@@ -435,6 +435,8 @@ describe("AbilitiesSection", () => {
       /^DIS$/,
     );
     expect(skills.queryByRole("button", { name: /^Arcana check: / })).not.toBeInTheDocument();
+    const stealth = skills.getByRole("button", { name: "Stealth check: Advantage" }).closest("li");
+    expect(stealth).toHaveTextContent("Stealth, expertisedexDexterityADV+7");
   });
 
   it("leaves out the granted-by-items card while no item grants anything", () => {
