@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RollEffectEntry } from "./characterDerived.ts";
-import { effectsOnRoll } from "./rollEffects.ts";
+import { effectsOnRoll, netRollEffect } from "./rollEffects.ts";
 
 const effect = (rest: Omit<RollEffectEntry, "item">): RollEffectEntry => ({
   item: "Item",
@@ -34,5 +34,31 @@ describe("effectsOnRoll", () => {
 
   it("marks an attack with the attack effects alone", () => {
     expect(effectsOnRoll(all, { roll: "attack" })).toEqual([ATTACK]);
+  });
+});
+
+describe("netRollEffect", () => {
+  it("names nothing for a roll no effect marks", () => {
+    expect(netRollEffect([])).toBeUndefined();
+  });
+
+  it("keeps the one mode that applies, however many effects grant it", () => {
+    expect(netRollEffect([STEALTH, ANY_CHECK])).toEqual({ mode: "advantage", conditional: false });
+    expect(netRollEffect([ATTACK])).toEqual({ mode: "disadvantage", conditional: false });
+  });
+
+  it("cancels advantage against disadvantage, whatever the count of each", () => {
+    expect(netRollEffect([STEALTH, ANY_CHECK, STRENGTH_CHECK])).toEqual({
+      mode: "cancel",
+      conditional: false,
+    });
+  });
+
+  it("flags a roll any conditional effect marks", () => {
+    expect(netRollEffect([SPELLS])).toEqual({ mode: "advantage", conditional: true });
+    expect(netRollEffect([SPELLS, STRENGTH_SAVE, ATTACK])).toEqual({
+      mode: "cancel",
+      conditional: true,
+    });
   });
 });

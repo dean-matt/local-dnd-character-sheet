@@ -108,7 +108,7 @@ export {
   type FeatureKey,
 } from "./refs.ts";
 export { derivedValue, houseRule } from "./resolve.ts";
-export { effectsOnRoll } from "./rollEffects.ts";
+export { effectsOnRoll, netRollEffect } from "./rollEffects.ts";
 export {
   type CharacterState,
   type CharacterStateRecord,
