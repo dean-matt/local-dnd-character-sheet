@@ -107,6 +107,14 @@ export const characterDerivedSchema = z.strictObject({
       passive: derivedSchema(z.int()),
     }),
   ),
+  /** One entry per custom skill the definition holds, in its order, keyed by name as the definition keys them. */
+  customSkills: z.array(
+    z.strictObject({
+      name: z.string().min(1),
+      ability: abilitySchema,
+      modifier: derivedSchema(z.int()),
+    }),
+  ),
   armorClass: derivedSchema(z.int()),
   initiative: derivedSchema(z.int()),
   /**
