@@ -1,6 +1,6 @@
 import { averageHitPoints, type HitDie } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { InputField } from "../../../InputField.tsx";
 import { signed } from "../../signed.ts";
 import { type HitPointMethod, typedFace } from "./hitPointPick.ts";
@@ -29,6 +29,7 @@ export function HitPointChoice({
   rolled,
   onChange,
 }: HitPointChoiceProps) {
+  const headingId = useId();
   const [typed, setTyped] = useState(rolled === undefined ? "" : String(rolled));
   const average = averageHitPoints(die);
   const face = method === "average" ? average : method === undefined ? undefined : rolled;
@@ -39,8 +40,8 @@ export function HitPointChoice({
         ? `Average ${average}`
         : `Typed ${face}`;
   return (
-    <section aria-labelledby="level-up-hit-points" className="flex flex-col gap-1.5">
-      <h3 id="level-up-hit-points" className="font-semibold text-label text-muted uppercase">
+    <section aria-labelledby={headingId} className="flex flex-col gap-1.5">
+      <h3 id={headingId} className="font-semibold text-label text-muted uppercase">
         Hit points — d{die}
       </h3>
       <div className="flex gap-2">

@@ -8,6 +8,7 @@ import {
   featureKey,
   refKey,
 } from "@dnd/character";
+import { useId } from "react";
 import { useCharacterDerived } from "../../../../hooks/useCharacterDerived.ts";
 import { useDisabledSources } from "../../../../hooks/useDisabledSources.ts";
 import { shownOptions } from "../../../../lib/featureChoices.ts";
@@ -42,6 +43,7 @@ export function LevelUpChoices({
   method,
   onMethod,
 }: LevelUpChoicesProps) {
+  const improvementId = useId();
   const derived = useCharacterDerived(characterId);
   const disabled = useDisabledSources();
   const groups = classLevels(definition);
@@ -110,8 +112,8 @@ export function LevelUpChoices({
         </FormField>
       )}
       {grant && candidate && (
-        <section aria-labelledby="level-up-improvement" className="flex flex-col gap-1.5">
-          <h3 id="level-up-improvement" className="font-semibold text-label text-muted uppercase">
+        <section aria-labelledby={improvementId} className="flex flex-col gap-1.5">
+          <h3 id={improvementId} className="font-semibold text-label text-muted uppercase">
             {grantTitle(grant)}
           </h3>
           <ImprovementField

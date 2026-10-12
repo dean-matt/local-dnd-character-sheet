@@ -18,7 +18,8 @@ const sameRef = (row: ContentRef, ref: ContentRef | undefined) =>
 
 /**
  * What one more level in `cls` reads: the class's hit die, whether this level asks for a
- * subclass and which ones it offers, and the class's and subclass's grants at its level now
+ * subclass, at the class's subclass level or past it for a class that reached it without one,
+ * and which ones it offers, and the class's and subclass's grants at its level now
  * and at the next. `picked` is the subclass chosen this level, read where the class holds
  * none yet. A homebrew class carries a hit die and nothing else.
  */
@@ -37,7 +38,10 @@ export function useLevelUpClass(
   const subclassLevel = row.data && subclassLevelSchema.parse(row.data.json);
   const subclasses: readonly SubclassRecord[] = subclassList.data?.items ?? [];
   const asksSubclass =
-    held?.subclass === undefined && subclassLevel === next && subclasses.length > 0;
+    held?.subclass === undefined &&
+    subclassLevel !== undefined &&
+    next >= subclassLevel &&
+    subclasses.length > 0;
   const subclass = held?.subclass ?? (asksSubclass ? picked : undefined);
   const before = useQuery(classGrantsQuery(level > 0 ? catalog : undefined, level));
   const after = useQuery(classGrantsQuery(catalog, next));

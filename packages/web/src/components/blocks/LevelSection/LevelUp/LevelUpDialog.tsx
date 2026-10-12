@@ -68,6 +68,9 @@ export function LevelUpDialog({
     <levelUpForm.FormShell
       draftScope={`${opened.id}:${opened.updatedAt}`}
       defaultValues={{ ...definition, levels: [...definition.levels, { class: last.class }] }}
+      // The fields the level writes replace the latest ones whole, so an edit to them made in
+      // another tab while the dialog is open is lost; comparing `latest.updatedAt` to the
+      // opened record's and refusing is the way out.
       onSubmit={async (values) => {
         await update.mutateAsync((latest) => ({
           ...latest,

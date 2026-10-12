@@ -115,7 +115,11 @@ export function useLevelUpPlan(
   };
 }
 
-/** The choices the class and its subclass offer at the level being taken. */
+/**
+ * The choices the class and its subclass offer at the level being taken. A subclass reads
+ * its features through the edition's subclass list, so one from the other edition offers
+ * nothing here; reading its row by reference is the way out.
+ */
 function offeringsAt(cls: EntryRef, target: ReturnType<typeof useLevelUpClass>) {
   if (!("name" in cls)) return [];
   const owner = { className: cls.name, classSource: cls.source };

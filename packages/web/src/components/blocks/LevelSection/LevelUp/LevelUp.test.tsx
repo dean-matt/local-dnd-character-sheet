@@ -66,6 +66,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/3": grants(3, 0, [
     feature("Dark One's Blessing", 3),
   ]),
+  "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/4": grants(4, 0, []),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
   ]),
@@ -194,7 +195,18 @@ describe("LevelUp", () => {
   });
 
   it("asks for the improvement and each feature's option the level brings", async () => {
-    renderSeeded(warlock(3));
+    const fiend = warlock(3);
+    renderSeeded({
+      ...fiend,
+      definition: {
+        ...fiend.definition,
+        levels: [
+          { class: WARLOCK },
+          { class: WARLOCK },
+          { class: WARLOCK, subclass: XPHB("Fiend Patron") },
+        ],
+      },
+    });
     await open();
     fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
     await within(dialog()).findByRole("combobox", { name: "Level 4 choice" });
@@ -279,5 +291,27 @@ describe("LevelUp", () => {
       "false",
     );
     expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("writes a typed face, and holds Apply on one the die cannot show", async () => {
+    renderSeeded(warlock(1));
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Custom" }));
+    const face = within(dialog()).getByRole("spinbutton", { name: "Rolled value, 1 to 8" });
+
+    fireEvent.change(face, { target: { value: "9" } });
+    expect(face).toHaveAccessibleDescription("Type a whole number from 1 to 8.");
+    expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+    fireEvent.change(face, { target: { value: "7" } });
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, rolled: 7 });
+  });
+
+  it("asks for a subclass a class passed its subclass level without", async () => {
+    renderSeeded(warlock(3));
+    await open();
+    expect(within(dialog()).getByRole("combobox", { name: "Warlock subclass" })).toBeVisible();
   });
 });
