@@ -1,10 +1,9 @@
 import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { identityRecord } from "../../../test/records.ts";
-import { stubFetch } from "../../../test/stubFetch.ts";
 import { LevelSection } from "./LevelSection.tsx";
 
 /** Reads the character from the cache, as the sheet does, so a write's response reaches it. */
@@ -29,17 +28,40 @@ function renderSeeded(character = record()) {
       <Seeded id={character.id} />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 const card = () => screen.getByRole("region", { name: "Level" });
 const adjust = () => screen.getByRole("spinbutton", { name: /Adjust experience points/ });
 const applyButton = () => screen.getByRole("button", { name: "Apply" });
-const sentBody = (fetchMock: ReturnType<typeof stubFetch>) =>
-  JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body));
+const sentBody = (fetchMock: Mock) => JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body));
 
 function applyXp(amount: string) {
   fireEvent.change(adjust(), { target: { value: amount } });
   fireEvent.click(applyButton());
+}
+
+const FIGHTER = { name: "Fighter", source: "XPHB" };
+const NO_GRANTS = { level: 1, resources: [], spellSlots: [], optionalFeatures: [], features: [] };
+let classGrants: unknown;
+let writes: Mock;
+
+/** Answers the class and feat reads `Improvements` makes, and hands every other call to `writes`. */
+beforeEach(() => {
+  classGrants = NO_GRANTS;
+  writes = vi.fn();
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(url);
+    if (path.startsWith("/api/classes/")) return new Response(JSON.stringify(classGrants));
+    if (path.startsWith("/api/feats?"))
+      return new Response(JSON.stringify({ items: [], total: 0 }));
+    return writes(url, init);
+  });
+});
+
+function stubWrite(response: Response) {
+  writes.mockResolvedValue(response);
+  return writes;
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -54,6 +76,25 @@ describe("LevelSection", () => {
         .queryAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual(["Warlock 2 (Fiend Patron)", "Fighter 1"]);
+  });
+
+  it("follows the Level card with the improvements the classes grant", async () => {
+    const asi = { name: "Ability Score Improvement", source: "XPHB", level: 4 };
+    classGrants = { ...NO_GRANTS, level: 4, features: [{ ...asi, json: asi }] };
+    renderSeeded(record({ levels: Array.from({ length: 4 }, () => ({ class: FIGHTER })) }));
+
+    const improvements = await screen.findByRole("region", { name: "Ability Score Improvements" });
+    expect(within(improvements).getByText("Level 4 · Fighter 4:")).toBeVisible();
+    expect(card().compareDocumentPosition(improvements)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("shows no improvements card where no class grants one", async () => {
+    const client = renderSeeded();
+
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+    expect(
+      screen.queryByRole("region", { name: "Ability Score Improvements" }),
+    ).not.toBeInTheDocument();
   });
 
   it("measures experience toward the next level's threshold", () => {
@@ -92,7 +133,7 @@ describe("LevelSection", () => {
 
   it("saves a picked leveling mode", async () => {
     const saved = record({ leveling: "milestone" });
-    const fetchMock = stubFetch(new Response(JSON.stringify(saved)));
+    const fetchMock = stubWrite(new Response(JSON.stringify(saved)));
     renderSeeded();
 
     fireEvent.click(screen.getByRole("combobox", { name: "Leveling" }));
@@ -103,7 +144,7 @@ describe("LevelSection", () => {
   });
 
   it("adds experience to the stored total and clears the field", async () => {
-    const fetchMock = stubFetch(new Response(JSON.stringify(record({ experience: 1750 }))));
+    const fetchMock = stubWrite(new Response(JSON.stringify(record({ experience: 1750 }))));
     renderSeeded(record({ experience: 1500 }));
 
     applyXp("250");
@@ -114,7 +155,7 @@ describe("LevelSection", () => {
   });
 
   it("removes experience with a negative amount, never below zero", async () => {
-    const fetchMock = stubFetch(new Response(JSON.stringify(record({ experience: 0 }))));
+    const fetchMock = stubWrite(new Response(JSON.stringify(record({ experience: 0 }))));
     renderSeeded(record({ experience: 100 }));
 
     applyXp("-300");
@@ -130,7 +171,7 @@ describe("LevelSection", () => {
   });
 
   it("keeps the total on a failed save and retries the same amount", async () => {
-    const fetchMock = stubFetch(
+    const fetchMock = stubWrite(
       new Response(JSON.stringify({ error: "disk full" }), { status: 500 }),
     );
     renderSeeded(record({ experience: 1500 }));

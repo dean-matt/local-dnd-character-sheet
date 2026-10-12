@@ -100,8 +100,7 @@ const nameButton = (region: string, name: string) =>
 
 /**
  * Answers the rules lookups a modal makes, and apart from them the state read `Vitals`
- * makes, the inventory read `Attacks` makes, and the class and feat reads `Improvements`
- * makes, which find no improvement at level 3.
+ * makes and the inventory read `Attacks` makes.
  */
 function stubRules(entries: unknown[]) {
   const fetchMock = vi.fn(
@@ -112,12 +111,8 @@ function stubRules(entries: unknown[]) {
     "/api/characters/1/state": stateRecord(),
     "/api/characters/1/inventory": { items: [] },
   };
-  const grants = { level: 3, resources: [], spellSlots: [], optionalFeatures: [], features: [] };
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);
-    if (path.startsWith("/api/classes/")) return new Response(JSON.stringify(grants));
-    if (path.startsWith("/api/feats?"))
-      return new Response(JSON.stringify({ items: [], total: 0 }));
     return path in reads ? new Response(JSON.stringify(reads[path])) : fetchMock(url, init);
   });
   return fetchMock;
