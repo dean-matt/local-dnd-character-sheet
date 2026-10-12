@@ -26,7 +26,7 @@ export function CharacterPage() {
 
   return (
     <section aria-label={page.title}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {character.isError && <ErrorState error={character.error} />}
         {derived.isPending && <LoadingState label="Loading derived values…" />}
         {derived.isError && <ErrorState error={derived.error} />}

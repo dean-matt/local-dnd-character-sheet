@@ -11,7 +11,7 @@ export function NotesSection({ character }: { character: CharacterRecord | undef
   if (!character) return <SectionUnavailable page="Notes" />;
   const { notes, departures } = character.definition;
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <Card title="Notes">
         {notes.trim() ? (
           <p className="whitespace-pre-wrap text-body">{notes}</p>

@@ -31,7 +31,7 @@ export function PageBlocks({
   derived: CharacterDerived | undefined;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {blocks.map((block, index) => {
         const View = REGISTRY[block.kind];
         // biome-ignore lint/suspicious/noArrayIndexKey: a page's blocks carry no id of their own.

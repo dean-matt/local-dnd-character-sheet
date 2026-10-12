@@ -47,7 +47,7 @@ export function AbilitiesSection({
   const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <AbilityScores character={character} derived={derived} />
       <Improvements character={character} />
       <CombatStats derived={derived} />
@@ -55,7 +55,7 @@ export function AbilitiesSection({
       <Attacks character={character} derived={derived} />
       <Defenses derived={derived} />
       <ItemGrants derived={derived} />
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
           <ul className="flex flex-col gap-1">
             {ABILITIES.map((ability) => (

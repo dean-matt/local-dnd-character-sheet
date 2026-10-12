@@ -49,7 +49,7 @@ export function CharacterLayout() {
               }
             />
           )}
-          <div className="px-gutter py-6">
+          <div className="px-gutter py-4">
             <Outlet />
           </div>
         </div>
