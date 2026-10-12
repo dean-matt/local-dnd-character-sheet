@@ -4,11 +4,13 @@ import {
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterRecord,
+  characterDefinitionSchema,
   derivedValue,
   effectsOnRoll,
 } from "@dnd/character";
 import { type FormEvent, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
 import { InputField } from "../../InputField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
@@ -24,10 +26,15 @@ const LEVEL_CYCLE: ProficiencyLevel[] = ["none", "proficient", "expertise"];
 const nextLevel = (level: ProficiencyLevel) =>
   LEVEL_CYCLE[(LEVEL_CYCLE.indexOf(level) + 1) % LEVEL_CYCLE.length] ?? "none";
 
-const ABILITY_OPTIONS = ABILITIES.map((ability) => ({
-  value: ability,
-  label: ability.toUpperCase(),
-}));
+type Base = Ability | "flat";
+
+const BASE_OPTIONS = [
+  ...ABILITIES.map((ability) => ({ value: ability, label: ability.toUpperCase() })),
+  { value: "flat", label: "Flat bonus" },
+];
+
+const flatSchema =
+  characterDefinitionSchema.shape.customSkills.unwrap().element.options[1].shape.flat;
 
 /**
  * The skills a character adds beyond the catalog's, each change saved at once as an undo
@@ -43,7 +50,7 @@ export function CustomSkills({
 }) {
   const update = useUpdateCharacterDefinition(character.id);
   const [name, setName] = useState("");
-  const [ability, setAbility] = useState<Ability>("str");
+  const [base, setBase] = useState<Base>("str");
   const [refusal, setRefusal] = useState<string>();
   const rollEffects = derivedValue(derived.rollEffects);
   const stored = character.definition.customSkills;
@@ -74,7 +81,11 @@ export function CustomSkills({
     if (custom) return setRefusal(`${custom.name} is already a custom skill.`);
     setRefusal(undefined);
     setName("");
-    save((skills) => [...skills, { name: trimmed, ability, level: "none" }]);
+    const skill: CustomSkill =
+      base === "flat"
+        ? { name: trimmed, flat: 0, level: "none" }
+        : { name: trimmed, ability: base, level: "none" };
+    save((skills) => [...skills, skill]);
   }
 
   return (
@@ -82,16 +93,41 @@ export function CustomSkills({
       {derived.customSkills.length > 0 && (
         <ul aria-label="Custom skills" className="mt-1 grid gap-x-5 gap-y-1 sm:grid-cols-2">
           {derived.customSkills.map((skill) => {
-            const level = stored.find((each) => each.name === skill.name)?.level ?? "none";
+            const own = stored.find((each) => each.name === skill.name);
+            const level = own?.level ?? "none";
             return (
               <ProficiencyRow
                 key={skill.name}
                 level={level}
                 name={skill.name}
-                ability={skill.ability}
+                ability={skill.ability ?? "flat"}
                 modifier={skill.modifier}
                 title={skill.name}
                 rules={undefined}
+                field={
+                  own &&
+                  "flat" in own && (
+                    <Field
+                      mode="edit"
+                      label={`${skill.name} flat bonus`}
+                      labelHidden
+                      inputMode="numeric"
+                      inputClassName="w-10 text-right"
+                      current={own.flat}
+                      format={String}
+                      parse={(raw) => Number(raw.trim())}
+                      schema={flatSchema}
+                      onSave={async (flat: number) => {
+                        await update.mutateAsync((latest) => ({
+                          ...latest,
+                          customSkills: latest.customSkills.map((each) =>
+                            each.name === skill.name && "flat" in each ? { ...each, flat } : each,
+                          ),
+                        }));
+                      }}
+                    />
+                  )
+                }
                 effects={effectsOnRoll(rollEffects, {
                   roll: "skill",
                   skill: skill.name,
@@ -128,9 +164,9 @@ export function CustomSkills({
           {(control) => (
             <Select
               {...control}
-              options={ABILITY_OPTIONS}
-              value={ability}
-              onChange={(next) => setAbility(next as Ability)}
+              options={BASE_OPTIONS}
+              value={base}
+              onChange={(next) => setBase(next as Base)}
             />
           )}
         </FormField>

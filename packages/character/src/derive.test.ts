@@ -631,6 +631,51 @@ describe("deriveCharacter", () => {
       ]);
     });
 
+    it("derives a flat skill from its value and proficiency, naming the value", () => {
+      const block = withCustom([
+        { name: "Cartography", flat: 3, level: "proficient" },
+        { name: "Gambling", flat: -1, level: "none" },
+      ]);
+
+      expect(block.customSkills).toEqual([
+        {
+          name: "Cartography",
+          ability: null,
+          modifier: {
+            computed: 6,
+            manual: null,
+            terms: [
+              { label: "Flat bonus", value: 3 },
+              { label: "Proficiency", value: 3 },
+            ],
+          },
+        },
+        {
+          name: "Gambling",
+          ability: null,
+          modifier: { computed: -1, manual: null, terms: [{ label: "Flat bonus", value: -1 }] },
+        },
+      ]);
+    });
+
+    it("refuses a skill holding both an ability and a flat value", () => {
+      const both = {
+        ...definition,
+        customSkills: [{ name: "Juggling", ability: "dex", flat: 2, level: "none" }],
+      };
+
+      expect(characterDefinitionSchema.safeParse(both).success).toBe(false);
+    });
+
+    it("reads a stored skill without a flat value as an ability skill", () => {
+      const stored = {
+        ...definition,
+        customSkills: [{ name: "Juggling", ability: "dex", level: "none" }],
+      };
+
+      expect(characterDefinitionSchema.parse(stored).customSkills).toEqual(stored.customSkills);
+    });
+
     it("folds an override keyed by the skill's name", () => {
       const block = withCustom([{ name: "Juggling", ability: "dex", level: "none" }], {
         "customSkills.Juggling.modifier": 7,

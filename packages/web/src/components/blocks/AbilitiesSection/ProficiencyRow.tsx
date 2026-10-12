@@ -1,4 +1,5 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
+import type { ReactNode } from "react";
 import { RemoveButton } from "../../RemoveButton.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DerivedBonus } from "./DerivedBonus.tsx";
@@ -17,18 +18,22 @@ export function ProficiencyRow({
   title,
   rules,
   effects = [],
+  field,
   onCycleLevel,
   onRemove,
 }: {
   level: ProficiencyLevel;
   name: string;
   label?: string;
-  ability?: Ability;
+  /** A check's ability, or `flat` for a skill whose base is a value the player sets; absent on a save. */
+  ability?: Ability | "flat";
   modifier: Derived<number>;
   title: string;
   rules: Rules | undefined;
   /** What equipped items grant on this roll. */
   effects?: readonly RollEffectEntry[];
+  /** An input the character's owner edits in place, set before the total. */
+  field?: ReactNode;
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
   onRemove?: () => void;
@@ -72,9 +77,12 @@ export function ProficiencyRow({
       {ability && (
         <span className="w-6.5 text-label text-muted uppercase">
           <span aria-hidden="true">{ability}</span>
-          <span className="sr-only">{ABILITY_LABEL[ability]}</span>
+          <span className="sr-only">
+            {ability === "flat" ? "Flat bonus" : ABILITY_LABEL[ability]}
+          </span>
         </span>
       )}
+      {field}
       <span className="flex w-7 justify-end font-semibold">
         <DerivedBonus named name={roll} value={modifier} />
       </span>

@@ -111,7 +111,8 @@ export const characterDerivedSchema = z.strictObject({
   customSkills: z.array(
     z.strictObject({
       name: z.string().min(1),
-      ability: abilitySchema,
+      /** Null for a skill whose base is a flat value rather than an ability. */
+      ability: abilitySchema.nullable(),
       modifier: derivedSchema(z.int()),
     }),
   ),
