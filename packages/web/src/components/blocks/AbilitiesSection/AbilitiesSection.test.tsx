@@ -94,9 +94,7 @@ const rowButton = (region: string, name: string) =>
     .at(-1) as HTMLElement;
 
 const nameButton = (region: string, name: string) =>
-  within(card(region).getByText(name).closest("li") as HTMLElement).getAllByRole(
-    "button",
-  )[0] as HTMLElement;
+  within(card(region).getByText(name).closest("li") as HTMLElement).getByRole("button", { name });
 
 /**
  * Answers the rules lookups a modal makes, and apart from them the state read `Vitals`

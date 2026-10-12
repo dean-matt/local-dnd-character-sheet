@@ -273,7 +273,7 @@ says how much of the artboard the app builds today.
 | `Layout` | #282 | all but the Rolls Panel |
 | `Abilities` | #227, #487 | the scores edit, the rest read-only |
 | `Saves` | #227, #487 | read-only |
-| `Skills` | #227, #399, #487 | read-only |
+| `Skills` | #227, #399, #487 | the rings and custom skills edit, the rest read-only |
 | `Combat` | #227, #228 | read-only |
 | `HP` | #277, #281, #487 | read-only |
 | `Attacks` | #398, #487 | read-only |

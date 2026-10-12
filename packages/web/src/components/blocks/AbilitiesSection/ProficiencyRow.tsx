@@ -46,7 +46,7 @@ export function ProficiencyRow({
           type="button"
           aria-label={`${name} proficiency: ${PROFICIENCY_MARK[level].text}`}
           onClick={onCycleLevel}
-          className="flex"
+          className="flex rounded-full hover:ring-3 hover:ring-accent/30"
         >
           <ProficiencyRing level={level} />
         </button>

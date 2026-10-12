@@ -1,0 +1,79 @@
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  type ContentRef,
+  derivedValue,
+  effectsOnRoll,
+  refKey,
+} from "@dnd/character";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { SaveFailure } from "../../SaveFailure.tsx";
+import { ProficiencyRow } from "./ProficiencyRow.tsx";
+import { nextLevel } from "./proficiencyMark.ts";
+
+/**
+ * The edition's skills, alphabetically, each ring stepping its skill's proficiency and
+ * saving it at once as an undo entry. A skill stepped to none leaves
+ * `proficiencies.skills`, which lists only the skills a character holds.
+ */
+export function CatalogSkills({
+  character,
+  derived,
+}: {
+  character: CharacterRecord;
+  derived: CharacterDerived;
+}) {
+  const update = useUpdateCharacterDefinition(character.id);
+  const skillLevel = new Map(
+    character.definition.proficiencies.skills.map((skill) => [refKey(skill.ref), skill.level]),
+  );
+  const rollEffects = derivedValue(derived.rollEffects);
+  const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
+
+  function cycle(ref: ContentRef) {
+    const key = refKey(ref);
+    update.mutate((latest) => {
+      const held = latest.proficiencies.skills;
+      const current = held.find((skill) => refKey(skill.ref) === key);
+      const level = nextLevel(current?.level ?? "none");
+      const others = held.filter((skill) => skill !== current);
+      const kept = level === "none" ? others : [...others, { ref, level }];
+      return { ...latest, proficiencies: { ...latest.proficiencies, skills: kept } };
+    });
+  }
+
+  return (
+    <>
+      <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
+        {skills.map((skill) => {
+          const key = refKey(skill.ref);
+          return (
+            <ProficiencyRow
+              key={key}
+              level={skillLevel.get(key) ?? "none"}
+              name={skill.ref.name}
+              ability={skill.ability}
+              modifier={skill.modifier}
+              title={skill.ref.name}
+              rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
+              effects={effectsOnRoll(rollEffects, {
+                roll: "skill",
+                skill: skill.ref.name,
+                ability: skill.ability,
+              })}
+              onCycleLevel={() => cycle(skill.ref)}
+            />
+          );
+        })}
+      </ul>
+      {update.isError && (
+        <p role="alert" className="mt-1 flex items-center gap-2 text-error text-row">
+          <SaveFailure
+            message={`Couldn't save the skill proficiency: ${update.error.message}`}
+            onRetry={() => update.variables && update.mutate(update.variables)}
+          />
+        </p>
+      )}
+    </>
+  );
+}

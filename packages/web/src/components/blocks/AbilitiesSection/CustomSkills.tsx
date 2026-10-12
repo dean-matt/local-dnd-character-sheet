@@ -16,15 +16,9 @@ import { InputField } from "../../InputField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
-import type { ProficiencyLevel } from "./proficiencyMark.ts";
+import { nextLevel } from "./proficiencyMark.ts";
 
 type CustomSkill = CharacterDefinition["customSkills"][number];
-
-/** Half proficiency comes from a feature rather than a pick, so the ring skips it and a stored half moves on to none. */
-const LEVEL_CYCLE: ProficiencyLevel[] = ["none", "proficient", "expertise"];
-
-const nextLevel = (level: ProficiencyLevel) =>
-  LEVEL_CYCLE[(LEVEL_CYCLE.indexOf(level) + 1) % LEVEL_CYCLE.length] ?? "none";
 
 type Base = Ability | "flat";
 
