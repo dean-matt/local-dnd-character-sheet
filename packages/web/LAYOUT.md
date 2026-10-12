@@ -26,8 +26,8 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   second row in a narrow column, so `CreationFlow` measures its height into
   `--creation-footer-height` rather than holding a token.
 - **Page content** sits below the header with `px-gutter`, then `py-4` on character pages
-  and `py-6` on Settings and in `ContentLayout` in `src/routes/ContentLayout.tsx`, which the
-  homepage, list and 404 pages use.
+  and `py-6` everywhere else: Settings, search, character creation, and `ContentLayout` in
+  `src/routes/ContentLayout.tsx`, which the homepage, list and 404 pages use.
 
 A side panel joins the flex row in `src/routes/CharacterLayout/CharacterLayout.tsx`. The content column
 and the character header follow it; the top bar never does. The mockup's Rolls Panel, a
