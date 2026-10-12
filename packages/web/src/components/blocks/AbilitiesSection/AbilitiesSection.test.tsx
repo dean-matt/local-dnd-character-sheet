@@ -93,10 +93,13 @@ const rowButton = (region: string, name: string) =>
     .getAllByRole("button")
     .at(-1) as HTMLElement;
 
+/** The row's first button past a skill's proficiency ring. */
 const nameButton = (region: string, name: string) =>
-  within(card(region).getByText(name).closest("li") as HTMLElement).getAllByRole(
-    "button",
-  )[0] as HTMLElement;
+  within(card(region).getByText(name).closest("li") as HTMLElement)
+    .getAllByRole("button")
+    .find(
+      (button) => !button.getAttribute("aria-label")?.includes(" proficiency: "),
+    ) as HTMLElement;
 
 /**
  * Answers the rules lookups a modal makes, and apart from them the state read `Vitals`

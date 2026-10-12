@@ -12,13 +12,13 @@ import {
   type CharacterRecord,
   derivedValue,
   effectsOnRoll,
-  refKey,
 } from "@dnd/character";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
 import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
+import { CatalogSkills } from "./CatalogSkills.tsx";
 import { CombatStats } from "./CombatStats.tsx";
 import { CustomSkills } from "./CustomSkills.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
@@ -39,11 +39,7 @@ export function AbilitiesSection({
   const { definition } = character;
 
   const saveProficient = new Set(definition.proficiencies.savingThrows);
-  const skillLevel = new Map(
-    definition.proficiencies.skills.map((skill) => [refKey(skill.ref), skill.level]),
-  );
   const rollEffects = derivedValue(derived.rollEffects);
-  const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
 
   return (
     <div className="flex flex-col gap-3">
@@ -80,24 +76,7 @@ export function AbilitiesSection({
           </ul>
         </Card>
         <Card title="Skills">
-          <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
-            {skills.map((skill) => (
-              <ProficiencyRow
-                key={refKey(skill.ref)}
-                level={skillLevel.get(refKey(skill.ref)) ?? "none"}
-                name={skill.ref.name}
-                ability={skill.ability}
-                modifier={skill.modifier}
-                title={skill.ref.name}
-                rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
-                effects={effectsOnRoll(rollEffects, {
-                  roll: "skill",
-                  skill: skill.ref.name,
-                  ability: skill.ability,
-                })}
-              />
-            ))}
-          </ul>
+          <CatalogSkills character={character} derived={derived} />
           <CustomSkills character={character} derived={derived} />
           <PassiveScores derived={derived} />
         </Card>
