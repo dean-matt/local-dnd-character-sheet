@@ -6,7 +6,9 @@ import {
   homebrewItemRecordSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
+  itemEntries,
   itemHitFacts,
+  rowEntries,
 } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
 import type { ComponentType } from "react";
@@ -49,6 +51,8 @@ export interface HomebrewKind<
   chips(record: R): string[];
   /** What the preview prints ahead of the rules text of an entry `inputSchema` accepted. */
   facts(input: I): Fact[];
+  /** The rules text the preview prints, as the saved row's detail reads it. */
+  entries(input: I): Entries;
   /** What a new entry opens with; the editor offers a choice where there is more than one. */
   starters: HomebrewStarters;
   Form: ComponentType<HomebrewFormProps>;
@@ -69,6 +73,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
   inputSchema: homebrewItemInputSchema,
   chips: (record) => [itemMeta(itemHitFacts(record.json))],
   facts: itemFacts,
+  entries: itemEntries,
   starters: ITEM_STARTERS,
   Form: ItemForm,
   formKeys: ["name", "type", "rarity", "reqAttune", "advantage", "entries"],
@@ -89,6 +94,7 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
   starters: SPELL_STARTERS,
   Form: SpellForm,
   facts: spellFacts,
+  entries: rowEntries,
   forEdition: withUpcastNameFor,
   formKeys: ["name", "level", "school", "duration", "meta", "entries"],
 };

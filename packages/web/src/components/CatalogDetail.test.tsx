@@ -376,6 +376,37 @@ describe("CatalogDetail", () => {
     await dialogNamed("+1 Longsword");
   });
 
+  it("links what an Artificer replicates an item with, and leaves one the catalog lacks as text", async () => {
+    const replicable = {
+      ...longsword,
+      json: {
+        ...longsword.json,
+        classFeatures: ["replicate magic item|artificer|efa|2|efa"],
+        optionalfeatures: ["replicate magic item|tce"],
+      },
+    };
+    const feature = {
+      name: "Replicate Magic Item",
+      source: "EFA",
+      entries: ["Make an item."],
+      path: "/classes/Artificer/EFA/features/Replicate%20Magic%20Item/EFA/2",
+    };
+    stubFetchByUrl({
+      "/api/items/%2B1%20Longsword/DMG": replicable,
+      "/api/refs/resolve": { refs: [feature, null] },
+    });
+    renderAt("/items/%2B1%20Longsword/DMG");
+
+    await dialogNamed("+1 Longsword");
+    await screen.findByRole("button", { name: "Replicate Magic Item" });
+    const [linked, plain] = screen.getAllByText("Replicate Magic Item");
+    expect(linked?.closest("button")).not.toBeNull();
+    expect(plain?.closest("button")).toBeNull();
+    expect(plain?.closest("p")).toHaveTextContent(
+      "An Artificer can replicate this item with Replicate Magic Item or the Replicate Magic Item infusion.",
+    );
+  });
+
   it("says an address no target matches is not found, without asking the API", async () => {
     const fetchMock = stubFetchByUrl({});
     renderAt("/monsters/Goblin/MM");

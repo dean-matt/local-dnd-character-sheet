@@ -21,6 +21,7 @@ import {
   homebrewItemRecordSchema,
   homebrewRaceRecordSchema,
   homebrewSpellRecordSchema,
+  itemEntries,
   itemRecordSchema,
   raceRecordSchema,
   rowEntries,
@@ -56,14 +57,16 @@ export interface CatalogTarget {
 type Row = {
   name: string;
   edition?: CharacterRecord["edition"];
-  json: { entries?: Entries; entriesHigherLevel?: unknown };
+  json: Record<string, unknown>;
 };
 
-const toRow = (record: Row & { source?: string }): CatalogRow => ({
+type ToEntries = (json: Record<string, unknown>) => Entries;
+
+const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntries): CatalogRow => ({
   name: record.name,
   source: record.source,
   edition: record.edition,
-  entries: rowEntries(record.json),
+  entries: entries(record.json),
 });
 
 const segments = (...parts: (string | undefined)[]) =>
@@ -75,23 +78,24 @@ function nameSource(
   collection: string,
   label: string,
   schema: z.ZodType<Row & { source: string }>,
+  entries?: ToEntries,
 ) {
   return {
     path: `${collection}/:name/:source`,
     label: () => label,
     lookedFor: (key: Params) => `the ${label} ${pair(key.name, key.source)}`,
     load: async (key: Params) =>
-      toRow(await apiGet(`/${collection}/${segments(key.name, key.source)}`, schema)),
+      toRow(await apiGet(`/${collection}/${segments(key.name, key.source)}`, schema), entries),
   };
 }
 
-function homebrew(collection: string, label: string, schema: z.ZodType<Row>) {
+function homebrew(collection: string, label: string, schema: z.ZodType<Row>, entries?: ToEntries) {
   return {
     path: `homebrew/${collection}/:id`,
     label: () => label,
     lookedFor: (key: Params) => `the homebrew ${label} ${key.id}`,
     load: async (key: Params) =>
-      toRow(await apiGet(`/homebrew/${collection}/${segments(key.id)}`, schema)),
+      toRow(await apiGet(`/homebrew/${collection}/${segments(key.id)}`, schema), entries),
   };
 }
 
@@ -140,7 +144,7 @@ async function subclassPath(key: Params): Promise<string> {
 
 const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("spells", "spell", spellRecordSchema),
-  nameSource("items", "item", itemRecordSchema),
+  nameSource("items", "item", itemRecordSchema, itemEntries),
   {
     path: "items/:name/:source/variants/:variantName/:variantSource",
     label: () => "magic variant",
@@ -152,6 +156,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
           `/items/${segments(key.name, key.source, "variants", key.variantName, key.variantSource)}`,
           itemRecordSchema,
         ),
+        itemEntries,
       ),
   },
   nameSource("races", "race", raceRecordSchema),
@@ -219,7 +224,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
     },
   },
   homebrew("spells", "spell", homebrewSpellRecordSchema),
-  homebrew("items", "item", homebrewItemRecordSchema),
+  homebrew("items", "item", homebrewItemRecordSchema, itemEntries),
   homebrew("races", "race", homebrewRaceRecordSchema),
   homebrew("backgrounds", "background", homebrewBackgroundRecordSchema),
   homebrew("feats", "feat", homebrewFeatRecordSchema),

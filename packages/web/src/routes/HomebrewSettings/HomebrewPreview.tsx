@@ -1,4 +1,4 @@
-import { rowEntries } from "@dnd/catalog";
+import type { Entries } from "@dnd/catalog";
 import { capitalize } from "../../components/blocks/capitalize.ts";
 import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { RulesText } from "../../components/RulesText/RulesText.tsx";
@@ -10,7 +10,7 @@ import type { HomebrewInput } from "./homebrewKinds.ts";
 export interface HomebrewPreviewProps {
   noun: string;
   /** The last entry the kind's schema accepted; absent until one has been. */
-  shown: { input: HomebrewInput; facts: Fact[] } | undefined;
+  shown: { input: HomebrewInput; facts: Fact[]; entries: Entries } | undefined;
 }
 
 /**
@@ -21,7 +21,7 @@ export function HomebrewPreview({ noun, shown }: HomebrewPreviewProps) {
   if (!shown) {
     return <p className="text-muted">Nothing to preview until the {noun} has no problems.</p>;
   }
-  const entries = rowEntries(shown.input);
+  const { entries } = shown;
   return (
     <div className="flex flex-col gap-2 text-body leading-normal">
       <div>
