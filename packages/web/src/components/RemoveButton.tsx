@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-export function RemoveItemButton({ name, onRemove }: { name: string; onRemove: () => void }) {
+export function RemoveButton({ name, onRemove }: { name: string; onRemove: () => void }) {
   return (
     <button
       type="button"

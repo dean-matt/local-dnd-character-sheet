@@ -2,12 +2,12 @@ import type { SheetItem } from "@dnd/catalog";
 import type { ReactNode } from "react";
 import { firstLine } from "../../../../../lib/rulesProse.ts";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
+import { RemoveButton } from "../../../../RemoveButton.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../../../Tag.tsx";
 import type { Attack, Grip } from "../../../attack.ts";
 import { capitalize } from "../../../capitalize.ts";
 import { pounds } from "../../pounds.ts";
-import { RemoveItemButton } from "../RemoveItemButton.tsx";
 import { AttackChips } from "./AttackChips/AttackChips.tsx";
 import { AttuneToggle } from "./AttuneToggle.tsx";
 import { EquipToggle } from "./EquipToggle.tsx";
@@ -59,7 +59,7 @@ export function ResolvedItemRow({
           {!item.carried && <Tag>Not carried</Tag>}
         </>
       }
-      remove={<RemoveItemButton name={item.name} onRemove={onRemove} />}
+      remove={<RemoveButton name={item.name} onRemove={onRemove} />}
       price={cost?.text}
       priceNote={cost?.note}
       preview={item.overridden ?? firstLine(item.entries)}

@@ -51,6 +51,18 @@ export function CustomSkills({
   const save = (customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
     update.mutate((latest) => ({ ...latest, customSkills: customSkills(latest.customSkills) }));
 
+  /** Drops the skill's overrides too, so a new skill taking its name starts computed. */
+  function remove(skill: string) {
+    const prefix = `customSkills.${skill}.`;
+    update.mutate((latest) => ({
+      ...latest,
+      customSkills: latest.customSkills.filter((each) => each.name !== skill),
+      overrides: Object.fromEntries(
+        Object.entries(latest.overrides).filter(([key]) => !key.startsWith(prefix)),
+      ),
+    }));
+  }
+
   function add(event: FormEvent) {
     event.preventDefault();
     const trimmed = name.trim();
@@ -92,7 +104,7 @@ export function CustomSkills({
                     ),
                   )
                 }
-                onRemove={() => save((skills) => skills.filter((each) => each.name !== skill.name))}
+                onRemove={() => remove(skill.name)}
               />
             );
           })}

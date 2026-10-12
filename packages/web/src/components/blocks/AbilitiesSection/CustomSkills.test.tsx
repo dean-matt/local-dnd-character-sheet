@@ -116,13 +116,24 @@ describe("CustomSkills", () => {
     await waitFor(() => expect(written(fetchMock)).toEqual([JUGGLING]));
   });
 
-  it("removes a skill", async () => {
+  it("removes a skill and its override, so a skill added under its name starts computed", async () => {
     const fetchMock = stubServer(holding([]));
-    renderSeeded(holding([JUGGLING]));
+    const record = holding([JUGGLING, { ...JUGGLING, name: "Cooking" }]);
+    renderSeeded({
+      ...record,
+      definition: {
+        ...record.definition,
+        overrides: { "customSkills.Juggling.modifier": 9, "customSkills.Cooking.modifier": 4 },
+      },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Juggling" }));
 
-    await waitFor(() => expect(written(fetchMock)).toEqual([]));
+    await waitFor(() => expect(written(fetchMock)).toEqual([{ ...JUGGLING, name: "Cooking" }]));
+    const init = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1")?.[1];
+    expect(JSON.parse(String(init?.body)).overrides).toEqual({
+      "customSkills.Cooking.modifier": 4,
+    });
   });
 
   it("says when a change did not save", async () => {

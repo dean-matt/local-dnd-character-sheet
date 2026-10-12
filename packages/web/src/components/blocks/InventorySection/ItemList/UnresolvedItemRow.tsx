@@ -2,8 +2,8 @@ import type { SheetItem } from "@dnd/catalog";
 import { renamedAt } from "../../../../lib/renamed.ts";
 import { ListRow } from "../../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../../NotFoundTag.tsx";
+import { RemoveButton } from "../../../RemoveButton.tsx";
 import { ItemMarks } from "./ItemMarks.tsx";
-import { RemoveItemButton } from "./RemoveItemButton.tsx";
 
 /** `index` is the item's place in the definition, which names its field in the report. */
 export function UnresolvedItemRow({
@@ -32,7 +32,7 @@ export function UnresolvedItemRow({
           />
         </>
       }
-      remove={<RemoveItemButton name={item.name} onRemove={onRemove} />}
+      remove={<RemoveButton name={item.name} onRemove={onRemove} />}
     />
   );
 }

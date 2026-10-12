@@ -1,5 +1,5 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
-import { X } from "lucide-react";
+import { RemoveButton } from "../../RemoveButton.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DerivedBonus } from "./DerivedBonus.tsx";
 import { DetailName } from "./DetailName/DetailName.tsx";
@@ -77,16 +77,7 @@ export function ProficiencyRow({
       <span className="flex w-7 justify-end font-semibold">
         <DerivedBonus named name={ability ? `${name} check` : `${name} save`} value={modifier} />
       </span>
-      {onRemove && (
-        <button
-          type="button"
-          aria-label={`Remove ${name}`}
-          onClick={onRemove}
-          className="text-muted hover:text-ink"
-        >
-          <X aria-hidden="true" size={10} strokeWidth={2} />
-        </button>
-      )}
+      {onRemove && <RemoveButton name={name} onRemove={onRemove} />}
       <RollEffects effects={effects} className="basis-full pl-6" />
     </li>
   );
