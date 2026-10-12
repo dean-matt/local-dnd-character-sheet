@@ -28,6 +28,7 @@ function renderSeeded(character = record()) {
       <Seeded id={character.id} />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 const card = () => screen.getByRole("region", { name: "Level" });
@@ -88,9 +89,9 @@ describe("LevelSection", () => {
   });
 
   it("shows no improvements card where no class grants one", async () => {
-    renderSeeded();
+    const client = renderSeeded();
 
-    await waitFor(() => expect(card()).toBeInTheDocument());
+    await waitFor(() => expect(client.isFetching()).toBe(0));
     expect(
       screen.queryByRole("region", { name: "Ability Score Improvements" }),
     ).not.toBeInTheDocument();
