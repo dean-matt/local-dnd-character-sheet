@@ -6,15 +6,14 @@ import {
   type CharacterRecord,
   derivedValue,
   effectsOnRoll,
-  flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
-import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
 import { InputField } from "../../InputField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
+import { FlatSkillBase } from "./FlatSkillBase.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
 import { RemoveCustomSkill } from "./RemoveCustomSkill.tsx";
@@ -52,7 +51,6 @@ export function CustomSkills({
 
   const addField = useRef<HTMLInputElement>(null);
   const [removed, setRemoved] = useState<string>();
-  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
 
   // Waits for the render that drops the row: until then its modal holds the page inert.
   useEffect(() => {
@@ -97,29 +95,6 @@ export function CustomSkills({
                 modifier={skill.modifier}
                 title={skill.name}
                 rules={undefined}
-                field={
-                  "flat" in own ? (
-                    <Field
-                      mode="edit"
-                      label={`${skill.name} flat bonus`}
-                      labelHidden
-                      inputClassName="w-10 py-0 text-right"
-                      messageSlot={{ into: messages, name: skill.name }}
-                      current={own.flat}
-                      format={String}
-                      parse={(raw) => Number(raw.trim())}
-                      schema={flatSkillBonusSchema}
-                      onSave={async (flat: number) => {
-                        await update.mutateAsync((latest) => ({
-                          ...latest,
-                          customSkills: latest.customSkills.map((each) =>
-                            each.name === skill.name && "flat" in each ? { ...each, flat } : each,
-                          ),
-                        }));
-                      }}
-                    />
-                  ) : undefined
-                }
                 effects={effectsOnRoll(rollEffects, {
                   roll: "skill",
                   skill: skill.name,
@@ -133,18 +108,22 @@ export function CustomSkills({
                   )
                 }
                 detailFooter={
-                  <RemoveCustomSkill
-                    characterId={character.id}
-                    name={skill.name}
-                    onRemoved={() => setRemoved(skill.name)}
-                  />
+                  <div className="flex flex-1 items-start justify-between gap-3">
+                    {"flat" in own && (
+                      <FlatSkillBase characterId={character.id} name={skill.name} flat={own.flat} />
+                    )}
+                    <RemoveCustomSkill
+                      characterId={character.id}
+                      name={skill.name}
+                      onRemoved={() => setRemoved(skill.name)}
+                    />
+                  </div>
                 }
               />
             );
           })}
         </ul>
       )}
-      <div ref={setMessages} className="flex flex-col" />
       <form noValidate onSubmit={add} className="mt-2 flex items-start gap-1.5">
         <div className="min-w-0 grow">
           <InputField

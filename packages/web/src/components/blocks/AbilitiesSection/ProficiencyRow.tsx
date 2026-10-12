@@ -9,9 +9,7 @@ import { RollEffectChip } from "./RollEffectChip.tsx";
 
 /**
  * One row of a proficiency list: the ring a reader checks as often as the total, the name
- * and what it rolls on, then the chip and the total in a column every row shares. A row
- * with a `field` shows the field in that column instead, and leaves the total to the
- * modal the name opens.
+ * and what it rolls on, then the chip and the total in a column every row shares.
  */
 export function ProficiencyRow({
   level,
@@ -22,7 +20,6 @@ export function ProficiencyRow({
   title,
   rules,
   effects = [],
-  field,
   onCycleLevel,
   detailFooter,
 }: {
@@ -36,8 +33,6 @@ export function ProficiencyRow({
   rules: Rules | undefined;
   /** What equipped items grant on this roll. */
   effects?: readonly RollEffectEntry[];
-  /** An input the character's owner edits in place, standing where the total would. */
-  field?: ReactNode;
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
   /** The foot of the modal the name opens, for an action on the row itself. */
@@ -90,11 +85,9 @@ export function ProficiencyRow({
       )}
       <span className="ms-auto flex items-center gap-2">
         <RollEffectChip roll={roll} effects={effects} />
-        {field ?? (
-          <span className="flex w-7 justify-end font-semibold">
-            <DerivedBonus named name={roll} value={modifier} />
-          </span>
-        )}
+        <span className="flex w-7 justify-end font-semibold">
+          <DerivedBonus named name={roll} value={modifier} />
+        </span>
       </span>
     </li>
   );
