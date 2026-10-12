@@ -14,6 +14,7 @@ import {
   maxHitPoints,
   multiclassCasterLevel,
   multiclassSlots,
+  type ProficiencyLevel,
   passiveScore,
   preparedSpellCount,
   proficiencyBonusBreakdown,
@@ -118,20 +119,36 @@ export function skillModifier(
 ): Breakdown<TermReference> {
   const key = refKey(skill);
   const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
+  return checkModifier(
+    definition,
+    { ability, level: entry?.level ?? "none", reference: skill },
+    grants,
+    bonuses,
+    proficiencyItems,
+  );
+}
+
+/** A skill check's terms, whether the skill is a catalog row or one of the character's own. */
+function checkModifier(
+  definition: Scored,
+  skill: { ability: Ability; level: ProficiencyLevel; reference?: ContentRef },
+  grants: readonly AbilityGrant[],
+  bonuses: readonly Term<TermReference>[],
+  proficiencyItems: readonly ProficiencyItem[],
+): Breakdown<TermReference> {
   const level = totalLevel(definition);
-  const proficiency = entry?.level ?? "none";
-  const contribution = proficiencyContribution(level, proficiency);
+  const contribution = proficiencyContribution(level, skill.level);
   const terms: Term<TermReference>[] = [
     {
-      label: ABILITY_LABEL[ability],
-      value: abilityModifier(abilityScore(definition, ability, grants)),
-      reference: skill,
+      label: ABILITY_LABEL[skill.ability],
+      value: abilityModifier(abilityScore(definition, skill.ability, grants)),
+      ...(skill.reference && { reference: skill.reference }),
     },
   ];
   if (contribution !== 0) terms.push({ label: "Proficiency", value: contribution });
   return breakdown([
     ...terms,
-    ...proficiencyItemTerms(level, proficiency, proficiencyItems),
+    ...proficiencyItemTerms(level, skill.level, proficiencyItems),
     ...bonuses,
   ]);
 }
@@ -710,6 +727,12 @@ export function deriveCharacter(
     };
   });
 
+  const customSkills = definition.customSkills.map((skill) => ({
+    name: skill.name,
+    ability: skill.ability,
+    modifier: fromBreakdown(checkModifier(definition, skill, grants, checkBonus, bonuses)),
+  }));
+
   const scores = Object.fromEntries(
     ABILITIES.map((ability) => [ability, abilityScoreBreakdown(definition, ability, grants)]),
   ) as Record<Ability, Breakdown<TermReference>>;
@@ -737,6 +760,7 @@ export function deriveCharacter(
     savingThrows,
     concentrationSave,
     skills,
+    customSkills,
     armorClass: derivedArmorClass(definition, catalog),
     initiative: fromBreakdown(
       breakdown([

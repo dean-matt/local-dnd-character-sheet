@@ -369,6 +369,24 @@ export const characterDefinitionSchema = z.strictObject({
   abilityScores: abilityScoresSchema,
   abilityIncreases: z.array(abilityIncreaseSchema).default([]),
   proficiencies: proficienciesSchema,
+  /**
+   * Skills the table plays that the catalog does not print, named rather than referenced:
+   * no row exists to reference. A name keys its override, so a second skill of the same
+   * name, in any case, is refused. A name matching a catalog skill is refused by the sheet, which holds the
+   * edition's skill list; this schema has no catalog to check against.
+   */
+  customSkills: z
+    .array(
+      z.strictObject({
+        name: z.string().trim().min(1),
+        ability: abilitySchema,
+        level: proficiencyLevelSchema,
+      }),
+    )
+    .refine((skills) => isUnique(skills, (skill) => skill.name.toLowerCase()), {
+      error: "the same custom skill is listed twice",
+    })
+    .default([]),
   inventory: z.array(inventoryEntrySchema).superRefine((entries, context) => {
     const byId = new Map(
       entries.flatMap((entry) => (entry.id ? [[entry.id, entry] as const] : [])),

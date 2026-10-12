@@ -598,6 +598,60 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("custom skills", () => {
+    const withCustom = (
+      customSkills: CharacterDefinition["customSkills"],
+      overrides: CharacterDefinition["overrides"] = {},
+    ) => deriveCharacter({ ...equipped, customSkills, overrides }, catalog);
+
+    it("derives each from its ability and proficiency as a catalog skill is derived", () => {
+      const block = withCustom([
+        { name: "Juggling", ability: "dex", level: "expertise" },
+        { name: "Cooking", ability: "wis", level: "none" },
+      ]);
+
+      expect(block.customSkills).toEqual([
+        {
+          name: "Juggling",
+          ability: "dex",
+          modifier: {
+            computed: 9,
+            manual: null,
+            terms: [
+              { label: "Dexterity", value: 3 },
+              { label: "Proficiency", value: 6 },
+            ],
+          },
+        },
+        {
+          name: "Cooking",
+          ability: "wis",
+          modifier: { computed: 1, manual: null, terms: [{ label: "Wisdom", value: 1 }] },
+        },
+      ]);
+    });
+
+    it("folds an override keyed by the skill's name", () => {
+      const block = withCustom([{ name: "Juggling", ability: "dex", level: "none" }], {
+        "customSkills.Juggling.modifier": 7,
+      });
+
+      expect(block.customSkills[0]?.modifier).toMatchObject({ computed: 3, manual: 7 });
+    });
+
+    it("refuses two that differ only in case, since a name keys its override", () => {
+      const twice = {
+        ...definition,
+        customSkills: [
+          { name: "Juggling", ability: "dex", level: "none" },
+          { name: "juggling", ability: "str", level: "none" },
+        ],
+      };
+
+      expect(characterDefinitionSchema.safeParse(twice).success).toBe(false);
+    });
+  });
+
   describe("range and ammunition", () => {
     const ARROW = "arrow|phb";
     const SHORTBOW = { name: "Shortbow", source: "PHB" };
@@ -1055,6 +1109,18 @@ describe("deriveCharacter", () => {
       }
       expect(block.initiative.computed).toBe(bare.initiative.computed + 1);
       expect(block.abilityModifiers).toEqual(bare.abilityModifiers);
+      const juggler = deriveCharacter(
+        {
+          ...equipped,
+          inventory: [...equipped.inventory, worn(LUCK)],
+          customSkills: [{ name: "Juggling", ability: "dex", level: "none" }],
+        },
+        itemCatalog,
+      );
+      expect(juggler.customSkills[0]?.modifier.terms.at(-1)).toEqual({
+        label: LUCK.name,
+        value: 1,
+      });
     });
 
     it("lowers the critical threshold of every weapon attack and shows a plain 20 otherwise", () => {
