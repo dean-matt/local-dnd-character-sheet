@@ -521,7 +521,7 @@ describe("AbilitiesSection", () => {
   });
 
   describe("detail modal", () => {
-    it("opens a skill's terms and its catalog text, asking for the skill by its own source", async () => {
+    it("opens a skill's terms and its catalog text, asking for the skill by its own source, with nothing to remove", async () => {
       const fetchMock = stubRules(["Stealth covers hiding."]);
       const record = warlock();
       renderWithClient(<AbilitiesSection character={record} derived={derivedFor(record)} />);
@@ -532,6 +532,7 @@ describe("AbilitiesSection", () => {
       expect(modal.getByText("Expertise")).toBeVisible();
       expect(modal.getByText("+7")).toBeVisible();
       expect(await modal.findByText("Stealth covers hiding.")).toBeVisible();
+      expect(modal.queryByRole("button", { name: /^Remove/ })).toBeNull();
       const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
       expect(body.refs).toEqual([{ tag: "skill", name: "Stealth", source: "XPHB" }]);
     });

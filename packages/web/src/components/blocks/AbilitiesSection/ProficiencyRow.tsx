@@ -1,6 +1,5 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
 import type { ReactNode } from "react";
-import { RemoveButton } from "../../RemoveButton.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DerivedBonus } from "./DerivedBonus.tsx";
 import { DetailName } from "./DetailName/DetailName.tsx";
@@ -23,7 +22,7 @@ export function ProficiencyRow({
   effects = [],
   field,
   onCycleLevel,
-  onRemove,
+  detailFooter,
 }: {
   level: ProficiencyLevel;
   name: string;
@@ -39,7 +38,8 @@ export function ProficiencyRow({
   field?: ReactNode;
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
-  onRemove?: () => void;
+  /** The foot of the modal the name opens, for an action on the row itself. */
+  detailFooter?: ReactNode;
 }) {
   const roll = ability ? `${name} check` : `${name} save`;
   return (
@@ -62,6 +62,7 @@ export function ProficiencyRow({
           meta={PROFICIENCY_MARK[level].text}
           value={modifier}
           rules={rules}
+          footer={detailFooter}
           className="hover:underline"
         >
           {label ? (
@@ -92,7 +93,6 @@ export function ProficiencyRow({
           <DerivedBonus named name={roll} value={modifier} />
         </span>
       </span>
-      {onRemove && <RemoveButton name={name} onRemove={onRemove} />}
     </li>
   );
 }
