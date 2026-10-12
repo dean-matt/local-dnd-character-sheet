@@ -11,13 +11,19 @@ import { levelUpForm } from "./levelUpForm.ts";
 
 type Level = CharacterDefinition["levels"][number];
 
+/** The fields Apply writes whole, which an edit made since the dialog opened would lose. */
+const WRITTEN = ["levels", "feats", "abilityIncreases", "featureChoices"] as const;
+
+const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
 /** What the summary reads once the write lands, taken when Apply is pressed. */
 type Sent = { before: CharacterDerived | undefined; table: LevelChange[]; features: string[] };
 
 /**
  * One level, chosen and confirmed before anything is written, then a list of what it
  * moved. Apply writes the level and the choices it brought as one edit, so it is one undo
- * entry; closing first writes nothing.
+ * entry, and refuses where those fields changed since the dialog opened, as from another
+ * tab; closing first writes nothing.
  *
  * The record is read once, as the dialog opens: the written level then cannot shift the
  * class level the summary describes. Its `updatedAt` scopes the draft, so a draft resumed
@@ -58,6 +64,7 @@ export function LevelUpDialog({
           <LevelUpSummary
             changes={summaryChanges(sent, derived.data, derived.isFetching, derived.isError)}
             features={sent.features}
+            emptyNote="No value on the sheet moved."
           />
         </ModalEntry>
       </Modal>
@@ -68,17 +75,18 @@ export function LevelUpDialog({
     <levelUpForm.FormShell
       draftScope={`${opened.id}:${opened.updatedAt}`}
       defaultValues={{ ...definition, levels: [...definition.levels, { class: last.class }] }}
-      // The fields the level writes replace the latest ones whole, so an edit to them made in
-      // another tab while the dialog is open is lost; comparing `latest.updatedAt` to the
-      // opened record's and refusing is the way out.
       onSubmit={async (values) => {
-        await update.mutateAsync((latest) => ({
-          ...latest,
-          levels: values.levels,
-          feats: values.feats,
-          abilityIncreases: values.abilityIncreases,
-          featureChoices: values.featureChoices,
-        }));
+        await update.mutateAsync((latest) => {
+          if (WRITTEN.some((field) => !sameJson(latest[field], definition[field])))
+            throw new Error("the character changed since the level-up opened; reopen it");
+          return {
+            ...latest,
+            levels: values.levels,
+            feats: values.feats,
+            abilityIncreases: values.abilityIncreases,
+            featureChoices: values.featureChoices,
+          };
+        });
       }}
       onCancel={onClose}
     >

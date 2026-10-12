@@ -1,15 +1,18 @@
 import type { LevelChange } from "./levelUpChanges.ts";
 
 /**
- * What the level changed, once it is applied: each value before and after, then the
- * features that arrived. `changes` is `undefined` while the sheet recomputes.
+ * What the level changes: each value before and after, then the features that arrive.
+ * `changes` is `undefined` while the sheet recomputes, and `emptyNote` stands in for a list
+ * with nothing in it.
  */
 export function LevelUpSummary({
   changes,
   features,
+  emptyNote,
 }: {
   changes: readonly LevelChange[] | undefined;
   features: readonly string[];
+  emptyNote?: string;
 }) {
   return (
     <div aria-live="polite" className="flex flex-col gap-2">
@@ -27,7 +30,7 @@ export function LevelUpSummary({
           ))}
         </dl>
       ) : (
-        <p className="text-muted">No value on the sheet moved.</p>
+        emptyNote && <p className="text-muted">{emptyNote}</p>
       )}
       {features.length > 0 && (
         <p>

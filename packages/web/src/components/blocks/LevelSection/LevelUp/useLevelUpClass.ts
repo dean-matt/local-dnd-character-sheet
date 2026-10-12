@@ -17,6 +17,20 @@ const sameRef = (row: ContentRef, ref: ContentRef | undefined) =>
   ref !== undefined && row.name === ref.name && row.source === ref.source;
 
 /**
+ * The subclass level, where level `next` asks for a subclass: the class holds none, offers
+ * some, and reaches its subclass level at `next` or reached it earlier without one.
+ */
+function subclassFrom(
+  held: ContentRef | undefined,
+  subclassLevel: number | undefined,
+  next: number,
+  offered: boolean,
+): number | undefined {
+  if (held !== undefined || subclassLevel === undefined || !offered) return undefined;
+  return next >= subclassLevel ? subclassLevel : undefined;
+}
+
+/**
  * What one more level in `cls` reads: the class's hit die, whether this level asks for a
  * subclass, at the class's subclass level or past it for a class that reached it without one,
  * and which ones it offers, and the class's and subclass's grants at its level now
@@ -37,11 +51,8 @@ export function useLevelUpClass(
   const subclassList = useQuery(subclassesQuery(catalog, definition.edition));
   const subclassLevel = row.data && subclassLevelSchema.parse(row.data.json);
   const subclasses: readonly SubclassRecord[] = subclassList.data?.items ?? [];
-  const asksSubclass =
-    held?.subclass === undefined &&
-    subclassLevel !== undefined &&
-    next >= subclassLevel &&
-    subclasses.length > 0;
+  const from = subclassFrom(held?.subclass, subclassLevel, next, subclasses.length > 0);
+  const asksSubclass = from !== undefined;
   const subclass = held?.subclass ?? (asksSubclass ? picked : undefined);
   const before = useQuery(classGrantsQuery(level > 0 ? catalog : undefined, level));
   const after = useQuery(classGrantsQuery(catalog, next));
@@ -56,6 +67,8 @@ export function useLevelUpClass(
     name: catalog?.name ?? homebrew.data?.name ?? "Homebrew",
     hitDie: row.data?.hitDie ?? homebrew.data?.hitDie,
     asksSubclass,
+    /** The first level whose subclass features this level brings: all of them where it picks the subclass. */
+    subclassFrom: from ?? next,
     subclasses,
     subclass,
     subclassRow: subclasses.find((each) => sameRef(each, subclass)),

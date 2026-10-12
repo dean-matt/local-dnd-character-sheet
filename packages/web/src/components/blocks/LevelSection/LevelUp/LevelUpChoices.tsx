@@ -18,6 +18,7 @@ import { ImprovementField } from "../../../ImprovementField.tsx";
 import { Select } from "../../../Select.tsx";
 import { HitPointChoice } from "./HitPointChoice.tsx";
 import type { HitPointMethod } from "./hitPointPick.ts";
+import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
 const UNCHOSEN = "Choose one";
@@ -146,17 +147,10 @@ export function LevelUpChoices({
           </FormField>
         );
       })}
-      {plan.features.length > 0 && (
-        <p>
-          <span className="font-semibold">
-            New at {target.name} {target.next}:
-          </span>{" "}
-          {plan.features.join(", ")}
-        </p>
-      )}
+      <LevelUpSummary changes={plan.table()} features={plan.features} />
       <p className="text-muted text-row">
-        Spell slots and resources follow the class table once you apply, and the summary then lists
-        each value that moved.
+        Hit points, proficiency bonus and spell slots are worked out once you apply, and the summary
+        then lists each that moved.
       </p>
     </>
   );

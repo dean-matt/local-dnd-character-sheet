@@ -66,7 +66,10 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/3": grants(3, 0, [
     feature("Dark One's Blessing", 3),
   ]),
-  "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/4": grants(4, 0, []),
+  "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/4": grants(4, 0, [
+    feature("Fiend Gift", 3, { choose: 1 }),
+    feature("Hellfire", 3, { offeredBy: XPHB("Fiend Gift") }),
+  ]),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
   ]),
@@ -118,6 +121,7 @@ function renderSeeded(character: CharacterRecord) {
       <Seeded id={character.id} />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 const sent = (): CharacterDefinition => JSON.parse(String(writes.mock.calls.at(-1)?.[1]?.body));
@@ -312,6 +316,46 @@ describe("LevelUp", () => {
   it("asks for a subclass a class passed its subclass level without", async () => {
     renderSeeded(warlock(3));
     await open();
-    expect(within(dialog()).getByRole("combobox", { name: "Warlock subclass" })).toBeVisible();
+    choose("Warlock subclass", "Fiend Patron");
+    fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (5)" }));
+    await within(dialog()).findByRole("combobox", { name: "Fiend Gift" });
+    expect(within(dialog()).getByText("New features:").parentElement).toHaveTextContent(
+      "Fiend Gift",
+    );
+    choose("Level 4 choice", "Alert");
+    choose("Pact Choice", "Pact of the Tome");
+    expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+    choose("Fiend Gift", "Hellfire");
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, subclass: XPHB("Fiend Patron") });
+    expect(sent().featureChoices).toContainEqual({
+      feature: {
+        className: "Warlock",
+        classSource: "XPHB",
+        subclass: { shortName: "Fiend", source: "XPHB" },
+        ...XPHB("Fiend Gift"),
+        level: 3,
+      },
+      options: [XPHB("Hellfire")],
+    });
+  });
+
+  it("refuses to write over a change made since the dialog opened", async () => {
+    const character = warlock(1);
+    const client = renderSeeded(character);
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+    client.setQueryData(characterKey(character.id), {
+      ...character,
+      definition: { ...character.definition, feats: [{ ref: XPHB("Alert") }] },
+    });
+    fireEvent.click(applyButton());
+
+    expect(await within(dialog()).findByRole("alert")).toHaveTextContent(
+      "the character changed since the level-up opened",
+    );
+    expect(writes).not.toHaveBeenCalled();
   });
 });

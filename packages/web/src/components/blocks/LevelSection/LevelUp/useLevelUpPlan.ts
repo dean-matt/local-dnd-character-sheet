@@ -81,7 +81,7 @@ export function useLevelUpPlan(
     ready,
     features: [
       ...featuresAt(target.after?.features ?? [], target.next),
-      ...featuresAt(target.subclassAfter?.features ?? [], target.next),
+      ...featuresAt(target.subclassAfter?.features ?? [], target.subclassFrom, target.next),
     ],
     table: () => [
       ...(target.after ? tableChanges(target.before, target.after) : []),
@@ -116,7 +116,8 @@ export function useLevelUpPlan(
 }
 
 /**
- * The choices the class and its subclass offer at the level being taken. A subclass reads
+ * The choices the class offers at the level being taken, and its subclass at every level
+ * the level brings its features from. A subclass reads
  * its features through the edition's subclass list, so one from the other edition offers
  * nothing here; reading its row by reference is the way out.
  */
@@ -124,13 +125,13 @@ function offeringsAt(cls: EntryRef, target: ReturnType<typeof useLevelUpClass>) 
   if (!("name" in cls)) return [];
   const owner = { className: cls.name, classSource: cls.source };
   const row = target.subclassRow;
-  return [
-    ...featureOfferings(target.after?.features ?? [], owner),
-    ...(row
-      ? featureOfferings(target.subclassAfter?.features ?? [], {
-          ...owner,
-          subclass: { shortName: row.shortName, source: row.source },
-        })
-      : []),
-  ].filter((offering) => offering.feature.level === target.next);
+  const own = featureOfferings(target.after?.features ?? [], owner).filter(
+    (offering) => offering.feature.level === target.next,
+  );
+  if (!row) return own;
+  const subclass = featureOfferings(target.subclassAfter?.features ?? [], {
+    ...owner,
+    subclass: { shortName: row.shortName, source: row.source },
+  }).filter(({ feature }) => feature.level >= target.subclassFrom && feature.level <= target.next);
+  return [...own, ...subclass];
 }

@@ -94,13 +94,20 @@ export function tableChanges(before: Table | undefined, after: Table): LevelChan
 }
 
 /**
- * The features gained at `level` itself, without the options a feature offers beside it,
- * which the level-up asks for as a choice instead.
+ * The features gained from level `from` through `to`, without the options a feature offers
+ * beside them, which the level-up asks for as a choice instead.
  */
-export const featuresAt = (features: ClassGrants["features"], level: number): string[] => [
+export const featuresAt = (
+  features: ClassGrants["features"],
+  from: number,
+  to = from,
+): string[] => [
   ...new Set(
     features
-      .filter((feature) => feature.level === level && feature.offeredBy === undefined)
+      .filter(
+        (feature) =>
+          feature.level >= from && feature.level <= to && feature.offeredBy === undefined,
+      )
       .map((feature) => feature.name),
   ),
 ];
