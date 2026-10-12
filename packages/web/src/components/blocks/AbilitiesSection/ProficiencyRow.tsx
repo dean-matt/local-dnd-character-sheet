@@ -56,7 +56,7 @@ export function ProficiencyRow({
       ) : (
         <ProficiencyRing level={level} />
       )}
-      <span className="min-w-0">
+      <span>
         <DetailName
           title={title}
           meta={PROFICIENCY_MARK[level].text}
