@@ -15,6 +15,10 @@ export type ClassFeatures = {
   subclass: readonly ClassFeatureRecord[];
 };
 
+/** Names a character level by the class level it took: `Level 4 · Wizard 4`. */
+export const levelTitle = (level: number, cls: EntryRef, classLevel: number): string =>
+  `Level ${level} · ${displayName(cls)} ${classLevel}`;
+
 /** One character level as the level history lists it. */
 export type LevelHistoryRow = {
   /** The character level, a position in `levels`. */
