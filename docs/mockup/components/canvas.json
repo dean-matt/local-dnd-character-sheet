@@ -44,7 +44,7 @@
     "Languages.dc.html": { "x": 0, "y": 5445, "w": 380, "h": 220, "title": "Languages", "is_interactive": true },
     "Proficiencies.dc.html": { "x": 480, "y": 5445, "w": 380, "h": 260, "title": "Proficiencies", "is_interactive": true },
 
-    "ManageTabs.dc.html": { "x": 1700, "y": 6685, "w": 360, "h": 560, "title": "Manage Tabs — Sidebar", "is_interactive": true },
+    "ManageTabs.dc.html": { "x": 1700, "y": 6685, "w": 360, "h": 560, "title": "Manage Tabs", "is_interactive": true },
     "TopBar.dc.html": { "x": 400, "y": 6025, "w": 1440, "h": 560, "title": "Top Bar Navigation", "is_interactive": true },
     "CharacterHeader.dc.html": { "x": 400, "y": 6685, "w": 1200, "h": 160, "title": "Character Header", "is_interactive": true },
     "Layout.dc.html": { "x": 2160, "y": 6025, "w": 1440, "h": 1140, "title": "Page Layout — Shared Structure" },
