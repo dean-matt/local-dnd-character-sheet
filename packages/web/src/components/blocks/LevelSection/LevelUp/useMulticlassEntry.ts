@@ -119,6 +119,8 @@ export function useMulticlassEntry(
     })),
     judged,
     score,
+    /** A row or list the entry reads failed to load, so it never becomes `read`. */
+    failed: entering && (heldRows.some((row) => row.isError) || names.isError || tools.isError),
     read:
       !entering ||
       (rowsRead &&

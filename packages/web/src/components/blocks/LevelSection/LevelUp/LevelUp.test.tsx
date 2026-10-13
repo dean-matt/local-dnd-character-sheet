@@ -28,6 +28,7 @@ const page = (items: object[]) => ({ items, total: items.length });
 const FIGHTER = { name: "Fighter", source: "XPHB" };
 const ROGUE = XPHB("Rogue");
 const PALADIN = XPHB("Paladin");
+const BARD = XPHB("Bard");
 
 /** A class row a character multiclasses into, with what its `multiclassing` grants. */
 const entryRow = (ref: { name: string; source: string }, hitDie: number, json: object) => ({
@@ -38,7 +39,13 @@ const entryRow = (ref: { name: string; source: string }, hitDie: number, json: o
 });
 
 const SEARCH: Record<string, object[]> = {
-  class: [ROGUE, PALADIN, WARLOCK].map((ref) => ({ type: "class", ...ref, edition: "one" })),
+  class: [ROGUE, PALADIN, BARD, WARLOCK].map((ref) => ({ type: "class", ...ref, edition: "one" })),
+  item: ["Lute", "Flute"].map((name) => ({
+    type: "item",
+    ...XPHB(name),
+    edition: "one",
+    item: { kinds: ["tool"], rarity: null, category: null, tool: "instrument" },
+  })),
   "skill,language": ["Acrobatics", "Stealth"].map((name) => ({
     type: "skill",
     ...XPHB(name),
@@ -112,6 +119,18 @@ const ROWS: Record<string, unknown> = {
     },
   }),
   "/api/classes/Paladin/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Bard/XPHB": entryRow(BARD, 8, {
+    primaryAbility: [{ cha: true }],
+    multiclassing: {
+      proficienciesGained: {
+        skills: [{ choose: { from: ["acrobatics", "stealth"], count: 1 } }],
+        toolProficiencies: [{ anyMusicalInstrument: 1 }],
+        armorProficiencies: [{ light: true }],
+      },
+    },
+  }),
+  "/api/classes/Bard/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Bard/XPHB/at/1": grants(1, 0, [feature("Bardic Inspiration", 1)]),
   "/api/classes/Paladin/XPHB/at/1": grants(1, 0, [feature("Lay On Hands", 1)]),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
@@ -142,6 +161,7 @@ function Seeded({ id }: { id: string }) {
 let writes: Mock;
 let server: CharacterRecord;
 let readable: boolean;
+let searchable: boolean;
 
 /** Stands for a write from another tab, which this tab's cache has not seen. */
 function editElsewhere(edit: Partial<CharacterDefinition>) {
@@ -152,9 +172,19 @@ function editElsewhere(edit: Partial<CharacterDefinition>) {
   };
 }
 
+/** A search answers every type but a class with a client error, which nothing retries, while `searchable` is off. */
+function searchResponse(path: string) {
+  const type = new URL(path, "http://local").searchParams.get("type") ?? "";
+  if (!searchable && type !== "class")
+    return new Response(JSON.stringify({ error: "refused" }), { status: 400 });
+  const items = SEARCH[type] ?? [];
+  return new Response(JSON.stringify({ ...page(items), limit: 200, offset: 0 }));
+}
+
 function renderSeeded(character: CharacterRecord) {
   server = character;
   readable = true;
+  searchable = true;
   writes = vi.fn(async (_url: string, init: RequestInit) => {
     const since = new Headers(init.headers).get("If-Unmodified-Since");
     if (since !== null && Date.parse(server.updatedAt) > Date.parse(since))
@@ -172,10 +202,7 @@ function renderSeeded(character: CharacterRecord) {
         ? new Response(JSON.stringify(server))
         : new Response(JSON.stringify({ error: "offline" }), { status: 500 });
     if (path in ROWS) return new Response(JSON.stringify(ROWS[path]));
-    if (path.startsWith("/api/search?")) {
-      const items = SEARCH[new URL(path, "http://local").searchParams.get("type") ?? ""] ?? [];
-      return new Response(JSON.stringify({ ...page(items), limit: 200, offset: 0 }));
-    }
+    if (path.startsWith("/api/search?")) return searchResponse(path);
     return new Response(JSON.stringify({ error: `unstubbed ${path}` }), { status: 404 });
   });
   const client = new QueryClient({
@@ -548,6 +575,35 @@ describe("LevelUp", () => {
       expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
       expect(sent().proficiencies.skills).toEqual([]);
       expect(sent().proficiencies.armor).toEqual([]);
+    });
+
+    it("waits on the instrument a class's tool pick asks for, and lands the one checked", async () => {
+      renderSeeded(warlock(1));
+      await open();
+      await multiclassInto("Bard");
+      const instruments = await within(dialog()).findByRole("group", { name: "Tool from Bard" });
+      await within(instruments).findByRole("checkbox", { name: "Lute" });
+      fireEvent.click(within(dialog()).getByRole("checkbox", { name: "Acrobatics" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+      fireEvent.click(within(instruments).getByRole("checkbox", { name: "Flute" }));
+      fireEvent.click(applyButton());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().proficiencies.tools).toEqual([{ name: "Flute", level: "proficient" }]);
+    });
+
+    it("says so where what the class offers fails to load, and holds Apply", async () => {
+      renderSeeded(warlock(1));
+      searchable = false;
+      await open();
+      await multiclassInto("Rogue");
+      expect(
+        await within(dialog()).findByText(/Couldn't load what multiclassing into Rogue offers/),
+      ).toBeVisible();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
     });
   });
 });

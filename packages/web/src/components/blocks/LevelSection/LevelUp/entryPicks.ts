@@ -1,7 +1,8 @@
 /**
  * The skill and tool picks a class's multiclass gains offer, narrowed to what the character
- * lacks. A pick asks for fewer where fewer are left; the 2014 rule's pick of any skill or
- * tool in place of one gained twice is the way past that.
+ * lacks. A pick asks for fewer where fewer are left, and offers nothing in place of the
+ * rest: the 2014 rule's pick of any skill or tool in place of one gained twice is not
+ * offered, and adding it is the way past that.
  */
 import type { SearchHit, SkillChoice, ToolChoice } from "@dnd/catalog";
 import { type CharacterDefinition, type ContentRef, refKey } from "@dnd/character";

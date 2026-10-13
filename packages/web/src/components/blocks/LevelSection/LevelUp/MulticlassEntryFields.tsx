@@ -51,7 +51,14 @@ export function MulticlassEntryFields({
           ? `Multiclassing into ${name} grants: ${granted.join(", ")}`
           : `Multiclassing into ${name} grants no proficiencies.`}
       </p>
-      {!entry.read && <p className="text-muted">Loading what the class offers…</p>}
+      {entry.failed ? (
+        <p role="alert" className="text-error">
+          Couldn't load what multiclassing into {name} offers, so the level cannot be applied. Close
+          the dialog and try again.
+        </p>
+      ) : (
+        !entry.read && <p className="text-muted">Loading what the class offers…</p>
+      )}
       {entry.read && entry.skillPick && (
         <EntryPickField
           legend={`Skill from ${name}`}
