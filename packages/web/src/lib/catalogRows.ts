@@ -11,6 +11,7 @@ import {
   backgroundRecordSchema,
   catalogRowEntries,
   catalogRowRecordSchema,
+  classEntries,
   classGrantsSchema,
   classRecordSchema,
   type Entries,
@@ -26,6 +27,7 @@ import {
   raceRecordSchema,
   rowEntries,
   spellRecordSchema,
+  subclassEntries,
   subclassRecordSchema,
   subraceRecordSchema,
 } from "@dnd/catalog";
@@ -175,7 +177,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   },
   nameSource("backgrounds", "background", backgroundRecordSchema),
   nameSource("feats", "feat", featRecordSchema),
-  nameSource("classes", "class", classRecordSchema),
+  nameSource("classes", "class", classRecordSchema, classEntries),
   {
     path: "classes/:className/:classSource/subclasses/:name/:source",
     label: () => "subclass",
@@ -187,6 +189,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
           `${classPath(key)}/subclasses/${segments(key.name, key.source)}`,
           subclassRecordSchema,
         ),
+        subclassEntries,
       ),
   },
   {
@@ -228,7 +231,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   homebrew("races", "race", homebrewRaceRecordSchema),
   homebrew("backgrounds", "background", homebrewBackgroundRecordSchema),
   homebrew("feats", "feat", homebrewFeatRecordSchema),
-  homebrew("classes", "class", homebrewClassRecordSchema),
+  homebrew("classes", "class", homebrewClassRecordSchema, classEntries),
 ];
 
 /**

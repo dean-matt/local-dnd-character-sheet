@@ -4,7 +4,8 @@
  * the row lacks leaves its line out.
  */
 import { type Entries, rowEntries } from "./entry.ts";
-import { alignmentWords, line } from "./monster.ts";
+import { capitalized, line } from "./entry-text.ts";
+import { alignmentWords } from "./monster.ts";
 
 type Json = Record<string, unknown>;
 
@@ -14,9 +15,6 @@ const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((one) => typeof one === "string") : [];
 
 const joined = (value: unknown) => strings(value).join(", ") || undefined;
-
-const capitalized = (value: string | undefined) =>
-  value && value.charAt(0).toUpperCase() + value.slice(1);
 
 export function deityEntries(json: Json): Entries {
   const alignment = strings(json.alignment);

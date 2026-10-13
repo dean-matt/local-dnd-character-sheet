@@ -13,13 +13,9 @@ import {
   creatureProficiencyBonus,
 } from "@dnd/rules";
 import { type Entries, entriesSchema } from "./entry.ts";
+import { isRecord, line, list, ordinal, titled } from "./entry-text.ts";
 
 type Json = Record<string, unknown>;
-
-const isRecord = (value: unknown): value is Json =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
 const text = (value: unknown): string | undefined =>
   typeof value === "string" || typeof value === "number" ? `${value}` : undefined;
@@ -27,9 +23,6 @@ const text = (value: unknown): string | undefined =>
 const texts = (values: unknown[]): string[] => values.flatMap((value) => text(value) || []);
 
 const signed = (value: number) => (value < 0 ? `${value}` : `+${value}`);
-
-export const line = (label: string, value: string | undefined): Entries =>
-  value ? [`{@b ${label}} ${value}`] : [];
 
 const SIZES: Record<string, string> = {
   T: "Tiny",
@@ -222,9 +215,6 @@ function saves(save: unknown): string | undefined {
   );
 }
 
-/** A skill as printed: each word capitalized but `of`, as in `Sleight of Hand`. */
-const titled = (name: string) => name.replace(/\b(?!of\b)[a-z]/g, (letter) => letter.toUpperCase());
-
 const bonuses = (skills: Json) =>
   Object.entries(skills).flatMap(([name, bonus]) =>
     typeof bonus === "string" ? `${titled(name)} ${bonus}` : [],
@@ -299,10 +289,6 @@ function challenge(cr: unknown): string | undefined {
   const raised = texts([lair && `${lair} in its lair`, coven && `${coven} as part of a coven`]);
   return texts([cr.cr, raised.length > 0 && `(or ${raised.join(", or ")})`]).join(" ") || undefined;
 }
-
-const ORDINALS = ["", "1st", "2nd", "3rd"];
-
-const ordinal = (level: string) => ORDINALS[Number(level)] ?? `${level}th`;
 
 const spellNames = (spells: unknown) =>
   list(spells)
