@@ -1,12 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { avatarColor } from "../../lib/avatarColor.ts";
 import { warlockRecord } from "../../test/records.ts";
+import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { CharacterHeader } from "./CharacterHeader.tsx";
 
 describe("CharacterHeader", () => {
   it("capitalizes the initial of a lowercase name and keeps a whole astral character", () => {
-    const { container, rerender } = render(
+    const { container, rerender } = renderWithClient(
       <CharacterHeader character={{ ...warlockRecord(), name: "vex" }} />,
     );
     expect(container.querySelector("[aria-hidden='true']")).toHaveTextContent("V");
@@ -16,14 +17,14 @@ describe("CharacterHeader", () => {
   });
 
   it("titles the page with the character's name above their subtitle", () => {
-    render(<CharacterHeader character={warlockRecord()} />);
+    renderWithClient(<CharacterHeader character={warlockRecord()} />);
 
     expect(screen.getByRole("heading", { level: 1, name: "Vex" })).toBeInTheDocument();
     expect(screen.getByText("Lv. 3 · Half-Elf · Warlock")).toBeInTheDocument();
   });
 
   it("draws the initial in a color derived from the id, hidden from a screen reader", () => {
-    const { container } = render(<CharacterHeader character={warlockRecord()} />);
+    const { container } = renderWithClient(<CharacterHeader character={warlockRecord()} />);
 
     const avatar = container.querySelector<HTMLElement>("[aria-hidden='true']");
     expect(avatar).toHaveTextContent("V");
@@ -31,7 +32,7 @@ describe("CharacterHeader", () => {
   });
 
   it("carries the full name and subtitle on hover, for when they truncate", () => {
-    render(<CharacterHeader character={warlockRecord()} />);
+    renderWithClient(<CharacterHeader character={warlockRecord()} />);
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveAttribute("title", "Vex");
     expect(screen.getByText("Lv. 3 · Half-Elf · Warlock")).toHaveAttribute(
@@ -41,7 +42,7 @@ describe("CharacterHeader", () => {
   });
 
   it("names the character's edition as its year's rules", () => {
-    const { rerender } = render(<CharacterHeader character={warlockRecord()} />);
+    const { rerender } = renderWithClient(<CharacterHeader character={warlockRecord()} />);
     const year = screen.getByTitle("This character uses the 2024 rules");
     expect(year).toHaveTextContent(/^2024$/);
     expect(year).toHaveAttribute("aria-hidden", "true");
@@ -52,8 +53,18 @@ describe("CharacterHeader", () => {
     expect(screen.getByText("2014 rules")).toHaveClass("sr-only");
   });
 
+  it("holds the save status between the name and the actions", () => {
+    renderWithClient(
+      <CharacterHeader character={warlockRecord()} actions={<button type="button">Undo</button>} />,
+    );
+
+    const status = screen.getByRole("status");
+    expect(status).toBeEmptyDOMElement();
+    expect(status.nextElementSibling).toBe(screen.getByRole("button", { name: "Undo" }));
+  });
+
   it("leaves the printed page to the print title", () => {
-    const { container } = render(<CharacterHeader character={warlockRecord()} />);
+    const { container } = renderWithClient(<CharacterHeader character={warlockRecord()} />);
     expect(container.firstElementChild).toHaveClass("print:hidden");
   });
 });

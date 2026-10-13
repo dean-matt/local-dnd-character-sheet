@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { avatarColor } from "../../lib/avatarColor.ts";
 import { headerSubtitle } from "./characterSubtitle.ts";
+import { SaveIndicator } from "./SaveIndicator.tsx";
 
 /**
  * Sits above every page of a character on screen, pinned under the top bar in a `tall`
  * window; print carries `PrintTitle` instead. Its height is `--spacing-header`, which
  * `index.css` adds to `scroll-padding-top` while it is mounted, so focus never lands under
- * it. Name and subtitle truncate rather than wrap, holding that height. `actions` sit at
- * the right, where the mockup puts its 32px buttons.
+ * it. Name and subtitle truncate rather than wrap, holding that height. The save status
+ * and then `actions` sit at the right, where the mockup puts its 32px buttons.
  */
 export function CharacterHeader({
   character,
@@ -44,6 +45,7 @@ export function CharacterHeader({
           {subtitle}
         </p>
       </div>
+      <SaveIndicator characterId={character.id} />
       {actions}
     </div>
   );

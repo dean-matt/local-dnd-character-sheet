@@ -147,9 +147,7 @@
       </sc-if>
     </div>
 
-    <span role="status" style="margin-left: auto; flex-shrink: 0; font-size: 13px; color: #6b7280;">{{saveText}}</span>
-
-    <a href="SettingsSidebar.dc.html" tabIndex="{{barTabIndex}}" style="flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: {{settingsWeight}}; color: {{settingsColor}}; text-decoration: none;">
+    <a href="SettingsSidebar.dc.html" tabIndex="{{barTabIndex}}" style="margin-left: auto; flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; border-radius: 4px; background: none; font-size: 14px; font-weight: {{settingsWeight}}; color: {{settingsColor}}; text-decoration: none;">
       Settings
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
     </a>
@@ -172,28 +170,16 @@
     </div>
   </div>
 
-  <section aria-label="Save problems" aria-live="assertive" style="position: absolute; right: 16px; bottom: 16px; z-index: 50; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
-    <sc-if value="{{showSaveToast}}" hint-placeholder-val="{{false}}">
-      <div style="display: flex; align-items: flex-start; gap: 8px; width: 320px; padding: 8px 12px; border: 1px solid #9f0712; border-radius: 8px; background: #ffffff; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); font-size: 13px;">
-        <p style="margin: 0; flex-grow: 1; min-width: 0; color: #9f0712;">Gold: Couldn't save 1,275 gp: disk full</p>
-        <button aria-label="Retry Gold" onClick="{{retrySave}}" style="flex-shrink: 0; border: none; background: none; padding: 0; font-size: 13px; font-weight: 600; color: #9f0712; text-decoration: underline;">Retry</button>
-        <button aria-label="Dismiss Gold" onClick="{{dismissSaveToast}}" style="flex-shrink: 0; border: none; background: none; padding: 2px; color: #6b7280; display: flex;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-    </sc-if>
-  </section>
-
   <sc-if value="{{showScrim}}" hint-placeholder-val="{{false}}">
     <button id="searchScrim" aria-label="Close search" onClick="{{closeSearch}}" onKeyDown="{{onSearchKeyDown}}" onBlur="{{onSearchBlur}}" style="position: absolute; inset: 0; z-index: 40; border: none; padding: 0; background: rgba(15,17,21,0.5); cursor: default;"></button>
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"save":{"editor":"enum","options":["idle","saving","saved","failed"],"default":"saving"},"$preview":{"width":1440,"height":560}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"openedFrom":{"editor":"enum","options":["sheet","elsewhere"],"default":"sheet"},"noCharacters":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":560}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { query: '', openMenu: null, searchOpen: false, pickerFor: null, toast: null, saveToastDismissed: false };
+    this.state = { query: '', openMenu: null, searchOpen: false, pickerFor: null, toast: null };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -306,8 +292,6 @@ class Component extends DCLogic {
 
     const searchOpen = this.state.searchOpen;
     const toast = this.state.toast;
-    // A failed save says nothing in the bar; its field raises the toast and outlines itself.
-    const save = this.props.save ?? 'saving';
 
     return {
       accent,
@@ -375,11 +359,7 @@ class Component extends DCLogic {
       hasToastNote: !!(toast && toast.note),
       toastText: toast ? toast.text : '',
       toastNote: toast ? toast.note : '',
-      toastBg: toast && toast.note ? '#fbf3e0' : '#eaf0ec',
-      saveText: save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved' : '',
-      showSaveToast: save === 'failed' && !this.state.saveToastDismissed,
-      retrySave: () => this.setState({ saveToastDismissed: true }),
-      dismissSaveToast: () => this.setState({ saveToastDismissed: true })
+      toastBg: toast && toast.note ? '#fbf3e0' : '#eaf0ec'
     };
   }
 }

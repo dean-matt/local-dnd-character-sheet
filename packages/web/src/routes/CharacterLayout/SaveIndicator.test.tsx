@@ -1,15 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterDefinitionWriteKey } from "../../../hooks/characterKeys.ts";
-import { SAVED_STATUS_MS } from "../../../hooks/useFleeting.ts";
+import { characterDefinitionWriteKey, characterUndoKey } from "../../hooks/characterKeys.ts";
+import { SAVED_STATUS_MS } from "../../hooks/useFleeting.ts";
 import { SaveIndicator } from "./SaveIndicator.tsx";
 
 function setup() {
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
-      <SaveIndicator />
+      <SaveIndicator characterId="1" />
     </QueryClientProvider>,
   );
   /** Starts a write under `key`, returning the calls that settle it. */
@@ -44,7 +44,7 @@ describe("SaveIndicator", () => {
     expect(status).toBeEmptyDOMElement();
 
     const first = write();
-    const second = write(characterDefinitionWriteKey("2"));
+    const second = write(characterUndoKey("1"));
     await tick();
     expect(status).toHaveTextContent("Saving…");
     first.land();
@@ -68,10 +68,11 @@ describe("SaveIndicator", () => {
     await waitFor(() => expect(screen.getByRole("status")).toBeEmptyDOMElement());
   });
 
-  it("ignores a write to anything but a character", async () => {
+  it("ignores a write to another character or to anything but a character", async () => {
     vi.useFakeTimers();
     const write = setup();
 
+    write(characterDefinitionWriteKey("2"));
     write(["homebrew"]);
     await tick();
 
