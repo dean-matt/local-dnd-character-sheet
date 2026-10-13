@@ -27,6 +27,7 @@ export function WeaponMasteryChoice({
     "Weapon mastery",
     failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
+    failure,
   );
   if (limit === 0 && chosen.length === 0) return null;
 

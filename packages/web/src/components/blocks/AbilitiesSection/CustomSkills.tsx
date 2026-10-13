@@ -55,6 +55,7 @@ export function CustomSkills({
     "Custom skills",
     failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
+    failure,
   );
 
   const save = (customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>

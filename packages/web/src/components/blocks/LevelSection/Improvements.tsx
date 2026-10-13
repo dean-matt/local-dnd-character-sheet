@@ -4,7 +4,7 @@ import {
   improvementAt,
   withImprovement,
 } from "@dnd/character";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useFeats } from "../../../hooks/useFeats.ts";
 import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
@@ -29,10 +29,14 @@ export function Improvements({ character }: { character: CharacterRecord }) {
   const update = useUpdateCharacterDefinition(character.id);
   const failure = useHeldWriteError(update);
   const [last, setLast] = useState<{ grant: ImprovementGrant; next: Improvement }>();
+  // The pick the held failure belongs to, which a later pick elsewhere must not take over.
+  const failed = useRef(last);
+  if (update.error) failed.current = last;
   useSaveToast(
-    `Level ${last?.grant.level}`,
+    `Level ${failed.current?.grant.level}`,
     failure ? `Couldn't save: ${failure.message}` : undefined,
-    () => last && save(last.grant, last.next),
+    () => failed.current && save(failed.current.grant, failed.current.next),
+    failure,
   );
   if (grants.length === 0) return null;
   const catalog = feats.data?.items ?? [];
@@ -75,7 +79,7 @@ export function Improvements({ character }: { character: CharacterRecord }) {
                 feats={catalog}
                 candidate={candidateAt(definition, grant)}
                 onChange={(next) => save(grant, next)}
-                invalid={failure !== null && last?.grant.level === grant.level}
+                invalid={failure !== null && failed.current?.grant.level === grant.level}
               />
             </li>
           );

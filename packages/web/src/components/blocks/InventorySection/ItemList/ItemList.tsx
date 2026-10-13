@@ -119,6 +119,7 @@ export function ItemList({
     "Inventory",
     failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
+    failure,
   );
 
   const picker = <AddItemField edition={character.edition} onAdd={add} />;

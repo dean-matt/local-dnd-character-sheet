@@ -127,4 +127,18 @@ describe("CatalogSkills", () => {
     expect(await saveToasts().findByText(/^Skill proficiency: Couldn't save/)).toBeInTheDocument();
     expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
+
+  it("raises a dismissed toast again when the next change fails the same way", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "disk full" }), { status: 500 })),
+    );
+    renderSeeded(holding([]));
+    fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Not proficient" }));
+    fireEvent.click(await saveToasts().findByRole("button", { name: "Dismiss Skill proficiency" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Stealth proficiency: Not proficient" }));
+
+    expect(await saveToasts().findByText(/^Skill proficiency: Couldn't save/)).toBeInTheDocument();
+  });
 });

@@ -4,7 +4,8 @@ import { dropSaveToast, raiseSaveToast, saveToastState } from "../lib/saveToasts
 /**
  * Raises a toast naming `field` while `message` is set, and drops it once `message` clears.
  * A dismissed toast comes back only with the field's next problem, or where `occurrence`
- * changes, as a repeat of the same failure does. Returns the toast's id, for a write that
+ * changes, as a repeat of the same failure does: a field passes its latest failure, such as
+ * the `Error` itself, so the same text failing again still raises it. Returns the toast's id, for a write that
  * fails after the field has gone.
  *
  * When the field unmounts, a toast for refused text goes with it, as the text does. One for
@@ -14,7 +15,7 @@ export function useSaveToast(
   field: string,
   message: string | undefined,
   retry?: () => void,
-  occurrence = 0,
+  occurrence?: unknown,
 ) {
   const id = useId();
   // Read at the click, so a retry runs the field's latest closure without re-raising the toast.

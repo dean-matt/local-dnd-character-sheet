@@ -32,6 +32,7 @@ export function AlignmentCard({ character }: { character: CharacterRecord }) {
       ? `Couldn't save ${options.find((option) => option.value === picked)?.label ?? picked}: ${failure.message}`
       : undefined,
     () => save(picked ?? ""),
+    failure,
   );
 
   return (

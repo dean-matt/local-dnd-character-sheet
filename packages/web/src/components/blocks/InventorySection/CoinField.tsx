@@ -91,6 +91,7 @@ export function CoinField({
         ? `Couldn't save ${sent.toLocaleString("en-US")} ${abbreviation}: ${failure.message}`
         : undefined),
     failure && refusal === null ? () => apply(sent) : undefined,
+    failure,
   );
 
   function submit(event: FormEvent) {

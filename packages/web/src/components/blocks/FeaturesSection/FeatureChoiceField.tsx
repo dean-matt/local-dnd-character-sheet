@@ -46,6 +46,7 @@ export function FeatureChoiceField({
       ? `Couldn't save ${choice.options.find((each) => refKey(each) === picked)?.name}: ${failure.message}`
       : undefined,
     () => picked && save(picked),
+    failure,
   );
 
   return (

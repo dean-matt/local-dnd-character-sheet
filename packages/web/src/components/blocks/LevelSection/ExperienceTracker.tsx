@@ -53,6 +53,7 @@ export function ExperienceTracker({
     "Experience",
     failure ? `Couldn't save ${sent > 0 ? "+" : ""}${xp(sent)}: ${failure.message}` : undefined,
     () => apply(sent),
+    failure,
   );
 
   function submit(event: FormEvent) {

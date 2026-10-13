@@ -31,6 +31,7 @@ export function LevelingField({ character }: { character: CharacterRecord }) {
       ? `Couldn't save ${OPTIONS.find((option) => option.value === picked)?.label}: ${failure.message}`
       : undefined,
     () => picked && save(picked),
+    failure,
   );
 
   return (

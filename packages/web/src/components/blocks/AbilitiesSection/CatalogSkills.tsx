@@ -33,6 +33,7 @@ export function CatalogSkills({
     "Skill proficiency",
     failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
+    failure,
   );
   const rollEffects = derivedValue(derived.rollEffects);
   const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
