@@ -67,6 +67,7 @@ const ROWS: Record<string, unknown> = {
     feature("Dark One's Blessing", 3),
   ]),
   "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/4": grants(4, 0, [
+    feature("Dark One's Blessing", 3),
     feature("Fiend Gift", 3, { choose: 1 }),
     feature("Hellfire", 3, { offeredBy: XPHB("Fiend Gift") }),
   ]),
@@ -97,18 +98,37 @@ function Seeded({ id }: { id: string }) {
 }
 
 let writes: Mock;
+let server: CharacterRecord;
+let readable: boolean;
+
+/** Stands for a write from another tab, which this tab's cache has not seen. */
+function editElsewhere(edit: Partial<CharacterDefinition>) {
+  server = {
+    ...server,
+    definition: { ...server.definition, ...edit },
+    updatedAt: "2024-01-01T00:05:00.000Z",
+  };
+}
 
 function renderSeeded(character: CharacterRecord) {
-  let stored = character.definition;
+  server = character;
+  readable = true;
   writes = vi.fn(async (_url: string, init: RequestInit) => {
-    stored = JSON.parse(String(init.body));
-    return new Response(JSON.stringify({ ...character, definition: stored }));
+    const since = new Headers(init.headers).get("If-Unmodified-Since");
+    if (since !== null && Date.parse(server.updatedAt) > Date.parse(since))
+      return new Response(JSON.stringify({ error: "The character changed" }), { status: 412 });
+    server = { ...server, definition: JSON.parse(String(init.body)) };
+    return new Response(JSON.stringify(server));
   });
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);
     if (path === "/api/characters/1/derived")
-      return new Response(JSON.stringify(derivedRecord(stored)));
+      return new Response(JSON.stringify(derivedRecord(server.definition)));
     if (init?.method === "PUT") return writes(path, init);
+    if (path === "/api/characters/1")
+      return readable
+        ? new Response(JSON.stringify(server))
+        : new Response(JSON.stringify({ error: "offline" }), { status: 500 });
     if (path in ROWS) return new Response(JSON.stringify(ROWS[path]));
     return new Response(JSON.stringify({ error: `unstubbed ${path}` }), { status: 404 });
   });
@@ -319,9 +339,9 @@ describe("LevelUp", () => {
     choose("Warlock subclass", "Fiend Patron");
     fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (5)" }));
     await within(dialog()).findByRole("combobox", { name: "Fiend Gift" });
-    expect(within(dialog()).getByText("New features:").parentElement).toHaveTextContent(
-      "Fiend Gift",
-    );
+    const features = within(dialog()).getByText("New features:").parentElement;
+    expect(features).toHaveTextContent("Fiend Gift");
+    expect(features).toHaveTextContent("Dark One's Blessing");
     choose("Level 4 choice", "Alert");
     choose("Pact Choice", "Pact of the Tome");
     expect(applyButton()).toHaveAttribute("aria-disabled", "true");
@@ -342,20 +362,51 @@ describe("LevelUp", () => {
     });
   });
 
-  it("refuses to write over a change made since the dialog opened", async () => {
+  it("refuses to write over an edit the server holds since the dialog opened, then reloads", async () => {
     const character = warlock(1);
-    const client = renderSeeded(character);
+    renderSeeded(character);
     await open();
     fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
-    client.setQueryData(characterKey(character.id), {
-      ...character,
-      definition: { ...character.definition, feats: [{ ref: XPHB("Alert") }] },
-    });
+    editElsewhere({ feats: [{ ref: XPHB("Alert") }] });
     fireEvent.click(applyButton());
 
-    expect(await within(dialog()).findByRole("alert")).toHaveTextContent(
-      "the character changed since the level-up opened",
+    await waitFor(() =>
+      expect(within(dialog()).getByRole("alert")).toHaveTextContent("The character changed"),
     );
-    expect(writes).not.toHaveBeenCalled();
+    expect(new Headers(writes.mock.calls[0]?.[1]?.headers).get("If-Unmodified-Since")).toBe(
+      new Date(character.updatedAt).toUTCString(),
+    );
+    expect(server.definition.levels).toHaveLength(1);
+
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Reload" }));
+    await waitFor(() =>
+      expect(within(dialog()).getByRole("button", { name: "Average (5)" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      ),
+    );
+    expect(within(dialog()).queryByRole("button", { name: "Reload" })).toBeNull();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+    await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
+    await within(dialog()).findByText("Level up applied");
+    expect(sent().levels).toHaveLength(2);
+    expect(sent().feats).toEqual([{ ref: XPHB("Alert") }]);
+  });
+
+  it("says so in the alert line where Reload cannot read the character", async () => {
+    renderSeeded(warlock(1));
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+    editElsewhere({ feats: [{ ref: XPHB("Alert") }] });
+    fireEvent.click(applyButton());
+    readable = false;
+
+    fireEvent.click(await within(dialog()).findByRole("button", { name: "Reload" }));
+    await waitFor(() =>
+      expect(within(dialog()).getByRole("alert")).toHaveTextContent("Reload failed: offline"),
+    );
+    expect(within(dialog()).getByRole("button", { name: "Reload" })).toBeVisible();
   });
 });

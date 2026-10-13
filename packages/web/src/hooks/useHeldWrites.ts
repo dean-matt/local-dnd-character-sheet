@@ -1,8 +1,8 @@
-import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
+import type { CharacterRecord } from "@dnd/character";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { useState } from "react";
+import type { DefinitionEdit, DefinitionWrite } from "./useUpdateCharacterDefinition.ts";
 
-type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
 type Held = { error: Error; edit: DefinitionEdit };
 
 /**
@@ -13,7 +13,7 @@ type Held = { error: Error; edit: DefinitionEdit };
  * `latest` is the newest failure still held, `failed` every held item's key, and `retry`
  * replays each held edit against the latest definition. `write` never rejects.
  */
-export function useHeldWrites(update: UseMutationResult<CharacterRecord, Error, DefinitionEdit>) {
+export function useHeldWrites(update: UseMutationResult<CharacterRecord, Error, DefinitionWrite>) {
   const [held, setHeld] = useState<ReadonlyMap<string, Held>>(new Map());
   const write = (key: string, edit: DefinitionEdit) =>
     update.mutateAsync(edit).then(
