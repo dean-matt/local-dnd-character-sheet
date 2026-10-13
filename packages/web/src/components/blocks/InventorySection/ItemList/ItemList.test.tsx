@@ -244,6 +244,14 @@ describe("ItemList", () => {
     expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
   });
 
+  it("keeps a group with no items as a column with a note", async () => {
+    renderList();
+
+    await screen.findByText("Longsword");
+    const armor = screen.getByRole("heading", { level: 3, name: "Armor" }).closest("section");
+    expect(armor).toHaveTextContent("No armor.");
+  });
+
   it("adds a magic variant as the pair it names, once its base item is picked", async () => {
     const fetchMock = renderList();
 
