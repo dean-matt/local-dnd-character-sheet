@@ -1,9 +1,10 @@
 import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDerived, type CharacterRecord, derivedValue, refKey } from "@dnd/character";
+import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
+import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
-import { SaveFailure } from "../../../SaveFailure.tsx";
 
 /**
  * The weapon kinds a character has mastery with, as many as the classes' Weapon Mastery
@@ -19,8 +20,16 @@ export function WeaponMasteryChoice({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const writes = useHeldWrites(update);
+  const failure = writes.latest?.error;
   const chosen = character.definition.weaponMasteries;
   const limit = derivedValue(derived.weaponMasteryLimit);
+  useSaveToast(
+    "Weapon mastery",
+    failure ? `Couldn't save: ${failure.message}` : undefined,
+    writes.retry,
+    failure,
+  );
   if (limit === 0 && chosen.length === 0) return null;
 
   const taken = new Set(chosen.map(refKey));
@@ -50,7 +59,7 @@ export function WeaponMasteryChoice({
               type="button"
               aria-label={`Remove ${kind.name}`}
               onClick={() =>
-                update.mutate((latest) => ({
+                writes.write(refKey(kind), (latest) => ({
                   ...latest,
                   weaponMasteries: latest.weaponMasteries.filter(
                     (each) => refKey(each) !== refKey(kind),
@@ -73,20 +82,12 @@ export function WeaponMasteryChoice({
           unavailableReason={unavailable}
           onPick={(ref) =>
             "name" in ref &&
-            update.mutate((latest) => ({
+            writes.write(refKey(ref), (latest) => ({
               ...latest,
               weaponMasteries: [...latest.weaponMasteries, ref],
             }))
           }
         />
-      )}
-      {update.isError && (
-        <p role="alert" className="text-error text-row">
-          <SaveFailure
-            message={`Couldn't save the weapon mastery: ${update.error.message} `}
-            onRetry={() => update.variables && update.mutate(update.variables)}
-          />
-        </p>
       )}
     </div>
   );

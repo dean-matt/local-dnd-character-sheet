@@ -33,6 +33,8 @@ export interface ImprovementFieldProps {
   feats: readonly FeatRecord[];
   candidate: Candidate;
   onChange: (next: Improvement) => void;
+  /** Outlines every control, as for a change that did not save. */
+  invalid?: boolean;
 }
 
 /**
@@ -47,6 +49,7 @@ export function ImprovementField({
   feats,
   candidate,
   onChange,
+  invalid,
 }: ImprovementFieldProps) {
   // Stored increases say what was placed but not which alternative: with nothing placed,
   // +1 and +1 reads as +2. What the player picked is held here while it matches the store.
@@ -91,7 +94,7 @@ export function ImprovementField({
 
   return (
     <div className="flex flex-wrap items-end gap-2">
-      <FormField label={`${name} choice`} labelHidden>
+      <FormField label={`${name} choice`} labelHidden invalid={invalid}>
         {(control) => (
           <Select
             {...control}
@@ -105,7 +108,7 @@ export function ImprovementField({
         )}
       </FormField>
       {alternatives.length > 1 && (
-        <FormField label={`${name} increase`} labelHidden>
+        <FormField label={`${name} increase`} labelHidden invalid={invalid}>
           {(control) => (
             <Select
               {...control}
@@ -129,6 +132,7 @@ export function ImprovementField({
             key={index}
             label={`${name} ${signed(slot.amount)}${count > 1 ? `, ${index + 1} of ${count}` : ""}`}
             labelHidden
+            invalid={invalid}
           >
             {(control) => (
               <Select

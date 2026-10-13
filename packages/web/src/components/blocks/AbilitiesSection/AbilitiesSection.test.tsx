@@ -5,12 +5,13 @@ import {
   entryKey,
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
-import { SAVED_STATUS_MS } from "../../../hooks/useFleeting.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
+import { saveToasts } from "../../../test/saveToasts.ts";
+import { SaveToasts } from "../../SaveToasts.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
@@ -71,7 +72,12 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
 
 function renderSection(record = warlock(), derived = derivedFor(record)) {
   stubRules([]);
-  renderWithClient(<AbilitiesSection character={record} derived={derived} />);
+  renderWithClient(
+    <>
+      <AbilitiesSection character={record} derived={derived} />
+      <SaveToasts />
+    </>,
+  );
 }
 
 /** A row's text with the aria-hidden decoration dropped, as a screen reader reaches it. */
@@ -149,64 +155,25 @@ describe("AbilitiesSection", () => {
       fireEvent.change(score, { target: { value: raw } });
       fireEvent.blur(score);
 
-      expect(await screen.findByRole("alert")).toHaveTextContent(
-        "A score is a whole number from 1 to 30.",
-      );
+      expect(
+        await saveToasts().findByText("Strength score: A score is a whole number from 1 to 30."),
+      ).toBeInTheDocument();
     },
   );
 
-  it("reports a refused score under the grid, naming the ability and keeping what was typed", async () => {
+  it("toasts a refused score, naming the ability and keeping what was typed, and adds nothing to the card", async () => {
     renderSection();
 
     const score = screen.getByRole("textbox", { name: "Strength score" });
     fireEvent.change(score, { target: { value: "31" } });
     fireEvent.blur(score);
 
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Strength: A score is a whole number from 1 to 30.");
-    const grid = tile("Ability Scores", "Strength").closest("dl");
-    expect(grid).not.toContainElement(alert);
-    expect(grid?.nextElementSibling).toContainElement(alert);
+    expect(
+      await saveToasts().findByText("Strength score: A score is a whole number from 1 to 30."),
+    ).toBeInTheDocument();
     expect(score).toHaveValue("31");
     expect(score).toHaveAttribute("aria-invalid", "true");
-    expect(score).toHaveAccessibleDescription("Strength: A score is a whole number from 1 to 30.");
-  });
-
-  it("clears each score's Saved after a moment, so saves in a row never stack under the grid", async () => {
-    vi.useFakeTimers();
-    const record = warlock();
-    stubRules([]);
-    const reads = fetch;
-    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
-      init?.method === "PUT"
-        ? new Response(JSON.stringify({ ...record, definition: JSON.parse(String(init.body)) }))
-        : reads(url, init),
-    );
-    const client = new QueryClient();
-    client.setQueryData(characterKey(record.id), record);
-    render(
-      <QueryClientProvider client={client}>
-        <AbilitiesSection character={record} derived={derivedFor(record)} />
-      </QueryClientProvider>,
-    );
-    const slot = tile("Ability Scores", "Strength").closest("dl")?.nextElementSibling;
-    const saveScore = async (name: string, value: string) => {
-      const score = screen.getByRole("textbox", { name });
-      fireEvent.change(score, { target: { value } });
-      fireEvent.blur(score);
-      await act(() => vi.advanceTimersByTimeAsync(0));
-    };
-
-    await saveScore("Strength score", "10");
-    expect(slot).toHaveTextContent(/^Strength: Saved$/);
-    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS));
-    expect(slot).toHaveTextContent(/^$/);
-
-    await saveScore("Dexterity score", "14");
-    expect(slot).toHaveTextContent(/^Dexterity: Saved$/);
-    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS));
-    expect(slot).toHaveTextContent(/^$/);
-    expect(slot?.querySelectorAll("[role='status']")).toHaveLength(6);
+    expect(card("Ability Scores").queryByText(/A score is/)).not.toBeInTheDocument();
   });
 
   it("shows a score through its increases, and saves an edit to the base beneath them, kept within 1 to 30", async () => {
@@ -231,6 +198,7 @@ describe("AbilitiesSection", () => {
     render(
       <QueryClientProvider client={client}>
         <AbilitiesSection character={record} derived={derivedFor(record)} />
+        <SaveToasts />
       </QueryClientProvider>,
     );
 
@@ -238,9 +206,11 @@ describe("AbilitiesSection", () => {
     expect(score).toHaveValue("10");
     fireEvent.change(score, { target: { value: "2" } });
     fireEvent.blur(score);
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Strength: With +2 from increases, a score is a whole number from 3 to 32.",
-    );
+    expect(
+      await saveToasts().findByText(
+        "Strength score: With +2 from increases, a score is a whole number from 3 to 32.",
+      ),
+    ).toBeInTheDocument();
     expect(saved).toBeUndefined();
 
     fireEvent.change(score, { target: { value: "13" } });

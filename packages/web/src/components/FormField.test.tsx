@@ -31,6 +31,19 @@ describe("FormField", () => {
     expect(screen.getByRole("alert")).toHaveClass("text-error");
   });
 
+  it("marks a control invalid without a message where one shows elsewhere", () => {
+    render(
+      <FormField label="Alignment" invalid>
+        {(control) => <select {...control} />}
+      </FormField>,
+    );
+
+    const select = screen.getByRole("combobox", { name: "Alignment" });
+    expect(select).toHaveAttribute("aria-invalid", "true");
+    expect(select).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("leaves a valid control undescribed and keeps an empty live region mounted", () => {
     render(<FormField label="Alignment">{(control) => <select {...control} />}</FormField>);
 

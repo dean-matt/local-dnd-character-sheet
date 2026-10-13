@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
+import { SaveToasts } from "../../components/SaveToasts.tsx";
 import { CatalogOutOfDateBanner } from "./CatalogOutOfDateBanner.tsx";
 import { ScrollMemory } from "./ScrollMemory.tsx";
 import { TopBar } from "./TopBar/TopBar.tsx";
@@ -38,6 +39,7 @@ export function RootLayout() {
         <Outlet />
       </main>
       <ScrollMemory />
+      <SaveToasts />
     </div>
   );
 }

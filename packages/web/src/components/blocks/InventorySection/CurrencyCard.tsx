@@ -1,6 +1,6 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { Info } from "lucide-react";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { Card } from "../../Card.tsx";
 import { Popover } from "../../Popover.tsx";
 import { CoinField } from "./CoinField.tsx";
@@ -22,8 +22,6 @@ export function CurrencyCard({
   characterId: string;
   money: CharacterDefinition["money"];
 }) {
-  // A column is too narrow for a sentence, so every coin's message lands under the row.
-  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   const hintId = useId();
   return (
     <Card
@@ -58,11 +56,9 @@ export function CurrencyCard({
             total={money[coin]}
             hint={HINT}
             hintId={hintId}
-            messages={messages}
           />
         ))}
       </div>
-      <div ref={setMessages} className="flex flex-col" />
     </Card>
   );
 }

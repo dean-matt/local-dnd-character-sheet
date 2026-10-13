@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacter } from "../../../../hooks/useCharacter.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
+import { saveToasts } from "../../../../test/saveToasts.ts";
+import { SaveToasts } from "../../../SaveToasts.tsx";
 import { ItemList } from "./ItemList.tsx";
 
 const flags = { quantity: 1, carried: true, equipped: false, attuned: false };
@@ -182,6 +184,7 @@ function renderList(
   render(
     <QueryClientProvider client={client}>
       <ItemList character={character} derived={derived} />
+      <SaveToasts />
     </QueryClientProvider>,
   );
   return fetchMock;
@@ -425,7 +428,6 @@ describe("ItemList", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
     await written(fetchMock);
-    expect(screen.getByText("Saving…")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Remove Cloak of Protection" }));
 
     const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
@@ -453,13 +455,20 @@ describe("ItemList", () => {
     fireEvent.click(remove as HTMLElement);
 
     expect((await written(fetchMock)).inventory).toHaveLength(1);
-    await waitFor(() => expect(screen.queryByText("Saving…")).toBeNull());
+    await waitFor(() => expect(client.isMutating() + client.isFetching()).toBe(0));
     const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
     expect(puts).toHaveLength(1);
   });
 
   it("keeps row edits working after an item is added while one is saving", async () => {
-    const fetchMock = renderList(derivedRecord(), undefined, { holdFirstPut: true });
+    const fetchMock = stubApi({ holdFirstPut: true });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(characterKey("1"), vex());
+    render(
+      <QueryClientProvider client={client}>
+        <ItemList character={vex()} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
 
     fireEvent.click(await screen.findByRole("button", { name: "Equipped, Ring of Warmth" }));
     await pick("Add an item", "rope", /^Rope/);
@@ -467,7 +476,7 @@ describe("ItemList", () => {
     await waitFor(() =>
       expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(2),
     );
-    await waitFor(() => expect(screen.queryByText("Saving…")).toBeNull());
+    await waitFor(() => expect(client.isMutating() + client.isFetching()).toBe(0));
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Longsword" }));
     await waitFor(() =>
@@ -508,7 +517,8 @@ describe("ItemList", () => {
     fireEvent.change(quantity, { target: { value: "0" } });
     fireEvent.blur(quantity);
 
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(await saveToasts().findByText(/^Longsword quantity: /)).toBeInTheDocument();
+    expect(quantity).toHaveAttribute("aria-invalid", "true");
     expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
   });
 
@@ -564,7 +574,7 @@ describe("ItemList", () => {
     expect((await written(fetchMock)).inventory[2].attuned).toBe(true);
   });
 
-  it("says so when a change fails to save", async () => {
+  it("toasts a change that failed to save, with Retry", async () => {
     renderList();
     vi.stubGlobal(
       "fetch",
@@ -572,8 +582,9 @@ describe("ItemList", () => {
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "The change was not saved: disk full",
-    );
+    expect(
+      await saveToasts().findByText("Inventory: Couldn't save: disk full"),
+    ).toBeInTheDocument();
+    expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
 });

@@ -61,8 +61,12 @@ widget, panel, or nav element:
   underline — and an open menu takes a gray fill instead. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
-  — total level, race and classes — after a `·`, with Inspiration (its icon alone, the label in a tooltip), Rest and the
-  character menu as 32px buttons at the right. The name takes the room it needs and
+  — total level, race and classes — after a `·`, with the save status, then Inspiration
+  (its icon alone, the label in a tooltip), Rest and the character menu as 32px buttons
+  at the right. The save status reads "Saving…" while any write to the character is in
+  flight and "Saved" for a moment after; a save that fails or an entry a field refuses
+  raises a toast at the bottom right naming the field, with Retry for a failed save, and
+  no card changes height. The header artboard's `save` tweak switches between them. The name takes the room it needs and
   the subtitle the rest, never under 160px, so some of it always shows. A long name or
   subtitle ends in an ellipsis and keeps its full text in a tooltip; the `longText`
   tweak shows both truncated. Manage Tabs is the modal

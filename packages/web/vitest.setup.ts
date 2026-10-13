@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, configure } from "@testing-library/react";
 import { afterEach } from "vitest";
+import { clearSaveToasts } from "./src/lib/saveToasts.ts";
 
 // jsdom lays nothing out and logs on every call to this, which `RootLayout` makes per navigation.
 window.scrollTo = () => {};
@@ -17,4 +18,7 @@ window.ResizeObserver = class {
 // here with the query that timed out rather than as a bare test timeout.
 configure({ asyncUtilTimeout: 3_000 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  clearSaveToasts();
+});

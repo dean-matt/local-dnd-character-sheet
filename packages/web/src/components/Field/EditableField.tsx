@@ -1,14 +1,13 @@
 import { type Derived, derivedValue } from "@dnd/character";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
-import { useFleeting } from "../../hooks/useFleeting.ts";
-import type { FormFieldProps } from "../FormField.tsx";
+import { useSaveToast } from "../../hooks/useSaveToast.ts";
+import { raiseSaveToast } from "../../lib/saveToasts.ts";
 import { InputField } from "../InputField.tsx";
-import { SaveFailure } from "../SaveFailure.tsx";
 
 /** `invalid` is text the parse or schema refused, which a retry would refuse again;
  * `failed` is a write that did not land, which a retry can. */
-type SaveStatus = "idle" | "saving" | "saved" | "invalid" | "failed";
+type SaveStatus = "idle" | "invalid" | "failed";
 
 /**
  * `Field`'s edit state. A derived `value` writes its manual half, and clearing it saves
@@ -28,7 +27,6 @@ export type EditableFieldProps<T> = {
   inputClassName?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
   placeholder?: string;
-  messageSlot?: FormFieldProps["messageSlot"];
 } & (
   | { value: Derived<T>; onSave: (next: T | null) => Promise<void> }
   | { current: T; onSave: (next: T) => Promise<void> }
@@ -47,13 +45,14 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     inputClassName,
     inputMode,
     placeholder,
-    messageSlot,
   } = props;
   const current = "current" in props ? props.current : derivedValue(props.value);
   const incoming = format(current);
   const [text, setText] = useState(incoming);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | undefined>();
+  // Counts failed writes, so a repeat of one the user dismissed raises its toast again.
+  const [failures, setFailures] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // The text behind the last write that actually landed, seeded with the field's
   // own starting text. `commit` skips only a raw value equal to this — never a
@@ -65,7 +64,6 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   const echo = useRef<string | undefined>(undefined);
   const textRef = useRef(text);
   const queue = useRef(Promise.resolve());
-  const showSaved = useFleeting(status === "saved");
 
   // The text of the latest write handed to `queue`, so an unmount does not send it twice.
   const queued = useRef<string | undefined>(undefined);
@@ -76,15 +74,17 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   };
   // A field can unmount mid-edit, as one in a modal does when Escape closes it, with no
   // blur to commit the text; saving it here keeps the edit rather than dropping it. With
-  // no field left to show a refusal or a failure, refused text is dropped and the caller's
-  // mutation reports a failed write.
-  useEffect(
-    () => () => {
+  // no field left to outline or retry, refused text is dropped and a failed write raises a
+  // toast without a retry.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
       clearTimeout(timer.current);
       flush.current();
-    },
-    [],
-  );
+    };
+  }, []);
 
   // A value set from outside the field, such as by undo, replaces the text only while
   // the field holds no unsaved edit: the user's own typing outranks it.
@@ -133,20 +133,23 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   }
 
   // Chained on `queue` rather than fired directly: a commit that lands while a
-  // prior save is still in flight waits for it, so the status shown always
+  // prior save is still in flight waits for it, so the problem shown always
   // reflects the most recently attempted write rather than whichever settles first.
   async function save(raw: string, formatted: string | undefined, write: () => Promise<void>) {
+    // A failure stands while its retry is in flight, so its toast goes only once one lands.
     const run = async () => {
-      setStatus("saving");
-      setError(undefined);
       try {
         await write();
         savedText.current = raw;
         echo.current = formatted;
-        setStatus("saved");
+        setStatus("idle");
+        setError(undefined);
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Save failed.";
+        if (!mounted.current) raiseSaveToast({ id: toastId, field: label, message });
         setStatus("failed");
-        setError(err instanceof Error ? err.message : "Save failed.");
+        setError(message);
+        setFailures((count) => count + 1);
       }
     };
     queued.current = raw;
@@ -165,9 +168,12 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     commit(text);
   }
 
-  function retry() {
-    commit(text);
-  }
+  const toastId = useSaveToast(
+    label,
+    status === "invalid" || status === "failed" ? (error ?? "Save failed.") : undefined,
+    status === "failed" ? () => commit(textRef.current) : undefined,
+    failures,
+  );
 
   return (
     <InputField
@@ -177,20 +183,10 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       type="text"
       inputMode={inputMode}
       placeholder={placeholder}
-      messageSlot={messageSlot}
       value={text}
       onChange={(event) => handleChange(event.target.value)}
       onBlur={handleBlur}
-      status={status === "saving" ? "Saving…" : showSaved ? "Saved" : undefined}
-      error={
-        status === "invalid" ? (
-          // Its own element, so a slot that cuts it short, such as a card's title row, ends it
-          // in an ellipsis and keeps the whole text in `title`.
-          <span title={error}>{error}</span>
-        ) : status === "failed" ? (
-          <SaveFailure message={error ?? "Save failed."} onRetry={retry} />
-        ) : undefined
-      }
+      invalid={status === "invalid" || status === "failed"}
     />
   );
 }

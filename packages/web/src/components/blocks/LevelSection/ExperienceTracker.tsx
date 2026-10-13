@@ -1,8 +1,9 @@
 import { type CharacterRecord, experienceThreshold, MAX_LEVEL, totalLevel } from "@dnd/character";
 import { type FormEvent, useState } from "react";
+import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 
 const xp = (points: number) => `${points.toLocaleString("en-US")} XP`;
 
@@ -19,6 +20,7 @@ export function ExperienceTracker({
   captionId?: string;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const failure = useHeldWriteError(update);
   const [draft, setDraft] = useState("");
   const [sent, setSent] = useState(0);
   const { experience } = character.definition;
@@ -46,6 +48,13 @@ export function ExperienceTracker({
       experience: Math.max(0, latest.experience + delta),
     }));
   }
+
+  useSaveToast(
+    "Experience",
+    failure ? `Couldn't save ${sent > 0 ? "+" : ""}${xp(sent)}: ${failure.message}` : undefined,
+    () => apply(sent),
+    failure,
+  );
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -76,15 +85,7 @@ export function ExperienceTracker({
             placeholder="± XP"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            status={update.isPending ? "Saving…" : null}
-            error={
-              update.isError && (
-                <SaveFailure
-                  message={`Couldn't save ${sent > 0 ? "+" : ""}${xp(sent)}: ${update.error.message}`}
-                  onRetry={() => apply(sent)}
-                />
-              )
-            }
+            invalid={failure !== null}
             className="w-full text-row"
           />
         </div>

@@ -7,7 +7,6 @@ import {
   type CharacterRecord,
   derivedValue,
 } from "@dnd/character";
-import { useState } from "react";
 import { z } from "zod";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
@@ -45,8 +44,6 @@ export function AbilityScores({
 }) {
   const { definition } = character;
   const update = useUpdateCharacterDefinition(character.id);
-  // A tile is too narrow for a sentence, so every score's message lands under the grid.
-  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   return (
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -89,7 +86,6 @@ export function AbilityScores({
                   schema={scoreSchema(raised)}
                   inputClassName="w-12 py-1 text-center text-number"
                   inputMode="numeric"
-                  messageSlot={{ into: messages, name: ABILITY_LABEL[ability] }}
                   onSave={async (typed: number) => {
                     // The player edits the score they see; the base takes the difference, so
                     // a race's increase stays its own term.
@@ -125,7 +121,6 @@ export function AbilityScores({
           );
         })}
       </dl>
-      <div ref={setMessages} className="flex flex-col" />
     </Card>
   );
 }

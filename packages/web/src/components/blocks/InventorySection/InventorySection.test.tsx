@@ -9,7 +9,9 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { saveToasts } from "../../../test/saveToasts.ts";
 import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
+import { SaveToasts } from "../../SaveToasts.tsx";
 import { CurrencyCard } from "./CurrencyCard.tsx";
 import { InventorySection } from "./InventorySection.tsx";
 
@@ -162,6 +164,7 @@ function renderSection(
   render(
     <QueryClientProvider client={client}>
       <InventorySection character={character} derived={derived ?? undefined} />
+      <SaveToasts />
     </QueryClientProvider>,
   );
   return fetchMock;
@@ -596,10 +599,9 @@ describe("InventorySection", () => {
       const fetchMock = renderSection();
 
       enterGold("1,250+25");
-      expect(await card("Currency").findByRole("alert")).toHaveTextContent(
-        "Gold: Couldn't save 1,275 gp",
-      );
-      fireEvent.click(card("Currency").getByRole("button", { name: "Retry" }));
+      expect(await saveToasts().findByText(/^Gold: Couldn't save 1,275 gp/)).toBeInTheDocument();
+      expect(goldField()).toHaveAttribute("aria-invalid", "true");
+      fireEvent.click(saveToasts().getByRole("button", { name: /^Retry / }));
 
       await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(2));
       expect(putBodies(fetchMock).map((body) => body.money.gold)).toEqual([1275, 1275]);
@@ -623,19 +625,22 @@ describe("InventorySection", () => {
       fireEvent.change(field, { target: { value: "1,275-3" } });
       fail();
 
-      expect(await card("Currency").findByRole("button", { name: "Retry" })).toBeInTheDocument();
+      expect(await saveToasts().findByRole("button", { name: /^Retry / })).toBeInTheDocument();
     });
 
     it.each(["", "10,00", "+-5", "1.5", "2*3", "10/2", "(5+5)", "1 000", "5+"])(
-      "refuses %j with the hint, keeping the text",
+      "refuses %j with a toast of the hint, keeping the text and the card's height",
       async (text) => {
         const fetchMock = renderSection();
 
         const field = enterGold(text);
 
-        expect(await card("Currency").findByRole("alert")).toHaveTextContent(`Gold: ${HINT}`);
-        expect(field).toHaveAccessibleDescription(`Gold: ${HINT}`);
+        expect(await saveToasts().findByText(`Gold: ${HINT}`)).toBeInTheDocument();
+        expect(saveToasts().queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
+        expect(field).toHaveAttribute("aria-invalid", "true");
+        expect(field).toHaveAccessibleDescription(HINT);
         expect(field).toHaveValue(text);
+        expect(card("Currency").queryByRole("alert")).toBeNull();
         expect(putBodies(fetchMock)).toHaveLength(0);
       },
     );
@@ -738,12 +743,12 @@ describe("InventorySection", () => {
       expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
     });
 
-    it("says so when the grip fails to save", async () => {
+    it("toasts a grip that failed to save", async () => {
       renderSection(load({ attacks: [attack(held)] }));
 
       const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
       fireEvent.click(grip.getByRole("button", { name: "2h, two-handed" }));
-      expect(await screen.findByRole("alert")).toHaveTextContent("The change was not saved");
+      expect(await saveToasts().findByText(/^Inventory: Couldn't save/)).toBeInTheDocument();
     });
   });
 

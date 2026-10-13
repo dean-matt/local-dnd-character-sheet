@@ -17,7 +17,7 @@
 </style>
 </helmet>
 
-<div style="width: 1200px; height: 160px; display: flex; flex-direction: column; background: #f4f5f7;">
+<div style="position: relative; width: 1200px; height: 160px; display: flex; flex-direction: column; background: #f4f5f7;">
   <div style="width: 100%; height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 40px; background: #ffffff; border-bottom: 1px solid #dde1e6;">
     <div style="position: relative; width: 32px; height: 32px; flex-shrink: 0;">
       <div style="width: 32px; height: 32px; border-radius: 50%; background: #3f5d44; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">E</div>
@@ -32,6 +32,7 @@
       <span title="This character uses the 2014 rules" style="align-self: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4b5260; background: #f4f5f7; border: 1px solid #dde1e6; border-radius: 4px; padding: 2px 5px; flex-shrink: 0;">2014</span>
       <div title="{{subtitle}}" style="flex: 1 1 0; min-width: 160px; font-size: 13px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{subtitle}}</div>
     </div>
+    <span role="status" style="flex-shrink: 0; font-size: 13px; color: #6b7280;">{{saveText}}</span>
     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
       <button aria-label="Inspiration" aria-pressed="{{inspiration}}" title="Inspiration: spend for advantage on one roll" onClick="{{toggleInspiration}}" style="width: 32px; height: 32px; padding: 0; border-radius: 6px; border: 1px solid {{inspirationBorder}}; background: {{inspirationBg}}; display: flex; align-items: center; justify-content: center;">
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="{{inspirationFill}}" stroke="{{inspirationColor}}" stroke-width="2"><path d="M13 2 4 14h6l-1 8 10-13h-6l1-7z"/></svg>
@@ -68,18 +69,32 @@
       </div>
     </div>
   </div>
+
+  <section aria-label="Save problems" aria-live="assertive" style="position: absolute; right: 16px; bottom: 16px; z-index: 50; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+    <sc-if value="{{showSaveToast}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; align-items: flex-start; gap: 8px; width: 320px; padding: 8px 12px; border: 1px solid #9f0712; border-radius: 8px; background: #ffffff; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); font-size: 13px;">
+        <p style="margin: 0; flex-grow: 1; min-width: 0; color: #9f0712;">Gold: Couldn't save 1,275 gp: disk full</p>
+        <button aria-label="Retry Gold" onClick="{{retrySave}}" style="flex-shrink: 0; border: none; background: none; padding: 0; font-size: 13px; font-weight: 600; color: #9f0712; text-decoration: underline;">Retry</button>
+        <button aria-label="Dismiss Gold" onClick="{{dismissSaveToast}}" style="flex-shrink: 0; border: none; background: none; padding: 2px; color: #6b7280; display: flex;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </sc-if>
+  </section>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"longText":{"editor":"boolean","default":false},"$preview":{"width":1200,"height":160}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"longText":{"editor":"boolean","default":false},"save":{"editor":"enum","options":["idle","saving","saved","failed"],"default":"saving"},"$preview":{"width":1200,"height":160}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { inspiration: false, menuOpen: false, restOpen: false };
+    this.state = { inspiration: false, menuOpen: false, restOpen: false, saveToastDismissed: false };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
     const on = this.state.inspiration;
     const long = this.props.longText ?? false;
+    // A failed save says nothing in the header; its field raises the toast and outlines itself.
+    const save = this.props.save ?? 'saving';
     return {
       accent,
       name: long ? 'Elara Nightshade, Warden of the Silverwood' : 'Elara Nightshade',
@@ -97,7 +112,11 @@ class Component extends DCLogic {
       restOpen: this.state.restOpen,
       toggleRest: () => this.setState({ restOpen: !this.state.restOpen, menuOpen: false }),
       shortRest: () => this.setState({ restOpen: false }),
-      longRest: () => this.setState({ restOpen: false })
+      longRest: () => this.setState({ restOpen: false }),
+      saveText: save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved' : '',
+      showSaveToast: save === 'failed' && !this.state.saveToastDismissed,
+      retrySave: () => this.setState({ saveToastDismissed: true }),
+      dismissSaveToast: () => this.setState({ saveToastDismissed: true })
     };
   }
 }

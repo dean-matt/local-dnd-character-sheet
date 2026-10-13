@@ -9,11 +9,12 @@ import {
   flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
 import { InputField } from "../../InputField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
@@ -41,14 +42,28 @@ export function CustomSkills({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const writes = useHeldWrites(update);
+  const failure = writes.latest?.error;
+  // A flat bonus saves through its own field, which reports its own failure.
+  const flats = useUpdateCharacterDefinition(character.id);
   const [name, setName] = useState("");
   const [base, setBase] = useState<Base>("str");
   const [refusal, setRefusal] = useState<string>();
   const rollEffects = derivedValue(derived.rollEffects);
   const stored = character.definition.customSkills;
 
-  const save = (customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
-    update.mutate((latest) => ({ ...latest, customSkills: customSkills(latest.customSkills) }));
+  useSaveToast(
+    "Custom skills",
+    failure ? `Couldn't save: ${failure.message}` : undefined,
+    writes.retry,
+    failure,
+  );
+
+  const save = (name: string, customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
+    writes.write(name.toLowerCase(), (latest) => ({
+      ...latest,
+      customSkills: customSkills(latest.customSkills),
+    }));
 
   const addField = useRef<HTMLInputElement>(null);
   const [removed, setRemoved] = useState<string>();
@@ -75,7 +90,7 @@ export function CustomSkills({
       base === "flat"
         ? { name: trimmed, flat: 0, level: "none" }
         : { name: trimmed, ability: base, level: "none" };
-    save((skills) => [...skills, skill]);
+    save(trimmed, (skills) => [...skills, skill]);
   }
 
   return (
@@ -102,7 +117,7 @@ export function CustomSkills({
                   ability: skill.ability,
                 })}
                 onCycleLevel={() =>
-                  save((skills) =>
+                  save(skill.name, (skills) =>
                     skills.map((each) =>
                       each.name === skill.name ? { ...each, level: nextLevel(each.level) } : each,
                     ),
@@ -125,7 +140,7 @@ export function CustomSkills({
                           parse={(raw) => Number(raw.trim())}
                           schema={flatSkillBonusSchema}
                           onSave={async (flat: number) => {
-                            await update.mutateAsync((latest) => ({
+                            await flats.mutateAsync((latest) => ({
                               ...latest,
                               customSkills: latest.customSkills.map((each) =>
                                 each.name === skill.name && "flat" in each
@@ -181,14 +196,6 @@ export function CustomSkills({
           Add
         </button>
       </form>
-      {update.isError && (
-        <p role="alert" className="mt-1 flex items-center gap-2 text-error text-row">
-          <SaveFailure
-            message={`Couldn't save the custom skills: ${update.error.message}`}
-            onRetry={() => update.variables && update.mutate(update.variables)}
-          />
-        </p>
-      )}
     </>
   );
 }

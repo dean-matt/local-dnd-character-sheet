@@ -1,5 +1,4 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
-import { useState } from "react";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
 
@@ -30,9 +29,8 @@ export function AppearanceCard({
   appearance: Appearance;
   onSave: (edit: (latest: Appearance) => Appearance) => Promise<void>;
 }) {
-  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   return (
-    <Card title="Appearance" messagesRef={setMessages}>
+    <Card title="Appearance">
       <div className="grid gap-x-3 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
         {FIELDS.map(({ key, label }) => (
           <Field
@@ -40,7 +38,6 @@ export function AppearanceCard({
             mode="edit"
             label={label}
             placeholder="Not set"
-            messageSlot={{ into: messages, name: label }}
             current={appearance[key]}
             format={(value) => value ?? ""}
             parse={(raw) => raw.trim() || undefined}
