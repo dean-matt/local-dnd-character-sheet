@@ -80,9 +80,12 @@ export function CoinField({
   }
 
   // A field can unmount while focused, with no blur to commit its draft; committing it
-  // here keeps the edit rather than dropping it.
+  // here keeps the edit rather than dropping it. A refused entry drops silently, which
+  // leaves the total as it was.
   const flush = useRef(commit);
-  flush.current = commit;
+  useEffect(() => {
+    flush.current = commit;
+  });
   useEffect(() => () => flush.current(), []);
 
   function submit(event: FormEvent) {
@@ -101,6 +104,8 @@ export function CoinField({
         type="text"
         enterKeyHint="done"
         value={draft ?? shown}
+        // Typing replaces the total, as both a new total and a signed amount want.
+        onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => {
           setDraft(event.target.value);
           setRefusal(null);

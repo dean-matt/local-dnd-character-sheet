@@ -482,6 +482,15 @@ describe("InventorySection", () => {
       expect(currency.getByText("Type a total, or an amount such as +25 or -37.")).toBeVisible();
     });
 
+    it("selects the total on focus, so typing replaces it", () => {
+      renderSection();
+
+      const field = goldField();
+      fireEvent.focus(field);
+
+      expect([field.selectionStart, field.selectionEnd]).toEqual([0, "1,250".length]);
+    });
+
     it("replaces the total with a plain number, on leaving the field", async () => {
       const fetchMock = renderSection();
 
