@@ -5,7 +5,7 @@ import {
   characterDefinitionSchema,
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
@@ -516,9 +516,20 @@ describe("InventorySection", () => {
 
       fireEvent.blur(goldField());
       enterGold("1,250");
+      enterGold("1250");
 
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(putBodies(fetchMock)).toHaveLength(0);
+    });
+
+    it("saves an entry the field holds when it unmounts", async () => {
+      const fetchMock = renderSection();
+
+      fireEvent.change(goldField(), { target: { value: "+25" } });
+      cleanup();
+
+      await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(1));
+      expect(putBodies(fetchMock)[0].money).toMatchObject({ gold: 1275 });
     });
 
     it("refuses a subtraction past the total and names the shortfall", async () => {

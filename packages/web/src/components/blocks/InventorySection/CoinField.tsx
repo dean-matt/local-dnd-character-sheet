@@ -1,5 +1,5 @@
 import type { CharacterDefinition } from "@dnd/character";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
 import { SaveFailure } from "../../SaveFailure.tsx";
@@ -65,10 +65,7 @@ export function CoinField({
   }
 
   function commit() {
-    if (draft === null || draft.trim() === shown) {
-      setDraft(null);
-      return;
-    }
+    if (draft === null) return;
     const change = parse(draft);
     if (!change) {
       setRefusal(hint);
@@ -76,9 +73,17 @@ export function CoinField({
     }
     setRefusal(null);
     setDraft(null);
-    if ("delta" in change && change.delta === 0) return;
-    apply(change);
+    // The rendered total lags a write in flight, so only a settled one proves a total unchanged.
+    const unchanged =
+      "total" in change ? change.total === total && !update.isPending : change.delta === 0;
+    if (!unchanged) apply(change);
   }
+
+  // A field can unmount while focused, with no blur to commit its draft; committing it
+  // here keeps the edit rather than dropping it.
+  const flush = useRef(commit);
+  flush.current = commit;
+  useEffect(() => () => flush.current(), []);
 
   function submit(event: FormEvent) {
     event.preventDefault();
