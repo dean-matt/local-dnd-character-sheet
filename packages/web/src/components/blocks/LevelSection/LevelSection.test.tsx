@@ -323,7 +323,7 @@ describe("LevelHistory", () => {
     expect(within(dialog).getByText("Dark One's Blessing rules text.")).toBeVisible();
   });
 
-  it("follows a level-up without a reload", async () => {
+  it("follows a level-up without a reload, holding hit points until they are recomputed", async () => {
     const before = warlock(4);
     stubHistory(before);
     const client = renderSeeded(before);
@@ -332,10 +332,12 @@ describe("LevelHistory", () => {
     const after = warlock(5);
     stubHistory(after);
     client.setQueryData(characterKey(after.id), after);
+    await waitFor(() => expect(rows()).toHaveLength(5));
+    expect(rows().map((row) => row[2])).toEqual(["…", "…", "…", "…", "…"]);
     await client.invalidateQueries({ queryKey: characterKey(after.id) });
 
     await waitFor(() => expect(rows()[4]?.[3]).toEqual(["Pact Boon"]));
-    expect(rows()).toHaveLength(5);
+    expect(rows()[4]?.[2]).toBe("+7 (Level 5: d8 average 5 +2 Con)");
   });
 
   it("tells apart two features of one name at a level by their grantors", async () => {
