@@ -288,15 +288,15 @@ const featureChoiceSchema = z.strictObject({
  * Coins, counted per denomination. A single converted total would lose which coins the
  * character holds, and a party splitting treasure divides the coins rather than the
  * total. Exchanging denominations is a rule, and belongs in `@dnd/rules` the day
- * something needs it.
+ * something needs it. A count may go below zero, so a character can carry a debt.
  */
 const moneySchema = z
   .strictObject({
-    copper: z.int().min(0).default(0),
-    silver: z.int().min(0).default(0),
-    electrum: z.int().min(0).default(0),
-    gold: z.int().min(0).default(0),
-    platinum: z.int().min(0).default(0),
+    copper: z.int().default(0),
+    silver: z.int().default(0),
+    electrum: z.int().default(0),
+    gold: z.int().default(0),
+    platinum: z.int().default(0),
   })
   .prefault({});
 

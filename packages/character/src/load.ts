@@ -39,7 +39,8 @@ const scaled = (pounds: number): number => Math.round(pounds * WEIGHT_SCALE);
  * Coins count regardless of `carried`, because `money` is a purse the definition has
  * nowhere to put down: a character who banked 1,000 gp in town carries 20 pounds they
  * left there, and `encumbranceAt` reads this total straight. The way out is a flag on
- * `money`, or an inventory entry per denomination.
+ * `money`, or an inventory entry per denomination. A denomination in debt weighs nothing
+ * rather than lightening the load.
  */
 export function carriedWeight(
   definition: CharacterDefinition,
@@ -57,7 +58,7 @@ export function carriedWeight(
     if (weight === undefined) throw new RangeError(`No item row for ${key}`);
     total += scaled(weight ?? 0) * entry.quantity;
   }
-  const coins = Object.values(definition.money).reduce((sum, count) => sum + count, 0);
+  const coins = Object.values(definition.money).reduce((sum, count) => sum + Math.max(count, 0), 0);
   return (total + scaled(POUNDS_PER_COIN) * coins) / WEIGHT_SCALE;
 }
 

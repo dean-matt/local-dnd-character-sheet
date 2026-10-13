@@ -30,6 +30,8 @@ export interface FormFieldProps {
   error?: ReactNode;
   /** Progress the user should hear without moving focus, such as a save in flight. */
   status?: ReactNode;
+  /** The id of an element the caller renders that describes the control, such as a hint. */
+  describedBy?: string;
   /** `into` is null until the caller's element mounts; nothing renders until then. */
   messageSlot?: { into: Element | null; name: string };
   children: (control: ControlProps) => ReactNode;
@@ -40,6 +42,7 @@ export function FormField({
   labelHidden,
   error,
   status,
+  describedBy,
   messageSlot,
   children,
 }: FormFieldProps) {
@@ -81,7 +84,12 @@ export function FormField({
       <label htmlFor={id} className={labelHidden ? "sr-only" : "mb-1 text-muted text-row"}>
         {label}
       </label>
-      {children({ id, "aria-invalid": invalid, "aria-describedby": invalid ? errorId : undefined })}
+      {children({
+        id,
+        "aria-invalid": invalid,
+        "aria-describedby":
+          [describedBy, invalid && errorId].filter(Boolean).join(" ") || undefined,
+      })}
       {messageSlot ? messageSlot.into && createPortal(messages, messageSlot.into) : messages}
     </div>
   );

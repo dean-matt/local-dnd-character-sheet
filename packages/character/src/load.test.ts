@@ -218,6 +218,11 @@ describe("carried weight", () => {
     expect(carriedWeight(packing([], purse), catalog, new Map())).toBe(1);
   });
 
+  it("weighs no coin for a denomination in debt", () => {
+    const purse = { gold: -500, silver: 50 };
+    expect(carriedWeight(packing([], purse), catalog, new Map())).toBe(1);
+  });
+
   it("feeds the encumbrance thresholds a caller would otherwise invent a weight for", () => {
     const packed = packing([{ ref: ROPE, quantity: 5 }], {});
     const { encumbered } = encumbranceThresholds(packed.abilityScores.str, "medium");
