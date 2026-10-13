@@ -418,10 +418,13 @@ describe("ItemList", () => {
     expect(list).toHaveAttribute("aria-busy", "false");
     fireEvent.click(remove);
     await waitFor(() => expect(list).toHaveAttribute("aria-busy", "true"));
+    const equip = screen.getByRole("button", { name: "Equipped, Ring of Warmth" });
+    expect(equip).toHaveAttribute("aria-disabled", "true");
     releasePut();
 
     await written(fetchMock);
     await waitFor(() => expect(list).toHaveAttribute("aria-busy", "false"));
+    expect(equip).not.toHaveAttribute("aria-disabled");
   });
 
   it("drops a row's edit while its rows wait on a refetch, rather than edit the entry that moved up", async () => {
@@ -443,7 +446,7 @@ describe("ItemList", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
     await written(fetchMock);
     const cloak = screen.getByRole("button", { name: "Remove Cloak of Protection" });
-    await waitFor(() => expect(cloak.closest("ul")).toHaveAttribute("aria-busy", "true"));
+    await waitFor(() => expect(cloak).toHaveAttribute("aria-disabled", "true"));
     fireEvent.click(cloak);
 
     const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");

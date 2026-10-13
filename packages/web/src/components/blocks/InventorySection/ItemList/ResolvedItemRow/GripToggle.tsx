@@ -14,16 +14,19 @@ export function GripToggle({
   name,
   grip,
   onChange,
+  busy,
 }: {
   name: string;
   grip: NonNullable<Attack["grip"]>;
   onChange: (grip: Grip) => void;
+  busy: boolean;
 }) {
   const option = (value: Grip, label: string, spoken: string) => (
     <button
       type="button"
       aria-label={`${label}, ${spoken}`}
       aria-pressed={grip.held === value}
+      aria-disabled={busy || undefined}
       onClick={() => grip.held !== value && onChange(value)}
       className={pillState(grip.held === value)}
     >

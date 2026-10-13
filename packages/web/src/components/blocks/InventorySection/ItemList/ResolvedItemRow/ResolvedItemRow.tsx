@@ -19,12 +19,14 @@ type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 
 /**
  * `quantity` is the control that edits the count, `placement` the one that picks a container.
+ * `busy` marks the row's toggles and Remove disabled while the list drops clicks.
  */
 export function ResolvedItemRow({
   item,
   attack,
   quantity,
   placement,
+  busy,
   onGrip,
   onEquip,
   onAttune,
@@ -34,6 +36,7 @@ export function ResolvedItemRow({
   attack: Attack | undefined;
   quantity: ReactNode;
   placement: ReactNode;
+  busy: boolean;
   onGrip: (grip: Grip) => void;
   onEquip: (equipped: boolean) => void;
   onAttune: (attuned: boolean) => void;
@@ -59,20 +62,22 @@ export function ResolvedItemRow({
           {!item.carried && <Tag>Not carried</Tag>}
         </>
       }
-      remove={<RemoveButton name={item.name} onRemove={onRemove} />}
+      remove={<RemoveButton name={item.name} onRemove={onRemove} busy={busy} />}
       price={cost?.text}
       priceNote={cost?.note}
       preview={item.overridden ?? firstLine(item.entries)}
       actions={attack && <AttackChips name={item.name} attack={attack} />}
       controls={
         <>
-          {attack?.grip && <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} />}
+          {attack?.grip && (
+            <GripToggle name={item.name} grip={attack.grip} onChange={onGrip} busy={busy} />
+          )}
           {(item.requiresAttunement || item.attuned) && (
-            <AttuneToggle name={item.name} attuned={item.attuned} onChange={onAttune} />
+            <AttuneToggle name={item.name} attuned={item.attuned} onChange={onAttune} busy={busy} />
           )}
           {quantity}
           {placement}
-          <EquipToggle item={item} onChange={onEquip} />
+          <EquipToggle item={item} onChange={onEquip} busy={busy} />
         </>
       }
       detail={{

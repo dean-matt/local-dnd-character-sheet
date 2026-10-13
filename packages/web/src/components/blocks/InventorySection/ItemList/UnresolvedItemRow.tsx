@@ -5,16 +5,21 @@ import { NotFoundTag } from "../../../NotFoundTag.tsx";
 import { RemoveButton } from "../../../RemoveButton.tsx";
 import { ItemMarks } from "./ItemMarks.tsx";
 
-/** `index` is the item's place in the definition, which names its field in the report. */
+/**
+ * `index` is the item's place in the definition, which names its field in the report. `busy`
+ * marks Remove disabled while the list drops clicks.
+ */
 export function UnresolvedItemRow({
   item,
   index,
   characterId,
+  busy,
   onRemove,
 }: {
   item: Extract<SheetItem, { resolved: false }>;
   index: number;
   characterId: string;
+  busy: boolean;
   onRemove: () => void;
 }) {
   const variant = item.variant ? `, as ${item.variant.name} (${item.variant.source})` : "";
@@ -32,7 +37,7 @@ export function UnresolvedItemRow({
           />
         </>
       }
-      remove={<RemoveButton name={item.name} onRemove={onRemove} />}
+      remove={<RemoveButton name={item.name} onRemove={onRemove} busy={busy} />}
     />
   );
 }

@@ -147,6 +147,7 @@ export function ItemList({
         holders={holders}
         current={current < 0 ? null : current}
         onChange={(holder) => place(index, holder)}
+        busy={busy}
       />
     );
   };
@@ -156,7 +157,7 @@ export function ItemList({
     return (
       rows.length > 0 && (
         <Card key={group} title={group}>
-          {/* Dimmed rather than disabled: disabling the button just pressed would drop its focus. */}
+          {/* aria-disabled rather than disabled: disabling the button just pressed would drop its focus. */}
           <ul
             aria-busy={busy}
             className="flex flex-col gap-2 aria-busy:cursor-wait aria-busy:opacity-60"
@@ -187,6 +188,7 @@ export function ItemList({
                     />
                   }
                   placement={placementField(index, item.name)}
+                  busy={busy}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
                   onEquip={(equipped) =>
                     edit(index, (entry) => ({
@@ -204,6 +206,7 @@ export function ItemList({
                   item={item}
                   index={index}
                   characterId={character.id}
+                  busy={busy}
                   onRemove={() => edit(index, () => null)}
                 />
               ),
