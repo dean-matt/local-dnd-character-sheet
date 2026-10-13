@@ -9,8 +9,8 @@
  * A control rendered outside `FormField` wires its own `aria-describedby`.
  *
  * `messageSlot` moves the status and error out of the field into an element the caller
- * places, for a control too narrow to hold a sentence, and names the field in each so one
- * slot can hold several fields' messages.
+ * places, for a control too narrow to hold a sentence or a card that must keep its height.
+ * Given a `name`, it names the field in each, so one slot can hold several fields' messages.
  */
 import { type ReactNode, useId } from "react";
 import { createPortal } from "react-dom";
@@ -33,7 +33,7 @@ export interface FormFieldProps {
   /** The id of an element the caller renders that describes the control, such as a hint. */
   describedBy?: string;
   /** `into` is null until the caller's element mounts; nothing renders until then. */
-  messageSlot?: { into: Element | null; name: string };
+  messageSlot?: { into: Element | null; name?: string };
   children: (control: ControlProps) => ReactNode;
 }
 
@@ -51,7 +51,7 @@ export function FormField({
   // Truthiness, so `error={touched && message}` reads its `false` as valid.
   const invalid = Boolean(error);
   const named = (message: ReactNode) =>
-    messageSlot && message ? (
+    messageSlot?.name && message ? (
       <>
         {`${messageSlot.name}: `}
         {message}

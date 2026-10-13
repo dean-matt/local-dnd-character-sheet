@@ -184,7 +184,9 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       status={status === "saving" ? "Saving…" : showSaved ? "Saved" : undefined}
       error={
         status === "invalid" ? (
-          error
+          // Its own element, so a slot that cuts it short, such as a card's title row, ends it
+          // in an ellipsis and keeps the whole text in `title`.
+          <span title={error}>{error}</span>
         ) : status === "failed" ? (
           <SaveFailure message={error ?? "Save failed."} onRetry={retry} />
         ) : undefined

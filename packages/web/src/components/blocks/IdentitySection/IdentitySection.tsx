@@ -9,6 +9,7 @@ import {
   displayName,
   raceSummary,
 } from "@dnd/character";
+import { useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { ChipList } from "../../ChipList.tsx";
@@ -24,6 +25,7 @@ const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertis
 
 export function IdentitySection({ character }: { character: CharacterRecord | undefined }) {
   const update = useUpdateCharacterDefinition(character?.id ?? "");
+  const [nameMessages, setNameMessages] = useState<HTMLDivElement | null>(null);
   if (!character) return <SectionUnavailable page="Identity" />;
   const { definition } = character;
   const { background, proficiencies } = definition;
@@ -35,11 +37,12 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
     // Proficiencies spans two rows at lg so Appearance, two columns wide, rises beside it
     // rather than under its full height.
     <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <Card title="Name">
+      <Card title="Name" messagesRef={setNameMessages}>
         <Field
           mode="edit"
           label="Name"
           labelHidden
+          messageSlot={{ into: nameMessages }}
           current={definition.name}
           format={(name) => name}
           parse={(raw) => raw.trim()}

@@ -127,6 +127,9 @@ describe("AlignmentCard", () => {
     );
     expect(field()).toHaveTextContent("Chaotic Good");
     expect(field()).toHaveAttribute("aria-describedby", screen.getByRole("alert").id);
+    expect(screen.getByRole("heading", { name: "Alignment" }).parentElement).toContainElement(
+      screen.getByRole("alert"),
+    );
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved)));
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
