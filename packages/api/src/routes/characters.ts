@@ -184,8 +184,20 @@ const update = createRoute({
   path: "/characters/{id}",
   tags: ["characters"],
   summary: "Replace a character's definition",
+  description:
+    "With `If-Unmodified-Since` set to the `updatedAt` the client last read, refuses " +
+    "with 412 where the character was written since. `updatedAt` holds whole seconds, " +
+    "so a write within the same second passes.",
   request: {
     params: idParam,
+    headers: z.object({
+      // RFC 9110 has a server ignore a date it cannot parse; a 400 instead keeps a
+      // malformed precondition from writing unguarded.
+      "if-unmodified-since": z
+        .string()
+        .refine((value) => !Number.isNaN(Date.parse(value)), "not an HTTP date")
+        .optional(),
+    }),
     body: { content: { "application/json": { schema: characterDefinitionSchema } } },
   },
   responses: {
@@ -194,6 +206,10 @@ const update = createRoute({
       content: { "application/json": { schema: characterRecordSchema } },
     },
     404: notFound("character"),
+    412: {
+      description: "The character was written after `If-Unmodified-Since`, so nothing was written",
+      content: { "application/json": { schema: errorSchema } },
+    },
   },
 });
 
@@ -345,8 +361,17 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
 
   routes.openapi(update, (c) => {
     const { id } = c.req.valid("param");
-    const row = updateCharacterDefinition(db, id, c.req.valid("json"));
+    const since = c.req.valid("header")["if-unmodified-since"];
+    const row = updateCharacterDefinition(
+      db,
+      id,
+      c.req.valid("json"),
+      since === undefined ? undefined : new Date(since),
+    );
     if (!row) return c.json({ error: NOT_FOUND }, 404);
+    if (row === "stale") {
+      return c.json({ error: "The character changed since it was read; reload it" }, 412);
+    }
     return c.json(toRecord(row), 200);
   });
 

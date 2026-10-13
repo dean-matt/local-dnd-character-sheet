@@ -128,6 +128,30 @@ describe("charactersRoutes", () => {
     expect(body).toMatchObject({ id: created.id, name: "Vex the Bold", level: 2 });
   });
 
+  it("refuses a replace with 412 where the character was written after If-Unmodified-Since", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+    const put = (since: string) =>
+      routes.request(`/characters/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "If-Unmodified-Since": since },
+        body: JSON.stringify(baseDefinition({ name: "Vex the Bold" })),
+      });
+    const earlier = new Date(Date.parse(created.updatedAt) - 1000).toUTCString();
+
+    const stale = await put(earlier);
+    expect(stale.status).toBe(412);
+    expect(await stale.json()).toEqual({
+      error: "The character changed since it was read; reload it",
+    });
+    expect(await (await routes.request(`/characters/${created.id}`)).json()).toEqual(created);
+
+    expect((await put("yesterday")).status).toBe(400);
+
+    const fresh = await put(new Date(created.updatedAt).toUTCString());
+    expect(fresh.status).toBe(200);
+    expect(await fresh.json()).toMatchObject({ name: "Vex the Bold" });
+  });
+
   it("duplicates a character under a new id, and 404s for a miss", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
 

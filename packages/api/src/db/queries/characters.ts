@@ -149,19 +149,26 @@ function writeDefinition(
  * `undefined` where `id` names no row, so a caller reads a missed update the way
  * `getCharacter` reads a miss. Records what it replaced in `undo_log`; a stored
  * definition its schema now refuses records nothing, since undo could not restore it.
+ *
+ * `"stale"`, writing nothing, where `unmodifiedSince` is given and the row was written
+ * after it. `updated_at` holds whole seconds, so a write landing in the same second as
+ * the one the caller read passes; a millisecond column or a revision counter closes that.
  */
 export function updateCharacterDefinition(
   db: CharactersDb,
   id: string,
   definition: CharacterDefinition,
+  unmodifiedSince?: Date,
 ) {
   return db.transaction((tx) => {
     const current = tx
-      .select({ definition: characters.definition })
+      .select({ definition: characters.definition, updatedAt: characters.updatedAt })
       .from(characters)
       .where(eq(characters.id, id))
       .get();
     if (!current) return undefined;
+    if (unmodifiedSince && current.updatedAt.getTime() > unmodifiedSince.getTime())
+      return "stale" as const;
     const now = new Date();
     const before = characterDefinitionSchema.safeParse(current.definition);
     if (before.success) recordChange(tx, id, before.data, definition, now);
