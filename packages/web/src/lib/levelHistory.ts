@@ -6,14 +6,9 @@ import {
   type EntryRef,
   entryKey,
 } from "@dnd/character";
+import type { ClassFeatures } from "./classFeatures.ts";
 
 type Level = CharacterDefinition["levels"][number];
-
-/** A class's features and its subclass's, each at the class level it arrives. */
-export type ClassFeatures = {
-  class: readonly ClassFeatureRecord[];
-  subclass: readonly ClassFeatureRecord[];
-};
 
 /** One character level as the level history lists it. */
 export type LevelHistoryRow = {

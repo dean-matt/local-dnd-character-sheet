@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type ClassFeatures, levelHistory } from "./levelHistory.ts";
+import type { ClassFeatures } from "./classFeatures.ts";
+import { levelHistory } from "./levelHistory.ts";
 
 const PHB = (name: string) => ({ name, source: "PHB" });
 const feature = (name: string, level: number, offeredBy?: string) => ({
