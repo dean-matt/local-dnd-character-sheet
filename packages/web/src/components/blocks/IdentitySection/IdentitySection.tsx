@@ -8,7 +8,6 @@ import {
   characterDefinitionSchema,
   displayName,
   raceSummary,
-  totalLevel,
 } from "@dnd/character";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
@@ -54,10 +53,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
         <ChipList labels={[raceSummary(definition)]} />
       </Card>
       <Card title="Class">
-        <div className="flex flex-col gap-1">
-          <ChipList labels={classChips(definition)} />
-          <p className="text-label text-muted">Total level: {totalLevel(definition)}</p>
-        </div>
+        <ChipList labels={classChips(definition)} />
       </Card>
       <Card title="Background">
         <ChipList labels={[displayName(background)]} />

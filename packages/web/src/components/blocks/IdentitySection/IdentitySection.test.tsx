@@ -22,13 +22,13 @@ function renderSeeded(ui: ReactElement, character = identityRecord()) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("IdentitySection", () => {
-  it("shows race, each class and background as chips, with the total level", () => {
+  it("shows race, each class and background as chips", () => {
     renderSeeded(<IdentitySection character={identityRecord()} />);
 
     expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Vex");
     expect(chips("Race")).toEqual(["Elf (High)"]);
     expect(chips("Class")).toEqual(["Warlock 2 (Fiend Patron)", "Fighter 1"]);
-    expect(screen.getByRole("region", { name: "Class" })).toHaveTextContent("Total level: 3");
+    expect(screen.getByRole("region", { name: "Class" })).not.toHaveTextContent("Total level");
     expect(chips("Background")).toEqual(["Charlatan"]);
   });
 
