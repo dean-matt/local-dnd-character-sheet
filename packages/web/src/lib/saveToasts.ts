@@ -72,7 +72,15 @@ export function clearSaveToasts() {
 
 export function openSaveToastViewport(id: string) {
   // A toast raised before any viewport opened has not been announced yet.
-  const toasts = state.toasts.map((each) => (each.raisedIn ? each : { ...each, raisedIn: id }));
+  const toasts = state.toasts.map((each) =>
+    each.raisedIn === undefined ? { ...each, raisedIn: id } : each,
+  );
   set({ toasts, viewports: [...state.viewports, id] });
-  return () => set({ ...state, viewports: state.viewports.filter((each) => each !== id) });
+  // Every toast showing has been announced by now. Homed to the closing viewport, which no
+  // open one matches, they move to the exposed viewport's quiet list instead of its live region.
+  return () =>
+    set({
+      toasts: state.toasts.map((each) => ({ ...each, raisedIn: id })),
+      viewports: state.viewports.filter((each) => each !== id),
+    });
 }

@@ -18,6 +18,10 @@ function Problem({
 
 const regions = () => screen.getAllByRole("region", { name: "Save problems" });
 const announced = (region: HTMLElement) => region.querySelector("[aria-live]")?.textContent;
+const expectEmpty = (region: HTMLElement) => {
+  expect(region.childElementCount).toBe(1);
+  expect(region.querySelector("[aria-live]")).toBeEmptyDOMElement();
+};
 
 describe("SaveToasts", () => {
   it("shows a field's problem until it clears, naming the field", () => {
@@ -38,7 +42,7 @@ describe("SaveToasts", () => {
         <SaveToasts />
       </>,
     );
-    expect(screen.getByRole("region", { name: "Save problems" })).toHaveTextContent(/^$/);
+    expectEmpty(screen.getByRole("region", { name: "Save problems" }));
   });
 
   it("retries through the field's latest handler, and goes when dismissed", () => {
@@ -133,7 +137,7 @@ describe("SaveToasts", () => {
       </>,
     );
     const [page, modal] = regions() as [HTMLElement, HTMLElement];
-    expect(page).toHaveTextContent(/^$/);
+    expectEmpty(page);
     expect(within(modal).getByText("Gold: disk full")).toBeInTheDocument();
 
     rerender(
@@ -145,7 +149,7 @@ describe("SaveToasts", () => {
     expect(within(regions()[0] as HTMLElement).getByText("Gold: disk full")).toBeInTheDocument();
   });
 
-  it("announces a toast only in the viewport it was raised in, as a modal opens and closes", () => {
+  it("announces a toast once, however often a modal opens and closes over it", () => {
     const { rerender } = render(
       <>
         <Problem message="disk full" />
@@ -173,8 +177,18 @@ describe("SaveToasts", () => {
       </>,
     );
     const page = regions()[0] as HTMLElement;
+    expect(page).toHaveTextContent("Gold: disk full");
     expect(page).toHaveTextContent("Silver: disk full");
-    expect(announced(page)).toBe("Gold: disk full");
+    expect(announced(page)).toBe("");
     expect(within(page).getByRole("button", { name: "Dismiss Silver" })).toBeInTheDocument();
+
+    rerender(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+        <Problem field="Copper" message="disk full" />
+      </>,
+    );
+    expect(announced(regions()[0] as HTMLElement)).toBe("Copper: disk full");
   });
 });
