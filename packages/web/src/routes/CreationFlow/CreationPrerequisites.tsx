@@ -1,7 +1,7 @@
 import { ABILITIES, type Ability, abilityScore, type CharacterDefinition } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { withPrerequisiteDepartures } from "./multiclassPrerequisites.ts";
+import { withPrerequisiteDepartures } from "../../lib/multiclassPrerequisites.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 
 /**
