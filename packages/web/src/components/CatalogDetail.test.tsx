@@ -194,6 +194,39 @@ describe("CatalogDetail", () => {
     expect(screen.getByText("This row carries no rules text of its own.")).toBeInTheDocument();
   });
 
+  it("renders a class by its fields and a level table whose features open their own entries", async () => {
+    stubFetchByUrl({
+      "/api/classes/Barbarian/PHB": {
+        name: "Barbarian",
+        source: "PHB",
+        edition: "classic",
+        hitDie: 12,
+        json: {
+          name: "Barbarian",
+          source: "PHB",
+          hd: { number: 1, faces: 12 },
+          classFeatures: ["Rage|Barbarian||1"],
+        },
+      },
+      "/api/refs/resolve": {
+        refs: [
+          {
+            name: "Rage",
+            source: "PHB",
+            entries: ["Rage text."],
+            path: "/classes/Barbarian/PHB/features/Rage/PHB/1",
+          },
+        ],
+      },
+    });
+    renderAt("/classes/Barbarian/PHB");
+
+    await dialogNamed("Barbarian");
+    expect(screen.getByText("d12")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Features" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Rage" })).toBeInTheDocument();
+  });
+
   it("reads an optional feature through the catalog, labeled by its type", async () => {
     stubFetchByUrl({
       "/api/catalog/optfeature/Agonizing%20Blast/PHB": {
