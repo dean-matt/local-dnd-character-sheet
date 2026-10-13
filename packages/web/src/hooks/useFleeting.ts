@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-/** How long the top bar's "Saved" stays before it clears. */
+/** How long the character header's "Saved" stays before it clears. */
 export const SAVED_STATUS_MS = 2000;
 
 /**

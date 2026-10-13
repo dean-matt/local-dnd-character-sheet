@@ -9,7 +9,7 @@ import {
   flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
+import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
@@ -42,7 +42,8 @@ export function CustomSkills({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
-  const failure = useHeldWriteError(update);
+  const writes = useHeldWrites(update);
+  const failure = writes.latest?.error;
   // A flat bonus saves through its own field, which reports its own failure.
   const flats = useUpdateCharacterDefinition(character.id);
   const [name, setName] = useState("");
@@ -54,12 +55,15 @@ export function CustomSkills({
   useSaveToast(
     "Custom skills",
     failure ? `Couldn't save: ${failure.message}` : undefined,
-    () => update.variables && update.mutate(update.variables),
+    writes.retry,
     failure,
   );
 
-  const save = (customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
-    update.mutate((latest) => ({ ...latest, customSkills: customSkills(latest.customSkills) }));
+  const save = (name: string, customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
+    writes.write(name.toLowerCase(), (latest) => ({
+      ...latest,
+      customSkills: customSkills(latest.customSkills),
+    }));
 
   const addField = useRef<HTMLInputElement>(null);
   const [removed, setRemoved] = useState<string>();
@@ -86,7 +90,7 @@ export function CustomSkills({
       base === "flat"
         ? { name: trimmed, flat: 0, level: "none" }
         : { name: trimmed, ability: base, level: "none" };
-    save((skills) => [...skills, skill]);
+    save(trimmed, (skills) => [...skills, skill]);
   }
 
   return (
@@ -113,7 +117,7 @@ export function CustomSkills({
                   ability: skill.ability,
                 })}
                 onCycleLevel={() =>
-                  save((skills) =>
+                  save(skill.name, (skills) =>
                     skills.map((each) =>
                       each.name === skill.name ? { ...each, level: nextLevel(each.level) } : each,
                     ),

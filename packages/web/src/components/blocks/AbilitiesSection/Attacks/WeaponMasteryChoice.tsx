@@ -1,6 +1,6 @@
 import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDerived, type CharacterRecord, derivedValue, refKey } from "@dnd/character";
-import { useHeldWriteError } from "../../../../hooks/useHeldWriteError.ts";
+import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
 import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
@@ -20,13 +20,14 @@ export function WeaponMasteryChoice({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
-  const failure = useHeldWriteError(update);
+  const writes = useHeldWrites(update);
+  const failure = writes.latest?.error;
   const chosen = character.definition.weaponMasteries;
   const limit = derivedValue(derived.weaponMasteryLimit);
   useSaveToast(
     "Weapon mastery",
     failure ? `Couldn't save: ${failure.message}` : undefined,
-    () => update.variables && update.mutate(update.variables),
+    writes.retry,
     failure,
   );
   if (limit === 0 && chosen.length === 0) return null;
@@ -58,7 +59,7 @@ export function WeaponMasteryChoice({
               type="button"
               aria-label={`Remove ${kind.name}`}
               onClick={() =>
-                update.mutate((latest) => ({
+                writes.write(refKey(kind), (latest) => ({
                   ...latest,
                   weaponMasteries: latest.weaponMasteries.filter(
                     (each) => refKey(each) !== refKey(kind),
@@ -81,7 +82,7 @@ export function WeaponMasteryChoice({
           unavailableReason={unavailable}
           onPick={(ref) =>
             "name" in ref &&
-            update.mutate((latest) => ({
+            writes.write(refKey(ref), (latest) => ({
               ...latest,
               weaponMasteries: [...latest.weaponMasteries, ref],
             }))

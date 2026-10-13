@@ -4,9 +4,8 @@ import {
   improvementAt,
   withImprovement,
 } from "@dnd/character";
-import { useRef, useState } from "react";
 import { useFeats } from "../../../hooks/useFeats.ts";
-import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
+import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
@@ -27,16 +26,13 @@ export function Improvements({ character }: { character: CharacterRecord }) {
   const { grants } = useImprovementGrants(definition.levels);
   const feats = useFeats(definition.edition);
   const update = useUpdateCharacterDefinition(character.id);
-  const failure = useHeldWriteError(update);
-  const [last, setLast] = useState<{ grant: ImprovementGrant; next: Improvement }>();
-  // The pick the held failure belongs to, which a later pick elsewhere must not take over.
-  const failed = useRef(last);
-  if (update.error) failed.current = last;
+  const writes = useHeldWrites(update);
+  const failure = writes.latest;
   useSaveToast(
-    `Level ${failed.current?.grant.level}`,
-    failure ? `Couldn't save: ${failure.message}` : undefined,
-    () => failed.current && save(failed.current.grant, failed.current.next),
-    failure,
+    `Level ${failure?.key}`,
+    failure ? `Couldn't save: ${failure.error.message}` : undefined,
+    writes.retry,
+    failure?.error,
   );
   if (grants.length === 0) return null;
   const catalog = feats.data?.items ?? [];
@@ -50,8 +46,7 @@ export function Improvements({ character }: { character: CharacterRecord }) {
   ).length;
 
   function save(grant: ImprovementGrant, next: Improvement) {
-    setLast({ grant, next });
-    update.mutate((latest) => ({
+    writes.write(String(grant.level), (latest) => ({
       ...latest,
       ...withImprovement(latest, grant.level, grant.cls, next),
     }));
@@ -79,7 +74,7 @@ export function Improvements({ character }: { character: CharacterRecord }) {
                 feats={catalog}
                 candidate={candidateAt(definition, grant)}
                 onChange={(next) => save(grant, next)}
-                invalid={failure !== null && failed.current?.grant.level === grant.level}
+                invalid={writes.failed.has(String(grant.level))}
               />
             </li>
           );

@@ -6,7 +6,7 @@ import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
-import { useHeldWriteError } from "../../../../hooks/useHeldWriteError.ts";
+import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
 import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
@@ -50,7 +50,8 @@ export function ItemList({
 }) {
   const inventory = useCharacterInventory(character.id);
   const update = useUpdateCharacterDefinition(character.id);
-  const failure = useHeldWriteError(update);
+  const writes = useHeldWrites(update);
+  const failure = writes.latest?.error;
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
   const queryClient = useQueryClient();
@@ -69,11 +70,9 @@ export function ItemList({
     if (!entry || !settled()) return;
     writing.current += 1;
     // Released from the write's own promise: `add` calling `mutate` on this observer
-    // detaches it from an earlier write, whose per-call `onSettled` then never runs. The
-    // observer's `error` still carries a failure to the alert, so the rejection is dropped.
-    update
-      .mutateAsync((latest) => editInventoryEntry(latest, index, entry, change))
-      .catch(() => {})
+    // detaches it from an earlier write, whose per-call `onSettled` then never runs.
+    writes
+      .write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change))
       .finally(() => {
         writing.current -= 1;
       });
@@ -83,8 +82,8 @@ export function ItemList({
     const container = holder === null ? undefined : drawn[holder];
     if (!entry || (holder !== null && !container) || !settled()) return;
     writing.current += 1;
-    update
-      .mutateAsync((latest) =>
+    writes
+      .write(`row:${index}`, (latest) =>
         placeInventoryEntry(
           latest,
           index,
@@ -92,7 +91,6 @@ export function ItemList({
           container && holder !== null ? { index: holder, drawn: container } : null,
         ),
       )
-      .catch(() => {})
       .finally(() => {
         writing.current -= 1;
       });
@@ -107,7 +105,7 @@ export function ItemList({
       .map(({ entry: at, name }) => ({ index: at, name }));
   };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
-    update.mutate((latest) => ({
+    writes.write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => ({
       ...latest,
       inventory: [
         ...latest.inventory,
@@ -118,7 +116,7 @@ export function ItemList({
   useSaveToast(
     "Inventory",
     failure ? `Couldn't save: ${failure.message}` : undefined,
-    () => update.variables && update.mutate(update.variables),
+    writes.retry,
     failure,
   );
 

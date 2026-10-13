@@ -7,7 +7,7 @@
  * debounce, on blur and on unmount. A derived value writes `manual` only, and clearing the input
  * reverts to `computed` rather than a parsed empty value: `onSave` receives `null`,
  * never a zero or an empty string. A plain `current` value is the definition's own;
- * `EditableFieldProps` says how clearing one saves. The top bar reports a save's progress.
+ * `EditableFieldProps` says how clearing one saves. The character header reports a save's progress.
  * A failed write outlines the field, keeps the user's text and raises a toast with a retry,
  * so it never looks like it went through. Text the parse or schema refuses is outlined and
  * toasted without a retry, which would only refuse it again.

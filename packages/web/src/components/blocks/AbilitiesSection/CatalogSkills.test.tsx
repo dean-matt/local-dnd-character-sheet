@@ -128,6 +128,33 @@ describe("CatalogSkills", () => {
     expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
 
+  it("keeps a failed skill's toast through another skill's save, and Retry writes the failed one", async () => {
+    const stealth: SkillProficiency = { ref: STEALTH, level: "proficient" };
+    const arcana: SkillProficiency = { ref: ARCANA, level: "proficient" };
+    const replies = [
+      new Response(JSON.stringify({ error: "disk full" }), { status: 500 }),
+      new Response(JSON.stringify(holding([stealth]))),
+      new Response(JSON.stringify(holding([stealth, arcana]))),
+    ];
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => replies.shift());
+    vi.stubGlobal("fetch", fetchMock);
+    renderSeeded(holding([]));
+
+    fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Not proficient" }));
+    await saveToasts().findByText(/^Skill proficiency: Couldn't save/);
+    fireEvent.click(screen.getByRole("button", { name: "Stealth proficiency: Not proficient" }));
+    await screen.findByRole("button", { name: "Stealth proficiency: Proficient" });
+
+    expect(saveToasts().getByText(/^Skill proficiency: Couldn't save/)).toBeInTheDocument();
+    fireEvent.click(saveToasts().getByRole("button", { name: "Retry Skill proficiency" }));
+
+    await waitFor(() =>
+      expect(saveToasts().queryByText(/^Skill proficiency: Couldn't save/)).toBeNull(),
+    );
+    const retried = fetchMock.mock.calls[2]?.[1];
+    expect(JSON.parse(String(retried?.body)).proficiencies.skills).toEqual([stealth, arcana]);
+  });
+
   it("raises a dismissed toast again when the next change fails the same way", async () => {
     vi.stubGlobal(
       "fetch",

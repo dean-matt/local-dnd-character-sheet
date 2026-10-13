@@ -6,7 +6,7 @@ import {
   effectsOnRoll,
   refKey,
 } from "@dnd/character";
-import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
+import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
@@ -25,14 +25,15 @@ export function CatalogSkills({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
-  const failure = useHeldWriteError(update);
+  const writes = useHeldWrites(update);
+  const failure = writes.latest?.error;
   const skillLevel = new Map(
     character.definition.proficiencies.skills.map((skill) => [refKey(skill.ref), skill.level]),
   );
   useSaveToast(
     "Skill proficiency",
     failure ? `Couldn't save: ${failure.message}` : undefined,
-    () => update.variables && update.mutate(update.variables),
+    writes.retry,
     failure,
   );
   const rollEffects = derivedValue(derived.rollEffects);
@@ -40,7 +41,7 @@ export function CatalogSkills({
 
   function cycle(ref: ContentRef) {
     const key = refKey(ref);
-    update.mutate((latest) => {
+    writes.write(key, (latest) => {
       const held = latest.proficiencies.skills;
       const current = held.find((skill) => refKey(skill.ref) === key);
       const level = nextLevel(current?.level ?? "none");
