@@ -13,7 +13,7 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     const hidden = await request.put(`/api/characters/${id}/pages`, {
       data: pages.map(({ preset: _preset, ...rest }: { preset: boolean; slug: string }) => ({
         ...rest,
-        hidden: rest.slug === "inventory" || rest.slug === "alignment",
+        hidden: rest.slug === "inventory",
       })),
     });
     expect(hidden.ok()).toBe(true);

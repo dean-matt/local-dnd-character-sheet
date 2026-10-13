@@ -1,8 +1,7 @@
 /**
- * The Identity page: the name and appearance edit in place and save themselves; race,
+ * The Identity page: the name, alignment and appearance edit in place and save themselves; race,
  * class, background and the proficiency lists are catalog picks and stay read-only here. It
- * shows as unavailable until the character loads, as the Level, Alignment and Notes pages
- * beside it do.
+ * shows as unavailable until the character loads, as the Level and Notes pages beside it do.
  */
 import {
   type CharacterRecord,
@@ -17,6 +16,7 @@ import { ChipList } from "../../ChipList.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { classChips } from "../classChips.ts";
 import { SectionUnavailable } from "../SectionUnavailable.tsx";
+import { AlignmentCard } from "./AlignmentCard.tsx";
 import { AppearanceCard } from "./AppearanceCard.tsx";
 import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
 
@@ -62,6 +62,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
       <Card title="Background">
         <ChipList labels={[displayName(background)]} />
       </Card>
+      <AlignmentCard character={character} />
       <Card title="Languages">
         <ChipList labels={proficiencies.languages.map((ref) => ref.name)} empty="No languages." />
       </Card>

@@ -2,15 +2,15 @@ import type { CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterKey } from "../../hooks/characterKeys.ts";
-import { characterRecord, identityRecord } from "../../test/records.ts";
-import { stubFetch } from "../../test/stubFetch.ts";
-import { AlignmentSection } from "./AlignmentSection.tsx";
+import { characterKey } from "../../../hooks/characterKeys.ts";
+import { characterRecord, identityRecord } from "../../../test/records.ts";
+import { stubFetch } from "../../../test/stubFetch.ts";
+import { AlignmentCard } from "./AlignmentCard.tsx";
 
 /** Reads the character from the cache, as the sheet does, so a write's response reaches it. */
 function Seeded({ id }: { id: string }) {
   const { data } = useQuery<CharacterRecord>({ queryKey: characterKey(id), queryFn: skipToken });
-  return <AlignmentSection character={data} />;
+  return data ? <AlignmentCard character={data} /> : null;
 }
 
 function renderSeeded(character = identityRecord()) {
@@ -36,7 +36,7 @@ const sentBody = (fetchMock: ReturnType<typeof stubFetch>) =>
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("AlignmentSection", () => {
+describe("AlignmentCard", () => {
   it("shows the alignment on the button", () => {
     renderSeeded();
     expect(field()).toHaveTextContent("Chaotic Good");

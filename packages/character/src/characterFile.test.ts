@@ -42,6 +42,20 @@ describe("characterFileSchema", () => {
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([["pages"]]);
   });
 
+  it("drops the stock Alignment page an older file lists, and keeps an edited one as the user's", () => {
+    const section = { kind: "section", section: "alignment" };
+    const note = { kind: "text", text: "Oath of Ruin" };
+    const stock = { slug: "alignment", title: "Alignment", hidden: true, blocks: [section] };
+    const edited = { slug: "alignment", title: "Creed", hidden: false, blocks: [section, note] };
+
+    expect(characterFileSchema.parse({ ...file, pages: [...PRESET_PAGES, stock] }).pages).toEqual(
+      PRESET_PAGES,
+    );
+    expect(
+      characterFileSchema.parse({ ...file, pages: [...PRESET_PAGES, edited] }).pages.at(-1),
+    ).toEqual({ ...edited, blocks: [{ kind: "unknown", raw: section }, note] });
+  });
+
   it("refuses a page marked preset, which only an import decides", () => {
     const pages = PRESET_PAGES.map((page) => ({ ...page, preset: true }));
     expect(characterFileSchema.safeParse({ ...file, pages }).success).toBe(false);
