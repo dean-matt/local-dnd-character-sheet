@@ -564,6 +564,34 @@ describe("InventorySection", () => {
       expect(putBodies(fetchMock)[0].money).toMatchObject({ gold: 1275 });
     });
 
+    it("appends to the total a write still settling, not the rendered one", async () => {
+      const fetchMock = renderSection();
+      let land = () => {};
+      const writes = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === "/api/characters/1"
+          ? new Promise<Response>((resolve) => {
+              land = () =>
+                resolve(
+                  new Response(
+                    JSON.stringify({ ...vex(), definition: JSON.parse(String(init?.body)) }),
+                  ),
+                );
+            })
+          : fetchMock(input, init),
+      );
+      vi.stubGlobal("fetch", writes);
+
+      enterGold("1,250+25");
+      await waitFor(() => expect(putBodies(writes)).toHaveLength(1));
+      expect(goldField()).toHaveValue("1,275");
+      enterGold("1,275+10");
+      land();
+
+      await waitFor(() => expect(putBodies(writes)).toHaveLength(2));
+      land();
+      expect(putBodies(writes).map((body) => body.money.gold)).toEqual([1275, 1285]);
+    });
+
     it("retries a write that failed", async () => {
       const fetchMock = renderSection();
 
@@ -606,6 +634,7 @@ describe("InventorySection", () => {
         const field = enterGold(text);
 
         expect(await card("Currency").findByRole("alert")).toHaveTextContent(`Gold: ${HINT}`);
+        expect(field).toHaveAccessibleDescription(`Gold: ${HINT}`);
         expect(field).toHaveValue(text);
         expect(putBodies(fetchMock)).toHaveLength(0);
       },

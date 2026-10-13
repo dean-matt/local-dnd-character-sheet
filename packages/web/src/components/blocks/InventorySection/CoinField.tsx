@@ -53,7 +53,9 @@ export function CoinField({
   const [draft, setDraft] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [sent, setSent] = useState(total);
-  const shown = total.toLocaleString("en-US");
+  // The cache updates only once a write settles, so a field showing the old total meanwhile
+  // would have the next sum appended to it and overwrite the write still saving.
+  const shown = (update.isPending ? sent : total).toLocaleString("en-US");
 
   function apply(next: number) {
     setSent(next);
@@ -91,7 +93,8 @@ export function CoinField({
     <form noValidate onSubmit={submit}>
       <InputField
         label={`${name} (${abbreviation})`}
-        describedBy={hintId}
+        // A refusal already repeats the hint.
+        describedBy={refusal ? undefined : hintId}
         type="text"
         enterKeyHint="done"
         value={draft ?? shown}
