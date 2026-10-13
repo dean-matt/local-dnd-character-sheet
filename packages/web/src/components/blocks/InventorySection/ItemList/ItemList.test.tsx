@@ -88,13 +88,14 @@ const homebrew = {
 
 function searchPage(url: string) {
   const kind = new URL(url, "http://local").searchParams.get("kind");
-  const items = kind
-    ? [hit("Dagger", "XPHB"), hit("+1 Armor", "XDMG", { variant: true })]
-    : [
-        hit("Rope", "XPHB", { kinds: ["gear"] }),
-        hit("+1 Weapon", "XDMG", { variant: true }),
-        homebrew,
-      ];
+  const items =
+    kind === "melee,ranged,ammunition"
+      ? [hit("Dagger", "XPHB"), hit("+1 Armor", "XDMG", { variant: true })]
+      : [
+          hit("Rope", "XPHB", { kinds: ["gear"] }),
+          hit("+1 Weapon", "XDMG", { variant: true }),
+          homebrew,
+        ];
   return json({ items, total: items.length, limit: 20, offset: 0 });
 }
 
@@ -206,6 +207,18 @@ async function pick(label: string, query: string, option: RegExp) {
   fireEvent.click(await screen.findByRole("option", { name: option }));
 }
 
+/** Opens `group`'s Add item modal and picks from its search. */
+async function addFrom(group: string, query: string, option: RegExp) {
+  fireEvent.click(await screen.findByRole("button", { name: `Add item to ${group}` }));
+  await pick("Search items", query, option);
+}
+
+const searchedKinds = (fetchMock: ReturnType<typeof stubApi>) =>
+  fetchMock.mock.calls
+    .map(([url]) => String(url))
+    .filter((url) => url.startsWith("/api/search?"))
+    .map((url) => new URL(url, "http://local").searchParams.get("kind") ?? undefined);
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -215,7 +228,7 @@ describe("ItemList", () => {
     const fetchMock = renderList();
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "rope", /^Rope/);
+    await addFrom("Gear", "rope", /^Rope/);
 
     const definition = await written(fetchMock);
     expect(definition.inventory).toHaveLength(4);
@@ -223,13 +236,57 @@ describe("ItemList", () => {
       ref: { name: "Rope", source: "XPHB" },
       ...flags,
     });
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Add item to Gear" })).toHaveFocus();
+  });
+
+  it("searches a column's own items first, and every item once the filter is cleared", async () => {
+    const fetchMock = renderList();
+
+    await screen.findByText("Longsword");
+    fireEvent.click(screen.getByRole("button", { name: "Add item to Armor" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Search items" }), {
+      target: { value: "pl" },
+    });
+    await waitFor(() => expect(searchedKinds(fetchMock)).toContain("light,medium,heavy,shield"));
+    const show = screen.getByRole("combobox", { name: "Show" });
+    expect(show).toHaveTextContent("Armor");
+
+    fireEvent.click(show);
+    fireEvent.click(screen.getByRole("option", { name: "All items" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Search items" }), {
+      target: { value: "rope" },
+    });
+    fireEvent.click(await screen.findByRole("option", { name: /^Rope/ }));
+
+    expect((await written(fetchMock)).inventory[3]).toMatchObject({
+      ref: { name: "Rope", source: "XPHB" },
+    });
+    expect(searchedKinds(fetchMock).at(-1)).toBeUndefined();
+  });
+
+  it("starts the Gear search on every kind but the weapons and armor", async () => {
+    const fetchMock = renderList();
+
+    await screen.findByText("Longsword");
+    fireEvent.click(screen.getByRole("button", { name: "Add item to Gear" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Search items" }), {
+      target: { value: "r" },
+    });
+
+    await waitFor(() =>
+      expect(searchedKinds(fetchMock)).toContain(
+        "ammunition,potion,scroll,ring,wand,rod,staff,wondrous,focus,gear,tool,treasure,other",
+      ),
+    );
   });
 
   it("adds a homebrew item by its id, the same way", async () => {
     const fetchMock = renderList();
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "coin", /^Lucky Coin/);
+    await addFrom("Gear", "coin", /^Lucky Coin/);
 
     expect((await written(fetchMock)).inventory[3]).toEqual({
       ref: { homebrewId: "hb-1" },
@@ -237,11 +294,13 @@ describe("ItemList", () => {
     });
   });
 
-  it("offers the picker while the inventory is empty", async () => {
+  it("offers each column's Add item button while the inventory is empty", async () => {
     renderList(derivedRecord(), []);
 
-    expect(await screen.findByText("Vex has no items yet.")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
+    expect(await screen.findByText("No weapons.")).toBeInTheDocument();
+    for (const group of ["Weapons", "Armor", "Gear"]) {
+      expect(screen.getByRole("button", { name: `Add item to ${group}` })).toBeInTheDocument();
+    }
   });
 
   it("notes an empty group in its card", async () => {
@@ -256,16 +315,13 @@ describe("ItemList", () => {
     const fetchMock = renderList();
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await addFrom("Weapons", "+1", /^\+1 Weapon/);
     const base = screen.getByRole("combobox", { name: "Base item for +1 Weapon" });
     fireEvent.change(base, { target: { value: "dag" } });
     const another = await screen.findByRole("option", { name: /^\+1 Armor/ });
     expect(another).toHaveAttribute("aria-disabled", "true");
     expect(another).toHaveTextContent("Another magic variant, not a base item");
-    const kinds = fetchMock.mock.calls.map(
-      ([url]) => new URL(String(url), "http://local").searchParams.get("kind") ?? undefined,
-    );
-    expect(kinds).toContain("melee,ranged,ammunition");
+    expect(searchedKinds(fetchMock)).toContain("melee,ranged,ammunition");
     fireEvent.click(screen.getByRole("option", { name: /^Dagger/ }));
 
     const definition = await written(fetchMock);
@@ -273,7 +329,8 @@ describe("ItemList", () => {
       ref: { name: "Dagger", source: "XPHB" },
       variant: { name: "+1 Weapon", source: "XDMG" },
     });
-    expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Add item to Weapons" })).toHaveFocus();
   });
 
   it("says why a variant refuses the base item picked, and saves nothing", async () => {
@@ -287,7 +344,7 @@ describe("ItemList", () => {
     );
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -295,7 +352,7 @@ describe("ItemList", () => {
     );
     expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Search items" })).toBeInTheDocument();
   });
 
   it("adds a refused pair of one group anyway, saving the reason beside the entry", async () => {
@@ -309,7 +366,7 @@ describe("ItemList", () => {
     );
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
     fireEvent.click(await screen.findByRole("button", { name: "Add anyway" }));
 
@@ -343,7 +400,7 @@ describe("ItemList", () => {
     );
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
     fireEvent.click(await screen.findByRole("button", { name: "Add anyway" }));
 
@@ -364,7 +421,7 @@ describe("ItemList", () => {
     );
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
 
     await screen.findByRole("alert");
@@ -382,7 +439,7 @@ describe("ItemList", () => {
     );
 
     await screen.findByText("Longsword");
-    await pick("Add an item", "+1", /^\+1 Weapon/);
+    await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -506,7 +563,7 @@ describe("ItemList", () => {
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Equipped, Ring of Warmth" }));
-    await pick("Add an item", "rope", /^Rope/);
+    await addFrom("Gear", "rope", /^Rope/);
     releasePut();
     await waitFor(() =>
       expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(2),

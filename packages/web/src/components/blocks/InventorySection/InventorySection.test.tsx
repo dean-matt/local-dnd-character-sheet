@@ -657,7 +657,9 @@ describe("InventorySection", () => {
   it("says so when the character has no items", async () => {
     renderSection(load(), { items: [] });
 
-    expect(await screen.findByText("Vex has no items yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No weapons.")).toBeInTheDocument();
+    expect(screen.getByText("No armor.")).toBeInTheDocument();
+    expect(screen.getByText("No gear.")).toBeInTheDocument();
   });
 
   describe("a weapon's attack", () => {

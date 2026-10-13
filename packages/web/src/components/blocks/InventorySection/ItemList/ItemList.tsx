@@ -1,8 +1,6 @@
-import type { SheetItem } from "@dnd/catalog";
 import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
@@ -12,33 +10,17 @@ import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharact
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
-import { AddItemField } from "./AddItemField.tsx";
+import { AddItemButton } from "./AddItemButton.tsx";
 import {
   editInventoryEntry,
   type InventoryEntry,
   placeInventoryEntry,
 } from "./editInventoryEntry.ts";
+import { GROUPS, groupOf } from "./itemGroups.ts";
 import { PlaceField } from "./PlaceField.tsx";
 import { QuantityField } from "./QuantityField.tsx";
 import { ResolvedItemRow } from "./ResolvedItemRow/ResolvedItemRow.tsx";
 import { UnresolvedItemRow } from "./UnresolvedItemRow.tsx";
-
-const GROUPS = ["Weapons", "Armor", "Gear"] as const;
-
-type Group = (typeof GROUPS)[number];
-
-const GROUP_OF_TYPE: Record<string, Group> = {
-  M: "Weapons",
-  R: "Weapons",
-  LA: "Armor",
-  MA: "Armor",
-  HA: "Armor",
-  S: "Armor",
-};
-
-/** An item nothing resolves has no type to sort by, so it lands in Gear. */
-const groupOf = (item: SheetItem): Group =>
-  (item.resolved && item.type && GROUP_OF_TYPE[item.type.abbreviation]) || "Gear";
 
 type EntryChange = (entry: InventoryEntry) => InventoryEntry | null;
 
@@ -126,17 +108,8 @@ export function ItemList({
     failure,
   );
 
-  const picker = <AddItemField edition={character.edition} onAdd={add} />;
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState error={inventory.error} />;
-  if (inventory.data.items.length === 0) {
-    return (
-      <>
-        {picker}
-        <EmptyState>{character.name} has no items yet.</EmptyState>
-      </>
-    );
-  }
   const placementField = (index: number, name: string) => {
     const holders = holdersFor(index);
     const inside = drawn[index]?.inside;
@@ -156,7 +129,11 @@ export function ItemList({
   const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
     return (
-      <Card key={group} title={group}>
+      <Card
+        key={group}
+        title={group}
+        aside={<AddItemButton group={group} edition={character.edition} onAdd={add} />}
+      >
         {rows.length === 0 ? (
           <EmptyNote>No {group.toLowerCase()}.</EmptyNote>
         ) : (
@@ -219,10 +196,5 @@ export function ItemList({
     );
   });
   // A third of the content column fits a row's controls only from xl, beside the sidebar.
-  return (
-    <>
-      {picker}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">{cards}</div>
-    </>
-  );
+  return <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">{cards}</div>;
 }

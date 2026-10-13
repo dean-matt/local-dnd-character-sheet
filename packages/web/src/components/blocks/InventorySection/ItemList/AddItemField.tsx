@@ -51,9 +51,12 @@ function refusalOf(
  */
 export function AddItemField({
   edition,
+  filters,
   onAdd,
 }: {
   edition: CharacterRecord["edition"];
+  /** Narrows the first search, such as to a column's item kinds; the base item search ignores it. */
+  filters?: Record<string, string>;
   onAdd: (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) => void;
 }) {
   const [variant, setVariant] = useState<PendingVariant>();
@@ -63,9 +66,10 @@ export function AddItemField({
   if (!variant) {
     return (
       <CatalogPicker
-        label="Add an item"
+        label="Search items"
         edition={edition}
         type="item"
+        filters={filters}
         onPick={(ref, hit) => {
           if ("name" in ref && hit.item?.variant) setVariant({ ref, kinds: hit.item.kinds });
           else onAdd({ ref });
