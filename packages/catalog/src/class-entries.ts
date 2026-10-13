@@ -6,18 +6,12 @@
  */
 import { ABILITY_LABEL } from "@dnd/rules";
 import { type Entries, rowEntries } from "./entry.ts";
-import { line } from "./monster.ts";
+import { capitalized } from "./lookup-entries.ts";
+import { isRecord, line, list, ordinal, titled } from "./monster.ts";
 import { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
 import { classSkillChoiceSchema } from "./skill-choice.ts";
 
 type Json = Record<string, unknown>;
-
-const isRecord = (value: unknown): value is Json =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-
-const capitalized = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 const joined = (values: string[]) =>
   values.length > 0 ? capitalized(values.join(", ")) : undefined;
@@ -44,14 +38,6 @@ function proficiency(value: unknown): string[] {
   return [value.optional === true ? `${name} (optional)` : name];
 }
 
-const SMALL_WORDS = new Set(["of"]);
-
-const skillName = (name: string) =>
-  name
-    .split(" ")
-    .map((word) => (SMALL_WORDS.has(word) ? word : capitalized(word)))
-    .join(" ");
-
 /** The armor, weapons, tools and skills a row's `startingProficiencies` lists. */
 function proficiencyLines(json: Json): Entries {
   const profs = isRecord(json.startingProficiencies) ? json.startingProficiencies : {};
@@ -59,7 +45,7 @@ function proficiencyLines(json: Json): Entries {
   const skillLine =
     skills &&
     (skills.from
-      ? `Choose ${skills.count} from ${skills.from.map(skillName).join(", ")}`
+      ? `Choose ${skills.count} from ${skills.from.map(titled).join(", ")}`
       : `Choose any ${skills.count}`);
   return [
     ...line("Armor", joined(list(profs.armor).flatMap(proficiency))),
@@ -101,10 +87,6 @@ function multiclassing(json: Json): Entries {
   ];
 }
 
-const ORDINALS = ["", "1st", "2nd", "3rd"];
-
-const ordinal = (level: number) => ORDINALS[level] ?? `${level}th`;
-
 /**
  * A feature reference as its level and its tag, `undefined` where its level is no class
  * level. `levelAt` is the reference's field holding the level; the feature's source
@@ -132,7 +114,7 @@ function featureTable(features: unknown, tag: string, levelAt: number): Entries 
   }
   const rows = [...byLevel.entries()]
     .sort(([a], [b]) => a - b)
-    .map(([level, texts]) => [ordinal(level), texts.join(", ")]);
+    .map(([level, texts]) => [ordinal(`${level}`), texts.join(", ")]);
   return section(
     "Features",
     rows.length > 0 ? [{ type: "table", colLabels: ["Level", "Features"], rows }] : [],

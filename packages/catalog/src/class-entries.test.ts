@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { classEntries, subclassEntries } from "./index.ts";
 
-/** Fighter (PHB) as `class-fighter.json` writes it, cut to two features. */
+/** Fighter (PHB) as `class-fighter.json` writes it, cut to four features. */
 const fighterPhb = {
   name: "Fighter",
   source: "PHB",

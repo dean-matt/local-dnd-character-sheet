@@ -16,10 +16,10 @@ import { type Entries, entriesSchema } from "./entry.ts";
 
 type Json = Record<string, unknown>;
 
-const isRecord = (value: unknown): value is Json =>
+export const isRecord = (value: unknown): value is Json =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+export const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
 const text = (value: unknown): string | undefined =>
   typeof value === "string" || typeof value === "number" ? `${value}` : undefined;
@@ -223,7 +223,8 @@ function saves(save: unknown): string | undefined {
 }
 
 /** A skill as printed: each word capitalized but `of`, as in `Sleight of Hand`. */
-const titled = (name: string) => name.replace(/\b(?!of\b)[a-z]/g, (letter) => letter.toUpperCase());
+export const titled = (name: string) =>
+  name.replace(/\b(?!of\b)[a-z]/g, (letter) => letter.toUpperCase());
 
 const bonuses = (skills: Json) =>
   Object.entries(skills).flatMap(([name, bonus]) =>
@@ -302,7 +303,7 @@ function challenge(cr: unknown): string | undefined {
 
 const ORDINALS = ["", "1st", "2nd", "3rd"];
 
-const ordinal = (level: string) => ORDINALS[Number(level)] ?? `${level}th`;
+export const ordinal = (level: string) => ORDINALS[Number(level)] ?? `${level}th`;
 
 const spellNames = (spells: unknown) =>
   list(spells)

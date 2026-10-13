@@ -15,7 +15,7 @@ const strings = (value: unknown): string[] =>
 
 const joined = (value: unknown) => strings(value).join(", ") || undefined;
 
-const capitalized = (value: string | undefined) =>
+export const capitalized = (value: string | undefined) =>
   value && value.charAt(0).toUpperCase() + value.slice(1);
 
 export function deityEntries(json: Json): Entries {
