@@ -10,6 +10,7 @@ export function InputField({
   labelHidden,
   error,
   status,
+  describedBy,
   messageSlot,
   className,
   ...input
@@ -20,6 +21,7 @@ export function InputField({
       labelHidden={labelHidden}
       error={error}
       status={status}
+      describedBy={describedBy}
       messageSlot={messageSlot}
     >
       {(control) => <input {...input} {...control} className={`control ${className ?? ""}`} />}
