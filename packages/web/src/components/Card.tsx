@@ -13,8 +13,9 @@ export function Card({
   const id = useId();
   return (
     <section aria-labelledby={id} className="rounded-card border border-border bg-surface p-2.5">
-      <div className="flex items-center gap-1.5">
-        <h3 id={id} className="font-semibold text-label text-muted uppercase tracking-label">
+      {/* One line tall, so an aside's larger hit target overflows the row rather than growing the card. */}
+      <div className="flex h-lh items-center gap-1.5 text-label">
+        <h3 id={id} className="font-semibold text-muted uppercase tracking-label">
           {title}
         </h3>
         {aside}
