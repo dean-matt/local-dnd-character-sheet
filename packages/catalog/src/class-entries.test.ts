@@ -55,6 +55,7 @@ describe("classEntries", () => {
         type: "entries",
         name: "Starting Equipment",
         entries: [
+          "You start with this equipment in addition to what your background grants.",
           { type: "list", items: ["(a) {@item chain mail|phb} or (b) {@item leather armor|phb}"] },
           "Alternatively, start with {@dice 5d4 × 10|5d4 × 10|Starting Gold} gp to buy your own equipment.",
         ],

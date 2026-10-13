@@ -6,8 +6,7 @@
  */
 import { ABILITY_LABEL } from "@dnd/rules";
 import { type Entries, rowEntries } from "./entry.ts";
-import { capitalized } from "./lookup-entries.ts";
-import { isRecord, line, list, ordinal, titled } from "./monster.ts";
+import { capitalized, isRecord, line, list, ordinal, titled } from "./entry-text.ts";
 import { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
 import { classSkillChoiceSchema } from "./skill-choice.ts";
 
@@ -55,19 +54,26 @@ function proficiencyLines(json: Json): Entries {
   ];
 }
 
-/** A `classic` row prints its choices under `default`, a `one` row under `entries`. */
+/**
+ * A `classic` row prints its choices under `default`, a `one` row under `entries`. A row
+ * marked `additionalFromBackground` says so first, or its list reads as all a character gets.
+ */
 function startingEquipment(json: Json): Entries {
   const equipment = isRecord(json.startingEquipment) ? json.startingEquipment : {};
-  const printed = rowEntries(equipment);
-  if (printed.length > 0) return printed;
   const lines = list(equipment.default).filter((item) => typeof item === "string");
   const gold = equipment.goldAlternative;
-  return [
+  const printed = [
+    ...rowEntries(equipment),
     ...(lines.length > 0 ? [{ type: "list", items: lines }] : []),
     ...(typeof gold === "string"
       ? [`Alternatively, start with ${gold} gp to buy your own equipment.`]
       : []),
   ];
+  const lead =
+    printed.length > 0 && equipment.additionalFromBackground === true
+      ? ["You start with this equipment in addition to what your background grants."]
+      : [];
+  return [...lead, ...printed];
 }
 
 function multiclassing(json: Json): Entries {
