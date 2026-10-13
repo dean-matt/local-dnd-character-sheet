@@ -411,7 +411,11 @@ describe("ItemList", () => {
   });
 
   it("draws the list busy while a row write and its refetch run, and idle once both land", async () => {
-    const fetchMock = renderList(derivedRecord(), undefined, { holdFirstPut: true });
+    const fetchMock = renderList(
+      { ...derivedRecord(), containers: [{ entry: 1, name: "Cloak of Protection", overflow: [] }] },
+      undefined,
+      { holdFirstPut: true },
+    );
 
     const remove = await screen.findByRole("button", { name: "Remove Longsword" });
     const list = remove.closest("ul") as HTMLElement;
@@ -420,6 +424,10 @@ describe("ItemList", () => {
     await waitFor(() => expect(list).toHaveAttribute("aria-busy", "true"));
     const equip = screen.getByRole("button", { name: "Equipped, Ring of Warmth" });
     expect(equip).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("combobox", { name: "Kept in, Longsword" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     releasePut();
 
     await written(fetchMock);

@@ -157,7 +157,6 @@ export function ItemList({
     return (
       rows.length > 0 && (
         <Card key={group} title={group}>
-          {/* aria-disabled rather than disabled: disabling the button just pressed would drop its focus. */}
           <ul
             aria-busy={busy}
             className="flex flex-col gap-2 aria-busy:cursor-wait aria-busy:opacity-60"
