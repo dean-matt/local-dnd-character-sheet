@@ -57,8 +57,12 @@
 
   <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{false}}">
     <div role="presentation" onClick="{{cancelRemove}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
-      <div onClick="{{stopPropagation}}">
-        <dc-import name="ConfirmDialog" open="{{confirmOpen}}" message="{{confirmMessage}}" on-confirm="{{doRemove}}" on-cancel="{{cancelRemove}}" accent="{{accent}}" hint-size="340px,200px"></dc-import>
+      <div role="alertdialog" aria-modal="true" aria-label="Confirm delete" onClick="{{stopPropagation}}" style="width: 340px; max-width: 90%; background: #ffffff; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);">
+        <div style="font-size: 14px; color: #1f2430; line-height: 1.5;">{{confirmMessage}}</div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button onClick="{{cancelRemove}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #dde1e6; background: none; color: #1f2430; font-size: 13px; font-weight: 600;">Cancel</button>
+          <button onClick="{{doRemove}}" style="padding: 8px 14px; border-radius: 6px; border: none; background: {{accent}}; color: #ffffff; font-size: 13px; font-weight: 600;">Delete</button>
+        </div>
       </div>
     </div>
   </sc-if>

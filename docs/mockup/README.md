@@ -43,8 +43,8 @@ widget, panel, or nav element:
   white on the accent — a sword for a weapon, a shirt for armor, a shield for a
   shield, a hand for other gear. An item the character is not proficient with shows a
   grayed backpack, `aria-disabled`, with a popover naming the missing proficiency. The
-  icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons, Armor
-  and List Item draw it.
+  icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons and Armor
+  draw it.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
@@ -55,7 +55,7 @@ widget, panel, or nav element:
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
   and new spells for a class that gains them, all gating Apply until every open choice
   the level actually offers is made.
-- Page chrome: Sidebar (the tab rail), Top Bar Navigation (Character menu, Mechanics
+- Page chrome: Top Bar Navigation (Character menu, Mechanics
   menu, search, and a Settings link), Character Header, Rolls Panel. The top bar marks
   the section you are in by its label alone — accent-colored and bold, with no fill or
   underline — and an open menu takes a gray fill instead. Character Header is one 52px
@@ -70,9 +70,9 @@ widget, panel, or nav element:
   the subtitle the rest, never under 160px, so some of it always shows. A long name or
   subtitle ends in an ellipsis and keeps its full text in a tooltip; the `longText`
   tweak shows both truncated. Manage Tabs is the modal
-  Sidebar's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
-  only a tab a user added renames or deletes — delete asks Confirm Dialog first. Rolls
-  Panel is a right-docked, collapsible rail — the counterpart to Sidebar on the left —
+  the tab rail's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
+  only a tab a user added renames or deletes — delete asks for confirmation first. Rolls
+  Panel is a right-docked, collapsible rail — the counterpart to the tab rail on the left —
   listing rolls newest first, each tagged with what it was rolled for (a weapon, a
   spell, an ability check…) and which character made it, with a Clear button and a
   Filter button (by character, by roll type) in the same shape as the other list
@@ -86,10 +86,10 @@ widget, panel, or nav element:
   everything else; clicking it or pressing Escape closes the results and returns focus to
   the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics and Settings
   controls. Results group under Characters and Compendium, each with a type chip and each
-  compendium row carrying the source chip List Item defines, and an "Advanced search" link at the foot opens Search,
+  compendium row carrying a source chip, and an "Advanced search" link at the foot opens Search,
   the `search` route. The app carries the pill's query there as `?q=<query>`; each
   artboard keeps its own state, so Search opens on its own sample query. Search draws the
-  query field, the results, and a collapsible filter sidebar shaped like Sidebar, its
+  query field, the results, and a collapsible filter sidebar shaped like the tab rail, its
   controls the Filter artboards' checkboxes and level range. Type, Source, School, Rarity
   and Kind are each the same multi-select: a button naming what is chosen ("All types",
   "Spells, Items", "3 types") that opens a list of checkboxes, with a filter box at the top
@@ -161,15 +161,11 @@ widget, panel, or nav element:
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search; Top Bar Navigation's global search is the one place that already spans both
   characters and a sample compendium.
-- Settings page: Settings Sidebar (same rail as Sidebar.dc.html, same size).
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats each paste the
   entry's 5etools-shaped JSON, as the app's Homebrew settings page takes items and spells
   beside their form. They're forward design for #489, not a page a build currently renders.
-- Overlays: Confirm Dialog, Add Widget Picker.
-- Confirm Dialog is also a real component now, not just a demo: Manage Tabs drives it
-  with `open`/`message`/`onConfirm`/`onCancel` props, and it falls back to its own
-  always-open demo state when those are left unset.
-- Add Widget Picker is a category sidebar (a tab list, same pattern as Sidebar.dc.html)
+- Overlays: Add Widget Picker.
+- Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)
   for the full catalog of addable widgets. Clicking a card always adds another copy —
   nothing caps a widget to one instance — and the card's "+ Add" label picks up a
@@ -180,20 +176,6 @@ widget, panel, or nav element:
   skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
   the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
   Backstory, Notes) never get this — their widgets are fixed.
-- Reference: List Item shows the row shape shared by Weapons, Armor, Gear, Known
-  Spells, the Features widgets, and every Homebrew artboard — design it here first, then
-  carry a change into each widget's rows. The name, the source chip, its gray property chips
-  and the gold price chip share the first line, with remove at the right; the description takes the
-  second; the accent action chips (Attack, Damage, AC) take the third, with the row's
-  controls (Equip, Prepared, Edit, a feature's use pips) at its right. Remove (an x)
-  and Edit (a pencil) are gray icons with no border or fill in Equip's 18px box, so the
-  three share one column. A row with neither has no third line. The source chip is one
-  gray-filled chip holding a source's abbreviation, or Homebrew for a homebrew row, read
-  aloud and shown on hover as the source's title. Wherever a row carries an edition, as a
-  search result and Catalog Detail do, the year chip sits beside it; a sheet row shows the
-  source alone, since the source already tells a 2014 book from a 2024 one. The Homebrew
-  artboards leave it out: every row there is homebrew. List Item's
-  `homebrew` tweak turns its chip to Homebrew, and `showYear` hides the year.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that
@@ -285,7 +267,6 @@ says how much of the artboard the app builds today.
 | `LevelUpModal` | #239, #240, #733 | all but the spell picks |
 | `Languages` | #488 | read-only |
 | `Proficiencies` | #400, #488 | read-only |
-| `Sidebar` | #242, #470, #486 | read-only |
 | `ManageTabs` | #242 | reorder and hide |
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |
@@ -293,7 +274,6 @@ says how much of the artboard the app builds today.
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the Character menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
-| `SettingsSidebar` | #486, #489 | Display, Homebrew and Sources |
 | `HomebrewRaces` | #489 | nothing |
 | `HomebrewClasses` | #489 | nothing |
 | `HomebrewBackgrounds` | #489 | nothing |
@@ -301,8 +281,6 @@ says how much of the artboard the app builds today.
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | all but the portraits |
-| `ConfirmDialog` | #241, #242 | nothing |
-| `ListItem` | #230, #231, #279, #398 | an item row's controls, the rest read-only |
 
 ## Changing a mockup
 
