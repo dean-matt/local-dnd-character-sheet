@@ -32,6 +32,15 @@ describe("IdentitySection", () => {
     expect(chips("Background")).toEqual(["Charlatan"]);
   });
 
+  it("shows the alignment in its own card", () => {
+    renderSeeded(<IdentitySection character={identityRecord()} />);
+
+    const card = screen.getByRole("region", { name: "Alignment" });
+    expect(within(card).getByRole("combobox", { name: "Alignment" })).toHaveTextContent(
+      "Chaotic Good",
+    );
+  });
+
   it("shows languages and each proficiency list apart, leaving out a tool held at none", () => {
     renderSeeded(<IdentitySection character={identityRecord()} />);
 

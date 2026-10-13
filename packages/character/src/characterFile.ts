@@ -3,6 +3,42 @@ import { characterDefinitionSchema } from "./definition.ts";
 import { characterPagesSchema, PRESET_PAGES } from "./pages.ts";
 import { characterStateSchema } from "./state.ts";
 
+const isAlignmentSection = (block: unknown) =>
+  typeof block === "object" &&
+  block !== null &&
+  "kind" in block &&
+  block.kind === "section" &&
+  "section" in block &&
+  block.section === "alignment";
+
+/**
+ * A file exported while Alignment had a preset page of its own still lists that page. The
+ * stock page goes, as the migration that removed it drops it; an edited one stays as a page
+ * of the user's, its alignment section degraded to `unknown` the way a database read
+ * degrades it.
+ */
+function withoutAlignmentPage(pages: unknown): unknown {
+  if (!Array.isArray(pages)) return pages;
+  return pages.flatMap((page) => {
+    if (typeof page !== "object" || page === null || !Array.isArray(page.blocks)) return [page];
+    const { blocks } = page as { blocks: unknown[] };
+    const stock =
+      page.slug === "alignment" &&
+      page.title === "Alignment" &&
+      blocks.length === 1 &&
+      isAlignmentSection(blocks[0]);
+    if (stock) return [];
+    return [
+      {
+        ...page,
+        blocks: blocks.map((block) =>
+          isAlignmentSection(block) ? { kind: "unknown", raw: block } : block,
+        ),
+      },
+    ];
+  });
+}
+
 /**
  * A character as one file: what an export writes and an import reads. Catalog and
  * homebrew references stay as the definition holds them, so a file names rows rather
@@ -15,9 +51,12 @@ export const characterFileSchema = z.strictObject({
   version: z.literal(1),
   definition: characterDefinitionSchema,
   state: characterStateSchema,
-  pages: characterPagesSchema.refine(
-    (pages) => PRESET_PAGES.every((preset) => pages.some((page) => page.slug === preset.slug)),
-    { error: `every preset page is listed: ${PRESET_PAGES.map((page) => page.slug).join(", ")}` },
+  pages: z.preprocess(
+    withoutAlignmentPage,
+    characterPagesSchema.refine(
+      (pages) => PRESET_PAGES.every((preset) => pages.some((page) => page.slug === preset.slug)),
+      { error: `every preset page is listed: ${PRESET_PAGES.map((page) => page.slug).join(", ")}` },
+    ),
   ),
 });
 

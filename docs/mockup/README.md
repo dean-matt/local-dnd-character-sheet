@@ -195,7 +195,7 @@ widget, panel, or nav element:
   drag-to-move and drag-a-corner-to-resize (each card previews as a title over a few
   skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
   the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
-  Alignment, Backstory, Notes) never get this — their widgets are fixed.
+  Backstory, Notes) never get this — their widgets are fixed.
 - Reference: List Item shows the row shape shared by Weapons, Armor, Gear, Known
   Spells, the Features widgets, and every Homebrew artboard — design it here first, then
   carry a change into each widget's rows. The name, the source chip, its gray property chips

@@ -64,6 +64,13 @@
       "when": 1791576989299,
       "tag": "0008_race_summary_with_subrace",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1791893335519,
+      "tag": "0009_remove_alignment_page",
+      "breakpoints": true
     }
   ]
 }

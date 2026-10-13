@@ -1,5 +1,4 @@
 import { AbilitiesSection } from "./AbilitiesSection/AbilitiesSection.tsx";
-import { AlignmentSection } from "./AlignmentSection.tsx";
 import { FeaturesSection } from "./FeaturesSection/FeaturesSection.tsx";
 import { IdentitySection } from "./IdentitySection/IdentitySection.tsx";
 import { InventorySection } from "./InventorySection/InventorySection.tsx";
@@ -23,8 +22,6 @@ export function SectionBlockView({ block, character, derived }: BlockViewProps) 
       return <IdentitySection character={character} />;
     case "level":
       return <LevelSection character={character} />;
-    case "alignment":
-      return <AlignmentSection character={character} />;
     case "notes":
       return <NotesSection character={character} />;
   }

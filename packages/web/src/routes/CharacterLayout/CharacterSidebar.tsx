@@ -8,7 +8,6 @@ import {
   List,
   type LucideIcon,
   NotebookText,
-  Scale,
   ShoppingBag,
   Sparkle,
   Star,
@@ -22,7 +21,6 @@ const PAGE_ICONS: Record<string, LucideIcon> = {
   features: Star,
   identity: IdCard,
   level: ChartNoAxesColumnIncreasing,
-  alignment: Scale,
   backstory: Book,
   notes: NotebookText,
 };

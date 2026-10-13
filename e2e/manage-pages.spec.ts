@@ -7,7 +7,7 @@ test("pages reorder from the keyboard, keep focus, persist and restore", async (
 }) => {
   const id = await createCharacter(request, `E2E Pages ${Date.now()}`);
   const nav = page.getByRole("navigation", { name: "Character pages" }).getByRole("link");
-  const later = ["Identity", "Level", "Alignment", "Notes"];
+  const later = ["Identity", "Level", "Notes"];
 
   try {
     await page.goto(`/characters/${id}/p/stats`);

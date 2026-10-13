@@ -170,7 +170,7 @@ describe("migrations", () => {
 
     const rows = sqlite
       .prepare(
-        "SELECT character_id AS characterId, slug, title, position, hidden, preset, blocks FROM character_pages ORDER BY position",
+        "SELECT character_id AS characterId, slug, title, hidden, preset, blocks FROM character_pages ORDER BY position",
       )
       .all() as { hidden: number; preset: number; blocks: string }[];
     expect(
@@ -180,7 +180,7 @@ describe("migrations", () => {
         preset: row.preset === 1,
         blocks: JSON.parse(row.blocks),
       })),
-    ).toEqual(presetPageRows("1"));
+    ).toEqual(presetPageRows("1").map(({ position: _position, ...row }) => row));
   });
 
   it("backfills the identity presets after a character's own pages, moving a page the user wrote under one of their slugs", () => {
@@ -213,11 +213,16 @@ describe("migrations", () => {
         preset: number;
         blocks: string;
       }[];
-    const presets = ["identity", "level", "alignment", "notes"];
+    // Alignment's position stays empty once a later migration removes that preset.
+    const presets = [
+      ["identity", 0],
+      ["level", 1],
+      ["notes", 3],
+    ] as const;
     const seeded = (from: number) =>
-      presets.map((slug, index) => ({
+      presets.map(([slug, offset]) => ({
         slug,
-        position: from + index,
+        position: from + offset,
         preset: 1,
         blocks: presetPageRows("x").find((row) => row.slug === slug)?.blocks,
       }));
@@ -261,6 +266,53 @@ describe("migrations", () => {
     expect(
       sqlite.prepare("SELECT race_summary AS summary FROM characters ORDER BY id").all(),
     ).toEqual([{ summary: "Elf (High)" }, { summary: "Homebrew (High)" }, { summary: "Half-Elf" }]);
+  });
+
+  it("removes the stock Alignment preset and keeps an edited one as the user's own page", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0008_race_summary_with_subrace");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const stock = '[{"kind":"section","section":"alignment"}]';
+    const edited =
+      '[{"kind":"section","section":"alignment"},{"kind":"text","text":"Oath of Ruin"}]';
+    const insertPage = sqlite.prepare(
+      "INSERT INTO character_pages (character_id, slug, title, position, hidden, preset, blocks) VALUES (?, ?, ?, ?, ?, 1, ?)",
+    );
+    for (const [id, title, hidden, blocks] of [
+      ["1", "Alignment", 1, stock],
+      ["2", "Alignment", 0, edited],
+      ["3", "Creed", 0, stock],
+    ] as const) {
+      insertBareCharacter(sqlite, id);
+      insertPage.run(id, "stats", "Stats", 0, 0, '[{"kind":"section","section":"abilities"}]');
+      insertPage.run(id, "alignment", title, 1, hidden, blocks);
+    }
+
+    migrateCharacters(db);
+
+    const pages = sqlite
+      .prepare(
+        "SELECT character_id AS id, slug, title, position, preset, blocks FROM character_pages WHERE slug <> 'stats' ORDER BY character_id",
+      )
+      .all() as {
+      id: string;
+      slug: string;
+      title: string;
+      position: number;
+      preset: number;
+      blocks: string;
+    }[];
+    expect(
+      pages.map(({ id, title, position, preset }) => ({ id, title, position, preset })),
+    ).toEqual([
+      { id: "2", title: "Alignment", position: 1, preset: 0 },
+      { id: "3", title: "Creed", position: 1, preset: 0 },
+    ]);
+    for (const page of pages) expect(page.slug).toMatch(/^alignment-[0-9a-f]{8}$/);
+    expect(pages.map((page) => page.blocks)).toEqual([edited, stock]);
   });
 
   it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {
