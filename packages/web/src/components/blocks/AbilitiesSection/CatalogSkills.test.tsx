@@ -4,6 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { saveToasts } from "../../../test/saveToasts.ts";
+import { SaveToasts } from "../../SaveToasts.tsx";
 import { CatalogSkills } from "./CatalogSkills.tsx";
 
 type SkillProficiency = CharacterDefinition["proficiencies"]["skills"][number];
@@ -49,6 +51,7 @@ function renderSeeded(character: CharacterRecord) {
   return render(
     <QueryClientProvider client={client}>
       <Seeded />
+      <SaveToasts />
     </QueryClientProvider>,
   );
 }
@@ -121,8 +124,7 @@ describe("CatalogSkills", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Not proficient" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't save the skill proficiency",
-    );
+    expect(await saveToasts().findByText(/^Skill proficiency: Couldn't save/)).toBeInTheDocument();
+    expect(saveToasts().getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 });

@@ -83,7 +83,7 @@ describe("FeatureChoiceField", () => {
     expect(open()).toEqual(["Bear", "Elk", "Wolf"]);
   });
 
-  it("replaces the option taken under the feature's whole key, and says it saved", async () => {
+  it("replaces the option taken under the feature's whole key", async () => {
     const saved = holding([BEAR]);
     const fetchMock = stubFetch(new Response(JSON.stringify(saved)));
     renderSeeded(holding([WOLF]));
@@ -91,7 +91,7 @@ describe("FeatureChoiceField", () => {
     open();
     fireEvent.click(screen.getByRole("option", { name: "Bear" }));
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(url).toBe("/api/characters/1");
     expect(JSON.parse(String(init?.body)).featureChoices).toEqual([

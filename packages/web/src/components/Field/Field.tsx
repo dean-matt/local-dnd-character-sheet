@@ -7,12 +7,10 @@
  * debounce, on blur and on unmount. A derived value writes `manual` only, and clearing the input
  * reverts to `computed` rather than a parsed empty value: `onSave` receives `null`,
  * never a zero or an empty string. A plain `current` value is the definition's own;
- * `EditableFieldProps` says how clearing one saves. A save's `saving`, `saved` and
- * `failed` status renders beside the field, or in the caller's `messageSlot`. `saved`
- * clears after `SAVED_STATUS_MS`, so a shared slot shows only the save in hand; `failed`
- * stays, keeps the user's text and offers a retry, so a failed write never looks like it
- * went through. Text the parse or schema refuses is marked without a retry, which would only
- * refuse it again.
+ * `EditableFieldProps` says how clearing one saves. The top bar reports a save's progress.
+ * A failed write outlines the field, keeps the user's text and raises a toast with a retry,
+ * so it never looks like it went through. Text the parse or schema refuses is outlined and
+ * toasted without a retry, which would only refuse it again.
  *
  * Autosave has no confirm step, so the only way back from a bad edit is undo —
  * which is why undo ships alongside editing rather than waiting for play state.

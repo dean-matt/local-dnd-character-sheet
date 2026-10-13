@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-/** How long a "Saved" status stays before it clears, so a message slot shows only what is happening now. */
+/** How long the top bar's "Saved" stays before it clears. */
 export const SAVED_STATUS_MS = 2000;
 
 /**

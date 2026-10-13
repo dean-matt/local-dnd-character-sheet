@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { identityRecord } from "../../../test/records.ts";
+import { saveToasts } from "../../../test/saveToasts.ts";
+import { SaveToasts } from "../../SaveToasts.tsx";
 import { LevelSection } from "./LevelSection.tsx";
 
 /** Reads the character from the cache, as the sheet does, so a write's response reaches it. */
@@ -26,6 +28,7 @@ function renderSeeded(character = record()) {
   render(
     <QueryClientProvider client={client}>
       <Seeded id={character.id} />
+      <SaveToasts />
     </QueryClientProvider>,
   );
   return client;
@@ -203,13 +206,14 @@ describe("LevelSection", () => {
 
     applyXp("250");
 
-    await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent("Couldn't save +250 XP: disk full"),
-    );
+    expect(
+      await saveToasts().findByText("Experience: Couldn't save +250 XP: disk full"),
+    ).toBeInTheDocument();
+    expect(adjust()).toHaveAttribute("aria-invalid", "true");
     expect(within(card()).getByText("1,500 XP")).toBeInTheDocument();
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(record({ experience: 1750 }))));
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
 
     await waitFor(() => expect(within(card()).getByText("1,750 XP")).toBeInTheDocument());
     expect(sentBody(fetchMock).experience).toBe(1750);

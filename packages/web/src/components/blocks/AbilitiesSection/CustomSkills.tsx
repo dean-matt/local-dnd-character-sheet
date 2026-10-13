@@ -9,11 +9,11 @@ import {
   flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
 import { InputField } from "../../InputField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
@@ -41,11 +41,19 @@ export function CustomSkills({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  // A flat bonus saves through its own field, which reports its own failure.
+  const flats = useUpdateCharacterDefinition(character.id);
   const [name, setName] = useState("");
   const [base, setBase] = useState<Base>("str");
   const [refusal, setRefusal] = useState<string>();
   const rollEffects = derivedValue(derived.rollEffects);
   const stored = character.definition.customSkills;
+
+  useSaveToast(
+    "Custom skills",
+    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    () => update.variables && update.mutate(update.variables),
+  );
 
   const save = (customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
     update.mutate((latest) => ({ ...latest, customSkills: customSkills(latest.customSkills) }));
@@ -125,7 +133,7 @@ export function CustomSkills({
                           parse={(raw) => Number(raw.trim())}
                           schema={flatSkillBonusSchema}
                           onSave={async (flat: number) => {
-                            await update.mutateAsync((latest) => ({
+                            await flats.mutateAsync((latest) => ({
                               ...latest,
                               customSkills: latest.customSkills.map((each) =>
                                 each.name === skill.name && "flat" in each
@@ -181,14 +189,6 @@ export function CustomSkills({
           Add
         </button>
       </form>
-      {update.isError && (
-        <p role="alert" className="mt-1 flex items-center gap-2 text-error text-row">
-          <SaveFailure
-            message={`Couldn't save the custom skills: ${update.error.message}`}
-            onRetry={() => update.variables && update.mutate(update.variables)}
-          />
-        </p>
-      )}
     </>
   );
 }

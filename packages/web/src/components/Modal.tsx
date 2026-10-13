@@ -1,6 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { InModal } from "./inModalContext.ts";
+import { SaveToasts } from "./SaveToasts.tsx";
 
 /**
  * The one modal dialog, showing one entry at a time. It opens on `children`, a
@@ -10,7 +11,8 @@ import { InModal } from "./inModalContext.ts";
  * The native `<dialog>` traps focus and marks the page behind it inert; Escape arrives as
  * `cancel` and a press and click on the backdrop as ones on the dialog itself, and both
  * are routed to `onClose` from any depth so the caller unmounts it and returns focus. The
- * page behind it does not scroll while it is open. It is never printed.
+ * page behind it does not scroll while it is open, and save toasts draw inside it, where they
+ * stay reachable. It is never printed.
  */
 export function Modal({ onClose, children }: { onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -83,6 +85,7 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
       <InModal.Provider value={context}>
         <Fragment key={trail.length}>{shown ? shown.entry : children}</Fragment>
       </InModal.Provider>
+      <SaveToasts />
     </dialog>
   );
 }

@@ -6,6 +6,7 @@ import { CharacterAvatar } from "./CharacterAvatar.tsx";
 import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
 import { MechanicsMenu } from "./MechanicsMenu.tsx";
 import { MenuDivider } from "./MenuDivider.tsx";
+import { SaveIndicator } from "./SaveIndicator.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
 export function TopBar() {
@@ -115,10 +116,12 @@ export function TopBar() {
 
       <GlobalSearch onOpen={closeMenu} />
 
+      <SaveIndicator />
+
       <NavLink
         to="/settings"
         className={({ isActive }) =>
-          `ml-auto shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
+          `shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
         }
       >
         {({ isActive }) => (

@@ -1,9 +1,9 @@
 import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDerived, type CharacterRecord, derivedValue, refKey } from "@dnd/character";
+import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
-import { SaveFailure } from "../../../SaveFailure.tsx";
 
 /**
  * The weapon kinds a character has mastery with, as many as the classes' Weapon Mastery
@@ -21,6 +21,11 @@ export function WeaponMasteryChoice({
   const update = useUpdateCharacterDefinition(character.id);
   const chosen = character.definition.weaponMasteries;
   const limit = derivedValue(derived.weaponMasteryLimit);
+  useSaveToast(
+    "Weapon mastery",
+    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    () => update.variables && update.mutate(update.variables),
+  );
   if (limit === 0 && chosen.length === 0) return null;
 
   const taken = new Set(chosen.map(refKey));
@@ -79,14 +84,6 @@ export function WeaponMasteryChoice({
             }))
           }
         />
-      )}
-      {update.isError && (
-        <p role="alert" className="text-error text-row">
-          <SaveFailure
-            message={`Couldn't save the weapon mastery: ${update.error.message} `}
-            onRetry={() => update.variables && update.mutate(update.variables)}
-          />
-        </p>
       )}
     </div>
   );

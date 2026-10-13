@@ -6,6 +6,7 @@ import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
+import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
@@ -53,14 +54,13 @@ export function ItemList({
   const queryClient = useQueryClient();
   // A row edits by index, and its index holds only once the last row write has landed and
   // the rows have refetched: a second click before then could reach the entry that moved
-  // into place, or a duplicate holding the same item. Such a click is dropped while "Saving…"
-  // shows. Both are read at the click rather than from render state, which a query's
+  // into place, or a duplicate holding the same item. Such a click is dropped until both
+  // settle. Both are read at the click rather than from render state, which a query's
   // observers update a tick late, too late for a double click.
   const writing = useRef(0);
   const settled = () =>
     writing.current === 0 &&
     queryClient.isFetching({ queryKey: characterInventoryKey(character.id) }) === 0;
-  const saving = update.isPending || counts.isPending || inventory.isFetching;
   const drawn = character.definition.inventory;
   const edit = (index: number, change: EntryChange) => {
     const entry = drawn[index];
@@ -113,26 +113,19 @@ export function ItemList({
       ],
     }));
 
-  const picker = (
-    <div className="flex flex-col gap-1">
-      <AddItemField edition={character.edition} onAdd={add} />
-      <p role="status" className="text-muted text-row">
-        {saving && inventory.data ? "Saving…" : ""}
-      </p>
-    </div>
+  useSaveToast(
+    "Inventory",
+    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    () => update.variables && update.mutate(update.variables),
   );
-  const failure = update.isError && (
-    <p role="alert" className="text-error text-row">
-      The change was not saved: {update.error.message}
-    </p>
-  );
+
+  const picker = <AddItemField edition={character.edition} onAdd={add} />;
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState error={inventory.error} />;
   if (inventory.data.items.length === 0) {
     return (
       <>
         {picker}
-        {failure}
         <EmptyState>{character.name} has no items yet.</EmptyState>
       </>
     );
@@ -216,7 +209,6 @@ export function ItemList({
   return (
     <>
       {picker}
-      {failure}
       {cards}
     </>
   );

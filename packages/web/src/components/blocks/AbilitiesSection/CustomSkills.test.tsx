@@ -4,6 +4,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { saveToasts } from "../../../test/saveToasts.ts";
+import { SaveToasts } from "../../SaveToasts.tsx";
 import { CustomSkills } from "./CustomSkills.tsx";
 
 type CustomSkill = CharacterDefinition["customSkills"][number];
@@ -46,6 +48,7 @@ function renderSeeded(character: CharacterRecord) {
   return render(
     <QueryClientProvider client={client}>
       <Seeded />
+      <SaveToasts />
     </QueryClientProvider>,
   );
 }
@@ -154,7 +157,7 @@ describe("CustomSkills", () => {
     expect(written(fetchMock)).toEqual([JUGGLING, { ...CARTOGRAPHY, flat: -2 }]);
   });
 
-  it("shows a failed base save in the modal and keeps the old base", async () => {
+  it("toasts a failed base save inside the modal and keeps the old base", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(JSON.stringify({ error: "disk full" }), { status: 500 })),
@@ -167,7 +170,8 @@ describe("CustomSkills", () => {
     fireEvent.change(input, { target: { value: "7" } });
     fireEvent.blur(input);
 
-    expect(await modal.findByRole("button", { name: "Retry" })).toBeVisible();
+    const toasts = within(modal.getByRole("region", { name: "Save problems" }));
+    expect(await toasts.findByRole("button", { name: "Retry" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
   });
 
@@ -213,7 +217,8 @@ describe("CustomSkills", () => {
     });
     fireEvent(screen.getByRole("dialog"), new Event("cancel"));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save the custom skills");
+    expect(await saveToasts().findByText(/^Cartography flat bonus: /)).toBeInTheDocument();
+    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
   });
 
@@ -304,6 +309,6 @@ describe("CustomSkills", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Juggling proficiency: Not proficient" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save the custom skills");
+    expect(await saveToasts().findByText(/^Custom skills: Couldn't save/)).toBeInTheDocument();
   });
 });

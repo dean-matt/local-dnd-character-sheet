@@ -9,8 +9,11 @@
  * A control rendered outside `FormField` wires its own `aria-describedby`.
  *
  * `messageSlot` moves the status and error out of the field into an element the caller
- * places, for a control too narrow to hold a sentence or a card that must keep its height.
- * Given a `name`, it names the field in each, so one slot can hold several fields' messages.
+ * places, for a control too narrow to hold a sentence. Given a `name`, it names the field in
+ * each, so one slot can hold several fields' messages.
+ *
+ * `invalid` marks the control without a message, for a field whose problem a save toast
+ * reports instead.
  */
 import { type ReactNode, useId } from "react";
 import { createPortal } from "react-dom";
@@ -28,6 +31,7 @@ export interface FormFieldProps {
   labelHidden?: boolean;
   /** Marks the control invalid and describes it. */
   error?: ReactNode;
+  invalid?: boolean;
   /** Progress the user should hear without moving focus, such as a save in flight. */
   status?: ReactNode;
   /** The id of an element the caller renders that describes the control, such as a hint. */
@@ -41,6 +45,7 @@ export function FormField({
   label,
   labelHidden,
   error,
+  invalid: marked = false,
   status,
   describedBy,
   messageSlot,
@@ -86,7 +91,7 @@ export function FormField({
       </label>
       {children({
         id,
-        "aria-invalid": invalid,
+        "aria-invalid": invalid || marked,
         "aria-describedby":
           [describedBy, invalid && errorId].filter(Boolean).join(" ") || undefined,
       })}

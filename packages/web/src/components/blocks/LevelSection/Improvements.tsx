@@ -7,13 +7,13 @@ import {
 import { useState } from "react";
 import { useFeats } from "../../../hooks/useFeats.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { improvementText, isMade } from "../../../lib/improvementChoice.ts";
 import { candidateAt } from "../../../lib/improvementFeats.ts";
 import { grantTitle, type ImprovementGrant } from "../../../lib/improvementGrants.ts";
 import { Card } from "../../Card.tsx";
 import { ImprovementField } from "../../ImprovementField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 
 /**
  * Each Ability Score Improvement and Epic Boon the character's classes grant, what was
@@ -27,6 +27,11 @@ export function Improvements({ character }: { character: CharacterRecord }) {
   const feats = useFeats(definition.edition);
   const update = useUpdateCharacterDefinition(character.id);
   const [last, setLast] = useState<{ grant: ImprovementGrant; next: Improvement }>();
+  useSaveToast(
+    `Level ${last?.grant.level}`,
+    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    () => last && save(last.grant, last.next),
+  );
   if (grants.length === 0) return null;
   const catalog = feats.data?.items ?? [];
   const missing = grants.filter(
@@ -68,22 +73,12 @@ export function Improvements({ character }: { character: CharacterRecord }) {
                 feats={catalog}
                 candidate={candidateAt(definition, grant)}
                 onChange={(next) => save(grant, next)}
+                invalid={update.isError && last?.grant.level === grant.level}
               />
             </li>
           );
         })}
       </ul>
-      <p role="status" aria-live="polite" className="mt-1 text-muted text-row empty:mt-0">
-        {update.isPending ? "Saving…" : ""}
-      </p>
-      {update.isError && last && (
-        <p role="alert" className="mt-1 flex items-center gap-2 text-error text-row">
-          <SaveFailure
-            message={`Couldn't save level ${last.grant.level}: ${update.error.message}`}
-            onRetry={() => save(last.grant, last.next)}
-          />
-        </p>
-      )}
     </Card>
   );
 }

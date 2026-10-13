@@ -1,8 +1,8 @@
 import { type CharacterRecord, experienceThreshold, MAX_LEVEL, totalLevel } from "@dnd/character";
 import { type FormEvent, useState } from "react";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 
 const xp = (points: number) => `${points.toLocaleString("en-US")} XP`;
 
@@ -47,6 +47,14 @@ export function ExperienceTracker({
     }));
   }
 
+  useSaveToast(
+    "Experience",
+    update.isError
+      ? `Couldn't save ${sent > 0 ? "+" : ""}${xp(sent)}: ${update.error.message}`
+      : undefined,
+    () => apply(sent),
+  );
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!valid) return;
@@ -76,15 +84,7 @@ export function ExperienceTracker({
             placeholder="± XP"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            status={update.isPending ? "Saving…" : null}
-            error={
-              update.isError && (
-                <SaveFailure
-                  message={`Couldn't save ${sent > 0 ? "+" : ""}${xp(sent)}: ${update.error.message}`}
-                  onRetry={() => apply(sent)}
-                />
-              )
-            }
+            invalid={update.isError}
             className="w-full text-row"
           />
         </div>

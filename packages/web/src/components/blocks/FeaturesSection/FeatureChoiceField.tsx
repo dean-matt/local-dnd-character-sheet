@@ -2,11 +2,10 @@ import type { SheetFeature } from "@dnd/catalog";
 import { type CharacterRecord, refKey } from "@dnd/character";
 import { useState } from "react";
 import { useDisabledSources } from "../../../hooks/useDisabledSources.ts";
-import { useFleeting } from "../../../hooks/useFleeting.ts";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { shownOptions, takenOption, withFeatureChoice } from "../../../lib/featureChoices.ts";
 import { FormField } from "../../FormField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 import { Select } from "../../Select.tsx";
 
 type Choice = NonNullable<SheetFeature["choice"]>;
@@ -27,9 +26,6 @@ export function FeatureChoiceField({
   const disabled = useDisabledSources();
   const [picked, setPicked] = useState<string>();
   const current = takenOption(character.definition.featureChoices, choice.feature, choice.options);
-  const showSaved = useFleeting(
-    update.isSuccess && picked !== undefined && current !== undefined && picked === refKey(current),
-  );
   const shown = shownOptions(choice.options, current, disabled);
 
   function save(key: string) {
@@ -42,20 +38,16 @@ export function FeatureChoiceField({
     }));
   }
 
+  useSaveToast(
+    choice.feature.name,
+    update.isError
+      ? `Couldn't save ${choice.options.find((each) => refKey(each) === picked)?.name}: ${update.error.message}`
+      : undefined,
+    () => picked && save(picked),
+  );
+
   return (
-    <FormField
-      label={`${choice.feature.name} choice`}
-      labelHidden
-      status={update.isPending ? "Saving…" : showSaved ? "Saved" : null}
-      error={
-        update.isError && (
-          <SaveFailure
-            message={`Couldn't save ${choice.options.find((each) => refKey(each) === picked)?.name}: ${update.error.message}`}
-            onRetry={() => picked && save(picked)}
-          />
-        )
-      }
-    >
+    <FormField label={`${choice.feature.name} choice`} labelHidden invalid={update.isError}>
       {(control) => (
         <Select
           {...control}

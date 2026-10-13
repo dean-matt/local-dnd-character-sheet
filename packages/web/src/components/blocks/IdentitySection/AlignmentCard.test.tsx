@@ -4,7 +4,9 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, identityRecord } from "../../../test/records.ts";
+import { saveToasts } from "../../../test/saveToasts.ts";
 import { stubFetch } from "../../../test/stubFetch.ts";
+import { SaveToasts } from "../../SaveToasts.tsx";
 import { AlignmentCard } from "./AlignmentCard.tsx";
 
 /** Reads the character from the cache, as the sheet does, so a write's response reaches it. */
@@ -21,6 +23,7 @@ function renderSeeded(character = identityRecord()) {
   render(
     <QueryClientProvider client={client}>
       <Seeded id={character.id} />
+      <SaveToasts />
     </QueryClientProvider>,
   );
   return client;
@@ -90,8 +93,7 @@ describe("AlignmentCard", () => {
 
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(field()).toHaveFocus();
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(sentBody(fetchMock).alignment).toBe("Neutral");
   });
 
@@ -112,7 +114,7 @@ describe("AlignmentCard", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("keeps the stored value on a failed save and offers Retry", async () => {
+  it("keeps the stored value on a failed save and toasts a Retry", async () => {
     const record = identityRecord();
     const saved = { ...record, definition: { ...record.definition, alignment: "Lawful Evil" } };
     const fetchMock = stubFetch(
@@ -122,34 +124,32 @@ describe("AlignmentCard", () => {
 
     fireEvent.click(within(open()).getByRole("option", { name: "Lawful Evil" }));
 
-    await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent("Couldn't save Lawful Evil: disk full"),
-    );
+    expect(
+      await saveToasts().findByText("Alignment: Couldn't save Lawful Evil: disk full"),
+    ).toBeInTheDocument();
     expect(field()).toHaveTextContent("Chaotic Good");
-    expect(field()).toHaveAttribute("aria-describedby", screen.getByRole("alert").id);
-    expect(screen.getByRole("heading", { name: "Alignment" }).parentElement).toContainElement(
-      screen.getByRole("alert"),
-    );
+    expect(field()).toHaveAttribute("aria-invalid", "true");
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved)));
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    await waitFor(() => expect(field()).toHaveTextContent("Lawful Evil"));
+    expect(field()).toHaveAttribute("aria-invalid", "false");
+    expect(saveToasts().queryByText(/disk full/)).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(sentBody(fetchMock).alignment).toBe("Lawful Evil");
   });
 
-  it("shows a value set from outside, such as by undo, and drops Saved", async () => {
+  it("shows a value set from outside, such as by undo", async () => {
     const record = identityRecord();
     const saved = { ...record, definition: { ...record.definition, alignment: "Neutral" } };
     stubFetch(new Response(JSON.stringify(saved)));
     const client = renderSeeded(record);
 
     fireEvent.click(within(open()).getByRole("option", { name: "Neutral" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    await waitFor(() => expect(field()).toHaveTextContent("Neutral"));
 
     client.setQueryData(characterKey(record.id), record);
     await waitFor(() => expect(field()).toHaveTextContent("Chaotic Good"));
-    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 });

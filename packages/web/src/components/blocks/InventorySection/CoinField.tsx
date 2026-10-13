@@ -1,8 +1,8 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
-import { SaveFailure } from "../../SaveFailure.tsx";
 
 type Coin = keyof CharacterDefinition["money"];
 
@@ -36,7 +36,6 @@ export function CoinField({
   total,
   hint,
   hintId,
-  messages,
 }: {
   characterId: string;
   coin: Coin;
@@ -47,7 +46,6 @@ export function CoinField({
   hint: string;
   /** The element holding the hint, which describes the field. */
   hintId: string;
-  messages: Element | null;
 }) {
   const update = useUpdateCharacterDefinition(characterId);
   const [draft, setDraft] = useState<string | null>(null);
@@ -84,6 +82,15 @@ export function CoinField({
   });
   useEffect(() => () => flush.current(), []);
 
+  useSaveToast(
+    name,
+    refusal ??
+      (update.isError
+        ? `Couldn't save ${sent.toLocaleString("en-US")} ${abbreviation}: ${update.error.message}`
+        : undefined),
+    update.isError && refusal === null ? () => apply(sent) : undefined,
+  );
+
   function submit(event: FormEvent) {
     event.preventDefault();
     commit();
@@ -93,8 +100,7 @@ export function CoinField({
     <form noValidate onSubmit={submit}>
       <InputField
         label={`${name} (${abbreviation})`}
-        // A refusal already repeats the hint.
-        describedBy={refusal ? undefined : hintId}
+        describedBy={hintId}
         type="text"
         enterKeyHint="done"
         value={draft ?? shown}
@@ -108,17 +114,7 @@ export function CoinField({
           setRefusal(null);
         }}
         onBlur={commit}
-        messageSlot={{ into: messages, name }}
-        status={update.isPending ? "Saving…" : null}
-        error={
-          refusal ??
-          (update.isError && (
-            <SaveFailure
-              message={`Couldn't save ${sent.toLocaleString("en-US")} ${abbreviation}: ${update.error.message}`}
-              onRetry={() => apply(sent)}
-            />
-          ))
-        }
+        invalid={refusal !== null || update.isError}
         className="w-[70px]"
       />
     </form>

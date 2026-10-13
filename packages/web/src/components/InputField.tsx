@@ -9,6 +9,7 @@ export function InputField({
   label,
   labelHidden,
   error,
+  invalid,
   status,
   describedBy,
   messageSlot,
@@ -20,6 +21,7 @@ export function InputField({
       label={label}
       labelHidden={labelHidden}
       error={error}
+      invalid={invalid}
       status={status}
       describedBy={describedBy}
       messageSlot={messageSlot}

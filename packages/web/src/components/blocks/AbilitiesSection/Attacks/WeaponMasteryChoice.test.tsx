@@ -5,6 +5,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
+import { saveToasts } from "../../../../test/saveToasts.ts";
+import { SaveToasts } from "../../../SaveToasts.tsx";
 import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
 const LONGSWORD = { name: "Longsword", source: "XPHB" };
@@ -40,6 +42,7 @@ function renderSeeded(character: CharacterRecord, derived: CharacterDerived) {
   return render(
     <QueryClientProvider client={client}>
       <Seeded derived={derived} />
+      <SaveToasts />
     </QueryClientProvider>,
   );
 }
@@ -64,8 +67,9 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("WeaponMasteryChoice", () => {
   it("shows nothing for a character whose classes allow none and who chose none", () => {
-    const { container } = renderSeeded(holding([]), allowing(0));
-    expect(container).toBeEmptyDOMElement();
+    renderSeeded(holding([]), allowing(0));
+    expect(screen.queryByRole("heading", { name: "Weapon mastery" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("counts the kinds chosen against the limit, and offers a pick while one is left", () => {
@@ -122,6 +126,6 @@ describe("WeaponMasteryChoice", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Longsword" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save the weapon mastery");
+    expect(await saveToasts().findByText(/^Weapon mastery: Couldn't save/)).toBeInTheDocument();
   });
 });

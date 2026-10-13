@@ -6,8 +6,8 @@ import {
   effectsOnRoll,
   refKey,
 } from "@dnd/character";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
-import { SaveFailure } from "../../SaveFailure.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
 
@@ -27,6 +27,11 @@ export function CatalogSkills({
   const skillLevel = new Map(
     character.definition.proficiencies.skills.map((skill) => [refKey(skill.ref), skill.level]),
   );
+  useSaveToast(
+    "Skill proficiency",
+    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    () => update.variables && update.mutate(update.variables),
+  );
   const rollEffects = derivedValue(derived.rollEffects);
   const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
 
@@ -43,37 +48,27 @@ export function CatalogSkills({
   }
 
   return (
-    <>
-      <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
-        {skills.map((skill) => {
-          const key = refKey(skill.ref);
-          return (
-            <ProficiencyRow
-              key={key}
-              level={skillLevel.get(key) ?? "none"}
-              name={skill.ref.name}
-              ability={skill.ability}
-              modifier={skill.modifier}
-              title={skill.ref.name}
-              rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
-              effects={effectsOnRoll(rollEffects, {
-                roll: "skill",
-                skill: skill.ref.name,
-                ability: skill.ability,
-              })}
-              onCycleLevel={() => cycle(skill.ref)}
-            />
-          );
-        })}
-      </ul>
-      {update.isError && (
-        <p role="alert" className="mt-1 flex items-center gap-2 text-error text-row">
-          <SaveFailure
-            message={`Couldn't save the skill proficiency: ${update.error.message}`}
-            onRetry={() => update.variables && update.mutate(update.variables)}
+    <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
+      {skills.map((skill) => {
+        const key = refKey(skill.ref);
+        return (
+          <ProficiencyRow
+            key={key}
+            level={skillLevel.get(key) ?? "none"}
+            name={skill.ref.name}
+            ability={skill.ability}
+            modifier={skill.modifier}
+            title={skill.ref.name}
+            rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
+            effects={effectsOnRoll(rollEffects, {
+              roll: "skill",
+              skill: skill.ref.name,
+              ability: skill.ability,
+            })}
+            onCycleLevel={() => cycle(skill.ref)}
           />
-        </p>
-      )}
-    </>
+        );
+      })}
+    </ul>
   );
 }

@@ -1,7 +1,9 @@
 import { characterDefinitionSchema, characterDerivedSchema } from "@dnd/character";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { SAVED_STATUS_MS } from "../../hooks/useFleeting.ts";
+import { saveToasts } from "../../test/saveToasts.ts";
+import { SaveToasts } from "../SaveToasts.tsx";
 import { Field } from "./Field.tsx";
 
 /** The real schema a hit point maximum field validates against, not a stand-in. */
@@ -9,6 +11,14 @@ const schema = characterDerivedSchema.shape.hitPointMaximum.shape.computed;
 const parse = (raw: string) => Number(raw);
 const format = (value: number) => String(value);
 const DEBOUNCE_MS = 10;
+
+const withToasts = (ui: ReactElement) =>
+  render(
+    <>
+      {ui}
+      <SaveToasts />
+    </>,
+  );
 
 describe("Field, read mode", () => {
   it("shows the manual value over the computed one", () => {
@@ -204,7 +214,6 @@ describe("Field, edit mode", () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
     expect(onSave).toHaveBeenNthCalledWith(1, 9);
     expect(onSave).toHaveBeenNthCalledWith(2, 12);
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
   });
 
   it("clears the override by writing null rather than a parsed empty value", async () => {
@@ -229,31 +238,9 @@ describe("Field, edit mode", () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(null));
   });
 
-  it("shows saving then saved", async () => {
-    const onSave = vi.fn().mockResolvedValue(undefined);
-    render(
-      <Field
-        mode="edit"
-        label="Hit points"
-        value={{ computed: 8, manual: null }}
-        format={format}
-        schema={schema}
-        parse={parse}
-        onSave={onSave}
-        debounceMs={DEBOUNCE_MS}
-      />,
-    );
-
-    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), {
-      target: { value: "12" },
-    });
-
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
-  });
-
-  it("keeps the typed text and offers a retry when the save fails", async () => {
+  it("keeps the typed text, outlines it and toasts a retry when the save fails", async () => {
     const onSave = vi.fn().mockRejectedValueOnce(new Error("network down"));
-    render(
+    withToasts(
       <Field
         mode="edit"
         label="Hit points"
@@ -269,19 +256,18 @@ describe("Field, edit mode", () => {
     const input = screen.getByRole("textbox", { name: "Hit points" });
     fireEvent.change(input, { target: { value: "12" } });
 
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("network down"));
+    expect(await saveToasts().findByText("Hit points: network down")).toBeInTheDocument();
     expect(input).toHaveValue("12");
     expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).toHaveAttribute("aria-describedby", screen.getByRole("alert").id);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     onSave.mockResolvedValueOnce(undefined);
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    await waitFor(() => expect(input).toHaveAttribute("aria-invalid", "false"));
     expect(onSave).toHaveBeenCalledTimes(2);
     expect(onSave).toHaveBeenLastCalledWith(12);
-    expect(input).toHaveAttribute("aria-invalid", "false");
-    expect(input).not.toHaveAttribute("aria-describedby");
+    expect(saveToasts().queryByText(/network down/)).not.toBeInTheDocument();
   });
 
   it("retries a failed save when the user edits back to the same value, without clicking retry", async () => {
@@ -305,7 +291,7 @@ describe("Field, edit mode", () => {
     const input = screen.getByRole("textbox", { name: "Hit points" });
     fireEvent.change(input, { target: { value: "12" } });
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+    await waitFor(() => expect(input).toHaveAttribute("aria-invalid", "true"));
 
     // A detour through another value, landing back on the one that failed —
     // never a click on Retry.
@@ -314,12 +300,12 @@ describe("Field, edit mode", () => {
 
     await waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
     expect(onSave).toHaveBeenLastCalledWith(12);
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    await waitFor(() => expect(input).toHaveAttribute("aria-invalid", "false"));
   });
 
   it("surfaces a schema validation failure without calling onSave", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    render(
+    withToasts(
       <Field
         mode="edit"
         label="Hit points"
@@ -336,14 +322,18 @@ describe("Field, edit mode", () => {
       target: { value: "0" },
     });
 
-    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+    expect(await saveToasts().findByText(/^Hit points: /)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 
   it("surfaces a parse failure without calling onSave", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    render(
+    withToasts(
       <Field
         mode="edit"
         label="Hit points"
@@ -363,9 +353,13 @@ describe("Field, edit mode", () => {
       target: { value: "abc" },
     });
 
-    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+    expect(await saveToasts().findByText(/^Hit points: /)).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 });
 
@@ -421,7 +415,7 @@ describe("Field, edit mode, a plain value", () => {
 
     fireEvent.change(input, { target: { value: "Vex " } });
     await waitFor(() => expect(onSave).toHaveBeenCalledWith("Vex"));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved"));
+    await act(async () => {});
     rerender(name("Vex"));
 
     expect(input).toHaveValue("Vex ");
@@ -429,7 +423,7 @@ describe("Field, edit mode, a plain value", () => {
 
   it("refuses a name of spaces alone", async () => {
     const onSave = vi.fn().mockResolvedValue(undefined);
-    render(
+    withToasts(
       <Field
         mode="edit"
         label="Name"
@@ -444,16 +438,16 @@ describe("Field, edit mode, a plain value", () => {
 
     fireEvent.change(screen.getByRole("textbox", { name: "Name" }), { target: { value: "   " } });
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("A character needs a name.");
+    expect(await saveToasts().findByText("Name: A character needs a name.")).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
   });
 });
 
-describe("Field, edit mode, the status after a save", () => {
+describe("Field, edit mode, a failed save's toast", () => {
   afterEach(() => vi.useRealTimers());
 
   const edit = (onSave: () => Promise<void>) =>
-    render(
+    withToasts(
       <Field
         mode="edit"
         label="Hit points"
@@ -470,36 +464,27 @@ describe("Field, edit mode, the status after a save", () => {
     await act(() => vi.advanceTimersByTimeAsync(DEBOUNCE_MS));
   };
 
-  it("clears Saved after a moment, leaving the live region mounted", async () => {
-    vi.useFakeTimers();
-    edit(vi.fn().mockResolvedValue(undefined));
-
-    await typeAndSettle("12");
-    expect(screen.getByRole("status")).toHaveTextContent("Saved");
-
-    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS - 1));
-    expect(screen.getByRole("status")).toHaveTextContent("Saved");
-    await act(() => vi.advanceTimersByTimeAsync(1));
-    expect(screen.getByRole("status")).toBeEmptyDOMElement();
-  });
-
-  it("restarts the wait for a save that lands while Saved still shows", async () => {
-    vi.useFakeTimers();
-    edit(vi.fn().mockResolvedValue(undefined));
-
-    await typeAndSettle("12");
-    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS / 2));
-    await typeAndSettle("13");
-    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS - DEBOUNCE_MS));
-    expect(screen.getByRole("status")).toHaveTextContent("Saved");
-  });
-
-  it("keeps a failed save on screen until it is fixed", async () => {
+  it("stays until it is fixed", async () => {
     vi.useFakeTimers();
     edit(vi.fn().mockRejectedValue(new Error("network down")));
 
     await typeAndSettle("12");
-    await act(() => vi.advanceTimersByTimeAsync(SAVED_STATUS_MS * 5));
-    expect(screen.getByRole("alert")).toHaveTextContent("network down");
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+    expect(saveToasts().getByText("Hit points: network down")).toBeInTheDocument();
+  });
+
+  it("goes when dismissed, leaving the field outlined", async () => {
+    edit(vi.fn().mockRejectedValue(new Error("network down")));
+    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), {
+      target: { value: "12" },
+    });
+
+    fireEvent.click(await saveToasts().findByRole("button", { name: "Dismiss Hit points" }));
+
+    expect(saveToasts().queryByText(/network down/)).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Hit points" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
   });
 });
