@@ -43,6 +43,7 @@ export function LevelUpDialog({
   const [opened, setOpened] = useState(character);
   const queryClient = useQueryClient();
   const [sent, setSent] = useState<Sent>();
+  const [reloadFailed, setReloadFailed] = useState<string>();
   const derived = useCharacterDerived(character.id);
   const update = useUpdateCharacterDefinition(character.id);
   const { definition } = opened;
@@ -98,13 +99,22 @@ export function LevelUpDialog({
           characterId={character.id}
           definition={definition}
           saving={update.isPending}
-          error={update.error?.message}
+          error={
+            reloadFailed
+              ? `${update.error?.message} Reload failed: ${reloadFailed}`
+              : update.error?.message
+          }
           onReload={
             update.error instanceof ApiError && update.error.status === 412
-              ? async () => {
-                  setOpened(await queryClient.fetchQuery(characterQuery(character.id)));
-                  update.reset();
-                }
+              ? () =>
+                  queryClient.fetchQuery(characterQuery(character.id)).then(
+                    (fresh) => {
+                      setReloadFailed(undefined);
+                      setOpened(fresh);
+                      update.reset();
+                    },
+                    (error: Error) => setReloadFailed(error.message),
+                  )
               : undefined
           }
           onSend={(picked) => setSent({ before: derived.data, ...picked })}

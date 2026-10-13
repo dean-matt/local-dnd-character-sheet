@@ -99,6 +99,7 @@ function Seeded({ id }: { id: string }) {
 
 let writes: Mock;
 let server: CharacterRecord;
+let readable: boolean;
 
 /** Stands for a write from another tab, which this tab's cache has not seen. */
 function editElsewhere(edit: Partial<CharacterDefinition>) {
@@ -111,6 +112,7 @@ function editElsewhere(edit: Partial<CharacterDefinition>) {
 
 function renderSeeded(character: CharacterRecord) {
   server = character;
+  readable = true;
   writes = vi.fn(async (_url: string, init: RequestInit) => {
     const since = new Headers(init.headers).get("If-Unmodified-Since");
     if (since !== null && Date.parse(server.updatedAt) > Date.parse(since))
@@ -123,7 +125,10 @@ function renderSeeded(character: CharacterRecord) {
     if (path === "/api/characters/1/derived")
       return new Response(JSON.stringify(derivedRecord(server.definition)));
     if (init?.method === "PUT") return writes(path, init);
-    if (path === "/api/characters/1") return new Response(JSON.stringify(server));
+    if (path === "/api/characters/1")
+      return readable
+        ? new Response(JSON.stringify(server))
+        : new Response(JSON.stringify({ error: "offline" }), { status: 500 });
     if (path in ROWS) return new Response(JSON.stringify(ROWS[path]));
     return new Response(JSON.stringify({ error: `unstubbed ${path}` }), { status: 404 });
   });
@@ -388,5 +393,20 @@ describe("LevelUp", () => {
     await within(dialog()).findByText("Level up applied");
     expect(sent().levels).toHaveLength(2);
     expect(sent().feats).toEqual([{ ref: XPHB("Alert") }]);
+  });
+
+  it("says so in the alert line where Reload cannot read the character", async () => {
+    renderSeeded(warlock(1));
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+    editElsewhere({ feats: [{ ref: XPHB("Alert") }] });
+    fireEvent.click(applyButton());
+    readable = false;
+
+    fireEvent.click(await within(dialog()).findByRole("button", { name: "Reload" }));
+    await waitFor(() =>
+      expect(within(dialog()).getByRole("alert")).toHaveTextContent("Reload failed: offline"),
+    );
+    expect(within(dialog()).getByRole("button", { name: "Reload" })).toBeVisible();
   });
 });
