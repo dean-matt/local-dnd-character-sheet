@@ -30,7 +30,12 @@ export function CurrencyCard({
       title="Currency"
       aside={
         <Popover
-          trigger={<Info aria-hidden="true" size={14} className="block text-muted" />}
+          trigger={
+            // Padded to a 24px target: an icon alone has no inline-text exemption.
+            <span className="block p-[5px]">
+              <Info aria-hidden="true" size={14} className="block text-muted" />
+            </span>
+          }
           triggerLabel="How to enter coins"
           label="How to enter coins"
         >
