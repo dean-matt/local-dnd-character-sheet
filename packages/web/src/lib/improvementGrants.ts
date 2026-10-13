@@ -1,6 +1,10 @@
-import { type CharacterDefinition, classLevels, type EntryRef, entryKey } from "@dnd/character";
-
-import { levelTitle } from "./levelHistory.ts";
+import {
+  type CharacterDefinition,
+  classLevels,
+  displayName,
+  type EntryRef,
+  entryKey,
+} from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -56,4 +60,4 @@ export function improvementGrants(
 
 /** Names `grant` where a sheet lists it: `Level 4 · Wizard 4`, a boon saying so. */
 export const grantTitle = (grant: ImprovementGrant): string =>
-  `${levelTitle(grant.level, grant.cls, grant.classLevel)}${grant.boon ? " · Epic Boon" : ""}`;
+  `Level ${grant.level} · ${displayName(grant.cls)} ${grant.classLevel}${grant.boon ? " · Epic Boon" : ""}`;
