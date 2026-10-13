@@ -1,5 +1,11 @@
 import type { ClassFeatureRecord } from "@dnd/catalog";
-import { type CharacterDefinition, type ContentRef, type EntryRef, entryKey } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  type ContentRef,
+  displayName,
+  type EntryRef,
+  entryKey,
+} from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -18,8 +24,16 @@ export type LevelHistoryRow = {
   classLevel: number;
   /** The subclass chosen at this level, if any. */
   subclass?: ContentRef;
-  features: readonly ClassFeatureRecord[];
+  features: readonly HistoryFeature[];
 };
+
+/**
+ * A feature a level grants, with the class or subclass that grants it. A class and its
+ * subclass can grant one name at one level — `Channel Divinity` (PHB) to a classic
+ * Paladin 3 — and a late subclass pick brings one name at several, so only the grantor
+ * and the level tell two apart.
+ */
+export type HistoryFeature = { record: ClassFeatureRecord; grantor: string; subclass: boolean };
 
 /**
  * One row per entry in `levels`, oldest first, each with the features its class level
@@ -33,13 +47,13 @@ export function levelHistory(
   featuresOf: (cls: EntryRef) => ClassFeatures,
 ): LevelHistoryRow[] {
   const taken = new Map<string, number>();
-  const chosenAt = new Map<string, number>();
+  const chosenAt = new Map<string, { level: number; subclass: ContentRef }>();
   return levels.map(({ class: cls, subclass }, index) => {
     const key = entryKey(cls);
     const classLevel = (taken.get(key) ?? 0) + 1;
     taken.set(key, classLevel);
-    if (subclass) chosenAt.set(key, classLevel);
-    const from = chosenAt.get(key);
+    if (subclass) chosenAt.set(key, { level: classLevel, subclass });
+    const chosen = chosenAt.get(key);
     const features = featuresOf(cls);
     const arrives = ({ level, offeredBy }: ClassFeatureRecord, early: boolean) =>
       offeredBy === undefined && (level === classLevel || (early && level < classLevel));
@@ -49,10 +63,14 @@ export function levelHistory(
       classLevel,
       ...(subclass && { subclass }),
       features: [
-        ...features.class.filter((feature) => arrives(feature, false)),
-        ...(from === undefined
+        ...features.class
+          .filter((feature) => arrives(feature, false))
+          .map((record) => ({ record, grantor: displayName(cls), subclass: false })),
+        ...(chosen === undefined
           ? []
-          : features.subclass.filter((feature) => arrives(feature, from === classLevel))),
+          : features.subclass
+              .filter((feature) => arrives(feature, chosen.level === classLevel))
+              .map((record) => ({ record, grantor: chosen.subclass.name, subclass: true }))),
       ],
     };
   });

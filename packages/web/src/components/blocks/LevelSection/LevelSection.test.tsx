@@ -281,10 +281,10 @@ describe("LevelHistory", () => {
 
     await waitFor(() =>
       expect(rows()).toEqual([
-        "Level 1 · Warlock 1Hit points: +10 (d8 highest 8 +2 Con)Features: Pact Magic",
-        "Level 2 · Warlock 2Hit points: +7 (d8 average 5 +2 Con)Features: Magical Cunning",
-        "Level 3 · Warlock 3Hit points: +7 (d8 average 5 +2 Con)Subclass: Fiend PatronFeatures: Dark One's Blessing",
-        "Level 4 · Warlock 4Hit points: +7 (d8 average 5 +2 Con)Features: Ability Score ImprovementTook: +2 Charisma",
+        "Level 1 · Warlock 1Hit points: +10 (Level 1: d8 highest 8 +2 Con)Features: Pact Magic",
+        "Level 2 · Warlock 2Hit points: +7 (Level 2: d8 average 5 +2 Con)Features: Magical Cunning",
+        "Level 3 · Warlock 3Hit points: +7 (Level 3: d8 average 5 +2 Con)Subclass: Fiend PatronFeatures: Dark One's Blessing",
+        "Level 4 · Warlock 4Hit points: +7 (Level 4: d8 average 5 +2 Con)Features: Ability Score ImprovementTook: +2 Charisma",
       ]),
     );
   });
@@ -313,5 +313,33 @@ describe("LevelHistory", () => {
 
     await waitFor(() => expect(rows()[4]).toContain("Features: Pact Boon"));
     expect(rows()).toHaveLength(5);
+  });
+
+  it("tells apart two features of one name at a level by their grantors", async () => {
+    const character = warlock(3);
+    stubFetchByUrl({
+      "/api/classes/Warlock/XPHB/at/3": grants(3, [feature("Channel Divinity", 3)]),
+      "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/3": grants(3, [
+        feature("Channel Divinity", 3),
+      ]),
+      "/api/characters/1/derived": derivedRecord(character.definition),
+    });
+    renderSeeded(character);
+
+    expect(
+      await within(history()).findByRole("button", { name: "Channel Divinity (Warlock 3)" }),
+    ).toBeVisible();
+    expect(
+      within(history()).getByRole("button", { name: "Channel Divinity (Fiend Patron 3)" }),
+    ).toBeVisible();
+  });
+
+  it("says so where the hit points cannot be read", async () => {
+    const character = warlock(1);
+    stubFetchByUrl({});
+    renderSeeded(character);
+
+    await waitFor(() => expect(rows()[0]).toContain("Hit points: unavailable"));
+    expect(within(history()).getByText("Some class features could not load.")).toBeVisible();
   });
 });

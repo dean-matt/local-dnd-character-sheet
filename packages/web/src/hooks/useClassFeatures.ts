@@ -8,12 +8,14 @@ type Level = CharacterDefinition["levels"][number];
 
 /**
  * Every feature each catalog class in `levels` grants up to the level it reaches, and its
- * subclass's. `read` holds once every class's features have loaded. A homebrew class
+ * subclass's. `read` holds once every class's features have loaded, and `failed` once
+ * any class or subclass read has failed. A homebrew class
  * carries no features, so `featuresOf` gives it none.
  */
 export function useClassFeatures(levels: readonly Level[]): {
   featuresOf: (cls: EntryRef) => ClassFeatures;
   read: boolean;
+  failed: boolean;
 } {
   const classes = classLevels({ levels }).flatMap(({ class: cls, level, subclass }) =>
     "name" in cls ? [{ cls, level, subclass }] : [],
@@ -36,5 +38,6 @@ export function useClassFeatures(levels: readonly Level[]): {
   return {
     featuresOf: (cls) => features.get(entryKey(cls)) ?? { class: [], subclass: [] },
     read: results.every((result) => result.isSuccess),
+    failed: [...results, ...subclasses].some((result) => result.isError),
   };
 }

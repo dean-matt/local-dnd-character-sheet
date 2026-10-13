@@ -22,7 +22,7 @@ const featuresOf = (cls: object) =>
     ? (FEATURES[String(cls.name)] ?? { class: [], subclass: [] })
     : { class: [], subclass: [] };
 const names = (rows: ReturnType<typeof levelHistory>) =>
-  rows.map((row) => [row.level, row.classLevel, row.features.map(({ name }) => name)]);
+  rows.map((row) => [row.level, row.classLevel, row.features.map(({ record }) => record.name)]);
 
 describe("levelHistory", () => {
   it("interleaves a multiclass character's classes in the order the levels were taken", () => {
@@ -81,6 +81,27 @@ describe("levelHistory", () => {
     };
     expect(names(levelHistory([{ class: PHB("Barbarian") }], () => totem))).toEqual([
       [1, 1, ["Totem Spirit"]],
+    ]);
+  });
+
+  it("names the grantor of each feature, telling a class's from its subclass's", () => {
+    const paladin = {
+      class: [feature("Channel Divinity", 3)],
+      subclass: [feature("Channel Divinity", 3)],
+    };
+    const levels = [
+      { class: PHB("Paladin") },
+      { class: PHB("Paladin") },
+      { class: PHB("Paladin"), subclass: PHB("Oath of Devotion") },
+    ];
+    expect(
+      levelHistory(levels, () => paladin)[2]?.features.map(({ grantor, subclass }) => [
+        grantor,
+        subclass,
+      ]),
+    ).toEqual([
+      ["Paladin", false],
+      ["Oath of Devotion", true],
     ]);
   });
 });
