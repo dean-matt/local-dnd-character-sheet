@@ -8,8 +8,9 @@ import { SourceChip } from "../SourceChip.tsx";
  * The one row every list on the sheet draws, in up to three lines: the name beside its
  * source chip, property chips and a price chip; a one-line preview of the rules text; then
  * the row's action chips, with its controls at the right, wrapping where the row is too
- * narrow for them. A row with neither actions nor controls has no third line. A row with `detail` opens it in a modal from its name; one without is
- * plain text, since there is nothing to open. `source` is absent on a homebrew row.
+ * narrow for them. A row with neither actions nor controls has no third line. A row with
+ * `detail` opens it in a modal from its name; one without is plain text, since there is
+ * nothing to open. `source` is absent on a homebrew row.
  * `priceNote` says where an estimated price comes from. `remove` sits at the end of the
  * first line, such as the button taking the row off a list.
  */

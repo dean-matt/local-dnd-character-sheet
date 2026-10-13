@@ -59,6 +59,20 @@ const item = (name: string, type: { abbreviation: string; name: string } | null)
   weight: 6,
 });
 
+/** The sword's attack, held one-handed so its row draws the grip toggle as well. */
+const attack = {
+  entry: 0,
+  ability: "str",
+  attackBonus: { computed: 4, manual: null, terms: [] },
+  critThreshold: { computed: 20, manual: null, terms: [] },
+  damage: { dice: "1d8", type: "slashing", modifier: { computed: 4, manual: null, terms: [] } },
+  grip: { held: "one-handed", twoHandedBlocked: false },
+  mastery: [],
+  range: null,
+  ammunition: null,
+  reload: null,
+};
+
 for (const width of [390, 800, 1440]) {
   test(`at ${width}px wide Weapons, Armor and Gear share a row only from xl`, async ({
     page,
@@ -68,13 +82,19 @@ for (const width of [390, 800, 1440]) {
     try {
       // CI runs with no content.db, so both the derived block and the items are stubbed.
       await page.route(`**/api/characters/${id}/derived`, (route) =>
-        route.fulfill({ json: derivedRecord() }),
+        route.fulfill({ json: { ...derivedRecord(), attacks: [attack] } }),
       );
       await page.route(`**/api/characters/${id}/inventory`, (route) =>
         route.fulfill({
           json: {
             items: [
-              item("Shield of the Unyielding Sentinel", { abbreviation: "S", name: "Shield" }),
+              {
+                ...item("Sword of the Unyielding Sentinel", {
+                  abbreviation: "M",
+                  name: "Melee Weapon",
+                }),
+                weapon: { category: "martial", damage: { dice: "1d8", type: "slashing" } },
+              },
               item("Instrument of the Bards, Ollamh Harp", null),
             ],
           },
@@ -84,8 +104,9 @@ for (const width of [390, 800, 1440]) {
       await page.goto(`/characters/${id}/p/inventory`);
       const cards = ["Weapons", "Armor", "Gear"].map((name) => page.getByRole("region", { name }));
       for (const card of cards) await expect(card).toBeVisible();
-      const weapons = page.getByRole("region", { name: "Weapons" });
-      await expect(weapons).toContainText("No weapons.");
+      const armor = page.getByRole("region", { name: "Armor" });
+      await expect(armor).toContainText("No armor.");
+      await expect(page.getByRole("button", { name: /attack bonus \+4$/ })).toBeVisible();
 
       const boxes = await Promise.all(cards.map(box));
       const rows = new Set(boxes.map((b) => Math.round(b.y)));
@@ -102,8 +123,8 @@ for (const width of [390, 800, 1440]) {
           expect(b.x + b.width).toBeLessThanOrEqual(outer.x + outer.width + 0.5);
         }
       }
-      // The page itself still scrolls at phone width, from the character header's menu.
-      const column = await box(weapons.locator(".."));
+      // Bounded by the content column, not the window: the character header owns the page's width.
+      const column = await box(armor.locator(".."));
       for (const b of boxes)
         expect(b.x + b.width).toBeLessThanOrEqual(column.x + column.width + 0.5);
     } finally {
