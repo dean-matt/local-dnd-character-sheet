@@ -11,6 +11,7 @@ import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
+import { EmptyNote } from "../../../EmptyNote.tsx";
 import { AddItemField } from "./AddItemField.tsx";
 import {
   editInventoryEntry,
@@ -155,8 +156,10 @@ export function ItemList({
   const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
     return (
-      rows.length > 0 && (
-        <Card key={group} title={group}>
+      <Card key={group} title={group}>
+        {rows.length === 0 ? (
+          <EmptyNote>No {group.toLowerCase()}.</EmptyNote>
+        ) : (
           <ul
             aria-busy={busy}
             className="flex flex-col gap-2 aria-busy:cursor-wait aria-busy:opacity-60"
@@ -211,14 +214,15 @@ export function ItemList({
               ),
             )}
           </ul>
-        </Card>
-      )
+        )}
+      </Card>
     );
   });
+  // A third of the content column fits a row's controls only from xl, beside the sidebar.
   return (
     <>
       {picker}
-      {cards}
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">{cards}</div>
     </>
   );
 }
