@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
+import { NO_GRANTS } from "../../lib/proficiencyGrants.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
-import { NO_GRANTS } from "./grants.ts";
 import { holdsTool, TOOLS_FIELD, toolsNeeded } from "./toolPicks.ts";
 import { useToolTally } from "./useToolTally.ts";
 

@@ -6,7 +6,7 @@ import {
 } from "@dnd/catalog";
 import { type CharacterDefinition, type ContentRef, houseRule, refKey } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { catalogRow } from "./grants.ts";
+import { catalogRow } from "../../lib/proficiencyGrants.ts";
 import { replacementOffer, type SkillOffer } from "./skillPicks.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";

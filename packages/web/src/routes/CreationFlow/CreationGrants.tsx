@@ -2,8 +2,8 @@ import { type ProficiencyGrants, proficiencyGrantsSchema } from "@dnd/catalog";
 import type { CharacterDefinition } from "@dnd/character";
 import { useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
+import { type Granted, NO_GRANTS, resolveGrants, swapGrants } from "../../lib/proficiencyGrants.ts";
 import { setRefValue } from "../../lib/setRefValue.ts";
-import { type Granted, NO_GRANTS, resolveGrants, swapGrants } from "./grants.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 

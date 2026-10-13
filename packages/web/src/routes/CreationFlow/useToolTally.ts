@@ -8,7 +8,7 @@ import {
 import { type CharacterDefinition, houseRule } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
-import { titleCase } from "./grants.ts";
+import { titleCase } from "../../lib/proficiencyGrants.ts";
 import {
   holdsTool,
   type ToolGrant,

@@ -65,6 +65,8 @@ export function useLevelUpClass(
     level,
     next,
     name: catalog?.name ?? homebrew.data?.name ?? "Homebrew",
+    /** The catalog class's row, which a homebrew class has none of. */
+    json: row.data?.json,
     hitDie: row.data?.hitDie ?? homebrew.data?.hitDie,
     asksSubclass,
     /** The first level whose subclass features this level brings: all of them where it picks the subclass. */

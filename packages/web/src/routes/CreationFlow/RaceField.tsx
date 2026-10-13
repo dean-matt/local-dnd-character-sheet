@@ -3,11 +3,11 @@ import { type CharacterDefinition, displayName, type EntryRef } from "@dnd/chara
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
+import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { RACE_FIELD, withDeparture } from "./departures.ts";
-import { titleCase } from "./grants.ts";
 import { RaceGrants } from "./RaceGrants.tsx";
 import { raceChoices } from "./raceChoices.ts";
 import { TypedEscape } from "./TypedEscape.tsx";

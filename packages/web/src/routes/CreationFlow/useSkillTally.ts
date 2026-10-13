@@ -1,6 +1,6 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { NO_GRANTS } from "./grants.ts";
+import { NO_GRANTS } from "../../lib/proficiencyGrants.ts";
 import { tallySkills } from "./skillPicks.ts";
 import { useSkillOffers } from "./useSkillOffers.ts";
 

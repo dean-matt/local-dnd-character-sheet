@@ -89,6 +89,8 @@ export function LevelUpDialog({
             feats: values.feats,
             abilityIncreases: values.abilityIncreases,
             featureChoices: values.featureChoices,
+            proficiencies: values.proficiencies,
+            departures: values.departures,
           }),
         });
       }}

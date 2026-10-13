@@ -3,8 +3,8 @@ import { type CharacterDefinition, displayName, type EntryRef } from "@dnd/chara
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
+import { grantNames } from "../../lib/proficiencyGrants.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
-import { grantNames } from "./grants.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 const grantsOf = (row: BackgroundRecord | undefined) => {

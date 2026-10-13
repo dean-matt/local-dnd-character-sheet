@@ -49,7 +49,7 @@ widget, panel, or nav element:
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Backstory, Notes.
-- Identity: Race, Class, Background, Languages, Proficiencies — each its own
+- Identity: Race, Background, Languages, Proficiencies — each its own
   widget. Level Up is the modal the Level tab's level-up button opens —
   pick an existing class or multiclass into a new one, Hit Points by average, roll, or
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
@@ -141,43 +141,23 @@ widget, panel, or nav element:
   ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
   confirmation notes why it is unusual. Races, classes and
   subclasses carry no "Add to…", since creation and level-up own them.
-- Character List and Creation 2/5 are full pages, not modals over the sheet
-  — sized to the same 1440px width as Layout and Top Bar Navigation, under the same top
-  bar with Character marked active. Neither boxes its content in a panel: it sits on the
-  page background, as the character sheet's does. Each creation step puts the five steps
-  in a left rail shaped like Sidebar — done, current, and not-yet-reached, collapsing to
-  the step numbers by the same toggle at its foot — and its own two-column content beside
-  it, with Cancel on the left of the bar under the content and Back beside Next on the right. The app's home page and Top Bar
-  Navigation's Character menu are how both are reached: "See all characters →" opens the list, and
-  "+ New Character" opens creation — a menu that jumps straight to one character is a
-  different action from either.
+- Character List is a full page, not a modal over the sheet — sized to the same 1440px
+  width as Layout and Top Bar Navigation, under the same top bar with Character marked
+  active. It boxes nothing in a panel: its content sits on the page background, as the
+  character sheet's does. The app's home page and Top Bar Navigation's Character menu
+  reach it: "See all characters →" opens the list, and "+ New Character" opens creation —
+  a menu that jumps straight to one character is a different action from either.
 - Character List is the full list at the `characters` route — every character's name,
   level, edition, race and class summary (`High Elf Ranger`, or `Fighter 3 / Wizard 2`
   for a multiclass character), and an avatar (a colored initial circle when a character
   has none), a page header offering Import and New Character, forward design for #206.
-  The avatar widens past #206's own "out of scope" line the same way creation's Class
-  step widens past #235's — a deliberate call, not an oversight the issue's text missed.
+  The avatar widens past #206's own "out of scope" line — a deliberate call, not an
+  oversight the issue's text missed.
   Race and class needed a real schema answer rather than just a mockup call: #310 adds
   the `race_summary` and `class_summary` columns #206 now reads, alongside `name`,
   `edition`, and `level`, so the list still never parses a character's `definition` blob
   per row.
-  Creation 2/5 (Class) is the wizard step beside Identity, Ability Scores, Proficiencies &
-  Equipment and Spells, which the app builds and leads, so its rail draws steps 1, 3, 4
-  and 5 without a link and "+ New Character" opens Class here. It carries the step rail,
-  Back/Next, and the acceptance criteria #235 already settled. The app builds the whole
-  step, starting multiclassed included, but types a custom gain for each level where the
-  artboard types one hit point total.
-  Its Next validates nothing, since the schema is checked only at Finish, and every step
-  in its rail is a link rather than locked until reached.
-  Creation 2/5 supports starting multiclassed — add more than one class, each with its
-  own level and subclass — even though #235's own "out of scope" line names a second
-  class as #240's job. Real tables commonly build a multiclass character in one pass
-  when starting above level 1, which #235 doesn't rule out, so this widens that step
-  rather than matching the letter of the issue. HP follows 5e's own multiclass rule:
-  the character's very first level is always the first class's hit die at max, and
-  every level after — in that class or a later one — rolls or averages against
-  whichever class it belongs to.
-  Every picker in these three pages searches a small in-file array, the same convention
+  Every picker on this page searches a small in-file array, the same convention
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search; Top Bar Navigation's global search is the one place that already spans both
   characters and a sample compendium.
@@ -245,8 +225,7 @@ Simplifications specific to these widgets:
   to the real Inventory implementation.
 - Weapons and Armor use a narrower sample proficiency list than a full character would,
   so both the allowed and the proficiency-blocked equip states show up.
-- Race and Background pick from a small fixed sample list, not the real catalog; Class
-  is multi-select (chips, each with its own level) to cover multiclassing.
+- Race and Background pick from a small fixed sample list, not the real catalog.
 
 ## Known gaps
 
@@ -302,9 +281,8 @@ says how much of the artboard the app builds today.
 | `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |
 | `Race` | #488 | read-only |
-| `Class` | #235, #240 | read-only |
 | `Background` | #488 | read-only |
-| `LevelUpModal` | #239, #240, #733 | all but multiclassing into a new class and the spell picks |
+| `LevelUpModal` | #239, #240, #733 | all but the spell picks |
 | `Languages` | #488 | read-only |
 | `Proficiencies` | #400, #488 | read-only |
 | `Sidebar` | #242, #470, #486 | read-only |
@@ -323,7 +301,6 @@ says how much of the artboard the app builds today.
 | `WidgetPicker` | #242 | nothing |
 | `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | all but the portraits |
-| `CreationClass` | #233, #235, #240, #604 | all, with a typed gain per level for its one typed total |
 | `ConfirmDialog` | #241, #242 | nothing |
 | `ListItem` | #230, #231, #279, #398 | an item row's controls, the rest read-only |
 

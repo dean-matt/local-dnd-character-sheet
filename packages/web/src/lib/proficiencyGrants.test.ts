@@ -9,13 +9,13 @@ import {
   swapGrants,
   titleCase,
   unlandedLanguages,
-} from "./grants.ts";
+} from "./proficiencyGrants.ts";
 
 type Row = { name: string; source: string; dialects?: string[] };
 const fixture = (file: string): Record<string, Row[]> =>
   JSON.parse(
     readFileSync(
-      join(import.meta.dirname, "../../../../../tests/fixtures/5etools/data", file),
+      join(import.meta.dirname, "../../../../tests/fixtures/5etools/data", file),
       "utf8",
     ),
   );

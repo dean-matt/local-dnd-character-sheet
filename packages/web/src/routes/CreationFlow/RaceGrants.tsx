@@ -1,5 +1,5 @@
 import { proficiencyGrantsSchema } from "@dnd/catalog";
-import { grantNames, unlandedLanguages } from "./grants.ts";
+import { grantNames, unlandedLanguages } from "../../lib/proficiencyGrants.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 const either = new Intl.ListFormat("en", { type: "disjunction" });

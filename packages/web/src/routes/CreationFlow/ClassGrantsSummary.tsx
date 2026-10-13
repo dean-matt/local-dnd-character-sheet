@@ -1,6 +1,6 @@
 import { ABILITY_LABEL } from "@dnd/character";
 import { useClassGrants } from "../../hooks/useClassGrants.ts";
-import { grantNames } from "./grants.ts";
+import { grantNames } from "../../lib/proficiencyGrants.ts";
 import type { ClassEntry } from "./useClassEntries.ts";
 
 /**

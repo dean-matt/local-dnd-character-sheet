@@ -6,8 +6,8 @@ import {
   type StartingEquipment,
 } from "@dnd/catalog";
 import { useResolvedRefs } from "../../hooks/useResolvedRefs.ts";
+import { CORE_SOURCE, titleCase } from "../../lib/proficiencyGrants.ts";
 import type { EquipmentSource, OfferedItem } from "./equipmentPicks.ts";
-import { CORE_SOURCE, titleCase } from "./grants.ts";
 
 import { useClassEntries } from "./useClassEntries.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";

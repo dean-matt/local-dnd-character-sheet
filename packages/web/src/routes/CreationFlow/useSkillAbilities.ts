@@ -3,8 +3,8 @@ import { ABILITIES, type Ability, type CharacterDefinition, type ContentRef } fr
 import { useQueries } from "@tanstack/react-query";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { apiGet } from "../../lib/api.ts";
+import { CORE_SOURCE } from "../../lib/proficiencyGrants.ts";
 import { retryUnlessClientError } from "../../lib/retryUnlessClientError.ts";
-import { CORE_SOURCE } from "./grants.ts";
 
 /**
  * The edition's core skills, each with the ability its row names, so the step can score
