@@ -5,6 +5,7 @@ import {
   HIT_DICE,
   type Improvement,
   improvementAt,
+  refKey,
   withImprovement,
 } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -14,9 +15,13 @@ import { takenOption, withFeatureChoice } from "../../../../lib/featureChoices.t
 import { type FeatureOffering, featureOfferings } from "../../../../lib/featureOfferings.ts";
 import { isMade } from "../../../../lib/improvementChoice.ts";
 import { candidateAt } from "../../../../lib/improvementFeats.ts";
+import { withPrerequisiteDepartures } from "../../../../lib/multiclassPrerequisites.ts";
+import { NO_GRANTS, swapGrants } from "../../../../lib/proficiencyGrants.ts";
+import { setRefValue } from "../../../../lib/setRefValue.ts";
 import type { HitPointMethod } from "./hitPointPick.ts";
 import { featuresAt, tableChanges } from "./levelUpChanges.ts";
 import { useLevelUpClass } from "./useLevelUpClass.ts";
+import { useMulticlassEntry } from "./useMulticlassEntry.ts";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -24,20 +29,36 @@ type Level = CharacterDefinition["levels"][number];
  * The level the draft holds last, on top of `definition`, read from the level-up form: the
  * choices it asks for, whether each is made, and the edits that make them. A change of
  * class takes back every choice made since, and a change of subclass the options its
- * features offered, since each read the old one.
+ * features offered, since each read the old one. A level in a class the character does not
+ * hold yet also asks for the skill and tool picks its multiclass gains offer, which the
+ * draft's proficiencies hold as they are made; `settle` adds what the class grants outright
+ * and notes each unmet multiclass prerequisite, just before Apply submits.
  */
 export function useLevelUpPlan(
   definition: CharacterDefinition,
   method: HitPointMethod | undefined,
 ) {
-  const { setValue } = useFormContext<CharacterDefinition>();
-  const [levels = [], feats = [], abilityIncreases = [], featureChoices = []] = useWatch<
+  const { setValue, getValues } = useFormContext<CharacterDefinition>();
+  const [
+    levels = [],
+    feats = [],
+    abilityIncreases = [],
+    featureChoices = [],
+    proficiencies = definition.proficiencies,
+  ] = useWatch<
     CharacterDefinition,
-    ["levels", "feats", "abilityIncreases", "featureChoices"]
-  >({ name: ["levels", "feats", "abilityIncreases", "featureChoices"] });
+    ["levels", "feats", "abilityIncreases", "featureChoices", "proficiencies"]
+  >({ name: ["levels", "feats", "abilityIncreases", "featureChoices", "proficiencies"] });
   // The schema holds at least one level, which the inferred array type cannot say.
   const level = (levels.at(-1) ?? definition.levels.at(-1)) as Level;
   const target = useLevelUpClass(definition, level.class, level.subclass);
+  const entry = useMulticlassEntry(definition, level.class, target.name, target.json);
+  const pickedSkills = (entry.skillPick?.options ?? []).filter((ref) =>
+    proficiencies.skills.some((skill) => refKey(skill.ref) === refKey(ref)),
+  );
+  const pickedTools = entry.toolPicks.map((pick) =>
+    pick.options.filter((tool) => proficiencies.tools.some((held) => held.name === tool)),
+  );
   const featList = useFeats(definition.edition);
   const die = HIT_DICE.find((each) => each === target.hitDie);
   const improvements = useImprovementGrants(levels);
@@ -56,6 +77,8 @@ export function useLevelUpPlan(
     setValue("feats", definition.feats, dirty);
     setValue("abilityIncreases", definition.abilityIncreases, dirty);
     setValue("featureChoices", definition.featureChoices, dirty);
+    setRefValue(setValue, "proficiencies", definition.proficiencies, dirty);
+    setValue("departures", definition.departures, dirty);
   };
 
   const ready =
@@ -66,7 +89,10 @@ export function useLevelUpPlan(
     improvements.read &&
     (grant === undefined ||
       (featList.isSuccess && isMade(improvement, catalogFeats, candidate?.totals))) &&
-    offerings.every((offering) => chosen(offering) !== undefined);
+    offerings.every((offering) => chosen(offering) !== undefined) &&
+    entry.read &&
+    pickedSkills.length === (entry.skillPick?.count ?? 0) &&
+    entry.toolPicks.every((pick, index) => pickedTools[index]?.length === pick.count);
 
   return {
     target,
@@ -78,6 +104,9 @@ export function useLevelUpPlan(
     catalogFeats,
     offerings,
     chosen,
+    entry,
+    pickedSkills,
+    pickedTools,
     ready,
     features: [
       ...featuresAt(target.after?.features ?? [], target.next),
@@ -105,6 +134,48 @@ export function useLevelUpPlan(
       const held = withImprovement(draft, grant.level, grant.cls, next);
       setValue("feats", held.feats, dirty);
       setValue("abilityIncreases", held.abilityIncreases, dirty);
+    },
+    toggleSkill: (ref: ContentRef) => {
+      const held = pickedSkills.some((each) => refKey(each) === refKey(ref));
+      setRefValue(
+        setValue,
+        "proficiencies",
+        {
+          ...proficiencies,
+          skills: held
+            ? proficiencies.skills.filter((skill) => refKey(skill.ref) !== refKey(ref))
+            : [...proficiencies.skills, { ref, level: "proficient" }],
+        },
+        dirty,
+      );
+    },
+    toggleTool: (name: string) => {
+      const held = proficiencies.tools.some((tool) => tool.name === name);
+      setRefValue(
+        setValue,
+        "proficiencies",
+        {
+          ...proficiencies,
+          tools: held
+            ? proficiencies.tools.filter((tool) => tool.name !== name)
+            : [...proficiencies.tools, { name, level: "proficient" }],
+        },
+        dirty,
+      );
+    },
+    settle: () => {
+      if (!entry.entering) return;
+      setRefValue(
+        setValue,
+        "proficiencies",
+        swapGrants(getValues("proficiencies"), NO_GRANTS, entry.granted),
+        dirty,
+      );
+      setValue(
+        "departures",
+        withPrerequisiteDepartures(definition.departures, entry.judged, entry.score),
+        dirty,
+      );
     },
     choose: (offering: FeatureOffering, option: ContentRef) =>
       setValue(

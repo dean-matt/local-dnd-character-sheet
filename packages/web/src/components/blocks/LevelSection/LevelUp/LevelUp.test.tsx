@@ -26,6 +26,25 @@ const grants = (level: number, invocations: number, features: object[]) => ({
 const page = (items: object[]) => ({ items, total: items.length });
 
 const FIGHTER = { name: "Fighter", source: "XPHB" };
+const ROGUE = XPHB("Rogue");
+const PALADIN = XPHB("Paladin");
+
+/** A class row a character multiclasses into, with what its `multiclassing` grants. */
+const entryRow = (ref: { name: string; source: string }, hitDie: number, json: object) => ({
+  ...ref,
+  edition: "one",
+  hitDie,
+  json: { ...ref, ...json },
+});
+
+const SEARCH: Record<string, object[]> = {
+  class: [ROGUE, PALADIN, WARLOCK].map((ref) => ({ type: "class", ...ref, edition: "one" })),
+  "skill,language": ["Acrobatics", "Stealth"].map((name) => ({
+    type: "skill",
+    ...XPHB(name),
+    edition: "one",
+  })),
+};
 
 const ROWS: Record<string, unknown> = {
   "/api/classes/Fighter/XPHB": { ...FIGHTER, edition: "one", hitDie: 10, json: FIGHTER },
@@ -71,6 +90,29 @@ const ROWS: Record<string, unknown> = {
     feature("Fiend Gift", 3, { choose: 1 }),
     feature("Hellfire", 3, { offeredBy: XPHB("Fiend Gift") }),
   ]),
+  "/api/classes/Rogue/XPHB": entryRow(ROGUE, 8, {
+    primaryAbility: [{ dex: true }],
+    multiclassing: {
+      proficienciesGained: {
+        skills: [{ choose: { from: ["acrobatics", "stealth"], count: 1 } }],
+        toolProficiencies: [{ "thieves' tools": true }],
+        armorProficiencies: [{ light: true }],
+      },
+    },
+  }),
+  "/api/classes/Rogue/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Rogue/XPHB/at/1": grants(1, 0, [feature("Sneak Attack", 1)]),
+  "/api/classes/Paladin/XPHB": entryRow(PALADIN, 10, {
+    primaryAbility: [{ str: true, cha: true }],
+    multiclassing: {
+      proficienciesGained: {
+        weapons: ["martial"],
+        armorProficiencies: [{ light: true, medium: true, shield: true }],
+      },
+    },
+  }),
+  "/api/classes/Paladin/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Paladin/XPHB/at/1": grants(1, 0, [feature("Lay On Hands", 1)]),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
   ]),
@@ -130,6 +172,10 @@ function renderSeeded(character: CharacterRecord) {
         ? new Response(JSON.stringify(server))
         : new Response(JSON.stringify({ error: "offline" }), { status: 500 });
     if (path in ROWS) return new Response(JSON.stringify(ROWS[path]));
+    if (path.startsWith("/api/search?")) {
+      const items = SEARCH[new URL(path, "http://local").searchParams.get("type") ?? ""] ?? [];
+      return new Response(JSON.stringify({ ...page(items), limit: 200, offset: 0 }));
+    }
     return new Response(JSON.stringify({ error: `unstubbed ${path}` }), { status: 404 });
   });
   const client = new QueryClient({
@@ -151,6 +197,16 @@ const applyButton = () => within(dialog()).getByRole("button", { name: "Apply le
 async function open() {
   fireEvent.click(screen.getByRole("button", { name: "Level up" }));
   await within(dialog()).findByText(/Choose how this level's hit points are found/);
+}
+
+async function multiclassInto(name: string) {
+  fireEvent.change(
+    within(dialog()).getByRole("combobox", { name: "Multiclass into a new class" }),
+    {
+      target: { value: name.slice(0, 3) },
+    },
+  );
+  fireEvent.click(await within(dialog()).findByRole("option", { name: new RegExp(name) }));
 }
 
 function choose(name: string, option: string) {
@@ -408,5 +464,90 @@ describe("LevelUp", () => {
       expect(within(dialog()).getByRole("alert")).toHaveTextContent("Reload failed: offline"),
     );
     expect(within(dialog()).getByRole("button", { name: "Reload" })).toBeVisible();
+  });
+
+  describe("a level in a class the character does not hold yet", () => {
+    it("lands the class's multiclass gains and the skill picked, and reports each prerequisite met", async () => {
+      const held = { ref: XPHB("Stealth"), level: "proficient" as const };
+      const vex = warlock(1);
+      renderSeeded(
+        warlock(1, {
+          proficiencies: { ...vex.definition.proficiencies, skills: [held] },
+        }),
+      );
+      await open();
+      await multiclassInto("Rogue");
+
+      expect(await within(dialog()).findByText(/Rogue needs Dexterity 13/)).toHaveTextContent(
+        "Rogue needs Dexterity 13: met",
+      );
+      expect(
+        within(dialog()).getByText("Multiclassing into Rogue grants: Light, Thieves' Tools"),
+      ).toBeVisible();
+      const skills = await within(dialog()).findByRole("group", { name: "Skill from Rogue" });
+      expect(
+        within(skills)
+          .getAllByRole("checkbox")
+          .map((box) => box.parentElement?.textContent),
+      ).toEqual(["Acrobatics"]);
+      expect(within(dialog()).getByText(/Sneak Attack/)).toBeVisible();
+
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(within(skills).getByRole("checkbox", { name: "Acrobatics" }));
+      fireEvent.click(applyButton());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: WARLOCK }, { class: ROGUE }]);
+      expect(sent().proficiencies).toMatchObject({
+        skills: [held, { ref: XPHB("Acrobatics"), level: "proficient" }],
+        armor: ["Light"],
+        tools: [{ name: "Thieves' Tools", level: "proficient" }],
+        savingThrows: [],
+      });
+      expect(sent().departures).toEqual([]);
+    });
+
+    it("reports a prerequisite the scores leave unmet without refusing the level, and notes it", async () => {
+      renderSeeded(warlock(1));
+      await open();
+      await multiclassInto("Paladin");
+
+      expect(
+        await within(dialog()).findByText(/Paladin needs Strength 13 and Charisma 13/),
+      ).toHaveTextContent("not met");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "false");
+      fireEvent.click(applyButton());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().proficiencies).toMatchObject({
+        armor: ["Light", "Medium", "Shield"],
+        weapons: ["Martial"],
+      });
+      expect(sent().departures).toEqual([
+        {
+          field: "levels.1.class",
+          note: "Multiclassing in or out of Paladin needs Strength 13 and Charisma 13.",
+        },
+      ]);
+    });
+
+    it("takes back the class's gains and picks when the level goes back to a held class", async () => {
+      renderSeeded(warlock(1));
+      await open();
+      await multiclassInto("Rogue");
+      const skills = await within(dialog()).findByRole("group", { name: "Skill from Rogue" });
+      fireEvent.click(within(skills).getByRole("checkbox", { name: "Stealth" }));
+
+      choose("Class", "Warlock 1 → 2");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      fireEvent.click(applyButton());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
+      expect(sent().proficiencies.skills).toEqual([]);
+      expect(sent().proficiencies.armor).toEqual([]);
+    });
   });
 });

@@ -73,7 +73,10 @@ export function LevelUpForm({
               aria-disabled={blocked}
               onClick={(event) => {
                 if (blocked) event.preventDefault();
-                else onSend({ table: plan.table(), features: plan.features });
+                else {
+                  plan.settle();
+                  onSend({ table: plan.table(), features: plan.features });
+                }
               }}
               className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
             >
