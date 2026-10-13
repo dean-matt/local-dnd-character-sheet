@@ -7,6 +7,11 @@ import { characterRecord, identityRecord } from "../../../test/records.ts";
 import { stubFetch } from "../../../test/stubFetch.ts";
 import { IdentitySection } from "./IdentitySection.tsx";
 
+/** The row holding a card's heading, where its fields report a save so the card keeps its height. */
+const titleRow = (card: string) =>
+  within(screen.getByRole("region", { name: card })).getByRole("heading")
+    .parentElement as HTMLElement;
+
 const chips = (card: string) =>
   within(screen.getByRole("region", { name: card }))
     .queryAllByRole("listitem")
@@ -92,6 +97,26 @@ describe("IdentitySection", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("A character needs a name.");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["Name", "Name", "disk full"],
+    ["Appearance", "Hair", "Hair: disk full"],
+  ])(
+    "reports a failed save in the %s card's title row, Retry beside it",
+    async (card, label, text) => {
+      stubFetch(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
+      renderSeeded(<IdentitySection character={identityRecord()} />);
+
+      const field = screen.getByRole("textbox", { name: label });
+      fireEvent.change(field, { target: { value: "Nyx" } });
+      fireEvent.blur(field);
+
+      const row = titleRow(card);
+      await waitFor(() => expect(within(row).getByRole("alert")).toHaveTextContent(text));
+      expect(within(row).getByRole("button", { name: "Retry" })).toBeInTheDocument();
+      expect(field).toHaveAttribute("aria-describedby", within(row).getByRole("alert").id);
+    },
+  );
 
   it("shows each appearance field, an unset one reading as not set", () => {
     const record = identityRecord();

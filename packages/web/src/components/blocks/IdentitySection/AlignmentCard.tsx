@@ -14,6 +14,7 @@ export function AlignmentCard({ character }: { character: CharacterRecord }) {
   // The last pick, which Retry writes again; "Saved" shows only while it is the value shown,
   // so an undo after a save clears it.
   const [picked, setPicked] = useState<string>();
+  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
   const showSaved = useFleeting(
     update.isSuccess && picked === (character.definition.alignment ?? ""),
   );
@@ -29,10 +30,11 @@ export function AlignmentCard({ character }: { character: CharacterRecord }) {
   }
 
   return (
-    <Card title="Alignment">
+    <Card title="Alignment" messagesRef={setMessages}>
       <FormField
         label="Alignment"
         labelHidden
+        messageSlot={{ into: messages }}
         status={update.isPending ? "Saving…" : showSaved ? "Saved" : null}
         error={
           update.isError && (
