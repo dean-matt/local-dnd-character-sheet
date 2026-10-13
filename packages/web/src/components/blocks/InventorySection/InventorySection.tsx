@@ -24,11 +24,12 @@ export function InventorySection({
     <div className="flex flex-col gap-3">
       {/* Currency's track sizes to its five coins unwrapped, so it joins the row only at xl,
           where the two narrower cards still fit their longest label and value. Until they
-          load, it spans the row rather than squeezing into the first track. */}
-      <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          load, it spans the row rather than squeezing into the first track. Each card
+          stretches to its row's height, Currency through its wrapper's own grid. */}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         {derived && <CarryingCard character={character} derived={derived} />}
         {derived && <AttunementCard character={character} derived={derived} />}
-        <div className={derived ? "sm:col-span-2 xl:col-span-1" : "sm:col-span-2 xl:col-span-3"}>
+        <div className={`grid sm:col-span-2 ${derived ? "xl:col-span-1" : "xl:col-span-3"}`}>
           <CurrencyCard characterId={character.id} money={character.definition.money} />
         </div>
       </div>
