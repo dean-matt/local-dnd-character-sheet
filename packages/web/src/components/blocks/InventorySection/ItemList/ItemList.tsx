@@ -11,6 +11,7 @@ import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
+import { EmptyNote } from "../../../EmptyNote.tsx";
 import { AddItemField } from "./AddItemField.tsx";
 import {
   editInventoryEntry,
@@ -157,7 +158,7 @@ export function ItemList({
     return (
       <Card key={group} title={group}>
         {rows.length === 0 ? (
-          <p className="text-muted text-row">No {group.toLowerCase()}.</p>
+          <EmptyNote>No {group.toLowerCase()}.</EmptyNote>
         ) : (
           <ul
             aria-busy={busy}

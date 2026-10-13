@@ -98,6 +98,7 @@ for (const width of [390, 800, 1440]) {
         for (const control of await card.locator("li *").all()) {
           if (!(await control.isVisible())) continue;
           const b = await box(control);
+          expect(b.x).toBeGreaterThanOrEqual(outer.x - 0.5);
           expect(b.x + b.width).toBeLessThanOrEqual(outer.x + outer.width + 0.5);
         }
       }
