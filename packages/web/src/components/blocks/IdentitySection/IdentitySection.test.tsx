@@ -94,7 +94,9 @@ describe("IdentitySection", () => {
     fireEvent.change(name, { target: { value: "" } });
     fireEvent.blur(name);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("A character needs a name.");
+    const alert = await within(titleRow("Name")).findByRole("alert");
+    expect(alert).toHaveTextContent("A character needs a name.");
+    expect(within(alert).getByTitle("A character needs a name.")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
