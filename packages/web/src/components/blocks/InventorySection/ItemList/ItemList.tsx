@@ -1,7 +1,7 @@
 import type { SheetItem } from "@dnd/catalog";
 import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
@@ -59,41 +59,46 @@ export function ItemList({
   // the rows have refetched: a second click before then could reach the entry that moved
   // into place, or a duplicate holding the same item. Such a click is dropped until both
   // settle. Both are read at the click rather than from render state, which a query's
-  // observers update a tick late, too late for a double click.
+  // observers update a tick late, too late for a double click; `rowWrites` mirrors the
+  // count only to draw the list busy.
   const writing = useRef(0);
+  const [rowWrites, setRowWrites] = useState(0);
+  const busy = rowWrites > 0 || inventory.isFetching;
   const settled = () =>
     writing.current === 0 &&
     queryClient.isFetching({ queryKey: characterInventoryKey(character.id) }) === 0;
+  // Released from the write's own promise: `add` calling `mutate` on this observer
+  // detaches it from an earlier write, whose per-call `onSettled` then never runs.
+  const hold = (run: () => Promise<unknown>) => {
+    writing.current += 1;
+    setRowWrites((count) => count + 1);
+    return run().finally(() => {
+      writing.current -= 1;
+      setRowWrites((count) => count - 1);
+    });
+  };
   const drawn = character.definition.inventory;
   const edit = (index: number, change: EntryChange) => {
     const entry = drawn[index];
     if (!entry || !settled()) return;
-    writing.current += 1;
-    // Released from the write's own promise: `add` calling `mutate` on this observer
-    // detaches it from an earlier write, whose per-call `onSettled` then never runs.
-    writes
-      .write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change))
-      .finally(() => {
-        writing.current -= 1;
-      });
+    hold(() =>
+      writes.write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change)),
+    );
   };
   const place = (index: number, holder: number | null) => {
     const entry = drawn[index];
     const container = holder === null ? undefined : drawn[holder];
     if (!entry || (holder !== null && !container) || !settled()) return;
-    writing.current += 1;
-    writes
-      .write(`row:${index}`, (latest) =>
+    hold(() =>
+      writes.write(`row:${index}`, (latest) =>
         placeInventoryEntry(
           latest,
           index,
           entry,
           container && holder !== null ? { index: holder, drawn: container } : null,
         ),
-      )
-      .finally(() => {
-        writing.current -= 1;
-      });
+      ),
+    );
   };
   // One level deep: a container on offer is not itself inside another, and an item that
   // holds others is offered none.
@@ -142,6 +147,7 @@ export function ItemList({
         holders={holders}
         current={current < 0 ? null : current}
         onChange={(holder) => place(index, holder)}
+        busy={busy}
       />
     );
   };
@@ -151,7 +157,10 @@ export function ItemList({
     return (
       rows.length > 0 && (
         <Card key={group} title={group}>
-          <ul className="flex flex-col gap-2">
+          <ul
+            aria-busy={busy}
+            className="flex flex-col gap-2 aria-busy:cursor-wait aria-busy:opacity-60"
+          >
             {/* The key is the definition's index, since two entries may hold the same item. */}
             {rows.map(({ item, index }) =>
               item.resolved ? (
@@ -169,18 +178,16 @@ export function ItemList({
                         if (!settled()) {
                           throw new Error("wait for the last change to save, then retry");
                         }
-                        writing.current += 1;
-                        try {
-                          await counts.mutateAsync((latest) =>
+                        await hold(() =>
+                          counts.mutateAsync((latest) =>
                             editInventoryEntry(latest, index, entry, (at) => ({ ...at, quantity })),
-                          );
-                        } finally {
-                          writing.current -= 1;
-                        }
+                          ),
+                        );
                       }}
                     />
                   }
                   placement={placementField(index, item.name)}
+                  busy={busy}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
                   onEquip={(equipped) =>
                     edit(index, (entry) => ({
@@ -198,6 +205,7 @@ export function ItemList({
                   item={item}
                   index={index}
                   characterId={character.id}
+                  busy={busy}
                   onRemove={() => edit(index, () => null)}
                 />
               ),

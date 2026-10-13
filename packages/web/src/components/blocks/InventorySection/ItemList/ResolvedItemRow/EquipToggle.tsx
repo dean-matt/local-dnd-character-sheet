@@ -13,9 +13,11 @@ function equippedIcon(item: ResolvedItem): LucideIcon {
 export function EquipToggle({
   item,
   onChange,
+  busy,
 }: {
   item: ResolvedItem;
   onChange: (equipped: boolean) => void;
+  busy: boolean;
 }) {
   const Icon = item.equipped ? equippedIcon(item) : Backpack;
   return (
@@ -23,6 +25,7 @@ export function EquipToggle({
       type="button"
       aria-label={`Equipped, ${item.name}`}
       aria-pressed={item.equipped}
+      aria-disabled={busy || undefined}
       title={item.equipped ? "Equipped, click to stow" : "Stowed, click to equip"}
       onClick={() => onChange(!item.equipped)}
       className={`relative flex size-4.5 shrink-0 items-center justify-center rounded-chip border before:absolute before:-inset-1 ${

@@ -8,13 +8,20 @@ const OPTIONS = ["Copper", "Silver", "Gold", "Platinum"].map((coin) => ({
   label: coin,
 }));
 
-function Harness({ onChange }: { onChange?: (next: string) => void }) {
+function Harness({
+  onChange,
+  disabled,
+}: {
+  onChange?: (next: string) => void;
+  disabled?: boolean;
+}) {
   const [value, setValue] = useState("silver");
   return (
     <>
       <label htmlFor="coin">Coin</label>
       <Select
         id="coin"
+        aria-disabled={disabled}
         options={OPTIONS}
         value={value}
         onChange={(next) => {
@@ -33,6 +40,23 @@ const active = () =>
 const key = (name: string) => fireEvent.keyDown(combobox(), { key: name });
 
 describe("Select", () => {
+  it("keeps the list shut while aria-disabled, by click or key", () => {
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} disabled />);
+    expect(combobox()).toHaveAttribute("aria-disabled", "true");
+    act(() => combobox().focus());
+    for (const open of [
+      () => fireEvent.click(combobox()),
+      () => key("ArrowDown"),
+      () => key("Enter"),
+    ]) {
+      open();
+      expect(combobox()).toHaveAttribute("aria-expanded", "false");
+    }
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("names the chosen option on a closed combobox that pops up a listbox", () => {
     render(<Harness />);
     expect(combobox()).toHaveTextContent("Silver");

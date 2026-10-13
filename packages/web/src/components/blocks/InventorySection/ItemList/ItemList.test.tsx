@@ -410,6 +410,31 @@ describe("ItemList", () => {
     ]);
   });
 
+  it("draws the list busy while a row write and its refetch run, and idle once both land", async () => {
+    const fetchMock = renderList(
+      { ...derivedRecord(), containers: [{ entry: 1, name: "Cloak of Protection", overflow: [] }] },
+      undefined,
+      { holdFirstPut: true },
+    );
+
+    const remove = await screen.findByRole("button", { name: "Remove Longsword" });
+    const list = remove.closest("ul") as HTMLElement;
+    expect(list).toHaveAttribute("aria-busy", "false");
+    fireEvent.click(remove);
+    await waitFor(() => expect(list).toHaveAttribute("aria-busy", "true"));
+    const equip = screen.getByRole("button", { name: "Equipped, Ring of Warmth" });
+    expect(equip).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("combobox", { name: "Kept in, Longsword" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    releasePut();
+
+    await written(fetchMock);
+    await waitFor(() => expect(list).toHaveAttribute("aria-busy", "false"));
+    expect(equip).not.toHaveAttribute("aria-disabled");
+  });
+
   it("drops a row's edit while its rows wait on a refetch, rather than edit the entry that moved up", async () => {
     const fetchMock = stubApi({ refetch: false });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -428,7 +453,9 @@ describe("ItemList", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
     await written(fetchMock);
-    fireEvent.click(screen.getByRole("button", { name: "Remove Cloak of Protection" }));
+    const cloak = screen.getByRole("button", { name: "Remove Cloak of Protection" });
+    await waitFor(() => expect(cloak).toHaveAttribute("aria-disabled", "true"));
+    fireEvent.click(cloak);
 
     const puts = fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
     expect(puts).toHaveLength(1);

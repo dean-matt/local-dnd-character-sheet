@@ -11,15 +11,18 @@ export function PlaceField({
   holders,
   current,
   onChange,
+  busy,
 }: {
   name: string;
   holders: readonly { index: number; name: string }[];
   current: number | null;
   onChange: (holder: number | null) => void;
+  busy: boolean;
 }) {
   return (
     <Select
       aria-label={`Kept in, ${name}`}
+      aria-disabled={busy || undefined}
       value={current === null ? OUTSIDE : String(current)}
       options={[
         { value: OUTSIDE, label: "Not in a container" },
