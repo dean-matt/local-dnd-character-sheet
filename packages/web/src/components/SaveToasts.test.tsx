@@ -17,6 +17,7 @@ function Problem({
 }
 
 const regions = () => screen.getAllByRole("region", { name: "Save problems" });
+const announced = (region: HTMLElement) => region.querySelector("[aria-live]")?.textContent;
 
 describe("SaveToasts", () => {
   it("shows a field's problem until it clears, naming the field", () => {
@@ -37,7 +38,7 @@ describe("SaveToasts", () => {
         <SaveToasts />
       </>,
     );
-    expect(screen.getByRole("region", { name: "Save problems" })).toBeEmptyDOMElement();
+    expect(screen.getByRole("region", { name: "Save problems" })).toHaveTextContent(/^$/);
   });
 
   it("retries through the field's latest handler, and goes when dismissed", () => {
@@ -132,7 +133,7 @@ describe("SaveToasts", () => {
       </>,
     );
     const [page, modal] = regions() as [HTMLElement, HTMLElement];
-    expect(page).toBeEmptyDOMElement();
+    expect(page).toHaveTextContent(/^$/);
     expect(within(modal).getByText("Gold: disk full")).toBeInTheDocument();
 
     rerender(
@@ -142,5 +143,38 @@ describe("SaveToasts", () => {
       </>,
     );
     expect(within(regions()[0] as HTMLElement).getByText("Gold: disk full")).toBeInTheDocument();
+  });
+
+  it("announces a toast only in the viewport it was raised in, as a modal opens and closes", () => {
+    const { rerender } = render(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    expect(announced(regions()[0] as HTMLElement)).toBe("Gold: disk full");
+
+    rerender(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+        <SaveToasts />
+        <Problem field="Silver" message="disk full" retry={() => {}} />
+      </>,
+    );
+    const modal = regions()[1] as HTMLElement;
+    expect(modal).toHaveTextContent("Gold: disk full");
+    expect(announced(modal)).toBe("Silver: disk fullRetry");
+
+    rerender(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    const page = regions()[0] as HTMLElement;
+    expect(page).toHaveTextContent("Silver: disk full");
+    expect(announced(page)).toBe("Gold: disk full");
+    expect(within(page).getByRole("button", { name: "Dismiss Silver" })).toBeInTheDocument();
   });
 });
