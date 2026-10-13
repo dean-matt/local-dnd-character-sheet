@@ -293,3 +293,48 @@ test("Escape closes a modal from an entry a link opened, and focus returns to wh
   await expect(page.locator("dialog")).toHaveCount(0);
   await expect(search).toBeFocused();
 });
+
+/** The sheet's one reference and the popover it opens, on the first page. */
+async function sheetPopover(page: Page, request: APIRequestContext, width: number) {
+  const id = await sheetWithReference(request);
+  await page.setViewportSize({ width, height: 800 });
+  await page.goto(`/characters/${id}/p/stats`);
+  const main = page.locator("main");
+  return {
+    trigger: main.getByRole("button", { name: fireball.name, exact: true }),
+    content: main.getByRole("group", { name: `${fireball.name} (${fireball.source})` }),
+  };
+}
+
+test("a popover with room to its right opens left-aligned under its trigger", async ({
+  page,
+  request,
+}) => {
+  const { trigger, content } = await sheetPopover(page, request, 1280);
+  await trigger.click();
+  await expect(content).toBeVisible();
+  expect(Math.abs((await box(content)).x - (await box(trigger)).x)).toBeLessThanOrEqual(1);
+});
+
+for (const width of [320, 390]) {
+  test(`at ${width}px wide a popover opened from the right edge stays inside the window`, async ({
+    page,
+    request,
+  }) => {
+    const { trigger, content } = await sheetPopover(page, request, width);
+    const scrollWidth = () => page.evaluate(() => document.documentElement.scrollWidth);
+    await expect(trigger).toBeVisible();
+    const before = await scrollWidth();
+    // Pinned to the right edge, as a right-aligned value on a card sits.
+    await trigger.evaluate((element) => {
+      const wrapper = element.parentElement as HTMLElement;
+      Object.assign(wrapper.style, { position: "fixed", right: "4px", top: "200px" });
+    });
+    await trigger.click();
+    await expect(content).toBeVisible();
+    const placed = await box(content);
+    expect(placed.x).toBeGreaterThanOrEqual(0);
+    expect(placed.x + placed.width).toBeLessThanOrEqual(width);
+    expect(await scrollWidth()).toBe(before);
+  });
+}

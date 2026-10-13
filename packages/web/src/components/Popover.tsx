@@ -8,7 +8,7 @@
  * Content stays in the DOM right after the trigger rather than portalled, so Tab
  * order runs trigger then content with no focus trap to build or break. On the
  * page it sits absolutely beside the trigger, beneath the pinned chrome and the
- * search panel. Inside a modal it draws in the top layer instead, anchored to the
+ * search panel, and shifts left where it would run past the viewport. Inside a modal it draws in the top layer instead, anchored to the
  * trigger by CSS anchor positioning, so the modal's scrolling body cannot clip it.
  * Nesting stops one level down: a term inside a breakdown may open its own
  * explanation, but a trigger inside *that* renders as plain text. Stacking a third
@@ -27,6 +27,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useClampToViewport } from "../hooks/useClampToViewport.ts";
 import { useTopLayer } from "../hooks/useTopLayer.ts";
 import { anchorName as toAnchorName } from "../lib/anchoring.ts";
 import { InModal } from "./inModalContext.ts";
@@ -77,6 +78,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
   useEffect(() => () => clearTimeout(hoverTimer.current), []);
 
   useTopLayer(contentRef, inModal && open);
+  useClampToViewport(contentRef, !inModal && open);
 
   // A pointer down anywhere outside the trigger and its content closes it —
   // the only way a mouse user dismisses one opened by hover, since it never
@@ -184,7 +186,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
                 }
               : undefined
           }
-          className={`${inModal ? "inset-auto m-0" : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-lg`}
+          className={`${inModal ? "inset-auto m-0" : "absolute top-full left-0 z-10"} mt-1 w-max max-w-[min(20rem,calc(100vw-1rem))] rounded-card border border-border bg-surface p-2 text-ink text-row shadow-lg`}
         >
           <DepthContext.Provider value={depth + 1}>{children}</DepthContext.Provider>
         </span>
