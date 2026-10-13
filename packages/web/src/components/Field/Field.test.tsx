@@ -473,6 +473,32 @@ describe("Field, edit mode, a failed save's toast", () => {
     expect(saveToasts().getByText("Hit points: network down")).toBeInTheDocument();
   });
 
+  it("comes back when the same failure repeats after a dismissal", async () => {
+    edit(vi.fn().mockRejectedValue(new Error("network down")));
+    const input = screen.getByRole("textbox", { name: "Hit points" });
+    fireEvent.change(input, { target: { value: "12" } });
+    fireEvent.click(await saveToasts().findByRole("button", { name: "Dismiss Hit points" }));
+
+    fireEvent.blur(input);
+
+    expect(await saveToasts().findByText("Hit points: network down")).toBeInTheDocument();
+  });
+
+  it("is raised, without Retry, for a write that fails after its field unmounts", async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error("network down"));
+    const { rerender } = edit(onSave);
+    fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), {
+      target: { value: "12" },
+    });
+
+    rerender(<SaveToasts />);
+
+    expect(await saveToasts().findByText("Hit points: network down")).toBeInTheDocument();
+    expect(onSave).toHaveBeenCalledWith(12);
+    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    fireEvent.click(saveToasts().getByRole("button", { name: "Dismiss Hit points" }));
+  });
+
   it("goes when dismissed, leaving the field outlined", async () => {
     edit(vi.fn().mockRejectedValue(new Error("network down")));
     fireEvent.change(screen.getByRole("textbox", { name: "Hit points" }), {

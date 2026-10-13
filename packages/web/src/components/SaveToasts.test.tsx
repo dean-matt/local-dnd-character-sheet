@@ -3,8 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import { useSaveToast } from "../hooks/useSaveToast.ts";
 import { SaveToasts } from "./SaveToasts.tsx";
 
-function Problem({ message, retry }: { message?: string; retry?: () => void }) {
-  useSaveToast("Gold", message, retry);
+function Problem({
+  field = "Gold",
+  message,
+  retry,
+}: {
+  field?: string;
+  message?: string;
+  retry?: () => void;
+}) {
+  useSaveToast(field, message, retry);
   return null;
 }
 
@@ -66,6 +74,40 @@ describe("SaveToasts", () => {
     rerender(<SaveToasts />);
 
     expect(screen.queryByText("Gold: disk full")).not.toBeInTheDocument();
+  });
+
+  it("returns focus to where it came from when a dismissal leaves no toast", () => {
+    render(
+      <>
+        <input aria-label="Gold (gp)" />
+        <Problem message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    const field = screen.getByRole("textbox", { name: "Gold (gp)" });
+    field.focus();
+    const dismiss = screen.getByRole("button", { name: "Dismiss Gold" });
+    dismiss.focus();
+
+    fireEvent.click(dismiss);
+
+    expect(field).toHaveFocus();
+  });
+
+  it("moves focus to the next toast when a dismissal leaves one", () => {
+    render(
+      <>
+        <Problem message="disk full" />
+        <Problem field="Silver" message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    const dismiss = screen.getByRole("button", { name: "Dismiss Gold" });
+    dismiss.focus();
+
+    fireEvent.click(dismiss);
+
+    expect(screen.getByRole("button", { name: "Dismiss Silver" })).toHaveFocus();
   });
 
   it("draws only in the viewport mounted last, as a modal's is over the page's", () => {

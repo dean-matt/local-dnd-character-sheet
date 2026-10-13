@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useSyncExternalStore } from "react";
 import {
   dropSaveToast,
   openSaveToastViewport,
@@ -11,15 +11,47 @@ import {
  * Where save problems show: one toast per field, each staying until it is dismissed or its
  * field's problem clears. The root layout holds one and every modal another, and only the
  * last mounted draws, so a toast is never stranded behind a modal's inert page.
+ *
+ * Retry and Dismiss can take their toast away with the focus on it. Focus then moves to the
+ * next toast, or back to where it was before it entered the region, rather than to the
+ * page's top.
  */
 export function SaveToasts() {
   const id = useId();
   useEffect(() => openSaveToastViewport(id), [id]);
   const { toasts, viewports } = useSyncExternalStore(subscribeSaveToasts, saveToastState);
   const shown = viewports.at(-1) === id ? toasts : [];
+  const region = useRef<HTMLElement>(null);
+  const cameFrom = useRef<HTMLElement | null>(null);
+  const restoring = useRef(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the toasts change, which is when a pressed button's toast goes
+  useEffect(() => {
+    const element = region.current;
+    if (!restoring.current || !element || element.contains(document.activeElement)) return;
+    restoring.current = false;
+    // Focus the user moved on their own stays where they put it.
+    if (document.activeElement && document.activeElement !== document.body) return;
+    const next =
+      element.querySelector("button") ?? (cameFrom.current?.isConnected ? cameFrom.current : null);
+    next?.focus();
+  }, [shown]);
+
+  const press = (action: () => void) => () => {
+    restoring.current = true;
+    action();
+  };
+
   return (
     // Mounted while empty: a live region added with its text is often not announced.
     <section
+      ref={region}
+      onFocus={(event) => {
+        const from = event.relatedTarget;
+        if (from instanceof HTMLElement && !event.currentTarget.contains(from)) {
+          cameFrom.current = from;
+        }
+      }}
       aria-label="Save problems"
       aria-live="assertive"
       className="fixed right-4 bottom-4 z-50 flex max-w-[calc(100%-2rem)] flex-col items-end gap-2 print:hidden"
@@ -35,7 +67,7 @@ export function SaveToasts() {
           {toast.retry && (
             <button
               type="button"
-              onClick={toast.retry}
+              onClick={press(toast.retry)}
               className="shrink-0 font-semibold text-error underline"
             >
               Retry
@@ -44,7 +76,7 @@ export function SaveToasts() {
           <button
             type="button"
             aria-label={`Dismiss ${toast.field}`}
-            onClick={() => dropSaveToast(toast.id)}
+            onClick={press(() => dropSaveToast(toast.id))}
             className="shrink-0 p-0.5 text-muted hover:text-ink"
           >
             <X aria-hidden="true" size={14} />

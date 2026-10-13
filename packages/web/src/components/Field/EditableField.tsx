@@ -51,6 +51,8 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
   const [text, setText] = useState(incoming);
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [error, setError] = useState<string | undefined>();
+  // Counts failed writes, so a repeat of one the user dismissed raises its toast again.
+  const [failures, setFailures] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // The text behind the last write that actually landed, seeded with the field's
   // own starting text. `commit` skips only a raw value equal to this — never a
@@ -147,6 +149,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
         if (!mounted.current) raiseSaveToast({ id: toastId, field: label, message });
         setStatus("failed");
         setError(message);
+        setFailures((count) => count + 1);
       }
     };
     queued.current = raw;
@@ -169,6 +172,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     label,
     status === "invalid" || status === "failed" ? (error ?? "Save failed.") : undefined,
     status === "failed" ? () => commit(textRef.current) : undefined,
+    failures,
   );
 
   return (
