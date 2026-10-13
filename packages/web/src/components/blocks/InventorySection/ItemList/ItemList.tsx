@@ -1,7 +1,6 @@
 import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
@@ -197,10 +196,5 @@ export function ItemList({
     );
   });
   // A third of the content column fits a row's controls only from xl, beside the sidebar.
-  return (
-    <>
-      {entries.length === 0 && <EmptyState>{character.name} has no items yet.</EmptyState>}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">{cards}</div>
-    </>
-  );
+  return <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">{cards}</div>;
 }

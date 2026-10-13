@@ -17,15 +17,16 @@ const GROUP_OF_TYPE: Record<string, Group> = {
 export const groupOf = (item: SheetItem): Group =>
   (item.resolved && item.type && GROUP_OF_TYPE[item.type.abbreviation]) || "Gear";
 
-const ARMS = ["melee", "ranged", "light", "medium", "heavy", "shield"];
+const WEAPONS = ["melee", "ranged"];
+const ARMOR = ["light", "medium", "heavy", "shield"];
 
 /**
  * The `/search` kinds that find each group's items. A search matches an item holding any
- * kind named, so Gear's also finds a weapon that is a staff or a wondrous item too, such as
- * a Staff of Power; narrowing it exactly needs `/search` to exclude a kind.
+ * kind named, so Gear's also finds a weapon that is a staff or a wondrous item, such as a
+ * Staff of Power; narrowing it exactly needs `/search` to exclude a kind.
  */
 export const GROUP_KINDS: Record<Group, string> = {
-  Weapons: "melee,ranged",
-  Armor: "light,medium,heavy,shield",
-  Gear: ITEM_KINDS.filter((kind) => !ARMS.includes(kind)).join(","),
+  Weapons: WEAPONS.join(","),
+  Armor: ARMOR.join(","),
+  Gear: ITEM_KINDS.filter((kind) => !WEAPONS.includes(kind) && !ARMOR.includes(kind)).join(","),
 };

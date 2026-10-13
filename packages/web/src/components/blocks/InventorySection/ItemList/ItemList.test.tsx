@@ -297,7 +297,7 @@ describe("ItemList", () => {
   it("offers each column's Add item button while the inventory is empty", async () => {
     renderList(derivedRecord(), []);
 
-    expect(await screen.findByText("Vex has no items yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No weapons.")).toBeInTheDocument();
     for (const group of ["Weapons", "Armor", "Gear"]) {
       expect(screen.getByRole("button", { name: `Add item to ${group}` })).toBeInTheDocument();
     }

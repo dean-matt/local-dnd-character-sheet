@@ -42,7 +42,7 @@ export function AddItemButton({
           setShown(group);
           setOpen(true);
         }}
-        className="flex cursor-pointer items-center gap-0.5 rounded-control px-1 font-semibold text-accent-text normal-case tracking-normal hover:bg-subtle"
+        className="flex cursor-pointer items-center gap-0.5 rounded-control p-1 font-semibold text-accent-text normal-case tracking-normal hover:bg-subtle"
       >
         <Plus aria-hidden="true" size={12} />
         Add item
