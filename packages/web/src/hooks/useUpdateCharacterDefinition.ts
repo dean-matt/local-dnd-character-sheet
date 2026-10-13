@@ -12,7 +12,13 @@ import {
   charactersKey,
 } from "./characterKeys.ts";
 
-type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
+export type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
+
+/**
+ * An edit alone, or an edit the API refuses with a 412 where the character was written
+ * after `readAt`, the `updatedAt` the caller read.
+ */
+export type DefinitionWrite = DefinitionEdit | { edit: DefinitionEdit; readAt: string };
 
 /**
  * Applies an edit to a character's definition and writes the result. The edit runs when
@@ -28,13 +34,23 @@ type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
 export function useUpdateCharacterDefinition(id: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<CharacterRecord, Error, DefinitionEdit>({
+  return useMutation<CharacterRecord, Error, DefinitionWrite>({
     mutationKey: characterDefinitionWriteKey(id),
     scope: { id: characterDefinitionWriteScope(id) },
-    mutationFn: (edit) => {
+    mutationFn: (write) => {
       const record = queryClient.getQueryData<CharacterRecord>(characterKey(id));
       if (!record) throw new Error("The character has not loaded yet.");
-      return apiMutate("PUT", `/characters/${id}`, characterRecordSchema, edit(record.definition));
+      const { edit, readAt } =
+        typeof write === "function" ? { edit: write, readAt: undefined } : write;
+      return apiMutate(
+        "PUT",
+        `/characters/${id}`,
+        characterRecordSchema,
+        edit(record.definition),
+        readAt === undefined
+          ? undefined
+          : { "If-Unmodified-Since": new Date(readAt).toUTCString() },
+      );
     },
     onSuccess: (record) => {
       queryClient.setQueryData(characterKey(id), record);

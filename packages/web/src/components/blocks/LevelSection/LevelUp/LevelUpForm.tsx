@@ -16,6 +16,8 @@ export interface LevelUpFormProps {
   definition: CharacterDefinition;
   saving: boolean;
   error: string | undefined;
+  /** Offered beside `error` where reading the character again is the way past it. */
+  onReload?: () => void;
   /** Runs as Apply submits a complete level, with what the summary lists from the class table. */
   onSend: (sent: { table: LevelChange[]; features: string[] }) => void;
   cancel: () => void;
@@ -31,6 +33,7 @@ export function LevelUpForm({
   definition,
   saving,
   error,
+  onReload,
   onSend,
   cancel,
 }: LevelUpFormProps) {
@@ -48,6 +51,15 @@ export function LevelUpForm({
           <div className="flex items-center gap-2">
             <p role="alert" className="text-error text-row">
               {error && `Couldn't save the level: ${error}`}
+              {onReload && (
+                <button
+                  type="button"
+                  onClick={onReload}
+                  className="ml-2 font-semibold text-accent underline hover:text-accent-hover"
+                >
+                  Reload
+                </button>
+              )}
             </p>
             <button
               type="button"

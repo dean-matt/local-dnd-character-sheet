@@ -69,10 +69,11 @@ export async function apiMutate<T>(
   path: string,
   schema: z.ZodType<T>,
   body: unknown,
+  headers?: Record<string, string>,
 ): Promise<T> {
   const response = await request(path, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
   return schema.parse(await response.json());
