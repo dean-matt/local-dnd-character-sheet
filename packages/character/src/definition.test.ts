@@ -133,10 +133,12 @@ describe("money", () => {
     });
   });
 
-  it("rejects a debt and a fraction of a coin", () => {
-    expect(
-      characterDefinitionSchema.safeParse({ ...definition, money: { gold: -1 } }).success,
-    ).toBe(false);
+  it("keeps a debt", () => {
+    const owing = characterDefinitionSchema.parse({ ...definition, money: { gold: -10 } });
+    expect(owing.money.gold).toBe(-10);
+  });
+
+  it("rejects a fraction of a coin", () => {
     expect(
       characterDefinitionSchema.safeParse({ ...definition, money: { gold: 1.5 } }).success,
     ).toBe(false);
