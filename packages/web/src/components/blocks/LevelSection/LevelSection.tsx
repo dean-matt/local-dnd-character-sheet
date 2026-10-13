@@ -6,6 +6,7 @@ import { classChips } from "../classChips.ts";
 import { SectionUnavailable } from "../SectionUnavailable.tsx";
 import { ExperienceTracker } from "./ExperienceTracker.tsx";
 import { Improvements } from "./Improvements.tsx";
+import { LevelHistory } from "./LevelHistory.tsx";
 import { LevelingField } from "./LevelingField.tsx";
 import { LevelUp } from "./LevelUp/LevelUp.tsx";
 
@@ -37,6 +38,7 @@ export function LevelSection({ character }: { character: CharacterRecord | undef
         </div>
       </Card>
       <Improvements character={character} />
+      <LevelHistory character={character} />
     </div>
   );
 }

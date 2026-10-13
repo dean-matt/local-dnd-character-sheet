@@ -1,8 +1,6 @@
-import { type CharacterDefinition, classLevels, entryKey } from "@dnd/character";
-import { useQueries } from "@tanstack/react-query";
+import type { CharacterDefinition } from "@dnd/character";
 import { type ImprovementGrant, improvementGrants } from "../lib/improvementGrants.ts";
-import { classGrantsQuery } from "./classGrantsQuery.ts";
-import { subclassGrantsQuery } from "./subclassGrantsQuery.ts";
+import { useClassFeatures } from "./useClassFeatures.ts";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -16,23 +14,12 @@ export function useImprovementGrants(levels: readonly Level[]): {
   grants: ImprovementGrant[];
   read: boolean;
 } {
-  const classes = classLevels({ levels }).flatMap(({ class: cls, level, subclass }) =>
-    "name" in cls ? [{ cls, level, subclass }] : [],
-  );
-  const results = useQueries({
-    queries: classes.map(({ cls, level }) => classGrantsQuery(cls, level)),
-  });
-  const subclasses = useQueries({
-    queries: classes.map(({ cls, level, subclass }) => subclassGrantsQuery(cls, subclass, level)),
-  });
-  const features = new Map(
-    classes.map(({ cls }, index) => [
-      entryKey(cls),
-      [...(results[index]?.data?.features ?? []), ...(subclasses[index]?.data?.features ?? [])],
-    ]),
-  );
+  const { featuresOf, read } = useClassFeatures(levels);
   return {
-    grants: improvementGrants(levels, (cls) => features.get(entryKey(cls)) ?? []),
-    read: results.every((result) => result.isSuccess),
+    grants: improvementGrants(levels, (cls) => {
+      const features = featuresOf(cls);
+      return [...features.class, ...features.subclass];
+    }),
+    read,
   };
 }

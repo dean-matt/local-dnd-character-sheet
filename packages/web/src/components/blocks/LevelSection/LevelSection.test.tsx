@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
-import { identityRecord } from "../../../test/records.ts";
+import { characterRecord, derivedRecord, identityRecord } from "../../../test/records.ts";
 import { saveToasts } from "../../../test/saveToasts.ts";
+import { stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { SaveToasts } from "../../SaveToasts.tsx";
 import { LevelSection } from "./LevelSection.tsx";
 
@@ -49,7 +50,10 @@ const NO_GRANTS = { level: 1, resources: [], spellSlots: [], optionalFeatures: [
 let classGrants: unknown;
 let writes: Mock;
 
-/** Answers the class and feat reads `Improvements` makes, and hands every other call to `writes`. */
+/**
+ * Answers the class and feat reads `Improvements` makes, refuses the derived read the
+ * history's hit points wait on, and hands every other call to `writes`.
+ */
 beforeEach(() => {
   classGrants = NO_GRANTS;
   writes = vi.fn();
@@ -58,6 +62,7 @@ beforeEach(() => {
     if (path.startsWith("/api/classes/")) return new Response(JSON.stringify(classGrants));
     if (path.startsWith("/api/feats?"))
       return new Response(JSON.stringify({ items: [], total: 0 }));
+    if (path.endsWith("/derived")) return new Response("{}", { status: 404 });
     return writes(url, init);
   });
 });
@@ -217,5 +222,96 @@ describe("LevelSection", () => {
 
     await waitFor(() => expect(within(card()).getByText("1,750 XP")).toBeInTheDocument());
     expect(sentBody(fetchMock).experience).toBe(1750);
+  });
+});
+
+describe("LevelHistory", () => {
+  const WARLOCK = { name: "Warlock", source: "XPHB" };
+  const FIEND = { name: "Fiend Patron", source: "XPHB" };
+  const feature = (name: string, level: number) => ({
+    name,
+    source: "XPHB",
+    level,
+    json: { name, source: "XPHB", entries: [`${name} rules text.`] },
+  });
+  const grants = (level: number, features: object[]) => ({ ...NO_GRANTS, level, features });
+
+  /** Vex at Warlock 4, a Fiend Patron from the third level and +2 Charisma at the fourth. */
+  function warlock(levels = 4): CharacterRecord {
+    const base = characterRecord("1", "Vex");
+    return {
+      ...base,
+      definition: {
+        ...base.definition,
+        levels: Array.from({ length: levels }, (_, index) =>
+          index === 2 ? { class: WARLOCK, subclass: FIEND } : { class: WARLOCK },
+        ),
+        abilityIncreases: [{ ability: "cha", amount: 2, grantedBy: "class", level: 4 }],
+      },
+    };
+  }
+
+  function stubHistory(character: CharacterRecord) {
+    const level = character.definition.levels.length;
+    stubFetchByUrl({
+      [`/api/classes/Warlock/XPHB/at/${level}`]: grants(level, [
+        feature("Pact Magic", 1),
+        feature("Magical Cunning", 2),
+        feature("Ability Score Improvement", 4),
+        feature("Pact Boon", 5),
+      ]),
+      [`/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/${level}`]: grants(level, [
+        feature("Dark One's Blessing", 3),
+      ]),
+      "/api/characters/1/derived": derivedRecord(character.definition),
+      "/api/feats?edition=one&limit=200": { items: [], total: 0 },
+    });
+  }
+
+  const history = () => screen.getByRole("region", { name: "Level History" });
+  const rows = () =>
+    within(history())
+      .getAllByRole("listitem")
+      .map((row) => row.textContent);
+
+  it("lists each level oldest first with its hit points, subclass, features and improvement", async () => {
+    const character = warlock();
+    stubHistory(character);
+    renderSeeded(character);
+
+    await waitFor(() =>
+      expect(rows()).toEqual([
+        "Level 1 · Warlock 1Hit points: +10 (d8 highest 8 +2 Con)Features: Pact Magic",
+        "Level 2 · Warlock 2Hit points: +7 (d8 average 5 +2 Con)Features: Magical Cunning",
+        "Level 3 · Warlock 3Hit points: +7 (d8 average 5 +2 Con)Subclass: Fiend PatronFeatures: Dark One's Blessing",
+        "Level 4 · Warlock 4Hit points: +7 (d8 average 5 +2 Con)Features: Ability Score ImprovementTook: +2 Charisma",
+      ]),
+    );
+  });
+
+  it("opens a feature's rules text from its name", async () => {
+    const character = warlock();
+    stubHistory(character);
+    renderSeeded(character);
+
+    fireEvent.click(await within(history()).findByRole("button", { name: "Dark One's Blessing" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Dark One's Blessing rules text.")).toBeVisible();
+  });
+
+  it("follows a level-up without a reload", async () => {
+    const before = warlock(4);
+    stubHistory(before);
+    const client = renderSeeded(before);
+    await waitFor(() => expect(rows()).toHaveLength(4));
+
+    const after = warlock(5);
+    stubHistory(after);
+    client.setQueryData(characterKey(after.id), after);
+    await client.invalidateQueries({ queryKey: characterKey(after.id) });
+
+    await waitFor(() => expect(rows()[4]).toContain("Features: Pact Boon"));
+    expect(rows()).toHaveLength(5);
   });
 });
