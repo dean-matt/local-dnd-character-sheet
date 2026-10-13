@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useSaveToast } from "../hooks/useSaveToast.ts";
 import { SaveToasts } from "./SaveToasts.tsx";
@@ -17,6 +18,11 @@ function Problem({
 }
 
 const regions = () => screen.getAllByRole("region", { name: "Save problems" });
+const announced = (region: HTMLElement) => region.querySelector("[aria-live]")?.textContent;
+const expectEmpty = (region: HTMLElement) => {
+  expect(region.childElementCount).toBe(1);
+  expect(region.querySelector("[aria-live]")).toBeEmptyDOMElement();
+};
 
 describe("SaveToasts", () => {
   it("shows a field's problem until it clears, naming the field", () => {
@@ -37,7 +43,7 @@ describe("SaveToasts", () => {
         <SaveToasts />
       </>,
     );
-    expect(screen.getByRole("region", { name: "Save problems" })).toBeEmptyDOMElement();
+    expectEmpty(screen.getByRole("region", { name: "Save problems" }));
   });
 
   it("retries through the field's latest handler, and goes when dismissed", () => {
@@ -132,7 +138,7 @@ describe("SaveToasts", () => {
       </>,
     );
     const [page, modal] = regions() as [HTMLElement, HTMLElement];
-    expect(page).toBeEmptyDOMElement();
+    expectEmpty(page);
     expect(within(modal).getByText("Gold: disk full")).toBeInTheDocument();
 
     rerender(
@@ -142,5 +148,67 @@ describe("SaveToasts", () => {
       </>,
     );
     expect(within(regions()[0] as HTMLElement).getByText("Gold: disk full")).toBeInTheDocument();
+  });
+
+  it("announces a toast once, however often a modal opens and closes over it", () => {
+    const { rerender } = render(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    expect(announced(regions()[0] as HTMLElement)).toBe("Gold: disk full");
+
+    rerender(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+        <SaveToasts />
+        <Problem field="Silver" message="disk full" retry={() => {}} />
+      </>,
+    );
+    const modal = regions()[1] as HTMLElement;
+    expect(modal).toHaveTextContent("Gold: disk full");
+    expect(announced(modal)).toBe("Silver: disk fullRetry");
+
+    rerender(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    const page = regions()[0] as HTMLElement;
+    expect(page).toHaveTextContent("Gold: disk full");
+    expect(page).toHaveTextContent("Silver: disk full");
+    expect(announced(page)).toBe("");
+    expect(within(page).getByRole("button", { name: "Dismiss Silver" })).toBeInTheDocument();
+
+    rerender(
+      <>
+        <Problem message="disk full" />
+        <SaveToasts />
+        <Problem field="Copper" message="disk full" />
+      </>,
+    );
+    expect(announced(regions()[0] as HTMLElement)).toBe("Copper: disk full");
+  });
+
+  it("announces nothing already showing when a modal opens under StrictMode", () => {
+    const { rerender } = render(
+      <StrictMode>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </StrictMode>,
+    );
+    rerender(
+      <StrictMode>
+        <Problem message="disk full" />
+        <SaveToasts />
+        <SaveToasts />
+      </StrictMode>,
+    );
+    const modal = regions()[1] as HTMLElement;
+    expect(modal).toHaveTextContent("Gold: disk full");
+    expect(announced(modal)).toBe("");
   });
 });
