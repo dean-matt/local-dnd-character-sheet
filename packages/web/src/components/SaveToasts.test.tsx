@@ -29,7 +29,7 @@ describe("SaveToasts", () => {
     expect(screen.getByRole("region", { name: "Save problems" })).toHaveTextContent(
       "Gold: disk full",
     );
-    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
 
     rerender(
       <>
@@ -56,7 +56,7 @@ describe("SaveToasts", () => {
       </>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Retry / }));
     expect(latest).toHaveBeenCalledOnce();
     expect(first).not.toHaveBeenCalled();
 
@@ -64,7 +64,20 @@ describe("SaveToasts", () => {
     expect(screen.queryByText("Gold: disk full")).not.toBeInTheDocument();
   });
 
-  it("goes with the field that raised it", () => {
+  it("stays, without Retry, when a field with a failed write unmounts", () => {
+    const { rerender } = render(
+      <>
+        <Problem message="disk full" retry={() => {}} />
+        <SaveToasts />
+      </>,
+    );
+    rerender(<SaveToasts />);
+
+    expect(screen.getByText("Gold: disk full")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry Gold" })).not.toBeInTheDocument();
+  });
+
+  it("goes with the field that raised refused text", () => {
     const { rerender } = render(
       <>
         <Problem message="disk full" />

@@ -171,7 +171,7 @@ describe("CustomSkills", () => {
     fireEvent.blur(input);
 
     const toasts = within(modal.getByRole("region", { name: "Save problems" }));
-    expect(await toasts.findByRole("button", { name: "Retry" })).toBeVisible();
+    expect(await toasts.findByRole("button", { name: /^Retry / })).toBeVisible();
     expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
   });
 
@@ -218,7 +218,7 @@ describe("CustomSkills", () => {
     fireEvent(screen.getByRole("dialog"), new Event("cancel"));
 
     expect(await saveToasts().findByText(/^Cartography flat bonus: /)).toBeInTheDocument();
-    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(saveToasts().queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cartography check +5" })).toBeInTheDocument();
   });
 

@@ -213,7 +213,7 @@ describe("LevelSection", () => {
     expect(within(card()).getByText("1,500 XP")).toBeInTheDocument();
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(record({ experience: 1750 }))));
-    fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
+    fireEvent.click(saveToasts().getByRole("button", { name: /^Retry / }));
 
     await waitFor(() => expect(within(card()).getByText("1,750 XP")).toBeInTheDocument());
     expect(sentBody(fetchMock).experience).toBe(1750);

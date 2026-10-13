@@ -115,7 +115,7 @@ describe("IdentitySection", () => {
       fireEvent.blur(field);
 
       expect(await saveToasts().findByText(`${label}: disk full`)).toBeInTheDocument();
-      expect(saveToasts().getByRole("button", { name: "Retry" })).toBeInTheDocument();
+      expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
       expect(field).toHaveAttribute("aria-invalid", "true");
       expect(screen.getByRole("region", { name: card })).not.toHaveTextContent(/disk full/);
     },

@@ -601,7 +601,7 @@ describe("InventorySection", () => {
       enterGold("1,250+25");
       expect(await saveToasts().findByText(/^Gold: Couldn't save 1,275 gp/)).toBeInTheDocument();
       expect(goldField()).toHaveAttribute("aria-invalid", "true");
-      fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
+      fireEvent.click(saveToasts().getByRole("button", { name: /^Retry / }));
 
       await waitFor(() => expect(putBodies(fetchMock)).toHaveLength(2));
       expect(putBodies(fetchMock).map((body) => body.money.gold)).toEqual([1275, 1275]);
@@ -625,7 +625,7 @@ describe("InventorySection", () => {
       fireEvent.change(field, { target: { value: "1,275-3" } });
       fail();
 
-      expect(await saveToasts().findByRole("button", { name: "Retry" })).toBeInTheDocument();
+      expect(await saveToasts().findByRole("button", { name: /^Retry / })).toBeInTheDocument();
     });
 
     it.each(["", "10,00", "+-5", "1.5", "2*3", "10/2", "(5+5)", "1 000", "5+"])(
@@ -636,7 +636,7 @@ describe("InventorySection", () => {
         const field = enterGold(text);
 
         expect(await saveToasts().findByText(`Gold: ${HINT}`)).toBeInTheDocument();
-        expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+        expect(saveToasts().queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
         expect(field).toHaveAttribute("aria-invalid", "true");
         expect(field).toHaveAccessibleDescription(HINT);
         expect(field).toHaveValue(text);

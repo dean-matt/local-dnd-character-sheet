@@ -67,6 +67,7 @@ export function SaveToasts() {
           {toast.retry && (
             <button
               type="button"
+              aria-label={`Retry ${toast.field}`}
               onClick={press(toast.retry)}
               className="shrink-0 font-semibold text-error underline"
             >

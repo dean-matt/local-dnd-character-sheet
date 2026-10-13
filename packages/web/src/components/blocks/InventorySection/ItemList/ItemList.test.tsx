@@ -585,6 +585,6 @@ describe("ItemList", () => {
     expect(
       await saveToasts().findByText("Inventory: Couldn't save: disk full"),
     ).toBeInTheDocument();
-    expect(saveToasts().getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
 });

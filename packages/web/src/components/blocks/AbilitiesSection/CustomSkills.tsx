@@ -9,6 +9,7 @@ import {
   flatSkillBonusSchema,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
@@ -41,6 +42,7 @@ export function CustomSkills({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const failure = useHeldWriteError(update);
   // A flat bonus saves through its own field, which reports its own failure.
   const flats = useUpdateCharacterDefinition(character.id);
   const [name, setName] = useState("");
@@ -51,7 +53,7 @@ export function CustomSkills({
 
   useSaveToast(
     "Custom skills",
-    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
   );
 

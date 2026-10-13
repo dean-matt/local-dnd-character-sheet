@@ -176,7 +176,7 @@
     <sc-if value="{{showSaveToast}}" hint-placeholder-val="{{false}}">
       <div style="display: flex; align-items: flex-start; gap: 8px; width: 320px; padding: 8px 12px; border: 1px solid #9f0712; border-radius: 8px; background: #ffffff; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); font-size: 13px;">
         <p style="margin: 0; flex-grow: 1; min-width: 0; color: #9f0712;">Gold: Couldn't save 1,275 gp: disk full</p>
-        <button onClick="{{retrySave}}" style="flex-shrink: 0; border: none; background: none; padding: 0; font-size: 13px; font-weight: 600; color: #9f0712; text-decoration: underline;">Retry</button>
+        <button aria-label="Retry Gold" onClick="{{retrySave}}" style="flex-shrink: 0; border: none; background: none; padding: 0; font-size: 13px; font-weight: 600; color: #9f0712; text-decoration: underline;">Retry</button>
         <button aria-label="Dismiss Gold" onClick="{{dismissSaveToast}}" style="flex-shrink: 0; border: none; background: none; padding: 2px; color: #6b7280; display: flex;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>

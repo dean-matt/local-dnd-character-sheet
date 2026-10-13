@@ -125,6 +125,6 @@ describe("CatalogSkills", () => {
     fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Not proficient" }));
 
     expect(await saveToasts().findByText(/^Skill proficiency: Couldn't save/)).toBeInTheDocument();
-    expect(saveToasts().getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
 });

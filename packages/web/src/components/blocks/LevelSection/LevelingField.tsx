@@ -1,5 +1,6 @@
 import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { useState } from "react";
+import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { FormField } from "../../FormField.tsx";
@@ -15,6 +16,7 @@ const OPTIONS: { value: Leveling; label: string }[] = [
 /** The leveling mode, saved as soon as it is picked. */
 export function LevelingField({ character }: { character: CharacterRecord }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const failure = useHeldWriteError(update);
   const current = character.definition.leveling;
   const [picked, setPicked] = useState<Leveling>();
 
@@ -25,14 +27,14 @@ export function LevelingField({ character }: { character: CharacterRecord }) {
 
   useSaveToast(
     "Leveling",
-    update.isError
-      ? `Couldn't save ${OPTIONS.find((option) => option.value === picked)?.label}: ${update.error.message}`
+    failure
+      ? `Couldn't save ${OPTIONS.find((option) => option.value === picked)?.label}: ${failure.message}`
       : undefined,
     () => picked && save(picked),
   );
 
   return (
-    <FormField label="Leveling" invalid={update.isError}>
+    <FormField label="Leveling" invalid={failure !== null}>
       {(control) => (
         <Select
           {...control}

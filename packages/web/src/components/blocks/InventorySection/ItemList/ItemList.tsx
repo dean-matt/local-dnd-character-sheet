@@ -6,6 +6,7 @@ import { EmptyState } from "../../../../EmptyState.tsx";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
+import { useHeldWriteError } from "../../../../hooks/useHeldWriteError.ts";
 import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
@@ -49,6 +50,7 @@ export function ItemList({
 }) {
   const inventory = useCharacterInventory(character.id);
   const update = useUpdateCharacterDefinition(character.id);
+  const failure = useHeldWriteError(update);
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
   const queryClient = useQueryClient();
@@ -115,7 +117,7 @@ export function ItemList({
 
   useSaveToast(
     "Inventory",
-    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
   );
 

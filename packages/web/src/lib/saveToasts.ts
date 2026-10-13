@@ -50,6 +50,11 @@ export function dropSaveToast(id: string) {
   set({ ...state, toasts: state.toasts.filter((each) => each.id !== id) });
 }
 
+/** Empties the store between tests, where a failed write's toast outlives its field. */
+export function clearSaveToasts() {
+  set({ ...state, toasts: [] });
+}
+
 export function openSaveToastViewport(id: string) {
   set({ ...state, viewports: [...state.viewports, id] });
   return () => set({ ...state, viewports: state.viewports.filter((each) => each !== id) });

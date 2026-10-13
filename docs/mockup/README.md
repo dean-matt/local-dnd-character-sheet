@@ -61,8 +61,8 @@ widget, panel, or nav element:
   no fill or underline — and an open menu takes a gray fill instead. The save status reads
   "Saving…" while any write to the character is in flight and "Saved" for a moment after;
   a save that fails or an entry a field refuses raises a toast at the bottom right naming
-  the field, with Retry for a failed save, and no card changes height. Its `save` tweak
-  switches between them. Character Header is one 52px
+  the field, with Retry for a failed save, and no card changes height. The artboard's
+  `save` tweak switches between them. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
   — total level, race and classes — after a `·`, with Inspiration (its icon alone, the label in a tooltip), Rest and the

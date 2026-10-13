@@ -131,13 +131,40 @@ describe("AlignmentCard", () => {
     expect(field()).toHaveAttribute("aria-invalid", "true");
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved)));
-    fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
+    fireEvent.click(saveToasts().getByRole("button", { name: /^Retry / }));
 
     await waitFor(() => expect(field()).toHaveTextContent("Lawful Evil"));
     expect(field()).toHaveAttribute("aria-invalid", "false");
     expect(saveToasts().queryByText(/disk full/)).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(sentBody(fetchMock).alignment).toBe("Lawful Evil");
+  });
+
+  it("keeps the toast and the outline while a retry is in flight, and after it fails too", async () => {
+    let fail = () => {};
+    const fetchMock = stubFetch(
+      new Response(JSON.stringify({ error: "disk full" }), { status: 500 }),
+    );
+    renderSeeded();
+    fireEvent.click(within(open()).getByRole("option", { name: "Lawful Evil" }));
+    const toast = await saveToasts().findByText(/^Alignment: /);
+
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          fail = () =>
+            resolve(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
+        }),
+    );
+    fireEvent.click(saveToasts().getByRole("button", { name: "Retry Alignment" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+    expect(toast).toBeInTheDocument();
+    expect(field()).toHaveAttribute("aria-invalid", "true");
+    fail();
+    await waitFor(() => expect(fetchMock.mock.results[1]?.value).resolves.toBeDefined());
+    expect(saveToasts().getByText(/^Alignment: /)).toBeInTheDocument();
+    expect(field()).toHaveAttribute("aria-invalid", "true");
   });
 
   it("shows a value set from outside, such as by undo", async () => {

@@ -1,5 +1,6 @@
 import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDerived, type CharacterRecord, derivedValue, refKey } from "@dnd/character";
+import { useHeldWriteError } from "../../../../hooks/useHeldWriteError.ts";
 import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
@@ -19,11 +20,12 @@ export function WeaponMasteryChoice({
   derived: CharacterDerived;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const failure = useHeldWriteError(update);
   const chosen = character.definition.weaponMasteries;
   const limit = derivedValue(derived.weaponMasteryLimit);
   useSaveToast(
     "Weapon mastery",
-    update.isError ? `Couldn't save: ${update.error.message}` : undefined,
+    failure ? `Couldn't save: ${failure.message}` : undefined,
     () => update.variables && update.mutate(update.variables),
   );
   if (limit === 0 && chosen.length === 0) return null;

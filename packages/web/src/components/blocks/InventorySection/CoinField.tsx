@@ -1,5 +1,6 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useHeldWriteError } from "../../../hooks/useHeldWriteError.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { InputField } from "../../InputField.tsx";
@@ -48,6 +49,7 @@ export function CoinField({
   hintId: string;
 }) {
   const update = useUpdateCharacterDefinition(characterId);
+  const failure = useHeldWriteError(update);
   const [draft, setDraft] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<string | null>(null);
   const [sent, setSent] = useState(total);
@@ -85,10 +87,10 @@ export function CoinField({
   useSaveToast(
     name,
     refusal ??
-      (update.isError
-        ? `Couldn't save ${sent.toLocaleString("en-US")} ${abbreviation}: ${update.error.message}`
+      (failure
+        ? `Couldn't save ${sent.toLocaleString("en-US")} ${abbreviation}: ${failure.message}`
         : undefined),
-    update.isError && refusal === null ? () => apply(sent) : undefined,
+    failure && refusal === null ? () => apply(sent) : undefined,
   );
 
   function submit(event: FormEvent) {
@@ -114,7 +116,7 @@ export function CoinField({
           setRefusal(null);
         }}
         onBlur={commit}
-        invalid={refusal !== null || update.isError}
+        invalid={refusal !== null || failure !== null}
         className="w-[70px]"
       />
     </form>

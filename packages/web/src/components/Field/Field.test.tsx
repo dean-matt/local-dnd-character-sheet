@@ -262,7 +262,7 @@ describe("Field, edit mode", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     onSave.mockResolvedValueOnce(undefined);
-    fireEvent.click(saveToasts().getByRole("button", { name: "Retry" }));
+    fireEvent.click(saveToasts().getByRole("button", { name: /^Retry / }));
 
     await waitFor(() => expect(input).toHaveAttribute("aria-invalid", "false"));
     expect(onSave).toHaveBeenCalledTimes(2);
@@ -328,7 +328,7 @@ describe("Field, edit mode", () => {
       "true",
     );
     expect(onSave).not.toHaveBeenCalled();
-    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(saveToasts().queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
   });
 
   it("surfaces a parse failure without calling onSave", async () => {
@@ -359,7 +359,7 @@ describe("Field, edit mode", () => {
       "true",
     );
     expect(onSave).not.toHaveBeenCalled();
-    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(saveToasts().queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
   });
 });
 
@@ -495,8 +495,7 @@ describe("Field, edit mode, a failed save's toast", () => {
 
     expect(await saveToasts().findByText("Hit points: network down")).toBeInTheDocument();
     expect(onSave).toHaveBeenCalledWith(12);
-    expect(saveToasts().queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
-    fireEvent.click(saveToasts().getByRole("button", { name: "Dismiss Hit points" }));
+    expect(saveToasts().queryByRole("button", { name: /^Retry / })).not.toBeInTheDocument();
   });
 
   it("goes when dismissed, leaving the field outlined", async () => {
