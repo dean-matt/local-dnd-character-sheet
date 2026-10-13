@@ -269,24 +269,47 @@ describe("LevelHistory", () => {
   }
 
   const history = () => screen.getByRole("region", { name: "Level History" });
+  /** Each body row's cells, the header row dropped. */
   const rows = () =>
     within(history())
-      .getAllByRole("listitem")
-      .map((row) => row.textContent);
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) =>
+        [...row.querySelectorAll("th, td")].map((cell) => {
+          const lines = [...cell.querySelectorAll("p")];
+          return lines.length > 0 ? lines.map((line) => line.textContent) : cell.textContent;
+        }),
+      );
 
-  it("lists each level oldest first with its hit points, subclass, features and improvement", async () => {
+  it("tables each level oldest first with its class, hit points and what it gained", async () => {
     const character = warlock();
     stubHistory(character);
     renderSeeded(character);
 
     await waitFor(() =>
       expect(rows()).toEqual([
-        "Level 1 · Warlock 1Hit points: +10 (Level 1: d8 highest 8 +2 Con)Features: Pact Magic",
-        "Level 2 · Warlock 2Hit points: +7 (Level 2: d8 average 5 +2 Con)Features: Magical Cunning",
-        "Level 3 · Warlock 3Hit points: +7 (Level 3: d8 average 5 +2 Con)Subclass: Fiend PatronFeatures: Dark One's Blessing",
-        "Level 4 · Warlock 4Hit points: +7 (Level 4: d8 average 5 +2 Con)Features: Ability Score ImprovementTook: +2 Charisma",
+        ["1", "Warlock 1", "+10 (Level 1: d8 highest 8 +2 Con)", ["Pact Magic"]],
+        ["2", "Warlock 2", "+7 (Level 2: d8 average 5 +2 Con)", ["Magical Cunning"]],
+        [
+          "3",
+          "Warlock 3",
+          "+7 (Level 3: d8 average 5 +2 Con)",
+          ["Subclass: Fiend Patron", "Dark One's Blessing"],
+        ],
+        [
+          "4",
+          "Warlock 4",
+          "+7 (Level 4: d8 average 5 +2 Con)",
+          ["Ability Score Improvement", "Improvement: +2 Charisma"],
+        ],
       ]),
     );
+    expect(
+      within(history())
+        .getAllByRole("columnheader")
+        .map((cell) => cell.textContent),
+    ).toEqual(["Lvl", "Class", "HP", "Gained"]);
+    expect(within(history()).getByRole("rowheader", { name: "3" })).toBeVisible();
   });
 
   it("opens a feature's rules text from its name", async () => {
@@ -311,7 +334,7 @@ describe("LevelHistory", () => {
     client.setQueryData(characterKey(after.id), after);
     await client.invalidateQueries({ queryKey: characterKey(after.id) });
 
-    await waitFor(() => expect(rows()[4]).toContain("Features: Pact Boon"));
+    await waitFor(() => expect(rows()[4]?.[3]).toEqual(["Pact Boon"]));
     expect(rows()).toHaveLength(5);
   });
 
@@ -339,7 +362,7 @@ describe("LevelHistory", () => {
     stubFetchByUrl({});
     renderSeeded(character);
 
-    await waitFor(() => expect(rows()[0]).toContain("Hit points: unavailable"));
+    await waitFor(() => expect(rows()[0]?.[2]).toBe("unavailable"));
     expect(within(history()).getByText("Some class features could not load.")).toBeVisible();
   });
 });
