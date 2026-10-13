@@ -244,7 +244,7 @@ describe("ItemList", () => {
     expect(screen.getByRole("combobox", { name: "Add an item" })).toBeInTheDocument();
   });
 
-  it("keeps a group with no items as a column with a note", async () => {
+  it("notes an empty group in its card", async () => {
     renderList();
 
     await screen.findByText("Longsword");
