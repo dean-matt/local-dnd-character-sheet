@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useSaveToast } from "../hooks/useSaveToast.ts";
 import { SaveToasts } from "./SaveToasts.tsx";
@@ -190,5 +191,24 @@ describe("SaveToasts", () => {
       </>,
     );
     expect(announced(regions()[0] as HTMLElement)).toBe("Copper: disk full");
+  });
+
+  it("announces nothing already showing when a modal opens under StrictMode", () => {
+    const { rerender } = render(
+      <StrictMode>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </StrictMode>,
+    );
+    rerender(
+      <StrictMode>
+        <Problem message="disk full" />
+        <SaveToasts />
+        <SaveToasts />
+      </StrictMode>,
+    );
+    const modal = regions()[1] as HTMLElement;
+    expect(modal).toHaveTextContent("Gold: disk full");
+    expect(announced(modal)).toBe("");
   });
 });

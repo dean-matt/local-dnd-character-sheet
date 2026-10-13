@@ -20,8 +20,11 @@ export interface SaveToast {
 }
 
 interface ShownToast extends SaveToast {
-  /** The viewport drawing when the toast was raised, the one that announces it. */
-  raisedIn?: string;
+  /**
+   * The viewport drawing when the toast was raised, the one that announces it. `null` once a
+   * viewport closes over it: already announced, so no viewport announces it again.
+   */
+  raisedIn?: string | null;
 }
 
 interface State {
@@ -76,11 +79,11 @@ export function openSaveToastViewport(id: string) {
     each.raisedIn === undefined ? { ...each, raisedIn: id } : each,
   );
   set({ toasts, viewports: [...state.viewports, id] });
-  // Every toast showing has been announced by now. Homed to the closing viewport, which no
-  // open one matches, they move to the exposed viewport's quiet list instead of its live region.
+  // Every toast showing has been announced by now, so the exposed viewport draws them all in
+  // its quiet list. Not the closing id: StrictMode reopens a viewport under the same one.
   return () =>
     set({
-      toasts: state.toasts.map((each) => ({ ...each, raisedIn: id })),
+      toasts: state.toasts.map((each) => ({ ...each, raisedIn: null })),
       viewports: state.viewports.filter((each) => each !== id),
     });
 }
