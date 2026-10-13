@@ -33,27 +33,12 @@
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 6px;">
-          <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Class</div>
-          <sc-for list="{{classOptions}}" as="c" hint-placeholder-count="1">
-            <button onClick="{{c.pick}}" style="display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 10px 12px; border-radius: 6px; border: 1px solid {{c.border}}; background: {{c.bg}};">
-              <span style="font-size: 13px; color: #1f2430;">{{c.name}}</span>
-              <span style="font-size: 12px; font-weight: 600; color: {{c.arrowColor}};">{{c.oldLevel}} → {{c.newLevel}}</span>
-            </button>
-          </sc-for>
-          <div style="position: relative;">
-            <label for="multiclassSearch" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Multiclass into a new class</label>
-            <input id="multiclassSearch" type="text" placeholder="Multiclass into a new class…" value="{{newClassQuery}}" onChange="{{onNewClassQuery}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
-            <sc-if value="{{showNewClassResults}}" hint-placeholder-val="{{false}}">
-              <div style="position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; max-height: 180px; overflow-y: auto; z-index: 60;">
-                <sc-for list="{{newClassMatches}}" as="m" hint-placeholder-count="3">
-                  <button onClick="{{m.pick}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
-                </sc-for>
-                <sc-if value="{{noNewClassMatches}}" hint-placeholder-val="{{false}}">
-                  <div style="font-size: 12px; color: #6b7280; padding: 8px 10px;">No matching class.</div>
-                </sc-if>
-              </div>
-            </sc-if>
-          </div>
+          <label for="levelUpClass" style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Class</label>
+          <select id="levelUpClass" value="{{classValue}}" onChange="{{onClassChange}}" style="width: 100%; padding: 8px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <sc-for list="{{classOptions}}" as="c" hint-placeholder-count="4">
+              <option value="{{c.value}}">{{c.label}}</option>
+            </sc-for>
+          </select>
         </div>
 
         <sc-if value="{{hasSelection}}" hint-placeholder-val="{{true}}">
@@ -176,7 +161,6 @@ class Component extends DCLogic {
       classes: [{ id: 'ranger', name: 'Ranger', level: 7 }],
       abilities: { str: 13, dex: 18, con: 14, int: 10, wis: 16, cha: 8 },
       selectedClassId: 'ranger',
-      newClassQuery: '',
       newClassName: null,
       hpMethod: 'average',
       hpRoll: null,
@@ -201,27 +185,18 @@ class Component extends DCLogic {
     const selectedNewLevel = selectedClassName ? selectedOldLevel + 1 : null;
     const hasSelection = !!selectedClassName;
 
-    const classOptions = classes.map((c) => {
-      const selected = selectedClassId === c.id;
-      return {
-        id: c.id,
-        name: c.name,
-        oldLevel: c.level,
-        newLevel: c.level + 1,
-        border: selected ? accent : '#dde1e6',
-        bg: selected ? '#fdf3ea' : '#ffffff',
-        arrowColor: selected ? accent : '#6b7280',
-        pick: () => this.setState({ selectedClassId: c.id, newClassName: null, newClassQuery: '', hpMethod: 'average', hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
-      };
-    });
-
     const taken = classes.map((c) => c.name);
-    const availableNew = ALL_CLASSES.filter((name) => taken.indexOf(name) === -1);
-    const nq = s.newClassQuery.trim().toLowerCase();
-    const newClassMatches = (nq ? availableNew.filter((name) => name.toLowerCase().indexOf(nq) !== -1) : availableNew).map((name) => ({
-      name,
-      pick: () => this.setState({ selectedClassId: 'new', newClassName: name, newClassQuery: name, hpMethod: 'average', hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' })
-    }));
+    const classOptions = [
+      ...classes.map((c) => ({ value: c.id, label: c.name + ' ' + c.level + ' → ' + (c.level + 1) })),
+      ...ALL_CLASSES.filter((name) => taken.indexOf(name) === -1).map((name) => ({ value: 'new:' + name, label: name + ' (new) → 1' }))
+    ];
+    const classValue = selectedClassId === 'new' ? 'new:' + s.newClassName : selectedClassId;
+    const resetPicks = { hpMethod: 'average', hpRoll: null, hpCustom: '', asiBonuses: {}, featChosen: null, featQuery: '', spellsChosen: [], spellQuery: '' };
+    const onClassChange = (e) => {
+      const value = e.target.value;
+      if (value.indexOf('new:') === 0) this.setState({ selectedClassId: 'new', newClassName: value.slice(4), ...resetPicks });
+      else this.setState({ selectedClassId: value, newClassName: null, ...resetPicks });
+    };
 
     const selectedHitDieFaces = selectedClassName ? HIT_DICE[selectedClassName] : null;
     const hitDieAverage = selectedHitDieFaces ? Math.floor(selectedHitDieFaces / 2) + 1 : 0;
@@ -281,11 +256,8 @@ class Component extends DCLogic {
       stopPropagation: (e) => e.stopPropagation(),
 
       classOptions,
-      newClassQuery: s.newClassQuery,
-      onNewClassQuery: (e) => this.setState({ newClassQuery: e.target.value, selectedClassId: null, newClassName: null }),
-      showNewClassResults: s.newClassQuery.trim().length > 0 && selectedClassId !== 'new',
-      newClassMatches,
-      noNewClassMatches: newClassMatches.length === 0,
+      classValue,
+      onClassChange,
 
       hasSelection,
       selectedClassName,

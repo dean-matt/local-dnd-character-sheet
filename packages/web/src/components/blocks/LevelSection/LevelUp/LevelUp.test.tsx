@@ -227,13 +227,8 @@ async function open() {
 }
 
 async function multiclassInto(name: string) {
-  fireEvent.change(
-    within(dialog()).getByRole("combobox", { name: "Multiclass into a new class" }),
-    {
-      target: { value: name.slice(0, 3) },
-    },
-  );
-  fireEvent.click(await within(dialog()).findByRole("option", { name: new RegExp(name) }));
+  fireEvent.click(within(dialog()).getByRole("combobox", { name: "Class" }));
+  fireEvent.click(await within(dialog()).findByRole("option", { name: `${name} (new) → 1` }));
 }
 
 function choose(name: string, option: string) {
@@ -494,6 +489,18 @@ describe("LevelUp", () => {
   });
 
   describe("a level in a class the character does not hold yet", () => {
+    it("offers each class in the one Class list, a held class only as its next level", async () => {
+      renderSeeded(warlock(1));
+      await open();
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Class" }));
+      await within(dialog()).findByRole("option", { name: "Rogue (new) → 1" });
+      expect(
+        within(dialog())
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ).toEqual(["Warlock 1 → 2", "Rogue (new) → 1", "Paladin (new) → 1", "Bard (new) → 1"]);
+    });
+
     it("lands the class's multiclass gains and the skill picked, and reports each prerequisite met", async () => {
       const held = { ref: XPHB("Stealth"), level: "proficient" as const };
       const vex = warlock(1);
