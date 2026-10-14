@@ -1,6 +1,6 @@
 {
   "name": "local-dnd-character-sheet",
-  "version": "0.0.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.22.0",
@@ -23,9 +23,10 @@
     "spell": "node scripts/spell.mjs",
     "tags:audit": "node scripts/tag-audit.ts",
     "deadcode": "knip",
+    "version:check": "node scripts/version-bump.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm lint && pnpm spell && pnpm deadcode && pnpm test",
+    "check": "pnpm typecheck && pnpm lint && pnpm spell && pnpm deadcode && pnpm version:check && pnpm test",
     "prepare": "lefthook install",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"

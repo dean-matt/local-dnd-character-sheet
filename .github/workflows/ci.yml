@@ -41,6 +41,11 @@ jobs:
       - name: Dead code
         run: pnpm deadcode
 
+      - name: Version bump
+        run: |
+          git fetch --quiet --depth=1 origin main
+          pnpm version:check
+
       - name: Test
         run: pnpm test
 

@@ -10,6 +10,19 @@ before it started nothing. A diff that changes `docs/mockup/components/` adds `-
 whoever runs it: [Changing a mockup](../../../docs/mockup/README.md#changing-a-mockup)
 marks it ready once the canvas carries the change.
 
+## The version
+
+A pull request that changes code raises the root `package.json` version over `main`'s,
+once: `feat` raises the minor, every other type the patch.
+
+```bash
+npm version <minor|patch> --no-git-tag-version
+```
+
+`pnpm check` fails a branch without it, so `issue-to-pr` commits the bump with its first
+commit, before this skill runs. Where `main` raises the version while the pull request is
+open, raise it again over `main`'s.
+
 ## The pull request body
 
 `Closes #<issue>` on the first line. Then what the change does and, for anything a reviewer

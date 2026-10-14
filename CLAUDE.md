@@ -42,7 +42,7 @@ pnpm content:build   # rebuild content.db from vendor/
 pnpm fixtures:build  # rebuild tests/fixtures/5etools/ from vendor/
 pnpm dev             # api + web
 pnpm db:studio       # visual database editor
-pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
+pnpm check           # typecheck, lint, spell, deadcode, version, test — what CI runs
 ```
 
 ## Invariants
@@ -63,8 +63,8 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 - **Unknown `{@tag}` values degrade to plain text.** Never throw on unrecognized markup.
 - **`tests/fixtures/5etools/` is generated**, never hand-edited — `pnpm fixtures:build`
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
-- **A pushed commit is never rewritten.** No amend, rebase or force push — add a commit.
-  `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the current branch.
+- **A pushed commit is never rewritten** — no amend, rebase or force push; add a commit.
+- **A pull request that changes code raises the root `package.json` version** by `open-pr`'s rule.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — a leaf package exports a schema or a type the day something reads it,
   and a test import counts as a reader. `knip` reports an orphaned file and an export
