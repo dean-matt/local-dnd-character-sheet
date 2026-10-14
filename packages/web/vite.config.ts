@@ -4,6 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+// Read once, when the config loads: a `pnpm dev` left running across a pull keeps showing
+// the old version and commit until it restarts. A virtual module that reruns git on each
+// page load would lift that.
 const { version } = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 );

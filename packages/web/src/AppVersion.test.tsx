@@ -28,4 +28,15 @@ describe("AppVersion", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Copied");
     expect(writeText).toHaveBeenCalledWith("0.5.1 (41d05f0)");
   });
+
+  it("says so where the clipboard refuses", async () => {
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText: vi.fn().mockRejectedValue(new Error()) },
+    });
+    render(<AppVersion />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy version" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Could not copy");
+  });
 });
