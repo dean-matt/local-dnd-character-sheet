@@ -57,7 +57,7 @@ over. On that line alone, set it to `main`'s version, then `git add package.json
 --no-edit`. Then:
 
 ```bash
-npm version <minor|patch> --no-git-tag-version   # repeat until the check passes
+npm version <minor|patch> --no-git-tag-version
 pnpm version:check
 git commit -am "chore(repo): raise the version over main's" && git push
 ```
