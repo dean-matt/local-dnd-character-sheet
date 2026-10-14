@@ -52,7 +52,6 @@ export function ProficienciesCard({ character }: { character: CharacterRecord })
     names.map((name) => ({ key: name, label: name, name: `${name} (${group})` }));
 
   return (
-    // Armor and weapons are categories, and `Light` names one of each, so each keeps a heading.
     <Card title="Proficiencies">
       <div className="flex flex-col gap-2">
         <ProficiencyGroup heading="Armor">
