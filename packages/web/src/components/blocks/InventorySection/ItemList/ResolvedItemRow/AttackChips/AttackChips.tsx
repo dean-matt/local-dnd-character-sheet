@@ -4,8 +4,8 @@
  */
 import { derivedValue } from "@dnd/character";
 import { Popover } from "../../../../../Popover.tsx";
-import { TermList } from "../../../../../TermList.tsx";
 import { type Attack, damageText } from "../../../../attack.ts";
+import { DerivedBreakdown } from "../../../../DerivedBreakdown.tsx";
 import { signed } from "../../../../signed.ts";
 import { AttackChip } from "./AttackChip.tsx";
 
@@ -21,7 +21,11 @@ export function AttackChips({ name, attack }: { name: string; attack: Attack }) 
         triggerLabel={`${name} attack bonus ${bonus}`}
         label={`${name} attack bonus`}
       >
-        <TermList terms={attack.attackBonus.terms ?? []} />
+        <DerivedBreakdown
+          name={`${name} attack bonus`}
+          value={attack.attackBonus}
+          format={signed}
+        />
       </Popover>
       {damage && (
         <Popover
@@ -33,7 +37,7 @@ export function AttackChips({ name, attack }: { name: string; attack: Attack }) 
             {grip && `${GRIP_LABEL[grip.held]} `}
             {damage.dice}
           </p>
-          <TermList terms={damage.modifier.terms ?? []} />
+          <DerivedBreakdown name={`${name} damage`} value={damage.modifier} format={signed} />
         </Popover>
       )}
     </>

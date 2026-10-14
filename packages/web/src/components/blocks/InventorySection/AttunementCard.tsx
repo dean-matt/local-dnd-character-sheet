@@ -1,10 +1,15 @@
-import { type CharacterDerived, type CharacterRecord, derivedValue } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  characterDerivedSchema,
+  derivedValue,
+} from "@dnd/character";
 import { TriangleAlert } from "lucide-react";
 import { useCharacterInventory } from "../../../hooks/useCharacterInventory.ts";
 import { Card } from "../../Card.tsx";
-import { Field } from "../../Field/Field.tsx";
 import { Popover } from "../../Popover.tsx";
-import { LabeledValue } from "./LabeledValue.tsx";
+import { DerivedValue } from "../DerivedValue.tsx";
+import { LabeledValue } from "../LabeledValue.tsx";
 
 const names = new Intl.ListFormat("en", { style: "long", type: "conjunction" });
 
@@ -46,7 +51,16 @@ export function AttunementCard({
             )}
           </span>
         </LabeledValue>
-        <Field mode="read" label="Slots" value={derived.attunementSlots} format={String} />
+        <LabeledValue label="Slots">
+          <DerivedValue
+            named
+            name="Attunement slots"
+            value={derived.attunementSlots}
+            format={String}
+            overrideKey="attunementSlots"
+            schema={characterDerivedSchema.shape.attunementSlots.shape.computed}
+          />
+        </LabeledValue>
         {/* Kept mounted while empty: a live region added with its text is often not announced. */}
         <span role="status" className="sr-only">
           {over ? warning : null}

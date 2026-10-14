@@ -2,8 +2,8 @@
  * The numbers a player reads constantly. Every computed number comes off the derived
  * block; the definition supplies only what a player chose — the scores, which saves and
  * skills they are proficient in, and the skills they added — and `Vitals` reads what play
- * has spent from state. A value with terms opens them in a popover; an ability, a save or
- * a skill opens its terms and the catalog's rules text in a modal.
+ * has spent from state. A number opens its terms and override in a popover; an ability, a
+ * save or a skill opens its terms and the catalog's rules text in a modal.
  */
 import {
   ABILITIES,
@@ -45,7 +45,7 @@ export function AbilitiesSection({
     <div className="flex flex-col gap-3">
       <AbilityScores character={character} derived={derived} />
       <CombatStats derived={derived} />
-      <Vitals characterId={character.id} derived={derived} />
+      <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses derived={derived} />
       <ItemGrants derived={derived} />
@@ -59,6 +59,7 @@ export function AbilitiesSection({
                 name={ABILITY_LABEL[ability]}
                 label={ability.toUpperCase()}
                 modifier={derived.savingThrows[ability]}
+                overrideKey={`savingThrows.${ability}`}
                 title={`${ABILITY_LABEL[ability]} saving throw`}
                 rules={editionRules(definition, SAVE_RULES)}
                 effects={effectsOnRoll(rollEffects, { roll: "save", ability })}
@@ -69,6 +70,7 @@ export function AbilitiesSection({
                 level={saveProficient.has("con") ? "proficient" : "none"}
                 name="Concentration"
                 modifier={derived.concentrationSave}
+                overrideKey="concentrationSave"
                 title="Concentration saving throw"
                 rules={undefined}
               />
@@ -78,7 +80,7 @@ export function AbilitiesSection({
         <Card title="Skills">
           <CatalogSkills character={character} derived={derived} />
           <CustomSkills character={character} derived={derived} />
-          <PassiveScores derived={derived} />
+          <PassiveScores character={character} derived={derived} />
         </Card>
       </div>
       <ProficiencyLegend />

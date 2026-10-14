@@ -22,6 +22,7 @@ import {
   type ItemBonusTrait,
   type ItemDefenseTrait,
   itemKey,
+  overrideKey,
   passiveSkill,
   type WeaponTrait,
 } from "./index.ts";
@@ -1726,6 +1727,16 @@ describe("deriveCharacter", () => {
       expect(block.hitDice[0]?.total.manual).toBe(7);
       expect(block.spellcasting[0]?.saveDc.manual).toBe(18);
       expect(block.attacks.find((attack) => attack.entry === 0)?.attackBonus.manual).toBe(9);
+    });
+
+    it("folds an override under the key overrideKey names for a list element", () => {
+      const [attack] = derived.attacks;
+      if (!attack) throw new Error("expected an attack");
+      const block = withOverrides({
+        [`${overrideKey("attacks", attack, equipped)}.attackBonus`]: 9,
+      });
+
+      expect(block.attacks[0]?.attackBonus.manual).toBe(9);
     });
 
     it("keeps a weapon's override on it when an item lands ahead of it", () => {

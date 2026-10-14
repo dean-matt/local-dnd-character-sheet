@@ -1,20 +1,31 @@
-import { type CharacterDerived, type CharacterState, derivedValue } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  type CharacterState,
+  characterDerivedSchema,
+  derivedValue,
+  overrideKey,
+} from "@dnd/character";
 import { Card } from "../../../Card.tsx";
-import { Field } from "../../../Field/Field.tsx";
+import { DerivedValue } from "../../DerivedValue.tsx";
+
+const { shape } = characterDerivedSchema;
 
 /** A die with no pool in state has spent nothing, the way a new character's empty `hitDice` reads. */
 function hitDiceRemaining(derived: CharacterDerived, state: CharacterState) {
-  return derived.hitDice.map(({ die, total }) => {
-    const size = derivedValue(total);
-    const pool = state.hitDice.find((candidate) => candidate.die === die);
-    return { die, total: size, remaining: Math.min(pool?.remaining ?? size, size) };
+  return derived.hitDice.map((pool) => {
+    const size = derivedValue(pool.total);
+    const spent = state.hitDice.find((candidate) => candidate.die === pool.die);
+    return { pool, remaining: Math.min(spent?.remaining ?? size, size) };
   });
 }
 
 export function HitPoints({
+  character,
   derived,
   state,
 }: {
+  character: CharacterRecord;
   derived: CharacterDerived;
   state: CharacterState;
 }) {
@@ -35,12 +46,12 @@ export function HitPoints({
           <span className="text-muted text-title">
             <span aria-hidden="true">/ </span>
             <span className="sr-only">of </span>
-            <Field
-              mode="read"
-              label="maximum"
-              labelHidden
+            <DerivedValue
+              name="Hit point maximum"
               value={derived.hitPointMaximum}
               format={String}
+              overrideKey="hitPointMaximum"
+              schema={shape.hitPointMaximum.shape.computed}
             />
           </span>
           {temporary > 0 && (
@@ -54,10 +65,19 @@ export function HitPoints({
           {dice.length > 0 && (
             <span className="ml-auto text-label text-muted">
               Hit Dice{" "}
-              {dice.map(({ die, total, remaining }, index) => (
-                <span key={die}>
+              {dice.map(({ pool, remaining }, index) => (
+                <span key={pool.die}>
                   {index > 0 && ", "}
-                  {remaining}/{total} d{die}
+                  {remaining}/
+                  <DerivedValue
+                    named
+                    name={`d${pool.die} Hit Dice total`}
+                    value={pool.total}
+                    format={String}
+                    overrideKey={`${overrideKey("hitDice", pool, character.definition)}.total`}
+                    schema={shape.hitDice.element.shape.total.shape.computed}
+                  />{" "}
+                  d{pool.die}
                 </span>
               ))}
             </span>

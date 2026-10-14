@@ -28,8 +28,8 @@ export function SpellsSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="grid items-start gap-3 sm:grid-cols-2">
-        <CasterNumbers derived={derived} />
-        <SpellSlots derived={derived} />
+        <CasterNumbers character={character} derived={derived} />
+        <SpellSlots character={character} derived={derived} />
       </div>
       <SpellList character={character} />
     </div>

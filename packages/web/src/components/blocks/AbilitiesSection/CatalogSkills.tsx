@@ -4,6 +4,7 @@ import {
   type ContentRef,
   derivedValue,
   effectsOnRoll,
+  overrideKey,
   refKey,
 } from "@dnd/character";
 import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
@@ -62,6 +63,7 @@ export function CatalogSkills({
             name={skill.ref.name}
             ability={skill.ability}
             modifier={skill.modifier}
+            overrideKey={`${overrideKey("skills", skill, character.definition)}.modifier`}
             title={skill.ref.name}
             rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
             effects={effectsOnRoll(rollEffects, {

@@ -11,6 +11,8 @@ import { z } from "zod";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
+import { DerivedBreakdown } from "../DerivedBreakdown.tsx";
+import { DerivedValue } from "../DerivedValue.tsx";
 import { signed } from "../signed.ts";
 import { ABILITY_RULES, editionRules } from "./abilityRules.ts";
 import { StatTile } from "./StatTile.tsx";
@@ -73,6 +75,16 @@ export function AbilityScores({
                     : `Score ${score}: base ${definition.abilityScores[ability]}, ${increases.join(", ")}`,
                 value: derived.abilityModifiers[ability],
                 rules: editionRules(definition, ABILITY_RULES),
+                footer: (
+                  <div className="flex-1">
+                    <DerivedBreakdown
+                      name={`${ABILITY_LABEL[ability]} score`}
+                      value={derived.abilityScores[ability]}
+                      format={String}
+                      overrideKey={`abilityScores.${ability}`}
+                    />
+                  </div>
+                ),
               }}
             >
               {editable ? (
@@ -109,12 +121,10 @@ export function AbilityScores({
                 />
               )}
               <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
-                <Field
-                  mode="read"
-                  label="modifier"
-                  labelHidden
+                <DerivedValue
+                  name={`${ABILITY_LABEL[ability]} modifier`}
                   value={derived.abilityModifiers[ability]}
-                  format={signed}
+                  overrideKey={`abilityModifiers.${ability}`}
                 />
               </span>
             </StatTile>

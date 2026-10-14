@@ -1,7 +1,7 @@
 import type { CharacterDerived, CharacterState } from "@dnd/character";
 import { screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { derivedRecord, stateRecord } from "../../../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../../../../test/stubFetch.ts";
 import { Vitals } from "./Vitals.tsx";
@@ -24,7 +24,7 @@ function renderVitals(state: Partial<CharacterState>, derivedBlock = derived()) 
   stubFetchByUrl({
     "/api/characters/1/state": { ...record, state: { ...record.state, ...state } },
   });
-  renderWithClient(<Vitals characterId="1" derived={derivedBlock} />);
+  renderWithClient(<Vitals character={characterRecord("1", "Vex")} derived={derivedBlock} />);
 }
 
 const card = async (name: string) => within(await screen.findByRole("region", { name }));
@@ -96,7 +96,7 @@ describe("Vitals", () => {
 
   it("reports a state the API could not answer", async () => {
     stubFetch(new Response(JSON.stringify({ error: "Character not found" }), { status: 404 }));
-    renderWithClient(<Vitals characterId="1" derived={derived()} />);
+    renderWithClient(<Vitals character={characterRecord("1", "Vex")} derived={derived()} />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Character not found");
   });

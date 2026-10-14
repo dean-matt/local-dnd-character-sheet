@@ -7,6 +7,7 @@ import {
   derivedValue,
   effectsOnRoll,
   flatSkillBonusSchema,
+  overrideKey,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
@@ -109,6 +110,7 @@ export function CustomSkills({
                 name={skill.name}
                 ability={skill.ability ?? "flat"}
                 modifier={skill.modifier}
+                overrideKey={`${overrideKey("customSkills", skill, character.definition)}.modifier`}
                 title={skill.name}
                 rules={undefined}
                 effects={effectsOnRoll(rollEffects, {

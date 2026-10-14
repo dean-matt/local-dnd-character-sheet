@@ -1,8 +1,7 @@
-import { derivedValue, type ValueBlockField } from "@dnd/character";
+import { characterDerivedSchema, type ValueBlockField } from "@dnd/character";
 import { EmptyState } from "../../EmptyState.tsx";
-import { Field } from "../Field/Field.tsx";
-import { Popover } from "../Popover.tsx";
-import { TermList } from "../TermList.tsx";
+import { DerivedValue } from "./DerivedValue.tsx";
+import { LabeledValue } from "./LabeledValue.tsx";
 import type { BlockViewProps } from "./types.ts";
 
 const VALUE_LABELS: Record<ValueBlockField, string> = {
@@ -12,12 +11,9 @@ const VALUE_LABELS: Record<ValueBlockField, string> = {
   proficiencyBonus: "Proficiency Bonus",
 };
 
-const formatValue = (value: number) => `${value}`;
-
 /**
- * One derived value, with the breakdown behind it — read from the derived block a
- * caller resolved, never recomputed here. Renders through `Field` the same way the rest
- * of the sheet reads a `Derived<T>`, so a value block gains editing the day `Field` does.
+ * One derived value, with the breakdown and override behind it — read from the derived
+ * block a caller resolved, never recomputed here.
  */
 export function ValueBlockView({ block, derived }: BlockViewProps) {
   if (block.kind !== "value") return null;
@@ -25,17 +21,16 @@ export function ValueBlockView({ block, derived }: BlockViewProps) {
   const field = derived?.[block.field];
   if (!field) return <EmptyState>{label} isn't available yet.</EmptyState>;
 
-  const terms = field.terms ?? [];
-  if (terms.length === 0) {
-    return <Field mode="read" label={label} value={field} format={formatValue} />;
-  }
-
   return (
-    <div className="flex items-baseline justify-between gap-2">
-      <span className="text-muted text-row">{label}</span>
-      <Popover trigger={derivedValue(field)} label={`${label} breakdown`}>
-        <TermList terms={terms} />
-      </Popover>
-    </div>
+    <LabeledValue label={label}>
+      <DerivedValue
+        named
+        name={label}
+        value={field}
+        format={String}
+        overrideKey={block.field}
+        schema={characterDerivedSchema.shape[block.field].shape.computed}
+      />
+    </LabeledValue>
   );
 }

@@ -2,7 +2,7 @@ import { type Derived, derivedValue } from "@dnd/character";
 import { TermList } from "../../../TermList.tsx";
 import { signed } from "../../signed.ts";
 
-/** A value's current total and the terms it is built from. */
+/** A value's current total and the terms it is built from, which an override no longer adds up to. */
 export function ValueDetail({
   value,
   format = signed,
@@ -21,7 +21,7 @@ export function ValueDetail({
           </span>
         )}
       </p>
-      {terms.length > 0 && <TermList terms={terms} />}
+      {value.manual === null && terms.length > 0 && <TermList terms={terms} />}
     </div>
   );
 }

@@ -41,7 +41,7 @@ describe("ValueBlockView", () => {
     } as unknown as CharacterDerived;
     render(<ValueBlockView block={block} character={undefined} derived={derived} />);
 
-    const trigger = screen.getByRole("button", { name: "14" });
+    const trigger = screen.getByRole("button", { name: "Armor Class 14" });
     trigger.focus();
     expect(await screen.findByText("Dexterity")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();

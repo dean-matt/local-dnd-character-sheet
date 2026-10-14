@@ -1,8 +1,12 @@
-import type { CharacterDerived, CharacterRecord } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  characterDerivedSchema,
+} from "@dnd/character";
 import { useCharacterInventory } from "../../../hooks/useCharacterInventory.ts";
 import { Card } from "../../Card.tsx";
-import { Field } from "../../Field/Field.tsx";
-import { LabeledValue } from "./LabeledValue.tsx";
+import { DerivedValue } from "../DerivedValue.tsx";
+import { LabeledValue } from "../LabeledValue.tsx";
 import { pounds } from "./pounds.ts";
 
 const ENCUMBRANCE_LABEL: Record<NonNullable<CharacterDerived["encumbrance"]>, string> = {
@@ -33,12 +37,16 @@ export function CarryingCard({
     <Card title="Carrying">
       <div className="flex flex-col gap-0.5">
         <LabeledValue label="Carried">{pounds(derived.carriedWeight)}</LabeledValue>
-        <Field
-          mode="read"
-          label="Carrying Capacity"
-          value={derived.carryingCapacity}
-          format={pounds}
-        />
+        <LabeledValue label="Carrying Capacity">
+          <DerivedValue
+            named
+            name="Carrying Capacity"
+            value={derived.carryingCapacity}
+            format={pounds}
+            overrideKey="carryingCapacity"
+            schema={characterDerivedSchema.shape.carryingCapacity.shape.computed}
+          />
+        </LabeledValue>
         {derived.encumbrance && (
           <LabeledValue label="Encumbrance">{ENCUMBRANCE_LABEL[derived.encumbrance]}</LabeledValue>
         )}

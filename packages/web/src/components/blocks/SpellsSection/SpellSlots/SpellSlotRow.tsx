@@ -1,15 +1,20 @@
 import { type Derived, derivedValue } from "@dnd/character";
-import { OverrideMark } from "../../../OverrideMark.tsx";
+import type { z } from "zod";
+import { DerivedValue } from "../../DerivedValue.tsx";
 
-/** Every pip draws empty: the sheet reads no expended slots yet. */
+/** Every pip draws empty: the sheet reads no expended slots yet. The count beside them opens the override. */
 export function SpellSlotRow({
   label,
   spoken = label,
   total,
+  overrideKey,
+  schema,
 }: {
   label: string;
   spoken?: string;
   total: Derived<number>;
+  overrideKey: string;
+  schema: z.ZodType<number>;
 }) {
   const count = derivedValue(total);
   return (
@@ -29,7 +34,16 @@ export function SpellSlotRow({
           />
         ))}
       </span>
-      {total.manual !== null && <OverrideMark computed={String(total.computed)} />}
+      <span className="text-muted text-xs">
+        <DerivedValue
+          named
+          name={`${spoken} slots`}
+          value={total}
+          format={String}
+          overrideKey={overrideKey}
+          schema={schema}
+        />
+      </span>
     </li>
   );
 }

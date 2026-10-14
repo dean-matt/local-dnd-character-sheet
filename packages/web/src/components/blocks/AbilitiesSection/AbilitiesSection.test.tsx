@@ -141,9 +141,9 @@ describe("AbilitiesSection", () => {
       "inputmode",
       "numeric",
     );
-    expect(spoken(tile("Ability Scores", "Strength"))).toContain("modifier-1");
+    expect(spoken(tile("Ability Scores", "Strength"))).toContain("Strength modifier-1");
     expect(screen.getByRole("textbox", { name: "Charisma score" })).toHaveValue("17");
-    expect(spoken(tile("Ability Scores", "Charisma"))).toContain("modifier+3");
+    expect(spoken(tile("Ability Scores", "Charisma"))).toContain("Charisma modifier+3");
   });
 
   it.each(["1e1", "0x1E", "+5"])(
@@ -517,7 +517,9 @@ describe("AbilitiesSection", () => {
       expect(screen.getByRole("dialog", { name: "Charisma saving throw" })).toBeVisible();
       fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
-      fireEvent.click(within(tile("Ability Scores", "Strength")).getByRole("button"));
+      fireEvent.click(
+        within(tile("Ability Scores", "Strength")).getByRole("button", { name: "Strength" }),
+      );
       expect(screen.getByRole("dialog", { name: "Strength" })).toHaveTextContent("Score 8");
       await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
       const asked = fetchMock.mock.calls.map((call) => JSON.parse(String(call[1]?.body)).refs[0]);
