@@ -130,7 +130,7 @@ function presentModes(speed: Speed): [string, number][] {
 
 /**
  * What a load costs a character's speeds. Heavy encumbrance's disadvantage reaches the
- * derived block's `rollEffects` instead.
+ * derived block's `rollEffects`.
  *
  * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
  * no stale derived value behind.

@@ -831,9 +831,10 @@ function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
         .map(({ excess, unit }) => ({ excess, unit }));
       return [{ entry: index, name: trait.name, overflow }];
     }),
-    // The tier reads Strength and size rather than `carryingCapacity`, so an override of
-    // the capacity leaves it standing. The way out is thresholds scaled by the overridden
-    // capacity, once overrides fold into the block.
+    // The tier and its disadvantage read the computed Strength and size rather than the
+    // block, so an override of the capacity or the size leaves them standing, while the
+    // Speed tile reduces by the overridden size. The way out is thresholds read from the
+    // overridden capacity and size, once overrides fold into the block.
     encumbrance: penalty?.tier ?? null,
     burdened: penalty?.disadvantage ?? false,
   };

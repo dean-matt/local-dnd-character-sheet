@@ -51,7 +51,7 @@ const itemGrantsSchema = z.strictObject({
 /**
  * One advantage or disadvantage, with what to cite for it — an equipped item, or the load
  * under the encumbrance variant — and its condition if it has one. An `attack` effect's
- * `target` is the ability the attack uses, absent for every attack.
+ * `target` is the ability the attack uses, absent where it marks every attack.
  */
 const rollEffectSchema = z.strictObject({
   source: z.string().min(1),
