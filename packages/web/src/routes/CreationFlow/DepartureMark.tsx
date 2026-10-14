@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { CHIP } from "../../lib/chipStyles.ts";
-import type { Departure } from "./departures.ts";
+import type { Departure } from "../../lib/departures.ts";
 
 /**
  * Each note `departures` holds for `field`, or for every field it matches, tagged and

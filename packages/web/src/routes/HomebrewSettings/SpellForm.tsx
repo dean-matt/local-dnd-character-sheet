@@ -1,6 +1,7 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
+import { DAMAGE_TYPE_NAMES } from "../../lib/defenseVocabulary.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
@@ -23,7 +24,6 @@ import {
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
 import {
   CASTING_UNITS,
-  DAMAGE_TYPE_NAMES,
   DURATION_TYPES,
   DURATION_UNITS,
   RANGE_KINDS,

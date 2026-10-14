@@ -1,15 +1,29 @@
 /**
  * The Resistances & Immunities card: what the race and the equipped items grant, read off
- * the derived block. A chip opens a modal naming every source that grants it.
+ * the derived block, then what the player added by hand from the definition. A granted chip
+ * opens a modal naming every source that grants it; an added one carries × instead. A type
+ * already granted is not offered to add.
  */
-import { type CharacterDerived, derivedValue } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  type CharacterDerived,
+  type CharacterRecord,
+  derivedValue,
+} from "@dnd/character";
+import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { capitalize } from "../../../../lib/capitalize.ts";
+import { CONDITIONS, DAMAGE_TYPE_NAMES } from "../../../../lib/defenseVocabulary.ts";
+import { AddChoice } from "../../../AddChoice.tsx";
 import { Card } from "../../../Card.tsx";
-import { capitalize } from "../../capitalize.ts";
 import { DefenseChipRow, type DefenseChipRowProps } from "./DefenseChipRow.tsx";
 
 type Defense = CharacterDerived["defenses"]["computed"]["resistances"][number];
 
 type Chip = DefenseChipRowProps["items"][number];
+
+type AddedKind = keyof CharacterDefinition["addedDefenses"];
+
+const TITLE = "Resistances & Immunities";
 
 const options = new Intl.ListFormat("en", { type: "disjunction" });
 
@@ -20,11 +34,54 @@ function chips(defenses: readonly Defense[], kind: string, effect: (name: string
   });
 }
 
-export function Defenses({ derived }: { derived: CharacterDerived }) {
+export function Defenses({
+  character,
+  derived,
+}: {
+  character: CharacterRecord;
+  derived: CharacterDerived;
+}) {
+  const write = useHeldSave(character.id, TITLE);
   const { resistances, damageImmunities, conditionImmunities, vulnerabilities, resistanceChoice } =
     derivedValue(derived.defenses);
+  const added = character.definition.addedDefenses;
+  const granted: Record<AddedKind, readonly Defense[]> = {
+    resistances,
+    damageImmunities,
+    conditionImmunities,
+  };
+
+  const edit = (kind: AddedKind, name: string, keep: boolean) =>
+    write(`${kind}|${name}`, (latest) => {
+      const others = latest.addedDefenses[kind].filter((each) => each !== name);
+      return {
+        ...latest,
+        addedDefenses: { ...latest.addedDefenses, [kind]: keep ? [...others, name] : others },
+      };
+    });
+  const addedChips = (kind: AddedKind, noun: string) =>
+    added[kind].map((name) => ({
+      key: `${kind}|${name}`,
+      label: capitalize(name),
+      name: `${capitalize(name)} ${noun}`,
+    }));
+  const remove = (key: string) => {
+    const at = key.indexOf("|");
+    edit(key.slice(0, at) as AddedKind, key.slice(at + 1), false);
+  };
+  const adder = (kind: AddedKind, label: string, vocabulary: typeof CONDITIONS) => (
+    <AddChoice
+      label={label}
+      options={vocabulary.filter(
+        ({ value }) =>
+          !added[kind].includes(value) && !granted[kind].some(({ name }) => name === value),
+      )}
+      onAdd={(name) => edit(kind, name, true)}
+    />
+  );
+
   return (
-    <Card title="Resistances & Immunities">
+    <Card title={TITLE}>
       <div className="flex flex-col gap-2">
         <DefenseChipRow
           heading="Resistances"
@@ -33,12 +90,16 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
             "Resistance",
             (name) => `You take half ${name} damage, rounded down.`,
           )}
+          added={addedChips("resistances", "resistance")}
+          onRemove={remove}
           note={
             resistanceChoice
               ? `${resistanceChoice.from} offers ${options.format(resistanceChoice.options)}, not yet chosen.`
               : undefined
           }
-        />
+        >
+          {adder("resistances", "Add resistance", DAMAGE_TYPE_NAMES)}
+        </DefenseChipRow>
         <DefenseChipRow
           heading="Immunities"
           items={[
@@ -49,7 +110,15 @@ export function Defenses({ derived }: { derived: CharacterDerived }) {
               (name) => `${capitalize(name)} can't affect you.`,
             ),
           ]}
-        />
+          added={[
+            ...addedChips("damageImmunities", "immunity"),
+            ...addedChips("conditionImmunities", "immunity"),
+          ]}
+          onRemove={remove}
+        >
+          {adder("damageImmunities", "Add damage immunity", DAMAGE_TYPE_NAMES)}
+          {adder("conditionImmunities", "Add condition immunity", CONDITIONS)}
+        </DefenseChipRow>
         {vulnerabilities.length > 0 && (
           <DefenseChipRow
             heading="Vulnerabilities"

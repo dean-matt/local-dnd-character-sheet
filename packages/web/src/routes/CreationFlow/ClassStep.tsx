@@ -1,11 +1,11 @@
 import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { CLASS_FIELD, withDeparture } from "../../lib/departures.ts";
 import { AddClassField } from "./AddClassField.tsx";
 import { ClassField } from "./ClassField.tsx";
 import { ClassRow } from "./ClassRow.tsx";
 import { HIGHEST_LEVEL, withClassCount } from "./classLevels.ts";
-import { CLASS_FIELD, withDeparture } from "./departures.ts";
 import { HitPointsField, type HitPointsFieldProps } from "./HitPointsField.tsx";
 import { useClassEntries } from "./useClassEntries.ts";
 import { useFeatureOfferings } from "./useFeatureOfferings.ts";

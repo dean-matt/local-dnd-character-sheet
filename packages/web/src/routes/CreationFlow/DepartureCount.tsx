@@ -1,6 +1,6 @@
 import { TriangleAlert } from "lucide-react";
 import { useId, useRef, useState } from "react";
-import type { Departure } from "./departures.ts";
+import type { Departure } from "../../lib/departures.ts";
 
 /** The count's button and the list it opens above the footer, which positions it. */
 export function DepartureCount({ departures }: { departures: Departure[] }) {

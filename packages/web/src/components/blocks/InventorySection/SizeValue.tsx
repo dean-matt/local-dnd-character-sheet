@@ -1,12 +1,12 @@
 import { type CharacterDerived, characterDerivedSchema, derivedValue } from "@dnd/character";
 import { useContext } from "react";
+import { capitalize } from "../../../lib/capitalize.ts";
 import { dropSaveToast, raiseSaveToast } from "../../../lib/saveToasts.ts";
 import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
 import { SaveOverride } from "../../overrideContext.ts";
 import { Popover } from "../../Popover.tsx";
 import { Select } from "../../Select.tsx";
-import { capitalize } from "../capitalize.ts";
 
 const SIZES = characterDerivedSchema.shape.size.shape.computed.options;
 const TOAST_ID = "size-override";

@@ -14,6 +14,10 @@ const chips = (card: string) =>
     .queryAllByRole("listitem")
     .map((item) => item.textContent);
 
+/** The character writes `fetchMock` saw, leaving out the catalog reads the cards make. */
+const puts = (fetchMock: ReturnType<typeof stubFetch>) =>
+  fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT");
+
 /** Renders `ui` with the character in the detail cache, where an edit reads it from. */
 function renderSeeded(ui: ReactElement, character = identityRecord()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -29,14 +33,16 @@ function renderSeeded(ui: ReactElement, character = identityRecord()) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("IdentitySection", () => {
-  it("shows race, each class and background as chips", () => {
+  it("shows race, each class and background", () => {
     renderSeeded(<IdentitySection character={identityRecord()} />);
 
     expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Vex");
-    expect(chips("Race")).toEqual(["Elf (High)"]);
+    expect(screen.getByRole("button", { name: "Change race, Elf (High)" })).toBeInTheDocument();
     expect(chips("Class")).toEqual(["Warlock 2 (Fiend Patron)", "Fighter 1"]);
     expect(screen.getByRole("region", { name: "Class" })).not.toHaveTextContent("Total level");
-    expect(chips("Background")).toEqual(["Charlatan"]);
+    expect(
+      screen.getByRole("button", { name: "Change background, Charlatan" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the alignment in its own card", () => {
@@ -82,8 +88,8 @@ describe("IdentitySection", () => {
     fireEvent.change(name, { target: { value: "Nyx" } });
     fireEvent.blur(name);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    await waitFor(() => expect(puts(fetchMock)).toHaveLength(1));
+    const [url, init] = puts(fetchMock)[0] ?? [];
     expect(url).toBe("/api/characters/1");
     expect(JSON.parse(String(init?.body))).toEqual({ ...identityRecord().definition, name: "Nyx" });
   });
@@ -98,7 +104,7 @@ describe("IdentitySection", () => {
 
     expect(await saveToasts().findByText("Name: A character needs a name.")).toBeInTheDocument();
     expect(name).toHaveAttribute("aria-invalid", "true");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(puts(fetchMock)).toHaveLength(0);
   });
 
   it.each([
@@ -145,8 +151,8 @@ describe("IdentitySection", () => {
     fireEvent.change(hair, { target: { value: " black " } });
     fireEvent.blur(hair);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    await waitFor(() => expect(puts(fetchMock)).toHaveLength(1));
+    const body = JSON.parse(String(puts(fetchMock)[0]?.[1]?.body));
     expect(body.appearance).toEqual({ age: "24", hair: "black" });
   });
 
@@ -160,8 +166,8 @@ describe("IdentitySection", () => {
     fireEvent.change(hair, { target: { value: "  " } });
     fireEvent.blur(hair);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    await waitFor(() => expect(puts(fetchMock)).toHaveLength(1));
+    const body = JSON.parse(String(puts(fetchMock)[0]?.[1]?.body));
     expect(body.appearance).toEqual({ age: "24" });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });

@@ -1,6 +1,6 @@
 import type { SheetItem } from "@dnd/catalog";
+import { capitalize } from "../../../../../lib/capitalize.ts";
 import { Tag } from "../../../../Tag.tsx";
-import { capitalize } from "../../../capitalize.ts";
 
 type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 

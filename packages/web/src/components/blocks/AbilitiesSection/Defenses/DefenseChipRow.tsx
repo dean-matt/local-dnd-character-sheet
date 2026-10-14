@@ -1,17 +1,32 @@
+import type { ReactNode } from "react";
 import { PILL } from "../../../../lib/chipStyles.ts";
 import { DetailTrigger } from "../../../DetailTrigger.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
+import { RemovableChipList, type RemovableChipListProps } from "../../../RemovableChipList.tsx";
 
 export interface DefenseChipRowProps {
   heading: string;
   items: readonly { label: string; title: string; effect: string; from: string[] }[];
+  /** What the player added by hand, after what is granted, each with × to remove it. */
+  added?: RemovableChipListProps["items"];
+  onRemove?: RemovableChipListProps["onRemove"];
   /** Shown after the chips, and in place of "None." where there are none. */
   note?: string;
+  /** The controls that add to the row, under everything else. */
+  children?: ReactNode;
 }
 
 const sources = new Intl.ListFormat("en", { type: "conjunction" });
 
-export function DefenseChipRow({ heading, items, note }: DefenseChipRowProps) {
+export function DefenseChipRow({
+  heading,
+  items,
+  added = [],
+  onRemove = () => {},
+  note,
+  children,
+}: DefenseChipRowProps) {
+  const none = items.length === 0 && added.length === 0;
   return (
     <div className="flex flex-col gap-1">
       <h4 className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
@@ -35,7 +50,9 @@ export function DefenseChipRow({ heading, items, note }: DefenseChipRowProps) {
           ))}
         </ul>
       )}
-      {note ? <EmptyNote>{note}</EmptyNote> : items.length === 0 && <EmptyNote>None.</EmptyNote>}
+      <RemovableChipList items={added} onRemove={onRemove} />
+      {note ? <EmptyNote>{note}</EmptyNote> : none && <EmptyNote>None.</EmptyNote>}
+      {children && <div className="flex flex-wrap gap-1.5">{children}</div>}
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import { vi } from "vitest";
 
-/** Stubs global `fetch` to resolve with `response`, for a test that reads `lib/api.ts`. */
+/**
+ * Stubs global `fetch` to resolve with a copy of `response` on every call, for a test that
+ * reads `lib/api.ts`. A copy, so a view's catalog read never spends the body its write reads.
+ */
 export function stubFetch(response: Response) {
-  const fetchMock = vi.fn().mockResolvedValue(response);
+  const fetchMock = vi.fn().mockImplementation(async () => response.clone());
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }

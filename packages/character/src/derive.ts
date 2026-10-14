@@ -270,8 +270,7 @@ function derivedArmorClass(
  * The typed form of an armor, weapon or category name, folded so the spellings the book
  * prints (`Simple weapons`, `Longswords`, `Heavy Armor`) meet the bare ones (`Simple`,
  * `Longsword`, `heavy`). Both sides pass through it, so a name that ends in `s` still
- * meets itself. Only these spellings fold until a catalog picker writes
- * `proficiencies.weapons`.
+ * meets itself.
  */
 export function proficiencyKey(name: string): string {
   return name

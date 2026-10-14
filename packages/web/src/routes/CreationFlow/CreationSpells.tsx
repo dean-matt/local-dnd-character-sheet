@@ -1,7 +1,7 @@
 import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { withDeparture } from "./departures.ts";
+import { withDeparture } from "../../lib/departures.ts";
 import { SPELLS_FIELD } from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 

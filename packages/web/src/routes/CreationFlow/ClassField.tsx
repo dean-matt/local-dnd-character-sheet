@@ -2,9 +2,9 @@ import type { CharacterDefinition, EntryRef } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
 import { useEnsureHomebrewClass } from "../../hooks/useEnsureHomebrewClass.ts";
+import { CLASS_FIELD, withDeparture } from "../../lib/departures.ts";
 import { ClassEscape } from "./ClassEscape.tsx";
 import { withClassCount } from "./classLevels.ts";
-import { CLASS_FIELD, withDeparture } from "./departures.ts";
 
 const OPTS = { shouldDirty: true } as const;
 

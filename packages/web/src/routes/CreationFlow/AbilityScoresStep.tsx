@@ -15,6 +15,7 @@ import { signed } from "../../components/blocks/signed.ts";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
+import { withDeparture } from "../../lib/departures.ts";
 import { NO_GRANTS } from "../../lib/proficiencyGrants.ts";
 import { AbilityIncreasesField } from "./AbilityIncreasesField.tsx";
 import {
@@ -32,7 +33,6 @@ import {
 } from "./abilityMethods.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
-import { withDeparture } from "./departures.ts";
 import { ImprovementsField } from "./ImprovementsField.tsx";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
 import { useSkillAbilities } from "./useSkillAbilities.ts";

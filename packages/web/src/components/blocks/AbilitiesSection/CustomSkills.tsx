@@ -10,8 +10,7 @@ import {
   overrideKey,
 } from "@dnd/character";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
-import { useSaveToast } from "../../../hooks/useSaveToast.ts";
+import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
 import { FormField } from "../../FormField.tsx";
@@ -42,9 +41,7 @@ export function CustomSkills({
   character: CharacterRecord;
   derived: CharacterDerived;
 }) {
-  const update = useUpdateCharacterDefinition(character.id);
-  const writes = useHeldWrites(update);
-  const failure = writes.latest?.error;
+  const write = useHeldSave(character.id, "Custom skills");
   // A flat bonus saves through its own field, which reports its own failure.
   const flats = useUpdateCharacterDefinition(character.id);
   const [name, setName] = useState("");
@@ -53,15 +50,8 @@ export function CustomSkills({
   const rollEffects = derivedValue(derived.rollEffects);
   const stored = character.definition.customSkills;
 
-  useSaveToast(
-    "Custom skills",
-    failure ? `Couldn't save: ${failure.message}` : undefined,
-    writes.retry,
-    failure,
-  );
-
   const save = (name: string, customSkills: (skills: CustomSkill[]) => CustomSkill[]) =>
-    writes.write(name.toLowerCase(), (latest) => ({
+    write(name.toLowerCase(), (latest) => ({
       ...latest,
       customSkills: customSkills(latest.customSkills),
     }));
