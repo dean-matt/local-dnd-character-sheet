@@ -17,6 +17,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The pull request's merge commit and its base parent, which the version check reads.
+          fetch-depth: 2
 
       - uses: pnpm/action-setup@v6
 
@@ -42,9 +45,8 @@ jobs:
         run: pnpm deadcode
 
       - name: Version bump
-        run: |
-          git fetch --quiet --depth=1 origin main
-          pnpm version:check
+        if: github.event_name == 'pull_request'
+        run: pnpm version:check HEAD~1
 
       - name: Test
         run: pnpm test

@@ -58,7 +58,7 @@ describe("changedFiles", () => {
       git("update-ref", "refs/remotes/origin/main", "main");
       git("checkout", "-q", "docs/1-notes");
 
-      expect(changedFiles(dir)).toEqual(["notes.md"]);
+      expect(changedFiles("origin/main", dir)).toEqual(["notes.md"]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

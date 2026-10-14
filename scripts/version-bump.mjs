@@ -1,7 +1,8 @@
 /**
- * Rejects a change to code that leaves the root `package.json` version at or below
- * `origin/main`'s. It compares the working tree with the branch point, so it judges an
- * uncommitted edit too, and needs `origin/main` fetched: CI fetches it first.
+ * Rejects a change to code that leaves the root `package.json` version at or below the
+ * base's. With no argument the base is `origin/main`, and the diff runs from the branch
+ * point to the working tree, so an uncommitted edit counts too. CI passes `HEAD~1`, the
+ * base side of the pull request's merge commit, which is exact even after `main` moves.
  *
  * Exports `checkVersionBump` and `changedFiles` for `tests/version-bump.test.ts`; running
  * the file checks this checkout and exits non-zero when it fails.
@@ -34,25 +35,23 @@ export function checkVersionBump({ changed, version, base }) {
 }
 
 /**
- * The files the working tree changes since it left `origin/main`. Against the tip instead,
- * a branch behind a fresh fetch would count `main`'s changes as its own. CI's depth-1
- * checkout of the pull request's merge commit has no merge base, and there the tip is exact.
+ * The files the working tree changes since it left `base`. Against the tip instead, a
+ * branch behind a fresh fetch would count `main`'s changes as its own.
  *
+ * @param {string} base
  * @param {string} [cwd]
  */
-export function changedFiles(cwd) {
-  let base = "origin/main";
-  try {
-    base = capture("git", ["merge-base", "origin/main", "HEAD"], { cwd, stdio: "pipe" }).trim();
-  } catch {}
-  return capture("git", ["diff", "--name-only", base], { cwd }).split("\n").filter(Boolean);
+export function changedFiles(base, cwd) {
+  const from = capture("git", ["merge-base", base, "HEAD"], { cwd }).trim();
+  return capture("git", ["diff", "--name-only", from], { cwd }).split("\n").filter(Boolean);
 }
 
 if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
+  const ref = process.argv[2] ?? "origin/main";
   const error = checkVersionBump({
-    changed: changedFiles(),
+    changed: changedFiles(ref),
     version: JSON.parse(readFileSync("package.json", "utf8")).version,
-    base: JSON.parse(capture("git", ["show", "origin/main:package.json"])).version,
+    base: JSON.parse(capture("git", ["show", `${ref}:package.json`])).version,
   });
   if (error !== null) {
     console.error(
