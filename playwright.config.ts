@@ -22,7 +22,9 @@ function scratchDataDir() {
 }
 
 // Each worker evaluates this file again, inheriting the runner's environment, so it reuses
-// the runner's directory rather than making one of its own. The OS reaps the directory.
+// the runner's directory rather than making one of its own. Each run leaves its directory in
+// the OS temp folder, which macOS and Linux clean and Windows never does; a globalTeardown
+// removing it would lift that.
 process.env.E2E_DATA_DIR ??= scratchDataDir();
 
 export default defineConfig({
