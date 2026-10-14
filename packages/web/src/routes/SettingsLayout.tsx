@@ -1,6 +1,6 @@
 import { FlaskConical, Layers, Monitor } from "lucide-react";
 import { Outlet } from "react-router";
-import { AppVersion } from "../AppVersion.tsx";
+import { AppVersion } from "./AppVersion.tsx";
 import { Sidebar, type SidebarProps } from "./Sidebar/Sidebar.tsx";
 import { SidebarFrame } from "./SidebarFrame.tsx";
 

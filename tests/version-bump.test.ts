@@ -6,7 +6,7 @@ import { capture } from "../scripts/capture.mjs";
 import { changedFiles, checkVersionBump } from "../scripts/version-bump.mjs";
 
 describe("checkVersionBump", () => {
-  const code = ["packages/web/src/AppVersion.tsx"];
+  const code = ["packages/web/src/routes/AppVersion.tsx"];
 
   it.each([
     ["0.5.1", "0.5.0", "a patch"],
