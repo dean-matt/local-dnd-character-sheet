@@ -48,8 +48,9 @@ function modeOf(speed: Derived<Speed>, mode: Mode): Derived<number | undefined> 
  * as burrowing, takes an override too.
  *
  * The speeds shown are what the carried load leaves, which the encumbrance house rule
- * reduces after any override, and its breakdown names the rule. Each override field edits
- * the speed before the load, the value the definition stores.
+ * reduces after any override, and its breakdown names the rule. An override is marked
+ * against the computed speed under the same load. Each override field edits the speed
+ * before the load, the value the definition stores.
  */
 export function SpeedValue({
   definition,
@@ -98,7 +99,7 @@ export function SpeedValue({
           <div className="flex flex-col gap-1.5">
             {overridden && (
               <p>
-                Overridden from {speedText(speed.computed)}.
+                Overridden from {speedText(loadedComputed)}.
                 {save !== null && " Clear a mode to return it."}
               </p>
             )}

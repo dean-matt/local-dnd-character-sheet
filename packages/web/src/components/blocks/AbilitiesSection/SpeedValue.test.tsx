@@ -124,7 +124,7 @@ describe("SpeedValue", () => {
     onPage({ ...computed, manual: { walk: 40, swim: 30 } }, { encumbrance: true, carried: 81 });
     open("Speed 20, overridden from 10");
     expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
-      "Encumbrance-20",
+      /^Overridden from 10 ft\., swim 10 ft\..*Encumbrance-20/,
     );
     expect(screen.getByRole("textbox", { name: "Walk speed override" })).toHaveValue("40");
   });
