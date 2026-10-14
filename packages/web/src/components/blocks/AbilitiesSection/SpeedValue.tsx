@@ -1,8 +1,10 @@
 import {
+  type CharacterDefinition,
   type CharacterDerived,
   characterDerivedSchema,
   type Derived,
   derivedValue,
+  encumberedSpeed,
 } from "@dnd/character";
 import { useContext } from "react";
 import { capitalize } from "../../../lib/capitalize.ts";
@@ -44,15 +46,40 @@ function modeOf(speed: Derived<Speed>, mode: Mode): Derived<number | undefined> 
  * The walking speed on the Combat tile, any other mode beneath it, and a breakdown that
  * overrides each mode under its own key, such as `speed.fly`. A mode no race grants, such
  * as burrowing, takes an override too.
+ *
+ * The speeds shown are what the carried load leaves, which the encumbrance house rule
+ * reduces after any override, and its breakdown names the rule. Each override field edits
+ * the speed before the load, the value the definition stores.
  */
-export function SpeedValue({ speed }: { speed: Derived<Speed> }) {
+export function SpeedValue({
+  definition,
+  derived,
+}: {
+  definition: CharacterDefinition;
+  derived: CharacterDerived;
+}) {
   const save = useContext(SaveOverride);
-  const walk = modeOf(speed, "walk");
+  const speed = derived.speed;
+  const loaded = encumberedSpeed(definition, derived, derived.carriedWeight);
+  const loadedComputed = encumberedSpeed(
+    definition,
+    { ...derived, speed: { ...speed, manual: null } },
+    derived.carriedWeight,
+  ).speed;
+  const shown = (mode: Mode): Derived<number | undefined> => ({
+    computed: loadedComputed[mode],
+    manual: modeOf(speed, mode).manual === null ? null : loaded.speed[mode],
+  });
+  const walk = shown("walk");
   const trigger = (
     <Field mode="read" label="" labelHidden value={walk} format={(value) => String(value)} />
   );
-  const terms = speed.terms ?? [];
   const overridden = MODES.some((mode) => modeOf(speed, mode).manual !== null);
+  const reduction = loaded.reductionBreakdown.terms.map(({ label, value }) => ({
+    label,
+    value: -value,
+  }));
+  const terms = overridden ? reduction : [...(speed.terms ?? []), ...reduction];
   const extraModes = MODES.filter(
     (mode) => mode !== "walk" && derivedValue(modeOf(speed, mode)) !== undefined,
   );
@@ -63,20 +90,19 @@ export function SpeedValue({ speed }: { speed: Derived<Speed> }) {
       ) : (
         <Popover
           trigger={trigger}
-          triggerLabel={`Speed ${derivedValue(speed).walk}${
+          triggerLabel={`Speed ${derivedValue(walk)}${
             walk.manual === null ? "" : `, overridden from ${walk.computed}`
           }`}
           label="Speed breakdown"
         >
           <div className="flex flex-col gap-1.5">
-            {overridden ? (
+            {overridden && (
               <p>
                 Overridden from {speedText(speed.computed)}.
                 {save !== null && " Clear a mode to return it."}
               </p>
-            ) : (
-              terms.length > 0 && <TermList terms={terms} />
             )}
+            {terms.length > 0 && <TermList terms={terms} />}
             {save !== null &&
               MODES.map((mode) => (
                 <div key={mode} className="flex items-baseline justify-between gap-4">
@@ -102,7 +128,7 @@ export function SpeedValue({ speed }: { speed: Derived<Speed> }) {
         </Popover>
       )}
       {extraModes.map((mode) => {
-        const value = modeOf(speed, mode);
+        const value = shown(mode);
         return (
           <span key={mode} className="font-normal text-label text-muted">
             {mode} {derivedValue(value)} ft.
