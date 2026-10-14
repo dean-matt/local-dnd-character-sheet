@@ -144,6 +144,5 @@ Full conventions and the reasoning behind them: [`CONTRIBUTING.md`](CONTRIBUTING
 
 ### Feedback
 
-Post feedback in the
-[Feedback discussion category](https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback),
-which the app's top bar also links to. Posting needs a GitHub account.
+[Start a Feedback discussion](https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback)
+to report a problem or suggest a change; the app's top bar links to the same form. Posting needs a GitHub account.
