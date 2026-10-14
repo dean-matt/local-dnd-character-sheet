@@ -27,10 +27,10 @@ together. It is a fixed 1440px with no stretch behavior, so it fixes the arrange
 not how each piece grows; `packages/web/LAYOUT.md` says that. Every other file matches a
 widget, panel, or nav element:
 
-- Stats: the eight widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status,
-  Defenses). Short Rest and Long Rest are the modals the Character Header's Rest menu
-  opens; Long Rest restores half the Hit Dice under 2014 rules and all of them under
-  2024, switched by the artboard's Edition tweak.
+- Stats: the seven widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status).
+  Short Rest and Long Rest are the modals the Character Header's Rest menu opens;
+  Long Rest restores half the Hit Dice under 2014 rules and all of them under 2024,
+  switched by the artboard's Edition tweak.
 - Inventory: Weapons, Armor, Gear. A price is a gold chip with a coin icon,
   read aloud as its cost. A versatile weapon's row has a 1h/2h grip toggle beside its
   Equip button, a gray pill track with the chosen grip on an accent-red thumb; the
@@ -49,9 +49,8 @@ widget, panel, or nav element:
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Backstory, Notes.
-- Identity: Race, Background, Languages, Proficiencies — each its own
-  widget. Level Up is the modal the Level tab's level-up button opens —
-  pick an existing class or multiclass into a new one, Hit Points by average, roll, or
+- Identity: Proficiencies, its own widget. Level Up is the modal the Level tab's
+  level-up button opens — pick an existing class or multiclass into a new one, Hit Points by average, roll, or
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
   and new spells for a class that gains them, all gating Apply until every open choice
   the level actually offers is made.
@@ -189,7 +188,7 @@ Ability scores, saves, and skills (with custom, non-ability-based
 skills); a tab rail where any tab reorders and hides, but only a user-created tab
 renames, deletes, or has its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
-short and long rest; temporary HP; status effects and resistances/immunities; a global
+short and long rest; temporary HP; status effects; a global
 search across characters and a sample compendium, with an advanced search page, a
 catalog detail modal, and a way to add a result to a character; light, dark, and system
 theme; a user-customizable accent color; a settings page for homebrew content and sources; a way
@@ -208,7 +207,6 @@ Simplifications specific to these widgets:
   to the real Inventory implementation.
 - Weapons and Armor use a narrower sample proficiency list than a full character would,
   so both the allowed and the proficiency-blocked equip states show up.
-- Race and Background pick from a small fixed sample list, not the real catalog.
 
 ## Known gaps
 
@@ -243,7 +241,6 @@ says how much of the artboard the app builds today.
 | `HP` | #277, #281, #487 | read-only |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
-| `Defenses` | #387, #488 | read-only |
 | `ShortRestModal` | #281 | nothing |
 | `LongRestModal` | #281 | nothing |
 | `Weapons` | #311, #398, #400 | all but the filter, its own search and Equip's proficiency check |
@@ -263,11 +260,8 @@ says how much of the artboard the app builds today.
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |
-| `Race` | #488 | read-only |
-| `Background` | #488 | read-only |
 | `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
-| `Languages` | #488 | read-only |
-| `Proficiencies` | #400, #488 | read-only |
+| `Proficiencies` | #400 | all but gating Equip |
 | `ManageTabs` | #242 | reorder and hide |
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |
