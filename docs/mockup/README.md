@@ -62,8 +62,8 @@ widget, panel, or nav element:
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
-  (its icon alone, the label in a tooltip), Rest and the character menu as 32px buttons
-  at the right. The save status reads "Saving…" while any write to the character is in
+  (its icon alone, the label in a tooltip), Rest and a Character settings gear as 32px
+  buttons at the right. The save status reads "Saving…" while any write to the character is in
   flight and "Saved" for a moment after; a save that fails or an entry a field refuses
   raises a toast at the bottom right naming the field, with Retry for a failed save, and
   no card changes height. The header artboard's `save` tweak switches between them. The name takes the room it needs and
@@ -266,7 +266,7 @@ says how much of the artboard the app builds today.
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |
 | `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
-| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the Character menu, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `HomebrewRaces` | #489 | nothing |

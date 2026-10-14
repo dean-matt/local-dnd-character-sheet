@@ -1,10 +1,10 @@
+import { Settings } from "lucide-react";
 import { useRef, useState } from "react";
-import { Outlet, useParams } from "react-router";
+import { NavLink, Outlet, useParams } from "react-router";
 import { useCharacter } from "../../hooks/useCharacter.ts";
 import { useCharacterPages } from "../../hooks/useCharacterPages.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CharacterHeader } from "./CharacterHeader.tsx";
-import { CharacterMenu } from "./CharacterMenu.tsx";
 import { CharacterSidebar } from "./CharacterSidebar.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
@@ -44,7 +44,14 @@ export function CharacterLayout() {
               actions={
                 <>
                   <UndoButton characterId={id} />
-                  <CharacterMenu character={character.data} />
+                  <NavLink
+                    to={`/characters/${id}/settings`}
+                    title="Character settings"
+                    aria-label="Character settings"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-[current=page]:text-ink"
+                  >
+                    <Settings size={16} aria-hidden="true" />
+                  </NavLink>
                 </>
               }
             />
