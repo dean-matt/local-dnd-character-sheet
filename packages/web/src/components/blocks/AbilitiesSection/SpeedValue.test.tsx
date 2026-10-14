@@ -1,6 +1,7 @@
 import type { CharacterDerived } from "@dnd/character";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { characterRecord, derivedRecord } from "../../../test/records.ts";
 import { SaveOverride } from "../../overrideContext.ts";
 import { SpeedValue } from "./SpeedValue.tsx";
 
@@ -12,13 +13,21 @@ const computed: Speed = {
   terms: [{ label: "Elf", value: 30 }],
 };
 
-function onPage(speed: Speed) {
-  const save = vi.fn().mockResolvedValue(undefined);
-  render(
-    <SaveOverride.Provider value={save}>
-      <SpeedValue speed={speed} />
-    </SaveOverride.Provider>,
+/** The Strength 8 Warlock carrying `carried` pounds, with the encumbrance option set or not. */
+function tile(speed: Speed, { encumbrance = false, carried = 0 } = {}) {
+  const { definition } = characterRecord("1", "Vex");
+  const withRules = { ...definition, houseRules: { encumbrance } };
+  return (
+    <SpeedValue
+      definition={withRules}
+      derived={{ ...derivedRecord(withRules), speed, carriedWeight: carried }}
+    />
   );
+}
+
+function onPage(speed: Speed, load?: { encumbrance?: boolean; carried?: number }) {
+  const save = vi.fn().mockResolvedValue(undefined);
+  render(<SaveOverride.Provider value={save}>{tile(speed, load)}</SaveOverride.Provider>);
   return save;
 }
 
@@ -88,9 +97,35 @@ describe("SpeedValue", () => {
   });
 
   it("shows the terms and no override field off the character page", () => {
-    render(<SpeedValue speed={computed} />);
+    render(tile(computed));
     open("Speed 30");
     expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent("Elf30");
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("takes the encumbrance option's reduction off every mode and names it in the breakdown", () => {
+    onPage(computed, { encumbrance: true, carried: 41 });
+    expect(screen.getByText(/swim 20 ft\./)).not.toHaveTextContent("overridden");
+    open("Speed 20");
+    expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
+      "Elf30Encumbrance-10",
+    );
+  });
+
+  it("leaves the speed alone under the same load without the option", () => {
+    onPage(computed, { carried: 81 });
+    open("Speed 30");
+    expect(screen.getByRole("group", { name: "Speed breakdown" })).not.toHaveTextContent(
+      "Encumbrance",
+    );
+  });
+
+  it("reduces an override, while its field still edits the speed before the load", () => {
+    onPage({ ...computed, manual: { walk: 40, swim: 30 } }, { encumbrance: true, carried: 81 });
+    open("Speed 20, overridden from 10");
+    expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
+      /^Overridden from 10 ft\., swim 10 ft\..*Encumbrance-20/,
+    );
+    expect(screen.getByRole("textbox", { name: "Walk speed override" })).toHaveValue("40");
   });
 });
