@@ -67,7 +67,7 @@ test("the top bar, character header and sidebar stay pinned in a tall window, th
 
     // A client-side navigation, so only the header's unmount clears its padding.
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.getByRole("link", { name: "Settings" }).click();
+    await page.getByRole("link", { name: "Settings", exact: true }).click();
     await expect(page).toHaveURL(/\/settings$/);
     await expect(page.locator("html")).toHaveCSS("scroll-padding-top", "64px");
     await scrollToBottom(page, page.locator("main"));
