@@ -45,7 +45,7 @@ export function SizeValue({ size }: { size: CharacterDerived["size"] }) {
         {size.manual !== null && (
           <p>
             Overridden from {capitalize(size.computed)}.
-            {save !== null && " Pick it again to return to it."}
+            {save !== null && ` Pick ${capitalize(size.computed)} again to drop the override.`}
           </p>
         )}
         {save !== null && (

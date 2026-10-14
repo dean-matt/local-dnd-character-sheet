@@ -30,12 +30,14 @@ const speedText = (speed: Speed) =>
 
 /**
  * One mode of the speed as a derived number of its own. The block holds one manual object
- * for every mode, so a mode counts as overridden only where it differs from its computed value.
+ * for every mode, so a mode counts as overridden only where it differs from its computed
+ * value; typing that value back clears the mode's key rather than pinning it unmarked. A
+ * mode a whole-speed override leaves out reads as its computed value.
  */
 function modeOf(speed: Derived<Speed>, mode: Mode): Derived<number | undefined> {
   const computed = speed.computed[mode];
   const manual = speed.manual?.[mode];
-  return { computed, manual: speed.manual === null || manual === computed ? null : manual };
+  return { computed, manual: manual === undefined || manual === computed ? null : manual };
 }
 
 /**
@@ -52,7 +54,7 @@ export function SpeedValue({ speed }: { speed: Derived<Speed> }) {
   const terms = speed.terms ?? [];
   const overridden = MODES.some((mode) => modeOf(speed, mode).manual !== null);
   const extraModes = MODES.filter(
-    (mode) => mode !== "walk" && derivedValue(speed)[mode] !== undefined,
+    (mode) => mode !== "walk" && derivedValue(modeOf(speed, mode)) !== undefined,
   );
   return (
     <>
@@ -91,7 +93,7 @@ export function SpeedValue({ speed }: { speed: Derived<Speed> }) {
                     schema={MODE_SCHEMA[mode]}
                     inputClassName="w-16 py-0.5 text-right"
                     onSave={(next: number | undefined | null) =>
-                      save(`speed.${mode}`, next ?? null)
+                      save(`speed.${mode}`, next === speed.computed[mode] ? null : (next ?? null))
                     }
                   />
                 </div>

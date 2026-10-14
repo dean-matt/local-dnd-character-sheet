@@ -1133,6 +1133,14 @@ describe("deriveCharacter", () => {
       expect(cloaked.speed.manual?.swim).toBe(60);
     });
 
+    it("drops a refused or unknown mode alone, keeping the modes beside it", () => {
+      const block = deriveCharacter(
+        { ...equipped, overrides: { "speed.walk": 25, "speed.fly": -5, "speed.run": 40 } },
+        itemCatalog,
+      );
+      expect(block.speed.manual).toEqual({ ...block.speed.computed, walk: 25 });
+    });
+
     it("lays a per-mode override over a whole-speed one", () => {
       const block = deriveCharacter(
         { ...equipped, overrides: { speed: { walk: 10, swim: 5 }, "speed.walk": 25 } },

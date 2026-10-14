@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import { type CharacterDerived, characterDerivedSchema } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
@@ -79,6 +80,40 @@ function visit(node: unknown, path: string, overrides: Record<string, unknown>):
 }
 
 /**
+ * Drops the override behind one schema issue. A refused member, such as `speed.run` or
+ * `speed.fly: -5`, falls back to its computed value alone, so the members beside it still
+ * apply, and a `manual` left matching the computed value drops. Any other refused value
+ * drops its field's whole `manual`.
+ */
+function unapply(folded: CharacterDerived, issue: z.core.$ZodIssue): void {
+  const at = issue.path.lastIndexOf("manual");
+  const field = issue.path
+    .slice(0, at)
+    .reduce<Record<PropertyKey, unknown>>(
+      (node, segment) => node[segment] as Record<PropertyKey, unknown>,
+      folded as unknown as Record<PropertyKey, unknown>,
+    );
+  const { manual, computed } = field;
+  const member = issue.path[at + 1];
+  const refused =
+    issue.code === "unrecognized_keys" && at === issue.path.length - 1
+      ? issue.keys
+      : typeof member === "string"
+        ? [member]
+        : [];
+  if (refused.length === 0 || !isRecord(manual) || !isRecord(computed)) {
+    field.manual = null;
+    return;
+  }
+  for (const key of refused) {
+    if (Object.hasOwn(computed, key)) manual[key] = computed[key];
+    else delete manual[key];
+  }
+  const keys = new Set([...Object.keys(manual), ...Object.keys(computed)]);
+  if ([...keys].every((key) => manual[key] === computed[key])) field.manual = null;
+}
+
+/**
  * Folds each stored override into the `manual` of the field its key names. A key naming
  * no field, such as a skill the catalog no longer lists, is left unapplied rather than
  * deleted. A value its field's schema refuses is left unapplied too, so one bad override
@@ -103,14 +138,6 @@ export function applyOverrides(
   if (parsed.success) return parsed.data;
   // `deriveCharacter` builds a block its schema accepts, so every issue sits under a
   // `manual` the fold wrote.
-  for (const { path } of parsed.error.issues) {
-    const field = path
-      .slice(0, path.lastIndexOf("manual"))
-      .reduce<Record<PropertyKey, unknown>>(
-        (node, segment) => node[segment] as Record<PropertyKey, unknown>,
-        folded as unknown as Record<PropertyKey, unknown>,
-      );
-    field.manual = null;
-  }
+  for (const issue of parsed.error.issues) unapply(folded, issue);
   return characterDerivedSchema.parse(folded);
 }

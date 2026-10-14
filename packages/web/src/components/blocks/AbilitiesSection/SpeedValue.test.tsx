@@ -57,6 +57,22 @@ describe("SpeedValue", () => {
     );
   });
 
+  it("clears a mode typed back to its computed value rather than pinning it unmarked", async () => {
+    const save = onPage({ ...computed, manual: { walk: 25, swim: 30 } });
+    open("Speed 25, overridden from 30");
+    const walk = screen.getByRole("textbox", { name: "Walk speed override" });
+    fireEvent.change(walk, { target: { value: "30" } });
+    fireEvent.blur(walk);
+    await waitFor(() => expect(save).toHaveBeenCalledWith("speed.walk", null));
+  });
+
+  it("shows a mode a whole-speed override leaves out at its computed value, field and tile alike", () => {
+    onPage({ computed: { walk: 30, fly: 60 }, manual: { walk: 25 }, terms: [] });
+    expect(screen.getByText(/fly 60 ft\./)).not.toHaveTextContent("overridden");
+    open("Speed 25, overridden from 30");
+    expect(screen.getByRole("textbox", { name: "Fly speed override" })).toHaveValue("60");
+  });
+
   it("marks another mode's override beside it", () => {
     onPage({ ...computed, manual: { walk: 30, swim: 30, fly: 10 } });
     expect(screen.getByText(/fly 10 ft\./)).toHaveTextContent("overridden from none");
