@@ -1,16 +1,22 @@
 import { defaultCharacterState, PRESET_PAGES } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterKey } from "../../hooks/characterKeys.ts";
 import { characterRecord, presetPageRecords } from "../../test/records.ts";
-import { CharacterMenu } from "./CharacterMenu.tsx";
+import { CharacterSettings } from "./CharacterSettings.tsx";
 
 function exportResponse(status: number) {
   return status === 500
     ? new Response(JSON.stringify({ error: "characters.db is locked" }), { status })
     : new Response(JSON.stringify(characterFile()), { status: 200 });
 }
+
+const GETS: Record<string, () => unknown> = {
+  "/api/characters/1": () => characterRecord("1", "Vex"),
+  "/api/characters/1/pages": presetPageRecords,
+};
 
 function stubFetch(status: number) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -25,8 +31,9 @@ function stubFetch(status: number) {
         : new Response(JSON.stringify({ error: "Could not back up characters.db" }), { status });
     }
     if (String(input) === "/api/characters/1/export") return exportResponse(status);
-    return String(input) === "/api/characters/1/pages"
-      ? new Response(JSON.stringify(presetPageRecords()), { status: 200 })
+    const body = GETS[String(input)];
+    return body
+      ? new Response(JSON.stringify(body()), { status: 200 })
       : new Response(JSON.stringify({ error: "nothing here" }), { status: 404 });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -44,26 +51,21 @@ const characterFile = () => ({
 const deletes = (fetchMock: ReturnType<typeof stubFetch>) =>
   fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE");
 
-const openMenu = () => fireEvent.click(screen.getByRole("button", { name: "Character menu" }));
+const press = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
 
-function openDelete() {
-  openMenu();
-  fireEvent.click(screen.getByRole("menuitem", { name: "Delete character" }));
-}
+const openDelete = () => press("Delete character");
 
-function renderMenu(name = "Vex") {
+function renderSettings(name = "Vex") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(["characters"], [characterRecord("1", name)]);
+  queryClient.setQueryData(characterKey("1"), characterRecord("1", name));
   const router = createMemoryRouter(
     [
-      {
-        path: "/characters/:id",
-        element: <CharacterMenu character={characterRecord("1", name)} />,
-      },
+      { path: "/characters/:id/settings", element: <CharacterSettings /> },
       { path: "/characters/2", element: <p>copy</p> },
       { path: "/characters", element: <p>list</p> },
     ],
-    { initialEntries: ["/characters/1"] },
+    { initialEntries: ["/characters/1/settings"] },
   );
   render(
     <QueryClientProvider client={queryClient}>
@@ -77,55 +79,48 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("CharacterMenu", () => {
-  it("holds Duplicate, Export and Delete, moves between them by arrow key, and closes on Escape", () => {
+describe("CharacterSettings", () => {
+  it("titles the page and lays out house rules, the character file and the danger zone in order", () => {
     stubFetch(204);
-    renderMenu();
-    const trigger = screen.getByRole("button", { name: "Character menu" });
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    renderSettings();
 
-    openMenu();
-
-    expect(trigger).toHaveAttribute("aria-expanded", "true");
-    const [duplicate, exportItem, remove] = screen.getAllByRole("menuitem");
-    expect(duplicate).toHaveTextContent("Duplicate character");
-    expect(exportItem).toHaveTextContent("Export character");
-    expect(remove).toHaveTextContent("Delete character");
-    expect(duplicate).toHaveFocus();
-    fireEvent.keyDown(duplicate as HTMLElement, { key: "ArrowDown" });
-    expect(exportItem).toHaveFocus();
-    fireEvent.keyDown(exportItem as HTMLElement, { key: "ArrowDown" });
-    expect(remove).toHaveFocus();
-    fireEvent.keyDown(remove as HTMLElement, { key: "ArrowDown" });
-    expect(duplicate).toHaveFocus();
-    fireEvent.keyDown(duplicate as HTMLElement, { key: "Escape" });
-    expect(screen.queryByRole("menu")).toBeNull();
-    expect(trigger).toHaveFocus();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Character settings" }),
+    ).toBeInTheDocument();
+    const sections = screen
+      .getAllByRole("region")
+      .map((region) => region.getAttribute("aria-labelledby"));
+    const titles = sections.map((id) => document.getElementById(id ?? "")?.textContent);
+    expect(titles).toEqual(["Character settings", "House rules", "Character file", "Danger zone"]);
+    const file = screen.getByRole("region", { name: "Character file" });
+    expect(
+      within(file)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Duplicate character", "Export character"]);
+    expect(
+      within(screen.getByRole("region", { name: "Danger zone" })).getByRole("button"),
+    ).toHaveTextContent("Delete character");
   });
 
-  it("reaches the last item by ArrowUp and End, the first by Home, and closes when focus leaves", () => {
+  it("returns focus to Delete character when the confirmation is cancelled", async () => {
     stubFetch(204);
-    renderMenu();
-    openMenu();
-    const items = screen.getAllByRole("menuitem");
-    const [duplicate, remove] = [items[0], items.at(-1)];
+    renderSettings();
+    openDelete();
 
-    fireEvent.keyDown(duplicate as HTMLElement, { key: "ArrowUp" });
-    expect(remove).toHaveFocus();
-    fireEvent.keyDown(remove as HTMLElement, { key: "Home" });
-    expect(duplicate).toHaveFocus();
-    fireEvent.keyDown(duplicate as HTMLElement, { key: "End" });
-    expect(remove).toHaveFocus();
-    fireEvent.blur(remove as HTMLElement, { relatedTarget: document.body });
-    expect(screen.queryByRole("menu")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Delete character" })).toHaveFocus(),
+    );
   });
 
   it("duplicates the character, then opens the copy", async () => {
     const fetchMock = stubFetch(201);
-    const { router, queryClient } = renderMenu();
+    const { router, queryClient } = renderSettings();
 
-    openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Duplicate character" }));
+    press("Duplicate character");
 
     await screen.findByText("copy");
     expect(router.state.location.pathname).toBe("/characters/2");
@@ -136,16 +131,12 @@ describe("CharacterMenu", () => {
 
   it("stays on the character and says why when the duplicate fails", async () => {
     stubFetch(500);
-    const { router } = renderMenu();
+    const { router } = renderSettings();
 
-    openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Duplicate character" }));
+    press("Duplicate character");
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Duplicate failed: disk full");
-    expect(router.state.location.pathname).toBe("/characters/1");
-
-    openMenu();
-    expect(screen.queryByRole("alert")).toBeNull();
+    expect(router.state.location.pathname).toBe("/characters/1/settings");
   });
 
   it("downloads the character's file, named for the character", async () => {
@@ -159,10 +150,9 @@ describe("CharacterMenu", () => {
       },
     );
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    renderMenu();
+    renderSettings();
 
-    openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Export character" }));
+    press("Export character");
 
     await waitFor(() => expect(click).toHaveBeenCalledOnce());
     const link = click.mock.contexts[0] as HTMLAnchorElement;
@@ -178,20 +168,19 @@ describe("CharacterMenu", () => {
 
   it("stays on the character and says why when the export fails", async () => {
     stubFetch(500);
-    const { router } = renderMenu();
+    const { router } = renderSettings();
 
-    openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Export character" }));
+    press("Export character");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Export failed: characters.db is locked",
     );
-    expect(router.state.location.pathname).toBe("/characters/1");
+    expect(router.state.location.pathname).toBe("/characters/1/settings");
   });
 
   it("names what goes with the character and that undo cannot bring it back", async () => {
     stubFetch(204);
-    renderMenu();
+    renderSettings();
 
     openDelete();
 
@@ -206,7 +195,7 @@ describe("CharacterMenu", () => {
 
   it("deletes nothing until the name is typed back", () => {
     const fetchMock = stubFetch(204);
-    renderMenu();
+    renderSettings();
     openDelete();
 
     const confirm = screen.getByRole("button", { name: "Delete" });
@@ -220,7 +209,7 @@ describe("CharacterMenu", () => {
 
   it("asks for a whitespace name to be typed too, rather than taking an empty field", () => {
     stubFetch(204);
-    renderMenu("  ");
+    renderSettings("  ");
     openDelete();
 
     expect(screen.getByRole("button", { name: "Delete" })).toHaveAttribute("aria-disabled", "true");
@@ -228,7 +217,7 @@ describe("CharacterMenu", () => {
 
   it("deletes once the name matches, then leaves for the list without the character", async () => {
     const fetchMock = stubFetch(204);
-    const { router, queryClient } = renderMenu();
+    const { router, queryClient } = renderSettings();
     openDelete();
 
     fireEvent.change(screen.getByLabelText("Type Vex to confirm"), { target: { value: "Vex" } });
@@ -243,7 +232,7 @@ describe("CharacterMenu", () => {
 
   it("stays open and says why when the delete fails", async () => {
     stubFetch(500);
-    const { router } = renderMenu();
+    const { router } = renderSettings();
     openDelete();
 
     fireEvent.change(screen.getByLabelText("Type Vex to confirm"), { target: { value: "Vex" } });
@@ -253,6 +242,6 @@ describe("CharacterMenu", () => {
       "Delete failed: Could not back up characters.db",
     );
     expect(screen.getByLabelText("Type Vex to confirm")).toHaveAttribute("aria-invalid", "false");
-    expect(router.state.location.pathname).toBe("/characters/1");
+    expect(router.state.location.pathname).toBe("/characters/1/settings");
   });
 });

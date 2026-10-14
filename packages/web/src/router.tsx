@@ -4,6 +4,7 @@ import { CharacterLayout } from "./routes/CharacterLayout/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
+import { CharacterSettings } from "./routes/CharacterSettings/CharacterSettings.tsx";
 import { ContentLayout } from "./routes/ContentLayout.tsx";
 import { CreationFlow } from "./routes/CreationFlow/CreationFlow.tsx";
 import { DisplaySettings } from "./routes/DisplaySettings.tsx";
@@ -34,6 +35,7 @@ export const routeConfig: RouteObject[] = [
         children: [
           { index: true, element: <CharacterRedirect /> },
           { path: "p/:slug", element: <CharacterPage /> },
+          { path: "settings", element: <CharacterSettings /> },
         ],
       },
       { path: "search", element: <SearchPage /> },

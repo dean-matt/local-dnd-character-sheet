@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
@@ -104,6 +104,24 @@ describe("routing", () => {
     await router.navigate("/characters/abc/p/spells");
     await screen.findByRole("region", { name: "Spells" });
     expect(screen.getAllByRole("heading", { level: 1, name: "Vex" })).toHaveLength(1);
+  });
+
+  it("opens Character settings from the header's gear, outside the pages the nav lists", async () => {
+    const router = renderAt("/characters/abc/p/stats");
+    await screen.findByRole("region", { name: "Stats" });
+    expect(screen.queryByRole("button", { name: "Character menu" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "Character settings" }));
+
+    await screen.findByRole("heading", { level: 2, name: "Character settings" });
+    expect(router.state.location.pathname).toBe("/characters/abc/settings");
+    expect(screen.getByRole("link", { name: "Character settings" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    const nav = screen.getByRole("navigation", { name: "Character pages" });
+    expect(nav.querySelectorAll("a")).toHaveLength(presetPageRecords().length);
+    expect(within(nav).queryByRole("link", { name: /settings/i })).not.toBeInTheDocument();
   });
 
   it("prints why the pages could not load", async () => {

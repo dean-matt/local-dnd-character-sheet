@@ -2,9 +2,9 @@ import type { CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterKey } from "../../../hooks/characterKeys.ts";
-import { identityRecord } from "../../../test/records.ts";
-import { stubFetch } from "../../../test/stubFetch.ts";
+import { characterKey } from "../../hooks/characterKeys.ts";
+import { identityRecord } from "../../test/records.ts";
+import { stubFetch } from "../../test/stubFetch.ts";
 import { HouseRulesCard } from "./HouseRulesCard.tsx";
 
 const classic = (houseRules: CharacterRecord["definition"]["houseRules"]): CharacterRecord => {

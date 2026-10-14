@@ -1,7 +1,7 @@
 import { type CharacterRecord, type HouseRule, houseRule } from "@dnd/character";
 import { useId, useState } from "react";
-import { useHeldSave } from "../../../hooks/useHeldSave.ts";
-import { Card } from "../../Card.tsx";
+import { Card } from "../../components/Card.tsx";
+import { useHeldSave } from "../../hooks/useHeldSave.ts";
 
 type Edition = CharacterRecord["edition"];
 
