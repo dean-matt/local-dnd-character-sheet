@@ -24,8 +24,11 @@ node scripts/wait-checks.mjs "$n"
 ```
 
 Run it with a 600000 ms tool timeout. On its exit 2, name what it printed and hand back.
-On exit 1, rerun the failed runs once, never twice: one rerun covers a flaky runner, a
-second says the failure is the branch's.
+On exit 1, read the failed step first with `gh run view <id> --log-failed`. A `check` failing
+at its Version bump step skips the rerun, which fails it the same way, and goes to
+[Raise the version again](behind-branch-recovery.md#raise-the-version-again). Rerun any
+other failed run once, never twice: one rerun covers a flaky runner, a second says the
+failure is the branch's.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
@@ -36,10 +39,7 @@ node scripts/wait-checks.mjs "$n"
 ```
 
 The sleep lets the rerun show as pending before `wait-checks` reads it. A second exit 1 is
-the branch's failure: name the failed checks and hand back. A `check` failing at its Version
-bump step skips the rerun, which fails it the same way: `gh run view <id> --log-failed` names
-the step, and [Raise the version again](behind-branch-recovery.md#raise-the-version-again)
-fixes it.
+the branch's failure: name the failed checks and hand back.
 
 ## The gate
 
