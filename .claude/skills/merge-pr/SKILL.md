@@ -36,7 +36,10 @@ node scripts/wait-checks.mjs "$n"
 ```
 
 The sleep lets the rerun show as pending before `wait-checks` reads it. A second exit 1 is
-the branch's failure: name the failed checks and hand back.
+the branch's failure: name the failed checks and hand back. A `check` failing at its Version
+bump step skips the rerun, which fails it the same way: `gh run view <id> --log-failed` names
+the step, and [Raise the version again](behind-branch-recovery.md#raise-the-version-again)
+fixes it.
 
 ## The gate
 

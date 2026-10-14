@@ -3,7 +3,7 @@
 A locally hosted D&D character sheet: React + Hono + SQLite, single user, no auth,
 no deployment. Rules data comes from 5etools and is fetched, never committed.
 
-Read at the start of every task: detail only some tasks need belongs in a skill or `docs/`.
+Every line here is read on every task; detail only some tasks need belongs in a skill or `docs/`.
 
 ## Architecture, decided
 
