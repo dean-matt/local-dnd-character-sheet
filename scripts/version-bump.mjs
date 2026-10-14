@@ -1,17 +1,17 @@
 /**
  * Rejects a change to code that leaves the root `package.json` version at or below
- * `origin/main`'s. It compares the working tree with `origin/main`, so it judges an
+ * `origin/main`'s. It compares the working tree with the branch point, so it judges an
  * uncommitted edit too, and needs `origin/main` fetched: CI fetches it first.
  *
- * Exports `checkVersionBump` for `tests/version-bump.test.ts`; running the file checks
- * this checkout and exits non-zero when it fails.
+ * Exports `checkVersionBump` and `changedFiles` for `tests/version-bump.test.ts`; running
+ * the file checks this checkout and exits non-zero when it fails.
  */
 import { readFileSync, realpathSync } from "node:fs";
 import { capture } from "./capture.mjs";
 
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
-/** Prose and the mockup ship nothing a user runs, so they need no bump. */
+/** Everything outside `docs/` and Markdown counts as code. */
 const isCode = (path) => !path.startsWith("docs/") && !path.endsWith(".md");
 
 function parse(version) {
@@ -33,16 +33,31 @@ export function checkVersionBump({ changed, version, base }) {
   return `package.json version ${version} does not raise main's ${base}.`;
 }
 
+/**
+ * The files the working tree changes since it left `origin/main`. Against the tip instead,
+ * a branch behind a fresh fetch would count `main`'s changes as its own. CI's depth-1
+ * checkout of the pull request's merge commit has no merge base, and there the tip is exact.
+ *
+ * @param {string} [cwd]
+ */
+export function changedFiles(cwd) {
+  let base = "origin/main";
+  try {
+    base = capture("git", ["merge-base", "origin/main", "HEAD"], { cwd, stdio: "pipe" }).trim();
+  } catch {}
+  return capture("git", ["diff", "--name-only", base], { cwd }).split("\n").filter(Boolean);
+}
+
 if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
   const error = checkVersionBump({
-    changed: capture("git", ["diff", "--name-only", "origin/main"]).split("\n").filter(Boolean),
+    changed: changedFiles(),
     version: JSON.parse(readFileSync("package.json", "utf8")).version,
     base: JSON.parse(capture("git", ["show", "origin/main:package.json"])).version,
   });
   if (error !== null) {
     console.error(
-      `${error}\n\n  A feat raises the minor version and any other type the patch:\n` +
-        "  npm version minor --no-git-tag-version\n",
+      `${error}\n\n  npm version minor --no-git-tag-version   # a feat\n` +
+        "  npm version patch --no-git-tag-version   # any other type\n",
     );
     process.exit(1);
   }
