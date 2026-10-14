@@ -13,7 +13,7 @@ const OPTIONS: Record<HouseRule, { name: string; description: string; editions: 
   encumbrance: {
     name: "Encumbrance",
     description:
-      "Carrying more than 5 times your Strength score in pounds costs 10 feet of speed, and more than 10 times costs 20 feet. A Tiny creature reaches both sooner.",
+      "Carrying more than 5 times your Strength score in pounds costs 10 feet of speed. More than 10 times costs 20 feet and gives disadvantage on Strength, Dexterity and Constitution checks, saves and attack rolls. A Tiny creature reaches both sooner.",
     editions: ["classic", "one"],
   },
   optionalClassFeatures: {

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import type { RollEffectEntry } from "./characterDerived.ts";
 import { effectsOnRoll, netRollEffect } from "./rollEffects.ts";
 
-const effect = (rest: Omit<RollEffectEntry, "item">): RollEffectEntry => ({
-  item: "Item",
+const effect = (rest: Omit<RollEffectEntry, "source">): RollEffectEntry => ({
+  source: "Item",
   ...rest,
 });
 
@@ -13,7 +13,8 @@ const STEALTH = effect({ mode: "advantage", roll: "skill", target: "Stealth" });
 const ANY_CHECK = effect({ mode: "advantage", roll: "check" });
 const STRENGTH_CHECK = effect({ mode: "disadvantage", roll: "check", target: "str" });
 const ATTACK = effect({ mode: "disadvantage", roll: "attack" });
-const all = [SPELLS, STRENGTH_SAVE, STEALTH, ANY_CHECK, STRENGTH_CHECK, ATTACK];
+const STRENGTH_ATTACK = effect({ mode: "disadvantage", roll: "attack", target: "str" });
+const all = [SPELLS, STRENGTH_SAVE, STEALTH, ANY_CHECK, STRENGTH_CHECK, ATTACK, STRENGTH_ATTACK];
 
 describe("effectsOnRoll", () => {
   it("marks a save with the effects for every save and for its own ability", () => {
@@ -39,8 +40,12 @@ describe("effectsOnRoll", () => {
     ]);
   });
 
-  it("marks an attack with the attack effects alone", () => {
-    expect(effectsOnRoll(all, { roll: "attack" })).toEqual([ATTACK]);
+  it("marks an attack with the effects for every attack and for its own ability", () => {
+    expect(effectsOnRoll(all, { roll: "attack", ability: "str" })).toEqual([
+      ATTACK,
+      STRENGTH_ATTACK,
+    ]);
+    expect(effectsOnRoll(all, { roll: "attack", ability: "int" })).toEqual([ATTACK]);
   });
 });
 

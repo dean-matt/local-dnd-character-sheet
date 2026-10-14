@@ -781,8 +781,8 @@ describe("derivedRoutes", () => {
       }),
     );
     expect((await derived()).rollEffects.computed).toEqual([
-      { item: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
-      { item: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
+      { source: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
+      { source: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
     ]);
   });
 
@@ -801,7 +801,7 @@ describe("derivedRoutes", () => {
     expect(plate.speed.computed.walk).toBe(25);
     expect(plate.speed.terms).toEqual([{ label: "Plate Armor: Strength 15 required", value: -10 }]);
     expect(plate.rollEffects.computed).toEqual([
-      { item: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
+      { source: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
     ]);
 
     updateCharacterDefinition(
@@ -818,7 +818,7 @@ describe("derivedRoutes", () => {
     );
     const belted = await derived();
     expect(belted.speed.terms).toEqual([]);
-    expect(belted.rollEffects.computed.map((effect) => effect.item)).toEqual([
+    expect(belted.rollEffects.computed.map((effect) => effect.source)).toEqual([
       PLATE.name,
       "Rattling Scale",
     ]);
@@ -832,7 +832,7 @@ describe("derivedRoutes", () => {
     );
     expect((await derived()).rollEffects.computed).toEqual([
       {
-        item: "Holy Avenger Longsword",
+        source: "Holy Avenger Longsword",
         mode: "advantage",
         roll: "save",
         condition: "against spells and other magical effects",

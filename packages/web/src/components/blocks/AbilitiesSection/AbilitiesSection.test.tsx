@@ -380,13 +380,13 @@ describe("AbilitiesSection", () => {
       rollEffects: {
         computed: [
           {
-            item: "Mantle of Spell Resistance",
+            source: "Mantle of Spell Resistance",
             mode: "advantage",
             roll: "save",
             condition: "against spells",
           },
-          { item: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
-          { item: "Cloak of the Mind", mode: "disadvantage", roll: "check", target: "cha" },
+          { source: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
+          { source: "Cloak of the Mind", mode: "disadvantage", roll: "check", target: "cha" },
         ],
         manual: null,
         terms: [],

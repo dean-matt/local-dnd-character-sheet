@@ -129,8 +129,8 @@ function presentModes(speed: Speed): [string, number][] {
 }
 
 /**
- * What a load costs a character: the speeds they move at now, and the disadvantage heavy
- * encumbrance imposes.
+ * What a load costs a character's speeds. Heavy encumbrance's disadvantage reaches the
+ * derived block's `rollEffects` instead.
  *
  * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
  * no stale derived value behind.
@@ -151,11 +151,10 @@ export function encumberedSpeed(
     return {
       speed: Object.fromEntries(modes) as Speed,
       speedReduction: 0,
-      disadvantage: false,
       reductionBreakdown: breakdown([]),
     };
   }
-  const { speedReduction, disadvantage } = encumbranceAt(
+  const { speedReduction } = encumbranceAt(
     derived.abilityScores.str.computed,
     derivedValue(derived.size),
     weight,
@@ -176,12 +175,11 @@ export function encumberedSpeed(
   return {
     speed: reduced,
     speedReduction,
-    disadvantage,
     reductionBreakdown: breakdown(reductionTerms),
   };
 }
 
-/** A character's speeds under the encumbrance variant, and what else the load costs. */
+/** A character's speeds under the encumbrance variant. */
 export type EncumberedSpeed = {
   speed: Speed;
   /**
@@ -192,8 +190,6 @@ export type EncumberedSpeed = {
    * table never opted in.
    */
   speedReduction: number;
-  /** From `encumbranceAt`, which names the rolls the rule covers. */
-  disadvantage: boolean;
   /** Why `speedReduction` is what it is — the encumbrance house rule, or no term at all. */
   reductionBreakdown: Breakdown<TermReference>;
 };

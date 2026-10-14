@@ -46,6 +46,9 @@ describe("HouseRulesCard", () => {
     expect(
       card.getByRole("checkbox", { name: "Replace a duplicate skill" }),
     ).toHaveAccessibleDescription(/pick any other skill instead/);
+    expect(card.getByRole("checkbox", { name: "Encumbrance" })).toHaveAccessibleDescription(
+      /disadvantage on Strength, Dexterity and Constitution checks, saves and attack rolls/,
+    );
   });
 
   it("reads an option the definition never set as the rule as printed", () => {

@@ -539,28 +539,43 @@ function wornBurdens(
   });
 }
 
+/** The abilities whose checks, saves and attacks heavy encumbrance puts at disadvantage. */
+const BURDENED_ABILITIES = ["str", "dex", "con"] as const;
+
 /**
  * The advantage and disadvantage of each equipped item, attuned where it must be, in
- * inventory order, then the Stealth disadvantage of worn armor.
+ * inventory order, then the Stealth disadvantage of worn armor, then heavy encumbrance's
+ * where `burdened`.
  */
 function derivedRollEffects(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
+  burdened: boolean,
 ): CharacterDerived["rollEffects"] {
   const granted = definition.inventory.flatMap((entry) => {
     const item = catalog.itemAdvantages.get(itemKey(entry));
     if (!item || !entry.equipped || (item.requiresAttunement && !entry.attuned)) return [];
-    return item.effects.map((effect) => ({ item: item.name, ...effect }));
+    return item.effects.map((effect) => ({ source: item.name, ...effect }));
   });
   const stealth = wornBurdens(definition, catalog)
     .filter((armor) => armor.stealth)
     .map((armor) => ({
-      item: armor.name,
+      source: armor.name,
       mode: "disadvantage" as const,
       roll: "skill" as const,
       target: "Stealth",
     }));
-  return computed([...granted, ...stealth]);
+  const encumbered = burdened
+    ? (["check", "save", "attack"] as const).flatMap((roll) =>
+        BURDENED_ABILITIES.map((target) => ({
+          source: "Heavily encumbered",
+          mode: "disadvantage" as const,
+          roll,
+          target,
+        })),
+      )
+    : [];
+  return computed([...granted, ...stealth, ...encumbered]);
 }
 
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
@@ -746,6 +761,7 @@ export function deriveCharacter(
       ComputedField<number>
     >;
 
+  const { burdened, ...carrying } = load(definition, catalog);
   const block: CharacterDerived = {
     abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
     abilityModifiers: perAbility((ability) =>
@@ -776,13 +792,13 @@ export function deriveCharacter(
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
-    ...load(definition, catalog),
+    ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog),
     itemGrants: derivedItemGrants(bonuses),
-    rollEffects: derivedRollEffects(definition, catalog),
+    rollEffects: derivedRollEffects(definition, catalog, burdened),
   };
   return applyOverrides(block, definition);
 }
@@ -801,6 +817,9 @@ function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
   const size = raceSize(definition, catalog);
   const weight = carriedWeight(definition, catalog.weights, catalog.containers);
   const overflows = containerOverflows(definition, catalog.weights, catalog.containers);
+  const penalty = houseRule(definition, "encumbrance")
+    ? encumbranceAt(strength, size, weight)
+    : null;
   return {
     carryingCapacity: computed(carryingCapacity(strength, size)),
     carriedWeight: weight,
@@ -815,9 +834,8 @@ function load(definition: CharacterDefinition, catalog: CharacterCatalog) {
     // The tier reads Strength and size rather than `carryingCapacity`, so an override of
     // the capacity leaves it standing. The way out is thresholds scaled by the overridden
     // capacity, once overrides fold into the block.
-    encumbrance: houseRule(definition, "encumbrance")
-      ? encumbranceAt(strength, size, weight).tier
-      : null,
+    encumbrance: penalty?.tier ?? null,
+    burdened: penalty?.disadvantage ?? false,
   };
 }
 

@@ -82,12 +82,12 @@ describe("Attacks", () => {
       rollEffects: {
         computed: [
           {
-            item: "Oathbow",
+            source: "Oathbow",
             mode: "disadvantage",
             roll: "attack",
             condition: "with all other weapons",
           },
-          { item: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
+          { source: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
         ],
         manual: null,
         terms: [],
@@ -108,6 +108,29 @@ describe("Attacks", () => {
         name: "Warlock spell attack: Disadvantage if every condition holds",
       }),
     ).toHaveTextContent(/^DIS\*$/);
+  });
+
+  it("marks only the attacks that use the ability an effect names, citing its source", async () => {
+    renderAttacks({
+      ...derivedRecord(),
+      attacks: [attack(0, 5)],
+      rollEffects: {
+        computed: (["str", "dex", "con"] as const).map((target) => ({
+          source: "Heavily encumbered",
+          mode: "disadvantage" as const,
+          roll: "attack" as const,
+          target,
+        })),
+        manual: null,
+        terms: [],
+      },
+    });
+
+    fireEvent.focus(await screen.findByRole("button", { name: "Longsword: Disadvantage" }));
+    expect(
+      screen.getByRole("group", { name: "Longsword advantage and disadvantage" }),
+    ).toHaveTextContent("Disadvantage (Heavily encumbered)");
+    expect(screen.queryByRole("button", { name: /^Warlock spell attack:/ })).toBeNull();
   });
 
   it("opens a weapon's attack terms from its bonus", async () => {
