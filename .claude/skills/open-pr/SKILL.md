@@ -12,8 +12,9 @@ marks it ready once the canvas carries the change.
 
 ## The version
 
-A pull request that changes code raises the root `package.json` version over `main`'s,
-once: `feat` raises the minor, every other type the patch.
+A pull request that changes any file outside `docs/` other than Markdown raises the root
+`package.json` version over `main`'s, once: `feat` raises the minor, every other type the
+patch.
 
 ```bash
 npm version <minor|patch> --no-git-tag-version
