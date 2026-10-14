@@ -37,6 +37,16 @@ const casterGrants = (level: number, resources: Record<string, string>, slots: n
 const FIGHTER = { name: "Fighter", source: "XPHB" };
 const SORCERER = { name: "Sorcerer", source: "PHB" };
 const CLERIC = XPHB("Cleric");
+const KNIGHT_FIGHTER = { name: "Fighter", source: "PHB" };
+const fighterSubclass = (name: string, shortName: string) => ({
+  name,
+  source: "PHB",
+  shortName,
+  className: "Fighter",
+  classSource: "PHB",
+  edition: "classic",
+  json: { name, source: "PHB", shortName },
+});
 
 /** Each spell's level and the classes whose list holds it. */
 const SPELLS: Record<string, { level: number; lists: string[] }> = {
@@ -163,6 +173,29 @@ const ROWS: Record<string, unknown> = {
     { cantrips_known: "5", spells_known: "5" },
     [4, 3],
   ),
+  "/api/classes/Fighter/PHB": {
+    ...KNIGHT_FIGHTER,
+    edition: "classic",
+    hitDie: 10,
+    json: {
+      ...KNIGHT_FIGHTER,
+      classFeatures: [
+        { classFeature: "Martial Archetype|Fighter|PHB|3", gainSubclassFeature: true },
+      ],
+    },
+  },
+  "/api/classes/Fighter/PHB/subclasses?edition=classic&limit=200": page([
+    fighterSubclass("Eldritch Knight", "Eldritch Knight"),
+    fighterSubclass("Champion", "Champion"),
+  ]),
+  "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
+  "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Eldritch%20Knight/PHB/at/3": casterGrants(
+    3,
+    { cantrips_known: "2", spells_known: "3" },
+    [2],
+  ),
+  "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Cleric/XPHB": { ...CLERIC, edition: "one", hitDie: 8, json: CLERIC },
   "/api/classes/Cleric/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Cleric/XPHB/at/1": casterGrants(
@@ -744,6 +777,51 @@ describe("LevelUp", () => {
         { ref: { name: "Fire Bolt", source: "PHB" }, prepared: false, origin: SORCERER },
         { ref: { name: "Misty Step", source: "PHB" }, prepared: false, origin: SORCERER },
       ]);
+    });
+
+    it("offers spells off the class's list and of any level past the escape", async () => {
+      renderSeeded(sorcerer(3));
+      await open();
+      await within(dialog()).findByRole("region", { name: "New spells" });
+      fireEvent.click(
+        within(dialog()).getByRole("checkbox", {
+          name: "Offer spells off the Sorcerer list, and of any level",
+        }),
+      );
+      await pickSpell("Add a spell", "Fireball");
+      await within(dialog()).findByRole("button", { name: "Remove Fireball" });
+      const search = Object.fromEntries(spellSearches.at(-1) ?? []);
+      expect(search).toMatchObject({ minLevel: "1", maxLevel: "9" });
+      expect(search).not.toHaveProperty("class");
+    });
+
+    it("takes back the spells picked when the subclass changes", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Eldritch Knight");
+      const cantrips = await within(dialog()).findByRole("region", { name: "New cantrips" });
+      expect(cantrips).toHaveTextContent("Choose 2 — 0 selected");
+      expect(within(dialog()).getByRole("region", { name: "New spells" })).toHaveTextContent(
+        "Choose 3 — 0 selected",
+      );
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" });
+
+      choose("Fighter subclass", "Champion");
+      await waitFor(() =>
+        expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull(),
+      );
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().spells).toEqual([{ ref: { name: "Shield", source: "PHB" }, prepared: false }]);
     });
 
     it("takes back the spells picked when the level goes to another class", async () => {

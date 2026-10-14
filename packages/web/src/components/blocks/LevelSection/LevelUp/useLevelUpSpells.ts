@@ -7,9 +7,6 @@ import type { useLevelUpClass } from "./useLevelUpClass.ts";
 
 type Spell = CharacterDefinition["spells"][number];
 
-/** A spell picked this level, with the level its lookup found, none where no row answers. */
-type LevelUpPick = { ref: EntryRef; name: string; level?: number };
-
 /**
  * The cantrips and spells the level adds to what `cls` knows, and the picks the draft's
  * `spells` holds past `definition`'s, split by the level each lookup found. A pick still
@@ -39,10 +36,11 @@ export function useLevelUpSpells(
     added.map((spell) => spell.ref),
     list ? { list } : {},
   );
-  const picked: LevelUpPick[] = added.flatMap(({ ref }, index) => {
+  const picked = added.flatMap(({ ref }, index) => {
     const found = looked[index];
     if (found === undefined) return [];
-    return [found === null ? { ref, name: displayName(ref) } : { ref, ...found }];
+    const { name, level } = found ?? { name: displayName(ref), level: undefined };
+    return [{ ref, name, level }];
   });
   const cantrips = picked.filter((pick) => pick.level === 0);
   const leveled = picked.filter((pick) => pick.level !== 0);

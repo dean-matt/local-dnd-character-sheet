@@ -8,31 +8,13 @@ import { SpellPickField } from "../../components/SpellPickField.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
 import { LoadingState } from "../../LoadingState.tsx";
+import type { CasterFacts } from "../../lib/casterFacts.ts";
+import { searchHitKey } from "../../lib/searchHitKey.ts";
+import { spellListFilters } from "../../lib/spellListFilters.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
-import {
-  type CasterFacts,
-  cantripsOf,
-  SPELLS_FIELD,
-  type SubclassPicks,
-  spellsOf,
-} from "./spellPicks.ts";
+import { cantripsOf, SPELLS_FIELD, type SubclassPicks, spellsOf } from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
-
-const hitKey = (hit: SearchHit) =>
-  entryKey("id" in hit ? { homebrewId: hit.id } : { name: hit.name, source: hit.source });
-
-const nameSource = (ref: { name: string; source: string }) => `${ref.name}|${ref.source}`;
-
-/** The `/search` filters narrowing a picker to `list`, or to nothing past the escape. */
-const listFilters = (list: ReturnType<typeof useSpellChoices>["list"], offList: boolean) =>
-  list && !offList
-    ? {
-        class: nameSource(list.class),
-        ...(list.subclass && { subclass: nameSource(list.subclass) }),
-        classLevel: String(list.level),
-      }
-    : {};
 
 /**
  * Which pick lists to draw: those the class casts from, those the subclass offers picks
@@ -105,11 +87,11 @@ export function SpellsStep() {
   const held = new Set(picked.map((spell) => entryKey(spell.ref)));
   const given = new Set(granted.map((spell) => entryKey(spell.ref)));
   const unavailableReason = (hit: SearchHit) => {
-    if (given.has(hitKey(hit))) return "Granted already";
-    return held.has(hitKey(hit)) ? "Picked already" : undefined;
+    if (given.has(searchHitKey(hit))) return "Granted already";
+    return held.has(searchHitKey(hit)) ? "Picked already" : undefined;
   };
   const offList = beyond || !facts;
-  const filters = listFilters(list, offList);
+  const filters = spellListFilters(list, offList);
   const field = { edition, unavailableReason, onRemove: remove };
   const shown = sectionsShown(facts, subclass, cantrips.length, spells.length);
 

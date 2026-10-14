@@ -15,6 +15,7 @@ import { useCharacterDerived } from "../../../../hooks/useCharacterDerived.ts";
 import { useDisabledSources } from "../../../../hooks/useDisabledSources.ts";
 import { shownOptions } from "../../../../lib/featureChoices.ts";
 import { grantTitle } from "../../../../lib/improvementGrants.ts";
+import { searchHitKey } from "../../../../lib/searchHitKey.ts";
 import { FormField } from "../../../FormField.tsx";
 import { ImprovementField } from "../../../ImprovementField.tsx";
 import { Select } from "../../../Select.tsx";
@@ -29,7 +30,6 @@ const UNCHOSEN = "Choose one";
 const subclassKey = (row: Pick<SubclassRecord, "name" | "source">) => `${row.name}|${row.source}`;
 const toRef = (hit: SearchHit): EntryRef =>
   "id" in hit ? { homebrewId: hit.id } : { name: hit.name, source: hit.source };
-const hitKey = (hit: SearchHit) => entryKey(toRef(hit));
 const hitSource = (hit: SearchHit) => ("id" in hit ? "homebrew" : hit.source);
 // Above every class one edition and the homebrew hold together; past it, the classes
 // beyond go unoffered until this pages.
@@ -71,7 +71,7 @@ export function LevelUpChoices({
     limit: CLASS_LIMIT,
     listAll: true,
   });
-  const fresh = (classes.data?.items ?? []).filter((hit) => !held.has(hitKey(hit)));
+  const fresh = (classes.data?.items ?? []).filter((hit) => !held.has(searchHitKey(hit)));
   const names = fresh.map((hit) => hit.name);
   const shared = new Set(names.filter((name, index) => names.indexOf(name) !== index));
   const pickClass = (cls: EntryRef) => {
@@ -90,14 +90,14 @@ export function LevelUpChoices({
                 label: `${displayName(group.class)} ${group.level} → ${group.level + 1}`,
               })),
               ...fresh.map((hit) => ({
-                value: hitKey(hit),
+                value: searchHitKey(hit),
                 label: `${shared.has(hit.name) ? `${hit.name} (${hitSource(hit)})` : hit.name} (new) → 1`,
               })),
             ]}
             value={entryKey(level.class)}
             onChange={(value) => {
               const group = groups.find((each) => entryKey(each.class) === value);
-              const hit = fresh.find((each) => hitKey(each) === value);
+              const hit = fresh.find((each) => searchHitKey(each) === value);
               if (group) pickClass(group.class);
               else if (hit) pickClass(toRef(hit));
             }}
@@ -180,7 +180,12 @@ export function LevelUpChoices({
           </FormField>
         );
       })}
-      <LevelUpSpells edition={definition.edition} picks={plan.spellPicks} />
+      <LevelUpSpells
+        key={`spells:${entryKey(level.class)}`}
+        edition={definition.edition}
+        className={target.name}
+        picks={plan.spellPicks}
+      />
       <LevelUpSummary changes={plan.table()} features={plan.features} />
       <p className="text-muted text-row">
         Hit points, proficiency bonus and spell slots are worked out once you apply, and the summary
