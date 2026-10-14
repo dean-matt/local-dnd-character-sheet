@@ -22,9 +22,6 @@ export function SpellSlotRow({
       <span aria-hidden="true" className="w-12 shrink-0 text-xs">
         {label}
       </span>
-      <span className="sr-only">
-        {spoken}: {count === 1 ? "1 slot" : `${count} slots`}
-      </span>
       <span aria-hidden="true" className="flex grow flex-wrap gap-[3px]">
         {Array.from({ length: count }, (_, index) => (
           <span
@@ -36,7 +33,6 @@ export function SpellSlotRow({
       </span>
       <span className="text-muted text-xs">
         <DerivedValue
-          named
           name={`${spoken} slots`}
           value={total}
           format={String}

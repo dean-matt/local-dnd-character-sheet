@@ -5,7 +5,10 @@ import { Field } from "../Field/Field.tsx";
 import { SaveOverride } from "../overrideContext.ts";
 import { TermList } from "../TermList.tsx";
 
-/** A sign and digits only, so `Number` cannot read "1e1" or "0x1E" as a value nobody typed. */
+/**
+ * A sign, digits and a decimal fraction only, so `Number` cannot read "1e1" or "0x1E" as a
+ * value nobody typed. The fraction is for carrying capacity, whose pounds need not be whole.
+ */
 const parseNumber = (raw: string) =>
   /^[+-]?\d+(\.\d+)?$/.test(raw.trim()) ? Number(raw.trim()) : Number.NaN;
 

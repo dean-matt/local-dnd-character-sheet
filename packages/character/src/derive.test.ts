@@ -1550,9 +1550,11 @@ describe("deriveCharacter", () => {
     const totals = (block: CharacterDerived) =>
       block.spellSlots.map((slot) => [slot.level, slot.total.computed]);
 
-    it("names a slot override by its slot level", () => {
+    it("names a slot override by its slot level, the key overrideKey builds", () => {
+      const key = `${overrideKey("spellSlots", { level: 1, total: { computed: 2, manual: null, terms: [] } }, caster(WIZARD))}.total`;
+      expect(key).toBe("spellSlots.1.total");
       const block = deriveCharacter(
-        { ...caster(WIZARD), overrides: { "spellSlots.1.total": 4 } },
+        { ...caster(WIZARD), overrides: { [key]: 4 } },
         tables([[WIZARD, { progression: "full", slots: [{ level: 1, total: 2 }] }]]),
       );
       expect(block.spellSlots).toEqual([

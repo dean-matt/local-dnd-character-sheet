@@ -70,11 +70,9 @@ export function AbilityScores({
               detail={{
                 title: ABILITY_LABEL[ability],
                 meta:
-                  derived.abilityScores[ability].manual !== null
-                    ? `Score ${score}, overridden from ${derived.abilityScores[ability].computed}`
-                    : increases.length === 0
-                      ? `Score ${score}`
-                      : `Score ${score}: base ${definition.abilityScores[ability]}, ${increases.join(", ")}`,
+                  derived.abilityScores[ability].manual !== null || increases.length === 0
+                    ? `Score ${score}`
+                    : `Score ${score}: base ${definition.abilityScores[ability]}, ${increases.join(", ")}`,
                 value: derived.abilityModifiers[ability],
                 rules: editionRules(definition, ABILITY_RULES),
                 footer: (
@@ -87,6 +85,11 @@ export function AbilityScores({
                       format={String}
                       overrideKey={`abilityScores.${ability}`}
                     />
+                    {derived.abilityScores[ability].manual !== null && (
+                      <p className="mt-1 text-muted">
+                        The modifier and every roll still read the computed score.
+                      </p>
+                    )}
                   </div>
                 ),
               }}

@@ -545,9 +545,10 @@ describe("AbilitiesSection", () => {
       fireEvent.click(
         within(tile("Ability Scores", "Strength")).getByRole("button", { name: "Strength" }),
       );
-      expect(screen.getByRole("dialog", { name: "Strength" })).toHaveTextContent(
-        "Score 20, overridden from 8",
-      );
+      const dialog = screen.getByRole("dialog", { name: "Strength" });
+      expect(dialog).toHaveTextContent("Score 20");
+      expect(dialog).toHaveTextContent("Overridden from 8.");
+      expect(dialog).toHaveTextContent("still read the computed score");
     });
 
     it("leaves a classic character's ability and save without rules text, and keeps its skill's", () => {

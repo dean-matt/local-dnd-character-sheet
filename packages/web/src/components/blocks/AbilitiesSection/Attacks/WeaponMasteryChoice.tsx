@@ -50,7 +50,7 @@ export function WeaponMasteryChoice({
       <h4 className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
         Weapon mastery
       </h4>
-      <p className="text-row">
+      <div className="text-row">
         {chosen.length} of{" "}
         <DerivedValue
           named
@@ -61,7 +61,7 @@ export function WeaponMasteryChoice({
           schema={characterDerivedSchema.shape.weaponMasteryLimit.shape.computed}
         />{" "}
         chosen
-      </p>
+      </div>
       {chosen.length > limit && (
         <p role="status" className="text-error text-row">
           Over the limit: remove {chosen.length - limit} to match what your classes allow.
