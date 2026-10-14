@@ -1,4 +1,4 @@
-import { ChevronDown, Settings } from "lucide-react";
+import { ChevronDown, MessageSquare, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
@@ -7,6 +7,9 @@ import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
 import { MechanicsMenu } from "./MechanicsMenu.tsx";
 import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
+
+const FEEDBACK_URL =
+  "https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback";
 
 export function TopBar() {
   const characters = useCharacters();
@@ -37,7 +40,7 @@ export function TopBar() {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full w-full items-center gap-1.5 border-b border-border bg-surface px-3 sm:px-6"
+      className="relative flex h-full w-full items-center border-b border-border bg-surface px-3 sm:gap-1.5 sm:px-6"
     >
       <Link
         to="/"
@@ -115,10 +118,21 @@ export function TopBar() {
 
       <GlobalSearch onOpen={closeMenu} />
 
+      <a
+        href={FEEDBACK_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Feedback (opens GitHub in a new tab)"
+        className={`ml-auto shrink-0 ${TRIGGER} ${ELSEWHERE} hover:bg-subtle`}
+      >
+        <span className="max-sm:sr-only">Feedback</span>
+        <MessageSquare size={16} className="text-muted" />
+      </a>
+
       <NavLink
         to="/settings"
         className={({ isActive }) =>
-          `ml-auto shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
+          `shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
         }
       >
         {({ isActive }) => (

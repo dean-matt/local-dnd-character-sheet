@@ -66,6 +66,22 @@ describe("TopBar", () => {
     expect(screen.queryByRole("group", { name: "Theme" })).not.toBeInTheDocument();
   });
 
+  it("Feedback opens a new Feedback discussion in a new tab, just left of Settings", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    const feedback = screen.getByRole("link", {
+      name: "Feedback (opens GitHub in a new tab)",
+    });
+    expect(feedback).toHaveAttribute(
+      "href",
+      "https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback",
+    );
+    expect(feedback).toHaveAttribute("target", "_blank");
+    expect(feedback).toHaveAttribute("rel", "noopener noreferrer");
+    expect(feedback.nextElementSibling).toBe(screen.getByRole("link", { name: /settings/i }));
+  });
+
   it.each([
     ["/characters", "character", "/characters"],
     ["/characters/7", "character", "/characters/7"],

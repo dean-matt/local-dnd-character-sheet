@@ -1,0 +1,75 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Specific beats short: the more we can see what you saw, the faster it turns into a fix or a feature.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of feedback is this?
+      options:
+        - Something is broken or behaves wrong
+        - A rule or number is calculated wrong
+        - Something is confusing or slow to do
+        - A feature I wanted and couldn't find
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Where in the app?
+      placeholder: "Level-up dialog, Spells page, character creation step 3…"
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What were you trying to do?
+      description: The goal at the table, not the click. "Swap a prepared spell after a long rest", not "click the spell".
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened, step by step?
+      description: The steps you took and what the sheet did. For a missing feature, what you did instead.
+      placeholder: |
+        1. Opened …
+        2. Clicked …
+        3. Saw …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: For a rules issue, cite the book and page if you can.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Rules edition
+      options: ["2024 (XPHB)", "2014 (PHB)", "Both / not rules-related"]
+    validations:
+      required: true
+
+  - type: input
+    id: character
+    attributes:
+      label: Character details
+      description: Class, subclass, species and level, if they matter.
+      placeholder: "Lore Bard 6, Half-Elf"
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or recording
+      description: Drag images into this box. Optional, but they help a lot.
