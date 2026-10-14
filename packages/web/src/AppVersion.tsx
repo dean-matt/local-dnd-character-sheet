@@ -27,9 +27,13 @@ export function AppVersion({ collapsed }: { collapsed: boolean }) {
 
   const Result = status === "Copied" ? Check : CircleAlert;
   const tone = status === "Copied" ? "text-positive" : "text-error";
-  // Every label shares one grid cell and only the current one is visible, so the row
-  // keeps the width of the longest and nothing beside it moves.
-  const labels = [text, "Copied", "Could not copy"];
+  // Every label shares one grid cell and only the current one is opaque, so the row keeps
+  // the width of the longest, nothing beside it moves, and the labels cross-fade.
+  const labels = [
+    { label: text, tone: "" },
+    { label: "Copied", tone: "text-positive" },
+    { label: "Could not copy", tone: "text-error" },
+  ];
 
   return (
     <div>
@@ -47,13 +51,14 @@ export function AppVersion({ collapsed }: { collapsed: boolean }) {
         )}
         {!collapsed && (
           <span className="grid min-w-0 text-left">
-            {labels.map((label) => {
+            {labels.map(({ label, tone }) => {
               const shown = label === (status || text);
               return (
                 <code
                   key={label}
                   aria-hidden={!shown || undefined}
-                  className={`col-start-1 row-start-1 truncate text-label ${shown ? (status ? tone : "") : "invisible"}`}
+                  className={`col-start-1 row-start-1 truncate text-label ${tone} ${shown ? "opacity-100" : "opacity-0"}`}
+                  style={{ transition: "opacity var(--duration-standard)" }}
                 >
                   {label}
                 </code>
