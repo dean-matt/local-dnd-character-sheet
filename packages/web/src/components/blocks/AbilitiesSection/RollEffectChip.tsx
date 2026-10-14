@@ -9,8 +9,8 @@ const MODE = {
 } as const;
 
 /**
- * The advantage or disadvantage equipped items grant on one roll, as one chip that opens
- * each effect and the net result. A conditional effect draws the chip in outline with an
+ * The advantage or disadvantage on one roll, as one chip that opens each effect with its
+ * source and the net result. A conditional effect draws the chip in outline with an
  * asterisk, because only the table knows whether its condition holds.
  */
 export function RollEffectChip({
@@ -26,8 +26,8 @@ export function RollEffectChip({
   const lines = [
     ...new Set(
       effects.map(
-        ({ item, mode, condition }) =>
-          `${condition ? `${MODE[mode].label} ${condition}` : MODE[mode].label} (${item})`,
+        ({ source, mode, condition }) =>
+          `${condition ? `${MODE[mode].label} ${condition}` : MODE[mode].label} (${source})`,
       ),
     ),
   ];

@@ -65,7 +65,7 @@ export function Attacks({
 }) {
   const inventory = useCharacterInventory(character.id);
   const { definition } = character;
-  const effects = effectsOnRoll(derivedValue(derived.rollEffects), { roll: "attack" });
+  const rollEffects = derivedValue(derived.rollEffects);
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
@@ -103,7 +103,7 @@ export function Attacks({
                 <AttackRow
                   key={attack.entry}
                   name={name}
-                  effects={effects}
+                  effects={effectsOnRoll(rollEffects, { roll: "attack", ability: attack.ability })}
                   notes={
                     <>
                       {attack.mastery.map((ref) => (
@@ -148,7 +148,7 @@ export function Attacks({
                     />
                   }
                   damage={NONE}
-                  effects={effects}
+                  effects={effectsOnRoll(rollEffects, { roll: "attack", ability: caster.ability })}
                 />
               );
             })}

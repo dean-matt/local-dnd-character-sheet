@@ -3,10 +3,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { RollEffectChip } from "./RollEffectChip.tsx";
 
-const KEY = { item: "Infiltrator's Key", mode: "advantage", roll: "check" } as const;
-const CLOAK = { item: "Cloak of the Mind", mode: "disadvantage", roll: "check" } as const;
+const KEY = { source: "Infiltrator's Key", mode: "advantage", roll: "check" } as const;
+const CLOAK = { source: "Cloak of the Mind", mode: "disadvantage", roll: "check" } as const;
 const MANTLE = {
-  item: "Mantle of Spell Resistance",
+  source: "Mantle of Spell Resistance",
   mode: "advantage",
   roll: "save",
   condition: "against spells",

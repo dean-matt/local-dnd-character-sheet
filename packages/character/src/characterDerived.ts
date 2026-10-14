@@ -48,9 +48,13 @@ const itemGrantsSchema = z.strictObject({
   languages: z.array(z.string().min(1)),
 });
 
-/** One advantage or disadvantage an equipped item grants, with the item to cite and its condition if it has one. */
+/**
+ * One advantage or disadvantage, with what to cite for it — an equipped item, or the load
+ * under the encumbrance variant — and its condition if it has one. An `attack` effect's
+ * `target` is the ability the attack uses, absent where it marks every attack.
+ */
 const rollEffectSchema = z.strictObject({
-  item: z.string().min(1),
+  source: z.string().min(1),
   mode: z.enum(ADVANTAGE_MODES),
   roll: z.enum(ADVANTAGE_ROLLS),
   target: z.string().min(1).optional(),
@@ -207,7 +211,8 @@ export const characterDerivedSchema = z.strictObject({
   itemGrants: derivedSchema(itemGrantsSchema),
   /**
    * The advantage and disadvantage equipped items grant, attuned where they must be, in
-   * inventory order. Nothing here cancels a pair: the table decides whether a condition holds.
+   * inventory order, then heavy encumbrance's under the variant. Nothing here cancels a
+   * pair: the table decides whether a condition holds.
    */
   rollEffects: derivedSchema(z.array(rollEffectSchema)),
 });

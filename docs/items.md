@@ -101,7 +101,9 @@ Things card. The rest are mapped. The count is pinned so that a new tag's rows g
 
 An equipped item, attuned where it requires attunement, lists its effects in
 `rollEffects`, and the sheet marks the save, skill or attack they apply to with one chip
-after its bonus. An attack effect marks every attack row, a spell attack included.
+after its bonus. An item's attack effect marks every attack row, a spell attack included.
+Heavy encumbrance under the encumbrance variant adds Strength, Dexterity and Constitution
+disadvantage to the same list, and its attack effects mark only the rows using those abilities.
 Advantage and disadvantage on one roll cancel, and the chip strikes them through. A
 conditional effect draws the chip in outline with an asterisk, since whether a condition
 holds is the table's call; the chip's popover lists each effect and the net result. An ability check marks the

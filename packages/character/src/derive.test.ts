@@ -375,6 +375,35 @@ describe("deriveCharacter", () => {
     expect(deriveCharacter({ ...equipped, houseRules: {} }, catalog).encumbrance).toBeNull();
   });
 
+  describe("heavy encumbrance's disadvantage", () => {
+    const carrying = (pounds: number) => ({
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(SHIELD), pounds]]),
+    });
+    const fromLoad = (definition: CharacterDefinition, pounds: number) =>
+      deriveCharacter(definition, carrying(pounds)).rollEffects.computed.filter(
+        (effect) => effect.source === "Heavily encumbered",
+      );
+
+    it("marks every Strength, Dexterity and Constitution check, save and attack", () => {
+      const marked = fromLoad(equipped, 90);
+      expect(marked).toHaveLength(9);
+      expect(marked.every((effect) => effect.mode === "disadvantage")).toBe(true);
+      expect(new Set(marked.map(({ roll, target }) => `${roll} ${target}`))).toEqual(
+        new Set(
+          ["check", "save", "attack"].flatMap((roll) =>
+            ["str", "dex", "con"].map((ability) => `${roll} ${ability}`),
+          ),
+        ),
+      );
+    });
+
+    it("marks nothing while merely encumbered, or where the table plays without the variant", () => {
+      expect(fromLoad(equipped, 30)).toEqual([]);
+      expect(fromLoad({ ...equipped, houseRules: {} }, 90)).toEqual([]);
+    });
+  });
+
   it("gives three attunement slots, and more to a high-level Artificer", () => {
     expect(derived.attunementSlots).toEqual({ computed: 3, manual: null, terms: [] });
     const artificer = { name: "Artificer", source: "TCE" };
@@ -1292,7 +1321,7 @@ describe("deriveCharacter", () => {
 
     it("marks Stealth with disadvantage, naming the armor, while it is worn", () => {
       expect(derive([entry(PLATE)]).rollEffects.computed).toEqual([
-        { item: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
+        { source: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
       ]);
       expect(derive([entry(PLATE, { equipped: false })]).rollEffects.computed).toEqual([]);
     });
@@ -1374,8 +1403,8 @@ describe("deriveCharacter", () => {
         entry(BOOTS_OF_ELVENKIND, { equipped: true }),
       ];
       expect(effectsOf(worn).computed).toEqual([
-        { item: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
-        { item: BOOTS_OF_ELVENKIND.name, mode: "advantage", roll: "skill", target: "Stealth" },
+        { source: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
+        { source: BOOTS_OF_ELVENKIND.name, mode: "advantage", roll: "skill", target: "Stealth" },
       ]);
     });
 

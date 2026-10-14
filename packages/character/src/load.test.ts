@@ -252,7 +252,6 @@ describe("encumbered speed", () => {
     expect(speeds(HEAVILY_ENCUMBERED_AT * 10, {})).toEqual({
       speed: { walk: 30, fly: 30, swim: 10 },
       speedReduction: 0,
-      disadvantage: false,
       reductionBreakdown: { total: 0, terms: [] },
     });
   });
@@ -271,7 +270,6 @@ describe("encumbered speed", () => {
       expect(speeds(weight)).toEqual({
         speed: { walk: 30, fly: 30, swim: 10 },
         speedReduction: 0,
-        disadvantage: false,
         reductionBreakdown: { total: 0, terms: [] },
       });
     },
@@ -283,7 +281,6 @@ describe("encumbered speed", () => {
       expect(speeds(weight)).toEqual({
         speed: { walk: 20, fly: 20, swim: 0 },
         speedReduction: 10,
-        disadvantage: false,
         reductionBreakdown: {
           total: 10,
           terms: [
@@ -294,11 +291,10 @@ describe("encumbered speed", () => {
     },
   );
 
-  it("surfaces the disadvantage the heavily encumbered state carries", () => {
+  it("loses 20 feet in excess of the heavier threshold", () => {
     expect(speeds(HEAVILY_ENCUMBERED_AT + 0.05)).toEqual({
       speed: { walk: 10, fly: 10, swim: 0 },
       speedReduction: 20,
-      disadvantage: true,
       reductionBreakdown: {
         total: 20,
         terms: [{ label: "Encumbrance", value: 20, reference: { houseRuleOption: "encumbrance" } }],
@@ -330,11 +326,10 @@ describe("encumbered speed", () => {
     const clamped = carryingCapacity(definition.abilityScores.str, "tiny");
 
     expect(clamped).toBe(60);
-    expect(speeds(clamped, { encumbrance: true }, tiny).disadvantage).toBe(false);
+    expect(speeds(clamped, { encumbrance: true }, tiny).speedReduction).toBe(10);
     expect(speeds(clamped + 0.05, { encumbrance: true }, tiny)).toEqual({
       speed: { walk: 10 },
       speedReduction: 20,
-      disadvantage: true,
       reductionBreakdown: {
         total: 20,
         terms: [{ label: "Encumbrance", value: 20, reference: { houseRuleOption: "encumbrance" } }],
