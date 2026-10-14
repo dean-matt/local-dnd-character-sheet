@@ -64,4 +64,21 @@ describe("HouseRulesCard", () => {
 
     await waitFor(() => expect(written(fetchMock)).toEqual({ feats: false, encumbrance: true }));
   });
+
+  it("shows a switch's new state while its write is in flight, and the stored one after a failure", async () => {
+    let fail: ((response: Response) => void) | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>((resolve) => (fail = resolve))),
+    );
+    const card = renderCard(identityRecord());
+    const box = card.getByRole("checkbox", { name: "Encumbrance" });
+
+    fireEvent.click(box);
+    expect(box).toBeChecked();
+
+    await waitFor(() => expect(fail).toBeDefined());
+    fail?.(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
+    await waitFor(() => expect(box).not.toBeChecked());
+  });
 });

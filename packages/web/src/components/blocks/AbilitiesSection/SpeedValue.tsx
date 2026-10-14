@@ -47,8 +47,8 @@ function modeOf(speed: Derived<Speed>, mode: Mode): Derived<number | undefined> 
  * overrides each mode under its own key, such as `speed.fly`. A mode no race grants, such
  * as burrowing, takes an override too.
  *
- * The speeds shown are what the carried load leaves, which the encumbrance house rule
- * reduces after any override, and its breakdown names the rule. An override is marked
+ * Each speed shown is after the encumbrance reduction, applied on top of any override, and
+ * the breakdown names the rule. An override is marked
  * against the computed speed under the same load. Each override field edits the speed
  * before the load, the value the definition stores.
  */

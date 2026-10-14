@@ -1,5 +1,5 @@
 import { type CharacterRecord, type HouseRule, houseRule } from "@dnd/character";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { Card } from "../../Card.tsx";
 
@@ -13,7 +13,7 @@ const OPTIONS: Record<HouseRule, { name: string; description: string; editions: 
   encumbrance: {
     name: "Encumbrance",
     description:
-      "Carrying more than 5 times your Strength score in pounds costs 10 feet of speed, and more than 10 times costs 20 feet. Neither threshold exceeds your carrying capacity.",
+      "Carrying more than 5 times your Strength score in pounds costs 10 feet of speed, and more than 10 times costs 20 feet. A Tiny creature reaches both sooner.",
     editions: ["classic", "one"],
   },
   optionalClassFeatures: {
@@ -52,11 +52,13 @@ const RULES = Object.keys(OPTIONS) as HouseRule[];
 /**
  * The rules this character's table bends, one switch per option that changes something
  * under the character's edition. Each saves on change; one never set reads as the rule as
- * printed.
+ * printed. A switch shows its new state while the write is in flight, and the stored one
+ * once the write settles, so a failed save puts it back.
  */
 export function HouseRulesCard({ character }: { character: CharacterRecord }) {
   const write = useHeldSave(character.id, "House rules");
   const hints = useId();
+  const [pending, setPending] = useState<Partial<Record<HouseRule, boolean>>>({});
   const { definition } = character;
   return (
     <Card title="House rules">
@@ -66,14 +68,20 @@ export function HouseRulesCard({ character }: { character: CharacterRecord }) {
             <label className="flex items-center gap-2 text-ink text-row">
               <input
                 type="checkbox"
-                checked={houseRule(definition, rule)}
+                checked={pending[rule] ?? houseRule(definition, rule)}
                 aria-describedby={`${hints}-${rule}`}
                 onChange={(event) => {
                   const on = event.target.checked;
+                  setPending((current) => ({ ...current, [rule]: on }));
                   write(rule, (latest) => ({
                     ...latest,
                     houseRules: { ...latest.houseRules, [rule]: on },
-                  }));
+                  })).then(() =>
+                    // A later click still in flight keeps its own state.
+                    setPending(({ [rule]: shown, ...rest }) =>
+                      shown === on ? rest : { ...rest, [rule]: shown },
+                    ),
+                  );
                 }}
               />
               {OPTIONS[rule].name}
