@@ -37,3 +37,20 @@ gh pr view "$n" --json mergeStateStatus --jq .mergeStateStatus
 
 Still `BEHIND` means the update never landed or `main` moved again: update again. Three
 reinvocations go to the user, carrying that reading.
+
+## Raise the version again
+
+Where the updated head fails `pnpm version:check`, `main` raised the version past or onto
+the branch's: two pull requests making the same bump merge without a conflict. In the
+issue's worktree, pull the update, raise the version over `main`'s as
+[`open-pr`](../open-pr/SKILL.md#the-version) says, then commit and push. Where
+`.claude/worktrees/<issue>` is gone, `git worktree add` it from the branch first.
+
+```bash
+git pull --ff-only && git fetch origin main
+npm version <minor|patch> --no-git-tag-version   # repeat until it passes
+pnpm version:check
+git commit -am "chore(repo): raise the version over main's" && git push
+```
+
+Then wait out the stale window again.

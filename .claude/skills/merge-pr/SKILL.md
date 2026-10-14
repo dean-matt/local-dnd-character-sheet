@@ -76,7 +76,8 @@ Branch protection requires a head carrying the tip of `main`, so `gh pr merge` r
 pull request that sat while another merged, whatever the rest of the gate said.
 [`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
 the server and waits out the window where the checks describe the old commit. On its
-`ready`, run *Block on the checks* and the gate again; a gate still saying GitHub is
+`ready`, run *Block on the checks* and the gate again; a `check` failing at its Version bump
+step goes to [Raise the version again](behind-branch-recovery.md#raise-the-version-again); a gate still saying GitHub is
 computing mergeability is the queued merge landing, so ask again. Two round trips is the
 ceiling — a third `BEHIND` means `main` moves faster than the checks run, and sequencing
 that is the user's call.

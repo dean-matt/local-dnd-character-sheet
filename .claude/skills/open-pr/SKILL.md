@@ -20,8 +20,8 @@ npm version <minor|patch> --no-git-tag-version
 ```
 
 `pnpm check` fails a branch without it, so `issue-to-pr` commits the bump with its first
-commit, before this skill runs. Where `main` raises the version while the pull request is
-open, raise it again over `main`'s.
+commit, before this skill runs. Where `main` raises it while the pull request is open,
+[`merge-pr`](../merge-pr/SKILL.md#where-the-branch-is-behind) raises it again.
 
 ## The pull request body
 
