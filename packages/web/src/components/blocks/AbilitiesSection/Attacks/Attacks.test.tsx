@@ -114,9 +114,9 @@ describe("Attacks", () => {
     renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5)] });
 
     fireEvent.click(await screen.findByRole("button", { name: "Longsword attack bonus +5" }));
-    expect(screen.getByRole("group", { name: "Longsword attack bonus" })).toHaveTextContent(
-      "Strength5",
-    );
+    expect(
+      screen.getByRole("group", { name: "Longsword attack bonus breakdown" }),
+    ).toHaveTextContent("Strength5");
   });
 
   it("names the mastery a chosen weapon has, linked to its rules text", async () => {
@@ -187,9 +187,9 @@ describe("Attacks", () => {
     renderAttacks(derivedRecord());
 
     fireEvent.click(await screen.findByRole("button", { name: "Warlock spell attack bonus +5" }));
-    expect(screen.getByRole("group", { name: "Warlock spell attack bonus" })).toHaveTextContent(
-      "Charisma3Proficiency2",
-    );
+    expect(
+      screen.getByRole("group", { name: "Warlock spell attack bonus breakdown" }),
+    ).toHaveTextContent("Charisma3Proficiency2");
   });
 
   it("says so when nothing is equipped and nothing casts", () => {

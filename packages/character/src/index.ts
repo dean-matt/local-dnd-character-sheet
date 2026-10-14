@@ -83,6 +83,7 @@ export {
 } from "./improvements.ts";
 export { deityKey, entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
+export { overrideKey } from "./overrides.ts";
 export {
   type CharacterPage,
   type CharacterPageRecord,

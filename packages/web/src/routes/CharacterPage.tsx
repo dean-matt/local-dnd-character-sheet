@@ -1,9 +1,11 @@
 import { useParams } from "react-router";
 import { PageBlocks } from "../components/blocks/PageBlocks.tsx";
+import { SaveOverride } from "../components/overrideContext.ts";
 import { ErrorState } from "../ErrorState.tsx";
 import { useCharacter } from "../hooks/useCharacter.ts";
 import { useCharacterDerived } from "../hooks/useCharacterDerived.ts";
 import { useCharacterPages } from "../hooks/useCharacterPages.ts";
+import { useSaveOverride } from "../hooks/useSaveOverride.ts";
 import { LoadingState } from "../LoadingState.tsx";
 import { NotFoundPanel } from "./NotFoundPanel.tsx";
 
@@ -17,6 +19,7 @@ export function CharacterPage() {
   const pages = useCharacterPages(id);
   const character = useCharacter(id);
   const derived = useCharacterDerived(id);
+  const saveOverride = useSaveOverride(id);
 
   if (pages.isPending) return <LoadingState label="Loading pages…" />;
   if (pages.isError) return <ErrorState error={pages.error} />;
@@ -30,7 +33,9 @@ export function CharacterPage() {
         {character.isError && <ErrorState error={character.error} />}
         {derived.isPending && <LoadingState label="Loading derived values…" />}
         {derived.isError && <ErrorState error={derived.error} />}
-        <PageBlocks blocks={page.blocks} character={character.data} derived={derived.data} />
+        <SaveOverride.Provider value={saveOverride}>
+          <PageBlocks blocks={page.blocks} character={character.data} derived={derived.data} />
+        </SaveOverride.Provider>
       </div>
     </section>
   );

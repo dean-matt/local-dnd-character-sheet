@@ -142,16 +142,15 @@ describe("SpellsSection", () => {
     });
 
     const slots = card("Spell Slots");
-    const row = (spoken: string) =>
-      slots.getByText(new RegExp(`^${spoken}:`)).closest("li") as HTMLElement;
+    const row = (spoken: string) => slots.getByText(`${spoken} slots`).closest("li") as HTMLElement;
     const pips = (spoken: string) => [
       ...(row(spoken).querySelectorAll(":scope > [aria-hidden]")[1]?.children ?? []),
     ];
-    expect(slots.getByText("1st Level: 4 slots")).toBeInTheDocument();
+    expect(row("1st Level")).toHaveTextContent("1st Level slots4");
     expect(pips("1st Level")).toHaveLength(4);
     expect(pips("2nd Level")).toHaveLength(2);
     expect(row("2nd Level")).toHaveTextContent("overridden from 3");
-    expect(slots.getByText("Pact Magic, 1st Level: 1 slot")).toBeInTheDocument();
+    expect(row("Pact Magic, 1st Level")).toHaveTextContent("Pact Magic, 1st Level slots1");
     expect(row("Pact Magic, 1st Level")).toHaveTextContent("Pact 1st");
     expect(pips("Pact Magic, 1st Level")).toHaveLength(1);
     for (const pip of pips("1st Level")) {

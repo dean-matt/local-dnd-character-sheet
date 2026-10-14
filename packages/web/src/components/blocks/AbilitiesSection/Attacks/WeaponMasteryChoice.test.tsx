@@ -75,7 +75,9 @@ describe("WeaponMasteryChoice", () => {
   it("counts the kinds chosen against the limit, and offers a pick while one is left", () => {
     renderSeeded(holding([LONGSWORD]), allowing(3));
 
-    expect(screen.getByText("1 of 3 chosen")).toBeInTheDocument();
+    expect(screen.getByText("Weapon mastery").nextElementSibling).toHaveTextContent(
+      "1 of 3 chosen",
+    );
     expect(screen.getByText("Longsword")).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Choose a weapon to master" })).toBeInTheDocument();
   });
@@ -89,7 +91,9 @@ describe("WeaponMasteryChoice", () => {
 
   it("reads the limit a player overrode", () => {
     renderSeeded(holding([LONGSWORD]), allowing(2, 1));
-    expect(screen.getByText("1 of 1 chosen")).toBeInTheDocument();
+    expect(screen.getByText("Weapon mastery").nextElementSibling).toHaveTextContent(
+      "1 of 1*, overridden from 2 chosen",
+    );
   });
 
   it("saves a base weapon with a mastery, and refuses one without", async () => {

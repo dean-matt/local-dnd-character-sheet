@@ -10,12 +10,14 @@ import {
   displayName,
   effectsOnRoll,
   entryKey,
+  overrideKey,
 } from "@dnd/character";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { Card } from "../../../Card.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { damageText } from "../../attack.ts";
-import { AttackBonus } from "./AttackBonus.tsx";
+import { DerivedValue } from "../../DerivedValue.tsx";
+import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRow } from "./AttackRow.tsx";
 import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
@@ -96,6 +98,7 @@ export function Attacks({
           <tbody>
             {weapons.map((attack) => {
               const name = nameOf(attack.entry);
+              const key = overrideKey("attacks", attack, definition);
               return (
                 <AttackRow
                   key={attack.entry}
@@ -111,14 +114,21 @@ export function Attacks({
                       {weaponNotes(attack)}
                     </>
                   }
-                  bonus={<AttackBonus name={`${name} attack bonus`} field={attack.attackBonus} />}
+                  bonus={
+                    <DerivedValue
+                      named
+                      name={`${name} attack bonus`}
+                      value={attack.attackBonus}
+                      overrideKey={`${key}.attackBonus`}
+                    />
+                  }
                   damage={
-                    <>
+                    <AttackDamage name={name} attack={attack} overrideKey={key}>
                       {attack.damage
                         ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
                         : NONE}
                       {critRange(attack)}
-                    </>
+                    </AttackDamage>
                   }
                 />
               );
@@ -129,7 +139,14 @@ export function Attacks({
                 <AttackRow
                   key={entryKey(caster.class)}
                   name={name}
-                  bonus={<AttackBonus name={`${name} bonus`} field={caster.attackBonus} />}
+                  bonus={
+                    <DerivedValue
+                      named
+                      name={`${name} bonus`}
+                      value={caster.attackBonus}
+                      overrideKey={`${overrideKey("spellcasting", caster, definition)}.attackBonus`}
+                    />
+                  }
                   damage={NONE}
                   effects={effects}
                 />

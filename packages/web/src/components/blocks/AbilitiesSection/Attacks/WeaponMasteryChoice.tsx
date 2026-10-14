@@ -1,10 +1,17 @@
 import type { SearchHit } from "@dnd/catalog";
-import { type CharacterDerived, type CharacterRecord, derivedValue, refKey } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  characterDerivedSchema,
+  derivedValue,
+  refKey,
+} from "@dnd/character";
 import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
 import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
+import { DerivedValue } from "../../DerivedValue.tsx";
 
 /**
  * The weapon kinds a character has mastery with, as many as the classes' Weapon Mastery
@@ -43,9 +50,18 @@ export function WeaponMasteryChoice({
       <h4 className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
         Weapon mastery
       </h4>
-      <p className="text-row">
-        {chosen.length} of {limit} chosen
-      </p>
+      <div className="text-row">
+        {chosen.length} of{" "}
+        <DerivedValue
+          named
+          name="Weapon mastery limit"
+          value={derived.weaponMasteryLimit}
+          format={String}
+          overrideKey="weaponMasteryLimit"
+          schema={characterDerivedSchema.shape.weaponMasteryLimit.shape.computed}
+        />{" "}
+        chosen
+      </div>
       {chosen.length > limit && (
         <p role="status" className="text-error text-row">
           Over the limit: remove {chosen.length - limit} to match what your classes allow.

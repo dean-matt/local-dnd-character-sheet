@@ -13,7 +13,13 @@ export function StatTile({
   label: string;
   name: string;
   labelClassName: string;
-  detail?: { title: string; meta: string; value: Derived<number>; rules: Rules | undefined };
+  detail?: {
+    title: string;
+    meta: string;
+    value: Derived<number>;
+    rules: Rules | undefined;
+    footer?: ReactNode;
+  };
   children: ReactNode;
 }) {
   const heading = (

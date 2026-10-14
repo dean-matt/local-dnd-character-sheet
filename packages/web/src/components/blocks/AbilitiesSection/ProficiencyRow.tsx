@@ -1,7 +1,7 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
 import type { ReactNode } from "react";
+import { DerivedValue } from "../DerivedValue.tsx";
 import type { Rules } from "./abilityRules.ts";
-import { DerivedBonus } from "./DerivedBonus.tsx";
 import { DetailName } from "./DetailName/DetailName.tsx";
 import { ProficiencyRing } from "./ProficiencyRing.tsx";
 import { PROFICIENCY_MARK, type ProficiencyLevel } from "./proficiencyMark.ts";
@@ -20,6 +20,7 @@ export function ProficiencyRow({
   title,
   rules,
   effects = [],
+  overrideKey,
   onCycleLevel,
   detailFooter,
 }: {
@@ -29,6 +30,8 @@ export function ProficiencyRow({
   /** A check's ability, or `flat` for a skill whose base is a value the player sets; absent on a save. */
   ability?: Ability | "flat";
   modifier: Derived<number>;
+  /** The definition's `overrides` key for the modifier. */
+  overrideKey: string;
   title: string;
   rules: Rules | undefined;
   /** What equipped items grant on this roll. */
@@ -86,7 +89,7 @@ export function ProficiencyRow({
       <span className="ms-auto flex items-center gap-2">
         <RollEffectChip roll={roll} effects={effects} />
         <span className="flex w-7 justify-end font-semibold">
-          <DerivedBonus named name={roll} value={modifier} />
+          <DerivedValue named name={roll} value={modifier} overrideKey={overrideKey} />
         </span>
       </span>
     </li>

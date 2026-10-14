@@ -1,9 +1,9 @@
-import { type CharacterDerived, derivedValue } from "@dnd/character";
+import { type CharacterDerived, characterDerivedSchema, derivedValue } from "@dnd/character";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { Popover } from "../../Popover.tsx";
 import { TermList } from "../../TermList.tsx";
-import { DerivedBonus } from "./DerivedBonus.tsx";
+import { DerivedValue } from "../DerivedValue.tsx";
 import { StatTile } from "./StatTile.tsx";
 
 const COMBAT_LABEL_CLASS = "text-chip tracking-[0.06em]";
@@ -26,13 +26,30 @@ export function CombatStats({ derived }: { derived: CharacterDerived }) {
     <Card title="Combat">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile label="Prof." name="Proficiency Bonus" labelClassName={COMBAT_LABEL_CLASS}>
-          <DerivedBonus named name="Proficiency Bonus" value={derived.proficiencyBonus} />
+          <DerivedValue
+            named
+            name="Proficiency Bonus"
+            value={derived.proficiencyBonus}
+            overrideKey="proficiencyBonus"
+            schema={characterDerivedSchema.shape.proficiencyBonus.shape.computed}
+          />
         </StatTile>
         <StatTile label="AC" name="Armor Class" labelClassName={COMBAT_LABEL_CLASS}>
-          <DerivedBonus named name="Armor Class" value={derived.armorClass} format={String} />
+          <DerivedValue
+            named
+            name="Armor Class"
+            value={derived.armorClass}
+            format={String}
+            overrideKey="armorClass"
+          />
         </StatTile>
         <StatTile label="Init." name="Initiative" labelClassName={COMBAT_LABEL_CLASS}>
-          <DerivedBonus named name="Initiative" value={derived.initiative} />
+          <DerivedValue
+            named
+            name="Initiative"
+            value={derived.initiative}
+            overrideKey="initiative"
+          />
         </StatTile>
         <StatTile label="Speed" name="Speed" labelClassName={COMBAT_LABEL_CLASS}>
           {speedTerms.length === 0 ? (

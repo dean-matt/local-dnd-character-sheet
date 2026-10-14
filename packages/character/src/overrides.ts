@@ -36,6 +36,19 @@ const ELEMENT_KEY: {
   },
 };
 
+/**
+ * The override key prefix for one element of a list in the derived block, the path
+ * `applyOverrides` folds under. A caller appends the field's own path, such as `.modifier`.
+ */
+export function overrideKey<K extends keyof Lists>(
+  list: K,
+  element: Lists[K][number],
+  definition: CharacterDefinition,
+): string {
+  const key = ELEMENT_KEY[list] as (element: unknown, definition: CharacterDefinition) => string;
+  return `${list}.${key(element, definition)}`;
+}
+
 const isDerived = (node: object): node is { manual: unknown } =>
   "computed" in node && "manual" in node;
 
@@ -62,12 +75,9 @@ export function applyOverrides(
   if (Object.keys(overrides).length === 0) return block;
   const folded = structuredClone(block);
   for (const [key, value] of Object.entries(folded)) {
-    const elementKey = ELEMENT_KEY[key as keyof Lists] as
-      | ((element: unknown, definition: CharacterDefinition) => string)
-      | undefined;
-    if (Array.isArray(value) && elementKey) {
+    if (Array.isArray(value) && key in ELEMENT_KEY) {
       for (const element of value)
-        visit(element, `${key}.${elementKey(element, definition)}`, overrides);
+        visit(element, overrideKey(key as keyof Lists, element, definition), overrides);
     } else {
       visit(value, key, overrides);
     }

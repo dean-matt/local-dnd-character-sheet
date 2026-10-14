@@ -104,8 +104,11 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
   }
 
   // Delayed rather than immediate, so a pointer crossing the gap between the
-  // trigger and the content it opened does not close it mid-crossing.
+  // trigger and the content it opened does not close it mid-crossing. Focus inside
+  // the content holds it open, so a pointer drifting off a field mid-edit cannot
+  // unmount it and commit the half-typed text; `handleBlur` closes it instead.
   function scheduleHide() {
+    if (contentRef.current?.contains(document.activeElement)) return;
     hoverTimer.current = setTimeout(() => setTransientOpen(false), HOVER_CLOSE_DELAY_MS);
   }
 

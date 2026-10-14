@@ -138,9 +138,10 @@ entry. Undo restores through that same write, so it reaches the definition alone
 play state, pages or a deleted character.
 
 **One field contract, two modes.** `packages/web/src/components/Field/Field.tsx` is the only
-component that renders a computed-versus-manual value. M4 uses its read mode, which marks
-an override and names the computed value it replaced; M5 turns on
-its edit mode without rewriting the view already rendering it. Edit mode commits on a
+component that renders a computed-versus-manual value. The sheet shows a derived number in
+read mode, which marks an override and names the computed value it replaced. Its edit mode
+sits in the popover or modal that breaks the number down. That breakdown lists the terms,
+or names the computed value while an override stands. Edit mode commits on a
 debounce, on blur and on unmount, writes `manual` and never `computed`, and clears an override by
 writing `null` rather than a parsed empty value. A failed save keeps the user's text and
 offers a retry, because autosave has no confirm step — the only way back from a bad edit
