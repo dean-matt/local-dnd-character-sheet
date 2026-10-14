@@ -1121,6 +1121,26 @@ describe("deriveCharacter", () => {
       expect(block.speed).toMatchObject({ computed: { walk: 60 }, manual: { walk: 10 } });
     });
 
+    it("lays a per-mode override over the computed speeds, so an untouched mode still moves", () => {
+      const overrides = { "speed.fly": 20 };
+      const bare = deriveCharacter({ ...equipped, overrides }, itemCatalog);
+      const cloaked = deriveCharacter(
+        { ...equipped, inventory: [worn(CLOAK)], overrides },
+        itemCatalog,
+      );
+      expect(bare.speed.manual).toEqual({ ...bare.speed.computed, fly: 20 });
+      expect(cloaked.speed.manual).toEqual({ ...cloaked.speed.computed, fly: 20 });
+      expect(cloaked.speed.manual?.swim).toBe(60);
+    });
+
+    it("lays a per-mode override over a whole-speed one", () => {
+      const block = deriveCharacter(
+        { ...equipped, overrides: { speed: { walk: 10, swim: 5 }, "speed.walk": 25 } },
+        itemCatalog,
+      );
+      expect(block.speed.manual).toEqual({ walk: 25, swim: 5 });
+    });
+
     it("raises the proficiency bonus and everything it feeds, expertise doubling it", () => {
       const block = withItems([worn(MASTERY)]);
       expect(block.proficiencyBonus.computed).toBe(bare.proficiencyBonus.computed + 1);

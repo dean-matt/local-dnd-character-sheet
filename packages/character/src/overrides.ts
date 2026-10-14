@@ -49,13 +49,30 @@ export function overrideKey<K extends keyof Lists>(
   return `${list}.${key(element, definition)}`;
 }
 
-const isDerived = (node: object): node is { manual: unknown } =>
+const isDerived = (node: object): node is { computed: unknown; manual: unknown } =>
   "computed" in node && "manual" in node;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * A field whose value is an object, such as `speed`, also takes one key per member, such
+ * as `speed.fly`. Each lays over the whole-field override where one is stored, else over
+ * the computed object, so a recomputed member the user never typed over still moves.
+ */
 function visit(node: unknown, path: string, overrides: Record<string, unknown>): void {
   if (typeof node !== "object" || node === null) return;
   if (isDerived(node)) {
     if (Object.hasOwn(overrides, path)) node.manual = overrides[path];
+    if (!isRecord(node.computed)) return;
+    const prefix = `${path}.`;
+    const members = Object.entries(overrides).filter(([key]) => key.startsWith(prefix));
+    if (members.length === 0) return;
+    const base = isRecord(node.manual) ? node.manual : node.computed;
+    node.manual = {
+      ...base,
+      ...Object.fromEntries(members.map(([key, value]) => [key.slice(prefix.length), value])),
+    };
     return;
   }
   for (const [key, child] of Object.entries(node)) visit(child, `${path}.${key}`, overrides);
