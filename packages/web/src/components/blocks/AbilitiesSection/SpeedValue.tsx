@@ -5,12 +5,12 @@ import {
   derivedValue,
 } from "@dnd/character";
 import { useContext } from "react";
+import { capitalize } from "../../../lib/capitalize.ts";
 import { Field } from "../../Field/Field.tsx";
 import { OverrideMark } from "../../OverrideMark.tsx";
 import { SaveOverride } from "../../overrideContext.ts";
 import { Popover } from "../../Popover.tsx";
 import { TermList } from "../../TermList.tsx";
-import { capitalize } from "../capitalize.ts";
 
 type Speed = CharacterDerived["speed"]["computed"];
 

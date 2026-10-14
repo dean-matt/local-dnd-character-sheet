@@ -4,7 +4,7 @@
  * lists under `itemType` and `itemProperty`.
  */
 import { DAMAGE_TYPES } from "@dnd/catalog";
-import { capitalize } from "../../components/blocks/capitalize.ts";
+import { capitalize } from "../../lib/capitalize.ts";
 
 /** Which fields beyond the common ones an item of a type carries. */
 export type ItemGroup = "weapon" | "armor" | "gear";

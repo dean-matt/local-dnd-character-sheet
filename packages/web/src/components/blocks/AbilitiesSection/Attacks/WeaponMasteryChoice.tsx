@@ -6,9 +6,7 @@ import {
   derivedValue,
   refKey,
 } from "@dnd/character";
-import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
-import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
-import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
+import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
@@ -26,17 +24,9 @@ export function WeaponMasteryChoice({
   character: CharacterRecord;
   derived: CharacterDerived;
 }) {
-  const update = useUpdateCharacterDefinition(character.id);
-  const writes = useHeldWrites(update);
-  const failure = writes.latest?.error;
+  const write = useHeldSave(character.id, "Weapon mastery");
   const chosen = character.definition.weaponMasteries;
   const limit = derivedValue(derived.weaponMasteryLimit);
-  useSaveToast(
-    "Weapon mastery",
-    failure ? `Couldn't save: ${failure.message}` : undefined,
-    writes.retry,
-    failure,
-  );
   if (limit === 0 && chosen.length === 0) return null;
 
   const taken = new Set(chosen.map(refKey));
@@ -75,7 +65,7 @@ export function WeaponMasteryChoice({
               type="button"
               aria-label={`Remove ${kind.name}`}
               onClick={() =>
-                writes.write(refKey(kind), (latest) => ({
+                write(refKey(kind), (latest) => ({
                   ...latest,
                   weaponMasteries: latest.weaponMasteries.filter(
                     (each) => refKey(each) !== refKey(kind),
@@ -98,7 +88,7 @@ export function WeaponMasteryChoice({
           unavailableReason={unavailable}
           onPick={(ref) =>
             "name" in ref &&
-            writes.write(refKey(ref), (latest) => ({
+            write(refKey(ref), (latest) => ({
               ...latest,
               weaponMasteries: [...latest.weaponMasteries, ref],
             }))

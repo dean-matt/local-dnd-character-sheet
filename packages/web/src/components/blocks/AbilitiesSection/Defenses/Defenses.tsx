@@ -1,7 +1,8 @@
 /**
  * The Resistances & Immunities card: what the race and the equipped items grant, read off
  * the derived block, then what the player added by hand from the definition. A granted chip
- * opens a modal naming every source that grants it; an added one carries × instead.
+ * opens a modal naming every source that grants it; an added one carries × instead. A type
+ * already granted is not offered to add.
  */
 import {
   type CharacterDefinition,
@@ -10,10 +11,10 @@ import {
   derivedValue,
 } from "@dnd/character";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { capitalize } from "../../../../lib/capitalize.ts";
 import { CONDITIONS, DAMAGE_TYPE_NAMES } from "../../../../lib/defenseVocabulary.ts";
 import { AddChoice } from "../../../AddChoice.tsx";
 import { Card } from "../../../Card.tsx";
-import { capitalize } from "../../capitalize.ts";
 import { DefenseChipRow, type DefenseChipRowProps } from "./DefenseChipRow.tsx";
 
 type Defense = CharacterDerived["defenses"]["computed"]["resistances"][number];
@@ -44,6 +45,11 @@ export function Defenses({
   const { resistances, damageImmunities, conditionImmunities, vulnerabilities, resistanceChoice } =
     derivedValue(derived.defenses);
   const added = character.definition.addedDefenses;
+  const granted: Record<AddedKind, readonly Defense[]> = {
+    resistances,
+    damageImmunities,
+    conditionImmunities,
+  };
 
   const edit = (kind: AddedKind, name: string, keep: boolean) =>
     write(`${kind}|${name}`, (latest) => {
@@ -66,7 +72,10 @@ export function Defenses({
   const adder = (kind: AddedKind, label: string, vocabulary: typeof CONDITIONS) => (
     <AddChoice
       label={label}
-      options={vocabulary.filter(({ value }) => !added[kind].includes(value))}
+      options={vocabulary.filter(
+        ({ value }) =>
+          !added[kind].includes(value) && !granted[kind].some(({ name }) => name === value),
+      )}
       onAdd={(name) => edit(kind, name, true)}
     />
   );

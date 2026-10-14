@@ -1,12 +1,12 @@
 import type { SheetItem } from "@dnd/catalog";
 import type { ReactNode } from "react";
+import { capitalize } from "../../../../../lib/capitalize.ts";
 import { firstLine } from "../../../../../lib/rulesProse.ts";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
 import { RemoveButton } from "../../../../RemoveButton.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../../../Tag.tsx";
 import type { Attack, Grip } from "../../../attack.ts";
-import { capitalize } from "../../../capitalize.ts";
 import { pounds } from "../../pounds.ts";
 import { AttackChips } from "./AttackChips/AttackChips.tsx";
 import { AttuneToggle } from "./AttuneToggle.tsx";

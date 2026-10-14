@@ -1,9 +1,9 @@
 import type { Entries } from "@dnd/catalog";
-import { capitalize } from "../../components/blocks/capitalize.ts";
 import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { RulesText } from "../../components/RulesText/RulesText.tsx";
 import { SourceChip } from "../../components/SourceChip.tsx";
 import { TypeChip } from "../../components/TypeChip.tsx";
+import { capitalize } from "../../lib/capitalize.ts";
 import type { Fact } from "./homebrewFacts.ts";
 import type { HomebrewInput } from "./homebrewKinds.ts";
 

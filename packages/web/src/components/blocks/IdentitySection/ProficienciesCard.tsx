@@ -1,5 +1,5 @@
 import type { SearchHit } from "@dnd/catalog";
-import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
+import { type CharacterDefinition, type CharacterRecord, proficiencyKey } from "@dnd/character";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { AddChoice } from "../../AddChoice.tsx";
 import { Card } from "../../Card.tsx";
@@ -16,11 +16,9 @@ const WEAPON_CATEGORIES = ["Simple", "Martial"];
 /** A tool held at `none` grants nothing, so it earns no chip. */
 const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertise: " (expertise)" };
 
-const lower = (name: string) => name.toLowerCase();
-
-/** `names` with `name` added, unless it is there in any case. */
+/** `names` with `name` added, unless it is there in any spelling the sheet reads as the same. */
 const withName = (names: string[], name: string) =>
-  names.some((each) => lower(each) === lower(name)) ? names : [...names, name];
+  names.some((each) => proficiencyKey(each) === proficiencyKey(name)) ? names : [...names, name];
 
 const withoutName = (names: string[], name: string) => names.filter((each) => each !== name);
 
@@ -37,10 +35,10 @@ export function ProficienciesCard({ character }: { character: CharacterRecord })
       ...latest,
       proficiencies: { ...latest.proficiencies, ...change(latest.proficiencies) },
     }));
-  const holds = (names: string[]) => new Set(names.map(lower));
+  const holds = (names: string[]) => new Set(names.map(proficiencyKey));
   const missing = (names: string[], from: string[]) =>
     from
-      .filter((name) => !holds(names).has(lower(name)))
+      .filter((name) => !holds(names).has(proficiencyKey(name)))
       .map((name) => ({ value: name, label: name }));
   const tools = proficiencies.tools.flatMap(({ name, level }) => {
     const suffix = TOOL_SUFFIX[level];
@@ -48,7 +46,7 @@ export function ProficienciesCard({ character }: { character: CharacterRecord })
   });
   const heldTools = holds(tools.map((tool) => tool.name));
   const unavailableIn = (names: Set<string>) => (hit: SearchHit) =>
-    names.has(lower(hit.name)) ? "Already proficient" : undefined;
+    names.has(proficiencyKey(hit.name)) ? "Already proficient" : undefined;
   // `Light` names an armor and a weapon category both, so × names the group too.
   const chips = (names: string[], group: string) =>
     names.map((name) => ({ key: name, label: name, name: `${name} (${group})` }));
@@ -124,7 +122,8 @@ export function ProficienciesCard({ character }: { character: CharacterRecord })
               unavailableReason={unavailableIn(heldTools)}
               onPick={(_, { name }) =>
                 edit(`tools|${name}`, (held) => {
-                  const same = (tool: { name: string }) => lower(tool.name) === lower(name);
+                  const same = (tool: { name: string }) =>
+                    proficiencyKey(tool.name) === proficiencyKey(name);
                   const kept = held.tools.find(same);
                   if (kept && kept.level !== "none") return {};
                   return {

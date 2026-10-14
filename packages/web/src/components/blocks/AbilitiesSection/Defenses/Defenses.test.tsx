@@ -119,12 +119,16 @@ describe("Defenses", () => {
     expect(within(card).queryByText("None.")).not.toBeInTheDocument();
   });
 
-  it("adds a resistance by hand, offering only a type not yet added", async () => {
+  it("adds a resistance by hand, offering only a type neither added nor granted", async () => {
     const fetchMock = stubFetch(new Response(JSON.stringify(characterRecord("1", "Vex"))));
-    const card = renderDefenses({}, { ...NONE_ADDED, resistances: ["acid"] });
+    const card = renderDefenses(
+      { resistances: [{ name: "poison", from: ["Dwarf (Hill)"] }] },
+      { ...NONE_ADDED, resistances: ["acid"] },
+    );
 
     fireEvent.click(within(card).getByRole("combobox", { name: "Add resistance" }));
     expect(screen.queryByRole("option", { name: "Acid" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Poison" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: "Fire" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));

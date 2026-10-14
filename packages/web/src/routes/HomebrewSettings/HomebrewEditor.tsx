@@ -1,9 +1,9 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { capitalize } from "../../components/blocks/capitalize.ts";
 import { FormField } from "../../components/FormField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { useDebounce } from "../../hooks/useDebounce.ts";
+import { capitalize } from "../../lib/capitalize.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewViewTabs, type HomebrewViewTabsProps } from "./HomebrewViewTabs.tsx";

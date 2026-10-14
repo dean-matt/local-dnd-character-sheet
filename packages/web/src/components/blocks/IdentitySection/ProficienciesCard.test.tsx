@@ -53,6 +53,20 @@ describe("ProficienciesCard", () => {
     expect(written(fetchMock).armor).toEqual(["Light", "Shield", "Heavy"]);
   });
 
+  it("reads the book's spelling of a held category as the bare one", async () => {
+    stubServer();
+    const record = identityRecord();
+    record.definition.proficiencies.weapons = ["Simple weapons", "Longswords"];
+    renderCard(record);
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Add weapon category" }));
+    expect(screen.queryByRole("option", { name: "Simple" })).not.toBeInTheDocument();
+    fireEvent.focus(screen.getByRole("combobox", { name: "Add a weapon" }));
+    expect(await screen.findByRole("option", { name: /Longsword/ })).toHaveTextContent(
+      "Already proficient",
+    );
+  });
+
   it("adds a single weapon through the picker", async () => {
     const fetchMock = stubServer();
     renderCard();

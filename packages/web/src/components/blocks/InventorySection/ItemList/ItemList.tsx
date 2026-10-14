@@ -4,8 +4,7 @@ import { useRef, useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
-import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
-import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
+import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
@@ -32,9 +31,7 @@ export function ItemList({
   derived: CharacterDerived | undefined;
 }) {
   const inventory = useCharacterInventory(character.id);
-  const update = useUpdateCharacterDefinition(character.id);
-  const writes = useHeldWrites(update);
-  const failure = writes.latest?.error;
+  const write = useHeldSave(character.id, "Inventory");
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
   const queryClient = useQueryClient();
@@ -64,16 +61,14 @@ export function ItemList({
   const edit = (index: number, change: EntryChange) => {
     const entry = drawn[index];
     if (!entry || !settled()) return;
-    hold(() =>
-      writes.write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change)),
-    );
+    hold(() => write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change)));
   };
   const place = (index: number, holder: number | null) => {
     const entry = drawn[index];
     const container = holder === null ? undefined : drawn[holder];
     if (!entry || (holder !== null && !container) || !settled()) return;
     hold(() =>
-      writes.write(`row:${index}`, (latest) =>
+      write(`row:${index}`, (latest) =>
         placeInventoryEntry(
           latest,
           index,
@@ -93,20 +88,13 @@ export function ItemList({
       .map(({ entry: at, name }) => ({ index: at, name }));
   };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
-    writes.write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => ({
+    write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => ({
       ...latest,
       inventory: [
         ...latest.inventory,
         { ...entry, quantity: 1, carried: true, equipped: false, attuned: false },
       ],
     }));
-
-  useSaveToast(
-    "Inventory",
-    failure ? `Couldn't save: ${failure.message}` : undefined,
-    writes.retry,
-    failure,
-  );
 
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState error={inventory.error} />;

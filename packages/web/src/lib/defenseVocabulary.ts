@@ -1,5 +1,5 @@
 import { DAMAGE_TYPES } from "@dnd/catalog";
-import { capitalize } from "../components/blocks/capitalize.ts";
+import { capitalize } from "./capitalize.ts";
 
 /** The damage types a resistance or a spell names, as upstream writes them: lowercase words. */
 export const DAMAGE_TYPE_NAMES = Object.values(DAMAGE_TYPES)
