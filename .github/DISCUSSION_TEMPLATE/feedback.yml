@@ -65,7 +65,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Settings shows it at the bottom of the Display section, with a button that copies it.
+      description: At the foot of the Settings sidebar. Click it to copy.
       placeholder: "0.5.1 (41d05f0)"
 
   - type: input

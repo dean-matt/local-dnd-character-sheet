@@ -1,5 +1,4 @@
 import { AccentPicker } from "../AccentPicker.tsx";
-import { AppVersion } from "../AppVersion.tsx";
 import { ThemeToggle } from "../ThemeToggle.tsx";
 
 export function DisplaySettings() {
@@ -11,7 +10,6 @@ export function DisplaySettings() {
       <div className="flex flex-col gap-4.5 rounded-card border border-border bg-surface p-4">
         <ThemeToggle />
         <AccentPicker />
-        <AppVersion />
       </div>
     </section>
   );

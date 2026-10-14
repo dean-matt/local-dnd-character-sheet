@@ -1,9 +1,11 @@
-import { Copy } from "lucide-react";
+import { Check, Tag } from "lucide-react";
 import { useState } from "react";
 
-export function AppVersion() {
+/** The build's version and commit as a rail row that copies them on click. */
+export function AppVersion({ collapsed }: { collapsed: boolean }) {
   const text = `${import.meta.env.VITE_APP_VERSION} (${import.meta.env.VITE_APP_COMMIT})`;
   const [status, setStatus] = useState("");
+  const Icon = status === "Copied" ? Check : Tag;
 
   // Cleared first so a second copy changes the live region and is announced again.
   const copy = async () => {
@@ -18,20 +20,17 @@ export function AppVersion() {
 
   return (
     <div>
-      <p className="mb-2.5 font-semibold text-label text-muted uppercase tracking-label">Version</p>
-      <div className="flex items-center gap-2">
-        <code className="select-all text-body text-ink">{text}</code>
-        <button
-          type="button"
-          onClick={copy}
-          aria-label="Copy version"
-          className="flex items-center gap-1 rounded-control px-2 py-1 font-semibold text-body text-muted hover:bg-subtle"
-        >
-          <Copy size={14} />
-          Copy
-        </button>
-      </div>
-      <p role="status" className="mt-1.5 text-label text-muted">
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={collapsed ? `Copy version ${text}` : undefined}
+        title="Copy version"
+        className={`flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
+      >
+        <Icon size={19} aria-hidden="true" className="shrink-0" />
+        {!collapsed && <code className="select-all truncate text-label">{text}</code>}
+      </button>
+      <p role="status" className={collapsed ? "sr-only" : "px-2.5 text-label text-muted"}>
         {status}
       </p>
     </div>

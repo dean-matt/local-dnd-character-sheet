@@ -13,29 +13,37 @@ describe("AppVersion", () => {
   });
 
   it("shows the version with the commit it was built from", () => {
-    render(<AppVersion />);
+    render(<AppVersion collapsed={false} />);
 
-    expect(screen.getByText("0.5.1 (41d05f0)")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "0.5.1 (41d05f0)" })).toBeInTheDocument();
   });
 
   it("copies that text and announces it", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", { clipboard: { writeText } });
-    render(<AppVersion />);
+    render(<AppVersion collapsed={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy version" }));
+    fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent("Copied");
     expect(writeText).toHaveBeenCalledWith("0.5.1 (41d05f0)");
+  });
+
+  it("names the version on the icon alone while the rail is collapsed", () => {
+    render(<AppVersion collapsed />);
+
+    expect(
+      screen.getByRole("button", { name: "Copy version 0.5.1 (41d05f0)" }),
+    ).toBeInTheDocument();
   });
 
   it("says so where the clipboard refuses", async () => {
     vi.stubGlobal("navigator", {
       clipboard: { writeText: vi.fn().mockRejectedValue(new Error()) },
     });
-    render(<AppVersion />);
+    render(<AppVersion collapsed={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy version" }));
+    fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent("Could not copy");
   });
