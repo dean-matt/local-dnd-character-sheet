@@ -109,6 +109,22 @@ describe("Popover", () => {
       expect(screen.queryByText("Base 16, modifier +3")).not.toBeInTheDocument();
     });
 
+    it("stays open while focus sits inside it, so a field mid-edit is not unmounted", () => {
+      render(
+        <Popover trigger="+3" label="Strength modifier">
+          <input aria-label="Override" />
+        </Popover>,
+      );
+      const wrapper = screen.getByRole("button", { name: "+3" }).parentElement as HTMLElement;
+
+      fireEvent.mouseEnter(wrapper);
+      screen.getByRole("textbox", { name: "Override" }).focus();
+      fireEvent.mouseLeave(wrapper);
+      act(() => vi.advanceTimersByTime(150));
+
+      expect(screen.getByRole("textbox", { name: "Override" })).toBeInTheDocument();
+    });
+
     it("cancels the pending close when the pointer re-enters during the delay", () => {
       render(
         <Popover trigger="+3" label="Strength modifier">

@@ -531,6 +531,25 @@ describe("AbilitiesSection", () => {
       });
     });
 
+    it("names an overridden score's computed value rather than terms that no longer add up", () => {
+      stubRules([]);
+      const record = warlock();
+      const overridden = {
+        ...record,
+        definition: { ...record.definition, overrides: { "abilityScores.str": 20 } },
+      };
+      renderWithClient(
+        <AbilitiesSection character={overridden} derived={derivedFor(overridden)} />,
+      );
+
+      fireEvent.click(
+        within(tile("Ability Scores", "Strength")).getByRole("button", { name: "Strength" }),
+      );
+      expect(screen.getByRole("dialog", { name: "Strength" })).toHaveTextContent(
+        "Score 20, overridden from 8",
+      );
+    });
+
     it("leaves a classic character's ability and save without rules text, and keeps its skill's", () => {
       const fetchMock = stubRules(["Roll to resist."]);
       const record = warlock();

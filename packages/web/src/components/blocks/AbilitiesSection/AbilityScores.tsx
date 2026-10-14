@@ -70,16 +70,20 @@ export function AbilityScores({
               detail={{
                 title: ABILITY_LABEL[ability],
                 meta:
-                  increases.length === 0
-                    ? `Score ${score}`
-                    : `Score ${score}: base ${definition.abilityScores[ability]}, ${increases.join(", ")}`,
+                  derived.abilityScores[ability].manual !== null
+                    ? `Score ${score}, overridden from ${derived.abilityScores[ability].computed}`
+                    : increases.length === 0
+                      ? `Score ${score}`
+                      : `Score ${score}: base ${definition.abilityScores[ability]}, ${increases.join(", ")}`,
                 value: derived.abilityModifiers[ability],
                 rules: editionRules(definition, ABILITY_RULES),
                 footer: (
                   <div className="flex-1">
+                    {/* The meta line already lists the score's terms. */}
                     <DerivedBreakdown
                       name={`${ABILITY_LABEL[ability]} score`}
-                      value={derived.abilityScores[ability]}
+                      label="Score override"
+                      value={{ ...derived.abilityScores[ability], terms: [] }}
                       format={String}
                       overrideKey={`abilityScores.${ability}`}
                     />

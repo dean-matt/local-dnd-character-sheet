@@ -20,12 +20,15 @@ const parseNumber = (raw: string) =>
  */
 export function DerivedBreakdown({
   name,
+  label = "Override",
   value,
   format,
   overrideKey,
   schema = z.int(),
 }: {
   name: string;
+  /** The field's visible name. */
+  label?: string;
   value: Derived<number>;
   format: (value: number) => string;
   overrideKey?: string;
@@ -47,7 +50,7 @@ export function DerivedBreakdown({
       {editable && (
         <div className="flex items-baseline justify-between gap-4">
           <span aria-hidden="true" className="text-muted">
-            Override
+            {label}
           </span>
           <Field
             mode="edit"

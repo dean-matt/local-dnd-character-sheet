@@ -139,9 +139,9 @@ play state, pages or a deleted character.
 
 **One field contract, two modes.** `packages/web/src/components/Field/Field.tsx` is the only
 component that renders a computed-versus-manual value. The sheet shows a derived number in
-read mode, which marks an override and names the computed value it replaced, and edits it
-in edit mode inside the breakdown popover behind it, which shows the terms or, while
-overridden, the computed value they add up to. Edit mode commits on a
+read mode, which marks an override and names the computed value it replaced. Its edit mode
+sits in the popover or modal that breaks the number down. That breakdown lists the terms,
+or names the computed value while an override stands. Edit mode commits on a
 debounce, on blur and on unmount, writes `manual` and never `computed`, and clears an override by
 writing `null` rather than a parsed empty value. A failed save keeps the user's text and
 offers a retry, because autosave has no confirm step — the only way back from a bad edit

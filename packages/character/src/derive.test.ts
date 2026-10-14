@@ -1739,6 +1739,48 @@ describe("deriveCharacter", () => {
       expect(block.attacks[0]?.attackBonus.manual).toBe(9);
     });
 
+    it("folds every key shape the sheet writes into the field it names", () => {
+      const definition = {
+        ...equipped,
+        customSkills: [{ name: "Juggling", ability: "dex" as const, level: "none" as const }],
+      };
+      const base = deriveCharacter(definition, catalog);
+      const [skill] = base.skills;
+      const [custom] = base.customSkills;
+      const [caster] = base.spellcasting;
+      const [pool] = base.hitDice;
+      const [attack] = base.attacks;
+      if (!skill || !custom || !caster || !pool || !attack || !base.pactSlots) {
+        throw new Error("expected every list the sheet overrides to hold an element");
+      }
+      const at = (list: Parameters<typeof overrideKey>[0], element: unknown, field: string) =>
+        `${overrideKey(list, element as never, definition)}.${field}`;
+      const cases: [string, (block: CharacterDerived) => unknown][] = [
+        ["abilityScores.str", (block) => block.abilityScores.str?.manual],
+        ["abilityModifiers.dex", (block) => block.abilityModifiers.dex?.manual],
+        ["savingThrows.wis", (block) => block.savingThrows.wis?.manual],
+        ["proficiencyBonus", (block) => block.proficiencyBonus.manual],
+        ["hitPointMaximum", (block) => block.hitPointMaximum.manual],
+        ["carryingCapacity", (block) => block.carryingCapacity.manual],
+        ["attunementSlots", (block) => block.attunementSlots.manual],
+        ["weaponMasteryLimit", (block) => block.weaponMasteryLimit.manual],
+        ["pactSlots.total", (block) => block.pactSlots?.total.manual],
+        [at("skills", skill, "passive"), (block) => block.skills[0]?.passive.manual],
+        [at("customSkills", custom, "modifier"), (block) => block.customSkills[0]?.modifier.manual],
+        [at("spellcasting", caster, "saveDc"), (block) => block.spellcasting[0]?.saveDc.manual],
+        [at("hitDice", pool, "total"), (block) => block.hitDice[0]?.total.manual],
+        [at("attacks", attack, "critThreshold"), (block) => block.attacks[0]?.critThreshold.manual],
+        [
+          at("attacks", attack, "damage.modifier"),
+          (block) => block.attacks[0]?.damage?.modifier.manual,
+        ],
+      ];
+      for (const [key, read] of cases) {
+        const block = deriveCharacter({ ...definition, overrides: { [key]: 3 } }, catalog);
+        expect(read(block), key).toBe(3);
+      }
+    });
+
     it("keeps a weapon's override on it when an item lands ahead of it", () => {
       const block = deriveCharacter(
         {
