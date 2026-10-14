@@ -252,7 +252,7 @@ says how much of the artboard the app builds today.
 | `ArmorFilter` | #311 | nothing |
 | `Gear` | #311 | all but the filter and its own search |
 | `GearFilter` | #311 | nothing |
-| `SpellSlots` | #230, #278 | read-only |
+| `SpellSlots` | #230, #278, #800 | read-only |
 | `SpellList` | #230, #311 | read-only |
 | `SpellListFilter` | #311 | nothing |
 | `ClassFeatures` | #279, #311 | read-only |
