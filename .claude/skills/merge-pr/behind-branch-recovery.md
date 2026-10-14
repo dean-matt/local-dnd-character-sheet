@@ -45,7 +45,8 @@ reinvocations go to the user, carrying that reading.
 updated head fails `pnpm version:check`; a different bump makes the update a 422 conflict on
 the `version` line. In the issue's worktree, merge `main` locally and raise the version over
 `main`'s as [`open-pr`](../open-pr/SKILL.md#the-version) says. Where
-`.claude/worktrees/<issue>` is gone, `git worktree add` it from the branch first.
+`.claude/worktrees/<issue>` is gone, open it as
+[`issue-worktree`](../issue-worktree/SKILL.md#opening) says first.
 
 ```bash
 git pull --ff-only && git fetch origin main
