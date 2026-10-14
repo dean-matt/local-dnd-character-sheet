@@ -31,59 +31,61 @@ export function CharacterSettings() {
   if (character.isError) return <ErrorState error={character.error} />;
 
   return (
-    <section aria-labelledby={heading} className="flex max-w-2xl flex-col gap-3">
+    <section aria-labelledby={heading} className="flex flex-col gap-3">
       <h2 id={heading} className="font-bold text-lg">
         Character settings
       </h2>
-      <HouseRulesCard character={character.data} />
-      <Card title="Character file">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <HouseRulesCard character={character.data} />
+        <Card title="Character file">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              aria-disabled={duplicate.isPending}
+              onClick={() => {
+                if (duplicate.isPending) return;
+                duplicate.mutate(undefined, {
+                  onSuccess: (copy) => navigate(`/characters/${copy.id}`),
+                });
+              }}
+              className={`${BUTTON} text-ink`}
+            >
+              Duplicate character
+            </button>
+            <button
+              type="button"
+              aria-disabled={exportFile.isPending}
+              onClick={() => {
+                if (!exportFile.isPending) exportFile.mutate();
+              }}
+              className={`${BUTTON} text-ink`}
+            >
+              Export character
+            </button>
+          </div>
+          {duplicate.isError && (
+            <p role="alert" className="mt-2 text-error text-row">
+              Duplicate failed: {duplicate.error.message}
+            </p>
+          )}
+          {exportFile.isError && (
+            <p role="alert" className="mt-2 text-error text-row">
+              Export failed: {exportFile.error.message}
+            </p>
+          )}
+        </Card>
+        <Card title="Danger zone">
           <button
+            ref={deleteButton}
             type="button"
-            aria-disabled={duplicate.isPending}
-            onClick={() => {
-              if (duplicate.isPending) return;
-              duplicate.mutate(undefined, {
-                onSuccess: (copy) => navigate(`/characters/${copy.id}`),
-              });
-            }}
-            className={`${BUTTON} text-ink`}
+            aria-haspopup="dialog"
+            onClick={() => setDeleting(true)}
+            className={`${BUTTON} text-accent`}
           >
-            Duplicate character
+            Delete character
           </button>
-          <button
-            type="button"
-            aria-disabled={exportFile.isPending}
-            onClick={() => {
-              if (!exportFile.isPending) exportFile.mutate();
-            }}
-            className={`${BUTTON} text-ink`}
-          >
-            Export character
-          </button>
-        </div>
-        {duplicate.isError && (
-          <p role="alert" className="mt-2 text-error text-row">
-            Duplicate failed: {duplicate.error.message}
-          </p>
-        )}
-        {exportFile.isError && (
-          <p role="alert" className="mt-2 text-error text-row">
-            Export failed: {exportFile.error.message}
-          </p>
-        )}
-      </Card>
-      <Card title="Danger zone">
-        <button
-          ref={deleteButton}
-          type="button"
-          aria-haspopup="dialog"
-          onClick={() => setDeleting(true)}
-          className={`${BUTTON} text-accent`}
-        >
-          Delete character
-        </button>
-      </Card>
+        </Card>
+      </div>
       {deleting && (
         <DeleteCharacterDialog character={character.data} onClose={() => setDeleting(false)} />
       )}
