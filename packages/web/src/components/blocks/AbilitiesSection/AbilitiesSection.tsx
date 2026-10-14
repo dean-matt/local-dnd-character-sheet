@@ -47,7 +47,7 @@ export function AbilitiesSection({
       <CombatStats derived={derived} />
       <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
-      <Defenses derived={derived} />
+      <Defenses character={character} derived={derived} />
       <ItemGrants derived={derived} />
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">

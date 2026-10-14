@@ -1,6 +1,7 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
+import { CONDITIONS, DAMAGE_TYPE_NAMES } from "../../lib/defenseVocabulary.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { RARITIES } from "../../lib/rarities.ts";
 import { AdvantageFields } from "./AdvantageFields.tsx";
@@ -24,9 +25,7 @@ import {
 } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
 import {
-  CONDITIONS,
   DAMAGE_TYPE_CODES,
-  DAMAGE_TYPE_NAMES,
   GROUP_FIELDS,
   ITEM_TYPES,
   itemGroup,

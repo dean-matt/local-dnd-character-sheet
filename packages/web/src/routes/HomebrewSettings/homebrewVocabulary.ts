@@ -86,29 +86,6 @@ export const DAMAGE_TYPE_CODES = Object.entries(DAMAGE_TYPES).map(([value, name]
   label: capitalize(name),
 }));
 
-/** The damage types a resistance or a spell names, as upstream writes them: lowercase words. */
-export const DAMAGE_TYPE_NAMES = Object.values(DAMAGE_TYPES)
-  .sort()
-  .map((value) => ({ value, label: capitalize(value) }));
-
-export const CONDITIONS = [
-  "blinded",
-  "charmed",
-  "deafened",
-  "exhaustion",
-  "frightened",
-  "grappled",
-  "incapacitated",
-  "invisible",
-  "paralyzed",
-  "petrified",
-  "poisoned",
-  "prone",
-  "restrained",
-  "stunned",
-  "unconscious",
-].map((value) => ({ value, label: capitalize(value) }));
-
 export const SPELL_LEVELS = [
   { value: "0", label: "Cantrip" },
   ...Array.from({ length: 9 }, (_, index) => ({

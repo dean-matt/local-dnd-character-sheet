@@ -303,6 +303,7 @@ describe("a character stored before these fields existed", () => {
       featureChoices: _featureChoices,
       houseRules: _houseRules,
       departures: _departures,
+      addedDefenses: _addedDefenses,
       ...older
     } = definition;
     const parsed = characterDefinitionSchema.parse(structuredClone(older));
@@ -321,7 +322,28 @@ describe("a character stored before these fields existed", () => {
     expect(parsed.houseRules).toEqual({});
     expect(parsed.notes).toBe("");
     expect(parsed.departures).toEqual([]);
+    expect(parsed.addedDefenses).toEqual({
+      resistances: [],
+      damageImmunities: [],
+      conditionImmunities: [],
+    });
     expect(parsed).toMatchObject(older);
+  });
+});
+
+describe("added defenses", () => {
+  const added = (resistances: string[]) => ({
+    ...definition,
+    addedDefenses: { ...definition.addedDefenses, resistances },
+  });
+
+  it("stores a name lowercased, as upstream writes a damage type", () => {
+    const parsed = characterDefinitionSchema.parse(structuredClone(added([" Fire "])));
+    expect(parsed.addedDefenses.resistances).toEqual(["fire"]);
+  });
+
+  it("refuses the same name twice in one list, in any case", () => {
+    expect(characterDefinitionSchema.safeParse(added(["fire", "Fire"])).success).toBe(false);
   });
 });
 

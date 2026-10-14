@@ -300,6 +300,12 @@ const moneySchema = z
   })
   .prefault({});
 
+/** Damage types or conditions, lowercased as upstream writes them, each once. */
+const defenseNamesSchema = z
+  .array(z.string().trim().toLowerCase().min(1))
+  .refine((names) => isUnique(names, String), { error: "the same name is listed twice" })
+  .default([]);
+
 /** The boxes the printed sheet has, each absent until a player fills it in. */
 const appearanceSchema = z
   .strictObject({
@@ -370,6 +376,18 @@ export const characterDefinitionSchema = z.strictObject({
    * race change ignores it rather than clearing it, as `size` does.
    */
   raceResistance: z.string().trim().toLowerCase().min(1).optional(),
+  /**
+   * Resistances and immunities the player added by hand, kept apart from what the race and
+   * the items grant, so a race or item change never takes one back and a derived one never
+   * reads as removable.
+   */
+  addedDefenses: z
+    .strictObject({
+      resistances: defenseNamesSchema,
+      damageImmunities: defenseNamesSchema,
+      conditionImmunities: defenseNamesSchema,
+    })
+    .prefault({}),
   background: entryRefSchema,
   /** The scores before any increase: what the array, point buy, roll or the player set. */
   abilityScores: abilityScoresSchema,
