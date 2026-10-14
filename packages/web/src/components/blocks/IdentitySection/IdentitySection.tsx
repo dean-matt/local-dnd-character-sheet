@@ -1,14 +1,8 @@
 /**
- * The Identity page: the name, alignment and appearance edit in place and save themselves; race,
- * class, background and the proficiency lists are catalog picks and stay read-only here. It
- * shows as unavailable until the character loads, as the Level and Notes pages beside it do.
+ * The Identity page: the name, race, background, alignment and appearance edit in place and save
+ * themselves; class and the proficiency lists stay read-only here. It shows as unavailable until the character loads, as the Level and Notes pages beside it do.
  */
-import {
-  type CharacterRecord,
-  characterDefinitionSchema,
-  displayName,
-  raceSummary,
-} from "@dnd/character";
+import { type CharacterRecord, characterDefinitionSchema } from "@dnd/character";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { ChipList } from "../../ChipList.tsx";
@@ -17,7 +11,9 @@ import { classChips } from "../classChips.ts";
 import { SectionUnavailable } from "../SectionUnavailable.tsx";
 import { AlignmentCard } from "./AlignmentCard.tsx";
 import { AppearanceCard } from "./AppearanceCard.tsx";
+import { BackgroundCard } from "./BackgroundCard.tsx";
 import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
+import { RaceCard } from "./RaceCard.tsx";
 
 /** A tool held at `none` grants nothing, so it earns no chip. */
 const TOOL_SUFFIX = { none: undefined, half: " (half)", proficient: "", expertise: " (expertise)" };
@@ -26,7 +22,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
   const update = useUpdateCharacterDefinition(character?.id ?? "");
   if (!character) return <SectionUnavailable page="Identity" />;
   const { definition } = character;
-  const { background, proficiencies } = definition;
+  const { proficiencies } = definition;
   const tools = proficiencies.tools.flatMap(({ name, level }) => {
     const suffix = TOOL_SUFFIX[level];
     return suffix === undefined ? [] : [`${name}${suffix}`];
@@ -49,15 +45,11 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
           }}
         />
       </Card>
-      <Card title="Race">
-        <ChipList labels={[raceSummary(definition)]} />
-      </Card>
+      <RaceCard character={character} />
       <Card title="Class">
         <ChipList labels={classChips(definition)} />
       </Card>
-      <Card title="Background">
-        <ChipList labels={[displayName(background)]} />
-      </Card>
+      <BackgroundCard character={character} />
       <AlignmentCard character={character} />
       <Card title="Languages">
         <ChipList labels={proficiencies.languages.map((ref) => ref.name)} empty="No languages." />

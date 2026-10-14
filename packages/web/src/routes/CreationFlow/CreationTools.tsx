@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { withDeparture } from "./departures.ts";
+import { withDeparture } from "../../lib/departures.ts";
 import { TOOLS_FIELD, toolDeparture } from "./toolPicks.ts";
 import { useToolTally } from "./useToolTally.ts";
 

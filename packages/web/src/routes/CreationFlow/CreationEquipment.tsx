@@ -1,8 +1,8 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { withDeparture } from "../../lib/departures.ts";
 import { setRefValue } from "../../lib/setRefValue.ts";
-import { withDeparture } from "./departures.ts";
 import { pickedName } from "./equipmentLabels.ts";
 import {
   coins,

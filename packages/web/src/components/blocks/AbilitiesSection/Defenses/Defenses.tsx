@@ -9,9 +9,7 @@ import {
   type CharacterRecord,
   derivedValue,
 } from "@dnd/character";
-import { useHeldWrites } from "../../../../hooks/useHeldWrites.ts";
-import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
-import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
+import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
 import { CONDITIONS, DAMAGE_TYPE_NAMES } from "../../../../lib/defenseVocabulary.ts";
 import { AddChoice } from "../../../AddChoice.tsx";
 import { Card } from "../../../Card.tsx";
@@ -42,21 +40,13 @@ export function Defenses({
   character: CharacterRecord;
   derived: CharacterDerived;
 }) {
-  const update = useUpdateCharacterDefinition(character.id);
-  const writes = useHeldWrites(update);
-  const failure = writes.latest?.error;
-  useSaveToast(
-    TITLE,
-    failure ? `Couldn't save: ${failure.message}` : undefined,
-    writes.retry,
-    failure,
-  );
+  const write = useHeldSave(character.id, TITLE);
   const { resistances, damageImmunities, conditionImmunities, vulnerabilities, resistanceChoice } =
     derivedValue(derived.defenses);
   const added = character.definition.addedDefenses;
 
   const edit = (kind: AddedKind, name: string, keep: boolean) =>
-    writes.write(`${kind}|${name}`, (latest) => {
+    write(`${kind}|${name}`, (latest) => {
       const others = latest.addedDefenses[kind].filter((each) => each !== name);
       return {
         ...latest,

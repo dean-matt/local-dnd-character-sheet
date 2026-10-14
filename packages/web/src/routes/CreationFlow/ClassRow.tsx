@@ -1,11 +1,11 @@
 import { ABILITIES, type CharacterDefinition } from "@dnd/character";
 import { useWatch } from "react-hook-form";
+import { CLASS_FIELD } from "../../lib/departures.ts";
 import type { FeatureOffering } from "../../lib/featureOfferings.ts";
 import { prerequisiteField, prerequisiteText } from "../../lib/multiclassPrerequisites.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { ClassGrantsSummary } from "./ClassGrantsSummary.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
-import { CLASS_FIELD } from "./departures.ts";
 import { FeatureChoicesField } from "./FeatureChoicesField.tsx";
 import { LevelField } from "./LevelField.tsx";
 import { SubclassField } from "./SubclassField.tsx";
