@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AppVersion } from "./AppVersion.tsx";
 
@@ -10,6 +10,7 @@ describe("AppVersion", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it("shows the version with the commit it was built from", () => {
@@ -25,8 +26,22 @@ describe("AppVersion", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Copied");
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Copied"));
     expect(writeText).toHaveBeenCalledWith("0.5.1 (41d05f0)");
+  });
+
+  it("clears the confirmation after two seconds", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    render(<AppVersion collapsed={false} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("Copied");
+
+    act(() => vi.advanceTimersByTime(2000));
+    expect(screen.getByRole("status")).toHaveTextContent("");
   });
 
   it("names the version on the icon alone while the rail is collapsed", () => {
@@ -45,6 +60,6 @@ describe("AppVersion", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Could not copy");
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Could not copy"));
   });
 });
