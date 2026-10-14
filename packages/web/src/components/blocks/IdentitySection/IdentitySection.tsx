@@ -12,6 +12,7 @@ import { SectionUnavailable } from "../SectionUnavailable.tsx";
 import { AlignmentCard } from "./AlignmentCard.tsx";
 import { AppearanceCard } from "./AppearanceCard.tsx";
 import { BackgroundCard } from "./BackgroundCard.tsx";
+import { HouseRulesCard } from "./HouseRulesCard.tsx";
 import { LanguagesCard } from "./LanguagesCard.tsx";
 import { ProficienciesCard } from "./ProficienciesCard.tsx";
 import { RaceCard } from "./RaceCard.tsx";
@@ -59,6 +60,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
           }}
         />
       </div>
+      <HouseRulesCard character={character} />
     </div>
   );
 }

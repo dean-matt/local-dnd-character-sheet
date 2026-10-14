@@ -72,6 +72,7 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
+export type { HouseRule } from "./houseRules.ts";
 export {
   IMPROVEMENT_FEAT,
   type Improvement,
