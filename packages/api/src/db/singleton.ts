@@ -1,5 +1,6 @@
 /**
- * The user's real `characters.db` and `homebrew.db`, opened once at `data/` on import.
+ * The user's real `characters.db` and `homebrew.db`, opened once on import at `data/`, or
+ * at `DND_DATA_DIR` where set — the end-to-end run points it at a scratch directory.
  *
  * Only `app.ts` imports this. Everything else opens its own pair, free of that side
  * effect: `openDatabases` from `client.ts` at a directory it controls, or in a test
@@ -16,7 +17,9 @@ import { resolve } from "node:path";
 import { backupDatabase, backupDirFor } from "./backup.ts";
 import { openDatabases } from "./client.ts";
 
-export const DATA_DIR = resolve(import.meta.dirname, "../../../../data");
+export const DATA_DIR = resolve(
+  process.env.DND_DATA_DIR ?? resolve(import.meta.dirname, "../../../../data"),
+);
 
 export const { charactersDb, homebrewDb } = openDatabases(DATA_DIR);
 
