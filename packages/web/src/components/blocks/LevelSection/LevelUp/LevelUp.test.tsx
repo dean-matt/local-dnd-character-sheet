@@ -25,7 +25,36 @@ const grants = (level: number, invocations: number, features: object[]) => ({
 });
 const page = (items: object[]) => ({ items, total: items.length });
 
+/** A class's table at `level`: its resources and the slots it holds at each spell level. */
+const casterGrants = (level: number, resources: Record<string, string>, slots: number[]) => ({
+  level,
+  resources: Object.entries(resources).map(([resourceKey, value]) => ({ resourceKey, value })),
+  spellSlots: slots.map((count, index) => ({ slotLevel: index + 1, slots: count })),
+  optionalFeatures: [],
+  features: [],
+});
+
 const FIGHTER = { name: "Fighter", source: "XPHB" };
+const SORCERER = { name: "Sorcerer", source: "PHB" };
+const CLERIC = XPHB("Cleric");
+const KNIGHT_FIGHTER = { name: "Fighter", source: "PHB" };
+const fighterSubclass = (name: string, shortName: string) => ({
+  name,
+  source: "PHB",
+  shortName,
+  className: "Fighter",
+  classSource: "PHB",
+  edition: "classic",
+  json: { name, source: "PHB", shortName },
+});
+
+/** Each spell's level and the classes whose list holds it. */
+const SPELLS: Record<string, { level: number; lists: string[] }> = {
+  "Fire Bolt": { level: 0, lists: ["Sorcerer"] },
+  Shield: { level: 1, lists: ["Sorcerer"] },
+  "Misty Step": { level: 2, lists: ["Sorcerer"] },
+  Fireball: { level: 3, lists: ["Sorcerer"] },
+};
 const ROGUE = XPHB("Rogue");
 const PALADIN = XPHB("Paladin");
 const BARD = XPHB("Bard");
@@ -132,6 +161,53 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Bard/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Bard/XPHB/at/1": grants(1, 0, [feature("Bardic Inspiration", 1)]),
   "/api/classes/Paladin/XPHB/at/1": grants(1, 0, [feature("Lay On Hands", 1)]),
+  "/api/classes/Sorcerer/PHB": { ...SORCERER, edition: "classic", hitDie: 6, json: SORCERER },
+  "/api/classes/Sorcerer/PHB/subclasses?edition=classic&limit=200": page([]),
+  "/api/classes/Sorcerer/PHB/at/3": casterGrants(
+    3,
+    { cantrips_known: "4", spells_known: "4" },
+    [4, 2],
+  ),
+  "/api/classes/Sorcerer/PHB/at/4": casterGrants(
+    4,
+    { cantrips_known: "5", spells_known: "5" },
+    [4, 3],
+  ),
+  "/api/classes/Fighter/PHB": {
+    ...KNIGHT_FIGHTER,
+    edition: "classic",
+    hitDie: 10,
+    json: {
+      ...KNIGHT_FIGHTER,
+      classFeatures: [
+        { classFeature: "Martial Archetype|Fighter|PHB|3", gainSubclassFeature: true },
+      ],
+    },
+  },
+  "/api/classes/Fighter/PHB/subclasses?edition=classic&limit=200": page([
+    fighterSubclass("Eldritch Knight", "Eldritch Knight"),
+    fighterSubclass("Champion", "Champion"),
+  ]),
+  "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
+  "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Eldritch%20Knight/PHB/at/3": casterGrants(
+    3,
+    { cantrips_known: "2", spells_known: "3" },
+    [2],
+  ),
+  "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Cleric/XPHB": { ...CLERIC, edition: "one", hitDie: 8, json: CLERIC },
+  "/api/classes/Cleric/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Cleric/XPHB/at/1": casterGrants(
+    1,
+    { cantrips_known: "3", prepared_spells: "4" },
+    [2],
+  ),
+  "/api/classes/Cleric/XPHB/at/2": casterGrants(
+    2,
+    { cantrips_known: "3", prepared_spells: "5" },
+    [3],
+  ),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
   ]),
@@ -162,6 +238,7 @@ let writes: Mock;
 let server: CharacterRecord;
 let readable: boolean;
 let searchable: boolean;
+let spellSearches: URLSearchParams[];
 
 /** Stands for a write from another tab, which this tab's cache has not seen. */
 function editElsewhere(edit: Partial<CharacterDefinition>) {
@@ -172,12 +249,35 @@ function editElsewhere(edit: Partial<CharacterDefinition>) {
   };
 }
 
+/** Each spell's name and level, and whether the list the request names holds it. */
+function lookupResponse(init: RequestInit) {
+  const request = JSON.parse(String(init.body)) as {
+    spells: { name: string }[];
+    list?: { class: { name: string } };
+  };
+  const spells = request.spells.map(({ name }) => {
+    const spell = SPELLS[name];
+    if (!spell) return null;
+    const listed = request.list && spell.lists.includes(request.list.class.name);
+    return { name, level: spell.level, ...(request.list && { listed }) };
+  });
+  return new Response(JSON.stringify({ spells }));
+}
+
 /** A search answers every type but a class with a client error, which nothing retries, while `searchable` is off. */
 function searchResponse(path: string) {
-  const type = new URL(path, "http://local").searchParams.get("type") ?? "";
+  const params = new URL(path, "http://local").searchParams;
+  const type = params.get("type") ?? "";
   if (!searchable && type !== "class")
     return new Response(JSON.stringify({ error: "refused" }), { status: 400 });
-  const items = SEARCH[type] ?? [];
+  if (type === "spell") spellSearches.push(params);
+  const items =
+    type === "spell"
+      ? Object.entries(SPELLS)
+          .filter(([, { level }]) => level >= Number(params.get("minLevel")))
+          .filter(([, { level }]) => level <= Number(params.get("maxLevel")))
+          .map(([name]) => ({ type: "spell", name, source: "PHB", edition: "classic" }))
+      : (SEARCH[type] ?? []);
   return new Response(JSON.stringify({ ...page(items), limit: 200, offset: 0 }));
 }
 
@@ -185,6 +285,7 @@ function renderSeeded(character: CharacterRecord) {
   server = character;
   readable = true;
   searchable = true;
+  spellSearches = [];
   writes = vi.fn(async (_url: string, init: RequestInit) => {
     const since = new Headers(init.headers).get("If-Unmodified-Since");
     if (since !== null && Date.parse(server.updatedAt) > Date.parse(since))
@@ -197,6 +298,7 @@ function renderSeeded(character: CharacterRecord) {
     if (path === "/api/characters/1/derived")
       return new Response(JSON.stringify(derivedRecord(server.definition)));
     if (init?.method === "PUT") return writes(path, init);
+    if (init?.method === "POST") return lookupResponse(init);
     if (path === "/api/characters/1")
       return readable
         ? new Response(JSON.stringify(server))
@@ -229,6 +331,11 @@ async function open() {
 async function multiclassInto(name: string) {
   fireEvent.click(within(dialog()).getByRole("combobox", { name: "Class" }));
   fireEvent.click(await within(dialog()).findByRole("option", { name: `${name} (new) → 1` }));
+}
+
+async function pickSpell(label: string, option: string) {
+  fireEvent.focus(within(dialog()).getByRole("combobox", { name: label }));
+  fireEvent.click(await within(dialog()).findByRole("option", { name: new RegExp(option) }));
 }
 
 function choose(name: string, option: string) {
@@ -611,6 +718,139 @@ describe("LevelUp", () => {
       ).toBeVisible();
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
       expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+    });
+  });
+
+  describe("spells", () => {
+    /** Vex as a 2014 Sorcerer of `count` levels, who knows Shield. */
+    function sorcerer(count: number): CharacterRecord {
+      const base = warlock(count);
+      return {
+        ...base,
+        edition: "classic",
+        definition: {
+          ...base.definition,
+          edition: "classic",
+          levels: Array.from({ length: count }, () => ({ class: SORCERER })),
+          spells: [{ ref: { name: "Shield", source: "PHB" }, prepared: false }],
+        },
+      };
+    }
+
+    it("asks for the cantrips and spells a level adds from the class's list, and writes them with the level", async () => {
+      renderSeeded(sorcerer(3));
+      await open();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (4)" }));
+      const cantrips = await within(dialog()).findByRole("region", { name: "New cantrips" });
+      expect(cantrips).toHaveTextContent("Choose 1 — 0 selected");
+      expect(within(dialog()).getByRole("region", { name: "New spells" })).toHaveTextContent(
+        "Choose 1 — 0 selected",
+      );
+
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      await waitFor(() => expect(cantrips).toHaveTextContent("Choose 1 — 1 selected"));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+      fireEvent.focus(within(dialog()).getByRole("combobox", { name: "Add a spell" }));
+      const list = await within(dialog()).findByRole("listbox", { name: "Add a spell" });
+      await waitFor(() =>
+        expect(within(list).getByRole("option", { name: /Shield/ })).toHaveTextContent(
+          "Known already",
+        ),
+      );
+      expect(within(list).queryByRole("option", { name: /Fireball/ })).toBeNull();
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({
+        class: "Sorcerer|PHB",
+        classLevel: "4",
+        minLevel: "1",
+        maxLevel: "2",
+      });
+      fireEvent.click(within(list).getByRole("option", { name: /Misty Step/ }));
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(writes).toHaveBeenCalledTimes(1);
+      expect(sent().levels).toHaveLength(4);
+      expect(sent().spells).toEqual([
+        { ref: { name: "Shield", source: "PHB" }, prepared: false },
+        { ref: { name: "Fire Bolt", source: "PHB" }, prepared: false, origin: SORCERER },
+        { ref: { name: "Misty Step", source: "PHB" }, prepared: false, origin: SORCERER },
+      ]);
+    });
+
+    it("offers spells off the class's list and of any level past the escape", async () => {
+      renderSeeded(sorcerer(3));
+      await open();
+      await within(dialog()).findByRole("region", { name: "New spells" });
+      fireEvent.click(
+        within(dialog()).getByRole("checkbox", {
+          name: "Offer spells off the Sorcerer list, and of any level",
+        }),
+      );
+      await pickSpell("Add a spell", "Fireball");
+      await within(dialog()).findByRole("button", { name: "Remove Fireball" });
+      const search = Object.fromEntries(spellSearches.at(-1) ?? []);
+      expect(search).toMatchObject({ minLevel: "1", maxLevel: "9" });
+      expect(search).not.toHaveProperty("class");
+    });
+
+    it("takes back the spells picked when the subclass changes", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Eldritch Knight");
+      const cantrips = await within(dialog()).findByRole("region", { name: "New cantrips" });
+      expect(cantrips).toHaveTextContent("Choose 2 — 0 selected");
+      expect(within(dialog()).getByRole("region", { name: "New spells" })).toHaveTextContent(
+        "Choose 3 — 0 selected",
+      );
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" });
+
+      choose("Fighter subclass", "Champion");
+      await waitFor(() =>
+        expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull(),
+      );
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().spells).toEqual([{ ref: { name: "Shield", source: "PHB" }, prepared: false }]);
+    });
+
+    it("takes back the spells picked when the level goes to another class", async () => {
+      const base = sorcerer(3);
+      renderSeeded({
+        ...base,
+        definition: { ...base.definition, levels: [{ class: FIGHTER }, ...base.definition.levels] },
+      });
+      await open();
+      await within(dialog()).findByRole("region", { name: "New cantrips" });
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" });
+
+      choose("Class", "Fighter 1 → 2");
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (6)" }));
+      expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().spells).toEqual([{ ref: { name: "Shield", source: "PHB" }, prepared: false }]);
+    });
+
+    it("asks a class that prepares its spells for none", async () => {
+      const base = warlock(1);
+      renderSeeded({ ...base, definition: { ...base.definition, levels: [{ class: CLERIC }] } });
+      await open();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+      expect(within(dialog()).queryByRole("region", { name: "New spells" })).toBeNull();
+      expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
     });
   });
 });

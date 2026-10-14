@@ -2,9 +2,8 @@ import type { SearchHit } from "@dnd/catalog";
 import { type CharacterRecord, type EntryRef, entryKey } from "@dnd/character";
 import { X } from "lucide-react";
 import { useId } from "react";
-import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
-import { PILL } from "../../lib/chipStyles.ts";
-import type { PickedSpell } from "./spellPicks.ts";
+import { PILL } from "../lib/chipStyles.ts";
+import { CatalogPicker } from "./CatalogPicker/CatalogPicker.tsx";
 
 const HEADING = "font-semibold text-label text-muted uppercase tracking-label";
 
@@ -15,7 +14,7 @@ export interface SpellPickFieldProps {
   noun: string;
   /** How many the class allows, `undefined` where nothing states a number. */
   count?: number;
-  picked: readonly PickedSpell[];
+  picked: readonly { ref: EntryRef; name: string }[];
   edition: CharacterRecord["edition"];
   /** The `/search` filters the picker narrows by, the class's list and levels among them. */
   filters: Record<string, string>;
@@ -27,7 +26,7 @@ export interface SpellPickFieldProps {
 /**
  * One list of picks: how many the class allows and how many are picked, each pick as a
  * removable pill, and the picker that adds another. The count is a note rather than a
- * fence, so a pick past it is kept and `CreationSpells` notes it.
+ * fence, so a pick past it is kept and the caller decides what that means.
  */
 export function SpellPickField({
   heading,

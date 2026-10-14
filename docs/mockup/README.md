@@ -264,7 +264,7 @@ says how much of the artboard the app builds today.
 | `Notes` | #401 | read-only |
 | `Race` | #488 | read-only |
 | `Background` | #488 | read-only |
-| `LevelUpModal` | #239, #240, #733 | all but the spell picks |
+| `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
 | `Languages` | #488 | read-only |
 | `Proficiencies` | #400, #488 | read-only |
 | `ManageTabs` | #242 | reorder and hide |

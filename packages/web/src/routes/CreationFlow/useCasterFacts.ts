@@ -8,7 +8,7 @@ import {
 import { useWatch } from "react-hook-form";
 import { useClassGrants } from "../../hooks/useClassGrants.ts";
 import { useSubclassGrants } from "../../hooks/useSubclassGrants.ts";
-import { type CasterFacts, casterFacts } from "./spellPicks.ts";
+import { type CasterFacts, casterFacts } from "../../lib/casterFacts.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 
 /** The modifier of `ability` the draft's scores give, 0 before any score is set. */
