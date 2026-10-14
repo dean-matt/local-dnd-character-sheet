@@ -58,7 +58,7 @@ export function AppVersion({ collapsed }: { collapsed: boolean }) {
                   key={label}
                   aria-hidden={!shown || undefined}
                   className={`col-start-1 row-start-1 truncate text-label ${tone} ${shown ? "opacity-100" : "opacity-0"}`}
-                  style={{ transition: "opacity var(--duration-standard)" }}
+                  style={{ transition: "opacity 75ms" }}
                 >
                   {label}
                 </code>
