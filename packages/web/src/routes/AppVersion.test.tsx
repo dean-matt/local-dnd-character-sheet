@@ -16,7 +16,9 @@ describe("AppVersion", () => {
   it("shows the version with the commit it was built from", () => {
     render(<AppVersion collapsed={false} />);
 
-    expect(screen.getByRole("button", { name: "0.5.1 (41d05f0)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy version 0.5.1 (41d05f0)" })).toHaveTextContent(
+      "0.5.1 (41d05f0)",
+    );
   });
 
   it("copies that text and announces it", async () => {
@@ -24,7 +26,7 @@ describe("AppVersion", () => {
     vi.stubGlobal("navigator", { clipboard: { writeText } });
     render(<AppVersion collapsed={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy version 0.5.1 (41d05f0)" }));
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Copied"));
     expect(writeText).toHaveBeenCalledWith("0.5.1 (41d05f0)");
@@ -36,7 +38,7 @@ describe("AppVersion", () => {
     render(<AppVersion collapsed={false} />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
+      fireEvent.click(screen.getByRole("button", { name: "Copy version 0.5.1 (41d05f0)" }));
     });
     expect(screen.getByRole("status")).toHaveTextContent("Copied");
 
@@ -58,7 +60,7 @@ describe("AppVersion", () => {
     });
     render(<AppVersion collapsed={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "0.5.1 (41d05f0)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy version 0.5.1 (41d05f0)" }));
 
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Could not copy"));
   });
