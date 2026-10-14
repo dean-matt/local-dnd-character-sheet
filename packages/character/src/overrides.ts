@@ -1,3 +1,4 @@
+import type { z } from "zod";
 import { type CharacterDerived, characterDerivedSchema } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
@@ -49,16 +50,67 @@ export function overrideKey<K extends keyof Lists>(
   return `${list}.${key(element, definition)}`;
 }
 
-const isDerived = (node: object): node is { manual: unknown } =>
+const isDerived = (node: object): node is { computed: unknown; manual: unknown } =>
   "computed" in node && "manual" in node;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * A field whose value is an object, such as `speed`, also takes one key per member, such
+ * as `speed.fly`. Each lays over the whole-field override where one is stored, else over
+ * the computed object, so a recomputed member the user never typed over still moves.
+ */
 function visit(node: unknown, path: string, overrides: Record<string, unknown>): void {
   if (typeof node !== "object" || node === null) return;
   if (isDerived(node)) {
     if (Object.hasOwn(overrides, path)) node.manual = overrides[path];
+    if (!isRecord(node.computed)) return;
+    const prefix = `${path}.`;
+    const members = Object.entries(overrides).filter(([key]) => key.startsWith(prefix));
+    if (members.length === 0) return;
+    const base = isRecord(node.manual) ? node.manual : node.computed;
+    node.manual = {
+      ...base,
+      ...Object.fromEntries(members.map(([key, value]) => [key.slice(prefix.length), value])),
+    };
     return;
   }
   for (const [key, child] of Object.entries(node)) visit(child, `${path}.${key}`, overrides);
+}
+
+/**
+ * Drops the override behind one schema issue. A refused member, such as `speed.run` or
+ * `speed.fly: -5`, falls back to its computed value alone, so the members beside it still
+ * apply, and a `manual` left matching the computed value drops. Any other refused value
+ * drops its field's whole `manual`.
+ */
+function unapply(folded: CharacterDerived, issue: z.core.$ZodIssue): void {
+  const at = issue.path.lastIndexOf("manual");
+  const field = issue.path
+    .slice(0, at)
+    .reduce<Record<PropertyKey, unknown>>(
+      (node, segment) => node[segment] as Record<PropertyKey, unknown>,
+      folded as unknown as Record<PropertyKey, unknown>,
+    );
+  const { manual, computed } = field;
+  const member = issue.path[at + 1];
+  const refused =
+    issue.code === "unrecognized_keys" && at === issue.path.length - 1
+      ? issue.keys
+      : typeof member === "string"
+        ? [member]
+        : [];
+  if (refused.length === 0 || !isRecord(manual) || !isRecord(computed)) {
+    field.manual = null;
+    return;
+  }
+  for (const key of refused) {
+    if (Object.hasOwn(computed, key)) manual[key] = computed[key];
+    else delete manual[key];
+  }
+  const keys = new Set([...Object.keys(manual), ...Object.keys(computed)]);
+  if ([...keys].every((key) => manual[key] === computed[key])) field.manual = null;
 }
 
 /**
@@ -86,14 +138,6 @@ export function applyOverrides(
   if (parsed.success) return parsed.data;
   // `deriveCharacter` builds a block its schema accepts, so every issue sits under a
   // `manual` the fold wrote.
-  for (const { path } of parsed.error.issues) {
-    const field = path
-      .slice(0, path.lastIndexOf("manual"))
-      .reduce<Record<PropertyKey, unknown>>(
-        (node, segment) => node[segment] as Record<PropertyKey, unknown>,
-        folded as unknown as Record<PropertyKey, unknown>,
-      );
-    field.manual = null;
-  }
+  for (const issue of parsed.error.issues) unapply(folded, issue);
   return characterDerivedSchema.parse(folded);
 }

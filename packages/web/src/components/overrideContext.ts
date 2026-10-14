@@ -5,5 +5,5 @@ import { createContext } from "react";
  * character page alone, so a view outside it, such as the print sheet, offers no override.
  */
 export const SaveOverride = createContext<
-  ((key: string, next: number | null) => Promise<void>) | null
+  ((key: string, next: number | string | null) => Promise<void>) | null
 >(null);

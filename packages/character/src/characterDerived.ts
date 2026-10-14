@@ -196,7 +196,12 @@ export const characterDerivedSchema = z.strictObject({
       reload: z.int().min(1).nullable(),
     }),
   ),
-  /** Resistances, immunities and vulnerabilities from the race, then from each equipped item, attuned where it must be. */
+  /**
+   * Resistances, immunities and vulnerabilities from the race, then from each equipped item, attuned where it must be.
+   *
+   * The sheet offers no override for this or the two lists below: each names the race or
+   * item behind an entry, and a typed-over list would name none and stop following the equipment.
+   */
   defenses: derivedSchema(defensesSchema),
   /** Which equipped items grant a proficiency or a language, attuned where they must be. */
   itemGrants: derivedSchema(itemGrantsSchema),
