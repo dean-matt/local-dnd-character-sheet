@@ -3,8 +3,7 @@
 A locally hosted D&D character sheet: React + Hono + SQLite, single user, no auth,
 no deployment. Rules data comes from 5etools and is fetched, never committed.
 
-This file is read at the start of every task, so every line here costs attention on
-all future work. Detail that only some tasks need belongs in a skill or `docs/`.
+Every line here is read on every task; detail only some tasks need belongs in a skill or `docs/`.
 
 ## Architecture, decided
 
@@ -42,7 +41,7 @@ pnpm content:build   # rebuild content.db from vendor/
 pnpm fixtures:build  # rebuild tests/fixtures/5etools/ from vendor/
 pnpm dev             # api + web
 pnpm db:studio       # visual database editor
-pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
+pnpm check           # typecheck, lint, spell, deadcode, version, test — what CI runs
 ```
 
 ## Invariants
@@ -65,6 +64,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
 - **A pushed commit is never rewritten.** No amend, rebase or force push — add a commit.
   `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the current branch.
+- **A pull request that changes code raises the root `package.json` version** by `open-pr`'s rule.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — a leaf package exports a schema or a type the day something reads it,
   and a test import counts as a reader. `knip` reports an orphaned file and an export

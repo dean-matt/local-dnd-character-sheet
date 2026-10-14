@@ -111,6 +111,7 @@ The sheet is read for its numbers, not its transitions. Most of it does not move
 | Token | Value | Used for |
 |---|---|---|
 | `duration-standard` | `150ms` | A popover opening or closing, a tab changing — content changing state in place |
+| `duration-quick` | `75ms` | A label swapping in place to confirm an action, such as the version's Copied |
 | `ease-standard` | Tailwind's `ease-out` | Paired with `duration-standard` |
 
 A page change is a route change and gets nothing beyond what the router does for free —

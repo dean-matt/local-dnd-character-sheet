@@ -72,6 +72,7 @@ pnpm lint            # biome check
 pnpm lint:fix        # biome check --write
 pnpm spell           # typos
 pnpm deadcode        # knip — unused files, exports, dependencies
+pnpm version:check   # a branch that changes code raises the version over origin/main
 pnpm test            # vitest — unit and repo fences
 pnpm test:e2e        # playwright — boots the dev server itself
 pnpm test:e2e:ui     # playwright in watch mode

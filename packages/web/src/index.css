@@ -108,6 +108,7 @@
   --shadow-modal: 0 24px 48px light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.5));
 
   --duration-standard: 150ms;
+  --duration-quick: 75ms;
   --ease-standard: var(--ease-out);
 }
 
