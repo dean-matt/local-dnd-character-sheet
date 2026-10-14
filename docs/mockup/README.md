@@ -62,8 +62,8 @@ widget, panel, or nav element:
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
-  (its icon alone, the label in a tooltip), Rest and the character menu as 32px buttons
-  at the right. The save status reads "Saving…" while any write to the character is in
+  (its icon alone, the label in a tooltip), Rest and a Character settings gear as 32px
+  buttons at the right. The save status reads "Saving…" while any write to the character is in
   flight and "Saved" for a moment after; a save that fails or an entry a field refuses
   raises a toast at the bottom right naming the field, with Retry for a failed save, and
   no card changes height. The header artboard's `save` tweak switches between them. The name takes the room it needs and
@@ -82,6 +82,11 @@ widget, panel, or nav element:
   line ("Filtering or searching the log") and its single-character framing the same way
   the character list's avatar widens past #206's — #311 and #312 are the new issues that
   settle those two, same as #310 settled the character list's own widening.
+- Character Settings is the page the header's gear opens, at a fixed route Manage Tabs
+  never lists. Under its "Character settings" heading, distinct from the app-wide
+  Settings, it stacks House rules, Character file (Duplicate and Export) and a danger
+  zone holding Delete, which opens the type-the-name confirmation. Its `exportFailed`
+  tweak shows a failed export's message.
 - Search: while Top Bar Navigation's search pill has focus or a query, a scrim dims
   everything else; clicking it or pressing Escape closes the results and returns focus to
   the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics, Feedback and
@@ -266,7 +271,8 @@ says how much of the artboard the app builds today.
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |
 | `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
-| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the Character menu, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
+| `CharacterSettings` | #806 | all |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `HomebrewRaces` | #489 | nothing |

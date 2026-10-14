@@ -55,18 +55,9 @@
           </div>
         </sc-if>
       </div>
-      <div style="position: relative;">
-        <button aria-label="Character menu" onClick="{{toggleMenu}}" style="width: 32px; height: 32px; padding: 0; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; display: flex; align-items: center; justify-content: center;">
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="#6b7280"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
-        </button>
-        <sc-if value="{{menuOpen}}" hint-placeholder-val="{{false}}">
-          <div style="position: absolute; top: calc(100% + 4px); right: 0; width: 180px; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 6px; z-index: 40;">
-            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">Duplicate Character</button>
-            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">Export Character</button>
-            <button style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: {{accent}};">Delete Character</button>
-          </div>
-        </sc-if>
-      </div>
+      <a href="#" aria-label="Character settings" title="Character settings" style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; display: flex; align-items: center; justify-content: center;">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+      </a>
     </div>
   </div>
 
@@ -87,7 +78,7 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { inspiration: false, menuOpen: false, restOpen: false, saveToastDismissed: false };
+    this.state = { inspiration: false, restOpen: false, saveToastDismissed: false };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -107,10 +98,8 @@ class Component extends DCLogic {
       inspirationFill: on ? accent : 'none',
       inspirationColor: on ? accent : '#6b7280',
       toggleInspiration: () => this.setState({ inspiration: !on }),
-      menuOpen: this.state.menuOpen,
-      toggleMenu: () => this.setState({ menuOpen: !this.state.menuOpen, restOpen: false }),
       restOpen: this.state.restOpen,
-      toggleRest: () => this.setState({ restOpen: !this.state.restOpen, menuOpen: false }),
+      toggleRest: () => this.setState({ restOpen: !this.state.restOpen }),
       shortRest: () => this.setState({ restOpen: false }),
       longRest: () => this.setState({ restOpen: false }),
       saveText: save === 'saving' ? 'Saving…' : save === 'saved' ? 'Saved' : '',

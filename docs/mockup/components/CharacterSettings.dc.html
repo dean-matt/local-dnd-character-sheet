@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Page — Character Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button, input { font-family: inherit; }
+  button { cursor: pointer; }
+</style>
+</helmet>
+
+<div style="position: relative; width: 760px; height: 760px; padding: 16px 40px; background: #f4f5f7;">
+  <section aria-labelledby="settingsTitle" style="max-width: 672px; display: flex; flex-direction: column; gap: 12px;">
+    <h2 id="settingsTitle" style="margin: 0; font-size: 18px; font-weight: 700;">Character settings</h2>
+
+    <section aria-labelledby="houseRulesTitle" style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 10px;">
+      <h3 id="houseRulesTitle" style="margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">House rules</h3>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px;">
+        <sc-for list="{{rules}}" as="rule" hint-placeholder-count="4">
+          <li style="display: flex; flex-direction: column;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #1f2430;">
+              <input type="checkbox" checked="{{rule.on}}" onChange="{{rule.toggle}}" style="accent-color: {{accent}};">
+              {{rule.name}}
+            </label>
+            <span style="font-size: 13px; color: #6b7280;">{{rule.description}}</span>
+          </li>
+        </sc-for>
+      </ul>
+    </section>
+
+    <section aria-labelledby="fileTitle" style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 10px;">
+      <h3 id="fileTitle" style="margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Character file</h3>
+      <div style="display: flex; gap: 8px;">
+        <button style="padding: 8px 14px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 13px; font-weight: 600; color: #1f2430;">Duplicate character</button>
+        <button style="padding: 8px 14px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 13px; font-weight: 600; color: #1f2430;">Export character</button>
+      </div>
+      <sc-if value="{{showError}}" hint-placeholder-val="{{false}}">
+        <p role="alert" style="margin: 8px 0 0; font-size: 13px; color: #9f0712;">Export failed: characters.db is locked</p>
+      </sc-if>
+    </section>
+
+    <section aria-labelledby="dangerTitle" style="background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 10px;">
+      <h3 id="dangerTitle" style="margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #6b7280; text-transform: uppercase;">Danger zone</h3>
+      <button aria-haspopup="dialog" onClick="{{openDelete}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 13px; font-weight: 600; color: {{accent}};">Delete character</button>
+    </section>
+  </section>
+
+  <sc-if value="{{deleting}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(31, 36, 48, 0.4); display: flex; align-items: center; justify-content: center;">
+      <div role="dialog" aria-labelledby="deleteTitle" style="width: 420px; background: #ffffff; border-radius: 8px; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18); padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+        <h2 id="deleteTitle" style="margin: 0; font-size: 16px; font-weight: 700;">Delete Elara Nightshade?</h2>
+        <p style="margin: 0;">This deletes the sheet, its play state, all 8 of its pages, its roll log and its undo history.</p>
+        <p style="margin: 0;">Undo cannot bring it back. A snapshot of <code>characters.db</code> lands in <code>data/backups/</code> first.</p>
+        <label style="display: flex; flex-direction: column; gap: 4px;">Type Elara Nightshade to confirm
+          <input type="text" autocomplete="off" style="padding: 7px 10px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 13px;">
+        </label>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button onClick="{{closeDelete}}" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #dde1e6; background: #ffffff; font-size: 13px; font-weight: 600; color: #1f2430;">Cancel</button>
+          <button aria-disabled="true" style="padding: 8px 14px; border-radius: 6px; border: none; background: {{accent}}; opacity: 0.5; font-size: 13px; font-weight: 600; color: #ffffff;">Delete</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"exportFailed":{"editor":"boolean","default":false},"$preview":{"width":760,"height":760}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { on: { encumbrance: true }, deleting: false };
+  }
+  renderVals() {
+    const RULES = [
+      { key: 'encumbrance', name: 'Encumbrance', description: 'Carrying more than 5 times your Strength score in pounds costs 10 feet of speed. More than 10 times costs 20 feet and gives disadvantage on Strength, Dexterity and Constitution checks, saves and attack rolls.' },
+      { key: 'optionalClassFeatures', name: 'Optional class features', description: "Your classes also grant the optional features from Tasha's Cauldron of Everything." },
+      { key: 'customOrigin', name: 'Custom origin', description: "Your race's ability score increases keep their amounts, but each goes on any ability you choose." },
+      { key: 'feats', name: 'Feats', description: 'A feat may replace an Ability Score Improvement.' }
+    ];
+    const on = this.state.on;
+    return {
+      accent: this.props.accent ?? '#c1272d',
+      rules: RULES.map((rule) => ({
+        name: rule.name,
+        description: rule.description,
+        on: !!on[rule.key],
+        toggle: () => this.setState({ on: { ...on, [rule.key]: !on[rule.key] } })
+      })),
+      showError: this.props.exportFailed ?? false,
+      deleting: this.state.deleting,
+      openDelete: () => this.setState({ deleting: true }),
+      closeDelete: () => this.setState({ deleting: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
