@@ -141,3 +141,9 @@ Direct pushes to `main` are rejected — everything lands through a pull request
 follow Conventional Commits, checked by `commitlint` on the commit-msg hook.
 
 Full conventions and the reasoning behind them: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+### Feedback
+
+Post feedback in the
+[Feedback discussion category](https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback),
+which the app's top bar also links to. Posting needs a GitHub account.

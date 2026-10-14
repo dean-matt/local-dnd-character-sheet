@@ -1,0 +1,21 @@
+title: "[Feedback] "
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: What were you trying to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+
+  - type: input
+    id: concerns
+    attributes:
+      label: Class, species, level or source
+      description: Which of these the feedback concerns, if any — "Wizard 5, PHB 2024".
