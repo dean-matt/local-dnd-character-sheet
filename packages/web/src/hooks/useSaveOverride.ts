@@ -5,7 +5,7 @@ import { useUpdateCharacterDefinition } from "./useUpdateCharacterDefinition.ts"
 export function useSaveOverride(id: string) {
   const { mutateAsync } = useUpdateCharacterDefinition(id);
   return useCallback(
-    async (key: string, next: number | null) => {
+    async (key: string, next: number | string | null) => {
       await mutateAsync((latest) => {
         const { [key]: _, ...rest } = latest.overrides;
         return { ...latest, overrides: next === null ? rest : { ...rest, [key]: next } };

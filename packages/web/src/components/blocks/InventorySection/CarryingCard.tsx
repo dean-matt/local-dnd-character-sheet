@@ -8,6 +8,7 @@ import { Card } from "../../Card.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { LabeledValue } from "../LabeledValue.tsx";
 import { pounds } from "./pounds.ts";
+import { SizeValue } from "./SizeValue.tsx";
 
 const ENCUMBRANCE_LABEL: Record<NonNullable<CharacterDerived["encumbrance"]>, string> = {
   unencumbered: "Unencumbered",
@@ -36,6 +37,9 @@ export function CarryingCard({
   return (
     <Card title="Carrying">
       <div className="flex flex-col gap-0.5">
+        <LabeledValue label="Size">
+          <SizeValue size={derived.size} />
+        </LabeledValue>
         <LabeledValue label="Carried">{pounds(derived.carriedWeight)}</LabeledValue>
         <LabeledValue label="Carrying Capacity">
           <DerivedValue
