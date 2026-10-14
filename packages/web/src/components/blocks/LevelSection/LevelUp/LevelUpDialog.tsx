@@ -90,6 +90,7 @@ export function LevelUpDialog({
             abilityIncreases: values.abilityIncreases,
             featureChoices: values.featureChoices,
             proficiencies: values.proficiencies,
+            spells: values.spells,
             departures: values.departures,
           }),
         });

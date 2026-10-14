@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogUnavailable } from "../../CatalogUnavailable.tsx";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
+import { SpellPickField } from "../../components/SpellPickField.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
-import { SpellPickField } from "./SpellPickField.tsx";
 import {
   type CasterFacts,
   cantripsOf,

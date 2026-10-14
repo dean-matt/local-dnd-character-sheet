@@ -20,6 +20,7 @@ import { ImprovementField } from "../../../ImprovementField.tsx";
 import { Select } from "../../../Select.tsx";
 import { HitPointChoice } from "./HitPointChoice.tsx";
 import type { HitPointMethod } from "./hitPointPick.ts";
+import { LevelUpSpells } from "./LevelUpSpells.tsx";
 import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import { MulticlassEntryFields } from "./MulticlassEntryFields.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
@@ -44,9 +45,10 @@ export interface LevelUpChoicesProps {
 
 /**
  * Every choice the level asks for, in order: the class, from one list of those the
- * character holds and those it could multiclass into, with what entering a new one asks; the hit points, a subclass at
- * the class's subclass level, an improvement, and each option a feature offers. Then the
- * features the level brings.
+ * character holds and those it could multiclass into, with what entering a new one asks;
+ * the hit points, a subclass at the class's subclass level, an improvement, each option a
+ * feature offers, and the cantrips and spells the level adds. Then the features the level
+ * brings.
  */
 export function LevelUpChoices({
   characterId,
@@ -178,6 +180,7 @@ export function LevelUpChoices({
           </FormField>
         );
       })}
+      <LevelUpSpells edition={definition.edition} picks={plan.spellPicks} />
       <LevelUpSummary changes={plan.table()} features={plan.features} />
       <p className="text-muted text-row">
         Hit points, proficiency bonus and spell slots are worked out once you apply, and the summary

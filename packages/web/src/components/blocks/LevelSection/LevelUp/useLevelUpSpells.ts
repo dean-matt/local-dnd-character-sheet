@@ -1,0 +1,66 @@
+import { type CharacterDefinition, displayName, type EntryRef, entryKey } from "@dnd/character";
+import { useFormContext } from "react-hook-form";
+import { useSpellLookup } from "../../../../hooks/useSpellLookup.ts";
+import { setRefValue } from "../../../../lib/setRefValue.ts";
+import { spellsGained } from "./spellsGained.ts";
+import type { useLevelUpClass } from "./useLevelUpClass.ts";
+
+type Spell = CharacterDefinition["spells"][number];
+
+/** A spell picked this level, with the level its lookup found, none where no row answers. */
+type LevelUpPick = { ref: EntryRef; name: string; level?: number };
+
+/**
+ * The cantrips and spells the level adds to what `cls` knows, and the picks the draft's
+ * `spells` holds past `definition`'s, split by the level each lookup found. A pick still
+ * loading is left out and keeps `ready` false. A pick lands unprepared, as a known spell
+ * or a cantrip is, with the class as its origin.
+ */
+export function useLevelUpSpells(
+  definition: CharacterDefinition,
+  cls: EntryRef,
+  target: ReturnType<typeof useLevelUpClass>,
+  spells: readonly Spell[],
+) {
+  const { setValue } = useFormContext<CharacterDefinition>();
+  const gained = spellsGained(
+    [target.before, target.subclassBefore],
+    [target.after, target.subclassAfter],
+  );
+  const catalog = "name" in cls ? cls : undefined;
+  const list = catalog && {
+    class: catalog,
+    ...(target.subclass && { subclass: target.subclass }),
+    level: target.next,
+  };
+  const known = new Set(definition.spells.map((spell) => entryKey(spell.ref)));
+  const added = spells.filter((spell) => !known.has(entryKey(spell.ref)));
+  const { looked, failed } = useSpellLookup(
+    added.map((spell) => spell.ref),
+    list ? { list } : {},
+  );
+  const picked: LevelUpPick[] = added.flatMap(({ ref }, index) => {
+    const found = looked[index];
+    if (found === undefined) return [];
+    return [found === null ? { ref, name: displayName(ref) } : { ref, ...found }];
+  });
+  const cantrips = picked.filter((pick) => pick.level === 0);
+  const leveled = picked.filter((pick) => pick.level !== 0);
+  const write = (next: Spell[]) => setRefValue(setValue, "spells", next, { shouldDirty: true });
+  return {
+    gained,
+    list,
+    known,
+    cantrips,
+    spells: leveled,
+    failed,
+    ready:
+      picked.length === added.length &&
+      cantrips.length === gained.cantrips &&
+      leveled.length === gained.spells,
+    add: (ref: EntryRef) =>
+      write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }) }]),
+    remove: (ref: EntryRef) =>
+      write(spells.filter((spell) => entryKey(spell.ref) !== entryKey(ref))),
+  };
+}
