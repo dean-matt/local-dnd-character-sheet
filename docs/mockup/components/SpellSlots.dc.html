@@ -27,6 +27,7 @@
             <button aria-label="{{pip.aria}}" title="{{pip.title}}" onClick="{{pip.toggle}}" style="width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid {{accent}}; background: {{pip.fill}}; padding: 0; flex-shrink: 0;"></button>
           </sc-for>
         </div>
+        <button aria-label="{{lvl.label}} slots {{lvl.total}}" style="font-size: 12px; color: #6b7280; background: none; border: none; padding: 0; flex-shrink: 0; text-decoration: underline dotted; text-underline-offset: 2px;">{{lvl.total}}</button>
         <button aria-label="Add a {{lvl.label}} slot" onClick="{{lvl.addSlot}}" style="width: 15px; height: 15px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0; flex-shrink: 0;">+</button>
         <button aria-label="Remove a {{lvl.label}} slot" onClick="{{lvl.removeSlot}}" style="width: 15px; height: 15px; border: none; background: none; color: #6b7280; font-size: 13px; line-height: 1; padding: 0; flex-shrink: 0;">&minus;</button>
       </div>
