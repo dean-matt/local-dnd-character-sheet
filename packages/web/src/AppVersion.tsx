@@ -26,13 +26,10 @@ export function AppVersion({ collapsed }: { collapsed: boolean }) {
   };
 
   const Result = status === "Copied" ? Check : CircleAlert;
-  const result = status && (
-    <Result
-      size={collapsed ? 19 : 16}
-      aria-hidden="true"
-      className={`shrink-0 ${status === "Copied" ? "text-positive" : "text-error"}`}
-    />
-  );
+  const tone = status === "Copied" ? "text-positive" : "text-error";
+  // Every label shares one grid cell and only the current one is visible, so the row
+  // keeps the width of the longest and nothing beside it moves.
+  const labels = [text, "Copied", "Could not copy"];
 
   return (
     <div>
@@ -43,14 +40,26 @@ export function AppVersion({ collapsed }: { collapsed: boolean }) {
         title="Copy version"
         className={`flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
       >
-        {collapsed ? (
-          result || <Tag size={19} aria-hidden="true" className="shrink-0" />
+        {collapsed && status ? (
+          <Result size={19} aria-hidden="true" className={`shrink-0 ${tone}`} />
         ) : (
-          <>
-            <Tag size={19} aria-hidden="true" className="shrink-0" />
-            <code className="truncate text-label">{text}</code>
-            {result}
-          </>
+          <Tag size={19} aria-hidden="true" className="shrink-0" />
+        )}
+        {!collapsed && (
+          <span className="grid min-w-0 text-left">
+            {labels.map((label) => {
+              const shown = label === (status || text);
+              return (
+                <code
+                  key={label}
+                  aria-hidden={!shown || undefined}
+                  className={`col-start-1 row-start-1 truncate text-label ${shown ? (status ? tone : "") : "invisible"}`}
+                >
+                  {label}
+                </code>
+              );
+            })}
+          </span>
         )}
       </button>
       <p role="status" className="sr-only">
