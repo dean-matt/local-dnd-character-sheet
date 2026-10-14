@@ -56,7 +56,8 @@ widget, panel, or nav element:
   and new spells for a class that gains them, all gating Apply until every open choice
   the level actually offers is made.
 - Page chrome: Top Bar Navigation (Character menu, Mechanics
-  menu, search, and a Settings link), Character Header, Rolls Panel. The top bar marks
+  menu, search, a Feedback link that opens a new GitHub discussion in a new tab, and a
+  Settings link), Character Header, Rolls Panel. The top bar marks
   the section you are in by its label alone — accent-colored and bold, with no fill or
   underline — and an open menu takes a gray fill instead. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
@@ -84,8 +85,8 @@ widget, panel, or nav element:
   settle those two, same as #310 settled the character list's own widening.
 - Search: while Top Bar Navigation's search pill has focus or a query, a scrim dims
   everything else; clicking it or pressing Escape closes the results and returns focus to
-  the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics and Settings
-  controls. Results group under Characters and Compendium, each with a type chip and each
+  the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics, Feedback and
+  Settings controls. Results group under Characters and Compendium, each with a type chip and each
   compendium row carrying a source chip, and an "Advanced search" link at the foot opens Search,
   the `search` route. The app carries the pill's query there as `?q=<query>`; each
   artboard keeps its own state, so Search opens on its own sample query. Search draws the

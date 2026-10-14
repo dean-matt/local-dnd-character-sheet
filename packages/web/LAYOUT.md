@@ -7,8 +7,8 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   beside it changes its width. Its height is `--spacing-topbar` in `src/index.css`; anything
   sized against it uses the token. Its own content sits at 24px, not the gutter, as the
   mockup draws it. Below the `sm` breakpoint it narrows to fit a 320px phone: 12px padding,
-  tighter triggers, the app name cut to "D&D" and Settings to its icon, each keeping its
-  full text for screen readers.
+  tighter triggers with no gap between them, the app name cut to "D&D", and Feedback and
+  Settings cut to their icons, each keeping its full text for screen readers.
 - **Sidebar** fills its column, sticky under the top bar, and scrolls its own rows in a
   window too short to hold them, with its scrollbar hidden so the collapsed icons stay
   centered and `scroll-shadow` shading the clipped edge instead. Its widths are
