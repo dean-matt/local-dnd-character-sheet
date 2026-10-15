@@ -6,6 +6,7 @@ import { presetPageRecords } from "../test/records.ts";
 import { stubFetch } from "../test/stubFetch.ts";
 import { useCharacterPages } from "./useCharacterPages.ts";
 import { useReplaceCharacterPages } from "./useReplaceCharacterPages.ts";
+import { useRestoreDefaultPages } from "./useRestoreDefaultPages.ts";
 
 function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>;
@@ -105,5 +106,56 @@ describe("useCharacterPages", () => {
       presets.map(({ preset: _, ...page }) => page),
     );
     expect(result.current.replace.canUndo).toBe(false);
+  });
+
+  it("drops the undo a failed save opened, since it would undo to what the server holds", async () => {
+    const presets = presetPageRecords();
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method !== "PUT") return new Response(JSON.stringify(presets), { status: 200 });
+      return new Response(JSON.stringify({ error: "refused" }), { status: 409 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(
+      () => ({ pages: useCharacterPages("1"), replace: useReplaceCharacterPages("1") }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.pages.isSuccess).toBe(true));
+
+    act(() => result.current.replace.write([...presets].reverse()));
+    expect(result.current.replace.canUndo).toBe(true);
+    await waitFor(() => expect(result.current.replace.isError).toBe(true));
+    expect(result.current.replace.canUndo).toBe(false);
+  });
+
+  it("sends a restore only once a write before it has replied", async () => {
+    const presets = presetPageRecords();
+    const reply = deferred();
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "PUT") return reply.promise;
+      return new Response(JSON.stringify(presets), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(
+      () => ({
+        pages: useCharacterPages("1"),
+        replace: useReplaceCharacterPages("1"),
+        restore: useRestoreDefaultPages("1"),
+      }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.pages.isSuccess).toBe(true));
+    const reversed = [...presets].reverse();
+
+    act(() => {
+      result.current.replace.write(reversed);
+      result.current.restore.mutate();
+    });
+    await new Promise((settle) => setTimeout(settle, 20));
+    const sent = () => fetchMock.mock.calls.map(([input]) => String(input));
+    expect(sent().filter((url) => url.endsWith("/restore-defaults"))).toHaveLength(0);
+
+    reply.resolve(new Response(JSON.stringify(reversed), { status: 200 }));
+    await waitFor(() => expect(result.current.restore.isSuccess).toBe(true));
+    expect(result.current.pages.data).toEqual(presets);
   });
 });

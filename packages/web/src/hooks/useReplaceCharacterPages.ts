@@ -1,27 +1,17 @@
 import type { CharacterPageRecord } from "@dnd/character";
-import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useSyncExternalStore } from "react";
 import { apiMutate } from "../lib/api.ts";
 import {
+  forgetPages,
   pageHistoryDepth,
   rememberPages,
   subscribePageHistory,
   takeLastPages,
 } from "../lib/pageHistory.ts";
+import { queuePageWrite } from "../lib/pageWriteQueue.ts";
 import { characterPagesKey } from "./characterKeys.ts";
 import { characterPagesSchema } from "./characterPagesSchema.ts";
-
-// Every caller of this hook shares one queue and one history per character and client.
-const queues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>();
-
-function queueOf(client: QueryClient) {
-  let byCharacter = queues.get(client);
-  if (!byCharacter) {
-    byCharacter = new Map();
-    queues.set(client, byCharacter);
-  }
-  return byCharacter;
-}
 
 /**
  * `write` replaces the whole list, in display order. The cache takes the new list before
@@ -41,22 +31,15 @@ export function useReplaceCharacterPages(id: string) {
 
   const mutation = useMutation<CharacterPageRecord[], Error, CharacterPageRecord[]>({
     mutationKey,
-    mutationFn: (pages) => {
-      const queue = queueOf(queryClient);
-      const write = (queue.get(id) ?? Promise.resolve()).then(() =>
+    mutationFn: (pages) =>
+      queuePageWrite(queryClient, id, () =>
         apiMutate(
           "PUT",
           `/characters/${id}/pages`,
           characterPagesSchema,
           pages.map(({ preset: _preset, ...page }) => page),
         ),
-      );
-      queue.set(
-        id,
-        write.catch(() => undefined),
-      );
-      return write;
-    },
+      ),
     onSuccess: (pages) => {
       if (queryClient.isMutating({ mutationKey }) === 1) {
         queryClient.setQueryData(characterPagesKey(id), pages);
@@ -76,10 +59,18 @@ export function useReplaceCharacterPages(id: string) {
   const current = () =>
     queryClient.getQueryData<CharacterPageRecord[]>(characterPagesKey(id)) ?? [];
 
-  /** `write` for a caller that reports its own failure, such as a `Field`: it rejects on one. */
+  /**
+   * `write` for a caller that reports its own failure, such as a `Field`: it rejects on one.
+   * A failed write drops the entry it opened, which would undo to what the server still holds.
+   */
   async function save(pages: CharacterPageRecord[], key?: string): Promise<void> {
-    rememberPages(queryClient, id, current(), key);
-    await put(pages);
+    const entry = rememberPages(queryClient, id, current(), key);
+    try {
+      await put(pages);
+    } catch (error) {
+      if (entry) forgetPages(queryClient, id, entry);
+      throw error;
+    }
   }
 
   // A failure already shows through `error`, so a caller that does not await drops it.

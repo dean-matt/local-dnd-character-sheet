@@ -1,7 +1,7 @@
 import { type CharacterPageRecord, UNDO_LOG_LIMIT } from "@dnd/character";
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-import { pageHistoryDepth, rememberPages, takeLastPages } from "./pageHistory.ts";
+import { forgetPages, pageHistoryDepth, rememberPages, takeLastPages } from "./pageHistory.ts";
 
 const list = (title: string): CharacterPageRecord[] => [
   { slug: "grapple", title, hidden: false, preset: false, blocks: [] },
@@ -16,6 +16,17 @@ describe("pageHistory", () => {
     let oldest: CharacterPageRecord[] | undefined;
     for (let n = 0; n < UNDO_LOG_LIMIT; n++) oldest = takeLastPages(client, "1");
     expect(oldest).toEqual(list("1"));
+    expect(takeLastPages(client, "1")).toBeUndefined();
+  });
+
+  it("forgets the entry a write opened, and a write merged into a run opens none", () => {
+    const client = new QueryClient();
+    rememberPages(client, "1", list("a"));
+    const opened = rememberPages(client, "1", list("b"), "title");
+    expect(rememberPages(client, "1", list("c"), "title")).toBeUndefined();
+
+    forgetPages(client, "1", opened as NonNullable<typeof opened>);
+    expect(takeLastPages(client, "1")).toEqual(list("a"));
     expect(takeLastPages(client, "1")).toBeUndefined();
   });
 });

@@ -49,18 +49,35 @@ export function pageHistoryDepth(client: QueryClient, characterId: string): numb
 }
 
 /**
- * Records `before` as what an undo restores. A run of writes sharing a `key`, such as a
- * title's debounced saves, is one entry holding the list before the first of them.
+ * Records `before` as what an undo restores, and returns the entry it opened. A run of
+ * writes sharing a `key`, such as a title's debounced saves, is one entry holding the list
+ * before the first of them, so a later write in the run opens none.
  */
 export function rememberPages(
   client: QueryClient,
   characterId: string,
   before: CharacterPageRecord[],
   key?: string,
-): void {
+): Entry | undefined {
   const entries = historyOf(client).entries.get(characterId) ?? [];
-  if (key !== undefined && entries.at(-1)?.key === key) return;
-  set(client, characterId, [...entries, { before, key }].slice(-UNDO_LOG_LIMIT));
+  if (key !== undefined && entries.at(-1)?.key === key) return undefined;
+  const entry = { before, key };
+  set(client, characterId, [...entries, entry].slice(-UNDO_LOG_LIMIT));
+  return entry;
+}
+
+/**
+ * Removes `entry` wherever it sits. A later write in its run goes with it, which costs that
+ * write its undo; the run's first write failing makes that rare.
+ */
+export function forgetPages(client: QueryClient, characterId: string, entry: Entry): void {
+  const entries = historyOf(client).entries.get(characterId) ?? [];
+  if (entries.includes(entry))
+    set(
+      client,
+      characterId,
+      entries.filter((each) => each !== entry),
+    );
 }
 
 /**
