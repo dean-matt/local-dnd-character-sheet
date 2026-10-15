@@ -48,8 +48,9 @@ export function NotesSection({ character }: { character: CharacterRecord | undef
 
   const writeSections = (key: string, edit: (latest: NoteSection[]) => NoteSection[]) =>
     write(key, (latest) => ({ ...latest, notes: edit(latest.notes) }));
-  const inSection = (id: string, edit: (section: NoteSection) => NoteSection) =>
-    writeSections(id, (latest) =>
+  /** `key` names the note a write adds or removes, so each holds its own failure. */
+  const inSection = (id: string, key: string, edit: (section: NoteSection) => NoteSection) =>
+    writeSections(key, (latest) =>
       latest.map((section) => (section.id === id ? edit(section) : section)),
     );
   const saveField = (id: string, edit: (section: NoteSection) => NoteSection) =>
@@ -67,7 +68,7 @@ export function NotesSection({ character }: { character: CharacterRecord | undef
   function addNote(sectionId: string) {
     const id = crypto.randomUUID();
     setFocus(`[data-note="${id}"] textarea`);
-    inSection(sectionId, (section) => ({
+    inSection(sectionId, id, (section) => ({
       ...section,
       notes: [...section.notes, { id, text: "" }],
     }));
@@ -156,7 +157,7 @@ export function NotesSection({ character }: { character: CharacterRecord | undef
                         aria-label={`Remove note ${index + 1}`}
                         onClick={() => {
                           setFocus(`[data-add-note="${section.id}"]`);
-                          inSection(section.id, (latest) => ({
+                          inSection(section.id, note.id, (latest) => ({
                             ...latest,
                             notes: latest.notes.filter((each) => each.id !== note.id),
                           }));
