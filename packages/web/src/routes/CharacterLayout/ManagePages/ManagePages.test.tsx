@@ -291,7 +291,7 @@ describe("ManagePages", () => {
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
-  it("deletes a preset as it deletes any page, and an undo brings it back a preset", async () => {
+  it("deletes a preset as it deletes any page, and an undo writes it back in place", async () => {
     const server = stubServer(presetPageRecords());
     const router = await renderManaging("/characters/abc/p/stats");
 
@@ -305,7 +305,7 @@ describe("ManagePages", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
     await waitFor(() => expect(server.puts).toHaveLength(2));
-    expect(server.stored()[0]).toEqual(presetPageRecords()[0]);
+    expect(server.puts[1]).toEqual(presetPageRecords().map(({ preset: _, ...page }) => page));
   });
 
   it("refuses to delete the last visible page", async () => {

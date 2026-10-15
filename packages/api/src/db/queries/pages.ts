@@ -28,10 +28,6 @@ function toRows(characterId: string, pages: readonly CharacterPage[]): PageRow[]
   }));
 }
 
-export function presetPageRows(characterId: string): PageRow[] {
-  return toRows(characterId, PRESET_PAGES);
-}
-
 function exists(db: Db, characterId: string): boolean {
   return (
     db
