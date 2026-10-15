@@ -41,15 +41,16 @@ widget, panel, or nav element:
   ("Equipped, Spear") with `aria-pressed` carrying the state. Stowed is a gray backpack
   on a white square, the same for every item type; equipped is the item type's icon in
   white on the accent — a sword for a weapon, a shirt for armor, a shield for a
-  shield, a hand for other gear. An item the character is not proficient with shows a
-  grayed backpack, `aria-disabled`, with a popover naming the missing proficiency. The
+  shield, a hand for other gear. Under the house rule that requires proficiency, an item
+  the character is not proficient with shows a grayed backpack, named "Equip Spear,
+  unavailable", whose popover names the missing proficiency. The
   icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons and Armor
   draw it.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Backstory, Notes.
-- Identity: Proficiencies, its own widget. Level Up is the modal the Level tab's
+- Identity: Level Up is the modal the Level tab's
   level-up button opens — pick an existing class or multiclass into a new one, Hit Points by average, roll, or
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
   and new spells for a class that gains them, all gating Apply until every open choice
@@ -243,9 +244,9 @@ says how much of the artboard the app builds today.
 | `Status` | #280 | read-only |
 | `ShortRestModal` | #281 | nothing |
 | `LongRestModal` | #281 | nothing |
-| `Weapons` | #311, #398, #400 | all but the filter, its own search and Equip's proficiency check |
+| `Weapons` | #311, #398, #400 | all but the filter and its own search |
 | `WeaponsFilter` | #311 | nothing |
-| `Armor` | #311, #400 | all but the filter, its own search and Equip's proficiency check |
+| `Armor` | #311, #400 | all but the filter and its own search |
 | `ArmorFilter` | #311 | nothing |
 | `Gear` | #311 | all but the filter and its own search |
 | `GearFilter` | #311 | nothing |
@@ -261,7 +262,6 @@ says how much of the artboard the app builds today.
 | `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |
 | `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
-| `Proficiencies` | #400 | all but gating Equip |
 | `ManageTabs` | #242 | reorder and hide |
 | `TopBar` | #386, #521, #522 | all but "Add to…" |
 | `Search` | #521, #522 | all but "Add to…" |

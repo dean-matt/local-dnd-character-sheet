@@ -180,10 +180,8 @@ export function raceJson(
 }
 
 /**
- * Only equipped entries, since nothing else reaches armor class. The map is keyed by the
- * base item, as `deriveCharacter` reads it, so a base equipped twice under two different
- * magic variants keeps the last one's bonus — the same last-one-wins rule it applies to
- * two suits of armor. The way out is keying armor by the inventory entry.
+ * Every entry whose row is armor or a shield, keyed by `itemKey`, equipped or not: armor
+ * class reads the equipped ones, and a missing armor proficiency reads them all.
  */
 function armorTraits(
   definition: CharacterDefinition,
@@ -192,9 +190,9 @@ function armorTraits(
   const armor = new Map<string, ArmorTrait>();
   definition.inventory.forEach((entry, index) => {
     const row = rows[index];
-    if (!entry.equipped || !row) return;
+    if (!row) return;
     const trait = parseJson(armorTraitSchema, row.json);
-    if (trait) armor.set(entryKey(entry.ref), trait);
+    if (trait) armor.set(itemKey(entry), { ...trait, name: row.name });
   });
   return armor;
 }

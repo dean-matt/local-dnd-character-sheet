@@ -119,6 +119,23 @@ short, takes 10 feet off walking speed as a term of `speed`. The 2014 and 2024 b
 rule alike. The score counts what an equipped item raises, and the cut applies after the
 items that set or scale a speed. A homebrew item states the same two fields.
 
+## Gear without proficiency
+
+An armor proficiency names a category (`Light`, `Shields`) or one armor, and a weapon
+proficiency a category or one base weapon, matched as `proficiencyKey` folds them. An item
+that makes its wearer proficient, such as `Elven Chain` (DMG), reaches the sheet as a
+proficiency the player names: upstream's `grantsProficiency` names none, and on most
+weapons it flags a tool or a skill. `unproficientItems` names, per inventory entry, the
+proficiency its weapon or armor lacks, equipped or not.
+
+An attack without proficiency adds none and carries a `Not proficient` term worth 0.
+Armor worn without proficiency adds Strength and Dexterity disadvantage on checks, saves
+and attacks to `rollEffects` and names itself in `castingBlockedBy`, which the sheet shows
+under each spell attack and atop the Spells page. A 2014 shield counts as armor; the 2024
+Armor Training rule costs an untrained shield only its AC bonus, which the sheet does not
+model. Equipping goes through as printed; under the `requireEquipProficiency` house rule the
+sheet refuses it and names the missing proficiency.
+
 ## Weapon mastery
 
 `mastery` is a list of `{@itemMastery}` references (`Topple|XPHB`) on 48 base items and 47

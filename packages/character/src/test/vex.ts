@@ -70,6 +70,8 @@ export const derivedInput = (traits: object = {}) => ({
   },
   itemGrants: { computed: { proficiencies: [], languages: [] } },
   rollEffects: { computed: [] },
+  unproficientItems: [],
+  castingBlockedBy: [],
   ...raceTraits,
   ...traits,
 });

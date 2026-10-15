@@ -120,6 +120,16 @@ describe("SpellsSection", () => {
     await screen.findByText("Hex");
   });
 
+  it("says the character can't cast while wearing armor without proficiency, naming it", async () => {
+    renderSection({ ...derivedRecord(), castingBlockedBy: ["Plate Armor", "Shield"] });
+
+    expect(
+      await screen.findByText(
+        "Can't cast spells while wearing Plate Armor and Shield without proficiency.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("shows a spell damage card only while an item adds to it", async () => {
     renderSection(derivedRecord());
     expect(screen.queryByText("Spell Damage Bonus")).toBeNull();

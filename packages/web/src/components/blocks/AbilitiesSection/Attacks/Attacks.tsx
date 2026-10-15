@@ -16,6 +16,7 @@ import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.t
 import { Card } from "../../../Card.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { damageText } from "../../attack.ts";
+import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRow } from "./AttackRow.tsx";
@@ -149,6 +150,7 @@ export function Attacks({
                   }
                   damage={NONE}
                   effects={effectsOnRoll(rollEffects, { roll: "attack", ability: caster.ability })}
+                  notes={<CastingBlockedNote armor={derived.castingBlockedBy} />}
                 />
               );
             })}

@@ -1,4 +1,4 @@
-import type { CharacterDerived, CharacterRecord } from "@dnd/character";
+import { type CharacterDerived, type CharacterRecord, houseRule } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
@@ -113,6 +113,9 @@ export function ItemList({
       />
     );
   };
+  const gated = houseRule(character.definition, "requireEquipProficiency");
+  const equipRequires = (index: number) =>
+    gated ? derived?.unproficientItems.find((item) => item.entry === index)?.requires : undefined;
   const entries = inventory.data.items.map((item, index) => ({ item, index }));
   const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
@@ -156,6 +159,7 @@ export function ItemList({
                   }
                   placement={placementField(index, item.name)}
                   busy={busy}
+                  equipRequires={equipRequires(index)}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
                   onEquip={(equipped) =>
                     edit(index, (entry) => ({

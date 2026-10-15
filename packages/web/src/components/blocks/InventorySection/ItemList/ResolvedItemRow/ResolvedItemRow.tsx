@@ -20,6 +20,7 @@ type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 /**
  * `quantity` is the control that edits the count, `placement` the one that picks a container.
  * `busy` marks the row's toggles and Remove disabled while the list drops clicks.
+ * `equipRequires` names the proficiency the table requires before the item equips.
  */
 export function ResolvedItemRow({
   item,
@@ -27,6 +28,7 @@ export function ResolvedItemRow({
   quantity,
   placement,
   busy,
+  equipRequires,
   onGrip,
   onEquip,
   onAttune,
@@ -37,6 +39,7 @@ export function ResolvedItemRow({
   quantity: ReactNode;
   placement: ReactNode;
   busy: boolean;
+  equipRequires?: string;
   onGrip: (grip: Grip) => void;
   onEquip: (equipped: boolean) => void;
   onAttune: (attuned: boolean) => void;
@@ -77,7 +80,7 @@ export function ResolvedItemRow({
           )}
           {quantity}
           {placement}
-          <EquipToggle item={item} onChange={onEquip} busy={busy} />
+          <EquipToggle item={item} requires={equipRequires} onChange={onEquip} busy={busy} />
         </>
       }
       detail={{

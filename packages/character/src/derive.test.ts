@@ -151,9 +151,10 @@ describe("deriveCharacter", () => {
     bonus: noBonus,
   };
 
-  /** The Warlock/Rogue fixture, with armor and a shield equipped. */
+  /** The Warlock/Rogue fixture, with armor and a shield equipped and proficiency in both. */
   const equipped: CharacterDefinition = {
     ...definition,
+    proficiencies: { ...definition.proficiencies, armor: ["Light", "Shields"] },
     inventory: [
       ...definition.inventory,
       { ref: STUDDED_LEATHER, quantity: 1, carried: true, equipped: true, attuned: false },
@@ -182,8 +183,11 @@ describe("deriveCharacter", () => {
     sizes: ["medium" as const],
     speed: { walk: 30 },
     armor: new Map([
-      [entryKey(STUDDED_LEATHER), { category: "light" as const, armorClass: 12 }],
-      [entryKey(SHIELD), { category: "shield" as const, armorClass: 2 }],
+      [
+        entryKey(STUDDED_LEATHER),
+        { name: STUDDED_LEATHER.name, category: "light" as const, armorClass: 12 },
+      ],
+      [entryKey(SHIELD), { name: SHIELD.name, category: "shield" as const, armorClass: 2 }],
     ]),
     weights: new Map<string, number | null>([
       [entryKey({ name: "Dagger", source: "XPHB" }), 1],
@@ -306,7 +310,12 @@ describe("deriveCharacter", () => {
     };
     const homebrewCatalog = {
       ...catalog,
-      armor: new Map([[entryKey(homebrewArmor), { category: "light" as const, armorClass: 11 }]]),
+      armor: new Map([
+        [
+          entryKey(homebrewArmor),
+          { name: "Homebrew armor", category: "light" as const, armorClass: 11 },
+        ],
+      ]),
       weights: new Map([...catalog.weights, [entryKey(homebrewArmor), 10]]),
     };
 
@@ -414,6 +423,96 @@ describe("deriveCharacter", () => {
     expect(tinkerer.attunementSlots.computed).toBe(5);
   });
 
+  describe("gear the character lacks proficiency with", () => {
+    const HIDE = { name: "Hide Armor", source: "XPHB" };
+    const gear = (equippedHide: boolean): CharacterDefinition => ({
+      ...equipped,
+      inventory: [
+        ...equipped.inventory,
+        { ref: LONGSWORD, quantity: 1, carried: false, equipped: false, attuned: false },
+        { ref: HIDE, quantity: 1, carried: true, equipped: equippedHide, attuned: false },
+      ],
+    });
+    const withHide = {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(HIDE), 12]]),
+      armor: new Map<string, ArmorTrait>([
+        ...catalog.armor,
+        [entryKey(HIDE), { name: HIDE.name, category: "medium" as const, armorClass: 12 }],
+      ]),
+    };
+
+    it("names the proficiency each entry needs, equipped, carried or neither", () => {
+      expect(deriveCharacter(gear(false), withHide).unproficientItems).toEqual([
+        { entry: 4, requires: "Martial weapons" },
+        { entry: 5, requires: "Medium armor" },
+      ]);
+      const shieldless = { ...equipped, proficiencies: definition.proficiencies };
+      expect(deriveCharacter(shieldless, catalog).unproficientItems).toEqual([
+        { entry: 3, requires: "Shields" },
+      ]);
+    });
+
+    it("puts Strength and Dexterity rolls at disadvantage and stops casting while the armor is worn", () => {
+      const worn = deriveCharacter(gear(true), withHide);
+      const fromHide = worn.rollEffects.computed.filter((effect) => effect.source === HIDE.name);
+      expect(
+        new Set(fromHide.map(({ mode, roll, target }) => `${mode} ${roll} ${target}`)),
+      ).toEqual(
+        new Set(
+          ["check", "save", "attack"].flatMap((roll) =>
+            ["str", "dex"].map((ability) => `disadvantage ${roll} ${ability}`),
+          ),
+        ),
+      );
+      expect(fromHide).toHaveLength(6);
+      expect(worn.castingBlockedBy).toEqual([HIDE.name]);
+
+      const stowed = deriveCharacter(gear(false), withHide);
+      expect(stowed.rollEffects.computed.some((effect) => effect.source === HIDE.name)).toBe(false);
+      expect(stowed.castingBlockedBy).toEqual([]);
+    });
+
+    it("counts an armor the character is proficient with by name", () => {
+      const ELVEN_CHAIN = { name: "Elven Chain", source: "DMG" };
+      const worn = (armor: string[]): CharacterDefinition => ({
+        ...equipped,
+        proficiencies: { ...equipped.proficiencies, armor },
+        inventory: [
+          ...equipped.inventory,
+          { ref: ELVEN_CHAIN, quantity: 1, carried: true, equipped: true, attuned: false },
+        ],
+      });
+      const chain = {
+        ...catalog,
+        weights: new Map([...catalog.weights, [entryKey(ELVEN_CHAIN), 20]]),
+        armor: new Map<string, ArmorTrait>([
+          ...catalog.armor,
+          [entryKey(ELVEN_CHAIN), { name: ELVEN_CHAIN.name, category: "medium", armorClass: 14 }],
+        ]),
+      };
+
+      expect(deriveCharacter(worn(["Light", "Shields"]), chain).castingBlockedBy).toEqual([
+        ELVEN_CHAIN.name,
+      ]);
+      const named = deriveCharacter(worn(["Light", "Shields", "Elven Chain"]), chain);
+      expect(named.castingBlockedBy).toEqual([]);
+      expect(named.unproficientItems).toEqual([]);
+    });
+
+    it("charges a shield as armor in a 2014 game and not in a 2024 one", () => {
+      const untrained = { ...equipped, proficiencies: definition.proficiencies };
+      const fromShield = (block: CharacterDerived) =>
+        block.rollEffects.computed.filter((effect) => effect.source === "Shield");
+      const one = deriveCharacter(untrained, catalog);
+      expect(one.castingBlockedBy).toEqual([]);
+      expect(fromShield(one)).toEqual([]);
+      const classic = deriveCharacter({ ...untrained, edition: "classic" }, catalog);
+      expect(classic.castingBlockedBy).toEqual(["Shield"]);
+      expect(fromShield(classic)).toHaveLength(6);
+    });
+  });
+
   describe("attacks", () => {
     const longsword = (entry: Partial<CharacterDefinition["inventory"][number]> = {}) => ({
       ref: LONGSWORD,
@@ -480,6 +579,17 @@ describe("deriveCharacter", () => {
       expect(named(["Simple"])).toBe(-1);
       expect(named(["martial"])).toBe(2);
       expect(named(["longsword"])).toBe(2);
+    });
+
+    it("says in the breakdown why a weapon the character lacks proficiency with adds none", () => {
+      expect(attackOf(deriveCharacter(withSword(), catalog), 2)?.attackBonus).toEqual({
+        computed: -1,
+        manual: null,
+        terms: [
+          { label: "Strength", value: -1 },
+          { label: "Not proficient", value: 0 },
+        ],
+      });
     });
 
     it("reads a proficiency spelled the way the book prints it", () => {

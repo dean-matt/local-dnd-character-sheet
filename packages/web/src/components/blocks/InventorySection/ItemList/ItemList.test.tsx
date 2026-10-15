@@ -55,10 +55,11 @@ const ITEMS: SheetItem[] = [
   },
 ];
 
-function vex() {
+function vex(houseRules: Record<string, boolean> = {}) {
   const record = characterRecord("1", "Vex");
   const definition = characterDefinitionSchema.parse({
     ...record.definition,
+    houseRules,
     inventory: [
       { ref: { name: "Longsword", source: "PHB" } },
       { ref: { name: "Cloak of Protection", source: "DMG" }, attuned: true },
@@ -137,15 +138,17 @@ function stubApi({
   overrideStatus = 200,
   refetch = true,
   holdFirstPut = false,
+  houseRules,
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
   overrideStatus?: number;
   refetch?: boolean;
   holdFirstPut?: boolean;
+  houseRules?: Record<string, boolean>;
 } = {}) {
   let reads = 0;
-  let record = vex();
+  let record = vex(houseRules);
   let held = holdFirstPut
     ? new Promise<void>((resolve) => {
         releasePut = resolve;
@@ -180,7 +183,7 @@ function renderList(
 ) {
   const fetchMock = stubApi({ inventory, ...stub });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const character = vex();
+  const character = vex(stub.houseRules);
   client.setQueryData(characterKey(character.id), character);
   render(
     <QueryClientProvider client={client}>
@@ -623,6 +626,38 @@ describe("ItemList", () => {
     const cloak = screen.getByRole("button", { name: "Equipped, Cloak of Protection" });
     expect(cloak).toHaveAttribute("aria-pressed", "false");
     expect(cloak.querySelector("svg")).toHaveClass("lucide-backpack");
+  });
+
+  describe("a weapon or armor the character lacks proficiency with", () => {
+    const unproficient = (): CharacterDerived => ({
+      ...derivedRecord(),
+      unproficientItems: [{ entry: 0, requires: "Martial weapons" }],
+    });
+
+    it("equips as printed", async () => {
+      const fetchMock = renderList(unproficient());
+
+      fireEvent.click(await screen.findByRole("button", { name: "Equipped, Longsword" }));
+
+      expect((await written(fetchMock)).inventory[0].equipped).toBe(true);
+    });
+
+    it("refuses under the house rule, naming the proficiency it lacks", async () => {
+      const fetchMock = renderList(unproficient(), undefined, {
+        houseRules: { requireEquipProficiency: true },
+      });
+
+      const blocked = await screen.findByRole("button", { name: "Equip Longsword, unavailable" });
+      expect(screen.queryByRole("button", { name: "Equipped, Longsword" })).toBeNull();
+      fireEvent.click(blocked);
+      expect(
+        within(screen.getByRole("group", { name: "Can't equip" })).getByText(
+          "Requires Martial weapons proficiency.",
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Equipped, Cloak of Protection" })).toBeEnabled();
+      expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+    });
   });
 
   it("carries an item it equips", async () => {
