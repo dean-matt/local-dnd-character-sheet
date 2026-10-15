@@ -7,6 +7,7 @@
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
 import { itemHitFactsSchema } from "./item-kind.ts";
+import { optionalFeaturePrerequisiteSchema } from "./optional-feature-terms.ts";
 
 /**
  * The Tier A types this endpoint searches. A subclass hit names its class in `parent`, since
@@ -41,6 +42,10 @@ export const catalogSearchHitSchema = z.strictObject({
   edition: z.enum(EDITIONS).nullable(),
   /** Present on an item hit alone. */
   item: itemHitFactsSchema.optional(),
+  /** Present on an optional feature hit alone, so a picker can judge each row it lists. */
+  optionalFeature: z
+    .strictObject({ prerequisites: z.array(optionalFeaturePrerequisiteSchema) })
+    .optional(),
 });
 
 /** The two homebrew tables a search reads — `homebrew.db` carries no others. */

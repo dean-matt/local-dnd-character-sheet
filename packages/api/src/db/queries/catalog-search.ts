@@ -2,7 +2,9 @@ import {
   type CatalogSearchType,
   type ItemHitFacts,
   itemHitFacts,
+  type OptionalFeaturePrerequisite,
   ofWantedKind,
+  optionalFeaturePrerequisitesSchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
@@ -19,6 +21,7 @@ export type CatalogSearchRow = {
   textless?: true;
   edition: Edition | null;
   item?: ItemHitFacts;
+  optionalFeature?: { prerequisites: OptionalFeaturePrerequisite[] };
 };
 
 /**
@@ -86,7 +89,9 @@ const SEARCH_LOOKUP_KINDS = [
  * `@dnd/catalog`'s `itemKinds` places in any one of the kinds named — a magic variant by
  * the base items it admits — and an item hit carries its kinds, rarity and weapon category
  * as `item`. `classList` narrows spells to those a class's list holds, and leaves homebrew
- * spells out, since no class list holds one.
+ * spells out, since no class list holds one. `featureTypes` narrows optional features to
+ * those carrying any one of the codes named, such as `EI`, and an optional feature hit
+ * carries its prerequisites as `optionalFeature`.
  */
 export type SearchFilter = {
   edition?: Edition;
@@ -97,6 +102,7 @@ export type SearchFilter = {
   rarities?: readonly string[];
   itemKinds?: readonly string[];
   classList?: ClassList;
+  featureTypes?: readonly string[];
 };
 
 const placeholders = (values: readonly unknown[]) => values.map(() => "?").join(", ");
@@ -133,29 +139,51 @@ const ITEM_FIELDS =
   ", type AS itemType, rarity, json_extract(json, '$.wondrous') AS wondrous," +
   " json_extract(json, '$.staff') AS staff, json_extract(json, '$.weaponCategory') AS weaponCategory," +
   " json_extract(json, '$.mastery') AS mastery, kind AS itemKind, CASE kind WHEN 'magicvariant' THEN json END AS variantJson";
+const OPTION_FIELDS = ", json_extract(json, '$.prerequisite') AS prerequisite";
 type SearchTable = (typeof CATALOG_SEARCH_TABLES)[number];
 
+/** The filters that narrow one kind of row alone, each passing every other kind through. */
+function narrowKind(conditions: Conditions, type: string, filter: SearchFilter) {
+  const { spellLevels, schools, rarities, featureTypes } = filter;
+  if (type === "spell" && spellLevels !== undefined) {
+    conditions.add("level BETWEEN ? AND ?", spellLevels.min, spellLevels.max);
+  }
+  if (type === "spell" && filter.classList) {
+    const { clause, params } = classListClause(filter.classList);
+    conditions.add(clause, ...params);
+  }
+  if (type === "spell" && schools?.length) {
+    conditions.add(`school IN (${placeholders(schools)})`, ...schools);
+  }
+  if (type === "item" && rarities?.length) {
+    conditions.add(`rarity IN (${placeholders(rarities)})`, ...rarities);
+  }
+  if (type === "optfeature" && featureTypes?.length) {
+    conditions.add(
+      `EXISTS (SELECT 1 FROM optional_feature_types t WHERE t.name = optional_features.name
+         AND t.source = optional_features.source AND t.feature_type IN (${placeholders(featureTypes)}))`,
+      ...featureTypes,
+    );
+  }
+}
+
+/** An optional feature row's `prerequisite` json as the hit carries it. */
+const optionFacts = (prerequisite: string | null | undefined) => ({
+  prerequisites: optionalFeaturePrerequisitesSchema.parse(
+    prerequisite ? JSON.parse(prerequisite) : undefined,
+  ),
+});
+
 function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSearchRow[] {
-  const { edition, term, spellLevels, schools, rarities } = filter;
+  const { edition, term } = filter;
   const kinds = entry.type === "item" ? filter.itemKinds : undefined;
   const conditions = new Conditions();
   if (entry.where) conditions.add(entry.where);
   if (edition !== undefined) conditions.add("edition = ?", edition);
   if (term) conditions.add("name LIKE ? ESCAPE '!'", `%${escapeLikeTerm(term)}%`);
-  if (entry.type === "spell" && spellLevels !== undefined) {
-    conditions.add("level BETWEEN ? AND ?", spellLevels.min, spellLevels.max);
-  }
-  if (entry.type === "spell" && filter.classList) {
-    const { clause, params } = classListClause(filter.classList);
-    conditions.add(clause, ...params);
-  }
-  if (entry.type === "spell" && schools?.length) {
-    conditions.add(`school IN (${placeholders(schools)})`, ...schools);
-  }
-  if (entry.type === "item" && rarities?.length) {
-    conditions.add(`rarity IN (${placeholders(rarities)})`, ...rarities);
-  }
+  narrowKind(conditions, entry.type, filter);
   const isItem = entry.type === "item";
+  const isOption = entry.type === "optfeature";
   let bases: Record<string, unknown>[] | undefined;
   const baseItems = () =>
     (bases ??= (
@@ -163,10 +191,14 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
     ).map((json) => JSON.parse(json)));
   const rows = db
     .prepare(
-      `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""}${entry.parent ?? ""} FROM ${entry.table}${conditions.where}`,
+      `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""}${isOption ? OPTION_FIELDS : ""}${entry.parent ?? ""} FROM ${entry.table}${conditions.where}`,
     )
     .all(...conditions.params) as (Omit<CatalogSearchRow, "type" | "parent"> &
-    Partial<ItemFields> & { parentName?: string; parentSource?: string })[];
+    Partial<ItemFields> & {
+      parentName?: string;
+      parentSource?: string;
+      prerequisite?: string | null;
+    })[];
   return rows.flatMap(
     ({
       name,
@@ -177,12 +209,14 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
       variantJson,
       parentName,
       parentSource,
+      prerequisite,
       ...fields
     }) => {
       const hit: CatalogSearchRow = { type: entry.type, name, source, edition };
       if (parentName !== undefined && parentSource !== undefined) {
         hit.parent = { name: parentName, source: parentSource };
       }
+      if (isOption) hit.optionalFeature = optionFacts(prerequisite);
       if (!isItem) return [hit];
       const item = itemHitFacts({ ...fields, type: itemType });
       if (itemKind === "baseitem" && fields.mastery) item.mastery = true;

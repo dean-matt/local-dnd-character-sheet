@@ -150,9 +150,12 @@ export type SearchFixture = {
   classes?: ClassFixtureRow[];
   subclasses?: SubclassFixtureRow[];
   optionalFeatures?: RaceFixtureRow[];
+  optionalFeatureTypes?: OptionalFeatureTypeFixtureRow[];
   lookups?: LookupFixtureRow[];
   entities?: EntityFixtureRow[];
 };
+
+type OptionalFeatureTypeFixtureRow = { name: string; source: string; feature_type: string };
 
 export function publishSearchFixture(dataDir: string, fixture: SearchFixture): void {
   publishContent(dataDir, fixture);
@@ -249,6 +252,23 @@ export type ClassFixture = {
 };
 
 export function publishClasses(dataDir: string, fixture: ClassFixture): void {
+  publishContent(dataDir, fixture);
+}
+
+/** What a character's option counts read: class and subclass rows, and the grants of what they hold. */
+export type EntitlementsFixture = ClassFixture & {
+  feats?: FeatFixtureRow[];
+  optionalFeatures?: FeatFixtureRow[];
+  grantedOptionalFeatures?: {
+    granted_by: string;
+    name: string;
+    source: string;
+    feature_type: string;
+    known: number;
+  }[];
+};
+
+export function publishEntitlementsFixture(dataDir: string, fixture: EntitlementsFixture): void {
   publishContent(dataDir, fixture);
 }
 

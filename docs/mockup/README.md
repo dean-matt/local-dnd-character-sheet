@@ -257,7 +257,7 @@ says how much of the artboard the app builds today.
 | `ClassFeaturesFilter` | #311 | nothing |
 | `RaceFeatures` | #279, #311 | read-only |
 | `RaceFeaturesFilter` | #311 | nothing |
-| `ChosenFeatures` | #231, #279, #311 | read-only |
+| `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |

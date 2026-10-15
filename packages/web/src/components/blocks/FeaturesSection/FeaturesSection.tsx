@@ -5,16 +5,18 @@
  * feature skips the rest.
  */
 import type { FeatureOrigin } from "@dnd/catalog";
-import type { CharacterRecord } from "@dnd/character";
+import { type CharacterRecord, optionalFeatureTallies } from "@dnd/character";
 import { useId, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { ErrorState } from "../../../ErrorState.tsx";
 import { useCharacterFeatures } from "../../../hooks/useCharacterFeatures.ts";
+import { useOptionalFeatureEntitlements } from "../../../hooks/useOptionalFeatureEntitlements.ts";
 import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
 import { FeatureRow } from "./FeatureRow.tsx";
 import { byLevelGained, classFeatureLevel } from "./featureOrder.ts";
+import { OptionalFeaturePicks } from "./OptionalFeaturePicks.tsx";
 
 /** `byLevel` widgets list in the order gained; race and background keep their printed order. */
 const WIDGETS: readonly {
@@ -22,6 +24,8 @@ const WIDGETS: readonly {
   noun: string;
   origins: readonly FeatureOrigin[];
   byLevel?: "class" | "taken";
+  /** Shown with no features in it, where it holds the picks the character may make. */
+  picks?: true;
 }[] = [
   {
     title: "Class Features",
@@ -36,11 +40,13 @@ const WIDGETS: readonly {
     noun: "chosen features",
     origins: ["feat", "optionalFeature"],
     byLevel: "taken",
+    picks: true,
   },
 ];
 
 export function FeaturesSection({ character }: { character: CharacterRecord | undefined }) {
   const features = useCharacterFeatures(character?.id ?? "");
+  const entitlements = useOptionalFeatureEntitlements(character?.id ?? "");
   const [query, setQuery] = useState("");
   const inputId = useId();
 
@@ -52,6 +58,12 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
     return <EmptyState>{character.name} has no features yet.</EmptyState>;
   }
 
+  // Built only once the entitlements land: read as none while loading, every pick would
+  // report itself past a count of 0.
+  const tallies = entitlements.isSuccess
+    ? optionalFeatureTallies(character.definition.optionalFeatures, entitlements.data.entitlements)
+    : [];
+  const picking = tallies.length > 0 || entitlements.isError;
   const needle = query.trim().toLowerCase();
   const widgets = WIDGETS.map((widget) => {
     const listed = features.data.groups
@@ -66,7 +78,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
       : listed;
     const matches = entries.filter(({ feature }) => feature.name.toLowerCase().includes(needle));
     return { ...widget, entries, matches };
-  }).filter((widget) => widget.entries.length > 0);
+  }).filter((widget) => widget.entries.length > 0 || (widget.picks && picking));
   const noMatches = widgets.every((widget) => widget.matches.length === 0);
 
   return (
@@ -93,7 +105,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
       <RulesBlock content={features.data.groups}>
         {widgets.map((widget) => (
           <Card key={widget.title} title={widget.title}>
-            {widget.matches.length === 0 ? (
+            {widget.entries.length === 0 ? null : widget.matches.length === 0 ? (
               <p className="text-body text-muted italic">
                 No {widget.noun} match “{query.trim()}”.
               </p>
@@ -104,6 +116,14 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
                   <FeatureRow key={index} {...entry} character={character} />
                 ))}
               </ul>
+            )}
+            {widget.picks && entitlements.isError && (
+              <p className="text-error">
+                Couldn't read what entitles {character.name} to optional features.
+              </p>
+            )}
+            {widget.picks && tallies.length > 0 && (
+              <OptionalFeaturePicks character={character} tallies={tallies} />
             )}
           </Card>
         ))}

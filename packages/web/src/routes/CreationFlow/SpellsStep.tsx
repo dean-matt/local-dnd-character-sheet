@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogUnavailable } from "../../CatalogUnavailable.tsx";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
-import { SpellPickField } from "../../components/SpellPickField.tsx";
+import { PickField } from "../../components/PickField.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
 import { LoadingState } from "../../LoadingState.tsx";
@@ -108,7 +108,7 @@ export function SpellsStep() {
       <div className="grid gap-7 sm:grid-cols-2">
         <div className="flex flex-col gap-5">
           {shown.cantrips && (
-            <SpellPickField
+            <PickField
               {...field}
               heading="Cantrips"
               noun="cantrip"
@@ -121,7 +121,7 @@ export function SpellsStep() {
           <GrantedSpells granted={granted} />
         </div>
         {shown.spells && (
-          <SpellPickField
+          <PickField
             {...field}
             heading={facts?.prepares ? "Spells Prepared" : "Spells Known"}
             noun="spell"

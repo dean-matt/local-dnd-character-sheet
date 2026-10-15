@@ -90,6 +90,43 @@ describe("searchCatalog", () => {
     expect(hits).toHaveLength(2);
   });
 
+  it("narrows optional features to a type, each hit carrying its prerequisites, and passes other kinds through", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const option = (name: string, prerequisite?: unknown[]) => ({
+      name,
+      source: "PHB",
+      edition: "classic",
+      json: JSON.stringify({ name, source: "PHB", prerequisite }),
+    });
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL],
+      optionalFeatures: [
+        option("Agonizing Blast", [{ spell: ["eldritch blast#c"] }]),
+        option("Archery"),
+      ],
+      optionalFeatureTypes: [
+        { name: "Agonizing Blast", source: "PHB", feature_type: "EI" },
+        { name: "Archery", source: "PHB", feature_type: "FS:F" },
+      ],
+    });
+
+    expect(searchCatalog(dataDir, { featureTypes: ["EI", "PB"] })).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      {
+        type: "optfeature",
+        name: "Agonizing Blast",
+        source: "PHB",
+        edition: "classic",
+        optionalFeature: {
+          prerequisites: [{ spells: ["eldritch blast"], options: [], unjudged: [] }],
+        },
+      },
+    ]);
+    expect(searchCatalog(dataDir, { types: ["optfeature"], featureTypes: ["FS:F"] })).toEqual([
+      expect.objectContaining({ name: "Archery", optionalFeature: { prerequisites: [] } }),
+    ]);
+  });
+
   it("filters a Tier A row to the requested edition, and includes an edition-less Tier C row regardless", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {

@@ -85,8 +85,8 @@ A Battle Master 7 who took `Martial Adept` knows 7 maneuvers — 5 from the subc
 2 from the feat — and 8 having also taken `Superior Technique`. The pool is the 43 options
 `optional_feature_types` carries for `MV:B`, 23 of them `classic` and 20 `one`, and it is
 joined unfiltered by edition: a 2024 Battle Master who took a 2014 feat picks from every
-maneuver the catalog holds, and what a table may legally offer is a question for the
-picker.
+maneuver the catalog holds. The sheet's picker narrows it to the grantor's own edition, so
+the feat offers the 23 and the subclass the 20.
 
 The build refuses a grant of a code no optional feature carries **in either edition**,
 where a class or subclass count has to reach the pool of its own edition. The two differ

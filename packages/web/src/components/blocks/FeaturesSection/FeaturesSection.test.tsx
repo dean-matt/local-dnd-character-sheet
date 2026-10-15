@@ -125,6 +125,67 @@ describe("FeaturesSection", () => {
     expect(within(card("Background Features")).getByText("Shelter of the Faithful")).toBeVisible();
   });
 
+  it("offers the options the character is entitled to before any is chosen", async () => {
+    stubFetchByUrl({
+      "/api/characters/1/features": { groups: FEATURES.groups.slice(0, 1) },
+      "/api/characters/1/optional-feature-entitlements": {
+        entitlements: [
+          {
+            featureType: "EI",
+            known: 1,
+            grantedBy: { kind: "class", ref: { name: "Warlock", source: "XPHB" } },
+            edition: "one",
+          },
+        ],
+      },
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <FeaturesSection character={characterRecord("1", "Vex")} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("heading", { level: 3, name: "Chosen Features" });
+    const chosen = card("Chosen Features");
+    expect(within(chosen).getByText("Choose 1 — 0 selected")).toBeInTheDocument();
+    expect(
+      within(chosen).getByRole("combobox", { name: "Add an eldritch invocation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("reports no pick past its count while the entitlements load", async () => {
+    vi.stubGlobal("fetch", (url: RequestInfo | URL) =>
+      String(url) === "/api/characters/1/features"
+        ? Promise.resolve(new Response(JSON.stringify(FEATURES)))
+        : new Promise<Response>(() => {}),
+    );
+    const record = characterRecord("1", "Vex");
+    const holding = {
+      ...record,
+      definition: {
+        ...record.definition,
+        optionalFeatures: [
+          {
+            ref: { name: "Archery", source: "PHB" },
+            featureType: "FS:F",
+            grantedBy: { kind: "class" as const, ref: { name: "Fighter", source: "PHB" } },
+          },
+        ],
+      },
+    };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <FeaturesSection character={holding} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("heading", { level: 3, name: "Chosen Features" });
+    expect(screen.queryByText(/nothing entitles/)).toBeNull();
+    expect(screen.queryByText(/Choose 0/)).toBeNull();
+  });
+
   it("lists class and subclass features by the character level they were gained at", async () => {
     const fighter = { name: "Fighter", source: "PHB" };
     const record = characterRecord("1", "Vex");

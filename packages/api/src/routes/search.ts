@@ -117,6 +117,10 @@ const listQuery = z.object({
   classLevel: z.coerce.number().int().min(1).max(20).optional().openapi({
     description: "The class level a subclass's added spells are read at; absent reads every level",
   }),
+  featureType: csv(
+    "Comma-separated option type codes to narrow optional features to, any one carried sufficing",
+    "EI,PB",
+  ),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
@@ -131,7 +135,7 @@ const search = createRoute({
   tags: ["search"],
   summary: "Search the catalog and homebrew together, one ranked list",
   description:
-    "minLevel, maxLevel and school narrow spells alone, and rarity and kind items alone, passing every other kind through. " +
+    "minLevel, maxLevel and school narrow spells alone, rarity and kind items alone, and featureType optional features alone, passing every other kind through. " +
     "A source narrows to catalog rows, so it leaves homebrew out.",
   request: { query: listQuery },
   responses: {
@@ -190,6 +194,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       schools: list(query.school),
       rarities: list(query.rarity),
       itemKinds: list(query.kind),
+      featureTypes: list(query.featureType),
       spellLevels:
         query.minLevel === undefined && query.maxLevel === undefined
           ? undefined
