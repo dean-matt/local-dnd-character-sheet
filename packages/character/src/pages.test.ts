@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { characterPagesSchema, degradePageBlock, PRESET_PAGES } from "./index.ts";
+import { characterPagesSchema, degradePageBlock, newPageSlug, PRESET_PAGES } from "./index.ts";
 
 describe("pages", () => {
   const page = { slug: "grapple", title: "Grapple", blocks: [] };
@@ -38,7 +38,8 @@ describe("pages", () => {
 
   it.each([
     { kind: "value", field: "armorClass" },
-    { kind: "list", source: "spells", filter: { level: 3 } },
+    { kind: "list", source: "spells", filter: { levels: [1, 3], prepared: true, search: "fire" } },
+    { kind: "list", source: "inventory", filter: { equipped: true } },
     { kind: "text", text: "{@spell fireball} at the ready." },
   ])("accepts the block %j", (block) => {
     expect(characterPagesSchema.safeParse([{ ...page, blocks: [block] }]).success).toBe(true);
@@ -47,6 +48,27 @@ describe("pages", () => {
   it("refuses a value block naming a field nothing derives", () => {
     const block = { kind: "value", field: "speed" };
     expect(characterPagesSchema.safeParse([{ ...page, blocks: [block] }]).success).toBe(false);
+  });
+
+  it.each([
+    { kind: "list", source: "inventory", filter: { levels: [3] } },
+    { kind: "list", source: "features", filter: { prepared: true } },
+    { kind: "list", source: "spells", filter: { equipped: true } },
+    { kind: "list", source: "spells", filter: { levels: [10] } },
+    { kind: "list", source: "spells", filter: { levels: [] } },
+    { kind: "list", source: "spells", filter: { school: "evocation" } },
+  ])("refuses the list block %j, whose filter that list cannot apply", (block) => {
+    expect(characterPagesSchema.safeParse([{ ...page, blocks: [block] }]).success).toBe(false);
+  });
+
+  it.each([
+    ["Grapple Rules", [], "grapple-rules"],
+    ["  Café & Bar!  ", [], "cafe-bar"],
+    ["???", [], "page"],
+    ["Grapple", ["grapple", "grapple-2"], "grapple-3"],
+  ])("slugs a new page titled %j beside %j as %j", (title, taken, slug) => {
+    expect(newPageSlug(title, taken)).toBe(slug);
+    expect(characterPagesSchema.safeParse([{ ...page, slug }]).success).toBe(true);
   });
 
   it("defaults a list block's filter to empty", () => {
