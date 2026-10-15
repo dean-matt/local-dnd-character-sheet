@@ -78,6 +78,12 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
       latest.map((block, at) => (ids.current[at] === id ? edit(block) : block)),
     );
 
+  /** A save that lands after its block was removed writes nothing, so it leaves no undo entry. */
+  async function saveBlock(id: number, edit: (latest: PageBlock) => PageBlock) {
+    if (ids.current.includes(id))
+      await replace.save(byId(id, edit), `${session}:block:${slug}:${id}`);
+  }
+
   function reorder<T>(list: T[], from: number, to: number) {
     const next = [...list];
     const [moved] = next.splice(from, 1);
@@ -179,7 +185,7 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
                 <BlockSettings
                   block={block}
                   onChange={(edit) => replace.write(byId(id, edit))}
-                  onSave={(edit) => replace.save(byId(id, edit), `${session}:block:${slug}:${id}`)}
+                  onSave={(edit) => saveBlock(id, edit)}
                 />
               </li>
             );

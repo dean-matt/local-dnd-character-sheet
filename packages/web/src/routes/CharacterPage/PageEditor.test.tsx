@@ -191,6 +191,24 @@ describe("PageEditor", () => {
     );
   });
 
+  it("drops a save queued behind another once its block is removed", async () => {
+    const server = stubServer([grapple([{ kind: "text", text: "A" }])]);
+    await renderEditor();
+    const release = server.hold();
+    const text = screen.getByRole("textbox", { name: "Text" });
+
+    fireEvent.change(text, { target: { value: "A1" } });
+    fireEvent.blur(text);
+    fireEvent.change(text, { target: { value: "A2" } });
+    fireEvent.blur(text);
+    fireEvent.click(screen.getByRole("button", { name: "Remove Text" }));
+    release();
+
+    await waitFor(() => expect(server.page()?.blocks).toEqual([]));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(server.puts).toHaveLength(1);
+  });
+
   it("removes a block", async () => {
     const server = stubServer([grapple([{ kind: "section", section: "notes" }])]);
     await renderEditor();
