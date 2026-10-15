@@ -38,6 +38,12 @@
   "alignment": "Lawful Good",
   "money": { "gold": 10 },
   "appearance": { "age": "27", "eyes": "brown" },
-  "notes": "Retired watch captain, called back to service.",
+  "notes": [
+    {
+      "id": "history",
+      "title": "History",
+      "notes": [{ "id": "service", "text": "Retired watch captain, called back to service." }]
+    }
+  ],
   "houseRules": {}
 }

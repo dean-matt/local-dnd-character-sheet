@@ -58,16 +58,46 @@ describe("describeChange", () => {
     );
   });
 
-  it("reads a first note as set and an emptied one as cleared", () => {
-    const empty = edit({ notes: "" });
-    const noted = edit({ notes: "Buy rope" });
-    expect(describeChange(empty, noted)?.describedAs).toBe("Notes set to Buy rope");
-    expect(describeChange(noted, empty)?.describedAs).toBe("Notes cleared");
+  it("reads a first note as set and an emptied one as cleared, naming its section", () => {
+    const notes = (text: string) =>
+      edit({ notes: [{ id: "s", title: "Debts", notes: [{ id: "n", text }] }] });
+    expect(describeChange(notes(""), notes("Buy rope"))).toEqual({
+      paths: ["notes.s.n"],
+      describedAs: "Debts note set to Buy rope",
+    });
+    expect(describeChange(notes("Buy rope"), notes(""))?.describedAs).toBe("Debts note cleared");
   });
 
   it("says edited rather than quoting long text", () => {
-    const after = edit({ notes: "x".repeat(41) });
-    expect(describeChange(definition, after)?.describedAs).toBe("Notes edited");
+    const [debts] = definition.notes;
+    if (!debts) throw new Error("the fixture holds a section");
+    const after = edit({
+      notes: [{ ...debts, notes: debts.notes.map((note) => ({ ...note, text: "x".repeat(41) })) }],
+    });
+    expect(describeChange(definition, after)?.describedAs).toBe("Debts note edited");
+  });
+
+  it("names a retitled section by both titles, and an untitled section's note as a note", () => {
+    const titled = (title: string) =>
+      edit({ notes: [{ id: "s", title, notes: [{ id: "n", text: "Rope" }] }] });
+    expect(describeChange(titled("Debts"), titled("Loans"))).toEqual({
+      paths: ["notes.s.title"],
+      describedAs: "Notes section Debts to Loans",
+    });
+    const untitled = edit({
+      notes: [{ id: "s", title: "", notes: [{ id: "n", text: "Pitons" }] }],
+    });
+    expect(describeChange(titled(""), untitled)?.describedAs).toBe("Note Rope to Pitons");
+  });
+
+  it("reads a section or note added or removed as the notes edited", () => {
+    const added = edit({ notes: [...definition.notes, { id: "new", title: "", notes: [] }] });
+    expect(describeChange(definition, added)).toEqual({
+      paths: ["notes"],
+      describedAs: "Notes edited",
+    });
+    const emptied = edit({ notes: definition.notes.map((section) => ({ ...section, notes: [] })) });
+    expect(describeChange(definition, emptied)?.paths).toEqual(["notes"]);
   });
 
   it("counts past three changes rather than listing them", () => {

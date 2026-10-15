@@ -144,6 +144,51 @@ function inventoryChanges(before: CharacterDefinition, after: CharacterDefinitio
   });
 }
 
+const sameIds = (was: { id: string }[], now: { id: string }[]) =>
+  was.length === now.length && was.every((each, at) => each.id === now[at]?.id);
+
+/**
+ * Each retitled section and each edited note, where every section and note kept its place,
+ * so editing one note or title merges its own autosave burst and no other. Adding,
+ * removing or reordering reads as the notes edited.
+ */
+function notesChanges(before: CharacterDefinition, after: CharacterDefinition): Change[] {
+  const kept =
+    sameIds(before.notes, after.notes) &&
+    after.notes.every((section, at) => sameIds(before.notes[at]?.notes ?? [], section.notes));
+  if (!kept) return [];
+  return after.notes.flatMap((section, at) => {
+    const was = before.notes[at];
+    if (!was) return [];
+    const title: Change[] =
+      was.title === section.title
+        ? []
+        : [
+            {
+              path: `notes.${section.id}.title`,
+              label: "Notes section",
+              before: was.title,
+              after: section.title,
+            },
+          ];
+    const label = section.title.trim() ? `${section.title} note` : "Note";
+    const notes = section.notes.flatMap((note, index): Change[] => {
+      const from = was.notes[index]?.text;
+      if (from === note.text) return [];
+      return [{ path: `notes.${section.id}.${note.id}`, label, before: from, after: note.text }];
+    });
+    return [...title, ...notes];
+  });
+}
+
+/** Sections whose one-item edit names the item, falling back to the section where none does. */
+const ITEMIZED: Partial<
+  Record<
+    keyof CharacterDefinition,
+    (before: CharacterDefinition, after: CharacterDefinition) => Change[]
+  >
+> = { inventory: inventoryChanges, notes: notesChanges };
+
 function changes(before: CharacterDefinition, after: CharacterDefinition): Change[] {
   return (Object.keys(SECTION_LABEL) as (keyof CharacterDefinition)[]).flatMap((section) => {
     const from: unknown = before[section];
@@ -166,10 +211,8 @@ function changes(before: CharacterDefinition, after: CharacterDefinition): Chang
             ],
       );
     }
-    if (section === "inventory") {
-      const entry = inventoryChanges(before, after);
-      if (entry.length > 0) return entry;
-    }
+    const itemized = ITEMIZED[section]?.(before, after) ?? [];
+    if (itemized.length > 0) return itemized;
     return [{ path: section, label: SECTION_LABEL[section], before: from, after: to }];
   });
 }

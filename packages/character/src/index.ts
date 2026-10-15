@@ -62,6 +62,7 @@ export {
   flatSkillBonusSchema,
   MAX_HIT_POINT_GAIN,
   MAX_LEVEL,
+  noteSectionSchema,
 } from "./definition.ts";
 export {
   deriveCharacter,

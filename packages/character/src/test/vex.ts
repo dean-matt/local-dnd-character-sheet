@@ -153,7 +153,9 @@ export const definition: CharacterDefinition = {
   houseRules: { encumbrance: true },
   overrides: {},
   departures: [],
-  notes: "Owes the Clasp a favor.",
+  notes: [
+    { id: "debts", title: "Debts", notes: [{ id: "clasp", text: "Owes the Clasp a favor." }] },
+  ],
 };
 
 export const state: CharacterState = {
