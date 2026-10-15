@@ -133,6 +133,19 @@ describe("Attacks", () => {
     expect(screen.queryByRole("button", { name: /^Warlock spell attack:/ })).toBeNull();
   });
 
+  it("notes under each spell attack that armor worn without proficiency stops casting", async () => {
+    renderAttacks({
+      ...derivedRecord(),
+      attacks: [attack(0, 5)],
+      castingBlockedBy: ["Plate Armor"],
+    });
+
+    expect(
+      await screen.findByRole("rowheader", { name: /^Warlock spell attack/ }),
+    ).toHaveTextContent("Can't cast spells while wearing Plate Armor without proficiency.");
+    expect(screen.getByRole("rowheader", { name: "Longsword" })).not.toHaveTextContent("cast");
+  });
+
   it("opens a weapon's attack terms from its bonus", async () => {
     renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5)] });
 

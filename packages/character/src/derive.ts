@@ -227,7 +227,7 @@ function equippedArmor(
   let shield: WornShield | undefined;
   for (const entry of definition.inventory) {
     if (!entry.equipped) continue;
-    const trait = armor.get(entryKey(entry.ref));
+    const trait = armor.get(itemKey(entry));
     if (trait === undefined) continue;
     if (trait.category === "shield") {
       shield = { armorClass: trait.armorClass, ref: entry.ref };
@@ -287,6 +287,58 @@ function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait):
     (weapon.category !== null && held.has(proficiencyKey(weapon.category))) ||
     held.has(proficiencyKey(weapon.name))
   );
+}
+
+/** An armor proficiency names a category: `Light`, `Shields`. */
+function armorProficient(definition: CharacterDefinition, armor: ArmorTrait): boolean {
+  return definition.proficiencies.armor.some(
+    (held) => proficiencyKey(held) === proficiencyKey(armor.category),
+  );
+}
+
+/** The proficiency the sheet names for a missing one: the weapon's category, or the weapon where it has none. */
+function weaponRequires(weapon: WeaponTrait): string {
+  return weapon.category === "simple"
+    ? "Simple weapons"
+    : weapon.category === "martial"
+      ? "Martial weapons"
+      : weapon.name;
+}
+
+const ARMOR_REQUIRES: Record<ArmorTrait["category"], string> = {
+  light: "Light armor",
+  medium: "Medium armor",
+  heavy: "Heavy armor",
+  shield: "Shields",
+};
+
+/** Each inventory entry holding a weapon or armor the character lacks proficiency with, equipped or not. */
+function derivedUnproficientItems(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): CharacterDerived["unproficientItems"] {
+  return definition.inventory.flatMap((entry, index) => {
+    const weapon = catalog.weapons.get(itemKey(entry));
+    if (weapon && !weaponProficient(definition, weapon)) {
+      return [{ entry: index, requires: weaponRequires(weapon) }];
+    }
+    const armor = catalog.armor.get(itemKey(entry));
+    if (armor && !armorProficient(definition, armor)) {
+      return [{ entry: index, requires: ARMOR_REQUIRES[armor.category] }];
+    }
+    return [];
+  });
+}
+
+/** The names of the equipped armor and shields the character lacks proficiency with, in inventory order. */
+function unproficientArmorWorn(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): string[] {
+  return definition.inventory.flatMap((entry) => {
+    const armor = catalog.armor.get(itemKey(entry));
+    return entry.equipped && armor && !armorProficient(definition, armor) ? [armor.name] : [];
+  });
 }
 
 /**
@@ -388,7 +440,11 @@ function derivedAttacks(
         entry: index,
         ability: result.ability,
         attackBonus: fromBreakdown(
-          breakdown([...result.attack.terms, ...proficiencyItemTerms(level, proficiency, bonuses)]),
+          breakdown([
+            ...result.attack.terms,
+            ...(proficiency === "none" ? [{ label: "Not proficient", value: 0 }] : []),
+            ...proficiencyItemTerms(level, proficiency, bonuses),
+          ]),
         ),
         critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
         damage: result.damage
@@ -542,10 +598,21 @@ function wornBurdens(
 /** The abilities whose checks, saves and attacks heavy encumbrance puts at disadvantage. */
 const BURDENED_ABILITIES = ["str", "dex", "con"] as const;
 
+/** The abilities whose checks, saves and attacks armor worn without proficiency puts at disadvantage. */
+const UNPROFICIENT_ARMOR_ABILITIES = ["str", "dex"] as const;
+
+const ROLLS = ["check", "save", "attack"] as const;
+
+/** Disadvantage on every check, save and attack that uses one of `abilities`, cited to `source`. */
+const disadvantageOn = (source: string, abilities: readonly Ability[]) =>
+  ROLLS.flatMap((roll) =>
+    abilities.map((target) => ({ source, mode: "disadvantage" as const, roll, target })),
+  );
+
 /**
  * The advantage and disadvantage of each equipped item, attuned where it must be, in
- * inventory order, then the Stealth disadvantage of worn armor, then heavy encumbrance's
- * where `burdened`.
+ * inventory order, then the Stealth disadvantage of worn armor, then the disadvantage of
+ * armor worn without proficiency, then heavy encumbrance's where `burdened`.
  */
 function derivedRollEffects(
   definition: CharacterDefinition,
@@ -565,17 +632,11 @@ function derivedRollEffects(
       roll: "skill" as const,
       target: "Stealth",
     }));
-  const encumbered = burdened
-    ? (["check", "save", "attack"] as const).flatMap((roll) =>
-        BURDENED_ABILITIES.map((target) => ({
-          source: "Heavily encumbered",
-          mode: "disadvantage" as const,
-          roll,
-          target,
-        })),
-      )
-    : [];
-  return computed([...granted, ...stealth, ...encumbered]);
+  const unproficient = unproficientArmorWorn(definition, catalog).flatMap((name) =>
+    disadvantageOn(name, UNPROFICIENT_ARMOR_ABILITIES),
+  );
+  const encumbered = burdened ? disadvantageOn("Heavily encumbered", BURDENED_ABILITIES) : [];
+  return computed([...granted, ...stealth, ...unproficient, ...encumbered]);
 }
 
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
@@ -799,6 +860,8 @@ export function deriveCharacter(
     defenses: derivedDefenses(definition, catalog),
     itemGrants: derivedItemGrants(bonuses),
     rollEffects: derivedRollEffects(definition, catalog, burdened),
+    unproficientItems: derivedUnproficientItems(definition, catalog),
+    castingBlockedBy: unproficientArmorWorn(definition, catalog),
   };
   return applyOverrides(block, definition);
 }

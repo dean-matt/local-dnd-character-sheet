@@ -40,7 +40,12 @@ describe("HouseRulesCard", () => {
 
     expect(
       card.getAllByRole("group").map((group) => group.querySelector("legend")?.textContent),
-    ).toEqual(["Encumbrance", "Replace a duplicate skill", "Replace a duplicate tool"]);
+    ).toEqual([
+      "Encumbrance",
+      "Replace a duplicate skill",
+      "Replace a duplicate tool",
+      "Equipping without proficiency",
+    ]);
   });
 
   it("names both outcomes, marks the printed one, and describes the one in effect", () => {

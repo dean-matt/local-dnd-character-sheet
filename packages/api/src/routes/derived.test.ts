@@ -83,7 +83,7 @@ const definitionWith = (
     proficiencies: {
       savingThrows: ["str", "con"],
       skills: [],
-      armor: [],
+      armor: ["Light", "Medium", "Heavy", "Shields"],
       weapons: [],
       tools: [],
       languages: [],
@@ -784,6 +784,34 @@ describe("derivedRoutes", () => {
       { source: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
       { source: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
     ]);
+  });
+
+  it("names armor the character lacks proficiency with, stowed or worn, and what wearing it costs", async () => {
+    const untrained = (equipped: boolean) =>
+      definitionWith({
+        proficiencies: {
+          savingThrows: [],
+          skills: [],
+          armor: ["Shields"],
+          weapons: [],
+          tools: [],
+          languages: [],
+        },
+        inventory: [
+          { ref: PLATE, equipped },
+          { ref: SHIELD, equipped: true },
+        ],
+      });
+    store(untrained(false));
+    const stowed = await derived();
+    expect(stowed.unproficientItems).toEqual([{ entry: 0, requires: "Heavy armor" }]);
+    expect(stowed.castingBlockedBy).toEqual([]);
+    expect(stowed.armorClass.computed).toBe(14);
+
+    updateCharacterDefinition(opened.charactersDb, "1", untrained(true));
+    const worn = await derived();
+    expect(worn.castingBlockedBy).toEqual([PLATE.name]);
+    expect(worn.rollEffects.computed.filter((effect) => effect.roll !== "skill")).toHaveLength(6);
   });
 
   it("marks Stealth and slows a wearer below the armor's Strength, counting a belt toward it, catalog or homebrew", async () => {

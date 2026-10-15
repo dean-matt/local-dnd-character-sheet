@@ -53,6 +53,12 @@ export const houseRulesSchema = z
      * improvement raises scores. The 2024 rules offer feats either way.
      */
     feats: z.boolean().optional(),
+    /**
+     * The sheet refuses to equip a weapon or armor the character lacks proficiency with.
+     * The rules let anyone wield or wear anything and charge penalties instead, so absent,
+     * the equip goes through and the sheet marks what it costs.
+     */
+    requireEquipProficiency: z.boolean().optional(),
   })
   .prefault({});
 
@@ -71,4 +77,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   duplicateSkillReplacement: false,
   duplicateToolReplacement: false,
   feats: false,
+  requireEquipProficiency: false,
 };

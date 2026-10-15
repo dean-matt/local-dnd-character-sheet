@@ -16,10 +16,15 @@ import type { Ability, ContentRef } from "./refs.ts";
 export type SkillTrait = { ref: ContentRef; ability: Ability };
 
 /**
- * What one equipped item contributes to armor class: its own number, and which
- * Dexterity rule it grants. `"shield"` stacks with worn armor rather than replacing it.
+ * What one suit of armor or shield contributes to armor class once equipped: its own
+ * number, and which Dexterity rule it grants. `"shield"` stacks with worn armor rather
+ * than replacing it. `category` is also what an armor proficiency names.
  */
-export type ArmorTrait = { category: "light" | "medium" | "heavy" | "shield"; armorClass: number };
+export type ArmorTrait = {
+  name: string;
+  category: "light" | "medium" | "heavy" | "shield";
+  armorClass: number;
+};
 
 /**
  * What one weapon row attacks with: the fields `weaponAttack` reads, and the category and
@@ -142,8 +147,8 @@ export type ContainerTrait = {
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
  * to parse. Keyed the way the field that reads it already keys a lookup: `hitDice` and
- * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, `armor` by
- * `entryKey` of an inventory entry's reference, `weights`, `weapons`, `itemDefenses`,
+ * `spellcastingAbilities` by `entryKey` of a `levels` entry's class, and `armor`,
+ * `weights`, `weapons`, `itemDefenses`,
  * `itemAbilities`, `itemBonuses`, `itemAdvantages` and `armorBurdens` and `containers` by `itemKey` of the entry, the way `carriedWeight` reads it.
  */
 export type CharacterCatalog = {

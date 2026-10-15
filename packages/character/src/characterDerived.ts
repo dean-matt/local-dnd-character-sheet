@@ -211,10 +211,22 @@ export const characterDerivedSchema = z.strictObject({
   itemGrants: derivedSchema(itemGrantsSchema),
   /**
    * The advantage and disadvantage equipped items grant, attuned where they must be, in
-   * inventory order, then heavy encumbrance's under the variant. Nothing here cancels a
-   * pair: the table decides whether a condition holds.
+   * inventory order, then what armor worn without proficiency costs, then heavy
+   * encumbrance's under the variant. Nothing here cancels a pair: the table decides
+   * whether a condition holds.
    */
   rollEffects: derivedSchema(z.array(rollEffectSchema)),
+  /**
+   * One per inventory entry holding a weapon or armor the character lacks proficiency
+   * with, equipped or not, in inventory order. `entry` is the index in the definition's
+   * `inventory`; `requires` names the proficiency that would cover it, such as
+   * `Martial weapons` or `Shields`.
+   */
+  unproficientItems: z.array(
+    z.strictObject({ entry: z.int().min(0), requires: z.string().min(1) }),
+  ),
+  /** The equipped armor and shields, by name, the character lacks proficiency with: each stops them casting spells. */
+  castingBlockedBy: z.array(z.string().min(1)),
 });
 
 export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
