@@ -5,9 +5,10 @@
  * modal over the current page, and closing it returns focus to the search with the query
  * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
  * hears it, and Enter or a click on it does nothing. An item, a spell or a feat carries
- * "Add to…" beside its option, reached by Tab rather than the arrows, since the listbox
- * holds options alone in the arrows' order. Below the results, a link carries the query to
- * the advanced search page, and from a sheet the character too.
+ * "Add to…" beside its option, reached by Tab rather than the arrows. The buttons sit outside
+ * the listbox, which may own only options and groups, and a subgrid lines each up with its
+ * option's row. Below the results, a link carries the query to the advanced search page, and
+ * from a sheet the character too.
  */
 import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
@@ -114,30 +115,20 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
     return settled && compendium.isSuccess ? `No results for "${query.trim()}".` : "Searching…";
   }
 
-  const group = (label: string, rows: SearchResult[], offset: number) =>
-    rows.length > 0 && (
-      // biome-ignore lint/a11y/useSemanticElements: a listbox groups its options with role="group"; <fieldset> groups form controls.
-      <div role="group" aria-label={label}>
-        <p aria-hidden className={groupLabel}>
-          {label}
-        </p>
-        {rows.map((result, i) => {
-          const addable = "hit" in result ? addableHit(result.hit) : undefined;
-          return (
-            <div key={result.key} role="none" className="flex items-center gap-1 pr-1">
-              <SearchResultOption
-                id={optionId(offset + i)}
-                result={result}
-                active={offset + i === activeIndex}
-                onPick={() => pick(result)}
-                onPoint={() => setActive(result.key)}
-              />
-              {addable && <AddTo row={addable} onAdded={setAdded} />}
-            </div>
-          );
-        })}
-      </div>
-    );
+  // The listbox and each group span their rows of the results' grid, so the buttons beside
+  // the listbox share those rows: a group takes one row for its label and one per option.
+  const groups = [
+    { label: "Characters", rows: characterResults },
+    { label: "Compendium", rows: compendiumResults },
+  ].filter((g) => g.rows.length > 0);
+  let gridRows = 0;
+  const placed = groups.map((g) => {
+    gridRows += 1;
+    return g.rows.map((result) => {
+      gridRows += 1;
+      return { result, index: results.indexOf(result), gridRow: gridRows };
+    });
+  });
 
   return (
     <>
@@ -216,14 +207,55 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         >
           {/* The results scroll alone, so the Advanced search link below stays in view. */}
           <div
-            id={listboxId}
-            role="listbox"
-            aria-label="Search results"
             hidden={results.length === 0}
-            className="min-h-0 flex-1 overflow-y-auto"
+            className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-1 overflow-y-auto"
           >
-            {group("Characters", characterResults, 0)}
-            {group("Compendium", compendiumResults, characterResults.length)}
+            <div
+              id={listboxId}
+              role="listbox"
+              aria-label="Search results"
+              className="col-start-1 grid grid-rows-subgrid"
+              style={{ gridRow: `1 / span ${gridRows}` }}
+            >
+              {groups.map((g, gi) => (
+                // biome-ignore lint/a11y/useSemanticElements: a listbox groups its options with role="group"; <fieldset> groups form controls.
+                <div
+                  key={g.label}
+                  role="group"
+                  aria-label={g.label}
+                  className="grid grid-rows-subgrid"
+                  style={{ gridRow: `span ${g.rows.length + 1}` }}
+                >
+                  <p aria-hidden className={groupLabel}>
+                    {g.label}
+                  </p>
+                  {placed[gi]?.map(({ result, index }) => (
+                    <SearchResultOption
+                      key={result.key}
+                      id={optionId(index)}
+                      result={result}
+                      active={index === activeIndex}
+                      onPick={() => pick(result)}
+                      onPoint={() => setActive(result.key)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+            {placed.flat().map(({ result, gridRow }) => {
+              const addable = "hit" in result ? addableHit(result.hit) : undefined;
+              return (
+                addable && (
+                  <div
+                    key={result.key}
+                    className="col-start-2 self-center pr-1"
+                    style={{ gridRow }}
+                  >
+                    <AddTo row={addable} onAdded={setAdded} />
+                  </div>
+                )
+              );
+            })}
           </div>
           <p
             aria-hidden

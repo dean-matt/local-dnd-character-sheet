@@ -107,6 +107,10 @@ describe("GlobalSearch", () => {
       screen.getByRole("button", { name: "Add to… Ember Charm (Homebrew), for Fira" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Fire Giant/ })).not.toBeInTheDocument();
+    // A listbox owns options and groups alone.
+    expect(
+      within(screen.getByRole("listbox", { name: "Search results" })).queryAllByRole("button"),
+    ).toEqual([]);
     expect(screen.getByRole("link", { name: 'Advanced search for "fir" →' })).toHaveAttribute(
       "href",
       "/search?q=fir&for=7",
