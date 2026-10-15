@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
+import { SEARCHED_FROM, useSheetCharacter } from "../../../hooks/useSheetCharacter.ts";
 import { isCatalogOutOfDate } from "../../../lib/api.ts";
 import { MECHANICS_ENTRIES, mechanicsHref } from "../../../lib/mechanicsEntries.ts";
 import { MenuDivider } from "./MenuDivider.tsx";
@@ -17,13 +18,16 @@ const entryLink = "rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:b
 /**
  * The top bar's Mechanics menu: a hand-picked list of the catalog's kinds, each opening the
  * search page filtered to it, then "All types…" opening it unfiltered. Three columns hold
- * the whole list in an ordinary window; a window shorter than the menu scrolls it.
+ * the whole list in an ordinary window; a window shorter than the menu scrolls it. From a
+ * sheet, each link carries the character to the search page, as the search's own link does.
  */
 export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
   const types = useSearchTypes();
   const here = useMatch("/search") !== null;
   const searchable = new Set(types.data ?? []);
   const entries = MECHANICS_ENTRIES.filter(({ type }) => searchable.has(type));
+  const sheet = useSheetCharacter();
+  const from: Record<string, string> = sheet ? { [SEARCHED_FROM]: sheet.id } : {};
 
   return (
     <div className="relative shrink-0">
@@ -55,7 +59,7 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
             {entries.map((entry) => (
               <Link
                 key={entry.label}
-                to={mechanicsHref(entry)}
+                to={mechanicsHref(entry, from)}
                 onClick={onClose}
                 className={entryLink}
               >
@@ -63,7 +67,11 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
               </Link>
             ))}
             <MenuDivider className="col-span-3" />
-            <Link to="/search" onClick={onClose} className={`${entryLink} col-span-3`}>
+            <Link
+              to={sheet ? `/search?${new URLSearchParams(from)}` : "/search"}
+              onClick={onClose}
+              className={`${entryLink} col-span-3`}
+            >
               All types…
             </Link>
           </div>
