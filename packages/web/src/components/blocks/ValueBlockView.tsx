@@ -1,15 +1,9 @@
-import { characterDerivedSchema, type ValueBlockField } from "@dnd/character";
+import { characterDerivedSchema } from "@dnd/character";
 import { EmptyState } from "../../EmptyState.tsx";
+import { VALUE_LABELS } from "../../lib/blockLabels.ts";
 import { DerivedValue } from "./DerivedValue.tsx";
 import { LabeledValue } from "./LabeledValue.tsx";
 import type { BlockViewProps } from "./types.ts";
-
-const VALUE_LABELS: Record<ValueBlockField, string> = {
-  hitPointMaximum: "Hit Point Maximum",
-  armorClass: "Armor Class",
-  initiative: "Initiative",
-  proficiencyBonus: "Proficiency Bonus",
-};
 
 /**
  * One derived value, with the breakdown and override behind it — read from the derived

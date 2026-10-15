@@ -1,15 +1,18 @@
-import type { ListBlockSource } from "@dnd/character";
 import { EmptyState } from "../../EmptyState.tsx";
+import { describeFilter, SOURCE_LABELS } from "../../lib/blockLabels.ts";
 import type { BlockViewProps } from "./types.ts";
 
-const SOURCE_LABELS: Record<ListBlockSource, string> = {
-  spells: "Spells",
-  inventory: "Inventory",
-  features: "Features",
-};
-
-/** A saved filter over one of the sheet's own lists. The list itself is a later issue. */
+/**
+ * A saved filter over one of the sheet's own lists, named in words. Rendering the rows it
+ * matches is a later change.
+ */
 export function ListBlockView({ block }: BlockViewProps) {
   if (block.kind !== "list") return null;
-  return <EmptyState>{SOURCE_LABELS[block.source]} isn't available yet.</EmptyState>;
+  const filter = describeFilter(block.filter);
+  return (
+    <EmptyState>
+      {SOURCE_LABELS[block.source]}
+      {filter && ` (${filter})`} isn't available yet.
+    </EmptyState>
+  );
 }

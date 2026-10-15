@@ -3,8 +3,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord, derivedRecord, presetPageRecords, stateRecord } from "../test/records.ts";
-import { stubFetch, stubFetchByUrl } from "../test/stubFetch.ts";
+import {
+  characterRecord,
+  derivedRecord,
+  presetPageRecords,
+  stateRecord,
+} from "../../test/records.ts";
+import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
 import { CharacterPage } from "./CharacterPage.tsx";
 
 function renderPage(path = "/characters/1/p/stats") {

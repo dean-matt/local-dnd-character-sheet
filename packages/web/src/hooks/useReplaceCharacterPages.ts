@@ -1,7 +1,13 @@
 import type { CharacterPageRecord } from "@dnd/character";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 import { apiMutate } from "../lib/api.ts";
+import {
+  pageHistoryDepth,
+  rememberPages,
+  subscribePageHistory,
+  takeLastPages,
+} from "../lib/pageHistory.ts";
 import { characterPagesKey } from "./characterKeys.ts";
 import { characterPagesSchema } from "./characterPagesSchema.ts";
 
@@ -13,6 +19,9 @@ import { characterPagesSchema } from "./characterPagesSchema.ts";
  * list. A response lands in the cache only when no later write is waiting, since it would
  * otherwise undo that write's list. A failure refetches what the server holds, which can
  * show an older list until a write still queued behind it replies — a flicker, not a loss.
+ *
+ * Each `write` records the list it replaces in `lib/pageHistory.ts`, and `undo` writes the
+ * newest one back. `key` names the edit, so a run of saves to one field undoes as one.
  */
 export function useReplaceCharacterPages(id: string) {
   const queryClient = useQueryClient();
@@ -41,16 +50,39 @@ export function useReplaceCharacterPages(id: string) {
     onError: () => queryClient.invalidateQueries({ queryKey: characterPagesKey(id) }),
   });
 
-  function write(pages: CharacterPageRecord[]) {
+  function put(pages: CharacterPageRecord[]): Promise<CharacterPageRecord[]> {
     // Cancelling reverts an in-flight read synchronously, so its answer cannot land over
     // the list set on the next line.
     void queryClient.cancelQueries({ queryKey: characterPagesKey(id) });
     queryClient.setQueryData(characterPagesKey(id), pages);
-    mutation.mutate(pages);
+    return mutation.mutateAsync(pages);
   }
 
   const current = () =>
     queryClient.getQueryData<CharacterPageRecord[]>(characterPagesKey(id)) ?? [];
 
-  return { ...mutation, write, current };
+  /** `write` for a caller that reports its own failure, such as a `Field`: it rejects on one. */
+  async function save(pages: CharacterPageRecord[], key?: string): Promise<void> {
+    rememberPages(queryClient, id, current(), key);
+    await put(pages);
+  }
+
+  // A failure already shows through `error`, so a caller that does not await drops it.
+  function write(pages: CharacterPageRecord[], key?: string) {
+    save(pages, key).catch(() => undefined);
+  }
+
+  /** Writes back the list the newest change replaced; answers false with nothing to undo. */
+  function undo(): boolean {
+    const before = takeLastPages(queryClient, id);
+    if (before) put(before).catch(() => undefined);
+    return before !== undefined;
+  }
+
+  const canUndo = useSyncExternalStore(
+    useCallback((listener) => subscribePageHistory(queryClient, listener), [queryClient]),
+    () => pageHistoryDepth(queryClient, id) > 0,
+  );
+
+  return { ...mutation, write, save, current, undo, canUndo };
 }
