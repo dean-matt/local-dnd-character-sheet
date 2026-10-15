@@ -6,6 +6,7 @@ import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
+import { withItem } from "../../../../lib/addedEntries.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
 import { AddItemButton } from "./AddItemButton.tsx";
@@ -66,13 +67,7 @@ export function ItemList({
       .map(({ entry: at, name }) => ({ index: at, name }));
   };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
-    write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => ({
-      ...latest,
-      inventory: [
-        ...latest.inventory,
-        { ...entry, quantity: 1, carried: true, equipped: false, attuned: false },
-      ],
-    }));
+    write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => withItem(latest, entry));
 
   if (inventory.isPending) return <LoadingState label="Loading inventory…" />;
   if (inventory.isError) return <ErrorState error={inventory.error} />;

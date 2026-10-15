@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { casterFacts } from "./casterFacts.ts";
+import { castableCeiling, casterFacts } from "./casterFacts.ts";
 
 const table = (resources: Record<string, string>, slots: number[] = []) => ({
   resources: Object.entries(resources).map(([resourceKey, value]) => ({ resourceKey, value })),
@@ -40,5 +40,19 @@ describe("casterFacts", () => {
 
   it("finds no caster where the level grants neither a cantrip nor a slot", () => {
     expect(casterFacts([table({})], { rule: "half-level", modifier: 3, level: 1 })).toBeUndefined();
+  });
+});
+
+describe("castableCeiling", () => {
+  const pactSlots = [table({}, [0, 0, 0, 0, 3])];
+
+  it("stops a pact caster at its slots below the Mystic Arcanum, and lifts it from there", () => {
+    expect(castableCeiling(pactSlots, true, 10)).toBe(5);
+    expect(castableCeiling(pactSlots, true, 11)).toBe(9);
+  });
+
+  it("holds any other caster to its slots, and a class with none to cantrips", () => {
+    expect(castableCeiling(pactSlots, false, 11)).toBe(5);
+    expect(castableCeiling([table({})], false, 1)).toBe(0);
   });
 });

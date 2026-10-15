@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../../test/records.ts";
@@ -163,6 +163,26 @@ describe("TopBar", () => {
 
     fireEvent.click(spells);
     expect(mechanics).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("from a sheet, the Mechanics menu's links carry its character to the search page", async () => {
+    stubFetchByUrl({
+      "/api/characters": [characterRecord("7", "Fira")],
+      "/api/search/types": { types: ["spell"] },
+    });
+    renderTopBar("/characters/7/p/stats");
+    fireEvent.click(screen.getByRole("button", { name: "Mechanics" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: "Spells" })).toHaveAttribute(
+        "href",
+        "/search?type=spell&for=7",
+      ),
+    );
+    expect(screen.getByRole("link", { name: "All types…" })).toHaveAttribute(
+      "href",
+      "/search?for=7",
+    );
   });
 
   it("marks Mechanics as the current section on the search page", () => {

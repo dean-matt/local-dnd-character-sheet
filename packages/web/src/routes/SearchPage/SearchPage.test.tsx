@@ -74,7 +74,7 @@ describe("SearchPage", () => {
       "href",
       "/characters/7",
     );
-    expect(screen.getByRole("status")).toHaveTextContent("2 results and 1 character");
+    expect(screen.getByRole("status", { name: "" })).toHaveTextContent("2 results and 1 character");
     expect(within(results).getByText(/No page yet/)).toBeInTheDocument();
   });
 
@@ -99,6 +99,26 @@ describe("SearchPage", () => {
     );
   });
 
+  it("keeps the character it was opened from through a filter change, and adds to it", async () => {
+    renderAt("/search?q=fire&for=7", {
+      "/api/search?q=fire&limit=50": page([fireball, fireGiant]),
+      "/api/search?q=fire&limit=50&type=spell": page([fireball]),
+    });
+    expect(
+      await screen.findByText("Add to… adds to Fira, whose sheet you searched from."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add to… Fireball (PHB), for Fira" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Fire Giant/ })).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Type All types" }));
+    fireEvent.click(
+      await screen.findByRole("checkbox", { name: "Spells (adds level and school filters)" }),
+    );
+    expect(where()).toBe("/search?q=fire&type=spell&for=7");
+  });
+
   it("writes a filter change to the URL, and announces the new count", async () => {
     renderAt("/search?q=fire", {
       "/api/search?q=fire&limit=50": page([fireball, fireGiant]),
@@ -115,8 +135,10 @@ describe("SearchPage", () => {
       }),
     );
     expect(where()).toBe("/search?q=fire&type=spell");
-    expect(screen.getByRole("status")).toHaveTextContent("Searching…");
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 result"));
+    expect(screen.getByRole("status", { name: "" })).toHaveTextContent("Searching…");
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent("1 result"),
+    );
 
     fireEvent.change(screen.getByRole("spinbutton", { name: "Min" }), { target: { value: "3" } });
     expect(where()).toBe("/search?q=fire&type=spell&minLevel=3");
@@ -124,7 +146,7 @@ describe("SearchPage", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "2014" }));
     expect(where()).toBe("/search?q=fire&type=spell&edition=one&minLevel=3");
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent(
         'No results for "fire" under these filters.',
       ),
     );
@@ -144,7 +166,9 @@ describe("SearchPage", () => {
     fireEvent.click(await within(list).findByRole("checkbox", { name: "PHB" }));
     expect(where()).toBe("/search?q=fire&source=PHB");
     expect(screen.getByRole("button", { name: "Source PHB" })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("1 result"));
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent("1 result"),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Clear sources" }));
     expect(where()).toBe("/search?q=fire");
@@ -198,7 +222,7 @@ describe("SearchPage", () => {
     renderAt("/search?q=zzz", { "/api/search?q=zzz&limit=50": page([]) });
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent('No results for "zzz"'),
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent('No results for "zzz"'),
     );
     expect(screen.queryByRole("button", { name: "Reset filters" })).not.toBeInTheDocument();
   });
@@ -333,7 +357,7 @@ describe("SearchPage", () => {
   it("asks for a query before searching anything", () => {
     const fetchMock = renderAt("/search", {});
 
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(screen.getByRole("status", { name: "" })).toHaveTextContent(
       "Type a name to search the compendium, or pick a type or source.",
     );
     expect(fetchMock.mock.calls.map(([url]) => String(url))).not.toContainEqual(
@@ -343,7 +367,9 @@ describe("SearchPage", () => {
 
   it("draws the prompt, not the error color, once a failed query is cleared", async () => {
     renderAt("/search?q=zzz", {});
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Search failed"));
+    await waitFor(() =>
+      expect(screen.getByRole("status", { name: "" })).toHaveTextContent("Search failed"),
+    );
 
     fireEvent.change(screen.getByRole("searchbox", { name: "Search the compendium" }), {
       target: { value: "" },

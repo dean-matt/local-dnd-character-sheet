@@ -14,7 +14,7 @@ import { classQuery } from "../../../../hooks/classQuery.ts";
 import { useClassGrants } from "../../../../hooks/useClassGrants.ts";
 import { useClassSpellList } from "../../../../hooks/useClassSpellList.ts";
 import { useSubclassGrants } from "../../../../hooks/useSubclassGrants.ts";
-import { casterFacts } from "../../../../lib/casterFacts.ts";
+import { castableCeiling } from "../../../../lib/casterFacts.ts";
 import { searchHitKey } from "../../../../lib/searchHitKey.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import { FormField } from "../../../FormField.tsx";
@@ -25,18 +25,9 @@ type Caster = CharacterDerived["spellcasting"][number];
 
 type Ref = { name: string; source: string };
 
-/** The class level a pact caster's Mystic Arcanum first reaches past its slots. */
-const ARCANUM_LEVEL = 11;
-
 /**
- * The spells on `list` above the highest level the class's own slots cast at its level, its
- * subclass's table counted, as the multiclass rules hold a spell learned for one class to.
- * An empty set where nothing is above; `undefined` while the tables or the list load.
- *
- * A pact caster's slots stop at 5th, and from `ARCANUM_LEVEL` its Mystic Arcanum casts a
- * 6th to 9th-level spell no table carries, so from there it takes any level: an 11th-level
- * Warlock may record a 9th-level spell its arcanum cannot yet cast. The way out is an
- * arcanum column in the class tables.
+ * The spells on `list` above `castableCeiling` at the class's level, its subclass's table
+ * counted. An empty set where nothing is above; `undefined` while the tables or the list load.
  */
 function useTooHigh(
   edition: CharacterRecord["edition"],
@@ -49,11 +40,10 @@ function useTooHigh(
   const loaded =
     own.data !== undefined && row.data !== undefined && (!list?.subclass || sub.data !== undefined);
   const tables = [own.data, sub.data].flatMap((table) => table ?? []);
-  const arcanum =
-    row.data !== undefined &&
-    casterProgressionSchema.parse(row.data.json) === "pact" &&
-    level >= ARCANUM_LEVEL;
-  const maxLevel = loaded ? (arcanum ? 9 : (casterFacts(tables)?.maxLevel ?? 0)) : undefined;
+  const maxLevel =
+    loaded && row.data !== undefined
+      ? castableCeiling(tables, casterProgressionSchema.parse(row.data.json) === "pact", level)
+      : undefined;
   const above = useClassSpellList(
     edition,
     list,

@@ -29,7 +29,9 @@ test.beforeEach(async ({ page }) => {
   );
   await page.route("**/api/refs/resolve", (route) => {
     const { refs } = route.request().postDataJSON() as { refs: unknown[] };
-    const row = { ...fireball, entries: ["A bright streak."], path: "/spells/Fireball/XPHB" };
+    // Tall enough to reach past the modal's footer from the last line of its body.
+    const entries = ["A bright streak.", "It blossoms into flame.", "Each creature in it saves."];
+    const row = { ...fireball, entries, path: "/spells/Fireball/XPHB" };
     return route.fulfill({ json: { refs: refs.map(() => row) } });
   });
   await page.route(`**/api/spells/${fireball.name}/${fireball.source}`, (route) => {

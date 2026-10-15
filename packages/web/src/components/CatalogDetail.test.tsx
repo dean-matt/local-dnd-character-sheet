@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubFetchByUrl } from "../test/stubFetch.ts";
 import { CatalogDetail } from "./CatalogDetail.tsx";
@@ -9,7 +10,9 @@ function renderAt(address: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <CatalogDetail address={address} onClose={onClose} />
+      <MemoryRouter>
+        <CatalogDetail address={address} onClose={onClose} />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
   return onClose;
@@ -88,6 +91,21 @@ describe("CatalogDetail", () => {
     expect(screen.getByRole("heading", { level: 4, name: "Nested" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "At Higher Levels" })).toBeInTheDocument();
     expect(screen.getByText("More dice.")).toBeInTheDocument();
+  });
+
+  it("ends a spell on Add to…, and a class feature on nothing to add", async () => {
+    stubFetchByUrl({
+      "/api/spells/Fireball/PHB": fireball,
+      "/api/classes/Barbarian/PHB/at/3": barbarianAt3,
+    });
+    renderAt("/spells/Fireball/PHB");
+    await dialogNamed("Fireball");
+    expect(screen.getByRole("button", { name: "Add to… Fireball (PHB)" })).toBeInTheDocument();
+
+    cleanup();
+    renderAt("/classes/Barbarian/PHB/features/Primal%20Path/PHB/3");
+    await dialogNamed("Primal Path");
+    expect(screen.queryByRole("button", { name: /^Add to…/ })).not.toBeInTheDocument();
   });
 
   it("reads a class feature from its class's grants at the level its address names", async () => {

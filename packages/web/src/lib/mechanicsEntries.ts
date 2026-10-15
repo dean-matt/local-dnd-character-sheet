@@ -36,7 +36,7 @@ export const MECHANICS_ENTRIES: readonly MechanicsEntry[] = [
   { label: "Weapons", type: "item", kind: WEAPON_KINDS.join(",") },
 ];
 
-/** The search page filtered to what `entry` names. */
-export function mechanicsHref({ type, kind }: MechanicsEntry): string {
-  return `/search?${new URLSearchParams(kind === undefined ? { type } : { type, kind })}`;
+/** The search page filtered to what `entry` names, carrying any `extra` parameters. */
+export function mechanicsHref({ type, kind }: MechanicsEntry, extra = {}): string {
+  return `/search?${new URLSearchParams({ type, ...(kind !== undefined && { kind }), ...extra })}`;
 }

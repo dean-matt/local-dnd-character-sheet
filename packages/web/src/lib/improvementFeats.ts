@@ -64,18 +64,29 @@ export type Candidate = {
  * not yet set refuse no feat.
  */
 export function improvementFeats(feats: readonly FeatRecord[], candidate: Candidate): FeatRecord[] {
-  if (!candidate.takesFeats) return [];
-  const held = new Set(candidate.held.map(refKey));
   return feats.filter((feat) => {
     if (refKey(feat) === refKey(IMPROVEMENT_FEAT)) return false;
-    const { category, repeatable, prerequisites } = featTermsSchema.parse(feat.json);
+    const { category } = featTermsSchema.parse(feat.json);
     if (candidate.edition === "one" && !OFFERED_CATEGORIES.includes(category ?? "")) return false;
-    if (!repeatable && held.has(refKey(feat))) return false;
-    return (
-      prerequisites.length === 0 ||
-      prerequisites.some((prerequisite) => meets(prerequisite, candidate))
-    );
+    return featBarrier(feat, candidate) === undefined;
   });
+}
+
+/**
+ * What stops `candidate` taking `feat` by the rules, if anything: no feats at all, the feat
+ * held already and not repeatable, or no alternative of its prerequisites met.
+ */
+export function featBarrier(
+  feat: FeatRecord,
+  candidate: Candidate,
+): "noFeats" | "held" | "prerequisite" | undefined {
+  if (!candidate.takesFeats) return "noFeats";
+  const { repeatable, prerequisites } = featTermsSchema.parse(feat.json);
+  if (!repeatable && candidate.held.some((ref) => refKey(ref) === refKey(feat))) return "held";
+  const met =
+    prerequisites.length === 0 ||
+    prerequisites.some((prerequisite) => meets(prerequisite, candidate));
+  return met ? undefined : "prerequisite";
 }
 
 /** Whether `candidate` meets one alternative. Anything not yet set refuses nothing. */
@@ -151,7 +162,10 @@ type Drafted = Pick<CharacterDefinition, "edition" | "levels" | "feats" | "abili
  * `definition` as a candidate for the feats at `grant`: its scores and classes as they
  * stood when that level was reached, its choice there set aside.
  */
-export function candidateAt(definition: Drafted, grant: ImprovementGrant): Candidate {
+export function candidateAt(
+  definition: Drafted,
+  grant: Pick<ImprovementGrant, "level" | "features">,
+): Candidate {
   const { feats, abilityIncreases } = withoutImprovement(definition, grant.level);
   const base = definition.abilityScores ?? {};
   const set = ABILITIES.every((ability) => Number.isInteger(base[ability]));

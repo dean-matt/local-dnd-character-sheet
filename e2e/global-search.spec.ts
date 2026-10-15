@@ -20,11 +20,13 @@ test("the Advanced search link stays in view below the results as they scroll", 
   await expect(results.getByRole("option", { name: /Fire Spell 39/ })).toBeAttached();
   const link = page.getByRole("link", { name: /Advanced search for "fire"/ });
   expect(await results.locator("a").count()).toBe(0);
-  expect(await results.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+  // The listbox scrolls with the "Add to…" buttons beside it, in the element holding both.
+  const scroller = results.locator("xpath=..");
+  expect(await scroller.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 
-  await results.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+  await scroller.evaluate((el) => el.scrollTo(0, el.scrollHeight));
   await expect(link).toBeInViewport({ ratio: 1 });
-  const [list, footer] = [await results.boundingBox(), await link.boundingBox()];
+  const [list, footer] = [await scroller.boundingBox(), await link.boundingBox()];
   expect(list && footer).toBeTruthy();
   if (!list || !footer) return;
   expect(footer.y).toBeGreaterThanOrEqual(list.y + list.height);

@@ -1,6 +1,9 @@
 import type { SearchHit } from "@dnd/catalog";
+import { AddTo } from "../../components/AddTo/AddTo.tsx";
 import { SourceChip } from "../../components/SourceChip.tsx";
 import { TypeChip } from "../../components/TypeChip.tsx";
+import type { AddOutcome } from "../../hooks/useAddToCharacter.ts";
+import { addableHit } from "../../lib/addable.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { searchHitAddress, searchHitTypeLabel } from "../../lib/searchHits.ts";
 
@@ -9,16 +12,19 @@ const row = "flex items-center gap-3 rounded-control border border-border bg-sur
 /**
  * One compendium hit on the search page: its type, its name opening its detail, an item's kind
  * and rarity or a deity's pantheon or a card's deck beneath, and where it comes from. A hit the web shows no detail for names itself
- * in plain text.
+ * in plain text. An item, a spell or a feat ends on "Add to…".
  */
 export function SearchHitRow({
   hit,
   onOpen,
+  onAdded,
 }: {
   hit: SearchHit;
   onOpen: (address: string) => void;
+  onAdded: (outcome: AddOutcome) => void;
 }) {
   const address = searchHitAddress(hit);
+  const addable = addableHit(hit);
   const label = searchHitTypeLabel(hit.type);
   return (
     <li className={row}>
@@ -51,6 +57,7 @@ export function SearchHitRow({
         edition={hit.edition}
         of={label.toLowerCase()}
       />
+      {addable && <AddTo row={addable} onAdded={onAdded} />}
     </li>
   );
 }
