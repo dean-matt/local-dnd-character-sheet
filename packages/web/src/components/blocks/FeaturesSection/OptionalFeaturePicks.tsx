@@ -4,11 +4,12 @@ import {
   displayName,
   type EntryRef,
   entryKey,
+  grantorKey,
   type OptionalFeatureTally,
   spareEntitlement,
 } from "@dnd/character";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
-import { featureTypeLabel } from "../../../lib/featureTypeLabel.ts";
+import { featureTypeLabel, featureTypeNoun } from "../../../lib/featureTypeLabel.ts";
 import {
   optionalFeatureJudge,
   prerequisiteFacts,
@@ -55,11 +56,17 @@ export function OptionalFeaturePicks({
           <PickField
             key={featureType}
             heading={label}
-            noun={label.toLowerCase()}
+            noun={featureTypeNoun(featureType)}
             count={tally.known}
             note={<EntitlementNote tally={tally} />}
             picked={tally.picks.map(({ ref }) => ({ ref, name: displayName(ref) }))}
             edition={spare?.edition ?? character.definition.edition}
+            replaceEdition={(ref) => {
+              const pick = tally.picks.find(same(ref));
+              return tally.entitlements.find(
+                (each) => pick && grantorKey(each.grantedBy) === grantorKey(pick.grantedBy),
+              )?.edition;
+            }}
             type="optfeature"
             filters={{ featureType }}
             {...judge}

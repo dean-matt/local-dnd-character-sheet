@@ -1,5 +1,5 @@
 import { displayName, entryKey, grantorKey } from "@dnd/character";
-import { featureTypeLabel } from "../../../../lib/featureTypeLabel.ts";
+import { featureTypeLabel, featureTypeNoun } from "../../../../lib/featureTypeLabel.ts";
 import {
   optionalFeatureJudge,
   prerequisiteFacts,
@@ -27,7 +27,7 @@ export function LevelUpOptions({ plan }: { plan: ReturnType<typeof useLevelUpPla
       <PickField
         key={`${gain.featureType}|${grantorKey(gain.grantedBy)}`}
         heading={`New ${label}${shared ? ` from ${displayName(gain.grantedBy.ref)}` : ""}`}
-        noun={label.toLowerCase()}
+        noun={featureTypeNoun(gain.featureType)}
         count={gain.count}
         picked={gain.picked.map(({ ref }) => ({ ref, name: displayName(ref) }))}
         edition={gain.edition}

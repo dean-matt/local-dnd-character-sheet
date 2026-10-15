@@ -158,7 +158,7 @@ describe("OptionalFeaturePicks", () => {
     ]);
   });
 
-  it("swaps a pick for another through the picker, keeping what entitled it", async () => {
+  it("swaps a pick through the picker in its own grantor's edition, keeping what entitled it", async () => {
     const fetchMock = stubApi();
     renderSeeded(holding([invocation("Agonizing Blast", FROM_WARLOCK)]));
 
@@ -168,6 +168,8 @@ describe("OptionalFeaturePicks", () => {
     fireEvent.click(await screen.findByRole("option", { name: /Armor of Shadows/ }));
 
     expect(await written(fetchMock)).toEqual([invocation("Armor of Shadows", FROM_WARLOCK)]);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("edition=one");
+    expect(screen.getByRole("combobox", { name: "Add an eldritch invocation" })).toHaveFocus();
   });
 
   it("removes a pick", async () => {

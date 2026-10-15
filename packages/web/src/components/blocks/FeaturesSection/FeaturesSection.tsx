@@ -58,10 +58,11 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
     return <EmptyState>{character.name} has no features yet.</EmptyState>;
   }
 
-  const tallies = optionalFeatureTallies(
-    character.definition.optionalFeatures,
-    entitlements.data?.entitlements ?? [],
-  );
+  // Built only once the entitlements land: read as none while loading, every pick would
+  // report itself past a count of 0.
+  const tallies = entitlements.isSuccess
+    ? optionalFeatureTallies(character.definition.optionalFeatures, entitlements.data.entitlements)
+    : [];
   const picking = tallies.length > 0 || entitlements.isError;
   const needle = query.trim().toLowerCase();
   const widgets = WIDGETS.map((widget) => {

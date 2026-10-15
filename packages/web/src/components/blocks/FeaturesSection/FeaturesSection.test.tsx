@@ -154,6 +154,38 @@ describe("FeaturesSection", () => {
     ).toBeInTheDocument();
   });
 
+  it("reports no pick past its count while the entitlements load", async () => {
+    vi.stubGlobal("fetch", (url: RequestInfo | URL) =>
+      String(url) === "/api/characters/1/features"
+        ? Promise.resolve(new Response(JSON.stringify(FEATURES)))
+        : new Promise<Response>(() => {}),
+    );
+    const record = characterRecord("1", "Vex");
+    const holding = {
+      ...record,
+      definition: {
+        ...record.definition,
+        optionalFeatures: [
+          {
+            ref: { name: "Archery", source: "PHB" },
+            featureType: "FS:F",
+            grantedBy: { kind: "class" as const, ref: { name: "Fighter", source: "PHB" } },
+          },
+        ],
+      },
+    };
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <FeaturesSection character={holding} />
+      </QueryClientProvider>,
+    );
+
+    await screen.findByRole("heading", { level: 3, name: "Chosen Features" });
+    expect(screen.queryByText(/nothing entitles/)).toBeNull();
+    expect(screen.queryByText(/Choose 0/)).toBeNull();
+  });
+
   it("lists class and subclass features by the character level they were gained at", async () => {
     const fighter = { name: "Fighter", source: "PHB" };
     const record = characterRecord("1", "Vex");

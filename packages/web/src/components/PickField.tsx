@@ -32,6 +32,8 @@ export interface PickFieldProps {
   onRemove: (ref: EntryRef) => void;
   /** Offers to swap each pick for another through the same picker, where given. */
   onReplace?: (old: EntryRef, ref: EntryRef) => void;
+  /** The edition a swap searches for `ref`, where it differs from `edition`. */
+  replaceEdition?: (ref: EntryRef) => CharacterRecord["edition"] | undefined;
 }
 
 /**
@@ -54,9 +56,16 @@ export function PickField({
   onPick,
   onRemove,
   onReplace,
+  replaceEdition,
 }: PickFieldProps) {
   const id = useId();
   const [replacing, setReplacing] = useState<Picked>();
+  // Set once a swap ends, so focus lands on the Add picker rather than the page.
+  const [swappedOnce, setSwappedOnce] = useState(false);
+  const endSwap = () => {
+    setReplacing(undefined);
+    setSwappedOnce(true);
+  };
   const swapped =
     replacing && picked.find((each) => entryKey(each.ref) === entryKey(replacing.ref));
   return (
@@ -106,14 +115,14 @@ export function PickField({
             <CatalogPicker
               key={entryKey(swapped.ref)}
               label={`Replace ${swapped.name}`}
-              edition={edition}
+              edition={replaceEdition?.(swapped.ref) ?? edition}
               type={type}
               filters={filters}
               unavailableReason={unavailableReason}
               describe={describe}
               onPick={(ref) => {
                 onReplace(swapped.ref, ref);
-                setReplacing(undefined);
+                endSwap();
               }}
               placeholder={`Search ${noun}s…`}
               focusOnMount
@@ -121,7 +130,7 @@ export function PickField({
           </div>
           <button
             type="button"
-            onClick={() => setReplacing(undefined)}
+            onClick={endSwap}
             className="rounded-control border border-border bg-surface px-3 py-2 text-row hover:bg-subtle"
           >
             Cancel
@@ -137,6 +146,7 @@ export function PickField({
           describe={describe}
           onPick={onPick}
           placeholder={`Search ${noun}s…`}
+          focusOnMount={swappedOnce}
         />
       )}
     </section>

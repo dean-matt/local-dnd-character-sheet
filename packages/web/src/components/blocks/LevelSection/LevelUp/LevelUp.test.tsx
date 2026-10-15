@@ -852,12 +852,12 @@ describe("LevelUp", () => {
       expect(maneuvers).toHaveTextContent("Choose 3 — 0 selected");
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
       for (const name of ["Parry", "Riposte"]) {
-        await pickSpell("Add a maneuver (battle master)", name);
+        await pickSpell("Add a maneuver", name);
         await within(dialog()).findByRole("button", { name: `Remove ${name}` });
       }
       expect(applyButton()).toHaveAttribute("aria-disabled", "true");
 
-      await pickSpell("Add a maneuver (battle master)", "Feint");
+      await pickSpell("Add a maneuver", "Feint");
       await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(applyButton());
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
