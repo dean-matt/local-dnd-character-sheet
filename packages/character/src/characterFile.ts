@@ -3,13 +3,15 @@ import { characterDefinitionSchema } from "./definition.ts";
 import { characterPagesSchema, PRESET_PAGES } from "./pages.ts";
 import { characterStateSchema } from "./state.ts";
 
-const isAlignmentSection = (block: unknown) =>
+const isSection = (section: string) => (block: unknown) =>
   typeof block === "object" &&
   block !== null &&
   "kind" in block &&
   block.kind === "section" &&
   "section" in block &&
-  block.section === "alignment";
+  block.section === section;
+
+const isAlignmentSection = isSection("alignment");
 
 /**
  * A file exported while Alignment had a preset page of its own still lists that page. The
@@ -41,17 +43,24 @@ function withoutAlignmentPage(pages: unknown): unknown {
 
 /**
  * A file exported before Backstory had a preset page lacks it, and gains the stock page just
- * before Notes, where the migration that added it puts it on a stored character.
+ * before Notes, where the migration that added it puts it on a stored character. A page such
+ * a file holds under `backstory` is the user's own, since no older build wrote a `backstory`
+ * section; it moves to the slug plus a random suffix, as the migration moves one, so the
+ * import does not make it the preset that restoring the defaults would overwrite.
  */
 function withBackstoryPage(pages: unknown): unknown {
   if (!Array.isArray(pages)) return pages;
   const isSlug = (slug: string) => (page: unknown) =>
     typeof page === "object" && page !== null && "slug" in page && page.slug === slug;
-  if (pages.some(isSlug("backstory"))) return pages;
+  const current = pages.find(isSlug("backstory"));
+  if (Array.isArray(current?.blocks) && current.blocks.some(isSection("backstory"))) return pages;
+  const renamed = pages.map((page) =>
+    page === current ? { ...page, slug: `backstory-${crypto.randomUUID().slice(0, 8)}` } : page,
+  );
   const stock = PRESET_PAGES.find((page) => page.slug === "backstory");
-  const notes = pages.findIndex(isSlug("notes"));
-  const at = notes === -1 ? pages.length : notes;
-  return [...pages.slice(0, at), stock, ...pages.slice(at)];
+  const notes = renamed.findIndex(isSlug("notes"));
+  const at = notes === -1 ? renamed.length : notes;
+  return [...renamed.slice(0, at), stock, ...renamed.slice(at)];
 }
 
 /**

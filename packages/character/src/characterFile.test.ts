@@ -61,6 +61,18 @@ describe("characterFileSchema", () => {
     expect(characterFileSchema.parse({ ...file, pages: older }).pages).toEqual(PRESET_PAGES);
   });
 
+  it("moves a page an older file holds under backstory aside, keeping its blocks, and adds the stock one", () => {
+    const own = { slug: "backstory", title: "My story", hidden: false, blocks: [] };
+    const older = [...PRESET_PAGES.filter((page) => page.slug !== "backstory"), own];
+    const pages = characterFileSchema.parse({ ...file, pages: older }).pages;
+
+    expect(pages.slice(0, -1)).toEqual(PRESET_PAGES);
+    expect(pages.at(-1)).toEqual({
+      ...own,
+      slug: expect.stringMatching(/^backstory-[0-9a-f]{8}$/),
+    });
+  });
+
   it("refuses a page marked preset, which only an import decides", () => {
     const pages = PRESET_PAGES.map((page) => ({ ...page, preset: true }));
     expect(characterFileSchema.safeParse({ ...file, pages }).success).toBe(false);
