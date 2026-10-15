@@ -21,6 +21,7 @@ import { setRefValue } from "../../../../lib/setRefValue.ts";
 import type { HitPointMethod } from "./hitPointPick.ts";
 import { featuresAt, tableChanges } from "./levelUpChanges.ts";
 import { useLevelUpClass } from "./useLevelUpClass.ts";
+import { useLevelUpOptions } from "./useLevelUpOptions.ts";
 import { useLevelUpSpells } from "./useLevelUpSpells.ts";
 import { useMulticlassEntry } from "./useMulticlassEntry.ts";
 
@@ -30,11 +31,11 @@ type Level = CharacterDefinition["levels"][number];
  * The level the draft holds last, on top of `definition`, read from the level-up form: the
  * choices it asks for, whether each is made, and the edits that make them. A change of
  * class takes back every choice made since, and a change of subclass the options its
- * features offered and the spells picked, since each read the old one. A level in a class
- * the character does not hold yet also asks for the skill and tool picks its multiclass
- * gains offer, which the draft's proficiencies hold as they are made; `settle` adds what the
- * class grants outright and notes each unmet multiclass prerequisite, just before Apply
- * submits.
+ * features offered and the spells and optional features picked, since each read the old
+ * one. A level in a class the character does not hold yet also asks for the skill and tool
+ * picks its multiclass gains offer, which the draft's proficiencies hold as they are made;
+ * `settle` adds what the class grants outright and notes each unmet multiclass
+ * prerequisite, just before Apply submits.
  */
 export function useLevelUpPlan(
   definition: CharacterDefinition,
@@ -48,17 +49,35 @@ export function useLevelUpPlan(
     featureChoices = [],
     proficiencies = definition.proficiencies,
     spells = definition.spells,
+    optionalFeatures = definition.optionalFeatures,
   ] = useWatch<
     CharacterDefinition,
-    ["levels", "feats", "abilityIncreases", "featureChoices", "proficiencies", "spells"]
+    [
+      "levels",
+      "feats",
+      "abilityIncreases",
+      "featureChoices",
+      "proficiencies",
+      "spells",
+      "optionalFeatures",
+    ]
   >({
-    name: ["levels", "feats", "abilityIncreases", "featureChoices", "proficiencies", "spells"],
+    name: [
+      "levels",
+      "feats",
+      "abilityIncreases",
+      "featureChoices",
+      "proficiencies",
+      "spells",
+      "optionalFeatures",
+    ],
   });
   // The schema holds at least one level, which the inferred array type cannot say.
   const level = (levels.at(-1) ?? definition.levels.at(-1)) as Level;
   const target = useLevelUpClass(definition, level.class, level.subclass);
   const entry = useMulticlassEntry(definition, level.class, target.name, target.json);
   const spellPicks = useLevelUpSpells(definition, level.class, target, spells);
+  const optionPicks = useLevelUpOptions(definition, level.class, target, optionalFeatures);
   const pickedSkills = (entry.skillPick?.options ?? []).filter((ref) =>
     proficiencies.skills.some((skill) => refKey(skill.ref) === refKey(ref)),
   );
@@ -86,6 +105,7 @@ export function useLevelUpPlan(
     setRefValue(setValue, "proficiencies", definition.proficiencies, dirty);
     setValue("departures", definition.departures, dirty);
     setRefValue(setValue, "spells", definition.spells, dirty);
+    setRefValue(setValue, "optionalFeatures", definition.optionalFeatures, dirty);
   };
 
   const ready =
@@ -100,7 +120,8 @@ export function useLevelUpPlan(
     entry.read &&
     pickedSkills.length === (entry.skillPick?.count ?? 0) &&
     entry.toolPicks.every((pick, index) => pickedTools[index]?.length === pick.count) &&
-    spellPicks.ready;
+    spellPicks.ready &&
+    optionPicks.ready;
 
   return {
     target,
@@ -116,6 +137,9 @@ export function useLevelUpPlan(
     pickedSkills,
     pickedTools,
     spellPicks,
+    optionPicks,
+    /** What an option's prerequisites read: the character with the level and its picks. */
+    draft: { levels, spells, optionalFeatures },
     ready,
     features: [
       ...featuresAt(target.after?.features ?? [], target.next),
@@ -134,6 +158,7 @@ export function useLevelUpPlan(
       setValue("levels", withLevel(subclass ? { ...rest, subclass } : rest), dirty);
       setValue("featureChoices", definition.featureChoices, dirty);
       setRefValue(setValue, "spells", definition.spells, dirty);
+      setRefValue(setValue, "optionalFeatures", definition.optionalFeatures, dirty);
     },
     setRolled: (rolled: number | undefined) => {
       const { rolled: _, ...rest } = level;

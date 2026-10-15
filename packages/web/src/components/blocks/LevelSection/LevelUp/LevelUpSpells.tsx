@@ -3,7 +3,7 @@ import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useState } from "react";
 import { searchHitKey } from "../../../../lib/searchHitKey.ts";
 import { spellListFilters } from "../../../../lib/spellListFilters.ts";
-import { SpellPickField } from "../../../SpellPickField.tsx";
+import { PickField } from "../../../PickField.tsx";
 import type { useLevelUpSpells } from "./useLevelUpSpells.ts";
 
 export interface LevelUpSpellsProps {
@@ -32,7 +32,7 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
   return (
     <>
       {gained.cantrips > 0 && (
-        <SpellPickField
+        <PickField
           {...field}
           heading="New cantrips"
           noun="cantrip"
@@ -42,7 +42,7 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
         />
       )}
       {gained.spells > 0 && (
-        <SpellPickField
+        <PickField
           {...field}
           heading="New spells"
           noun="spell"

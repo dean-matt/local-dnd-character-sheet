@@ -75,6 +75,13 @@ const SEARCH: Record<string, object[]> = {
     edition: "one",
     item: { kinds: ["tool"], rarity: null, category: null, tool: "instrument" },
   })),
+  optfeature: ["Feint", "Parry", "Rally", "Riposte"].map((name) => ({
+    type: "optfeature",
+    name,
+    source: "PHB",
+    edition: "classic",
+    optionalFeature: { prerequisites: [] },
+  })),
   "skill,language": ["Acrobatics", "Stealth"].map((name) => ({
     type: "skill",
     ...XPHB(name),
@@ -109,7 +116,8 @@ const ROWS: Record<string, unknown> = {
       json: { name: "Fiend Patron", source: "XPHB", shortName: "Fiend" },
     },
   ]),
-  "/api/classes/Warlock/XPHB/at/1": grants(1, 1, [feature("Pact Magic", 1)]),
+  // Three from the first level, where the 2024 table has one, so leveling to 2 asks for none.
+  "/api/classes/Warlock/XPHB/at/1": grants(1, 3, [feature("Pact Magic", 1)]),
   "/api/classes/Warlock/XPHB/at/2": grants(2, 3, [feature("Magical Cunning", 2)]),
   "/api/classes/Warlock/XPHB/at/3": grants(3, 3, [feature("Warlock Subclass", 3)]),
   "/api/classes/Warlock/XPHB/at/4": grants(4, 3, [
@@ -187,6 +195,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Fighter/PHB/subclasses?edition=classic&limit=200": page([
     fighterSubclass("Eldritch Knight", "Eldritch Knight"),
     fighterSubclass("Champion", "Champion"),
+    fighterSubclass("Battle Master", "Battle Master"),
   ]),
   "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
   "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
@@ -196,6 +205,10 @@ const ROWS: Record<string, unknown> = {
     [2],
   ),
   "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Battle%20Master/PHB/at/3": {
+    ...casterGrants(3, {}, []),
+    optionalFeatures: [{ featureType: "MV:B", known: 3 }],
+  },
   "/api/classes/Cleric/XPHB": { ...CLERIC, edition: "one", hitDie: 8, json: CLERIC },
   "/api/classes/Cleric/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Cleric/XPHB/at/1": casterGrants(
@@ -364,8 +377,6 @@ describe("LevelUp", () => {
     expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
     expect(sent().overrides).toEqual({ armorClass: 17 });
     expect(within(dialog()).getByText("10 → 17")).toBeVisible();
-    expect(within(dialog()).getByText("Eldritch Invocation options known")).toBeVisible();
-    expect(within(dialog()).getByText("1 → 3")).toBeVisible();
     expect(within(dialog()).getByText("New features:").parentElement).toHaveTextContent(
       "New features: Magical Cunning",
     );
@@ -822,6 +833,49 @@ describe("LevelUp", () => {
       fireEvent.click(applyButton());
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().spells).toEqual([{ ref: { name: "Shield", source: "PHB" }, prepared: false }]);
+    });
+
+    it("asks for each optional feature the level entitles the character to, and writes them under the subclass", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Battle Master");
+      const maneuvers = await within(dialog()).findByRole("region", {
+        name: "New Maneuver (Battle Master)",
+      });
+      expect(maneuvers).toHaveTextContent("Choose 3 — 0 selected");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      for (const name of ["Parry", "Riposte"]) {
+        await pickSpell("Add a maneuver (battle master)", name);
+        await within(dialog()).findByRole("button", { name: `Remove ${name}` });
+      }
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+      await pickSpell("Add a maneuver (battle master)", "Feint");
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      const grantedBy = {
+        kind: "subclass",
+        ref: { name: "Battle Master", source: "PHB" },
+        class: KNIGHT_FIGHTER,
+      };
+      expect(sent().optionalFeatures).toEqual(
+        ["Parry", "Riposte", "Feint"].map((name) => ({
+          ref: { name, source: "PHB" },
+          featureType: "MV:B",
+          grantedBy,
+        })),
+      );
+      expect(
+        await within(dialog()).findByText("Maneuver (Battle Master) options known"),
+      ).toBeVisible();
     });
 
     it("takes back the spells picked when the level goes to another class", async () => {

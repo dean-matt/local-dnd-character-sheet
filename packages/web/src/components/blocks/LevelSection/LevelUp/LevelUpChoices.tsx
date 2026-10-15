@@ -21,6 +21,7 @@ import { ImprovementField } from "../../../ImprovementField.tsx";
 import { Select } from "../../../Select.tsx";
 import { HitPointChoice } from "./HitPointChoice.tsx";
 import type { HitPointMethod } from "./hitPointPick.ts";
+import { LevelUpOptions } from "./LevelUpOptions.tsx";
 import { LevelUpSpells } from "./LevelUpSpells.tsx";
 import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import { MulticlassEntryFields } from "./MulticlassEntryFields.tsx";
@@ -47,8 +48,8 @@ export interface LevelUpChoicesProps {
  * Every choice the level asks for, in order: the class, from one list of those the
  * character holds and those it could multiclass into, with what entering a new one asks;
  * the hit points, a subclass at the class's subclass level, an improvement, each option a
- * feature offers, and the cantrips and spells the level adds. Then the features the level
- * brings.
+ * feature offers, the optional features, cantrips and spells the level adds. Then the
+ * features the level brings.
  */
 export function LevelUpChoices({
   characterId,
@@ -180,6 +181,7 @@ export function LevelUpChoices({
           </FormField>
         );
       })}
+      <LevelUpOptions plan={plan} />
       <LevelUpSpells
         key={`spells:${entryKey(level.class)}`}
         edition={definition.edition}
