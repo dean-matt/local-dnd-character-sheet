@@ -20,7 +20,7 @@ const titleSchema = noteSectionSchema.shape.title;
 const textSchema = noteSectionSchema.shape.notes.element.shape.text;
 
 const ADD =
-  "flex cursor-pointer items-center gap-0.5 rounded-control p-1 font-semibold text-accent-text normal-case tracking-normal hover:bg-subtle print:hidden";
+  "flex cursor-pointer items-center gap-0.5 rounded-control p-1 font-semibold text-accent-text text-label normal-case tracking-normal hover:bg-subtle print:hidden";
 
 /**
  * The player's notes in titled sections, each section and note added, edited and removed
