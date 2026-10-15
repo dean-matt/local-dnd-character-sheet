@@ -42,37 +42,55 @@ function vex(spells: CharacterDefinition["spells"] = []) {
 
 const SHEET: CharacterSpells = { spells: [spell("Hex", 1, true), spell("Armor of Agathys", 1)] };
 
+/** The class list's first page: Hex and 199 others, so Hellish Rebuke sits on the second. */
+const FIRST_PAGE = [hit("Hex"), ...Array.from({ length: 199 }, (_, n) => hit(`Filler ${n}`))];
+
+const json = (value: unknown) => new Response(JSON.stringify(value));
+const page = (items: unknown[], total = items.length) =>
+  json({ items, total, limit: 200, offset: 0 });
+
+/** A class's row or its table, or `undefined` for another URL. */
+function classAnswer(url: string) {
+  if (!url.startsWith("/api/classes/")) return undefined;
+  if (url.includes("/at/")) {
+    const spellSlots = [{ slotLevel: 1, slots: 1 }];
+    return json({ level: 1, resources: [], spellSlots, optionalFeatures: [], features: [] });
+  }
+  return json({
+    ...WARLOCK,
+    edition: "one",
+    hitDie: 8,
+    json: { ...WARLOCK, casterProgression: "pact" },
+  });
+}
+
+/** A class's list, or any other search, or `undefined` for another URL. */
+function searchAnswer(url: string) {
+  if (!url.startsWith("/api/search")) return undefined;
+  if (url.includes("class=")) {
+    if (url.includes("minLevel=2")) return page([hit("Darkness")]);
+    if (url.includes("offset=200")) return page([hit("Hellish Rebuke"), hit("Darkness")], 202);
+    return page(FIRST_PAGE, 202);
+  }
+  const glimmer = { type: "spell", id: "hb-1", name: "Glimmer", edition: "one" };
+  return page([hit("Hex"), hit("Fireball"), hit("Hellish Rebuke"), hit("Darkness"), glimmer]);
+}
+
 /**
- * Answers the spells read with `sheet`; a class's table with a 1st-level slot; its list with
- * Hex, Hellish Rebuke and the 2nd-level Darkness, or Darkness alone from 2nd level; any
- * other search with Hex, Fireball, Hellish Rebuke, Darkness and a homebrew Glimmer; and a
- * write with the record.
+ * Answers the spells read with `sheet`; a Warlock row casting by pact; its table with a
+ * 1st-level slot; its list over two pages, the second holding Hellish Rebuke and the
+ * 2nd-level Darkness, or Darkness alone from 2nd level; any other search with Hex,
+ * Fireball, Hellish Rebuke, Darkness and a homebrew Glimmer; and a write with the record.
  */
 function stubServer(record: CharacterRecord, sheet: CharacterSpells) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    const body = (value: unknown) => new Response(JSON.stringify(value));
-    const page = (items: unknown[]) => body({ items, total: items.length, limit: 200, offset: 0 });
-    if (url === "/api/characters/1/spells") return body(sheet);
-    if (url.startsWith("/api/classes/")) {
-      const slots = [{ slotLevel: 1, slots: 1 }];
-      return body({
-        level: 1,
-        resources: [],
-        spellSlots: slots,
-        optionalFeatures: [],
-        features: [],
-      });
-    }
-    if (url.startsWith("/api/search") && url.includes("class=")) {
-      if (url.includes("minLevel=2")) return page([hit("Darkness")]);
-      return page([hit("Hex"), hit("Hellish Rebuke"), hit("Darkness")]);
-    }
-    if (url.startsWith("/api/search")) {
-      const glimmer = { type: "spell", id: "hb-1", name: "Glimmer", edition: "one" };
-      return page([hit("Hex"), hit("Fireball"), hit("Hellish Rebuke"), hit("Darkness"), glimmer]);
-    }
-    return body({ ...record, definition: JSON.parse(String(init?.body)) });
+    if (url === "/api/characters/1/spells") return json(sheet);
+    return (
+      classAnswer(url) ??
+      searchAnswer(url) ??
+      json({ ...record, definition: JSON.parse(String(init?.body)) })
+    );
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -202,6 +220,21 @@ describe("SpellList", () => {
       prepared: false,
       origin: WARLOCK,
     });
+  });
+
+  it("lets a pact caster with Mystic Arcanum learn past its slots", async () => {
+    const base = vex();
+    const levels = Array.from({ length: 11 }, () => ({ class: WARLOCK }));
+    const fetchMock = renderList({ ...base, definition: { ...base.definition, levels } });
+
+    fireEvent.focus(await screen.findByRole("combobox", { name: "Learn a Warlock spell" }));
+    const darkness = await screen.findByRole("option", { name: /Darkness/ });
+    await waitFor(() => expect(darkness).not.toHaveTextContent("Checking"));
+    expect(darkness).not.toHaveTextContent("Above");
+    fireEvent.click(darkness);
+
+    await waitFor(() => expect(written(fetchMock)).toBeDefined());
+    expect(written(fetchMock)[2]?.ref).toEqual({ name: "Darkness", source: "XPHB" });
   });
 
   it("learns a homebrew spell like any other", async () => {

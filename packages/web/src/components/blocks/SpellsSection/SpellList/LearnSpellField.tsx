@@ -1,4 +1,4 @@
-import type { SearchHit } from "@dnd/catalog";
+import { casterProgressionSchema, type SearchHit } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -8,7 +8,9 @@ import {
   type EntryRef,
   entryKey,
 } from "@dnd/character";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { classQuery } from "../../../../hooks/classQuery.ts";
 import { useClassGrants } from "../../../../hooks/useClassGrants.ts";
 import { useClassSpellList } from "../../../../hooks/useClassSpellList.ts";
 import { useSubclassGrants } from "../../../../hooks/useSubclassGrants.ts";
@@ -23,10 +25,18 @@ type Caster = CharacterDerived["spellcasting"][number];
 
 type Ref = { name: string; source: string };
 
+/** The class level a pact caster's Mystic Arcanum first reaches past its slots. */
+const ARCANUM_LEVEL = 11;
+
 /**
  * The spells on `list` above the highest level the class's own slots cast at its level, its
  * subclass's table counted, as the multiclass rules hold a spell learned for one class to.
- * An empty set where its slots reach 9th; `undefined` while the tables or the list load.
+ * An empty set where nothing is above; `undefined` while the tables or the list load.
+ *
+ * A pact caster's slots stop at 5th, and from `ARCANUM_LEVEL` its Mystic Arcanum casts a
+ * 6th to 9th-level spell no table carries, so from there it takes any level: an 11th-level
+ * Warlock may record a 9th-level spell its arcanum cannot yet cast. The way out is an
+ * arcanum column in the class tables.
  */
 function useTooHigh(
   edition: CharacterRecord["edition"],
@@ -35,17 +45,23 @@ function useTooHigh(
   const level = list?.level ?? 1;
   const own = useClassGrants(list?.class, level);
   const sub = useSubclassGrants(list?.class, list?.subclass, level);
-  const loaded = own.data !== undefined && (!list?.subclass || sub.data !== undefined);
+  const row = useQuery(classQuery(list?.class));
+  const loaded =
+    own.data !== undefined && row.data !== undefined && (!list?.subclass || sub.data !== undefined);
   const tables = [own.data, sub.data].flatMap((table) => table ?? []);
-  const maxLevel = loaded ? (casterFacts(tables)?.maxLevel ?? 0) : undefined;
+  const arcanum =
+    row.data !== undefined &&
+    casterProgressionSchema.parse(row.data.json) === "pact" &&
+    level >= ARCANUM_LEVEL;
+  const maxLevel = loaded ? (arcanum ? 9 : (casterFacts(tables)?.maxLevel ?? 0)) : undefined;
   const above = useClassSpellList(
     edition,
     list,
     maxLevel === undefined || maxLevel >= 9 ? undefined : maxLevel + 1,
   );
   return {
-    failed: own.isError || sub.isError || above.isError,
-    keys: maxLevel === 9 ? new Set<string>() : above.data,
+    failed: own.isError || sub.isError || row.isError || above.isError,
+    keys: maxLevel !== undefined && maxLevel >= 9 ? new Set<string>() : above.data,
   };
 }
 
