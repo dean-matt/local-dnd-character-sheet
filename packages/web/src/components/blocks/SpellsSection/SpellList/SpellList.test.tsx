@@ -1,7 +1,7 @@
 import type { CharacterSpells, SheetSpell } from "@dnd/catalog";
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
@@ -146,6 +146,27 @@ describe("SpellList", () => {
 
     expect(await screen.findByText("Warlock: 1 of 2 prepared")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Prepared, Eldritch Blast" })).toBeNull();
+  });
+
+  it("marks a spell known where its class knows rather than prepares, or a granted one", async () => {
+    const [warlock] = derivedRecord().spellcasting;
+    const { preparedSpells: _, ...knower } = warlock as CharacterDerived["spellcasting"][number];
+    renderList(
+      vex(),
+      { spells: [...SHEET.spells, { ...spell("Bane", 1, true), granted: true }] },
+      { ...derivedRecord(), spellcasting: [knower] },
+    );
+
+    const agathys = (await screen.findByText("Armor of Agathys")).closest("li") as HTMLElement;
+    expect(agathys).toHaveTextContent("Known");
+    expect(screen.queryByRole("button", { name: /^Prepared, / })).toBeNull();
+    expect(screen.queryByText(/prepared$/)).toBeNull();
+    cleanup();
+
+    renderList(vex(), { spells: [...SHEET.spells, { ...spell("Bane", 1, true), granted: true }] });
+    const bane = (await screen.findByText("Bane")).closest("li") as HTMLElement;
+    expect(bane).toHaveTextContent("Prepared");
+    expect(screen.queryByRole("button", { name: "Prepared, Bane" })).toBeNull();
   });
 
   it("learns a spell on the class's list, offering one off it only with the reason", async () => {

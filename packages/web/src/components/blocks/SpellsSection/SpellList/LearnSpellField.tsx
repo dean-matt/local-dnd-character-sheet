@@ -92,6 +92,9 @@ export function LearnSpellField({
         edition={definition.edition}
         type="spell"
         unavailableReason={unavailableReason}
+        // A homebrew class cannot be an `origin`, which holds a catalog reference, so its
+        // spell saves with none and `spellCaster` gives it to the first class that casts. A
+        // homebrew `origin` in the definition schema is the way out.
         onPick={(ref) => onLearn(ref, cls)}
         placeholder="Search spells…"
       />

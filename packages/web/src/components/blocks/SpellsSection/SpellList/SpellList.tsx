@@ -85,6 +85,13 @@ export function SpellList({
     const caster = casters.length > 1 ? spellCaster(spell, casters) : undefined;
     return caster && displayName(caster.class);
   };
+  // A cantrip is always ready, a granted spell always prepared, and a class that knows its
+  // spells, as a classic Sorcerer does, prepares none.
+  const preparable = (spell: SheetSpell) =>
+    spell.resolved &&
+    spell.level > 0 &&
+    !spell.granted &&
+    spellCaster(spell, casters)?.preparedSpells !== undefined;
   return (
     <Card title="Known Spells">
       <div className="flex flex-col gap-2">
@@ -108,6 +115,7 @@ export function SpellList({
                     index={index}
                     characterId={character.id}
                     className={classOf(spell)}
+                    preparable={preparable(spell)}
                     busy={busy}
                     onPrepare={(prepared) => edit(index, (entry) => ({ ...entry, prepared }))}
                     onRemove={() => edit(index, () => null)}

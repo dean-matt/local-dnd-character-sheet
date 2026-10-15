@@ -19,15 +19,15 @@ import { SpellFact } from "./SpellFact.tsx";
 
 /**
  * `index` is the spell's place in the definition, which names its field in the report.
- * `className` names the class the spell belongs to, where more than one casts. A leveled
- * spell prepares through its toggle; a cantrip, always ready, and a spell nothing resolves
- * carry a mark instead.
+ * `className` names the class the spell belongs to, where more than one casts. A spell
+ * `preparable` prepares through its toggle; any other carries a Prepared or Known mark.
  */
 export function SpellRow({
   spell,
   index,
   characterId,
   className,
+  preparable,
   busy,
   onPrepare,
   onRemove,
@@ -36,6 +36,7 @@ export function SpellRow({
   index: number;
   characterId: string;
   className: string | undefined;
+  preparable: boolean;
   busy: boolean;
   onPrepare: (prepared: boolean) => void;
   onRemove: () => void;
@@ -63,7 +64,6 @@ export function SpellRow({
       />
     );
   }
-  const leveled = spell.level > 0;
   return (
     <ListRow
       name={spell.name}
@@ -73,7 +73,7 @@ export function SpellRow({
           <Tag>{schoolName(spell.school)}</Tag>
           <SpellDamageChips spell={spell} />
           {classTag}
-          {!leveled && mark}
+          {!preparable && mark}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}
         </>
@@ -81,7 +81,7 @@ export function SpellRow({
       remove={remove}
       preview={firstLine(spell.entries)}
       controls={
-        leveled && (
+        preparable && (
           <PreparedToggle
             name={spell.name}
             prepared={spell.prepared}
