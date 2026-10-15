@@ -333,6 +333,34 @@ const backstorySchema = z
   })
   .prefault({});
 
+const hasUniqueIds = (items: { id: string }[]) => isUnique(items, (item) => item.id);
+
+/**
+ * Whatever the player writes down, in titled sections of notes, each stored verbatim. An id
+ * names a section or a note apart from its position, so an edit in flight still lands on
+ * its own box after an earlier one is removed. A blank title or an empty note stays
+ * stored, as a box just added holds one.
+ */
+export const noteSectionSchema = z.strictObject({
+  id: z.string().min(1),
+  title: z.string(),
+  notes: z
+    .array(z.strictObject({ id: z.string().min(1), text: z.string() }))
+    .refine(hasUniqueIds, { error: "two notes in one section share an id" }),
+});
+
+/**
+ * A definition written before sections held its notes as one string, which reads as one
+ * section holding it as one note, or as no sections where it holds only whitespace — the
+ * sheet showed that as no notes. The ids are fixed, so each read of a definition still
+ * holding the string gives the same ones.
+ */
+const fromNotesString = (notes: unknown) => {
+  if (typeof notes !== "string") return notes;
+  if (notes.trim() === "") return [];
+  return [{ id: "notes", title: "Notes", notes: [{ id: "notes", text: notes }] }];
+};
+
 /**
  * A value the character holds against the rules as printed, and why, noted where the
  * player took a path the rules do not offer. `field` is the value's path through the
@@ -492,8 +520,12 @@ export const characterDefinitionSchema = z.strictObject({
   money: moneySchema,
   appearance: appearanceSchema,
   backstory: backstorySchema,
-  /** Whatever the player writes down, unbounded and stored verbatim. */
-  notes: z.string().default(""),
+  notes: z
+    .preprocess(
+      fromNotesString,
+      z.array(noteSectionSchema).refine(hasUniqueIds, { error: "two note sections share an id" }),
+    )
+    .default([]),
   houseRules: houseRulesSchema,
   departures: z.array(departureSchema).default([]),
   /**

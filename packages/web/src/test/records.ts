@@ -97,7 +97,13 @@ export function identityRecord(): CharacterRecord {
         ],
       },
       alignment: "Chaotic Good",
-      notes: "Owes Sarth 10 gp.\nDo not trust the ferryman.",
+      notes: [
+        {
+          id: "debts",
+          title: "Debts",
+          notes: [{ id: "sarth", text: "Owes Sarth 10 gp.\nDo not trust the ferryman." }],
+        },
+      ],
     }),
   };
 }

@@ -246,17 +246,48 @@ describe("houseRules", () => {
 });
 
 describe("notes", () => {
-  it("survives the JSON round trip the database column makes, newlines included", () => {
-    const written = "Line one.\n\n  Line two, indented.\nLine three.\n";
-    const stored = { ...definition, notes: written };
-    const parsed = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(stored)));
-
-    expect(parsed.notes).toBe(written);
+  const section = (id: string, notes: { id: string; text: string }[]) => ({
+    id,
+    title: "Quests",
+    notes,
   });
 
-  it("has no length ceiling", () => {
-    const long = "word ".repeat(20_000);
-    expect(characterDefinitionSchema.parse({ ...definition, notes: long }).notes).toBe(long);
+  it("survives the JSON round trip the database column makes, newlines and blanks included", () => {
+    const notes = [
+      section("quests", [
+        { id: "a", text: "Line one.\n\n  Line two, indented.\n" },
+        { id: "b", text: "" },
+      ]),
+      { id: "untitled", title: "", notes: [] },
+    ];
+    const stored = { ...definition, notes };
+    expect(characterDefinitionSchema.parse(JSON.parse(JSON.stringify(stored))).notes).toEqual(
+      notes,
+    );
+  });
+
+  it("reads a string written before sections as one section holding it, every character kept", () => {
+    const written = "Line one.\n\n  Line two, indented.\nLine three.\n";
+    expect(characterDefinitionSchema.parse({ ...definition, notes: written }).notes).toEqual([
+      { id: "notes", title: "Notes", notes: [{ id: "notes", text: written }] },
+    ]);
+  });
+
+  it("reads an empty or blank string as no sections", () => {
+    for (const notes of ["", " \n "]) {
+      expect(characterDefinitionSchema.parse({ ...definition, notes }).notes).toEqual([]);
+    }
+  });
+
+  it("rejects two sections, or two notes in one section, sharing an id", () => {
+    const note = { id: "a", text: "Rope" };
+    const twoSections = [section("x", [note]), section("x", [])];
+    const twoNotes = [section("x", [note, { ...note, text: "Pitons" }])];
+    for (const notes of [twoSections, twoNotes]) {
+      expect(characterDefinitionSchema.safeParse({ ...definition, notes }).success).toBe(false);
+    }
+    const apart = [section("x", [note]), section("y", [note])];
+    expect(characterDefinitionSchema.safeParse({ ...definition, notes: apart }).success).toBe(true);
   });
 });
 
@@ -336,7 +367,7 @@ describe("a character stored before these fields existed", () => {
     expect(parsed.appearance).toEqual({});
     expect(parsed.backstory).toEqual({});
     expect(parsed.houseRules).toEqual({});
-    expect(parsed.notes).toBe("");
+    expect(parsed.notes).toEqual([]);
     expect(parsed.departures).toEqual([]);
     expect(parsed.addedDefenses).toEqual({
       resistances: [],
