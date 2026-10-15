@@ -42,7 +42,7 @@ function stubFetch(status: number) {
 
 const characterFile = () => ({
   format: "local-dnd-character-sheet/character",
-  version: 1,
+  version: 2,
   definition: characterRecord("1", "Vex").definition,
   state: defaultCharacterState(),
   pages: PRESET_PAGES,

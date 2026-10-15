@@ -278,7 +278,7 @@ describe("the character file", () => {
     await pages.request(`/characters/${created.id}/pages`, { ...json(edited), method: "PUT" });
 
     const exported = await exportOf(created.id);
-    expect(exported).toMatchObject({ format: "local-dnd-character-sheet/character", version: 1 });
+    expect(exported).toMatchObject({ format: "local-dnd-character-sheet/character", version: 2 });
     expect(exported.state).toEqual(hurt);
 
     const res = await importFile(exported);

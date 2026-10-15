@@ -340,7 +340,7 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
     if (!row || !state || !pages) return c.json({ error: NOT_FOUND }, 404);
     const file: CharacterFile = {
       format: "local-dnd-character-sheet/character",
-      version: 1,
+      version: 2,
       definition: toRecord(row).definition,
       state: toStateRecord(state).state,
       pages: toPageRecords(pages).map(({ preset: _, ...page }) => page),

@@ -3,7 +3,7 @@ import { characterFileSchema, defaultCharacterState, PRESET_PAGES } from "./inde
 
 const file = {
   format: "local-dnd-character-sheet/character",
-  version: 1,
+  version: 2,
   definition: {
     name: "Mira",
     edition: "one",
@@ -26,6 +26,13 @@ const file = {
   pages: PRESET_PAGES,
 };
 
+/** A file exported before the Backstory preset, which lists every other one. */
+const v1 = {
+  ...file,
+  version: 1,
+  pages: PRESET_PAGES.filter((page) => page.slug !== "backstory"),
+};
+
 describe("characterFileSchema", () => {
   it("reads back what it wrote", () => {
     const parsed = characterFileSchema.parse(file);
@@ -33,7 +40,7 @@ describe("characterFileSchema", () => {
   });
 
   it("refuses a version it does not know, naming the field", () => {
-    const result = characterFileSchema.safeParse({ ...file, version: 2 });
+    const result = characterFileSchema.safeParse({ ...file, version: 3 });
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([["version"]]);
   });
 
@@ -42,35 +49,44 @@ describe("characterFileSchema", () => {
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([["pages"]]);
   });
 
-  it("drops the stock Alignment page an older file lists, and keeps an edited one as the user's", () => {
+  it("drops the stock Alignment page a version 1 file lists, and keeps an edited one as the user's", () => {
     const section = { kind: "section", section: "alignment" };
     const note = { kind: "text", text: "Oath of Ruin" };
     const stock = { slug: "alignment", title: "Alignment", hidden: true, blocks: [section] };
     const edited = { slug: "alignment", title: "Creed", hidden: false, blocks: [section, note] };
 
-    expect(characterFileSchema.parse({ ...file, pages: [...PRESET_PAGES, stock] }).pages).toEqual(
+    expect(characterFileSchema.parse({ ...v1, pages: [...v1.pages, stock] }).pages).toEqual(
       PRESET_PAGES,
     );
-    expect(
-      characterFileSchema.parse({ ...file, pages: [...PRESET_PAGES, edited] }).pages.at(-1),
-    ).toEqual({ ...edited, blocks: [{ kind: "unknown", raw: section }, note] });
+    expect(characterFileSchema.parse({ ...v1, pages: [...v1.pages, edited] }).pages.at(-1)).toEqual(
+      { ...edited, blocks: [{ kind: "unknown", raw: section }, note] },
+    );
   });
 
-  it("gives an older file with no Backstory page the stock one, just before Notes", () => {
-    const older = PRESET_PAGES.filter((page) => page.slug !== "backstory");
-    expect(characterFileSchema.parse({ ...file, pages: older }).pages).toEqual(PRESET_PAGES);
+  it("gives a version 1 file the stock Backstory page, just before Notes", () => {
+    const parsed = characterFileSchema.parse(v1);
+    expect(parsed.version).toBe(2);
+    expect(parsed.pages).toEqual(PRESET_PAGES);
   });
 
-  it("moves a page an older file holds under backstory aside, keeping its blocks, and adds the stock one", () => {
+  it("moves a page a version 1 file holds under backstory aside, keeping its blocks", () => {
     const own = { slug: "backstory", title: "My story", hidden: false, blocks: [] };
-    const older = [...PRESET_PAGES.filter((page) => page.slug !== "backstory"), own];
-    const pages = characterFileSchema.parse({ ...file, pages: older }).pages;
+    const pages = characterFileSchema.parse({ ...v1, pages: [...v1.pages, own] }).pages;
 
     expect(pages.slice(0, -1)).toEqual(PRESET_PAGES);
     expect(pages.at(-1)).toEqual({
       ...own,
       slug: expect.stringMatching(/^backstory-[0-9a-f]{8}$/),
     });
+  });
+
+  it("keeps a version 2 file's Backstory preset as written, edited or not", () => {
+    const edited = PRESET_PAGES.map((page) =>
+      page.slug === "backstory"
+        ? { ...page, blocks: [{ kind: "text", text: "Raised by wolves" }] }
+        : page,
+    );
+    expect(characterFileSchema.parse({ ...file, pages: edited }).pages).toEqual(edited);
   });
 
   it("refuses a page marked preset, which only an import decides", () => {
