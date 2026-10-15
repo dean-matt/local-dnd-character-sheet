@@ -1,4 +1,4 @@
-import { LIST_FACET_SOURCE, type ListFilter, type PageBlock } from "@dnd/character";
+import { facetApplies, type ListFilter, type PageBlock } from "@dnd/character";
 import { z } from "zod";
 import { Field } from "../../components/Field/Field.tsx";
 import { levelLabel } from "../../lib/spellLevel.ts";
@@ -6,9 +6,6 @@ import { levelLabel } from "../../lib/spellLevel.ts";
 type ListBlock = Extract<PageBlock, { kind: "list" }>;
 
 const LEVELS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-const applies = (facet: keyof typeof LIST_FACET_SOURCE, block: ListBlock) =>
-  LIST_FACET_SOURCE[facet] === block.source;
 
 /** Drops a facet left empty, so the stored filter names only what narrows. */
 function withFacet<K extends keyof ListFilter>(filter: ListFilter, facet: K, value: ListFilter[K]) {
@@ -44,7 +41,7 @@ export function ListFilterSettings({
           onSave((latest) => withFacet(latest, "search", search || undefined))
         }
       />
-      {applies("prepared", block) && (
+      {facetApplies("prepared", block.source) && (
         <label className="flex items-center gap-2 text-ink text-row">
           <input
             type="checkbox"
@@ -57,7 +54,7 @@ export function ListFilterSettings({
           Prepared only
         </label>
       )}
-      {applies("equipped", block) && (
+      {facetApplies("equipped", block.source) && (
         <label className="flex items-center gap-2 text-ink text-row">
           <input
             type="checkbox"
@@ -70,7 +67,7 @@ export function ListFilterSettings({
           Equipped only
         </label>
       )}
-      {applies("levels", block) && (
+      {facetApplies("levels", block.source) && (
         <fieldset className="flex flex-col gap-1">
           <legend className="text-muted text-row">Spell levels (none means every level)</legend>
           <div className="flex flex-wrap gap-x-3 gap-y-1">

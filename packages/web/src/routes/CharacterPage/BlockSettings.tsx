@@ -1,6 +1,6 @@
 import {
+  facetApplies,
   LIST_BLOCK_SOURCES,
-  LIST_FACET_SOURCE,
   type ListBlockSource,
   type ListFilter,
   type PageBlock,
@@ -22,10 +22,7 @@ const options = <K extends string>(keys: readonly K[], labels: Record<K, string>
 /** Keeps the facets the new source shares, such as the name search, and drops the rest. */
 function filterFor(source: ListBlockSource, filter: ListFilter): ListFilter {
   return Object.fromEntries(
-    Object.entries(filter).filter(([facet]) => {
-      const only = LIST_FACET_SOURCE[facet as keyof typeof LIST_FACET_SOURCE];
-      return only === undefined || only === source;
-    }),
+    Object.entries(filter).filter(([facet]) => facetApplies(facet, source)),
   );
 }
 

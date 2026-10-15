@@ -58,11 +58,17 @@ const listFilterSchema = z.strictObject({
 });
 
 /** The one source each source-specific facet narrows; a facet absent here narrows any. */
-export const LIST_FACET_SOURCE = {
+const LIST_FACET_SOURCE = {
   levels: "spells",
   prepared: "spells",
   equipped: "inventory",
 } as const satisfies Partial<Record<keyof ListFilter, ListBlockSource>>;
+
+/** Whether a list of `source` has `facet` to narrow by. */
+export function facetApplies(facet: string, source: ListBlockSource): boolean {
+  const only = LIST_FACET_SOURCE[facet as keyof typeof LIST_FACET_SOURCE];
+  return only === undefined || only === source;
+}
 
 /** A saved filter over a list the sheet already renders, never a snapshot of the rows it matched. */
 const listBlockSchema = z
@@ -72,11 +78,7 @@ const listBlockSchema = z
     filter: listFilterSchema.default({}),
   })
   .refine(
-    (block) =>
-      Object.keys(block.filter).every((facet) => {
-        const only = LIST_FACET_SOURCE[facet as keyof typeof LIST_FACET_SOURCE];
-        return only === undefined || only === block.source;
-      }),
+    (block) => Object.keys(block.filter).every((facet) => facetApplies(facet, block.source)),
     { error: "the filter narrows by a facet this list does not have", path: ["filter"] },
   );
 
