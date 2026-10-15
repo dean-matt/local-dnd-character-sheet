@@ -73,10 +73,10 @@ async function aboveCeiling(
 }
 
 /**
- * A spell learns for the first class whose list holds it, as the sheet's picker learns it
- * for the class chosen there. One no class lists lands with no class, and one above the
- * level that class's slots cast lands for it, each noted. A homebrew spell is on no list and
- * stays open to every class, as the picker holds.
+ * A spell learns for the first class whose list holds it and whose slots cast it, as the
+ * sheet's picker learns it for the class chosen there. Where every class holding it casts
+ * below it, it learns for the first of them, noted; one no class lists lands with no class,
+ * noted. A homebrew spell is on no list and stays open to every class, as the picker holds.
  */
 async function planSpell(
   client: QueryClient,
@@ -95,16 +95,22 @@ async function planSpell(
   const lists = await Promise.all(
     classes.map((list) => client.fetchQuery(classSpellListQuery(definition.edition, list))),
   );
-  const holder = classes[lists.findIndex((list) => list.has(key))];
+  const holders = classes.filter((_, index) => lists[index]?.has(key));
+  const above = await Promise.all(
+    holders.map((holder) => aboveCeiling(client, definition.edition, holder, key)),
+  );
+  const holder = holders[above.indexOf(false)] ?? holders[0];
   const origin = holder?.class;
   const edit: Edit = (latest) => withSpell(latest, row.ref, origin);
   if (!holder) {
     const names = or.format(classes.map((each) => each.class.name));
     return { edit, note: `${row.label} is not on the ${names} spell list.` };
   }
-  return (await aboveCeiling(client, definition.edition, holder, key))
-    ? { edit, note: `${row.label} is above the highest level a ${holder.class.name} slot casts.` }
-    : { edit };
+  if (!above.includes(false)) {
+    const names = or.format(holders.map((each) => each.class.name));
+    return { edit, note: `${row.label} is above the highest level a ${names} slot casts.` };
+  }
+  return { edit };
 }
 
 /**

@@ -39,12 +39,17 @@ const plusOne = {
  * `writes` collects each definition written.
  */
 const missile = { name: "Magic Missile", source: "XPHB" };
+const counterspell = { name: "Counterspell", source: "XPHB" };
 
 /** Each class's list, with each spell's level. */
 const LISTS: Record<string, [{ name: string; source: string }, number][]> = {
-  "Warlock|XPHB": [[blast, 0]],
+  "Warlock|XPHB": [
+    [blast, 0],
+    [counterspell, 3],
+  ],
   "Wizard|XPHB": [
     [missile, 1],
+    [counterspell, 3],
     [fireball, 3],
   ],
 };
@@ -58,12 +63,13 @@ const spellList = (url: string) => {
   return { items, total: items.length, limit: 200, offset: 0 };
 };
 
-/** A class's row, or its table at 1st level casting 1st-level slots. */
+/** A class's row, or its table at a level, casting slots up to half that level rounded up. */
 const classAnswer = (url: string) => {
-  const [name = "", source = ""] = url.split("/").slice(3, 5);
-  if (url.endsWith("/at/1")) {
-    const spellSlots = [{ slotLevel: 1, slots: 2 }];
-    return { level: 1, resources: [], spellSlots, optionalFeatures: [], features: [] };
+  const [name = "", source = "", at, level] = url.split("/").slice(3, 7);
+  if (at === "at") {
+    const top = Math.ceil(Number(level) / 2);
+    const spellSlots = Array.from({ length: top }, (_, i) => ({ slotLevel: i + 1, slots: 2 }));
+    return { level: Number(level), resources: [], spellSlots, optionalFeatures: [], features: [] };
   }
   const casterProgression = name === "Warlock" ? "pact" : "full";
   return { name, source, edition: "one", hitDie: 8, json: { name, source, casterProgression } };
@@ -143,6 +149,23 @@ describe("useAddToCharacter", () => {
     expect(outcome.note).toBe(`Noted: ${note}`);
     expect(writes[0]?.spells).toEqual([{ ref: fireball, prepared: false, origin: WIZARD }]);
     expect(writes[0]?.departures).toEqual([{ field: `spells.${entryKey(fireball)}`, note }]);
+  });
+
+  it("learns a spell for a later class whose slots cast it, where the first's do not", async () => {
+    const wizardFive = Array.from({ length: 5 }, () => ({ class: WIZARD }));
+    const writes = stubApi({ levels: [{ class: WARLOCK }, ...wizardFive] });
+    const outcome = await add({ kind: "spell", ref: counterspell, label: "Counterspell (XPHB)" });
+    expect(outcome).toEqual({ text: "Added Counterspell (XPHB) to Fira." });
+    expect(writes[0]?.spells).toEqual([{ ref: counterspell, prepared: false, origin: WIZARD }]);
+  });
+
+  it("notes a spell every class holding it casts below, learned for the first", async () => {
+    const writes = stubApi({ levels: [{ class: WARLOCK }, { class: WIZARD }] });
+    const outcome = await add({ kind: "spell", ref: counterspell, label: "Counterspell (XPHB)" });
+    expect(outcome.note).toBe(
+      "Noted: Counterspell (XPHB) is above the highest level a Warlock or Wizard slot casts.",
+    );
+    expect(writes[0]?.spells).toEqual([{ ref: counterspell, prepared: false, origin: WARLOCK }]);
   });
 
   it("names every class's list in the note for a spell none of them holds", async () => {
