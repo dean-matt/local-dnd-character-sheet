@@ -11,6 +11,18 @@ import {
 import { characterPagesKey } from "./characterKeys.ts";
 import { characterPagesSchema } from "./characterPagesSchema.ts";
 
+// Every caller of this hook shares one queue and one history per character and client.
+const queues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>();
+
+function queueOf(client: QueryClient) {
+  let byCharacter = queues.get(client);
+  if (!byCharacter) {
+    byCharacter = new Map();
+    queues.set(client, byCharacter);
+  }
+  return byCharacter;
+}
+
 /**
  * `write` replaces the whole list, in display order. The cache takes the new list before
  * `write` returns — `onMutate` would run a tick later, and a second press inside that
@@ -23,18 +35,6 @@ import { characterPagesSchema } from "./characterPagesSchema.ts";
  * Each `write` records the list it replaces in `lib/pageHistory.ts`, and `undo` writes the
  * newest one back. `key` names the edit, so a run of saves to one field undoes as one.
  */
-// One queue per character and client, shared by every caller, which share one history too.
-const queues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>();
-
-function queueOf(client: QueryClient) {
-  let byCharacter = queues.get(client);
-  if (!byCharacter) {
-    byCharacter = new Map();
-    queues.set(client, byCharacter);
-  }
-  return byCharacter;
-}
-
 export function useReplaceCharacterPages(id: string) {
   const queryClient = useQueryClient();
   const mutationKey = [...characterPagesKey(id), "write"];

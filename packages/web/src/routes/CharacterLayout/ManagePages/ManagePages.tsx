@@ -1,6 +1,6 @@
 /**
- * Creates, deletes, reorders and hides a character's pages with move and hide buttons rather than
- * dragging: a button works the same from a pointer, a keyboard and a screen reader,
+ * Creates, deletes and hides a character's pages, and reorders them with move buttons rather
+ * than dragging: a button works the same from a pointer, a keyboard and a screen reader,
  * where a drag needs a hand-built keyboard path beside it. Each change is announced
  * through one polite live region, since a row that moves makes no sound on its own.
  * New page adds a page behind the dialog and focuses its title for renaming there. A page
