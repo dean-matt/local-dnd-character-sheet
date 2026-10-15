@@ -120,14 +120,33 @@ describe("pagesRoutes", () => {
     expect(await list(id)).toEqual(PRESETS);
   });
 
-  it("refuses a list that leaves out a preset, naming it and writing nothing", async () => {
+  it("deletes a preset the list leaves out, and leaves the character's data alone", async () => {
     const id = await create();
+    const before = await (await characters.request(`/characters/${id}`)).json();
     const withoutSpells = PRESET_PAGES.filter((page) => page.slug !== "spells");
 
     const res = await replace(id, [...withoutSpells, GRAPPLE]);
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toContain("spells");
+    expect(res.status).toBe(200);
+    expect((await list(id)).map((page) => page.slug)).toEqual([
+      ...withoutSpells.map((page) => page.slug),
+      "grapple",
+    ]);
+    expect(await (await characters.request(`/characters/${id}`)).json()).toEqual(before);
+  });
+
+  it("marks a page written back under a deleted preset's slug as that preset", async () => {
+    const id = await create();
+    await replace(id, PRESET_PAGES.slice(1));
+
+    await replace(id, PRESET_PAGES);
     expect(await list(id)).toEqual(PRESETS);
+  });
+
+  it("writes an empty list, deleting every page", async () => {
+    const id = await create();
+
+    expect((await replace(id, [])).status).toBe(200);
+    expect(await list(id)).toEqual([]);
   });
 
   it("does not make a preset of a page that takes a preset's place in the order", async () => {
@@ -224,6 +243,35 @@ describe("pagesRoutes", () => {
     const expected = [{ ...GRAPPLE, preset: false }, ...PRESETS];
     expect(await res.json()).toEqual(expected);
     expect(await list(id)).toEqual(expected);
+  });
+
+  it("recreates each deleted preset as seeded, just after the preset seeded before it", async () => {
+    const id = await create();
+    const [, , inventory, ...rest] = PRESET_PAGES as CharacterPage[];
+    await replace(id, [GRAPPLE, { ...inventory, title: "Pack" } as CharacterPage, ...rest]);
+
+    const res = await restore(id);
+    expect(res.status).toBe(200);
+    const expected = [{ ...GRAPPLE, preset: false }, ...PRESETS];
+    expect(await res.json()).toEqual(expected);
+    expect(await list(id)).toEqual(expected);
+  });
+
+  it("recreates a deleted preset after a written page that sits between presets", async () => {
+    const id = await create();
+    const [stats, , ...rest] = PRESET_PAGES as CharacterPage[];
+    await replace(id, [stats, GRAPPLE, ...rest] as CharacterPage[]);
+
+    const slugs = (await (await restore(id)).json()).map((page: CharacterPage) => page.slug);
+    expect(slugs).toEqual(["stats", "spells", "grapple", ...rest.map((page) => page.slug)]);
+  });
+
+  it("recreates every preset ahead of the written pages where the user deleted them all", async () => {
+    const id = await create();
+    await replace(id, [GRAPPLE]);
+
+    const res = await restore(id);
+    expect(await res.json()).toEqual([...PRESETS, { ...GRAPPLE, preset: false }]);
   });
 
   it("keeps one character's order and visibility apart from another's", async () => {

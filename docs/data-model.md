@@ -189,9 +189,9 @@ old number. A key naming no field, or a value its field refuses, stays stored an
 accepted.** All five derive from `characters.definition` — `race_summary` and `class_summary`
 from `raceSummary()` and `classSummary()`, reading `Homebrew` for an unresolvable `homebrewId`.
 
-**A preset page is hidden, never deleted.** Each character seeds with the pages `PRESET_PAGES`
-lists; a write omitting one is refused. Restoring resets the presets and their seeded
-order, in their own slots; written pages stay put. The server alone sets `preset`.
+**A preset page is one a `PRESET_PAGES` slug names**, which only the server marks and a new
+page never takes; a write may delete it. Restoring resets the presets and their seeded order
+in their own slots, recreating a deleted one after its seeded predecessor; written pages stay put.
 
 **A page is an ordered list of blocks** — `section`, `value` (a derived field and its
 breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup). An unknown

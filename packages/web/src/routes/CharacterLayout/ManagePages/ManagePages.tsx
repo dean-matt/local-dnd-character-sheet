@@ -4,7 +4,7 @@
  * where a drag needs a hand-built keyboard path beside it. Each change is announced
  * through one polite live region, since a row that moves makes no sound on its own.
  * New page adds a page behind the dialog and focuses its title for renaming there. Every
- * page renames in its row, here and nowhere else; only a page the user wrote deletes.
+ * page renames in its row, here and nowhere else, and any page deletes, preset or not.
  *
  * Renders as a modal dialog: focus is trapped inside while open, Escape closes it,
  * and focus returns to the trigger button on close.
@@ -132,7 +132,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
   function remove(target: string) {
     const current = replace.current();
     const page = current.find((candidate) => candidate.slug === target);
-    if (busy || !page || page.preset) return;
+    if (busy || !page) return;
     const next = current.filter((candidate) => candidate.slug !== target);
     if (!next.some((candidate) => !candidate.hidden)) return;
     write(next, `${page.title} deleted.`);
@@ -178,7 +178,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
         </div>
 
         <p id={descId} className="text-[11px] text-muted">
-          Add a page, reorder, rename or show/hide any page, and delete one you added.
+          Add a page, and reorder, rename, show/hide or delete any page.
         </p>
 
         {error && <ErrorState error={error} />}

@@ -145,8 +145,10 @@ const pageSlugSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
 });
 
 /**
- * A slug for a new page titled `title`, distinct from every slug in `taken`. A retitle
- * keeps the slug it was created with, so this runs once per page.
+ * A slug for a new page titled `title`, distinct from every slug in `taken` and every
+ * preset's, even a preset the character deleted: a page under a preset's slug is that
+ * preset, and restoring the defaults recreates it there. A retitle keeps the slug it was
+ * created with, so this runs once per page.
  */
 export function newPageSlug(title: string, taken: Iterable<string>): string {
   const base =
@@ -155,7 +157,7 @@ export function newPageSlug(title: string, taken: Iterable<string>): string {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "page";
-  const used = new Set(taken);
+  const used = new Set([...taken, ...PRESET_PAGES.map((page) => page.slug)]);
   let slug = base;
   for (let n = 2; used.has(slug); n++) slug = `${base}-${n}`;
   return slug;
@@ -178,9 +180,9 @@ export const characterPagesSchema = z
   });
 
 /**
- * A stored page, as an endpoint returns it. The server sets `preset` and never accepts
- * it: a preset can be hidden or edited but not deleted, and restoring the defaults
- * resets the presets alone.
+ * A stored page, as an endpoint returns it. The server sets `preset` from the slug and
+ * never accepts it: restoring the defaults resets the presets alone, and recreates any
+ * the user deleted.
  */
 export const characterPageRecordSchema = characterPageSchema.extend({ preset: z.boolean() });
 
@@ -190,8 +192,8 @@ export type CharacterPageRecord = z.infer<typeof characterPageRecordSchema>;
 /**
  * Seeded on every character, in this order. A preset's blocks are whole sheet sections.
  * A new entry reaches existing characters only through a backfill migration, as every
- * entry here did. That migration must settle any user page already under the new slug, since
- * restoring the defaults fails on one.
+ * entry here did. That migration must settle any user page already under the new slug,
+ * which the next write would otherwise mark preset.
  */
 export const PRESET_PAGES: readonly CharacterPage[] = [
   {

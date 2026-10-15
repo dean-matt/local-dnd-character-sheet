@@ -295,6 +295,16 @@ describe("the character file", () => {
     ]);
   });
 
+  it("carries a character whose presets the user deleted, every one, through an import", async () => {
+    const created = await create();
+    await pages.request(`/characters/${created.id}/pages`, { ...json([]), method: "PUT" });
+
+    const res = await importFile(await exportOf(created.id));
+    expect(res.status).toBe(201);
+    const imported = await res.json();
+    expect(await (await pages.request(`/characters/${imported.id}/pages`)).json()).toEqual([]);
+  });
+
   it("creates a second character when one file is imported twice, leaving the first", async () => {
     const created = await create();
     const file = await exportOf(created.id);

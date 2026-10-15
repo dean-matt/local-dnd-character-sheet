@@ -1,7 +1,7 @@
 /**
  * Read, replace and restore for a character's pages. The list is written whole, in
- * display order, so one route reorders, hides, edits, adds and removes. `preset` is
- * never accepted from a request body — the query layer carries it through every write.
+ * display order, so one route reorders, hides, edits, adds and deletes, presets included.
+ * `preset` is never accepted from a request body — the query layer sets it from the slug.
  */
 import {
   type CharacterPageRecord,
@@ -16,7 +16,7 @@ import {
   replaceCharacterPages,
   restoreDefaultPages,
 } from "../db/queries/pages.ts";
-import { errorSchema, notFound } from "./errors.ts";
+import { notFound } from "./errors.ts";
 
 type PageRow = NonNullable<ReturnType<typeof listCharacterPages>>[number];
 
@@ -74,10 +74,6 @@ const replace = createRoute({
   responses: {
     200: pagesResponse("The character's pages as written"),
     404: notFound("character"),
-    409: {
-      description: "The list leaves out a preset, which can be hidden but not deleted",
-      content: { "application/json": { schema: errorSchema } },
-    },
   },
 });
 
@@ -85,7 +81,7 @@ const restore = createRoute({
   method: "post",
   path: "/characters/{id}/pages/restore-defaults",
   tags: ["characters"],
-  summary: "Restore every preset page as seeded, keeping the pages the user wrote",
+  summary: "Restore every preset page as seeded, deleted or not, keeping the pages the user wrote",
   request: { params: idParam },
   responses: {
     200: pagesResponse("The character's pages after the restore"),
@@ -103,13 +99,9 @@ export function pagesRoutes(db: CharactersDb) {
   });
 
   routes.openapi(replace, (c) => {
-    const result = replaceCharacterPages(db, c.req.valid("param").id, c.req.valid("json"));
-    if (!result) return c.json({ error: NOT_FOUND }, 404);
-    if ("missingPresets" in result) {
-      const slugs = result.missingPresets.join(", ");
-      return c.json({ error: `A preset can be hidden but not deleted: ${slugs}` }, 409);
-    }
-    return c.json(toPageRecords(result.pages), 200);
+    const rows = replaceCharacterPages(db, c.req.valid("param").id, c.req.valid("json"));
+    if (!rows) return c.json({ error: NOT_FOUND }, 404);
+    return c.json(toPageRecords(rows), 200);
   });
 
   routes.openapi(restore, (c) => {

@@ -20,7 +20,7 @@ import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as charactersSchema from "../characters.ts";
 import { characterPages, characterState, characters } from "../characters.ts";
-import { presetPageRows } from "./pages.ts";
+import { writePages } from "./pages.ts";
 import { deleteUndoEntry, newestUndoEntry, recordChange } from "./undo.ts";
 
 export type CharactersDb = BetterSQLite3Database<typeof charactersSchema>;
@@ -67,7 +67,7 @@ export function insertCharacter(
 ) {
   return db.transaction((tx) => {
     const row = insertCharacterRows(tx, input.id, input.definition);
-    tx.insert(characterPages).values(presetPageRows(input.id)).run();
+    writePages(tx, input.id, PRESET_PAGES);
     return row;
   });
 }
@@ -97,25 +97,11 @@ export function duplicateCharacter(db: CharactersDb, sourceId: string, id: strin
   });
 }
 
-/**
- * Writes `file` as a new character under `id`, never over an existing one. A page whose
- * slug a preset seeds is marked preset, since the file never says; the schema has
- * already checked every preset is there.
- */
+/** Writes `file` as a new character under `id`, never over an existing one. */
 export function importCharacter(db: CharactersDb, id: string, file: CharacterFile) {
-  const presets = new Set(PRESET_PAGES.map((page) => page.slug));
   return db.transaction((tx) => {
     const row = insertCharacterRows(tx, id, file.definition, file.state);
-    tx.insert(characterPages)
-      .values(
-        file.pages.map((page, position) => ({
-          ...page,
-          characterId: id,
-          position,
-          preset: presets.has(page.slug),
-        })),
-      )
-      .run();
+    writePages(tx, id, file.pages);
     return row;
   });
 }
