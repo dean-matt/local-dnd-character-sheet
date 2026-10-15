@@ -51,3 +51,18 @@ export function casterFacts(
   }
   return { cantrips, spells: resource(tables, "spells_known") ?? 0, prepares: false, maxLevel };
 }
+
+/** The class level a pact caster's Mystic Arcanum first reaches past its slots. */
+const ARCANUM_LEVEL = 11;
+
+/**
+ * The highest spell level a class casts at `level` from its own and its subclass's
+ * `tables`, as the multiclass rules hold a spell learned for one class to.
+ *
+ * A `pact` caster's slots stop at 5th, and from `ARCANUM_LEVEL` its Mystic Arcanum casts a
+ * 6th to 9th-level spell no table carries, so from there it takes any level: an 11th-level
+ * Warlock may record a 9th-level spell its arcanum cannot yet cast. The way out is an
+ * arcanum column in the class tables.
+ */
+export const castableCeiling = (tables: readonly Table[], pact: boolean, level: number) =>
+  pact && level >= ARCANUM_LEVEL ? 9 : (casterFacts(tables)?.maxLevel ?? 0);

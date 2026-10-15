@@ -1,4 +1,4 @@
-import { featRecordSchema, itemRecordSchema } from "@dnd/catalog";
+import { casterProgressionSchema, featRecordSchema, itemRecordSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type ContentRef,
@@ -11,10 +11,12 @@ import type { z } from "zod";
 import type { Addable } from "../lib/addable.ts";
 import { withFeat, withItem, withSpell } from "../lib/addedEntries.ts";
 import { apiGet } from "../lib/api.ts";
+import { castableCeiling } from "../lib/casterFacts.ts";
 import { withDeparture } from "../lib/departures.ts";
 import { candidateAt, featBarrier } from "../lib/improvementFeats.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 import { classGrantsQuery } from "./classGrantsQuery.ts";
+import { classQuery } from "./classQuery.ts";
 import { classSpellListQuery } from "./classSpellListQuery.ts";
 import { subclassGrantsQuery } from "./subclassGrantsQuery.ts";
 import { characterQuery } from "./useCharacter.ts";
@@ -51,10 +53,30 @@ const catalogClasses = (definition: CharacterDefinition) =>
     "name" in cls ? [{ class: cls, level, ...(subclass && { subclass }) }] : [],
   );
 
+/** Whether `key` is above the highest level `list`'s class casts, as the sheet's picker reads it. */
+async function aboveCeiling(
+  client: QueryClient,
+  edition: CharacterDefinition["edition"],
+  list: ReturnType<typeof catalogClasses>[number],
+  key: string,
+): Promise<boolean> {
+  const { class: cls, level, subclass } = list;
+  const [own, sub, row] = await Promise.all([
+    client.fetchQuery(classGrantsQuery(cls, level)),
+    subclass ? client.fetchQuery(subclassGrantsQuery(cls, subclass, level)) : undefined,
+    client.fetchQuery(classQuery(cls)),
+  ]);
+  const pact = casterProgressionSchema.parse(row.json) === "pact";
+  const ceiling = castableCeiling(sub ? [own, sub] : [own], pact, level);
+  if (ceiling >= 9) return false;
+  return (await client.fetchQuery(classSpellListQuery(edition, list, ceiling + 1))).has(key);
+}
+
 /**
  * A spell learns for the first class whose list holds it, as the sheet's picker learns it
- * for the class chosen there. One no class lists lands with no class, noted; a homebrew spell
- * is on no list and stays open to every class, as the picker holds.
+ * for the class chosen there. One no class lists lands with no class, and one above the
+ * level that class's slots cast lands for it, each noted. A homebrew spell is on no list and
+ * stays open to every class, as the picker holds.
  */
 async function planSpell(
   client: QueryClient,
@@ -73,13 +95,16 @@ async function planSpell(
   const lists = await Promise.all(
     classes.map((list) => client.fetchQuery(classSpellListQuery(definition.edition, list))),
   );
-  const origin = classes[lists.findIndex((list) => list.has(key))]?.class;
-  return {
-    edit: (latest) => withSpell(latest, row.ref, origin),
-    ...(!origin && {
-      note: `${row.label} is not on the ${or.format(classes.map((each) => each.class.name))} spell list.`,
-    }),
-  };
+  const holder = classes[lists.findIndex((list) => list.has(key))];
+  const origin = holder?.class;
+  const edit: Edit = (latest) => withSpell(latest, row.ref, origin);
+  if (!holder) {
+    const names = or.format(classes.map((each) => each.class.name));
+    return { edit, note: `${row.label} is not on the ${names} spell list.` };
+  }
+  return (await aboveCeiling(client, definition.edition, holder, key))
+    ? { edit, note: `${row.label} is above the highest level a ${holder.class.name} slot casts.` }
+    : { edit };
 }
 
 /**

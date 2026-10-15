@@ -35,13 +35,38 @@ const plusOne = {
 };
 
 /**
- * Answers Fira's reads, the Warlock's spell list holding Eldritch Blast alone, the Wizard's
- * holding Fireball alone, and a PUT with the record it was sent; `writes` collects each
- * definition written.
+ * Answers Fira's reads, `LISTS`, `classAnswer`, and a PUT with the record it was sent;
+ * `writes` collects each definition written.
  */
+const missile = { name: "Magic Missile", source: "XPHB" };
+
+/** Each class's list, with each spell's level. */
+const LISTS: Record<string, [{ name: string; source: string }, number][]> = {
+  "Warlock|XPHB": [[blast, 0]],
+  "Wizard|XPHB": [
+    [missile, 1],
+    [fireball, 3],
+  ],
+};
+
 const spellList = (url: string) => {
-  const wizard = new URL(url, "http://x").searchParams.get("class") === "Wizard|XPHB";
-  return { items: [spellHit(wizard ? fireball : blast)], total: 1, limit: 200, offset: 0 };
+  const params = new URL(url, "http://x").searchParams;
+  const minLevel = Number(params.get("minLevel") ?? 0);
+  const items = (LISTS[params.get("class") ?? ""] ?? [])
+    .filter(([, level]) => level >= minLevel)
+    .map(([ref]) => spellHit(ref));
+  return { items, total: items.length, limit: 200, offset: 0 };
+};
+
+/** A class's row, or its table at 1st level casting 1st-level slots. */
+const classAnswer = (url: string) => {
+  const [name = "", source = ""] = url.split("/").slice(3, 5);
+  if (url.endsWith("/at/1")) {
+    const spellSlots = [{ slotLevel: 1, slots: 2 }];
+    return { level: 1, resources: [], spellSlots, optionalFeatures: [], features: [] };
+  }
+  const casterProgression = name === "Warlock" ? "pact" : "full";
+  return { name, source, edition: "one", hitDie: 8, json: { name, source, casterProgression } };
 };
 
 function stubApi(definition: Partial<CharacterDefinition> = {}, failWrite = false) {
@@ -60,9 +85,7 @@ function stubApi(definition: Partial<CharacterDefinition> = {}, failWrite = fals
     }
     if (url === "/api/characters/7") return json(record);
     if (url.startsWith("/api/search?")) return json(spellList(url));
-    if (url === "/api/classes/Warlock/XPHB/at/1") {
-      return json({ level: 1, resources: [], spellSlots: [], optionalFeatures: [], features: [] });
-    }
+    if (url.startsWith("/api/classes/")) return json(classAnswer(url));
     if (url === "/api/feats/Grappler/XPHB") return json(grappler);
     if (url === "/api/items/%2B1%20Weapon/DMG") return json(plusOne);
     return json({ error: `nothing at ${url}` }, 404);
@@ -108,9 +131,18 @@ describe("useAddToCharacter", () => {
 
   it("learns a spell for the first of several classes whose list holds it", async () => {
     const writes = stubApi({ levels: [{ class: WARLOCK }, { class: WIZARD }] });
+    const outcome = await add({ kind: "spell", ref: missile, label: "Magic Missile (XPHB)" });
+    expect(outcome).toEqual({ text: "Added Magic Missile (XPHB) to Fira." });
+    expect(writes[0]?.spells).toEqual([{ ref: missile, prepared: false, origin: WIZARD }]);
+  });
+
+  it("learns a spell above the level its class's slots cast, and notes it", async () => {
+    const writes = stubApi({ levels: [{ class: WIZARD }] });
     const outcome = await add({ kind: "spell", ref: fireball, label: "Fireball (XPHB)" });
-    expect(outcome).toEqual({ text: "Added Fireball (XPHB) to Fira." });
+    const note = "Fireball (XPHB) is above the highest level a Wizard slot casts.";
+    expect(outcome.note).toBe(`Noted: ${note}`);
     expect(writes[0]?.spells).toEqual([{ ref: fireball, prepared: false, origin: WIZARD }]);
+    expect(writes[0]?.departures).toEqual([{ field: `spells.${entryKey(fireball)}`, note }]);
   });
 
   it("names every class's list in the note for a spell none of them holds", async () => {
