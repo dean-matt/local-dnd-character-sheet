@@ -3,7 +3,8 @@
  * dragging: a button works the same from a pointer, a keyboard and a screen reader,
  * where a drag needs a hand-built keyboard path beside it. Each change is announced
  * through one polite live region, since a row that moves makes no sound on its own.
- * A new page opens in its editor; a preset can be hidden but never deleted.
+ * New page adds a page behind the dialog and focuses its title for renaming there. A page
+ * the user wrote renames in its row; a preset can be hidden but never renamed or deleted here.
  *
  * Renders as a modal dialog: focus is trapped inside while open, Escape closes it,
  * and focus returns to the trigger button on close.
@@ -42,6 +43,21 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
   const headingId = useId();
   const descId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Scopes each title's undo key to this opening of the dialog, as the page editor does.
+  const session = useId();
+  // The page whose title takes focus once its row renders.
+  const [renaming, setRenaming] = useState<string>();
+
+  useEffect(() => {
+    if (renaming === undefined) return;
+    const input = dialogRef.current?.querySelector<HTMLInputElement>(
+      `[data-page="${renaming}"] input`,
+    );
+    if (!input) return;
+    input.focus();
+    input.select();
+    setRenaming(undefined);
+  });
 
   // Opens as a modal on mount; the caller returns focus on close.
   useEffect(() => {
@@ -96,9 +112,21 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
       title,
       current.map((page) => page.slug),
     );
-    replace.write([...current, { slug: created, title, hidden: false, blocks: [], preset: false }]);
-    onClose();
-    navigate(`/characters/${id}/p/${created}?edit`);
+    write(
+      [...current, { slug: created, title, hidden: false, blocks: [], preset: false }],
+      `${title} added.`,
+    );
+    setRenaming(created);
+    navigate(`/characters/${id}/p/${created}`);
+  }
+
+  function rename(target: string, title: string) {
+    return replace.save(
+      replace
+        .current()
+        .map((candidate) => (candidate.slug === target ? { ...candidate, title } : candidate)),
+      `${session}:title:${target}`,
+    );
   }
 
   function remove(target: string) {
@@ -150,7 +178,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
         </div>
 
         <p id={descId} className="text-[11px] text-muted">
-          Add a page, reorder or show/hide any page, and delete one you added.
+          Add a page, reorder or show/hide any page, and rename or delete one you added.
         </p>
 
         {error && <ErrorState error={error} />}
@@ -168,6 +196,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
               onShift={(by) => shift(page.slug, by)}
               onToggle={() => toggle(page.slug)}
               onRemove={() => remove(page.slug)}
+              onRename={(title) => rename(page.slug, title)}
             />
           ))}
         </ol>

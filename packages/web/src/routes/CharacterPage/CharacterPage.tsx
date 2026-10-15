@@ -14,7 +14,7 @@ import { PageEditor } from "./PageEditor.tsx";
  * A page renders its blocks whether or not the character and its derived block have
  * loaded — a block that reads either shows as unavailable while it is in flight or when
  * the API could not answer. `?edit` in the URL opens the page's editor in place of its
- * blocks, so a page just created lands ready to build.
+ * blocks.
  */
 export function CharacterPage() {
   const { id = "", slug = "" } = useParams();

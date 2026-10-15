@@ -68,7 +68,7 @@ const navTitles = () =>
     .queryAllByRole("link")
     .map((link) => link.textContent);
 
-const status = () => document.querySelector("dialog [aria-live='polite']");
+const status = () => document.querySelector("dialog p[aria-live='polite']");
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -212,7 +212,7 @@ describe("ManagePages", () => {
     expect(navTitles()).toEqual(["Stats"]);
   });
 
-  it("creates a page under a fresh slug and opens it in its editor", async () => {
+  it("creates a page under a fresh slug behind the dialog, its title focused for renaming", async () => {
     const server = stubServer([...presetPageRecords(), { ...GRAPPLE, slug: "new-page" }]);
     const router = await renderManaging();
 
@@ -227,8 +227,26 @@ describe("ManagePages", () => {
       blocks: [],
     });
     expect(router.state.location.pathname).toBe("/characters/abc/p/new-page-2");
-    expect(router.state.location.search).toBe("?edit");
-    expect(await screen.findByRole("textbox", { name: "Page title" })).toHaveValue("New page");
+    expect(router.state.location.search).toBe("");
+    expect(screen.getByRole("heading", { level: 2, name: "Manage pages" })).toBeInTheDocument();
+    expect(status()).toHaveTextContent("New page added.");
+    const created = screen.getByRole("textbox", { name: "Rename New page" });
+    await waitFor(() => expect(created).toHaveFocus());
+    expect(created.closest("[data-page]")).toHaveAttribute("data-page", "new-page-2");
+  });
+
+  it("renames a page the user wrote in its row, keeping its slug, and never a preset", async () => {
+    const server = stubServer([GRAPPLE, ...presetPageRecords()]);
+    await renderManaging();
+
+    expect(screen.queryByRole("textbox", { name: "Rename Stats" })).not.toBeInTheDocument();
+    const field = screen.getByRole("textbox", { name: "Rename Grapple" });
+    fireEvent.change(field, { target: { value: "Shove" } });
+    fireEvent.blur(field);
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.stored()[0]).toMatchObject({ slug: "grapple", title: "Shove" });
+    expect(await screen.findByRole("textbox", { name: "Rename Shove" })).toHaveValue("Shove");
   });
 
   it("deletes a page the user wrote, never a preset, and leaves the page it was on", async () => {

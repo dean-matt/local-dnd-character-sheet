@@ -1,12 +1,13 @@
-import type { CharacterPageRecord } from "@dnd/character";
+import { type CharacterPageRecord, pageTitleSchema } from "@dnd/character";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Field } from "../../../components/Field/Field.tsx";
 
 const iconBtn =
   "flex h-7 w-7 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
 /**
- * One page in Manage pages: move it, show or hide it, and delete it where the user wrote
- * it. `lastVisible` holds hiding and deleting, which would leave no page to land on.
+ * One page in Manage pages: move it, show or hide it, and rename and delete it where the
+ * user wrote it. `lastVisible` holds hiding and deleting, which would leave no page to land on.
  */
 export function ManagePageRow({
   page,
@@ -18,6 +19,7 @@ export function ManagePageRow({
   onShift,
   onToggle,
   onRemove,
+  onRename,
 }: {
   page: CharacterPageRecord;
   first: boolean;
@@ -29,11 +31,15 @@ export function ManagePageRow({
   onShift: (by: -1 | 1) => void;
   onToggle: () => void;
   onRemove: () => void;
+  onRename: (title: string) => Promise<void>;
 }) {
   const held = lastVisible || busy;
   const heldBy = lastVisible ? lastVisibleId : undefined;
   return (
-    <li className="flex items-center gap-1.5 rounded-control border border-border px-2 py-1.5">
+    <li
+      data-page={page.slug}
+      className="flex items-center gap-1.5 rounded-control border border-border px-2 py-1.5"
+    >
       <button
         type="button"
         className={iconBtn}
@@ -52,10 +58,26 @@ export function ManagePageRow({
       >
         <ArrowDown size={13} strokeWidth={2.5} />
       </button>
-      <span className={`flex-1 truncate text-row ${page.hidden ? "text-muted" : "text-ink"}`}>
-        {page.title}
-        {page.hidden && <span className="sr-only"> (hidden)</span>}
-      </span>
+      {page.preset ? (
+        <span className={`flex-1 truncate text-row ${page.hidden ? "text-muted" : "text-ink"}`}>
+          {page.title}
+          {page.hidden && <span className="sr-only"> (hidden)</span>}
+        </span>
+      ) : (
+        <div className="min-w-0 flex-1">
+          <Field
+            mode="edit"
+            label={`Rename ${page.title}${page.hidden ? " (hidden)" : ""}`}
+            labelHidden
+            inputClassName={`py-1 text-row ${page.hidden ? "text-muted" : ""}`}
+            current={page.title}
+            format={(title) => title}
+            parse={(raw) => raw}
+            schema={pageTitleSchema}
+            onSave={onRename}
+          />
+        </div>
+      )}
       <button
         type="button"
         className={iconBtn}
