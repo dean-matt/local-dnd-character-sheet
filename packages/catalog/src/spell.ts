@@ -132,12 +132,14 @@ export function spellCastingFacts(json: Record<string, unknown>) {
 /**
  * `source` is absent on a homebrew spell, which stores an id and no source — the same
  * shape difference that tells a homebrew row from a catalog one everywhere else.
- * `origin` is the class the character learned it through.
+ * `origin` is the class the character learned it through, and `granted` marks a spell a
+ * class, race, background or feat gives rather than one the player picked.
  */
 const sheetSpellFields = {
   name: z.string().min(1),
   source: z.string().min(1).optional(),
   prepared: z.boolean(),
+  granted: z.literal(true).optional(),
   origin: z.strictObject({ name: z.string().min(1), source: z.string().min(1) }).optional(),
 };
 

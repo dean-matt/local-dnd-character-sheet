@@ -10,22 +10,39 @@ import {
 import { schoolName } from "../../../../../lib/spellSchool.ts";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../../../NotFoundTag.tsx";
+import { RemoveButton } from "../../../../RemoveButton.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../../../Tag.tsx";
+import { PreparedToggle } from "./PreparedToggle.tsx";
 import { SpellDamageChips } from "./SpellDamageChips.tsx";
 import { SpellFact } from "./SpellFact.tsx";
 
-/** `index` is the spell's place in the definition, which names its field in the report. */
+/**
+ * `index` is the spell's place in the definition, which names its field in the report.
+ * `className` names the class the spell belongs to, where more than one casts. A leveled
+ * spell prepares through its toggle; a cantrip, always ready, and a spell nothing resolves
+ * carry a mark instead.
+ */
 export function SpellRow({
   spell,
   index,
   characterId,
+  className,
+  busy,
+  onPrepare,
+  onRemove,
 }: {
   spell: SheetSpell;
   index: number;
   characterId: string;
+  className: string | undefined;
+  busy: boolean;
+  onPrepare: (prepared: boolean) => void;
+  onRemove: () => void;
 }) {
-  const marks = <Tag>{spell.prepared ? "Prepared" : "Known"}</Tag>;
+  const classTag = className && <Tag>{className}</Tag>;
+  const remove = <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />;
+  const mark = <Tag>{spell.prepared ? "Prepared" : "Known"}</Tag>;
   if (!spell.resolved) {
     return (
       <ListRow
@@ -33,7 +50,8 @@ export function SpellRow({
         source={spell.source}
         chips={
           <>
-            {marks}
+            {classTag}
+            {mark}
             <NotFoundTag
               characterId={characterId}
               homebrew={spell.source === undefined}
@@ -41,9 +59,11 @@ export function SpellRow({
             />
           </>
         }
+        remove={remove}
       />
     );
   }
+  const leveled = spell.level > 0;
   return (
     <ListRow
       name={spell.name}
@@ -52,12 +72,24 @@ export function SpellRow({
         <>
           <Tag>{schoolName(spell.school)}</Tag>
           <SpellDamageChips spell={spell} />
-          {marks}
+          {classTag}
+          {!leveled && mark}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}
         </>
       }
+      remove={remove}
       preview={firstLine(spell.entries)}
+      controls={
+        leveled && (
+          <PreparedToggle
+            name={spell.name}
+            prepared={spell.prepared}
+            onChange={onPrepare}
+            busy={busy}
+          />
+        )
+      }
       detail={{
         meta: (
           <span className="flex flex-wrap gap-x-3">

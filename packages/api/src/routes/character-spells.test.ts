@@ -157,6 +157,19 @@ describe("characterSpellsRoutes", () => {
     });
   });
 
+  it("marks a spell something granted, and leaves a pick unmarked", async () => {
+    store(
+      withSpells([
+        { ref: { name: "Shield", source: "PHB" }, granted: true },
+        { ref: { name: "Shield", source: "PHB" }, origin: WIZARD },
+      ]),
+    );
+    const [granted, picked] = await spells();
+
+    expect(granted).toMatchObject({ name: "Shield", granted: true });
+    expect(picked).not.toHaveProperty("granted");
+  });
+
   it("drops a casting fact that does not parse and keeps the rest", async () => {
     store(withSpells([{ ref: { name: "Detect Magic", source: "PHB" } }]));
     const [spell] = await spells();

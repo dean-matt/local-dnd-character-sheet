@@ -33,7 +33,7 @@ export function SpellsSection({
         <CasterNumbers character={character} derived={derived} />
         <SpellSlots character={character} derived={derived} />
       </div>
-      <SpellList character={character} />
+      <SpellList character={character} derived={derived} />
     </div>
   );
 }
