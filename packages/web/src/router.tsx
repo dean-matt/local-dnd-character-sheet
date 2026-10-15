@@ -2,7 +2,7 @@ import type { RouteObject } from "react-router";
 import { createBrowserRouter } from "react-router";
 import { CharacterLayout } from "./routes/CharacterLayout/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.tsx";
-import { CharacterPage } from "./routes/CharacterPage.tsx";
+import { CharacterPage } from "./routes/CharacterPage/CharacterPage.tsx";
 import { CharacterRedirect } from "./routes/CharacterRedirect.tsx";
 import { CharacterSettings } from "./routes/CharacterSettings/CharacterSettings.tsx";
 import { ContentLayout } from "./routes/ContentLayout.tsx";

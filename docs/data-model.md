@@ -195,6 +195,6 @@ order, in their own slots; written pages stay put. The server alone sets `preset
 
 **A page is an ordered list of blocks** — `section`, `value` (a derived field and its
 breakdown), `list` (a filter, never a row snapshot) or `text` (`{@tag}` markup). An unknown
-kind is refused on write; on read it degrades to an `unknown` block a save still keeps.
+kind or a facet its source lacks is refused on write, and read as an `unknown` block a save keeps.
 
 **Logs are pruned on insert**, in the same statement that writes the new row — nothing to schedule.

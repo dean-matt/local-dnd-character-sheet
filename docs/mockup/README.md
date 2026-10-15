@@ -65,9 +65,7 @@ widget, panel, or nav element:
   no card changes height. The header artboard's `save` tweak switches between them. The name takes the room it needs and
   the subtitle the rest, never under 160px, so some of it always shows. A long name or
   subtitle ends in an ellipsis and keeps its full text in a tooltip; the `longText`
-  tweak shows both truncated. Manage Tabs is the modal
-  the tab rail's "Manage Tabs" button opens: every tab reorders (drag) and hides here, but
-  only a tab a user added renames or deletes — delete asks for confirmation first. Rolls
+  tweak shows both truncated. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to the tab rail on the left —
   listing rolls newest first, each tagged with what it was rolled for (a weapon, a
   spell, an ability check…) and which character made it, with a Clear button and a
@@ -120,8 +118,8 @@ widget, panel, or nav element:
 ## Covered
 
 Ability scores, saves, and skills (with custom, non-ability-based
-skills); a tab rail where any tab reorders and hides, but only a user-created tab
-renames, deletes, or has its widgets added, moved, or resized; inventory split into weapons, armor, and
+skills); a tab rail where any tab reorders, hides and renames, but only a user-created
+tab deletes or has its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects; a global
 search across characters and a sample compendium, with an advanced search page, a
@@ -193,7 +191,6 @@ says how much of the artboard the app builds today.
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
-| `ManageTabs` | #242 | reorder and hide |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
@@ -201,8 +198,8 @@ says how much of the artboard the app builds today.
 | `HomebrewClasses` | #489 | nothing |
 | `HomebrewBackgrounds` | #489 | nothing |
 | `HomebrewFeats` | #489 | nothing |
-| `WidgetPicker` | #242 | nothing |
-| `CustomTab` | #242 | nothing |
+| `WidgetPicker` | #819 | nothing |
+| `CustomTab` | #819 | nothing |
 | `CharacterList` | #233, #391, #395 | all but the portraits |
 
 ## Changing a mockup

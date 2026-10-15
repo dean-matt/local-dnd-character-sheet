@@ -10,7 +10,9 @@ import { TopBar } from "./TopBar/TopBar.tsx";
  * reading whatever the previous page left focused. Moving focus to `main` on every
  * navigation after the first restores the landmark a full page load would have given
  * for free; the first is skipped so mounting the app doesn't steal focus from the
- * browser chrome. `preventScroll` leaves the scroll position to `ScrollMemory`.
+ * browser chrome. A navigation made from inside an open dialog, such as Manage pages
+ * opening a page it just added, leaves focus in the dialog that stays over the new page.
+ * `preventScroll` leaves the scroll position to `ScrollMemory`.
  */
 export function RootLayout() {
   const location = useLocation();
@@ -19,7 +21,8 @@ export function RootLayout() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs on the path alone, not on every render
   useEffect(() => {
-    if (mounted.current) mainRef.current?.focus({ preventScroll: true });
+    const inDialog = document.activeElement?.closest("dialog[open]");
+    if (mounted.current && !inDialog) mainRef.current?.focus({ preventScroll: true });
     mounted.current = true;
   }, [location.pathname]);
 

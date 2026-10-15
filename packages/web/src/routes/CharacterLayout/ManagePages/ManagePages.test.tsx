@@ -68,7 +68,7 @@ const navTitles = () =>
     .queryAllByRole("link")
     .map((link) => link.textContent);
 
-const status = () => document.querySelector("dialog [aria-live='polite']");
+const status = () => document.querySelector("dialog p[aria-live='polite']");
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -205,11 +205,107 @@ describe("ManagePages", () => {
 
     const hide = screen.getByRole("button", { name: "Hide Stats" });
     expect(hide).toHaveAttribute("aria-disabled", "true");
-    expect(hide).toHaveAccessibleDescription("The last visible page cannot be hidden.");
+    expect(hide).toHaveAccessibleDescription("The last visible page cannot be hidden or deleted.");
     fireEvent.click(hide);
 
     expect(server.puts).toHaveLength(0);
     expect(navTitles()).toEqual(["Stats"]);
+  });
+
+  it("creates a page under a fresh slug behind the dialog, its title focused for renaming", async () => {
+    const server = stubServer([...presetPageRecords(), { ...GRAPPLE, slug: "new-page" }]);
+    const router = await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "New page" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.stored().at(-1)).toEqual({
+      slug: "new-page-2",
+      title: "New page",
+      hidden: false,
+      preset: false,
+      blocks: [],
+    });
+    expect(router.state.location.pathname).toBe("/characters/abc/p/new-page-2");
+    expect(router.state.location.search).toBe("");
+    expect(screen.getByRole("heading", { level: 2, name: "Manage pages" })).toBeInTheDocument();
+    expect(status()).toHaveTextContent("New page added.");
+    const created = screen.getByRole("textbox", { name: "Rename New page" });
+    await waitFor(() => expect(created).toHaveFocus());
+    expect(created.closest("[data-page]")).toHaveAttribute("data-page", "new-page-2");
+  });
+
+  it("undoes a page's creation, leaving it for the first visible page", async () => {
+    const server = stubServer(presetPageRecords());
+    const router = await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "New page" }));
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(2));
+    expect(server.stored().map((page) => page.slug)).not.toContain("new-page");
+    expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
+  });
+
+  it("renames a page the user wrote in its row, keeping its slug", async () => {
+    const server = stubServer([GRAPPLE, ...presetPageRecords()]);
+    await renderManaging();
+
+    const field = screen.getByRole("textbox", { name: "Rename Grapple" });
+    fireEvent.change(field, { target: { value: "Shove" } });
+    fireEvent.blur(field);
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.stored()[0]).toMatchObject({ slug: "grapple", title: "Shove" });
+    expect(await screen.findByRole("textbox", { name: "Rename Shove" })).toHaveValue("Shove");
+  });
+
+  it("renames a preset in its row, and restoring the defaults puts its title back", async () => {
+    const server = stubServer(presetPageRecords());
+    await renderManaging();
+
+    const field = screen.getByRole("textbox", { name: "Rename Stats" });
+    fireEvent.change(field, { target: { value: "Numbers" } });
+    fireEvent.blur(field);
+    await waitFor(() =>
+      expect(server.stored()[0]).toMatchObject({ slug: "stats", title: "Numbers" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    await waitFor(() =>
+      expect(server.stored()[0]).toMatchObject({ slug: "stats", title: "Stats" }),
+    );
+    expect(await screen.findByRole("textbox", { name: "Rename Stats" })).toHaveValue("Stats");
+  });
+
+  it("deletes a page the user wrote, never a preset, and leaves the page it was on", async () => {
+    const server = stubServer([GRAPPLE, ...presetPageRecords()]);
+    const router = await renderManaging("/characters/abc/p/grapple");
+
+    expect(screen.queryByRole("button", { name: "Delete Stats" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Grapple" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.stored().map((page) => page.slug)).not.toContain("grapple");
+    expect(status()).toHaveTextContent("Grapple deleted.");
+    expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
+  });
+
+  it("undoes a delete, writing back the list before it", async () => {
+    const server = stubServer([GRAPPLE, ...presetPageRecords()]);
+    await renderManaging();
+    const undo = screen.getByRole("button", { name: "Undo page change" });
+    expect(undo).toHaveAttribute("aria-disabled", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Grapple" }));
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    fireEvent.click(undo);
+
+    await waitFor(() => expect(server.puts).toHaveLength(2));
+    expect(server.stored().map((page) => page.slug)[0]).toBe("grapple");
+    expect(status()).toHaveTextContent("Undid the last page change.");
+    expect(undo).toHaveAttribute("aria-disabled", "true");
   });
 
   it("restores the presets' seeded order and visibility, leaving a written page alone", async () => {
@@ -230,5 +326,18 @@ describe("ManagePages", () => {
     );
     expect(server.stored()[0]).toEqual(GRAPPLE);
     expect(status()).toHaveTextContent("Default pages restored.");
+  });
+
+  it("undoes a restore, writing back the list before it", async () => {
+    const before = [GRAPPLE, ...presetPageRecords().reverse()];
+    const server = stubServer(before);
+    await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Default pages restored."));
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.puts[0]).toEqual(before.map(({ preset: _, ...page }) => page));
   });
 });

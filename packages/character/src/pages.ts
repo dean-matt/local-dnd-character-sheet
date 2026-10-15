@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isUnique } from "./keys.ts";
 
-const SHEET_SECTIONS = [
+export const SHEET_SECTIONS = [
   "abilities",
   "spells",
   "inventory",
@@ -24,7 +24,7 @@ const sectionBlockSchema = z.strictObject({
  * `spellcasting` are keyed collections a block would need a second field to address,
  * and nothing renders them yet.
  */
-const VALUE_BLOCK_FIELDS = [
+export const VALUE_BLOCK_FIELDS = [
   "hitPointMaximum",
   "armorClass",
   "initiative",
@@ -38,18 +38,49 @@ const valueBlockSchema = z.strictObject({
 });
 
 /** Which of the sheet's own lists a `list` block narrows. Abilities is not a list. */
-const LIST_BLOCK_SOURCES = ["spells", "inventory", "features"] as const;
+export const LIST_BLOCK_SOURCES = ["spells", "inventory", "features"] as const;
 
 /**
- * A saved filter over a list the sheet already renders, never a snapshot of the rows
- * it matched. The facets stay an opaque bag until something reads them — narrowing by
- * level or type is a later change, not a new field here.
+ * What narrows a `list` block's rows. Every facet is optional, and a filter with none
+ * matches every row. `search` matches a row's name.
  */
-const listBlockSchema = z.strictObject({
-  kind: z.literal("list"),
-  source: z.enum(LIST_BLOCK_SOURCES),
-  filter: z.record(z.string(), z.unknown()).default({}),
+const listFilterSchema = z.strictObject({
+  search: z.string().trim().min(1).optional(),
+  levels: z
+    .array(z.int().min(0).max(9))
+    .min(1)
+    .refine((levels) => isUnique(levels, String), {
+      error: "the same spell level is listed twice",
+    })
+    .optional(),
+  prepared: z.literal(true).optional(),
+  equipped: z.literal(true).optional(),
 });
+
+/** The one source each source-specific facet narrows; a facet absent here narrows any. */
+const LIST_FACET_SOURCE = {
+  levels: "spells",
+  prepared: "spells",
+  equipped: "inventory",
+} as const satisfies Partial<Record<keyof ListFilter, ListBlockSource>>;
+
+/** Whether a list of `source` has `facet` to narrow by. */
+export function facetApplies(facet: string, source: ListBlockSource): boolean {
+  const only = LIST_FACET_SOURCE[facet as keyof typeof LIST_FACET_SOURCE];
+  return only === undefined || only === source;
+}
+
+/** A saved filter over a list the sheet already renders, never a snapshot of the rows it matched. */
+const listBlockSchema = z
+  .strictObject({
+    kind: z.literal("list"),
+    source: z.enum(LIST_BLOCK_SOURCES),
+    filter: listFilterSchema.default({}),
+  })
+  .refine(
+    (block) => Object.keys(block.filter).every((facet) => facetApplies(facet, block.source)),
+    { error: "the filter narrows by a facet this list does not have", path: ["filter"] },
+  );
 
 /** A note in the same `{@tag}` markup a catalog row's prose carries. */
 const textBlockSchema = z.strictObject({
@@ -92,6 +123,8 @@ const pageBlockSchema = z.discriminatedUnion("kind", [
 export type PageBlock = z.infer<typeof pageBlockSchema>;
 export type ValueBlockField = (typeof VALUE_BLOCK_FIELDS)[number];
 export type ListBlockSource = (typeof LIST_BLOCK_SOURCES)[number];
+export type ListFilter = z.infer<typeof listFilterSchema>;
+export type SheetSection = (typeof SHEET_SECTIONS)[number];
 
 /**
  * A block read out of `characters.db` that the schema refuses degrades to `unknown`
@@ -111,9 +144,28 @@ const pageSlugSchema = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
   error: "a slug is lowercase letters and digits, joined by single hyphens",
 });
 
+/**
+ * A slug for a new page titled `title`, distinct from every slug in `taken`. A retitle
+ * keeps the slug it was created with, so this runs once per page.
+ */
+export function newPageSlug(title: string, taken: Iterable<string>): string {
+  const base =
+    title
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "page";
+  const used = new Set(taken);
+  let slug = base;
+  for (let n = 2; used.has(slug); n++) slug = `${base}-${n}`;
+  return slug;
+}
+
+export const pageTitleSchema = z.string().trim().min(1);
+
 const characterPageSchema = z.strictObject({
   slug: pageSlugSchema,
-  title: z.string().trim().min(1),
+  title: pageTitleSchema,
   hidden: z.boolean().default(false),
   blocks: z.array(pageBlockSchema),
 });
