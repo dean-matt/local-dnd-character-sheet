@@ -14,6 +14,8 @@ type Picked = { ref: EntryRef; name: string };
 export interface PickFieldProps {
   /** The section's name, such as `Cantrips` or `Spells Known`. */
   heading: string;
+  /** The heading's element, one level under whatever holds the field; `h2` unless named. */
+  headingLevel?: "h2" | "h4";
   /** What one pick is called in the picker's label, such as `cantrip`. */
   noun: string;
   /** How many the character may pick, `undefined` where nothing states a number. */
@@ -44,6 +46,7 @@ export interface PickFieldProps {
  */
 export function PickField({
   heading,
+  headingLevel: Heading = "h2",
   noun,
   count,
   note,
@@ -70,9 +73,9 @@ export function PickField({
     replacing && picked.find((each) => entryKey(each.ref) === entryKey(replacing.ref));
   return (
     <section aria-labelledby={id} className="flex flex-col gap-1.5">
-      <h2 id={id} className={HEADING}>
+      <Heading id={id} className={HEADING}>
         {heading}
-      </h2>
+      </Heading>
       {count !== undefined && (
         <p
           aria-live="polite"

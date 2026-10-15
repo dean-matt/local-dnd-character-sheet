@@ -57,6 +57,7 @@ export function OptionalFeaturePicks({
           <PickField
             key={featureType}
             heading={label}
+            headingLevel="h4"
             noun={featureTypeNoun(featureType)}
             count={tally.known}
             note={<EntitlementNote tally={tally} />}

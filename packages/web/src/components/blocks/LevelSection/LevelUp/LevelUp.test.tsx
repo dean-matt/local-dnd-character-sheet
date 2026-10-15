@@ -878,6 +878,33 @@ describe("LevelUp", () => {
       ).toBeVisible();
     });
 
+    it("takes back the optional features picked when the subclass changes", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Battle Master");
+      await within(dialog()).findByRole("region", { name: "New Maneuver (Battle Master)" });
+      await pickSpell("Add a maneuver", "Parry");
+      await within(dialog()).findByRole("button", { name: "Remove Parry" });
+
+      choose("Fighter subclass", "Champion");
+      await waitFor(() =>
+        expect(
+          within(dialog()).queryByRole("region", { name: "New Maneuver (Battle Master)" }),
+        ).toBeNull(),
+      );
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().optionalFeatures).toEqual([]);
+    });
+
     it("takes back the spells picked when the level goes to another class", async () => {
       const base = sorcerer(3);
       renderSeeded({
