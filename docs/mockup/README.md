@@ -148,7 +148,6 @@ Simplifications specific to these widgets:
 
 - No mobile or narrow-width pass exists in this style yet — an earlier, since-removed
   version of this mockup had one; a phone-width layout still needs redoing here.
-- The search dropdowns take Tab and Escape, but not the arrow keys.
 - On Custom Tab, dragging a widget's corner cycles it through four preset sizes
   (S/M/L/XL) rather than resizing to an arbitrary pixel size.
 
