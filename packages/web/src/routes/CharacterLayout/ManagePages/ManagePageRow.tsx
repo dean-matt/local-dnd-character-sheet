@@ -6,7 +6,7 @@ const iconBtn =
   "flex h-7 w-7 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
 /**
- * One page in Manage pages: move it, show or hide it, and rename and delete it where the
+ * One page in Manage pages: move, rename, and show or hide it, and delete it where the
  * user wrote it. `lastVisible` holds hiding and deleting, which would leave no page to land on.
  */
 export function ManagePageRow({
@@ -58,26 +58,19 @@ export function ManagePageRow({
       >
         <ArrowDown size={13} strokeWidth={2.5} />
       </button>
-      {page.preset ? (
-        <span className={`flex-1 truncate text-row ${page.hidden ? "text-muted" : "text-ink"}`}>
-          {page.title}
-          {page.hidden && <span className="sr-only"> (hidden)</span>}
-        </span>
-      ) : (
-        <div className="min-w-0 flex-1">
-          <Field
-            mode="edit"
-            label={`Rename ${page.title}${page.hidden ? " (hidden)" : ""}`}
-            labelHidden
-            inputClassName={`py-1 text-row ${page.hidden ? "text-muted" : ""}`}
-            current={page.title}
-            format={(title) => title}
-            parse={(raw) => raw}
-            schema={pageTitleSchema}
-            onSave={onRename}
-          />
-        </div>
-      )}
+      <div className="min-w-0 flex-1">
+        <Field
+          mode="edit"
+          label={`Rename ${page.title}${page.hidden ? " (hidden)" : ""}`}
+          labelHidden
+          inputClassName={`py-1 text-row ${page.hidden ? "text-muted" : ""}`}
+          current={page.title}
+          format={(title) => title}
+          parse={(raw) => raw}
+          schema={pageTitleSchema}
+          onSave={onRename}
+        />
+      </div>
       <button
         type="button"
         className={iconBtn}

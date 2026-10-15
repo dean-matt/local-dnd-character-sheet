@@ -1,7 +1,7 @@
 /**
- * Edits one page in place: its title, and the blocks on it — added from a picker, edited,
- * moved and removed. Every change saves as it is made, through the page list's one write
- * queue, and the undo button walks those changes back.
+ * Edits the blocks on one page in place — added from a picker, edited, moved and removed.
+ * The page's title renames in Manage pages, not here. Every change saves as it is made,
+ * through the page list's one write queue, and the undo button walks those changes back.
  *
  * Blocks move with up and down buttons rather than dragging, as pages do in Manage pages:
  * a button works the same from a pointer, a keyboard and a screen reader. Focus follows a
@@ -12,10 +12,9 @@
  * queues a save behind its last one, and that save finds its block by id when its turn
  * comes, so a move or a remove in between cannot point it at another block.
  */
-import { type CharacterPageRecord, type PageBlock, pageTitleSchema } from "@dnd/character";
+import type { CharacterPageRecord, PageBlock } from "@dnd/character";
 import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { Field } from "../../components/Field/Field.tsx";
 import { PagesUndoButton } from "../../components/PagesUndoButton.tsx";
 import { RemoveButton } from "../../components/RemoveButton.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
@@ -63,7 +62,7 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
   blocks.forEach((block, index) => {
     named.current.set(block, ids.current[index] as number);
   });
-  // Scopes each field's undo key to this opening of the editor, so a retitle after closing
+  // Scopes each field's undo key to this opening of the editor, so an edit after closing
   // and reopening it undoes on its own rather than with the one before.
   const session = useId();
 
@@ -121,23 +120,7 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
   return (
     <div ref={root} className="flex flex-col gap-3">
       {replace.error && <ErrorState error={replace.error} />}
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="min-w-0 grow">
-          <Field
-            mode="edit"
-            label="Page title"
-            current={page.title}
-            format={(title) => title}
-            parse={(raw) => raw}
-            schema={pageTitleSchema}
-            onSave={(title: string) =>
-              replace.save(
-                replace.current().map((each) => (each.slug === slug ? { ...each, title } : each)),
-                `${session}:title:${slug}`,
-              )
-            }
-          />
-        </div>
+      <div className="flex justify-end">
         <PagesUndoButton
           replace={replace}
           onUndone={() => setAnnouncement("Undid the last page change.")}

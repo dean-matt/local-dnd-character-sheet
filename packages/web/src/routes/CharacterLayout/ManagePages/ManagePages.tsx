@@ -3,8 +3,8 @@
  * than dragging: a button works the same from a pointer, a keyboard and a screen reader,
  * where a drag needs a hand-built keyboard path beside it. Each change is announced
  * through one polite live region, since a row that moves makes no sound on its own.
- * New page adds a page behind the dialog and focuses its title for renaming there. A page
- * the user wrote renames in its row; a preset can be hidden but never renamed or deleted here.
+ * New page adds a page behind the dialog and focuses its title for renaming there. Every
+ * page renames in its row, here and nowhere else; only a page the user wrote deletes.
  *
  * Renders as a modal dialog: focus is trapped inside while open, Escape closes it,
  * and focus returns to the trigger button on close.
@@ -178,7 +178,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
         </div>
 
         <p id={descId} className="text-[11px] text-muted">
-          Add a page, reorder or show/hide any page, and rename or delete one you added.
+          Add a page, reorder, rename or show/hide any page, and delete one you added.
         </p>
 
         {error && <ErrorState error={error} />}

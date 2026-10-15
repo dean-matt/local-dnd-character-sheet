@@ -248,11 +248,10 @@ describe("ManagePages", () => {
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
-  it("renames a page the user wrote in its row, keeping its slug, and never a preset", async () => {
+  it("renames a page the user wrote in its row, keeping its slug", async () => {
     const server = stubServer([GRAPPLE, ...presetPageRecords()]);
     await renderManaging();
 
-    expect(screen.queryByRole("textbox", { name: "Rename Stats" })).not.toBeInTheDocument();
     const field = screen.getByRole("textbox", { name: "Rename Grapple" });
     fireEvent.change(field, { target: { value: "Shove" } });
     fireEvent.blur(field);
@@ -260,6 +259,24 @@ describe("ManagePages", () => {
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored()[0]).toMatchObject({ slug: "grapple", title: "Shove" });
     expect(await screen.findByRole("textbox", { name: "Rename Shove" })).toHaveValue("Shove");
+  });
+
+  it("renames a preset in its row, and restoring the defaults puts its title back", async () => {
+    const server = stubServer(presetPageRecords());
+    await renderManaging();
+
+    const field = screen.getByRole("textbox", { name: "Rename Stats" });
+    fireEvent.change(field, { target: { value: "Numbers" } });
+    fireEvent.blur(field);
+    await waitFor(() =>
+      expect(server.stored()[0]).toMatchObject({ slug: "stats", title: "Numbers" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    await waitFor(() =>
+      expect(server.stored()[0]).toMatchObject({ slug: "stats", title: "Stats" }),
+    );
+    expect(await screen.findByRole("textbox", { name: "Rename Stats" })).toHaveValue("Stats");
   });
 
   it("deletes a page the user wrote, never a preset, and leaves the page it was on", async () => {

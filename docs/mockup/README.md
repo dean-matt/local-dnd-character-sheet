@@ -118,8 +118,8 @@ widget, panel, or nav element:
 ## Covered
 
 Ability scores, saves, and skills (with custom, non-ability-based
-skills); a tab rail where any tab reorders and hides, but only a user-created tab
-renames, deletes, or has its widgets added, moved, or resized; inventory split into weapons, armor, and
+skills); a tab rail where any tab reorders, hides and renames, but only a user-created
+tab deletes or has its widgets added, moved, or resized; inventory split into weapons, armor, and
 gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
 short and long rest; temporary HP; status effects; a global
 search across characters and a sample compendium, with an advanced search page, a

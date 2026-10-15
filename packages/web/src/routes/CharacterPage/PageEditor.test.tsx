@@ -63,7 +63,7 @@ async function renderEditor() {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  await screen.findByRole("textbox", { name: "Page title" });
+  await screen.findByRole("button", { name: "Add block" });
 }
 
 const blockNames = () =>
@@ -97,23 +97,12 @@ describe("PageEditor", () => {
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Edit page" }));
-    expect(screen.getByRole("textbox", { name: "Page title" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add block" })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /title/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Done editing" }));
-    expect(screen.queryByRole("textbox", { name: "Page title" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add block" })).not.toBeInTheDocument();
     expect(screen.getByText("Grab them.")).toBeInTheDocument();
-  });
-
-  it("retitles the page and keeps its slug", async () => {
-    const server = stubServer([grapple([])]);
-    await renderEditor();
-
-    const title = screen.getByRole("textbox", { name: "Page title" });
-    fireEvent.change(title, { target: { value: "Grappling" } });
-    fireEvent.blur(title);
-
-    await waitFor(() => expect(server.page()?.title).toBe("Grappling"));
-    expect(server.page()?.slug).toBe("grapple");
   });
 
   it("adds a block of every kind from the picker, focusing each where it lands", async () => {
@@ -261,26 +250,28 @@ describe("PageEditor", () => {
     expect(screen.queryByRole("checkbox", { name: "Prepared only" })).not.toBeInTheDocument();
   });
 
-  it("undoes a retitle made after an undo apart from the retitle before it", async () => {
-    const server = stubServer([grapple([])]);
+  it("undoes an edit made after an undo apart from the edit before it", async () => {
+    const server = stubServer([grapple([{ kind: "text", text: "Grab." }])]);
     await renderEditor();
-    const title = screen.getByRole("textbox", { name: "Page title" });
-    const retitle = async (value: string) => {
-      fireEvent.change(title, { target: { value } });
-      fireEvent.blur(title);
-      await waitFor(() => expect(server.page()?.title).toBe(value));
+    const edit = async (value: string) => {
+      const text = screen.getByRole("textbox", { name: "Text" });
+      fireEvent.change(text, { target: { value } });
+      fireEvent.blur(text);
+      await waitFor(() => expect(server.page()?.blocks[0]).toEqual({ kind: "text", text: value }));
     };
 
-    await retitle("Grappling");
+    await edit("Grab them.");
     fireEvent.click(screen.getByRole("button", { name: "Add block" }));
     fireEvent.click(await screen.findByRole("button", { name: "Add Text" }));
-    await waitFor(() => expect(server.page()?.blocks).toHaveLength(1));
+    await waitFor(() => expect(server.page()?.blocks).toHaveLength(2));
     fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
-    await waitFor(() => expect(server.page()?.blocks).toEqual([]));
-    await retitle("Holds");
+    await waitFor(() => expect(server.page()?.blocks).toHaveLength(1));
+    await edit("Hold them.");
 
     fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
-    await waitFor(() => expect(server.page()?.title).toBe("Grappling"));
+    await waitFor(() =>
+      expect(server.page()?.blocks).toEqual([{ kind: "text", text: "Grab them." }]),
+    );
   });
 
   it("undoes each change in turn, a burst of typing as one", async () => {
