@@ -113,6 +113,8 @@ function overrideLabel(key: string): string {
 function keyLabel(section: keyof CharacterDefinition, key: string): string {
   if (section === "abilityScores") return ABILITY_LABEL[key as Ability] ?? key;
   if (section === "overrides") return overrideLabel(key);
+  // The sheet labels the box `story` names Backstory, after its page.
+  if (section === "backstory" && key === "story") return "Backstory";
   return capitalize(words(key));
 }
 

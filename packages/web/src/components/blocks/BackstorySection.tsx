@@ -39,7 +39,6 @@ export function BackstorySection({ character }: { character: CharacterRecord | u
       inputClassName={inputClassName}
       current={backstory[key]}
       format={(value) => value ?? ""}
-      // Whitespace alone clears the box; any other text saves as typed, line breaks kept.
       parse={(raw) => (raw.trim() ? raw : undefined)}
       schema={backstoryShape[key]}
       onSave={async (value: string | undefined) => {

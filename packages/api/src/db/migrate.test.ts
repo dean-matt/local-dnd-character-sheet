@@ -328,11 +328,12 @@ describe("migrations", () => {
       "INSERT INTO character_pages (character_id, slug, title, position, hidden, preset, blocks) VALUES (?, ?, ?, ?, 0, ?, ?)",
     );
     const text = '[{"kind":"text","text":"Raised by wolves"}]';
-    for (const id of ["1", "2"]) insertBareCharacter(sqlite, id);
+    for (const id of ["1", "2", "3"]) insertBareCharacter(sqlite, id);
     insertPage.run("1", "stats", "Stats", 0, 1, '[{"kind":"section","section":"abilities"}]');
     insertPage.run("1", "notes", "Notes", 1, 1, '[{"kind":"section","section":"notes"}]');
     insertPage.run("1", "backstory", "My story", 2, 0, text);
     insertPage.run("1", "loot", "Loot", 3, 0, "[]");
+    insertPage.run("3", "loot", "Loot", 4, 0, "[]");
 
     migrateCharacters(db);
 
@@ -358,6 +359,10 @@ describe("migrations", () => {
     expect(moved?.slug).toMatch(/^backstory-[0-9a-f]{8}$/);
     expect(loot?.slug).toBe("loot");
     expect(pages("2")).toEqual([{ ...backstory, position: 0 }]);
+    expect(pages("3").map(({ slug, position }) => ({ slug, position }))).toEqual([
+      { slug: "loot", position: 4 },
+      { slug: "backstory", position: 5 },
+    ]);
   });
 
   it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {
