@@ -8,6 +8,7 @@ import { characterRecord } from "../test/records.ts";
 import { type AddOutcome, useAddToCharacter } from "./useAddToCharacter.ts";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
+const WIZARD = { name: "Wizard", source: "XPHB" };
 const blast = { name: "Eldritch Blast", source: "XPHB" };
 const fireball = { name: "Fireball", source: "XPHB" };
 const spellHit = (ref: { name: string; source: string }) => ({
@@ -34,9 +35,15 @@ const plusOne = {
 };
 
 /**
- * Answers Fira's reads, the Warlock's spell list holding Eldritch Blast alone, and a PUT
- * with the record it was sent; `writes` collects each definition written.
+ * Answers Fira's reads, the Warlock's spell list holding Eldritch Blast alone, the Wizard's
+ * holding Fireball alone, and a PUT with the record it was sent; `writes` collects each
+ * definition written.
  */
+const spellList = (url: string) => {
+  const wizard = new URL(url, "http://x").searchParams.get("class") === "Wizard|XPHB";
+  return { items: [spellHit(wizard ? fireball : blast)], total: 1, limit: 200, offset: 0 };
+};
+
 function stubApi(definition: Partial<CharacterDefinition> = {}, failWrite = false) {
   const base = characterRecord("7", "Fira");
   const record = { ...base, definition: { ...base.definition, ...definition } };
@@ -52,9 +59,7 @@ function stubApi(definition: Partial<CharacterDefinition> = {}, failWrite = fals
       return json({ ...record, definition: written });
     }
     if (url === "/api/characters/7") return json(record);
-    if (url.startsWith("/api/search?")) {
-      return json({ items: [spellHit(blast)], total: 1, limit: 200, offset: 0 });
-    }
+    if (url.startsWith("/api/search?")) return json(spellList(url));
     if (url === "/api/classes/Warlock/XPHB/at/1") {
       return json({ level: 1, resources: [], spellSlots: [], optionalFeatures: [], features: [] });
     }
@@ -99,6 +104,20 @@ describe("useAddToCharacter", () => {
     expect(outcome).toEqual({ text: "Added Fireball (XPHB) to Fira.", note: `Noted: ${note}` });
     expect(writes[0]?.spells).toEqual([{ ref: fireball, prepared: false }]);
     expect(writes[0]?.departures).toEqual([{ field: `spells.${entryKey(fireball)}`, note }]);
+  });
+
+  it("learns a spell for the first of several classes whose list holds it", async () => {
+    const writes = stubApi({ levels: [{ class: WARLOCK }, { class: WIZARD }] });
+    const outcome = await add({ kind: "spell", ref: fireball, label: "Fireball (XPHB)" });
+    expect(outcome).toEqual({ text: "Added Fireball (XPHB) to Fira." });
+    expect(writes[0]?.spells).toEqual([{ ref: fireball, prepared: false, origin: WIZARD }]);
+  });
+
+  it("names every class's list in the note for a spell none of them holds", async () => {
+    const ember = { name: "Ember", source: "XPHB" };
+    stubApi({ levels: [{ class: WARLOCK }, { class: WIZARD }] });
+    const outcome = await add({ kind: "spell", ref: ember, label: "Ember (XPHB)" });
+    expect(outcome.note).toBe("Noted: Ember (XPHB) is not on the Warlock or Wizard spell list.");
   });
 
   it("does not learn a spell known already", async () => {
