@@ -40,6 +40,21 @@ function withoutAlignmentPage(pages: unknown): unknown {
 }
 
 /**
+ * A file exported before Backstory had a preset page lacks it, and gains the stock page just
+ * before Notes, where the migration that added it puts it on a stored character.
+ */
+function withBackstoryPage(pages: unknown): unknown {
+  if (!Array.isArray(pages)) return pages;
+  const isSlug = (slug: string) => (page: unknown) =>
+    typeof page === "object" && page !== null && "slug" in page && page.slug === slug;
+  if (pages.some(isSlug("backstory"))) return pages;
+  const stock = PRESET_PAGES.find((page) => page.slug === "backstory");
+  const notes = pages.findIndex(isSlug("notes"));
+  const at = notes === -1 ? pages.length : notes;
+  return [...pages.slice(0, at), stock, ...pages.slice(at)];
+}
+
+/**
  * A character as one file: what an export writes and an import reads. Catalog and
  * homebrew references stay as the definition holds them, so a file names rows rather
  * than carrying them, and imports whether or not they resolve here. A file names its
@@ -52,7 +67,7 @@ export const characterFileSchema = z.strictObject({
   definition: characterDefinitionSchema,
   state: characterStateSchema,
   pages: z.preprocess(
-    withoutAlignmentPage,
+    (pages) => withBackstoryPage(withoutAlignmentPage(pages)),
     characterPagesSchema.refine(
       (pages) => PRESET_PAGES.every((preset) => pages.some((page) => page.slug === preset.slug)),
       { error: `every preset page is listed: ${PRESET_PAGES.map((page) => page.slug).join(", ")}` },

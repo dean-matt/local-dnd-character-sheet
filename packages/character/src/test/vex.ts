@@ -149,6 +149,7 @@ export const definition: CharacterDefinition = {
   customSkills: [],
   money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
+  backstory: { flaws: "Trusts a pact over a friend." },
   houseRules: { encumbrance: true },
   overrides: {},
   departures: [],

@@ -51,6 +51,7 @@ export const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   alignment: "Alignment",
   money: "Money",
   appearance: "Appearance",
+  backstory: "Backstory",
   notes: "Notes",
   houseRules: "House rules",
   departures: "Departures from the rules",
@@ -62,6 +63,7 @@ const KEYED = new Set<keyof CharacterDefinition>([
   "abilityScores",
   "money",
   "appearance",
+  "backstory",
   "overrides",
 ]);
 

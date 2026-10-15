@@ -56,6 +56,11 @@ describe("characterFileSchema", () => {
     ).toEqual({ ...edited, blocks: [{ kind: "unknown", raw: section }, note] });
   });
 
+  it("gives an older file with no Backstory page the stock one, just before Notes", () => {
+    const older = PRESET_PAGES.filter((page) => page.slug !== "backstory");
+    expect(characterFileSchema.parse({ ...file, pages: older }).pages).toEqual(PRESET_PAGES);
+  });
+
   it("refuses a page marked preset, which only an import decides", () => {
     const pages = PRESET_PAGES.map((page) => ({ ...page, preset: true }));
     expect(characterFileSchema.safeParse({ ...file, pages }).success).toBe(false);

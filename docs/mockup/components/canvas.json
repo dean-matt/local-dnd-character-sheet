@@ -33,7 +33,6 @@
     "RaceFeaturesFilter.dc.html": { "x": 1440, "y": 3445, "w": 220, "h": 250, "title": "Filter — Race Features", "is_interactive": true },
     "ChosenFeatures.dc.html": { "x": 1760, "y": 3445, "w": 460, "h": 360, "title": "Chosen Features", "is_interactive": true },
     "ChosenFeaturesFilter.dc.html": { "x": 2320, "y": 3445, "w": 220, "h": 250, "title": "Filter — Chosen Features", "is_interactive": true },
-    "Backstory.dc.html": { "x": 2640, "y": 3445, "w": 560, "h": 460, "title": "Backstory", "is_interactive": true },
     "Notes.dc.html": { "x": 3300, "y": 3445, "w": 480, "h": 420, "title": "Notes", "is_interactive": true },
 
     "LevelUpModal.dc.html": { "x": 2100, "y": 4225, "w": 460, "h": 900, "title": "Level Up", "is_interactive": true },
@@ -54,7 +53,7 @@
 
     "CharacterList.dc.html": { "x": 0, "y": 10205, "w": 1440, "h": 640, "title": "Character List — pending #206", "is_interactive": true }
   },
-  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "ShortRestModal.dc.html", "LongRestModal.dc.html", "Weapons.dc.html", "WeaponsFilter.dc.html", "Armor.dc.html", "ArmorFilter.dc.html", "Gear.dc.html", "GearFilter.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "SpellListFilter.dc.html", "ClassFeatures.dc.html", "ClassFeaturesFilter.dc.html", "RaceFeatures.dc.html", "RaceFeaturesFilter.dc.html", "ChosenFeatures.dc.html", "ChosenFeaturesFilter.dc.html", "Backstory.dc.html", "Notes.dc.html", "LevelUpModal.dc.html", "ManageTabs.dc.html", "CharacterHeader.dc.html", "RollsPanel.dc.html", "RollsPanelFilter.dc.html", "HomebrewRaces.dc.html", "HomebrewClasses.dc.html", "HomebrewBackgrounds.dc.html", "HomebrewFeats.dc.html", "WidgetPicker.dc.html", "CustomTab.dc.html", "CharacterList.dc.html"],
+  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "ShortRestModal.dc.html", "LongRestModal.dc.html", "Weapons.dc.html", "WeaponsFilter.dc.html", "Armor.dc.html", "ArmorFilter.dc.html", "Gear.dc.html", "GearFilter.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "SpellListFilter.dc.html", "ClassFeatures.dc.html", "ClassFeaturesFilter.dc.html", "RaceFeatures.dc.html", "RaceFeaturesFilter.dc.html", "ChosenFeatures.dc.html", "ChosenFeaturesFilter.dc.html", "Notes.dc.html", "LevelUpModal.dc.html", "ManageTabs.dc.html", "CharacterHeader.dc.html", "RollsPanel.dc.html", "RollsPanelFilter.dc.html", "HomebrewRaces.dc.html", "HomebrewClasses.dc.html", "HomebrewBackgrounds.dc.html", "HomebrewFeats.dc.html", "WidgetPicker.dc.html", "CustomTab.dc.html", "CharacterList.dc.html"],
   "notes": {},
   "designSystems": []
 }

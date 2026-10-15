@@ -320,6 +320,20 @@ const appearanceSchema = z
   .prefault({});
 
 /**
+ * Who the character is, in the player's words: the printed sheet's four personality boxes
+ * and the backstory under them, each absent until written. Stored as typed, line breaks kept.
+ */
+const backstorySchema = z
+  .strictObject({
+    personalityTraits: z.string().min(1).optional(),
+    ideals: z.string().min(1).optional(),
+    bonds: z.string().min(1).optional(),
+    flaws: z.string().min(1).optional(),
+    story: z.string().min(1).optional(),
+  })
+  .prefault({});
+
+/**
  * A value the character holds against the rules as printed, and why, noted where the
  * player took a path the rules do not offer. `field` is the value's path through the
  * definition — `abilityScores.str`, `race` — so a sheet can mark the value it names.
@@ -477,6 +491,7 @@ export const characterDefinitionSchema = z.strictObject({
   alignment: z.string().min(1).optional(),
   money: moneySchema,
   appearance: appearanceSchema,
+  backstory: backstorySchema,
   /** Whatever the player writes down, unbounded and stored verbatim. */
   notes: z.string().default(""),
   houseRules: houseRulesSchema,

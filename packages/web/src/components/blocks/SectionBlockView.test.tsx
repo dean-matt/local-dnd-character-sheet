@@ -56,6 +56,7 @@ describe("SectionBlockView", () => {
   it.each([
     ["identity", "Identity"],
     ["level", "Level"],
+    ["backstory", "Backstory"],
     ["notes", "Notes"],
   ] as const)("renders the %s section, which waits on the character", (section, page) => {
     render(
