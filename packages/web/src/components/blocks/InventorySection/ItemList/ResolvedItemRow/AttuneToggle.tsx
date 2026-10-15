@@ -1,5 +1,4 @@
-const PILL =
-  "rounded-pill border px-2 py-0.5 font-bold text-chip leading-3 tracking-chip uppercase";
+import { TOGGLE_PILL } from "../../../../../lib/chipStyles.ts";
 
 /** Presses to attune and again to end it. */
 export function AttuneToggle({
@@ -20,7 +19,7 @@ export function AttuneToggle({
       aria-pressed={attuned}
       aria-disabled={busy || undefined}
       onClick={() => onChange(!attuned)}
-      className={`${PILL} ${attuned ? "border-accent bg-accent text-white" : "border-border bg-surface text-muted"}`}
+      className={`${TOGGLE_PILL} ${attuned ? "border-accent bg-accent text-white" : "border-border bg-surface text-muted"}`}
     >
       {attuned ? "Attuned" : "Attune"}
     </button>

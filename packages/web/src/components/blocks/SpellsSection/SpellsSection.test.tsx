@@ -247,7 +247,11 @@ describe("SpellsSection", () => {
 
     const row = (await screen.findByText("Lost Spell")).closest("li") as HTMLElement;
     expect(row).toHaveTextContent("Not found in the catalog");
-    expect(within(row).queryByRole("button")).toBeNull();
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((button) => button.ariaLabel),
+    ).toEqual(["Remove Lost Spell"]);
   });
 
   it("names the row a renamed reference became, without showing it", async () => {
@@ -265,7 +269,11 @@ describe("SpellsSection", () => {
     const row = (await screen.findByText("Lost Spell")).closest("li") as HTMLElement;
     expect(await within(row).findByText("Renamed to Found Spell (XPHB)")).toBeInTheDocument();
     expect(row).not.toHaveTextContent("Not found in the catalog");
-    expect(within(row).queryByRole("button")).toBeNull();
+    expect(
+      within(row)
+        .getAllByRole("button")
+        .map((button) => button.ariaLabel),
+    ).toEqual(["Remove Lost Spell"]);
   });
 
   it("reads the rename off the spell's own field, not another entry of the same name", async () => {
