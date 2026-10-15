@@ -4,9 +4,13 @@
  * queue, and the undo button walks those changes back.
  *
  * Blocks move with up and down buttons rather than dragging, as pages do in Manage pages:
- * a button works the same from a pointer, a keyboard and a screen reader. A block carries
- * no id, so focus follows a moved block by its new position, and each change is announced
- * through one polite live region.
+ * a button works the same from a pointer, a keyboard and a screen reader. Focus follows a
+ * moved block by its new position, and each change is announced through one polite live
+ * region.
+ *
+ * A stored block carries no id, so the editor gives each one an id of its own. A field
+ * queues a save behind its last one, and that save finds its block by id when its turn
+ * comes, so a move or a remove in between cannot point it at another block.
  */
 import { type CharacterPageRecord, type PageBlock, pageTitleSchema } from "@dnd/character";
 import { ArrowDown, ArrowUp, Plus } from "lucide-react";
@@ -39,7 +43,26 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
     setFocus(undefined);
   });
 
-  const { slug, blocks } = page;
+  const { slug } = page;
+  // Read from the cache a write updates, since the `page` the route passes can trail it
+  // by a render, and the ids below must follow the list a queued save edits.
+  const { blocks } = replace.current().find((each) => each.slug === slug) ?? page;
+
+  // The ids in the cache's block order. The editor's own moves, removes and adds keep them
+  // in step as they write; any other change, such as an undo, realigns them here by the
+  // block objects they last named, or keeps them by position where the count still matches.
+  const ids = useRef<number[]>([]);
+  const named = useRef(new WeakMap<PageBlock, number>());
+  const nextId = useRef(0);
+  const known = blocks.map((block) => named.current.get(block));
+  if (known.every((each) => each !== undefined) && new Set(known).size === known.length) {
+    ids.current = known as number[];
+  } else if (ids.current.length !== blocks.length) {
+    ids.current = blocks.map(() => nextId.current++);
+  }
+  blocks.forEach((block, index) => {
+    named.current.set(block, ids.current[index] as number);
+  });
   // Scopes each field's undo key to this opening of the editor, so a retitle after closing
   // and reopening it undoes on its own rather than with the one before.
   const session = useId();
@@ -50,21 +73,24 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
       .current()
       .map((each) => (each.slug === slug ? { ...each, blocks: edit(each.blocks) } : each));
 
-  const atIndex = (index: number, edit: (latest: PageBlock) => PageBlock) =>
-    withBlocks((latest) => latest.map((block, at) => (at === index ? edit(block) : block)));
+  const byId = (id: number, edit: (latest: PageBlock) => PageBlock) =>
+    withBlocks((latest) =>
+      latest.map((block, at) => (ids.current[at] === id ? edit(block) : block)),
+    );
+
+  function reorder<T>(list: T[], from: number, to: number) {
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    if (moved !== undefined) next.splice(to, 0, moved);
+    return next;
+  }
 
   function move(index: number, by: -1 | 1) {
     const to = index + by;
     const block = blocks[index];
     if (!block || to < 0 || to >= blocks.length) return;
-    replace.write(
-      withBlocks((latest) => {
-        const next = [...latest];
-        const [moved] = next.splice(index, 1);
-        if (moved) next.splice(to, 0, moved);
-        return next;
-      }),
-    );
+    replace.write(withBlocks((latest) => reorder(latest, index, to)));
+    ids.current = reorder(ids.current, index, to);
     setFocus(`[data-block="${to}"] [data-move="${by < 0 ? "up" : "down"}"]`);
     setAnnouncement(`${blockLabel(block)} moved to position ${to + 1} of ${blocks.length}.`);
   }
@@ -73,12 +99,14 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
     const block = blocks[index];
     if (!block) return;
     replace.write(withBlocks((latest) => latest.filter((_, at) => at !== index)));
+    ids.current = ids.current.filter((_, at) => at !== index);
     setFocus("[data-add-block]");
     setAnnouncement(`${blockLabel(block)} removed.`);
   }
 
   function add(block: PageBlock) {
     replace.write(withBlocks((latest) => [...latest, block]));
+    ids.current = [...ids.current, nextId.current++];
     setPicking(false);
     setFocus(`[data-block="${blocks.length}"] [data-move="up"]`);
     setAnnouncement(`${blockLabel(block)} added.`);
@@ -116,10 +144,10 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
         <ol aria-label="Blocks" className="flex flex-col gap-2">
           {blocks.map((block, index) => {
             const name = blockLabel(block);
+            const id = ids.current[index] as number;
             return (
               <li
-                // biome-ignore lint/suspicious/noArrayIndexKey: a page's blocks carry no id of their own.
-                key={index}
+                key={id}
                 data-block={index}
                 aria-label={`${name}, block ${index + 1} of ${blocks.length}`}
                 className="flex flex-col gap-2 rounded-card border border-border border-dashed p-2.5"
@@ -150,10 +178,8 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
                 </div>
                 <BlockSettings
                   block={block}
-                  onChange={(edit) => replace.write(atIndex(index, edit))}
-                  onSave={(edit) =>
-                    replace.save(atIndex(index, edit), `${session}:block:${slug}:${index}`)
-                  }
+                  onChange={(edit) => replace.write(byId(id, edit))}
+                  onSave={(edit) => replace.save(byId(id, edit), `${session}:block:${slug}:${id}`)}
                 />
               </li>
             );

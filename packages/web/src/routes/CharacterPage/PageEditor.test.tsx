@@ -14,16 +14,21 @@ const grapple = (blocks: PageBlock[]): CharacterPageRecord => ({
   blocks,
 });
 
-/** A fake of the pages routes: a `PUT` stores the list it is sent and answers it back. */
+/**
+ * A fake of the pages routes: a `PUT` stores the list it is sent and answers it back.
+ * `hold` keeps every `PUT` waiting until the function it returns is called.
+ */
 function stubServer(initial: CharacterPageRecord[]) {
   let stored = initial;
   const puts: CharacterPageRecord[][] = [];
+  let gate: Promise<void> | undefined;
   const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url === "/api/characters/1/pages" && init?.method === "PUT") {
+        await gate;
         const body = JSON.parse(String(init.body)) as Omit<CharacterPageRecord, "preset">[];
         stored = body.map((page) => ({ ...page, preset: false }));
         puts.push(stored);
@@ -37,7 +42,14 @@ function stubServer(initial: CharacterPageRecord[]) {
     }),
   );
   const page = () => stored.find((each) => each.slug === "grapple");
-  return { puts, page };
+  const hold = () => {
+    let release = () => {};
+    gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    return release;
+  };
+  return { puts, page, hold };
 }
 
 async function renderEditor() {
@@ -149,6 +161,32 @@ describe("PageEditor", () => {
       expect(server.page()?.blocks.map((block) => block.kind === "value" && block.field)).toEqual([
         "initiative",
         "armorClass",
+      ]),
+    );
+  });
+
+  it("lands a save queued behind another on the block typed into, after a move", async () => {
+    const server = stubServer([
+      grapple([
+        { kind: "text", text: "A" },
+        { kind: "text", text: "B" },
+      ]),
+    ]);
+    await renderEditor();
+    const release = server.hold();
+    const [first] = screen.getAllByRole("textbox", { name: "Text" }) as [HTMLElement];
+
+    fireEvent.change(first, { target: { value: "A1" } });
+    fireEvent.blur(first);
+    fireEvent.change(first, { target: { value: "A2" } });
+    fireEvent.blur(first);
+    fireEvent.click(screen.getAllByRole("button", { name: "Move Text down" })[0] as HTMLElement);
+    release();
+
+    await waitFor(() =>
+      expect(server.page()?.blocks).toEqual([
+        { kind: "text", text: "B" },
+        { kind: "text", text: "A2" },
       ]),
     );
   });
