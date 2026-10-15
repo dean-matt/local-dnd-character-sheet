@@ -71,7 +71,7 @@ export function SearchResultOption({
       aria-disabled={opens ? undefined : true}
       onMouseEnter={onPoint}
       onClick={onPick}
-      className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 ${active ? "bg-accent-tint" : ""} ${opens ? "cursor-pointer" : "cursor-not-allowed"}`}
+      className={`flex min-w-0 grow items-center gap-2.5 rounded-lg px-2.5 py-2 ${active ? "bg-accent-tint" : ""} ${opens ? "cursor-pointer" : "cursor-not-allowed"}`}
     >
       {"character" in result && (
         <CharacterAvatar id={result.character.id} name={result.character.name} />

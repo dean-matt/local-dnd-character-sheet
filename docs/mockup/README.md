@@ -55,11 +55,7 @@ widget, panel, or nav element:
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
   and new spells for a class that gains them, all gating Apply until every open choice
   the level actually offers is made.
-- Page chrome: Top Bar Navigation (Character menu, Mechanics
-  menu, search, a Feedback link that opens a new GitHub discussion in a new tab, and a
-  Settings link), Character Header, Rolls Panel. The top bar marks
-  the section you are in by its label alone — accent-colored and bold, with no fill or
-  underline — and an open menu takes a gray fill instead. Character Header is one 52px
+- Page chrome: Character Header, Rolls Panel. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
@@ -83,70 +79,10 @@ widget, panel, or nav element:
   line ("Filtering or searching the log") and its single-character framing the same way
   the character list's avatar widens past #206's — #311 and #312 are the new issues that
   settle those two, same as #310 settled the character list's own widening.
-- Search: while Top Bar Navigation's search pill has focus or a query, a scrim dims
-  everything else; clicking it or pressing Escape closes the results and returns focus to
-  the pill. While the scrim is up, Tab skips the dimmed Character, Mechanics, Feedback and
-  Settings controls. Results group under Characters and Compendium, each with a type chip and each
-  compendium row carrying a source chip, and an "Advanced search" link at the foot opens Search,
-  the `search` route. The app carries the pill's query there as `?q=<query>`; each
-  artboard keeps its own state, so Search opens on its own sample query. Search draws the
-  query field, the results, and a collapsible filter sidebar shaped like the tab rail, its
-  controls the Filter artboards' checkboxes and level range. Type, Source, School, Rarity
-  and Kind are each the same multi-select: a button naming what is chosen ("All types",
-  "Spells, Items", "3 types") that opens a list of checkboxes, with a filter box at the top
-  of any list longer than ten and a Clear link beside the filter's heading once something
-  is chosen. The Spells and Items rows carry an icon saying they add filters. Collapsed,
-  the sidebar shows a filter icon badged with how many filters are on, and its foot keeps
-  the expand button. The query field, results and confirmation fill the main column
-  beside the sidebar, with no maximum width. It filters by type, source and edition, and
-  adds level and school once Spells is chosen and rarity and kind once Items is — a melee weapon, light armor or a wondrous
-  item, each grouping upstream's item type codes. A row with no edition, which Tier B and C allow though
-  no loader writes one today, would show under either edition. The API's `/search`
-  takes every filter Search offers, but matches `q` against a Tier A row's name alone,
-  so matching a row's text, as Search does for Flame Tongue on "fire", is forward design.
-  The Mechanics menu is a hand-picked list in three columns, wide enough to need no
-  scrolling, ending in "All types…", which opens Search unfiltered; the app shows an entry
-  once search returns its type. Weapons and Armor open Search on items of those kinds. An
-  item result, here and in the dropdown, keeps its Item chip and leads the line under its
-  name with its kind, then its rarity: "Martial ranged weapon • Uncommon".
-- Catalog Detail is a modal, not a page: a result in the dropdown or on Search, or a
-  rules-text reference on a sheet, opens it over the page that holds the link, and the
-  app drops its `catalog` route (#537). Its `host` tweak draws that page behind the
-  scrim, and its `kind` tweak switches between a short spell, a long one, an item, a feat,
-  a homebrew item, a monster, a legendary group, a deity and a language. It opens on the long spell, its body scrolled partway, so the header
-  and footer show holding still while the rules text scrolls; its `scrolled` tweak starts
-  the body at the top instead. It puts the type chip beside
-  the name and, below the name, the source chip and the edition year chip the app's
-  `EditionTag` draws; the rules text follows, or the empty rules-text state for the
-  homebrew item. A monster's text is its stat block: size, type and alignment, the lines
-  from Armor Class to Speed, the six abilities as a table, the lines from Saving Throws to
-  Challenge, then a heading per group of traits and actions, each trait under a heading
-  of its own. A line the monster lacks is left out. A monster with a legendary group ends
-  on a link to it, which opens its lair actions and regional effects in its place. A
-  deity or a language opens on a bold-labelled line per field, ahead of any prose: a
-  deity's pantheon, alignment, domains, province and symbol, and a language's type,
-  script, typical speakers and, on a 2024 row, origin. A field the row lacks is left out, and its fields stand in
-  for the empty rules-text state where it has no prose. "Add to…" sits at the bottom right of a footer pinned to the modal's foot, and its picker opens
-  above it. Focus moves into the modal when it
-  opens and Tab stays inside it; the close button, the scrim and Escape close it from any
-  entry and return focus to the link. A link inside the modal replaces its entry rather
-  than opening a second modal. A back button at the page's top left, over the scrim, reads
-  "Back to" the entry before and returns to it, or reads "Back" on the first and closes
-  the modal. The artboard's `throughLink` tweak opens on an entry reached through a link.
-- Add to…: every item, spell and feat result on Top Bar Navigation and Search carries
-  "Add to…", and so does Catalog Detail. Opened from a sheet (the `openedFrom` tweak, always true
-  of Catalog Detail's `sheet` host), it adds to that character; opened anywhere else, it
-  asks which character first, and says there is none to add to when the list is empty
-  (the `noCharacters` tweak). Top Bar Navigation opened from elsewhere sits over the
-  Settings page instead of a sheet. A row the rules do not allow, such as Fireball for a
-  ranger or Elemental Adept for a fighter who casts no spell, still lands, and the
-  confirmation notes why it is unusual. Races, classes and
-  subclasses carry no "Add to…", since creation and level-up own them.
 - Character List is a full page, not a modal over the sheet — sized to the same 1440px
-  width as Layout and Top Bar Navigation, under the same top bar with Character marked
-  active. It boxes nothing in a panel: its content sits on the page background, as the
-  character sheet's does. The app's home page and Top Bar Navigation's Character menu
-  reach it: "See all characters →" opens the list, and "+ New Character" opens creation —
+  width as Layout, under the top bar with Character marked active. It boxes nothing in a
+  panel: its content sits on the page background, as the character sheet's does. The
+  app's home page and the top bar's Character menu reach it: "See all characters →" opens the list, and "+ New Character" opens creation —
   a menu that jumps straight to one character is a different action from either.
 - Character List is the full list at the `characters` route — every character's name,
   level, edition, race and class summary (`High Elf Ranger`, or `Fighter 3 / Wizard 2`
@@ -160,8 +96,7 @@ widget, panel, or nav element:
   per row.
   Every picker on this page searches a small in-file array, the same convention
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
-  search; Top Bar Navigation's global search is the one place that already spans both
-  characters and a sample compendium.
+  search.
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats each paste the
   entry's 5etools-shaped JSON, as the app's Homebrew settings page takes items and spells
   beside their form. They're forward design for #489, not a page a build currently renders.
@@ -263,9 +198,6 @@ says how much of the artboard the app builds today.
 | `Notes` | #401 | read-only |
 | `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
 | `ManageTabs` | #242 | reorder and hide |
-| `TopBar` | #386, #521, #522 | all but "Add to…" |
-| `Search` | #521, #522 | all but "Add to…" |
-| `CatalogDetail` | #522, #537, #555 | all but "Add to…" |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |

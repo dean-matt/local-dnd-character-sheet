@@ -39,7 +39,7 @@ function Where() {
   return <output aria-label="location">{useLocation().pathname}</output>;
 }
 
-function renderSearch(bodies: Record<string, unknown>) {
+function renderSearch(bodies: Record<string, unknown>, path = "/") {
   const onOpen = vi.fn();
   stubFetchByUrl({ "/api/characters": [characterRecord("7", "Fira")], ...bodies });
   const router = createMemoryRouter(
@@ -54,7 +54,7 @@ function renderSearch(bodies: Record<string, unknown>) {
         ),
       },
     ],
-    { initialEntries: ["/"] },
+    { initialEntries: [path] },
   );
   render(
     <QueryClientProvider
@@ -91,6 +91,26 @@ describe("GlobalSearch", () => {
     fireEvent.click(advanced);
     expect(screen.getByRole("status", { name: "location" })).toHaveTextContent("/search");
     expect(input).toHaveValue("");
+  });
+
+  it("offers Add to… beside an item, a spell or a feat alone, and carries the sheet's character to the advanced search", async () => {
+    const { input } = renderSearch(
+      { [searchUrl("fir")]: page([fireball, fireGiant, ember]) },
+      "/characters/7/p/stats",
+    );
+    type(input, "fir");
+
+    expect(
+      await screen.findByRole("button", { name: "Add to… Fireball (PHB), for Fira" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add to… Ember Charm (Homebrew), for Fira" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Fire Giant/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: 'Advanced search for "fir" →' })).toHaveAttribute(
+      "href",
+      "/search?q=fir&for=7",
+    );
   });
 
   it("groups characters and compendium hits from both editions, in the order the server ranks them, each with its type", async () => {

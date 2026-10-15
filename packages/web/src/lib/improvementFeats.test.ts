@@ -1,7 +1,13 @@
 import type { FeatRecord } from "@dnd/catalog";
 import { withImprovement } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { type Candidate, candidateAt, improvementFeats, takesFeats } from "./improvementFeats.ts";
+import {
+  type Candidate,
+  candidateAt,
+  featBarrier,
+  improvementFeats,
+  takesFeats,
+} from "./improvementFeats.ts";
 
 const feat = (name: string, source: string, json: object = {}): FeatRecord => ({
   name,
@@ -51,6 +57,21 @@ describe("takesFeats", () => {
     expect(takesFeats({ edition: "one", houseRules: { feats: false } })).toBe(true);
     expect(takesFeats({ edition: "classic", houseRules: undefined })).toBe(false);
     expect(takesFeats({ edition: "classic", houseRules: { feats: true } })).toBe(true);
+  });
+});
+
+describe("featBarrier", () => {
+  const grappler = FEATS[4] as FeatRecord;
+  it("names what stops a feat: no feats at all, a feat held already, then a prerequisite", () => {
+    expect(featBarrier(grappler, { ...at4, takesFeats: false })).toBe("noFeats");
+    expect(featBarrier(grappler, { ...at4, held: [grappler] })).toBe("held");
+    expect(featBarrier(grappler, { ...at4, scores: { ...SCORES, dex: 12 } })).toBe("prerequisite");
+    expect(featBarrier(grappler, at4)).toBeUndefined();
+  });
+
+  it("lets a repeatable feat be taken again", () => {
+    const improvement = FEATS[0] as FeatRecord;
+    expect(featBarrier(improvement, { ...at4, held: [improvement] })).toBeUndefined();
   });
 });
 
@@ -195,7 +216,7 @@ describe("candidateAt", () => {
         houseRules: { feats: true },
         ...raised,
       },
-      { level: 4, cls: WIZARD, classLevel: 4, boon: false, features: [] },
+      { level: 4, features: [] },
     );
     expect(candidate.takesFeats).toBe(true);
     expect(candidate.scores?.str).toBe(12);

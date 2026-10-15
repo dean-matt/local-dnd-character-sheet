@@ -12,6 +12,7 @@ import { useCharacterSpells } from "../../../../hooks/useCharacterSpells.ts";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
+import { withSpell } from "../../../../lib/addedEntries.ts";
 import { levelLabel } from "../../../../lib/spellLevel.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
@@ -72,10 +73,7 @@ export function SpellList({
   };
   const learn = (ref: EntryRef, origin: ContentRef | undefined) =>
     hold(() =>
-      write(`learn:${JSON.stringify([ref, origin])}`, (latest) => ({
-        ...latest,
-        spells: [...latest.spells, { ref, prepared: false, ...(origin && { origin }) }],
-      })),
+      write(`learn:${JSON.stringify([ref, origin])}`, (latest) => withSpell(latest, ref, origin)),
     );
 
   if (spells.isPending) return <LoadingState label="Loading spells…" />;

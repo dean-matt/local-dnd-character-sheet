@@ -4,17 +4,24 @@
  * editions. A character result opens its sheet; a compendium result opens its detail in a
  * modal over the current page, and closing it returns focus to the search with the query
  * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
- * hears it, and Enter or a click on it does nothing. Below the results, a link carries the
- * query to the advanced search page.
+ * hears it, and Enter or a click on it does nothing. An item, a spell or a feat carries
+ * "Add to…" beside its option, reached by Tab rather than the arrows, since the listbox
+ * holds options alone in the arrows' order. Below the results, a link carries the query to
+ * the advanced search page, and from a sheet the character too.
  */
 import { Search, X } from "lucide-react";
 import { type KeyboardEvent, useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { AddedNotice } from "../../../../components/AddedNotice.tsx";
+import { AddTo } from "../../../../components/AddTo/AddTo.tsx";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
+import type { AddOutcome } from "../../../../hooks/useAddToCharacter.ts";
 import { SEARCH_DEBOUNCE_MS, useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
 import { useDebounce } from "../../../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
+import { SEARCHED_FROM, useSheetCharacter } from "../../../../hooks/useSheetCharacter.ts";
+import { addableHit } from "../../../../lib/addable.ts";
 import { searchHitAddress, searchHitKey } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
 import type { SearchResult } from "./searchResult.ts";
@@ -33,7 +40,9 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
+  const [added, setAdded] = useState<AddOutcome>();
   const characters = useCharacters();
+  const sheet = useSheetCharacter();
   const debounced = useDebounce(query, SEARCH_DEBOUNCE_MS);
   const compendium = useCatalogSearch({
     query: debounced,
@@ -112,16 +121,21 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         <p aria-hidden className={groupLabel}>
           {label}
         </p>
-        {rows.map((result, i) => (
-          <SearchResultOption
-            key={result.key}
-            id={optionId(offset + i)}
-            result={result}
-            active={offset + i === activeIndex}
-            onPick={() => pick(result)}
-            onPoint={() => setActive(result.key)}
-          />
-        ))}
+        {rows.map((result, i) => {
+          const addable = "hit" in result ? addableHit(result.hit) : undefined;
+          return (
+            <div key={result.key} role="none" className="flex items-center gap-1 pr-1">
+              <SearchResultOption
+                id={optionId(offset + i)}
+                result={result}
+                active={offset + i === activeIndex}
+                onPick={() => pick(result)}
+                onPoint={() => setActive(result.key)}
+              />
+              {addable && <AddTo row={addable} onAdded={setAdded} />}
+            </div>
+          );
+        })}
       </div>
     );
 
@@ -169,6 +183,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
               setQuery(event.target.value);
               setOpen(true);
               setActive(null);
+              setAdded(undefined);
             }}
             onFocus={() => {
               setOpen(true);
@@ -217,9 +232,10 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           >
             {showPanel ? status() : undefined}
           </p>
+          <AddedNotice outcome={added} />
           <div className="mt-1 shrink-0 border-t border-border pt-1">
             <Link
-              to={`/search?${new URLSearchParams({ q: query.trim() })}`}
+              to={`/search?${new URLSearchParams({ q: query.trim(), ...(sheet && { [SEARCHED_FROM]: sheet.id }) })}`}
               onClick={() => {
                 setOpen(false);
                 setQuery("");

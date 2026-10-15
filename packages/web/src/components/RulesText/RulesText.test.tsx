@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
@@ -167,10 +168,13 @@ describe("reference resolution", () => {
         ? Promise.resolve(new Response(JSON.stringify({ refs: [shield] })))
         : byUrl(url, init),
     );
+    // The detail's "Add to…" reads the route.
     renderWithClient(
-      <p>
-        <RulesText text="Cast {@spell fireball}." />
-      </p>,
+      <MemoryRouter>
+        <p>
+          <RulesText text="Cast {@spell fireball}." />
+        </p>
+      </MemoryRouter>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "fireball" }));

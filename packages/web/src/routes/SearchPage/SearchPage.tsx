@@ -2,19 +2,23 @@
  * The advanced search: a query, a rail of filters, and a page of results from the user's
  * characters and the compendium. The query and every filter live in the URL. With a type
  * or source picked and no query, it lists every row they admit, which makes it the catalog
- * browse.
+ * browse. Opened from a sheet, it carries that character in `for`, which "Add to…" adds to.
  */
 import { Search } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useSearchParams } from "react-router";
+import { AddedNotice } from "../../components/AddedNotice.tsx";
 import { CatalogDetail } from "../../components/CatalogDetail.tsx";
+import type { AddOutcome } from "../../hooks/useAddToCharacter.ts";
 import { SEARCH_DEBOUNCE_MS, useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../hooks/useCharacters.ts";
 import { useDebounce } from "../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
+import { SEARCHED_FROM } from "../../hooks/useSheetCharacter.ts";
 import { searchHitKey } from "../../lib/searchHits.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CharacterResultRow } from "./CharacterResultRow.tsx";
+import { SearchedFrom } from "./SearchedFrom.tsx";
 import { SearchFilterPanel } from "./SearchFilterPanel.tsx";
 import { SearchHitRow } from "./SearchHitRow.tsx";
 import {
@@ -64,6 +68,13 @@ function searchStatus(s: {
   return { text, failed: false };
 }
 
+/** `next` keeping the character the search was opened from, which no filter clears. */
+function keepSearchedFrom(next: URLSearchParams, current: URLSearchParams): URLSearchParams {
+  const from = current.get(SEARCHED_FROM);
+  if (from) next.set(SEARCHED_FROM, from);
+  return next;
+}
+
 const pageButton =
   "rounded-control border border-border bg-surface px-3 py-1.5 text-row font-medium text-ink hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -71,6 +82,7 @@ export function SearchPage() {
   const [params, setParams] = useSearchParams();
   const filters = readSearchFilters(params);
   const [detail, setDetail] = useState<string | undefined>(undefined);
+  const [added, setAdded] = useState<AddOutcome>();
   const opener = useReturnFocus<HTMLElement>(detail !== undefined);
   const characters = useCharacters();
   const id = useId();
@@ -104,8 +116,12 @@ export function SearchPage() {
   // The last page stays up while the next loads, and nothing may read it as the new answer.
   const settled = query === q && !search.isPlaceholderData;
 
-  const update = (next: Partial<SearchFilters>, replace = false) =>
-    setParams(writeSearchFilters({ ...filters, offset: 0, ...next }), { replace });
+  const update = (next: Partial<SearchFilters>, replace = false) => {
+    setParams(keepSearchedFrom(writeSearchFilters({ ...filters, offset: 0, ...next }), params), {
+      replace,
+    });
+    setAdded(undefined);
+  };
 
   // A link whose offset runs past the last page, as a stale one can, moves back to that page.
   const pastEnd = settled && total > 0 && filters.offset >= total;
@@ -158,10 +174,12 @@ export function SearchPage() {
         >
           {status.text}
         </p>
+        <SearchedFrom />
         {/* Rendered even while empty: a live region added with its text is often not announced. */}
         <p role="status" className="sr-only">
           {status.text}
         </p>
+        <AddedNotice outcome={added} />
 
         {(characterResults.length > 0 || hits.length > 0) && (
           <ul aria-label="Results" className="flex flex-col gap-2">
@@ -172,6 +190,7 @@ export function SearchPage() {
               <SearchHitRow
                 key={searchHitKey(hit)}
                 hit={hit}
+                onAdded={setAdded}
                 onOpen={(address) => {
                   opener.current = document.activeElement as HTMLElement | null;
                   setDetail(address);
