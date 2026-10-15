@@ -9,7 +9,10 @@ import {
   entryKey,
 } from "@dnd/character";
 import { useState } from "react";
+import { useClassGrants } from "../../../../hooks/useClassGrants.ts";
 import { useClassSpellList } from "../../../../hooks/useClassSpellList.ts";
+import { useSubclassGrants } from "../../../../hooks/useSubclassGrants.ts";
+import { casterFacts } from "../../../../lib/casterFacts.ts";
 import { searchHitKey } from "../../../../lib/searchHitKey.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import { FormField } from "../../../FormField.tsx";
@@ -18,21 +21,52 @@ import { spellCaster } from "./spellCaster.ts";
 
 type Caster = CharacterDerived["spellcasting"][number];
 
-/** Why the class `name` cannot take a catalog spell its list may not hold, if it cannot. */
+type Ref = { name: string; source: string };
+
+/**
+ * The spells on `list` above the highest level the class's own slots cast at its level, its
+ * subclass's table counted, as the multiclass rules hold a spell learned for one class to.
+ * An empty set where its slots reach 9th; `undefined` while the tables or the list load.
+ */
+function useTooHigh(
+  edition: CharacterRecord["edition"],
+  list: { class: Ref; subclass?: Ref; level: number } | undefined,
+) {
+  const level = list?.level ?? 1;
+  const own = useClassGrants(list?.class, level);
+  const sub = useSubclassGrants(list?.class, list?.subclass, level);
+  const loaded = own.data !== undefined && (!list?.subclass || sub.data !== undefined);
+  const tables = [own.data, sub.data].flatMap((table) => table ?? []);
+  const maxLevel = loaded ? (casterFacts(tables)?.maxLevel ?? 0) : undefined;
+  const above = useClassSpellList(
+    edition,
+    list,
+    maxLevel === undefined || maxLevel >= 9 ? undefined : maxLevel + 1,
+  );
+  return {
+    failed: own.isError || sub.isError || above.isError,
+    keys: maxLevel === 9 ? new Set<string>() : above.data,
+  };
+}
+
+/** Why the class `name` cannot take a catalog spell, if it cannot. */
 function listReason(
   name: string,
   listed: ReturnType<typeof useClassSpellList>,
+  tooHigh: ReturnType<typeof useTooHigh>,
   key: string,
 ): string | undefined {
-  if (listed.isError) return `Couldn't read the ${name} spell list`;
-  if (!listed.data) return `Checking the ${name} spell list…`;
-  return listed.data.has(key) ? undefined : `Not on the ${name} spell list`;
+  if (listed.isError || tooHigh.failed) return `Couldn't read the ${name} spell list`;
+  if (!listed.data || !tooHigh.keys) return `Checking the ${name} spell list…`;
+  if (!listed.data.has(key)) return `Not on the ${name} spell list`;
+  return tooHigh.keys.has(key) ? `Above the highest level a ${name} slot casts` : undefined;
 }
 
 /**
  * Learns a spell for one casting class, chosen first where more than one casts. The picker
- * offers every spell, and one the class's list does not hold, at its subclass's level, says
- * so and cannot be picked. A homebrew spell is on no list and stays open to every class; a
+ * offers every spell. One the class's list does not hold, with its subclass's additions at
+ * the class level, or one above the level the class's slots cast, says why and cannot be
+ * picked. A homebrew spell is on no list and stays open to every class; a
  * homebrew class has no list to read, so it takes any spell. The spell lands unprepared,
  * with the class as its origin.
  */
@@ -58,6 +92,7 @@ export function LearnSpellField({
       level: group.level,
     };
   const listed = useClassSpellList(definition.edition, list);
+  const tooHigh = useTooHigh(definition.edition, list);
   const name = caster ? displayName(caster.class) : "";
   const known = new Set(
     definition.spells
@@ -67,7 +102,7 @@ export function LearnSpellField({
   const unavailableReason = (hit: SearchHit) => {
     if (known.has(searchHitKey(hit))) return "Known already";
     if ("id" in hit || !list) return undefined;
-    return listReason(name, listed, searchHitKey(hit));
+    return listReason(name, listed, tooHigh, searchHitKey(hit));
   };
 
   return (

@@ -12,17 +12,19 @@ type Ref = { name: string; source: string };
 const PAGE = 200;
 
 /**
- * The `searchHitKey` of every spell `list` holds in `edition`, the subclass's additions at
- * the class level `list.level` among them. A picker offering every spell reads it to say
- * which ones the class cannot take. Pages through `/search`, since the largest list, the
- * 2024 Wizard's, holds 369 spells; `undefined` while it loads or where `list` is.
+ * The `searchHitKey` of every spell `list` holds in `edition` from spell level `minLevel`
+ * up, with the subclass's additions at the class level `list.level`. A picker offering
+ * every spell reads it to say which ones the class cannot take. Pages through `/search`,
+ * since the largest list, the 2024 Wizard's, holds 369 spells. Nothing is read where
+ * `list` or `minLevel` is `undefined`.
  */
 export function useClassSpellList(
   edition: CharacterRecord["edition"],
   list: { class: Ref; subclass?: Ref; level: number } | undefined,
+  minLevel: number | undefined = 0,
 ) {
   return useQuery({
-    queryKey: ["search", "class-spells", edition, list],
+    queryKey: ["search", "class-spells", edition, list, minLevel],
     queryFn: async () => {
       const keys = new Set<string>();
       for (let offset = 0; ; offset += PAGE) {
@@ -31,6 +33,7 @@ export function useClassSpellList(
           type: "spell",
           limit: String(PAGE),
           offset: String(offset),
+          minLevel: String(minLevel),
           ...spellListFilters(list),
         });
         const page = await apiGet(`/search?${params}`, searchResponseSchema);
@@ -38,7 +41,7 @@ export function useClassSpellList(
         if (page.items.length === 0 || offset + PAGE >= page.total) return keys;
       }
     },
-    enabled: list !== undefined,
+    enabled: list !== undefined && minLevel !== undefined,
     retry: retryUnlessClientError,
   });
 }
