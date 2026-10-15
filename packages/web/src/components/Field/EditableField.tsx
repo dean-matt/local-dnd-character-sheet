@@ -28,7 +28,8 @@ export type EditableFieldProps<T> = {
   inputClassName?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
   placeholder?: string;
-  /** A text area rather than a one-line input, for prose whose line breaks the value keeps. */
+  /** A text area rather than a one-line input, for prose whose line breaks the value keeps.
+   * On paper it grows to its text, which a fixed box would cut off. */
   multiline?: boolean;
 } & (
   | { value: Derived<T>; onSave: (next: T | null) => Promise<void> }
@@ -186,7 +187,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
         {(control) => (
           <textarea
             {...control}
-            className={`control min-h-16 resize-y ${inputClassName ?? ""}`}
+            className={`control min-h-16 resize-y print:field-sizing-content ${inputClassName ?? ""}`}
             placeholder={placeholder}
             value={text}
             onChange={(event) => handleChange(event.target.value)}
