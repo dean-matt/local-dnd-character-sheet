@@ -205,6 +205,28 @@ describe("PageEditor", () => {
     expect(screen.queryByRole("checkbox", { name: "Prepared only" })).not.toBeInTheDocument();
   });
 
+  it("undoes a retitle made after an undo apart from the retitle before it", async () => {
+    const server = stubServer([grapple([])]);
+    await renderEditor();
+    const title = screen.getByRole("textbox", { name: "Page title" });
+    const retitle = async (value: string) => {
+      fireEvent.change(title, { target: { value } });
+      fireEvent.blur(title);
+      await waitFor(() => expect(server.page()?.title).toBe(value));
+    };
+
+    await retitle("Grappling");
+    fireEvent.click(screen.getByRole("button", { name: "Add block" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add Text" }));
+    await waitFor(() => expect(server.page()?.blocks).toHaveLength(1));
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+    await waitFor(() => expect(server.page()?.blocks).toEqual([]));
+    await retitle("Holds");
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+    await waitFor(() => expect(server.page()?.title).toBe("Grappling"));
+  });
+
   it("undoes each change in turn, a burst of typing as one", async () => {
     const server = stubServer([grapple([{ kind: "text", text: "Grab." }])]);
     await renderEditor();

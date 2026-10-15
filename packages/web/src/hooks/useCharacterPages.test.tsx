@@ -67,4 +67,43 @@ describe("useCharacterPages", () => {
     await waitFor(() => expect(result.current.replace.isPending).toBe(false));
     expect(result.current.pages.data).toEqual(second);
   });
+
+  it("keeps an undo whose write fails, so the next press retries it", async () => {
+    const presets = presetPageRecords();
+    const reversed = [...presets].reverse();
+    let failNext = false;
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method !== "PUT") return new Response(JSON.stringify(presets), { status: 200 });
+      if (failNext) return new Response(JSON.stringify({ error: "refused" }), { status: 409 });
+      const body = JSON.parse(String(init.body)) as object[];
+      return new Response(JSON.stringify(body.map((page) => ({ ...page, preset: true }))), {
+        status: 200,
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderHook(
+      () => ({ pages: useCharacterPages("1"), replace: useReplaceCharacterPages("1") }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.pages.isSuccess).toBe(true));
+    act(() => result.current.replace.write(reversed));
+    await waitFor(() => expect(result.current.replace.isSuccess).toBe(true));
+
+    failNext = true;
+    act(() => {
+      result.current.replace.undo();
+    });
+    await waitFor(() => expect(result.current.replace.isError).toBe(true));
+    expect(result.current.replace.canUndo).toBe(true);
+
+    failNext = false;
+    act(() => {
+      result.current.replace.undo();
+    });
+    await waitFor(() => expect(result.current.replace.isSuccess).toBe(true));
+    expect(JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body))).toEqual(
+      presets.map(({ preset: _, ...page }) => page),
+    );
+    expect(result.current.replace.canUndo).toBe(false);
+  });
 });

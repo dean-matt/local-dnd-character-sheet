@@ -10,7 +10,7 @@
  */
 import { type CharacterPageRecord, type PageBlock, pageTitleSchema } from "@dnd/character";
 import { ArrowDown, ArrowUp, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Field } from "../../components/Field/Field.tsx";
 import { PagesUndoButton } from "../../components/PagesUndoButton.tsx";
 import { RemoveButton } from "../../components/RemoveButton.tsx";
@@ -40,6 +40,9 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
   });
 
   const { slug, blocks } = page;
+  // Scopes each field's undo key to this opening of the editor, so a retitle after closing
+  // and reopening it undoes on its own rather than with the one before.
+  const session = useId();
 
   /** The whole list with this page's blocks edited, read from the cache a write updates. */
   const withBlocks = (edit: (latest: PageBlock[]) => PageBlock[]) =>
@@ -96,7 +99,7 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
             onSave={(title: string) =>
               replace.save(
                 replace.current().map((each) => (each.slug === slug ? { ...each, title } : each)),
-                `title:${slug}`,
+                `${session}:title:${slug}`,
               )
             }
           />
@@ -148,7 +151,9 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
                 <BlockSettings
                   block={block}
                   onChange={(edit) => replace.write(atIndex(index, edit))}
-                  onSave={(edit) => replace.save(atIndex(index, edit), `block:${slug}:${index}`)}
+                  onSave={(edit) =>
+                    replace.save(atIndex(index, edit), `${session}:block:${slug}:${index}`)
+                  }
                 />
               </li>
             );

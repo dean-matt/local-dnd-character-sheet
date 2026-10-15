@@ -1,6 +1,6 @@
 import type { CharacterPageRecord } from "@dnd/character";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useSyncExternalStore } from "react";
 import { apiMutate } from "../lib/api.ts";
 import {
   pageHistoryDepth,
@@ -23,15 +23,27 @@ import { characterPagesSchema } from "./characterPagesSchema.ts";
  * Each `write` records the list it replaces in `lib/pageHistory.ts`, and `undo` writes the
  * newest one back. `key` names the edit, so a run of saves to one field undoes as one.
  */
+// One queue per character and client, shared by every caller, which share one history too.
+const queues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>();
+
+function queueOf(client: QueryClient) {
+  let byCharacter = queues.get(client);
+  if (!byCharacter) {
+    byCharacter = new Map();
+    queues.set(client, byCharacter);
+  }
+  return byCharacter;
+}
+
 export function useReplaceCharacterPages(id: string) {
   const queryClient = useQueryClient();
-  const queue = useRef<Promise<unknown>>(Promise.resolve());
   const mutationKey = [...characterPagesKey(id), "write"];
 
   const mutation = useMutation<CharacterPageRecord[], Error, CharacterPageRecord[]>({
     mutationKey,
     mutationFn: (pages) => {
-      const write = queue.current.then(() =>
+      const queue = queueOf(queryClient);
+      const write = (queue.get(id) ?? Promise.resolve()).then(() =>
         apiMutate(
           "PUT",
           `/characters/${id}/pages`,
@@ -39,7 +51,10 @@ export function useReplaceCharacterPages(id: string) {
           pages.map(({ preset: _preset, ...page }) => page),
         ),
       );
-      queue.current = write.catch(() => undefined);
+      queue.set(
+        id,
+        write.catch(() => undefined),
+      );
       return write;
     },
     onSuccess: (pages) => {
@@ -72,10 +87,13 @@ export function useReplaceCharacterPages(id: string) {
     save(pages, key).catch(() => undefined);
   }
 
-  /** Writes back the list the newest change replaced; answers false with nothing to undo. */
+  /**
+   * Writes back the list the newest change replaced; answers false with nothing to undo.
+   * A write that fails puts the entry back, so the next press retries it.
+   */
   function undo(): boolean {
     const before = takeLastPages(queryClient, id);
-    if (before) put(before).catch(() => undefined);
+    if (before) put(before).catch(() => rememberPages(queryClient, id, before));
     return before !== undefined;
   }
 

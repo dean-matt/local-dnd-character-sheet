@@ -56,6 +56,7 @@ describe("pages", () => {
     { kind: "list", source: "spells", filter: { equipped: true } },
     { kind: "list", source: "spells", filter: { levels: [10] } },
     { kind: "list", source: "spells", filter: { levels: [] } },
+    { kind: "list", source: "spells", filter: { levels: [3, 3] } },
     { kind: "list", source: "spells", filter: { school: "evocation" } },
   ])("refuses the list block %j, whose filter that list cannot apply", (block) => {
     expect(characterPagesSchema.safeParse([{ ...page, blocks: [block] }]).success).toBe(false);

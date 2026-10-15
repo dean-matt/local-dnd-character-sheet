@@ -193,6 +193,7 @@ export function ManagePages({ id, onClose }: { id: string; onClose: () => void }
           </button>
           <PagesUndoButton
             replace={replace}
+            held={busy}
             onUndone={() => setAnnouncement("Undid the last page change.")}
           />
         </div>

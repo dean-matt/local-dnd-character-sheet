@@ -46,7 +46,13 @@ export const LIST_BLOCK_SOURCES = ["spells", "inventory", "features"] as const;
  */
 const listFilterSchema = z.strictObject({
   search: z.string().trim().min(1).optional(),
-  levels: z.array(z.int().min(0).max(9)).min(1).optional(),
+  levels: z
+    .array(z.int().min(0).max(9))
+    .min(1)
+    .refine((levels) => isUnique(levels, String), {
+      error: "the same spell level is listed twice",
+    })
+    .optional(),
   prepared: z.literal(true).optional(),
   equipped: z.literal(true).optional(),
 });

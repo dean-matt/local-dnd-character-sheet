@@ -63,13 +63,20 @@ export function rememberPages(
   set(client, characterId, [...entries, { before, key }].slice(-UNDO_LOG_LIMIT));
 }
 
-/** Removes and returns the newest entry's list, or `undefined` with nothing to undo. */
+/**
+ * Removes and returns the newest entry's list, or `undefined` with nothing to undo. The
+ * entry it uncovers stops merging, so an edit after the undo starts an entry of its own.
+ */
 export function takeLastPages(
   client: QueryClient,
   characterId: string,
 ): CharacterPageRecord[] | undefined {
   const entries = historyOf(client).entries.get(characterId) ?? [];
   const last = entries.at(-1);
-  if (last) set(client, characterId, entries.slice(0, -1));
-  return last?.before;
+  if (!last) return undefined;
+  const rest = entries.slice(0, -1);
+  const uncovered = rest.at(-1);
+  if (uncovered) rest[rest.length - 1] = { ...uncovered, key: undefined };
+  set(client, characterId, rest);
+  return last.before;
 }
