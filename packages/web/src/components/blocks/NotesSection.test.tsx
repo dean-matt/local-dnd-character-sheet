@@ -139,6 +139,16 @@ describe("NotesSection", () => {
     expect(screen.getByRole("button", { name: "Add section" })).toHaveFocus();
   });
 
+  it("sets Add note in the same type and icon size as Add section, hidden in print", () => {
+    renderStatic(identityRecord());
+    const addSection = screen.getByRole("button", { name: "Add section" });
+    const addNote = within(section("Debts")).getByRole("button", { name: "Add note" });
+    for (const button of [addSection, addNote]) {
+      expect(button).toHaveClass("text-label", "print:hidden");
+      expect(button.querySelector("svg")).toHaveAttribute("width", "12");
+    }
+  });
+
   it("lists what the character holds off the rules, and draws nothing where it holds nothing", () => {
     const record = characterRecord("1", "Vex");
     const departure = { field: "abilityScores.str", note: "20 at level 1" };
