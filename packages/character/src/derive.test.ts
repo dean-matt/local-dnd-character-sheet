@@ -473,6 +473,56 @@ describe("deriveCharacter", () => {
       expect(stowed.castingBlockedBy).toEqual([]);
     });
 
+    it("counts an item that makes its wearer proficient, attuned where it must be", () => {
+      const ELVEN_CHAIN = { name: "Elven Chain", source: "DMG" };
+      const AXE = { name: "Axe of the Dwarvish Lords", source: "DMG" };
+      const grants = (name: string, requiresAttunement: boolean): ItemBonusTrait => ({
+        ...noEffects,
+        name,
+        requiresAttunement,
+        ac: 0,
+        save: 0,
+        concentration: 0,
+        spellAttack: 0,
+        spellSaveDc: 0,
+        spellDamage: 0,
+        grantsProficiency: true,
+      });
+      const worn = (attuned: boolean): CharacterDefinition => ({
+        ...equipped,
+        inventory: [
+          ...equipped.inventory,
+          { ref: ELVEN_CHAIN, quantity: 1, carried: true, equipped: true, attuned: false },
+          { ref: AXE, quantity: 1, carried: true, equipped: true, attuned },
+        ],
+      });
+      const magic = {
+        ...withHide,
+        weights: new Map([...withHide.weights, [entryKey(ELVEN_CHAIN), 20], [entryKey(AXE), 4]]),
+        armor: new Map<string, ArmorTrait>([
+          ...withHide.armor,
+          [entryKey(ELVEN_CHAIN), { name: ELVEN_CHAIN.name, category: "medium", armorClass: 14 }],
+        ]),
+        weapons: new Map([
+          ...catalog.weapons,
+          [entryKey(AXE), { ...LONGSWORD_TRAIT, name: AXE.name }],
+        ]),
+        itemBonuses: new Map([
+          [entryKey(ELVEN_CHAIN), grants(ELVEN_CHAIN.name, false)],
+          [entryKey(AXE), grants(AXE.name, true)],
+        ]),
+      };
+
+      const unattuned = deriveCharacter(worn(false), magic);
+      expect(unattuned.unproficientItems).toEqual([{ entry: 5, requires: "Martial weapons" }]);
+      expect(unattuned.castingBlockedBy).toEqual([]);
+      const attuned = deriveCharacter(worn(true), magic);
+      expect(attuned.unproficientItems).toEqual([]);
+      expect(
+        attuned.attacks.find((attack) => attack.entry === 5)?.attackBonus.terms,
+      ).toContainEqual({ label: "Proficiency", value: 3, reference: undefined });
+    });
+
     it("charges a shield as armor in a 2014 game and not in a 2024 one", () => {
       const untrained = { ...equipped, proficiencies: definition.proficiencies };
       const fromShield = (block: CharacterDerived) =>

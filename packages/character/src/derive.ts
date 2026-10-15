@@ -289,6 +289,29 @@ function weaponProficient(definition: CharacterDefinition, weapon: WeaponTrait):
   );
 }
 
+type InventoryEntry = CharacterDefinition["inventory"][number];
+
+/**
+ * An item that names itself proficient, as `Elven Chain` (DMG) does for any wearer, attuned
+ * where it requires attunement. Upstream's flag names no proficiency, so on a weapon or
+ * armor it is read as that item's own.
+ */
+function grantsOwnProficiency(catalog: CharacterCatalog, entry: InventoryEntry): boolean {
+  const item = catalog.itemBonuses.get(itemKey(entry));
+  return item?.grantsProficiency === true && (entry.attuned || !item.requiresAttunement);
+}
+
+function attackProficiency(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  entry: InventoryEntry,
+  weapon: WeaponTrait,
+): ProficiencyLevel {
+  return weaponProficient(definition, weapon) || grantsOwnProficiency(catalog, entry)
+    ? "proficient"
+    : "none";
+}
+
 /** An armor proficiency names a category: `Light`, `Shields`. */
 function armorProficient(definition: CharacterDefinition, armor: ArmorTrait): boolean {
   return definition.proficiencies.armor.some(
@@ -318,6 +341,7 @@ function derivedUnproficientItems(
   catalog: CharacterCatalog,
 ): CharacterDerived["unproficientItems"] {
   return definition.inventory.flatMap((entry, index) => {
+    if (grantsOwnProficiency(catalog, entry)) return [];
     const weapon = catalog.weapons.get(itemKey(entry));
     if (weapon && !weaponProficient(definition, weapon)) {
       return [{ entry: index, requires: weaponRequires(weapon) }];
@@ -342,6 +366,7 @@ function unproficientArmorWorn(
   return definition.inventory.flatMap((entry) => {
     const armor = catalog.armor.get(itemKey(entry));
     if (!entry.equipped || !armor || armorProficient(definition, armor)) return [];
+    if (grantsOwnProficiency(catalog, entry)) return [];
     return definition.edition === "one" && armor.category === "shield" ? [] : [armor.name];
   });
 }
@@ -430,7 +455,7 @@ function derivedAttacks(
     const twoHandedBlocked = entry.equipped && shield;
     const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
     const { reference } = weapon.bonus;
-    const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
+    const proficiency = attackProficiency(definition, catalog, entry, weapon);
     const result = weaponAttack<TermReference>({
       weapon,
       strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),

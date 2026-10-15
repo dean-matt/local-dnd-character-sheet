@@ -123,7 +123,9 @@ items that set or scale a speed. A homebrew item states the same two fields.
 
 An armor proficiency names a category (`Light`, `Shields`) and a weapon proficiency a
 category or one base weapon, matched as `proficiencyKey` folds them. `unproficientItems`
-names, per inventory entry, the proficiency its weapon or armor lacks, equipped or not.
+names, per inventory entry, the proficiency its weapon or armor lacks, equipped or not. An
+item flagged `grantsProficiency`, such as `Elven Chain` (DMG), counts as proficient,
+attuned where it requires attunement.
 An attack without proficiency adds none and carries a `Not proficient` term worth 0.
 Armor worn without proficiency adds Strength and Dexterity disadvantage on checks, saves
 and attacks to `rollEffects` and names itself in `castingBlockedBy`, which the sheet shows
