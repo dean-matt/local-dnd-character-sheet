@@ -1,13 +1,12 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { defaultCharacterState } from "@dnd/character";
+import { defaultCharacterState, PRESET_PAGES } from "@dnd/character";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
-import { presetPageRows } from "./queries/pages.ts";
 
 const CHARACTERS_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/characters");
 const HOMEBREW_MIGRATIONS = resolve(import.meta.dirname, "../../drizzle/homebrew");
@@ -180,7 +179,7 @@ describe("migrations", () => {
         preset: row.preset === 1,
         blocks: JSON.parse(row.blocks),
       })),
-    ).toEqual(presetPageRows("1").map(({ position: _position, ...row }) => row));
+    ).toEqual(PRESET_PAGES.map((page) => ({ ...page, characterId: "1", preset: true })));
   });
 
   it("backfills the identity presets after a character's own pages, moving a page the user wrote under one of their slugs", () => {
@@ -226,7 +225,7 @@ describe("migrations", () => {
         slug,
         position: from + offset,
         preset: 1,
-        blocks: presetPageRows("x").find((row) => row.slug === slug)?.blocks,
+        blocks: PRESET_PAGES.find((page) => page.slug === slug)?.blocks,
       }));
     const shape = ({ slug, position, preset, blocks }: ReturnType<typeof pages>[number]) => ({
       slug,

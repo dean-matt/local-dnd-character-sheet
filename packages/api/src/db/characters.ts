@@ -40,8 +40,9 @@ export const characterState = sqliteTable("character_state", {
 });
 
 /**
- * A character's pages, in `position` order. `preset` marks the pages seeded on insert,
- * which a write may hide or edit but never delete. `slug` is the key a URL carries.
+ * A character's pages, in `position` order. `slug` is the key a URL carries. `preset`
+ * caches whether `PRESET_PAGES` seeds the slug: every write sets it from the slug, and
+ * restoring the defaults reads the slug rather than the flag.
  */
 export const characterPages = sqliteTable(
   "character_pages",

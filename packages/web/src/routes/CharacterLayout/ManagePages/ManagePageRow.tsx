@@ -4,8 +4,8 @@ import { Field } from "../../../components/Field/Field.tsx";
 import { ICON_BUTTON } from "../../../lib/iconButton.ts";
 
 /**
- * One page in Manage pages: move, rename, and show or hide it, and delete it where the
- * user wrote it. `lastVisible` holds hiding and deleting, which would leave no page to land on.
+ * One page in Manage pages: move, rename, show or hide, and delete it. `lastVisible`
+ * holds hiding and deleting, which would leave no page to land on.
  */
 export function ManagePageRow({
   page,
@@ -79,18 +79,16 @@ export function ManagePageRow({
       >
         {page.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
-      {!page.preset && (
-        <button
-          type="button"
-          className={ICON_BUTTON}
-          aria-label={`Delete ${page.title}`}
-          aria-disabled={held}
-          aria-describedby={heldBy}
-          onClick={onRemove}
-        >
-          <Trash2 size={13} aria-hidden="true" />
-        </button>
-      )}
+      <button
+        type="button"
+        className={ICON_BUTTON}
+        aria-label={`Delete ${page.title}`}
+        aria-disabled={held}
+        aria-describedby={heldBy}
+        onClick={onRemove}
+      >
+        <Trash2 size={13} aria-hidden="true" />
+      </button>
     </li>
   );
 }

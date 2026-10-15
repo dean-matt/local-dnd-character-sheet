@@ -13,8 +13,19 @@ type PageRecordRow = typeof characterPages.$inferSelect;
 /** What a transaction and the database both offer, so a helper serves either. */
 type Db = Pick<CharactersDb, "select" | "insert" | "delete">;
 
-export function presetPageRows(characterId: string): PageRow[] {
-  return PRESET_PAGES.map((page, position) => ({ ...page, characterId, position, preset: true }));
+const PRESET_SLUGS = new Set(PRESET_PAGES.map((page) => page.slug));
+
+/**
+ * `pages` as rows, in that order. A page under a preset's slug is that preset, whoever
+ * wrote the list, so an undo that puts back a deleted preset puts back a preset.
+ */
+function toRows(characterId: string, pages: readonly CharacterPage[]): PageRow[] {
+  return pages.map((page, position) => ({
+    ...page,
+    characterId,
+    position,
+    preset: PRESET_SLUGS.has(page.slug),
+  }));
 }
 
 function exists(db: Db, characterId: string): boolean {
@@ -36,77 +47,61 @@ function pageRows(db: Db, characterId: string) {
     .all();
 }
 
-/** Deletes then inserts, so a reorder never passes through two rows at one position. */
-function rewrite(db: Db, characterId: string, rows: PageRow[]) {
+/**
+ * Replaces every page `characterId` holds with `pages`, in that order. Deletes then
+ * inserts, so a reorder never passes through two rows at one position.
+ */
+export function writePages(db: Db, characterId: string, pages: readonly CharacterPage[]) {
   db.delete(characterPages).where(eq(characterPages.characterId, characterId)).run();
-  if (rows.length > 0) db.insert(characterPages).values(rows).run();
+  if (pages.length > 0) db.insert(characterPages).values(toRows(characterId, pages)).run();
 }
 
 export function listCharacterPages(db: CharactersDb, characterId: string) {
   return exists(db, characterId) ? pageRows(db, characterId) : undefined;
 }
 
-/**
- * Replaces a character's pages with `pages`, in that order. A preset keeps its `preset`
- * flag through the write, and a page the list leaves out is deleted — unless it is a
- * preset, which refuses the whole write and names every preset it left out.
- */
+/** Replaces a character's pages with `pages`, in that order, deleting any it leaves out. */
 export function replaceCharacterPages(
   db: CharactersDb,
   characterId: string,
   pages: CharacterPage[],
-): { pages: PageRecordRow[] } | { missingPresets: string[] } | undefined {
+): PageRecordRow[] | undefined {
   return db.transaction((tx) => {
     if (!exists(tx, characterId)) return undefined;
-
-    const presets = new Set(
-      pageRows(tx, characterId)
-        .filter((row) => row.preset)
-        .map((row) => row.slug),
-    );
-    const kept = new Set(pages.map((page) => page.slug));
-    const missingPresets = [...presets].filter((slug) => !kept.has(slug));
-    if (missingPresets.length > 0) return { missingPresets };
-
-    rewrite(
-      tx,
-      characterId,
-      pages.map((page, position) => ({
-        ...page,
-        characterId,
-        position,
-        preset: presets.has(page.slug),
-      })),
-    );
-    return { pages: pageRows(tx, characterId) };
+    writePages(tx, characterId, pages);
+    return pageRows(tx, characterId);
   });
 }
 
 /**
  * Resets each preset's title, visibility and blocks to the seeded page, and puts the
  * presets back in seeded order across the positions presets already hold. Every page the
- * user wrote keeps its position, so one placed ahead of or between presets stays there.
+ * user wrote keeps its place among them, so one placed ahead of or between presets stays
+ * there. A preset the user deleted comes back just after the preset seeded before it, or
+ * ahead of every other preset where it is seeded first.
  */
 export function restoreDefaultPages(db: CharactersDb, characterId: string) {
   return db.transaction((tx) => {
     if (!exists(tx, characterId)) return undefined;
 
-    const seeded = new Map(PRESET_PAGES.map((page, order) => [page.slug, { page, order }]));
-    const order = (slug: string) => seeded.get(slug)?.order ?? PRESET_PAGES.length;
     const rows = pageRows(tx, characterId);
-    const presets = rows
-      .filter((row) => row.preset)
-      .sort((a, b) => order(a.slug) - order(b.slug))
-      .map((row) => {
-        const seed = seeded.get(row.slug)?.page;
-        return seed ? { ...row, title: seed.title, hidden: seed.hidden, blocks: seed.blocks } : row;
-      });
+    const held = new Set(rows.map((row) => row.slug).filter((slug) => PRESET_SLUGS.has(slug)));
+    const presets = PRESET_PAGES.filter((page) => held.has(page.slug));
     let next = 0;
-    const restored = rows.map((row, position) => ({
-      ...(row.preset ? (presets[next++] as PageRecordRow) : row),
-      position,
-    }));
-    rewrite(tx, characterId, restored);
+    const restored = rows.map(({ slug, title, hidden, blocks }) =>
+      held.has(slug)
+        ? (presets[next++] as CharacterPage)
+        : ({ slug, title, hidden, blocks } as CharacterPage),
+    );
+    for (const [order, page] of PRESET_PAGES.entries()) {
+      if (held.has(page.slug)) continue;
+      const before = PRESET_PAGES[order - 1]?.slug;
+      const after = restored.findIndex((row) => row.slug === before);
+      const first = restored.findIndex((row) => PRESET_SLUGS.has(row.slug));
+      const at = after !== -1 ? after + 1 : first !== -1 ? first : 0;
+      restored.splice(at, 0, page);
+    }
+    writePages(tx, characterId, restored);
     return pageRows(tx, characterId);
   });
 }

@@ -20,7 +20,7 @@ const LATER_SLUGS = LATER.map((page) => page.slug);
 const LATER_TITLES = LATER.map((page) => page.title);
 
 /**
- * A fake of the pages routes: a `PUT` stores the list with each preset flag carried over,
+ * A fake of the pages routes: a `PUT` stores the list, marking a page preset by its slug,
  * and restoring resets the presets to seeded order in the slots presets hold.
  */
 function stubServer(initial: CharacterPageRecord[]) {
@@ -33,7 +33,7 @@ function stubServer(initial: CharacterPageRecord[]) {
     if (url === "/api/characters/abc/pages" && init?.method === "PUT") {
       const body = JSON.parse(String(init.body)) as Omit<CharacterPageRecord, "preset">[];
       puts.push(body);
-      const presets = new Set(stored.filter((page) => page.preset).map((page) => page.slug));
+      const presets = new Set(presetPageRecords().map((page) => page.slug));
       stored = body.map((page) => ({ ...page, preset: presets.has(page.slug) }));
       return json(stored);
     }
@@ -279,17 +279,51 @@ describe("ManagePages", () => {
     expect(await screen.findByRole("textbox", { name: "Rename Stats" })).toHaveValue("Stats");
   });
 
-  it("deletes a page the user wrote, never a preset, and leaves the page it was on", async () => {
+  it("deletes a page the user wrote, and leaves the page it was on", async () => {
     const server = stubServer([GRAPPLE, ...presetPageRecords()]);
     const router = await renderManaging("/characters/abc/p/grapple");
 
-    expect(screen.queryByRole("button", { name: "Delete Stats" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Delete Grapple" }));
 
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored().map((page) => page.slug)).not.toContain("grapple");
     expect(status()).toHaveTextContent("Grapple deleted.");
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
+  });
+
+  it("deletes a preset as it deletes any page, and an undo writes it back in place", async () => {
+    const server = stubServer(presetPageRecords());
+    const router = await renderManaging("/characters/abc/p/stats");
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Stats" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.stored().map((page) => page.slug)).not.toContain("stats");
+    expect(status()).toHaveTextContent("Stats deleted.");
+    expect(router.state.location.pathname).toBe("/characters/abc/p/spells");
+    await waitFor(() => expect(navTitles()).not.toContain("Stats"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+    await waitFor(() => expect(server.puts).toHaveLength(2));
+    expect(server.puts[1]).toEqual(presetPageRecords().map(({ preset: _, ...page }) => page));
+  });
+
+  it("refuses to delete the last visible page", async () => {
+    const [stats, ...rest] = presetPageRecords();
+    const server = stubServer([
+      stats as CharacterPageRecord,
+      ...rest.map((page) => ({ ...page, hidden: true })),
+    ]);
+    await renderManaging();
+
+    const remove = screen.getByRole("button", { name: "Delete Stats" });
+    expect(remove).toHaveAttribute("aria-disabled", "true");
+    expect(remove).toHaveAccessibleDescription(
+      "The last visible page cannot be hidden or deleted.",
+    );
+    fireEvent.click(remove);
+
+    expect(server.puts).toHaveLength(0);
   });
 
   it("undoes a delete, writing back the list before it", async () => {

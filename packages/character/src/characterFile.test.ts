@@ -44,9 +44,9 @@ describe("characterFileSchema", () => {
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([["version"]]);
   });
 
-  it("refuses a file that leaves out a preset page, which a character always holds", () => {
-    const result = characterFileSchema.safeParse({ ...file, pages: PRESET_PAGES.slice(1) });
-    expect(result.error?.issues.map((issue) => issue.path)).toEqual([["pages"]]);
+  it("reads a file that leaves out a preset page the user deleted", () => {
+    const pages = PRESET_PAGES.slice(1);
+    expect(characterFileSchema.parse({ ...file, pages }).pages).toEqual(pages);
   });
 
   it("drops the stock Alignment page a version 1 file lists, and keeps an edited one as the user's", () => {

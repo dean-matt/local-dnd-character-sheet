@@ -83,10 +83,7 @@ export const characterFileSchema = z.preprocess(
     version: z.literal(2),
     definition: characterDefinitionSchema,
     state: characterStateSchema,
-    pages: characterPagesSchema.refine(
-      (pages) => PRESET_PAGES.every((preset) => pages.some((page) => page.slug === preset.slug)),
-      { error: `every preset page is listed: ${PRESET_PAGES.map((page) => page.slug).join(", ")}` },
-    ),
+    pages: characterPagesSchema,
   }),
 );
 

@@ -37,12 +37,14 @@ describe("CharacterRedirect", () => {
     expect(router.state.location.pathname).toBe("/characters/abc/p/spells");
   });
 
-  it("shows the not-found state for a character with no visible page", async () => {
-    stubFetchByUrl({
-      "/api/characters/abc/pages": presetPageRecords().map((page) => ({ ...page, hidden: true })),
-    });
+  it.each([
+    ["hidden", presetPageRecords().map((page) => ({ ...page, hidden: true }))],
+    ["deleted", []],
+  ])("points a character whose every page is %s at Manage pages", async (_, pages) => {
+    stubFetchByUrl({ "/api/characters/abc/pages": pages });
     renderRedirect();
 
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await screen.findByRole("heading", { level: 1, name: "No pages to show" });
+    expect(screen.getByText(/Manage pages, in the sidebar/)).toBeInTheDocument();
   });
 });

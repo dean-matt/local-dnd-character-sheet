@@ -67,6 +67,7 @@ describe("pages", () => {
     ["  Café & Bar!  ", [], "cafe-bar"],
     ["???", [], "page"],
     ["Grapple", ["grapple", "grapple-2"], "grapple-3"],
+    ["Spells", [], "spells-2"],
   ])("slugs a new page titled %j beside %j as %j", (title, taken, slug) => {
     expect(newPageSlug(title, taken)).toBe(slug);
     expect(characterPagesSchema.safeParse([{ ...page, slug }]).success).toBe(true);
