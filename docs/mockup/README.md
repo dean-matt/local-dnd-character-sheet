@@ -193,7 +193,6 @@ says how much of the artboard the app builds today.
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
-| `ManageTabs` | #242 | reorder and hide |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
@@ -201,8 +200,6 @@ says how much of the artboard the app builds today.
 | `HomebrewClasses` | #489 | nothing |
 | `HomebrewBackgrounds` | #489 | nothing |
 | `HomebrewFeats` | #489 | nothing |
-| `WidgetPicker` | #242 | nothing |
-| `CustomTab` | #242 | nothing |
 | `CharacterList` | #233, #391, #395 | all but the portraits |
 
 ## Changing a mockup
