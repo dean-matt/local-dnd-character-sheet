@@ -204,7 +204,7 @@ const subclassGrantor = z.strictObject({
  * `Superior Technique` (TCE) is a fighting style that grants a maneuver. No background
  * and no race grants an option at the pinned tag, so neither is a kind a pick can store.
  */
-const grantorSchema = z.discriminatedUnion("kind", [
+export const optionalFeatureGrantorSchema = z.discriminatedUnion("kind", [
   classGrantor,
   subclassGrantor,
   z.strictObject({ kind: z.literal("feat"), ref: entryRefSchema }),
@@ -214,13 +214,14 @@ const grantorSchema = z.discriminatedUnion("kind", [
 /**
  * What entitled a feat. A class and a subclass grant one as they grant an option —
  * `Fighting Style` on the `Fighter` (XPHB) table at level 1, `Additional Fighting Style`
- * on `Champion` (XPHB) at 7 — so those two branches are `grantorSchema`'s own rather
- * than a second spelling of them.
+ * on `Champion` (XPHB) at 7 — so those two branches are `optionalFeatureGrantorSchema`'s
+ * own rather than a second spelling of them.
  *
- * Three more grant a feat and no option, which is why `grantorSchema` carries none of
- * them: 74 backgrounds, the `Custom Lineage` (TCE) and `Human` (XPHB) races, and the
- * `Variant` subrace of `Human` (PHB). A subrace names its race for the reason a subclass
- * names its class — `(name, source)` alone collides across the 98 upstream rows.
+ * Three more grant a feat and no option, which is why `optionalFeatureGrantorSchema`
+ * carries none of them: 74 backgrounds, the `Custom Lineage` (TCE) and `Human` (XPHB)
+ * races, and the `Variant` subrace of `Human` (PHB). A subrace names its race for the
+ * reason a subclass names its class — `(name, source)` alone collides across the 98
+ * upstream rows.
  *
  * No feat and no optional feature grants a feat at the pinned tag, so neither is a kind
  * this union carries.
@@ -268,7 +269,7 @@ const optionalFeatureEntrySchema = z.strictObject({
    * four fighting-style classes, so the type says which entitlement a pick spends.
    */
   featureType: z.string().min(1),
-  grantedBy: grantorSchema,
+  grantedBy: optionalFeatureGrantorSchema,
 });
 
 /**

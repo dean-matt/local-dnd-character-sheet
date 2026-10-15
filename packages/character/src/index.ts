@@ -84,6 +84,14 @@ export {
 } from "./improvements.ts";
 export { deityKey, entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
+export {
+  grantorKey,
+  type OptionalFeatureEntitlement,
+  type OptionalFeatureTally,
+  optionalFeatureEntitlementsSchema,
+  optionalFeatureTallies,
+  spareEntitlement,
+} from "./optionalFeatures.ts";
 export { overrideKey } from "./overrides.ts";
 export {
   type CharacterPage,
