@@ -42,8 +42,8 @@ widget, panel, or nav element:
   on a white square, the same for every item type; equipped is the item type's icon in
   white on the accent — a sword for a weapon, a shirt for armor, a shield for a
   shield, a hand for other gear. Under the house rule that requires proficiency, an item
-  the character is not proficient with shows a grayed backpack, `aria-disabled`, with a
-  popover naming the missing proficiency. The
+  the character is not proficient with shows a grayed backpack, named "Equip Spear,
+  unavailable", whose popover names the missing proficiency. The
   icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons and Armor
   draw it.
 - Spells: Spell Slots, Known Spells.

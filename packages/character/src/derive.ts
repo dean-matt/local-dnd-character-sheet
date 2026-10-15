@@ -330,14 +330,19 @@ function derivedUnproficientItems(
   });
 }
 
-/** The names of the equipped armor and shields the character lacks proficiency with, in inventory order. */
+/**
+ * The names of the equipped armor the character lacks proficiency with, in inventory
+ * order. A 2014 shield counts as armor; a 2024 one costs only its own AC bonus, which
+ * the sheet does not model, so it is left out.
+ */
 function unproficientArmorWorn(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
 ): string[] {
   return definition.inventory.flatMap((entry) => {
     const armor = catalog.armor.get(itemKey(entry));
-    return entry.equipped && armor && !armorProficient(definition, armor) ? [armor.name] : [];
+    if (!entry.equipped || !armor || armorProficient(definition, armor)) return [];
+    return definition.edition === "one" && armor.category === "shield" ? [] : [armor.name];
   });
 }
 

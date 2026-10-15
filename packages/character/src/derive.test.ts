@@ -472,6 +472,18 @@ describe("deriveCharacter", () => {
       expect(stowed.rollEffects.computed.some((effect) => effect.source === HIDE.name)).toBe(false);
       expect(stowed.castingBlockedBy).toEqual([]);
     });
+
+    it("charges a shield as armor in a 2014 game and not in a 2024 one", () => {
+      const untrained = { ...equipped, proficiencies: definition.proficiencies };
+      const fromShield = (block: CharacterDerived) =>
+        block.rollEffects.computed.filter((effect) => effect.source === "Shield");
+      const one = deriveCharacter(untrained, catalog);
+      expect(one.castingBlockedBy).toEqual([]);
+      expect(fromShield(one)).toEqual([]);
+      const classic = deriveCharacter({ ...untrained, edition: "classic" }, catalog);
+      expect(classic.castingBlockedBy).toEqual(["Shield"]);
+      expect(fromShield(classic)).toHaveLength(6);
+    });
   });
 
   describe("attacks", () => {
