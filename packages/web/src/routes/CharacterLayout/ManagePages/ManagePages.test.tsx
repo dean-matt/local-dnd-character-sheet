@@ -235,6 +235,19 @@ describe("ManagePages", () => {
     expect(created.closest("[data-page]")).toHaveAttribute("data-page", "new-page-2");
   });
 
+  it("undoes a page's creation, leaving it for the first visible page", async () => {
+    const server = stubServer(presetPageRecords());
+    const router = await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "New page" }));
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(2));
+    expect(server.stored().map((page) => page.slug)).not.toContain("new-page");
+    expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
+  });
+
   it("renames a page the user wrote in its row, keeping its slug, and never a preset", async () => {
     const server = stubServer([GRAPPLE, ...presetPageRecords()]);
     await renderManaging();
@@ -296,5 +309,18 @@ describe("ManagePages", () => {
     );
     expect(server.stored()[0]).toEqual(GRAPPLE);
     expect(status()).toHaveTextContent("Default pages restored.");
+  });
+
+  it("undoes a restore, writing back the list before it", async () => {
+    const before = [GRAPPLE, ...presetPageRecords().reverse()];
+    const server = stubServer(before);
+    await renderManaging();
+
+    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    await waitFor(() => expect(status()).toHaveTextContent("Default pages restored."));
+    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+
+    await waitFor(() => expect(server.puts).toHaveLength(1));
+    expect(server.puts[0]).toEqual(before.map(({ preset: _, ...page }) => page));
   });
 });

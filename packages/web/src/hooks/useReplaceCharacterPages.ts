@@ -88,13 +88,13 @@ export function useReplaceCharacterPages(id: string) {
   }
 
   /**
-   * Writes back the list the newest change replaced; answers false with nothing to undo.
-   * A write that fails puts the entry back, so the next press retries it.
+   * Writes back the list the newest change replaced, and returns it; `undefined` with
+   * nothing to undo. A write that fails puts the entry back, so the next press retries it.
    */
-  function undo(): boolean {
+  function undo(): CharacterPageRecord[] | undefined {
     const before = takeLastPages(queryClient, id);
     if (before) put(before).catch(() => rememberPages(queryClient, id, before));
-    return before !== undefined;
+    return before;
   }
 
   const canUndo = useSyncExternalStore(
