@@ -20,11 +20,9 @@ import { RemoveButton } from "../../components/RemoveButton.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useReplaceCharacterPages } from "../../hooks/useReplaceCharacterPages.ts";
 import { blockLabel } from "../../lib/blockLabels.ts";
+import { ICON_BUTTON } from "../../lib/iconButton.ts";
 import { BlockPicker } from "./BlockPicker.tsx";
 import { BlockSettings } from "./BlockSettings.tsx";
-
-const iconBtn =
-  "flex h-7 w-7 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
 export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord }) {
   const replace = useReplaceCharacterPages(id);
@@ -145,7 +143,7 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
                   <button
                     type="button"
                     data-move="up"
-                    className={iconBtn}
+                    className={ICON_BUTTON}
                     aria-label={`Move ${name} up`}
                     aria-disabled={index === 0}
                     onClick={() => move(index, -1)}
@@ -155,7 +153,7 @@ export function PageEditor({ id, page }: { id: string; page: CharacterPageRecord
                   <button
                     type="button"
                     data-move="down"
-                    className={iconBtn}
+                    className={ICON_BUTTON}
                     aria-label={`Move ${name} down`}
                     aria-disabled={index === blocks.length - 1}
                     onClick={() => move(index, 1)}

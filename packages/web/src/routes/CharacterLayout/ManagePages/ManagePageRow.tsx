@@ -1,9 +1,7 @@
 import { type CharacterPageRecord, pageTitleSchema } from "@dnd/character";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Field } from "../../../components/Field/Field.tsx";
-
-const iconBtn =
-  "flex h-7 w-7 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
+import { ICON_BUTTON } from "../../../lib/iconButton.ts";
 
 /**
  * One page in Manage pages: move, rename, and show or hide it, and delete it where the
@@ -42,7 +40,7 @@ export function ManagePageRow({
     >
       <button
         type="button"
-        className={iconBtn}
+        className={ICON_BUTTON}
         aria-label={`Move ${page.title} up`}
         aria-disabled={first || busy}
         onClick={() => onShift(-1)}
@@ -51,7 +49,7 @@ export function ManagePageRow({
       </button>
       <button
         type="button"
-        className={iconBtn}
+        className={ICON_BUTTON}
         aria-label={`Move ${page.title} down`}
         aria-disabled={last || busy}
         onClick={() => onShift(1)}
@@ -73,7 +71,7 @@ export function ManagePageRow({
       </div>
       <button
         type="button"
-        className={iconBtn}
+        className={ICON_BUTTON}
         aria-label={`${page.hidden ? "Show" : "Hide"} ${page.title}`}
         aria-disabled={held}
         aria-describedby={heldBy}
@@ -84,7 +82,7 @@ export function ManagePageRow({
       {!page.preset && (
         <button
           type="button"
-          className={iconBtn}
+          className={ICON_BUTTON}
           aria-label={`Delete ${page.title}`}
           aria-disabled={held}
           aria-describedby={heldBy}
