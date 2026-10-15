@@ -1,10 +1,9 @@
 import { type CharacterDerived, type CharacterRecord, houseRule } from "@dnd/character";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Card } from "../../../Card.tsx";
@@ -34,29 +33,8 @@ export function ItemList({
   const write = useHeldSave(character.id, "Inventory");
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
-  const queryClient = useQueryClient();
-  // A row edits by index, and its index holds only once the last row write has landed and
-  // the rows have refetched: a second click before then could reach the entry that moved
-  // into place, or a duplicate holding the same item. Such a click is dropped until both
-  // settle. Both are read at the click rather than from render state, which a query's
-  // observers update a tick late, too late for a double click; `rowWrites` mirrors the
-  // count only to draw the list busy.
-  const writing = useRef(0);
-  const [rowWrites, setRowWrites] = useState(0);
-  const busy = rowWrites > 0 || inventory.isFetching;
-  const settled = () =>
-    writing.current === 0 &&
-    queryClient.isFetching({ queryKey: characterInventoryKey(character.id) }) === 0;
-  // Released from the write's own promise: `add` calling `mutate` on this observer
-  // detaches it from an earlier write, whose per-call `onSettled` then never runs.
-  const hold = (run: () => Promise<unknown>) => {
-    writing.current += 1;
-    setRowWrites((count) => count + 1);
-    return run().finally(() => {
-      writing.current -= 1;
-      setRowWrites((count) => count - 1);
-    });
-  };
+  const { settled, hold, writing } = useRowWrites(characterInventoryKey(character.id));
+  const busy = writing || inventory.isFetching;
   const drawn = character.definition.inventory;
   const edit = (index: number, change: EntryChange) => {
     const entry = drawn[index];
