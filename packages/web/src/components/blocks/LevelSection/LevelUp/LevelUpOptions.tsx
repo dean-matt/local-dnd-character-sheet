@@ -15,14 +15,13 @@ import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 export function LevelUpOptions({ plan }: { plan: ReturnType<typeof useLevelUpPlan> }) {
   const { gains, add, remove } = plan.optionPicks;
   const facts = prerequisiteFacts(plan.draft);
+  // Held under any type: one fighting style is never taken twice, though four classes offer it.
+  const held = new Set(plan.draft.optionalFeatures.map((pick) => entryKey(pick.ref)));
   const types = gains.map((gain) => gain.featureType);
   return gains.map((gain) => {
     const label = featureTypeLabel(gain.featureType);
     // A class and its subclass growing one type at one level each get a list, told apart by name.
     const shared = types.indexOf(gain.featureType) !== types.lastIndexOf(gain.featureType);
-    const held = plan.draft.optionalFeatures.filter(
-      (pick) => pick.featureType === gain.featureType,
-    );
     return (
       <PickField
         key={`${gain.featureType}|${grantorKey(gain.grantedBy)}`}
@@ -33,7 +32,7 @@ export function LevelUpOptions({ plan }: { plan: ReturnType<typeof useLevelUpPla
         edition={gain.edition}
         type="optfeature"
         filters={{ featureType: gain.featureType }}
-        {...optionalFeatureJudge(facts, new Set(held.map((pick) => entryKey(pick.ref))))}
+        {...optionalFeatureJudge(facts, held)}
         onPick={(ref) => add(gain, ref)}
         onRemove={(ref) => remove(gain, ref)}
       />

@@ -40,11 +40,14 @@ const levelSchema = z
 
 const summarySchema = z.looseObject({ entrySummary: z.string().min(1) });
 
+/** `eldritch blast#c` is a cantrip: the name before the mark is the spell a sheet can find. */
+const spellName = (tag: string) => (tag.split("#")[0] ?? "").split("|")[0] ?? "";
+
 /**
- * `eldritch blast#c` is a cantrip and `hex/curse#x` the spell or a feature that curses;
- * the name before either mark is the spell a sheet can find.
+ * `hex/curse#x` is the spell or a feature that curses, which a Hexblade meets with no Hex
+ * known, so a sheet that can find only the spell prints it rather than refusing the pick.
  */
-const spellName = (tag: string) => (tag.split("#")[0] ?? "").split("/")[0]?.split("|")[0] ?? "";
+const isAlternative = (tag: string) => tag.includes("/");
 
 const partSchema = z
   .looseObject({
@@ -62,11 +65,14 @@ const partSchema = z
     ...level,
     ...(pact && { pact }),
     spells: spell.flatMap((each) =>
-      typeof each === "string" ? [spellName(each).toLowerCase()] : [],
+      typeof each === "string" && !isAlternative(each) ? [spellName(each).toLowerCase()] : [],
     ),
     options: optionalfeature.map((each) => each.toLowerCase()),
     unjudged: [
-      ...spell.flatMap((each) => (typeof each === "string" ? [] : [each.entrySummary])),
+      ...spell.flatMap((each) => {
+        if (typeof each !== "string") return [each.entrySummary];
+        return isAlternative(each) ? [spellName(each).split("/").join(" or ")] : [];
+      }),
       ...item,
       ...(otherSummary ? [otherSummary.entrySummary] : []),
     ],

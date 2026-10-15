@@ -12,13 +12,17 @@ describe("optionalFeaturePrerequisitesSchema", () => {
     ).toEqual([{ ...NONE, level: 12, className: "Warlock", pact: "Talisman" }]);
   });
 
-  it("reads a spell by the name before its marks, and an option by its key", () => {
+  it("reads a spell by the name before its mark, and an option by its key", () => {
     expect(
       optionalFeaturePrerequisitesSchema.parse([
-        { spell: ["eldritch blast#c", "hex/curse#x"], optionalfeature: ["Pact of the Blade|XPHB"] },
+        { spell: ["eldritch blast#c"], optionalfeature: ["Pact of the Blade|XPHB"] },
       ]),
-    ).toEqual([
-      { ...NONE, spells: ["eldritch blast", "hex"], options: ["pact of the blade|xphb"] },
+    ).toEqual([{ ...NONE, spells: ["eldritch blast"], options: ["pact of the blade|xphb"] }]);
+  });
+
+  it("prints a spell met another way rather than requiring it", () => {
+    expect(optionalFeaturePrerequisitesSchema.parse([{ spell: ["hex/curse#x"] }])).toEqual([
+      { ...NONE, unjudged: ["hex or curse"] },
     ]);
   });
 

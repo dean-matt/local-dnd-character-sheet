@@ -50,7 +50,8 @@ export function OptionalFeaturePicks({
           }));
         const judge = optionalFeatureJudge(
           facts,
-          new Set(tally.picks.map((pick) => entryKey(pick.ref))),
+          // Held under any type: one fighting style is never taken twice, though four classes offer it.
+          new Set(character.definition.optionalFeatures.map((pick) => entryKey(pick.ref))),
         );
         return (
           <PickField
