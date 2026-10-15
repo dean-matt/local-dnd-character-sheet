@@ -38,6 +38,7 @@ test("a character prints its visible pages in light ink, with the screen chrome 
       "Features",
       "Identity",
       "Level",
+      "Backstory",
       "Notes",
     ]);
     await expect(page.getByRole("banner")).toBeHidden();

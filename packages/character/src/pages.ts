@@ -8,6 +8,7 @@ const SHEET_SECTIONS = [
   "features",
   "identity",
   "level",
+  "backstory",
   "notes",
 ] as const;
 
@@ -176,6 +177,12 @@ export const PRESET_PAGES: readonly CharacterPage[] = [
     title: "Level",
     hidden: false,
     blocks: [{ kind: "section", section: "level" }],
+  },
+  {
+    slug: "backstory",
+    title: "Backstory",
+    hidden: false,
+    blocks: [{ kind: "section", section: "backstory" }],
   },
   {
     slug: "notes",

@@ -214,6 +214,20 @@ describe("appearance", () => {
   });
 });
 
+describe("backstory", () => {
+  it("keeps each box as written, line breaks included, and leaves a skipped one absent", () => {
+    const backstory = { ideals: "Freedom.", story: "Born in Neverwinter.\n\nLeft at twelve." };
+    const stored = JSON.parse(JSON.stringify({ ...definition, backstory }));
+    expect(characterDefinitionSchema.parse(stored).backstory).toEqual(backstory);
+  });
+
+  it("rejects a box the printed sheet does not have", () => {
+    expect(
+      characterDefinitionSchema.safeParse({ ...definition, backstory: { quirks: "hums" } }).success,
+    ).toBe(false);
+  });
+});
+
 describe("houseRules", () => {
   it("keeps an option the table set", () => {
     const parsed = characterDefinitionSchema.parse(structuredClone(definition));
@@ -297,6 +311,7 @@ describe("a character stored before these fields existed", () => {
     const {
       money: _money,
       appearance: _appearance,
+      backstory: _backstory,
       notes: _notes,
       feats: _feats,
       optionalFeatures: _optionalFeatures,
@@ -319,6 +334,7 @@ describe("a character stored before these fields existed", () => {
       platinum: 0,
     });
     expect(parsed.appearance).toEqual({});
+    expect(parsed.backstory).toEqual({});
     expect(parsed.houseRules).toEqual({});
     expect(parsed.notes).toBe("");
     expect(parsed.departures).toEqual([]);

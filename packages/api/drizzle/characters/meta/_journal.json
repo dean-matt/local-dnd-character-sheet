@@ -71,6 +71,13 @@
       "when": 1791893335519,
       "tag": "0009_remove_alignment_page",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1792082438906,
+      "tag": "0010_backfill_backstory_page",
+      "breakpoints": true
     }
   ]
 }

@@ -213,11 +213,13 @@ describe("migrations", () => {
         preset: number;
         blocks: string;
       }[];
-    // Alignment's position stays empty once a later migration removes that preset.
+    // Later migrations remove Alignment, leaving its position empty, and put Backstory where
+    // Notes was, moving Notes down one.
     const presets = [
       ["identity", 0],
       ["level", 1],
-      ["notes", 3],
+      ["backstory", 3],
+      ["notes", 4],
     ] as const;
     const seeded = (from: number) =>
       presets.map(([slug, offset]) => ({
@@ -295,7 +297,7 @@ describe("migrations", () => {
 
     const pages = sqlite
       .prepare(
-        "SELECT character_id AS id, slug, title, position, preset, blocks FROM character_pages WHERE slug <> 'stats' ORDER BY character_id",
+        "SELECT character_id AS id, slug, title, position, preset, blocks FROM character_pages WHERE slug NOT IN ('stats', 'backstory') ORDER BY character_id",
       )
       .all() as {
       id: string;
@@ -313,6 +315,54 @@ describe("migrations", () => {
     ]);
     for (const page of pages) expect(page.slug).toMatch(/^alignment-[0-9a-f]{8}$/);
     expect(pages.map((page) => page.blocks)).toEqual([edited, stock]);
+  });
+
+  it("backfills the Backstory preset just before Notes, moving a page the user wrote under its slug", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0009_remove_alignment_page");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insertPage = sqlite.prepare(
+      "INSERT INTO character_pages (character_id, slug, title, position, hidden, preset, blocks) VALUES (?, ?, ?, ?, 0, ?, ?)",
+    );
+    const text = '[{"kind":"text","text":"Raised by wolves"}]';
+    for (const id of ["1", "2", "3"]) insertBareCharacter(sqlite, id);
+    insertPage.run("1", "stats", "Stats", 0, 1, '[{"kind":"section","section":"abilities"}]');
+    insertPage.run("1", "notes", "Notes", 1, 1, '[{"kind":"section","section":"notes"}]');
+    insertPage.run("1", "backstory", "My story", 2, 0, text);
+    insertPage.run("1", "loot", "Loot", 3, 0, "[]");
+    insertPage.run("3", "loot", "Loot", 4, 0, "[]");
+
+    migrateCharacters(db);
+
+    const pages = (id: string) =>
+      sqlite
+        .prepare(
+          "SELECT slug, title, position, preset, blocks FROM character_pages WHERE character_id = ? ORDER BY position",
+        )
+        .all(id) as { slug: string; title: string; position: number; preset: number }[];
+    const backstory = {
+      slug: "backstory",
+      title: "Backstory",
+      preset: 1,
+      blocks: '[{"kind":"section","section":"backstory"}]',
+    };
+    const [stats, added, notes, moved, loot] = pages("1");
+    expect([stats, added, notes, moved, loot].map((page) => page?.position)).toEqual([
+      0, 1, 2, 3, 4,
+    ]);
+    expect(added).toMatchObject(backstory);
+    expect(notes).toMatchObject({ slug: "notes", preset: 1 });
+    expect(moved).toMatchObject({ title: "My story", preset: 0, blocks: text });
+    expect(moved?.slug).toMatch(/^backstory-[0-9a-f]{8}$/);
+    expect(loot?.slug).toBe("loot");
+    expect(pages("2")).toEqual([{ ...backstory, position: 0 }]);
+    expect(pages("3").map(({ slug, position }) => ({ slug, position }))).toEqual([
+      { slug: "loot", position: 4 },
+      { slug: "backstory", position: 5 },
+    ]);
   });
 
   it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {

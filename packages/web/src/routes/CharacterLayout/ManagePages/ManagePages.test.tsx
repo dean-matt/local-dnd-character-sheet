@@ -108,7 +108,7 @@ describe("ManagePages", () => {
     await waitFor(() =>
       expect(navTitles()).toEqual(["Spells", "Stats", "Inventory", "Features", ...LATER_TITLES]),
     );
-    expect(status()).toHaveTextContent("Stats moved to position 2 of 7.");
+    expect(status()).toHaveTextContent("Stats moved to position 2 of 8.");
     await waitFor(() =>
       expect(server.stored().map((page) => page.slug)).toEqual([
         "spells",

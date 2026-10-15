@@ -20,6 +20,13 @@ describe("describeChange", () => {
     });
   });
 
+  it("names a backstory box by the label the sheet gives it", () => {
+    const story = edit({ backstory: { ...definition.backstory, story: "Born" } });
+    expect(describeChange(definition, story)?.describedAs).toBe("Backstory set to Born");
+    const traits = edit({ backstory: { ...definition.backstory, personalityTraits: "Wry" } });
+    expect(describeChange(definition, traits)?.describedAs).toBe("Personality traits set to Wry");
+  });
+
   it("names the item and field of a single inventory entry's edit", () => {
     const after = edit({
       inventory: definition.inventory.map((entry, at) =>

@@ -3,6 +3,7 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import { useSaveToast } from "../../hooks/useSaveToast.ts";
 import { raiseSaveToast } from "../../lib/saveToasts.ts";
+import { FormField } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
 
 /** `invalid` is text the parse or schema refused, which a retry would refuse again;
@@ -27,6 +28,9 @@ export type EditableFieldProps<T> = {
   inputClassName?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
   placeholder?: string;
+  /** A text area rather than a one-line input, for prose whose line breaks the value keeps.
+   * On paper it grows to its text, which a fixed box would cut off. */
+  multiline?: boolean;
 } & (
   | { value: Derived<T>; onSave: (next: T | null) => Promise<void> }
   | { current: T; onSave: (next: T) => Promise<void> }
@@ -45,6 +49,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     inputClassName,
     inputMode,
     placeholder,
+    multiline,
   } = props;
   const current = "current" in props ? props.current : derivedValue(props.value);
   const incoming = format(current);
@@ -175,6 +180,23 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
     failures,
   );
 
+  const invalid = status === "invalid" || status === "failed";
+  if (multiline) {
+    return (
+      <FormField label={label} labelHidden={labelHidden} invalid={invalid}>
+        {(control) => (
+          <textarea
+            {...control}
+            className={`control min-h-16 resize-y print:field-sizing-content ${inputClassName ?? ""}`}
+            placeholder={placeholder}
+            value={text}
+            onChange={(event) => handleChange(event.target.value)}
+            onBlur={handleBlur}
+          />
+        )}
+      </FormField>
+    );
+  }
   return (
     <InputField
       label={label}
@@ -186,7 +208,7 @@ export function EditableField<T>(props: EditableFieldProps<T>) {
       value={text}
       onChange={(event) => handleChange(event.target.value)}
       onBlur={handleBlur}
-      invalid={status === "invalid" || status === "failed"}
+      invalid={invalid}
     />
   );
 }

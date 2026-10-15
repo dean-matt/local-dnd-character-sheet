@@ -49,7 +49,7 @@ widget, panel, or nav element:
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
-- Backstory, Notes.
+- Notes.
 - Identity: Level Up is the modal the Level tab's
   level-up button opens — pick an existing class or multiclass into a new one, Hit Points by average, roll, or
   a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
@@ -193,7 +193,6 @@ says how much of the artboard the app builds today.
 | `RaceFeaturesFilter` | #311 | nothing |
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
-| `Backstory` | #392 | nothing |
 | `Notes` | #401 | read-only |
 | `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
 | `ManageTabs` | #242 | reorder and hide |
