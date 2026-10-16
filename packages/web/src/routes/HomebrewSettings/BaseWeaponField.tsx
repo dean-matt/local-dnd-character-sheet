@@ -10,8 +10,10 @@ const uid = (weapon: { name: string; source: string }) => `${weapon.name}|${weap
 /**
  * The weapon a homebrew weapon is built on, picked by name from the edition's catalog base
  * weapons and written `name|source` as the catalog spells it, which proficiency and mastery
- * resolve. Text that names no base weapon stays in the field, marked, and writes nothing;
- * leaving the field shows the saved value again. A saved `baseItem` no base weapon of the
+ * resolve. Text that names no base weapon stays in the field and writes nothing, marked once
+ * no base weapon's name starts with it; leaving the field shows the saved value again. The
+ * field is read-only until the list loads, saying so, since a typed name has nothing to
+ * match until then. A saved `baseItem` no base weapon of the
  * edition matches, pasted or left over from the other edition, shows as written, marked, and
  * saves unchanged.
  */
@@ -27,7 +29,8 @@ export function BaseWeaponField({
   onChange: (baseItem: string | undefined) => void;
 }) {
   const list = useId();
-  const weapons = useBaseWeapons(edition).data?.items;
+  const query = useBaseWeapons(edition);
+  const weapons = query.data?.items;
   const [draft, setDraft] = useState<string>();
   const saved = weapons?.find((weapon) => uid(weapon).toLowerCase() === current.toLowerCase());
   const named = (text: string) =>
@@ -35,9 +38,12 @@ export function BaseWeaponField({
   const editions = `${EDITION_LABELS[edition]} base weapons`;
 
   function mark() {
+    if (query.isError) return `The ${editions} failed to load: ${query.error.message}`;
     if (!weapons) return undefined;
     if (draft !== undefined) {
-      return draft.trim() === "" || named(draft) ? undefined : `Pick one of the ${editions}`;
+      const typed = draft.trim().toLowerCase();
+      const leads = weapons.some((weapon) => weapon.name.toLowerCase().startsWith(typed));
+      return leads ? undefined : `Pick one of the ${editions}`;
     }
     return current && !saved ? `Not found among the ${editions}` : undefined;
   }
@@ -49,6 +55,8 @@ export function BaseWeaponField({
         placeholder="Longsword"
         list={list}
         autoComplete="off"
+        readOnly={!weapons}
+        status={query.isPending && `Loading the ${editions}…`}
         value={draft ?? saved?.name ?? current}
         error={error || mark()}
         onChange={(event) => {
