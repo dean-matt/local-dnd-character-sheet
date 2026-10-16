@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { useTopLayer } from "../hooks/useTopLayer.ts";
-import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../lib/anchoring.ts";
+import { anchoredListStyle, anchorName, DROPDOWN_PANEL } from "../lib/anchoring.ts";
 
 export interface DropdownProps {
   open: boolean;
@@ -32,8 +32,6 @@ export interface DropdownProps {
     style: CSSProperties;
   }) => ReactNode;
 }
-
-const PANEL = `${ANCHORED_LIST_CLASSES} flex flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none`;
 
 /**
  * The shell `MultiSelect` and `Select` share: a button naming the value with a chevron, and
@@ -93,7 +91,7 @@ export function Dropdown({
           ref: (element) => {
             panel.current = element;
           },
-          className: PANEL,
+          className: DROPDOWN_PANEL,
           style: anchoredListStyle(anchor),
         })}
     </div>

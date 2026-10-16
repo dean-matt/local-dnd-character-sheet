@@ -242,14 +242,14 @@ describe("HomebrewSettings", () => {
     mode("Step by step");
     stepTo("Combat");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
-    fireEvent.change(field("textbox", "Damage"), { target: { value: "1d" } });
+    fireEvent.change(field("combobox", "Damage"), { target: { value: "1d" } });
     click("Next");
-    expect(field("textbox", "Damage")).toHaveAccessibleDescription(
+    expect(field("combobox", "Damage")).toHaveAccessibleDescription(
       "Not dice notation, such as 1d8 or 2d6",
     );
-    expect(field("textbox", "Damage")).toHaveFocus();
-    fireEvent.change(field("textbox", "Damage"), { target: { value: "1d8" } });
-    expect(field("textbox", "Damage")).not.toHaveAccessibleDescription();
+    expect(field("combobox", "Damage")).toHaveFocus();
+    fireEvent.change(field("combobox", "Damage"), { target: { value: "1d8" } });
+    expect(field("combobox", "Damage")).not.toHaveAccessibleDescription();
     expect(
       within(editor()).getByRole("button", { name: "Properties Versatile" }),
     ).toBeInTheDocument();
@@ -405,10 +405,10 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     stepTo("Combat");
-    expect(field("textbox", "Versatile damage")).toHaveValue("1d10");
+    expect(field("combobox", "Versatile damage")).toHaveValue("1d10");
     fireEvent.click(within(editor()).getByRole("button", { name: "Properties Versatile" }));
     fireEvent.click(within(editor()).getByRole("checkbox", { name: /^Versatile/ }));
-    expect(within(editor()).queryByRole("textbox", { name: "Versatile damage" })).toBeNull();
+    expect(within(editor()).queryByRole("combobox", { name: "Versatile damage" })).toBeNull();
     mode("JSON");
     expect(JSON.parse(jsonText("Item JSON"))).not.toHaveProperty("dmg2");
   });

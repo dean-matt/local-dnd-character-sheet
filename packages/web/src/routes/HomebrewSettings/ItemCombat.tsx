@@ -3,6 +3,7 @@ import { InputField } from "../../components/InputField.tsx";
 import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { Select } from "../../components/Select.tsx";
 import { BaseWeaponField } from "./BaseWeaponField.tsx";
+import { DiceField } from "./DiceField.tsx";
 import {
   type HomebrewFormProps,
   listAt,
@@ -31,10 +32,9 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const group = itemGroup(entry.type);
   const properties = listAt(entry, "property");
-  const text = (key: string) => ({
+  const dice = (key: string) => ({
     value: textAt(entry, key),
-    onChange: (event: { target: { value: string } }) =>
-      set(key, event.target.value === "" ? undefined : event.target.value),
+    onChange: (next: string) => set(key, next.trim() === "" ? undefined : next),
   });
   const integer = (
     key: string,
@@ -128,20 +128,20 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
             />
           </div>
           <div className={PAIRED}>
-            <InputField
+            <DiceField
               label="Damage"
               placeholder="1d8"
               error={errorFor("dmg1")}
-              {...text("dmg1")}
+              {...dice("dmg1")}
             />
           </div>
           {isVersatile(entry) && (
             <div className={PAIRED}>
-              <InputField
+              <DiceField
                 label="Versatile damage"
                 placeholder="1d10"
                 error={errorFor("dmg2")}
-                {...text("dmg2")}
+                {...dice("dmg2")}
               />
             </div>
           )}
