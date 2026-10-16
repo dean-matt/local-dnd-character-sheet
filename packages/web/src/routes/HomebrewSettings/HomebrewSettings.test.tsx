@@ -372,6 +372,30 @@ describe("HomebrewSettings", () => {
       .map((term) => term.textContent ?? "");
     expect(keys).toEqual([...keys].sort((a, b) => a.localeCompare(b)));
     expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/only displays/);
+    expect(reference).not.toHaveTextContent(/not listed/);
+
+    fireEvent.change(within(reference).getByRole("searchbox", { name: "Search fields" }), {
+      target: { value: "copper" },
+    });
+    expect(
+      within(reference)
+        .getAllByRole("term")
+        .map((term) => term.textContent),
+    ).toEqual(["value"]);
+    fireEvent.change(within(reference).getByRole("searchbox", { name: "Search fields" }), {
+      target: { value: "nothing like this" },
+    });
+    expect(reference).toHaveTextContent("No field matches");
+    fireEvent.change(within(reference).getByRole("searchbox", { name: "Search fields" }), {
+      target: { value: "" },
+    });
+
+    const toggle = within(reference).getByRole("button", { name: "Field Reference" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(reference).queryByRole("term")).toBeNull();
+    fireEvent.click(toggle);
     expect(within(reference).getByText("value").nextSibling).toHaveTextContent(/copper/);
     expect(within(reference).getByText("ability")).toBeInTheDocument();
     expect(

@@ -11,7 +11,7 @@ export interface HomebrewJsonModeProps {
   onText: (next: string) => void;
 }
 
-/** The entry as JSON text, with the kind's field reference beside it where it has one. */
+/** The entry as JSON text, with the kind's field reference beside it where it has one, or above it where the reference is collapsed. */
 export function HomebrewJsonMode({
   noun,
   reference,
@@ -22,7 +22,7 @@ export function HomebrewJsonMode({
   return (
     <div className="@container">
       <div
-        className={`flex flex-col gap-4 ${reference ? "@2xl:grid @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:items-start" : ""}`}
+        className={`flex flex-col gap-4 ${reference ? "@2xl:grid @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:items-start @2xl:has-[[data-collapsed]]:grid-cols-1" : ""}`}
       >
         {reference && <div className="min-w-0">{reference}</div>}
         <div className="flex min-w-0 flex-col">
