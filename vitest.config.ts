@@ -5,10 +5,12 @@ import { BaseSequencer, type TestSpecification } from "vitest/node";
 
 /**
  * Deals each project's files across the shards largest first, each to the shard holding
- * the fewest of that project's bytes. Vitest's own split by path hash left one Windows
- * shard at 1.6 times another's time. Balancing per project keeps the content tests, which
- * a Windows runner slows far more than the rest, spread evenly. A file's size stands in
- * for its run time; recorded timings would balance closer, and drift with every test added.
+ * the fewest of that project's bytes, where Vitest's own split by path hash ignores both.
+ * Balancing per project spreads the content tests, which a Windows runner slows far more
+ * than the rest. A file's size stands in for its run time: on Linux the two shards land
+ * within 5% of each other, while on Windows the slowest still runs about 1.6 times the
+ * fastest. Recorded Windows timings would balance closer, at the cost of a record that
+ * drifts with every test added.
  */
 class BalancedSequencer extends BaseSequencer {
   override async shard(files: TestSpecification[]): Promise<TestSpecification[]> {
