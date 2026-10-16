@@ -101,10 +101,8 @@ export function HomebrewEditor({
     if (!draft.changed || window.confirm(`Discard your changes to ${title}?`)) onClose();
   };
 
-  const settings = (parts?: readonly ("rules" | "starter")[], inline?: boolean) => (
+  const settings = (
     <HomebrewEntrySettings
-      parts={parts}
-      inline={inline}
       edition={draft.edition}
       onEdition={draft.pickEdition}
       starters={record ? [] : kind.starters}
@@ -143,7 +141,7 @@ export function HomebrewEditor({
               view={previewing ? "Preview" : mode}
               onView={switchView}
             />
-            {mode === "JSON" && !previewing && settings(undefined, true)}
+            {settings}
           </div>
           <div
             id={`${id}-panel`}
@@ -185,8 +183,6 @@ export function HomebrewEditor({
                     kind={kind}
                     step={step}
                     draft={draft}
-                    starter={settings(["starter"])}
-                    rules={settings(["rules"])}
                     shownProblems={shownProblems}
                     onStep={goTo}
                   />

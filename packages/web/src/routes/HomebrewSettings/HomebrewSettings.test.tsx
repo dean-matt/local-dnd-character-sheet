@@ -236,8 +236,10 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     expect(field("combobox", "Type")).toHaveTextContent("Melee weapon");
     const basics = within(editor()).getByRole("region", { name: "Basics" });
-    expect(within(basics).getByRole("combobox", { name: "Rules" })).toBeInTheDocument();
-    expect(within(basics).queryByRole("combobox", { name: "Start from" })).toBeNull();
+    expect(within(basics).queryByRole("combobox", { name: "Rules" })).toBeNull();
+    mode("Preview");
+    expect(field("combobox", "Rules")).toHaveTextContent("2024");
+    mode("Step by step");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
     expect(
       within(editor()).getByRole("button", { name: "Properties Versatile" }),

@@ -1,5 +1,4 @@
 import { Eye } from "lucide-react";
-import type { ReactNode } from "react";
 import { HomebrewProblemAlert } from "./HomebrewProblemAlert.tsx";
 import { errorFor, type HomebrewProblem } from "./homebrewDraft.ts";
 import { type HomebrewKind, stepOf, stepsOf } from "./homebrewKinds.ts";
@@ -9,10 +8,6 @@ export interface HomebrewStepModeProps {
   kind: HomebrewKind;
   step: number;
   draft: ReturnType<typeof useHomebrewEntryDraft>;
-  /** The example a new entry starts from, shown above the steps. */
-  starter: ReactNode;
-  /** The entry's edition, shown first in the first section. */
-  rules: ReactNode;
   /** The problems to name, which stay empty until a step or a save is tried. */
   shownProblems: HomebrewProblem[];
   onStep: (step: number) => void;
@@ -27,8 +22,6 @@ export function HomebrewStepMode({
   kind,
   step,
   draft,
-  starter,
-  rules,
   shownProblems,
   onStep,
 }: HomebrewStepModeProps) {
@@ -67,16 +60,14 @@ export function HomebrewStepMode({
       </p>
       {current && (
         <>
-          {step === 0 && starter}
           <div className={`grid gap-6 ${current.sections.length > 1 ? "@3xl:grid-cols-2" : ""}`}>
-            {current.sections.map(({ title, Fields }, index) => (
+            {current.sections.map(({ title, Fields }) => (
               <section
                 key={title}
                 aria-label={title}
                 className="@container flex min-w-0 flex-col gap-3"
               >
                 <h3 className="font-semibold text-sm">{title}</h3>
-                {step === 0 && index === 0 && rules}
                 <Fields
                   key={draft.revision}
                   entry={draft.entry}
