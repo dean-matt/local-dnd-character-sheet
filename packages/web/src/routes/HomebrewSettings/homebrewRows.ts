@@ -1,5 +1,5 @@
 /**
- * The layout every homebrew row list shares: up to four controls and a Remove button on one
+ * The layout every homebrew row list shares: up to four controls and a remove button on one
  * line where the form is wide, two to a line where it is not.
  */
 export const ROW = "grid grid-cols-2 items-end gap-2 @2xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]";

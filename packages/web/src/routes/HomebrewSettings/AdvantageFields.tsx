@@ -4,6 +4,7 @@ import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { textAt } from "./homebrewEntry.ts";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 import {
@@ -101,13 +102,10 @@ export function AdvantageFields({
               value={textAt(row, "condition")}
               onChange={(event) => replace(index, { condition: event.target.value || undefined })}
             />
-            <button
-              type="button"
-              onClick={() => onChange(effects.filter((_, at) => at !== index))}
-              className={ROW_BUTTON}
-            >
-              Remove <span className="sr-only">effect {index + 1}</span>
-            </button>
+            <HomebrewRowRemove
+              name={`effect ${index + 1}`}
+              onRemove={() => onChange(effects.filter((_, at) => at !== index))}
+            />
           </div>
         );
       })}

@@ -3,6 +3,7 @@ import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { numberAt, recordAt, typedInteger } from "./homebrewEntry.ts";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 
@@ -133,13 +134,10 @@ export function ItemSpeedFields({ speed, onChange, error }: ItemSpeedFieldsProps
               />
             )}
             <div />
-            <button
-              type="button"
-              onClick={() => write(rows.filter((_, at) => at !== index))}
-              className={ROW_BUTTON}
-            >
-              Remove <span className="sr-only">speed change {index + 1}</span>
-            </button>
+            <HomebrewRowRemove
+              name={`speed change ${index + 1}`}
+              onRemove={() => write(rows.filter((_, at) => at !== index))}
+            />
           </div>
         );
       })}

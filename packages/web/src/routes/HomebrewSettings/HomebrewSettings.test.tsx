@@ -257,7 +257,8 @@ describe("HomebrewSettings", () => {
     pick("Start from", "Weapon");
     stepTo("Magic");
     expect(field("combobox", "Rarity")).toHaveTextContent("Rare");
-    expect(field("spinbutton", "Bonus to attack and damage")).toHaveValue(1);
+    expect(field("combobox", "Bonus 1 to")).toHaveTextContent("Attack and damage");
+    expect(field("spinbutton", "Bonus 1 amount")).toHaveValue(1);
     stepTo("Rules text");
     expect(field("textbox", "Rules text")).toHaveValue(
       (ITEM_STARTERS[0].entry.entries as string[]).join("\n\n"),
@@ -271,14 +272,26 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     pick("Start from", "Wondrous item");
     stepTo("Magic");
-    expect(field("checkbox", "Requires attunement")).toBeChecked();
-    expect(field("spinbutton", "Bonus to saving throws")).toHaveValue(1);
-    expect(field("spinbutton", "Bonus to concentration saves")).toHaveValue(2);
-    expect(field("spinbutton", "Critical hit on")).toHaveValue(19);
-    expect(
-      within(editor()).queryByRole("spinbutton", { name: "Bonus to attack and damage" }),
-    ).toBeNull();
-    fireEvent.change(field("spinbutton", "Bonus to spell save DC"), { target: { value: "2" } });
+    expect(field("combobox", "Attunement")).toHaveTextContent("Required");
+    expect(field("combobox", "Bonus 1 to")).toHaveTextContent("Saving throws");
+    expect(field("combobox", "Bonus 2 to")).toHaveTextContent("Concentration saves");
+    expect(field("spinbutton", "Bonus 2 amount")).toHaveValue(2);
+    expect(field("combobox", "Bonus 6 to")).toHaveTextContent("Spell save DC");
+    expect(field("combobox", "Bonus 8 to")).toHaveTextContent("Critical hit on");
+    expect(field("spinbutton", "Bonus 8 amount")).toHaveValue(19);
+    fireEvent.change(field("spinbutton", "Bonus 6 amount"), { target: { value: "2" } });
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Remove bonus 3" }));
+    click("Add a bonus");
+    fireEvent.click(field("combobox", "Bonus 8 to"));
+    expect(screen.queryByRole("option", { name: "Attack and damage" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "Saving throws" })).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: "AC" }));
+    fireEvent.change(field("spinbutton", "Bonus 8 amount"), { target: { value: "1" } });
+    expect(within(editor()).queryByRole("button", { name: "Add a bonus" })).toBeInTheDocument();
+
+    pick("Attunement", "Required by…");
+    fireEvent.change(field("textbox", "Attuned by"), { target: { value: "by a sorcerer" } });
 
     stepTo("Effects");
     expect(field("combobox", "Ability change 1 ability")).toHaveTextContent("Wisdom");
@@ -311,11 +324,15 @@ describe("HomebrewSettings", () => {
 
     const entry = JSON.parse(jsonText("Item JSON"));
     expect(entry).toMatchObject({
+      reqAttune: "by a sorcerer",
+      bonusAc: "+1",
       bonusSpellSaveDc: "+2",
+      critThreshold: 19,
       ability: { static: { str: 19 } },
       modifySpeed: { equal: { fly: "walk" }, bonus: { "*": 10 } },
       vulnerable: ["thunder", "cold"],
     });
+    expect(entry).not.toHaveProperty("bonusAbilityCheck");
     expect(entry.ability).toEqual({ static: { str: 19 } });
     expect(entry.modifySpeed).toEqual({ equal: { fly: "walk" }, bonus: { "*": 10 } });
   });
