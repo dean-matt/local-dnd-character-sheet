@@ -7,6 +7,7 @@ import { ListRow } from "../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../NotFoundTag.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../Tag.tsx";
+import { FeatPicks } from "./FeatPicks.tsx";
 import { FeatureChoiceField } from "./FeatureChoiceField.tsx";
 
 /** Names a grantor in the modal where the group carries no name of its own. */
@@ -33,9 +34,15 @@ const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
 
 /**
  * An unresolved feature with no source is a homebrew reference, which names no source. A
- * feature that offers a choice of features carries the control that changes it.
+ * feature that offers a choice of features carries the control that changes it, and a feat
+ * the controls for what its own fields offer. `featIndex` is a feat's place in `feats`.
  */
-export function FeatureRow({ feature, group, character }: Entry & { character: CharacterRecord }) {
+export function FeatureRow({
+  feature,
+  group,
+  character,
+  featIndex,
+}: Entry & { character: CharacterRecord; featIndex?: number }) {
   const type =
     feature.featureType === undefined ? undefined : featureTypeLabel(feature.featureType);
   const level = feature.level;
@@ -71,7 +78,11 @@ export function FeatureRow({ feature, group, character }: Entry & { character: C
       chips={chips}
       preview={firstLine(feature.entries)}
       controls={
-        feature.choice && <FeatureChoiceField character={character} choice={feature.choice} />
+        feature.choice ? (
+          <FeatureChoiceField character={character} choice={feature.choice} />
+        ) : (
+          featIndex !== undefined && <FeatPicks character={character} index={featIndex} />
+        )
       }
       detail={{
         meta: [

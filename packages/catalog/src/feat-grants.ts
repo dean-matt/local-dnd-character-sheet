@@ -15,7 +15,7 @@ type FeatPickField = "savingThrows" | "skills" | "expertise" | "tools" | "langua
  * character is proficient in for `expertise`. A pick among tools names the kinds of tool it
  * also offers in `types`.
  */
-type FeatOffer = {
+export type FeatOffer = {
   fields: FeatPickField[];
   count: number;
   from: string[] | null;

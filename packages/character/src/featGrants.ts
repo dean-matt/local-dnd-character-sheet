@@ -29,13 +29,13 @@ const FIELDS: readonly FeatPickField[] = [
 ];
 
 /** One pick an offer took: the field it lands in, and the name. */
-type FeatPick = { field: FeatPickField; name: string };
+export type FeatPick = { field: FeatPickField; name: string };
 
 /**
  * The picks each of `offers` takes from `picks`: each offer, in order, takes up to its count
  * of the names stored under its fields that it offers. A pick no offer takes grants nothing.
  */
-function allocatePicks(offers: readonly FeatOffer[], picks: Picks): FeatPick[][] {
+export function allocatePicks(offers: readonly FeatOffer[], picks: Picks): FeatPick[][] {
   const left = new Map(FIELDS.map((field) => [field, [...(picks?.[field] ?? [])]]));
   return offers.map((offer) => {
     const taken: FeatPick[] = [];
