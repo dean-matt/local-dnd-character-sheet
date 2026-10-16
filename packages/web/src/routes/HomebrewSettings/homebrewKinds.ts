@@ -21,6 +21,7 @@ import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrew
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
 import { ItemDefenses } from "./ItemDefenses.tsx";
+import { ItemEffects } from "./ItemEffects.tsx";
 import { ItemFieldReference } from "./ItemFieldReference.tsx";
 import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
@@ -115,14 +116,13 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
         "bonusSpellSaveDc",
         "bonusSpellDamage",
         "critThreshold",
-        "ability",
-        "modifySpeed",
       ],
     },
+    { title: "Effects", Fields: ItemEffects, keys: ["ability", "modifySpeed", "advantage"] },
     {
       title: "Defenses",
       Fields: ItemDefenses,
-      keys: ["resist", "immune", "vulnerable", "conditionImmune", "advantage"],
+      keys: ["resist", "immune", "vulnerable", "conditionImmune"],
     },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
   ],

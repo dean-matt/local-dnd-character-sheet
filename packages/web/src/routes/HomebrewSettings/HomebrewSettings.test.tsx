@@ -273,20 +273,28 @@ describe("HomebrewSettings", () => {
     expect(field("spinbutton", "Bonus to saving throws")).toHaveValue(1);
     expect(field("spinbutton", "Bonus to concentration saves")).toHaveValue(2);
     expect(field("spinbutton", "Critical hit on")).toHaveValue(19);
-    expect(field("spinbutton", "Wisdom bonus")).toHaveValue(1);
-    expect(field("spinbutton", "Flying set to (ft.)")).toHaveValue(30);
     expect(
       within(editor()).queryByRole("spinbutton", { name: "Bonus to attack and damage" }),
     ).toBeNull();
-
     fireEvent.change(field("spinbutton", "Bonus to spell save DC"), { target: { value: "2" } });
-    fireEvent.change(field("spinbutton", "Wisdom bonus"), { target: { value: "" } });
-    fireEvent.change(field("spinbutton", "Strength set to"), { target: { value: "19" } });
-    fireEvent.change(field("spinbutton", "Flying set to (ft.)"), { target: { value: "" } });
-    pick("Flying equal to", "Walking");
-    fireEvent.change(field("spinbutton", "Bonus to every speed (ft.)"), {
-      target: { value: "10" },
-    });
+
+    stepTo("Effects");
+    expect(field("combobox", "Ability change 1 ability")).toHaveTextContent("Wisdom");
+    expect(field("combobox", "Ability change 1 rule")).toHaveTextContent("Raises by");
+    expect(field("spinbutton", "Ability change 1 amount")).toHaveValue(1);
+    expect(field("combobox", "Speed change 1 speed")).toHaveTextContent("Flying");
+    expect(field("spinbutton", "Speed change 1 feet")).toHaveValue(30);
+
+    pick("Ability change 1 rule", "Sets to");
+    pick("Ability change 1 ability", "Strength");
+    fireEvent.change(field("spinbutton", "Ability change 1 amount"), { target: { value: "19" } });
+    click("Add an ability change");
+    pick("Ability change 2 ability", "Dexterity");
+    pick("Speed change 1 rule", "Equal to");
+    pick("Speed change 1 matches", "Walking");
+    click("Add a speed change");
+    pick("Speed change 2 speed", "Every speed");
+    fireEvent.change(field("spinbutton", "Speed change 2 feet"), { target: { value: "10" } });
     stepTo("Defenses");
     const vulnerable = within(editor()).getByRole("group", { name: "Damage vulnerabilities" });
     expect(within(vulnerable).getByRole("checkbox", { name: "Thunder" })).toBeChecked();
@@ -299,8 +307,8 @@ describe("HomebrewSettings", () => {
       modifySpeed: { equal: { fly: "walk" }, bonus: { "*": 10 } },
       vulnerable: ["thunder"],
     });
-    expect(entry.ability).not.toHaveProperty("wis");
-    expect(entry.modifySpeed).not.toHaveProperty("static");
+    expect(entry.ability).toEqual({ static: { str: 19 } });
+    expect(entry.modifySpeed).toEqual({ equal: { fly: "walk" }, bonus: { "*": 10 } });
   });
 
   it("drops a weapon's attack when its type turns to armor", async () => {
@@ -325,7 +333,7 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    stepTo("Defenses");
+    stepTo("Effects");
     click("Add an effect");
     pick("Effect 1 roll", "Skill");
     pick("Effect 1 skill", "Stealth");

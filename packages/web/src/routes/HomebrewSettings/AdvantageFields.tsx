@@ -5,6 +5,7 @@ import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { textAt } from "./homebrewEntry.ts";
+import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 import {
   ADVANTAGE_MODE_OPTIONS,
   ADVANTAGE_ROLL_OPTIONS,
@@ -57,7 +58,7 @@ export function AdvantageFields({
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: a row has no id, and the list only grows or shrinks at a row the user picked.
             key={index}
-            className="grid grid-cols-2 items-end gap-2 @2xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
+            className={ROW}
           >
             <FormField label={`${label} mode`} labelHidden>
               {(control) => (
@@ -103,7 +104,7 @@ export function AdvantageFields({
             <button
               type="button"
               onClick={() => onChange(effects.filter((_, at) => at !== index))}
-              className="rounded-control border border-border bg-surface px-3 py-2 font-semibold text-ink text-row hover:bg-subtle"
+              className={ROW_BUTTON}
             >
               Remove <span className="sr-only">effect {index + 1}</span>
             </button>
@@ -113,7 +114,7 @@ export function AdvantageFields({
       <button
         type="button"
         onClick={() => onChange([...effects, { mode: "advantage", roll: "save" }])}
-        className="self-start rounded-control border border-border bg-surface px-3 py-2 font-semibold text-ink text-row hover:bg-subtle"
+        className={`self-start ${ROW_BUTTON}`}
       >
         Add an effect
       </button>

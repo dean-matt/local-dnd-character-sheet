@@ -1,19 +1,35 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
-import { numberAt, recordAt, typedInteger, withField } from "./homebrewEntry.ts";
-import { FORM_GRID, SHORT } from "./homebrewGrid.ts";
-import { NOT_STATED } from "./homebrewOptions.ts";
+import { numberAt, recordAt, typedInteger } from "./homebrewEntry.ts";
+import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 
 const MODES = [
-  ["walk", "Walking"],
-  ["fly", "Flying"],
-  ["swim", "Swimming"],
-  ["climb", "Climbing"],
-  ["burrow", "Burrowing"],
-] as const;
+  { value: "walk", label: "Walking" },
+  { value: "fly", label: "Flying" },
+  { value: "swim", label: "Swimming" },
+  { value: "climb", label: "Climbing" },
+  { value: "burrow", label: "Burrowing" },
+];
+
+const EVERY = { value: "*", label: "Every speed" };
+
+const HOW_OPTIONS = [
+  { value: "static", label: "Set to (ft.)" },
+  { value: "bonus", label: "Raised by (ft.)" },
+  { value: "equal", label: "Equal to" },
+];
+
+type How = "static" | "bonus" | "equal";
+
+interface Change {
+  mode: string;
+  how: How;
+  /** Feet for `static` and `bonus`, a mode for `equal`. */
+  value: number | string | undefined;
+}
 
 export interface ItemSpeedFieldsProps {
   /** The entry's `modifySpeed`. */
@@ -22,80 +38,123 @@ export interface ItemSpeedFieldsProps {
   error?: ReactNode;
 }
 
-const orNothing = (record: Record<string, unknown>) =>
-  Object.keys(record).length > 0 ? record : undefined;
+function changesIn(modify: Record<string, unknown>): Change[] {
+  return (["static", "bonus", "equal"] as const).flatMap((how) =>
+    Object.entries(recordAt(modify, how)).map(([mode, value]) => ({
+      mode,
+      how,
+      value: how === "equal" ? (typeof value === "string" ? value : undefined) : numberAt(value),
+    })),
+  );
+}
 
 /**
- * Feet added to every speed, then each speed's bonus, the speed it is set to, and the speed
- * it matches. `multiply` has no control here, and survives an edit as a pasted entry holds it.
+ * One row per speed the item sets, raises or matches to another, as `modifySpeed` holds
+ * them. Every speed takes only a raise. A row with nothing to write yet writes nothing.
+ * `multiply` has no control here, and survives an edit as a pasted entry holds it.
  */
 export function ItemSpeedFields({ speed, onChange, error }: ItemSpeedFieldsProps) {
   const modify = isRecord(speed) && !Array.isArray(speed) ? speed : {};
-  const write = (part: string, mode: string, value: unknown) => {
-    const next = orNothing(withField(recordAt(modify, part), mode, value));
-    onChange(orNothing(withField(modify, part, next)));
+  const [rows, setRows] = useState(() => changesIn(modify));
+  const write = (next: Change[]) => {
+    setRows(next);
+    const { static: _s, bonus: _b, equal: _e, ...rest } = modify;
+    const parts = Object.fromEntries(
+      (["static", "bonus", "equal"] as const).flatMap((how) => {
+        const part = Object.fromEntries(
+          next
+            .filter((row) => row.how === how && row.value !== undefined)
+            .map((row) => [row.mode, row.value]),
+        );
+        return Object.keys(part).length > 0 ? [[how, part]] : [];
+      }),
+    );
+    const result = { ...rest, ...parts };
+    onChange(Object.keys(result).length > 0 ? result : undefined);
   };
-  const bonus = recordAt(modify, "bonus");
-  const fixed = recordAt(modify, "static");
-  const equal = recordAt(modify, "equal");
+  const replace = (index: number, change: Partial<Change>) =>
+    write(rows.map((row, at) => (at === index ? { ...row, ...change } : row)));
+
   return (
-    <fieldset className="flex min-w-0 flex-col gap-1">
+    <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className="mb-1 text-muted text-row">Speed</legend>
-      {error && <p className="text-error text-row">{error}</p>}
-      <div className={FORM_GRID}>
-        <div className={SHORT}>
-          <InputField
-            label="Bonus to every speed (ft.)"
-            type="number"
-            step={5}
-            value={numberAt(bonus["*"]) ?? ""}
-            onChange={(event) => write("bonus", "*", typedInteger(event.target.value))}
-          />
-        </div>
-        <div className="hidden @2xl:col-span-3 @2xl:block" />
-        {MODES.map(([mode, label]) => (
-          <div key={mode} className="contents">
-            <div className={SHORT}>
-              <InputField
-                label={`${label} bonus (ft.)`}
-                type="number"
-                step={5}
-                value={numberAt(bonus[mode]) ?? ""}
-                onChange={(event) => write("bonus", mode, typedInteger(event.target.value))}
-              />
-            </div>
-            <div className={SHORT}>
-              <InputField
-                label={`${label} set to (ft.)`}
-                type="number"
-                min={0}
-                step={5}
-                value={numberAt(fixed[mode]) ?? ""}
-                onChange={(event) => write("static", mode, typedInteger(event.target.value))}
-              />
-            </div>
-            <div className={SHORT}>
-              <FormField label={`${label} equal to`}>
+      {rows.map((row, index) => {
+        const label = `Speed change ${index + 1}`;
+        return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: a row has no id, and the list only grows or shrinks at a row the user picked.
+          <div key={index} className={ROW}>
+            <FormField label={`${label} speed`} labelHidden>
+              {(control) => (
+                <Select
+                  {...control}
+                  options={[...MODES, EVERY]}
+                  value={row.mode}
+                  onChange={(mode) =>
+                    replace(
+                      index,
+                      mode === "*" ? { mode, how: "bonus", value: undefined } : { mode },
+                    )
+                  }
+                />
+              )}
+            </FormField>
+            <FormField label={`${label} rule`} labelHidden>
+              {(control) => (
+                <Select
+                  {...control}
+                  options={row.mode === "*" ? HOW_OPTIONS.slice(1, 2) : HOW_OPTIONS}
+                  value={row.how}
+                  onChange={(how) => replace(index, { how: how as How, value: undefined })}
+                />
+              )}
+            </FormField>
+            {row.how === "equal" ? (
+              <FormField label={`${label} matches`} labelHidden>
                 {(control) => (
                   <Select
                     {...control}
                     options={[
-                      NOT_STATED,
-                      ...MODES.filter(([other]) => other !== mode).map(([value, name]) => ({
-                        value,
-                        label: name,
-                      })),
+                      { value: "", label: "Pick a speed" },
+                      ...MODES.filter(({ value }) => value !== row.mode),
                     ]}
-                    value={typeof equal[mode] === "string" ? (equal[mode] as string) : ""}
-                    onChange={(next) => write("equal", mode, next || undefined)}
+                    value={typeof row.value === "string" ? row.value : ""}
+                    onChange={(value) => replace(index, { value: value || undefined })}
                   />
                 )}
               </FormField>
-            </div>
-            <div className="hidden @2xl:block" />
+            ) : (
+              <InputField
+                label={`${label} feet`}
+                labelHidden
+                type="number"
+                step={5}
+                value={typeof row.value === "number" ? row.value : ""}
+                onChange={(event) => replace(index, { value: typedInteger(event.target.value) })}
+              />
+            )}
+            <div />
+            <button
+              type="button"
+              onClick={() => write(rows.filter((_, at) => at !== index))}
+              className={ROW_BUTTON}
+            >
+              Remove <span className="sr-only">speed change {index + 1}</span>
+            </button>
           </div>
-        ))}
-      </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => setRows([...rows, { mode: "walk", how: "bonus", value: undefined }])}
+        className={`self-start ${ROW_BUTTON}`}
+      >
+        Add a speed change
+      </button>
+      {error && (
+        <p role="alert" className="text-error text-row">
+          {error}
+        </p>
+      )}
     </fieldset>
   );
 }

@@ -12,11 +12,9 @@ import {
   unsigned,
   withField,
 } from "./homebrewEntry.ts";
-import { FORM_GRID, SHORT, WHOLE } from "./homebrewGrid.ts";
+import { FORM_GRID, SHORT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import { itemGroup } from "./homebrewVocabulary.ts";
-import { ItemAbilityFields } from "./ItemAbilityFields.tsx";
-import { ItemSpeedFields } from "./ItemSpeedFields.tsx";
 
 const BONUSES = [
   ["bonusAc", "Bonus to AC"],
@@ -30,9 +28,8 @@ const BONUSES = [
 ] as const;
 
 /**
- * What makes a homebrew item magic: its rarity and attunement, its bonuses, the critical
- * range it grants, and what it does to ability scores and speeds. A weapon adds its bonus to
- * attack and damage rolls.
+ * What makes a homebrew item magic: its rarity and attunement, its bonuses and the critical
+ * range it grants. A weapon adds its bonus to attack and damage rolls.
  */
 export function ItemMagic({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
@@ -85,20 +82,6 @@ export function ItemMagic({ entry, onChange, errorFor }: HomebrewFormProps) {
           value={numberAt(entry.critThreshold) ?? ""}
           onChange={(event) => set("critThreshold", typedInteger(event.target.value))}
           error={errorFor("critThreshold")}
-        />
-      </div>
-      <div className={WHOLE}>
-        <ItemAbilityFields
-          ability={entry.ability}
-          onChange={(next) => set("ability", next)}
-          error={errorFor("ability")}
-        />
-      </div>
-      <div className={WHOLE}>
-        <ItemSpeedFields
-          speed={entry.modifySpeed}
-          onChange={(next) => set("modifySpeed", next)}
-          error={errorFor("modifySpeed")}
         />
       </div>
     </div>
