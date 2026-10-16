@@ -39,6 +39,7 @@ export function ItemMagic({ entry, onChange, errorFor }: HomebrewFormProps) {
           entry={entry}
           onChange={onChange}
           weapon={itemGroup(entry.type) === "weapon"}
+          errorFor={errorFor}
         />
       </div>
     </div>

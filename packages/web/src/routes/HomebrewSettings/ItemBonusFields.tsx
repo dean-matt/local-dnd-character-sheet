@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
@@ -40,7 +40,8 @@ interface Row {
 export interface ItemBonusFieldsProps extends Pick<HomebrewFormProps, "entry" | "onChange"> {
   /** Whether the item is a weapon, the only kind that takes a bonus to attack and damage. */
   weapon: boolean;
-  error?: ReactNode;
+  /** The problem to show beside the row for the field `key`, if it has one. */
+  errorFor: HomebrewFormProps["errorFor"];
 }
 
 /**
@@ -48,7 +49,7 @@ export interface ItemBonusFieldsProps extends Pick<HomebrewFormProps, "entry" | 
  * the bonuses no other row holds. A row with no number yet writes nothing, and changing a
  * row's bonus moves its number to the new field.
  */
-export function ItemBonusFields({ entry, onChange, weapon, error }: ItemBonusFieldsProps) {
+export function ItemBonusFields({ entry, onChange, weapon, errorFor }: ItemBonusFieldsProps) {
   const offered = BONUSES.filter(({ value }) => weapon || value !== "bonusWeapon");
   const [rows, setRows] = useState<Row[]>(() =>
     offered.flatMap(({ value: key }) => {
@@ -100,6 +101,7 @@ export function ItemBonusFields({ entry, onChange, weapon, error }: ItemBonusFie
               max={roll ? 19 : undefined}
               placeholder={roll ? "19" : "+1"}
               value={row.value ?? ""}
+              error={errorFor(row.key)}
               onChange={(event) =>
                 write(
                   rows.map((each, at) =>
@@ -123,11 +125,6 @@ export function ItemBonusFields({ entry, onChange, weapon, error }: ItemBonusFie
         >
           Add a bonus
         </button>
-      )}
-      {error && (
-        <p role="alert" className="text-error text-row">
-          {error}
-        </p>
       )}
     </fieldset>
   );

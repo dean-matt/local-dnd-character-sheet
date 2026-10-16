@@ -2,7 +2,6 @@ import {
   type Entries,
   type HomebrewItemInput,
   type HomebrewSpellInput,
-  homebrewItemInputSchema,
   homebrewItemRecordSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
@@ -17,6 +16,7 @@ import { itemMeta } from "../../lib/itemKind.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
 import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
+import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
@@ -91,7 +91,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
   noun: "item",
   heading: "Items",
   recordSchema: homebrewItemRecordSchema,
-  inputSchema: homebrewItemInputSchema,
+  inputSchema: homebrewItemFormSchema,
   chips: (record) => [itemMeta(itemHitFacts(record.json))],
   facts: itemFacts,
   entries: itemEntries,
@@ -134,7 +134,17 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
   ],
   reference: createElement(ItemFieldReference),
-  formKeys: ["name", "type", "rarity", "reqAttune", "advantage", "entries"],
+  formKeys: [
+    "name",
+    "type",
+    "rarity",
+    "reqAttune",
+    "advantage",
+    "entries",
+    "dmg1",
+    "dmg2",
+    "critThreshold",
+  ],
 };
 
 const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpellInput> = {

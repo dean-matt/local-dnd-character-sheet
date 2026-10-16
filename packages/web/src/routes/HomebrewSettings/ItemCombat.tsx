@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { MultiSelect } from "../../components/MultiSelect.tsx";
@@ -20,6 +21,9 @@ import {
   WEAPON_PROPERTIES,
 } from "./homebrewVocabulary.ts";
 
+/** The dice a weapon's damage most often takes, offered as the field is typed; any other still saves. */
+const WEAPON_DICE = ["1d4", "1d6", "1d8", "1d10", "1d12", "2d6"];
+
 /** A weapon property's code: `V` for `V|XPHB`, and for Lance's `{uid: "V|XPHB", note}`. */
 function propertyCode(property: unknown): string | undefined {
   const named = isRecord(property) ? property.uid : property;
@@ -27,7 +31,8 @@ function propertyCode(property: unknown): string | undefined {
 }
 
 /** A weapon's attack or an armor's AC, by the item's type; neither for any other type. */
-export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
+export function ItemCombat({ entry, onChange, errorFor }: HomebrewFormProps) {
+  const dice = useId();
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const group = itemGroup(entry.type);
   const baseItem = textAt(entry, "baseItem").split("|");
@@ -123,10 +128,27 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
             />
           </div>
           <div className={PAIRED}>
-            <InputField label="Damage" placeholder="1d8" {...text("dmg1")} />
+            <InputField
+              label="Damage"
+              placeholder="1d8"
+              list={dice}
+              error={errorFor("dmg1")}
+              {...text("dmg1")}
+            />
           </div>
           <div className={PAIRED}>
-            <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
+            <InputField
+              label="Versatile damage"
+              placeholder="1d10"
+              list={dice}
+              error={errorFor("dmg2")}
+              {...text("dmg2")}
+            />
+            <datalist id={dice}>
+              {WEAPON_DICE.map((die) => (
+                <option key={die} value={die} />
+              ))}
+            </datalist>
           </div>
         </>
       )}
