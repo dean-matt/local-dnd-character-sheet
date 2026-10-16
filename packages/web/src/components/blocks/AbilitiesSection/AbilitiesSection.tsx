@@ -1,9 +1,10 @@
 /**
  * The numbers a player reads constantly. Every computed number comes off the derived
  * block; the definition supplies only what a player chose — the scores, which saves and
- * skills they are proficient in, and the skills they added — and `Vitals` reads what play
- * has spent from state. A number opens its terms and override in a popover; an ability, a
- * save or a skill opens its terms and the catalog's rules text in a modal.
+ * skills they are proficient in, and the skills they added — the derived block what feats
+ * grant beside them, and `Vitals` reads what play has spent from state. A number opens its
+ * terms and override in a popover; an ability, a save or a skill opens its terms and the
+ * catalog's rules text in a modal.
  */
 import {
   ABILITIES,
@@ -22,6 +23,7 @@ import { CatalogSkills } from "./CatalogSkills.tsx";
 import { CombatStats } from "./CombatStats.tsx";
 import { CustomSkills } from "./CustomSkills.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
+import { FeatGrants } from "./FeatGrants.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
@@ -38,7 +40,10 @@ export function AbilitiesSection({
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
 
-  const saveProficient = new Set(definition.proficiencies.savingThrows);
+  const saveProficient = new Set([
+    ...definition.proficiencies.savingThrows,
+    ...derivedValue(derived.featGrants).savingThrows.map(({ name }) => name),
+  ]);
   const rollEffects = derivedValue(derived.rollEffects);
 
   return (
@@ -49,6 +54,7 @@ export function AbilitiesSection({
       <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />
       <ItemGrants derived={derived} />
+      <FeatGrants derived={derived} />
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Card title="Saving Throws">
           <ul className="flex flex-col gap-0.5">

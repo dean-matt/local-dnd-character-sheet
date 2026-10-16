@@ -24,3 +24,8 @@ const NEXT_LEVEL: Record<ProficiencyLevel, ProficiencyLevel> = {
 };
 
 export const nextLevel = (level: ProficiencyLevel) => NEXT_LEVEL[level];
+
+const RANK: Record<ProficiencyLevel, number> = { none: 0, half: 1, proficient: 2, expertise: 3 };
+
+export const higherLevel = (a: ProficiencyLevel, b: ProficiencyLevel) =>
+  RANK[b] > RANK[a] ? b : a;

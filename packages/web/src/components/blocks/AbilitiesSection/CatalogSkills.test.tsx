@@ -23,12 +23,18 @@ const holding = (skills: SkillProficiency[]): CharacterRecord => {
   };
 };
 
-const derivedFor = (record: CharacterRecord): CharacterDerived => {
+type Granted = CharacterDerived["featGrants"]["computed"]["skills"];
+
+const derivedFor = (record: CharacterRecord, granted: Granted): CharacterDerived => {
   const derived = derivedRecord(record.definition);
   const modifier = { computed: 2, manual: null, terms: [] };
   const passive = { ...modifier, computed: 12 };
   return {
     ...derived,
+    featGrants: {
+      ...derived.featGrants,
+      computed: { ...derived.featGrants.computed, skills: granted },
+    },
     skills: [STEALTH, ARCANA, PERCEPTION].map((ref) => ({
       ref,
       ability: "dex",
@@ -38,19 +44,19 @@ const derivedFor = (record: CharacterRecord): CharacterDerived => {
   };
 };
 
-function Seeded() {
+function Seeded({ granted }: { granted: Granted }) {
   const { data } = useQuery<CharacterRecord>({ queryKey: characterKey("1"), queryFn: skipToken });
-  return data ? <CatalogSkills character={data} derived={derivedFor(data)} /> : null;
+  return data ? <CatalogSkills character={data} derived={derivedFor(data, granted)} /> : null;
 }
 
-function renderSeeded(character: CharacterRecord) {
+function renderSeeded(character: CharacterRecord, granted: Granted = []) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   client.setQueryData(characterKey("1"), character);
   return render(
     <QueryClientProvider client={client}>
-      <Seeded />
+      <Seeded granted={granted} />
       <SaveToasts />
     </QueryClientProvider>,
   );
@@ -116,6 +122,24 @@ describe("CatalogSkills", () => {
     fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Half proficiency" }));
 
     await waitFor(() => expect(written(fetchMock)).toEqual([{ ref: ARCANA, level: "proficient" }]));
+  });
+
+  it("shows a feat's skill at the level it grants, and steps on from there", async () => {
+    const fetchMock = stubServer(new Response(JSON.stringify(holding([]))));
+    renderSeeded(holding([{ ref: STEALTH, level: "expertise" }]), [
+      { ref: PERCEPTION, level: "proficient", from: ["Observant"] },
+      { ref: STEALTH, level: "proficient", from: ["Skulker"] },
+    ]);
+
+    expect(screen.getByRole("button", { name: "Stealth proficiency: Expertise" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Perception proficiency: Proficient" }));
+
+    await waitFor(() =>
+      expect(written(fetchMock)).toEqual([
+        { ref: STEALTH, level: "expertise" },
+        { ref: PERCEPTION, level: "expertise" },
+      ]),
+    );
   });
 
   it("says when the change fails to save", async () => {
