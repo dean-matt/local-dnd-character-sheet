@@ -8,6 +8,7 @@ import { FeatPicks } from "./FeatPicks.tsx";
 
 const RESILIENT = { name: "Resilient", source: "XPHB" };
 const SKILLED = { name: "Skilled", source: "XPHB" };
+const EXPERT = { name: "Skill Expert", source: "XPHB" };
 const ARCANA = { name: "Arcana", source: "XPHB" };
 const HISTORY = { name: "History", source: "XPHB" };
 
@@ -29,6 +30,7 @@ const FEATS = [
       skillToolLanguageProficiencies: [{ choose: [{ from: ["anySkill", "anyTool"], count: 2 }] }],
     },
   },
+  { ...EXPERT, edition: "one", json: { ...EXPERT, expertise: [{ anyProficientSkill: 1 }] } },
 ];
 
 type Feat = CharacterDefinition["feats"][number];
@@ -144,5 +146,27 @@ describe("FeatPicks", () => {
       await screen.findByRole("combobox", { name: "Skilled skill or tool, 1 of 2" }),
     ).toHaveTextContent("Arcana");
     expect(options("Skilled skill or tool, 2 of 2")).toEqual(["History"]);
+  });
+
+  it("offers expertise only in a skill held at proficient or better", async () => {
+    const base = holding([{ ref: EXPERT }]);
+    const record = {
+      ...base,
+      definition: {
+        ...base.definition,
+        proficiencies: {
+          ...base.definition.proficiencies,
+          skills: [
+            { ref: ARCANA, level: "half" as const },
+            { ref: HISTORY, level: "proficient" as const },
+          ],
+        },
+      },
+    };
+    stubApi(record);
+    renderSeeded(record);
+
+    await screen.findByRole("combobox", { name: "Skill Expert expertise" });
+    expect(options("Skill Expert expertise")).toEqual(["History"]);
   });
 });

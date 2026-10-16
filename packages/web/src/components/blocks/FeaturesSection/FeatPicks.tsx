@@ -49,7 +49,9 @@ function pool(
   const granted = derived ? derivedValue(derived.featGrants).skills : [];
   const proficient = new Set(
     [
-      ...record.definition.proficiencies.skills.filter((skill) => skill.level !== "none"),
+      ...record.definition.proficiencies.skills.filter(
+        (skill) => skill.level === "proficient" || skill.level === "expertise",
+      ),
       ...granted,
     ].map(({ ref }) => ref.name),
   );
@@ -96,6 +98,10 @@ function offerOptions(offer: FeatOffer, pools: (field: FeatPick["field"]) => Opt
  * saved as soon as it is picked. A name another slot of the same field holds is not offered
  * again, and a pick stays shown while the list it came from loads or after it leaves it. A
  * homebrew feat states no offer the sheet reads, so it shows none.
+ *
+ * Each offer is asked on its own, so `Resilient` (XPHB) can store a Constitution save beside
+ * a +1 to Strength, where the rules raise the save's ability. Upstream writes no field tying
+ * the two; a feat table naming the feats that tie them is the way out.
  */
 export function FeatPicks({ character, index }: { character: CharacterRecord; index: number }) {
   const { definition } = character;

@@ -42,6 +42,8 @@ export function CatalogSkills({
 
   function cycle(ref: ContentRef) {
     const key = refKey(ref);
+    // A feat's expertise steps to none with nothing stored to remove, which changes nothing.
+    if (!skillLevel.has(key) && nextLevel(shown(key)) === "none") return;
     write(key, (latest) => {
       const held = latest.proficiencies.skills;
       const current = held.find((skill) => refKey(skill.ref) === key);

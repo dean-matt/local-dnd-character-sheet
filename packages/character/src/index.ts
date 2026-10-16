@@ -27,6 +27,7 @@ export {
   hitPointSource,
   IMPROVEMENT_CAP,
   maxHitPoints,
+  PROFICIENCY_LEVELS,
   preparedSpellCount,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
