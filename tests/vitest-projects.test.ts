@@ -1,4 +1,4 @@
-import { globSync } from "node:fs";
+import { globSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import viteConfig from "../vitest.config.ts";
@@ -90,5 +90,18 @@ describe("the shard sequencer", () => {
     const dealt = shards.flat().map((s) => s.moduleId);
     expect(dealt.toSorted()).toEqual(specs.map((s) => s.moduleId).toSorted());
     expect(shards.every((s) => s.length > 0)).toBe(true);
+  });
+
+  it.each([2, 4])("keeps each project's %i shards within one file's bytes", async (count) => {
+    const shards = await deal(count);
+    for (const { name } of projects) {
+      const bytes = shards.map((s) =>
+        s.filter((f) => f.project.name === name).reduce((n, f) => n + statSync(f.moduleId).size, 0),
+      );
+      const largest = Math.max(
+        ...specs.filter((f) => f.project.name === name).map((f) => statSync(f.moduleId).size),
+      );
+      expect(Math.max(...bytes) - Math.min(...bytes), name).toBeLessThanOrEqual(largest);
+    }
   });
 });
