@@ -5,9 +5,10 @@
  * a caller tells the two apart, without inspecting `source`.
  *
  * The list filters to `item` and `baseitem` kinds — the equipment a character can own,
- * per docs/items.md. The read does not: `(name, source)` resolves any kind, which a
- * `{@item}` reference or a magic-variant expansion needs. A magic variant reads as the
- * item its template describes, its `inherits` fields lifted to the top level.
+ * per docs/items.md — or, given `baseWeapons`, to the catalog's base weapons alone. The
+ * read does not: `(name, source)` resolves any kind, which a `{@item}` reference or a
+ * magic-variant expansion needs. A magic variant reads as the item its template
+ * describes, its `inherits` fields lifted to the top level.
  *
  * `/variants` expands a base item and a magic variant into the specific item they make —
  * `+1 Chain Mail` exists nowhere in `content.db`, so a character's inventory row names
@@ -59,6 +60,14 @@ const listQuery = z.object({
   edition: z.enum(EDITIONS),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
+  baseWeapons: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true")
+    .openapi({
+      description:
+        "Only the edition's catalog base weapons, the rows a weapon's baseItem names, with no homebrew",
+    }),
 });
 
 const itemListResponseSchema = z.object({
@@ -148,11 +157,13 @@ export function itemsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   const routes = new OpenAPIHono();
 
   routes.openapi(list, (c) => {
-    const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
-    const catalog = listItems(dataDir, edition).map(toItemRecord);
-    const homebrew = listHomebrewItems(homebrewDb)
-      .filter((row) => row.edition === edition)
-      .map(toHomebrewItemRecord);
+    const { edition, limit = DEFAULT_LIMIT, offset = 0, baseWeapons } = c.req.valid("query");
+    const catalog = listItems(dataDir, edition, baseWeapons).map(toItemRecord);
+    const homebrew = baseWeapons
+      ? []
+      : listHomebrewItems(homebrewDb)
+          .filter((row) => row.edition === edition)
+          .map(toHomebrewItemRecord);
     const merged = [...catalog, ...homebrew].sort((a, b) => a.name.localeCompare(b.name));
     return c.json(
       {
