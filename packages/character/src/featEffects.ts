@@ -74,7 +74,11 @@ export function speedWithFeats(
   if (walk === undefined) return { speed: base, terms };
   for (const { ref, bonus } of bonusFeats(definition)) {
     if (bonus.walk === undefined) continue;
-    terms.push({ label: `${ref.name}: walk ${walk} to ${walk + bonus.walk}`, value: bonus.walk });
+    terms.push({
+      label: `${ref.name}: walk ${walk} to ${walk + bonus.walk}`,
+      value: bonus.walk,
+      reference: ref,
+    });
     walk += bonus.walk;
   }
   return { speed: { ...base, walk }, terms };
