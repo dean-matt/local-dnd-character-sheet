@@ -47,6 +47,8 @@ export default defineConfig({
           globals: true,
           setupFiles: ["./packages/web/vitest.setup.ts"],
           include: ["packages/web/src/**/*.test.{ts,tsx}"],
+          // Its ESM build imports without file extensions, which only a bundler resolves.
+          server: { deps: { inline: ["codemirror-json-schema"] } },
         },
       },
     ],

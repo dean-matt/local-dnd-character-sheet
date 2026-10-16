@@ -1,5 +1,6 @@
 import type { RouteObject } from "react-router";
 import { createBrowserRouter } from "react-router";
+import { LoadingState } from "./LoadingState.tsx";
 import { CharacterLayout } from "./routes/CharacterLayout/CharacterLayout.tsx";
 import { CharacterListPage } from "./routes/CharacterListPage/CharacterListPage.tsx";
 import { CharacterPage } from "./routes/CharacterPage/CharacterPage.tsx";
@@ -8,7 +9,6 @@ import { CharacterSettings } from "./routes/CharacterSettings/CharacterSettings.
 import { ContentLayout } from "./routes/ContentLayout.tsx";
 import { CreationFlow } from "./routes/CreationFlow/CreationFlow.tsx";
 import { DisplaySettings } from "./routes/DisplaySettings.tsx";
-import { HomebrewSettings } from "./routes/HomebrewSettings/HomebrewSettings.tsx";
 import { HomePage } from "./routes/HomePage/HomePage.tsx";
 import { NotFoundPanel } from "./routes/NotFoundPanel.tsx";
 import { RootLayout } from "./routes/RootLayout/RootLayout.tsx";
@@ -45,7 +45,15 @@ export const routeConfig: RouteObject[] = [
         children: [
           { index: true, element: <DisplaySettings /> },
           { path: "sources", element: <SourcesSettings /> },
-          { path: "homebrew", element: <HomebrewSettings /> },
+          {
+            path: "homebrew",
+            HydrateFallback: LoadingState,
+            // Its own chunk, so the JSON editor it carries loads with this page alone.
+            lazy: async () => ({
+              Component: (await import("./routes/HomebrewSettings/HomebrewSettings.tsx"))
+                .HomebrewSettings,
+            }),
+          },
         ],
       },
     ],

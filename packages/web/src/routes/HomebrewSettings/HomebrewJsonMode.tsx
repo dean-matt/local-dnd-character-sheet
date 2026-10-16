@@ -3,6 +3,7 @@ import { type ReactNode, useId, useState } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { HomebrewProblemList } from "./HomebrewProblemList.tsx";
 import type { HomebrewProblem } from "./homebrewDraft.ts";
+import { JsonEditor, type JsonEditorProps } from "./JsonEditor.tsx";
 
 const TOGGLE =
   "flex shrink-0 items-center gap-1.5 self-start rounded-control px-1.5 py-1 font-semibold text-muted text-row hover:bg-subtle hover:text-ink";
@@ -10,6 +11,7 @@ const TOGGLE =
 export interface HomebrewJsonModeProps {
   noun: string;
   reference: ReactNode;
+  schema: JsonEditorProps["schema"];
   text: string;
   problems: HomebrewProblem[];
   onText: (next: string) => void;
@@ -23,6 +25,7 @@ export interface HomebrewJsonModeProps {
 export function HomebrewJsonMode({
   noun,
   reference,
+  schema,
   text,
   problems,
   onText,
@@ -76,13 +79,12 @@ export function HomebrewJsonMode({
             error={problems.length > 0 && <HomebrewProblemList problems={problems} />}
           >
             {(control) => (
-              <textarea
+              <JsonEditor
                 {...control}
+                label={`${noun} JSON`}
                 value={text}
-                onChange={(event) => onText(event.target.value)}
-                spellCheck={false}
-                rows={20}
-                className="resize-y rounded-control border border-border bg-surface px-2 py-1 font-mono text-row aria-invalid:border-error"
+                onChange={onText}
+                schema={schema}
               />
             )}
           </FormField>
