@@ -76,6 +76,7 @@ export function HomebrewJsonMode({
         <div className="flex min-w-0 flex-1 flex-col">
           <FormField
             label={`${noun} JSON`}
+            status="Tab indents. Press Esc, then Tab, to leave the editor."
             error={problems.length > 0 && <HomebrewProblemList problems={problems} />}
           >
             {(control) => (

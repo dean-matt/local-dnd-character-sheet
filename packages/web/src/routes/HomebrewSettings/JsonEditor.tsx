@@ -1,6 +1,8 @@
+import { indentLess, indentMore } from "@codemirror/commands";
 import { json } from "@codemirror/lang-json";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { HighlightStyle, indentUnit, syntaxHighlighting } from "@codemirror/language";
 import { Compartment } from "@codemirror/state";
+import { type Command, keymap } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
 import { basicSetup, EditorView } from "codemirror";
 import { jsonSchema } from "codemirror-json-schema";
@@ -67,6 +69,15 @@ const theme = EditorView.theme({
   },
 });
 
+const INDENT = "  ";
+
+/** Two spaces at the cursor, or every selected line indented where text is selected. */
+const tab: Command = (view) => {
+  if (!view.state.selection.ranges.every((range) => range.empty)) return indentMore(view);
+  view.dispatch(view.state.replaceSelection(INDENT), { scrollIntoView: true, userEvent: "input" });
+  return true;
+};
+
 /**
  * Text tokens `contrast.test.ts` holds to AA on the surface in both themes, in place of
  * CodeMirror's light-only defaults.
@@ -80,8 +91,9 @@ const highlight = HighlightStyle.define([
 /**
  * JSON text in CodeMirror, controlled by `value`. The content element takes `FormField`'s
  * control props, and its label by id, since a `<label for>` neither names nor focuses a
- * `contenteditable`. Tab is left to the browser, so a keyboard user leaves the editor as
- * from any field.
+ * `contenteditable`. Tab types two spaces, or indents the selected lines, and Shift-Tab
+ * outdents; Escape then Tab leaves
+ * the editor, CodeMirror's own way out, which the field's hint names.
  */
 export function JsonEditor({ value, onChange, schema, ...control }: JsonEditorProps) {
   const host = useRef<HTMLDivElement>(null);
@@ -112,6 +124,8 @@ export function JsonEditor({ value, onChange, schema, ...control }: JsonEditorPr
       doc: value,
       extensions: [
         basicSetup,
+        keymap.of([{ key: "Tab", run: tab, shift: indentLess }]),
+        indentUnit.of(INDENT),
         schema ? jsonSchema(schema) : json(),
         theme,
         syntaxHighlighting(highlight),

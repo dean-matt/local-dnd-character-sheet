@@ -137,6 +137,12 @@ test("the item JSON editor suggests, describes and marks the fields the sheet ap
   await expect(hover).toContainText("object");
   await expectNoViolations(page);
 
+  await json.press("ControlOrMeta+End");
+  const before = await json.textContent();
+  await json.press("Tab");
+  await expect(json).toBeFocused();
+  expect(await json.textContent()).toBe(`${before}  `);
+  await json.press("Escape");
   await json.press("Tab");
   await expect(json).not.toBeFocused();
   await expect(editor).toBeVisible();
