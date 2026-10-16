@@ -217,6 +217,21 @@ describe("HomebrewSettings", () => {
     expect(entry()).not.toHaveProperty("advantage");
   });
 
+  it("lists the fields the sheet reads beside an item, and none beside a spell", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    const reference = within(items()).getByText("Fields the sheet reads").closest("details");
+    if (!reference) throw new Error("no reference");
+    expect(reference).toHaveTextContent(/Rules text only displays/);
+    expect(within(reference).getByText("value").nextSibling).toHaveTextContent(/copper/);
+    expect(within(reference).getByText("ability")).toBeInTheDocument();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    expect(within(spells()).queryByText("Fields the sheet reads")).toBeNull();
+  });
+
   it("offers no example to pick for a spell or a row being edited", async () => {
     stubApi({ items: [sunblade] });
     renderPage();
