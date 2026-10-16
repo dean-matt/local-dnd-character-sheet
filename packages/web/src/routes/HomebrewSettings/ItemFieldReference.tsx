@@ -1,33 +1,59 @@
 import { appliedItemFieldsSchema } from "@dnd/catalog";
+import { type ReactNode, useState } from "react";
+import { InputField } from "../../components/InputField.tsx";
 
-const FIELDS = Object.entries(appliedItemFieldsSchema.shape).map(([key, schema]) => ({
-  key,
-  description: schema.description,
-}));
+const ENTRIES_TEXT =
+  'The rules text. It only displays, {@tags} included: {@ability wis +1} prints, where "ability": {"wis": 1} raises Wisdom.';
 
-/** The fields the sheet reads off a homebrew item, collapsed until asked for. */
+const ENTRIES: ReactNode = (
+  <>
+    The rules text. It only displays, <code>{"{@tags}"}</code> included:{" "}
+    <code>{"{@ability wis +1}"}</code> prints, where <code>{'"ability": {"wis": 1}'}</code> raises
+    Wisdom.
+  </>
+);
+
+/** Each field with the text a search reads and what the list prints. */
+const FIELDS: { key: string; text: string; description: ReactNode }[] = [
+  ...Object.entries(appliedItemFieldsSchema.shape).map(([key, schema]) => ({
+    key,
+    text: schema.description ?? "",
+    description: schema.description,
+  })),
+  { key: "entries", text: ENTRIES_TEXT, description: ENTRIES },
+].sort((a, b) => a.key.localeCompare(b.key));
+
+/**
+ * Every field the sheet reads off a homebrew item, and its rules text, by name, narrowed by a
+ * search of names and descriptions.
+ */
 export function ItemFieldReference() {
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const shown = FIELDS.filter(
+    ({ key, text }) =>
+      needle === "" || key.toLowerCase().includes(needle) || text.toLowerCase().includes(needle),
+  );
   return (
-    <details className="rounded-control border border-border bg-surface px-3 py-2 text-row">
-      <summary className="cursor-pointer font-semibold">Fields the sheet reads</summary>
-      <div className="mt-2 flex flex-col gap-2">
-        <p className="text-muted">
-          Rules text only displays, <code>{"{@tags}"}</code> included:{" "}
-          <code>{"{@ability wis +1}"}</code> prints, and <code>{'"ability": {"wis": 1}'}</code>{" "}
-          raises Wisdom. Set the fields below to change the sheet; the JSON view takes every one. A
-          bonus or a defense applies while the item is equipped, and attuned where it requires
-          attunement. Anything else, such as a bonus to one skill or an action the item grants, only
-          displays.
-        </p>
-        <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1">
-          {FIELDS.map(({ key, description }) => (
-            <div key={key} className="contents">
+    <div className="flex flex-col gap-2 text-row">
+      <InputField
+        label="Search fields"
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {shown.length === 0 ? (
+        <p className="text-muted">No field matches “{query.trim()}”.</p>
+      ) : (
+        <dl className="flex flex-col gap-2">
+          {shown.map(({ key, description }) => (
+            <div key={key}>
               <dt className="font-mono">{key}</dt>
               <dd className="text-muted">{description}</dd>
             </div>
           ))}
         </dl>
-      </div>
-    </details>
+      )}
+    </div>
   );
 }

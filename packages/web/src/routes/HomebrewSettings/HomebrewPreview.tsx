@@ -9,7 +9,7 @@ import type { HomebrewInput } from "./homebrewKinds.ts";
 
 export interface HomebrewPreviewProps {
   noun: string;
-  /** The last entry the kind's schema accepted; absent until one has been. */
+  /** The entry as it stands, once the kind's schema accepts it; absent while it holds a problem. */
   shown: { input: HomebrewInput; facts: Fact[]; entries: Entries } | undefined;
 }
 
@@ -26,7 +26,7 @@ export function HomebrewPreview({ noun, shown }: HomebrewPreviewProps) {
     <div className="flex flex-col gap-2 text-body leading-normal">
       <div>
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <h4 className="font-bold text-title">{shown.input.name}</h4>
+          <h3 className="font-bold text-title">{shown.input.name}</h3>
           <TypeChip type={noun}>{capitalize(noun)}</TypeChip>
         </div>
         <div className="mt-1 text-muted text-row">
@@ -46,7 +46,7 @@ export function HomebrewPreview({ noun, shown }: HomebrewPreviewProps) {
         </dl>
       )}
       {entries.length > 0 ? (
-        <RulesEntries entries={entries} headingLevel={5} />
+        <RulesEntries entries={entries} headingLevel={4} />
       ) : (
         <p className="text-muted">No rules text yet.</p>
       )}

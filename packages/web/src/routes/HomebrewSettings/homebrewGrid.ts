@@ -12,5 +12,8 @@ export const SHORT = "col-span-1";
 /** A text input. */
 export const TEXT = "col-span-2";
 
-/** A text area, or a group of checkboxes. */
+/** A text area, or a list of rows. */
 export const WHOLE = "col-span-full";
+
+/** A text input paired with its neighbor: beside it in a half-width section, as wide as text in a full one. */
+export const PAIRED = "col-span-1 @2xl:col-span-2";

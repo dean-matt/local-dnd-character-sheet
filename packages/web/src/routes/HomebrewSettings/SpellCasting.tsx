@@ -1,24 +1,16 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
-import { DAMAGE_TYPE_NAMES } from "../../lib/defenseVocabulary.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
-import { SCHOOLS } from "../../lib/spellSchool.ts";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
-import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
-import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
 import {
-  chosenIn,
-  entriesOf,
   type HomebrewFormProps,
   listAt,
   numberAt,
-  paragraphsOf,
   recordAt,
   textAt,
   typedInteger,
   typedNumber,
-  withChosen,
   withField,
 } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
@@ -28,11 +20,8 @@ import {
   DURATION_UNITS,
   RANGE_KINDS,
   RANGE_SHAPES,
-  SPELL_LEVELS,
 } from "./homebrewVocabulary.ts";
-import { upcastName, upcastSection, upcastText, withUpcastNameFor } from "./spellUpcast.ts";
 
-const SCHOOL_OPTIONS = Object.entries(SCHOOLS).map(([value, label]) => ({ value, label }));
 const DISTANCES = new Set(["feet", "miles"]);
 
 /** `record` with `key` set, or removed where `value` is `undefined`; `undefined` once it is empty. */
@@ -42,11 +31,10 @@ function withKey(record: Record<string, unknown>, key: string, value: unknown) {
 }
 
 /**
- * A homebrew spell's form: level and school, the four casting facts, the damage it deals,
- * its rules text, and the text for casting it with a higher-level slot. Each casting fact
- * edits the first span upstream's list holds; a second span, rare upstream, is kept.
+ * A homebrew spell's casting facts. Each edits the first span upstream's list holds; a
+ * second span, rare upstream, is kept.
  */
-export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
+export function SpellCasting({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const [time = {}, ...moreTimes] = listAt(entry, "time").map((span) =>
     isRecord(span) ? span : {},
@@ -61,7 +49,6 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
   const components = recordAt(entry, "components");
   const material = components.m;
   const meta = recordAt(entry, "meta");
-  const higher = listAt(entry, "entriesHigherLevel")[0];
 
   const setTime = (next: Record<string, unknown>) => set("time", [next, ...moreTimes]);
   const setSpan = (next: Record<string, unknown> | undefined) =>
@@ -79,40 +66,6 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
 
   return (
     <div className={FORM_GRID}>
-      <div className={TEXT}>
-        <InputField
-          label="Name"
-          value={textAt(entry, "name")}
-          onChange={(event) => set("name", event.target.value)}
-          error={errorFor("name")}
-        />
-      </div>
-      <div className={SHORT}>
-        <FormField label="Level" error={errorFor("level")}>
-          {(control) => (
-            <Select
-              {...control}
-              options={SPELL_LEVELS}
-              value={String(entry.level ?? "")}
-              onChange={(next) =>
-                onChange(withUpcastNameFor(withField(entry, "level", Number(next)), edition))
-              }
-            />
-          )}
-        </FormField>
-      </div>
-      <div className={SHORT}>
-        <FormField label="School" error={errorFor("school")}>
-          {(control) => (
-            <Select
-              {...control}
-              options={SCHOOL_OPTIONS}
-              value={textAt(entry, "school")}
-              onChange={(next) => set("school", next)}
-            />
-          )}
-        </FormField>
-      </div>
       <div className={SHORT}>
         <InputField
           label="Casting time"
@@ -283,37 +236,6 @@ export function SpellForm({ entry, edition, onChange, errorFor }: HomebrewFormPr
           checked={meta.ritual === true}
           onChange={(checked) => set("meta", withKey(meta, "ritual", checked || undefined))}
           error={errorFor("meta")}
-        />
-      </div>
-      <div className={WHOLE}>
-        <HomebrewCheckboxGroup
-          legend="Damage types"
-          options={DAMAGE_TYPE_NAMES}
-          chosen={chosenIn(listAt(entry, "damageInflict"))}
-          onChange={(chosen) =>
-            set("damageInflict", withChosen(listAt(entry, "damageInflict"), chosen))
-          }
-        />
-      </div>
-      <div className={WHOLE}>
-        <HomebrewRulesText
-          label="Rules text"
-          text={paragraphsOf(entry.entries)}
-          onText={(next) => set("entries", entriesOf(next))}
-          error={errorFor("entries")}
-        />
-      </div>
-      <div className={WHOLE}>
-        <HomebrewRulesText
-          label={entry.level === 0 ? "Cantrip upgrade" : "At higher levels"}
-          text={upcastText(entry.entriesHigherLevel)}
-          onText={(next) => {
-            const paragraphs = entriesOf(next);
-            set(
-              "entriesHigherLevel",
-              paragraphs && [upcastSection(higher, paragraphs, upcastName(edition, entry.level))],
-            );
-          }}
         />
       </div>
     </div>

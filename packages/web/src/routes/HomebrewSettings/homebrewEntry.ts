@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import { isRecord } from "../../lib/entryGuards.ts";
 import type { HomebrewEntry } from "./homebrewDraft.ts";
 
-/** What `ItemForm` and `SpellForm` take: the entry, a way to replace it, and each field's problem. */
+/** What each step of a kind's form takes: the entry, a way to replace it, and each field's problem. */
 export interface HomebrewFormProps {
   entry: HomebrewEntry;
   edition: CharacterRecord["edition"];

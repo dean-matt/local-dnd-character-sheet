@@ -14,7 +14,19 @@ import { SaveToasts } from "./SaveToasts.tsx";
  * page behind it does not scroll while it is open, and save toasts draw inside it, where they
  * stay reachable. It is never printed.
  */
-export function Modal({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+export function Modal({
+  onClose,
+  wide,
+  children,
+}: {
+  onClose: () => void;
+  /**
+   * For an entry edited beside a reference: wider, and one height whatever its content, so
+   * moving between views never resizes it; content taller than that height scrolls.
+   */
+  wide?: boolean;
+  children: ReactNode;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   // A selection dragged out of the content ends in a click on the dialog; only a press that
@@ -62,7 +74,7 @@ export function Modal({ onClose, children }: { onClose: () => void; children: Re
       onClick={(event) => {
         if (pressedBackdrop.current && event.target === event.currentTarget) onClose();
       }}
-      className="m-auto max-h-[80%] w-3xl max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden"
+      className={`m-auto max-h-[80%] ${wide ? "h-[min(35.5rem,80%)] w-6xl" : "w-3xl"} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
     >
       {/* Fixed to the viewport, so it draws over the backdrop rather than inside the dialog's box. */}
       <button

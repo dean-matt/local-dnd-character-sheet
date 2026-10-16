@@ -95,8 +95,8 @@ widget, panel, or nav element:
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search.
 - Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats each paste the
-  entry's 5etools-shaped JSON, as the app's Homebrew settings page takes items and spells
-  beside their form. They're forward design for #489, not a page a build currently renders.
+  entry's 5etools-shaped JSON, as the app's Homebrew settings editor takes items and spells
+  in its JSON mode. They're forward design for #489, not a page a build currently renders.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)

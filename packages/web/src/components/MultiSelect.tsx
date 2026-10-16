@@ -9,6 +9,8 @@ interface MultiSelectOption {
   short?: string;
   /** What choosing it does beyond the filter, such as "adds rarity and kind filters", marked by an icon. */
   hint?: string;
+  /** A line under the label saying what the option is, such as a weapon property's rule. */
+  description?: string;
 }
 
 export interface MultiSelectProps {
@@ -19,6 +21,11 @@ export interface MultiSelectProps {
   options: MultiSelectOption[];
   selected: string[];
   onChange: (next: string[]) => void;
+  /**
+   * A field of a form rather than a filter: nothing chosen reads "None" rather than all, and
+   * the label takes the form's style.
+   */
+  inForm?: boolean;
 }
 
 /** Past this many options the list opens with a filter input. */
@@ -26,9 +33,14 @@ const FILTER_ABOVE = 10;
 /** The longest two names the closed button joins before it counts them instead. */
 const SHORT_SUMMARY = 20;
 
-/** What the closed button says: all, one by name, two by name while short, then a count. */
-function summary(options: MultiSelectOption[], selected: string[], noun: string): string {
-  if (selected.length === 0) return `All ${noun}`;
+/** What the closed button says: all or none, one by name, two by name while short, then a count. */
+function summary(
+  options: MultiSelectOption[],
+  selected: string[],
+  noun: string,
+  inForm: boolean,
+): string {
+  if (selected.length === 0) return inForm ? "None" : `All ${noun}`;
   const names = selected.map((value) => {
     const option = options.find((o) => o.value === value);
     return option?.short ?? option?.label ?? value;
@@ -57,7 +69,14 @@ const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1
  * checkboxes, Space ticks one, and Escape or focus leaving closes the list, Escape returning
  * focus to the button. Clear, beside the heading while anything is chosen, unticks them all.
  */
-export function MultiSelect({ label, noun, options, selected, onChange }: MultiSelectProps) {
+export function MultiSelect({
+  label,
+  noun,
+  options,
+  selected,
+  onChange,
+  inForm = false,
+}: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   // The values chosen when the list opened, which lead it; ticking one does not move its row.
@@ -97,7 +116,7 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
       open={open}
       onClose={() => setOpen(false)}
       onKeyDown={onKeyDown}
-      value={summary(options, selected, noun)}
+      value={summary(options, selected, noun, inForm)}
       valueId={`${id}-value`}
       button={{
         ref: button,
@@ -106,11 +125,16 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
         onClick: toggle,
       }}
       header={
-        // A fixed height, so Clear appearing moves nothing below it.
-        <div className="flex h-6 items-center justify-between">
+        // A fixed height, so Clear appearing moves nothing below it; in a form, a label's own
+        // height, so the button lines up with the controls beside it.
+        <div className={`flex items-center justify-between ${inForm ? "h-4" : "h-6"}`}>
           <span
             id={`${id}-label`}
-            className="text-label font-semibold uppercase tracking-label text-muted"
+            className={
+              inForm
+                ? "text-muted text-row"
+                : "text-label font-semibold uppercase tracking-label text-muted"
+            }
           >
             {label}
           </span>
@@ -140,7 +164,9 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
           className={panel.className}
           style={panel.style}
         >
-          <legend className="sr-only">{capitalize(noun)} to search</legend>
+          <legend className="sr-only">
+            {capitalize(noun)} to {inForm ? "choose" : "search"}
+          </legend>
           {filterable && (
             <input
               ref={filter}
@@ -168,6 +194,9 @@ export function MultiSelect({ label, noun, options, selected, onChange }: MultiS
                 {option.label}
                 {option.hint && " "}
                 {option.hint && <span className="sr-only">({option.hint})</span>}
+                {option.description && (
+                  <span className="mt-0.5 block text-label text-muted">{option.description}</span>
+                )}
               </span>
               {option.hint && (
                 <span
