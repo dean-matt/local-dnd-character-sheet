@@ -161,9 +161,10 @@ describe("HomebrewSettings", () => {
     click("Next");
     expect(editor()).toHaveTextContent("Step 1 of 4");
     expect(field("textbox", "Name")).toHaveAccessibleDescription();
+    expect(field("textbox", "Name")).toHaveFocus();
 
     fireEvent.change(field("textbox", "Name"), { target: { value: "Brineburst" } });
-    click("Next");
+    fireEvent.submit(within(editor()).getByRole("form"));
     expect(within(editor()).getByRole("heading", { name: "Casting" })).toBeInTheDocument();
     expect(field("textbox", "Material component")).not.toHaveAccessibleDescription();
     click("Next");
@@ -574,6 +575,8 @@ describe("HomebrewSettings", () => {
     const add = within(items()).getByRole("button", { name: "Add item" });
     add.focus();
     fireEvent.click(add);
+    mode("JSON");
+    mode("Step by step");
     click("Close");
     expect(confirm).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();

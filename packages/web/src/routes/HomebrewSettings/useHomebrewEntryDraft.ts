@@ -71,7 +71,9 @@ export function useHomebrewEntryDraft(kind: HomebrewKind, record: HomebrewRow | 
     /** Back to the form, once the text parses; `false` where it does not. */
     leaveJson: () => {
       if (!("entry" in parsed)) return false;
-      replace(parsed.entry);
+      // Typing already marked the draft changed; leaving JSON edits nothing.
+      setEntry(parsed.entry);
+      setRevision((count) => count + 1);
       setText(undefined);
       return true;
     },

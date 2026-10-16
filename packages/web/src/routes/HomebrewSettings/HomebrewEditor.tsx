@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Modal } from "../../components/Modal.tsx";
 import { ModalEntry } from "../../components/ModalEntry.tsx";
 import { capitalize } from "../../lib/capitalize.ts";
@@ -45,7 +45,14 @@ export function HomebrewEditor({
   const [step, setStep] = useState(0);
   const [tried, setTried] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  /** Counts each refused Next or save, so focus moves to the first field it names. */
+  const [refusals, setRefusals] = useState(0);
+  const form = useRef<HTMLFormElement>(null);
   const id = useId();
+  // A refusal changes nothing a screen reader announces, so focus carries it to the field.
+  useEffect(() => {
+    if (refusals > 0) form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [refusals]);
   const mode = draft.text === undefined ? MODES[0] : MODES[1];
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
   const current = kind.steps[step];
@@ -58,8 +65,12 @@ export function HomebrewEditor({
     if (next === "JSON") draft.openJson();
     else if (!draft.leaveJson()) setTried(true);
   };
+  const refuse = () => {
+    setTried(true);
+    setRefusals((count) => count + 1);
+  };
   const advance = (by: number) => {
-    if (by > 0 && problems.some(({ key }) => stepOf(kind, key) === step)) return setTried(true);
+    if (by > 0 && problems.some(({ key }) => stepOf(kind, key) === step)) return refuse();
     setTried(false);
     setStep(step + by);
   };
@@ -68,7 +79,7 @@ export function HomebrewEditor({
       if (!saving) onSave(draft.checked.input);
       return;
     }
-    setTried(true);
+    refuse();
     setPreviewing(false);
     if (mode === "Step by step") setStep(Math.min(...problems.map(({ key }) => stepOf(kind, key))));
   };
@@ -108,11 +119,14 @@ export function HomebrewEditor({
           <HomebrewPreview noun={kind.noun} shown={draft.shown} />
         ) : (
           <form
+            ref={form}
             aria-label={title}
             noValidate
             onSubmit={(event) => {
               event.preventDefault();
-              save();
+              // Enter walks the steps rather than saving past the ones not yet seen.
+              if (mode === "Step by step" && current) advance(1);
+              else save();
             }}
             className="@container flex flex-col gap-3"
           >
