@@ -78,9 +78,25 @@ const writesOf = (fetchMock: ReturnType<typeof stubApi>) =>
 
 const spells = () => screen.getByRole("region", { name: "Spells" });
 const items = () => screen.getByRole("region", { name: "Items" });
+const editor = () => screen.getByRole("dialog");
+const field = (role: "textbox" | "combobox" | "checkbox" | "spinbutton", name: string) =>
+  within(editor()).getByRole(role, { name });
+const click = (name: string) => {
+  const button = within(editor()).getByRole("button", { name });
+  fireEvent.click(button);
+  return button;
+};
+const mode = (name: "Step by step" | "JSON") =>
+  fireEvent.click(within(editor()).getByRole("tab", { name }));
+const pick = (name: string, option: string) => {
+  fireEvent.click(field("combobox", name));
+  fireEvent.click(screen.getByRole("option", { name: option }));
+};
+const jsonText = (name: string) => (field("textbox", name) as HTMLTextAreaElement).value;
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("HomebrewSettings", () => {
@@ -115,27 +131,50 @@ describe("HomebrewSettings", () => {
     expect(row).toHaveTextContent(/Cantrip.*Evocation.*Concentration.*Ritual/);
   });
 
-  it("names the field a rejected value sits in, beside it in either view, and sends nothing", async () => {
+  it("names the field a rejected value sits in, beside it in either mode, and sends nothing", async () => {
     const fetchMock = stubApi({});
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Name" }), {
-      target: { value: "" },
-    });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
-    expect(within(spells()).getByRole("textbox", { name: "Name" })).toHaveAccessibleDescription();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
+    click("Save");
+    expect(field("textbox", "Name")).toHaveAccessibleDescription();
 
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Spell JSON" }), {
+    mode("JSON");
+    fireEvent.change(field("textbox", "Spell JSON"), {
       target: { value: JSON.stringify({ ...ward, level: 12 }) },
     });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
+    click("Save");
 
-    expect(
-      within(spells()).getByRole("textbox", { name: "Spell JSON" }),
-    ).toHaveAccessibleDescription(/^level: /);
+    expect(field("textbox", "Spell JSON")).toHaveAccessibleDescription(/^level: /);
     expect(writesOf(fetchMock)).toEqual([]);
+  });
+
+  it("holds a step whose field fails until it is fixed, then walks on to a review of the entry", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    expect(editor()).toHaveTextContent("Step 1 of 4");
+    expect(click("Previous")).toHaveAttribute("aria-disabled", "true");
+    fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
+    click("Next");
+    expect(editor()).toHaveTextContent("Step 1 of 4");
+    expect(field("textbox", "Name")).toHaveAccessibleDescription();
+
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Brineburst" } });
+    click("Next");
+    expect(within(editor()).getByRole("heading", { name: "Casting" })).toBeInTheDocument();
+    expect(field("textbox", "Material component")).not.toHaveAccessibleDescription();
+    click("Next");
+    expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
+    click("Next");
+    expect(editor()).toHaveTextContent("Step 4 of 4");
+    expect(within(editor()).getByRole("heading", { name: "Review" })).toBeInTheDocument();
+    expect(within(editor()).getByRole("heading", { name: "Brineburst" })).toBeInTheDocument();
+    expect(click("Next")).toHaveAttribute("aria-disabled", "true");
+    click("Previous");
+    expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
   });
 
   it("opens a new item on the weapon example's form, naming each code, and swaps it for the type picked", async () => {
@@ -143,20 +182,22 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    const picker = (name: string) => within(items()).getByRole("combobox", { name });
-    expect(picker("Type")).toHaveTextContent("Melee weapon");
-    expect(picker("Rarity")).toHaveTextContent("Rare");
-    expect(picker("Damage type")).toHaveTextContent("Slashing");
-    expect(within(items()).getByRole("checkbox", { name: "Versatile" })).toBeChecked();
-    expect(within(items()).getByRole("textbox", { name: "Rules text" })).toHaveValue(
+    expect(field("combobox", "Type")).toHaveTextContent("Melee weapon");
+    expect(field("combobox", "Rarity")).toHaveTextContent("Rare");
+    expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
+    expect(field("checkbox", "Versatile")).toBeChecked();
+
+    pick("Start from", "Armor");
+    expect(field("combobox", "Type")).toHaveTextContent("Medium armor");
+    expect(field("spinbutton", "Armor class")).toHaveValue(14);
+    expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
+
+    pick("Start from", "Weapon");
+    click("Next");
+    click("Next");
+    expect(field("textbox", "Rules text")).toHaveValue(
       (ITEM_STARTERS[0].entry.entries as string[]).join("\n\n"),
     );
-
-    fireEvent.click(picker("Start from"));
-    fireEvent.click(screen.getByRole("option", { name: "Armor" }));
-    expect(picker("Type")).toHaveTextContent("Medium armor");
-    expect(within(items()).getByRole("spinbutton", { name: "Armor class" })).toHaveValue(14);
-    expect(within(items()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
   });
 
   it("drops a weapon's attack when its type turns to armor", async () => {
@@ -164,17 +205,12 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    expect(within(items()).getByRole("spinbutton", { name: "Value (gp)" })).toHaveValue(1500);
-    fireEvent.change(within(items()).getByRole("spinbutton", { name: "Value (gp)" }), {
-      target: { value: "15.5" },
-    });
-    fireEvent.click(within(items()).getByRole("combobox", { name: "Type" }));
-    fireEvent.click(screen.getByRole("option", { name: "Shield" }));
-    fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
+    expect(field("spinbutton", "Value (gp)")).toHaveValue(1500);
+    fireEvent.change(field("spinbutton", "Value (gp)"), { target: { value: "15.5" } });
+    pick("Type", "Shield");
+    mode("JSON");
 
-    const entry = JSON.parse(
-      (within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement).value,
-    );
+    const entry = JSON.parse(jsonText("Item JSON"));
     expect(entry).toMatchObject({ type: "S", name: "Sunfire Blade", rarity: "rare", value: 1550 });
     expect(entry).not.toHaveProperty("dmg1");
     expect(entry).not.toHaveProperty("weaponCategory");
@@ -186,50 +222,52 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    fireEvent.click(within(items()).getByRole("button", { name: "Add an effect" }));
-    const picker = (name: string) => within(items()).getByRole("combobox", { name });
-    fireEvent.click(picker("Effect 1 roll"));
-    fireEvent.click(screen.getByRole("option", { name: "Skill" }));
-    fireEvent.click(picker("Effect 1 skill"));
-    fireEvent.click(screen.getByRole("option", { name: "Stealth" }));
-    fireEvent.change(within(items()).getByRole("textbox", { name: "Effect 1 condition" }), {
+    click("Next");
+    click("Add an effect");
+    pick("Effect 1 roll", "Skill");
+    pick("Effect 1 skill", "Stealth");
+    fireEvent.change(field("textbox", "Effect 1 condition"), {
       target: { value: "in dim light" },
     });
     const entry = () => {
-      fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
-      const text = (
-        within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement
-      ).value;
-      fireEvent.click(within(items()).getByRole("button", { name: "Edit as form" }));
+      mode("JSON");
+      const text = jsonText("Item JSON");
+      mode("Step by step");
       return JSON.parse(text);
     };
     expect(entry().advantage).toEqual([
       { mode: "advantage", roll: "skill", target: "Stealth", condition: "in dim light" },
     ]);
 
-    fireEvent.click(picker("Effect 1 roll"));
-    fireEvent.click(screen.getByRole("option", { name: "Saving throw" }));
+    pick("Effect 1 roll", "Saving throw");
     expect(entry().advantage).toEqual([
       { mode: "advantage", roll: "save", condition: "in dim light" },
     ]);
 
-    fireEvent.click(within(items()).getByRole("button", { name: "Remove effect 1" }));
+    click("Remove effect 1");
     expect(entry()).not.toHaveProperty("advantage");
   });
 
-  it("lists the fields the sheet reads beside an item, and none beside a spell", async () => {
+  it("lists the fields the sheet reads ahead of an item's JSON, and none beside a spell's", async () => {
     stubApi({});
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    const reference = within(items()).getByText("Fields the sheet reads").closest("details");
-    if (!reference) throw new Error("no reference");
+    expect(within(editor()).queryByText("Fields the sheet reads")).toBeNull();
+    mode("JSON");
+    const reference = within(editor()).getByRole("region", { name: "Fields the sheet reads" });
     expect(reference).toHaveTextContent(/Rules text only displays/);
     expect(within(reference).getByText("value").nextSibling).toHaveTextContent(/copper/);
     expect(within(reference).getByText("ability")).toBeInTheDocument();
+    expect(
+      reference.compareDocumentPosition(field("textbox", "Item JSON")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    click("Close");
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    expect(within(spells()).queryByText("Fields the sheet reads")).toBeNull();
+    mode("JSON");
+    expect(within(editor()).queryByText("Fields the sheet reads")).toBeNull();
   });
 
   it("offers no example to pick for a spell or a row being edited", async () => {
@@ -237,24 +275,26 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    expect(within(spells()).queryByRole("combobox", { name: "Start from" })).toBeNull();
-    expect(within(spells()).getByRole("combobox", { name: "School" })).toHaveTextContent(
-      "Evocation",
-    );
+    expect(within(editor()).queryByRole("combobox", { name: "Start from" })).toBeNull();
+    expect(field("combobox", "School")).toHaveTextContent("Evocation");
+    click("Close");
     fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
-    expect(within(items()).queryByRole("combobox", { name: "Start from" })).toBeNull();
+    expect(within(editor()).queryByRole("combobox", { name: "Start from" })).toBeNull();
   });
 
-  it("previews the whole spell as its catalog detail shows it, and no rules text alone", async () => {
+  it("previews the whole spell as its catalog detail shows it, and returns to the same step", async () => {
     stubApi({});
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Rules text" }), {
+    click("Next");
+    click("Next");
+    fireEvent.change(field("textbox", "Rules text"), {
       target: { value: "Brine deals {@damage 3d4} cold damage.\n\nIt stings." },
     });
+    click("Preview");
 
-    const preview = within(spells()).getByRole("tabpanel", { name: "Preview" });
+    const preview = editor();
     const roll = await within(preview).findByText("3d4");
     expect(roll).toHaveAttribute("data-rollable", "true");
     expect(within(preview).getByRole("heading", { name: "Brinelash" })).toBeInTheDocument();
@@ -268,64 +308,72 @@ describe("HomebrewSettings", () => {
     expect(preview).not.toHaveTextContent("{@damage");
     expect(preview).toHaveTextContent("It stings.");
     expect(preview).toHaveTextContent("Using a Higher-Level Spell Slot");
-    expect(within(spells()).queryAllByRole("tabpanel", { name: /preview/i })).toHaveLength(1);
+    expect(within(preview).queryByRole("textbox")).toBeNull();
+
+    click("Back to editing");
+    expect(editor()).toHaveTextContent("Step 3 of 4");
+    expect(field("textbox", "Rules text")).toHaveValue(
+      "Brine deals {@damage 3d4} cold damage.\n\nIt stings.",
+    );
   });
 
-  it("keeps the last valid entry in the preview while a field holds a problem, and follows the JSON view", async () => {
+  it("previews the JSON draft as it stands, says so while it holds a problem, and returns to JSON", async () => {
     stubApi({});
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    const preview = within(items()).getByRole("tabpanel", { name: "Preview" });
-    expect(within(preview).getByRole("heading", { name: "Sunfire Blade" })).toBeInTheDocument();
-    expect(preview).toHaveTextContent("Attack bonus: +1");
-    expect(preview).toHaveTextContent("Damage: 1d8 + 1 slashing (1d10 + 1 versatile)");
-    expect(preview).toHaveTextContent("Value: 1500 gp");
-
-    const name = within(items()).getByRole("textbox", { name: "Name" });
-    fireEvent.change(name, { target: { value: "Starfire Blade" } });
-    fireEvent.change(name, { target: { value: "" } });
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    expect(within(preview).getByRole("heading", { name: "Starfire Blade" })).toBeInTheDocument();
-
-    fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
-    const box = within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement;
+    mode("JSON");
+    const box = field("textbox", "Item JSON");
     fireEvent.change(box, {
       target: {
         value: JSON.stringify({
-          ...JSON.parse(box.value),
+          ...JSON.parse(jsonText("Item JSON")),
           name: "Moonfire Blade",
           optionalfeatures: ["replicate magic item|tce"],
         }),
       },
     });
+    click("Preview");
     expect(
-      await within(preview).findByRole("heading", { name: "Moonfire Blade" }),
+      await within(editor()).findByRole("heading", { name: "Moonfire Blade" }),
     ).toBeInTheDocument();
-    expect(preview).toHaveTextContent(
+    expect(editor()).toHaveTextContent("Attack bonus: +1");
+    expect(editor()).toHaveTextContent("Damage: 1d8 + 1 slashing (1d10 + 1 versatile)");
+    expect(editor()).toHaveTextContent(
       "An Artificer can replicate this item with the Replicate Magic Item infusion.",
     );
+
+    click("Back to editing");
+    expect(within(editor()).getByRole("tab", { name: "JSON" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    fireEvent.change(field("textbox", "Item JSON"), { target: { value: "{" } });
+    click("Preview");
+    expect(editor()).toHaveTextContent("Nothing to preview until the item has no problems.");
   });
 
-  it("switches between the form and the preview by a labelled tab, by keyboard too", () => {
+  it("switches between step by step and JSON by a labelled tab, by keyboard too", () => {
     stubApi({});
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    const tabs = within(spells()).getByRole("tablist", { name: "Spell view" });
-    const edit = within(tabs).getByRole("tab", { name: "Edit" });
-    const preview = within(tabs).getByRole("tab", { name: "Preview" });
-    expect(edit).toHaveAttribute("aria-selected", "true");
+    const tabs = within(editor()).getByRole("tablist", { name: "Spell editor" });
+    const steps = within(tabs).getByRole("tab", { name: "Step by step" });
+    const json = within(tabs).getByRole("tab", { name: "JSON" });
+    expect(steps).toHaveAttribute("aria-selected", "true");
+    expect(within(editor()).getByRole("tabpanel", { name: "Step by step" })).toBeInTheDocument();
 
-    fireEvent.keyDown(edit, { key: "ArrowRight" });
-    expect(preview).toHaveAttribute("aria-selected", "true");
-    expect(preview).toHaveFocus();
+    fireEvent.keyDown(steps, { key: "ArrowRight" });
+    expect(json).toHaveAttribute("aria-selected", "true");
+    expect(json).toHaveFocus();
+    expect(within(editor()).getByRole("tabpanel", { name: "JSON" })).toContainElement(
+      field("textbox", "Spell JSON"),
+    );
 
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Name" }), {
-      target: { value: "" },
-    });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
-    expect(edit).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(json, { key: "Home" });
+    expect(steps).toHaveAttribute("aria-selected", "true");
+    expect(field("textbox", "Name")).toHaveValue("Brinelash");
   });
 
   it("fills the form from a pasted entry, and creates it with the chosen edition, leaving its source to the server", async () => {
@@ -344,22 +392,18 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.click(within(spells()).getByRole("combobox", { name: "Rules" }));
-    fireEvent.click(screen.getByRole("option", { name: "2014" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Spell JSON" }), {
+    pick("Rules", "2014");
+    mode("JSON");
+    fireEvent.change(field("textbox", "Spell JSON"), {
       target: { value: JSON.stringify({ ...ward, source: "PHB" }) },
     });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as form" }));
+    mode("Step by step");
 
-    expect(within(spells()).getByRole("textbox", { name: "Name" })).toHaveValue("Coastal Ward");
-    expect(within(spells()).getByRole("combobox", { name: "School" })).toHaveTextContent(
-      "Abjuration",
-    );
-    expect(within(spells()).getByRole("combobox", { name: "Duration" })).toHaveTextContent(
-      "Instantaneous",
-    );
-    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
+    expect(field("textbox", "Name")).toHaveValue("Coastal Ward");
+    expect(field("combobox", "School")).toHaveTextContent("Abjuration");
+    click("Next");
+    expect(field("combobox", "Duration")).toHaveTextContent("Instantaneous");
+    click("Save");
 
     await waitFor(() =>
       expect(writesOf(fetchMock)).toEqual([
@@ -370,47 +414,38 @@ describe("HomebrewSettings", () => {
         },
       ]),
     );
-    await waitFor(() =>
-      expect(within(spells()).queryByRole("textbox", { name: "Name" })).toBeNull(),
-    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
-  it("stays in the JSON view until its text parses", async () => {
+  it("stays in JSON until its text parses", async () => {
     stubApi({});
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Spell JSON" }), {
-      target: { value: "{ name: " },
-    });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as form" }));
+    mode("JSON");
+    fireEvent.change(field("textbox", "Spell JSON"), { target: { value: "{ name: " } });
+    mode("Step by step");
 
-    expect(
-      within(spells()).getByRole("textbox", { name: "Spell JSON" }),
-    ).toHaveAccessibleDescription(/^entry: Not valid JSON/);
+    expect(field("textbox", "Spell JSON")).toHaveAccessibleDescription(/^entry: Not valid JSON/);
   });
 
-  it("carries a change across both views, and keeps a field the form does not show", async () => {
+  it("carries a change across both modes, and keeps a field the form does not show", async () => {
     const charged = { ...sunblade, json: { ...sunblade.json, charges: 3 } };
     const fetchMock = stubApi({ items: [charged] }, [{ status: 200, body: charged }]);
     renderPage();
 
     fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
-    fireEvent.change(within(items()).getByRole("textbox", { name: "Name" }), {
-      target: { value: "Moonblade" },
-    });
-    fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
-    const box = within(items()).getByRole("textbox", { name: "Item JSON" }) as HTMLTextAreaElement;
-    const entry = JSON.parse(box.value);
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Moonblade" } });
+    mode("JSON");
+    const entry = JSON.parse(jsonText("Item JSON"));
     expect(entry).toMatchObject({ name: "Moonblade", charges: 3 });
 
-    fireEvent.change(box, { target: { value: JSON.stringify({ ...entry, rarity: "legendary" }) } });
-    fireEvent.click(within(items()).getByRole("button", { name: "Edit as form" }));
-    expect(within(items()).getByRole("combobox", { name: "Rarity" })).toHaveTextContent(
-      "Legendary",
-    );
-    fireEvent.click(within(items()).getByRole("button", { name: "Save" }));
+    fireEvent.change(field("textbox", "Item JSON"), {
+      target: { value: JSON.stringify({ ...entry, rarity: "legendary" }) },
+    });
+    mode("Step by step");
+    expect(field("combobox", "Rarity")).toHaveTextContent("Legendary");
+    click("Save");
 
     const { source: _source, ...rest } = charged.json;
     await waitFor(() =>
@@ -429,30 +464,21 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    const pick = (name: string, option: string) => {
-      fireEvent.click(within(spells()).getByRole("combobox", { name }));
-      fireEvent.click(screen.getByRole("option", { name: option }));
-    };
+    click("Next");
     pick("Range", "Feet");
-    fireEvent.change(within(spells()).getByRole("spinbutton", { name: "Distance" }), {
-      target: { value: "15" },
-    });
+    fireEvent.change(field("spinbutton", "Distance"), { target: { value: "15" } });
     pick("Area", "Cone");
     pick("Range", "Miles");
     pick("Range", "Feet");
     pick("Duration", "Timed");
     pick("Duration", "Instantaneous");
     pick("Duration", "Timed");
-    fireEvent.click(within(spells()).getByRole("checkbox", { name: "Concentration" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "At higher levels" }), {
-      target: { value: "More cold." },
-    });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
+    fireEvent.click(field("checkbox", "Concentration"));
+    click("Next");
+    fireEvent.change(field("textbox", "At higher levels"), { target: { value: "More cold." } });
+    mode("JSON");
 
-    const entry = JSON.parse(
-      (within(spells()).getByRole("textbox", { name: "Spell JSON" }) as HTMLTextAreaElement).value,
-    );
-    expect(entry).toMatchObject({
+    expect(JSON.parse(jsonText("Spell JSON"))).toMatchObject({
       range: { type: "cone", distance: { type: "feet", amount: 15 } },
       duration: [{ type: "timed", duration: { type: "minute", amount: 1 }, concentration: true }],
       entriesHigherLevel: [
@@ -477,63 +503,60 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
-    fireEvent.change(within(spells()).getByRole("textbox", { name: "Spell JSON" }), {
+    mode("JSON");
+    fireEvent.change(field("textbox", "Spell JSON"), {
       target: { value: JSON.stringify(shield) },
     });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as form" }));
-    const time = within(spells()).getByRole("spinbutton", { name: "Casting time" });
+    mode("Step by step");
+    click("Next");
+    const time = field("spinbutton", "Casting time");
     fireEvent.change(time, { target: { value: "" } });
     fireEvent.change(time, { target: { value: "1" } });
-    fireEvent.click(within(spells()).getByRole("checkbox", { name: "Ritual" }));
-    fireEvent.click(within(spells()).getByRole("combobox", { name: "Rules" }));
-    fireEvent.click(screen.getByRole("option", { name: "2014" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
+    fireEvent.click(field("checkbox", "Ritual"));
+    click("Previous");
+    pick("Rules", "2014");
+    mode("JSON");
 
-    const entry = JSON.parse(
-      (within(spells()).getByRole("textbox", { name: "Spell JSON" }) as HTMLTextAreaElement).value,
-    );
+    const entry = JSON.parse(jsonText("Spell JSON"));
     expect(entry.time).toEqual(shield.time);
     expect(entry).not.toHaveProperty("meta");
     expect(entry.entriesHigherLevel[0].name).toBe("At Higher Levels");
   });
 
-  it("shows a problem in rules text the form leaves to JSON, and names a cantrip's upgrade", async () => {
+  it("takes a save holding a problem to the step that shows it, and names a cantrip's upgrade", async () => {
     const fetchMock = stubApi({});
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.click(within(spells()).getByRole("combobox", { name: "Level" }));
-    fireEvent.click(screen.getByRole("option", { name: "Cantrip" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as JSON" }));
-    const box = within(spells()).getByRole("textbox", {
-      name: "Spell JSON",
-    }) as HTMLTextAreaElement;
-    const entry = JSON.parse(box.value);
+    pick("Level", "Cantrip");
+    mode("JSON");
+    const entry = JSON.parse(jsonText("Spell JSON"));
     expect(entry.entriesHigherLevel[0].name).toBe("Cantrip Upgrade");
 
-    fireEvent.change(box, { target: { value: JSON.stringify({ ...entry, entries: "loose" }) } });
-    fireEvent.click(within(spells()).getByRole("button", { name: "Edit as form" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
+    fireEvent.change(field("textbox", "Spell JSON"), {
+      target: { value: JSON.stringify({ ...entry, entries: "loose" }) },
+    });
+    mode("Step by step");
+    click("Save");
 
-    expect(within(spells()).getByText(/expected array/i)).toBeInTheDocument();
-    expect(within(spells()).getByRole("textbox", { name: "Cantrip upgrade" })).toBeInTheDocument();
+    expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
+    expect(within(editor()).getByText(/expected array/i)).toBeInTheDocument();
+    expect(field("textbox", "Cantrip upgrade")).toBeInTheDocument();
     expect(writesOf(fetchMock)).toEqual([]);
   });
 
-  it("edits a row in place, starting from its entry without the stamped source", async () => {
+  it("edits a row in a modal, starting from its entry without the stamped source, and returns focus", async () => {
     const fetchMock = stubApi({ items: [sunblade] }, [{ status: 200, body: sunblade }]);
     renderPage();
 
     const edit = await within(items()).findByRole("button", { name: "Edit Sunblade" });
     edit.focus();
     fireEvent.click(edit);
-    expect(within(items()).getByRole("textbox", { name: "Name" })).toHaveFocus();
-    fireEvent.click(within(items()).getByRole("button", { name: "Edit as JSON" }));
-    const box = within(items()).getByRole("textbox", { name: "Item JSON" });
+    expect(screen.getByRole("dialog", { name: "Edit Sunblade" })).toBeInTheDocument();
+    mode("JSON");
     const { source: _source, ...entry } = sunblade.json;
-    expect(JSON.parse((box as HTMLTextAreaElement).value)).toEqual(entry);
-    fireEvent.click(within(items()).getByRole("button", { name: "Save" }));
+    expect(JSON.parse(jsonText("Item JSON"))).toEqual(entry);
+    click("Save");
 
     await waitFor(() =>
       expect(writesOf(fetchMock)).toEqual([
@@ -543,6 +566,31 @@ describe("HomebrewSettings", () => {
     await waitFor(() => expect(edit).toHaveFocus());
   });
 
+  it("asks before closing over unsaved changes, and closes without asking where there are none", () => {
+    stubApi({});
+    renderPage();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    const add = within(items()).getByRole("button", { name: "Add item" });
+    add.focus();
+    fireEvent.click(add);
+    click("Close");
+    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(add).toHaveFocus();
+
+    fireEvent.click(add);
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Moonfire Blade" } });
+    click("Close");
+    expect(confirm).toHaveBeenCalledWith("Discard your changes to New item?");
+    expect(field("textbox", "Name")).toHaveValue("Moonfire Blade");
+
+    confirm.mockReturnValue(true);
+    click("Close");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(add).toHaveFocus();
+  });
+
   it("says why a save failed, such as a name another row holds", async () => {
     stubApi({}, [
       { status: 409, body: { error: 'The homebrew spell s9 is already named "Coastal Ward"' } },
@@ -550,9 +598,9 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    fireEvent.click(within(spells()).getByRole("button", { name: "Save" }));
+    click("Save");
 
-    expect(await within(spells()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
+    expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
   });
 
   it("refuses to delete a row a character holds, naming each character", async () => {
@@ -599,22 +647,5 @@ describe("HomebrewSettings", () => {
     expect(writesOf(fetchMock)).toEqual([
       { url: "/api/homebrew/items/i1", method: "DELETE", body: undefined },
     ]);
-  });
-  it("closes the editor of a row once that row is deleted, and says the list is empty", async () => {
-    const lists: { items: unknown[] } = { items: [sunblade] };
-    stubApi(lists, [{ status: 204 }]);
-    renderPage();
-
-    fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
-    fireEvent.click(within(items()).getByRole("button", { name: "Delete Sunblade" }));
-    lists.items = [];
-    fireEvent.click(
-      within(screen.getByRole("dialog", { name: "Delete Sunblade?" })).getByRole("button", {
-        name: "Delete",
-      }),
-    );
-
-    expect(await within(items()).findByText("No homebrew items yet.")).toBeInTheDocument();
-    expect(within(items()).queryByRole("textbox", { name: "Name" })).toBeNull();
   });
 });

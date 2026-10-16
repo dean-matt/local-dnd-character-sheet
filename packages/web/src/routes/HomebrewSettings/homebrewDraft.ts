@@ -70,3 +70,12 @@ export function checkHomebrewEntry<T>(
         })),
       };
 }
+
+/** The problems with the top-level field `key`, joined, for the control that shows it. */
+export function errorFor(problems: HomebrewProblem[], key: string): string | undefined {
+  const own = problems.filter((problem) => problem.key === key);
+  if (own.length === 0) return undefined;
+  return own
+    .map(({ field, message }) => (field === key ? message : `${field}: ${message}`))
+    .join("; ");
+}

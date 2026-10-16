@@ -1,26 +1,19 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
-import { CONDITIONS, DAMAGE_TYPE_NAMES } from "../../lib/defenseVocabulary.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { RARITIES } from "../../lib/rarities.ts";
-import { AdvantageFields } from "./AdvantageFields.tsx";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
 import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
-import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
 import {
-  chosenIn,
-  entriesOf,
   type HomebrewFormProps,
   listAt,
   numberAt,
-  paragraphsOf,
   signed,
   textAt,
   typedInteger,
   typedNumber,
   unsigned,
-  withChosen,
   withField,
 } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
@@ -49,11 +42,11 @@ function withCurrent(options: { value: string; label: string }[], current: strin
 }
 
 /**
- * A homebrew item's form: the fields every item carries, then a weapon's attack or an
- * armor's AC where its type is one, then what it grants against damage and conditions, then
- * its rules text. Picking a type in another group drops the fields the old group carried.
+ * A homebrew item's first step: the fields every item carries, then a weapon's attack or an
+ * armor's AC where its type is one. Picking a type in another group drops the fields the old
+ * group carried.
  */
-export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
+export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const type = typeof entry.type === "string" ? (entry.type.split("|")[0] ?? "") : "";
   const group = itemGroup(entry.type);
@@ -76,14 +69,6 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
     onChange: (event: { target: { value: string } }) =>
       set(key, write(typedInteger(event.target.value))),
   });
-  const defenses = (key: string, legend: string, options: typeof CONDITIONS) => (
-    <HomebrewCheckboxGroup
-      legend={legend}
-      options={options}
-      chosen={chosenIn(listAt(entry, key))}
-      onChange={(chosen) => set(key, withChosen(listAt(entry, key), chosen))}
-    />
-  );
 
   return (
     <div className={FORM_GRID}>
@@ -248,24 +233,6 @@ export function ItemForm({ entry, onChange, errorFor }: HomebrewFormProps) {
           </div>
         </>
       )}
-      <div className={WHOLE}>{defenses("resist", "Resistances", DAMAGE_TYPE_NAMES)}</div>
-      <div className={WHOLE}>{defenses("immune", "Damage immunities", DAMAGE_TYPE_NAMES)}</div>
-      <div className={WHOLE}>{defenses("conditionImmune", "Condition immunities", CONDITIONS)}</div>
-      <div className={WHOLE}>
-        <AdvantageFields
-          effects={listAt(entry, "advantage")}
-          onChange={(next) => set("advantage", next.length > 0 ? next : undefined)}
-          error={errorFor("advantage")}
-        />
-      </div>
-      <div className={WHOLE}>
-        <HomebrewRulesText
-          label="Rules text"
-          text={paragraphsOf(entry.entries)}
-          onText={(next) => set("entries", entriesOf(next))}
-          error={errorFor("entries")}
-        />
-      </div>
     </div>
   );
 }

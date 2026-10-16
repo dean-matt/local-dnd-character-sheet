@@ -68,7 +68,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
       </div>
       {list.isPending && <LoadingState label={`Loading homebrew ${kind.heading.toLowerCase()}…`} />}
       {list.isError && <ErrorState error={list.error} />}
-      {list.isSuccess && rows.length === 0 && editing === undefined && (
+      {list.isSuccess && rows.length === 0 && (
         <EmptyState>No homebrew {kind.heading.toLowerCase()} yet.</EmptyState>
       )}
       {rows.length > 0 && (
@@ -126,7 +126,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
           onSave={(input) =>
             save.mutate({ id: edited?.id, input }, { onSuccess: () => setEditing(undefined) })
           }
-          onCancel={() => openEditor(undefined)}
+          onClose={() => openEditor(undefined)}
         />
       )}
       {deleting && (
@@ -137,10 +137,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
           error={remove.error}
           onConfirm={() =>
             remove.mutate(deleting.id, {
-              onSuccess: () => {
-                if (deleting.id === editing) setEditing(undefined);
-                closeDelete();
-              },
+              onSuccess: closeDelete,
             })
           }
           onClose={closeDelete}

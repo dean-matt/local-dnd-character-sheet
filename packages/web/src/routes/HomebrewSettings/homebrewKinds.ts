@@ -18,9 +18,13 @@ import { schoolName } from "../../lib/spellSchool.ts";
 import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
+import { ItemBasics } from "./ItemBasics.tsx";
+import { ItemDefenses } from "./ItemDefenses.tsx";
 import { ItemFieldReference } from "./ItemFieldReference.tsx";
-import { ItemForm } from "./ItemForm.tsx";
-import { SpellForm } from "./SpellForm.tsx";
+import { ItemRulesText } from "./ItemRulesText.tsx";
+import { SpellBasics } from "./SpellBasics.tsx";
+import { SpellCasting } from "./SpellCasting.tsx";
+import { SpellEffect } from "./SpellEffect.tsx";
 import { withUpcastNameFor } from "./spellUpcast.ts";
 
 /** What every homebrew record carries, whichever kind it is. */
@@ -56,10 +60,14 @@ export interface HomebrewKind<
   entries(input: I): Entries;
   /** What a new entry opens with; the editor offers a choice where there is more than one. */
   starters: HomebrewStarters;
-  Form: ComponentType<HomebrewFormProps>;
-  /** What the editor shows under either view: the fields the sheet reads, where a kind lists them. */
+  /**
+   * The form's steps, in order: each one's fields, and the top-level fields whose problems
+   * keep it from advancing. A field no step names is checked at the review that follows them.
+   */
+  steps: { title: string; Fields: ComponentType<HomebrewFormProps>; keys: string[] }[];
+  /** What the JSON view shows beside its editor: the fields the sheet reads, where a kind lists them. */
   reference?: ReactNode;
-  /** The top-level fields `Form` shows a problem beside; the editor lists any other problem itself. */
+  /** The top-level fields a step shows a problem beside; the editor lists any other problem itself. */
   formKeys: string[];
   /** The entry as the edition picked next would write it, where an edition changes how it reads. */
   forEdition?(
@@ -78,7 +86,35 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
   facts: itemFacts,
   entries: itemEntries,
   starters: ITEM_STARTERS,
-  Form: ItemForm,
+  steps: [
+    {
+      title: "Basics",
+      Fields: ItemBasics,
+      keys: [
+        "name",
+        "type",
+        "rarity",
+        "weight",
+        "value",
+        "reqAttune",
+        "weaponCategory",
+        "dmgType",
+        "baseItem",
+        "dmg1",
+        "dmg2",
+        "bonusWeapon",
+        "property",
+        "ac",
+        "bonusAc",
+      ],
+    },
+    {
+      title: "Defenses",
+      Fields: ItemDefenses,
+      keys: ["resist", "immune", "conditionImmune", "advantage"],
+    },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+  ],
   reference: createElement(ItemFieldReference),
   formKeys: ["name", "type", "rarity", "reqAttune", "advantage", "entries"],
 };
@@ -96,7 +132,19 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
     ...(record.ritual ? ["Ritual"] : []),
   ],
   starters: SPELL_STARTERS,
-  Form: SpellForm,
+  steps: [
+    { title: "Basics", Fields: SpellBasics, keys: ["name", "level", "school"] },
+    {
+      title: "Casting",
+      Fields: SpellCasting,
+      keys: ["time", "range", "duration", "components", "meta"],
+    },
+    {
+      title: "Effect",
+      Fields: SpellEffect,
+      keys: ["damageInflict", "entries", "entriesHigherLevel"],
+    },
+  ],
   facts: spellFacts,
   entries: rowEntries,
   forEdition: withUpcastNameFor,
@@ -105,3 +153,9 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
 
 /** The kinds in the order the page lists them. */
 export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell];
+
+/** The step that shows a problem with the top-level field `key`; past the last, the review. */
+export function stepOf(kind: HomebrewKind, key: string): number {
+  const at = kind.steps.findIndex(({ keys }) => keys.includes(key));
+  return at === -1 ? kind.steps.length : at;
+}
