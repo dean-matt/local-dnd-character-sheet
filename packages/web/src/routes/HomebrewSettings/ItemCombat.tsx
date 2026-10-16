@@ -4,6 +4,7 @@ import { InputField } from "../../components/InputField.tsx";
 import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { BaseWeaponField } from "./BaseWeaponField.tsx";
 import {
   type HomebrewFormProps,
   listAt,
@@ -39,7 +40,6 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
   const dice = useId();
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const group = itemGroup(entry.type);
-  const baseItem = textAt(entry, "baseItem").split("|");
   const properties = listAt(entry, "property");
   const text = (key: string) => ({
     value: textAt(entry, key),
@@ -97,18 +97,11 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
             </FormField>
           </div>
           <div className={PAIRED}>
-            <InputField
-              label="Base weapon"
-              placeholder="longsword"
-              value={baseItem[0] ?? ""}
-              onChange={(event) =>
-                set(
-                  "baseItem",
-                  event.target.value === ""
-                    ? undefined
-                    : [event.target.value, ...baseItem.slice(1)].join("|"),
-                )
-              }
+            <BaseWeaponField
+              current={textAt(entry, "baseItem")}
+              edition={edition}
+              error={errorFor("baseItem")}
+              onChange={(next) => set("baseItem", next)}
             />
           </div>
           <div className={PAIRED}>
