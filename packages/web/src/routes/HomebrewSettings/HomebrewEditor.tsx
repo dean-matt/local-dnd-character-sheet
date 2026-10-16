@@ -8,7 +8,7 @@ import { HomebrewJsonMode } from "./HomebrewJsonMode.tsx";
 import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewStepMode } from "./HomebrewStepMode.tsx";
 import { HomebrewViewTabs } from "./HomebrewViewTabs.tsx";
-import { type HomebrewKind, type HomebrewRow, stepOf } from "./homebrewKinds.ts";
+import { type HomebrewKind, type HomebrewRow, stepOf, stepsOf } from "./homebrewKinds.ts";
 import { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
 const MODES = ["Step by step", "JSON"] as const;
@@ -83,7 +83,7 @@ export function HomebrewEditor({
       return refuse();
     }
     setTried(false);
-    if (target < kind.steps.length) return setStep(target);
+    if (target < stepsOf(kind).length) return setStep(target);
     switchView("Preview");
     // The step buttons and Next leave with the form, so focus moves to the tab now selected.
     document.getElementById(`${id}-tab-${VIEWS.indexOf("Preview")}`)?.focus();

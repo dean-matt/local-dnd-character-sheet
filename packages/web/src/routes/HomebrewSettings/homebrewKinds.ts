@@ -45,6 +45,13 @@ export interface HomebrewInput {
   entries?: Entries;
 }
 
+/** One section of a kind's form: its title, its fields, and the top-level keys it shows. */
+export interface HomebrewSection {
+  title: string;
+  Fields: ComponentType<HomebrewFormProps>;
+  keys: string[];
+}
+
 /** A kind of homebrew the Homebrew settings page edits: its route, its schemas and its chips. */
 export interface HomebrewKind<
   R extends HomebrewRow = HomebrewRow,
@@ -64,10 +71,10 @@ export interface HomebrewKind<
   /** What a new entry opens with; the editor offers a choice where there is more than one. */
   starters: HomebrewStarters;
   /**
-   * The form's steps, in order: each one's fields, and the top-level fields whose problems
-   * keep it from advancing. A field no step names is checked at the review that follows them.
+   * The form's sections, in order: each one's fields, and the top-level fields whose problems
+   * keep its step from advancing. A field no section names belongs to the last.
    */
-  steps: { title: string; Fields: ComponentType<HomebrewFormProps>; keys: string[] }[];
+  sections: HomebrewSection[];
   /** What the JSON view shows beside its editor: the fields the sheet reads, where a kind lists them. */
   reference?: ReactNode;
   /** The top-level fields a step shows a problem beside; the editor lists any other problem itself. */
@@ -89,7 +96,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
   facts: itemFacts,
   entries: itemEntries,
   starters: ITEM_STARTERS,
-  steps: [
+  sections: [
     {
       title: "Basics",
       Fields: ItemBasics,
@@ -143,7 +150,7 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
     ...(record.ritual ? ["Ritual"] : []),
   ],
   starters: SPELL_STARTERS,
-  steps: [
+  sections: [
     { title: "Basics", Fields: SpellBasics, keys: ["name", "level", "school"] },
     {
       title: "Casting",
@@ -165,8 +172,21 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
 /** The kinds in the order the page lists them. */
 export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell];
 
+/** How many sections a step sets side by side, which the wide modal holds two of. */
+const PER_STEP = 2;
+
+/** The kind's sections, two to a step, a step titled by its sections. */
+export function stepsOf(kind: HomebrewKind): { title: string; sections: HomebrewSection[] }[] {
+  const steps = [];
+  for (let at = 0; at < kind.sections.length; at += PER_STEP) {
+    const sections = kind.sections.slice(at, at + PER_STEP);
+    steps.push({ title: sections.map(({ title }) => title).join(" & "), sections });
+  }
+  return steps;
+}
+
 /** The step that shows a problem with the top-level field `key`; the last, where none lists it. */
 export function stepOf(kind: HomebrewKind, key: string): number {
-  const at = kind.steps.findIndex(({ keys }) => keys.includes(key));
-  return at === -1 ? kind.steps.length - 1 : at;
+  const at = kind.sections.findIndex(({ keys }) => keys.includes(key));
+  return Math.floor((at === -1 ? kind.sections.length - 1 : at) / PER_STEP);
 }

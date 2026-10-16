@@ -88,10 +88,11 @@ const click = (name: string) => {
 };
 const mode = (name: "Step by step" | "JSON" | "Preview") =>
   fireEvent.click(within(editor()).getByRole("tab", { name }));
+/** Goes to the step holding the section `name`, a step being titled by its sections. */
 const stepTo = (name: string) =>
   fireEvent.click(
     within(within(editor()).getByRole("navigation", { name: "Steps" })).getByRole("button", {
-      name,
+      name: new RegExp(`(^| & )${name}( & |$)`),
     }),
   );
 const pick = (name: string, option: string) => {
@@ -161,21 +162,21 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    expect(editor()).toHaveTextContent("Step 1 of 3");
+    expect(editor()).toHaveTextContent("Step 1 of 2");
+    expect(within(editor()).getByRole("heading", { name: "Basics" })).toBeInTheDocument();
+    expect(within(editor()).getByRole("heading", { name: "Casting" })).toBeInTheDocument();
     expect(click("Previous")).toHaveAttribute("aria-disabled", "true");
     fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
     click("Next");
-    expect(editor()).toHaveTextContent("Step 1 of 3");
+    expect(editor()).toHaveTextContent("Step 1 of 2");
     expect(field("textbox", "Name")).toHaveAccessibleDescription();
     expect(field("textbox", "Name")).toHaveFocus();
+    expect(field("textbox", "Material component")).not.toHaveAccessibleDescription();
 
     fireEvent.change(field("textbox", "Name"), { target: { value: "Brineburst" } });
     fireEvent.keyDown(field("textbox", "Name"), { key: "Enter" });
-    expect(within(editor()).getByRole("heading", { name: "Casting" })).toBeInTheDocument();
-    expect(field("textbox", "Material component")).not.toHaveAccessibleDescription();
-    click("Next");
     expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
-    expect(editor()).toHaveTextContent("Step 3 of 3");
+    expect(editor()).toHaveTextContent("Step 2 of 2");
     click("Next");
     expect(within(editor()).getByRole("tab", { name: "Preview" })).toHaveAttribute(
       "aria-selected",
@@ -193,7 +194,7 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     const steps = within(editor()).getByRole("navigation", { name: "Steps" });
-    expect(within(steps).getByRole("button", { name: "Basics" })).toHaveAttribute(
+    expect(within(steps).getByRole("button", { name: "Basics & Casting" })).toHaveAttribute(
       "aria-current",
       "step",
     );
@@ -204,7 +205,7 @@ describe("HomebrewSettings", () => {
       "step",
     );
 
-    fireEvent.click(within(steps).getByRole("button", { name: "Basics" }));
+    fireEvent.click(within(steps).getByRole("button", { name: "Basics & Casting" }));
     fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
     fireEvent.click(within(steps).getByRole("button", { name: "Preview" }));
     expect(within(editor()).getByRole("heading", { name: "Basics" })).toBeInTheDocument();
@@ -234,26 +235,19 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     expect(field("combobox", "Type")).toHaveTextContent("Melee weapon");
-    expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
-    click("Next");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
     expect(
       within(editor()).getByRole("button", { name: "Properties Versatile" }),
     ).toBeInTheDocument();
 
-    click("Previous");
     pick("Start from", "Armor");
     expect(field("combobox", "Type")).toHaveTextContent("Medium armor");
-    click("Next");
     expect(field("spinbutton", "Armor class")).toHaveValue(14);
     expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
 
-    click("Previous");
     pick("Start from", "Gear");
-    click("Next");
     expect(editor()).toHaveTextContent("Only a weapon or armor has fields here.");
 
-    click("Previous");
     pick("Start from", "Weapon");
     stepTo("Magic");
     expect(field("combobox", "Rarity")).toHaveTextContent("Rare");
@@ -455,7 +449,6 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     click("Next");
-    click("Next");
     fireEvent.change(field("textbox", "Rules text"), {
       target: { value: "Brine deals {@damage 3d4} cold damage.\n\nIt stings." },
     });
@@ -478,7 +471,7 @@ describe("HomebrewSettings", () => {
     expect(within(preview).queryByRole("textbox")).toBeNull();
 
     mode("Step by step");
-    expect(editor()).toHaveTextContent("Step 3 of 3");
+    expect(editor()).toHaveTextContent("Step 2 of 2");
     expect(field("textbox", "Rules text")).toHaveValue(
       "Brine deals {@damage 3d4} cold damage.\n\nIt stings.",
     );
@@ -575,7 +568,6 @@ describe("HomebrewSettings", () => {
 
     expect(field("textbox", "Name")).toHaveValue("Coastal Ward");
     expect(field("combobox", "School")).toHaveTextContent("Abjuration");
-    click("Next");
     expect(field("combobox", "Duration")).toHaveTextContent("Instantaneous");
     click("Save");
 
@@ -639,7 +631,6 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    click("Next");
     pick("Range", "Feet");
     fireEvent.change(field("spinbutton", "Distance"), { target: { value: "15" } });
     pick("Area", "Cone");
@@ -683,12 +674,10 @@ describe("HomebrewSettings", () => {
       target: { value: JSON.stringify(shield) },
     });
     mode("Step by step");
-    click("Next");
     const time = field("spinbutton", "Casting time");
     fireEvent.change(time, { target: { value: "" } });
     fireEvent.change(time, { target: { value: "1" } });
     fireEvent.click(field("checkbox", "Ritual"));
-    click("Previous");
     pick("Rules", "2014");
     mode("JSON");
 
