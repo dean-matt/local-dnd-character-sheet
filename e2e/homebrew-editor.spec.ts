@@ -32,8 +32,8 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   await name.press("ControlOrMeta+a");
   await name.pressSequentially(named);
   await name.press("Enter");
-  await expect(editor.getByRole("heading", { name: "Magic" })).toBeVisible();
-  await expect(editor.getByRole("heading", { name: "Effects" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Combat" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Defenses" })).toBeVisible();
 
   const next = editor.getByRole("button", { name: "Next" });
   await editor.getByRole("button", { name: "Close" }).focus();
@@ -46,8 +46,8 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   }
   await expect(next).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(editor.getByRole("heading", { name: "Defenses" })).toBeVisible();
-  await expect(editor.getByRole("heading", { name: "Rules text" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Magic" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Effects" })).toBeVisible();
   await page.keyboard.press("Enter");
   await expect(editor.getByRole("tab", { name: "Preview" })).toBeFocused();
   await expect(editor.getByRole("heading", { name: named })).toBeVisible();

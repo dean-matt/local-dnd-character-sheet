@@ -102,10 +102,16 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
       Fields: ItemBasics,
       keys: ["name", "type", "weight", "value"],
     },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
     {
       title: "Combat",
       Fields: ItemCombat,
       keys: ["weaponCategory", "dmgType", "baseItem", "dmg1", "dmg2", "property", "ac"],
+    },
+    {
+      title: "Defenses",
+      Fields: ItemDefenses,
+      keys: ["resist", "immune", "vulnerable", "conditionImmune"],
     },
     {
       title: "Magic",
@@ -126,12 +132,6 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
       ],
     },
     { title: "Effects", Fields: ItemEffects, keys: ["ability", "modifySpeed", "advantage"] },
-    {
-      title: "Defenses",
-      Fields: ItemDefenses,
-      keys: ["resist", "immune", "vulnerable", "conditionImmune"],
-    },
-    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
   ],
   reference: createElement(ItemFieldReference),
   formKeys: [

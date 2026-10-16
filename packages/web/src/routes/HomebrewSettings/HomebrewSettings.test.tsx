@@ -240,6 +240,7 @@ describe("HomebrewSettings", () => {
     mode("Preview");
     expect(field("combobox", "Rules")).toHaveTextContent("2024");
     mode("Step by step");
+    stepTo("Combat");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
     fireEvent.change(field("combobox", "Damage"), { target: { value: "1d" } });
     click("Next");
@@ -254,7 +255,6 @@ describe("HomebrewSettings", () => {
     ).toBeInTheDocument();
 
     pick("Start from", "Armor");
-    expect(field("combobox", "Type")).toHaveTextContent("Medium armor");
     expect(field("spinbutton", "Armor class")).toHaveValue(14);
     expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
 
