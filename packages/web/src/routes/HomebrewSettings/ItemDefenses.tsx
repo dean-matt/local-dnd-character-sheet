@@ -8,9 +8,14 @@ import {
   withField,
 } from "./homebrewEntry.ts";
 import { FORM_GRID, TEXT } from "./homebrewGrid.ts";
+import { useCatalogBlurbs } from "./useCatalogBlurbs.ts";
 
 /** What a homebrew item grants against damage and conditions, and the damage it leaves the wearer vulnerable to. */
-export function ItemDefenses({ entry, onChange }: HomebrewFormProps) {
+const CONDITION_NAMES = CONDITIONS.map(({ label }) => label);
+
+export function ItemDefenses({ entry, edition, onChange }: HomebrewFormProps) {
+  const blurbs = useCatalogBlurbs("condition", CONDITION_NAMES, edition);
+  const conditions = CONDITIONS.map((option) => ({ ...option, description: blurbs[option.label] }));
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const defenses = (key: string, legend: string, noun: string, options: typeof CONDITIONS) => (
     <MultiSelect
@@ -35,7 +40,7 @@ export function ItemDefenses({ entry, onChange }: HomebrewFormProps) {
         {defenses("vulnerable", "Damage vulnerabilities", "damage types", DAMAGE_TYPE_NAMES)}
       </div>
       <div className={TEXT}>
-        {defenses("conditionImmune", "Condition immunities", "conditions", CONDITIONS)}
+        {defenses("conditionImmune", "Condition immunities", "conditions", conditions)}
       </div>
     </div>
   );

@@ -272,7 +272,7 @@ describe("HomebrewSettings", () => {
     );
   });
 
-  it("shows the wondrous example's effects on the Magic step, and writes each in upstream's shape", () => {
+  it("shows the wondrous example's bonuses and attunement on the Magic step, and writes each in upstream's shape", () => {
     stubApi({});
     renderPage();
 
@@ -300,6 +300,23 @@ describe("HomebrewSettings", () => {
     pick("Attunement", "Required by…");
     fireEvent.change(field("textbox", "Attuned by"), { target: { value: "by a sorcerer" } });
 
+    mode("JSON");
+    const entry = JSON.parse(jsonText("Item JSON"));
+    expect(entry).toMatchObject({
+      reqAttune: "by a sorcerer",
+      bonusAc: "+1",
+      bonusSpellSaveDc: "+2",
+      critThreshold: 19,
+    });
+    expect(entry).not.toHaveProperty("bonusAbilityCheck");
+  });
+
+  it("shows the wondrous example's ability and speed changes as rows, and writes each in upstream's shape", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    pick("Start from", "Wondrous item");
     stepTo("Effects");
     expect(field("combobox", "Ability change 1 ability")).toHaveTextContent("Wisdom");
     expect(field("combobox", "Ability change 1 rule")).toHaveTextContent("Raises by");
@@ -317,6 +334,18 @@ describe("HomebrewSettings", () => {
     click("Add a speed change");
     pick("Speed change 2 speed", "Every speed");
     fireEvent.change(field("spinbutton", "Speed change 2 feet"), { target: { value: "10" } });
+    mode("JSON");
+    const entry = JSON.parse(jsonText("Item JSON"));
+    expect(entry.ability).toEqual({ static: { str: 19 } });
+    expect(entry.modifySpeed).toEqual({ equal: { fly: "walk" }, bonus: { "*": 10 } });
+  });
+
+  it("shows the wondrous example's vulnerability, and adds another", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    pick("Start from", "Wondrous item");
     stepTo("Defenses");
     const vulnerable = within(editor()).getByRole("button", {
       name: "Damage vulnerabilities Thunder",
@@ -328,20 +357,8 @@ describe("HomebrewSettings", () => {
       within(editor()).getByRole("button", { name: "Damage vulnerabilities Thunder, Cold" }),
     ).toBeInTheDocument();
     mode("JSON");
-
     const entry = JSON.parse(jsonText("Item JSON"));
-    expect(entry).toMatchObject({
-      reqAttune: "by a sorcerer",
-      bonusAc: "+1",
-      bonusSpellSaveDc: "+2",
-      critThreshold: 19,
-      ability: { static: { str: 19 } },
-      modifySpeed: { equal: { fly: "walk" }, bonus: { "*": 10 } },
-      vulnerable: ["thunder", "cold"],
-    });
-    expect(entry).not.toHaveProperty("bonusAbilityCheck");
-    expect(entry.ability).toEqual({ static: { str: 19 } });
-    expect(entry.modifySpeed).toEqual({ equal: { fly: "walk" }, bonus: { "*": 10 } });
+    expect(entry.vulnerable).toEqual(["thunder", "cold"]);
   });
 
   it("drops a weapon's attack when its type turns to armor", async () => {

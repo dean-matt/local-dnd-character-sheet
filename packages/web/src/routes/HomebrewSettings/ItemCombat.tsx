@@ -20,6 +20,7 @@ import {
   WEAPON_CATEGORIES,
   WEAPON_PROPERTIES,
 } from "./homebrewVocabulary.ts";
+import { useCatalogBlurbs } from "./useCatalogBlurbs.ts";
 
 /** The dice a weapon's damage most often takes, offered as the field is typed; any other still saves. */
 const WEAPON_DICE = ["1d4", "1d6", "1d8", "1d10", "1d12", "2d6"];
@@ -31,7 +32,10 @@ function propertyCode(property: unknown): string | undefined {
 }
 
 /** A weapon's attack or an armor's AC, by the item's type; neither for any other type. */
-export function ItemCombat({ entry, onChange, errorFor }: HomebrewFormProps) {
+const PROPERTY_CODES = WEAPON_PROPERTIES.map(({ value }) => value);
+
+export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
+  const blurbs = useCatalogBlurbs("itemProperty", PROPERTY_CODES, edition);
   const dice = useId();
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const group = itemGroup(entry.type);
@@ -112,7 +116,10 @@ export function ItemCombat({ entry, onChange, errorFor }: HomebrewFormProps) {
               inForm
               label="Properties"
               noun="properties"
-              options={WEAPON_PROPERTIES}
+              options={WEAPON_PROPERTIES.map((option) => ({
+                ...option,
+                description: blurbs[option.value],
+              }))}
               selected={properties.flatMap((property) => propertyCode(property) ?? [])}
               onChange={(chosen) => {
                 const kept = properties.filter((property) => {

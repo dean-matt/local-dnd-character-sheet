@@ -9,6 +9,8 @@ interface MultiSelectOption {
   short?: string;
   /** What choosing it does beyond the filter, such as "adds rarity and kind filters", marked by an icon. */
   hint?: string;
+  /** A line under the label saying what the option is, such as a weapon property's rule. */
+  description?: string;
 }
 
 export interface MultiSelectProps {
@@ -192,6 +194,9 @@ export function MultiSelect({
                 {option.label}
                 {option.hint && " "}
                 {option.hint && <span className="sr-only">({option.hint})</span>}
+                {option.description && (
+                  <span className="mt-0.5 block text-label text-muted">{option.description}</span>
+                )}
               </span>
               {option.hint && (
                 <span
