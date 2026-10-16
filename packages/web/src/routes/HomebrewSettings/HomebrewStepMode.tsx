@@ -27,6 +27,7 @@ export function HomebrewStepMode({
 }: HomebrewStepModeProps) {
   const steps = stepsOf(kind);
   const current = steps[step];
+  const shown = kind.shownKeys(draft.entry);
   return (
     <>
       <nav aria-label="Steps">
@@ -80,7 +81,7 @@ export function HomebrewStepMode({
           </div>
           <HomebrewProblemAlert
             problems={shownProblems.filter(
-              ({ key }) => stepOf(kind, key) === step && !kind.formKeys.includes(key),
+              ({ key }) => stepOf(kind, key) === step && !shown.includes(key),
             )}
           />
         </>

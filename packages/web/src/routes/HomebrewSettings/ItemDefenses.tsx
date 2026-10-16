@@ -10,9 +10,9 @@ import {
 import { FORM_GRID, TEXT } from "./homebrewGrid.ts";
 import { useCatalogBlurbs } from "./useCatalogBlurbs.ts";
 
-/** What a homebrew item grants against damage and conditions, and the damage it leaves the wearer vulnerable to. */
 const CONDITION_NAMES = CONDITIONS.map(({ label }) => label);
 
+/** What a homebrew item grants against damage and conditions, and the damage it leaves the wearer vulnerable to. */
 export function ItemDefenses({ entry, edition, onChange }: HomebrewFormProps) {
   const blurbs = useCatalogBlurbs("condition", CONDITION_NAMES, edition);
   const conditions = CONDITIONS.map((option) => ({ ...option, description: blurbs[option.label] }));

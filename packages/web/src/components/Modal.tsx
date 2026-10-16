@@ -21,9 +21,8 @@ export function Modal({
 }: {
   onClose: () => void;
   /**
-   * For an entry edited beside a reference, such as the homebrew editor: wider, and one
-   * height whatever its content, so moving between steps never resizes it. The height is the
-   * homebrew JSON editor's at its default size; a taller step scrolls.
+   * For an entry edited beside a reference: wider, and one height whatever its content, so
+   * moving between views never resizes it; content taller than that height scrolls.
    */
   wide?: boolean;
   children: ReactNode;

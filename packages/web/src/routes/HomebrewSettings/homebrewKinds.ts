@@ -14,10 +14,11 @@ import { type ComponentType, createElement, type ReactNode } from "react";
 import type { z } from "zod";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
-import type { HomebrewFormProps } from "./homebrewEntry.ts";
+import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
+import { itemGroup } from "./homebrewVocabulary.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
 import { ItemDefenses } from "./ItemDefenses.tsx";
@@ -77,8 +78,12 @@ export interface HomebrewKind<
   sections: HomebrewSection[];
   /** What the JSON view shows beside its editor: the fields the sheet reads, where a kind lists them. */
   reference?: ReactNode;
-  /** The top-level fields a step shows a problem beside; the editor lists any other problem itself. */
-  formKeys: string[];
+  /**
+   * The top-level fields whose problem a control shows beside it for `entry`, which can
+   * depend on what the entry is, as a weapon's damage only shows for a weapon; the step lists
+   * any other problem itself, so none goes unseen.
+   */
+  shownKeys(entry: Record<string, unknown>): string[];
   /** The entry as the edition picked next would write it, where an edition changes how it reads. */
   forEdition?(
     entry: Record<string, unknown>,
@@ -134,16 +139,18 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     { title: "Effects", Fields: ItemEffects, keys: ["ability", "modifySpeed", "advantage"] },
   ],
   reference: createElement(ItemFieldReference),
-  formKeys: [
+  shownKeys: (entry) => [
     "name",
     "type",
     "rarity",
     "reqAttune",
-    "advantage",
     "entries",
-    "dmg1",
-    "dmg2",
-    "critThreshold",
+    "ability",
+    "modifySpeed",
+    "advantage",
+    ...(itemGroup(entry.type) === "weapon" ? ["dmg1", "dmg2"] : []),
+    // A bonus row shows only for a number; a non-number pasted as JSON has no row to sit beside.
+    ...(numberAt(entry.critThreshold) === undefined ? [] : ["critThreshold"]),
   ],
 };
 
@@ -176,7 +183,7 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
   facts: spellFacts,
   entries: rowEntries,
   forEdition: withUpcastNameFor,
-  formKeys: ["name", "level", "school", "duration", "meta", "entries"],
+  shownKeys: () => ["name", "level", "school", "duration", "meta", "entries"],
 };
 
 /** The kinds in the order the page lists them. */

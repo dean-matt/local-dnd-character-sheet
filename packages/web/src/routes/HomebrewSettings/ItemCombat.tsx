@@ -31,9 +31,9 @@ function propertyCode(property: unknown): string | undefined {
   return typeof named === "string" ? named.split("|")[0] : undefined;
 }
 
-/** A weapon's attack or an armor's AC, by the item's type; neither for any other type. */
 const PROPERTY_CODES = WEAPON_PROPERTIES.map(({ value }) => value);
 
+/** A weapon's attack or an armor's AC, by the item's type; neither for any other type. */
 export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
   const blurbs = useCatalogBlurbs("itemProperty", PROPERTY_CODES, edition);
   const dice = useId();

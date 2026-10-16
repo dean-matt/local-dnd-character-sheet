@@ -26,8 +26,8 @@ export interface HomebrewEditorProps {
 }
 
 /**
- * A homebrew entry in a modal, edited step by step through its kind's form and reviewed at
- * the end, or as the 5etools-shaped JSON it is stored as beside the kind's field reference.
+ * A homebrew entry in a modal, edited step by step through its kind's form, or as the
+ * 5etools-shaped JSON it is stored as beside the kind's field reference.
  * Both modes edit one entry, so a change in either shows in the other and a field the form
  * has no control for survives it. Leaving JSON waits until the text parses. A step holding a
  * problem holds every step after it, and each problem shows beside its field once a step or
@@ -112,6 +112,7 @@ export function HomebrewEditor({
   );
 
   return (
+    // `wide`'s height is the JSON mode's at its default size, so that mode never scrolls.
     <Modal onClose={close} wide>
       <ModalEntry
         title={title}

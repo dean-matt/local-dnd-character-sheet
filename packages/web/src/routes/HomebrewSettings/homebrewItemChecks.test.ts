@@ -8,8 +8,9 @@ const problems = (fields: Record<string, unknown>) => {
 };
 
 describe("homebrewItemFormSchema", () => {
-  it("takes damage the roller can roll, and a critical range of 2 to 19", () => {
+  it("takes damage the roller can roll or a flat number, and a critical range of 2 to 19", () => {
     expect(problems({ dmg1: "1d8", dmg2: "2d6+1", critThreshold: 19 })).toEqual([]);
+    expect(problems({ dmg1: "1" })).toEqual([]);
     expect(problems({ critThreshold: 2 })).toEqual([]);
   });
 

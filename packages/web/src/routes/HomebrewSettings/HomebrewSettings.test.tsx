@@ -361,6 +361,44 @@ describe("HomebrewSettings", () => {
     expect(entry.vulnerable).toEqual(["thunder", "cold"]);
   });
 
+  it("lists a problem in a field the step shows no control for, as a gear item's pasted damage", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    pick("Start from", "Gear");
+    mode("JSON");
+    fireEvent.change(field("textbox", "Item JSON"), {
+      target: {
+        value: JSON.stringify({
+          ...JSON.parse(jsonText("Item JSON")),
+          dmg1: "1d",
+          critThreshold: "x",
+        }),
+      },
+    });
+    mode("Step by step");
+    click("Save");
+
+    expect(within(editor()).getByRole("heading", { name: "Combat" })).toBeInTheDocument();
+    expect(within(editor()).queryByRole("combobox", { name: "Damage" })).toBeNull();
+    const alerts = within(editor())
+      .getAllByRole("alert")
+      .map((alert) => alert.textContent);
+    expect(alerts.some((text) => text?.includes("dmg1"))).toBe(true);
+
+    mode("JSON");
+    const { dmg1: _dmg1, ...rest } = JSON.parse(jsonText("Item JSON"));
+    fireEvent.change(field("textbox", "Item JSON"), { target: { value: JSON.stringify(rest) } });
+    mode("Step by step");
+    click("Save");
+    expect(within(editor()).getByRole("heading", { name: "Magic" })).toBeInTheDocument();
+    const shown = within(editor())
+      .getAllByRole("alert")
+      .map((alert) => alert.textContent);
+    expect(shown.some((text) => text?.includes("critThreshold"))).toBe(true);
+  });
+
   it("drops a weapon's attack when its type turns to armor", async () => {
     stubApi({});
     renderPage();
