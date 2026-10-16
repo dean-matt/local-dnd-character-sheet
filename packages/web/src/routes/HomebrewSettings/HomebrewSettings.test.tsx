@@ -88,6 +88,12 @@ const click = (name: string) => {
 };
 const mode = (name: "Step by step" | "JSON" | "Preview") =>
   fireEvent.click(within(editor()).getByRole("tab", { name }));
+const stepTo = (name: string) =>
+  fireEvent.click(
+    within(within(editor()).getByRole("navigation", { name: "Steps" })).getByRole("button", {
+      name,
+    }),
+  );
 const pick = (name: string, option: string) => {
   fireEvent.click(field("combobox", name));
   fireEvent.click(screen.getByRole("option", { name: option }));
@@ -228,7 +234,6 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     expect(field("combobox", "Type")).toHaveTextContent("Melee weapon");
-    expect(field("combobox", "Rarity")).toHaveTextContent("Rare");
     expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
     click("Next");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
@@ -248,12 +253,54 @@ describe("HomebrewSettings", () => {
 
     click("Previous");
     pick("Start from", "Weapon");
-    click("Next");
-    click("Next");
-    click("Next");
+    stepTo("Magic");
+    expect(field("combobox", "Rarity")).toHaveTextContent("Rare");
+    expect(field("spinbutton", "Bonus to attack and damage")).toHaveValue(1);
+    stepTo("Rules text");
     expect(field("textbox", "Rules text")).toHaveValue(
       (ITEM_STARTERS[0].entry.entries as string[]).join("\n\n"),
     );
+  });
+
+  it("shows the wondrous example's effects on the Magic step, and writes each in upstream's shape", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    pick("Start from", "Wondrous item");
+    stepTo("Magic");
+    expect(field("checkbox", "Requires attunement")).toBeChecked();
+    expect(field("spinbutton", "Bonus to saving throws")).toHaveValue(1);
+    expect(field("spinbutton", "Bonus to concentration saves")).toHaveValue(2);
+    expect(field("spinbutton", "Critical hit on")).toHaveValue(19);
+    expect(field("spinbutton", "Wisdom bonus")).toHaveValue(1);
+    expect(field("spinbutton", "Flying set to (ft.)")).toHaveValue(30);
+    expect(
+      within(editor()).queryByRole("spinbutton", { name: "Bonus to attack and damage" }),
+    ).toBeNull();
+
+    fireEvent.change(field("spinbutton", "Bonus to spell save DC"), { target: { value: "2" } });
+    fireEvent.change(field("spinbutton", "Wisdom bonus"), { target: { value: "" } });
+    fireEvent.change(field("spinbutton", "Strength set to"), { target: { value: "19" } });
+    fireEvent.change(field("spinbutton", "Flying set to (ft.)"), { target: { value: "" } });
+    pick("Flying equal to", "Walking");
+    fireEvent.change(field("spinbutton", "Bonus to every speed (ft.)"), {
+      target: { value: "10" },
+    });
+    stepTo("Defenses");
+    const vulnerable = within(editor()).getByRole("group", { name: "Damage vulnerabilities" });
+    expect(within(vulnerable).getByRole("checkbox", { name: "Thunder" })).toBeChecked();
+    mode("JSON");
+
+    const entry = JSON.parse(jsonText("Item JSON"));
+    expect(entry).toMatchObject({
+      bonusSpellSaveDc: "+2",
+      ability: { static: { str: 19 } },
+      modifySpeed: { equal: { fly: "walk" }, bonus: { "*": 10 } },
+      vulnerable: ["thunder"],
+    });
+    expect(entry.ability).not.toHaveProperty("wis");
+    expect(entry.modifySpeed).not.toHaveProperty("static");
   });
 
   it("drops a weapon's attack when its type turns to armor", async () => {
@@ -278,8 +325,7 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    click("Next");
-    click("Next");
+    stepTo("Defenses");
     click("Add an effect");
     pick("Effect 1 roll", "Skill");
     pick("Effect 1 skill", "Stealth");
@@ -512,6 +558,7 @@ describe("HomebrewSettings", () => {
       target: { value: JSON.stringify({ ...entry, rarity: "legendary" }) },
     });
     mode("Step by step");
+    stepTo("Magic");
     expect(field("combobox", "Rarity")).toHaveTextContent("Legendary");
     click("Save");
 

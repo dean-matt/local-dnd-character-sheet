@@ -7,10 +7,8 @@ import {
   type HomebrewFormProps,
   listAt,
   numberAt,
-  signed,
   textAt,
   typedInteger,
-  unsigned,
   withField,
 } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
@@ -110,13 +108,6 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
           <div className={TEXT}>
             <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
           </div>
-          <div className={SHORT}>
-            <InputField
-              label="Magic bonus"
-              step={1}
-              {...integer("bonusWeapon", unsigned, signed)}
-            />
-          </div>
           <div className={WHOLE}>
             <HomebrewCheckboxGroup
               legend="Properties"
@@ -138,18 +129,9 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
         </>
       )}
       {group === "armor" && (
-        <>
-          <div className={SHORT}>
-            <InputField label="Armor class" min={0} step={1} {...integer("ac")} />
-          </div>
-          <div className={SHORT}>
-            <InputField
-              label="Magic bonus to AC"
-              step={1}
-              {...integer("bonusAc", unsigned, signed)}
-            />
-          </div>
-        </>
+        <div className={SHORT}>
+          <InputField label="Armor class" min={0} step={1} {...integer("ac")} />
+        </div>
       )}
     </div>
   );

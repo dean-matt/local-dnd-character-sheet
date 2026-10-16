@@ -22,6 +22,7 @@ import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
 import { ItemDefenses } from "./ItemDefenses.tsx";
 import { ItemFieldReference } from "./ItemFieldReference.tsx";
+import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { SpellBasics } from "./SpellBasics.tsx";
 import { SpellCasting } from "./SpellCasting.tsx";
@@ -91,27 +92,37 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     {
       title: "Basics",
       Fields: ItemBasics,
-      keys: ["name", "type", "rarity", "weight", "value", "reqAttune"],
+      keys: ["name", "type", "weight", "value"],
     },
     {
       title: "Combat",
       Fields: ItemCombat,
+      keys: ["weaponCategory", "dmgType", "baseItem", "dmg1", "dmg2", "property", "ac"],
+    },
+    {
+      title: "Magic",
+      Fields: ItemMagic,
       keys: [
-        "weaponCategory",
-        "dmgType",
-        "baseItem",
-        "dmg1",
-        "dmg2",
+        "rarity",
+        "reqAttune",
         "bonusWeapon",
-        "property",
-        "ac",
         "bonusAc",
+        "bonusSavingThrow",
+        "bonusSavingThrowConcentration",
+        "bonusAbilityCheck",
+        "bonusProficiencyBonus",
+        "bonusSpellAttack",
+        "bonusSpellSaveDc",
+        "bonusSpellDamage",
+        "critThreshold",
+        "ability",
+        "modifySpeed",
       ],
     },
     {
       title: "Defenses",
       Fields: ItemDefenses,
-      keys: ["resist", "immune", "conditionImmune", "advantage"],
+      keys: ["resist", "immune", "vulnerable", "conditionImmune", "advantage"],
     },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
   ],

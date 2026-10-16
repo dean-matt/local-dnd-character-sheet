@@ -1,8 +1,6 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
-import { RARITIES } from "../../lib/rarities.ts";
-import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
 import {
   type HomebrewFormProps,
   numberAt,
@@ -10,7 +8,7 @@ import {
   typedNumber,
   withField,
 } from "./homebrewEntry.ts";
-import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
+import { FORM_GRID, SHORT, TEXT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import { GROUP_FIELDS, ITEM_TYPES, itemGroup } from "./homebrewVocabulary.ts";
 
@@ -22,7 +20,6 @@ export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const type = typeof entry.type === "string" ? (entry.type.split("|")[0] ?? "") : "";
   const group = itemGroup(entry.type);
-  const rarity = textAt(entry, "rarity");
   const value = numberAt(entry.value);
   return (
     <div className={FORM_GRID}>
@@ -54,18 +51,6 @@ export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
         </FormField>
       </div>
       <div className={SHORT}>
-        <FormField label="Rarity" error={errorFor("rarity")}>
-          {(control) => (
-            <Select
-              {...control}
-              options={withCurrent([NOT_STATED, ...RARITIES], rarity)}
-              value={rarity}
-              onChange={(next) => set("rarity", next || undefined)}
-            />
-          )}
-        </FormField>
-      </div>
-      <div className={SHORT}>
         <InputField
           label="Weight (lb.)"
           type="number"
@@ -86,14 +71,6 @@ export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
             const gp = typedNumber(event.target.value);
             set("value", gp === undefined ? undefined : Math.round(gp * 100));
           }}
-        />
-      </div>
-      <div className={WHOLE}>
-        <HomebrewCheckbox
-          label="Requires attunement"
-          checked={Boolean(entry.reqAttune)}
-          onChange={(checked) => set("reqAttune", checked || undefined)}
-          error={errorFor("reqAttune")}
         />
       </div>
     </div>

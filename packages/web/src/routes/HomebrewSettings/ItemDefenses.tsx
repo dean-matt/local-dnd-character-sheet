@@ -10,7 +10,7 @@ import {
 } from "./homebrewEntry.ts";
 import { FORM_GRID, WHOLE } from "./homebrewGrid.ts";
 
-/** What a homebrew item grants against damage, conditions and rolls. */
+/** What a homebrew item grants against damage, conditions and rolls, and the damage it leaves the wearer vulnerable to. */
 export function ItemDefenses({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const defenses = (key: string, legend: string, options: typeof CONDITIONS) => (
@@ -26,6 +26,9 @@ export function ItemDefenses({ entry, onChange, errorFor }: HomebrewFormProps) {
     <div className={FORM_GRID}>
       <div className={WHOLE}>{defenses("resist", "Resistances", DAMAGE_TYPE_NAMES)}</div>
       <div className={WHOLE}>{defenses("immune", "Damage immunities", DAMAGE_TYPE_NAMES)}</div>
+      <div className={WHOLE}>
+        {defenses("vulnerable", "Damage vulnerabilities", DAMAGE_TYPE_NAMES)}
+      </div>
       <div className={WHOLE}>{defenses("conditionImmune", "Condition immunities", CONDITIONS)}</div>
       <div className={WHOLE}>
         <AdvantageFields

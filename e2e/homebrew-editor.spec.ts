@@ -44,7 +44,7 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
     await page.keyboard.press("Tab");
   }
   await expect(next).toBeFocused();
-  for (const title of ["Defenses", "Rules text"]) {
+  for (const title of ["Magic", "Defenses", "Rules text"]) {
     await page.keyboard.press("Enter");
     await expect(editor.getByRole("heading", { name: title })).toBeVisible();
   }
