@@ -22,6 +22,9 @@ export type SelectProps = Pick<
   onChange: (next: string) => void;
 };
 
+/** How long a pause ends a typed run of letters, so the next letter starts a new search. */
+const TYPEAHEAD_MS = 500;
+
 /**
  * A single choice in `MultiSelect`'s look: a select-only combobox whose button names the
  * chosen option and opens a listbox, the chosen option checked. Focus stays on the button,
@@ -30,9 +33,6 @@ export type SelectProps = Pick<
  * half second, opening the list; Enter or Space picks it and closes; Escape or focus leaving
  * closes without picking. Picking the option already chosen calls nothing.
  */
-/** How long a pause ends a typed run of letters, so the next letter starts a new search. */
-const TYPEAHEAD_MS = 500;
-
 export function Select({ options, value, onChange, ...control }: SelectProps) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Combobox } from "./Combobox.tsx";
 
 function Holder({ initial = "" }: { initial?: string }) {
@@ -60,5 +60,29 @@ describe("Combobox", () => {
     fireEvent.click(input());
     fireEvent.keyDown(input(), { key: "Escape" });
     expect(options()).toEqual([]);
+  });
+
+  it("returns the list to the top layer after it empties and refills while open", () => {
+    const shown = vi.fn();
+    const proto = HTMLElement.prototype as HTMLElement & {
+      showPopover?: () => void;
+      hidePopover?: () => void;
+    };
+    const had = { show: proto.showPopover, hide: proto.hidePopover };
+    proto.showPopover = shown;
+    proto.hidePopover = () => {};
+    try {
+      const { unmount } = render(<Holder />);
+      fireEvent.change(input(), { target: { value: "1d" } });
+      expect(shown).toHaveBeenCalledTimes(1);
+      fireEvent.change(input(), { target: { value: "9d9" } });
+      expect(options()).toEqual([]);
+      fireEvent.change(input(), { target: { value: "1d" } });
+      expect(shown).toHaveBeenCalledTimes(2);
+      unmount();
+    } finally {
+      proto.showPopover = had.show;
+      proto.hidePopover = had.hide;
+    }
   });
 });

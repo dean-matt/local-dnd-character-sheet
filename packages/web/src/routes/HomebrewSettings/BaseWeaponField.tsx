@@ -28,14 +28,16 @@ export function BaseWeaponField({
   onChange: (baseItem: string | undefined) => void;
 }) {
   const query = useBaseWeapons(edition);
-  const weapons = [...(query.data?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const weapons = query.data?.items ?? [];
   const editions = `${EDITION_LABELS[edition]} base weapons`;
   const saved = weapons.find((weapon) => uid(weapon).toLowerCase() === current.toLowerCase());
   const unknown = current !== "" && !saved;
   const options = [
     NOT_STATED,
     ...weapons.map((weapon) => ({ value: uid(weapon), label: weapon.name })),
-    ...(unknown ? [{ value: current, label: current, hint: "not found" }] : []),
+    ...(unknown
+      ? [{ value: current, label: current, ...(query.isSuccess && { hint: "not found" }) }]
+      : []),
   ];
 
   function mark() {

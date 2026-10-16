@@ -28,13 +28,13 @@ export function Combobox({ options, value, onChange, ...control }: ComboboxProps
   const panel = useRef<HTMLElement>(null);
   const id = useId();
   const anchor = anchorName(id);
-  useTopLayer(panel, open);
   const needle = value.trim().toLowerCase();
   const shown =
     needle === "" || options.includes(value)
       ? options
       : options.filter((option) => option.toLowerCase().includes(needle));
   const listed = open && shown.length > 0;
+  useTopLayer(panel, listed);
   const optionId = (index: number) => `${id}-option-${index}`;
 
   useEffect(() => {
