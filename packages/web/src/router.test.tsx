@@ -164,8 +164,9 @@ describe("routing", () => {
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("aria-current", "page");
   });
 
-  it("renders Homebrew as a Settings section", () => {
+  it("renders Homebrew as a Settings section", async () => {
     renderAt("/settings/homebrew");
+    await screen.findByRole("heading", { level: 1, name: "Homebrew" });
 
     const nav = screen.getByRole("navigation", { name: "Settings sections" });
     expect(within(nav).getByRole("link", { name: "Homebrew" })).toHaveAttribute(

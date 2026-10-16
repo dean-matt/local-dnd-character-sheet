@@ -92,3 +92,97 @@ test("at phone width the field reference stacks above the JSON, and the editor f
     width,
   );
 });
+
+test("the item JSON editor suggests, describes and marks the fields the sheet applies, and a keyboard user leaves it", async ({
+  page,
+}) => {
+  await page.goto("/settings/homebrew");
+  await page.getByRole("button", { name: "Add item" }).click();
+  const editor = page.getByRole("dialog", { name: "New item" });
+  await editor.getByRole("tab", { name: "JSON" }).click();
+  const json = editor.getByRole("textbox", { name: "Item JSON" });
+  await editor.getByText("Item JSON", { exact: true }).click();
+  await expect(json).toBeFocused();
+  await json.press("ControlOrMeta+a");
+  await page.keyboard.insertText('{ "name": "Glow", "abil" }');
+  for (const _ of '" }') await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("Control+Space");
+  const suggestions = editor.getByRole("listbox");
+  await expect(suggestions.getByRole("option", { name: "ability" })).toBeVisible();
+  await expect(editor.locator(".cm-completionInfo")).toContainText('{"wis": 1} adds 1 to Wisdom');
+  await page.keyboard.press("Escape");
+  await expect(suggestions).toBeHidden();
+  await expect(editor).toBeVisible();
+
+  await json.press("ControlOrMeta+a");
+  await page.keyboard.insertText('{ "name": "Glow", "ability": { "wis": "+1" } }');
+  await expect(editor.locator(".cm-lintRange-error")).toBeVisible();
+  const key = await json.evaluate((content) => {
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const at = node.textContent?.indexOf("ability") ?? -1;
+      if (at < 0) continue;
+      const range = document.createRange();
+      range.setStart(node, at);
+      range.setEnd(node, at + "ability".length);
+      const { x, y, width, height } = range.getBoundingClientRect();
+      return { x: x + width / 2, y: y + height / 2 };
+    }
+    throw new Error("no ability key");
+  });
+  await page.mouse.move(key.x, key.y);
+  const hover = editor.locator(".cm-tooltip-hover");
+  await expect(hover).toContainText('{"wis": 1} adds 1 to Wisdom');
+  await expect(hover).toContainText("object");
+  await expectNoViolations(page);
+
+  await json.press("ControlOrMeta+End");
+  const before = await json.textContent();
+  await json.press("Tab");
+  await expect(json).toBeFocused();
+  expect(await json.textContent()).toBe(`${before}  `);
+  await json.press("Escape");
+  await json.press("Tab");
+  await expect(json).not.toBeFocused();
+  await expect(editor).toBeVisible();
+});
+
+/** A token's color as the page computes it, to compare with an element's own. */
+const tokenColor = (page: Page, property: "color" | "backgroundColor", token: string) =>
+  page.evaluate(
+    ([property, token]) => {
+      const probe = document.createElement("i");
+      probe.style[property] = `var(${token})`;
+      document.body.append(probe);
+      const color = getComputedStyle(probe)[property];
+      probe.remove();
+      return color;
+    },
+    [property, token] as const,
+  );
+
+test("in the dark theme the JSON editor's text, caret and search panel take the theme's tokens", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/settings/homebrew");
+  await page.getByRole("button", { name: "Add item" }).click();
+  const editor = page.getByRole("dialog", { name: "New item" });
+  await editor.getByRole("tab", { name: "JSON" }).click();
+  const json = editor.getByRole("textbox", { name: "Item JSON" });
+  await json.focus();
+  const caret = await editor
+    .locator(".cm-cursor")
+    .first()
+    .evaluate((cursor) => getComputedStyle(cursor).borderLeftColor);
+  expect(caret).toBe(await tokenColor(page, "color", "--color-ink"));
+
+  await page.keyboard.press("ControlOrMeta+f");
+  await expect(editor.getByRole("textbox", { name: "Find" })).toBeFocused();
+  const panel = await editor
+    .locator(".cm-panels")
+    .evaluate((panels) => getComputedStyle(panels).backgroundColor);
+  expect(panel).toBe(await tokenColor(page, "backgroundColor", "--color-subtle"));
+  await expectNoViolations(page);
+});

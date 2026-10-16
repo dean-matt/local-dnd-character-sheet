@@ -12,7 +12,19 @@ function editable(entry: Record<string, unknown>): HomebrewEntry {
   return rest;
 }
 
-const asText = (entry: HomebrewEntry) => JSON.stringify(entry, null, 2);
+/** `value` with every object's keys sorted by name, at any depth; arrays keep their order. */
+function sortedKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortedKeys);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, field]) => [key, sortedKeys(field)]),
+  );
+}
+
+/** The entry as the JSON mode opens it, its fields in alphabetical order to find them by. */
+const asText = (entry: HomebrewEntry) => JSON.stringify(sortedKeys(entry), null, 2);
 
 /**
  * The entry being edited and its edition, read against the kind's schema. `text` is set

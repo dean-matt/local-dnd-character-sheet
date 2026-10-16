@@ -6,7 +6,9 @@
  *
  * The error reaches a screen reader through `aria-describedby` and a `role="alert"`
  * region, never a native validation bubble, so a `<form>` holding these sets `noValidate`.
- * A control rendered outside `FormField` wires its own `aria-describedby`.
+ * A control rendered outside `FormField` wires its own `aria-describedby`. The label's id is
+ * the control's id with `-label`, for a control no `<label for>` names, such as a
+ * `contenteditable`.
  *
  * `messageSlot` moves the status and error out of the field into an element the caller
  * places, for a control too narrow to hold a sentence. Given a `name`, it names the field in
@@ -86,7 +88,11 @@ export function FormField({
 
   return (
     <div className="flex flex-col">
-      <label htmlFor={id} className={labelHidden ? "sr-only" : "mb-1 text-muted text-row"}>
+      <label
+        id={`${id}-label`}
+        htmlFor={id}
+        className={labelHidden ? "sr-only" : "mb-1 text-muted text-row"}
+      >
         {label}
       </label>
       {children({

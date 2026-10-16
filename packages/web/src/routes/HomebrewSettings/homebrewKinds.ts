@@ -26,6 +26,8 @@ import { ItemEffects } from "./ItemEffects.tsx";
 import { ItemFieldReference } from "./ItemFieldReference.tsx";
 import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
+import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
+import type { JsonEditorProps } from "./JsonEditor.tsx";
 import { SpellBasics } from "./SpellBasics.tsx";
 import { SpellCasting } from "./SpellCasting.tsx";
 import { SpellEffect } from "./SpellEffect.tsx";
@@ -78,6 +80,8 @@ export interface HomebrewKind<
   sections: HomebrewSection[];
   /** What the JSON view shows beside its editor: the fields the sheet reads, where a kind lists them. */
   reference?: ReactNode;
+  /** What the JSON editor suggests and marks as the user types, where a kind has one. */
+  jsonSchema?: JsonEditorProps["schema"];
   /**
    * The top-level fields whose problem a control shows beside it for `entry`, which can
    * depend on what the entry is, as a weapon's damage only shows for a weapon; the step lists
@@ -139,6 +143,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     { title: "Effects", Fields: ItemEffects, keys: ["ability", "modifySpeed", "advantage"] },
   ],
   reference: createElement(ItemFieldReference),
+  jsonSchema: ITEM_JSON_SCHEMA,
   shownKeys: (entry) => [
     "name",
     "type",

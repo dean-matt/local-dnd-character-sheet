@@ -175,6 +175,7 @@ export function HomebrewEditor({
                   <HomebrewJsonMode
                     noun={noun}
                     reference={kind.reference}
+                    schema={kind.jsonSchema}
                     text={draft.text ?? ""}
                     problems={shownProblems}
                     onText={draft.typeJson}

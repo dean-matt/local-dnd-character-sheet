@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { EditorView } from "codemirror";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomebrewSettings } from "./HomebrewSettings.tsx";
@@ -99,7 +100,17 @@ const pick = (name: string, option: string) => {
   fireEvent.click(field("combobox", name));
   fireEvent.click(screen.getByRole("option", { name: option }));
 };
-const jsonText = (name: string) => (field("textbox", name) as HTMLTextAreaElement).value;
+/** The CodeMirror view behind a JSON editor, which jsdom cannot type into. */
+const jsonView = (name: string) => {
+  const view = EditorView.findFromDOM(field("textbox", name));
+  if (!view) throw new Error(`no editor for ${name}`);
+  return view;
+};
+const jsonText = (name: string) => jsonView(name).state.doc.toString();
+const typeJson = (name: string, text: string) => {
+  const view = jsonView(name);
+  act(() => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } }));
+};
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -148,9 +159,7 @@ describe("HomebrewSettings", () => {
     expect(field("textbox", "Name")).toHaveAccessibleDescription();
 
     mode("JSON");
-    fireEvent.change(field("textbox", "Spell JSON"), {
-      target: { value: JSON.stringify({ ...ward, level: 12 }) },
-    });
+    typeJson("Spell JSON", JSON.stringify({ ...ward, level: 12 }));
     click("Save");
 
     expect(field("textbox", "Spell JSON")).toHaveAccessibleDescription(/^level: /);
@@ -361,6 +370,24 @@ describe("HomebrewSettings", () => {
     expect(entry.vulnerable).toEqual(["thunder", "cold"]);
   });
 
+  it("opens the JSON with every object's fields in alphabetical order", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    pick("Start from", "Wondrous item");
+    mode("JSON");
+    const keysOf = (value: unknown): string[][] =>
+      value && typeof value === "object" && !Array.isArray(value)
+        ? [Object.keys(value), ...Object.values(value).flatMap(keysOf)]
+        : Array.isArray(value)
+          ? value.flatMap(keysOf)
+          : [];
+    for (const keys of keysOf(JSON.parse(jsonText("Item JSON")))) {
+      expect(keys).toEqual([...keys].sort((a, b) => a.localeCompare(b)));
+    }
+  });
+
   it("lists a problem in a field the step shows no control for, as a gear item's pasted damage", () => {
     stubApi({});
     renderPage();
@@ -368,15 +395,14 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     pick("Start from", "Gear");
     mode("JSON");
-    fireEvent.change(field("textbox", "Item JSON"), {
-      target: {
-        value: JSON.stringify({
-          ...JSON.parse(jsonText("Item JSON")),
-          dmg1: "1d",
-          critThreshold: "x",
-        }),
-      },
-    });
+    typeJson(
+      "Item JSON",
+      JSON.stringify({
+        ...JSON.parse(jsonText("Item JSON")),
+        dmg1: "1d",
+        critThreshold: "x",
+      }),
+    );
     mode("Step by step");
     click("Save");
 
@@ -389,7 +415,7 @@ describe("HomebrewSettings", () => {
 
     mode("JSON");
     const { dmg1: _dmg1, ...rest } = JSON.parse(jsonText("Item JSON"));
-    fireEvent.change(field("textbox", "Item JSON"), { target: { value: JSON.stringify(rest) } });
+    typeJson("Item JSON", JSON.stringify(rest));
     mode("Step by step");
     click("Save");
     expect(within(editor()).getByRole("heading", { name: "Magic" })).toBeInTheDocument();
@@ -565,16 +591,14 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     mode("JSON");
-    const box = field("textbox", "Item JSON");
-    fireEvent.change(box, {
-      target: {
-        value: JSON.stringify({
-          ...JSON.parse(jsonText("Item JSON")),
-          name: "Moonfire Blade",
-          optionalfeatures: ["replicate magic item|tce"],
-        }),
-      },
-    });
+    typeJson(
+      "Item JSON",
+      JSON.stringify({
+        ...JSON.parse(jsonText("Item JSON")),
+        name: "Moonfire Blade",
+        optionalfeatures: ["replicate magic item|tce"],
+      }),
+    );
     mode("Preview");
     expect(
       await within(editor()).findByRole("heading", { name: "Moonfire Blade" }),
@@ -590,7 +614,7 @@ describe("HomebrewSettings", () => {
       "aria-selected",
       "true",
     );
-    fireEvent.change(field("textbox", "Item JSON"), { target: { value: "{" } });
+    typeJson("Item JSON", "{");
     mode("Preview");
     expect(editor()).toHaveTextContent("Nothing to preview until the item has no problems.");
   });
@@ -613,12 +637,12 @@ describe("HomebrewSettings", () => {
       field("textbox", "Spell JSON"),
     );
 
-    fireEvent.change(field("textbox", "Spell JSON"), { target: { value: "{" } });
+    typeJson("Spell JSON", "{");
     fireEvent.keyDown(json, { key: "Home" });
     expect(json).toHaveAttribute("aria-selected", "true");
     expect(json).toHaveFocus();
 
-    fireEvent.change(field("textbox", "Spell JSON"), { target: { value: JSON.stringify(ward) } });
+    typeJson("Spell JSON", JSON.stringify(ward));
     fireEvent.keyDown(json, { key: "Home" });
     expect(steps).toHaveAttribute("aria-selected", "true");
     expect(steps).toHaveFocus();
@@ -643,9 +667,7 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     pick("Rules", "2014");
     mode("JSON");
-    fireEvent.change(field("textbox", "Spell JSON"), {
-      target: { value: JSON.stringify({ ...ward, source: "PHB" }) },
-    });
+    typeJson("Spell JSON", JSON.stringify({ ...ward, source: "PHB" }));
     mode("Step by step");
 
     expect(field("textbox", "Name")).toHaveValue("Coastal Ward");
@@ -671,7 +693,7 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     mode("JSON");
-    fireEvent.change(field("textbox", "Spell JSON"), { target: { value: "{ name: " } });
+    typeJson("Spell JSON", "{ name: ");
     mode("Step by step");
 
     expect(field("textbox", "Spell JSON")).toHaveAccessibleDescription(/^entry: Not valid JSON/);
@@ -688,9 +710,7 @@ describe("HomebrewSettings", () => {
     const entry = JSON.parse(jsonText("Item JSON"));
     expect(entry).toMatchObject({ name: "Moonblade", charges: 3 });
 
-    fireEvent.change(field("textbox", "Item JSON"), {
-      target: { value: JSON.stringify({ ...entry, rarity: "legendary" }) },
-    });
+    typeJson("Item JSON", JSON.stringify({ ...entry, rarity: "legendary" }));
     mode("Step by step");
     stepTo("Magic");
     expect(field("combobox", "Rarity")).toHaveTextContent("Legendary");
@@ -752,9 +772,7 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     mode("JSON");
-    fireEvent.change(field("textbox", "Spell JSON"), {
-      target: { value: JSON.stringify(shield) },
-    });
+    typeJson("Spell JSON", JSON.stringify(shield));
     mode("Step by step");
     const time = field("spinbutton", "Casting time");
     fireEvent.change(time, { target: { value: "" } });
@@ -779,9 +797,7 @@ describe("HomebrewSettings", () => {
     const entry = JSON.parse(jsonText("Spell JSON"));
     expect(entry.entriesHigherLevel[0].name).toBe("Cantrip Upgrade");
 
-    fireEvent.change(field("textbox", "Spell JSON"), {
-      target: { value: JSON.stringify({ ...entry, entries: "loose" }) },
-    });
+    typeJson("Spell JSON", JSON.stringify({ ...entry, entries: "loose" }));
     mode("Step by step");
     click("Save");
 
@@ -895,5 +911,20 @@ describe("HomebrewSettings", () => {
     expect(writesOf(fetchMock)).toEqual([
       { url: "/api/homebrew/items/i1", method: "DELETE", body: undefined },
     ]);
+  });
+
+  it("loads a starter picked while the JSON editor is open, and keeps it through the next edit", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    mode("JSON");
+    pick("Start from", "Gear");
+    const gear = ITEM_STARTERS.find(({ label }) => label === "Gear");
+    expect(JSON.parse(jsonText("Item JSON")).name).toBe(gear?.entry.name);
+
+    typeJson("Item JSON", jsonText("Item JSON").replace(`"${gear?.entry.name}"`, '"Lamp"'));
+    mode("Step by step");
+    expect(field("textbox", "Name")).toHaveValue("Lamp");
   });
 });

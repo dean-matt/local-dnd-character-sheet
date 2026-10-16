@@ -1,9 +1,7 @@
 import { appliedItemFieldsSchema } from "@dnd/catalog";
 import { type ReactNode, useState } from "react";
 import { InputField } from "../../components/InputField.tsx";
-
-const ENTRIES_TEXT =
-  'The rules text. It only displays, {@tags} included: {@ability wis +1} prints, where "ability": {"wis": 1} raises Wisdom.';
+import { ENTRIES_TEXT } from "./itemJsonSchema.ts";
 
 const ENTRIES: ReactNode = (
   <>
