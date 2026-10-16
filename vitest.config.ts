@@ -1,5 +1,38 @@
+import { statSync } from "node:fs";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
+import { BaseSequencer, type TestSpecification } from "vitest/node";
+
+/**
+ * Deals each project's files across the shards largest first, each to the shard holding
+ * the fewest of that project's bytes, where Vitest's own split by path hash ignores both.
+ * Balancing per project spreads the content tests, which a Windows runner slows far more
+ * than the rest. A file's size stands in for its run time, and predicts it worse on
+ * Windows than on Linux. Recorded Windows timings would balance closer, at the cost of a
+ * record that drifts with every test added.
+ */
+class BalancedSequencer extends BaseSequencer {
+  override async shard(files: TestSpecification[]): Promise<TestSpecification[]> {
+    const shard = this.ctx.config.shard;
+    if (shard === undefined) return files;
+    const size = new Map(files.map((f) => [f, statSync(f.moduleId).size]));
+    const mine: TestSpecification[] = [];
+    for (const project of new Set(files.map((f) => f.project.name))) {
+      const load = Array<number>(shard.count).fill(0);
+      const ordered = files
+        .filter((f) => f.project.name === project)
+        .sort(
+          (a, b) => (size.get(b) ?? 0) - (size.get(a) ?? 0) || a.moduleId.localeCompare(b.moduleId),
+        );
+      for (const file of ordered) {
+        const lightest = load.indexOf(Math.min(...load));
+        load[lightest] = (load[lightest] ?? 0) + (size.get(file) ?? 0);
+        if (lightest === shard.index - 1) mine.push(file);
+      }
+    }
+    return mine;
+  }
+}
 
 /**
  * Three projects. Node code and the repo fences run in `node`; anything touching
@@ -10,6 +43,7 @@ import { defineConfig } from "vitest/config";
  */
 export default defineConfig({
   test: {
+    sequence: { sequencer: BalancedSequencer },
     projects: [
       {
         test: {

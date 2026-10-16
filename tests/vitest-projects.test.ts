@@ -1,4 +1,5 @@
-import { globSync } from "node:fs";
+import { globSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import viteConfig from "../vitest.config.ts";
 import { ROOT } from "./lib/doc-helpers.ts";
@@ -65,5 +66,42 @@ describe("vitest projects", () => {
     expect(
       budgeted.map(({ name, testTimeout, hookTimeout }) => ({ name, testTimeout, hookTimeout })),
     ).toEqual([{ name: "content", testTimeout: BUDGET, hookTimeout: BUDGET }]);
+  });
+});
+
+describe("the shard sequencer", () => {
+  type Spec = { moduleId: string; project: { name: string } };
+  // The sequencer reads two fields of the context and of each spec, so stand-ins suffice.
+  const Sequencer = viteConfig.test?.sequence?.sequencer as unknown as new (ctx: {
+    config: { shard: { index: number; count: number } };
+  }) => { shard(specs: Spec[]): Promise<Spec[]> };
+  const specs: Spec[] = projects.flatMap(({ name, files }) =>
+    [...files].map((file) => ({ moduleId: join(ROOT, file), project: { name } })),
+  );
+  const deal = (count: number) =>
+    Promise.all(
+      Array.from({ length: count }, (_, i) =>
+        new Sequencer({ config: { shard: { index: i + 1, count } } }).shard(specs),
+      ),
+    );
+
+  it.each([2, 4])("puts every test file in exactly one of %i shards", async (count) => {
+    const shards = await deal(count);
+    const dealt = shards.flat().map((s) => s.moduleId);
+    expect(dealt.toSorted()).toEqual(specs.map((s) => s.moduleId).toSorted());
+    expect(shards.every((s) => s.length > 0)).toBe(true);
+  });
+
+  it.each([2, 4])("keeps each project's %i shards within one file's bytes", async (count) => {
+    const shards = await deal(count);
+    for (const { name } of projects) {
+      const bytes = shards.map((s) =>
+        s.filter((f) => f.project.name === name).reduce((n, f) => n + statSync(f.moduleId).size, 0),
+      );
+      const largest = Math.max(
+        ...specs.filter((f) => f.project.name === name).map((f) => statSync(f.moduleId).size),
+      );
+      expect(Math.max(...bytes) - Math.min(...bytes), name).toBeLessThanOrEqual(largest);
+    }
   });
 });

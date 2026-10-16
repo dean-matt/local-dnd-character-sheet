@@ -97,6 +97,27 @@ describe("a final answer", () => {
   });
 });
 
+describe("a sharded OS check", () => {
+  const REQUIRED = ["check (ubuntu-latest)", "check (windows-latest)"];
+  const red = { name: "test (windows-latest, 2/4)", bucket: "fail" };
+
+  it("waits while a red shard's OS check is still pending, then exits 1 on both", async () => {
+    const r = await harness(
+      [
+        [pass("check (ubuntu-latest)"), red, { name: "check (windows-latest)", bucket: "pending" }],
+        [pass("check (ubuntu-latest)"), red, { name: "check (windows-latest)", bucket: "fail" }],
+      ],
+      60_000,
+      REQUIRED,
+    );
+    expect(r).toMatchObject({
+      code: 1,
+      failed: ["test (windows-latest, 2/4)", "check (windows-latest)"],
+      reads: 2,
+    });
+  });
+});
+
 describe("readExpected", () => {
   it("retries once after a delay, then lets the second error stand", async () => {
     const waits: number[] = [];

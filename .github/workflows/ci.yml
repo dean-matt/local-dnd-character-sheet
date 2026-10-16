@@ -9,12 +9,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  # Nothing here depends on the OS, so it runs once rather than beside every shard.
+  static:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
@@ -27,11 +24,6 @@ jobs:
         with:
           node-version-file: .node-version
           cache: pnpm
-
-      - name: Exclude the workspace from Defender
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE, $env:RUNNER_TEMP
 
       - run: pnpm install --frozen-lockfile
 
@@ -49,11 +41,65 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
         run: pnpm version:check HEAD~1
 
-      - name: Test
-        run: pnpm test
-
       - name: Build
         run: pnpm build
+
+  # The shard list's length is the shard count. Past four, each runner's fixed setup
+  # outweighs the test time it saves.
+  test-ubuntu:
+    name: test (ubuntu-latest, ${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps: &test-steps
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Exclude the workspace from Defender
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE, $env:RUNNER_TEMP
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+
+  test-windows:
+    name: test (windows-latest, ${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps: *test-steps
+
+  # The ruleset requires these two names, so each stands for its OS's shards. always()
+  # makes a red or cancelled shard report here as a failure, where a skipped job would
+  # read as green to the ruleset and to merge-gate alike.
+  check-ubuntu:
+    name: check (ubuntu-latest)
+    needs: [static, test-ubuntu]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: for r in ${{ join(needs.*.result, ' ') }}; do echo "$r"; [ "$r" = success ] || exit 1; done
+
+  check-windows:
+    name: check (windows-latest)
+    needs: [test-windows]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: for r in ${{ join(needs.*.result, ' ') }}; do echo "$r"; [ "$r" = success ] || exit 1; done
 
   spellcheck:
     runs-on: ubuntu-latest

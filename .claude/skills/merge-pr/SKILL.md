@@ -24,7 +24,7 @@ node scripts/wait-checks.mjs "$n"
 ```
 
 Run it with a 600000 ms tool timeout. On its exit 2, name what it printed and hand back.
-On exit 1, read the failed step first with `gh run view <id> --log-failed`. Where `check`
+On exit 1, read the failed step first with `gh run view <id> --log-failed`. Where `static`
 fails at its Version bump step, do not rerun it — a rerun fails the same way — and go to
 [Raise the version again](behind-branch-recovery.md#raise-the-version-again). Rerun any
 other failed run once, never twice: one rerun covers a flaky runner, a second says the
