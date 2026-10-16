@@ -20,7 +20,10 @@ export function Modal({
   children,
 }: {
   onClose: () => void;
-  /** For an entry edited beside a reference, such as the homebrew editor. */
+  /**
+   * For an entry edited beside a reference, such as the homebrew editor: wider, and one
+   * height whatever its content, so moving between steps never resizes it.
+   */
   wide?: boolean;
   children: ReactNode;
 }) {
@@ -71,7 +74,7 @@ export function Modal({
       onClick={(event) => {
         if (pressedBackdrop.current && event.target === event.currentTarget) onClose();
       }}
-      className={`m-auto max-h-[80%] ${wide ? "w-6xl" : "w-3xl"} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
+      className={`m-auto max-h-[80%] ${wide ? "h-[80%] w-6xl" : "w-3xl"} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
     >
       {/* Fixed to the viewport, so it draws over the backdrop rather than inside the dialog's box. */}
       <button
