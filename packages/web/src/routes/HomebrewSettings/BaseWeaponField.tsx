@@ -1,21 +1,20 @@
 import type { ReactNode } from "react";
-import { useId, useState } from "react";
-import { InputField } from "../../components/InputField.tsx";
+import { FormField } from "../../components/FormField.tsx";
+import { Select } from "../../components/Select.tsx";
 import { useBaseWeapons } from "../../hooks/useBaseWeapons.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
 import type { HomebrewFormProps } from "./homebrewEntry.ts";
+import { NOT_STATED } from "./homebrewOptions.ts";
 
 const uid = (weapon: { name: string; source: string }) => `${weapon.name}|${weapon.source}`;
 
 /**
- * The weapon a homebrew weapon is built on, picked by name from the edition's catalog base
- * weapons and written `name|source` as the catalog spells it, which proficiency and mastery
- * resolve. Text that names no base weapon stays in the field and writes nothing, marked once
- * no base weapon's name starts with it; leaving the field shows the saved value again. The
- * field is read-only while the list loads, saying so, since a typed name has nothing to
- * match until then; after a failed load it names the failure and can still be cleared. A saved `baseItem` no base weapon of the
- * edition matches, pasted or left over from the other edition, shows as written, marked, and
- * saves unchanged.
+ * The weapon a homebrew weapon is built on, picked from the edition's catalog base weapons
+ * and written `name|source` as the catalog spells it, which proficiency and mastery resolve.
+ * A saved `baseItem` no base weapon of the edition matches, pasted or left over from the
+ * other edition, stays an option under its own spelling, marked, and saves unchanged. While
+ * the list loads, or after it fails, the field offers only that value and Not stated, so it
+ * can still be cleared.
  */
 export function BaseWeaponField({
   current,
@@ -28,53 +27,36 @@ export function BaseWeaponField({
   error: ReactNode;
   onChange: (baseItem: string | undefined) => void;
 }) {
-  const list = useId();
   const query = useBaseWeapons(edition);
-  const weapons = query.data?.items;
-  const [draft, setDraft] = useState<string>();
-  const saved = weapons?.find((weapon) => uid(weapon).toLowerCase() === current.toLowerCase());
-  const named = (text: string) =>
-    weapons?.find((weapon) => weapon.name.toLowerCase() === text.trim().toLowerCase());
+  const weapons = [...(query.data?.items ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   const editions = `${EDITION_LABELS[edition]} base weapons`;
+  const saved = weapons.find((weapon) => uid(weapon).toLowerCase() === current.toLowerCase());
+  const unknown = current !== "" && !saved;
+  const options = [
+    NOT_STATED,
+    ...weapons.map((weapon) => ({ value: uid(weapon), label: weapon.name })),
+    ...(unknown ? [{ value: current, label: current, hint: "not found" }] : []),
+  ];
 
   function mark() {
     if (query.isError) return `The ${editions} failed to load: ${query.error.message}`;
-    if (!weapons) return undefined;
-    if (draft !== undefined) {
-      const typed = draft.trim().toLowerCase();
-      const leads = weapons.some((weapon) => weapon.name.toLowerCase().startsWith(typed));
-      return leads ? undefined : `Pick one of the ${editions}`;
-    }
-    return current && !saved ? `Not found among the ${editions}` : undefined;
+    return query.isSuccess && unknown ? `Not found among the ${editions}` : undefined;
   }
 
   return (
-    <>
-      <InputField
-        label="Base weapon"
-        placeholder="Longsword"
-        list={list}
-        autoComplete="off"
-        readOnly={query.isPending}
-        status={query.isPending && `Loading the ${editions}…`}
-        value={draft ?? saved?.name ?? current}
-        error={error || mark()}
-        onChange={(event) => {
-          const text = event.target.value;
-          setDraft(text);
-          if (text.trim() === "") onChange(undefined);
-          else {
-            const weapon = named(text);
-            if (weapon) onChange(uid(weapon));
-          }
-        }}
-        onBlur={() => setDraft(undefined)}
-      />
-      <datalist id={list}>
-        {weapons?.map((weapon) => (
-          <option key={uid(weapon)} value={weapon.name} label={weapon.source} />
-        ))}
-      </datalist>
-    </>
+    <FormField
+      label="Base weapon"
+      error={error || mark()}
+      status={query.isPending && `Loading the ${editions}…`}
+    >
+      {(control) => (
+        <Select
+          {...control}
+          options={options}
+          value={saved ? uid(saved) : current}
+          onChange={(next) => onChange(next || undefined)}
+        />
+      )}
+    </FormField>
   );
 }

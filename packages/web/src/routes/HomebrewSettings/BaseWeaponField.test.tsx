@@ -61,9 +61,13 @@ function renderField(initial: string) {
 
 const field = () => screen.getByRole("combobox", { name: "Base weapon" });
 
-/** Waits for the catalog list to reach the datalist, so a typed name has rows to match. */
-const loaded = () =>
-  waitFor(() => expect(document.querySelectorAll("datalist option")).toHaveLength(2));
+const pickOption = (name: string) => {
+  fireEvent.click(field());
+  fireEvent.click(screen.getByRole("option", { name }));
+};
+
+/** Waits for the catalog list to load, so the dropdown offers the weapons. */
+const loaded = () => waitFor(() => expect(screen.queryByText(/^Loading the/)).toBeNull());
 
 describe("BaseWeaponField", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -72,12 +76,25 @@ describe("BaseWeaponField", () => {
     stubApi();
     const { writes } = renderField("");
     await loaded();
+    expect(field()).toHaveTextContent("Not stated");
 
-    fireEvent.change(field(), { target: { value: "longsword" } });
+    pickOption("Longsword");
 
     expect(writes).toEqual(["Longsword|XPHB"]);
+    expect(field()).toHaveTextContent("Longsword");
     const trait = weaponTraitSchema.parse({ weaponCategory: "martial", baseItem: writes[0] });
     expect(trait?.baseName?.toLowerCase()).toBe("longsword");
+  });
+
+  it("jumps to a weapon by typing its name", async () => {
+    stubApi();
+    renderField("");
+    await loaded();
+
+    fireEvent.keyDown(field(), { key: "m" });
+    expect(screen.getByRole("option", { name: "Musket" }).id).toBe(
+      field().getAttribute("aria-activedescendant"),
+    );
   });
 
   it("names a failed load and still lets the field be cleared", async () => {
@@ -90,31 +107,18 @@ describe("BaseWeaponField", () => {
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("The 2024 base weapons failed to load"),
     );
-    expect(field()).not.toHaveAttribute("readonly");
-    fireEvent.change(field(), { target: { value: "" } });
+    pickOption("Not stated");
     expect(writes).toEqual([undefined]);
   });
 
-  it("is read-only and says so until the list loads", () => {
+  it("says so until the list loads", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise<Response>(() => {})),
     );
     renderField("");
 
-    expect(field()).toHaveAttribute("readonly");
     expect(screen.getByText("Loading the 2024 base weapons…")).toBeInTheDocument();
-  });
-
-  it("marks typed text only once no base weapon's name starts with it", async () => {
-    stubApi();
-    renderField("");
-    await loaded();
-
-    fireEvent.change(field(), { target: { value: "Long" } });
-    expect(screen.queryByRole("alert")).toBeNull();
-    fireEvent.change(field(), { target: { value: "Longx" } });
-    expect(screen.getByRole("alert")).toHaveTextContent("Pick one of the 2024 base weapons");
   });
 
   it("flags a base weapon from the other edition once the item's edition changes", async () => {
@@ -128,40 +132,29 @@ describe("BaseWeaponField", () => {
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("Not found among the 2014 base weapons"),
     );
-    expect(field()).toHaveValue("Longsword|XPHB");
+    expect(field()).toHaveTextContent("Longsword|XPHB");
     expect(writes).toEqual([]);
   });
 
-  it("writes nothing for text that names no base weapon, marks it, and shows the saved value on leaving", async () => {
-    stubApi();
-    const { writes } = renderField("longsword|xphb");
-    await loaded();
-    expect(field()).toHaveValue("Longsword");
-
-    fireEvent.change(field(), { target: { value: "Longswrod" } });
-
-    expect(writes).toEqual([]);
-    expect(screen.getByRole("alert")).toHaveTextContent("Pick one of the 2024 base weapons");
-    fireEvent.blur(field());
-    expect(field()).toHaveValue("Longsword");
-  });
-
-  it("shows a baseItem no base weapon of the edition matches as written, marked, without writing it", async () => {
+  it("offers a baseItem no base weapon of the edition matches as written, marked, without writing it", async () => {
     stubApi();
     const { writes } = renderField("longsword|phb");
-    await loaded();
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("Not found among the 2024 base weapons"),
+    );
 
-    expect(field()).toHaveValue("longsword|phb");
-    expect(screen.getByRole("alert")).toHaveTextContent("Not found among the 2024 base weapons");
+    expect(field()).toHaveTextContent("longsword|phb");
+    fireEvent.click(field());
+    expect(screen.getByRole("option", { name: "longsword|phb — not found" })).toBeInTheDocument();
     expect(writes).toEqual([]);
   });
 
-  it("removes the baseItem when the field is cleared", async () => {
+  it("removes the baseItem when Not stated is picked", async () => {
     stubApi();
     const { writes } = renderField("Musket|XDMG");
     await loaded();
 
-    fireEvent.change(field(), { target: { value: "" } });
+    pickOption("Not stated");
 
     expect(writes).toEqual([undefined]);
   });

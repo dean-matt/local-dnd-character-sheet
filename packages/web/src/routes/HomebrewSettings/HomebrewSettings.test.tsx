@@ -242,14 +242,14 @@ describe("HomebrewSettings", () => {
     mode("Step by step");
     stepTo("Combat");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
-    fireEvent.change(field("combobox", "Damage"), { target: { value: "1d" } });
+    fireEvent.change(field("textbox", "Damage"), { target: { value: "1d" } });
     click("Next");
-    expect(field("combobox", "Damage")).toHaveAccessibleDescription(
+    expect(field("textbox", "Damage")).toHaveAccessibleDescription(
       "Not dice notation, such as 1d8 or 2d6",
     );
-    expect(field("combobox", "Damage")).toHaveFocus();
-    fireEvent.change(field("combobox", "Damage"), { target: { value: "1d8" } });
-    expect(field("combobox", "Damage")).not.toHaveAccessibleDescription();
+    expect(field("textbox", "Damage")).toHaveFocus();
+    fireEvent.change(field("textbox", "Damage"), { target: { value: "1d8" } });
+    expect(field("textbox", "Damage")).not.toHaveAccessibleDescription();
     expect(
       within(editor()).getByRole("button", { name: "Properties Versatile" }),
     ).toBeInTheDocument();
