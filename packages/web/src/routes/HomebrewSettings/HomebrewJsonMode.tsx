@@ -17,7 +17,7 @@ export interface HomebrewJsonModeProps {
 
 /**
  * The entry as JSON text, with the kind's field reference in a sidebar on its left where it
- * has one. The sidebar collapses sideways to a strip, and the JSON takes the width; where
+ * has one, as tall as the JSON and scrolling within it. The sidebar collapses sideways to a strip, and the JSON takes the width; where
  * the modal is narrow, it stacks above the JSON and collapses to its button.
  */
 export function HomebrewJsonMode({
@@ -31,12 +31,12 @@ export function HomebrewJsonMode({
   const [open, setOpen] = useState(true);
   return (
     <div className="@container">
-      <div className="flex flex-col gap-4 @2xl:flex-row @2xl:items-start">
+      <div className="flex flex-col gap-4 @2xl:grid @2xl:grid-cols-[auto_minmax(0,1fr)] @2xl:items-start">
         {reference &&
           (open ? (
             <section
               aria-labelledby={`${id}-heading`}
-              className="flex min-w-0 flex-col gap-2 @2xl:max-h-[32rem] @2xl:w-80 @2xl:shrink-0 @2xl:overflow-y-auto"
+              className="flex min-w-0 flex-col gap-2 @2xl:h-0 @2xl:min-h-full @2xl:w-80 @2xl:overflow-y-auto"
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 id={`${id}-heading`} className="font-semibold text-row">

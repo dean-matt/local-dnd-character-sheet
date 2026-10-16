@@ -22,7 +22,8 @@ export function Modal({
   onClose: () => void;
   /**
    * For an entry edited beside a reference, such as the homebrew editor: wider, and one
-   * height whatever its content, so moving between steps never resizes it.
+   * height whatever its content, so moving between steps never resizes it. The height is the
+   * homebrew JSON editor's at its default size; a taller step scrolls.
    */
   wide?: boolean;
   children: ReactNode;
@@ -74,7 +75,7 @@ export function Modal({
       onClick={(event) => {
         if (pressedBackdrop.current && event.target === event.currentTarget) onClose();
       }}
-      className={`m-auto max-h-[80%] ${wide ? "h-[min(40rem,80%)] w-6xl" : "w-3xl"} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
+      className={`m-auto max-h-[80%] ${wide ? "h-[min(35.5rem,80%)] w-6xl" : "w-3xl"} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
     >
       {/* Fixed to the viewport, so it draws over the backdrop rather than inside the dialog's box. */}
       <button

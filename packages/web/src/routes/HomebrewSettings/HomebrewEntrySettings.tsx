@@ -19,6 +19,8 @@ export interface HomebrewEntrySettingsProps {
   onStarter: (picked: Starter) => void;
   /** Which of the two to show: step by step sets the edition in Basics and the example above it. */
   parts?: readonly ("rules" | "starter")[];
+  /** Set in a row beside other controls, such as the editor's tabs, rather than on the form's grid. */
+  inline?: boolean;
 }
 
 /**
@@ -32,12 +34,13 @@ export function HomebrewEntrySettings({
   starter,
   onStarter,
   parts = ["rules", "starter"],
+  inline = false,
 }: HomebrewEntrySettingsProps) {
   const rules = parts.includes("rules");
   const starting = parts.includes("starter") && starters.length > 1;
   if (!rules && !starting) return null;
   return (
-    <div className={FORM_GRID}>
+    <div className={inline ? "flex flex-wrap gap-3 *:w-44" : FORM_GRID}>
       {rules && (
         <div className={SHORT}>
           <FormField label="Rules">

@@ -101,9 +101,10 @@ export function HomebrewEditor({
     if (!draft.changed || window.confirm(`Discard your changes to ${title}?`)) onClose();
   };
 
-  const settings = (parts?: readonly ("rules" | "starter")[]) => (
+  const settings = (parts?: readonly ("rules" | "starter")[], inline?: boolean) => (
     <HomebrewEntrySettings
       parts={parts}
+      inline={inline}
       edition={draft.edition}
       onEdition={draft.pickEdition}
       starters={record ? [] : kind.starters}
@@ -134,13 +135,16 @@ export function HomebrewEditor({
             or in JSON, where a pasted 5etools-shaped one replaces it. Saving replaces the whole
             entry, and the source is always Homebrew.
           </p>
-          <HomebrewViewTabs
-            label={`${noun} editor`}
-            idPrefix={id}
-            views={VIEWS}
-            view={previewing ? "Preview" : mode}
-            onView={switchView}
-          />
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <HomebrewViewTabs
+              label={`${noun} editor`}
+              idPrefix={id}
+              views={VIEWS}
+              view={previewing ? "Preview" : mode}
+              onView={switchView}
+            />
+            {mode === "JSON" && !previewing && settings(undefined, true)}
+          </div>
           <div
             id={`${id}-panel`}
             role="tabpanel"
@@ -169,16 +173,13 @@ export function HomebrewEditor({
                 className="flex min-w-0 flex-col gap-3"
               >
                 {mode === "JSON" ? (
-                  <>
-                    {settings()}
-                    <HomebrewJsonMode
-                      noun={noun}
-                      reference={kind.reference}
-                      text={draft.text ?? ""}
-                      problems={shownProblems}
-                      onText={draft.typeJson}
-                    />
-                  </>
+                  <HomebrewJsonMode
+                    noun={noun}
+                    reference={kind.reference}
+                    text={draft.text ?? ""}
+                    problems={shownProblems}
+                    onText={draft.typeJson}
+                  />
                 ) : (
                   <HomebrewStepMode
                     kind={kind}
