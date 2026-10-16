@@ -11,9 +11,12 @@ import {
 } from "./item.ts";
 import { itemBonusSchema } from "./item-bonus.ts";
 
-/** `weight`, `value` and `wondrous` are read off the entry directly, with no trait schema to borrow. */
+/**
+ * `weight`, `value` and `wondrous` are read off the entry directly, with no trait schema to
+ * borrow. A key several schemas read takes the shape of the last spread, so the homebrew
+ * fields come last and keep the shape the editor validates.
+ */
 const shape = {
-  ...homebrewItemSchema.pick({ type: true, rarity: true, reqAttune: true, advantage: true }).shape,
   wondrous: z.literal(true).optional(),
   weight: z.number().min(0).optional(),
   value: z.number().min(0).optional(),
@@ -25,6 +28,7 @@ const shape = {
   ...defenseTraitSchema.in.shape,
   ...abilityGrantSchema.in.shape,
   ...itemBonusSchema.in.shape,
+  ...homebrewItemSchema.pick({ type: true, rarity: true, reqAttune: true, advantage: true }).shape,
 };
 
 type Shape = typeof shape;
