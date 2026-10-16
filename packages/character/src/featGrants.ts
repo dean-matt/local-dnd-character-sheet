@@ -34,6 +34,9 @@ export type FeatPick = { field: FeatPickField; name: string };
 /**
  * The picks each of `offers` takes from `picks`: each offer, in order, takes up to its count
  * of the names stored under its fields that it offers. A pick no offer takes grants nothing.
+ * An offer of any tool of a kind takes any tool name, since the kind a tool is lives in its
+ * item row and not here; only the sheet's control holds a pick to the kind. Carrying the
+ * kinds on the offer and the tool rows on the catalog is the way out.
  */
 export function allocatePicks(offers: readonly FeatOffer[], picks: Picks): FeatPick[][] {
   const left = new Map(FIELDS.map((field) => [field, [...(picks?.[field] ?? [])]]));

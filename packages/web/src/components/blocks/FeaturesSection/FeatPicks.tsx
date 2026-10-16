@@ -3,10 +3,12 @@ import {
   ABILITIES,
   ABILITY_LABEL,
   type Ability,
+  abilityScore,
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterRecord,
   derivedValue,
+  entryKey,
   type FeatPick,
   type Raise,
 } from "@dnd/character";
@@ -124,15 +126,15 @@ export function FeatPicks({ character, index }: { character: CharacterRecord; in
   if (!entry || !row) return null;
 
   const own = entry.picks?.ability ?? [];
-  const totals =
-    derived &&
-    (Object.fromEntries(
-      ABILITIES.map((ability) => [
-        ability,
-        derived.abilityScores[ability].computed -
-          own.filter((raise) => raise.ability === ability).reduce((sum, r) => sum + r.amount, 0),
-      ]),
-    ) as Record<Ability, number>);
+  // Items stay out of the cap, as an improvement's does: a belt setting Strength to 21
+  // leaves the score's own room under 20 where it was.
+  const totals = Object.fromEntries(
+    ABILITIES.map((ability) => [
+      ability,
+      abilityScore(definition, ability) -
+        own.filter((raise) => raise.ability === ability).reduce((sum, r) => sum + r.amount, 0),
+    ]),
+  ) as Record<Ability, number>;
   const alternatives =
     entry.level === undefined
       ? alternativesOf({ feat: entry.ref, increases: [] }, feats, totals)
@@ -145,7 +147,9 @@ export function FeatPicks({ character, index }: { character: CharacterRecord; in
     write(key, (latest) => ({
       ...latest,
       feats: latest.feats.map((feat, at) => {
-        if (at !== index) return feat;
+        // The row's position comes from the features query, which lags an add or a removal,
+        // so a write lands only on the feat the row was drawn for.
+        if (at !== index || entryKey(feat.ref) !== entryKey(entry.ref)) return feat;
         const { picks: _, ...rest } = feat;
         const picks = change(feat.picks);
         return picks && Object.keys(picks).length > 0 ? { ...rest, picks } : rest;

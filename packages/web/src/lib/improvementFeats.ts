@@ -190,7 +190,10 @@ export function candidateAt(
     takesFeats: takesFeats(definition),
     level: grant.level,
     classNames: definition.levels.slice(0, grant.level).map((level) => displayName(level.class)),
-    scores: scored(abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level)),
+    scores: scored(
+      abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level),
+      feats.filter((feat) => feat.level === undefined),
+    ),
     totals: scored(abilityIncreases, feats),
     held: feats.flatMap(({ ref }) => ("name" in ref ? [ref] : [])),
     earlier: feats.flatMap(({ ref, level }) =>

@@ -75,12 +75,12 @@ function Seeded() {
   return data ? <FeatPicks character={data} index={0} /> : null;
 }
 
-function renderSeeded(record: CharacterRecord) {
+function renderSeeded(record: CharacterRecord, derived = derivedFor(record)) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   client.setQueryData(characterKey("1"), record);
-  client.setQueryData([...characterKey("1"), "derived"], derivedFor(record));
+  client.setQueryData([...characterKey("1"), "derived"], derived);
   render(
     <QueryClientProvider client={client}>
       <Seeded />
@@ -168,5 +168,22 @@ describe("FeatPicks", () => {
 
     await screen.findByRole("combobox", { name: "Skill Expert expertise" });
     expect(options("Skill Expert expertise")).toEqual(["History"]);
+  });
+
+  it("caps an increase by the scores alone, leaving out what an equipped item sets", async () => {
+    const record = holding([{ ref: RESILIENT }]);
+    stubApi(record);
+    const derived = derivedFor(record);
+    const belted = {
+      ...derived,
+      abilityScores: {
+        ...derived.abilityScores,
+        str: { ...derived.abilityScores.str, computed: 21 },
+      },
+    };
+    renderSeeded(record, belted);
+
+    await screen.findByRole("combobox", { name: "Resilient +1" });
+    expect(options("Resilient +1")).toContain("+1 Strength");
   });
 });
