@@ -1812,6 +1812,70 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("feat bonuses stated only in prose", () => {
+    const withFeats = (...refs: EntryRef[]) =>
+      deriveCharacter(
+        { ...equipped, feats: [...equipped.feats, ...refs.map((ref) => ({ ref }))] },
+        catalog,
+      );
+    const ALERT_2014 = { name: "Alert", source: "PHB" };
+    const ALERT_2024 = { name: "Alert", source: "XPHB" };
+    const TOUGH = { name: "Tough", source: "XPHB" };
+
+    it("adds 5 initiative for the 2014 Alert and the proficiency bonus for the 2024 one", () => {
+      expect(derived.initiative.computed).toBe(3);
+      expect(withFeats(ALERT_2014).initiative.computed).toBe(8);
+      expect(withFeats(ALERT_2024).initiative.terms).toContainEqual({
+        label: "Alert",
+        value: 3,
+        reference: ALERT_2024,
+      });
+      expect(withFeats(ALERT_2024).initiative.computed).toBe(6);
+    });
+
+    it("adds 2 hit points per character level for Tough, and follows a level-up", () => {
+      expect(withFeats(TOUGH).hitPointMaximum.computed).toBe(derived.hitPointMaximum.computed + 10);
+      const fighter = { name: "Fighter", source: "XPHB" };
+      const leveled = deriveCharacter(
+        {
+          ...equipped,
+          levels: [...equipped.levels, { class: fighter }],
+          feats: [...equipped.feats, { ref: TOUGH }],
+        },
+        { ...catalog, hitDice: new Map([...hitDice, [entryKey(fighter), 10 as const]]) },
+      );
+      expect(leveled.hitPointMaximum.terms).toContainEqual({
+        label: "Tough",
+        value: 12,
+        reference: TOUGH,
+      });
+    });
+
+    it("adds 10 feet of walking speed for Mobile and for Speedy", () => {
+      expect(withFeats({ name: "Mobile", source: "PHB" }).speed.computed).toEqual({ walk: 40 });
+      expect(withFeats({ name: "Speedy", source: "XPHB" }).speed.computed).toEqual({ walk: 40 });
+    });
+
+    it("counts a feat listed twice once, and ignores a homebrew feat", () => {
+      expect(withFeats(ALERT_2014, ALERT_2014).initiative.computed).toBe(8);
+      expect(withFeats({ homebrewId: "hb_alert" }).initiative.computed).toBe(3);
+    });
+
+    it("yields to a manual override of each stat", () => {
+      const block = deriveCharacter(
+        {
+          ...equipped,
+          feats: [{ ref: ALERT_2014 }, { ref: TOUGH }, { ref: { name: "Mobile", source: "PHB" } }],
+          overrides: { initiative: 1, hitPointMaximum: 20, speed: { walk: 25 } },
+        },
+        catalog,
+      );
+      expect(derivedValue(block.initiative)).toBe(1);
+      expect(derivedValue(block.hitPointMaximum)).toBe(20);
+      expect(derivedValue(block.speed)).toEqual({ walk: 25 });
+    });
+  });
+
   describe("overrides", () => {
     const withOverrides = (overrides: CharacterDefinition["overrides"]) =>
       deriveCharacter({ ...equipped, overrides }, catalog);
