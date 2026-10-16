@@ -123,8 +123,9 @@ export function MultiSelect({
         onClick: toggle,
       }}
       header={
-        // A fixed height, so Clear appearing moves nothing below it.
-        <div className="flex h-6 items-center justify-between">
+        // A fixed height, so Clear appearing moves nothing below it; in a form, a label's own
+        // height, so the button lines up with the controls beside it.
+        <div className={`flex items-center justify-between ${inForm ? "h-4" : "h-6"}`}>
           <span
             id={`${id}-label`}
             className={
