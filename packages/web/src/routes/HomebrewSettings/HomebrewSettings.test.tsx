@@ -229,15 +229,26 @@ describe("HomebrewSettings", () => {
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
     expect(field("combobox", "Type")).toHaveTextContent("Melee weapon");
     expect(field("combobox", "Rarity")).toHaveTextContent("Rare");
+    expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
+    click("Next");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
     expect(field("checkbox", "Versatile")).toBeChecked();
 
+    click("Previous");
     pick("Start from", "Armor");
     expect(field("combobox", "Type")).toHaveTextContent("Medium armor");
+    click("Next");
     expect(field("spinbutton", "Armor class")).toHaveValue(14);
     expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
 
+    click("Previous");
+    pick("Start from", "Gear");
+    click("Next");
+    expect(editor()).toHaveTextContent("Only a weapon or armor has fields here.");
+
+    click("Previous");
     pick("Start from", "Weapon");
+    click("Next");
     click("Next");
     click("Next");
     expect(field("textbox", "Rules text")).toHaveValue(
@@ -267,6 +278,7 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    click("Next");
     click("Next");
     click("Add an effect");
     pick("Effect 1 roll", "Skill");

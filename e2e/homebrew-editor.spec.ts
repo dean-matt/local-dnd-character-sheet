@@ -32,7 +32,7 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   await name.press("ControlOrMeta+a");
   await name.pressSequentially(named);
   await name.press("Enter");
-  await expect(editor.getByRole("heading", { name: "Defenses" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Combat" })).toBeVisible();
 
   const next = editor.getByRole("button", { name: "Next" });
   await editor.getByRole("button", { name: "Close" }).focus();
@@ -44,8 +44,10 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
     await page.keyboard.press("Tab");
   }
   await expect(next).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(editor.getByRole("heading", { name: "Rules text" })).toBeVisible();
+  for (const title of ["Defenses", "Rules text"]) {
+    await page.keyboard.press("Enter");
+    await expect(editor.getByRole("heading", { name: title })).toBeVisible();
+  }
   await page.keyboard.press("Enter");
   await expect(editor.getByRole("tab", { name: "Preview" })).toBeFocused();
   await expect(editor.getByRole("heading", { name: named })).toBeVisible();

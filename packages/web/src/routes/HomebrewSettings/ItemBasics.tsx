@@ -1,50 +1,22 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
-import { isRecord } from "../../lib/entryGuards.ts";
 import { RARITIES } from "../../lib/rarities.ts";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
-import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
 import {
   type HomebrewFormProps,
-  listAt,
   numberAt,
-  signed,
   textAt,
-  typedInteger,
   typedNumber,
-  unsigned,
   withField,
 } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
-import {
-  DAMAGE_TYPE_CODES,
-  GROUP_FIELDS,
-  ITEM_TYPES,
-  itemGroup,
-  WEAPON_CATEGORIES,
-  WEAPON_PROPERTIES,
-} from "./homebrewVocabulary.ts";
-
-const NOT_STATED = { value: "", label: "Not stated" };
-
-/** A weapon property's code: `V` for `V|XPHB`, and for Lance's `{uid: "V|XPHB", note}`. */
-function propertyCode(property: unknown): string | undefined {
-  const named = isRecord(property) ? property.uid : property;
-  return typeof named === "string" ? named.split("|")[0] : undefined;
-}
-
-/** A Select's options, with `current` added under its own spelling where none lists it. */
-function withCurrent(options: { value: string; label: string }[], current: string) {
-  return options.some((option) => option.value === current)
-    ? options
-    : [...options, { value: current, label: current }];
-}
+import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
+import { GROUP_FIELDS, ITEM_TYPES, itemGroup } from "./homebrewVocabulary.ts";
 
 /**
- * A homebrew item's first step: the fields every item carries, then a weapon's attack or an
- * armor's AC where its type is one. Picking a type in another group drops the fields the old
- * group carried.
+ * A homebrew item's first step: the fields every item carries. Picking a type in another group
+ * drops the fields the old group carried.
  */
 export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
@@ -52,24 +24,6 @@ export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const group = itemGroup(entry.type);
   const rarity = textAt(entry, "rarity");
   const value = numberAt(entry.value);
-  const baseItem = textAt(entry, "baseItem").split("|");
-  const properties = listAt(entry, "property");
-  const text = (key: string) => ({
-    value: textAt(entry, key),
-    onChange: (event: { target: { value: string } }) =>
-      set(key, event.target.value === "" ? undefined : event.target.value),
-  });
-  const integer = (
-    key: string,
-    read = numberAt,
-    write = (n: number | undefined): unknown => n,
-  ) => ({
-    type: "number",
-    value: read(entry[key]) ?? "",
-    onChange: (event: { target: { value: string } }) =>
-      set(key, write(typedInteger(event.target.value))),
-  });
-
   return (
     <div className={FORM_GRID}>
       <div className={TEXT}>
@@ -142,97 +96,6 @@ export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
           error={errorFor("reqAttune")}
         />
       </div>
-      {group === "weapon" && (
-        <>
-          <div className={SHORT}>
-            <FormField label="Weapon category">
-              {(control) => (
-                <Select
-                  {...control}
-                  options={[NOT_STATED, ...WEAPON_CATEGORIES]}
-                  value={textAt(entry, "weaponCategory")}
-                  onChange={(next) => set("weaponCategory", next || undefined)}
-                />
-              )}
-            </FormField>
-          </div>
-          <div className={SHORT}>
-            <FormField label="Damage type">
-              {(control) => (
-                <Select
-                  {...control}
-                  options={withCurrent(
-                    [NOT_STATED, ...DAMAGE_TYPE_CODES],
-                    textAt(entry, "dmgType"),
-                  )}
-                  value={textAt(entry, "dmgType")}
-                  onChange={(next) => set("dmgType", next || undefined)}
-                />
-              )}
-            </FormField>
-          </div>
-          <div className={TEXT}>
-            <InputField
-              label="Base weapon"
-              placeholder="longsword"
-              value={baseItem[0] ?? ""}
-              onChange={(event) =>
-                set(
-                  "baseItem",
-                  event.target.value === ""
-                    ? undefined
-                    : [event.target.value, ...baseItem.slice(1)].join("|"),
-                )
-              }
-            />
-          </div>
-          <div className={TEXT}>
-            <InputField label="Damage" placeholder="1d8" {...text("dmg1")} />
-          </div>
-          <div className={TEXT}>
-            <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
-          </div>
-          <div className={SHORT}>
-            <InputField
-              label="Magic bonus"
-              step={1}
-              {...integer("bonusWeapon", unsigned, signed)}
-            />
-          </div>
-          <div className={WHOLE}>
-            <HomebrewCheckboxGroup
-              legend="Properties"
-              options={WEAPON_PROPERTIES}
-              chosen={properties.flatMap((property) => propertyCode(property) ?? [])}
-              onChange={(chosen) => {
-                const kept = properties.filter((property) => {
-                  const code = propertyCode(property);
-                  return code === undefined || chosen.includes(code);
-                });
-                const added = chosen.filter(
-                  (code) => !kept.some((property) => propertyCode(property) === code),
-                );
-                const next = [...kept, ...added];
-                set("property", next.length > 0 ? next : undefined);
-              }}
-            />
-          </div>
-        </>
-      )}
-      {group === "armor" && (
-        <>
-          <div className={SHORT}>
-            <InputField label="Armor class" min={0} step={1} {...integer("ac")} />
-          </div>
-          <div className={SHORT}>
-            <InputField
-              label="Magic bonus to AC"
-              step={1}
-              {...integer("bonusAc", unsigned, signed)}
-            />
-          </div>
-        </>
-      )}
     </div>
   );
 }

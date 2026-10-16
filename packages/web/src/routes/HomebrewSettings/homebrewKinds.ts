@@ -19,6 +19,7 @@ import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
+import { ItemCombat } from "./ItemCombat.tsx";
 import { ItemDefenses } from "./ItemDefenses.tsx";
 import { ItemFieldReference } from "./ItemFieldReference.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
@@ -90,13 +91,12 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     {
       title: "Basics",
       Fields: ItemBasics,
+      keys: ["name", "type", "rarity", "weight", "value", "reqAttune"],
+    },
+    {
+      title: "Combat",
+      Fields: ItemCombat,
       keys: [
-        "name",
-        "type",
-        "rarity",
-        "weight",
-        "value",
-        "reqAttune",
         "weaponCategory",
         "dmgType",
         "baseItem",

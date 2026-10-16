@@ -1,3 +1,4 @@
+import { Eye } from "lucide-react";
 import type { ReactNode } from "react";
 import { HomebrewProblemAlert } from "./HomebrewProblemAlert.tsx";
 import { errorFor, type HomebrewProblem } from "./homebrewDraft.ts";
@@ -27,12 +28,11 @@ export function HomebrewStepMode({
   onStep,
 }: HomebrewStepModeProps) {
   const current = kind.steps[step];
-  const titles = [...kind.steps.map(({ title }) => title), "Preview"];
   return (
     <>
       <nav aria-label="Steps">
-        <ol className="flex flex-wrap gap-1">
-          {titles.map((title, index) => (
+        <ol className="flex flex-wrap items-center gap-1">
+          {kind.steps.map(({ title }, index) => (
             <li key={title}>
               <button
                 type="button"
@@ -44,6 +44,16 @@ export function HomebrewStepMode({
               </button>
             </li>
           ))}
+          <li className="flex items-center gap-1 border-border border-l pl-2">
+            <button
+              type="button"
+              onClick={() => onStep(kind.steps.length)}
+              className="inline-flex items-center gap-1.5 rounded-control border border-accent px-3 py-1 font-semibold text-accent text-row hover:bg-subtle"
+            >
+              <Eye aria-hidden size={14} />
+              Preview
+            </button>
+          </li>
         </ol>
       </nav>
       <p aria-live="polite" className="text-label text-muted">
