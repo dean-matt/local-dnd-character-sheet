@@ -4,6 +4,9 @@ import { FormField } from "../../components/FormField.tsx";
 import { HomebrewProblemList } from "./HomebrewProblemList.tsx";
 import type { HomebrewProblem } from "./homebrewDraft.ts";
 
+const TOGGLE =
+  "flex shrink-0 items-center gap-1.5 self-start rounded-control px-1.5 py-1 font-semibold text-muted text-row hover:bg-subtle hover:text-ink";
+
 export interface HomebrewJsonModeProps {
   noun: string;
   reference: ReactNode;
@@ -29,38 +32,44 @@ export function HomebrewJsonMode({
   return (
     <div className="@container">
       <div className="flex flex-col gap-4 @2xl:flex-row @2xl:items-start">
-        {reference && (
-          <div
-            className={`flex min-w-0 flex-col gap-2 @2xl:max-h-[32rem] @2xl:shrink-0 @2xl:overflow-y-auto ${open ? "@2xl:w-80" : "@2xl:w-10"}`}
-          >
-            <button
-              type="button"
-              aria-expanded={open}
-              aria-controls={`${id}-reference`}
-              onClick={() => setOpen(!open)}
-              title={open ? "Hide field reference" : "Show field reference"}
-              className="flex items-center gap-1.5 self-start rounded-control px-1.5 py-1 font-semibold text-muted text-row hover:bg-subtle hover:text-ink @2xl:self-end"
+        {reference &&
+          (open ? (
+            <section
+              aria-labelledby={`${id}-heading`}
+              className="flex min-w-0 flex-col gap-2 @2xl:max-h-[32rem] @2xl:w-80 @2xl:shrink-0 @2xl:overflow-y-auto"
             >
-              {open ? (
-                <>
+              <div className="flex items-center justify-between gap-2">
+                <h3 id={`${id}-heading`} className="font-semibold text-row">
+                  Field Reference
+                </h3>
+                <button
+                  type="button"
+                  aria-expanded
+                  title="Hide field reference"
+                  onClick={() => setOpen(false)}
+                  className={TOGGLE}
+                >
                   <PanelLeftClose aria-hidden size={16} />
                   <span className="sr-only">Hide field reference</span>
-                </>
-              ) : (
-                <>
-                  <PanelLeftOpen aria-hidden size={16} />
-                  <span className="sr-only">Show field reference</span>
-                  <span aria-hidden className="@2xl:[writing-mode:vertical-rl]">
-                    Field Reference
-                  </span>
-                </>
-              )}
-            </button>
-            <div id={`${id}-reference`} hidden={!open}>
+                </button>
+              </div>
               {reference}
-            </div>
-          </div>
-        )}
+            </section>
+          ) : (
+            <button
+              type="button"
+              aria-expanded={false}
+              title="Show field reference"
+              onClick={() => setOpen(true)}
+              className={`${TOGGLE} @2xl:flex-col @2xl:py-2`}
+            >
+              <PanelLeftOpen aria-hidden size={16} />
+              <span className="sr-only">Show field reference</span>
+              <span aria-hidden className="@2xl:[writing-mode:vertical-rl]">
+                Field Reference
+              </span>
+            </button>
+          ))}
         <div className="flex min-w-0 flex-1 flex-col">
           <FormField
             label={`${noun} JSON`}

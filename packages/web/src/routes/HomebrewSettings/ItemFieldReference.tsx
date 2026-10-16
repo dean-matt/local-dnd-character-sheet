@@ -1,5 +1,5 @@
 import { appliedItemFieldsSchema } from "@dnd/catalog";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { InputField } from "../../components/InputField.tsx";
 
 const ENTRIES_TEXT =
@@ -28,7 +28,6 @@ const FIELDS: { key: string; text: string; description: ReactNode }[] = [
  * search of names and descriptions.
  */
 export function ItemFieldReference() {
-  const id = useId();
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const shown = FIELDS.filter(
@@ -36,10 +35,7 @@ export function ItemFieldReference() {
       needle === "" || key.toLowerCase().includes(needle) || text.toLowerCase().includes(needle),
   );
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-2 text-row">
-      <h3 id={id} className="font-semibold">
-        Field Reference
-      </h3>
+    <div className="flex flex-col gap-2 text-row">
       <InputField
         label="Search fields"
         type="search"
@@ -58,6 +54,6 @@ export function ItemFieldReference() {
           ))}
         </dl>
       )}
-    </section>
+    </div>
   );
 }

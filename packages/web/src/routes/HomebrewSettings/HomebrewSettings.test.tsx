@@ -397,11 +397,11 @@ describe("HomebrewSettings", () => {
     const show = within(editor()).getByRole("button", { name: "Show field reference" });
     expect(show).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(show);
-    expect(within(editor()).getByRole("region", { name: "Field Reference" })).toBeInTheDocument();
-    expect(within(reference).getByText("value").nextSibling).toHaveTextContent(/copper/);
-    expect(within(reference).getByText("ability")).toBeInTheDocument();
+    const reopened = within(editor()).getByRole("region", { name: "Field Reference" });
+    expect(within(reopened).getByText("value").nextSibling).toHaveTextContent(/copper/);
+    expect(within(reopened).getByText("ability")).toBeInTheDocument();
     expect(
-      reference.compareDocumentPosition(field("textbox", "Item JSON")) &
+      reopened.compareDocumentPosition(field("textbox", "Item JSON")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     click("Close");
