@@ -29,9 +29,21 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   const name = editor.getByRole("textbox", { name: "Name" });
   await name.press("ControlOrMeta+a");
   await name.pressSequentially("Lantern Blade");
+  await name.press("Enter");
+  await expect(editor.getByRole("heading", { name: "Defenses" })).toBeVisible();
+
   const next = editor.getByRole("button", { name: "Next" });
-  for (const title of ["Defenses", "Rules text", "Review"]) {
-    await next.press("Enter");
+  await editor.getByRole("button", { name: "Close" }).focus();
+  for (
+    let presses = 0;
+    presses < 80 && !(await next.evaluate((n) => n === document.activeElement));
+    presses++
+  ) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(next).toBeFocused();
+  for (const title of ["Rules text", "Review"]) {
+    await page.keyboard.press("Enter");
     await expect(editor.getByRole("heading", { name: title })).toBeVisible();
   }
   await expect(editor.getByRole("heading", { name: "Lantern Blade" })).toBeVisible();

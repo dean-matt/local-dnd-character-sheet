@@ -164,7 +164,7 @@ describe("HomebrewSettings", () => {
     expect(field("textbox", "Name")).toHaveFocus();
 
     fireEvent.change(field("textbox", "Name"), { target: { value: "Brineburst" } });
-    fireEvent.submit(within(editor()).getByRole("form"));
+    fireEvent.keyDown(field("textbox", "Name"), { key: "Enter" });
     expect(within(editor()).getByRole("heading", { name: "Casting" })).toBeInTheDocument();
     expect(field("textbox", "Material component")).not.toHaveAccessibleDescription();
     click("Next");
@@ -372,9 +372,16 @@ describe("HomebrewSettings", () => {
       field("textbox", "Spell JSON"),
     );
 
+    fireEvent.change(field("textbox", "Spell JSON"), { target: { value: "{" } });
+    fireEvent.keyDown(json, { key: "Home" });
+    expect(json).toHaveAttribute("aria-selected", "true");
+    expect(json).toHaveFocus();
+
+    fireEvent.change(field("textbox", "Spell JSON"), { target: { value: JSON.stringify(ward) } });
     fireEvent.keyDown(json, { key: "Home" });
     expect(steps).toHaveAttribute("aria-selected", "true");
-    expect(field("textbox", "Name")).toHaveValue("Brinelash");
+    expect(steps).toHaveFocus();
+    expect(field("textbox", "Name")).toHaveValue("Coastal Ward");
   });
 
   it("fills the form from a pasted entry, and creates it with the chosen edition, leaving its source to the server", async () => {

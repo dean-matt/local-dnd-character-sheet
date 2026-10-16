@@ -6,7 +6,8 @@ export interface HomebrewViewTabsProps<V extends string> {
   idPrefix: string;
   views: readonly V[];
   view: V;
-  onView: (view: V) => void;
+  /** Returns `false` where the view refused the change, which leaves focus where it is. */
+  onView: (view: V) => boolean;
 }
 
 /**
@@ -33,8 +34,7 @@ export function HomebrewViewTabs<V extends string>({
     const next = index === undefined ? undefined : views[index];
     if (index === undefined || next === undefined) return;
     event.preventDefault();
-    onView(next);
-    tabs.current[index]?.focus();
+    if (onView(next) !== false) tabs.current[index]?.focus();
   };
   return (
     <div role="tablist" aria-label={label} className="flex gap-1">

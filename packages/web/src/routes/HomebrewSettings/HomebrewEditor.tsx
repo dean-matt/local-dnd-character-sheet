@@ -60,10 +60,15 @@ export function HomebrewEditor({
   const title = record ? `Edit ${record.name}` : `New ${kind.noun}`;
   const noun = capitalize(kind.noun);
 
+  /** `false` where JSON that does not parse keeps the mode where it is. */
   const switchMode = (next: (typeof MODES)[number]) => {
-    if (next === mode) return;
+    if (next === mode) return true;
     if (next === "JSON") draft.openJson();
-    else if (!draft.leaveJson()) setTried(true);
+    else if (!draft.leaveJson()) {
+      setTried(true);
+      return false;
+    }
+    return true;
   };
   const refuse = () => {
     setTried(true);
@@ -122,7 +127,13 @@ export function HomebrewEditor({
             ref={form}
             aria-label={title}
             noValidate
-            onSubmit={(event) => {
+            onSubmit={(event) => event.preventDefault()}
+            onKeyDown={(event) => {
+              // Handled here, not by submitting: a form submits on Enter only where it holds
+              // one text field or a submit button, and Save sits in the footer outside it.
+              const { target } = event;
+              if (event.key !== "Enter" || !(target instanceof HTMLInputElement)) return;
+              if (target.type === "checkbox") return;
               event.preventDefault();
               // Enter walks the steps rather than saving past the ones not yet seen.
               if (mode === "Step by step" && current) advance(1);
