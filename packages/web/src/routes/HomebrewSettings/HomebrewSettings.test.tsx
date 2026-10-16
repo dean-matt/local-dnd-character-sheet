@@ -86,7 +86,7 @@ const click = (name: string) => {
   fireEvent.click(button);
   return button;
 };
-const mode = (name: "Step by step" | "JSON") =>
+const mode = (name: "Step by step" | "JSON" | "Preview") =>
   fireEvent.click(within(editor()).getByRole("tab", { name }));
 const pick = (name: string, option: string) => {
   fireEvent.click(field("combobox", name));
@@ -178,6 +178,47 @@ describe("HomebrewSettings", () => {
     expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
   });
 
+  it("jumps to a step by its named button, and holds a jump past a step whose field fails", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    const steps = within(editor()).getByRole("navigation", { name: "Steps" });
+    expect(within(steps).getByRole("button", { name: "Basics" })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+    fireEvent.click(within(steps).getByRole("button", { name: "Effect" }));
+    expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
+    expect(within(steps).getByRole("button", { name: "Effect" })).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
+
+    fireEvent.click(within(steps).getByRole("button", { name: "Basics" }));
+    fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
+    fireEvent.click(within(steps).getByRole("button", { name: "Review" }));
+    expect(within(editor()).getByRole("heading", { name: "Basics" })).toBeInTheDocument();
+    expect(field("textbox", "Name")).toHaveFocus();
+  });
+
+  it("cancels from the footer, asking first where the entry changed", () => {
+    stubApi({});
+    renderPage();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    click("Cancel");
+    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Brineburst" } });
+    click("Cancel");
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(editor()).toBeInTheDocument();
+  });
+
   it("opens a new item on the weapon example's form, naming each code, and swaps it for the type picked", async () => {
     stubApi({});
     renderPage();
@@ -249,15 +290,19 @@ describe("HomebrewSettings", () => {
     expect(entry()).not.toHaveProperty("advantage");
   });
 
-  it("lists the fields the sheet reads ahead of an item's JSON, and none beside a spell's", async () => {
+  it("lists the fields the sheet reads, and the rules text, by name ahead of an item's JSON, and none beside a spell's", async () => {
     stubApi({});
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    expect(within(editor()).queryByText("Fields the sheet reads")).toBeNull();
+    expect(within(editor()).queryByText("Field Reference")).toBeNull();
     mode("JSON");
-    const reference = within(editor()).getByRole("region", { name: "Fields the sheet reads" });
-    expect(reference).toHaveTextContent(/Rules text only displays/);
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    const keys = within(reference)
+      .getAllByRole("term")
+      .map((term) => term.textContent ?? "");
+    expect(keys).toEqual([...keys].sort((a, b) => a.localeCompare(b)));
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/only displays/);
     expect(within(reference).getByText("value").nextSibling).toHaveTextContent(/copper/);
     expect(within(reference).getByText("ability")).toBeInTheDocument();
     expect(
@@ -268,7 +313,7 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     mode("JSON");
-    expect(within(editor()).queryByText("Fields the sheet reads")).toBeNull();
+    expect(within(editor()).queryByText("Field Reference")).toBeNull();
   });
 
   it("offers no example to pick for a spell or a row being edited", async () => {
@@ -293,7 +338,7 @@ describe("HomebrewSettings", () => {
     fireEvent.change(field("textbox", "Rules text"), {
       target: { value: "Brine deals {@damage 3d4} cold damage.\n\nIt stings." },
     });
-    click("Preview");
+    mode("Preview");
 
     const preview = editor();
     const roll = await within(preview).findByText("3d4");
@@ -311,7 +356,7 @@ describe("HomebrewSettings", () => {
     expect(preview).toHaveTextContent("Using a Higher-Level Spell Slot");
     expect(within(preview).queryByRole("textbox")).toBeNull();
 
-    click("Back to editing");
+    mode("Step by step");
     expect(editor()).toHaveTextContent("Step 3 of 4");
     expect(field("textbox", "Rules text")).toHaveValue(
       "Brine deals {@damage 3d4} cold damage.\n\nIt stings.",
@@ -334,7 +379,7 @@ describe("HomebrewSettings", () => {
         }),
       },
     });
-    click("Preview");
+    mode("Preview");
     expect(
       await within(editor()).findByRole("heading", { name: "Moonfire Blade" }),
     ).toBeInTheDocument();
@@ -344,13 +389,13 @@ describe("HomebrewSettings", () => {
       "An Artificer can replicate this item with the Replicate Magic Item infusion.",
     );
 
-    click("Back to editing");
+    mode("JSON");
     expect(within(editor()).getByRole("tab", { name: "JSON" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
     fireEvent.change(field("textbox", "Item JSON"), { target: { value: "{" } });
-    click("Preview");
+    mode("Preview");
     expect(editor()).toHaveTextContent("Nothing to preview until the item has no problems.");
   });
 

@@ -12,6 +12,7 @@ import { type HomebrewKind, type HomebrewRow, stepOf } from "./homebrewKinds.ts"
 import { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
 const MODES = ["Step by step", "JSON"] as const;
+const VIEWS = [...MODES, "Preview"] as const;
 
 export interface HomebrewEditorProps {
   kind: HomebrewKind;
@@ -29,9 +30,10 @@ export interface HomebrewEditorProps {
  * the end, or as the 5etools-shaped JSON it is stored as beside the kind's field reference.
  * Both modes edit one entry, so a change in either shows in the other and a field the form
  * has no control for survives it. Leaving JSON waits until the text parses. A step holding a
- * problem does not advance, and each problem shows beside its field once a step or a save
- * is tried. Preview shows the entry as the sheet renders it, then returns to the same mode
- * and step. Saving replaces the whole entry; closing with changes asks first.
+ * problem holds every step after it, and each problem shows beside its field once a step or
+ * a save is tried. The Preview tab shows the entry as the sheet renders it, and either mode's
+ * tab returns to it at the same step. Saving replaces the whole entry; closing with changes
+ * asks first.
  */
 export function HomebrewEditor({
   kind,
@@ -61,8 +63,9 @@ export function HomebrewEditor({
   const noun = capitalize(kind.noun);
 
   /** `false` where JSON that does not parse keeps the mode where it is. */
-  const switchMode = (next: (typeof MODES)[number]) => {
-    if (next === mode) return true;
+  const switchView = (next: (typeof VIEWS)[number]) => {
+    setPreviewing(next === "Preview");
+    if (next === "Preview" || next === mode) return true;
     if (next === "JSON") draft.openJson();
     else if (!draft.leaveJson()) {
       setTried(true);
@@ -74,10 +77,14 @@ export function HomebrewEditor({
     setTried(true);
     setRefusals((count) => count + 1);
   };
-  const advance = (by: number) => {
-    if (by > 0 && problems.some(({ key }) => stepOf(kind, key) === step)) return refuse();
+  const goTo = (target: number) => {
+    const held = problems.map(({ key }) => stepOf(kind, key)).filter((at) => at < target);
+    if (target > step && held.length > 0) {
+      setStep(Math.min(...held));
+      return refuse();
+    }
     setTried(false);
-    setStep(step + by);
+    setStep(target);
   };
   const save = () => {
     if ("input" in draft.checked) {
@@ -109,80 +116,82 @@ export function HomebrewEditor({
         footer={
           <HomebrewEditorFooter
             failure={failure}
-            previewing={previewing}
-            onPreview={() => setPreviewing(!previewing)}
+            onCancel={close}
             stepping={mode === "Step by step" && !previewing}
             first={step === 0}
             last={current === undefined}
-            onAdvance={advance}
+            onAdvance={(by) => goTo(step + by)}
             saving={saving}
             onSave={save}
           />
         }
       >
-        {previewing ? (
-          <HomebrewPreview noun={kind.noun} shown={draft.shown} />
-        ) : (
-          <form
-            ref={form}
-            aria-label={title}
-            noValidate
-            onSubmit={(event) => event.preventDefault()}
-            onKeyDown={(event) => {
-              // Handled here, not by submitting: a form submits on Enter only where it holds
-              // one text field or a submit button, and Save sits in the footer outside it.
-              const { target } = event;
-              if (event.key !== "Enter" || !(target instanceof HTMLInputElement)) return;
-              if (target.type === "checkbox") return;
-              event.preventDefault();
-              // Enter walks the steps rather than saving past the ones not yet seen.
-              if (mode === "Step by step" && current) advance(1);
-              else save();
-            }}
-            className="@container flex flex-col gap-3"
+        <div className="@container flex flex-col gap-3">
+          <p className="text-label text-muted">
+            {record ? `Edit the ${kind.noun}` : `Fill in this example ${kind.noun}`} step by step,
+            or in JSON, where a pasted 5etools-shaped one replaces it. Saving replaces the whole
+            entry, and the source is always Homebrew.
+          </p>
+          <HomebrewViewTabs
+            label={`${noun} editor`}
+            idPrefix={id}
+            views={VIEWS}
+            view={previewing ? "Preview" : mode}
+            onView={switchView}
+          />
+          <div
+            id={`${id}-panel`}
+            role="tabpanel"
+            aria-labelledby={`${id}-tab-${VIEWS.indexOf(previewing ? "Preview" : mode)}`}
+            className="flex min-w-0 flex-col gap-3"
           >
-            <p className="text-label text-muted">
-              {record ? `Edit the ${kind.noun}` : `Fill in this example ${kind.noun}`} step by step,
-              or in JSON, where a pasted 5etools-shaped one replaces it. Saving replaces the whole
-              entry, and the source is always Homebrew.
-            </p>
-            <HomebrewViewTabs
-              label={`${noun} editor`}
-              idPrefix={id}
-              views={MODES}
-              view={mode}
-              onView={switchMode}
-            />
-            <div
-              id={`${id}-panel`}
-              role="tabpanel"
-              aria-labelledby={`${id}-tab-${MODES.indexOf(mode)}`}
-              className="flex min-w-0 flex-col gap-3"
-            >
-              {mode === "JSON" ? (
-                <>
-                  {settings}
-                  <HomebrewJsonMode
-                    noun={noun}
-                    reference={kind.reference}
-                    text={draft.text ?? ""}
-                    problems={shownProblems}
-                    onText={draft.typeJson}
+            {previewing ? (
+              <HomebrewPreview noun={kind.noun} shown={draft.shown} />
+            ) : (
+              <form
+                ref={form}
+                aria-label={title}
+                noValidate
+                onSubmit={(event) => event.preventDefault()}
+                onKeyDown={(event) => {
+                  // Handled here, not by submitting: a form submits on Enter only where it holds
+                  // one text field or a submit button, and Save sits in the footer outside it.
+                  const { target } = event;
+                  if (event.key !== "Enter" || !(target instanceof HTMLInputElement)) return;
+                  if (target.type === "checkbox") return;
+                  event.preventDefault();
+                  // Enter walks the steps rather than saving past the ones not yet seen.
+                  if (mode === "Step by step" && current) goTo(step + 1);
+                  else save();
+                }}
+                className="flex min-w-0 flex-col gap-3"
+              >
+                {mode === "JSON" ? (
+                  <>
+                    {settings}
+                    <HomebrewJsonMode
+                      noun={noun}
+                      reference={kind.reference}
+                      text={draft.text ?? ""}
+                      problems={shownProblems}
+                      onText={draft.typeJson}
+                    />
+                  </>
+                ) : (
+                  <HomebrewStepMode
+                    kind={kind}
+                    step={step}
+                    draft={draft}
+                    settings={settings}
+                    problems={problems}
+                    shownProblems={shownProblems}
+                    onStep={goTo}
                   />
-                </>
-              ) : (
-                <HomebrewStepMode
-                  kind={kind}
-                  step={step}
-                  draft={draft}
-                  settings={settings}
-                  problems={problems}
-                  shownProblems={shownProblems}
-                />
-              )}
-            </div>
-          </form>
-        )}
+                )}
+              </form>
+            )}
+          </div>
+        </div>
       </ModalEntry>
     </Modal>
   );

@@ -13,11 +13,12 @@ export interface HomebrewStepModeProps {
   problems: HomebrewProblem[];
   /** The problems to name, which stay empty until a step or a save is tried. */
   shownProblems: HomebrewProblem[];
+  onStep: (step: number) => void;
 }
 
 /**
- * One step of the kind's form, with the problems in fields it has no control for; past the
- * last step, the review.
+ * A button naming each step, one step of the kind's form with the problems in fields it has
+ * no control for, and past the last step, the review.
  */
 export function HomebrewStepMode({
   kind,
@@ -26,10 +27,28 @@ export function HomebrewStepMode({
   settings,
   problems,
   shownProblems,
+  onStep,
 }: HomebrewStepModeProps) {
   const current = kind.steps[step];
+  const titles = [...kind.steps.map(({ title }) => title), "Review"];
   return (
     <>
+      <nav aria-label="Steps">
+        <ol className="flex flex-wrap gap-1">
+          {titles.map((title, index) => (
+            <li key={title}>
+              <button
+                type="button"
+                aria-current={index === step ? "step" : undefined}
+                onClick={() => onStep(index)}
+                className="rounded-control border border-border px-3 py-1 text-muted text-row hover:bg-subtle aria-[current=step]:bg-subtle aria-[current=step]:font-semibold aria-[current=step]:text-ink"
+              >
+                {title}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </nav>
       <p aria-live="polite" className="text-label text-muted">
         Step {step + 1} of {kind.steps.length + 1}
       </p>

@@ -3,8 +3,7 @@ const SECONDARY = `${BUTTON} border border-border bg-surface text-ink hover:bg-s
 
 export interface HomebrewEditorFooterProps {
   failure: string | undefined;
-  previewing: boolean;
-  onPreview: () => void;
+  onCancel: () => void;
   stepping: boolean;
   first: boolean;
   last: boolean;
@@ -14,14 +13,12 @@ export interface HomebrewEditorFooterProps {
 }
 
 /**
- * Why a save failed, Preview or the way back from it, Previous and Next while stepping, and
- * Save. Previous and Next stay in place at either end, so focus never drops off a button
- * that vanished.
+ * Cancel, why a save failed, Previous and Next while stepping, and Save. Previous and Next
+ * stay in place at either end, so focus never drops off a button that vanished.
  */
 export function HomebrewEditorFooter({
   failure,
-  previewing,
-  onPreview,
+  onCancel,
   stepping,
   first,
   last,
@@ -31,12 +28,12 @@ export function HomebrewEditorFooter({
 }: HomebrewEditorFooterProps) {
   return (
     <div className="flex w-full flex-wrap items-center justify-end gap-2">
+      <button type="button" onClick={onCancel} className={SECONDARY}>
+        Cancel
+      </button>
       <p role="alert" className="mr-auto text-error text-row">
         {failure && `Save failed: ${failure}`}
       </p>
-      <button type="button" onClick={onPreview} className={SECONDARY}>
-        {previewing ? "Back to editing" : "Preview"}
-      </button>
       {stepping && (
         <>
           <button

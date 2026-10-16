@@ -56,9 +56,10 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   await expect(editor.getByRole("textbox", { name: "Item JSON" })).toBeVisible();
   await expectNoViolations(page);
 
-  await editor.getByRole("button", { name: "Preview" }).press("Enter");
+  await editor.getByRole("tab", { name: "JSON" }).press("ArrowRight");
+  await expect(editor.getByRole("tab", { name: "Preview" })).toBeFocused();
   await expect(editor.getByRole("heading", { name: named })).toBeVisible();
-  await editor.getByRole("button", { name: "Back to editing" }).press("Enter");
+  await editor.getByRole("tab", { name: "Preview" }).press("ArrowLeft");
   await expect(editor.getByRole("textbox", { name: "Item JSON" })).toBeVisible();
 
   await editor.getByRole("button", { name: "Save" }).press("Enter");
@@ -77,7 +78,7 @@ test("at phone width the field reference stacks above the JSON, and the editor f
   const editor = page.getByRole("dialog", { name: "New item" });
   await editor.getByRole("tab", { name: "JSON" }).click();
 
-  const reference = await box(editor.getByRole("region", { name: "Fields the sheet reads" }));
+  const reference = await box(editor.getByRole("region", { name: "Field Reference" }));
   const json = await box(editor.getByRole("textbox", { name: "Item JSON" }));
   expect(reference.y + reference.height).toBeLessThanOrEqual(json.y);
   const dialog = await box(editor);
