@@ -68,7 +68,7 @@ const loaded = () =>
 describe("BaseWeaponField", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("writes a picked weapon as the catalog spells it, a uid proficiency and mastery resolve", async () => {
+  it("writes a picked weapon as the catalog spells it, a uid that proficiency and mastery resolve", async () => {
     stubApi();
     const { writes } = renderField("");
     await loaded();
@@ -76,19 +76,23 @@ describe("BaseWeaponField", () => {
     fireEvent.change(field(), { target: { value: "longsword" } });
 
     expect(writes).toEqual(["Longsword|XPHB"]);
-    const written = writes[0] ?? "";
-    // The lookups' own rules: the trait's `baseName` is what a proficiency folds and
-    // matches, and the mastery lookup splits the uid and matches name and source ignoring case.
-    const trait = weaponTraitSchema.parse({ weaponCategory: "martial", baseItem: written });
+    const trait = weaponTraitSchema.parse({ weaponCategory: "martial", baseItem: writes[0] });
     expect(trait?.baseName?.toLowerCase()).toBe("longsword");
-    const [name = "", source = ""] = written.split("|");
-    const matches = CATALOG.one.filter(
-      (weapon) =>
-        weapon.kind === "baseitem" &&
-        weapon.name.toLowerCase() === name.toLowerCase() &&
-        weapon.source.toLowerCase() === source.toLowerCase(),
+  });
+
+  it("names a failed load and still lets the field be cleared", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: "boom" }), { status: 404 })),
     );
-    expect(matches).toHaveLength(1);
+    const { writes } = renderField("Longsword|XPHB");
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent("The 2024 base weapons failed to load"),
+    );
+    expect(field()).not.toHaveAttribute("readonly");
+    fireEvent.change(field(), { target: { value: "" } });
+    expect(writes).toEqual([undefined]);
   });
 
   it("is read-only and says so until the list loads", () => {

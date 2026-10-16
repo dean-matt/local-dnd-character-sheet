@@ -12,8 +12,8 @@ const uid = (weapon: { name: string; source: string }) => `${weapon.name}|${weap
  * weapons and written `name|source` as the catalog spells it, which proficiency and mastery
  * resolve. Text that names no base weapon stays in the field and writes nothing, marked once
  * no base weapon's name starts with it; leaving the field shows the saved value again. The
- * field is read-only until the list loads, saying so, since a typed name has nothing to
- * match until then. A saved `baseItem` no base weapon of the
+ * field is read-only while the list loads, saying so, since a typed name has nothing to
+ * match until then; after a failed load it names the failure and can still be cleared. A saved `baseItem` no base weapon of the
  * edition matches, pasted or left over from the other edition, shows as written, marked, and
  * saves unchanged.
  */
@@ -55,7 +55,7 @@ export function BaseWeaponField({
         placeholder="Longsword"
         list={list}
         autoComplete="off"
-        readOnly={!weapons}
+        readOnly={query.isPending}
         status={query.isPending && `Loading the ${editions}…`}
         value={draft ?? saved?.name ?? current}
         error={error || mark()}
