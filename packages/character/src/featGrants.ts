@@ -36,7 +36,10 @@ export type FeatPick = { field: FeatPickField; name: string };
  * of the names stored under its fields that it offers. A pick no offer takes grants nothing.
  * An offer of any tool of a kind takes any tool name, since the kind a tool is lives in its
  * item row and not here; only the sheet's control holds a pick to the kind. Carrying the
- * kinds on the offer and the tool rows on the catalog is the way out.
+ * kinds on the offer and the tool rows on the catalog is the way out. Two offers sharing a
+ * field read its names in offer order, so a name stored for the later one fills the earlier
+ * first; no feat at the pinned tag offers two such picks, and keying a pick by its offer is
+ * the way out.
  */
 export function allocatePicks(offers: readonly FeatOffer[], picks: Picks): FeatPick[][] {
   const left = new Map(FIELDS.map((field) => [field, [...(picks?.[field] ?? [])]]));
