@@ -46,6 +46,11 @@ describe("ITEM_JSON_SCHEMA", () => {
     );
   });
 
+  it("suggests the fields in alphabetical order", () => {
+    const labels = suggest("").map(({ label }) => label);
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+  });
+
   it("shows a key's description and its value's form on hover", async () => {
     const doc = '{ "name": "Lantern", "ability": { "wis": 1 } }';
     const editor = editorOf(doc);

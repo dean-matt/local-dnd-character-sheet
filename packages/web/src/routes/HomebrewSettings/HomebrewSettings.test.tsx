@@ -370,6 +370,24 @@ describe("HomebrewSettings", () => {
     expect(entry.vulnerable).toEqual(["thunder", "cold"]);
   });
 
+  it("opens the JSON with every object's fields in alphabetical order", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    pick("Start from", "Wondrous item");
+    mode("JSON");
+    const keysOf = (value: unknown): string[][] =>
+      value && typeof value === "object" && !Array.isArray(value)
+        ? [Object.keys(value), ...Object.values(value).flatMap(keysOf)]
+        : Array.isArray(value)
+          ? value.flatMap(keysOf)
+          : [];
+    for (const keys of keysOf(JSON.parse(jsonText("Item JSON")))) {
+      expect(keys).toEqual([...keys].sort((a, b) => a.localeCompare(b)));
+    }
+  });
+
   it("lists a problem in a field the step shows no control for, as a gear item's pasted damage", () => {
     stubApi({});
     renderPage();
