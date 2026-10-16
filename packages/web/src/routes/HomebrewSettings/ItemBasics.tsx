@@ -8,7 +8,7 @@ import {
   typedNumber,
   withField,
 } from "./homebrewEntry.ts";
-import { FORM_GRID, NAME, SHORT } from "./homebrewGrid.ts";
+import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import { GROUP_FIELDS, ITEM_TYPES, itemGroup } from "./homebrewVocabulary.ts";
 
@@ -23,7 +23,7 @@ export function ItemBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const value = numberAt(entry.value);
   return (
     <div className={FORM_GRID}>
-      <div className={NAME}>
+      <div className={PAIRED}>
         <InputField
           label="Name"
           value={textAt(entry, "name")}

@@ -11,7 +11,7 @@ import {
   typedInteger,
   withField,
 } from "./homebrewEntry.ts";
-import { FORM_GRID, SHORT, TEXT } from "./homebrewGrid.ts";
+import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import {
   DAMAGE_TYPE_CODES,
@@ -87,7 +87,7 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
               )}
             </FormField>
           </div>
-          <div className={TEXT}>
+          <div className={PAIRED}>
             <InputField
               label="Base weapon"
               placeholder="longsword"
@@ -102,13 +102,7 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
               }
             />
           </div>
-          <div className={TEXT}>
-            <InputField label="Damage" placeholder="1d8" {...text("dmg1")} />
-          </div>
-          <div className={TEXT}>
-            <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
-          </div>
-          <div className={TEXT}>
+          <div className={PAIRED}>
             <MultiSelect
               inForm
               label="Properties"
@@ -127,6 +121,12 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
                 set("property", next.length > 0 ? next : undefined);
               }}
             />
+          </div>
+          <div className={PAIRED}>
+            <InputField label="Damage" placeholder="1d8" {...text("dmg1")} />
+          </div>
+          <div className={PAIRED}>
+            <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
           </div>
         </>
       )}

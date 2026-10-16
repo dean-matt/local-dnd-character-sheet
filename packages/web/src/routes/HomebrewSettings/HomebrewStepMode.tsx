@@ -68,7 +68,7 @@ export function HomebrewStepMode({
       {current && (
         <>
           {step === 0 && starter}
-          <div className="grid gap-6 @3xl:grid-cols-2">
+          <div className={`grid gap-6 ${current.sections.length > 1 ? "@3xl:grid-cols-2" : ""}`}>
             {current.sections.map(({ title, Fields }, index) => (
               <section
                 key={title}

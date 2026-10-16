@@ -3,7 +3,7 @@ import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
-import { FORM_GRID, NAME, SHORT } from "./homebrewGrid.ts";
+import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 import { SPELL_LEVELS } from "./homebrewVocabulary.ts";
 import { withUpcastNameFor } from "./spellUpcast.ts";
 
@@ -15,7 +15,7 @@ export function SpellBasics({ entry, edition, onChange, errorFor }: HomebrewForm
 
   return (
     <div className={FORM_GRID}>
-      <div className={NAME}>
+      <div className={PAIRED}>
         <InputField
           label="Name"
           value={textAt(entry, "name")}

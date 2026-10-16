@@ -15,5 +15,5 @@ export const TEXT = "col-span-2";
 /** A text area, or a list of rows. */
 export const WHOLE = "col-span-full";
 
-/** An entry's name: beside its type where the section is half the modal, as wide as text where it is all of it. */
-export const NAME = "col-span-1 @2xl:col-span-2";
+/** A text input paired with its neighbor: beside it in a half-width section, as wide as text in a full one. */
+export const PAIRED = "col-span-1 @2xl:col-span-2";
