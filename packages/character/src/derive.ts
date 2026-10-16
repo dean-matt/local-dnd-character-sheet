@@ -41,6 +41,7 @@ import type { CharacterDerived, Defenses } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
+import { featGrants, withFeatGrants } from "./featGrants.ts";
 import {
   type ProficiencyItem,
   proficiencyItemTerms,
@@ -557,14 +558,15 @@ function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly st
 }
 
 /**
- * The race's grants, its picked resistance among them, then each equipped item's. An
- * item that requires attunement grants only once it is attuned as well. A resistance
+ * The race's grants, its picked resistance among them, then each feat's, then each equipped
+ * item's. An item that requires attunement grants only once it is attuned as well. A resistance
  * stays listed beside an immunity to the same type, since each names a source the reader
  * may want.
  */
 function derivedDefenses(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
+  feats: readonly Grant[],
 ): ComputedField<Defenses> {
   const { resistChoice, ...race } = catalog.raceDefenses;
   const from = raceSummary(definition);
@@ -572,6 +574,7 @@ function derivedDefenses(
   const picked = pick !== undefined && resistChoice.includes(pick) ? pick : undefined;
   const grants: Grant[] = [
     { ...race, resist: picked ? [...race.resist, picked] : race.resist, from },
+    ...feats,
   ];
   for (const entry of definition.inventory) {
     const item = catalog.itemDefenses.get(itemKey(entry));
@@ -763,12 +766,15 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 /**
  * The whole derived block for one character: every value `characterDerivedSchema`
  * holds, assembled from the definition and the catalog facts the caller resolved for
- * it, with the definition's `overrides` folded into each `manual`.
+ * it, with the definition's `overrides` folded into each `manual`. Every number reads the
+ * proficiencies with what feats grant added.
  */
 export function deriveCharacter(
-  definition: CharacterDefinition,
+  stored: CharacterDefinition,
   catalog: CharacterCatalog,
 ): CharacterDerived {
+  const feats = featGrants(stored, catalog);
+  const definition = withFeatGrants(stored, feats.granted);
   const level = totalLevel(definition);
   const casters = castingClasses(definition, catalog);
   const grants = equippedAbilityGrants(definition, catalog);
@@ -876,13 +882,14 @@ export function deriveCharacter(
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(definition, catalog, bonuses),
-    defenses: derivedDefenses(definition, catalog),
+    defenses: derivedDefenses(definition, catalog, feats.defenses),
     itemGrants: derivedItemGrants(bonuses),
+    featGrants: computed(feats.granted),
     rollEffects: derivedRollEffects(definition, catalog, burdened),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),
   };
-  return applyOverrides(block, definition);
+  return applyOverrides(block, stored);
 }
 
 /** The definition's pick where the race offers it, otherwise the largest size it offers. */

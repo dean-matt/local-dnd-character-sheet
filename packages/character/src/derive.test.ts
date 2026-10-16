@@ -16,6 +16,7 @@ import {
   derivedValue,
   type EntryRef,
   entryKey,
+  type FeatGrantTrait,
   hitPointMaximum,
   type ItemAbilityTrait,
   type ItemAdvantageTrait,
@@ -208,6 +209,7 @@ describe("deriveCharacter", () => {
     armorBurdens: new Map<string, ArmorBurdenTrait>(),
     ammunition: new Map<string, AmmunitionTrait>(),
     containers: new Map<string, ContainerTrait>(),
+    featGrants: new Map(),
     weaponMasteryKinds: new Map<string, number>(),
   };
 
@@ -1873,6 +1875,177 @@ describe("deriveCharacter", () => {
       expect(derivedValue(block.initiative)).toBe(1);
       expect(derivedValue(block.hitPointMaximum)).toBe(20);
       expect(derivedValue(block.speed)).toEqual({ walk: 25 });
+    });
+  });
+
+  describe("what feats grant through their fields", () => {
+    const none = {
+      savingThrows: [],
+      skills: [],
+      expertise: [],
+      tools: [],
+      languages: [],
+      armor: [],
+      weapons: [],
+      resist: [],
+      immune: [],
+      conditionImmune: [],
+      offers: [],
+    };
+    const ARMORED = { name: "Moderately Armored", source: "PHB" };
+    const RESILIENT = { name: "Resilient", source: "XPHB" };
+    const EXPERT = { name: "Skill Expert", source: "XPHB" };
+    const ANATOMY = { name: "Aberrant Anatomy", source: "RHW" };
+    const INFERNAL = { name: "Infernal Constitution", source: "XPHB" };
+    const BOON = { name: "Boon of Energy Resistance", source: "XPHB" };
+    const traits: [EntryRef, FeatGrantTrait][] = [
+      [ARMORED, { ...none, name: ARMORED.name, armor: ["medium", "shield"] }],
+      [
+        RESILIENT,
+        {
+          ...none,
+          name: RESILIENT.name,
+          offers: [{ fields: ["savingThrows"], count: 1, from: ["con", "dex"] }],
+        },
+      ],
+      [
+        EXPERT,
+        {
+          ...none,
+          name: EXPERT.name,
+          tools: ["cook's utensils"],
+          languages: ["sylvan"],
+          offers: [
+            { fields: ["skills"], count: 1, from: null },
+            { fields: ["expertise"], count: 1, from: null },
+          ],
+        },
+      ],
+      [ANATOMY, { ...none, name: ANATOMY.name, skills: ["perception"], expertise: ["perception"] }],
+      [INFERNAL, { ...none, name: INFERNAL.name, resist: ["cold"], conditionImmune: ["poisoned"] }],
+      [
+        BOON,
+        {
+          ...none,
+          name: BOON.name,
+          offers: [{ fields: ["resist"], count: 2, from: ["acid", "cold", "fire"] }],
+        },
+      ],
+    ];
+    const featCatalog = {
+      ...catalog,
+      featGrants: new Map(traits.map(([ref, trait]) => [entryKey(ref), trait])),
+    };
+    type Feat = CharacterDefinition["feats"][number];
+    const withFeats = (feats: Feat[], base: CharacterDefinition = equipped) =>
+      deriveCharacter({ ...base, feats }, featCatalog);
+
+    it("adds a feat's armor to what the gear is checked against, until the feat goes", () => {
+      const HIDE = { name: "Hide Armor", source: "XPHB" };
+      const hidebound = {
+        ...featCatalog,
+        weights: new Map([...catalog.weights, [entryKey(HIDE), 12]]),
+        armor: new Map<string, ArmorTrait>([
+          ...catalog.armor,
+          [entryKey(HIDE), { name: HIDE.name, category: "medium" as const, armorClass: 12 }],
+        ]),
+      };
+      const worn = {
+        ...equipped,
+        inventory: [
+          ...equipped.inventory,
+          { ref: HIDE, quantity: 1, carried: true, equipped: false, attuned: false },
+        ],
+      };
+      const armored = deriveCharacter({ ...worn, feats: [{ ref: ARMORED }] }, hidebound);
+      expect(armored.unproficientItems).toEqual([]);
+      expect(armored.featGrants.computed.armor).toEqual([
+        { name: "medium", from: [ARMORED.name] },
+        { name: "shield", from: [ARMORED.name] },
+      ]);
+      expect(deriveCharacter(worn, hidebound).unproficientItems).toEqual([
+        { entry: 4, requires: "Medium armor" },
+      ]);
+    });
+
+    it("adds the saving throw picked from those the feat offers, and nothing else", () => {
+      const picked = (savingThrows: ("con" | "str")[]) =>
+        withFeats([{ ref: RESILIENT, picks: { savingThrows } }]);
+      expect(picked(["con"]).savingThrows.con.computed).toBe(derived.savingThrows.con.computed + 3);
+      expect(picked(["con"]).featGrants.computed.savingThrows).toEqual([
+        { name: "con", from: [RESILIENT.name] },
+      ]);
+      expect(picked(["str"]).savingThrows.str.computed).toBe(derived.savingThrows.str.computed);
+      expect(withFeats([{ ref: RESILIENT }]).featGrants.computed.savingThrows).toEqual([]);
+    });
+
+    it("grants a picked skill, and expertise only in a skill already proficient", () => {
+      const perception = (block: CharacterDerived) =>
+        block.skills.find((skill) => skill.ref.name === "Perception")?.modifier.computed;
+      const expert = withFeats([
+        { ref: EXPERT, picks: { skills: ["perception"], expertise: ["deception"] } },
+      ]);
+      expect(perception(expert)).toBe(4);
+      expect(expert.featGrants.computed.skills).toEqual([
+        { ref: PERCEPTION, level: "proficient", from: [EXPERT.name] },
+        { ref: DECEPTION, level: "expertise", from: [EXPERT.name] },
+      ]);
+      expect(expert.featGrants.computed.tools).toEqual([
+        { name: "cook's utensils", from: [EXPERT.name] },
+      ]);
+      expect(expert.featGrants.computed.languages).toEqual([
+        { name: "sylvan", from: [EXPERT.name] },
+      ]);
+      const unproficient = withFeats([{ ref: EXPERT, picks: { expertise: ["perception"] } }]);
+      expect(perception(unproficient)).toBe(1);
+      expect(unproficient.featGrants.computed.skills).toEqual([]);
+    });
+
+    it("grants expertise in a skill the feat also grants only where something else gave it first", () => {
+      const perception = (block: CharacterDerived) =>
+        block.featGrants.computed.skills.find((skill) => skill.ref.name === "Perception")?.level;
+      expect(perception(withFeats([{ ref: ANATOMY }]))).toBe("proficient");
+      const trained: CharacterDefinition = {
+        ...equipped,
+        proficiencies: {
+          ...equipped.proficiencies,
+          skills: [{ ref: PERCEPTION, level: "proficient" }],
+        },
+      };
+      expect(perception(withFeats([{ ref: ANATOMY }], trained))).toBe("expertise");
+    });
+
+    it("cites each feat for the defenses it grants and the resistances picked, up to its count", () => {
+      const block = withFeats([
+        { ref: INFERNAL },
+        { ref: BOON, picks: { resist: ["cold", "lightning", "acid", "fire"] } },
+      ]);
+      expect(block.defenses.computed.resistances).toEqual([
+        { name: "cold", from: [INFERNAL.name, BOON.name] },
+        { name: "acid", from: [BOON.name] },
+      ]);
+      expect(block.defenses.computed.conditionImmunities).toEqual([
+        { name: "poisoned", from: [INFERNAL.name] },
+      ]);
+    });
+
+    it("raises scores by what a feat taken outside an improvement placed", () => {
+      const block = withFeats([
+        {
+          ref: RESILIENT,
+          picks: { savingThrows: ["con"], ability: [{ ability: "con", amount: 1 }] },
+        },
+      ]);
+      expect(block.abilityScores.con.terms).toContainEqual({ label: RESILIENT.name, value: 1 });
+      expect(block.abilityScores.con.computed).toBe(derived.abilityScores.con.computed + 1);
+      expect(
+        characterDefinitionSchema.safeParse({
+          ...equipped,
+          feats: [
+            { ref: RESILIENT, level: 4, picks: { ability: [{ ability: "con", amount: 1 }] } },
+          ],
+        }).success,
+      ).toBe(false);
     });
   });
 

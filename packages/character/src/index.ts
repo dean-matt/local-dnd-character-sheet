@@ -38,6 +38,7 @@ export type {
   CharacterCatalog,
   ContainerTrait,
   DefenseTrait,
+  FeatGrantTrait,
   ItemAbilityTrait,
   ItemAdvantageTrait,
   ItemBonusTrait,

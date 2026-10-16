@@ -292,6 +292,7 @@ export type DerivedFixture = {
   subraces?: SubraceFixtureRow[];
   items?: ItemFixtureRow[];
   lookups?: LookupFixtureRow[];
+  feats?: FeatFixtureRow[];
 };
 
 export function publishDerivedFixture(dataDir: string, fixture: DerivedFixture): void {

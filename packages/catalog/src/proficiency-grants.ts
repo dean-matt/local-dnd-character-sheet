@@ -10,7 +10,7 @@ import { z } from "zod";
  * `battleaxe|phb`, which the name drops. A malformed list grants nothing rather than
  * refusing the row.
  */
-const grantedSchema = z
+export const grantedSchema = z
   .array(z.unknown())
   .optional()
   .catch(undefined)
@@ -24,7 +24,7 @@ const grantedSchema = z
   });
 
 /**
- * What a race, subrace or background row grants outright: skills, languages, tools,
+ * What a race, subrace, background or feat row grants outright: skills, languages, tools,
  * weapons and armor, each a name for a caller to resolve. A choice it offers is left for
  * the step that asks it.
  */

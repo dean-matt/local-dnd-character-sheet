@@ -100,7 +100,7 @@ export function armsGroupKinds(kinds: readonly string[]): readonly string[] | un
  * of any artisan's tool never offers a lute. `other` is a tool of none of them, such as
  * thieves' tools.
  */
-const TOOL_TYPES = ["artisan", "instrument", "gaming", "other"] as const;
+export const TOOL_TYPES = ["artisan", "instrument", "gaming", "other"] as const;
 
 export type ToolType = (typeof TOOL_TYPES)[number];
 

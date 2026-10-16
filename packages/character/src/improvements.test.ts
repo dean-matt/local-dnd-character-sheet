@@ -81,6 +81,23 @@ describe("improvements", () => {
     expect(changed.abilityIncreases[0]).toEqual(held.abilityIncreases[0]);
   });
 
+  it("keeps a feat's picks while its increases move, and drops them with the feat", () => {
+    const first = withImprovement(held, 4, WIZARD, { feat: SKILLED, increases: [] });
+    const picked = {
+      ...first,
+      feats: first.feats.map((feat) =>
+        feat.level === 4 ? { ...feat, picks: { skills: ["arcana"] } } : feat,
+      ),
+    };
+    const moved = withImprovement(picked, 4, WIZARD, {
+      feat: SKILLED,
+      increases: [{ ability: "int", amount: 1 }],
+    });
+    expect(moved.feats.find((feat) => feat.level === 4)?.picks).toEqual({ skills: ["arcana"] });
+    const swapped = withImprovement(picked, 4, WIZARD, { feat: GRAPPLER, increases: [] });
+    expect(swapped.feats.find((feat) => feat.level === 4)?.picks).toBeUndefined();
+  });
+
   it("reads no improvement where nothing was taken, as for a character stored before them", () => {
     expect(improvementAt(held, 4)).toBeUndefined();
   });

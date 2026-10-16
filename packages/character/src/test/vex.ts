@@ -69,6 +69,9 @@ export const derivedInput = (traits: object = {}) => ({
     },
   },
   itemGrants: { computed: { proficiencies: [], languages: [] } },
+  featGrants: {
+    computed: { savingThrows: [], skills: [], tools: [], languages: [], armor: [], weapons: [] },
+  },
   rollEffects: { computed: [] },
   unproficientItems: [],
   castingBlockedBy: [],

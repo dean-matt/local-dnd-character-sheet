@@ -56,6 +56,44 @@ export type DefenseTrait = {
 /** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
 type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
 
+/** A definition field a feat's pick lands in, as `feats[].picks` keys it. */
+export type FeatPickField =
+  | "savingThrows"
+  | "skills"
+  | "expertise"
+  | "tools"
+  | "languages"
+  | "resist";
+
+/**
+ * One pick a feat offers: `count` names, each landing in one of `fields`. `from` holds the
+ * names lowercased, or is `null` where any of the field's own pool will do.
+ */
+export type FeatOffer = {
+  fields: readonly FeatPickField[];
+  count: number;
+  from: readonly string[] | null;
+};
+
+/**
+ * What a feat grants through the fields races and items carry, each name lowercased as
+ * upstream writes it, the picks it offers, and the name its grants cite.
+ */
+export type FeatGrantTrait = {
+  name: string;
+  savingThrows: readonly string[];
+  skills: readonly string[];
+  expertise: readonly string[];
+  tools: readonly string[];
+  languages: readonly string[];
+  armor: readonly string[];
+  weapons: readonly string[];
+  resist: readonly string[];
+  immune: readonly string[];
+  conditionImmune: readonly string[];
+  offers: readonly FeatOffer[];
+};
+
 /** The ammunition uids an inventory entry stands for, each with how many one unit of the entry holds. */
 export type AmmunitionTrait = readonly { uid: string; count: number }[];
 
@@ -186,6 +224,8 @@ export type CharacterCatalog = {
   itemAdvantages: ReadonlyMap<string, ItemAdvantageTrait>;
   /** Keyed like `weapons`, and absent for an item that states neither a Stealth penalty nor a Strength requirement. */
   armorBurdens: ReadonlyMap<string, ArmorBurdenTrait>;
+  /** Keyed by `entryKey` of a `feats` entry's feat, and absent for a feat no row answers. */
+  featGrants: ReadonlyMap<string, FeatGrantTrait>;
   /** Keyed like `weapons`, and absent for an entry that is not ammunition. */
   ammunition: ReadonlyMap<string, AmmunitionTrait>;
   /** Keyed like `weapons`, and absent for an item that holds nothing. */
