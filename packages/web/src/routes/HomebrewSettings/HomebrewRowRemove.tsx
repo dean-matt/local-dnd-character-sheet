@@ -8,7 +8,7 @@ export function HomebrewRowRemove({ name, onRemove }: { name: string; onRemove: 
       aria-label={`Remove ${name}`}
       title="Remove"
       onClick={onRemove}
-      className="flex size-9 items-center justify-center self-end rounded-control text-error hover:bg-subtle"
+      className="flex size-8 items-center justify-center self-center justify-self-start rounded-control text-error hover:bg-subtle"
     >
       <X aria-hidden size={16} />
     </button>

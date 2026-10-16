@@ -108,8 +108,6 @@ export function ItemBonusFields({ entry, onChange, weapon, error }: ItemBonusFie
                 )
               }
             />
-            <div />
-            <div />
             <HomebrewRowRemove
               name={`bonus ${index + 1}`}
               onRemove={() => write(rows.filter((_, at) => at !== index))}

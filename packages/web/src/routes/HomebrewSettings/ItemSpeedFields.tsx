@@ -133,7 +133,6 @@ export function ItemSpeedFields({ speed, onChange, error }: ItemSpeedFieldsProps
                 onChange={(event) => replace(index, { value: typedInteger(event.target.value) })}
               />
             )}
-            <div />
             <HomebrewRowRemove
               name={`speed change ${index + 1}`}
               onRemove={() => write(rows.filter((_, at) => at !== index))}

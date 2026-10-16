@@ -104,7 +104,6 @@ export function ItemAbilityFields({ ability, onChange, error }: ItemAbilityField
               value={row.value ?? ""}
               onChange={(event) => replace(index, { value: typedInteger(event.target.value) })}
             />
-            <div />
             <HomebrewRowRemove
               name={`ability change ${index + 1}`}
               onRemove={() => write(rows.filter((_, at) => at !== index))}
