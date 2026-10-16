@@ -40,6 +40,7 @@ import type {
 import type { CharacterDerived, Defenses } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
+import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
 import {
   type ProficiencyItem,
   proficiencyItemTerms,
@@ -58,7 +59,8 @@ import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
  *
  * `hitDice` maps a class to its die, keyed by `entryKey` — a class is catalog or
  * homebrew data a character references rather than copies. A class the map does not
- * name is rejected rather than defaulted, since a guessed die invents hit points.
+ * name is rejected rather than defaulted, since a guessed die invents hit points. A feat
+ * such as Tough adds its own term after the levels.
  */
 export function hitPointMaximum(
   definition: CharacterDefinition,
@@ -71,7 +73,11 @@ export function hitPointMaximum(
     if (die === undefined) throw new RangeError(`No hit die for ${key}`);
     return { die, rolled: level.rolled };
   });
-  return maxHitPoints(levels, abilityModifier(abilityScore(definition, "con", grants)));
+  const { terms } = maxHitPoints<TermReference>(
+    levels,
+    abilityModifier(abilityScore(definition, "con", grants)),
+  );
+  return breakdown([...terms, ...featHitPointTerms(definition, totalLevel(definition))]);
 }
 
 /**
@@ -769,9 +775,13 @@ export function deriveCharacter(
   const bonuses = equippedBonuses(definition, catalog);
 
   const worn = wornBurdens(definition, catalog);
-  const itemSpeed = speedWithItems(catalog.speed, bonuses);
+  const featSpeed = speedWithFeats(catalog.speed, definition);
+  const itemSpeed = speedWithItems(featSpeed.speed, bonuses);
   const armorSpeed = speedUnderArmor(itemSpeed.speed, worn, scoreOf(definition, catalog, "str"));
-  const speed = { speed: armorSpeed.speed, terms: [...itemSpeed.terms, ...armorSpeed.terms] };
+  const speed = {
+    speed: armorSpeed.speed,
+    terms: [...featSpeed.terms, ...itemSpeed.terms, ...armorSpeed.terms],
+  };
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
       const { total, terms } = savingThrowModifier(
@@ -831,6 +841,10 @@ export function deriveCharacter(
       ComputedField<number>
     >;
 
+  const proficiencyBonus = breakdown<TermReference>([
+    ...proficiencyBonusBreakdown<TermReference>(level).terms,
+    ...itemTerms(bonuses, (item) => item.proficiencyBonus),
+  ]);
   const { burdened, ...carrying } = load(definition, catalog);
   const block: CharacterDerived = {
     abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
@@ -841,12 +855,7 @@ export function deriveCharacter(
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: speed.speed, manual: null, terms: speed.terms },
-    proficiencyBonus: fromBreakdown(
-      breakdown([
-        ...proficiencyBonusBreakdown<TermReference>(level).terms,
-        ...itemTerms(bonuses, (item) => item.proficiencyBonus),
-      ]),
-    ),
+    proficiencyBonus: fromBreakdown(proficiencyBonus),
     savingThrows,
     concentrationSave,
     skills,
@@ -856,6 +865,7 @@ export function deriveCharacter(
       breakdown([
         ...abilityModifierBreakdown<TermReference>(scores.dex.total).terms,
         ...checkBonus,
+        ...featInitiativeTerms(definition, proficiencyBonus.total),
       ]),
     ),
     spellcasting: spellcastingEntries(definition, catalog, level, bonuses),
