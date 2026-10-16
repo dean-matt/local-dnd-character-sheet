@@ -17,31 +17,42 @@ export interface HomebrewEntrySettingsProps {
   starters: readonly Starter[];
   starter: string;
   onStarter: (picked: Starter) => void;
+  /** Which of the two to show: step by step sets the edition in Basics and the example above it. */
+  parts?: readonly ("rules" | "starter")[];
 }
 
-/** The entry's edition, and for a new entry the example it starts from where a kind has several. */
+/**
+ * The entry's edition, and for a new entry the example it starts from where a kind has several;
+ * nothing where `parts` leaves neither to show.
+ */
 export function HomebrewEntrySettings({
   edition,
   onEdition,
   starters,
   starter,
   onStarter,
+  parts = ["rules", "starter"],
 }: HomebrewEntrySettingsProps) {
+  const rules = parts.includes("rules");
+  const starting = parts.includes("starter") && starters.length > 1;
+  if (!rules && !starting) return null;
   return (
     <div className={FORM_GRID}>
-      <div className={SHORT}>
-        <FormField label="Rules">
-          {(control) => (
-            <Select
-              {...control}
-              options={EDITIONS}
-              value={edition}
-              onChange={(next) => onEdition(next as Edition)}
-            />
-          )}
-        </FormField>
-      </div>
-      {starters.length > 1 && (
+      {rules && (
+        <div className={SHORT}>
+          <FormField label="Rules">
+            {(control) => (
+              <Select
+                {...control}
+                options={EDITIONS}
+                value={edition}
+                onChange={(next) => onEdition(next as Edition)}
+              />
+            )}
+          </FormField>
+        </div>
+      )}
+      {starting && (
         <div className={SHORT}>
           <FormField label="Start from">
             {(control) => (

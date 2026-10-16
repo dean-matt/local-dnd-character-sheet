@@ -101,8 +101,9 @@ export function HomebrewEditor({
     if (!draft.changed || window.confirm(`Discard your changes to ${title}?`)) onClose();
   };
 
-  const settings = (
+  const settings = (parts?: readonly ("rules" | "starter")[]) => (
     <HomebrewEntrySettings
+      parts={parts}
       edition={draft.edition}
       onEdition={draft.pickEdition}
       starters={record ? [] : kind.starters}
@@ -169,7 +170,7 @@ export function HomebrewEditor({
               >
                 {mode === "JSON" ? (
                   <>
-                    {settings}
+                    {settings()}
                     <HomebrewJsonMode
                       noun={noun}
                       reference={kind.reference}
@@ -183,7 +184,8 @@ export function HomebrewEditor({
                     kind={kind}
                     step={step}
                     draft={draft}
-                    settings={settings}
+                    starter={settings(["starter"])}
+                    rules={settings(["rules"])}
                     shownProblems={shownProblems}
                     onStep={goTo}
                   />

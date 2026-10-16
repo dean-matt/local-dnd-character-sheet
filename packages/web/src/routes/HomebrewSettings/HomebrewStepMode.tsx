@@ -9,7 +9,10 @@ export interface HomebrewStepModeProps {
   kind: HomebrewKind;
   step: number;
   draft: ReturnType<typeof useHomebrewEntryDraft>;
-  settings: ReactNode;
+  /** The example a new entry starts from, shown above the steps. */
+  starter: ReactNode;
+  /** The entry's edition, shown first in the first section. */
+  rules: ReactNode;
   /** The problems to name, which stay empty until a step or a save is tried. */
   shownProblems: HomebrewProblem[];
   onStep: (step: number) => void;
@@ -24,7 +27,8 @@ export function HomebrewStepMode({
   kind,
   step,
   draft,
-  settings,
+  starter,
+  rules,
   shownProblems,
   onStep,
 }: HomebrewStepModeProps) {
@@ -58,20 +62,21 @@ export function HomebrewStepMode({
           </li>
         </ol>
       </nav>
-      <p aria-live="polite" className="text-label text-muted">
+      <p aria-live="polite" className="sr-only">
         Step {step + 1} of {steps.length}
       </p>
       {current && (
         <>
-          {step === 0 && settings}
+          {step === 0 && starter}
           <div className="grid gap-6 @3xl:grid-cols-2">
-            {current.sections.map(({ title, Fields }) => (
+            {current.sections.map(({ title, Fields }, index) => (
               <section
                 key={title}
                 aria-label={title}
                 className="@container flex min-w-0 flex-col gap-3"
               >
                 <h3 className="font-semibold text-sm">{title}</h3>
+                {step === 0 && index === 0 && rules}
                 <Fields
                   key={draft.revision}
                   entry={draft.entry}
