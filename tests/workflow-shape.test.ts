@@ -70,3 +70,40 @@ describe(".github/workflows/", () => {
     ).toBe(true);
   });
 });
+
+type CiJob = {
+  name?: string;
+  needs?: string[];
+  if?: string;
+  strategy?: { matrix?: { shard?: number[] } };
+};
+
+/**
+ * The ruleset requires `check (<os>)` by name, so each must wait on every job that runs
+ * for that OS, and report when one fails rather than skip, which reads as green.
+ */
+describe("ci.yml", () => {
+  const jobs = (parse(read(".github/workflows/ci.yml")) as { jobs: Record<string, CiJob> }).jobs;
+
+  it.each(["ubuntu-latest", "windows-latest"])("check (%s) stands for its shards", (os) => {
+    const check = Object.values(jobs).find((j) => j.name === `check (${os})`);
+    const shards = Object.entries(jobs)
+      .filter(([, j]) => j.name?.startsWith(`test (${os},`))
+      .map(([id]) => id);
+    expect(shards).toHaveLength(1);
+    expect(check?.needs).toEqual(expect.arrayContaining(shards));
+    expect(check?.if).toBe("always()");
+  });
+
+  it("gates the OS-independent steps under check (ubuntu-latest)", () => {
+    expect(jobs["check-ubuntu"]?.needs).toContain("static");
+  });
+
+  it("numbers each OS's shards 1 to n", () => {
+    for (const [id, job] of Object.entries(jobs).filter(([id]) => id.startsWith("test-"))) {
+      const shards = job.strategy?.matrix?.shard ?? [];
+      expect(shards, id).toEqual(shards.map((_, i) => i + 1));
+      expect(shards.length, id).toBeGreaterThan(0);
+    }
+  });
+});

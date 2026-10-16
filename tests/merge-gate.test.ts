@@ -353,6 +353,17 @@ describe("the other three conditions", () => {
     expect(checksBlocked(reported, ["check", "e2e"])).toBe("e2e (not reported)");
   });
 
+  it("blocks on a red shard and the OS check it fails", () => {
+    const checks = [
+      { name: "check (ubuntu-latest)", bucket: "pass" },
+      { name: "test (windows-latest, 3/4)", bucket: "fail" },
+      { name: "check (windows-latest)", bucket: "fail" },
+    ];
+    expect(checksBlocked(checks, ["check (ubuntu-latest)", "check (windows-latest)"])).toBe(
+      "test (windows-latest, 3/4), check (windows-latest)",
+    );
+  });
+
   it("blocks where the ruleset names no required check", () => {
     expect(checksBlocked([{ name: "check", bucket: "pass" }], [])).toMatch(/no required check/);
   });
