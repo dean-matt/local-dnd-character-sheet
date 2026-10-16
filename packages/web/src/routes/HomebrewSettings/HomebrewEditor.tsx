@@ -239,6 +239,7 @@ export function HomebrewEditor({
               {problemList(unplaced)}
             </div>
           )}
+          {kind.reference}
         </div>
         <div
           id={`${id}-Preview`}

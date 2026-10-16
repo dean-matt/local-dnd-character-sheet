@@ -1,8 +1,7 @@
 /**
- * The entries a new homebrew row opens with, each carrying every field the sheet reads off
- * an entry of its sort, in the shape `vendor/5etools/data/` writes it. A field upstream
- * carries that nothing here reads, such as an armor's `stealth`, is left out, so editing
- * one never looks like it changed the sheet.
+ * The entries a new homebrew row opens with, in the shape `vendor/5etools/data/` writes
+ * it. Between them they carry the fields `appliedItemFieldsSchema` lists, and no other
+ * field but a name and rules text, so editing one never looks like it changed the sheet.
  */
 
 /** One example a new entry can start from, named for the picker. */
@@ -59,13 +58,38 @@ export const ITEM_STARTERS: HomebrewStarters = [
   {
     label: "Gear",
     entry: {
-      name: "Tidewatcher's Lantern",
+      name: "Tidewatcher's Candle",
       type: "G",
       rarity: "none",
-      weight: 2,
-      value: 500,
+      weight: 0.5,
+      value: 50,
       entries: [
-        "This hooded lantern burns for 6 hours on one {@item Oil|XPHB|flask of oil}, casting bright light in a 30-foot radius and dim light for an additional 30 feet.",
+        "This candle of blue tallow burns for 1 hour, casting bright light in a 5-foot radius and dim light for an additional 5 feet. Its flame leans toward the nearest salt water within 1 mile.",
+      ],
+    },
+  },
+  {
+    label: "Wondrous item",
+    entry: {
+      name: "Stormcaller's Circlet",
+      wondrous: true,
+      rarity: "legendary",
+      reqAttune: true,
+      weight: 1,
+      ability: { wis: 1 },
+      bonusAbilityCheck: "+1",
+      bonusSavingThrow: "+1",
+      bonusSavingThrowConcentration: "+2",
+      bonusSpellAttack: "+1",
+      bonusSpellSaveDc: "+1",
+      bonusSpellDamage: "+1",
+      bonusProficiencyBonus: "+1",
+      modifySpeed: { static: { fly: 30 } },
+      critThreshold: 19,
+      vulnerable: ["thunder"],
+      entries: [
+        "While wearing this circlet, your Wisdom score increases by 1, you gain a +1 bonus to ability checks, saving throws, spell attack rolls, spell damage rolls, your spell save DC and your Proficiency Bonus, and a +2 bonus to saving throws to maintain {@status Concentration|XPHB}.",
+        "You have a flying speed of 30 feet, and your attack rolls score a critical hit on a roll of 19 or 20. The storm's rage is yours to bear: you have vulnerability to thunder damage.",
       ],
     },
   },

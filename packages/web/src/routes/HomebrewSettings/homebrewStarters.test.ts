@@ -1,7 +1,10 @@
 import {
+  abilityGrantSchema,
+  appliedItemFieldsSchema,
   armorTraitSchema,
   defenseTraitSchema,
   entriesSchema,
+  itemBonusSchema,
   spellCastingFactsSchema,
   weaponTraitSchema,
 } from "@dnd/catalog";
@@ -43,6 +46,36 @@ describe("homebrew starters", () => {
       immune: ["fire"],
       conditionImmune: ["frightened"],
     });
+  });
+
+  it("shows only fields the sheet applies, beside a name and rules text", () => {
+    const applied = new Set([...Object.keys(appliedItemFieldsSchema.shape), "name", "entries"]);
+    const shown = ITEM_STARTERS.flatMap(({ entry }) => Object.keys(entry));
+    expect(shown.filter((key) => !applied.has(key))).toEqual([]);
+  });
+
+  it("prices the gear under 1 gp, in copper", () => {
+    expect(starter("Gear").value).toBe(50);
+  });
+
+  it("gives the wondrous item a score, every bonus, a speed, a critical range and a vulnerability", () => {
+    const circlet = starter("Wondrous item");
+    expect(abilityGrantSchema.parse(circlet)).toEqual({ static: {}, bonus: { wis: 1 } });
+    expect(itemBonusSchema.parse(circlet)).toEqual({
+      ac: 0,
+      save: 1,
+      concentration: 2,
+      spellAttack: 1,
+      spellSaveDc: 1,
+      spellDamage: 1,
+      abilityCheck: 1,
+      proficiencyBonus: 1,
+      grantsProficiency: false,
+      grantsLanguage: false,
+      critThreshold: 19,
+      speed: { static: { fly: 30 } },
+    });
+    expect(defenseTraitSchema.parse(circlet)).toMatchObject({ vulnerable: ["thunder"] });
   });
 
   it("gives the spell every casting fact and its upcast text in the shape the sheet reads", () => {

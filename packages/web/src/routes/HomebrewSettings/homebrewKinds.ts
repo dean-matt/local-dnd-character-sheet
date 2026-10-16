@@ -11,13 +11,14 @@ import {
   rowEntries,
 } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
-import type { ComponentType } from "react";
+import { type ComponentType, createElement, type ReactNode } from "react";
 import type { z } from "zod";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
 import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
+import { ItemFieldReference } from "./ItemFieldReference.tsx";
 import { ItemForm } from "./ItemForm.tsx";
 import { SpellForm } from "./SpellForm.tsx";
 import { withUpcastNameFor } from "./spellUpcast.ts";
@@ -56,6 +57,8 @@ export interface HomebrewKind<
   /** What a new entry opens with; the editor offers a choice where there is more than one. */
   starters: HomebrewStarters;
   Form: ComponentType<HomebrewFormProps>;
+  /** What the editor shows under either view: the fields the sheet reads, where a kind lists them. */
+  reference?: ReactNode;
   /** The top-level fields `Form` shows a problem beside; the editor lists any other problem itself. */
   formKeys: string[];
   /** The entry as the edition picked next would write it, where an edition changes how it reads. */
@@ -76,6 +79,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
   entries: itemEntries,
   starters: ITEM_STARTERS,
   Form: ItemForm,
+  reference: createElement(ItemFieldReference),
   formKeys: ["name", "type", "rarity", "reqAttune", "advantage", "entries"],
 };
 
