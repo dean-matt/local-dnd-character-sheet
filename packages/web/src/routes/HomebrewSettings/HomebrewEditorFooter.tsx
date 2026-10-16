@@ -6,22 +6,20 @@ export interface HomebrewEditorFooterProps {
   onCancel: () => void;
   stepping: boolean;
   first: boolean;
-  last: boolean;
   onAdvance: (by: number) => void;
   saving: boolean;
   onSave: () => void;
 }
 
 /**
- * Cancel, why a save failed, Previous and Next while stepping, and Save. Previous and Next
- * stay in place at either end, so focus never drops off a button that vanished.
+ * Cancel, why a save failed, Previous and Next while stepping, and Save. Previous stays in
+ * place on the first step, so focus never drops off a button that vanished.
  */
 export function HomebrewEditorFooter({
   failure,
   onCancel,
   stepping,
   first,
-  last,
   onAdvance,
   saving,
   onSave,
@@ -44,12 +42,7 @@ export function HomebrewEditorFooter({
           >
             Previous
           </button>
-          <button
-            type="button"
-            aria-disabled={last}
-            onClick={() => !last && onAdvance(1)}
-            className={SECONDARY}
-          >
+          <button type="button" onClick={() => onAdvance(1)} className={SECONDARY}>
             Next
           </button>
         </>

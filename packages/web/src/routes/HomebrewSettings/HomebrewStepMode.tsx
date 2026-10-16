@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewProblemAlert } from "./HomebrewProblemAlert.tsx";
 import { errorFor, type HomebrewProblem } from "./homebrewDraft.ts";
 import { type HomebrewKind, stepOf } from "./homebrewKinds.ts";
@@ -10,27 +9,25 @@ export interface HomebrewStepModeProps {
   step: number;
   draft: ReturnType<typeof useHomebrewEntryDraft>;
   settings: ReactNode;
-  problems: HomebrewProblem[];
   /** The problems to name, which stay empty until a step or a save is tried. */
   shownProblems: HomebrewProblem[];
   onStep: (step: number) => void;
 }
 
 /**
- * A button naming each step, one step of the kind's form with the problems in fields it has
- * no control for, and past the last step, the review.
+ * A button naming each step and one for the preview past the last, then one step of the
+ * kind's form with the problems in fields it has no control for.
  */
 export function HomebrewStepMode({
   kind,
   step,
   draft,
   settings,
-  problems,
   shownProblems,
   onStep,
 }: HomebrewStepModeProps) {
   const current = kind.steps[step];
-  const titles = [...kind.steps.map(({ title }) => title), "Review"];
+  const titles = [...kind.steps.map(({ title }) => title), "Preview"];
   return (
     <>
       <nav aria-label="Steps">
@@ -50,9 +47,9 @@ export function HomebrewStepMode({
         </ol>
       </nav>
       <p aria-live="polite" className="text-label text-muted">
-        Step {step + 1} of {kind.steps.length + 1}
+        Step {step + 1} of {kind.steps.length}
       </p>
-      {current ? (
+      {current && (
         <>
           <h3 className="font-semibold text-sm">{current.title}</h3>
           {step === 0 && settings}
@@ -68,12 +65,6 @@ export function HomebrewStepMode({
               ({ key }) => stepOf(kind, key) === step && !kind.formKeys.includes(key),
             )}
           />
-        </>
-      ) : (
-        <>
-          <h3 className="font-semibold text-sm">Review</h3>
-          <HomebrewProblemAlert problems={problems} />
-          <HomebrewPreview noun={kind.noun} shown={draft.shown} />
         </>
       )}
     </>

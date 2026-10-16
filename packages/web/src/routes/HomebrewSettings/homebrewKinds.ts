@@ -154,8 +154,8 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
 /** The kinds in the order the page lists them. */
 export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell];
 
-/** The step that shows a problem with the top-level field `key`; past the last, the review. */
+/** The step that shows a problem with the top-level field `key`; the last, where none lists it. */
 export function stepOf(kind: HomebrewKind, key: string): number {
   const at = kind.steps.findIndex(({ keys }) => keys.includes(key));
-  return at === -1 ? kind.steps.length : at;
+  return at === -1 ? kind.steps.length - 1 : at;
 }

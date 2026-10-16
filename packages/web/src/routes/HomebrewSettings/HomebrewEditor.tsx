@@ -31,8 +31,8 @@ export interface HomebrewEditorProps {
  * Both modes edit one entry, so a change in either shows in the other and a field the form
  * has no control for survives it. Leaving JSON waits until the text parses. A step holding a
  * problem holds every step after it, and each problem shows beside its field once a step or
- * a save is tried. The Preview tab shows the entry as the sheet renders it, and either mode's
- * tab returns to it at the same step. Saving replaces the whole entry; closing with changes
+ * a save is tried. The Preview tab, or the step past the last, shows the entry as the sheet
+ * renders it, and either mode's tab returns to it at the same step. Saving replaces the whole entry; closing with changes
  * asks first.
  */
 export function HomebrewEditor({
@@ -57,7 +57,6 @@ export function HomebrewEditor({
   }, [refusals]);
   const mode = draft.text === undefined ? MODES[0] : MODES[1];
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
-  const current = kind.steps[step];
   const shownProblems = tried ? problems : [];
   const title = record ? `Edit ${record.name}` : `New ${kind.noun}`;
   const noun = capitalize(kind.noun);
@@ -84,7 +83,10 @@ export function HomebrewEditor({
       return refuse();
     }
     setTried(false);
-    setStep(target);
+    if (target < kind.steps.length) return setStep(target);
+    switchView("Preview");
+    // The step buttons and Next leave with the form, so focus moves to the tab now selected.
+    document.getElementById(`${id}-tab-${VIEWS.indexOf("Preview")}`)?.focus();
   };
   const save = () => {
     if ("input" in draft.checked) {
@@ -119,7 +121,6 @@ export function HomebrewEditor({
             onCancel={close}
             stepping={mode === "Step by step" && !previewing}
             first={step === 0}
-            last={current === undefined}
             onAdvance={(by) => goTo(step + by)}
             saving={saving}
             onSave={save}
@@ -161,7 +162,7 @@ export function HomebrewEditor({
                   if (target.type === "checkbox") return;
                   event.preventDefault();
                   // Enter walks the steps rather than saving past the ones not yet seen.
-                  if (mode === "Step by step" && current) goTo(step + 1);
+                  if (mode === "Step by step") goTo(step + 1);
                   else save();
                 }}
                 className="flex min-w-0 flex-col gap-3"
@@ -183,7 +184,6 @@ export function HomebrewEditor({
                     step={step}
                     draft={draft}
                     settings={settings}
-                    problems={problems}
                     shownProblems={shownProblems}
                     onStep={goTo}
                   />

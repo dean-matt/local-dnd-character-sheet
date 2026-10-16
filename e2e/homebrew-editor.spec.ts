@@ -44,14 +44,14 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
     await page.keyboard.press("Tab");
   }
   await expect(next).toBeFocused();
-  for (const title of ["Rules text", "Review"]) {
-    await page.keyboard.press("Enter");
-    await expect(editor.getByRole("heading", { name: title })).toBeVisible();
-  }
+  await page.keyboard.press("Enter");
+  await expect(editor.getByRole("heading", { name: "Rules text" })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(editor.getByRole("tab", { name: "Preview" })).toBeFocused();
   await expect(editor.getByRole("heading", { name: named })).toBeVisible();
   await expectNoViolations(page);
 
-  await editor.getByRole("tab", { name: "Step by step" }).press("ArrowRight");
+  await page.keyboard.press("ArrowLeft");
   await expect(editor.getByRole("tab", { name: "JSON" })).toBeFocused();
   await expect(editor.getByRole("textbox", { name: "Item JSON" })).toBeVisible();
   await expectNoViolations(page);

@@ -155,11 +155,11 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
-    expect(editor()).toHaveTextContent("Step 1 of 4");
+    expect(editor()).toHaveTextContent("Step 1 of 3");
     expect(click("Previous")).toHaveAttribute("aria-disabled", "true");
     fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
     click("Next");
-    expect(editor()).toHaveTextContent("Step 1 of 4");
+    expect(editor()).toHaveTextContent("Step 1 of 3");
     expect(field("textbox", "Name")).toHaveAccessibleDescription();
     expect(field("textbox", "Name")).toHaveFocus();
 
@@ -169,12 +169,15 @@ describe("HomebrewSettings", () => {
     expect(field("textbox", "Material component")).not.toHaveAccessibleDescription();
     click("Next");
     expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
+    expect(editor()).toHaveTextContent("Step 3 of 3");
     click("Next");
-    expect(editor()).toHaveTextContent("Step 4 of 4");
-    expect(within(editor()).getByRole("heading", { name: "Review" })).toBeInTheDocument();
+    expect(within(editor()).getByRole("tab", { name: "Preview" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(within(editor()).getByRole("tab", { name: "Preview" })).toHaveFocus();
     expect(within(editor()).getByRole("heading", { name: "Brineburst" })).toBeInTheDocument();
-    expect(click("Next")).toHaveAttribute("aria-disabled", "true");
-    click("Previous");
+    mode("Step by step");
     expect(within(editor()).getByRole("heading", { name: "Effect" })).toBeInTheDocument();
   });
 
@@ -197,7 +200,7 @@ describe("HomebrewSettings", () => {
 
     fireEvent.click(within(steps).getByRole("button", { name: "Basics" }));
     fireEvent.change(field("textbox", "Name"), { target: { value: "" } });
-    fireEvent.click(within(steps).getByRole("button", { name: "Review" }));
+    fireEvent.click(within(steps).getByRole("button", { name: "Preview" }));
     expect(within(editor()).getByRole("heading", { name: "Basics" })).toBeInTheDocument();
     expect(field("textbox", "Name")).toHaveFocus();
   });
@@ -357,7 +360,7 @@ describe("HomebrewSettings", () => {
     expect(within(preview).queryByRole("textbox")).toBeNull();
 
     mode("Step by step");
-    expect(editor()).toHaveTextContent("Step 3 of 4");
+    expect(editor()).toHaveTextContent("Step 3 of 3");
     expect(field("textbox", "Rules text")).toHaveValue(
       "Brine deals {@damage 3d4} cold damage.\n\nIt stings.",
     );
