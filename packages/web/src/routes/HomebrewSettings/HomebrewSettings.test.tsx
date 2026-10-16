@@ -894,4 +894,19 @@ describe("HomebrewSettings", () => {
       { url: "/api/homebrew/items/i1", method: "DELETE", body: undefined },
     ]);
   });
+
+  it("loads a starter picked while the JSON editor is open, and keeps it through the next edit", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    mode("JSON");
+    pick("Start from", "Gear");
+    const gear = ITEM_STARTERS.find(({ label }) => label === "Gear");
+    expect(JSON.parse(jsonText("Item JSON")).name).toBe(gear?.entry.name);
+
+    typeJson("Item JSON", jsonText("Item JSON").replace(`"${gear?.entry.name}"`, '"Lamp"'));
+    mode("Step by step");
+    expect(field("textbox", "Name")).toHaveValue("Lamp");
+  });
 });

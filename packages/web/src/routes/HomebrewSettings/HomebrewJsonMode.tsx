@@ -79,13 +79,7 @@ export function HomebrewJsonMode({
             error={problems.length > 0 && <HomebrewProblemList problems={problems} />}
           >
             {(control) => (
-              <JsonEditor
-                {...control}
-                label={`${noun} JSON`}
-                value={text}
-                onChange={onText}
-                schema={schema}
-              />
+              <JsonEditor {...control} value={text} onChange={onText} schema={schema} />
             )}
           </FormField>
         </div>

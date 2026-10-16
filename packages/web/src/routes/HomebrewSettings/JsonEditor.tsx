@@ -1,11 +1,13 @@
 import { json } from "@codemirror/lang-json";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { Compartment } from "@codemirror/state";
+import { tags } from "@lezer/highlight";
 import { basicSetup, EditorView } from "codemirror";
 import { jsonSchema } from "codemirror-json-schema";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface JsonEditorProps {
-  label: string;
+  /** `FormField`'s control id; its label carries this id with `-label`. */
   id: string;
   "aria-invalid": boolean;
   "aria-describedby": string | undefined;
@@ -34,6 +36,9 @@ const theme = EditorView.theme({
     borderColor: "var(--color-border)",
   },
   ".cm-activeLine, .cm-activeLineGutter": { backgroundColor: "transparent" },
+  ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--color-ink)" },
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground":
+    { backgroundColor: "color-mix(in oklab, var(--color-accent) 30%, var(--color-surface))" },
   ".cm-tooltip": {
     maxWidth: "24rem",
     backgroundColor: "var(--color-surface)",
@@ -43,11 +48,22 @@ const theme = EditorView.theme({
 });
 
 /**
- * JSON text in CodeMirror, controlled by `value`. The content element takes the label and
- * `FormField`'s control props, since a `<label for>` names no `contenteditable`. Tab is left
- * to the browser, so a keyboard user leaves the editor as from any field.
+ * Text tokens `contrast.test.ts` holds to AA on the surface in both themes, in place of
+ * CodeMirror's light-only defaults.
  */
-export function JsonEditor({ label, value, onChange, schema, ...control }: JsonEditorProps) {
+const highlight = HighlightStyle.define([
+  { tag: tags.propertyName, color: "var(--color-accent-text)" },
+  { tag: tags.string, color: "var(--color-positive)" },
+  { tag: [tags.number, tags.bool, tags.null], color: "var(--color-secondary)" },
+]);
+
+/**
+ * JSON text in CodeMirror, controlled by `value`. The content element takes `FormField`'s
+ * control props, and its label by id, since a `<label for>` neither names nor focuses a
+ * `contenteditable`. Tab is left to the browser, so a keyboard user leaves the editor as
+ * from any field.
+ */
+export function JsonEditor({ value, onChange, schema, ...control }: JsonEditorProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView>(null);
   const [attributes] = useState(() => new Compartment());
@@ -57,14 +73,14 @@ export function JsonEditor({ label, value, onChange, schema, ...control }: JsonE
   const contentAttributes = useMemo(
     () =>
       EditorView.contentAttributes.of({
-        "aria-label": label,
+        "aria-labelledby": `${id}-label`,
         // axe counts no contenteditable as focusable, and would flag the scroller around it.
         tabindex: "0",
         id,
         "aria-invalid": invalid,
         ...(describedBy && { "aria-describedby": describedBy }),
       }),
-    [label, id, invalid, describedBy],
+    [id, invalid, describedBy],
   );
   const latest = useRef({ value, schema, contentAttributes, onChange });
   latest.current = { value, schema, contentAttributes, onChange };
@@ -78,6 +94,7 @@ export function JsonEditor({ label, value, onChange, schema, ...control }: JsonE
         basicSetup,
         schema ? jsonSchema(schema) : json(),
         theme,
+        syntaxHighlighting(highlight),
         attributes.of(contentAttributes),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) latest.current.onChange(update.state.doc.toString());
@@ -87,6 +104,13 @@ export function JsonEditor({ label, value, onChange, schema, ...control }: JsonE
     view.current = editor;
     return () => editor.destroy();
   }, [attributes]);
+
+  useEffect(() => {
+    const label = document.getElementById(`${id}-label`);
+    const focus = () => view.current?.focus();
+    label?.addEventListener("click", focus);
+    return () => label?.removeEventListener("click", focus);
+  }, [id]);
 
   useEffect(() => {
     view.current?.dispatch({ effects: attributes.reconfigure(contentAttributes) });

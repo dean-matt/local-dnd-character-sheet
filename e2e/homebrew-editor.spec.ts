@@ -101,9 +101,8 @@ test("the item JSON editor suggests, describes and marks the fields the sheet ap
   const editor = page.getByRole("dialog", { name: "New item" });
   await editor.getByRole("tab", { name: "JSON" }).click();
   const json = editor.getByRole("textbox", { name: "Item JSON" });
-  await expect(editor.getByText("Item JSON", { exact: true })).toBeVisible();
-
-  await json.focus();
+  await editor.getByText("Item JSON", { exact: true }).click();
+  await expect(json).toBeFocused();
   await json.press("ControlOrMeta+a");
   await page.keyboard.insertText('{ "name": "Glow", "abil" }');
   for (const _ of '" }') await page.keyboard.press("ArrowLeft");
@@ -141,4 +140,26 @@ test("the item JSON editor suggests, describes and marks the fields the sheet ap
   await json.press("Tab");
   await expect(json).not.toBeFocused();
   await expect(editor).toBeVisible();
+});
+
+test("in the dark theme the JSON editor's text and caret hold contrast", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/settings/homebrew");
+  await page.getByRole("button", { name: "Add item" }).click();
+  const editor = page.getByRole("dialog", { name: "New item" });
+  await editor.getByRole("tab", { name: "JSON" }).click();
+  const json = editor.getByRole("textbox", { name: "Item JSON" });
+  await json.focus();
+  await expectNoViolations(page);
+  const caret = await editor
+    .locator(".cm-cursor")
+    .first()
+    .evaluate((cursor) => getComputedStyle(cursor).borderLeftColor);
+  const ink = await page.evaluate(() => {
+    const probe = document.createElement("i");
+    probe.style.color = "var(--color-ink)";
+    document.body.append(probe);
+    return getComputedStyle(probe).color;
+  });
+  expect(caret).toBe(ink);
 });
