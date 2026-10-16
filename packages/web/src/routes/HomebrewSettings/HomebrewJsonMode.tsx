@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { type ReactNode, useId, useState } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { HomebrewProblemList } from "./HomebrewProblemList.tsx";
 import type { HomebrewProblem } from "./homebrewDraft.ts";
@@ -11,7 +12,11 @@ export interface HomebrewJsonModeProps {
   onText: (next: string) => void;
 }
 
-/** The entry as JSON text, with the kind's field reference beside it where it has one, or above it where the reference is collapsed. */
+/**
+ * The entry as JSON text, with the kind's field reference in a sidebar on its left where it
+ * has one. The sidebar collapses sideways to a strip, and the JSON takes the width; where
+ * the modal is narrow, it stacks above the JSON and collapses to its button.
+ */
 export function HomebrewJsonMode({
   noun,
   reference,
@@ -19,13 +24,44 @@ export function HomebrewJsonMode({
   problems,
   onText,
 }: HomebrewJsonModeProps) {
+  const id = useId();
+  const [open, setOpen] = useState(true);
   return (
     <div className="@container">
-      <div
-        className={`flex flex-col gap-4 ${reference ? "@2xl:grid @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:items-start @2xl:has-[[data-collapsed]]:grid-cols-1" : ""}`}
-      >
-        {reference && <div className="min-w-0">{reference}</div>}
-        <div className="flex min-w-0 flex-col">
+      <div className="flex flex-col gap-4 @2xl:flex-row @2xl:items-start">
+        {reference && (
+          <div
+            className={`flex min-w-0 flex-col gap-2 @2xl:max-h-[32rem] @2xl:shrink-0 @2xl:overflow-y-auto ${open ? "@2xl:w-80" : "@2xl:w-10"}`}
+          >
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={`${id}-reference`}
+              onClick={() => setOpen(!open)}
+              title={open ? "Hide field reference" : "Show field reference"}
+              className="flex items-center gap-1.5 self-start rounded-control px-1.5 py-1 font-semibold text-muted text-row hover:bg-subtle hover:text-ink @2xl:self-end"
+            >
+              {open ? (
+                <>
+                  <PanelLeftClose aria-hidden size={16} />
+                  <span className="sr-only">Hide field reference</span>
+                </>
+              ) : (
+                <>
+                  <PanelLeftOpen aria-hidden size={16} />
+                  <span className="sr-only">Show field reference</span>
+                  <span aria-hidden className="@2xl:[writing-mode:vertical-rl]">
+                    Field Reference
+                  </span>
+                </>
+              )}
+            </button>
+            <div id={`${id}-reference`} hidden={!open}>
+              {reference}
+            </div>
+          </div>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
           <FormField
             label={`${noun} JSON`}
             error={problems.length > 0 && <HomebrewProblemList problems={problems} />}

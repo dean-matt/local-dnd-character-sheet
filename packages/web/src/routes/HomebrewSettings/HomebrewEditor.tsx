@@ -112,7 +112,7 @@ export function HomebrewEditor({
   );
 
   return (
-    <Modal onClose={close}>
+    <Modal onClose={close} wide>
       <ModalEntry
         title={title}
         footer={

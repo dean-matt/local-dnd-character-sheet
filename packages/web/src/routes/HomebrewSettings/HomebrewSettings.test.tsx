@@ -390,12 +390,14 @@ describe("HomebrewSettings", () => {
       target: { value: "" },
     });
 
-    const toggle = within(reference).getByRole("button", { name: "Field Reference" });
-    expect(toggle).toHaveAttribute("aria-expanded", "true");
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(within(reference).queryByRole("term")).toBeNull();
-    fireEvent.click(toggle);
+    const hide = within(editor()).getByRole("button", { name: "Hide field reference" });
+    expect(hide).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(hide);
+    expect(within(editor()).queryByRole("region", { name: "Field Reference" })).toBeNull();
+    const show = within(editor()).getByRole("button", { name: "Show field reference" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(show);
+    expect(within(editor()).getByRole("region", { name: "Field Reference" })).toBeInTheDocument();
     expect(within(reference).getByText("value").nextSibling).toHaveTextContent(/copper/);
     expect(within(reference).getByText("ability")).toBeInTheDocument();
     expect(

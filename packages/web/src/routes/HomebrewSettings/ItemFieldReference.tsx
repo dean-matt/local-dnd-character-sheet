@@ -1,5 +1,4 @@
 import { appliedItemFieldsSchema } from "@dnd/catalog";
-import { ChevronDown } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
 import { InputField } from "../../components/InputField.tsx";
 
@@ -26,12 +25,10 @@ const FIELDS: { key: string; text: string; description: ReactNode }[] = [
 
 /**
  * Every field the sheet reads off a homebrew item, and its rules text, by name, narrowed by a
- * search of names and descriptions. Collapsed, it marks itself `data-collapsed` so the JSON
- * beside it can take the width.
+ * search of names and descriptions.
  */
 export function ItemFieldReference() {
   const id = useId();
-  const [open, setOpen] = useState(true);
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const shown = FIELDS.filter(
@@ -39,47 +36,28 @@ export function ItemFieldReference() {
       needle === "" || key.toLowerCase().includes(needle) || text.toLowerCase().includes(needle),
   );
   return (
-    <section
-      aria-labelledby={`${id}-heading`}
-      data-collapsed={open ? undefined : ""}
-      className="flex flex-col gap-2 text-row"
-    >
-      <h3 id={`${id}-heading`} className="font-semibold">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={`${id}-body`}
-          onClick={() => setOpen(!open)}
-          className="inline-flex items-center gap-1 rounded-control hover:text-accent"
-        >
-          <ChevronDown
-            aria-hidden
-            size={14}
-            className={open ? "transition-transform" : "-rotate-90 transition-transform"}
-          />
-          Field Reference
-        </button>
+    <section aria-labelledby={id} className="flex flex-col gap-2 text-row">
+      <h3 id={id} className="font-semibold">
+        Field Reference
       </h3>
-      <div id={`${id}-body`} hidden={!open} className="flex flex-col gap-2">
-        <InputField
-          label="Search fields"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        {shown.length === 0 ? (
-          <p className="text-muted">No field matches “{query.trim()}”.</p>
-        ) : (
-          <dl className="flex flex-col gap-2">
-            {shown.map(({ key, description }) => (
-              <div key={key}>
-                <dt className="font-mono">{key}</dt>
-                <dd className="text-muted">{description}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-      </div>
+      <InputField
+        label="Search fields"
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {shown.length === 0 ? (
+        <p className="text-muted">No field matches “{query.trim()}”.</p>
+      ) : (
+        <dl className="flex flex-col gap-2">
+          {shown.map(({ key, description }) => (
+            <div key={key}>
+              <dt className="font-mono">{key}</dt>
+              <dd className="text-muted">{description}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </section>
   );
 }
