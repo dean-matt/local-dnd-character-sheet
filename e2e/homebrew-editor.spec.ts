@@ -18,6 +18,8 @@ async function expectNoViolations(page: Page) {
 test("a keyboard user adds a homebrew item step by step, switches to JSON, previews and saves it", async ({
   page,
 }) => {
+  // CI retries on the same homebrew.db, where a first attempt's save would hold the name.
+  const named = `Lantern Blade ${test.info().retry + 1}`;
   await page.goto("/settings/homebrew");
   const items = page.getByRole("region", { name: "Items" });
   const add = items.getByRole("button", { name: "Add item" });
@@ -28,7 +30,7 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
 
   const name = editor.getByRole("textbox", { name: "Name" });
   await name.press("ControlOrMeta+a");
-  await name.pressSequentially("Lantern Blade");
+  await name.pressSequentially(named);
   await name.press("Enter");
   await expect(editor.getByRole("heading", { name: "Defenses" })).toBeVisible();
 
@@ -46,7 +48,7 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
     await page.keyboard.press("Enter");
     await expect(editor.getByRole("heading", { name: title })).toBeVisible();
   }
-  await expect(editor.getByRole("heading", { name: "Lantern Blade" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: named })).toBeVisible();
   await expectNoViolations(page);
 
   await editor.getByRole("tab", { name: "Step by step" }).press("ArrowRight");
@@ -55,13 +57,13 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   await expectNoViolations(page);
 
   await editor.getByRole("button", { name: "Preview" }).press("Enter");
-  await expect(editor.getByRole("heading", { name: "Lantern Blade" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: named })).toBeVisible();
   await editor.getByRole("button", { name: "Back to editing" }).press("Enter");
   await expect(editor.getByRole("textbox", { name: "Item JSON" })).toBeVisible();
 
   await editor.getByRole("button", { name: "Save" }).press("Enter");
   await expect(editor).toBeHidden();
-  await expect(items.getByText("Lantern Blade")).toBeVisible();
+  await expect(items.getByText(named)).toBeVisible();
   await expect(add).toBeFocused();
 });
 

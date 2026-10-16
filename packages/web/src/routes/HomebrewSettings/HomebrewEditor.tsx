@@ -143,7 +143,7 @@ export function HomebrewEditor({
           >
             <p className="text-label text-muted">
               {record ? `Edit the ${kind.noun}` : `Fill in this example ${kind.noun}`} step by step,
-              or switch to JSON to paste a 5etools-shaped one over it. Saving replaces the whole
+              or in JSON, where a pasted 5etools-shaped one replaces it. Saving replaces the whole
               entry, and the source is always Homebrew.
             </p>
             <HomebrewViewTabs

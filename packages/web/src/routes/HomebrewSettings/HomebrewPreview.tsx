@@ -9,7 +9,7 @@ import type { HomebrewInput } from "./homebrewKinds.ts";
 
 export interface HomebrewPreviewProps {
   noun: string;
-  /** The last entry the kind's schema accepted; absent until one has been. */
+  /** The entry as it stands, once the kind's schema accepts it; absent while it holds a problem. */
   shown: { input: HomebrewInput; facts: Fact[]; entries: Entries } | undefined;
 }
 
