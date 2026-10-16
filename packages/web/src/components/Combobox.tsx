@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { type ComponentProps, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { useTopLayer } from "../hooks/useTopLayer.ts";
 import { anchoredListStyle, anchorName, DROPDOWN_PANEL } from "../lib/anchoring.ts";
@@ -130,8 +130,13 @@ export function Combobox({ options, value, onChange, ...control }: ComboboxProps
               aria-selected={option === value}
               onClick={() => pick(option)}
               onMouseEnter={() => setActive(index)}
-              className={`cursor-pointer rounded-lg px-2 py-1.5 text-row text-ink ${index === active ? "bg-subtle" : ""}`}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-row text-ink ${index === active ? "bg-subtle" : ""}`}
             >
+              <Check
+                size={14}
+                aria-hidden
+                className={`shrink-0 text-accent-text ${option === value ? "" : "invisible"}`}
+              />
               {option}
             </div>
           ))}
