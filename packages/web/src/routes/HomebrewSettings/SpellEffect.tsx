@@ -1,5 +1,5 @@
+import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { DAMAGE_TYPE_NAMES } from "../../lib/defenseVocabulary.ts";
-import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
 import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
 import {
   chosenIn,
@@ -10,7 +10,7 @@ import {
   withChosen,
   withField,
 } from "./homebrewEntry.ts";
-import { FORM_GRID, WHOLE } from "./homebrewGrid.ts";
+import { FORM_GRID, TEXT, WHOLE } from "./homebrewGrid.ts";
 import { upcastName, upcastSection, upcastText } from "./spellUpcast.ts";
 
 /** A homebrew spell's damage, rules text, and the text for casting it with a higher-level slot. */
@@ -20,11 +20,13 @@ export function SpellEffect({ entry, edition, onChange, errorFor }: HomebrewForm
 
   return (
     <div className={FORM_GRID}>
-      <div className={WHOLE}>
-        <HomebrewCheckboxGroup
-          legend="Damage types"
+      <div className={TEXT}>
+        <MultiSelect
+          inForm
+          label="Damage types"
+          noun="damage types"
           options={DAMAGE_TYPE_NAMES}
-          chosen={chosenIn(listAt(entry, "damageInflict"))}
+          selected={chosenIn(listAt(entry, "damageInflict"))}
           onChange={(chosen) =>
             set("damageInflict", withChosen(listAt(entry, "damageInflict"), chosen))
           }

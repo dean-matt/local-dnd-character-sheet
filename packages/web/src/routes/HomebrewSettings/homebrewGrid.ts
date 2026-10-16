@@ -12,5 +12,5 @@ export const SHORT = "col-span-1";
 /** A text input. */
 export const TEXT = "col-span-2";
 
-/** A text area, or a group of checkboxes. */
+/** A text area, or a list of rows. */
 export const WHOLE = "col-span-full";

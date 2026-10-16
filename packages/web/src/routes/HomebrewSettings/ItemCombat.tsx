@@ -1,8 +1,8 @@
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
+import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
-import { HomebrewCheckboxGroup } from "./HomebrewCheckboxGroup.tsx";
 import {
   type HomebrewFormProps,
   listAt,
@@ -11,7 +11,7 @@ import {
   typedInteger,
   withField,
 } from "./homebrewEntry.ts";
-import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
+import { FORM_GRID, SHORT, TEXT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import {
   DAMAGE_TYPE_CODES,
@@ -108,11 +108,13 @@ export function ItemCombat({ entry, onChange }: HomebrewFormProps) {
           <div className={TEXT}>
             <InputField label="Versatile damage" placeholder="1d10" {...text("dmg2")} />
           </div>
-          <div className={WHOLE}>
-            <HomebrewCheckboxGroup
-              legend="Properties"
+          <div className={TEXT}>
+            <MultiSelect
+              inForm
+              label="Properties"
+              noun="properties"
               options={WEAPON_PROPERTIES}
-              chosen={properties.flatMap((property) => propertyCode(property) ?? [])}
+              selected={properties.flatMap((property) => propertyCode(property) ?? [])}
               onChange={(chosen) => {
                 const kept = properties.filter((property) => {
                   const code = propertyCode(property);

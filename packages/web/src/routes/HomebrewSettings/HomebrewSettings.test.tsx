@@ -237,7 +237,9 @@ describe("HomebrewSettings", () => {
     expect(within(editor()).queryByRole("combobox", { name: "Damage type" })).toBeNull();
     click("Next");
     expect(field("combobox", "Damage type")).toHaveTextContent("Slashing");
-    expect(field("checkbox", "Versatile")).toBeChecked();
+    expect(
+      within(editor()).getByRole("button", { name: "Properties Versatile" }),
+    ).toBeInTheDocument();
 
     click("Previous");
     pick("Start from", "Armor");
@@ -296,8 +298,15 @@ describe("HomebrewSettings", () => {
     pick("Speed change 2 speed", "Every speed");
     fireEvent.change(field("spinbutton", "Speed change 2 feet"), { target: { value: "10" } });
     stepTo("Defenses");
-    const vulnerable = within(editor()).getByRole("group", { name: "Damage vulnerabilities" });
-    expect(within(vulnerable).getByRole("checkbox", { name: "Thunder" })).toBeChecked();
+    const vulnerable = within(editor()).getByRole("button", {
+      name: "Damage vulnerabilities Thunder",
+    });
+    expect(within(editor()).getByRole("button", { name: "Resistances None" })).toBeInTheDocument();
+    fireEvent.click(vulnerable);
+    fireEvent.click(within(editor()).getByRole("checkbox", { name: "Cold" }));
+    expect(
+      within(editor()).getByRole("button", { name: "Damage vulnerabilities Thunder, Cold" }),
+    ).toBeInTheDocument();
     mode("JSON");
 
     const entry = JSON.parse(jsonText("Item JSON"));
@@ -305,7 +314,7 @@ describe("HomebrewSettings", () => {
       bonusSpellSaveDc: "+2",
       ability: { static: { str: 19 } },
       modifySpeed: { equal: { fly: "walk" }, bonus: { "*": 10 } },
-      vulnerable: ["thunder"],
+      vulnerable: ["thunder", "cold"],
     });
     expect(entry.ability).toEqual({ static: { str: 19 } });
     expect(entry.modifySpeed).toEqual({ equal: { fly: "walk" }, bonus: { "*": 10 } });
