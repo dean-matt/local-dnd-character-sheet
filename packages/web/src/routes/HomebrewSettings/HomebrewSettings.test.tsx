@@ -399,6 +399,20 @@ describe("HomebrewSettings", () => {
     expect(shown.some((text) => text?.includes("critThreshold"))).toBe(true);
   });
 
+  it("shows a versatile die only for a Versatile weapon, and drops it with the property", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    stepTo("Combat");
+    expect(field("textbox", "Versatile damage")).toHaveValue("1d10");
+    fireEvent.click(within(editor()).getByRole("button", { name: "Properties Versatile" }));
+    fireEvent.click(within(editor()).getByRole("checkbox", { name: /^Versatile/ }));
+    expect(within(editor()).queryByRole("textbox", { name: "Versatile damage" })).toBeNull();
+    mode("JSON");
+    expect(JSON.parse(jsonText("Item JSON"))).not.toHaveProperty("dmg2");
+  });
+
   it("drops a weapon's attack when its type turns to armor", async () => {
     stubApi({});
     renderPage();

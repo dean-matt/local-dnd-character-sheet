@@ -2,7 +2,6 @@ import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { Select } from "../../components/Select.tsx";
-import { isRecord } from "../../lib/entryGuards.ts";
 import { BaseWeaponField } from "./BaseWeaponField.tsx";
 import {
   type HomebrewFormProps,
@@ -16,17 +15,13 @@ import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import {
   DAMAGE_TYPE_CODES,
+  isVersatile,
   itemGroup,
+  propertyCode,
   WEAPON_CATEGORIES,
   WEAPON_PROPERTIES,
 } from "./homebrewVocabulary.ts";
 import { useCatalogBlurbs } from "./useCatalogBlurbs.ts";
-
-/** A weapon property's code: `V` for `V|XPHB`, and for Lance's `{uid: "V|XPHB", note}`. */
-function propertyCode(property: unknown): string | undefined {
-  const named = isRecord(property) ? property.uid : property;
-  return typeof named === "string" ? named.split("|")[0] : undefined;
-}
 
 const PROPERTY_CODES = WEAPON_PROPERTIES.map(({ value }) => value);
 
@@ -118,7 +113,17 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
                   (code) => !kept.some((property) => propertyCode(property) === code),
                 );
                 const next = [...kept, ...added];
-                set("property", next.length > 0 ? next : undefined);
+                const withProperties = withField(
+                  entry,
+                  "property",
+                  next.length > 0 ? next : undefined,
+                );
+                // A versatile die belongs to the Versatile property, so it leaves with it.
+                onChange(
+                  chosen.includes("V")
+                    ? withProperties
+                    : withField(withProperties, "dmg2", undefined),
+                );
               }}
             />
           </div>
@@ -130,14 +135,16 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
               {...text("dmg1")}
             />
           </div>
-          <div className={PAIRED}>
-            <InputField
-              label="Versatile damage"
-              placeholder="1d10"
-              error={errorFor("dmg2")}
-              {...text("dmg2")}
-            />
-          </div>
+          {isVersatile(entry) && (
+            <div className={PAIRED}>
+              <InputField
+                label="Versatile damage"
+                placeholder="1d10"
+                error={errorFor("dmg2")}
+                {...text("dmg2")}
+              />
+            </div>
+          )}
         </>
       )}
       {group === "armor" && (
