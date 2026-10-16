@@ -1,9 +1,9 @@
-import { useId } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { Select } from "../../components/Select.tsx";
-import { isRecord } from "../../lib/entryGuards.ts";
+import { BaseWeaponField } from "./BaseWeaponField.tsx";
+import { DiceField } from "./DiceField.tsx";
 import {
   type HomebrewFormProps,
   listAt,
@@ -16,35 +16,25 @@ import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";
 import {
   DAMAGE_TYPE_CODES,
+  isVersatile,
   itemGroup,
+  propertyCode,
   WEAPON_CATEGORIES,
   WEAPON_PROPERTIES,
 } from "./homebrewVocabulary.ts";
 import { useCatalogBlurbs } from "./useCatalogBlurbs.ts";
-
-/** The dice a weapon's damage most often takes, offered as the field is typed; any other still saves. */
-const WEAPON_DICE = ["1d4", "1d6", "1d8", "1d10", "1d12", "2d6"];
-
-/** A weapon property's code: `V` for `V|XPHB`, and for Lance's `{uid: "V|XPHB", note}`. */
-function propertyCode(property: unknown): string | undefined {
-  const named = isRecord(property) ? property.uid : property;
-  return typeof named === "string" ? named.split("|")[0] : undefined;
-}
 
 const PROPERTY_CODES = WEAPON_PROPERTIES.map(({ value }) => value);
 
 /** A weapon's attack or an armor's AC, by the item's type; neither for any other type. */
 export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
   const blurbs = useCatalogBlurbs("itemProperty", PROPERTY_CODES, edition);
-  const dice = useId();
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const group = itemGroup(entry.type);
-  const baseItem = textAt(entry, "baseItem").split("|");
   const properties = listAt(entry, "property");
-  const text = (key: string) => ({
+  const dice = (key: string) => ({
     value: textAt(entry, key),
-    onChange: (event: { target: { value: string } }) =>
-      set(key, event.target.value === "" ? undefined : event.target.value),
+    onChange: (next: string) => set(key, next.trim() === "" ? undefined : next),
   });
   const integer = (
     key: string,
@@ -97,18 +87,11 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
             </FormField>
           </div>
           <div className={PAIRED}>
-            <InputField
-              label="Base weapon"
-              placeholder="longsword"
-              value={baseItem[0] ?? ""}
-              onChange={(event) =>
-                set(
-                  "baseItem",
-                  event.target.value === ""
-                    ? undefined
-                    : [event.target.value, ...baseItem.slice(1)].join("|"),
-                )
-              }
+            <BaseWeaponField
+              current={textAt(entry, "baseItem")}
+              edition={edition}
+              error={errorFor("baseItem")}
+              onChange={(next) => set("baseItem", next)}
             />
           </div>
           <div className={PAIRED}>
@@ -130,33 +113,38 @@ export function ItemCombat({ entry, edition, onChange, errorFor }: HomebrewFormP
                   (code) => !kept.some((property) => propertyCode(property) === code),
                 );
                 const next = [...kept, ...added];
-                set("property", next.length > 0 ? next : undefined);
+                const withProperties = withField(
+                  entry,
+                  "property",
+                  next.length > 0 ? next : undefined,
+                );
+                // A versatile die belongs to the Versatile property, so it leaves with it.
+                onChange(
+                  chosen.includes("V")
+                    ? withProperties
+                    : withField(withProperties, "dmg2", undefined),
+                );
               }}
             />
           </div>
           <div className={PAIRED}>
-            <InputField
+            <DiceField
               label="Damage"
               placeholder="1d8"
-              list={dice}
               error={errorFor("dmg1")}
-              {...text("dmg1")}
+              {...dice("dmg1")}
             />
           </div>
-          <div className={PAIRED}>
-            <InputField
-              label="Versatile damage"
-              placeholder="1d10"
-              list={dice}
-              error={errorFor("dmg2")}
-              {...text("dmg2")}
-            />
-            <datalist id={dice}>
-              {WEAPON_DICE.map((die) => (
-                <option key={die} value={die} />
-              ))}
-            </datalist>
-          </div>
+          {isVersatile(entry) && (
+            <div className={PAIRED}>
+              <DiceField
+                label="Versatile damage"
+                placeholder="1d10"
+                error={errorFor("dmg2")}
+                {...dice("dmg2")}
+              />
+            </div>
+          )}
         </>
       )}
       {group === "armor" && (

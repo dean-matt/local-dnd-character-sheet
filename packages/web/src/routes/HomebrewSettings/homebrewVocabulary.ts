@@ -5,6 +5,7 @@
  */
 import { DAMAGE_TYPES } from "@dnd/catalog";
 import { capitalize } from "../../lib/capitalize.ts";
+import { isRecord } from "../../lib/entryGuards.ts";
 
 /** Which fields beyond the common ones an item of a type carries. */
 export type ItemGroup = "weapon" | "armor" | "gear";
@@ -177,3 +178,15 @@ export const SKILL_NAMES = [
   "Stealth",
   "Survival",
 ];
+
+/** A weapon property's code: `V` for `V|XPHB`, and for Lance's `{uid: "V|XPHB", note}`. */
+export function propertyCode(property: unknown): string | undefined {
+  const named = isRecord(property) ? property.uid : property;
+  return typeof named === "string" ? named.split("|")[0] : undefined;
+}
+
+/** Whether the entry's weapon has the Versatile property, the only one a versatile die belongs to. */
+export function isVersatile(entry: Record<string, unknown>): boolean {
+  const properties = entry.property;
+  return Array.isArray(properties) && properties.some((property) => propertyCode(property) === "V");
+}

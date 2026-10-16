@@ -5,6 +5,7 @@ import type { HomebrewItemInput } from "@dnd/catalog";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishItems } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem } from "../db/queries/homebrew.ts";
+import { getBaseItemMasteries, listItems } from "../db/queries/items.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { itemsRoutes } from "./items.ts";
 
@@ -17,6 +18,23 @@ const LONGSWORD = {
   rarity: null,
   requires_attunement: 0 as const,
   json: JSON.stringify({ name: "Longsword", source: "PHB", weapon: true }),
+};
+
+const DAGGER = {
+  name: "Dagger",
+  source: "PHB",
+  edition: "classic",
+  kind: "baseitem",
+  type: "M",
+  rarity: null,
+  requires_attunement: 0 as const,
+  json: JSON.stringify({
+    name: "Dagger",
+    source: "PHB",
+    weapon: true,
+    weaponCategory: "simple",
+    mastery: ["Nick|XPHB"],
+  }),
 };
 
 const NET = {
@@ -139,7 +157,13 @@ describe("itemsRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "items-routes-"));
-    publishItems(dataDir, [LONGSWORD, DEMON_ARMOR_ONE, BAG_OF_TRICKS]);
+    publishItems(dataDir, [
+      LONGSWORD,
+      DAGGER,
+      armor("Plate", "HA"),
+      DEMON_ARMOR_ONE,
+      BAG_OF_TRICKS,
+    ]);
   });
 
   afterAll(() => {
@@ -167,8 +191,12 @@ describe("itemsRoutes", () => {
       expect(res.status).toBe(200);
 
       const body = await res.json();
-      expect(body).toMatchObject({ total: 1, limit: 50, offset: 0 });
-      expect(body.items).toEqual([expect.objectContaining({ name: "Longsword", source: "PHB" })]);
+      expect(body).toMatchObject({ total: 3, limit: 50, offset: 0 });
+      expect(body.items.map((item: { name: string }) => item.name)).toEqual([
+        "Dagger",
+        "Longsword",
+        "Plate",
+      ]);
     });
 
     it("merges a homebrew item of the same edition into the list, distinguishable by id", async () => {
@@ -183,6 +211,21 @@ describe("itemsRoutes", () => {
       ]);
       expect(body.items[0].id).toBeUndefined();
       expect(body.items[1].source).toBeUndefined();
+    });
+
+    it("narrows to the edition's catalog base weapons, without homebrew, given baseWeapons", async () => {
+      insertHomebrewItem(opened.homebrewDb, "1", sunblade({ edition: "classic" }));
+
+      const res = await routes.request("/items?edition=classic&baseWeapons=true");
+      const body = await res.json();
+      expect(body).toMatchObject({ total: 1 });
+      expect(body.items).toEqual([expect.objectContaining({ name: "Dagger", source: "PHB" })]);
+    });
+
+    it("lists base weapons whose name|source the mastery lookup resolves", () => {
+      const uids = listItems(dataDir, "classic", true).map((row) => `${row.name}|${row.source}`);
+      expect(uids).toEqual(["Dagger|PHB"]);
+      expect([...getBaseItemMasteries(dataDir, uids).keys()]).toEqual(uids);
     });
 
     it("does not return a homebrew item of a different edition", async () => {

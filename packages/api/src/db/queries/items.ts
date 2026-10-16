@@ -17,15 +17,19 @@ const ITEM_COLUMNS = "name, source, edition, kind, type, rarity, requires_attune
 /**
  * `item` and `baseitem` only — the two kinds a character can own. An `itemGroup` is the
  * entry a family of items is written under and a `magicvariant` is a template upstream
- * expands against a base item; see docs/items.md.
+ * expands against a base item; see docs/items.md. `baseWeapons` narrows to the base items
+ * that state a weapon category, the rows a named weapon's `baseItem` names.
  */
-export function listItems(dataDir: string, edition: Edition): ItemRow[] {
+export function listItems(dataDir: string, edition: Edition, baseWeapons = false): ItemRow[] {
   const db = openContentDb(dataDir);
   try {
+    const kinds = baseWeapons
+      ? "kind = 'baseitem' AND json_extract(json, '$.weaponCategory') IS NOT NULL"
+      : "kind IN ('item', 'baseitem')";
     return db
       .prepare(
         `SELECT ${ITEM_COLUMNS} FROM items
-         WHERE edition = ? AND kind IN ('item', 'baseitem')
+         WHERE edition = ? AND ${kinds}
          ORDER BY name, source`,
       )
       .all(edition) as ItemRow[];

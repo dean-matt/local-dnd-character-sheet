@@ -25,3 +25,6 @@ export function anchoredListStyle(anchor: string): CSSProperties {
     maxHeight: "min(20rem, 100% - 0.5rem)",
   };
 }
+
+/** The floating list's look, shared by the dropdowns and the combobox. */
+export const DROPDOWN_PANEL = `${ANCHORED_LIST_CLASSES} flex flex-col overflow-y-auto rounded-control border border-border bg-surface p-1.5 shadow-popover outline-none`;

@@ -22,12 +22,16 @@ export type SelectProps = Pick<
   onChange: (next: string) => void;
 };
 
+/** How long a pause ends a typed run of letters, so the next letter starts a new search. */
+const TYPEAHEAD_MS = 500;
+
 /**
  * A single choice in `MultiSelect`'s look: a select-only combobox whose button names the
  * chosen option and opens a listbox, the chosen option checked. Focus stays on the button,
  * which points at the active option. Arrow keys, Home and End move it, opening the list
- * first; Enter or Space picks it and closes; Escape or focus leaving closes without picking.
- * Picking the option already chosen calls nothing.
+ * first; typing jumps to the first option whose label starts with what was typed in the last
+ * half second, opening the list; Enter or Space picks it and closes; Escape or focus leaving
+ * closes without picking. Picking the option already chosen calls nothing.
  */
 export function Select({ options, value, onChange, ...control }: SelectProps) {
   const [open, setOpen] = useState(false);
@@ -38,6 +42,7 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
   const chosen = options.findIndex((option) => option.value === value);
   const optionId = (index: number) => `${id}-option-${index}`;
   const held = control["aria-disabled"] === true || control["aria-disabled"] === "true";
+  const typed = useRef({ text: "", at: 0 });
 
   useEffect(() => {
     if (open)
@@ -55,6 +60,27 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
     button.current?.focus();
     const option = options[index];
     if (option && index !== chosen && !held) onChange(option.value);
+  }
+
+  /** The option a typed letter leads to, `undefined` where the key types nothing or none matches. */
+  function typeahead(event: KeyboardEvent): number | undefined {
+    if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return undefined;
+    const now = Date.now();
+    const text = (now - typed.current.at < TYPEAHEAD_MS ? typed.current.text : "") + event.key;
+    // A space opens or picks unless it continues a name being typed.
+    if (text === " ") return undefined;
+    typed.current = { text, at: now };
+    const at = options.findIndex((option) =>
+      option.label.toLowerCase().startsWith(text.toLowerCase()),
+    );
+    return at === -1 ? undefined : at;
+  }
+
+  function onKey(event: KeyboardEvent) {
+    const lead = typeahead(event);
+    if (lead === undefined) return onKeyDown(event);
+    event.preventDefault();
+    show(lead);
   }
 
   function onKeyDown(event: KeyboardEvent) {
@@ -82,7 +108,7 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
     <Dropdown
       open={open}
       onClose={() => setOpen(false)}
-      onKeyDown={onKeyDown}
+      onKeyDown={onKey}
       value={options[chosen]?.label ?? value}
       button={{
         ...control,

@@ -18,7 +18,7 @@ import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
 import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
-import { itemGroup } from "./homebrewVocabulary.ts";
+import { isVersatile, itemGroup } from "./homebrewVocabulary.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
 import { ItemDefenses } from "./ItemDefenses.tsx";
@@ -148,7 +148,8 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     "ability",
     "modifySpeed",
     "advantage",
-    ...(itemGroup(entry.type) === "weapon" ? ["dmg1", "dmg2"] : []),
+    ...(itemGroup(entry.type) === "weapon" ? ["dmg1"] : []),
+    ...(itemGroup(entry.type) === "weapon" && isVersatile(entry) ? ["dmg2"] : []),
     // A bonus row shows only for a number; a non-number pasted as JSON has no row to sit beside.
     ...(numberAt(entry.critThreshold) === undefined ? [] : ["critThreshold"]),
   ],

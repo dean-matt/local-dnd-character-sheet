@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Select } from "./Select.tsx";
 
 const OPTIONS = ["Copper", "Silver", "Gold", "Platinum"].map((coin) => ({
@@ -131,5 +131,70 @@ describe("Select", () => {
     fireEvent.click(combobox());
     act(() => screen.getByRole("button", { name: "Elsewhere" }).focus());
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  describe("typeahead", () => {
+    const WEAPONS = ["Light Crossbow", "Light Hammer", "Longbow"].map((name) => ({
+      value: name,
+      label: name,
+    }));
+    function Weapons({ disabled }: { disabled?: boolean }) {
+      const [value, setValue] = useState("");
+      return (
+        <>
+          <label htmlFor="weapon">Weapon</label>
+          <Select
+            id="weapon"
+            aria-disabled={disabled}
+            options={WEAPONS}
+            value={value}
+            onChange={setValue}
+          />
+        </>
+      );
+    }
+    const weapon = () => screen.getByRole("combobox", { name: "Weapon" });
+    const pointed = () =>
+      document.getElementById(String(weapon().getAttribute("aria-activedescendant")))?.textContent;
+    const type = (text: string) => {
+      for (const letter of text) fireEvent.keyDown(weapon(), { key: letter });
+    };
+
+    afterEach(() => vi.useRealTimers());
+
+    it("jumps to the first label a typed run starts, a space continuing the run", () => {
+      vi.useFakeTimers();
+      render(<Weapons />);
+
+      type("l");
+      expect(pointed()).toBe("Light Crossbow");
+      type("o");
+      expect(pointed()).toBe("Longbow");
+      vi.advanceTimersByTime(600);
+      type("light h");
+      expect(pointed()).toBe("Light Hammer");
+    });
+
+    it("starts a new run after a pause", () => {
+      vi.useFakeTimers();
+      render(<Weapons />);
+
+      type("lo");
+      expect(pointed()).toBe("Longbow");
+      vi.advanceTimersByTime(600);
+      type("l");
+      expect(pointed()).toBe("Light Crossbow");
+    });
+
+    it("leaves a lone Space to open the list, and a held select closed", () => {
+      const { unmount } = render(<Weapons />);
+      fireEvent.keyDown(weapon(), { key: " " });
+      expect(weapon()).toHaveAttribute("aria-expanded", "true");
+      unmount();
+
+      render(<Weapons disabled />);
+      type("lo");
+      expect(weapon()).toHaveAttribute("aria-expanded", "false");
+    });
   });
 });
