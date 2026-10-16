@@ -41,7 +41,9 @@ describe("ITEM_JSON_SCHEMA", () => {
     const [ability] = suggest("abil");
     const info = typeof ability?.info === "function" ? ability.info(ability) : undefined;
     expect(ability?.label).toBe("ability");
-    expect(info instanceof Node && info.textContent).toMatch(/adds 1 to Wisdom/);
+    expect(info instanceof Node && info.textContent).toContain(
+      'Ability scores: {"wis": 1} adds 1 to Wisdom',
+    );
   });
 
   it("shows a key's description and its value's form on hover", async () => {
@@ -49,7 +51,7 @@ describe("ITEM_JSON_SCHEMA", () => {
     const editor = editorOf(doc);
     const tooltip = await jsonSchemaHover()(editor, doc.indexOf("ability") + 2, 1);
     const text = tooltip?.create(editor).dom.textContent;
-    expect(text).toMatch(/adds 1 to Wisdom/);
+    expect(text).toContain('Ability scores: {"wis": 1} adds 1 to Wisdom');
     expect(text).toMatch(/object/);
   });
 

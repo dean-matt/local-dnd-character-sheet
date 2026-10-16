@@ -39,6 +39,26 @@ const theme = EditorView.theme({
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--color-ink)" },
   "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground":
     { backgroundColor: "color-mix(in oklab, var(--color-accent) 30%, var(--color-surface))" },
+  // CodeMirror's base styles are light only, so every surface it paints reads a token.
+  ".cm-panels": {
+    backgroundColor: "var(--color-subtle)",
+    color: "var(--color-ink)",
+    borderColor: "var(--color-border)",
+  },
+  ".cm-textfield": {
+    backgroundColor: "var(--color-surface)",
+    color: "var(--color-ink)",
+    borderColor: "var(--color-border)",
+  },
+  ".cm-button": {
+    backgroundImage: "none",
+    backgroundColor: "var(--color-surface)",
+    color: "var(--color-ink)",
+    borderColor: "var(--color-border)",
+  },
+  ".cm-selectionMatch, .cm-panel.cm-panel-lint ul [aria-selected]": {
+    backgroundColor: "var(--color-subtle)",
+  },
   ".cm-tooltip": {
     maxWidth: "24rem",
     backgroundColor: "var(--color-surface)",
