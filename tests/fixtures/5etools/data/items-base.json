@@ -360,6 +360,28 @@
       "name": "Armor of Resistance",
       "source": "DMG",
       "entriesTemplate": ["Elided. {{item.resist}} Elided."]
+    },
+    {
+      "name": "Absorbing Tattoo",
+      "source": "TCE",
+      "entriesTemplate": [
+        "Elided. {{item.detail1}} Elided.",
+        {
+          "type": "entries",
+          "name": "Tattoo Attunement",
+          "entries": ["Elided.", "Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Damage Resistance",
+          "entries": ["Elided. {{item.resist}} Elided."]
+        },
+        {
+          "type": "entries",
+          "name": "Damage Absorption",
+          "entries": ["Elided. {{item.resist}} Elided."]
+        }
+      ]
     }
   ],
   "itemMastery": [
