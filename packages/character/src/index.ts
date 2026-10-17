@@ -28,6 +28,7 @@ export {
   IMPROVEMENT_CAP,
   maxHitPoints,
   preparedSpellCount,
+  SENSES,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
 export type {
@@ -43,7 +44,9 @@ export type {
   ItemAdvantageTrait,
   ItemBonusTrait,
   ItemDefenseTrait,
+  ItemSenseTrait,
   Preparation,
+  SenseGrant,
   SkillTrait,
   WeaponTrait,
 } from "./catalog.ts";

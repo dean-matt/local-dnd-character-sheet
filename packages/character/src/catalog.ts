@@ -4,6 +4,7 @@ import type {
   CasterProgression,
   HitDie,
   PreparationRule,
+  Sense,
   Size,
   SpellSlotTotal,
   Weapon,
@@ -56,6 +57,9 @@ export type DefenseTrait = {
 /** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
 type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
 
+/** A sense a race, feat or item grants, and the range in feet. */
+export type SenseGrant = { name: Sense; range: number };
+
 /** A definition field a feat's pick lands in, as `feats[].picks` keys it. */
 export type FeatPickField =
   | "savingThrows"
@@ -91,6 +95,7 @@ export type FeatGrantTrait = {
   resist: readonly string[];
   immune: readonly string[];
   conditionImmune: readonly string[];
+  senses: readonly SenseGrant[];
   offers: readonly FeatOffer[];
 };
 
@@ -99,6 +104,13 @@ export type AmmunitionTrait = readonly { uid: string; count: number }[];
 
 /** An item's grant, the name its chip cites, and whether it waits on attunement. */
 export type ItemDefenseTrait = DefenseTrait & { name: string; requiresAttunement: boolean };
+
+/** An item's senses, the name its chip cites, and whether it waits on attunement. */
+export type ItemSenseTrait = {
+  name: string;
+  requiresAttunement: boolean;
+  senses: readonly SenseGrant[];
+};
 
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
@@ -214,6 +226,10 @@ export type CharacterCatalog = {
   weapons: ReadonlyMap<string, WeaponTrait>;
   /** The race's, or the subrace row's, which already holds its race's. */
   raceDefenses: RaceDefenseTrait;
+  /** The race's, or the subrace row's, which already holds its race's. */
+  raceSenses: readonly SenseGrant[];
+  /** Keyed like `weapons`, and absent for an item that grants no sense. */
+  itemSenses: ReadonlyMap<string, ItemSenseTrait>;
   /** Keyed like `weapons`, and absent for an item that grants nothing. */
   itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
   /** Keyed like `weapons`, and absent for an item that changes no score. */

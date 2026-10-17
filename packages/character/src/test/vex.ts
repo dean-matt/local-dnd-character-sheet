@@ -68,6 +68,7 @@ export const derivedInput = (traits: object = {}) => ({
       resistanceChoice: null,
     },
   },
+  senses: { computed: [] },
   itemGrants: { computed: { proficiencies: [], languages: [] } },
   featGrants: {
     computed: { savingThrows: [], skills: [], tools: [], languages: [], armor: [], weapons: [] },

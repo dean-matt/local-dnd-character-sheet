@@ -25,6 +25,7 @@ const WARLOCK = { name: "Warlock", source: "XPHB" };
 const ELDRITCH_KNIGHT = { name: "Eldritch Knight", source: "PHB" };
 const FIGHTER_ONE = { name: "Fighter", source: "XPHB" };
 const ELDRITCH_KNIGHT_ONE = { name: "Eldritch Knight", source: "XPHB" };
+const BLIND_FIGHTING = { name: "Blind Fighting", source: "XPHB" };
 const ELF = { name: "Elf", source: "PHB" };
 const PLATE = { name: "Plate Armor", source: "PHB" };
 const SHIELD = { name: "Shield", source: "PHB" };
@@ -231,6 +232,11 @@ describe("derivedRoutes", () => {
           json: JSON.stringify({ ...INFERNAL_CONSTITUTION, resist: ["cold", "poison"] }),
         },
         {
+          ...BLIND_FIGHTING,
+          edition: "classic",
+          json: JSON.stringify({ ...BLIND_FIGHTING, senses: [{ blindsight: 10 }] }),
+        },
+        {
           ...RESILIENT,
           edition: "classic",
           json: JSON.stringify({
@@ -259,7 +265,7 @@ describe("derivedRoutes", () => {
           race_name: "Elf",
           race_source: "PHB",
           edition: "classic",
-          json: JSON.stringify({ size: ["M"], speed: 35 }),
+          json: JSON.stringify({ size: ["M"], speed: 35, darkvision: 60 }),
         },
         {
           name: "Hill",
@@ -827,6 +833,36 @@ describe("derivedRoutes", () => {
     expect((await derived()).rollEffects.computed).toEqual([
       { source: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
       { source: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
+    ]);
+  });
+
+  it("lists the senses of the race, a feat and a homebrew item, the longest range standing", async () => {
+    insertHomebrewItem(opened.homebrewDb, "helm", {
+      name: "Helm of Devil's Sight",
+      edition: "classic",
+      reqAttune: true,
+      senses: [{ darkvision: 120 }],
+    });
+    store(
+      definitionWith({
+        feats: [{ ref: BLIND_FIGHTING }],
+        inventory: [{ ref: { homebrewId: "helm" }, equipped: true }],
+      }),
+    );
+    expect((await derived()).senses.computed).toEqual([
+      { name: "blindsight", range: 10, from: [BLIND_FIGHTING.name] },
+      { name: "darkvision", range: 60, from: ["Elf (Wood)"] },
+    ]);
+
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        inventory: [{ ref: { homebrewId: "helm" }, equipped: true, attuned: true }],
+      }),
+    );
+    expect((await derived()).senses.computed).toEqual([
+      { name: "darkvision", range: 120, from: ["Elf (Wood)", "Helm of Devil's Sight"] },
     ]);
   });
 

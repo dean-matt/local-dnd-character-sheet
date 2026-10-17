@@ -28,7 +28,13 @@ const shape = {
   ...defenseTraitSchema.in.shape,
   ...abilityGrantSchema.in.shape,
   ...itemBonusSchema.in.shape,
-  ...homebrewItemSchema.pick({ type: true, rarity: true, reqAttune: true, advantage: true }).shape,
+  ...homebrewItemSchema.pick({
+    type: true,
+    rarity: true,
+    reqAttune: true,
+    advantage: true,
+    senses: true,
+  }).shape,
 };
 
 type Shape = typeof shape;
@@ -40,6 +46,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'true, or a condition such as "by a wizard". Holds the item\'s bonuses until it is attuned.',
   advantage:
     'Advantage or disadvantage the item grants, such as [{"mode": "advantage", "roll": "save", "condition": "against spells"}].',
+  senses:
+    'Senses the item grants, such as [{"darkvision": 120}] or [{"blindsight": 10}, {"truesight": 30}]. Blindsight, darkvision, tremorsense and truesight take a range in feet.',
   wondrous: "true for a wondrous item.",
   weight: "Pounds, such as 3.",
   value: "Price in copper pieces: 50 is 5 sp, 100 is 1 gp.",

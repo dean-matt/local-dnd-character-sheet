@@ -59,6 +59,8 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     weights: new Map(),
     weapons: new Map(),
     raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [], vulnerable: [] },
+    raceSenses: [],
+    itemSenses: new Map(),
     itemDefenses: new Map(),
     itemAbilities: new Map(),
     itemBonuses: new Map(),
@@ -444,6 +446,33 @@ describe("AbilitiesSection", () => {
     expect(skills.queryByRole("button", { name: /^Arcana check: / })).not.toBeInTheDocument();
     const stealth = skills.getByRole("button", { name: "Stealth check: Advantage" }).closest("li");
     expect(stealth).toHaveTextContent("Stealth, expertisedexDexterityADV+7");
+  });
+
+  it("lists each sense with its range and every source behind it, and leaves the card out while none is granted", () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, {
+      ...derived,
+      senses: {
+        computed: [
+          { name: "blindsight", range: 10, from: ["Blind Fighting"] },
+          { name: "darkvision", range: 120, from: ["Elf (Wood)", "Helm of Devil's Sight"] },
+        ],
+        manual: null,
+        terms: [],
+      },
+    });
+
+    const senses = card("Senses");
+    expect(senses.getByText("Blindsight")).toBeInTheDocument();
+    expect(senses.getByText("10 ft. (Blind Fighting)")).toBeInTheDocument();
+    expect(senses.getByText("120 ft. (Elf (Wood), Helm of Devil's Sight)")).toBeInTheDocument();
+  });
+
+  it("leaves out the senses card while no source grants a sense", () => {
+    renderSection();
+
+    expect(screen.queryByRole("region", { name: "Senses" })).not.toBeInTheDocument();
   });
 
   it("leaves out the granted-by-items card while no item grants anything", () => {

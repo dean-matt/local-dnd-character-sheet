@@ -19,6 +19,7 @@ import {
   preparedSpellCount,
   proficiencyBonusBreakdown,
   proficiencyContribution,
+  SENSES,
   SIZES,
   type Size,
   type SpellSlotTotal,
@@ -35,6 +36,7 @@ import type {
   DefenseTrait,
   ItemBonusTrait,
   Preparation,
+  SenseGrant,
   WeaponTrait,
 } from "./catalog.ts";
 import type { CharacterDerived, Defenses } from "./characterDerived.ts";
@@ -592,6 +594,40 @@ function derivedDefenses(
   });
 }
 
+/**
+ * The race's senses, then each feat's, then each equipped item's, attuned where it must be.
+ * A sense two sources grant keeps the longer range and names both.
+ */
+function derivedSenses(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  feats: readonly (SenseGrant & { from: string })[],
+): ComputedField<CharacterDerived["senses"]["computed"]> {
+  const grants = [
+    ...catalog.raceSenses.map((sense) => ({ ...sense, from: raceSummary(definition) })),
+    ...feats,
+  ];
+  for (const entry of definition.inventory) {
+    const item = catalog.itemSenses.get(itemKey(entry));
+    if (item && entry.equipped && (entry.attuned || !item.requiresAttunement)) {
+      grants.push(...item.senses.map((sense) => ({ ...sense, from: item.name })));
+    }
+  }
+  return computed(
+    SENSES.flatMap((name) => {
+      const granting = grants.filter((grant) => grant.name === name);
+      if (granting.length === 0) return [];
+      return [
+        {
+          name,
+          range: Math.max(...granting.map(({ range }) => range)),
+          from: [...new Set(granting.map(({ from }) => from))],
+        },
+      ];
+    }),
+  );
+}
+
 /** The equipped items, attuned where they must be, that grant a proficiency or a language. */
 function derivedItemGrants(bonuses: readonly ItemBonusTrait[]): CharacterDerived["itemGrants"] {
   const named = (granted: (item: ItemBonusTrait) => boolean) =>
@@ -883,6 +919,7 @@ export function deriveCharacter(
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog, feats.defenses),
+    senses: derivedSenses(definition, catalog, feats.senses),
     itemGrants: derivedItemGrants(bonuses),
     featGrants: computed(feats.granted),
     rollEffects: derivedRollEffects(definition, catalog, burdened),

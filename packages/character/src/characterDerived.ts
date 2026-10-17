@@ -4,6 +4,7 @@ import {
   ENCUMBRANCE_TIERS,
   GRIPS,
   HIT_DICE,
+  SENSES,
   SIZES,
 } from "@dnd/rules";
 import { z } from "zod";
@@ -49,6 +50,13 @@ const featGrantsSchema = z.strictObject({
   languages: z.array(grantSchema),
   armor: z.array(grantSchema),
   weapons: z.array(grantSchema),
+});
+
+/** One sense at the longest range any source grants, with every race, feat or item that grants it. */
+const senseSchema = z.strictObject({
+  name: z.enum(SENSES),
+  range: z.int().min(1),
+  from: grantorsSchema,
 });
 
 const defensesSchema = z.strictObject({
@@ -227,6 +235,12 @@ export const characterDerivedSchema = z.strictObject({
    * feat or item behind an entry, and a typed-over list would name none and stop following the equipment.
    */
   defenses: derivedSchema(defensesSchema),
+  /**
+   * Senses from the race, then each feat, then each equipped item, attuned where it must be,
+   * in the order `SENSES` lists them. Where two sources grant a sense the longer range stands and
+   * both are named. Like `defenses`, it offers no override: a typed-over list would name no source.
+   */
+  senses: derivedSchema(z.array(senseSchema)),
   /** Which equipped items grant a proficiency or a language, attuned where they must be. */
   itemGrants: derivedSchema(itemGrantsSchema),
   featGrants: derivedSchema(featGrantsSchema),

@@ -12,6 +12,7 @@ const NONE = {
   resist: [],
   immune: [],
   conditionImmune: [],
+  senses: [],
   offers: [],
 };
 
