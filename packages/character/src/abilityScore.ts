@@ -3,6 +3,7 @@ import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { improvementLabel } from "./improvements.ts";
 import type { Ability } from "./refs.ts";
+import { displayName } from "./summaries.ts";
 
 const GRANTOR_LABEL = { race: "Race", background: "Background" } as const;
 
@@ -25,8 +26,8 @@ export type AbilityGrant = {
  * each item's `grants` named by the item. Bonuses add before a static score is compared,
  * so a static score counts against the total the bonuses reached.
  * Takes these fields alone so a creation draft, which holds no whole definition yet,
- * reads the same arithmetic the sheet does. `feats` names the feat an improvement took;
- * without it, the term names the improvement.
+ * reads the same arithmetic the sheet does. `feats` names the feat an improvement took, and
+ * adds what a feat taken outside one placed; without it, the term names the improvement.
  */
 export function abilityScoreBreakdown(
   definition: Scored,
@@ -44,6 +45,11 @@ export function abilityScoreBreakdown(
             : improvementLabel(definition.feats, increase.level ?? 0),
         value: increase.amount,
       })),
+    ...(definition.feats ?? []).flatMap(({ ref, picks }) =>
+      (picks?.ability ?? [])
+        .filter((increase) => increase.ability === ability)
+        .map((increase) => ({ label: displayName(ref), value: increase.amount })),
+    ),
   ];
   let score = sum(terms);
   for (const grant of grants) {

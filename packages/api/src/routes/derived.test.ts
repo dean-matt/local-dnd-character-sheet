@@ -69,6 +69,9 @@ const skill = (name: string, source: string, edition: string, ability: string) =
   json: JSON.stringify({ name, source, ability }),
 });
 
+const INFERNAL_CONSTITUTION = { name: "Infernal Constitution", source: "XGE" };
+const RESILIENT = { name: "Resilient", source: "PHB" };
+
 const definitionWith = (
   overrides: Partial<z.input<typeof characterDefinitionSchema>> = {},
 ): CharacterDefinition =>
@@ -218,6 +221,21 @@ describe("derivedRoutes", () => {
             name: "Path of the Ancestral Guardian",
             spellcastingAbility: "wis",
             additionalSpells: [{ innate: { "10": ["augury", "clairvoyance"] } }],
+          }),
+        },
+      ],
+      feats: [
+        {
+          ...INFERNAL_CONSTITUTION,
+          edition: "classic",
+          json: JSON.stringify({ ...INFERNAL_CONSTITUTION, resist: ["cold", "poison"] }),
+        },
+        {
+          ...RESILIENT,
+          edition: "classic",
+          json: JSON.stringify({
+            ...RESILIENT,
+            savingThrowProficiencies: [{ choose: { from: ["str", "dex", "con", "wis"] } }],
           }),
         },
       ],
@@ -655,6 +673,32 @@ describe("derivedRoutes", () => {
       vulnerabilities: [],
       resistanceChoice: null,
     });
+  });
+
+  it("adds what a feat grants and the saving throw picked from it, and drops both with the feat", async () => {
+    store(definitionWith());
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        feats: [
+          { ref: INFERNAL_CONSTITUTION },
+          { ref: RESILIENT, picks: { savingThrows: ["wis"] } },
+        ],
+      }),
+    );
+    const taken = await derived();
+    expect(taken.defenses.computed.resistances).toContainEqual({
+      name: "cold",
+      from: [INFERNAL_CONSTITUTION.name],
+    });
+    expect(taken.featGrants.computed.savingThrows).toEqual([
+      { name: "wis", from: [RESILIENT.name] },
+    ]);
+    expect(taken.savingThrows.wis.computed).toBe(bare.savingThrows.wis.computed + 2);
+    updateCharacterDefinition(opened.charactersDb, "1", definitionWith());
+    expect(await derived()).toEqual(bare);
   });
 
   it("raises a score to an equipped item's, catalog or homebrew", async () => {

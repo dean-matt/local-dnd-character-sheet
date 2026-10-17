@@ -23,6 +23,12 @@ const grappler = {
   edition: "one",
   json: { name: "Grappler", source: "XPHB", prerequisite: [{ level: 4 }] },
 };
+const infernal = {
+  name: "Infernal Constitution",
+  source: "XGE",
+  edition: "classic",
+  json: { name: "Infernal Constitution", source: "XGE", ability: [{ con: 1 }] },
+};
 const plusOne = {
   name: "+1 Weapon",
   source: "DMG",
@@ -75,6 +81,12 @@ const classAnswer = (url: string) => {
   return { name, source, edition: "one", hitDie: 8, json: { name, source, casterProgression } };
 };
 
+const ROWS: Record<string, unknown> = {
+  "/api/feats/Grappler/XPHB": grappler,
+  "/api/feats/Infernal%20Constitution/XGE": infernal,
+  "/api/items/%2B1%20Weapon/DMG": plusOne,
+};
+
 function stubApi(definition: Partial<CharacterDefinition> = {}, failWrite = false) {
   const base = characterRecord("7", "Fira");
   const record = { ...base, definition: { ...base.definition, ...definition } };
@@ -92,8 +104,7 @@ function stubApi(definition: Partial<CharacterDefinition> = {}, failWrite = fals
     if (url === "/api/characters/7") return json(record);
     if (url.startsWith("/api/search?")) return json(spellList(url));
     if (url.startsWith("/api/classes/")) return json(classAnswer(url));
-    if (url === "/api/feats/Grappler/XPHB") return json(grappler);
-    if (url === "/api/items/%2B1%20Weapon/DMG") return json(plusOne);
+    if (url in ROWS) return json(ROWS[url]);
     return json({ error: `nothing at ${url}` }, 404);
   });
   return writes;
@@ -188,6 +199,15 @@ describe("useAddToCharacter", () => {
     const outcome = await add({ kind: "feat", ref, label: "Grappler (XPHB)" });
     expect(outcome.note).toBe("Noted: Fira does not meet a prerequisite of Grappler (XPHB).");
     expect(writes[0]?.feats).toEqual([{ ref }]);
+  });
+
+  it("places the increase a feat fixes as it adds the feat", async () => {
+    const ref = { name: "Infernal Constitution", source: "XGE" };
+    const writes = stubApi();
+    await add({ kind: "feat", ref, label: "Infernal Constitution (XGE)" });
+    expect(writes[0]?.feats).toEqual([
+      { ref, picks: { ability: [{ ability: "con", amount: 1 }] } },
+    ]);
   });
 
   it("adds a magic variant named alone as its own row, noting it wants a base item", async () => {

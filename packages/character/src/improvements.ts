@@ -9,6 +9,7 @@
  * another feat, so a class-granted feat at an improvement's level is that improvement's.
  */
 import type { CharacterDefinition } from "./definition.ts";
+import { entryKey } from "./keys.ts";
 import type { Ability, ContentRef, EntryRef } from "./refs.ts";
 
 type Held = Pick<CharacterDefinition, "feats" | "abilityIncreases">;
@@ -51,7 +52,8 @@ export function withoutImprovement(definition: Held, level: number): Held {
 
 /**
  * `definition`'s feats and increases with the improvement at `level` replaced by
- * `improvement`, granted by `cls`.
+ * `improvement`, granted by `cls`. A feat taken there again keeps the picks its own fields
+ * offered, so placing its increases differently leaves its skills where they were.
  */
 export function withImprovement(
   definition: Held,
@@ -61,8 +63,15 @@ export function withImprovement(
 ): Held {
   const { feats, abilityIncreases } = withoutImprovement(definition, level);
   const { feat, increases } = improvement;
+  const before = definition.feats.find(takenAt(level));
+  const picks = feat && before?.picks && entryKey(before.ref) === entryKey(feat) && before.picks;
   return {
-    feats: feat ? [...feats, { ref: feat, grantedBy: { kind: "class", ref: cls }, level }] : feats,
+    feats: feat
+      ? [
+          ...feats,
+          { ref: feat, grantedBy: { kind: "class", ref: cls }, level, ...(picks && { picks }) },
+        ]
+      : feats,
     abilityIncreases: [
       ...abilityIncreases,
       ...increases.map(

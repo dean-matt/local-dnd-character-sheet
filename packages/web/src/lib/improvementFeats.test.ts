@@ -224,6 +224,24 @@ describe("candidateAt", () => {
     expect(candidate.classNames).toEqual(["Wizard", "Wizard", "Wizard", "Wizard"]);
   });
 
+  it("counts the increase of a feat taken outside an improvement toward scores and the cap", () => {
+    const WIZARD = { name: "Wizard", source: "XPHB" };
+    const INFERNAL = { name: "Infernal Constitution", source: "XGE" };
+    const candidate = candidateAt(
+      {
+        edition: "classic",
+        levels: Array.from({ length: 4 }, () => ({ class: WIZARD })),
+        abilityScores: { ...SCORES, con: 12 },
+        houseRules: { feats: true },
+        feats: [{ ref: INFERNAL, picks: { ability: [{ ability: "con", amount: 1 }] } }],
+        abilityIncreases: [],
+      },
+      { level: 4, features: [] },
+    );
+    expect(candidate.scores?.con).toBe(13);
+    expect(candidate.totals?.con).toBe(13);
+  });
+
   it("reads the race, proficiencies and the feats taken before the level", () => {
     const WIZARD = { name: "Wizard", source: "PHB" };
     const levels = Array.from({ length: 8 }, () => ({ class: WIZARD }));

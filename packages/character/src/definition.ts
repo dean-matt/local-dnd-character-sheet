@@ -80,10 +80,15 @@ const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 /** A custom skill's base where no ability governs it: a number the player sets. */
 export const flatSkillBonusSchema = z.int();
 
-/** One skill, and how proficient the character is in it. */
+/**
+ * One skill, and how proficient the character is in it. `onGrant` marks expertise the player
+ * stepped a feat's granted proficiency up to: it counts only while a feat still grants the
+ * skill, since expertise needs proficiency, and comes back if one grants it again.
+ */
 const skillProficiencySchema = z.strictObject({
   ref: contentRefSchema,
   level: proficiencyLevelSchema,
+  onGrant: z.literal(true).optional(),
 });
 
 /**
@@ -238,6 +243,45 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
+const pickedNamesSchema = z
+  .array(z.string().trim().toLowerCase().min(1))
+  .refine((names) => isUnique(names, String), { error: "the same name is picked twice" })
+  .optional();
+
+/**
+ * What the player picked where a feat's own fields offer a choice, by the field each pick
+ * lands in, a name lowercased as upstream writes it: `perception` for `Observant` (XPHB),
+ * `fire` for `Dragonscarred` (FRHoF). A pick the feat does not offer grants nothing, so a
+ * stale one stays stored and is ignored, as `raceResistance` is.
+ *
+ * `ability` holds the increases of a feat taken outside an improvement, such as one added
+ * from search. One taken at an improvement places its increases in `abilityIncreases` at
+ * that level, so the refinement on the entry refuses both.
+ */
+const featPicksSchema = z.strictObject({
+  savingThrows: z
+    .array(abilitySchema)
+    .refine((abilities) => isUnique(abilities, String), {
+      error: "the same saving throw is picked twice",
+    })
+    .optional(),
+  skills: pickedNamesSchema,
+  expertise: pickedNamesSchema,
+  tools: pickedNamesSchema,
+  languages: pickedNamesSchema,
+  resist: pickedNamesSchema,
+  ability: z
+    .array(
+      z.strictObject({
+        ability: abilitySchema,
+        amount: z
+          .int()
+          .refine((amount) => amount !== 0, { error: "an increase of 0 raises nothing" }),
+      }),
+    )
+    .optional(),
+});
+
 /**
  * One feat, what entitled it, and the level that spent that entitlement — a character
  * level, which is a position in `levels` rather than the grantor's own level a
@@ -254,11 +298,16 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
  */
 const featEntrySchema = z.preprocess(
   (entry) => (entryRefSchema.safeParse(entry).success ? { ref: entry } : entry),
-  z.strictObject({
-    ref: entryRefSchema,
-    grantedBy: featGrantorSchema.optional(),
-    level: z.int().min(1).max(20).optional(),
-  }),
+  z
+    .strictObject({
+      ref: entryRefSchema,
+      grantedBy: featGrantorSchema.optional(),
+      level: z.int().min(1).max(20).optional(),
+      picks: featPicksSchema.optional(),
+    })
+    .refine((entry) => entry.level === undefined || entry.picks?.ability === undefined, {
+      error: "a feat taken at an improvement places its increases in abilityIncreases",
+    }),
 );
 
 const optionalFeatureEntrySchema = z.strictObject({

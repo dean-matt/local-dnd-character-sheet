@@ -13,7 +13,9 @@ import { withFeat, withItem, withSpell } from "../lib/addedEntries.ts";
 import { apiGet } from "../lib/api.ts";
 import { castableCeiling } from "../lib/casterFacts.ts";
 import { withDeparture } from "../lib/departures.ts";
+import { alternativesOf } from "../lib/improvementChoice.ts";
 import { candidateAt, featBarrier } from "../lib/improvementFeats.ts";
+import { raisesOf } from "../lib/increasePicks.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 import { classGrantsQuery } from "./classGrantsQuery.ts";
 import { classQuery } from "./classQuery.ts";
@@ -117,7 +119,8 @@ async function planSpell(
  * A feat's prerequisites read against the character as it stands, with every class and
  * subclass feature it holds. `candidateAt` reads a level's improvement with that level's
  * own choice set aside, so it reads one level on, where nothing is stored, and the level
- * is put back after.
+ * is put back after. A feat offering one way to take its increases places its fixed ones
+ * at once, as level-up does; a choice among scores waits for its row on the Features page.
  */
 async function planFeat(
   client: QueryClient,
@@ -125,8 +128,7 @@ async function planFeat(
   row: Addable,
   who: string,
 ): Promise<Plan> {
-  const edit: Edit = (latest) => withFeat(latest, row.ref);
-  if ("homebrewId" in row.ref) return { edit };
+  if ("homebrewId" in row.ref) return { edit: (latest) => withFeat(latest, row.ref) };
   const ref = row.ref;
   const classes = catalogClasses(definition);
   const [feat, ...grants] = await Promise.all([
@@ -141,6 +143,10 @@ async function planFeat(
   );
   const level = totalLevel(definition);
   const candidate = { ...candidateAt(definition, { level: level + 1, features }), level };
+  const fixed = alternativesOf({ feat: ref, increases: [] }, [feat], candidate.totals);
+  const ability = fixed.length === 1 ? raisesOf(fixed, { alternative: 0, slots: [] }) : [];
+  const edit: Edit = (latest) =>
+    withFeat(latest, ref, ability.length > 0 ? { ability } : undefined);
   const notes = {
     noFeats: `${who} takes a feat only under the Feats house rule.`,
     held: `${who} holds ${row.label} already, and it does not repeat.`,

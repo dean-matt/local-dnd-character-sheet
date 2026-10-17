@@ -1,17 +1,18 @@
 import { z } from "zod";
-import type { ToolType } from "./item-kind.ts";
+import { TOOL_TYPES, type ToolType } from "./item-kind.ts";
 
 /**
  * A pick of tools a row offers: `count` of the tools `names` holds, lowercased as upstream
- * writes them, or of any tool of a kind `types` holds.
+ * writes them, or of any tool of a kind `types` holds, every kind for a pick of any tool.
  */
 export type ToolChoice = { names: string[]; types: ToolType[]; count: number };
 
-/** Upstream's keys for a pick of any tool of a kind, beside a `choose` list. */
-const ANY_OF_TYPE: Record<string, ToolType> = {
-  anyArtisansTool: "artisan",
-  anyMusicalInstrument: "instrument",
-  anyGamingSet: "gaming",
+/** Upstream's keys for a pick of any tool of a kind, or of any tool, beside a `choose` list. */
+const ANY_OF_TYPE: Record<string, ToolType[]> = {
+  anyArtisansTool: ["artisan"],
+  anyMusicalInstrument: ["instrument"],
+  anyGamingSet: ["gaming"],
+  any: [...TOOL_TYPES],
 };
 
 /** The names a `choose.from` list writes for every tool of a kind rather than one tool. */
@@ -38,7 +39,7 @@ function readAlternative(alternative: unknown): { fixed: string[]; picks: ToolCh
     const count = countSchema.safeParse(value).data;
     const choose = key === "choose" ? chooseSchema.safeParse(value).data : undefined;
     if (value === true) fixed.push(key.split("|")[0]?.trim().toLowerCase() ?? key);
-    else if (anyType && count) picks.push({ names: [], types: [anyType], count });
+    else if (anyType && count) picks.push({ names: [], types: anyType, count });
     else if (choose) {
       const from = choose.from.map((name) => name.toLowerCase());
       picks.push({
@@ -95,7 +96,7 @@ export const classToolChoicesSchema = z
   })
   .transform((row) => row.startingProficiencies?.toolProficiencies ?? []);
 
-/** The tool picks a background row offers, beside the tools it grants outright. */
+/** The tool picks a background or feat row offers, beside the tools it grants outright. */
 export const backgroundToolChoicesSchema = z
   .looseObject({ toolProficiencies: choicesSchema })
   .transform((row) => row.toolProficiencies);

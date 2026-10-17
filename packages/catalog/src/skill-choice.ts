@@ -42,7 +42,7 @@ export const classSkillChoiceSchema = z
   .transform((row) => row.startingProficiencies?.skills);
 
 /**
- * The skills a race, subrace or background row lets the player pick, beside the ones it
+ * The skills a race, subrace, background or feat row lets the player pick, beside the ones it
  * grants outright.
  */
 export const skillProficienciesChoiceSchema = z

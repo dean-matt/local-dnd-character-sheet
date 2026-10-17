@@ -25,17 +25,37 @@ const speedSchema = z.strictObject({
   swim: z.int().min(0).optional(),
 });
 
-/** One damage type or condition, and every race or item label that grants it. */
-const defenseSchema = z.strictObject({
-  name: z.string().min(1),
-  from: z.array(z.string().min(1)).min(1),
+const grantorsSchema = z.array(z.string().min(1)).min(1);
+
+/** One damage type, condition or proficiency, and every race, item or feat label that grants it. */
+const grantSchema = z.strictObject({ name: z.string().min(1), from: grantorsSchema });
+
+/**
+ * What feats grant beyond what the definition stores, each with the feats behind it: a
+ * saving throw by ability, a skill at the level the feats raise it to, and the rest by the
+ * name upstream writes, lowercased. The sheet reads skills, saves, armor and weapons with
+ * these added.
+ */
+const featGrantsSchema = z.strictObject({
+  savingThrows: z.array(z.strictObject({ name: abilitySchema, from: grantorsSchema })),
+  skills: z.array(
+    z.strictObject({
+      ref: contentRefSchema,
+      level: z.enum(["proficient", "expertise"]),
+      from: grantorsSchema,
+    }),
+  ),
+  tools: z.array(grantSchema),
+  languages: z.array(grantSchema),
+  armor: z.array(grantSchema),
+  weapons: z.array(grantSchema),
 });
 
 const defensesSchema = z.strictObject({
-  resistances: z.array(defenseSchema),
-  damageImmunities: z.array(defenseSchema),
-  conditionImmunities: z.array(defenseSchema),
-  vulnerabilities: z.array(defenseSchema),
+  resistances: z.array(grantSchema),
+  damageImmunities: z.array(grantSchema),
+  conditionImmunities: z.array(grantSchema),
+  vulnerabilities: z.array(grantSchema),
   /** The race's choice of resistance while the definition stores no pick it offers. */
   resistanceChoice: z
     .strictObject({ from: z.string().min(1), options: z.array(z.string().min(1)).min(1) })
@@ -201,14 +221,15 @@ export const characterDerivedSchema = z.strictObject({
     }),
   ),
   /**
-   * Resistances, immunities and vulnerabilities from the race, then from each equipped item, attuned where it must be.
+   * Resistances, immunities and vulnerabilities from the race, then from each feat, then from each equipped item, attuned where it must be.
    *
-   * The sheet offers no override for this or the two lists below: each names the race or
-   * item behind an entry, and a typed-over list would name none and stop following the equipment.
+   * The sheet offers no override for this or the three lists below: each names the race,
+   * feat or item behind an entry, and a typed-over list would name none and stop following the equipment.
    */
   defenses: derivedSchema(defensesSchema),
   /** Which equipped items grant a proficiency or a language, attuned where they must be. */
   itemGrants: derivedSchema(itemGrantsSchema),
+  featGrants: derivedSchema(featGrantsSchema),
   /**
    * The advantage and disadvantage equipped items grant, attuned where they must be, in
    * inventory order, then what armor worn without proficiency costs, then heavy
@@ -233,3 +254,4 @@ export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
 export type Speed = z.infer<typeof speedSchema>;
 export type RollEffectEntry = z.infer<typeof rollEffectSchema>;
 export type Defenses = z.infer<typeof defensesSchema>;
+export type FeatGrants = z.infer<typeof featGrantsSchema>;

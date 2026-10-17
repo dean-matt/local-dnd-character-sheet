@@ -29,8 +29,14 @@ export const withSpell = (
   spells: [...definition.spells, { ref, prepared: false, ...(origin && { origin }) }],
 });
 
-/** `definition` holding the feat, with no entitlement recorded for it. */
-export const withFeat = (definition: CharacterDefinition, ref: EntryRef): CharacterDefinition => ({
+type FeatPicks = CharacterDefinition["feats"][number]["picks"];
+
+/** `definition` holding the feat, with no entitlement recorded for it, and `picks` where given. */
+export const withFeat = (
+  definition: CharacterDefinition,
+  ref: EntryRef,
+  picks?: FeatPicks,
+): CharacterDefinition => ({
   ...definition,
-  feats: [...definition.feats, { ref }],
+  feats: [...definition.feats, { ref, ...(picks && { picks }) }],
 });

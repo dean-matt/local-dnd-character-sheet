@@ -38,6 +38,7 @@ export type {
   CharacterCatalog,
   ContainerTrait,
   DefenseTrait,
+  FeatGrantTrait,
   ItemAbilityTrait,
   ItemAdvantageTrait,
   ItemBonusTrait,
@@ -73,6 +74,7 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
+export { allocatePicks, type FeatPick, heldSkillLevel } from "./featGrants.ts";
 export type { HouseRule } from "./houseRules.ts";
 export {
   IMPROVEMENT_FEAT,

@@ -66,6 +66,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     armorBurdens: new Map(),
     ammunition: new Map(),
     containers: new Map(),
+    featGrants: new Map(),
     weaponMasteryKinds: new Map(),
   });
 }
@@ -370,6 +371,42 @@ describe("AbilitiesSection", () => {
     const granted = card("Granted by items");
     expect(granted.getByText("Bracers of Archery")).toBeInTheDocument();
     expect(granted.getByText("Belt of Dwarvenkind")).toBeInTheDocument();
+  });
+
+  it("lists what feats grant with the feats behind it, and marks a feat's save proficient", () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    renderSection(record, {
+      ...derived,
+      featGrants: {
+        computed: {
+          savingThrows: [{ name: "con", from: ["Resilient"] }],
+          skills: [
+            { ref: PERCEPTION, level: "proficient", from: ["Observant"] },
+            { ref: DECEPTION, level: "expertise", from: ["Skill Expert"] },
+          ],
+          tools: [{ name: "cook's utensils", from: ["Chef"] }],
+          languages: [{ name: "sylvan", from: ["Fey Teleportation"] }],
+          armor: [{ name: "medium", from: ["Moderately Armored"] }],
+          weapons: [],
+        },
+        manual: null,
+        terms: [],
+      },
+    });
+
+    const granted = card("Granted by feats");
+    expect(granted.getByText("Constitution (Resilient)")).toBeInTheDocument();
+    expect(granted.getByText("Perception (Observant)")).toBeInTheDocument();
+    expect(granted.getByText("Deception (Skill Expert)")).toBeInTheDocument();
+    expect(granted.getByText("Cook's Utensils (Chef)")).toBeInTheDocument();
+    expect(granted.getByText("Sylvan (Fey Teleportation)")).toBeInTheDocument();
+    expect(granted.getByText("Medium (Moderately Armored)")).toBeInTheDocument();
+    expect(granted.queryByText("Weapon")).not.toBeInTheDocument();
+    const ring = (ability: string) =>
+      card("Saving Throws").getByText(ability).closest("li")?.querySelector("[title]");
+    expect(ring("CON")).toHaveAttribute("title", "Proficient");
+    expect(ring("STR")).toHaveAttribute("title", "Not proficient");
   });
 
   it("marks the saves and skills an item grants advantage on with a chip, and flags a condition instead of stating it", () => {

@@ -18,6 +18,7 @@ import {
   castingStartLevelSchema,
   containerTraitSchema,
   defenseTraitSchema,
+  featGrantsSchema,
   itemAdvantageSchema,
   itemAdvantagesOf,
   itemBonusSchema,
@@ -40,6 +41,7 @@ import {
   type DefenseTrait,
   type EntryRef,
   entryKey,
+  type FeatGrantTrait,
   type ItemAbilityTrait,
   type ItemAdvantageTrait,
   type ItemBonusTrait,
@@ -58,7 +60,8 @@ import {
   getSubclass,
   getWeaponMasteryCount,
 } from "./classes.ts";
-import { getHomebrewClass, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
+import { getFeat } from "./feats.ts";
+import { getHomebrewClass, getHomebrewFeat, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
 import { getBaseItemMasteries } from "./items.ts";
 import { getRace, getSubrace } from "./races.ts";
@@ -425,6 +428,26 @@ function itemAdvantages(
   return advantages;
 }
 
+/** Every feat the definition holds whose row answers, keyed by `entryKey`. */
+function featGrants(
+  dataDir: string,
+  homebrewDb: HomebrewDb,
+  definition: CharacterDefinition,
+): Map<string, FeatGrantTrait> {
+  const grants = new Map<string, FeatGrantTrait>();
+  for (const { ref } of definition.feats) {
+    const key = entryKey(ref);
+    if (grants.has(key)) continue;
+    const row =
+      "homebrewId" in ref
+        ? getHomebrewFeat(homebrewDb, ref.homebrewId)
+        : getFeat(dataDir, ref.name, ref.source);
+    const trait = row && parseJson(featGrantsSchema, row.json);
+    if (row && trait) grants.set(key, { ...trait, name: row.name });
+  }
+  return grants;
+}
+
 /** Per catalog class, how many kinds of weapon its Weapon Mastery allows at the character's level in it. */
 function weaponMasteryKinds(dataDir: string, definition: CharacterDefinition): Map<string, number> {
   const kinds = new Map<string, number>();
@@ -497,6 +520,7 @@ export function resolveCharacterCatalog(
     itemBonuses: itemBonuses(definition, items),
     itemAdvantages: itemAdvantages(definition, items),
     armorBurdens: armorBurdens(definition, items),
+    featGrants: featGrants(dataDir, homebrewDb, definition),
     ammunition: ammunition(definition, items),
     containers: containers(definition, items),
   };

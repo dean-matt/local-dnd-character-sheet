@@ -139,6 +139,7 @@ export function derivedRecord(
     armorBurdens: new Map(),
     ammunition: new Map(),
     containers: new Map(),
+    featGrants: new Map(),
     weaponMasteryKinds: new Map(),
   });
 }

@@ -169,13 +169,17 @@ export function candidateAt(
   const { feats, abilityIncreases } = withoutImprovement(definition, grant.level);
   const base = definition.abilityScores ?? {};
   const set = ABILITIES.every((ability) => Number.isInteger(base[ability]));
-  const scored = (increases: typeof abilityIncreases) =>
+  const scored = (increases: typeof abilityIncreases, held: typeof feats = []) =>
     set
       ? (Object.fromEntries(
           ABILITIES.map((ability) => [
             ability,
             abilityScore(
-              { abilityScores: base as Record<Ability, number>, abilityIncreases: increases },
+              {
+                abilityScores: base as Record<Ability, number>,
+                abilityIncreases: increases,
+                feats: held,
+              },
               ability,
             ),
           ]),
@@ -186,8 +190,11 @@ export function candidateAt(
     takesFeats: takesFeats(definition),
     level: grant.level,
     classNames: definition.levels.slice(0, grant.level).map((level) => displayName(level.class)),
-    scores: scored(abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level)),
-    totals: scored(abilityIncreases),
+    scores: scored(
+      abilityIncreases.filter((increase) => (increase.level ?? 0) < grant.level),
+      feats.filter((feat) => feat.level === undefined),
+    ),
+    totals: scored(abilityIncreases, feats),
     held: feats.flatMap(({ ref }) => ("name" in ref ? [ref] : [])),
     earlier: feats.flatMap(({ ref, level }) =>
       "name" in ref && (level ?? 0) < grant.level ? [refKey(ref).toLowerCase()] : [],
