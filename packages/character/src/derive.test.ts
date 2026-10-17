@@ -320,6 +320,31 @@ describe("deriveCharacter", () => {
     expect(unarmored.armorClass.computed).toBe(13);
   });
 
+  it("adds a Monk's Wisdom to the unarmored base, and a manual armor class still wins", () => {
+    const MONK = { name: "Monk", source: "XPHB" };
+    const monk: CharacterDefinition = {
+      ...definition,
+      levels: [{ class: MONK }],
+      inventory: [],
+    };
+    const withMonk = {
+      ...catalog,
+      hitDice: new Map([...hitDice, [entryKey(MONK), 8 as const]]),
+    };
+    const result = deriveCharacter(monk, withMonk);
+    expect(result.armorClass).toEqual({
+      computed: 14,
+      manual: null,
+      terms: [
+        { label: "Armor", value: 10 },
+        { label: "Dexterity", value: 3 },
+        { label: "Unarmored Defense (Wisdom)", value: 1 },
+      ],
+    });
+    const overridden = deriveCharacter({ ...monk, overrides: { armorClass: 20 } }, withMonk);
+    expect(overridden.armorClass.manual).toBe(20);
+  });
+
   it("omits the reference when the equipped armor is homebrew", () => {
     const homebrewArmor = { homebrewId: "hb_leather" };
     const withHomebrew: CharacterDefinition = {

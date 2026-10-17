@@ -56,6 +56,7 @@ import { applyOverrides } from "./overrides.ts";
 import type { Ability, ContentRef, EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
 import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
+import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
 
 /**
  * The hit point maximum for a stored character.
@@ -253,16 +254,25 @@ function equippedArmor(
  * base of 10 rather than throwing, since one missing suit of armor is not a reason to
  * refuse the rest of the sheet.
  *
- * Unarmored Defense, the formula a Barbarian or a Monk uses in place of 10, is not
- * modeled: no catalog field states one yet. The gap closes the day a class's own row
- * carries it; until then this reads the base as if no such feature exists.
+ * Wearing no armor, the best unarmored formula a class or subclass has reached adds its
+ * term to the base of 10; `unarmoredDefenseTerm` holds the formulas.
  */
 function derivedArmorClass(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
 ): ComputedField<number> {
-  const bonus = itemTerms(equippedBonuses(definition, catalog), (item) => item.ac);
   const { worn, shield } = equippedArmor(definition, catalog.armor);
+  const unarmored = worn
+    ? undefined
+    : unarmoredDefenseTerm(
+        definition,
+        (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
+        shield !== undefined,
+      );
+  const bonus = [
+    ...(unarmored ? [unarmored] : []),
+    ...itemTerms(equippedBonuses(definition, catalog), (item) => item.ac),
+  ];
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
     dexterityModifier: { value: abilityModifier(scoreOf(definition, catalog, "dex")) },
