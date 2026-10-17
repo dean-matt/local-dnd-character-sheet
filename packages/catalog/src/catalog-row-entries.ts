@@ -4,9 +4,10 @@ import { legendaryGroupEntries, monsterEntries } from "./monster.ts";
 
 /**
  * What a catalog row's detail renders, by the `type` a search hit carries: a table's own
- * rows, a monster's stat block (which reads the row's `edition`), a legendary group's lair, a deity's or a language's fields
+ * rows, a monster's stat block, a legendary group's lair, a deity's or a language's fields
  * ahead of its prose, and every other row's `entries`. Empty where the detail would show
  * the row's name alone.
+ * A 2024 monster's stat block needs the row's `edition`.
  */
 export function catalogRowEntries(
   type: string,

@@ -146,20 +146,20 @@ const ADVANTAGE: Record<string, [string, number]> = {
 /**
  * A stated bonus, or the Dexterity modifier plus a multiple of the proficiency bonus,
  * with the passive score after it. Advantage adds 5 to that score, and Disadvantage takes 5.
- * Upstream omits the field where a 2024 monster's initiative is plain Dexterity, which the
- * printed block still shows; a 2014 block shows none.
+ * Upstream omits the field where a 2024 monster's initiative is plain Dexterity, yet the
+ * printed block shows the line; a 2014 block shows none.
  */
 function initiative(json: Json, edition: string | null | undefined): string | undefined {
   const stated = json.initiative;
   if (typeof stated === "number") return `${signed(stated)} (${10 + stated})`;
-  const initiative = stated === undefined && edition === "one" ? {} : stated;
-  if (!isRecord(initiative) || typeof json.dex !== "number") return undefined;
-  const proficiency = typeof initiative.proficiency === "number" ? initiative.proficiency : 0;
+  const fields = stated === undefined && edition === "one" ? {} : stated;
+  if (!isRecord(fields) || typeof json.dex !== "number") return undefined;
+  const proficiency = typeof fields.proficiency === "number" ? fields.proficiency : 0;
   const proficient =
     proficiency === 0 ? 0 : proficiency * creatureProficiencyBonus(rating(json.cr));
   const bonus = abilityModifier(json.dex) + proficient;
   if (!Number.isFinite(bonus)) return undefined;
-  const [roll, shift] = ADVANTAGE[`${initiative.advantageMode}`] ?? [];
+  const [roll, shift] = ADVANTAGE[`${fields.advantageMode}`] ?? [];
   return `${signed(bonus)}${roll ? ` with ${roll}` : ""} (${10 + bonus + (shift ?? 0)})`;
 }
 
