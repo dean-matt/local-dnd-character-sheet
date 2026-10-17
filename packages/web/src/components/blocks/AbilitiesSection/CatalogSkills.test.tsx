@@ -124,7 +124,7 @@ describe("CatalogSkills", () => {
     await waitFor(() => expect(written(fetchMock)).toEqual([{ ref: ARCANA, level: "proficient" }]));
   });
 
-  it("shows a feat's skill at the level it grants, and steps on from there", async () => {
+  it("shows a feat's skill at the level it grants, and steps on from there, marking expertise over the grant", async () => {
     const fetchMock = stubServer(new Response(JSON.stringify(holding([]))));
     renderSeeded(holding([{ ref: STEALTH, level: "expertise" }]), [
       { ref: PERCEPTION, level: "proficient", from: ["Observant"] },
@@ -137,7 +137,7 @@ describe("CatalogSkills", () => {
     await waitFor(() =>
       expect(written(fetchMock)).toEqual([
         { ref: STEALTH, level: "expertise" },
-        { ref: PERCEPTION, level: "expertise" },
+        { ref: PERCEPTION, level: "expertise", onGrant: true },
       ]),
     );
   });

@@ -27,7 +27,6 @@ export {
   hitPointSource,
   IMPROVEMENT_CAP,
   maxHitPoints,
-  PROFICIENCY_LEVELS,
   preparedSpellCount,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
@@ -75,7 +74,7 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
-export { allocatePicks, type FeatPick } from "./featGrants.ts";
+export { allocatePicks, type FeatPick, heldSkillLevel } from "./featGrants.ts";
 export type { HouseRule } from "./houseRules.ts";
 export {
   IMPROVEMENT_FEAT,

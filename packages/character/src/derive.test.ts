@@ -2015,6 +2015,20 @@ describe("deriveCharacter", () => {
       expect(perception(withFeats([{ ref: ANATOMY }], trained))).toBe("expertise");
     });
 
+    it("counts expertise stepped up from a feat's proficiency only while the feat grants it", () => {
+      const perception = (block: CharacterDerived) =>
+        block.skills.find((skill) => skill.ref.name === "Perception")?.modifier.computed;
+      const holding = (skill: CharacterDefinition["proficiencies"]["skills"][number]) => ({
+        ...equipped,
+        proficiencies: { ...equipped.proficiencies, skills: [skill] },
+      });
+      const overGrant = holding({ ref: PERCEPTION, level: "expertise", onGrant: true });
+      const feat = [{ ref: EXPERT, picks: { skills: ["perception"] } }];
+      expect(perception(withFeats(feat, overGrant))).toBe(7);
+      expect(perception(withFeats([], overGrant))).toBe(1);
+      expect(perception(withFeats([], holding({ ref: PERCEPTION, level: "expertise" })))).toBe(7);
+    });
+
     it("cites each feat for the defenses it grants and the resistances picked, up to its count", () => {
       const block = withFeats([
         { ref: INFERNAL },

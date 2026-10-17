@@ -186,6 +186,18 @@ export function featGrants(
 }
 
 /**
+ * A skill's level from what the character stores and what feats grant: the higher of the
+ * two, except that expertise stored `onGrant` counts only while a feat grants the skill.
+ */
+export function heldSkillLevel(
+  stored: { level: ProficiencyLevel; onGrant?: true } | undefined,
+  granted: ProficiencyLevel = "none",
+): ProficiencyLevel {
+  const own = stored?.onGrant && granted === "none" ? "none" : (stored?.level ?? "none");
+  return rank(granted) > rank(own) ? granted : own;
+}
+
+/**
  * `definition` with what feats grant added to the proficiencies the sheet computes from:
  * saving throws, skills at the higher of the stored and granted level, armor and weapons.
  */
@@ -194,10 +206,16 @@ export function withFeatGrants(
   granted: FeatGrants,
 ): CharacterDefinition {
   const { proficiencies } = definition;
-  const skills = new Map(proficiencies.skills.map((skill) => [refKey(skill.ref), skill]));
-  for (const { ref, level } of granted.skills) {
-    const held = skills.get(refKey(ref));
-    if (!held || rank(level) > rank(held.level)) skills.set(refKey(ref), { ref, level });
+  const grants = new Map(granted.skills.map((skill) => [refKey(skill.ref), skill]));
+  const skills = new Map<
+    string,
+    { ref: (typeof granted.skills)[number]["ref"]; level: ProficiencyLevel }
+  >();
+  for (const skill of [...proficiencies.skills, ...granted.skills]) {
+    const key = refKey(skill.ref);
+    const stored = proficiencies.skills.find((held) => refKey(held.ref) === key);
+    const level = heldSkillLevel(stored, grants.get(key)?.level);
+    if (level !== "none") skills.set(key, { ref: skill.ref, level });
   }
   const names = (list: readonly string[], more: readonly { name: string }[]) => [
     ...list,

@@ -1,4 +1,4 @@
-import { type CharacterDefinition, PROFICIENCY_LEVELS } from "@dnd/character";
+import type { CharacterDefinition } from "@dnd/character";
 
 export type ProficiencyLevel = CharacterDefinition["proficiencies"]["skills"][number]["level"];
 
@@ -24,6 +24,3 @@ const NEXT_LEVEL: Record<ProficiencyLevel, ProficiencyLevel> = {
 };
 
 export const nextLevel = (level: ProficiencyLevel) => NEXT_LEVEL[level];
-
-export const higherLevel = (a: ProficiencyLevel, b: ProficiencyLevel) =>
-  PROFICIENCY_LEVELS.indexOf(b) > PROFICIENCY_LEVELS.indexOf(a) ? b : a;

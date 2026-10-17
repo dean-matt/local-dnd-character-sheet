@@ -80,10 +80,15 @@ const proficiencyLevelSchema = z.enum(PROFICIENCY_LEVELS);
 /** A custom skill's base where no ability governs it: a number the player sets. */
 export const flatSkillBonusSchema = z.int();
 
-/** One skill, and how proficient the character is in it. */
+/**
+ * One skill, and how proficient the character is in it. `onGrant` marks expertise the player
+ * stepped a feat's granted proficiency up to: it counts only while a feat still grants the
+ * skill, since expertise needs proficiency, and comes back if one grants it again.
+ */
 const skillProficiencySchema = z.strictObject({
   ref: contentRefSchema,
   level: proficiencyLevelSchema,
+  onGrant: z.literal(true).optional(),
 });
 
 /**
