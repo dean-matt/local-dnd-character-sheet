@@ -10,6 +10,7 @@ import type {
   FeatGrantTrait,
   FeatOffer,
   FeatPickField,
+  SenseGrant,
 } from "./catalog.ts";
 import type { FeatGrants } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
@@ -151,12 +152,16 @@ function grantedSkills(
 
 /**
  * What every feat the definition holds grants, and its resistances and immunities as a
- * defense grant each, cited by the feat's name. A feat no row answers grants nothing.
+ * defense grant each and its senses, cited by the feat's name. A feat no row answers grants nothing.
  */
 export function featGrants(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
-): { granted: FeatGrants; defenses: (DefenseTrait & { from: string })[] } {
+): {
+  granted: FeatGrants;
+  defenses: (DefenseTrait & { from: string })[];
+  senses: (SenseGrant & { from: string })[];
+} {
   const held = definition.feats.flatMap(({ ref, picks }): Held[] => {
     const trait = catalog.featGrants.get(entryKey(ref));
     return trait ? [{ trait, picked: acceptedPicks(trait.offers, picks) }] : [];
@@ -182,6 +187,9 @@ export function featGrants(
       vulnerable: [],
       from: trait.name,
     })),
+    senses: held.flatMap(({ trait }) =>
+      trait.senses.map((sense) => ({ ...sense, from: trait.name })),
+    ),
   };
 }
 

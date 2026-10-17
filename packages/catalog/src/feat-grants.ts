@@ -2,6 +2,7 @@ import { z } from "zod";
 import { defenseTraitSchema } from "./defense.ts";
 import type { ToolType } from "./item-kind.ts";
 import { grantedSchema, proficiencyGrantsSchema } from "./proficiency-grants.ts";
+import { senseGrantsSchema } from "./sense.ts";
 import { skillProficienciesChoiceSchema } from "./skill-choice.ts";
 import { backgroundToolChoicesSchema } from "./tool-choice.ts";
 
@@ -87,6 +88,7 @@ export const featGrantsSchema = z.looseObject({}).transform((row) => {
   const outright = outrightSchema.parse(row);
   const { skills, languages, tools, weapons, armor } = proficiencyGrantsSchema.parse(row);
   const { resist, immune, conditionImmune } = defenseTraitSchema.parse(row);
+  const senses = senseGrantsSchema.parse(row);
   const skillPick = skillProficienciesChoiceSchema.parse(row);
   const toolPicks = backgroundToolChoicesSchema.parse(row);
   return {
@@ -100,6 +102,7 @@ export const featGrantsSchema = z.looseObject({}).transform((row) => {
     resist,
     immune,
     conditionImmune,
+    senses,
     offers: [
       ...(skillPick ? [{ fields: ["skills"], ...skillPick } satisfies FeatOffer] : []),
       ...toolPicks.map(

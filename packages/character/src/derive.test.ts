@@ -22,11 +22,14 @@ import {
   type ItemAdvantageTrait,
   type ItemBonusTrait,
   type ItemDefenseTrait,
+  type ItemSenseTrait,
   itemKey,
   overrideKey,
   passiveSkill,
+  type SenseGrant,
   type WeaponTrait,
 } from "./index.ts";
+import { raceSummary } from "./summaries.ts";
 import {
   DECEPTION,
   definition,
@@ -132,6 +135,20 @@ describe("deriveCharacter", () => {
     conditionImmune: [],
     vulnerable: [],
   };
+  const noFeatGrants = {
+    savingThrows: [],
+    skills: [],
+    expertise: [],
+    tools: [],
+    languages: [],
+    armor: [],
+    weapons: [],
+    resist: [],
+    immune: [],
+    conditionImmune: [],
+    senses: [] as SenseGrant[],
+    offers: [],
+  };
   const DAGGER_TRAIT: WeaponTrait = {
     kind: "melee",
     properties: ["F|XPHB", "L|XPHB", "T|XPHB"],
@@ -202,6 +219,8 @@ describe("deriveCharacter", () => {
       [entryKey(LONGSWORD), LONGSWORD_TRAIT],
     ]),
     raceDefenses: noDefenses,
+    raceSenses: [] as SenseGrant[],
+    itemSenses: new Map<string, ItemSenseTrait>(),
     itemDefenses: new Map<string, ItemDefenseTrait>(),
     itemAbilities: new Map<string, ItemAbilityTrait>(),
     itemBonuses: new Map<string, ItemBonusTrait>(),
@@ -1695,6 +1714,90 @@ describe("deriveCharacter", () => {
     ]);
   });
 
+  describe("senses", () => {
+    const GOGGLES = { name: "Goggles of Night", source: "DMG" };
+    const HELM = { name: "Helm of Devil's Sight", source: "HB" };
+    const FIGHTING = { name: "Blind Fighting", source: "XPHB" };
+    const worn = (ref: EntryRef, flags: { attuned?: boolean } = {}) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: true,
+      attuned: flags.attuned ?? false,
+    });
+    const senseCatalog: typeof catalog = {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(GOGGLES), 0], [entryKey(HELM), 0]]),
+      raceSenses: [{ name: "darkvision", range: 60 }],
+      itemSenses: new Map<string, ItemSenseTrait>([
+        [
+          entryKey(GOGGLES),
+          {
+            name: GOGGLES.name,
+            requiresAttunement: false,
+            senses: [{ name: "darkvision", range: 60 }],
+          },
+        ],
+        [
+          entryKey(HELM),
+          {
+            name: HELM.name,
+            requiresAttunement: true,
+            senses: [
+              { name: "darkvision", range: 120 },
+              { name: "truesight", range: 10 },
+            ],
+          },
+        ],
+      ]),
+      featGrants: new Map([
+        [
+          entryKey(FIGHTING),
+          {
+            ...noFeatGrants,
+            name: FIGHTING.name,
+            senses: [{ name: "blindsight" as const, range: 10 }],
+          },
+        ],
+      ]),
+    };
+    const sensesOf = (
+      inventory: CharacterDefinition["inventory"],
+      feats: CharacterDefinition["feats"] = [],
+    ) => deriveCharacter({ ...equipped, inventory, feats }, senseCatalog).senses.computed;
+
+    it("lists the race's sense, citing the race", () => {
+      expect(sensesOf([])).toEqual([
+        { name: "darkvision", range: 60, from: [raceSummary(equipped)] },
+      ]);
+    });
+
+    it("lists a feat's sense, in the order senses are listed", () => {
+      expect(sensesOf([], [{ ref: FIGHTING }])).toEqual([
+        { name: "blindsight", range: 10, from: ["Blind Fighting"] },
+        { name: "darkvision", range: 60, from: [raceSummary(equipped)] },
+      ]);
+    });
+
+    it("keeps the longer range where two sources grant one sense, and names both", () => {
+      expect(sensesOf([worn(GOGGLES), worn(HELM, { attuned: true })])).toEqual([
+        {
+          name: "darkvision",
+          range: 120,
+          from: [raceSummary(equipped), GOGGLES.name, HELM.name],
+        },
+        { name: "truesight", range: 10, from: [HELM.name] },
+      ]);
+    });
+
+    it("waits on attunement and on being equipped", () => {
+      expect(sensesOf([worn(HELM)]).map(({ name }) => name)).toEqual(["darkvision"]);
+      expect(sensesOf([{ ...worn(GOGGLES), equipped: false }]).map(({ from }) => from)).toEqual([
+        [raceSummary(equipped)],
+      ]);
+    });
+  });
+
   describe("spell slots", () => {
     const WIZARD = { name: "Wizard", source: "PHB" };
     const SORCERER = { name: "Sorcerer", source: "PHB" };
@@ -1879,19 +1982,7 @@ describe("deriveCharacter", () => {
   });
 
   describe("what feats grant through their fields", () => {
-    const none = {
-      savingThrows: [],
-      skills: [],
-      expertise: [],
-      tools: [],
-      languages: [],
-      armor: [],
-      weapons: [],
-      resist: [],
-      immune: [],
-      conditionImmune: [],
-      offers: [],
-    };
+    const none = noFeatGrants;
     const ARMORED = { name: "Moderately Armored", source: "PHB" };
     const RESILIENT = { name: "Resilient", source: "XPHB" };
     const EXPERT = { name: "Skill Expert", source: "XPHB" };

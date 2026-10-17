@@ -25,6 +25,7 @@ import {
   type PreparedSpellCount,
   preparationRuleSchema,
   raceTraitsSchema,
+  senseGrantsSchema,
   spellcastingAbilitySchema,
   weaponTraitSchema,
 } from "@dnd/catalog";
@@ -46,6 +47,7 @@ import {
   type ItemAdvantageTrait,
   type ItemBonusTrait,
   type ItemDefenseTrait,
+  type ItemSenseTrait,
   itemKey,
   type Preparation,
   type SkillTrait,
@@ -327,6 +329,27 @@ function itemDefenses(
   return defenses;
 }
 
+const raceSenses = (json: unknown) => parseJson(senseGrantsSchema, json) ?? [];
+
+/** Every entry whose row grants a sense, keyed by `itemKey`. */
+function itemSenses(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ItemSenseTrait> {
+  const senses = new Map<string, ItemSenseTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const granted = row && parseJson(senseGrantsSchema, row.json);
+    if (!row || !granted?.length) return;
+    senses.set(itemKey(entry), {
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+      senses: granted,
+    });
+  });
+  return senses;
+}
+
 /** Every entry whose row sets or raises a score, keyed by `itemKey`. */
 function itemAbilities(
   definition: CharacterDefinition,
@@ -515,6 +538,8 @@ export function resolveCharacterCatalog(
     weights: itemWeights(definition.inventory, items),
     weapons: weaponTraits(dataDir, definition, items),
     raceDefenses: raceDefenses(json),
+    raceSenses: raceSenses(json),
+    itemSenses: itemSenses(definition, items),
     itemDefenses: itemDefenses(definition, items),
     itemAbilities: itemAbilities(definition, items),
     itemBonuses: itemBonuses(definition, items),

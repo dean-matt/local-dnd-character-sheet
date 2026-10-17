@@ -18,6 +18,7 @@ import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 import { itemAdvantageSchema } from "./item-advantage.ts";
+import { senseListSchema } from "./sense.ts";
 
 /**
  * `true`, a condition such as `"by a spellcaster"`, or `"optional"` — the shape
@@ -34,6 +35,8 @@ export const homebrewItemSchema = z.looseObject({
   entries: entriesSchema.optional(),
   /** The advantage or disadvantage the item grants its bearer, which a catalog item states in prose. */
   advantage: z.array(itemAdvantageSchema).optional(),
+  /** The senses the item grants its bearer, shaped as a feat's `senses`, which a catalog item states in prose. */
+  senses: senseListSchema.optional(),
 });
 
 export type HomebrewItem = z.infer<typeof homebrewItemSchema>;

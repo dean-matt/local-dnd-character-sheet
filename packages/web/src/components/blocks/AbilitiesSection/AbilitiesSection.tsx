@@ -28,6 +28,7 @@ import { ItemGrants } from "./ItemGrants.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
+import { Senses } from "./Senses.tsx";
 import { Vitals } from "./Vitals/Vitals.tsx";
 
 export function AbilitiesSection({
@@ -53,6 +54,7 @@ export function AbilitiesSection({
       <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />
+      <Senses derived={derived} />
       <ItemGrants derived={derived} />
       <FeatGrants derived={derived} />
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">

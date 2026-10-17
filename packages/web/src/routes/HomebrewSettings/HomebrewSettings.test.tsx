@@ -487,6 +487,29 @@ describe("HomebrewSettings", () => {
     expect(entry()).not.toHaveProperty("advantage");
   });
 
+  it("states an item's senses through the form, one range each, and drops the field when none is left", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    stepTo("Effects");
+    fireEvent.change(field("spinbutton", "Truesight (ft.)"), { target: { value: "30" } });
+    fireEvent.change(field("spinbutton", "Darkvision (ft.)"), { target: { value: "120" } });
+    const entry = () => {
+      mode("JSON");
+      const text = jsonText("Item JSON");
+      mode("Step by step");
+      return JSON.parse(text);
+    };
+    expect(entry().senses).toEqual([{ darkvision: 120 }, { truesight: 30 }]);
+
+    fireEvent.change(field("spinbutton", "Darkvision (ft.)"), { target: { value: "" } });
+    expect(entry().senses).toEqual([{ truesight: 30 }]);
+
+    fireEvent.change(field("spinbutton", "Truesight (ft.)"), { target: { value: "0" } });
+    expect(entry()).not.toHaveProperty("senses");
+  });
+
   it("lists the fields the sheet reads, and the rules text, by name ahead of an item's JSON, and none beside a spell's", async () => {
     stubApi({});
     renderPage();

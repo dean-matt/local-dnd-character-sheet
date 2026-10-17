@@ -132,6 +132,7 @@ export {
   searchHitSchema,
   searchResponseSchema,
 } from "./search.ts";
+export { senseGrantsSchema } from "./sense.ts";
 export type { SkillChoice } from "./skill-choice.ts";
 export { classSkillChoiceSchema, skillProficienciesChoiceSchema } from "./skill-choice.ts";
 export type { CatalogSource } from "./source.ts";
