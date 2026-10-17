@@ -9,6 +9,7 @@ import { ApiError } from "../lib/api.ts";
 import { matchCatalogTarget } from "../lib/catalogRows.ts";
 import { AddedNotice } from "./AddedNotice.tsx";
 import { AddTo } from "./AddTo/AddTo.tsx";
+import { JsonView } from "./JsonView.tsx";
 import { ModalEntry } from "./ModalEntry.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
 import { ResolvedRefs } from "./resolvedRefsContext.ts";
@@ -44,7 +45,7 @@ export function CatalogEntry({ address }: { address: string }) {
   if (row.isError) return entry("Could not load", <ErrorState error={row.error} />);
   if (row.isPending) return entry("Loading…", <LoadingState />);
 
-  const { name, source, edition, qualifier, entries } = row.data;
+  const { name, source, edition, qualifier, entries, json } = row.data;
   const label = match.target.label(match.key);
   const addable = addableAt(address, name, source);
   return entry(
@@ -59,6 +60,7 @@ export function CatalogEntry({ address }: { address: string }) {
       ) : (
         <EmptyState>This row carries no rules text of its own.</EmptyState>
       )}
+      <JsonView json={json} />
     </>,
     <TypeChip type={label}>{capitalized(label)}</TypeChip>,
     <span className="flex items-center gap-2">
