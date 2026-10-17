@@ -1,5 +1,6 @@
 import type { SearchHit } from "@dnd/catalog";
 import { useEffect, useRef } from "react";
+import { CHIP } from "../../lib/chipStyles.ts";
 import { searchHitTypeLabel } from "../../lib/searchHits.ts";
 import { SourceChip } from "../SourceChip.tsx";
 
@@ -53,6 +54,15 @@ export function CatalogPickerOption({
         edition={hit.edition}
         of={searchHitTypeLabel(hit.type).toLowerCase()}
       />
+      {"npcRace" in hit && hit.npcRace && (
+        <span
+          title="Upstream tags this race for NPCs, not for a player character"
+          className={`${CHIP} border-border text-secondary uppercase`}
+        >
+          <span aria-hidden="true">NPC</span>
+          <span className="sr-only">NPC race, not for player characters</span>
+        </span>
+      )}
       {reason !== undefined && <span className="text-row">{reason}</span>}
       {detail !== undefined && <span className="basis-full text-muted text-row">{detail}</span>}
     </div>

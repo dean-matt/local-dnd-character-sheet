@@ -169,6 +169,7 @@ describe("IdentityStep", () => {
     await pick("Race", "elf", /^Elf/);
 
     expect(screen.getByRole("button", { name: "Clear race, Elf" })).toHaveFocus();
+    expect(screen.getByText("PHB")).toBeVisible();
     expect(await screen.findByText("Elf has subraces — choose one")).toBeVisible();
     expect(screen.getByText("Traits: Darkvision")).toBeVisible();
     await waitFor(() =>

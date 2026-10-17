@@ -127,6 +127,24 @@ describe("searchCatalog", () => {
     ]);
   });
 
+  it("flags a race whose traitTags hold NPC Race", () => {
+    dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
+    const race = (source: string, traitTags: string[]) => ({
+      name: "Aarakocra",
+      source,
+      edition: "classic",
+      json: JSON.stringify({ name: "Aarakocra", source, traitTags }),
+    });
+    publishSearchFixture(dataDir, {
+      races: [race("DMG", ["Natural Weapon", "NPC Race"]), race("EEPC", ["Natural Weapon"])],
+    });
+
+    expect(searchCatalog(dataDir, { types: ["race"] })).toEqual([
+      { type: "race", name: "Aarakocra", source: "DMG", edition: "classic", npcRace: true },
+      { type: "race", name: "Aarakocra", source: "EEPC", edition: "classic" },
+    ]);
+  });
+
   it("filters a Tier A row to the requested edition, and includes an edition-less Tier C row regardless", () => {
     dataDir = mkdtempSync(join(tmpdir(), "content-search-"));
     publishSearchFixture(dataDir, {

@@ -84,6 +84,7 @@ export function RaceField() {
       <ChosenChip
         label="Race"
         value={displayName(race)}
+        source={catalogRace?.source}
         focusOnMount={moved}
         onClear={() => choose(undefined)}
       />
