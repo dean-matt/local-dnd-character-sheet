@@ -189,8 +189,11 @@ keeps the spelling upstream gave it, so a case-folding resolve in the renderer i
 closes that one — safe here, because no two abbreviations collide once case is folded.
 
 **`itemEntry` and `itemTypeAdditionalEntries` are loaded although no `{@tag}` reaches
-them.** An item's rendered text needs both: `items.json` and `magicvariants.json` carry
-122 `{#itemEntry Name|SOURCE}` references, and the two additional-entry rows attach to
-every item whose type their `appliesTo` names. Expanding either into an item's text is
-the renderer's half; the rows are here so that half is a query rather than a second ETL
-change.
+them.** `items.json` and `magicvariants.json` carry 122 `{#itemEntry Name|SOURCE}`
+references, and the `items` loader replaces each at build time with that template's
+`entriesTemplate`, a variant's inside `inherits`. A reference without a source names the
+item's own. `{{item.<field>}}` and `{{getFullImmRes item.<field>}}` read the item's fields,
+a list reading as "acid, cold, and fire". A reference no template answers reads as its name,
+and a field the item lacks as the field's name in words. The two additional-entry rows
+attach to every item whose type their `appliesTo` names; the renderer expands those, and the
+rows are here so that half is a query rather than a second ETL change.

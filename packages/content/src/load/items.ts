@@ -15,6 +15,7 @@
 import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./edition.ts";
 import { collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
+import { expandItemEntries, type ItemEntryTemplates, itemEntryTemplates } from "./item-entry.ts";
 import { type Entry, isRecord, kindedRows, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
@@ -76,16 +77,30 @@ function requiresAttunement(fields: Entry, context: string): number {
   );
 }
 
+function withExpanded(entry: Entry, fields: Entry, templates: ItemEntryTemplates): Entry {
+  if (entry.entries === undefined) return entry;
+  return { ...entry, entries: expandItemEntries(entry.entries, fields, templates) };
+}
+
+function withExpandedInherits(entry: Entry, fields: Entry, templates: ItemEntryTemplates): Entry {
+  return { ...entry, inherits: withExpanded(fields, fields, templates) };
+}
+
 function toRow(
   entry: Entry,
   kind: string,
   context: string,
   fromSource: FromSource,
   fluff: (key: string) => Entry | undefined,
+  templates: ItemEntryTemplates,
 ): Row {
   const fields = itemFields(entry, kind, context);
   const source = text(fields, "source", context);
-  const merged = withFluff(entry, fluff(fluffKey(text(entry, "name", context), source)), context);
+  const withText = withFluff(entry, fluff(fluffKey(text(entry, "name", context), source)), context);
+  const merged =
+    kind === VARIANT
+      ? withExpandedInherits(withText, fields, templates)
+      : withExpanded(withText, fields, templates);
   return {
     name: text(entry, "name", context),
     source,
@@ -109,9 +124,10 @@ export const items: Loader = {
       (entry, ctx) => fluffKey(text(entry, "name", ctx), text(entry, "source", ctx)),
     );
     const files = ownFiles(sources).filter(([path]) => !isFluffPath(path));
+    const templates = itemEntryTemplates(sources.get("data/items-base.json"));
     return {
       items: kindedRows(files, KINDS, (entry, kind, context) =>
-        toRow(entry, kind, context, fromSource, fluff),
+        toRow(entry, kind, context, fromSource, fluff, templates),
       ),
     };
   },

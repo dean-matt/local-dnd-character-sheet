@@ -65,7 +65,7 @@ const attack = (mode: Mode, condition?: string) => effect(mode, "attack", undefi
 const ADV = "advantage";
 const DIS = "disadvantage";
 
-const DRAGON_SCALE_MAIL = [
+const DRAGON_SCALE_COLORS = [
   "Black",
   "Blue",
   "Brass",
@@ -76,7 +76,10 @@ const DRAGON_SCALE_MAIL = [
   "Red",
   "Silver",
   "White",
-].map((color) => `${color} Dragon Scale Mail|DMG`);
+];
+
+const dragonScaleMail = (source: string) =>
+  DRAGON_SCALE_COLORS.map((color) => `${color} Dragon Scale Mail|${source}`);
 
 const ELEMENTAL_RINGS = ["Air", "Earth", "Fire", "Water"];
 
@@ -115,8 +118,12 @@ const GROUPS: { items: string[]; effects: ItemAdvantage[] }[] = [
     effects: [save(ADV, undefined, "against spells and other magical effects")],
   },
   {
-    items: [...DRAGON_SCALE_MAIL],
+    items: dragonScaleMail("DMG"),
     effects: [save(ADV, undefined, "against the Frightful Presence and breath weapons of dragons")],
+  },
+  {
+    items: dragonScaleMail("XDMG"),
+    effects: [save(ADV, undefined, "against the breath weapons of dragons")],
   },
   {
     items: ["Dragonguard|LMoP", "Dragonguard|PaBTSO"],

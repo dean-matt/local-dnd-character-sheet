@@ -228,6 +228,14 @@
       "hasFluffImages": true
     },
     {
+      "name": "Acid Absorbing Tattoo",
+      "source": "TCE",
+      "page": 119,
+      "resist": ["acid"],
+      "detail1": "green",
+      "entries": ["{#itemEntry Absorbing Tattoo|TCE}"]
+    },
+    {
       "name": "Mantle of Spell Resistance",
       "source": "DMG",
       "entries": ["Elided."]
@@ -542,6 +550,56 @@
       "name": "White Dragon Scale Mail",
       "source": "DMG",
       "entries": ["Elided.", "Elided."]
+    },
+    {
+      "name": "Black Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Blue Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Brass Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Bronze Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Copper Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Gold Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Green Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Red Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Silver Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "White Dragon Scale Mail",
+      "source": "XDMG",
+      "entries": ["Elided."]
     },
     {
       "name": "Dragonguard",

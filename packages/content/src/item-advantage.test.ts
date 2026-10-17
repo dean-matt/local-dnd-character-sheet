@@ -11,7 +11,7 @@ const FIXTURE_VENDOR = join(import.meta.dirname, "../../../tests/fixtures/5etool
 const VENDOR = join(import.meta.dirname, "../../../vendor/5etools");
 
 /** The rows at the pinned tag whose rules text mentions advantage or disadvantage, read in full. */
-const SEARCHED = 336;
+const SEARCHED = 346;
 
 type Row = { name: string; source: string; json: string };
 

@@ -63,10 +63,12 @@ describe("the items loader", () => {
       row("Wakened Dragon Vessel", "FTD", "classic", "item", null, "very rare", 1),
       row("Borderlands Tabard", "HotB", "one", "item", "G|XPHB", "none", 0),
       row("Dragon Thighbone Club", "SKT", "classic", "item", "M", "unknown (magic)", 0),
+      row("Acid Absorbing Tattoo", "TCE", "classic", "item", null, null, 0),
       row("Charred Wand of Magic Missiles", "WDH", "classic", "item", "WD|DMG", "uncommon", 0),
       row("Cloak of Billowing", "XDMG", "one", "item", null, "common", 0),
       row("Arcane Focus", "PHB", "classic", "itemGroup", "SCF", "none", 0),
       row("Vicious +1 Weapon", "AI", "classic", "magicvariant", null, "unknown (magic)", 0),
+      row("Armor of Acid Resistance", "DMG", "classic", "magicvariant", null, "rare", 1),
       row("Arrow of Slaying (*)", "DMG", "classic", "magicvariant", null, "very rare", 0),
       row("Vicious Weapon", "DMG", "classic", "magicvariant", null, "rare", 0),
       row("Armblade", "ERLW", "classic", "magicvariant", null, "common", 1),
@@ -159,6 +161,67 @@ describe("the items loader", () => {
       1,
       "by a spellcaster",
     ]);
+  });
+
+  it("leaves no {#itemEntry} reference in any row", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const left = db.prepare("SELECT name FROM items WHERE json LIKE '%{#itemEntry%'").all();
+    db.close();
+
+    expect(left).toEqual([]);
+  });
+
+  it("fills an item's template from the item's own fields", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const json = (name: string) =>
+      db.prepare("SELECT json FROM items WHERE name = ?").pluck().get(name) as string;
+    const tattoo = json("Acid Absorbing Tattoo");
+    const armor = JSON.parse(json("Armor of Acid Resistance")) as {
+      inherits: { entries: unknown };
+    };
+    db.close();
+
+    expect(tattoo).toContain("Elided. acid Elided.");
+    expect(tattoo).toContain("Elided. green Elided.");
+    expect(tattoo).not.toContain("{{");
+    // The reference names no source, so it reads the variant's own, DMG.
+    expect(armor.inherits.entries).toEqual(["Elided. acid Elided."]);
+  });
+
+  describe("an {#itemEntry} reference", () => {
+    const entriesOf = (item: Record<string, unknown>, template?: Record<string, unknown>) => {
+      const files = {
+        "data/items.json": { item: [{ name: "Charm", source: "DMG", ...item }], itemGroup: [] },
+        ...(template && { "data/items-base.json": { baseitem: [], itemEntry: [template] } }),
+      };
+      build(vendorHolding(files));
+      const db = open();
+      const json = db.prepare("SELECT json FROM items").pluck().get() as string;
+      db.close();
+      return (JSON.parse(json) as { entries: unknown }).entries;
+    };
+
+    it("reads as its name where no template answers it", () => {
+      expect(entriesOf({ entries: ["{#itemEntry Nothing|DMG}", "kept"] })).toEqual([
+        "Nothing",
+        "kept",
+      ]);
+    });
+
+    it("names a placeholder's field where the item lacks it, and joins a list", () => {
+      const template = {
+        name: "Charm",
+        source: "DMG",
+        entriesTemplate: ["{{item.resist}} {{getFullImmRes item.missingField}} {{item.detail1}}"],
+      };
+      expect(
+        entriesOf({ resist: ["acid", "cold", "fire"], entries: ["{#itemEntry Charm}"] }, template),
+      ).toEqual(["acid, cold, and fire missing field detail1"]);
+    });
   });
 
   const LONGSWORD = { name: "Longsword", source: "PHB", type: "M", rarity: "none" };

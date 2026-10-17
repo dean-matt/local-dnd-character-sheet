@@ -60,6 +60,7 @@ describe("the lookups loader", () => {
       "deity Oghma|PHB|Celtic classic",
       "deity Oghma|PHB|Forgotten Realms classic",
       "disease Blinding Sickness|PHB classic",
+      "itemEntry Absorbing Tattoo|TCE classic",
       "itemEntry Armor of Resistance|DMG classic",
       "itemMastery Cleave|XPHB one",
       "itemProperty 2H|PHB classic",
