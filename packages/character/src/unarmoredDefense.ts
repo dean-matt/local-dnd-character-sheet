@@ -63,7 +63,8 @@ function reachedFormulas(definition: CharacterDefinition): Formula[] {
 /**
  * The unarmored base the character's best formula gives, as the term that adds to the 10
  * in place of armor. A formula that adds nothing, or loses to another, yields none, so a
- * negative modifier never lowers the plain 10.
+ * negative modifier never lowers the plain 10. Formulas compete rather than sum, so a
+ * Barbarian/Monk takes the higher, as the rule's "only one at a time" says.
  */
 export function unarmoredDefenseTerm(
   definition: CharacterDefinition,
