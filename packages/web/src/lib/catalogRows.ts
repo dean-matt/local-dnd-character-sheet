@@ -46,6 +46,8 @@ interface CatalogRow {
   /** A deity's pantheon or a card's deck. */
   qualifier?: string;
   entries: Entries;
+  /** The row as the API returned it, for the detail's JSON view. */
+  json: Record<string, unknown>;
 }
 
 export interface CatalogTarget {
@@ -69,6 +71,7 @@ const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntrie
   source: record.source,
   edition: record.edition,
   entries: entries(record.json),
+  json: record.json,
 });
 
 const segments = (...parts: (string | undefined)[]) =>
@@ -223,6 +226,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
         edition: row.edition ?? undefined,
         qualifier: row.qualifier,
         entries: catalogRowEntries(row.type, row.json, row.edition),
+        json: row.json,
       };
     },
   },

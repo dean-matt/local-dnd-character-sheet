@@ -458,6 +458,90 @@ describe("CatalogDetail", () => {
     );
   });
 
+  describe("JSON view", () => {
+    const toggle = () => screen.getByRole("button", { name: "JSON" });
+
+    it("starts closed, then shows exactly the row's JSON, read-only, in a region", async () => {
+      stubFetchByUrl({ "/api/items/%2B1%20Longsword/DMG": longsword });
+      renderAt("/items/%2B1%20Longsword/DMG");
+      await dialogNamed("+1 Longsword");
+
+      expect(toggle()).toHaveAttribute("aria-expanded", "false");
+      expect(screen.queryByRole("region", { name: "Row JSON" })).not.toBeInTheDocument();
+
+      fireEvent.click(toggle());
+      expect(toggle()).toHaveAttribute("aria-expanded", "true");
+      const region = screen.getByRole("region", { name: "Row JSON" });
+      expect(region.textContent).toBe(JSON.stringify(longsword.json, null, 2));
+      expect(region.textContent).not.toContain("rarity");
+      expect(region.querySelector("input, textarea, [contenteditable]")).toBeNull();
+    });
+
+    it.each([
+      [
+        "a catalog spell",
+        "/spells/Fireball/PHB",
+        { "/api/spells/Fireball/PHB": fireball },
+        fireball,
+      ],
+      [
+        "a homebrew spell",
+        "/homebrew/spells/hb-1",
+        {
+          "/api/homebrew/spells/hb-1": {
+            id: "hb-1",
+            name: "Frost Nova",
+            edition: "one",
+            level: 2,
+            school: "V",
+            concentration: false,
+            ritual: false,
+            json: { ...fireball.json, name: "Frost Nova", source: "HB" },
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        },
+        { json: { ...fireball.json, name: "Frost Nova", source: "HB" } },
+      ],
+      [
+        "a catalog monster",
+        "/catalog/monster/Goblin/MM",
+        {
+          "/api/catalog/monster/Goblin/MM": {
+            type: "monster",
+            name: "Goblin",
+            source: "MM",
+            edition: "classic",
+            json: { size: ["S"], type: "humanoid" },
+          },
+        },
+        { json: { size: ["S"], type: "humanoid" } },
+      ],
+    ])("offers it for %s", async (_kind, address, routes, expected) => {
+      stubFetchByUrl(routes);
+      renderAt(address);
+      await screen.findByRole("dialog");
+      await screen.findByRole("button", { name: "JSON" });
+
+      fireEvent.click(toggle());
+      expect(
+        JSON.parse(screen.getByRole("region", { name: "Row JSON" }).textContent ?? ""),
+      ).toEqual(expected.json);
+    });
+
+    it("copies the JSON and says so", async () => {
+      const writeText = vi.fn(async () => {});
+      vi.stubGlobal("navigator", { clipboard: { writeText } });
+      stubFetchByUrl({ "/api/items/%2B1%20Longsword/DMG": longsword });
+      renderAt("/items/%2B1%20Longsword/DMG");
+      await dialogNamed("+1 Longsword");
+
+      fireEvent.click(toggle());
+      fireEvent.click(screen.getByRole("button", { name: "Copy JSON" }));
+      expect(writeText).toHaveBeenCalledWith(JSON.stringify(longsword.json, null, 2));
+      expect(await screen.findByText("Copied")).toBeInTheDocument();
+    });
+  });
+
   it("says an address no target matches is not found, without asking the API", async () => {
     const fetchMock = stubFetchByUrl({});
     renderAt("/monsters/Goblin/MM");
