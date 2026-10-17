@@ -41,7 +41,8 @@ const ABOLETH_MM = {
   legendaryGroup: { name: "Aboleth", source: "MM" },
 };
 
-const monster = (json: Record<string, unknown>) => catalogRowEntries("monster", json);
+const monster = (json: Record<string, unknown>, edition?: "classic" | "one") =>
+  catalogRowEntries("monster", json, edition);
 
 const named = (entries: unknown[]) =>
   entries.flatMap((entry) =>
@@ -78,16 +79,16 @@ describe("a monster's stat block", () => {
   });
 
   it("reads a 2024 monster's bare armor class and its bonus actions", () => {
-    const entries = monster(fixture("bestiary-xmm.json", "Goblin Warrior"));
-    expect(entries.slice(0, 2)).toEqual([
+    const entries = monster(fixture("bestiary-xmm.json", "Goblin Warrior"), "one");
+    expect(entries.slice(0, 3)).toEqual([
       "{@i Small fey (goblinoid), chaotic neutral}",
       "{@b Armor Class} 15",
+      "{@b Initiative} +2 (12)",
     ]);
     expect(entries).toContain("{@b Senses} Darkvision 60 ft., passive Perception 9");
     expect(entries).toContain(
       "{@b Gear} {@item leather armor|xphb|Leather Armor}, {@item scimitar|xphb|Scimitar}, {@item shield|xphb|Shield}, {@item shortbow|xphb|Shortbow}",
     );
-    expect(entries.some((entry) => `${entry}`.startsWith("{@b Initiative}"))).toBe(false);
     expect(named(entries)).toEqual(["Actions", "Bonus Actions"]);
   });
 
@@ -108,6 +109,15 @@ describe("a monster's stat block", () => {
     [{ initiative: { proficiency: 2 }, dex: 10, cr: { cr: "1/2", lair: "1" } }, "+4 (14)"],
   ])("reads initiative %j as %s", (json, shown) => {
     expect(monster(json)[0]).toBe(`{@b Initiative} ${shown}`);
+  });
+
+  it("leaves a classic monster with no initiative field without an Initiative line", () => {
+    const goblin = fixture("bestiary-mm.json", "Goblin");
+    for (const edition of ["classic", undefined] as const) {
+      expect(
+        monster(goblin, edition).some((entry) => `${entry}`.startsWith("{@b Initiative}")),
+      ).toBe(false);
+    }
   });
 
   it("names gear as upstream displays it, and leaves out a proficient initiative with no rating", () => {
