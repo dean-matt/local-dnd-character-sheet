@@ -34,9 +34,9 @@ duplicates.
 nine classic races grant one by name. Creation lands `Primordial` for it, through
 `DIALECT_OF` in `packages/web/src/routes/CreationFlow/grants.ts`.
 
-Deities are the one exception to the two-part key: `{@deity Ioun|dawn war|dmg}` names a
-pantheon because five `PHB` gods share a name with a god of another one — Oghma,
-Silvanus, Surtur, Thrym and Tyr. `lookups.qualifier` holds it.
+Deities and cards need a third key part. `{@deity Ioun|dawn war|dmg}` names a pantheon,
+since five `PHB` gods share a name with another pantheon's: `lookups.qualifier`. `{@card}`
+names its deck, since `Balance` from `BMT` is in two decks: `entities.qualifier`.
 
 Three of the 30 class entries are Tasha's sidekicks, flagged `isSidekick`. None carries
 `hd` or `proficiency`, because a sidekick's hit die comes from its creature stat block,
