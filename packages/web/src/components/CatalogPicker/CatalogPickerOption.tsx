@@ -59,7 +59,8 @@ export function CatalogPickerOption({
           title="Upstream tags this race for NPCs, not for a player character"
           className={`${CHIP} border-border text-secondary uppercase`}
         >
-          NPC
+          <span aria-hidden="true">NPC</span>
+          <span className="sr-only">NPC race, not for player characters</span>
         </span>
       )}
       {reason !== undefined && <span className="text-row">{reason}</span>}
