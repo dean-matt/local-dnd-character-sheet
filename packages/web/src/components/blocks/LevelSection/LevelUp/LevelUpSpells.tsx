@@ -20,7 +20,7 @@ export interface LevelUpSpellsProps {
  */
 export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps) {
   const [beyond, setBeyond] = useState(false);
-  const { gained, list, known, failed } = picks;
+  const { gained, spellbook, list, known, failed } = picks;
   if (gained.cantrips === 0 && gained.spells === 0) return null;
   const picked = new Set([...picks.cantrips, ...picks.spells].map((pick) => entryKey(pick.ref)));
   const unavailableReason = (hit: SearchHit) => {
@@ -44,7 +44,7 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
       {gained.spells > 0 && (
         <PickField
           {...field}
-          heading="New spells"
+          heading={spellbook ? "Spells for your spellbook" : "New spells"}
           noun="spell"
           count={gained.spells}
           picked={picks.spells}

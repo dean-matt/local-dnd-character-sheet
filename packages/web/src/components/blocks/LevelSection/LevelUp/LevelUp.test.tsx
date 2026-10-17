@@ -53,8 +53,11 @@ const SPELLS: Record<string, { level: number; lists: string[] }> = {
   "Fire Bolt": { level: 0, lists: ["Sorcerer"] },
   Shield: { level: 1, lists: ["Sorcerer"] },
   "Misty Step": { level: 2, lists: ["Sorcerer"] },
-  Fireball: { level: 3, lists: ["Sorcerer"] },
+  Fireball: { level: 3, lists: ["Sorcerer", "Wizard"] },
+  "Magic Missile": { level: 1, lists: ["Wizard"] },
+  "Mage Armor": { level: 1, lists: ["Wizard"] },
 };
+const WIZARD = { name: "Wizard", source: "PHB" };
 const ROGUE = XPHB("Rogue");
 const PALADIN = XPHB("Paladin");
 const BARD = XPHB("Bard");
@@ -220,6 +223,27 @@ const ROWS: Record<string, unknown> = {
     2,
     { cantrips_known: "3", prepared_spells: "5" },
     [3],
+  ),
+  "/api/classes/Wizard/PHB": { ...WIZARD, edition: "classic", hitDie: 6, json: WIZARD },
+  "/api/classes/Wizard/PHB/subclasses?edition=classic&limit=200": page([]),
+  "/api/classes/Wizard/PHB/at/3": casterGrants(3, { cantrips_known: "3" }, [4, 2]),
+  "/api/classes/Wizard/PHB/at/4": casterGrants(4, { cantrips_known: "3" }, [4, 3]),
+  "/api/classes/Wizard/XPHB": {
+    ...XPHB("Wizard"),
+    edition: "one",
+    hitDie: 6,
+    json: XPHB("Wizard"),
+  },
+  "/api/classes/Wizard/XPHB/subclasses?edition=one&limit=200": page([]),
+  "/api/classes/Wizard/XPHB/at/3": casterGrants(
+    3,
+    { cantrips_known: "3", prepared_spells: "6" },
+    [4, 2],
+  ),
+  "/api/classes/Wizard/XPHB/at/4": casterGrants(
+    4,
+    { cantrips_known: "3", prepared_spells: "7" },
+    [4, 3],
   ),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
@@ -923,6 +947,51 @@ describe("LevelUp", () => {
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().spells).toEqual([{ ref: { name: "Shield", source: "PHB" }, prepared: false }]);
     });
+
+    it.each([
+      ["a 2014 Wizard", WIZARD, "classic"],
+      ["a 2024 Wizard", XPHB("Wizard"), "one"],
+    ] as const)(
+      "asks %s for two spells for its spellbook and writes them with the level",
+      async (_label, wizard, edition) => {
+        const base = warlock(3);
+        renderSeeded({
+          ...base,
+          edition,
+          definition: {
+            ...base.definition,
+            edition,
+            levels: Array.from({ length: 3 }, () => ({ class: wizard })),
+          },
+        });
+        await open();
+        fireEvent.click(within(dialog()).getByRole("button", { name: "Average (4)" }));
+        const region = await within(dialog()).findByRole("region", {
+          name: "Spells for your spellbook",
+        });
+        expect(region).toHaveTextContent("Choose 2 — 0 selected");
+        expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+        await pickSpell("Add a spell", "Magic Missile");
+        await within(dialog()).findByRole("button", { name: "Remove Magic Missile" });
+        expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+        await pickSpell("Add a spell", "Mage Armor");
+        await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+        expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({
+          class: `Wizard|${wizard.source}`,
+          classLevel: "4",
+          maxLevel: "2",
+        });
+
+        fireEvent.click(applyButton());
+        await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+        expect(sent().levels).toHaveLength(4);
+        expect(sent().spells).toEqual([
+          { ref: { name: "Magic Missile", source: "PHB" }, prepared: false, origin: wizard },
+          { ref: { name: "Mage Armor", source: "PHB" }, prepared: false, origin: wizard },
+        ]);
+      },
+    );
 
     it("asks a class that prepares its spells for none", async () => {
       const base = warlock(1);

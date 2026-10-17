@@ -36,4 +36,14 @@ describe("spellsGained", () => {
       maxLevel: 0,
     });
   });
+
+  it("gives a spellbook class two spells a level, prepared or not, at levels whose slots cast", () => {
+    const before = table({ cantrips_known: "3", prepared_spells: "6" }, [4, 3]);
+    const after = table({ cantrips_known: "3", prepared_spells: "7" }, [4, 3, 2]);
+    expect(spellsGained([before], [after], true)).toEqual({ cantrips: 0, spells: 2, maxLevel: 3 });
+    expect(spellsGained([table({}, [2])], [table({ cantrips_known: "3" }, [3])], true).spells).toBe(
+      2,
+    );
+    expect(spellsGained([], [table({})], true).spells).toBe(0);
+  });
 });
