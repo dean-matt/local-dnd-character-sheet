@@ -108,6 +108,22 @@ describe("CatalogPicker", () => {
     expect(within(catalog).queryByText("Homebrew")).not.toBeInTheDocument();
   });
 
+  it("marks a race upstream tags for NPCs", async () => {
+    stubFetch(
+      page([
+        { type: "race", name: "Aarakocra", source: "DMG", edition: "classic", npcRace: true },
+        { type: "race", name: "Aarakocra", source: "EEPC", edition: "classic" },
+      ]),
+    );
+    const { input } = renderPicker();
+
+    fireEvent.change(input, { target: { value: "aar" } });
+
+    const npc = await screen.findByRole("option", { name: /DMG/ });
+    expect(within(npc).getByText("NPC")).toBeInTheDocument();
+    expect(within(screen.getByRole("option", { name: /EEPC/ })).queryByText("NPC")).toBeNull();
+  });
+
   it("shows the bound when the search matched more than it lists", async () => {
     stubFetch(page([FIREBALL, FIRE_BOLT], 312));
     const { input } = renderPicker();

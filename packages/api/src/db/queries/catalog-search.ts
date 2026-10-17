@@ -19,6 +19,7 @@ export type CatalogSearchRow = {
   qualifier?: string;
   parent?: { name: string; source: string };
   textless?: true;
+  npcRace?: true;
   edition: Edition | null;
   item?: ItemHitFacts;
   optionalFeature?: { prerequisites: OptionalFeaturePrerequisite[] };
@@ -139,6 +140,8 @@ const ITEM_FIELDS =
   ", type AS itemType, rarity, json_extract(json, '$.wondrous') AS wondrous," +
   " json_extract(json, '$.staff') AS staff, json_extract(json, '$.weaponCategory') AS weaponCategory," +
   " json_extract(json, '$.mastery') AS mastery, kind AS itemKind, CASE kind WHEN 'magicvariant' THEN json END AS variantJson";
+const RACE_FIELDS =
+  ", EXISTS (SELECT 1 FROM json_each(races.json, '$.traitTags') WHERE value = 'NPC Race') AS npcRace";
 const OPTION_FIELDS = ", json_extract(json, '$.prerequisite') AS prerequisite";
 type SearchTable = (typeof CATALOG_SEARCH_TABLES)[number];
 
@@ -174,6 +177,9 @@ const optionFacts = (prerequisite: string | null | undefined) => ({
   ),
 });
 
+/** A race hit carries `npcRace` only where true, as `toHit` does `textless`. */
+const npcFlag = (npcRace: 0 | 1 | undefined) => (npcRace ? { npcRace: true } : {});
+
 function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSearchRow[] {
   const { edition, term } = filter;
   const kinds = entry.type === "item" ? filter.itemKinds : undefined;
@@ -184,6 +190,7 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
   narrowKind(conditions, entry.type, filter);
   const isItem = entry.type === "item";
   const isOption = entry.type === "optfeature";
+  const isRace = entry.type === "race";
   let bases: Record<string, unknown>[] | undefined;
   const baseItems = () =>
     (bases ??= (
@@ -191,13 +198,14 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
     ).map((json) => JSON.parse(json)));
   const rows = db
     .prepare(
-      `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""}${isOption ? OPTION_FIELDS : ""}${entry.parent ?? ""} FROM ${entry.table}${conditions.where}`,
+      `SELECT name, source, edition${isItem ? ITEM_FIELDS : ""}${isOption ? OPTION_FIELDS : ""}${isRace ? RACE_FIELDS : ""}${entry.parent ?? ""} FROM ${entry.table}${conditions.where}`,
     )
     .all(...conditions.params) as (Omit<CatalogSearchRow, "type" | "parent"> &
     Partial<ItemFields> & {
       parentName?: string;
       parentSource?: string;
       prerequisite?: string | null;
+      npcRace?: 0 | 1;
     })[];
   return rows.flatMap(
     ({
@@ -210,12 +218,14 @@ function tierARows(db: Db, entry: SearchTable, filter: SearchFilter): CatalogSea
       parentName,
       parentSource,
       prerequisite,
+      npcRace,
       ...fields
     }) => {
       const hit: CatalogSearchRow = { type: entry.type, name, source, edition };
       if (parentName !== undefined && parentSource !== undefined) {
         hit.parent = { name: parentName, source: parentSource };
       }
+      Object.assign(hit, npcFlag(npcRace));
       if (isOption) hit.optionalFeature = optionFacts(prerequisite);
       if (!isItem) return [hit];
       const item = itemHitFacts({ ...fields, type: itemType });

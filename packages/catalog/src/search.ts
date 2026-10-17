@@ -40,6 +40,8 @@ export const catalogSearchHitSchema = z.strictObject({
   /** Present on a lookup or entity hit with no rules text to show, such as a book. */
   textless: z.literal(true).optional(),
   edition: z.enum(EDITIONS).nullable(),
+  /** Present on a race hit upstream tags `NPC Race`: a monster's kin, not a playable choice. */
+  npcRace: z.literal(true).optional(),
   /** Present on an item hit alone. */
   item: itemHitFactsSchema.optional(),
   /** Present on an optional feature hit alone, so a picker can judge each row it lists. */
