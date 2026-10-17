@@ -49,11 +49,6 @@ widget, panel, or nav element:
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
-- Identity: Level Up is the modal the Level tab's
-  level-up button opens — pick an existing class or multiclass into a new one, Hit Points by average, roll, or
-  a typed-in value, an Ability Score Improvement or a feat at the levels that grant one,
-  and new spells for a class that gains them, all gating Apply until every open choice
-  the level actually offers is made.
 - Page chrome: Character Header, Rolls Panel. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
@@ -190,7 +185,6 @@ says how much of the artboard the app builds today.
 | `RaceFeaturesFilter` | #311 | nothing |
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
-| `LevelUpModal` | #239, #240, #733, #787 | all but the spellbook additions |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
