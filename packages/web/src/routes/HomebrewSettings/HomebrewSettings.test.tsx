@@ -506,7 +506,7 @@ describe("HomebrewSettings", () => {
     fireEvent.change(field("spinbutton", "Darkvision (ft.)"), { target: { value: "" } });
     expect(entry().senses).toEqual([{ truesight: 30 }]);
 
-    fireEvent.change(field("spinbutton", "Truesight (ft.)"), { target: { value: "" } });
+    fireEvent.change(field("spinbutton", "Truesight (ft.)"), { target: { value: "0" } });
     expect(entry()).not.toHaveProperty("senses");
   });
 

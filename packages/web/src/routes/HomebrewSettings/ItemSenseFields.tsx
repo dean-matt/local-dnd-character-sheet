@@ -42,10 +42,10 @@ export function ItemSenseFields({
             key={sense}
             label={`${titleCase(sense)} (ft.)`}
             type="number"
-            min={0}
+            min={1}
             step={5}
             value={rangeOf(senses, sense) ?? ""}
-            onChange={(event) => write(sense, typedInteger(event.target.value))}
+            onChange={(event) => write(sense, typedInteger(event.target.value) || undefined)}
           />
         ))}
       </div>
