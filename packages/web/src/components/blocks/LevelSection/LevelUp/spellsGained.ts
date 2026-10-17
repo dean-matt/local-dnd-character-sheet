@@ -24,10 +24,7 @@ export function spellsGained(
   const now = casterFacts(present(after));
   const gain = (key: "cantrips" | "spells") => Math.max(0, (now?.[key] ?? 0) - (was?.[key] ?? 0));
   const maxLevel = now?.maxLevel ?? 0;
-  const learned = now?.prepares ? 0 : gain("spells");
-  return {
-    cantrips: gain("cantrips"),
-    spells: spellbook ? (maxLevel > 0 ? SPELLBOOK_GAIN : 0) : learned,
-    maxLevel,
-  };
+  const cantrips = gain("cantrips");
+  if (spellbook) return { cantrips, spells: maxLevel > 0 ? SPELLBOOK_GAIN : 0, maxLevel };
+  return { cantrips, spells: now?.prepares ? 0 : gain("spells"), maxLevel };
 }

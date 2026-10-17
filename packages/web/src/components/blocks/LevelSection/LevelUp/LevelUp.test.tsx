@@ -993,6 +993,33 @@ describe("LevelUp", () => {
       },
     );
 
+    it("asks a multiclass Wizard for its spellbook spells when the Wizard levels", async () => {
+      const base = warlock(4);
+      renderSeeded({
+        ...base,
+        edition: "classic",
+        definition: {
+          ...base.definition,
+          edition: "classic",
+          levels: [{ class: FIGHTER }, ...Array.from({ length: 3 }, () => ({ class: WIZARD }))],
+        },
+      });
+      await open();
+      choose("Class", "Wizard 3 → 4");
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (4)" }));
+      await within(dialog()).findByRole("region", { name: "Spells for your spellbook" });
+      await pickSpell("Add a spell", "Magic Missile");
+      await within(dialog()).findByRole("button", { name: "Remove Magic Missile" });
+      await pickSpell("Add a spell", "Mage Armor");
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+
+      choose("Class", "Fighter 1 → 2");
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (6)" }));
+      expect(
+        within(dialog()).queryByRole("region", { name: "Spells for your spellbook" }),
+      ).toBeNull();
+    });
+
     it("asks a class that prepares its spells for none", async () => {
       const base = warlock(1);
       renderSeeded({ ...base, definition: { ...base.definition, levels: [{ class: CLERIC }] } });
