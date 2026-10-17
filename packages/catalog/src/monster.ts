@@ -146,10 +146,13 @@ const ADVANTAGE: Record<string, [string, number]> = {
 /**
  * A stated bonus, or the Dexterity modifier plus a multiple of the proficiency bonus,
  * with the passive score after it. Advantage adds 5 to that score, and Disadvantage takes 5.
+ * Upstream omits the field where a 2024 monster's initiative is plain Dexterity, which the
+ * printed block still shows; a 2014 block shows none.
  */
-function initiative(json: Json): string | undefined {
-  const { initiative } = json;
-  if (typeof initiative === "number") return `${signed(initiative)} (${10 + initiative})`;
+function initiative(json: Json, edition: string | null | undefined): string | undefined {
+  const stated = json.initiative;
+  if (typeof stated === "number") return `${signed(stated)} (${10 + stated})`;
+  const initiative = stated === undefined && edition === "one" ? {} : stated;
   if (!isRecord(initiative) || typeof json.dex !== "number") return undefined;
   const proficiency = typeof initiative.proficiency === "number" ? initiative.proficiency : 0;
   const proficient =
@@ -412,11 +415,11 @@ function lair(group: unknown): Entries {
   return line("Lair Actions and Regional Effects", `{@legroup ${name}|${source}}`);
 }
 
-export function monsterEntries(json: Json): Entries {
+export function monsterEntries(json: Json, edition?: string | null): Entries {
   return [
     ...texts([sizeTypeAlignment(json)]),
     ...line("Armor Class", armorClass(json.ac)),
-    ...line("Initiative", initiative(json)),
+    ...line("Initiative", initiative(json, edition)),
     ...line("Hit Points", hitPoints(json.hp)),
     ...line("Speed", speed(json.speed)),
     ...abilityTable(json),

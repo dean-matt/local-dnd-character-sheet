@@ -222,7 +222,7 @@ const CATALOG_TARGETS: CatalogTarget[] = [
         source: row.source,
         edition: row.edition ?? undefined,
         qualifier: row.qualifier,
-        entries: catalogRowEntries(row.type, row.json),
+        entries: catalogRowEntries(row.type, row.json, row.edition),
       };
     },
   },
