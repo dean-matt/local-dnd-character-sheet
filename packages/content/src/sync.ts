@@ -98,6 +98,22 @@ export async function verifyVendor(): Promise<{ dir: string; tag: string }> {
   return { dir, tag: lock.tag };
 }
 
+/** Keeps the previous lock, `fetchedAt` included, when the tag and every hash are unchanged. */
+export function nextLock(
+  previous: Lock | undefined,
+  tag: string,
+  files: Record<string, string>,
+): Lock {
+  if (
+    previous &&
+    previous.tag === tag &&
+    JSON.stringify(previous.files) === JSON.stringify(files)
+  ) {
+    return previous;
+  }
+  return { tag, fetchedAt: new Date().toISOString(), files };
+}
+
 async function sync(manifest: Manifest, tag: string, dest: string): Promise<void> {
   const temp = mkdtempSync(join(tmpdir(), "5etools-"));
   try {
@@ -113,10 +129,18 @@ async function sync(manifest: Manifest, tag: string, dest: string): Promise<void
     renameSync(staging, dest);
 
     const files = await hashTree(dest);
-    const lock: Lock = { tag, fetchedAt: new Date().toISOString(), files };
-    writeFileSync(LOCKFILE, `${JSON.stringify(lock, null, 2)}\n`);
+    let previous: Lock | undefined;
+    try {
+      previous = JSON.parse(readFileSync(LOCKFILE, "utf8"));
+    } catch {}
+    const lock = nextLock(previous, tag, files);
     console.log(`Fetched ${Object.keys(files).length} files to ${relative(ROOT, dest)}`);
-    console.log("Wrote content.lock.json. Next: pnpm content:build");
+    if (lock === previous) {
+      console.log("content.lock.json is unchanged. Next: pnpm content:build");
+    } else {
+      writeFileSync(LOCKFILE, `${JSON.stringify(lock, null, 2)}\n`);
+      console.log("Wrote content.lock.json. Next: pnpm content:build");
+    }
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
