@@ -111,6 +111,7 @@ describe("characterPortraitRoutes", () => {
     big.set(PNG);
     const res = await portraits.request(`/characters/${id}/portrait`, upload(big, "image/png"));
     expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: "The image is larger than 2 MiB" });
     expect((await record()).portraitUpdatedAt).toBeNull();
   });
 

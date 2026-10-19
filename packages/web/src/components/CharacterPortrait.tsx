@@ -1,5 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useState } from "react";
+import { apiUrl } from "../lib/api.ts";
 import { avatarColor } from "../lib/avatarColor.ts";
 
 /**
@@ -24,7 +25,7 @@ export function CharacterPortrait({
       <img
         aria-hidden="true"
         alt=""
-        src={`/api/characters/${character.id}/portrait?v=${encodeURIComponent(version)}`}
+        src={apiUrl(`/characters/${character.id}/portrait?v=${encodeURIComponent(version)}`)}
         onError={() => setFailed(version)}
         className={`${shape} object-cover`}
       />

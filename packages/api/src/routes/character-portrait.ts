@@ -65,7 +65,8 @@ const write = createRoute({
   middleware: [
     bodyLimit({
       maxSize: PORTRAIT_MAX_BYTES,
-      onError: (c) => c.json({ error: "The image is larger than 2 MB" }, 413),
+      onError: (c) =>
+        c.json({ error: `The image is larger than ${PORTRAIT_MAX_BYTES / 1024 / 1024} MiB` }, 413),
     }),
   ],
   request: { params: idParam, body: { content: imageContent, required: true } },

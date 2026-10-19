@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { SaveToasts } from "../../components/SaveToasts.tsx";
 import { avatarColor } from "../../lib/avatarColor.ts";
 import { warlockRecord } from "../../test/records.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
@@ -100,5 +101,29 @@ describe("CharacterHeader", () => {
       />,
     );
     expect(screen.getByRole("button", { name: "Change portrait" })).toBeInTheDocument();
+  });
+
+  it("raises a toast naming why an upload was refused", async () => {
+    stubFetch(
+      new Response(JSON.stringify({ error: "Upload a PNG, JPEG, GIF or WebP image" }), {
+        status: 415,
+      }),
+    );
+    const { container } = renderWithClient(
+      <>
+        <CharacterHeader character={warlockRecord()} />
+        <SaveToasts />
+      </>,
+    );
+    const picker = container.querySelector<HTMLInputElement>("input[type=file]");
+    if (!picker) throw new Error("no file input");
+    const file = new File(["<svg/>"], "face.svg", { type: "image/svg+xml" });
+    fireEvent.change(picker, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Save problems" })).toHaveTextContent(
+        "Portrait: Couldn't upload the image: Upload a PNG, JPEG, GIF or WebP image",
+      ),
+    );
   });
 });

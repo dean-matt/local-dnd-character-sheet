@@ -125,6 +125,17 @@ describe("CharacterSettings", () => {
     expect(screen.getByRole("region", { name: "Portrait" }).querySelector("img")).toBeNull();
   });
 
+  it("says why when removing the portrait fails", async () => {
+    stubFetch(500);
+    renderSettings("Vex", "2026-10-19T12:00:00.000Z");
+
+    press("Remove portrait");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Remove failed: Could not back up characters.db",
+    );
+  });
+
   it("returns focus to Delete character when the confirmation is cancelled", async () => {
     stubFetch(204);
     renderSettings();
