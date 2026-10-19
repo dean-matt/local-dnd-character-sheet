@@ -33,6 +33,7 @@ function characterRecord(id: string, name: string) {
       inventory: [],
       spells: [],
     }),
+    portraitUpdatedAt: null,
     createdAt: "2024-01-01T00:00:00.000Z",
     updatedAt: "2024-01-01T00:00:00.000Z",
   };
@@ -119,6 +120,22 @@ describe("CharacterListPage", () => {
     expect(links[1]).toHaveAccessibleName("Nyx Warlock • Lvl 1 2014");
     expect(links[0]?.querySelector("[aria-hidden]")).toHaveTextContent("V");
     expect(screen.getByText("2 characters")).toBeInTheDocument();
+  });
+
+  it("shows a character's portrait on its tile where one is set", async () => {
+    const at = "2026-10-19T12:00:00.000Z";
+    stubFetch(
+      new Response(JSON.stringify([{ ...characterRecord("1", "vex"), portraitUpdatedAt: at }]), {
+        status: 200,
+      }),
+    );
+    renderPage();
+
+    const link = await screen.findByRole("link", { name: /^vex/ });
+    expect(link.querySelector("img")).toHaveAttribute(
+      "src",
+      `/api/characters/1/portrait?v=${encodeURIComponent(at)}`,
+    );
   });
 
   it("counts a lone character in the singular", async () => {

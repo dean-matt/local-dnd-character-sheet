@@ -8,6 +8,9 @@ import type { z } from "zod";
 
 const BASE_URL = "/api";
 
+/** The URL of `path` under `packages/api`, for an element such as `<img>` that loads it itself. */
+export const apiUrl = (path: string) => `${BASE_URL}${path}`;
+
 /**
  * `status` is `0` for a network-level failure, where no HTTP response ever arrived. `body`
  * is the failure's parsed JSON, for a route whose error carries more than its message.
@@ -40,7 +43,7 @@ function readErrorMessage(body: unknown): string | undefined {
 async function request(path: string, init?: RequestInit): Promise<Response> {
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, init);
+    response = await fetch(apiUrl(path), init);
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : "network request failed";
     throw new ApiError(message, 0, { cause });
@@ -77,6 +80,11 @@ export async function apiMutate<T>(
     body: JSON.stringify(body),
   });
   return schema.parse(await response.json());
+}
+
+/** A `PUT` whose body is `file` itself, sent under the file's own type, for a route that answers `204`. */
+export async function apiUpload(path: string, file: Blob): Promise<void> {
+  await request(path, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
 }
 
 /** A `DELETE`, which every route in `packages/api` answers with `204` and no body. */

@@ -3,6 +3,7 @@ import { backupCharactersDb, charactersDb, DATA_DIR, homebrewDb } from "./db/sin
 import { backgroundsRoutes } from "./routes/backgrounds.ts";
 import { catalogRoutes } from "./routes/catalog.ts";
 import { characterInventoryRoutes } from "./routes/character-inventory.ts";
+import { characterPortraitRoutes } from "./routes/character-portrait.ts";
 import { characterReferencesRoutes } from "./routes/character-references.ts";
 import { characterSpellsRoutes } from "./routes/character-spells.ts";
 import { charactersRoutes } from "./routes/characters.ts";
@@ -31,6 +32,7 @@ export const app = new OpenAPIHono();
 app.onError(onAppError);
 
 app.route("/", charactersRoutes(charactersDb, backupCharactersDb));
+app.route("/", characterPortraitRoutes(charactersDb));
 app.route("/", pagesRoutes(charactersDb));
 app.route("/", derivedRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", featuresRoutes(charactersDb, DATA_DIR, homebrewDb));

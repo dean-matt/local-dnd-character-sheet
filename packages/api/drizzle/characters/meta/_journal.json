@@ -78,6 +78,13 @@
       "when": 1792082438906,
       "tag": "0010_backfill_backstory_page",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1792416629523,
+      "tag": "0011_character_portraits",
+      "breakpoints": true
     }
   ]
 }

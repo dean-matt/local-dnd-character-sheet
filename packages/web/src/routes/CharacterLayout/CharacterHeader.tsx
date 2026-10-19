@@ -1,8 +1,8 @@
 import type { CharacterRecord } from "@dnd/character";
 import type { ReactNode } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
-import { avatarColor } from "../../lib/avatarColor.ts";
 import { headerSubtitle } from "./characterSubtitle.ts";
+import { PortraitUpload } from "./PortraitUpload.tsx";
 import { SaveIndicator } from "./SaveIndicator.tsx";
 
 /**
@@ -25,13 +25,7 @@ export function CharacterHeader({
       data-character-header
       className="top-topbar z-20 flex h-header tall:sticky items-center gap-3 border-b border-border bg-surface px-gutter print:hidden"
     >
-      <span
-        aria-hidden="true"
-        className="flex size-8 shrink-0 items-center justify-center rounded-full font-semibold text-sm text-white"
-        style={{ background: avatarColor(character.id) }}
-      >
-        {[...character.name][0]?.toUpperCase()}
-      </span>
+      <PortraitUpload character={character} />
       <div className="flex min-w-0 grow items-baseline gap-2">
         <h1 title={character.name} className="min-w-0 truncate font-bold text-lg">
           {character.name}

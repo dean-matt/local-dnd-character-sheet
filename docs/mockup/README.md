@@ -51,7 +51,7 @@ widget, panel, or nav element:
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Page chrome: Character Header, Rolls Panel. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
-  `2014` or `2024` chip (the same chip as the Character List tile), then the subtitle
+  `2014` or `2024` chip (the same chip as the app's character list tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
   (its icon alone, the label in a tooltip), Rest and a Character settings gear as 32px
   buttons at the right. The save status reads "Saving…" while any write to the character is in
@@ -68,27 +68,8 @@ widget, panel, or nav element:
   widgets' filters. Character sheet only, not Settings. Forward design for #282, which
   only specified the list; the dock, the collapse, and Clear are this mockup's own call.
   The Filter button and the per-roll character tag widen past #282's own "out of scope"
-  line ("Filtering or searching the log") and its single-character framing the same way
-  the character list's avatar widens past #206's — #311 and #312 are the new issues that
-  settle those two, same as #310 settled the character list's own widening.
-- Character List is a full page, not a modal over the sheet — sized to the same 1440px
-  width as Layout, under the top bar with Character marked active. It boxes nothing in a
-  panel: its content sits on the page background, as the character sheet's does. The
-  app's home page and the top bar's Character menu reach it: "See all characters →" opens the list, and "+ New Character" opens creation —
-  a menu that jumps straight to one character is a different action from either.
-- Character List is the full list at the `characters` route — every character's name,
-  level, edition, race and class summary (`High Elf Ranger`, or `Fighter 3 / Wizard 2`
-  for a multiclass character), and an avatar (a colored initial circle when a character
-  has none), a page header offering Import and New Character, forward design for #206.
-  The avatar widens past #206's own "out of scope" line — a deliberate call, not an
-  oversight the issue's text missed.
-  Race and class needed a real schema answer rather than just a mockup call: #310 adds
-  the `race_summary` and `class_summary` columns #206 now reads, alongside `name`,
-  `edition`, and `level`, so the list still never parses a character's `definition` blob
-  per row.
-  Every picker on this page searches a small in-file array, the same convention
-  every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
-  search.
+  line ("Filtering or searching the log") and its single-character framing — #311 and #312
+  are the new issues that settle those two.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)
@@ -182,12 +163,11 @@ says how much of the artboard the app builds today.
 | `RaceFeaturesFilter` | #311 | nothing |
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
-| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear and the portrait upload, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `WidgetPicker` | #819 | nothing |
 | `CustomTab` | #819 | nothing |
-| `CharacterList` | #233, #391, #395 | all but the portraits |
 
 ## Changing a mockup
 

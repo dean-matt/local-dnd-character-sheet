@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { stubFetch } from "../test/stubFetch.ts";
-import { ApiError, apiDelete, apiGet, apiMutate } from "./api.ts";
+import { ApiError, apiDelete, apiGet, apiMutate, apiUpload } from "./api.ts";
 
 const widgetSchema = z.object({ name: z.string() });
 
@@ -98,5 +98,18 @@ describe("apiDelete", () => {
     const body = { error: "in use", characters: [{ id: "c1", name: "Vex" }] };
     stubFetch(new Response(JSON.stringify(body), { status: 409 }));
     await expect(apiDelete("/widgets/1")).rejects.toMatchObject({ message: "in use", body });
+  });
+});
+
+describe("apiUpload", () => {
+  it("sends the file as the body under its own type", async () => {
+    const fetchMock = stubFetch(new Response(null, { status: 204 }));
+    const file = new File([new Uint8Array([1, 2])], "face.png", { type: "image/png" });
+    await expect(apiUpload("/widgets/1/image", file)).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith("/api/widgets/1/image", {
+      method: "PUT",
+      headers: { "Content-Type": "image/png" },
+      body: file,
+    });
   });
 });

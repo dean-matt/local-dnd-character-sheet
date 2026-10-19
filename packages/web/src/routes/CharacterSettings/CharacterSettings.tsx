@@ -9,13 +9,14 @@ import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import { DeleteCharacterDialog } from "./DeleteCharacterDialog.tsx";
 import { HouseRulesCard } from "./HouseRulesCard.tsx";
+import { PortraitCard } from "./PortraitCard.tsx";
 
 const BUTTON =
   "rounded-control border border-border bg-surface px-3.5 py-2 font-semibold text-row hover:bg-subtle aria-disabled:cursor-wait aria-disabled:opacity-60";
 
 /**
  * What configures or acts on the character as a whole, at a fixed route Manage pages never
- * lists: its house rules, Duplicate and Export, and Delete behind its confirmation.
+ * lists: its house rules, its portrait, Duplicate and Export, and Delete behind its confirmation.
  */
 export function CharacterSettings() {
   const { id = "" } = useParams();
@@ -37,6 +38,7 @@ export function CharacterSettings() {
       </h2>
       <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <HouseRulesCard character={character.data} />
+        <PortraitCard character={character.data} buttonClass={BUTTON} />
         <Card title="Character file">
           <div className="flex flex-wrap items-center gap-2">
             <button
