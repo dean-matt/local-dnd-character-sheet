@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
@@ -53,7 +53,11 @@ describe("routing", () => {
 
   it("redirects a character to its first visible page", async () => {
     const router = renderAt("/characters/abc");
-    await screen.findByRole("region", { name: "Stats" });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/stats"));
+    await waitFor(() =>
+      expect(document.querySelector('section[aria-label="Stats"]')).not.toBeNull(),
+    );
+    expect(screen.getByRole("region", { name: "Stats" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
