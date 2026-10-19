@@ -251,6 +251,17 @@ describe("characterReferencesRoutes", () => {
     ]);
   });
 
+  it("reports the row a spell pick was made for once the catalog drops it", async () => {
+    publishReferencesFixture(dataDir, CATALOG);
+    const initiate = { name: "Magic Initiate", source: "PHB" };
+    store(
+      definitionWith({ spells: [{ ref: SHIELD, pickedFor: { kind: "feat", ref: initiate } }] }),
+    );
+    expect(await unresolved()).toEqual([
+      { field: "spells[0].pickedFor.ref", kind: "feat", ref: initiate },
+    ]);
+  });
+
   it("reports a variant its base item no longer takes, or that is no longer a variant", async () => {
     const DAGGER = { name: "Dagger", source: "PHB" };
     const CLUB = { name: "Club", source: "PHB" };
