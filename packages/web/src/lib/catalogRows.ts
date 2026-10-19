@@ -35,8 +35,8 @@ import type { CharacterRecord } from "@dnd/character";
 import { matchPath, type Params } from "react-router";
 import { z } from "zod";
 import { ApiError, apiGet } from "./api.ts";
-import { displayName } from "./displayName.ts";
 import { searchHitTypeLabel } from "./searchHits.ts";
+import { shownName } from "./shownName.ts";
 
 /** `source` is absent on a homebrew row, the shape difference the sheet reads everywhere. */
 interface CatalogRow {
@@ -82,7 +82,7 @@ const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntrie
 const segments = (...parts: (string | undefined)[]) =>
   parts.map((part) => encodeURIComponent(part ?? "")).join("/");
 
-const pair = (name?: string, source?: string) => `${displayName(name ?? "")} (${source})`;
+const pair = (name?: string, source?: string) => `${shownName(name ?? "")} (${source})`;
 
 function nameSource(
   collection: string,

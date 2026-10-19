@@ -2,7 +2,7 @@ import { armsGroupKinds, itemRecordSchema, type SearchHit } from "@dnd/catalog";
 import type { CharacterRecord, ContentRef } from "@dnd/character";
 import { useState } from "react";
 import { ApiError, apiGet } from "../../../../lib/api.ts";
-import { displayName } from "../../../../lib/displayName.ts";
+import { shownName } from "../../../../lib/shownName.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import type { InventoryEntry } from "./editInventoryEntry.ts";
 
@@ -36,10 +36,10 @@ function refusalOf(
   const detail = error instanceof Error ? error.message : String(error);
   if (!(error instanceof ApiError && error.status === 409)) {
     return {
-      message: `${name} as ${displayName(variant.ref.name)} could not be checked: ${detail}`,
+      message: `${name} as ${shownName(variant.ref.name)} could not be checked: ${detail}`,
     };
   }
-  const message = `${name} cannot take ${displayName(variant.ref.name)}. ${detail}.`;
+  const message = `${name} cannot take ${shownName(variant.ref.name)}. ${detail}.`;
   const group = armsGroupKinds(variant.kinds);
   const offer =
     !overriding && group && baseKinds.length > 0 && baseKinds.every((kind) => group.includes(kind));
@@ -111,7 +111,7 @@ export function AddItemField({
       <div className="flex items-end gap-2">
         <div className="min-w-0 flex-1">
           <CatalogPicker
-            label={`Base item for ${displayName(variant.ref.name)}`}
+            label={`Base item for ${shownName(variant.ref.name)}`}
             edition={edition}
             type="item"
             filters={{ kind: (armsGroupKinds(variant.kinds) ?? variant.kinds).join(",") }}
@@ -132,7 +132,7 @@ export function AddItemField({
         </button>
       </div>
       <p role="status" className="text-muted text-row">
-        {checking ? `Checking ${checking} as ${displayName(variant.ref.name)}…` : ""}
+        {checking ? `Checking ${checking} as ${shownName(variant.ref.name)}…` : ""}
       </p>
       {refusal && (
         <div role="alert" className="flex items-center gap-2 text-error text-row">

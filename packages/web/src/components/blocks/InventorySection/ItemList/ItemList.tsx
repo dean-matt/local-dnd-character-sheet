@@ -7,7 +7,6 @@ import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { withItem } from "../../../../lib/addedEntries.ts";
-import { displayName } from "../../../../lib/displayName.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
 import { AddItemButton } from "./AddItemButton.tsx";
@@ -90,10 +89,7 @@ export function ItemList({
   const gated = houseRule(character.definition, "requireEquipProficiency");
   const equipRequires = (index: number) =>
     gated ? derived?.unproficientItems.find((item) => item.entry === index)?.requires : undefined;
-  const entries = inventory.data.items.map((item, index) => ({
-    item: { ...item, name: displayName(item.name) },
-    index,
-  }));
+  const entries = inventory.data.items.map((item, index) => ({ item, index }));
   const cards = GROUPS.map((group) => {
     const rows = entries.filter(({ item }) => groupOf(item) === group);
     return (

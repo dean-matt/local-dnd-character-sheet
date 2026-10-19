@@ -1,6 +1,6 @@
 import type { SheetItem } from "@dnd/catalog";
-import { displayName } from "../../../../lib/displayName.ts";
 import { renamedAt } from "../../../../lib/renamed.ts";
+import { shownName } from "../../../../lib/shownName.ts";
 import { ListRow } from "../../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../../NotFoundTag.tsx";
 import { RemoveButton } from "../../../RemoveButton.tsx";
@@ -24,7 +24,7 @@ export function UnresolvedItemRow({
   onRemove: () => void;
 }) {
   const variant = item.variant
-    ? `, as ${displayName(item.variant.name)} (${item.variant.source})`
+    ? `, as ${shownName(item.variant.name)} (${item.variant.source})`
     : "";
   return (
     <ListRow

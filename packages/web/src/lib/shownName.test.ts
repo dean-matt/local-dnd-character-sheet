@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { displayName } from "./displayName.ts";
+import { shownName } from "./shownName.ts";
 
-describe("displayName", () => {
+describe("shownName", () => {
   it.each([
     ["Arrow of Slaying (*)", "Arrow of Slaying"],
     ["+1 Shield (*)", "+1 Shield"],
     ["Potion of Healing (*)", "Potion of Healing"],
   ])("leaves the star off %s", (name, shown) => {
-    expect(displayName(name)).toBe(shown);
+    expect(shownName(name)).toBe(shown);
   });
 
   it.each(["Longsword", "Potion of Healing", "Star (*) Map", "Thing(*)"])(
     "keeps %s as given",
     (name) => {
-      expect(displayName(name)).toBe(name);
+      expect(shownName(name)).toBe(name);
     },
   );
 });

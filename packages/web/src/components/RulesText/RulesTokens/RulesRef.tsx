@@ -1,9 +1,9 @@
 import type { Token } from "@dnd/tags";
 import { useContext, useState } from "react";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
-import { displayName } from "../../../lib/displayName.ts";
 import { paragraphs } from "../../../lib/rulesProse.ts";
 import { refKey } from "../../../lib/rulesRefs.ts";
+import { shownName } from "../../../lib/shownName.ts";
 import { CatalogDetail } from "../../CatalogDetail.tsx";
 import { CatalogEntry } from "../../CatalogEntry.tsx";
 import { InModal } from "../../inModalContext.ts";
@@ -31,16 +31,16 @@ export function RulesRef({ token }: { token: RefToken }) {
   if (row === undefined || (prose.length === 0 && row.path === undefined)) {
     return (
       <span data-tag={token.tag} data-name={token.name} data-source={token.source}>
-        {displayName(token.display)}
+        {shownName(token.display)}
       </span>
     );
   }
   const { path } = row;
-  const name = displayName(row.name);
+  const name = shownName(row.name);
   return (
     <>
       <Popover
-        trigger={displayName(token.display)}
+        trigger={shownName(token.display)}
         label={`${name} (${row.source})`}
         triggerRef={reference}
       >

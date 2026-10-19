@@ -16,7 +16,7 @@ A magic variant states the item's own fields under `inherits` — the entry arou
 the template's match rules — so its source, rarity and attunement come from there. Its
 own `type` is a `GV|` generic-variant code that `kind` already says, and is not stored.
 Nine template and `itemGroup` names end in ` (*)`, kept in the key and left off what the web
-shows. An `itemGroup`'s detail reads "Item group" and offers no Add to…, being no item to own.
+shows. An `itemGroup`'s detail reads "Item group" and offers no Add to…, since a character owns its items, not the group.
 
 **The expansions are absent.** `+1 Chain Mail` and `Longsword of Cold Resistance` exist
 in no upstream file: they come of applying a template to every base item its `requires`
@@ -51,7 +51,7 @@ markup. Search lists the templates beside the items and places each by the base 
 its `requires` and `excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
 A `requires` clause naming `type`, `staff`, `wondrous` or `name` passes on every kind of
 the items it admits; a clause on any other trait, such as `weaponCategory` or `dmgType`,
-passes on only their weapon and armor kinds. The focuses `Staff` and `Wooden Staff`
+passes on only the weapon and armor kinds of those items. The focuses `Staff` and `Wooden Staff`
 carry a simple weapon's stats, so a `weaponCategory` clause admits them, yet a template
 such as Holy Avenger that reaches them that way is a weapon, not a staff or a focus.
 Imbued Wood requires an arcane focus by `type`, so it still lists as a staff and a focus.

@@ -3,4 +3,4 @@
  * ` (*)`, as `Arrow of Slaying (*)`; the star stays in the name the row is keyed and
  * looked up by, and is left off wherever a reader sees it.
  */
-export const displayName = (name: string) => name.replace(/ \(\*\)$/, "");
+export const shownName = (name: string) => name.replace(/ \(\*\)$/, "");

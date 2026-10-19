@@ -1,8 +1,8 @@
 import type { SearchHit } from "@dnd/catalog";
 import { useEffect, useRef } from "react";
 import { CHIP } from "../../lib/chipStyles.ts";
-import { displayName } from "../../lib/displayName.ts";
 import { searchHitTypeLabel } from "../../lib/searchHits.ts";
+import { shownName } from "../../lib/shownName.ts";
 import { SourceChip } from "../SourceChip.tsx";
 
 export interface CatalogPickerOptionProps {
@@ -47,7 +47,7 @@ export function CatalogPickerOption({
       } ${reason === undefined ? "cursor-pointer" : "cursor-not-allowed text-muted"}`}
     >
       <span>
-        {displayName(hit.name)}
+        {shownName(hit.name)}
         {"qualifier" in hit && hit.qualifier !== undefined && ` · ${hit.qualifier}`}
       </span>
       <SourceChip
