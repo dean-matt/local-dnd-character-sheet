@@ -7,6 +7,7 @@ import { LoadingState } from "../LoadingState.tsx";
 import { addableAt } from "../lib/addable.ts";
 import { ApiError } from "../lib/api.ts";
 import { matchCatalogTarget } from "../lib/catalogRows.ts";
+import { displayName } from "../lib/displayName.ts";
 import { AddedNotice } from "./AddedNotice.tsx";
 import { AddTo } from "./AddTo/AddTo.tsx";
 import { JsonView } from "./JsonView.tsx";
@@ -45,9 +46,10 @@ export function CatalogEntry({ address }: { address: string }) {
   if (row.isError) return entry("Could not load", <ErrorState error={row.error} />);
   if (row.isPending) return entry("Loading…", <LoadingState />);
 
-  const { name, source, edition, qualifier, entries, json } = row.data;
+  const { source, edition, qualifier, entries, json } = row.data;
+  const name = displayName(row.data.name);
   const label = match.target.label(match.key);
-  const addable = addableAt(address, name, source);
+  const addable = addableAt(address, row.data.name, source);
   return entry(
     name,
     <>

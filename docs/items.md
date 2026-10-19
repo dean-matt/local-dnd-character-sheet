@@ -15,6 +15,8 @@ magicvariants.json magicvariant   214    templates upstream expands against base
 A magic variant states the item's own fields under `inherits` — the entry around it is
 the template's match rules — so its source, rarity and attunement come from there. Its
 own `type` is a `GV|` generic-variant code that `kind` already says, and is not stored.
+Nine template and `itemGroup` names end in ` (*)`, kept in the key and left off what the web
+shows; an `itemGroup` reads "Item group", so `Potion of Healing (*)` (DMG) differs from its potion.
 
 **The expansions are absent.** `+1 Chain Mail` and `Longsword of Cold Resistance` exist
 in no upstream file: they come of applying a template to every base item its `requires`
@@ -48,9 +50,8 @@ placeholder left empty, here or in an expansion, reads as neutral prose rather t
 markup. Search lists the templates beside the items and places each by the base items
 its `requires` and `excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
 A `requires` clause naming `type`, `staff`, `wondrous` or `name` passes on every kind of
-the items it admits. A
-clause on any other trait, such as `weaponCategory` or `dmgType`, passes on only the
-weapon and armor kinds of the items it admits. The focuses `Staff` and `Wooden Staff`
+the items it admits; a clause on any other trait, such as `weaponCategory` or `dmgType`,
+passes on only their weapon and armor kinds. The focuses `Staff` and `Wooden Staff`
 carry a simple weapon's stats, so a `weaponCategory` clause admits them, yet a template
 such as Holy Avenger that reaches them that way is a weapon, not a staff or a focus.
 Imbued Wood requires an arcane focus by `type`, so it still lists as a staff and a focus.

@@ -87,6 +87,17 @@ describe("SearchPage", () => {
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
+  it("names a hit without upstream's star, and opens it by its full name", async () => {
+    const arrow = { type: "item", name: "Arrow of Slaying (*)", source: "DMG", edition: "classic" };
+    const fetchMock = renderAt("/search?q=slaying&type=item", {
+      "/api/search?q=slaying&limit=50&type=item": page([arrow]),
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Arrow of Slaying" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/items/Arrow%20of%20Slaying%20(*)/DMG", undefined);
+  });
+
   it("lists every row of a ticked type for an empty query", async () => {
     renderAt("/search?type=monster", {
       "/api/search?limit=50&type=monster": page([fireGiant]),

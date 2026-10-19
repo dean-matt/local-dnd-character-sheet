@@ -478,6 +478,21 @@ describe("ItemList", () => {
     ]);
   });
 
+  it("names an item without upstream's star, and still removes the entry it names", async () => {
+    const [, cloak, ring] = ITEMS as [SheetItem, SheetItem, SheetItem];
+    const arrow = { ...cloak, name: "Arrow of Slaying (*)", attuned: false };
+    const fetchMock = renderList(derivedRecord(), [arrow, cloak, ring]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Remove Arrow of Slaying" }));
+    expect(screen.queryByText(/\(\*\)/)).toBeNull();
+
+    const definition = await written(fetchMock);
+    expect(definition.inventory.map((entry: { ref: { name: string } }) => entry.ref.name)).toEqual([
+      "Cloak of Protection",
+      "Ring of Warmth",
+    ]);
+  });
+
   it("draws the list busy while a row write and its refetch run, and idle once both land", async () => {
     const fetchMock = renderList(
       { ...derivedRecord(), containers: [{ entry: 1, name: "Cloak of Protection", overflow: [] }] },

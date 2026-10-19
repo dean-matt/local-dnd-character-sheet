@@ -4,6 +4,7 @@ import { SourceChip } from "../../components/SourceChip.tsx";
 import { TypeChip } from "../../components/TypeChip.tsx";
 import type { AddOutcome } from "../../hooks/useAddToCharacter.ts";
 import { addableHit } from "../../lib/addable.ts";
+import { displayName } from "../../lib/displayName.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { searchHitAddress, searchHitTypeLabel } from "../../lib/searchHits.ts";
 
@@ -32,7 +33,7 @@ export function SearchHitRow({
       <span className="min-w-0 grow">
         {address === undefined ? (
           <span className="block truncate text-body font-medium text-ink">
-            {hit.name}
+            {displayName(hit.name)}
             <span className="ml-2 text-label font-normal text-muted">No page yet</span>
           </span>
         ) : (
@@ -42,7 +43,7 @@ export function SearchHitRow({
             onClick={() => onOpen(address)}
             className="block max-w-full cursor-pointer truncate text-left text-body font-medium text-ink hover:underline"
           >
-            {hit.name}
+            {displayName(hit.name)}
           </button>
         )}
         {hit.item && (

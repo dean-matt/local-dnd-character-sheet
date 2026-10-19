@@ -427,6 +427,28 @@ describe("CatalogDetail", () => {
     await dialogNamed("+1 Longsword");
   });
 
+  it("leaves upstream's star off a name it still reads the row by, and marks an item group", async () => {
+    const potions = {
+      ...longsword,
+      name: "Potion of Healing (*)",
+      kind: "itemGroup",
+      type: "P",
+      rarity: "varies",
+      json: { name: "Potion of Healing (*)", source: "DMG", entries: ["A family of potions."] },
+    };
+    const fetchMock = stubFetchByUrl({
+      "/api/items/Potion%20of%20Healing%20(*)/DMG": potions,
+    });
+    renderAt("/items/Potion%20of%20Healing%20(*)/DMG");
+
+    await dialogNamed("Potion of Healing");
+    expect(screen.getByText("Item group")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Add to… Potion of Healing (DMG)" }),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/items/Potion%20of%20Healing%20(*)/DMG", undefined);
+  });
+
   it("links what an Artificer replicates an item with, and leaves one the catalog lacks as text", async () => {
     const replicable = {
       ...longsword,
