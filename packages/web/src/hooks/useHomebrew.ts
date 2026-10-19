@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
 
+/** The path segment of each kind's routes, `/homebrew/{collection}`. */
+export type HomebrewCollection = "items" | "spells" | "races" | "classes" | "backgrounds" | "feats";
+
 /**
  * One homebrew collection under `/homebrew/{collection}`: its rows, a save that creates a
  * row where `id` is absent and replaces it otherwise, and a delete by id.
  */
-export function useHomebrew<R>(collection: "items" | "spells", schema: z.ZodType<R>) {
+export function useHomebrew<R>(collection: HomebrewCollection, schema: z.ZodType<R>) {
   const queryClient = useQueryClient();
   const path = `/homebrew/${collection}`;
   const rowPath = (id: string) => `${path}/${encodeURIComponent(id)}`;

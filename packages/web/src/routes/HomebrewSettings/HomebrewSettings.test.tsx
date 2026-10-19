@@ -4,7 +4,13 @@ import { EditorView } from "codemirror";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HomebrewSettings } from "./HomebrewSettings.tsx";
-import { ITEM_STARTERS } from "./homebrewStarters.ts";
+import {
+  BACKGROUND_STARTERS,
+  CLASS_STARTERS,
+  FEAT_STARTERS,
+  ITEM_STARTERS,
+  RACE_STARTERS,
+} from "./homebrewStarters.ts";
 
 const CREATED_AT = "2026-01-01T00:00:00.000Z";
 
@@ -41,12 +47,12 @@ type Answer = { status: number; body?: unknown };
  * A fake API: a `GET` of a homebrew list answers from `lists`, and any other request under
  * `/api/homebrew` takes the next answer in `writes`.
  */
-function stubApi(lists: { items?: unknown[]; spells?: unknown[] }, writes: Answer[] = []) {
+function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = []) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? "GET";
-    if (method === "GET" && url === "/api/homebrew/items") return json(200, lists.items ?? []);
-    if (method === "GET" && url === "/api/homebrew/spells") return json(200, lists.spells ?? []);
+    const listed = /^\/api\/homebrew\/(\w+)$/.exec(url)?.[1];
+    if (method === "GET" && listed) return json(200, lists[listed] ?? []);
     const answer = url.startsWith("/api/homebrew") ? writes.shift() : undefined;
     return answer ? json(answer.status, answer.body) : json(404, { error: `nothing at ${url}` });
   });
@@ -949,5 +955,62 @@ describe("HomebrewSettings", () => {
     typeJson("Item JSON", jsonText("Item JSON").replace(`"${gear?.entry.name}"`, '"Lamp"'));
     mode("Step by step");
     expect(field("textbox", "Name")).toHaveValue("Lamp");
+  });
+
+  it("chips a race, a class, a background and a feat as their entries state them", async () => {
+    const row = (id: string, json: Record<string, unknown>, extra = {}) => ({
+      id,
+      name: json.name,
+      edition: "one",
+      json: { ...json, source: "HB" },
+      createdAt: CREATED_AT,
+      ...extra,
+    });
+    stubApi({
+      races: [row("r1", RACE_STARTERS[0].entry)],
+      classes: [row("c1", CLASS_STARTERS[0].entry, { hitDie: 10 })],
+      backgrounds: [row("b1", BACKGROUND_STARTERS[0].entry)],
+      feats: [row("f1", FEAT_STARTERS[0].entry)],
+    });
+    renderPage();
+
+    const chips = async (region: string, name: string) =>
+      (await within(screen.getByRole("region", { name: region })).findByText(name)).closest("li");
+    expect(await chips("Races", "Duskling")).toHaveTextContent(/Medium.*30 ft\..*\+2 DEX \+1 CHA/);
+    expect(await chips("Classes", "Warden")).toHaveTextContent(/d10.*STR.*STR\/CON/);
+    expect(await chips("Backgrounds", "Wayfarer")).toHaveTextContent("Insight, Survival");
+    expect(await chips("Feats", "Ironbound")).toHaveTextContent("STR 13");
+  });
+
+  it("creates a race from pasted JSON alone, naming a field that fails rather than the whole paste", async () => {
+    const fetchMock = stubApi({}, [{ status: 201, body: {} }]);
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Races" })).getByRole("button", {
+        name: "Add race",
+      }),
+    );
+    expect(within(editor()).queryByRole("tab", { name: "Step by step" })).toBeNull();
+    const { size: _size, ...sizeless } = RACE_STARTERS[0].entry;
+    typeJson("Race JSON", JSON.stringify(sizeless));
+    click("Save");
+    expect(field("textbox", "Race JSON")).toHaveAccessibleDescription(/^size: /);
+    expect(writesOf(fetchMock)).toEqual([]);
+
+    typeJson("Race JSON", JSON.stringify({ ...RACE_STARTERS[0].entry, source: "PHB" }));
+    mode("Preview");
+    expect(editor()).toHaveTextContent(/Size: Medium.*Speed: 30 ft\./);
+    click("Save");
+
+    await waitFor(() =>
+      expect(writesOf(fetchMock)).toEqual([
+        {
+          url: "/api/homebrew/races",
+          method: "POST",
+          body: { ...RACE_STARTERS[0].entry, edition: "one" },
+        },
+      ]),
+    );
   });
 });

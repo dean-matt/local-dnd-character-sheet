@@ -89,9 +89,6 @@ widget, panel, or nav element:
   Every picker on this page searches a small in-file array, the same convention
   every other widget in this mockup uses to stand in for #226's real catalog-and-homebrew
   search.
-- Homebrew Races, Homebrew Classes, Homebrew Backgrounds, Homebrew Feats each paste the
-  entry's 5etools-shaped JSON, as the app's Homebrew settings editor takes items and spells
-  in its JSON mode. They're forward design for #489, not a page a build currently renders.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)
@@ -188,10 +185,6 @@ says how much of the artboard the app builds today.
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
-| `HomebrewRaces` | #489 | nothing |
-| `HomebrewClasses` | #489 | nothing |
-| `HomebrewBackgrounds` | #489 | nothing |
-| `HomebrewFeats` | #489 | nothing |
 | `WidgetPicker` | #819 | nothing |
 | `CustomTab` | #819 | nothing |
 | `CharacterList` | #233, #391, #395 | all but the portraits |

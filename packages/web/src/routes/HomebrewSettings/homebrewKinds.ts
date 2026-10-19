@@ -1,8 +1,17 @@
 import {
+  classEntries,
   type Entries,
   type HomebrewItemInput,
   type HomebrewSpellInput,
+  homebrewBackgroundInputSchema,
+  homebrewBackgroundRecordSchema,
+  homebrewClassInputSchema,
+  homebrewClassRecordSchema,
+  homebrewFeatInputSchema,
+  homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
+  homebrewRaceInputSchema,
+  homebrewRaceRecordSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
   itemEntries,
@@ -12,12 +21,22 @@ import {
 import type { CharacterRecord } from "@dnd/character";
 import { type ComponentType, createElement, type ReactNode } from "react";
 import type { z } from "zod";
+import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
 import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
-import { type HomebrewStarters, ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
+import { backgroundFacts, classFacts, featFacts, raceFacts } from "./homebrewOptionFacts.ts";
+import {
+  BACKGROUND_STARTERS,
+  CLASS_STARTERS,
+  FEAT_STARTERS,
+  type HomebrewStarters,
+  ITEM_STARTERS,
+  RACE_STARTERS,
+  SPELL_STARTERS,
+} from "./homebrewStarters.ts";
 import { isVersatile, itemGroup } from "./homebrewVocabulary.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
@@ -60,7 +79,7 @@ export interface HomebrewKind<
   R extends HomebrewRow = HomebrewRow,
   I extends HomebrewInput = HomebrewInput,
 > {
-  collection: "items" | "spells";
+  collection: HomebrewCollection;
   noun: string;
   heading: string;
   recordSchema: z.ZodType<R>;
@@ -75,7 +94,8 @@ export interface HomebrewKind<
   starters: HomebrewStarters;
   /**
    * The form's sections, in order: each one's fields, and the top-level fields whose problems
-   * keep its step from advancing. A field no section names belongs to the last.
+   * keep its step from advancing. A field no section names belongs to the last. A kind with
+   * none is edited as JSON alone.
    */
   sections: HomebrewSection[];
   /** What the JSON view shows beside its editor: the fields the sheet reads, where a kind lists them. */
@@ -197,8 +217,80 @@ const spell: HomebrewKind<z.infer<typeof homebrewSpellRecordSchema>, HomebrewSpe
   shownKeys: () => ["name", "level", "school", "duration", "meta", "entries"],
 };
 
+/** A kind edited as pasted JSON alone, its chips and preview facts read off the entry. */
+function pasted<R extends HomebrewRow, I extends HomebrewInput & Record<string, unknown>>(
+  kind: Pick<
+    HomebrewKind<R, I>,
+    "collection" | "noun" | "heading" | "recordSchema" | "inputSchema" | "starters" | "entries"
+  >,
+  facts: (json: Record<string, unknown>) => Fact[],
+  previewed: (fact: Fact) => boolean = () => true,
+): HomebrewKind<R, I> {
+  return {
+    ...kind,
+    chips: (record) => facts(record.json).map(([, value]) => value),
+    facts: (input) => facts(input).filter(previewed),
+    sections: [],
+    shownKeys: () => [],
+  };
+}
+
+const race = pasted(
+  {
+    collection: "races",
+    noun: "race",
+    heading: "Races",
+    recordSchema: homebrewRaceRecordSchema,
+    inputSchema: homebrewRaceInputSchema,
+    starters: RACE_STARTERS,
+    entries: rowEntries,
+  },
+  raceFacts,
+);
+
+const klass = pasted(
+  {
+    collection: "classes",
+    noun: "class",
+    heading: "Classes",
+    recordSchema: homebrewClassRecordSchema,
+    inputSchema: homebrewClassInputSchema,
+    starters: CLASS_STARTERS,
+    entries: classEntries,
+  },
+  classFacts,
+  // `classEntries` already prints the hit die and saving throws.
+  ([label]) => label === "Primary Ability",
+);
+
+const background = pasted(
+  {
+    collection: "backgrounds",
+    noun: "background",
+    heading: "Backgrounds",
+    recordSchema: homebrewBackgroundRecordSchema,
+    inputSchema: homebrewBackgroundInputSchema,
+    starters: BACKGROUND_STARTERS,
+    entries: rowEntries,
+  },
+  backgroundFacts,
+);
+
+const feat = pasted(
+  {
+    collection: "feats",
+    noun: "feat",
+    heading: "Feats",
+    recordSchema: homebrewFeatRecordSchema,
+    inputSchema: homebrewFeatInputSchema,
+    starters: FEAT_STARTERS,
+    entries: rowEntries,
+  },
+  featFacts,
+);
+
 /** The kinds in the order the page lists them. */
-export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell];
+export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell, race, klass, background, feat];
 
 /** How many sections a step sets side by side, which the wide modal holds two of. */
 const PER_STEP = 2;
