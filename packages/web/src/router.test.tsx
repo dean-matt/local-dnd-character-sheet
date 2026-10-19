@@ -81,12 +81,14 @@ describe("routing", () => {
 
   it("redirects a character to its first visible page", async () => {
     const router = renderAt("/characters/abc");
-    void vi
-      .waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/stats"), {
-        interval: 1,
-      })
-      .then(() => mark("redirect happened"));
-    await screen.findByRole("region", { name: "Stats" });
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/stats"), {
+      interval: 1,
+    });
+    mark("pathname reached");
+    await vi.waitFor(
+      () => expect(document.querySelector('section[aria-label="Stats"]')).not.toBeNull(),
+      { interval: 1 },
+    );
     mark("region rendered");
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
