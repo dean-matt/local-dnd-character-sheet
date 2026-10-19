@@ -48,7 +48,9 @@ function pool(
   hits: { tools: readonly SearchHit[]; languages: readonly SearchHit[] },
 ): Option[] {
   const skills = derived?.skills.map(({ ref }) => ref.name) ?? [];
-  const granted = derived ? derivedValue(derived.featGrants).skills : [];
+  const granted = derived
+    ? [...derivedValue(derived.featGrants).skills, ...derivedValue(derived.itemGrants).skills]
+    : [];
   const proficient = new Set(
     [
       ...record.definition.proficiencies.skills.filter(

@@ -3,10 +3,11 @@ import { type HomebrewFormProps, listAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, WHOLE } from "./homebrewGrid.ts";
 import { ItemAbilityFields } from "./ItemAbilityFields.tsx";
 import { ItemSenseFields } from "./ItemSenseFields.tsx";
+import { ItemSkillFields } from "./ItemSkillFields.tsx";
 import { ItemSpeedFields } from "./ItemSpeedFields.tsx";
 import { ItemSpellFields } from "./ItemSpellFields.tsx";
 
-/** What a homebrew item does to the wearer's ability scores, speeds, senses, rolls and spells. */
+/** What a homebrew item does to the wearer's ability scores, speeds, senses, skills, rolls and spells. */
 export function ItemEffects({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   return (
@@ -30,6 +31,13 @@ export function ItemEffects({ entry, onChange, errorFor }: HomebrewFormProps) {
           senses={listAt(entry, "senses")}
           onChange={(next) => set("senses", next.length > 0 ? next : undefined)}
           error={errorFor("senses")}
+        />
+      </div>
+      <div className={WHOLE}>
+        <ItemSkillFields
+          proficiencies={entry.skillProficiencies}
+          expertise={entry.expertise}
+          onChange={set}
         />
       </div>
       <div className={WHOLE}>

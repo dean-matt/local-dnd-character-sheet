@@ -2,14 +2,20 @@ import { type CharacterDerived, derivedValue } from "@dnd/character";
 import { Card } from "../../Card.tsx";
 
 /**
- * The equipped items that grant a proficiency or a language. Upstream flags the grant
- * without naming what it grants, so the card names the item and leaves the rest to its
- * rules text.
+ * The equipped items that grant a skill, a proficiency or a language. A skill is named with
+ * the items behind it. Upstream flags another proficiency or a language without naming what
+ * it grants, so the card names the item and leaves the rest to its rules text.
  */
 export function ItemGrants({ derived }: { derived: CharacterDerived }) {
-  const { proficiencies, languages } = derivedValue(derived.itemGrants);
-  if (proficiencies.length + languages.length === 0) return null;
+  const { skills, proficiencies, languages } = derivedValue(derived.itemGrants);
+  if (skills.length + proficiencies.length + languages.length === 0) return null;
+  const skilled = (level: "proficient" | "expertise") =>
+    skills
+      .filter((skill) => skill.level === level)
+      .map((skill) => `${skill.ref.name} (${skill.from.join(", ")})`);
   const rows = [
+    ["Skill", skilled("proficient")],
+    ["Expertise", skilled("expertise")],
     ["Proficiency", proficiencies],
     ["Language", languages],
   ] as const;

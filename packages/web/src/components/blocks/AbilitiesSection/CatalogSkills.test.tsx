@@ -25,7 +25,11 @@ const holding = (skills: SkillProficiency[]): CharacterRecord => {
 
 type Granted = CharacterDerived["featGrants"]["computed"]["skills"];
 
-const derivedFor = (record: CharacterRecord, granted: Granted): CharacterDerived => {
+const derivedFor = (
+  record: CharacterRecord,
+  granted: Granted,
+  fromItems: Granted,
+): CharacterDerived => {
   const derived = derivedRecord(record.definition);
   const modifier = { computed: 2, manual: null, terms: [] };
   const passive = { ...modifier, computed: 12 };
@@ -34,6 +38,10 @@ const derivedFor = (record: CharacterRecord, granted: Granted): CharacterDerived
     featGrants: {
       ...derived.featGrants,
       computed: { ...derived.featGrants.computed, skills: granted },
+    },
+    itemGrants: {
+      ...derived.itemGrants,
+      computed: { ...derived.itemGrants.computed, skills: fromItems },
     },
     skills: [STEALTH, ARCANA, PERCEPTION].map((ref) => ({
       ref,
@@ -44,19 +52,21 @@ const derivedFor = (record: CharacterRecord, granted: Granted): CharacterDerived
   };
 };
 
-function Seeded({ granted }: { granted: Granted }) {
+function Seeded({ granted, fromItems }: { granted: Granted; fromItems: Granted }) {
   const { data } = useQuery<CharacterRecord>({ queryKey: characterKey("1"), queryFn: skipToken });
-  return data ? <CatalogSkills character={data} derived={derivedFor(data, granted)} /> : null;
+  return data ? (
+    <CatalogSkills character={data} derived={derivedFor(data, granted, fromItems)} />
+  ) : null;
 }
 
-function renderSeeded(character: CharacterRecord, granted: Granted = []) {
+function renderSeeded(character: CharacterRecord, granted: Granted = [], fromItems: Granted = []) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   client.setQueryData(characterKey("1"), character);
   return render(
     <QueryClientProvider client={client}>
-      <Seeded granted={granted} />
+      <Seeded granted={granted} fromItems={fromItems} />
       <SaveToasts />
     </QueryClientProvider>,
   );
@@ -122,6 +132,22 @@ describe("CatalogSkills", () => {
     fireEvent.click(screen.getByRole("button", { name: "Arcana proficiency: Half proficiency" }));
 
     await waitFor(() => expect(written(fetchMock)).toEqual([{ ref: ARCANA, level: "proficient" }]));
+  });
+
+  it("shows a worn item's skill at the level it grants, the higher where a feat grants it too", () => {
+    renderSeeded(
+      holding([]),
+      [{ ref: ARCANA, level: "proficient", from: ["Observant"] }],
+      [
+        { ref: PERCEPTION, level: "proficient", from: ["Mask of Shadows"] },
+        { ref: ARCANA, level: "expertise", from: ["Mask of Shadows"] },
+      ],
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Perception proficiency: Proficient" }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Arcana proficiency: Expertise" })).toBeVisible();
   });
 
   it("shows a feat's skill at the level it grants, and steps on from there, marking expertise over the grant", async () => {

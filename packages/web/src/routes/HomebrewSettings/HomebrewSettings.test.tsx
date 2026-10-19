@@ -516,6 +516,53 @@ describe("HomebrewSettings", () => {
     expect(entry()).not.toHaveProperty("senses");
   });
 
+  it("sets an item's skill proficiency and expertise through the form, and drops the field when none is left", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    stepTo("Effects");
+    fireEvent.click(within(editor()).getByRole("button", { name: "Skill proficiencies None" }));
+    fireEvent.click(within(editor()).getByRole("checkbox", { name: "Intimidation" }));
+    fireEvent.click(within(editor()).getByRole("checkbox", { name: "Stealth" }));
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    fireEvent.click(within(editor()).getByRole("button", { name: "Skill expertise None" }));
+    fireEvent.click(within(editor()).getByRole("checkbox", { name: "Intimidation" }));
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    const entry = () => {
+      mode("JSON");
+      const text = jsonText("Item JSON");
+      mode("Step by step");
+      return JSON.parse(text);
+    };
+    expect(entry().skillProficiencies).toEqual([{ intimidation: true, stealth: true }]);
+    expect(entry().expertise).toEqual([{ intimidation: true }]);
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Skill expertise Intimidation" }));
+    fireEvent.click(within(editor()).getByRole("checkbox", { name: "Intimidation" }));
+    expect(entry()).not.toHaveProperty("expertise");
+  });
+
+  it("leaves skills stated as alternatives to the JSON, and does not flatten them", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    mode("JSON");
+    const picked = {
+      ...JSON.parse(jsonText("Item JSON")),
+      skillProficiencies: [{ any: 1 }],
+    };
+    typeJson("Item JSON", JSON.stringify(picked));
+    mode("Step by step");
+    stepTo("Effects");
+
+    expect(within(editor()).getByText(/skill proficiencies as alternatives/)).toBeInTheDocument();
+    expect(
+      within(editor()).queryByRole("button", { name: /^Skill proficiencies/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("adds and removes an item's spells through the form, and drops the field when none is left", async () => {
     stubApi({});
     renderPage();

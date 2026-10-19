@@ -22,6 +22,7 @@ import {
   itemAdvantageSchema,
   itemAdvantagesOf,
   itemBonusSchema,
+  itemSkillGrantsSchema,
   type PreparedSpellCount,
   preparationRuleSchema,
   raceTraitsSchema,
@@ -48,6 +49,7 @@ import {
   type ItemBonusTrait,
   type ItemDefenseTrait,
   type ItemSenseTrait,
+  type ItemSkillTrait,
   itemKey,
   type Preparation,
   type SkillTrait,
@@ -350,6 +352,25 @@ function itemSenses(
   return senses;
 }
 
+/** Every entry whose row grants a skill proficiency or expertise, keyed by `itemKey`. */
+function itemSkills(
+  definition: CharacterDefinition,
+  rows: readonly (ItemFacts | undefined)[],
+): Map<string, ItemSkillTrait> {
+  const skills = new Map<string, ItemSkillTrait>();
+  definition.inventory.forEach((entry, index) => {
+    const row = rows[index];
+    const granted = row && parseJson(itemSkillGrantsSchema, row.json);
+    if (!row || !granted) return;
+    skills.set(itemKey(entry), {
+      ...granted,
+      name: row.name,
+      requiresAttunement: row.requiresAttunement,
+    });
+  });
+  return skills;
+}
+
 /** Every entry whose row sets or raises a score, keyed by `itemKey`. */
 function itemAbilities(
   definition: CharacterDefinition,
@@ -540,6 +561,7 @@ export function resolveCharacterCatalog(
     raceDefenses: raceDefenses(json),
     raceSenses: raceSenses(json),
     itemSenses: itemSenses(definition, items),
+    itemSkills: itemSkills(definition, items),
     itemDefenses: itemDefenses(definition, items),
     itemAbilities: itemAbilities(definition, items),
     itemBonuses: itemBonuses(definition, items),

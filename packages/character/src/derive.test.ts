@@ -23,6 +23,7 @@ import {
   type ItemBonusTrait,
   type ItemDefenseTrait,
   type ItemSenseTrait,
+  type ItemSkillTrait,
   itemKey,
   overrideKey,
   passiveSkill,
@@ -221,6 +222,7 @@ describe("deriveCharacter", () => {
     raceDefenses: noDefenses,
     raceSenses: [] as SenseGrant[],
     itemSenses: new Map<string, ItemSenseTrait>(),
+    itemSkills: new Map<string, ItemSkillTrait>(),
     itemDefenses: new Map<string, ItemDefenseTrait>(),
     itemAbilities: new Map<string, ItemAbilityTrait>(),
     itemBonuses: new Map<string, ItemBonusTrait>(),
@@ -1410,6 +1412,7 @@ describe("deriveCharacter", () => {
         { name: "fire", from: [BELT.name] },
       ]);
       expect(block.itemGrants.computed).toEqual({
+        skills: [],
         proficiencies: [BRACERS.name],
         languages: [BELT.name],
       });
@@ -1428,6 +1431,102 @@ describe("deriveCharacter", () => {
       const carried = items.map((ref) => ({ ...worn(ref), equipped: false }));
       expect(withItems(carried).speed).toEqual(bare.speed);
       expect(withItems(carried).itemGrants).toEqual(bare.itemGrants);
+    });
+
+    describe("skills", () => {
+      const CAP = { name: "Cap of Watching", source: "HOMEBREW" };
+      const MASK = { name: "Mask of Shadows", source: "HOMEBREW" };
+      const skillItem = (
+        ref: EntryRef & { name: string },
+        skills: string[],
+        expertise: string[],
+        requiresAttunement = true,
+      ): [string, ItemSkillTrait] => [
+        entryKey(ref),
+        { name: ref.name, requiresAttunement, skills, expertise },
+      ];
+      const skilled = {
+        ...itemCatalog,
+        weights: new Map([...itemCatalog.weights, [entryKey(CAP), 0], [entryKey(MASK), 0]]),
+        itemSkills: new Map<string, ItemSkillTrait>([
+          skillItem(CAP, ["perception"], ["perception"]),
+          skillItem(MASK, [], ["stealth"], false),
+        ]),
+      };
+      const trained = (...names: (typeof PERCEPTION)[]): CharacterDefinition => ({
+        ...equipped,
+        proficiencies: {
+          ...equipped.proficiencies,
+          skills: names.map((ref) => ({ ref, level: "proficient" as const })),
+        },
+      });
+      const modifier = (block: CharacterDerived, name: string) =>
+        block.skills.find((skill) => skill.ref.name === name)?.modifier.computed;
+      const wearing = (definition: CharacterDefinition, ...entries: ReturnType<typeof worn>[]) =>
+        deriveCharacter(
+          { ...definition, inventory: [...definition.inventory, ...entries] },
+          skilled,
+        );
+
+      it("grants proficiency while the item is worn, naming the item and not a feat", () => {
+        const bare = wearing(trained());
+        const block = wearing(trained(), worn(CAP));
+        expect(modifier(block, "Perception")).toBe((modifier(bare, "Perception") ?? 0) + 3);
+        expect(block.itemGrants.computed.skills).toEqual([
+          { ref: PERCEPTION, level: "proficient", from: [CAP.name] },
+        ]);
+        expect(block.featGrants.computed.skills).toEqual([]);
+      });
+
+      it("raises the proficiency to expertise only where the wearer is proficient another way", () => {
+        const block = wearing(trained(PERCEPTION), worn(CAP));
+        expect(block.itemGrants.computed.skills).toEqual([
+          { ref: PERCEPTION, level: "expertise", from: [CAP.name] },
+        ]);
+        expect(modifier(block, "Perception")).toBe(
+          (modifier(wearing(trained(PERCEPTION)), "Perception") ?? 0) + 3,
+        );
+      });
+
+      it("grants no expertise in a skill the wearer is not proficient in", () => {
+        const block = wearing(trained(), worn(MASK));
+        expect(block.itemGrants.computed.skills).toEqual([]);
+        expect(modifier(block, "Stealth")).toBe(modifier(wearing(trained()), "Stealth"));
+        const proficient = wearing(trained(STEALTH), worn(MASK));
+        expect(proficient.itemGrants.computed.skills).toEqual([
+          { ref: STEALTH, level: "expertise", from: [MASK.name] },
+        ]);
+      });
+
+      it("counts proficiency another worn item grants toward expertise", () => {
+        const block = wearing(trained(), worn(CAP), worn(MASK));
+        expect(block.itemGrants.computed.skills.map((skill) => skill.ref.name)).toEqual([
+          "Perception",
+        ]);
+        const both = {
+          ...skilled,
+          itemSkills: new Map<string, ItemSkillTrait>([
+            skillItem(CAP, ["stealth"], []),
+            skillItem(MASK, [], ["stealth"], false),
+          ]),
+        };
+        const stacked = deriveCharacter(
+          { ...trained(), inventory: [...equipped.inventory, worn(CAP), worn(MASK)] },
+          both,
+        );
+        expect(stacked.itemGrants.computed.skills).toEqual([
+          { ref: STEALTH, level: "expertise", from: [CAP.name, MASK.name] },
+        ]);
+      });
+
+      it("leaves with the item when it is unequipped, or unattuned where it requires attunement", () => {
+        const bare = wearing(trained());
+        expect(wearing(trained(), { ...worn(CAP), equipped: false })).toEqual(bare);
+        expect(wearing(trained(), worn(CAP, false)).itemGrants).toEqual(bare.itemGrants);
+        expect(
+          wearing(trained(STEALTH), worn(MASK, false)).itemGrants.computed.skills,
+        ).toHaveLength(1);
+      });
     });
 
     it("keeps the proficiency bonus override beside the computed value", () => {

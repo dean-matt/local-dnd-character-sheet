@@ -11,6 +11,7 @@ import {
   weaponTraitSchema,
 } from "./item.ts";
 import { itemBonusSchema } from "./item-bonus.ts";
+import { itemSkillGrantsSchema } from "./item-skill.ts";
 
 /**
  * `weight`, `value` and `wondrous` are read off the entry directly, with no trait schema to
@@ -30,6 +31,7 @@ const shape = {
   ...defenseTraitSchema.in.shape,
   ...abilityGrantSchema.in.shape,
   ...itemBonusSchema.in.shape,
+  ...itemSkillGrantsSchema.in.shape,
   ...homebrewItemSchema.pick({
     type: true,
     rarity: true,
@@ -95,6 +97,10 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   grantsProficiency: "true where the item grants a proficiency its text names.",
   attachedSpells:
     'Spells the item lets its bearer cast, such as ["fireball", "shield|phb"]. A name with no source reads from the character\'s edition. The spells show on the sheet while the item is equipped, attuned where it must be.',
+  skillProficiencies:
+    'Skills the item grants proficiency in, such as [{"intimidation": true}]. Granted while the item is equipped, attuned where it must be.',
+  expertise:
+    'Skills the item grants expertise in, such as [{"intimidation": true}]. Expertise applies only where the wearer is proficient, so list a skill here and under skillProficiencies for proficiency, or expertise where already proficient.',
   grantsLanguage: "true where the item grants a language its text names.",
 };
 

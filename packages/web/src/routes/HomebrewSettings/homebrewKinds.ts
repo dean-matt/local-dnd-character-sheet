@@ -163,7 +163,7 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     {
       title: "Effects",
       Fields: ItemEffects,
-      keys: ["ability", "modifySpeed", "senses", "advantage"],
+      keys: ["ability", "modifySpeed", "senses", "skillProficiencies", "expertise", "advantage"],
     },
   ],
   reference: createElement(ItemFieldReference),
@@ -177,6 +177,8 @@ const item: HomebrewKind<z.infer<typeof homebrewItemRecordSchema>, HomebrewItemI
     "ability",
     "modifySpeed",
     "senses",
+    "skillProficiencies",
+    "expertise",
     "advantage",
     ...(itemGroup(entry.type) === "weapon" ? ["dmg1"] : []),
     ...(itemGroup(entry.type) === "weapon" && isVersatile(entry) ? ["dmg2"] : []),
