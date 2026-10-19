@@ -178,6 +178,20 @@ describe("SpellList", () => {
     expect(screen.queryByRole("button", { name: "Prepared, Eldritch Blast" })).toBeNull();
   });
 
+  it("cites the item behind a spell it lets the character cast, with no × to forget it", async () => {
+    renderList(vex(), {
+      spells: [
+        ...SHEET.spells,
+        { ...spell("Fireball", 3, true), granted: true, fromItem: "Staff of Power" },
+      ],
+    });
+
+    const row = (await screen.findByText("Fireball")).closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("Staff of Power");
+    expect(screen.queryByRole("button", { name: "Remove Fireball" })).toBeNull();
+    expect(screen.getByText("Warlock: 1 of 2 prepared")).toBeInTheDocument();
+  });
+
   it("holds a spell picked for a feat apart from the class", async () => {
     const pickedFor = { kind: "feat" as const, ref: { name: "Magic Initiate", source: "XPHB" } };
     const rebuke = { ref: { name: "Hellish Rebuke", source: "XPHB" }, prepared: true, pickedFor };

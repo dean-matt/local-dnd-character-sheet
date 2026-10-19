@@ -173,6 +173,52 @@ export const ammunitionTraitSchema = z
       : undefined,
   );
 
+const spellNameListSchema = z.array(z.string().min(1));
+
+/** Every spell name under an `attachedSpells` value, whatever frequency keys group them. */
+function namesIn(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(namesIn);
+  if (value && typeof value === "object") return Object.values(value).flatMap(namesIn);
+  return [];
+}
+
+/**
+ * The spells an item lets its bearer cast, `undefined` for one that names none. Upstream
+ * writes a bare list of names, or an object grouping them by how the item casts them —
+ * `will`, `daily`, `charges`, `limited`, `rest`, `ritual`, `other` — with a spell count or
+ * charge cost as the key one level down. Every group reads as the same list, since the
+ * sheet lists a spell without tracking its charges; `ability`, the casting ability, is not
+ * a spell. A name reads `name`, `name|source` or `name#level`, and a `#level` upcast marker
+ * is dropped. A name with no source is left for the caller to resolve in the character's
+ * edition.
+ */
+export const attachedSpellsSchema = z
+  .looseObject({
+    attachedSpells: z
+      .union([spellNameListSchema, z.record(z.string(), z.unknown())])
+      .optional()
+      .catch(undefined),
+  })
+  .transform(({ attachedSpells }) => {
+    const names = Array.isArray(attachedSpells)
+      ? attachedSpells
+      : Object.entries(attachedSpells ?? {}).flatMap(([group, value]) =>
+          group === "ability" ? [] : namesIn(value),
+        );
+    const spells = new Map<string, { name: string; source?: string }>();
+    for (const written of names) {
+      const [name = "", source] = (written.split("#")[0] ?? "").split("|");
+      if (!name.trim()) continue;
+      const spell = {
+        name: name.trim().toLowerCase(),
+        ...(source && { source: source.toLowerCase() }),
+      };
+      spells.set(`${spell.name}|${spell.source ?? ""}`, spell);
+    }
+    return spells.size > 0 ? [...spells.values()] : undefined;
+  });
+
 /** Upstream's one-letter `dmgType` codes, spelled out. */
 export const DAMAGE_TYPES: Readonly<Record<string, string>> = {
   A: "acid",

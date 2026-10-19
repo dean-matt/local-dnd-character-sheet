@@ -74,6 +74,7 @@ export {
   ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
+  attachedSpellsSchema,
   containerTraitSchema,
   DAMAGE_TYPES,
   homebrewItemInputSchema,

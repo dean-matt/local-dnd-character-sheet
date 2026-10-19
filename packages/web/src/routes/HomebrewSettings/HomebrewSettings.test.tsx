@@ -516,6 +516,31 @@ describe("HomebrewSettings", () => {
     expect(entry()).not.toHaveProperty("senses");
   });
 
+  it("adds and removes an item's spells through the form, and drops the field when none is left", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    stepTo("Effects");
+    fireEvent.change(field("textbox", "Spell"), { target: { value: "Fireball" } });
+    click("Add a spell");
+    fireEvent.change(field("textbox", "Spell"), { target: { value: "shield|phb" } });
+    click("Add a spell");
+    const entry = () => {
+      mode("JSON");
+      const text = jsonText("Item JSON");
+      mode("Step by step");
+      return JSON.parse(text);
+    };
+    expect(entry().attachedSpells).toEqual(["Fireball", "shield|phb"]);
+
+    click("Remove Fireball");
+    expect(entry().attachedSpells).toEqual(["shield|phb"]);
+
+    click("Remove shield|phb");
+    expect(entry()).not.toHaveProperty("attachedSpells");
+  });
+
   it("lists the fields the sheet reads, and the rules text, by name ahead of an item's JSON, and none beside a spell's", async () => {
     stubApi({});
     renderPage();

@@ -5,7 +5,7 @@ import type { CharacterSpells } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { insertCharacter } from "../db/queries/characters.ts";
-import { publishSpells } from "../db/queries/contentFixture.ts";
+import { type ItemFixtureRow, publishSpells } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
@@ -30,7 +30,7 @@ const SHIELD = {
   ],
 };
 
-const withSpells = (spells: object[]): CharacterDefinition =>
+const withSpells = (spells: object[], inventory: object[] = []): CharacterDefinition =>
   characterDefinitionSchema.parse({
     name: "Vex",
     edition: "classic",
@@ -46,9 +46,25 @@ const withSpells = (spells: object[]): CharacterDefinition =>
       tools: [],
       languages: [],
     },
-    inventory: [],
+    inventory,
     spells,
   });
+
+const item = (name: string, attachedSpells: unknown, requiresAttunement: 0 | 1 = 0) => ({
+  name,
+  source: "DMG",
+  edition: "classic",
+  kind: "item",
+  type: null,
+  rarity: "rare",
+  requires_attunement: requiresAttunement,
+  json: JSON.stringify({ name, source: "DMG", attachedSpells }),
+});
+
+const ITEMS: ItemFixtureRow[] = [
+  item("Ring of Shielding", { will: ["shield"] }),
+  item("Staff of Seeing", ["Detect Magic|PHB", "no such spell"], 1),
+];
 
 describe("characterSpellsRoutes", () => {
   let dataDir: string;
@@ -66,57 +82,61 @@ describe("characterSpellsRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "character-spells-"));
-    publishSpells(dataDir, [
-      {
-        name: "Shield",
-        source: "PHB",
-        edition: "classic",
-        level: 1,
-        school: "A",
-        concentration: 0,
-        ritual: 0,
-        json: JSON.stringify(SHIELD),
-      },
-      {
-        name: "Detect Magic",
-        source: "PHB",
-        edition: "classic",
-        level: 1,
-        school: "D",
-        concentration: 1,
-        ritual: 1,
-        json: JSON.stringify({
+    publishSpells(
+      dataDir,
+      [
+        {
+          name: "Shield",
+          source: "PHB",
+          edition: "classic",
+          level: 1,
+          school: "A",
+          concentration: 0,
+          ritual: 0,
+          json: JSON.stringify(SHIELD),
+        },
+        {
           name: "Detect Magic",
           source: "PHB",
+          edition: "classic",
           level: 1,
           school: "D",
-          time: [{ number: 1, unit: "action" }],
-          range: "not a range",
-          damageInflict: "not a list",
-          duration: [{ type: "timed", duration: { type: "minute", amount: 10 } }],
-        }),
-      },
-      {
-        name: "Fire Bolt",
-        source: "PHB",
-        edition: "classic",
-        level: 0,
-        school: "V",
-        concentration: 0,
-        ritual: 0,
-        json: JSON.stringify({
+          concentration: 1,
+          ritual: 1,
+          json: JSON.stringify({
+            name: "Detect Magic",
+            source: "PHB",
+            level: 1,
+            school: "D",
+            time: [{ number: 1, unit: "action" }],
+            range: "not a range",
+            damageInflict: "not a list",
+            duration: [{ type: "timed", duration: { type: "minute", amount: 10 } }],
+          }),
+        },
+        {
           name: "Fire Bolt",
           source: "PHB",
+          edition: "classic",
           level: 0,
           school: "V",
-          damageInflict: ["fire"],
-          entries: [
-            "A target takes {@damage 1d10} fire damage.",
-            { type: "entries", entries: ["It rises to {@damage 2d10} at 5th level."] },
-          ],
-        }),
-      },
-    ]);
+          concentration: 0,
+          ritual: 0,
+          json: JSON.stringify({
+            name: "Fire Bolt",
+            source: "PHB",
+            level: 0,
+            school: "V",
+            damageInflict: ["fire"],
+            entries: [
+              "A target takes {@damage 1d10} fire damage.",
+              { type: "entries", entries: ["It rises to {@damage 2d10} at 5th level."] },
+            ],
+          }),
+        },
+      ],
+      ITEMS,
+    );
   });
 
   afterAll(() => {
@@ -220,6 +240,57 @@ describe("characterSpellsRoutes", () => {
 
     expect(glimmer).toMatchObject({ resolved: true, name: "Glimmer", level: 0, prepared: false });
     expect(glimmer).not.toHaveProperty("source");
+  });
+
+  describe("a spell an item lets the character cast", () => {
+    const held = (name: string, flags: { equipped: boolean; attuned?: boolean }) => ({
+      ref: { name, source: "DMG" },
+      quantity: 1,
+      carried: true,
+      attuned: false,
+      ...flags,
+    });
+
+    it("lists it while the item is equipped, citing the item", async () => {
+      store(withSpells([], [held("Ring of Shielding", { equipped: true })]));
+      expect(await spells()).toEqual([
+        expect.objectContaining({
+          resolved: true,
+          name: "Shield",
+          source: "PHB",
+          granted: true,
+          prepared: true,
+          fromItem: "Ring of Shielding",
+        }),
+      ]);
+    });
+
+    it("drops it once the item is unequipped", async () => {
+      store(withSpells([], [held("Ring of Shielding", { equipped: false })]));
+      expect(await spells()).toEqual([]);
+    });
+
+    it("waits for attunement where the item requires it", async () => {
+      store(withSpells([], [held("Staff of Seeing", { equipped: true })]));
+      expect(await spells()).toEqual([]);
+    });
+
+    it("lists it once attuned, and leaves out a name no row answers", async () => {
+      store(withSpells([], [held("Staff of Seeing", { equipped: true, attuned: true })]));
+      expect((await spells()).map(({ name, fromItem }) => ({ name, fromItem }))).toEqual([
+        { name: "Detect Magic", fromItem: "Staff of Seeing" },
+      ]);
+    });
+
+    it("lists it after the spells the definition holds", async () => {
+      store(
+        withSpells(
+          [{ ref: SHIELD_REF, origin: WIZARD }],
+          [held("Staff of Seeing", { equipped: true, attuned: true })],
+        ),
+      );
+      expect((await spells()).map((spell) => spell.name)).toEqual(["Shield", "Detect Magic"]);
+    });
   });
 
   it("lists a reference nothing answers, in order, with its stored name", async () => {
