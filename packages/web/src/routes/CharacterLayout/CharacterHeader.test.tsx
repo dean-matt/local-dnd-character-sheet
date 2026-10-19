@@ -1,9 +1,14 @@
-import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { avatarColor } from "../../lib/avatarColor.ts";
 import { warlockRecord } from "../../test/records.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
+import { stubFetch } from "../../test/stubFetch.ts";
 import { CharacterHeader } from "./CharacterHeader.tsx";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("CharacterHeader", () => {
   it("capitalizes the initial of a lowercase name and keeps a whole astral character", () => {
@@ -66,5 +71,34 @@ describe("CharacterHeader", () => {
   it("leaves the printed page to the print title", () => {
     const { container } = renderWithClient(<CharacterHeader character={warlockRecord()} />);
     expect(container.firstElementChild).toHaveClass("print:hidden");
+  });
+
+  it("uploads the image the camera badge picks", async () => {
+    const fetchMock = stubFetch(new Response(null, { status: 204 }));
+    const { container } = renderWithClient(<CharacterHeader character={warlockRecord()} />);
+    const badge = screen.getByRole("button", { name: "Upload portrait" });
+    expect(badge.tagName).toBe("BUTTON");
+
+    const file = new File([new Uint8Array([0x89])], "face.png", { type: "image/png" });
+    const picker = container.querySelector<HTMLInputElement>("input[type=file]");
+    if (!picker) throw new Error("no file input");
+    fireEvent.change(picker, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/portrait", {
+        method: "PUT",
+        headers: { "Content-Type": "image/png" },
+        body: file,
+      }),
+    );
+  });
+
+  it("names the badge for a change where a portrait is set", () => {
+    renderWithClient(
+      <CharacterHeader
+        character={{ ...warlockRecord(), portraitUpdatedAt: "2026-10-19T12:00:00.000Z" }}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Change portrait" })).toBeInTheDocument();
   });
 });

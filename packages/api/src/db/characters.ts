@@ -11,6 +11,7 @@
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import {
+  blob,
   index,
   integer,
   primaryKey,
@@ -27,6 +28,12 @@ export const characters = sqliteTable("characters", {
   raceSummary: text("race_summary").notNull(),
   classSummary: text("class_summary").notNull(),
   definition: text("definition", { mode: "json" }).notNull(),
+  /**
+   * When `character_portraits` last changed for this character, null with no portrait. A
+   * client keys the image URL on it; a portrait write leaves `updatedAt`, which
+   * `If-Unmodified-Since` reads, alone.
+   */
+  portraitUpdatedAt: integer("portrait_updated_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
@@ -37,6 +44,15 @@ export const characterState = sqliteTable("character_state", {
     .references(() => characters.id, { onDelete: "cascade" }),
   state: text("state", { mode: "json" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+});
+
+/** The uploaded image behind a character's avatar, kept apart so a list read never loads it. */
+export const characterPortraits = sqliteTable("character_portraits", {
+  characterId: text("character_id")
+    .primaryKey()
+    .references(() => characters.id, { onDelete: "cascade" }),
+  mediaType: text("media_type").notNull(),
+  image: blob("image", { mode: "buffer" }).notNull(),
 });
 
 /**

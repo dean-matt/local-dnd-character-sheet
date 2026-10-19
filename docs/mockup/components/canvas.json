@@ -40,11 +40,9 @@
     "RollsPanelFilter.dc.html": { "x": 4040, "y": 6025, "w": 220, "h": 320, "title": "Filter — Rolls Panel", "is_interactive": true },
 
     "WidgetPicker.dc.html": { "x": 0, "y": 9025, "w": 680, "h": 620, "title": "Add Widget Picker — pending #819", "is_interactive": true },
-    "CustomTab.dc.html": { "x": 780, "y": 9025, "w": 1200, "h": 860, "title": "Custom Tab — pending #819", "is_interactive": true },
-
-    "CharacterList.dc.html": { "x": 0, "y": 10205, "w": 1440, "h": 640, "title": "Character List — pending #206", "is_interactive": true }
+    "CustomTab.dc.html": { "x": 780, "y": 9025, "w": 1200, "h": 860, "title": "Custom Tab — pending #819", "is_interactive": true }
   },
-  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "ShortRestModal.dc.html", "LongRestModal.dc.html", "Weapons.dc.html", "WeaponsFilter.dc.html", "Armor.dc.html", "ArmorFilter.dc.html", "Gear.dc.html", "GearFilter.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "SpellListFilter.dc.html", "ClassFeatures.dc.html", "ClassFeaturesFilter.dc.html", "RaceFeatures.dc.html", "RaceFeaturesFilter.dc.html", "ChosenFeatures.dc.html", "ChosenFeaturesFilter.dc.html", "CharacterHeader.dc.html", "RollsPanel.dc.html", "RollsPanelFilter.dc.html", "WidgetPicker.dc.html", "CustomTab.dc.html", "CharacterList.dc.html"],
+  "order": ["Layout.dc.html", "Abilities.dc.html", "Saves.dc.html", "Skills.dc.html", "Combat.dc.html", "HP.dc.html", "Attacks.dc.html", "Status.dc.html", "ShortRestModal.dc.html", "LongRestModal.dc.html", "Weapons.dc.html", "WeaponsFilter.dc.html", "Armor.dc.html", "ArmorFilter.dc.html", "Gear.dc.html", "GearFilter.dc.html", "SpellSlots.dc.html", "SpellList.dc.html", "SpellListFilter.dc.html", "ClassFeatures.dc.html", "ClassFeaturesFilter.dc.html", "RaceFeatures.dc.html", "RaceFeaturesFilter.dc.html", "ChosenFeatures.dc.html", "ChosenFeaturesFilter.dc.html", "CharacterHeader.dc.html", "RollsPanel.dc.html", "RollsPanelFilter.dc.html", "WidgetPicker.dc.html", "CustomTab.dc.html"],
   "notes": {},
   "designSystems": []
 }

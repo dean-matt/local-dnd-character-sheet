@@ -79,6 +79,11 @@ export async function apiMutate<T>(
   return schema.parse(await response.json());
 }
 
+/** A `PUT` whose body is `file` itself, sent under the file's own type, for a route that answers `204`. */
+export async function apiUpload(path: string, file: Blob): Promise<void> {
+  await request(path, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+}
+
 /** A `DELETE`, which every route in `packages/api` answers with `204` and no body. */
 export async function apiDelete(path: string): Promise<void> {
   await request(path, { method: "DELETE" });

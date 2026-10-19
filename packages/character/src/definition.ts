@@ -599,6 +599,8 @@ export const characterRecordSchema = z.strictObject({
   raceSummary: z.string(),
   classSummary: z.string(),
   definition: characterDefinitionSchema,
+  /** When the uploaded portrait last changed, null where the character has none. */
+  portraitUpdatedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

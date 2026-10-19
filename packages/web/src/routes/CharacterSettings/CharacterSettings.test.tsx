@@ -55,10 +55,10 @@ const press = (name: string) => fireEvent.click(screen.getByRole("button", { nam
 
 const openDelete = () => press("Delete character");
 
-function renderSettings(name = "Vex") {
+function renderSettings(name = "Vex", portraitUpdatedAt: string | null = null) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(["characters"], [characterRecord("1", name)]);
-  queryClient.setQueryData(characterKey("1"), characterRecord("1", name));
+  queryClient.setQueryData(characterKey("1"), { ...characterRecord("1", name), portraitUpdatedAt });
   const router = createMemoryRouter(
     [
       { path: "/characters/:id/settings", element: <CharacterSettings /> },
@@ -80,7 +80,7 @@ afterEach(() => {
 });
 
 describe("CharacterSettings", () => {
-  it("titles the page and lays out house rules, the character file and the danger zone in order", () => {
+  it("titles the page and lays out house rules, the portrait, the character file and the danger zone in order", () => {
     stubFetch(204);
     renderSettings();
 
@@ -91,7 +91,13 @@ describe("CharacterSettings", () => {
       .getAllByRole("region")
       .map((region) => region.getAttribute("aria-labelledby"));
     const titles = sections.map((id) => document.getElementById(id ?? "")?.textContent);
-    expect(titles).toEqual(["Character settings", "House rules", "Character file", "Danger zone"]);
+    expect(titles).toEqual([
+      "Character settings",
+      "House rules",
+      "Portrait",
+      "Character file",
+      "Danger zone",
+    ]);
     const file = screen.getByRole("region", { name: "Character file" });
     expect(
       within(file)
@@ -101,6 +107,22 @@ describe("CharacterSettings", () => {
     expect(
       within(screen.getByRole("region", { name: "Danger zone" })).getByRole("button"),
     ).toHaveTextContent("Delete character");
+  });
+
+  it("removes the portrait, leaving the initial", async () => {
+    const fetchMock = stubFetch(204);
+    renderSettings("Vex", "2026-10-19T12:00:00.000Z");
+    expect(screen.getByRole("region", { name: "Portrait" }).querySelector("img")).not.toBeNull();
+
+    press("Remove portrait");
+
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Remove portrait" })).toBeNull(),
+    );
+    expect(deletes(fetchMock).map(([input]) => String(input))).toEqual([
+      "/api/characters/1/portrait",
+    ]);
+    expect(screen.getByRole("region", { name: "Portrait" }).querySelector("img")).toBeNull();
   });
 
   it("returns focus to Delete character when the confirmation is cancelled", async () => {

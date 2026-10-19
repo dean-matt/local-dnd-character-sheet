@@ -52,6 +52,7 @@ function toRecord(row: CharacterRow): CharacterRecord {
     raceSummary: row.raceSummary,
     classSummary: row.classSummary,
     definition: row.definition,
+    portraitUpdatedAt: row.portraitUpdatedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   });
