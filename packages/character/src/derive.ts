@@ -55,6 +55,7 @@ import { carriedWeight, containerOverflows } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
 import type { Ability, ContentRef, EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
+import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
 import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
 
@@ -918,6 +919,11 @@ export function deriveCharacter(
         ...abilityModifierBreakdown<TermReference>(scores.dex.total).terms,
         ...checkBonus,
         ...featInitiativeTerms(definition, proficiencyBonus.total),
+        ...subclassInitiativeTerms(
+          definition,
+          (ability) => abilityModifier(scores[ability].total),
+          proficiencyBonus.total,
+        ),
       ]),
     ),
     spellcasting: spellcastingEntries(definition, catalog, level, bonuses),

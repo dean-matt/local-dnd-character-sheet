@@ -1991,6 +1991,27 @@ describe("deriveCharacter", () => {
       expect(withFeats({ homebrewId: "hb_alert" }).initiative.computed).toBe(3);
     });
 
+    it("adds a Swashbuckler's Charisma modifier to initiative from level 3", () => {
+      const swashbuckler = (count: number) =>
+        deriveCharacter(
+          {
+            ...equipped,
+            levels: Array.from({ length: count }, (_, index) => ({
+              class: ROGUE,
+              ...(index === 2 ? { subclass: { name: "Swashbuckler", source: "XGE" } } : {}),
+            })),
+          },
+          catalog,
+        );
+      expect(swashbuckler(3).initiative.terms).toContainEqual({
+        label: "Rakish Audacity (Charisma)",
+        value: 3,
+        reference: { name: "Rakish Audacity", source: "XGE" },
+      });
+      expect(swashbuckler(3).initiative.computed).toBe(6);
+      expect(swashbuckler(2).initiative.computed).toBe(3);
+    });
+
     it("yields to a manual override of each stat", () => {
       const block = deriveCharacter(
         {
