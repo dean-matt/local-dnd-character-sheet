@@ -1,4 +1,4 @@
-import { type OfferedPicks, offeredPicks, type SpellGrantor } from "@dnd/catalog";
+import { type OfferedPicks, offeredPicks, type SpellGrantor, type SpellOffer } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 
@@ -95,6 +95,27 @@ const GRANTOR_TABLES: Record<SpellGrantor, string> = {
   optionalFeature: "optional_features",
 };
 
+/**
+ * A `WHERE` clause holding a `spells` row `offer`'s row leaves to a pick by its level, and
+ * the parameters it binds.
+ */
+export function offerClause(offer: SpellOffer): { clause: string; params: (string | number)[] } {
+  return {
+    clause: `EXISTS (SELECT 1 FROM spell_grants g
+      WHERE g.spell_name = spells.name AND g.spell_source = spells.source
+      AND g.granted_by = ? AND g.name = ? AND g.source = ?
+      AND g.parent_name = ? AND g.parent_source = ? AND g.chosen = 1 AND g.level <= ?)`,
+    params: [
+      GRANTOR_TABLES[offer.grantor],
+      offer.ref.name,
+      offer.ref.source,
+      offer.parent?.name ?? "",
+      offer.parent?.source ?? "",
+      offer.level,
+    ],
+  };
+}
+
 export type Grantor = {
   kind: SpellGrantor;
   name: string;
@@ -149,16 +170,21 @@ export function getGrantedSpells(
 
 type Standing = { name: string; level: number; listed?: boolean };
 
-/** Each catalog spell's name and level and, where `list` is named, whether it holds the spell. */
+/**
+ * Each catalog spell's name and level and, where `against` names a class's list or a row's
+ * offer, whether it holds the spell.
+ */
 export function lookupCatalogSpells(
   dataDir: string,
   refs: readonly { name: string; source: string }[],
-  list: ClassList | undefined,
+  against: { list?: ClassList; offer?: SpellOffer },
 ): (Standing | undefined)[] {
   if (refs.length === 0) return [];
   const db = openContentDb(dataDir);
   try {
-    const held = list && classListClause(list);
+    const held = against.list
+      ? classListClause(against.list)
+      : against.offer && offerClause(against.offer);
     const select = db.prepare(
       `SELECT name, level${held ? `, ${held.clause} AS listed` : ""}
        FROM spells WHERE name = ? AND source = ?`,

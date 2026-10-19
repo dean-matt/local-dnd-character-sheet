@@ -42,27 +42,47 @@ export const grantedSpellsSchema = z.strictObject({
 const MAX_SPELLS_PER_LOOKUP = 500;
 
 /**
- * Spells to look up, and the class whose list each is checked against. A subclass widens
- * the list by the spells it adds to it, as the Eldritch Knight's are the wizard's.
+ * A row's offer of spell picks by a level, as `GET /spells/granted` reads the row: the
+ * spells its `choose` filters admit, never one it gives outright.
  */
-export const spellLookupRequestSchema = z.strictObject({
-  spells: z.array(spellRefSchema).max(MAX_SPELLS_PER_LOOKUP),
-  list: z
-    .strictObject({
-      class: catalogRefSchema,
-      subclass: catalogRefSchema.optional(),
-      /** The class level the subclass's additions are read at, every level where absent. */
-      level: z.int().min(1).max(20).optional(),
-    })
-    .optional(),
+const spellOfferSchema = z.strictObject({
+  grantor: z.enum(SPELL_GRANTORS),
+  ref: catalogRefSchema,
+  /** A subclass's class or a subrace's race, which the grantor's key carries. */
+  parent: catalogRefSchema.optional(),
+  level: z.int().min(1).max(20),
 });
+
+export type SpellOffer = z.infer<typeof spellOfferSchema>;
+
+/**
+ * Spells to look up, and the class whose list or the row whose offer each is checked
+ * against. A subclass widens the list by the spells it adds to it, as the Eldritch
+ * Knight's are the wizard's.
+ */
+export const spellLookupRequestSchema = z
+  .strictObject({
+    spells: z.array(spellRefSchema).max(MAX_SPELLS_PER_LOOKUP),
+    list: z
+      .strictObject({
+        class: catalogRefSchema,
+        subclass: catalogRefSchema.optional(),
+        /** The class level the subclass's additions are read at, every level where absent. */
+        level: z.int().min(1).max(20).optional(),
+      })
+      .optional(),
+    offer: spellOfferSchema.optional(),
+  })
+  .refine((request) => !(request.list && request.offer), {
+    error: "a lookup checks against a class's list or a row's offer, not both",
+  });
 
 export type SpellLookupRequest = z.infer<typeof spellLookupRequestSchema>;
 
 /**
- * Positional: each spell's name, level and whether the list holds it, `null` where no row
- * answers. `listed` is absent where the request named no list, and false for a homebrew
- * spell, which no class's list holds.
+ * Positional: each spell's name, level and whether the list or the offer holds it, `null`
+ * where no row answers. `listed` is absent where the request named neither, and false for a
+ * homebrew spell, which no class's list and no row's offer holds.
  */
 export const spellLookupResponseSchema = z.strictObject({
   spells: z.array(

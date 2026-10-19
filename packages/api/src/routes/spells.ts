@@ -132,7 +132,8 @@ const lookup = createRoute({
   method: "post",
   path: "/spells/lookup",
   tags: ["spells"],
-  summary: "Read each spell's name and level, and whether a class's list holds it, in order",
+  summary:
+    "Read each spell's name and level, and whether a class's list or a row's offer holds it, in order",
   description:
     "A POST because the batch is a body a query string would have to encode; it writes nothing.",
   request: {
@@ -181,17 +182,17 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   });
 
   routes.openapi(lookup, (c) => {
-    const { spells, list } = c.req.valid("json");
+    const { spells, list, offer } = c.req.valid("json");
     const catalog = lookupCatalogSpells(
       dataDir,
       spells.flatMap((ref) => ("homebrewId" in ref ? [] : [ref])),
-      list,
+      { list, offer },
     ).values();
     const looked: (SpellLookup | null)[] = spells.map((ref) => {
       if (!("homebrewId" in ref)) return catalog.next().value ?? null;
       const row = getHomebrewSpell(homebrewDb, ref.homebrewId);
       if (!row) return null;
-      return { name: row.name, level: row.level, ...(list && { listed: false }) };
+      return { name: row.name, level: row.level, ...((list || offer) && { listed: false }) };
     });
     return c.json({ spells: looked }, 200);
   });

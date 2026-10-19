@@ -15,6 +15,8 @@ import {
   ITEM_KINDS,
   itemHitFacts,
   type SearchHit,
+  SPELL_GRANTORS,
+  type SpellOffer,
   searchResponseSchema,
   searchSourcesResponseSchema,
   searchTypesResponseSchema,
@@ -117,6 +119,20 @@ const listQuery = z.object({
   classLevel: z.coerce.number().int().min(1).max(20).optional().openapi({
     description: "The class level a subclass's added spells are read at; absent reads every level",
   }),
+  offerGrantor: z.enum(SPELL_GRANTORS).optional().openapi({
+    description: "The kind of row whose spell picks to narrow spells to; ignored without offer",
+  }),
+  offer: refParam(
+    "A row, as Name|Source, the spells it leaves to a pick to narrow spells to; ignored without offerGrantor and offerLevel",
+    "Magic Initiate|PHB",
+  ),
+  offerParent: refParam(
+    "A subclass's class or a subrace's race, which the row's key carries",
+    "Elf|PHB",
+  ),
+  offerLevel: z.coerce.number().int().min(1).max(20).optional().openapi({
+    description: "The level the row's picks are read at, the class level for a subclass",
+  }),
   featureType: csv(
     "Comma-separated option type codes to narrow optional features to, any one carried sufficing",
     "EI,PB",
@@ -125,6 +141,27 @@ const listQuery = z.object({
   offset: z.coerce.number().int().min(0).optional(),
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
 });
+
+/** The class list the query narrows spells to, `undefined` where it names no class. */
+function classListOf(query: z.infer<typeof listQuery>) {
+  const cls = nameSource(query.class);
+  const subclass = nameSource(query.subclass);
+  if (!cls) return undefined;
+  return {
+    class: cls,
+    ...(subclass && { subclass }),
+    ...(query.classLevel && { level: query.classLevel }),
+  };
+}
+
+/** The row whose picks the query narrows spells to, `undefined` unless it names all three parts. */
+function offerOf(query: z.infer<typeof listQuery>): SpellOffer | undefined {
+  const ref = nameSource(query.offer);
+  const parent = nameSource(query.offerParent);
+  const { offerGrantor: grantor, offerLevel: level } = query;
+  if (!ref || !grantor || !level) return undefined;
+  return { grantor, ref, ...(parent && { parent }), level };
+}
 
 /** The spell levels from `a` to `b`, read the right way round when written backwards. */
 const levelRange = (a: number, b: number) => ({ min: Math.min(a, b), max: Math.max(a, b) });
@@ -185,8 +222,8 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
     const term = query.q ?? "";
     const typeList = list(query.type);
     const narrowTo = list(query.source);
-    const cls = nameSource(query.class);
-    const subclass = nameSource(query.subclass);
+    const classList = classListOf(query);
+    const offer = offerOf(query);
     const filter: SearchFilter = {
       edition: query.edition,
       term,
@@ -199,13 +236,8 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
         query.minLevel === undefined && query.maxLevel === undefined
           ? undefined
           : levelRange(query.minLevel ?? 0, query.maxLevel ?? 9),
-      ...(cls && {
-        classList: {
-          class: cls,
-          ...(subclass && { subclass }),
-          ...(query.classLevel && { level: query.classLevel }),
-        },
-      }),
+      ...(classList && { classList }),
+      ...(offer && { offer }),
     };
     const reads = (type: string) => typeList === undefined || typeList.includes(type);
 
@@ -218,7 +250,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
         ? searchHomebrewItems(homebrewDb, filter).map(toHomebrewItemHit)
         : [];
     const homebrewSpellHits =
-      !narrowTo && !cls && reads("spell")
+      !narrowTo && !classList && !offer && reads("spell")
         ? searchHomebrewSpells(homebrewDb, filter).map(toHomebrewSpellHit)
         : [];
 

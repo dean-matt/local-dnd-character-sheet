@@ -163,6 +163,7 @@ export type {
   SpellGrantor,
   SpellLookup,
   SpellLookupRequest,
+  SpellOffer,
 } from "./spell-choice.ts";
 export {
   grantedSpellsSchema,

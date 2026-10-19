@@ -313,4 +313,47 @@ describe("spellsRoutes, choosing spells", () => {
       null,
     ]);
   });
+
+  it("looks up each spell's standing on a row's offer by its level, a spell given outright off it", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", acidSplash());
+    const lookup = async (level: number) => {
+      const res = await routes.request("/spells/lookup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          spells: [
+            { name: "Light", source: "PHB" },
+            { name: "Shield", source: "PHB" },
+            { homebrewId: "1" },
+          ],
+          offer: {
+            grantor: "subclass",
+            ref: { name: "Eldritch Knight", source: "PHB" },
+            parent: { name: "Fighter", source: "PHB" },
+            level,
+          },
+        }),
+      });
+      return (await res.json()).spells;
+    };
+    expect(await lookup(3)).toEqual([
+      { name: "Light", level: 0, listed: true },
+      { name: "Shield", level: 1, listed: false },
+      { name: "Acid Splash", level: 0, listed: false },
+    ]);
+    expect((await lookup(2))[0]).toEqual({ name: "Light", level: 0, listed: false });
+  });
+
+  it("refuses a lookup naming both a list and an offer", async () => {
+    const res = await routes.request("/spells/lookup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        spells: [],
+        list: { class: { name: "Wizard", source: "PHB" } },
+        offer: { grantor: "feat", ref: { name: "Magic Initiate", source: "XPHB" }, level: 1 },
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
 });
