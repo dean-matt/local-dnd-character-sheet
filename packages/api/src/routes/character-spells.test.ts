@@ -11,6 +11,9 @@ import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
 
 const WIZARD = { name: "Wizard", source: "PHB" };
+const SHIELD_REF = { name: "Shield", source: "PHB" };
+
+type PickGrantor = NonNullable<CharacterDefinition["spells"][number]["pickedFor"]>;
 
 const SHIELD = {
   name: "Shield",
@@ -170,12 +173,19 @@ describe("characterSpellsRoutes", () => {
     expect(picked).not.toHaveProperty("granted");
   });
 
-  it("carries the row a spell was picked for", async () => {
-    const pickedFor = { kind: "feat" as const, ref: { name: "Magic Initiate", source: "PHB" } };
-    store(withSpells([{ ref: { name: "Shield", source: "PHB" }, pickedFor }]));
-    const [spell] = await spells();
+  it("carries the row a spell was picked for, of every kind the definition stores", async () => {
+    const ref = { name: "Magic Initiate", source: "PHB" };
+    const picks = {
+      race: { kind: "race", ref },
+      subrace: { kind: "subrace", ref, race: { name: "Elf", source: "PHB" } },
+      background: { kind: "background", ref },
+      feat: { kind: "feat", ref },
+      optionalFeature: { kind: "optionalFeature", ref },
+    } satisfies { [K in PickGrantor["kind"]]: Extract<PickGrantor, { kind: K }> };
+    const grantors = Object.values(picks);
+    store(withSpells(grantors.map((pickedFor) => ({ ref: SHIELD_REF, pickedFor }))));
 
-    expect(spell).toMatchObject({ name: "Shield", pickedFor });
+    expect((await spells()).map((spell) => spell.pickedFor)).toEqual(grantors);
   });
 
   it("drops a casting fact that does not parse and keeps the rest", async () => {

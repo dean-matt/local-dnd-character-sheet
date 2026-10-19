@@ -4,10 +4,10 @@ import { type CharacterDerived, derivedValue, displayName, entryKey } from "@dnd
 type Caster = CharacterDerived["spellcasting"][number];
 
 /**
- * The casting class a spell belongs to: the class its `origin` names, or for a class pick
- * with none, the first class that casts, which a spell picked at creation was picked for.
- * A granted spell with no origin, such as a race's, and a spell picked for a race,
- * background or feat belong to none.
+ * The casting class a spell belongs to: the class its `origin` names. A class pick with no
+ * origin, such as one made at creation, goes to the first class that casts. A granted spell
+ * with no origin, such as a race's, and a spell picked for a race, subrace, background,
+ * feat or optional feature belong to none.
  */
 export function spellCaster(
   spell: Pick<SheetSpell, "origin" | "granted" | "pickedFor">,
