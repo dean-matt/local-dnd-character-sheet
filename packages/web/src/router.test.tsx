@@ -6,7 +6,14 @@ import { routeConfig } from "./router.tsx";
 import { characterRecord, presetPageRecords } from "./test/records.ts";
 import { stubFetchByUrl } from "./test/stubFetch.ts";
 
+let renderStart = 0;
+function mark(stage: string) {
+  const ms = (performance.now() - renderStart).toFixed(1);
+  console.log(`[timing] ${expect.getState().currentTestName} | ${stage} | +${ms}ms`);
+}
+
 function renderAt(path: string) {
+  renderStart = performance.now();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(routeConfig, { initialEntries: [path] });
   render(
@@ -52,14 +59,27 @@ describe("routing", () => {
   });
 
   it("redirects a character to its first visible page", async () => {
+    const realFetch = globalThis.fetch;
+    vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
+      const response = await realFetch(...args);
+      if (String(args[0]).includes("/pages")) mark("pages query resolved");
+      return response;
+    });
     const router = renderAt("/characters/abc");
+    void vi
+      .waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/stats"), {
+        interval: 1,
+      })
+      .then(() => mark("redirect happened"));
     await screen.findByRole("region", { name: "Stats" });
+    mark("region rendered");
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
   it("lists a character's pages in the nav, with the current one marked", async () => {
     renderAt("/characters/abc/p/spells");
     await screen.findByRole("region", { name: "Spells" });
+    mark("first render");
 
     const nav = screen.getByRole("navigation", { name: "Character pages" });
     expect(nav.querySelectorAll("a")).toHaveLength(presetPageRecords().length);
@@ -76,6 +96,7 @@ describe("routing", () => {
     });
     renderAt("/characters/abc/p/stats");
     await screen.findByRole("region", { name: "Stats" });
+    mark("first render");
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
     expect(sheet).not.toBeNull();
@@ -91,6 +112,7 @@ describe("routing", () => {
   it("shows the character's header above every page and prints it once, ahead of them", async () => {
     const router = renderAt("/characters/abc/p/stats");
     await screen.findByRole("heading", { level: 1, name: "Vex" });
+    mark("first render");
     await screen.findByRole("region", { name: "Stats" });
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]") as HTMLElement;
@@ -109,6 +131,7 @@ describe("routing", () => {
   it("opens Character settings from the header's gear, outside the pages the nav lists", async () => {
     const router = renderAt("/characters/abc/p/stats");
     await screen.findByRole("region", { name: "Stats" });
+    mark("first render");
     expect(screen.queryByRole("button", { name: "Character menu" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: "Character settings" }));
@@ -128,6 +151,7 @@ describe("routing", () => {
     stubFetchByUrl({ "/api/characters/abc": characterRecord("abc", "Vex") });
     renderAt("/characters/abc/p/stats");
     await screen.findByRole("alert");
+    mark("first render");
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
     const alerts = within(sheet as HTMLElement)
@@ -223,6 +247,7 @@ describe("routing", () => {
       window.dispatchEvent(new Event("scroll"));
     };
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    renderStart = performance.now();
     const router = createMemoryRouter(routeConfig, { initialEntries: ["/characters/abc/p/stats"] });
     render(
       <QueryClientProvider client={queryClient}>
@@ -230,6 +255,7 @@ describe("routing", () => {
       </QueryClientProvider>,
     );
     await screen.findByRole("region", { name: "Stats" });
+    mark("first render");
 
     scroll(480);
     await router.navigate("/characters");
