@@ -50,7 +50,8 @@ function refusalOf(
  * Adds any catalog or homebrew item. A magic variant asks for its base item next, offering
  * the kinds the variant reaches, and saves the pair once `/items` expands it. A pair the
  * variant refuses says why and offers to add it anyway where both are weapons or both armor,
- * saving a code for the failed requirement beside the entry; a pair the check cannot reach says why and saves nothing.
+ * saving a code for the failed requirement beside the entry.
+ * A pair the check cannot reach says why and saves nothing.
  */
 export function AddItemField({
   edition,

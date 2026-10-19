@@ -321,6 +321,13 @@ describe("characterInventoryRoutes", () => {
     expect(printed).toMatchObject({ resolved: false, variant: MIND_CARAPACE });
   });
 
+  it("shows the text an older entry saved as its override reason", async () => {
+    const reason = "Half Plate Armor cannot take Mind Carapace Armor. Saved before codes.";
+    store(withInventory([{ ref: HALF_PLATE, variant: MIND_CARAPACE, variantOverride: reason }]));
+    const [overridden] = await items();
+    expect(overridden).toMatchObject({ overridden: reason });
+  });
+
   it("resolves a homebrew item with no source, and keeps a missing one listed", async () => {
     insertHomebrewItem(opened.homebrewDb, "i", {
       name: "Lucky Coin",
