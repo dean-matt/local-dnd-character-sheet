@@ -94,7 +94,7 @@ describe("the spell grants loader", () => {
     const db = new Database(resolveContentDb(contentDir), { readonly: true });
     const rows = db
       .prepare(
-        "SELECT spell_name, spell_source, granted_by, name, source, parent_name, parent_source, chosen, level " +
+        "SELECT spell_name, spell_source, granted_by, name, source, parent_name, parent_source, block, chosen, level " +
           "FROM spell_grants ORDER BY granted_by, name, spell_name",
       )
       .all();
@@ -166,10 +166,32 @@ describe("the spell grants loader", () => {
     ]);
   });
 
-  it("makes every spell a pick where a grantor offers blocks as alternatives", () => {
-    expect(offered(feat([{ innate: { _: ["light"] } }, { innate: { _: ["shield"] } }]))).toEqual([
-      ["Light", 1],
-      ["Shield", 1],
+  it("indexes the blocks of a grantor offering several, each spell kept in its own", () => {
+    const rows = grants({
+      feat: [
+        {
+          name: "Gift",
+          source: "PHB",
+          additionalSpells: [
+            { innate: { _: ["light"] } },
+            {
+              innate: { _: ["light", "shield"] },
+              known: { _: [{ choose: "level=1|class=Wizard" }] },
+            },
+          ],
+        },
+      ],
+    });
+    expect(
+      rows.map((row) => {
+        const { spell_name, block, chosen } = row as Record<string, unknown>;
+        return [spell_name, block, chosen];
+      }),
+    ).toEqual([
+      ["Detect Magic", 1, 1],
+      ["Light", 0, 0],
+      ["Light", 1, 0],
+      ["Shield", 1, 0],
     ]);
   });
 
@@ -226,6 +248,7 @@ describe("the spell grants loader", () => {
         source: "PHB",
         parent_name: "",
         parent_source: "",
+        block: -1,
         chosen: 0,
         level: 0,
       },
@@ -237,6 +260,7 @@ describe("the spell grants loader", () => {
         source: "PHB",
         parent_name: "",
         parent_source: "",
+        block: -1,
         chosen: 0,
         level: 1,
       },
@@ -248,6 +272,7 @@ describe("the spell grants loader", () => {
         source: "PHB",
         parent_name: "Wizard",
         parent_source: "PHB",
+        block: -1,
         chosen: 0,
         level: 3,
       },
@@ -259,6 +284,7 @@ describe("the spell grants loader", () => {
         source: "PHB",
         parent_name: "Elf",
         parent_source: "PHB",
+        block: -1,
         chosen: 0,
         level: 1,
       },
@@ -320,6 +346,7 @@ describe("the spell grants loader", () => {
         source: "GGR",
         parent_name: "",
         parent_source: "",
+        block: -1,
         chosen: 1,
         level: 0,
       },
@@ -331,6 +358,7 @@ describe("the spell grants loader", () => {
         source: "XPHB",
         parent_name: "",
         parent_source: "",
+        block: -1,
         chosen: 0,
         level: 2,
       },

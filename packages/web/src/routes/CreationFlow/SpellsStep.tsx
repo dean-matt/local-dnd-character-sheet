@@ -16,6 +16,7 @@ import { GrantedSpells } from "./GrantedSpells.tsx";
 import { NoCastingNote } from "./NoCastingNote.tsx";
 import { OwnSpells } from "./OwnSpells.tsx";
 import { RowPickList } from "./RowPickList.tsx";
+import { SpellBlockChoices } from "./SpellBlockChoices.tsx";
 import { StrayPicks } from "./StrayPicks.tsx";
 import {
   cantripsOf,
@@ -105,6 +106,7 @@ export function SpellsStep() {
     facts,
     list,
     granted,
+    offers,
     picked,
     subclass,
     rows,
@@ -167,6 +169,7 @@ export function SpellsStep() {
           />
         )}
       </div>
+      <SpellBlockChoices offers={offers} />
       <StrayPicks strays={strayPicks(picked, rows)} onRemove={remove} />
       <RowPickList
         rows={rows}

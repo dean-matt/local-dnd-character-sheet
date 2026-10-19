@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { offeredPicks } from "./index.ts";
+import { blockLabels, offeredPicks } from "./index.ts";
 
 const row = (...additionalSpells: unknown[]) => ({ additionalSpells });
 
@@ -68,5 +68,36 @@ describe("offeredPicks", () => {
       learned: 0,
       alternatives: true,
     });
+  });
+});
+
+describe("a chosen alternative block", () => {
+  const initiate = row(
+    { name: "Cleric Spells", known: { _: [{ choose: "level=0|class=Cleric", count: 2 }] } },
+    { known: { _: [{ choose: "level=1|class=Druid" }] } },
+  );
+
+  it("owes its own picks and no ceiling", () => {
+    expect(offeredPicks(initiate, 1)).toEqual({
+      cantrips: 2,
+      spells: 0,
+      learned: 0,
+      alternatives: true,
+    });
+    expect(offeredPicks(initiate, 1, 1)).toEqual({
+      cantrips: 0,
+      spells: 1,
+      learned: 1,
+      alternatives: false,
+    });
+  });
+
+  it("reads a block past the last as no choice", () => {
+    expect(offeredPicks(initiate, 1, 5)).toEqual(offeredPicks(initiate, 1));
+  });
+
+  it("labels each block by its name, or its position where unnamed", () => {
+    expect(blockLabels(initiate)).toEqual(["Cleric Spells", "Option 2"]);
+    expect(blockLabels(row({ known: {} }))).toEqual([]);
   });
 });

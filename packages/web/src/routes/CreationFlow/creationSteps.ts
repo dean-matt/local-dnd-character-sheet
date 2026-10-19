@@ -54,6 +54,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   inventory: "equipment",
   money: "equipment",
   spells: "spells",
+  spellBlocks: "spells",
   leveling: null,
   experience: null,
   backstory: null,

@@ -11,6 +11,8 @@ export type SpellGrantorRef = {
   /** A subclass's class or a subrace's race. */
   parent?: ContentRef;
   level: number;
+  /** The alternative block the player chose, by its position in the row's blocks. */
+  block?: number;
 };
 
 /**
@@ -20,13 +22,14 @@ export type SpellGrantorRef = {
  */
 export function useGrantedSpells(grantors: readonly SpellGrantorRef[]) {
   return useQueries({
-    queries: grantors.map(({ grantor, ref, parent, level }) => {
+    queries: grantors.map(({ grantor, ref, parent, level, block }) => {
       const params = new URLSearchParams({
         grantor,
         name: ref.name,
         source: ref.source,
         level: String(level),
         ...(parent && { parentName: parent.name, parentSource: parent.source }),
+        ...(block !== undefined && { block: String(block) }),
       });
       return {
         queryKey: ["spells", "granted", params.toString()],
@@ -40,6 +43,7 @@ export function useGrantedSpells(grantors: readonly SpellGrantorRef[]) {
             (result) =>
               result.data ?? {
                 spells: [],
+                blocks: [],
                 picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
               },
           )

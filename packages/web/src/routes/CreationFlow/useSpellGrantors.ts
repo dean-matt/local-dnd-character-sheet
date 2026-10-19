@@ -1,6 +1,7 @@
-import type { CharacterDefinition, ContentRef } from "@dnd/character";
+import { type CharacterDefinition, type ContentRef, spellBlockKey } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
+import { blockGrantorOf } from "./spellPicks.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 import { CUSTOM_RACE_SOURCE } from "./useIdentityCatalog.ts";
 
@@ -20,6 +21,7 @@ const WATCHED = [
   "background",
   "feats",
   "optionalFeatures",
+  "spellBlocks",
 ] as const satisfies readonly (keyof CharacterDefinition)[];
 
 /**
@@ -28,10 +30,8 @@ const WATCHED = [
  * class grants none here, since starting spells come from the first class alone.
  */
 export function useSpellGrantors(): SpellGrantorRef[] {
-  const [levels = [], race, subrace, background, feats, optionalFeatures] = useWatch<
-    CharacterDefinition,
-    typeof WATCHED
-  >({ name: WATCHED });
+  const [levels = [], race, subrace, background, feats, optionalFeatures, spellBlocks = []] =
+    useWatch<CharacterDefinition, typeof WATCHED>({ name: WATCHED });
   const level = Math.max(1, levels.length);
   const first = useClassEntries().entries[0];
   const cls = first?.catalogClass;
@@ -44,12 +44,13 @@ export function useSpellGrantors(): SpellGrantorRef[] {
     ref: ContentRef,
     parent?: ContentRef,
     atLevel = level,
-  ) => ({
-    grantor,
-    ref,
-    level: atLevel,
-    ...(parent && { parent }),
-  });
+  ): SpellGrantorRef => {
+    const row = { grantor, ref, level: atLevel, ...(parent && { parent }) };
+    const key = blockGrantorOf(row);
+    const block =
+      key && spellBlocks.find((choice) => spellBlockKey(choice.grantor) === spellBlockKey(key));
+    return { ...row, ...(block && { block: block.block }) };
+  };
   return [
     ...(cls ? [at("class", cls, undefined, classLevel)] : []),
     ...(cls && subclass ? [at("subclass", subclass, cls, classLevel)] : []),

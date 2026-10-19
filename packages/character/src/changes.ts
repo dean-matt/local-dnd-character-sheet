@@ -43,6 +43,7 @@ export const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   customSkills: "Custom skills",
   inventory: "Inventory",
   spells: "Spells",
+  spellBlocks: "Spell blocks",
   feats: "Feats",
   optionalFeatures: "Optional features",
   featureChoices: "Feature choices",

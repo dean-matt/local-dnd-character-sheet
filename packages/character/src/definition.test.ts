@@ -348,6 +348,7 @@ describe("a character stored before these fields existed", () => {
       feats: _feats,
       optionalFeatures: _optionalFeatures,
       featureChoices: _featureChoices,
+      spellBlocks: _spellBlocks,
       houseRules: _houseRules,
       departures: _departures,
       addedDefenses: _addedDefenses,
@@ -358,6 +359,7 @@ describe("a character stored before these fields existed", () => {
     expect(parsed.feats).toEqual([]);
     expect(parsed.optionalFeatures).toEqual([]);
     expect(parsed.featureChoices).toEqual([]);
+    expect(parsed.spellBlocks).toEqual([]);
     expect(parsed.money).toEqual({
       copper: 0,
       silver: 0,
@@ -913,6 +915,36 @@ describe("featureChoices", () => {
       characterDefinitionSchema.safeParse(choosing({ feature: totemSpirit, options: [bear, bear] }))
         .success,
     ).toBe(false);
+  });
+});
+
+describe("spellBlocks", () => {
+  const elf = { kind: "race", ref: { name: "Elf", source: "XPHB" } };
+  const druid = { name: "Druid", source: "XPHB" };
+  const land = {
+    kind: "subclass",
+    ref: { name: "Circle of the Land", source: "XPHB" },
+    class: druid,
+  };
+  const choosing = (...spellBlocks: unknown[]) => ({ ...definition, spellBlocks });
+
+  it("keeps the block chosen for a row, a subclass included", () => {
+    const choices = [
+      { grantor: elf, block: 0 },
+      { grantor: land, block: 3 },
+    ];
+    expect(characterDefinitionSchema.parse(choosing(...choices)).spellBlocks).toEqual(choices);
+  });
+
+  it("rejects a row's block chosen twice, or a block before the first", () => {
+    expect(
+      characterDefinitionSchema.safeParse(
+        choosing({ grantor: elf, block: 0 }, { grantor: elf, block: 1 }),
+      ).success,
+    ).toBe(false);
+    expect(characterDefinitionSchema.safeParse(choosing({ grantor: elf, block: -1 })).success).toBe(
+      false,
+    );
   });
 });
 

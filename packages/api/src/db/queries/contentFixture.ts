@@ -402,11 +402,16 @@ export type SpellListFixture = {
     source: string;
     parent_name?: string;
     parent_source?: string;
+    /** The alternative block it came from, -1 where its grantor offers one. */
+    block?: number;
     chosen: 0 | 1;
     level: number;
   }[];
 };
 
 export function publishSpellLists(dataDir: string, fixture: SpellListFixture): void {
-  publishContent(dataDir, fixture);
+  publishContent(dataDir, {
+    ...fixture,
+    spellGrants: fixture.spellGrants?.map((grant) => ({ block: -1, ...grant })),
+  });
 }

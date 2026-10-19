@@ -5,7 +5,7 @@ import { cantripsOf, type PickGrantor, type RowPicks, spellsOf } from "./spellPi
 const nameSource = (ref: { name: string; source: string }) => `${ref.name}|${ref.source}`;
 
 /** The `/search` filters narrowing a picker to what `row` leaves to a pick, none `offList`. */
-const offerFilters = ({ grantor, ref, parent, level }: RowPicks["row"], offList: boolean) =>
+const offerFilters = ({ grantor, ref, parent, level, block }: RowPicks["row"], offList: boolean) =>
   offList
     ? {}
     : {
@@ -13,6 +13,7 @@ const offerFilters = ({ grantor, ref, parent, level }: RowPicks["row"], offList:
         offer: nameSource(ref),
         ...(parent && { offerParent: nameSource(parent) }),
         offerLevel: String(level),
+        ...(block !== undefined && { offerBlock: String(block) }),
       };
 
 /**
@@ -39,7 +40,7 @@ export function RowPickFields({
   const alternatives = row.owed.cantrips + row.owed.spells === 0;
   const note = alternatives ? (
     <p className="text-muted text-row">
-      The most any of {by}'s options offers; which applies is your choice.
+      The most any of {by}'s options offers; choose which applies above.
     </p>
   ) : undefined;
   return (

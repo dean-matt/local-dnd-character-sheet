@@ -220,6 +220,9 @@ CREATE INDEX spell_classes_by_class ON spell_classes (class_name, class_source);
 -- parent_name and parent_source hold a subclass's class or a subrace's race,
 -- and the empty string for every other grantor, since a STRICT key cannot be NULL.
 -- chosen is 1 where the spell reaches a character only by the player's pick.
+-- block is the index of the additionalSpells block a row came from where the
+-- grantor offers several, which upstream writes as alternatives, and -1 where
+-- it offers one.
 -- level is the grantor's level the row's reading arrives at — a class or
 -- subclass counts class levels, every other grantor character levels — and 0
 -- where it arrives with the grantor.
@@ -233,9 +236,10 @@ CREATE TABLE spell_grants (
   source        TEXT NOT NULL,
   parent_name   TEXT NOT NULL,
   parent_source TEXT NOT NULL,
+  block         INTEGER NOT NULL CHECK (block >= -1),
   chosen        INTEGER NOT NULL CHECK (chosen IN (0, 1)),
   level         INTEGER NOT NULL CHECK (level BETWEEN 0 AND 20),
-  PRIMARY KEY (spell_name, spell_source, granted_by, name, source, parent_name, parent_source)
+  PRIMARY KEY (spell_name, spell_source, granted_by, name, source, parent_name, parent_source, block)
 ) STRICT;
 
 CREATE INDEX spell_grants_by_grantor

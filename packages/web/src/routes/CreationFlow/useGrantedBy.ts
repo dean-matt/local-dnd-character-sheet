@@ -26,9 +26,9 @@ export function useGrantedBy(): {
       return [{ ref, by: grantors[index]?.ref.name ?? "" }];
     }),
   );
-  const offers = (lists ?? []).flatMap(({ picks }, index) => {
+  const offers = (lists ?? []).flatMap(({ picks, blocks }, index) => {
     const row = grantors[index];
-    return row ? [{ row, picks }] : [];
+    return row ? [{ row, blocks, picks }] : [];
   });
   return { ...(granted && { granted }), offers, failed };
 }

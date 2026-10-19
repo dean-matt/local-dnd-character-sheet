@@ -1,4 +1,11 @@
-import { type OfferedPicks, offeredPicks, type SpellGrantor, type SpellOffer } from "@dnd/catalog";
+import {
+  blockLabels,
+  chosenBlock,
+  type OfferedPicks,
+  offeredPicks,
+  type SpellGrantor,
+  type SpellOffer,
+} from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 
@@ -100,18 +107,29 @@ const GRANTOR_TABLES: Record<SpellGrantor, string> = {
  * the parameters it binds.
  */
 export function offerClause(offer: SpellOffer): { clause: string; params: (string | number)[] } {
+  const table = GRANTOR_TABLES[offer.grantor];
+  const parentColumns = PARENT_COLUMNS[offer.grantor];
+  const parent = [offer.parent?.name ?? "", offer.parent?.source ?? ""];
+  const block = offer.block ?? -1;
   return {
     clause: `EXISTS (SELECT 1 FROM spell_grants g
       WHERE g.spell_name = spells.name AND g.spell_source = spells.source
       AND g.granted_by = ? AND g.name = ? AND g.source = ?
-      AND g.parent_name = ? AND g.parent_source = ? AND g.chosen = 1 AND g.level <= ?)`,
+      AND g.parent_name = ? AND g.parent_source = ? AND g.chosen = 1 AND g.level <= ?
+      AND (? = -1 OR g.block = ? OR ? >= (SELECT json_array_length(json, '$.additionalSpells')
+        FROM ${table} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""})))`,
     params: [
-      GRANTOR_TABLES[offer.grantor],
+      table,
       offer.ref.name,
       offer.ref.source,
-      offer.parent?.name ?? "",
-      offer.parent?.source ?? "",
+      ...parent,
       offer.level,
+      block,
+      block,
+      block,
+      offer.ref.name,
+      offer.ref.source,
+      ...(parentColumns ? parent : []),
     ],
   };
 }
@@ -122,6 +140,8 @@ export type Grantor = {
   source: string;
   /** A subclass's class or a subrace's race, which the row's key carries. */
   parent?: { name: string; source: string };
+  /** The alternative block the player chose, none of a row's alternatives given outright where absent. */
+  block?: number;
 };
 
 /** The column pair each grantor table keys a parent on, for those that carry one. */
@@ -131,27 +151,18 @@ const PARENT_COLUMNS: Partial<Record<SpellGrantor, string>> = {
 };
 
 /**
- * The spells `grantor` gives outright by `level`, by name, and the picks its row offers by
- * then. A grantor no row answers gives nothing and offers nothing.
+ * The spells `grantor` gives outright by `level`, by name, the alternative blocks its row
+ * offers, and the picks it offers by then. A row offering alternatives gives and offers
+ * those of its chosen block alone. A grantor no row answers gives nothing and offers nothing.
  */
 export function getGrantedSpells(
   dataDir: string,
   grantor: Grantor,
   level: number,
-): { spells: { name: string; source: string }[]; picks: OfferedPicks } {
+): { spells: { name: string; source: string }[]; blocks: string[]; picks: OfferedPicks } {
   const db = openContentDb(dataDir);
   try {
     const parent = [grantor.parent?.name ?? "", grantor.parent?.source ?? ""];
-    const spells = db
-      .prepare(
-        `SELECT spell_name AS name, spell_source AS source FROM spell_grants
-         WHERE granted_by = ? AND name = ? AND source = ? AND parent_name = ? AND parent_source = ?
-         AND chosen = 0 AND level <= ? ORDER BY spell_name, spell_source`,
-      )
-      .all(GRANTOR_TABLES[grantor.kind], grantor.name, grantor.source, ...parent, level) as {
-      name: string;
-      source: string;
-    }[];
     const parentColumns = PARENT_COLUMNS[grantor.kind];
     const json = db
       .prepare(
@@ -159,9 +170,29 @@ export function getGrantedSpells(
       )
       .pluck()
       .get(grantor.name, grantor.source, ...(parentColumns ? parent : [])) as string | undefined;
+    const row = json === undefined ? undefined : JSON.parse(json);
+    const block = chosenBlock(row, grantor.block);
+    const spells = db
+      .prepare(
+        `SELECT spell_name AS name, spell_source AS source FROM spell_grants
+         WHERE granted_by = ? AND name = ? AND source = ? AND parent_name = ? AND parent_source = ?
+         AND chosen = 0 AND level <= ? AND block IN (-1, ?) ORDER BY spell_name, spell_source`,
+      )
+      .all(
+        GRANTOR_TABLES[grantor.kind],
+        grantor.name,
+        grantor.source,
+        ...parent,
+        level,
+        block ?? -1,
+      ) as {
+      name: string;
+      source: string;
+    }[];
     return {
       spells,
-      picks: offeredPicks(json === undefined ? undefined : JSON.parse(json), level),
+      blocks: blockLabels(row),
+      picks: offeredPicks(row, level, block),
     };
   } finally {
     db.close();

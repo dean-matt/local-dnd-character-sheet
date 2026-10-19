@@ -46,9 +46,14 @@ type Counts = { cantrips: number; spells: number };
  */
 export type SubclassPicks = Counts & { owed: Counts };
 
+/** The row a choice of alternative spell block is stored under. */
+export type BlockGrantor = CharacterDefinition["spellBlocks"][number]["grantor"];
+
 /** One row's offer, as `GET /spells/granted` counts it, and the row making it. */
 export type Offer = {
   row: SpellGrantorRef;
+  /** The labels of the alternative blocks the row offers, none where it offers one. */
+  blocks: string[];
   picks: Counts & { learned: number; alternatives: boolean };
 };
 
@@ -64,10 +69,19 @@ function pickedForOf({ grantor, ref, parent }: SpellGrantorRef): PickGrantor | u
   return { kind: grantor, ref };
 }
 
+/** The row a block choice for `row` is stored under, or `undefined` for a class, which offers none. */
+export function blockGrantorOf(row: SpellGrantorRef): BlockGrantor | undefined {
+  if (row.grantor === "class") return undefined;
+  if (row.grantor === "subclass") {
+    return row.parent ? { kind: "subclass", ref: row.ref, class: row.parent } : undefined;
+  }
+  return pickedForOf(row);
+}
+
 /**
  * The picks a race, subrace, background, feat or optional feature offers, apart from the
  * class's: its own count of each kind, and the picks made for it. Alternative blocks, as
- * Magic Initiate's classes, owe none until a block is chosen.
+ * Magic Initiate's classes, owe none until the player chooses a block.
  */
 export type RowPicks = {
   row: SpellGrantorRef;

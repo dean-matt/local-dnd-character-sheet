@@ -148,6 +148,7 @@ export const definition: CharacterDefinition = {
     },
   ],
   featureChoices: [],
+  spellBlocks: [],
   weaponMasteries: [],
   addedDefenses: { resistances: [], damageImmunities: [], conditionImmunities: [] },
   customSkills: [],
