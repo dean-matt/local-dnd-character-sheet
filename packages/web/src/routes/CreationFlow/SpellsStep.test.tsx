@@ -351,6 +351,25 @@ describe("SpellsStep", () => {
     );
   });
 
+  it("drops the old block's granted spells and keeps one choice when the block changes", async () => {
+    raceBlocks = ["Abyssal", "Infernal"];
+    renderStep();
+
+    const choice = await screen.findByRole("group", { name: /Tiefling: which spells apply/ });
+    fireEvent.click(within(choice).getByRole("button", { name: "Infernal" }));
+    await waitFor(() =>
+      expect(values.spells).toContainEqual(expect.objectContaining({ ref: PHB("Fire Bolt") })),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Abyssal" }));
+
+    await waitFor(() =>
+      expect(values.spells).not.toContainEqual(expect.objectContaining({ ref: PHB("Fire Bolt") })),
+    );
+    expect(values.spellBlocks).toEqual([
+      { grantor: { kind: "race", ref: PHB("Tiefling") }, block: 0 },
+    ]);
+  });
+
   it("widens no class count by the picks a race offers", async () => {
     raceOffers = { cantrips: 1, spells: 0, learned: 0, alternatives: false };
     renderStep();

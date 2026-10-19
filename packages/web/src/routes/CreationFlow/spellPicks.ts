@@ -81,7 +81,7 @@ export function blockGrantorOf(row: SpellGrantorRef): BlockGrantor | undefined {
 /**
  * The picks a race, subrace, background, feat or optional feature offers, apart from the
  * class's: its own count of each kind, and the picks made for it. Alternative blocks, as
- * Magic Initiate's classes, owe none until a block is chosen.
+ * Magic Initiate's classes, owe none until the player chooses a block.
  */
 export type RowPicks = {
   row: SpellGrantorRef;
