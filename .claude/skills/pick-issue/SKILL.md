@@ -9,21 +9,22 @@ Say which issue you are taking, then start. The `D&D Character Sheet` project bo
 decides — not the issue number, not what just merged, not how small it looks.
 
 ```bash
-gh api graphql -f o=dean-matt -f r=local-dnd-character-sheet -f query='
-  query($o:String!,$r:String!){repository(owner:$o,name:$r){issues(states:OPEN,first:100){
-    totalCount nodes{number milestone{title}
-      projectItems(first:5){nodes{project{number}
-        fieldValueByName(name:"Rank"){... on ProjectV2ItemFieldNumberValue{number}}}}}}}}' |
-  jq '.data.repository.issues
-    | if .totalCount > (.nodes | length) then error("more than 100 open issues — add an after cursor") else . end
-    | [.nodes[] | {number, milestone: .milestone.title, rank: ([.projectItems.nodes[] | select(.project.number == 1) | .fieldValueByName.number] | first)}
+gh api graphql --paginate --slurp -f o=dean-matt -f r=local-dnd-character-sheet -f query='
+  query($o:String!,$r:String!,$endCursor:String){repository(owner:$o,name:$r){
+    issues(states:OPEN,first:100,after:$endCursor){pageInfo{hasNextPage endCursor}
+      nodes{number milestone{title}
+        projectItems(first:5){nodes{project{number}
+          fieldValueByName(name:"Rank"){... on ProjectV2ItemFieldNumberValue{number}}}}}}}}' |
+  jq '[.[].data.repository.issues.nodes[]
+      | {number, milestone: .milestone.title, rank: ([.projectItems.nodes[] | select(.project.number == 1) | .fieldValueByName.number] | first)}
       | select(.rank and .milestone)]
     | sort_by(.milestone, .rank) | .[0]'
 ```
 
-One call that reads the open issues and their own cards, never the board: it holds hundreds of
-mostly `Done` cards, and paging them is what hit the secondary rate limit. On a rate-limit
-error, stop and report; do not retry.
+`--paginate` follows `$endCursor` until `hasNextPage` is false, and `--slurp` hands jq every
+page at once, so the sort spans them all. The query reads the open issues and their own
+cards, never the board: the board holds hundreds of mostly `Done` cards, and paging them is
+what hit the secondary rate limit. On a rate-limit error, stop and report; do not retry.
 
 Milestones sort by title, which holds while they are numbered. An unranked or
 milestone-less issue is backlog and waits for the user to name it. `null` means no
