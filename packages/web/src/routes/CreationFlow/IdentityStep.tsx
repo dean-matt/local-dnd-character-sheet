@@ -4,6 +4,7 @@ import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
 import { alignmentOptions } from "../../lib/alignments.ts";
+import { BackgroundFeatField } from "./BackgroundFeatField.tsx";
 import { BackgroundField } from "./BackgroundField.tsx";
 import { creationForm } from "./creationForm.ts";
 import { DeityField } from "./DeityField.tsx";
@@ -28,6 +29,7 @@ export function IdentityStep() {
         </div>
         <div className="flex flex-col gap-4">
           <BackgroundField />
+          <BackgroundFeatField />
           <FormField label="Alignment">
             {(control) => (
               <Select

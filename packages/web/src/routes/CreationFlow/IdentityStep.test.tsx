@@ -34,10 +34,10 @@ const VERDAN = {
   resist: [{ choose: { from: ["acid", "fire"] } }],
   languageProficiencies: [{ common: true, goblin: true }],
 };
-const background = (name: string, skills: Record<string, true>) => ({
+const background = (name: string, skills: Record<string, true>, feats?: unknown[]) => ({
   ...PHB(name),
   edition: "classic",
-  json: { ...PHB(name), skillProficiencies: [skills] },
+  json: { ...PHB(name), skillProficiencies: [skills], ...(feats && { feats }) },
 });
 
 const ROWS: Record<string, unknown> = {
@@ -51,10 +51,20 @@ const ROWS: Record<string, unknown> = {
   "/api/backgrounds?edition=classic&limit=200": page([
     background("Sage", { arcana: true, history: true }),
     background("Acolyte", { insight: true, religion: true }),
+    background("Ruined", {}, [
+      { "alert|phb": true },
+      { "skilled|phb": true },
+      { "tough|phb": true },
+    ]),
+    background("Hermit", {}, [{ "grappler|phb": true }]),
   ]),
   "/api/races/Elf/PHB/subraces?edition=one&limit=200": page([]),
   "/api/feats?edition=classic&limit=200": page([
-    { ...PHB("Grappler"), edition: "classic", json: PHB("Grappler") },
+    ...["Grappler", "Alert", "Skilled", "Tough"].map((name) => ({
+      ...PHB(name),
+      edition: "classic",
+      json: PHB(name),
+    })),
   ]),
   "/api/feats?edition=one&limit=200": page([
     {
@@ -100,7 +110,12 @@ const ROWS: Record<string, unknown> = {
 
 const SEARCHES: Record<string, unknown[]> = {
   race: [hit("race", "Elf"), hit("race", "Verdan", "AI")],
-  background: [hit("background", "Sage"), hit("background", "Acolyte")],
+  background: [
+    hit("background", "Sage"),
+    hit("background", "Acolyte"),
+    hit("background", "Ruined"),
+    hit("background", "Hermit"),
+  ],
   deity: [hit("deity", "Oghma", "PHB", "Celtic"), hit("deity", "Oghma", "PHB", "Forgotten Realms")],
   "skill,language": [
     ...["Perception", "Arcana", "History", "Insight", "Religion"].map((name) => hit("skill", name)),
@@ -214,6 +229,46 @@ describe("IdentityStep", () => {
         "Religion",
       ]),
     );
+  });
+
+  it("asks which feat a background of alternatives grants, and takes it back with the background", async () => {
+    renderStep();
+
+    await pick("Background", "ruin", /Ruined/);
+
+    expect(
+      await screen.findByRole("group", { name: "Background feat — choose one" }),
+    ).toBeVisible();
+    expect(values.feats ?? []).toEqual([]);
+    click("Skilled");
+    expect(values.feats).toEqual([
+      { ref: PHB("Skilled"), grantedBy: { kind: "background", ref: PHB("Ruined") } },
+    ]);
+    click("Tough");
+    expect(values.feats).toEqual([
+      { ref: PHB("Tough"), grantedBy: { kind: "background", ref: PHB("Ruined") } },
+    ]);
+
+    click("Clear background, Ruined");
+    await waitFor(() => expect(values.feats).toEqual([]));
+  });
+
+  it("grants a background's one feat without asking", async () => {
+    renderStep();
+
+    await pick("Background", "herm", /Hermit/);
+
+    expect(await screen.findByText("Feat: Grappler")).toBeVisible();
+    expect(screen.queryByRole("group", { name: /Background feat/ })).toBeNull();
+    await waitFor(() =>
+      expect(values.feats).toEqual([
+        { ref: PHB("Grappler"), grantedBy: { kind: "background", ref: PHB("Hermit") } },
+      ]),
+    );
+
+    click("Clear background, Hermit");
+    await pick("Background", "sa", /Sage/);
+    await waitFor(() => expect(values.feats).toEqual([]));
   });
 
   it("takes a race the catalog lacks, noting the departure, and drops the note with it", async () => {
