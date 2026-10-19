@@ -57,6 +57,7 @@ describe("routing", () => {
     await waitFor(() =>
       expect(document.querySelector('section[aria-label="Stats"]')).not.toBeNull(),
     );
+    expect(screen.getByRole("region", { name: "Stats" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
