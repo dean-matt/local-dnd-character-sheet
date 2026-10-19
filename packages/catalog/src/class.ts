@@ -49,6 +49,15 @@ export const preparationRuleSchema = z
   });
 
 /**
+ * The spells a class copies into its spellbook at each class level, first level first,
+ * `undefined` for a class with none. Upstream counts a wizard's under
+ * `spellsKnownProgressionFixed`: six at 1st and two at each level after.
+ */
+export const spellbookGainsSchema = z
+  .looseObject({ spellsKnownProgressionFixed: z.array(z.int().nonnegative()).optional() })
+  .transform((entry) => entry.spellsKnownProgressionFixed);
+
+/**
  * Whether a class or subclass feature row is one of Tasha's optional class features,
  * which a table opts into rather than a class granting outright.
  */

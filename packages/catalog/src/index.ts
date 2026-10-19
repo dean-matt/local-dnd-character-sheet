@@ -44,6 +44,7 @@ export {
   homebrewClassSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
+  spellbookGainsSchema,
   spellcastingAbilitySchema,
   subclassLevelSchema,
   subclassRecordSchema,

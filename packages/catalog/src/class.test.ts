@@ -8,6 +8,7 @@ import {
   homebrewClassRecordSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
+  spellbookGainsSchema,
   spellcastingAbilitySchema,
   subclassLevelSchema,
   subclassRecordSchema,
@@ -193,6 +194,17 @@ describe("preparationRuleSchema", () => {
   it("reads no rule off a row that prints no formula, or one that counts no level", () => {
     expect(preparationRuleSchema.parse({ name: "Wizard" })).toBeUndefined();
     expect(preparationRuleSchema.parse({ preparedSpells: "<$int_mod$>" })).toBeUndefined();
+  });
+});
+
+describe("spellbookGainsSchema", () => {
+  it("reads the spells a class copies into its spellbook at each level", () => {
+    const gains = [6, 2, 2];
+    expect(spellbookGainsSchema.parse({ spellsKnownProgressionFixed: gains })).toEqual(gains);
+  });
+
+  it("is undefined for a class that keeps no spellbook", () => {
+    expect(spellbookGainsSchema.parse({ name: "Cleric" })).toBeUndefined();
   });
 });
 
