@@ -303,10 +303,9 @@ describe("characterInventoryRoutes", () => {
   });
 
   it("expands a refused pair the entry overrides, and only that entry", async () => {
-    const reason = "Half Plate Armor cannot take Mind Carapace Armor.";
     store(
       withInventory([
-        { ref: HALF_PLATE, variant: MIND_CARAPACE, variantOverride: reason },
+        { ref: HALF_PLATE, variant: MIND_CARAPACE, variantOverride: { code: "requirements" } },
         { ref: HALF_PLATE, variant: MIND_CARAPACE },
       ]),
     );
@@ -316,7 +315,8 @@ describe("characterInventoryRoutes", () => {
       name: "Half Plate Armor of Mind Carapace",
       weight: 40,
       armor: { category: "medium", armorClass: 15 },
-      overridden: reason,
+      overridden:
+        "Half Plate Armor cannot take Mind Carapace Armor. This base item does not meet the variant's requirements.",
     });
     expect(printed).toMatchObject({ resolved: false, variant: MIND_CARAPACE });
   });

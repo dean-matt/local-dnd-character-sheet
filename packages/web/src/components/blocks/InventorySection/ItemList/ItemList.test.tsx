@@ -101,10 +101,8 @@ function searchPage(url: string) {
 }
 
 /** `+1 Weapon` expanded over a Dagger, or the error a `status` other than 200 answers. */
-function expansion(status: number) {
-  if (status !== 200) {
-    return json({ error: "This base item does not meet the variant's requirements" }, status);
-  }
+function expansion(status: number, refusal: string) {
+  if (status !== 200) return json({ error: refusal }, status);
   return json({
     name: "+1 Dagger",
     source: "XDMG",
@@ -117,12 +115,12 @@ function expansion(status: number) {
   });
 }
 
-function variantReply(url: string, variantStatus: number, overrideStatus: number) {
+function variantReply(url: string, variantStatus: number, overrideStatus: number, refusal: string) {
   const [path, query] = url.split("?");
   if (path !== "/api/items/Dagger/XPHB/variants/%2B1%20Weapon/XDMG") {
     return json({ error: `nothing at ${url}` }, 404);
   }
-  return expansion(query === "override=true" ? overrideStatus : variantStatus);
+  return expansion(query === "override=true" ? overrideStatus : variantStatus, refusal);
 }
 
 /**
@@ -136,6 +134,7 @@ function stubApi({
   inventory = ITEMS,
   variantStatus = 200,
   overrideStatus = 200,
+  refusal = "This base item does not meet the variant's requirements",
   refetch = true,
   holdFirstPut = false,
   houseRules,
@@ -143,6 +142,7 @@ function stubApi({
   inventory?: SheetItem[];
   variantStatus?: number;
   overrideStatus?: number;
+  refusal?: string;
   refetch?: boolean;
   holdFirstPut?: boolean;
   houseRules?: Record<string, boolean>;
@@ -169,7 +169,8 @@ function stubApi({
       return reads > 1 && !refetch ? new Promise<Response>(() => {}) : json({ items: inventory });
     }
     if (url.startsWith("/api/search?")) return searchPage(url);
-    if (url.startsWith("/api/items/")) return variantReply(url, variantStatus, overrideStatus);
+    if (url.startsWith("/api/items/"))
+      return variantReply(url, variantStatus, overrideStatus, refusal);
     return json({ error: `nothing at ${url}` }, 404);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -358,8 +359,8 @@ describe("ItemList", () => {
     expect(screen.getByRole("combobox", { name: "Search items" })).toBeInTheDocument();
   });
 
-  it("adds a refused pair of one group anyway, saving the reason beside the entry", async () => {
-    const fetchMock = stubApi({ variantStatus: 409 });
+  it("adds a refused pair of one group anyway, saving a code that holds no error wording", async () => {
+    const fetchMock = stubApi({ variantStatus: 409, refusal: "Reworded by a later release" });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     client.setQueryData(characterKey("1"), vex());
     render(
@@ -377,8 +378,7 @@ describe("ItemList", () => {
     expect(definition.inventory[3]).toMatchObject({
       ref: { name: "Dagger", source: "XPHB" },
       variant: { name: "+1 Weapon", source: "XDMG" },
-      variantOverride:
-        "Dagger cannot take +1 Weapon. This base item does not meet the variant's requirements.",
+      variantOverride: { code: "requirements" },
     });
   });
 
