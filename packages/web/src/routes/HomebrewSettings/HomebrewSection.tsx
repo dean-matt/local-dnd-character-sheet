@@ -50,7 +50,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
       aria-labelledby={`${id}-title`}
       className="flex flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id={`${id}-title`}
           className="font-semibold text-label text-muted uppercase tracking-label"
