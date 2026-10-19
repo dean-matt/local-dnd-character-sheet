@@ -267,7 +267,7 @@ describe("Field, edit mode", () => {
     await waitFor(() => expect(input).toHaveAttribute("aria-invalid", "false"));
     expect(onSave).toHaveBeenCalledTimes(2);
     expect(onSave).toHaveBeenLastCalledWith(12);
-    expect(saveToasts().queryByText(/network down/)).not.toBeInTheDocument();
+    await waitFor(() => expect(saveToasts().queryByText(/network down/)).not.toBeInTheDocument());
   });
 
   it("retries a failed save when the user edits back to the same value, without clicking retry", async () => {
