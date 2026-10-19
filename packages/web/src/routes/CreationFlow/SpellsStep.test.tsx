@@ -25,13 +25,13 @@ const classRow = (name: string, hitDie: number, json: Record<string, unknown> = 
   json: { ...PHB(name), ...json },
 });
 
+const WIZARD = { spellcastingAbility: "int", preparedSpells: "<$level$> + <$int_mod$>" };
+
 const ROWS: Record<string, unknown> = {
-  "/api/classes/Wizard/PHB": classRow("Wizard", 6, {
-    spellcastingAbility: "int",
-    preparedSpells: "<$level$> + <$int_mod$>",
-  }),
+  "/api/classes/Wizard/PHB": classRow("Wizard", 6, WIZARD),
   "/api/classes/Fighter/PHB": classRow("Fighter", 10),
   "/api/classes/Wizard/PHB/at/1": grants({ cantrips_known: "1" }, [2]),
+  "/api/classes/Wizard/PHB/at/3": grants({ cantrips_known: "1" }, [4, 2]),
   "/api/classes/Fighter/PHB/at/1": grants({}, []),
   "/api/classes/Wizard/PHB/subclasses?edition=classic&limit=200": page([]),
   "/api/classes/Fighter/PHB/subclasses?edition=classic&limit=200": page([]),
@@ -159,6 +159,7 @@ describe("SpellsStep", () => {
     stubCatalog();
   });
   afterEach(() => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, WIZARD);
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -225,6 +226,82 @@ describe("SpellsStep", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Remove Cure Wounds" }));
     await waitFor(() => expect(values.departures).toEqual([]));
+  });
+
+  it("fills a spellbook first, prepares from it, and notes a book past its size", async () => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, {
+      ...WIZARD,
+      spellsKnownProgressionFixed: [2, 2],
+    });
+    renderStep("Wizard", { spells: [{ ref: PHB("Fire Bolt"), prepared: false }] });
+
+    const book = await screen.findByRole("region", { name: "Spellbook" });
+    expect(book).toHaveTextContent("Choose 2 — 0 selected");
+    expect(section("Spells Prepared")).toHaveTextContent("Add spells to the spellbook");
+
+    await pick("Add a spell", "Shield");
+    await pick("Add a spell", "Magic Missile");
+    await waitFor(() =>
+      expect(picks().slice(1)).toEqual([
+        { ref: PHB("Shield"), prepared: false },
+        { ref: PHB("Magic Missile"), prepared: false },
+      ]),
+    );
+    const prepared = section("Spells Prepared");
+    expect(prepared).toHaveTextContent("Choose 2 from the spellbook — 0 selected");
+    expect(done).toBe(false);
+
+    fireEvent.click(within(prepared).getByRole("button", { name: "Shield", pressed: false }));
+    fireEvent.click(within(prepared).getByRole("button", { name: "Magic Missile" }));
+    await waitFor(() => expect(done).toBe(true));
+    expect(within(prepared).getByRole("button", { name: "Shield" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(values.departures ?? []).toEqual([]);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Offer spells off the Wizard list/ }));
+    await pick("Add a spell", "Cure Wounds");
+    const note =
+      "3 spells in the spellbook, where the class holds 2; Cure Wounds picked off the Wizard spell list.";
+    await waitFor(() => expect(values.departures).toEqual([{ field: "spells", note }]));
+  });
+
+  it("sizes the spellbook by every level's gain up to the class's level", async () => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, {
+      ...WIZARD,
+      spellsKnownProgressionFixed: [6, 2, 2, 2],
+    });
+    const wizard = { class: PHB("Wizard") };
+    renderStep("Wizard", { levels: [wizard, wizard, wizard] });
+
+    expect(await screen.findByRole("region", { name: "Spellbook" })).toHaveTextContent(
+      "Choose 10 — 0 selected",
+    );
+  });
+
+  it("asks to prepare no more than a book smaller than the count holds", async () => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, {
+      ...WIZARD,
+      spellsKnownProgressionFixed: [2, 2],
+    });
+    renderStep("Wizard", {
+      abilityScores: { str: 10, dex: 10, con: 10, int: 20, wis: 10, cha: 10 },
+    });
+
+    await screen.findByRole("region", { name: "Spellbook" });
+    expect(section("Spells Prepared")).toHaveTextContent("Choose 2 from the spellbook");
+  });
+
+  it("asks a class with spellbook gains but no preparation formula for no spellbook", async () => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, {
+      spellcastingAbility: "int",
+      spellsKnownProgressionFixed: [6, 2],
+    });
+    renderStep();
+
+    await screen.findByRole("region", { name: "Spells Known" });
+    expect(screen.queryByRole("region", { name: "Spellbook" })).toBeNull();
   });
 
   it("says a class that casts nothing has nothing to choose, and counts the step done", async () => {

@@ -1,4 +1,8 @@
-import { preparationRuleSchema, spellcastingAbilitySchema } from "@dnd/catalog";
+import {
+  preparationRuleSchema,
+  spellbookGainsSchema,
+  spellcastingAbilitySchema,
+} from "@dnd/catalog";
 import {
   abilityModifier,
   abilityScore,
@@ -26,6 +30,16 @@ function useModifier(ability: Parameters<typeof abilityScore>[1] | undefined): n
 const homebrewFacts = (json: unknown): CasterFacts | undefined =>
   spellcastingAbilitySchema.parse(json) ? { prepares: false, maxLevel: 9 } : undefined;
 
+/** `facts` with the size of the spellbook the class keeps, the sum of `gains` up to `level`. */
+function withSpellbook(
+  facts: CasterFacts | undefined,
+  gains: readonly number[] | undefined,
+  level: number,
+): CasterFacts | undefined {
+  if (!facts || !gains) return facts;
+  return { ...facts, spellbook: gains.slice(0, level).reduce((sum, gain) => sum + gain, 0) };
+}
+
 /** What a catalog class casts at `level`, and whether its tables have loaded. */
 function useCatalogCaster(
   cls: ContentRef | undefined,
@@ -41,6 +55,8 @@ function useCatalogCaster(
     (subclassJson ? spellcastingAbilitySchema.parse(subclassJson) : undefined);
   const modifier = useModifier(ability);
   const rule = classJson ? preparationRuleSchema.parse(classJson) : undefined;
+  // A `one` wizard prints a Prepared Spells column, no formula, and is asked for those alone.
+  const gains = rule && classJson ? spellbookGainsSchema.parse(classJson) : undefined;
   // The row as well as the tables: a 2014 preparer reads as a knower until its formula loads.
   const ready =
     classJson !== undefined &&
@@ -57,7 +73,9 @@ function useCatalogCaster(
       cantrips: states("cantrips_known"),
       spells: states("spells_known", "prepared_spells"),
     },
-    facts: ready ? casterFacts(tables, rule && { rule, modifier, level }) : undefined,
+    facts: ready
+      ? withSpellbook(casterFacts(tables, rule && { rule, modifier, level }), gains, level)
+      : undefined,
   };
 }
 

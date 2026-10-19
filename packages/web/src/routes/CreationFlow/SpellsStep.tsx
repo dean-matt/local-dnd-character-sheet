@@ -14,6 +14,7 @@ import { spellListFilters } from "../../lib/spellListFilters.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
 import { NoCastingNote } from "./NoCastingNote.tsx";
+import { OwnSpells } from "./OwnSpells.tsx";
 import { RowPickList } from "./RowPickList.tsx";
 import { StrayPicks } from "./StrayPicks.tsx";
 import {
@@ -48,7 +49,7 @@ function sectionsShown(
 const countOf = (own: number | undefined, subclass: number, casts: boolean) =>
   casts ? (own === undefined ? undefined : own + subclass) : subclass;
 
-/** Adds a pick to the draft's spells, and takes one out. */
+/** Adds a pick to the draft's spells, takes one out, and prepares or unprepares one. */
 function useSpellEdits() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const held = () => getValues("spells") ?? [];
@@ -61,6 +62,14 @@ function useSpellEdits() {
       setValue(
         "spells",
         held().filter((entry) => entryKey(entry.ref) !== entryKey(ref)),
+        { shouldDirty: true },
+      ),
+    toggle: (ref: EntryRef) =>
+      setValue(
+        "spells",
+        held().map((entry) =>
+          entryKey(entry.ref) === entryKey(ref) ? { ...entry, prepared: !entry.prepared } : entry,
+        ),
         { shouldDirty: true },
       ),
   };
@@ -80,11 +89,12 @@ function escapeLabel(casts: boolean, className: string, rows: boolean) {
  * its slots cast, beside the spells its rows give outright. Neither the list nor a count is a
  * fence: the escape offers every spell of every level, and a pick past a count is kept, each
  * noted as a departure. A class that casts nothing at its level has nothing to pick of its
- * own. A race, background, feat or optional feature offering picks gets fields of its own,
+ * own. A class keeping a spellbook, as a 2014 wizard, fills the book first and prepares from
+ * it. A race, background, feat or optional feature offering picks gets fields of its own,
  * held to its count and offer rather than the class's.
  */
 export function SpellsStep() {
-  const { add, remove } = useSpellEdits();
+  const { add, remove, toggle } = useSpellEdits();
   const edition = useWatch<CharacterDefinition, "edition">({ name: "edition" }) ?? "one";
   const {
     tablesReady,
@@ -142,18 +152,18 @@ export function SpellsStep() {
           <GrantedSpells granted={granted} />
         </div>
         {shown.spells && (
-          <PickField
-            {...field}
-            heading={facts?.prepares ? "Spells Prepared" : "Spells Known"}
-            noun="spell"
+          <OwnSpells
+            field={field}
+            facts={facts}
             count={countOf(facts?.spells, subclass.spells, facts !== undefined)}
-            picked={spells}
+            spells={spells}
             filters={{
               minLevel: "1",
               maxLevel: String(offList ? 9 : Math.max(1, facts.maxLevel)),
               ...filters,
             }}
-            onPick={(ref) => add(ref, facts?.prepares ?? false)}
+            add={add}
+            toggle={toggle}
           />
         )}
       </div>

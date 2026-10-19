@@ -13,6 +13,11 @@ export type CasterFacts = {
   prepares: boolean;
   /** The highest spell level a slot casts, 0 for a caster of cantrips alone. */
   maxLevel: number;
+  /**
+   * How many spells the spellbook holds at the level, where the class prepares `spells`
+   * of them rather than from its whole list.
+   */
+  spellbook?: number;
 };
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;

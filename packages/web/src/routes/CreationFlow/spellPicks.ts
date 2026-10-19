@@ -17,6 +17,7 @@ export type PickedSpell = {
   name: string;
   level?: number;
   listed?: boolean;
+  prepared?: boolean;
   pickedFor?: PickGrantor;
 };
 
@@ -27,6 +28,13 @@ export const cantripsOf = (picked: readonly PickedSpell[]) => picked.filter(isCa
 
 export const spellsOf = (picked: readonly PickedSpell[]) =>
   picked.filter((spell) => !isCantrip(spell));
+
+/**
+ * The spells `facts` counts as prepared: those marked so where the class keeps a
+ * spellbook, else every spell.
+ */
+const preparedOf = (facts: CasterFacts, spells: readonly PickedSpell[]) =>
+  facts.spellbook === undefined ? spells : spells.filter((spell) => spell.prepared);
 
 const names = (spells: readonly PickedSpell[]) => spells.map((spell) => spell.name).join(", ");
 
@@ -157,6 +165,7 @@ function classNotes(
       ? [`${names(stray)} picked for a class that casts no spells at its level`]
       : [];
   }
+  const counted = preparedOf(facts, spells);
   const offList = ordered.filter((spell) => spell.listed === false);
   const tooHigh = ordered.filter(
     (spell) => spell.listed !== false && spell.level !== undefined && spell.level > facts.maxLevel,
@@ -167,9 +176,12 @@ function classNotes(
           `${cantrips.length} cantrips picked, where the class knows ${allowing(facts.cantrips, subclass.cantrips)}`,
         ]
       : []),
-    ...(facts.spells !== undefined && spells.length > facts.spells + subclass.spells
+    ...(facts.spellbook !== undefined && spells.length > facts.spellbook
+      ? [`${spells.length} spells in the spellbook, where the class holds ${facts.spellbook}`]
+      : []),
+    ...(facts.spells !== undefined && counted.length > facts.spells + subclass.spells
       ? [
-          `${spells.length} spells ${facts.prepares ? "prepared" : "known"}, where the class allows ${allowing(facts.spells, subclass.spells)}`,
+          `${counted.length} spells ${facts.prepares ? "prepared" : "known"}, where the class allows ${allowing(facts.spells, subclass.spells)}`,
         ]
       : []),
     ...(offList.length > 0 ? [`${names(offList)} picked off the ${className} spell list`] : []),
@@ -215,10 +227,12 @@ const strayNotes = (picked: readonly PickedSpell[], rows: readonly RowPicks[]) =
 /**
  * The note on picks the rules would refuse, `undefined` where every pick holds. A class
  * pick is held to the class's counts and list: past a count, off the list, or of a level
- * no slot casts. `className` names the list, and `subclass` widens each count by the
- * picks the subclass offers. A class that casts nothing at its level may still make those:
- * the first of each kind stand, and the rest are noted. A pick made for a row is held to
- * that row's count and offer alone, so it never widens or excuses a class pick.
+ * no slot casts. A class keeping a spellbook is held to the book's size, and its count
+ * to the spells in the book marked prepared. `className` names the list, and `subclass`
+ * widens each count by the picks the subclass offers. A class that casts nothing at its
+ * level may still make those: the first of each kind stand, and the rest are noted. A
+ * pick made for a row is held to that row's count and offer alone, so it never widens or
+ * excuses a class pick.
  */
 export function spellDeparture(
   facts: CasterFacts | undefined,
@@ -235,6 +249,19 @@ export function spellDeparture(
   return notes.length > 0 ? `${notes.join("; ")}.` : undefined;
 }
 
+/** Whether the class's own spells fill its count, and where it keeps one, its spellbook. */
+function ownSpellsFilled(
+  facts: CasterFacts | undefined,
+  spells: readonly PickedSpell[],
+  owed: number,
+) {
+  const count = (facts?.spells ?? 0) + owed;
+  if (facts?.spellbook === undefined) return spells.length >= count;
+  // A spellbook smaller than the count, as a high modifier makes, fills by preparing it all.
+  const prepared = preparedOf(facts, spells).length;
+  return spells.length >= facts.spellbook && prepared >= Math.min(count, spells.length);
+}
+
 /**
  * Whether the picks fill every count the class states, every pick the subclass owes and
  * every pick each row owes, an overspend counting as filled.
@@ -248,7 +275,7 @@ export function spellsFilled(
   const own = classPicksOf(picked);
   return (
     cantripsOf(own).length >= (facts?.cantrips ?? 0) + owed.cantrips &&
-    spellsOf(own).length >= (facts?.spells ?? 0) + owed.spells &&
+    ownSpellsFilled(facts, spellsOf(own), owed.spells) &&
     rows.every(
       (row) =>
         cantripsOf(row.picked).length >= row.owed.cantrips &&

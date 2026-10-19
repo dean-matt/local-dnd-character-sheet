@@ -27,10 +27,10 @@ export function usePickedSpells(
     picks.map((entry) => entry.ref),
     contextOf,
   );
-  const picked: PickedSpell[] = picks.flatMap(({ ref, pickedFor }, index) => {
+  const picked: PickedSpell[] = picks.flatMap(({ ref, pickedFor, prepared }, index) => {
     const found = looked[index];
     if (found === undefined) return [];
-    const made = pickedFor && { pickedFor };
+    const made = { prepared, ...(pickedFor && { pickedFor }) };
     if (found === null) return [{ ref, name: displayName(ref), ...made }];
     const { name, level, listed } = found;
     return [{ ref, name, level, ...(listed !== undefined && { listed }), ...made }];

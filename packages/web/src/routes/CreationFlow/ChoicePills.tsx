@@ -1,3 +1,5 @@
+import { PRESS_PILL } from "../../lib/chipStyles.ts";
+
 export interface ChoicePillsProps {
   legend: string;
   /** Marks a choice the step waits on: the legend in the accent, and "choose one" after it. */
@@ -30,7 +32,7 @@ export function ChoicePills({
             key={option.value}
             aria-pressed={option.value === value}
             onClick={() => onChange(option.value)}
-            className="rounded-pill border border-border px-3 py-1 font-semibold text-row aria-pressed:border-accent aria-pressed:bg-accent-tint"
+            className={PRESS_PILL}
           >
             {option.label}
           </button>

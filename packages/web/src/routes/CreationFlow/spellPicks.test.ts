@@ -107,6 +107,43 @@ describe("spellsFilled", () => {
   });
 });
 
+describe("a spellbook", () => {
+  const wizard = { cantrips: 3, spells: 2, prepares: true, maxLevel: 1, spellbook: 3 };
+  const book = (...prepared: boolean[]) =>
+    prepared.map((ready, index) => ({ ...pick(`Spell ${index}`, 1, true), prepared: ready }));
+  const NO_SUBCLASS = { ...NONE, owed: NONE };
+  const cantrips = [
+    pick("Light", 0, true),
+    pick("Mage Hand", 0, true),
+    pick("Prestidigitation", 0, true),
+  ];
+
+  it("asks for the book filled and the count prepared from it", () => {
+    expect(spellsFilled(wizard, [...cantrips, ...book(true, false)], NO_SUBCLASS, [])).toBe(false);
+    expect(spellsFilled(wizard, [...cantrips, ...book(true, false, false)], NO_SUBCLASS, [])).toBe(
+      false,
+    );
+    expect(spellsFilled(wizard, [...cantrips, ...book(true, true, false)], NO_SUBCLASS, [])).toBe(
+      true,
+    );
+  });
+
+  it("counts a book smaller than the prepared count filled once all of it is prepared", () => {
+    const keen = { ...wizard, spells: 5 };
+    expect(spellsFilled(keen, [...cantrips, ...book(true, true, true)], NO_SUBCLASS, [])).toBe(
+      true,
+    );
+  });
+
+  it("notes a book past its size and prepared spells past the count", () => {
+    expect(spellDeparture(wizard, book(true, true, false), "Wizard", NONE, [])).toBe(undefined);
+    expect(spellDeparture(wizard, book(true, true, true, false), "Wizard", NONE, [])).toBe(
+      "4 spells in the spellbook, where the class holds 3; " +
+        "3 spells prepared, where the class allows 2.",
+    );
+  });
+});
+
 describe("subclassPicks", () => {
   const offer = (
     grantor: string,
