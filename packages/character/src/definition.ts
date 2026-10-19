@@ -237,7 +237,9 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
 /**
  * The row a spell pick was made for, where a race, subrace, background, feat or optional
  * feature offers it rather than the class, so the pick counts against that row's offer
- * and never the class's. A subrace names its race, as a feat's grantor does.
+ * and never the class's. A subrace names its race, as a feat's grantor does. Each branch
+ * takes a catalog reference where `featGrantorSchema`'s takes an entry, since a homebrew
+ * row offers no picks.
  */
 const spellPickGrantorSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("race"), ref: contentRefSchema }),
