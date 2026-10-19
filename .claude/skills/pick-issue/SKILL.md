@@ -21,10 +21,9 @@ gh api graphql --paginate --slurp -f o=dean-matt -f r=local-dnd-character-sheet 
     | sort_by(.milestone, .rank) | .[0]'
 ```
 
-`--paginate` follows `$endCursor` until `hasNextPage` is false, and `--slurp` hands jq every
-page at once, so the sort spans them all. The query reads the open issues and their own
-cards, never the board: the board holds hundreds of mostly `Done` cards, and paging them is
-what hit the secondary rate limit. On a rate-limit error, stop and report; do not retry.
+`--slurp` hands jq every page at once; without it the sort runs per page. The query reads
+the open issues and their own cards, never the board: the board holds hundreds of mostly
+`Done` cards, and paging them is what hit the secondary rate limit. On a rate-limit error, stop and report; do not retry.
 
 Milestones sort by title, which holds while they are numbered. An unranked or
 milestone-less issue is backlog and waits for the user to name it. `null` means no
