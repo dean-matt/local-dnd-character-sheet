@@ -376,6 +376,9 @@ describe("searchRoutes, narrowed to a class's spell list", () => {
       "offerGrantor=subclass&offer=Eldritch%20Knight%7CPHB&offerParent=Fighter%7CPHB&offerLevel=";
     expect(await names(`${knight}3`)).toEqual(["Shield"]);
     expect(await names(`${knight}2`)).toEqual([]);
+    const initiate = "offerGrantor=feat&offer=Magic%20Initiate%7CPHB&offerLevel=1";
+    expect(await names(`${initiate}&class=Cleric%7CPHB`)).toEqual(["Bless"]);
+    expect(await names(`${initiate}&class=Wizard%7CPHB`)).toEqual([]);
   });
 
   it("refuses a class not written as Name|Source", async () => {

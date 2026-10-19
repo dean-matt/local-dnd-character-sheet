@@ -123,7 +123,7 @@ const listQuery = z.object({
     description: "The kind of row whose spell picks to narrow spells to; ignored without offer",
   }),
   offer: refParam(
-    "A row, as Name|Source, the spells it leaves to a pick to narrow spells to; ignored without offerGrantor and offerLevel. Beside class, a spell must pass both",
+    "A row, as Name|Source, whose picks narrow spells to those it leaves to a pick; ignored without offerGrantor and offerLevel. With class, a spell must pass both",
     "Magic Initiate|PHB",
   ),
   offerParent: refParam(
