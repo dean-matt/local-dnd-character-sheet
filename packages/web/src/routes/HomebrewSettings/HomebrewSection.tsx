@@ -50,7 +50,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
       aria-labelledby={`${id}-title`}
       className="flex flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id={`${id}-title`}
           className="font-semibold text-label text-muted uppercase tracking-label"
@@ -81,8 +81,9 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
               chips={
                 <>
                   <EditionTag edition={row.edition} of={kind.noun} />
-                  {kind.chips(row).map((chip) => (
-                    <Tag key={chip}>{chip}</Tag>
+                  {kind.chips(row).map((chip, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: two chips can share a label, and the list is redrawn whole.
+                    <Tag key={index}>{chip}</Tag>
                   ))}
                 </>
               }

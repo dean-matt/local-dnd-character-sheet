@@ -11,12 +11,15 @@ const isPrerequisiteField = (field: string) => /^levels\.\d+\.class$/.test(field
 
 export const prerequisiteField = (firstIndex: number) => `levels.${firstIndex}.class`;
 
-/** `[{ str: 13 }, { dex: 13 }]` as `Strength 13 or Dexterity 13`. */
-export function prerequisiteText(alternatives: readonly ScoreMinimums[]): string {
+/** `[{ str: 13 }, { dex: 13 }]` as `Strength 13 or Dexterity 13`, each ability named by `label`. */
+export function prerequisiteText(
+  alternatives: readonly ScoreMinimums[],
+  label: (ability: Ability) => string = (ability) => ABILITY_LABEL[ability],
+): string {
   return alternatives
     .map((minimums) =>
       Object.entries(minimums)
-        .map(([ability, minimum]) => `${ABILITY_LABEL[ability as Ability]} ${minimum}`)
+        .map(([ability, minimum]) => `${label(ability as Ability)} ${minimum}`)
         .join(" and "),
     )
     .join(" or ");

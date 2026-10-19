@@ -1,7 +1,8 @@
 /**
  * The entries a new homebrew row opens with, in the shape `vendor/5etools/data/` writes
- * it. Between them they carry the fields `appliedItemFieldsSchema` lists, and no other
- * field but a name and rules text, so editing one never looks like it changed the sheet.
+ * it. Between them the item starters carry the fields `appliedItemFieldsSchema` lists, and
+ * no other field but a name and rules text, so editing one never looks like it changed the
+ * sheet.
  */
 
 /** One example a new entry can start from, named for the picker. */
@@ -121,6 +122,54 @@ export const SPELL_STARTERS: HomebrewStarters = [
         },
       ],
       damageInflict: ["cold"],
+    },
+  },
+];
+
+export const RACE_STARTERS: HomebrewStarters = [
+  {
+    label: "Race",
+    entry: {
+      name: "Duskling",
+      size: ["M"],
+      speed: 30,
+      ability: [{ dex: 2, cha: 1 }],
+      entries: ["A slight, twilight-eyed folk who see as well in starlight as in day."],
+    },
+  },
+];
+
+export const CLASS_STARTERS: HomebrewStarters = [
+  {
+    label: "Class",
+    entry: {
+      name: "Warden",
+      hd: { number: 1, faces: 10 },
+      proficiency: ["str", "con"],
+      primaryAbility: [{ str: true }],
+      entries: ["A grove-bound defender who channels the forest into martial strength."],
+    },
+  },
+];
+
+export const BACKGROUND_STARTERS: HomebrewStarters = [
+  {
+    label: "Background",
+    entry: {
+      name: "Wayfarer",
+      skillProficiencies: [{ insight: true, survival: true }],
+      entries: ["A wanderer who has crossed more borders than they can name."],
+    },
+  },
+];
+
+export const FEAT_STARTERS: HomebrewStarters = [
+  {
+    label: "Feat",
+    entry: {
+      name: "Ironbound",
+      prerequisite: [{ ability: [{ str: 13 }] }],
+      entries: ["Your skin toughens like tempered iron."],
     },
   },
 ];

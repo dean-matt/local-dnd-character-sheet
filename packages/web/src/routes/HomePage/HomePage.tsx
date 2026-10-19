@@ -100,7 +100,7 @@ export function HomePage() {
               to="/settings/homebrew"
               icon={FlaskConical}
               label="Homebrew"
-              description="Your own items and spells, written as 5etools entries"
+              description="Your own items, spells, races, classes, backgrounds and feats, written as 5etools entries"
             />
           </li>
         </ul>
