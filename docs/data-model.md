@@ -155,7 +155,7 @@ the class side alone is short by whatever their feats granted.
 class, subclass, race, subrace, background, feat or optional feature — a spell or a filter
 such as `level=0|class=Wizard` — at build time, one row per spell it may give, with the level
 it arrives at. Rewards go unread: the DM gives one, so no picker offers it. The player's pick
-is character state, and names the row it was made for where a row other than the class offered it. A filter names no class source, so it reaches both editions and a picker filters on edition.
+is character state, and names the row it was made for where a row other than the class or subclass offered it. A filter names no class source, so it reaches both editions and a picker filters on edition.
 
 **Every content lookup filters on edition.** Both rulesets are present for every class,
 spell, and lookup table. A query without an edition filter returns duplicates. The pool a
