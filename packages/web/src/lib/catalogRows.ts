@@ -35,6 +35,7 @@ import type { CharacterRecord } from "@dnd/character";
 import { matchPath, type Params } from "react-router";
 import { z } from "zod";
 import { ApiError, apiGet } from "./api.ts";
+import { displayName } from "./displayName.ts";
 import { searchHitTypeLabel } from "./searchHits.ts";
 
 /** `source` is absent on a homebrew row, the shape difference the sheet reads everywhere. */
@@ -43,11 +44,10 @@ interface CatalogRow {
   source?: string;
   /** Absent on a class or subclass feature, which the grants list carries without one. */
   edition?: CharacterRecord["edition"];
-  /**
-   * A deity's pantheon, a card's deck, or "Item group" on the row upstream groups a
-   * family under, which can share its shown name and source with one of the family.
-   */
+  /** A deity's pantheon or a card's deck. */
   qualifier?: string;
+  /** An item row's kind, as `itemRecordSchema` reads it. */
+  kind?: string;
   entries: Entries;
   /** The row as the API returned it, for the detail's JSON view. */
   json: Record<string, unknown>;
@@ -74,7 +74,7 @@ const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntrie
   name: record.name,
   source: record.source,
   edition: record.edition,
-  ...(record.kind === "itemGroup" && { qualifier: "Item group" }),
+  ...(record.kind && { kind: record.kind }),
   entries: entries(record.json),
   json: record.json,
 });
@@ -82,7 +82,7 @@ const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntrie
 const segments = (...parts: (string | undefined)[]) =>
   parts.map((part) => encodeURIComponent(part ?? "")).join("/");
 
-const pair = (name?: string, source?: string) => `${name} (${source})`;
+const pair = (name?: string, source?: string) => `${displayName(name ?? "")} (${source})`;
 
 function nameSource(
   collection: string,

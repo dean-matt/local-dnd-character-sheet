@@ -427,7 +427,7 @@ describe("CatalogDetail", () => {
     await dialogNamed("+1 Longsword");
   });
 
-  it("leaves upstream's star off a name it still reads the row by, and marks an item group", async () => {
+  it("leaves upstream's star off a name it still reads the row by, and marks an item group unaddable", async () => {
     const potions = {
       ...longsword,
       name: "Potion of Healing (*)",
@@ -443,10 +443,18 @@ describe("CatalogDetail", () => {
 
     await dialogNamed("Potion of Healing");
     expect(screen.getByText("Item group")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Add to… Potion of Healing (DMG)" }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Add to…/ })).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/items/Potion%20of%20Healing%20(*)/DMG", undefined);
+  });
+
+  it("names a starred row it cannot find without the star", async () => {
+    stubFetchByUrl({});
+    renderAt("/items/Arrow%20of%20Slaying%20(*)/DMG");
+
+    await dialogNamed("Not found");
+    expect(
+      screen.getByText("Nothing answers to the item Arrow of Slaying (DMG)."),
+    ).toBeInTheDocument();
   });
 
   it("links what an Artificer replicates an item with, and leaves one the catalog lacks as text", async () => {

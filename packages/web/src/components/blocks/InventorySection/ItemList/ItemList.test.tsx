@@ -483,8 +483,10 @@ describe("ItemList", () => {
     const arrow = { ...cloak, name: "Arrow of Slaying (*)", attuned: false };
     const fetchMock = renderList(derivedRecord(), [arrow, cloak, ring]);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Remove Arrow of Slaying" }));
+    const remove = await screen.findByRole("button", { name: "Remove Arrow of Slaying" });
+    expect(screen.getByText("Arrow of Slaying")).toBeInTheDocument();
     expect(screen.queryByText(/\(\*\)/)).toBeNull();
+    fireEvent.click(remove);
 
     const definition = await written(fetchMock);
     expect(definition.inventory.map((entry: { ref: { name: string } }) => entry.ref.name)).toEqual([
