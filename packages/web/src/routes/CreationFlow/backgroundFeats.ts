@@ -79,7 +79,11 @@ export function withBackgroundFeat(
   const kept = feats.filter(keep);
   const [fixed] = offers.options;
   const next =
-    background && offers.fixed && fixed && !heldFromBackground(kept).length
+    background &&
+    offers.fixed &&
+    fixed &&
+    !heldFromBackground(kept).length &&
+    !kept.some((entry) => entryKey(entry.ref) === entryKey(fixed))
       ? [
           ...kept,
           {

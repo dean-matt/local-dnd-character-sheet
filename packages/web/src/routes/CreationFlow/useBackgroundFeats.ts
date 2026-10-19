@@ -14,7 +14,7 @@ import { useIdentityCatalog } from "./useIdentityCatalog.ts";
  * `feats` the draft should hold: `feats` itself where it already does.
  */
 export function useBackgroundFeats() {
-  const [edition = "one", background, held = []] = useWatch<
+  const [edition = "one", background, feats = []] = useWatch<
     CharacterDefinition,
     ["edition", "background", "feats"]
   >({ name: ["edition", "background", "feats"] });
@@ -26,7 +26,6 @@ export function useBackgroundFeats() {
         ? backgroundFeatOffers(backgroundRow.json, catalog.data.items)
         : { options: [], fixed: false }
       : undefined;
-  const feats = held;
   return {
     background,
     offers,
