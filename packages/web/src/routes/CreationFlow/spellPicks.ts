@@ -194,16 +194,17 @@ function rowNotes({ row, counts, picked }: RowPicks): string[] {
 
 /**
  * The picks made for a row the draft no longer holds, or that offers none now, grouped by
- * the name of the row each was made for.
+ * the row each was made for, with that row's name.
  */
 export function strayPicks(picked: readonly PickedSpell[], rows: readonly RowPicks[]) {
-  const byRow = new Map<string, PickedSpell[]>();
+  const byRow = new Map<string, { key: string; by: string; spells: PickedSpell[] }>();
   for (const spell of picked) {
     if (!spell.pickedFor || rowFor(rows, spell.pickedFor)) continue;
-    const by = spell.pickedFor.ref.name;
-    byRow.set(by, [...(byRow.get(by) ?? []), spell]);
+    const key = pickKey(spell.pickedFor);
+    const group = byRow.get(key) ?? { key, by: spell.pickedFor.ref.name, spells: [] };
+    byRow.set(key, { ...group, spells: [...group.spells, spell] });
   }
-  return [...byRow].map(([by, spells]) => ({ by, spells }));
+  return [...byRow.values()];
 }
 
 const strayNotes = (picked: readonly PickedSpell[], rows: readonly RowPicks[]) =>

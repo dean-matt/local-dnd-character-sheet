@@ -12,7 +12,7 @@ export function NoCastingNote({
     <p className="text-muted text-row">
       {className} doesn't cast spells at level {level}.{" "}
       {offersAny
-        ? "Pick here only the spells its subclass, race, background or feats offer."
+        ? "Pick here only the spells the subclass, race, background, feats or optional features offer."
         : "Nothing to choose here — select Finish to create the character."}
     </p>
   );
