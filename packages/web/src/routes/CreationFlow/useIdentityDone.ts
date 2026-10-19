@@ -1,23 +1,35 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
+import { heldFromBackground } from "./backgroundFeats.ts";
 import { stepOf } from "./creationSteps.ts";
 import { raceChoices } from "./raceChoices.ts";
+import { useBackgroundFeats } from "./useBackgroundFeats.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 /**
  * Whether the Identity step is finished: Finish would find no fault in a value it sets, and
  * the race leaves nothing open — a subrace where it has subraces and no plain variant, a
  * size where it offers more than one, a resistance where it offers a choice. A race the
- * catalog does not hold leaves nothing to ask.
+ * catalog does not hold leaves nothing to ask. A background offering a choice of feats waits
+ * for its pick.
  */
 export function useIdentityDone(): boolean {
   const values = useWatch<CharacterDefinition>();
   const { catalogRace, raceRow, subraces, subraceRow, raceJson } = useIdentityCatalog();
+  const backgroundFeats = useBackgroundFeats();
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "identity",
   );
   if (faulted) return false;
+  const { offers, feats } = backgroundFeats;
+  if (
+    offers &&
+    !offers.fixed &&
+    offers.options.length > 0 &&
+    heldFromBackground(feats).length === 0
+  )
+    return false;
   if (catalogRace === undefined) return true;
   if (raceRow.data === undefined || subraces.data === undefined) return false;
   const rows = subraces.data.items;
