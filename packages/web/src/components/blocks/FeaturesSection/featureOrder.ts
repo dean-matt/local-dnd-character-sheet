@@ -1,5 +1,5 @@
 import type { FeatureGroup, SheetFeature } from "@dnd/catalog";
-import { type CharacterDefinition, displayName, entryKey } from "@dnd/character";
+import { type CharacterDefinition, entryKey } from "@dnd/character";
 
 type Entry = { feature: SheetFeature; group: FeatureGroup };
 
@@ -18,21 +18,15 @@ export function byLevelGained(entries: Entry[], levelOf: (entry: Entry) => numbe
 
 /**
  * The character level a class or subclass feature arrives at: the position in `levels` of
- * the class's Nth level, N being the feature's own class level. A group names its class or
- * its subclass, so a subclass group finds its class through the level that chose it.
+ * the class's Nth level, N being the feature's own class level. A class and its subclass
+ * group both name the class they count.
  */
 export function classFeatureLevel(
   levels: CharacterDefinition["levels"],
   { feature, group }: Entry,
 ): number | undefined {
-  if (feature.level === undefined) return undefined;
-  const owner = levels.find((each) =>
-    group.origin === "subclass"
-      ? each.subclass?.name === group.name
-      : displayName(each.class) === group.name,
-  );
-  if (!owner) return undefined;
-  const key = entryKey(owner.class);
+  if (feature.level === undefined || !group.class) return undefined;
+  const key = entryKey(group.class);
   let taken = 0;
   for (const [index, each] of levels.entries()) {
     if (entryKey(each.class) !== key) continue;

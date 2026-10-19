@@ -65,11 +65,14 @@ const FEATURE_ORIGINS = [
 
 /**
  * `name` is the class, subclass, race or background the group came from. The feat and
- * optional-feature groups gather several grantors, so they carry none.
+ * optional-feature groups gather several grantors, so they carry none. `class` is the
+ * class whose levels a class or subclass group counts, since a display name or a
+ * subclass name repeats across classes and sources.
  */
 const featureGroupSchema = z.strictObject({
   origin: z.enum(FEATURE_ORIGINS),
   name: z.string().min(1).optional(),
+  class: z.union([refSchema, z.strictObject({ homebrewId: z.string().min(1) })]).optional(),
   features: z.array(sheetFeatureSchema),
 });
 
