@@ -280,6 +280,19 @@ describe("SpellsStep", () => {
     );
   });
 
+  it("asks to prepare no more than a book smaller than the count holds", async () => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, {
+      ...WIZARD,
+      spellsKnownProgressionFixed: [2, 2],
+    });
+    renderStep("Wizard", {
+      abilityScores: { str: 10, dex: 10, con: 10, int: 20, wis: 10, cha: 10 },
+    });
+
+    await screen.findByRole("region", { name: "Spellbook" });
+    expect(section("Spells Prepared")).toHaveTextContent("Choose 2 from the spellbook");
+  });
+
   it("asks a class with spellbook gains but no preparation formula for no spellbook", async () => {
     ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, {
       spellcastingAbility: "int",

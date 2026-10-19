@@ -30,16 +30,13 @@ function useModifier(ability: Parameters<typeof abilityScore>[1] | undefined): n
 const homebrewFacts = (json: unknown): CasterFacts | undefined =>
   spellcastingAbilitySchema.parse(json) ? { prepares: false, maxLevel: 9 } : undefined;
 
-/**
- * `facts` with the spellbook's size, the sum of `gains` up to `level`, where the class
- * keeps one and has a slot to cast from.
- */
+/** `facts` with the size of the spellbook the class keeps, the sum of `gains` up to `level`. */
 function withSpellbook(
   facts: CasterFacts | undefined,
   gains: readonly number[] | undefined,
   level: number,
 ): CasterFacts | undefined {
-  if (!facts || !gains || facts.maxLevel === 0) return facts;
+  if (!facts || !gains) return facts;
   return { ...facts, spellbook: gains.slice(0, level).reduce((sum, gain) => sum + gain, 0) };
 }
 

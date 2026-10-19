@@ -41,7 +41,14 @@ export function OwnSpells({ field, facts, count, spells, filters, add, toggle }:
         count={spellbook}
         onPick={(ref) => add(ref, false)}
       />
-      <PreparedField count={count} spellbook={spells} onToggle={toggle} />
+      <PreparedField
+        // A book smaller than the count, as a high modifier makes, prepares only what it holds.
+        count={
+          count === undefined ? undefined : Math.min(count, Math.max(spellbook, spells.length))
+        }
+        spellbook={spells}
+        onToggle={toggle}
+      />
     </div>
   );
 }
