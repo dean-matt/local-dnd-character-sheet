@@ -107,8 +107,12 @@ export function publishMeta(dataDir: string, rows: MetaFixtureRow[]): void {
   publishContent(dataDir, { meta: rows });
 }
 
-export function publishSpells(dataDir: string, rows: SpellFixtureRow[]): void {
-  publishContent(dataDir, { spells: rows });
+export function publishSpells(
+  dataDir: string,
+  rows: SpellFixtureRow[],
+  items: ItemFixtureRow[] = [],
+): void {
+  publishContent(dataDir, { spells: rows, items });
 }
 
 export function publishRaces(dataDir: string, rows: RaceFixtureRow[]): void {

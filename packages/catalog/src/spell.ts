@@ -137,13 +137,15 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  * `origin` is the class the character learned it through, and `granted` marks a spell a
  * class, race, background or feat gives rather than one the player picked. `pickedFor`
  * names the race, subrace, background, feat or optional feature a pick was made for; its
- * `kind` stays a string because `@dnd/character` owns that vocabulary.
+ * `kind` stays a string because `@dnd/character` owns that vocabulary. `fromItem` names the
+ * equipped item that lets the character cast a spell the definition does not list.
  */
 const sheetSpellFields = {
   name: z.string().min(1),
   source: z.string().min(1).optional(),
   prepared: z.boolean(),
   granted: z.literal(true).optional(),
+  fromItem: z.string().min(1).optional(),
   origin: contentRef.optional(),
   pickedFor: z
     .strictObject({ kind: z.string().min(1), ref: contentRef, race: contentRef.optional() })

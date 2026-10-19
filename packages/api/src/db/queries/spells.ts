@@ -59,6 +59,35 @@ export function getSpells(
   }
 }
 
+/**
+ * One spell per name for each of `names`, the first answering row, `undefined` where none
+ * does. A name with a `source` reads that source; one without reads `edition`'s rows,
+ * the player's handbook first, and falls back to the other edition's.
+ */
+export function findSpells(
+  dataDir: string,
+  edition: Edition,
+  names: readonly { name: string; source?: string }[],
+): (SpellRow | undefined)[] {
+  if (names.length === 0) return [];
+  const db = openContentDb(dataDir);
+  try {
+    const bySource = db.prepare(
+      `SELECT ${SPELL_COLUMNS} FROM spells WHERE lower(name) = ? AND lower(source) = ?`,
+    );
+    const byName = db.prepare(
+      `SELECT ${SPELL_COLUMNS} FROM spells WHERE lower(name) = ?
+        ORDER BY edition = ? DESC, source IN ('PHB', 'XPHB') DESC, source LIMIT 1`,
+    );
+    return names.map(
+      ({ name, source }) =>
+        (source ? bySource.get(name, source) : byName.get(name, edition)) as SpellRow | undefined,
+    );
+  } finally {
+    db.close();
+  }
+}
+
 export type ClassList = {
   class: { name: string; source: string };
   subclass?: { name: string; source: string };

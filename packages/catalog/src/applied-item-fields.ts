@@ -5,6 +5,7 @@ import {
   ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
+  attachedSpellsSchema,
   containerTraitSchema,
   homebrewItemSchema,
   weaponTraitSchema,
@@ -25,6 +26,7 @@ const shape = {
   ...weaponTraitSchema.in.shape,
   ...ammunitionTraitSchema.in.shape,
   ...containerTraitSchema.in.shape,
+  ...attachedSpellsSchema.in.shape,
   ...defenseTraitSchema.in.shape,
   ...abilityGrantSchema.in.shape,
   ...itemBonusSchema.in.shape,
@@ -91,6 +93,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   modifySpeed:
     'Speed: {"bonus": {"walk": 10}} adds feet, {"static": {"fly": 30}} sets a speed, {"equal": {"swim": "walk"}} matches one to another, and {"multiply": {"walk": 2}} scales one. "*" in bonus means every speed.',
   grantsProficiency: "true where the item grants a proficiency its text names.",
+  attachedSpells:
+    'Spells the item lets its bearer cast, such as ["fireball", "shield|phb"]. A name with no source reads from the character\'s edition. The spells show on the sheet while the item is equipped, attuned where it must be.',
   grantsLanguage: "true where the item grants a language its text names.",
 };
 

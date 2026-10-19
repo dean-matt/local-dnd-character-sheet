@@ -3,6 +3,7 @@ import {
   ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
+  attachedSpellsSchema,
   containerTraitSchema,
   type HomebrewItem,
   homebrewItemInputSchema,
@@ -296,5 +297,54 @@ describe("ammunitionTraitSchema", () => {
   it("reads nothing from a row that is not ammunition", () => {
     expect(ammunitionTraitSchema.parse({ type: "M" })).toBeUndefined();
     expect(ammunitionTraitSchema.parse({})).toBeUndefined();
+  });
+});
+
+describe("attachedSpellsSchema", () => {
+  const spellsOf = (attachedSpells: unknown) => attachedSpellsSchema.parse({ attachedSpells });
+
+  it("reads a bare list of names", () => {
+    expect(spellsOf(["Enlarge/Reduce", "feather fall"])).toEqual([
+      { name: "enlarge/reduce" },
+      { name: "feather fall" },
+    ]);
+  });
+
+  it("reads every frequency group and the keys under it, and not the casting ability", () => {
+    expect(
+      spellsOf({
+        will: ["mage hand"],
+        daily: { "1": ["bigby's hand#9"], "1e": ["conjure elemental"] },
+        charges: { "3": ["shatter"] },
+        limited: { "1": ["gate"] },
+        rest: { "1e": ["meld into stone"] },
+        ritual: ["detect evil and good"],
+        other: ["teleport|xphb"],
+        ability: "int",
+      }),
+    ).toEqual([
+      { name: "mage hand" },
+      { name: "bigby's hand" },
+      { name: "conjure elemental" },
+      { name: "shatter" },
+      { name: "gate" },
+      { name: "meld into stone" },
+      { name: "detect evil and good" },
+      { name: "teleport", source: "xphb" },
+    ]);
+  });
+
+  it("lists a spell once per name and source", () => {
+    expect(spellsOf({ will: ["mage hand"], other: ["Mage Hand", "mage hand|phb"] })).toEqual([
+      { name: "mage hand" },
+      { name: "mage hand", source: "phb" },
+    ]);
+  });
+
+  it("reads nothing from an absent, malformed or empty field", () => {
+    expect(attachedSpellsSchema.parse({})).toBeUndefined();
+    expect(spellsOf("fireball")).toBeUndefined();
+    expect(spellsOf({ ability: "cha" })).toBeUndefined();
+    expect(spellsOf([])).toBeUndefined();
   });
 });

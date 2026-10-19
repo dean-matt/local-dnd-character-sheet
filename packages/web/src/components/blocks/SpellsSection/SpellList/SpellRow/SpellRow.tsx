@@ -42,8 +42,10 @@ export function SpellRow({
   onRemove: () => void;
 }) {
   const classTag = className && <Tag>{className}</Tag>;
-  const remove = <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />;
-  const mark = <Tag>{spell.prepared ? "Prepared" : "Known"}</Tag>;
+  const remove = spell.fromItem ? undefined : (
+    <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />
+  );
+  const mark = <Tag>{spell.fromItem ?? (spell.prepared ? "Prepared" : "Known")}</Tag>;
   if (!spell.resolved) {
     return (
       <ListRow
