@@ -315,6 +315,39 @@ describe("SpellsStep", () => {
     expect(screen.queryByRole("region", { name: "Spellbook" })).toBeNull();
   });
 
+  it("stores a class pick as prepared where the class prepares from its list, whatever it was picked as", async () => {
+    renderStep("Wizard", {
+      spells: [
+        { ref: PHB("Fire Bolt"), prepared: false },
+        { ref: PHB("Shield"), prepared: false },
+        {
+          ref: PHB("Cure Wounds"),
+          prepared: false,
+          pickedFor: { kind: "feat", ref: PHB("Alert") },
+        },
+      ],
+    });
+
+    await waitFor(() =>
+      expect(picks()).toEqual([
+        { ref: PHB("Fire Bolt"), prepared: false },
+        { ref: PHB("Shield"), prepared: true },
+        {
+          ref: PHB("Cure Wounds"),
+          prepared: false,
+          pickedFor: { kind: "feat", ref: PHB("Alert") },
+        },
+      ]),
+    );
+  });
+
+  it("stores a class pick as unprepared where the class knows its spells", async () => {
+    ROWS["/api/classes/Wizard/PHB"] = classRow("Wizard", 6, { spellcastingAbility: "int" });
+    renderStep("Wizard", { spells: [{ ref: PHB("Shield"), prepared: true }] });
+
+    await waitFor(() => expect(picks()).toEqual([{ ref: PHB("Shield"), prepared: false }]));
+  });
+
   it("says a class that casts nothing has nothing to choose, and counts the step done", async () => {
     renderStep("Fighter");
 
