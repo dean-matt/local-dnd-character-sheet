@@ -84,7 +84,9 @@ function prerequisiteText(prerequisite: FeatPrerequisite): string {
     anyOf(
       proficiencies.map(
         ({ armor, weapon }) =>
-          `${titleCase([armor, weapon].filter(Boolean).join(" "))} proficiency`,
+          [armor && `${titleCase(armor)} armor`, weapon && `${titleCase(weapon)} weapon`]
+            .filter(Boolean)
+            .join(" and ") + " proficiency",
       ),
     ),
     anyOf(feats.map((feat) => titleCase(feat.split("|")[0] ?? feat))),
@@ -96,6 +98,8 @@ function prerequisiteText(prerequisite: FeatPrerequisite): string {
 }
 
 export function featFacts(json: Json): Fact[] {
-  const { prerequisites } = featTermsSchema.parse(json);
-  return stated([["Prerequisite", prerequisites.map(prerequisiteText).join("; or ")]]);
+  const alternatives = featTermsSchema.parse(json).prerequisites.map(prerequisiteText);
+  // An alternative naming nothing the schema reads, such as a background, reads as met.
+  if (alternatives.includes("")) return [];
+  return stated([["Prerequisite", alternatives.join("; or ")]]);
 }

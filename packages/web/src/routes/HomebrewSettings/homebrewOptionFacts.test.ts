@@ -43,4 +43,18 @@ describe("homebrewOptionFacts", () => {
       }),
     ).toEqual([["Prerequisite", "Level 4, STR 13 or DEX 13; or Elf (Drow), Spellcasting"]]);
   });
+
+  it("names armor and weapon proficiency prerequisites by kind", () => {
+    expect(
+      featFacts({ prerequisite: [{ proficiency: [{ armor: "heavy" }, { weapon: "martial" }] }] }),
+    ).toEqual([["Prerequisite", "Heavy armor proficiency or Martial weapon proficiency"]]);
+  });
+
+  it("names no prerequisite where an alternative names only what the sheet reads as met", () => {
+    expect(
+      featFacts({
+        prerequisite: [{ spellcastingFeature: true }, { background: [{ name: "Rune Carver" }] }],
+      }),
+    ).toEqual([]);
+  });
 });
