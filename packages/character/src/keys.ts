@@ -22,6 +22,20 @@ export const featureKey = (key: FeatureKey): string =>
     key.level,
   ].join("|");
 
+/**
+ * A row's whole key for a spell block choice: its kind, its reference, and the class or
+ * race a subclass or subrace belongs to, since a name and source alone collide across them.
+ */
+export const spellBlockKey = (grantor: {
+  kind: string;
+  ref: ContentRef;
+  class?: ContentRef;
+  race?: ContentRef;
+}): string => {
+  const parent = grantor.class ?? grantor.race;
+  return `${grantor.kind}|${refKey(grantor.ref)}|${parent ? refKey(parent) : ""}`;
+};
+
 /** Rejects a list naming the same thing twice, where a duplicate would double-count. */
 export const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
   new Set(items.map(key)).size === items.length;

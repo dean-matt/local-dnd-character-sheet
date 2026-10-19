@@ -13,6 +13,10 @@
  * when every clause holds one of its values. Six keys appear at the pinned tag;
  * a seventh fails the build rather than matching nothing.
  *
+ * A grantor offering several blocks writes them as alternatives, so each row records the
+ * index of the block it came from, and -1 where the grantor offers one. The player's choice
+ * of block is character state.
+ *
  * A row records the level its reading arrives at: the grantor's lowest level
  * that gives the spell outright, or, for a pick, the lowest that offers it. A
  * key naming no level, such as `_` or the spell level `s1`, arrives with the
@@ -34,6 +38,9 @@ const KINDS = new Set(["innate", "known", "prepared", "expanded"]);
 
 /** Block keys that describe a grant rather than hold spells. */
 const DESCRIBING = new Set(["ability", "name", "resourceName"]);
+
+/** The `block` of a grantor offering one block, since a STRICT key cannot be NULL. */
+const NO_BLOCK = -1;
 
 /** 5etools reads a spell named without a source as the 2014 Player's Handbook's. */
 const DEFAULT_SOURCE = "phb";
@@ -266,7 +273,6 @@ function visitRecord(value: Entry, chosen: boolean, where: string, catalog: Cata
 /** One `additionalSpells` block, each kind keyed by the level its spells arrive at. */
 function visitBlock(
   block: unknown,
-  alternative: boolean,
   where: string,
   catalog: Catalog,
   giveAt: (level: number) => Give,
@@ -276,7 +282,7 @@ function visitBlock(
     if (DESCRIBING.has(kind)) continue;
     if (!KINDS.has(kind)) throw new Error(`${where} holds ${kind}, which no rule reads`);
     if (!isRecord(byLevel)) throw new Error(`${where}.${kind} is not keyed by level`);
-    const chosen = alternative || kind === "expanded";
+    const chosen = kind === "expanded";
     for (const [key, value] of Object.entries(byLevel)) {
       visit(value, chosen, `${where}.${kind}.${key}`, catalog, giveAt(arrival(key)));
     }
@@ -284,28 +290,28 @@ function visitBlock(
 }
 
 /**
- * Every spell one grantor may give, and whether the player picks it. A pick is
- * a `choose`, an `expanded` spell — added to a class list, still to be learned
- * or prepared — or anything in a grantor offering several `additionalSpells`
- * blocks, which upstream writes as alternatives: Magic Initiate's six classes.
- * A spell one grant gives outright and another offers is given outright.
+ * Every spell one grantor may give, per block, and whether the player picks it. A pick is
+ * a `choose`, or an `expanded` spell — added to a class list, still to be learned
+ * or prepared. A spell one grant gives outright and another offers is given outright.
  */
-function grantsOf(grantor: Grantor, catalog: Catalog): Map<Spell, Grant> {
-  const granted = new Map<Spell, Grant>();
+function grantsOf(
+  grantor: Grantor,
+  catalog: Catalog,
+): { block: number; grants: Map<Spell, Grant> }[] {
   const blocks = grantor.entry.additionalSpells;
   // A `_versions` entry un-sets an inherited field with null: one Kobold version drops the
   // race's spells.
-  if (blocks === undefined || blocks === null) return granted;
+  if (blocks === undefined || blocks === null) return [];
   if (!Array.isArray(blocks)) throw new Error(`${grantor.context}: additionalSpells is not a list`);
-  const giveAt =
-    (level: number): Give =>
-    (spell, chosen) =>
-      granted.set(spell, merged(granted.get(spell), { chosen, level }));
-  for (const [index, block] of blocks.entries()) {
-    const where = `${grantor.context} additionalSpells[${index}]`;
-    visitBlock(block, blocks.length > 1, where, catalog, giveAt);
-  }
-  return granted;
+  return blocks.map((block, index) => {
+    const grants = new Map<Spell, Grant>();
+    const giveAt =
+      (level: number): Give =>
+      (spell, chosen) =>
+        grants.set(spell, merged(grants.get(spell), { chosen, level }));
+    visitBlock(block, `${grantor.context} additionalSpells[${index}]`, catalog, giveAt);
+    return { block: blocks.length > 1 ? index : NO_BLOCK, grants };
+  });
 }
 
 export const spellGrants: Loader = {
@@ -325,14 +331,17 @@ export const spellGrants: Loader = {
     const rows: Row[] = [];
     for (const grantor of grantorsOf(sources)) {
       const { entry: _entry, context: _context, ...identity } = grantor;
-      for (const [spell, { chosen, level }] of grantsOf(grantor, catalog)) {
-        rows.push({
-          spell_name: spell.name,
-          spell_source: spell.source,
-          ...identity,
-          chosen: chosen ? 1 : 0,
-          level,
-        });
+      for (const { block, grants } of grantsOf(grantor, catalog)) {
+        for (const [spell, { chosen, level }] of grants) {
+          rows.push({
+            spell_name: spell.name,
+            spell_source: spell.source,
+            ...identity,
+            block,
+            chosen: chosen ? 1 : 0,
+            level,
+          });
+        }
       }
     }
     return { spell_grants: rows };

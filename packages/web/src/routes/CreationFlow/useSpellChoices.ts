@@ -24,6 +24,7 @@ export function useSpellChoices() {
     failed: caster.failed || lookupFailed || grantsFailed,
     ready,
     granted,
+    offers,
     subclass,
     rows,
     picked,

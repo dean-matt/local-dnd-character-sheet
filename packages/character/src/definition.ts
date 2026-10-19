@@ -1,7 +1,7 @@
 import { GRIPS, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
 import { z } from "zod";
 import { houseRulesSchema } from "./houseRules.ts";
-import { entryKey, featureKey, isUnique, refKey } from "./keys.ts";
+import { entryKey, featureKey, isUnique, refKey, spellBlockKey } from "./keys.ts";
 import {
   abilitySchema,
   contentRefSchema,
@@ -248,6 +248,26 @@ const spellPickGrantorSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("feat"), ref: contentRefSchema }),
   z.strictObject({ kind: z.literal("optionalFeature"), ref: contentRefSchema }),
 ]);
+
+/**
+ * The row a spell block choice was made for: any row a pick can name, and a subclass, whose
+ * picks name no row but whose alternative blocks can still be chosen from.
+ */
+const spellBlockGrantorSchema = z.discriminatedUnion("kind", [
+  ...spellPickGrantorSchema.options,
+  subclassGrantor,
+]);
+
+/**
+ * Which of a row's alternative `additionalSpells` blocks applies, by its position in the
+ * row — the Drow lineage of the 2024 elf, the land of a Circle of the Land druid. A choice
+ * for a row the character no longer holds stays stored and applies nothing, as
+ * `featureChoices` does.
+ */
+const spellBlockChoiceSchema = z.strictObject({
+  grantor: spellBlockGrantorSchema,
+  block: z.int().min(0),
+});
 
 const spellEntrySchema = z.strictObject({
   ref: entryRefSchema,
@@ -546,6 +566,12 @@ export const characterDefinitionSchema = z.strictObject({
     }
   }),
   spells: z.array(spellEntrySchema),
+  spellBlocks: z
+    .array(spellBlockChoiceSchema)
+    .refine((choices) => isUnique(choices, (choice) => spellBlockKey(choice.grantor)), {
+      error: "the same row's spell block is chosen twice",
+    })
+    .default([]),
   /**
    * The 2024 ruleset repeats `Ability Score Improvement` (XPHB), so the list accepts a
    * duplicate that a uniqueness rule would make unstorable.

@@ -109,6 +109,10 @@ const grantedQuery = z.object({
   level: z.coerce.number().int().min(1).max(20).openapi({
     description: "The class level for a class or subclass, the character level for the rest",
   }),
+  block: z.coerce.number().int().min(0).optional().openapi({
+    description:
+      "The alternative block the player chose, by its position in the row's blocks; absent gives none of a row's alternatives outright",
+  }),
 });
 
 const granted = createRoute({
@@ -172,11 +176,15 @@ export function spellsRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   });
 
   routes.openapi(granted, (c) => {
-    const { grantor, name, source, parentName, parentSource, level } = c.req.valid("query");
+    const { grantor, name, source, parentName, parentSource, level, block } = c.req.valid("query");
     const parent =
       parentName && parentSource ? { parent: { name: parentName, source: parentSource } } : {};
     return c.json(
-      getGrantedSpells(dataDir, { kind: grantor, name, source, ...parent }, level),
+      getGrantedSpells(
+        dataDir,
+        { kind: grantor, name, source, ...parent, ...(block !== undefined && { block }) },
+        level,
+      ),
       200,
     );
   });

@@ -314,6 +314,7 @@ describe("searchRoutes, narrowed to a class's spell list", () => {
           source: "PHB",
           parent_name: "",
           parent_source: "",
+          block: 1,
           chosen: 1,
           level: 0,
         },
@@ -379,6 +380,8 @@ describe("searchRoutes, narrowed to a class's spell list", () => {
     const initiate = "offerGrantor=feat&offer=Magic%20Initiate%7CPHB&offerLevel=1";
     expect(await names(`${initiate}&class=Cleric%7CPHB`)).toEqual(["Bless"]);
     expect(await names(`${initiate}&class=Wizard%7CPHB`)).toEqual([]);
+    expect(await names(`${initiate}&offerBlock=1`)).toEqual(["Bless"]);
+    expect(await names(`${initiate}&offerBlock=0`)).toEqual([]);
   });
 
   it("refuses a class not written as Name|Source", async () => {

@@ -30,6 +30,8 @@ export type SpellGrantor = (typeof SPELL_GRANTORS)[number];
  */
 export const grantedSpellsSchema = z.strictObject({
   spells: z.array(catalogRefSchema),
+  /** The alternative blocks the row offers, by label and in block order, none where it offers one. */
+  blocks: z.array(z.string().min(1)),
   picks: z.strictObject({
     cantrips: z.int().min(0),
     spells: z.int().min(0),
@@ -51,6 +53,8 @@ const spellOfferSchema = z.strictObject({
   /** A subclass's class or a subrace's race, which the grantor's key carries. */
   parent: catalogRefSchema.optional(),
   level: z.int().min(1).max(20),
+  /** The alternative block the player chose, any block's offer where absent. */
+  block: z.int().min(0).optional(),
 });
 
 export type SpellOffer = z.infer<typeof spellOfferSchema>;
@@ -141,17 +145,34 @@ const picksCantrip = ({ filter, from }: Choose) =>
       from.length > 0 &&
       from.every((name) => typeof name === "string" && name.endsWith("#c"));
 
+const blocksOf = (json: unknown): unknown[] =>
+  isRecord(json) && Array.isArray(json.additionalSpells) ? json.additionalSpells : [];
+
+/**
+ * The labels of the alternative blocks a row offers: each block's name, or its position
+ * where upstream leaves it unnamed. A row offering one block offers no alternatives.
+ */
+export function blockLabels(json: unknown): string[] {
+  const blocks = blocksOf(json);
+  if (blocks.length < 2) return [];
+  return blocks.map((block, index) =>
+    isRecord(block) && typeof block.name === "string" ? block.name : `Option ${index + 1}`,
+  );
+}
+
 /**
  * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
  * level key at or below it, a key naming no level arriving with the row. An `expanded`
  * block only widens a list, so it offers none. A row offering several blocks offers them
  * as alternatives, as Magic Initiate offers six classes or an elf its lineages, so the
- * largest block counts and `alternatives` says the counts are a ceiling rather than owed. A
+ * largest block counts and `alternatives` says the counts are a ceiling rather than owed.
+ * Where `block` names one of them, that block's picks are owed. A
  * `choose` from a list of names reads as a spell unless every name is marked a cantrip.
  */
-export function offeredPicks(json: unknown, level: number): OfferedPicks {
-  const blocks =
-    isRecord(json) && Array.isArray(json.additionalSpells) ? json.additionalSpells : [];
+export function offeredPicks(json: unknown, level: number, block?: number): OfferedPicks {
+  const all = blocksOf(json);
+  const chosen = block === undefined ? undefined : all[block];
+  const blocks = chosen === undefined ? all : [chosen];
   const each = blocks.map((block) => {
     const chooses = Object.entries(isRecord(block) ? block : {})
       .filter(([kind]) => ["innate", "known", "prepared"].includes(kind))

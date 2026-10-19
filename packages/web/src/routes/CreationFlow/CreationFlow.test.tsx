@@ -113,10 +113,12 @@ describe("CreationFlow", () => {
       },
       "/api/spells/granted?grantor=class&name=Fighter&source=PHB&level=1": {
         spells: [],
+        blocks: [],
         picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
       },
       "/api/spells/granted?grantor=feat&name=Magic+Initiate&source=PHB&level=1": {
         spells: [],
+        blocks: ["Cleric Spells", "Druid Spells"],
         picks: { cantrips: 2, spells: 1, learned: 0, alternatives: true },
       },
     });

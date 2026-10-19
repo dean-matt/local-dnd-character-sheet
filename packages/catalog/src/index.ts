@@ -167,6 +167,7 @@ export type {
   SpellOffer,
 } from "./spell-choice.ts";
 export {
+  blockLabels,
   grantedSpellsSchema,
   offeredPicks,
   SPELL_GRANTORS,

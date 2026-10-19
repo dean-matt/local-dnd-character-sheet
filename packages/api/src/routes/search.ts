@@ -133,6 +133,10 @@ const listQuery = z.object({
   offerLevel: z.coerce.number().int().min(1).max(20).optional().openapi({
     description: "The level the row's picks are read at, the class level for a subclass",
   }),
+  offerBlock: z.coerce.number().int().min(0).optional().openapi({
+    description:
+      "The alternative block of the row the player chose, narrowing its picks to that block's; ignored without offer",
+  }),
   featureType: csv(
     "Comma-separated option type codes to narrow optional features to, any one carried sufficing",
     "EI,PB",
@@ -158,9 +162,9 @@ function classListOf(query: z.infer<typeof listQuery>) {
 function offerOf(query: z.infer<typeof listQuery>): SpellOffer | undefined {
   const ref = nameSource(query.offer);
   const parent = nameSource(query.offerParent);
-  const { offerGrantor: grantor, offerLevel: level } = query;
+  const { offerGrantor: grantor, offerLevel: level, offerBlock: block } = query;
   if (!ref || !grantor || !level) return undefined;
-  return { grantor, ref, ...(parent && { parent }), level };
+  return { grantor, ref, ...(parent && { parent }), level, ...(block !== undefined && { block }) };
 }
 
 /** The spell levels from `a` to `b`, read the right way round when written backwards. */

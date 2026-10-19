@@ -49,7 +49,8 @@ const catalog = (ref: EntryRef | undefined): ContentRef | undefined =>
 type Grantor =
   | NonNullable<CharacterDefinition["feats"][number]["grantedBy"]>
   | CharacterDefinition["optionalFeatures"][number]["grantedBy"]
-  | NonNullable<CharacterDefinition["spells"][number]["pickedFor"]>;
+  | NonNullable<CharacterDefinition["spells"][number]["pickedFor"]>
+  | CharacterDefinition["spellBlocks"][number]["grantor"];
 
 const GRANTOR_KIND: Record<Grantor["kind"], CatalogKind> = {
   class: "class",
@@ -128,6 +129,9 @@ export function catalogReferences(
     add(`spells[${i}].ref`, "spell", entry.ref);
     add(`spells[${i}].origin`, "class", entry.origin);
     grantor(`spells[${i}].pickedFor`, entry.pickedFor);
+  });
+  definition.spellBlocks.forEach((choice, i) => {
+    grantor(`spellBlocks[${i}].grantor`, choice.grantor);
   });
   definition.feats.forEach((entry, i) => {
     add(`feats[${i}].ref`, "feat", entry.ref);

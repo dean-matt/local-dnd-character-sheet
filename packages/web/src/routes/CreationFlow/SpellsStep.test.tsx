@@ -53,6 +53,9 @@ const RACE_LIST = "Cleric";
 /** The picks the draft's race offers, which a test widens. */
 let raceOffers = { cantrips: 0, spells: 0, learned: 0, alternatives: false };
 
+/** The alternative blocks the draft's race offers, which a test names. */
+let raceBlocks: string[] = [];
+
 /** What `POST /spells/lookup` answers, a row's offer holding the race's list. */
 function lookup(request: {
   spells: { name: string }[];
@@ -84,6 +87,17 @@ function search(params: URLSearchParams) {
   );
 }
 
+/** What `GET /spells/granted` answers: the race's spells and offer, and nothing for any other row. */
+function granted(params: URLSearchParams) {
+  const race = params.get("grantor") === "race";
+  const chosen = params.get("block") === "1";
+  return {
+    spells: race ? [PHB("Thaumaturgy"), ...(chosen ? [PHB("Fire Bolt")] : [])] : [],
+    blocks: race ? raceBlocks : [],
+    picks: race ? raceOffers : { cantrips: 0, spells: 0, learned: 0, alternatives: false },
+  };
+}
+
 function stubCatalog() {
   vi.stubGlobal(
     "fetch",
@@ -92,11 +106,7 @@ function stubCatalog() {
       const params = new URL(url, "http://local").searchParams;
       let body: unknown = ROWS[url];
       if (url.startsWith("/api/spells/granted?")) {
-        const race = params.get("grantor") === "race";
-        body = {
-          spells: race ? [PHB("Thaumaturgy")] : [],
-          picks: race ? raceOffers : { cantrips: 0, spells: 0, learned: 0, alternatives: false },
-        };
+        body = granted(params);
       } else if (url === "/api/spells/lookup") {
         body = lookup(JSON.parse(String(init?.body)));
       } else if (url.startsWith("/api/search?")) {
@@ -156,6 +166,7 @@ describe("SpellsStep", () => {
   beforeEach(() => {
     localStorage.clear();
     raceOffers = { cantrips: 0, spells: 0, learned: 0, alternatives: false };
+    raceBlocks = [];
     stubCatalog();
   });
   afterEach(() => {
@@ -312,6 +323,32 @@ describe("SpellsStep", () => {
     ).toBeVisible();
     expect(screen.queryByRole("combobox")).toBeNull();
     await waitFor(() => expect(done).toBe(true));
+  });
+
+  it("asks which of a race's alternative blocks applies, and grants the chosen block's spells", async () => {
+    raceBlocks = ["Abyssal", "Infernal"];
+    renderStep();
+
+    const choice = await screen.findByRole("group", { name: /Tiefling: which spells apply/ });
+    expect(values.spells).not.toContainEqual(expect.objectContaining({ ref: PHB("Fire Bolt") }));
+    fireEvent.click(within(choice).getByRole("button", { name: "Infernal" }));
+
+    await waitFor(() =>
+      expect(values.spellBlocks).toEqual([
+        { grantor: { kind: "race", ref: PHB("Tiefling") }, block: 1 },
+      ]),
+    );
+    await waitFor(() =>
+      expect(values.spells).toContainEqual({
+        ref: PHB("Fire Bolt"),
+        prepared: true,
+        granted: true,
+      }),
+    );
+    expect(screen.getByRole("button", { name: "Infernal" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("widens no class count by the picks a race offers", async () => {

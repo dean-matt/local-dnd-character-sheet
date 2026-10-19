@@ -161,6 +161,7 @@ const MAGIC_INITIATE = {
   name: "Magic Initiate",
   source: "XPHB",
   additionalSpells: ["Cleric", "Wizard"].map((cls) => ({
+    name: `${cls} Spells`,
     innate: { _: { daily: { "1": [{ choose: `level=1|class=${cls}` }] } } },
     known: { _: [{ choose: `level=0|class=${cls}`, count: 2 }] },
   })),
@@ -177,7 +178,7 @@ describe("spellsRoutes, choosing spells", () => {
     level,
     json: JSON.stringify({ name, source: "PHB", level, school: "V" }),
   });
-  const grant = (spell_name: string, level: number, chosen: 0 | 1 = 0) => ({
+  const grant = (spell_name: string, level: number, chosen: 0 | 1 = 0, block = -1) => ({
     spell_name,
     spell_source: "PHB",
     granted_by: "subclasses",
@@ -185,9 +186,18 @@ describe("spellsRoutes, choosing spells", () => {
     source: "PHB",
     parent_name: "Fighter",
     parent_source: "PHB",
+    block,
     chosen,
     level,
   });
+
+  const initiate = {
+    granted_by: "feats",
+    name: "Magic Initiate",
+    source: "XPHB",
+    parent_name: "",
+    parent_source: "",
+  };
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "spells-choosing-"));
@@ -204,7 +214,13 @@ describe("spellsRoutes, choosing spells", () => {
       spellClasses: [
         { spell_name: "Bless", spell_source: "PHB", class_name: "Cleric", class_source: "PHB" },
       ],
-      spellGrants: [grant("Shield", 3), grant("Fireball", 13), grant("Light", 3, 1)],
+      spellGrants: [
+        grant("Shield", 3),
+        grant("Fireball", 13),
+        grant("Light", 3, 1),
+        { ...grant("Light", 0, 0, 0), ...initiate },
+        { ...grant("Shield", 0, 0, 1), ...initiate },
+      ],
     });
   });
 
@@ -228,12 +244,14 @@ describe("spellsRoutes, choosing spells", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       spells: [{ name: "Shield", source: "PHB" }],
+      blocks: [],
       picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
     });
 
     const early = await routes.request(`/spells/granted?${eldritchKnight}&level=2`);
     expect(await early.json()).toEqual({
       spells: [],
+      blocks: [],
       picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
     });
 
@@ -250,8 +268,21 @@ describe("spellsRoutes, choosing spells", () => {
     );
     expect(await res.json()).toEqual({
       spells: [],
+      blocks: ["Cleric Spells", "Wizard Spells"],
       picks: { cantrips: 2, spells: 1, learned: 0, alternatives: true },
     });
+  });
+
+  it("narrows a chosen alternative block to its own outright spells and picks", async () => {
+    const initiate = "grantor=feat&name=Magic%20Initiate&source=XPHB&level=1";
+    const wizard = await routes.request(`/spells/granted?${initiate}&block=1`);
+    expect(await wizard.json()).toEqual({
+      spells: [{ name: "Shield", source: "PHB" }],
+      blocks: ["Cleric Spells", "Wizard Spells"],
+      picks: { cantrips: 2, spells: 1, learned: 0, alternatives: false },
+    });
+    const cleric = await routes.request(`/spells/granted?${initiate}&block=0`);
+    expect((await cleric.json()).spells).toEqual([{ name: "Light", source: "PHB" }]);
   });
 
   it("gives nothing for a grantor whose parent the request leaves off", async () => {
@@ -260,6 +291,7 @@ describe("spellsRoutes, choosing spells", () => {
     );
     expect(await res.json()).toEqual({
       spells: [],
+      blocks: [],
       picks: { cantrips: 0, spells: 0, learned: 0, alternatives: false },
     });
   });
