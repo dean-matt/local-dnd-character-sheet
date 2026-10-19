@@ -20,9 +20,10 @@ A skill an item grants proficiency in counts on its skill row like any other pro
 Abilities section lists it under "Granted by items" with the item's name.
 
 Expertise applies only where the wearer is proficient, whether the proficiency comes from the
-definition, a feat or another worn item. An item that names a skill under both lists therefore
-grants proficiency and expertise together, and an item that names a skill only under `expertise`
-changes nothing for a wearer without the proficiency.
+definition, a feat or another worn item, never the item's own grant. An item that names a skill
+under both lists grants proficiency, and expertise where something else already supplied the
+proficiency. An item that names a skill only under `expertise` changes nothing for a wearer without
+the proficiency.
 
 ## Editing a homebrew item
 
