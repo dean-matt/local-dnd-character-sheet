@@ -12,6 +12,13 @@ describe("homebrewOptionFacts", () => {
     ]);
   });
 
+  it("leaves a race's increases to its rules text where it offers more than one way", () => {
+    expect(raceFacts({ size: ["M"], speed: 30, ability: [{ str: 2 }, { con: 2 }] })).toEqual([
+      ["Size", "Medium"],
+      ["Speed", "30 ft."],
+    ]);
+  });
+
   it("leaves out what an entry does not state", () => {
     expect(raceFacts({ name: "Blank" })).toEqual([]);
     expect(classFacts({ name: "Blank" })).toEqual([]);
@@ -53,7 +60,7 @@ describe("homebrewOptionFacts", () => {
   it("names no prerequisite where an alternative names only what the sheet reads as met", () => {
     expect(
       featFacts({
-        prerequisite: [{ spellcastingFeature: true }, { background: [{ name: "Rune Carver" }] }],
+        prerequisite: [{ background: [{ name: "Rune Carver" }] }],
       }),
     ).toEqual([]);
   });

@@ -15,9 +15,9 @@ export function HomebrewSettings() {
           Homebrew
         </h1>
         <p className="mt-1 text-label text-muted">
-          Your own items, spells, races, classes, backgrounds and feats. Items and spells are
-          searched and added to characters beside the catalog's. Rules text takes the same{" "}
-          <code>{"{@tag}"}</code> markup the catalog's does.
+          Your own items, spells, races, classes, backgrounds and feats. Search finds homebrew items
+          and spells beside the catalog's. Rules text takes the same <code>{"{@tag}"}</code> markup
+          the catalog's does.
         </p>
       </div>
       {HOMEBREW_KINDS.map((kind) => (

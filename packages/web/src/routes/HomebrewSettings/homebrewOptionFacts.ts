@@ -12,6 +12,7 @@ import {
   raceTraitsSchema,
 } from "@dnd/catalog";
 import { capitalize } from "../../lib/capitalize.ts";
+import { prerequisiteText as scoreText } from "../../lib/multiclassPrerequisites.ts";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
 import type { Fact } from "./homebrewFacts.ts";
 
@@ -21,10 +22,14 @@ const stated = (facts: [string, string][]): Fact[] => facts.filter(([, value]) =
 
 const abbreviated = (ability: string) => ability.toUpperCase();
 
-/** `{ dex: 2, cha: 1 }` as `+2 DEX +1 CHA`, the increases a race fixes; a choice is left to its rules text. */
+/**
+ * `{ dex: 2, cha: 1 }` as `+2 DEX +1 CHA`, the increases a race fixes. A choice, or a
+ * second alternative, is left to its rules text.
+ */
 function increases(json: Json): string {
-  const [first] = abilityIncreasesSchema.parse(json);
-  return Object.entries(first?.fixed ?? {})
+  const alternatives = abilityIncreasesSchema.parse(json);
+  if (alternatives.length !== 1) return "";
+  return Object.entries(alternatives[0]?.fixed ?? {})
     .map(([ability, amount]) => `${amount < 0 ? "" : "+"}${amount} ${abbreviated(ability)}`)
     .join(" ");
 }
@@ -68,18 +73,12 @@ export function backgroundFacts(json: Json): Fact[] {
 }
 
 /** One alternative of a feat's prerequisites, every part of which it needs. */
-function prerequisiteText(prerequisite: FeatPrerequisite): string {
+function alternativeText(prerequisite: FeatPrerequisite): string {
   const { level, className, scores, races, proficiencies, feats, features, spell } = prerequisite;
   const anyOf = (names: string[]) => names.join(" or ");
   return [
     level === undefined ? "" : `${className ? `${className} ` : ""}Level ${level}`,
-    anyOf(
-      scores.map((minimums) =>
-        Object.entries(minimums)
-          .map(([ability, minimum]) => `${abbreviated(ability)} ${minimum}`)
-          .join(" and "),
-      ),
-    ),
+    scoreText(scores, abbreviated),
     anyOf(races.map(({ name, subrace }) => titleCase(subrace ? `${name} (${subrace})` : name))),
     anyOf(
       proficiencies.map(
@@ -98,7 +97,7 @@ function prerequisiteText(prerequisite: FeatPrerequisite): string {
 }
 
 export function featFacts(json: Json): Fact[] {
-  const alternatives = featTermsSchema.parse(json).prerequisites.map(prerequisiteText);
+  const alternatives = featTermsSchema.parse(json).prerequisites.map(alternativeText);
   // An alternative naming nothing the schema reads, such as a background, reads as met.
   if (alternatives.includes("")) return [];
   return stated([["Prerequisite", alternatives.join("; or ")]]);
