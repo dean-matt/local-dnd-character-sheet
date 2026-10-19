@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { Profiler } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
@@ -16,9 +17,29 @@ function renderAt(path: string) {
   renderStart = performance.now();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(routeConfig, { initialEntries: [path] });
+  const detailed = expect.getState().currentTestName?.includes("redirects") === true;
+  if (detailed) {
+    const realFetch = globalThis.fetch;
+    vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
+      mark(`fetch start ${String(args[0])}`);
+      const response = await realFetch(...args);
+      mark(`fetch end ${String(args[0])}`);
+      return response;
+    });
+    router.subscribe((state) =>
+      mark(`router state ${state.navigation.state} ${state.location.pathname}`),
+    );
+  }
   render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <Profiler
+        id="root"
+        onRender={(_id, phase, actual) => {
+          if (detailed) mark(`commit ${phase} render=${actual.toFixed(1)}ms`);
+        }}
+      >
+        <RouterProvider router={router} />
+      </Profiler>
     </QueryClientProvider>,
   );
   return router;
@@ -59,12 +80,6 @@ describe("routing", () => {
   });
 
   it("redirects a character to its first visible page", async () => {
-    const realFetch = globalThis.fetch;
-    vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
-      const response = await realFetch(...args);
-      if (String(args[0]).includes("/pages")) mark("pages query resolved");
-      return response;
-    });
     const router = renderAt("/characters/abc");
     void vi
       .waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/stats"), {
