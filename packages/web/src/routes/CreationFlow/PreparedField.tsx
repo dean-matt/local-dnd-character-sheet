@@ -1,7 +1,7 @@
 import { type EntryRef, entryKey } from "@dnd/character";
 import { useId } from "react";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
-import { PICK_HEADING } from "../../lib/chipStyles.ts";
+import { PICK_HEADING, PRESS_PILL } from "../../lib/chipStyles.ts";
 import type { PickedSpell } from "./spellPicks.ts";
 
 export interface PreparedFieldProps {
@@ -41,7 +41,7 @@ export function PreparedField({ count, spellbook, onToggle }: PreparedFieldProps
               key={entryKey(spell.ref)}
               aria-pressed={spell.prepared === true}
               onClick={() => onToggle(spell.ref)}
-              className="rounded-pill border border-border px-3 py-1 font-semibold text-row aria-pressed:border-accent aria-pressed:bg-accent-tint"
+              className={PRESS_PILL}
             >
               {spell.name}
             </button>
