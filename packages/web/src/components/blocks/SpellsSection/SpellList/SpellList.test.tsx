@@ -178,6 +178,24 @@ describe("SpellList", () => {
     expect(screen.queryByRole("button", { name: "Prepared, Eldritch Blast" })).toBeNull();
   });
 
+  it("holds a spell picked for a feat apart from the class", async () => {
+    const pickedFor = { kind: "feat" as const, ref: { name: "Magic Initiate", source: "XPHB" } };
+    const rebuke = { ref: { name: "Hellish Rebuke", source: "XPHB" }, prepared: true, pickedFor };
+    renderList(vex([rebuke]), {
+      spells: [...SHEET.spells, { ...spell("Hellish Rebuke", 1, true), pickedFor }],
+    });
+
+    expect(await screen.findByText("Warlock: 1 of 2 prepared")).toBeInTheDocument();
+    const row = screen.getByText("Hellish Rebuke").closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("Prepared");
+    expect(screen.queryByRole("button", { name: "Prepared, Hellish Rebuke" })).toBeNull();
+
+    fireEvent.focus(screen.getByRole("combobox", { name: "Learn a Warlock spell" }));
+    expect(await screen.findByRole("option", { name: /Hellish Rebuke/ })).not.toHaveTextContent(
+      "Known already",
+    );
+  });
+
   it("marks a spell known where its class knows rather than prepares, or a granted one", async () => {
     const [warlock] = derivedRecord().spellcasting;
     const { preparedSpells: _, ...knower } = warlock as CharacterDerived["spellcasting"][number];

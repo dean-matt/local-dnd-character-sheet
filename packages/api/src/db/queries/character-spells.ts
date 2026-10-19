@@ -72,13 +72,14 @@ function rowFacts(
 }
 
 function sheetSpell(entry: SpellEntry, row: SpellRow | undefined) {
-  const { ref, prepared, granted, origin } = entry;
+  const { ref, prepared, granted, origin, pickedFor } = entry;
   const fields = {
     name: row?.name ?? displayName(ref),
     ...("homebrewId" in ref ? {} : { source: ref.source }),
     prepared,
     ...(granted && { granted }),
     ...(origin && { origin }),
+    ...(pickedFor && { pickedFor }),
   };
   if (!row) return { resolved: false as const, ...fields };
   return {

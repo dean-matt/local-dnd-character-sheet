@@ -170,6 +170,14 @@ describe("characterSpellsRoutes", () => {
     expect(picked).not.toHaveProperty("granted");
   });
 
+  it("carries the row a spell was picked for", async () => {
+    const pickedFor = { kind: "feat" as const, ref: { name: "Magic Initiate", source: "PHB" } };
+    store(withSpells([{ ref: { name: "Shield", source: "PHB" }, pickedFor }]));
+    const [spell] = await spells();
+
+    expect(spell).toMatchObject({ name: "Shield", pickedFor });
+  });
+
   it("drops a casting fact that does not parse and keeps the rest", async () => {
     store(withSpells([{ ref: { name: "Detect Magic", source: "PHB" } }]));
     const [spell] = await spells();
