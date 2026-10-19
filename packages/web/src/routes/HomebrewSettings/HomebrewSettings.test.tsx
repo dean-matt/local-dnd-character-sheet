@@ -982,6 +982,25 @@ describe("HomebrewSettings", () => {
     expect(await chips("Feats", "Ironbound")).toHaveTextContent("STR 13");
   });
 
+  it("shows both chips of a class whose one save matches its primary ability", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const json = { ...CLASS_STARTERS[0].entry, proficiency: ["str"], source: "HB" };
+    stubApi({
+      classes: [
+        { id: "c1", name: "Warden", edition: "one", json, createdAt: CREATED_AT, hitDie: 10 },
+      ],
+    });
+    renderPage();
+
+    const row = (
+      await within(screen.getByRole("region", { name: "Classes" })).findByText("Warden")
+    ).closest("li");
+    expect(within(row as HTMLElement).getAllByText("STR")).toHaveLength(2);
+    expect(error.mock.calls.filter(([message]) => String(message).includes("same key"))).toEqual(
+      [],
+    );
+  });
+
   it("creates a race from pasted JSON alone, naming a field that fails rather than the whole paste", async () => {
     const fetchMock = stubApi({}, [{ status: 201, body: {} }]);
     renderPage();
