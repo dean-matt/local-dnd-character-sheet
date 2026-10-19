@@ -1,9 +1,8 @@
 # Items
 
-Three files and four array keys land in the one `items` table, keyed `(name, source)`.
-No key collides with another, which is what lets a `{@item}` tag resolve in one lookup
-without saying which array it meant. `kind` records the array, because two of the four
-are not things a character owns:
+Three files and four array keys land in the one `items` table, keyed `(name, source)`. No key
+collides with another, which is what lets a `{@item}` tag resolve in one lookup without saying which
+array it meant. `kind` records the array, because two of the four are not things a character owns:
 
 ```
 items.json         item          2428    the magic items, 53 _copy
@@ -18,43 +17,40 @@ own `type` is a `GV|` generic-variant code that `kind` already says, and is not 
 Nine template and `itemGroup` names end in ` (*)`, kept in the key and left off what the web
 shows. An `itemGroup`'s detail reads "Item group" and offers no Add to…, since a character owns its items, not the group.
 
-**The expansions are absent.** `+1 Chain Mail` and `Longsword of Cold Resistance` exist
-in no upstream file: they come of applying a template to every base item its `requires`
-matches. Storing them means 6,155 synthesized rows, 3,634 distinct — the same expanded
-name arrives from a `PHB` and an `XPHB` base item, so 2,521 collide on `(name, source)`
-and the key would have to widen to carry the base item. Templates alone resolve 173 of
-the 361 `{@item}` targets that would otherwise dangle, and the expansions another 185
-— 1,374 of 1,382 occurrences between them.
+**The expansions are absent.** `+1 Chain Mail` and `Longsword of Cold Resistance` exist in no
+upstream file: they come of applying a template to every base item its `requires` matches. Storing
+them means 6,155 synthesized rows, 3,634 distinct — the same expanded name arrives from a `PHB` and
+an `XPHB` base item, so 2,521 collide on `(name, source)` and the key would have to widen to carry
+the base item. Templates alone resolve 173 of the 361 `{@item}` targets that would otherwise dangle,
+and the expansions another 185 — 1,374 of 1,382 occurrences between them.
 
-A character holds one by naming both: an inventory entry's `ref` is the base item and its
-`variant` the `magicvariant`, the same way a reference names a catalog row rather than
-copying it. `GET /items/{name}/{source}/variants/{variantName}/{variantSource}`
-(`packages/api/src/db/queries/item-variant.ts`) expands the pair at read time — the
-variant's `inherits` fields over the base item's own — rather than storing the result, so
-a `content.db` rebuild still updates every character. A base item the variant's `requires`
-or `excludes` refuses is a 409, not an expanded item the rules do not allow. A caller may ask
-for `?override=true`, which expands a refused pair when the variant and the base item sit
-in one weapon or armor group; an entry saved that way carries `variantOverride`, the reason
-the check gave, and the sheet marks it off the printed rules. The expansion
-also fills the 77 `{=bonusAc}`-style placeholders in the templates' `entries`: they are
-not `{@tag}` markup, so the renderer would print them as written.
+A character holds one by naming both: an inventory entry's `ref` is the base item and its `variant`
+the `magicvariant`, the same way a reference names a catalog row rather than copying it. `GET
+/items/{name}/{source}/variants/{variantName}/{variantSource}`
+(`packages/api/src/db/queries/item-variant.ts`) expands the pair at read time — the variant's
+`inherits` fields over the base item's own — rather than storing the result, so a `content.db`
+rebuild still updates every character. A base item the variant's `requires` or `excludes` refuses is
+a 409, not an expanded item the rules do not allow. A caller may ask for `?override=true`, which
+expands a refused pair when the variant and the base item sit in one weapon or armor group; an entry
+saved that way carries `variantOverride`, the reason the check gave, and the sheet marks it off the
+printed rules. The expansion also fills the 77 `{=bonusAc}`-style placeholders in the templates'
+`entries`: they are not `{@tag}` markup, so the renderer would print them as written.
 
 Four dangling targets survive both, all of them barding: `{@item leather barding|phb}`
 and its three fellows are written as one `Barding` variant upstream renders per animal.
 
-Read alone, `GET /items/{name}/{source}` returns a template as the item it describes:
-`inherits` lifted over the entry around it, a placeholder filled where `inherits` holds
-the value. No base item is chosen, so `{=baseName}` reads as the first flag `requires`
-names — "an arrow" for Arrow of Slaying — and `{=dmgType}` as "weapon". Any other
-placeholder left empty, here or in an expansion, reads as neutral prose rather than
-markup. Search lists the templates beside the items and places each by the base items
-its `requires` and `excludes` admit, so `+1 Weapon` is a melee and a ranged weapon both.
-A `requires` clause naming `type`, `staff`, `wondrous` or `name` passes on every kind of
-the items it admits; a clause on any other trait, such as `weaponCategory` or `dmgType`,
-passes on only the weapon and armor kinds of those items. The focuses `Staff` and `Wooden Staff`
-carry a simple weapon's stats, so a `weaponCategory` clause admits them, yet a template
-such as Holy Avenger that reaches them that way is a weapon, not a staff or a focus.
-Imbued Wood requires an arcane focus by `type`, so it still lists as a staff and a focus.
+Read alone, `GET /items/{name}/{source}` returns a template as the item it describes: `inherits`
+lifted over the entry around it, a placeholder filled where `inherits` holds the value. No base item
+is chosen, so `{=baseName}` reads as the first flag `requires` names — "an arrow" for Arrow of
+Slaying — and `{=dmgType}` as "weapon". Any other placeholder left empty, here or in an expansion,
+reads as neutral prose rather than markup. Search lists the templates beside the items and places
+each by the base items its `requires` and `excludes` admit, so `+1 Weapon` is a melee and a ranged
+weapon both. A `requires` clause naming `type`, `staff`, `wondrous` or `name` passes on every kind
+of the items it admits; a clause on any other trait, such as `weaponCategory` or `dmgType`, passes
+on only the weapon and armor kinds of those items. The focuses `Staff` and `Wooden Staff` carry a
+simple weapon's stats, so a `weaponCategory` clause admits them, yet a template such as Holy Avenger
+that reaches them that way is a weapon, not a staff or a focus. Imbued Wood requires an arcane focus
+by `type`, so it still lists as a staff and a focus.
 
 `rarity` spans 10 upstream values, `none`, `varies` and `unknown (magic)` among them,
 and the column is nullable because 43 items carry none — though every one of those
@@ -111,6 +107,13 @@ holds is the table's call; the chip's popover lists each effect and the net resu
 skills that use the ability, because the sheet has no row for a bare check. A homebrew item states its own
 in an `advantage` array, which the item form edits.
 
+## Skills an item grants
+
+A homebrew item may state `skillProficiencies: [{"intimidation": true}]` and `expertise`, as a race
+and a feat do; no catalog item does. Worn, attuned where required, the skills list under "Granted by
+items" and count on the skill rows. Expertise applies only where the wearer is proficient, from the
+definition, a feat or another worn item.
+
 ## Armor's Stealth penalty and Strength requirement
 
 `stealth: true` and `strength` (a string, `"13"` or `"15"`) sit on 15 and 6 base items and
@@ -139,26 +142,24 @@ sheet refuses it and names the missing proficiency.
 
 ## Weapon mastery
 
-`mastery` is a list of `{@itemMastery}` references (`Topple|XPHB`) on 48 base items and 47
-named items at v2.34.1, all of them 2024 weapons; `Wand of Orcus` (XDMG) is the one
-named weapon built on a `baseItem` that states none, so the derived block reads the base
-item's. A character stores the weapon kinds it chose as base-item references in
-`weaponMasteries`, and an attack shows the mastery only when its weapon, matched by
-base-item name as a proficiency is, is among them. How many it may choose is the sum, over
-its classes, of what `getWeaponMasteryCount` reads: the `weapon_mastery` column Barbarian
-and Fighter print, or the number Paladin, Ranger and Rogue write into the feature's text.
-Which weapons a class may choose from is prose and stays unchecked.
+`mastery` is a list of `{@itemMastery}` references (`Topple|XPHB`) on 48 base items and 47 named
+items at v2.34.1, all of them 2024 weapons; `Wand of Orcus` (XDMG) is the one named weapon built on
+a `baseItem` that states none, so the derived block reads the base item's. A character stores the
+weapon kinds it chose as base-item references in `weaponMasteries`, and an attack shows the mastery
+only when its weapon, matched by base-item name as a proficiency is, is among them. How many it may
+choose is the sum, over its classes, of what `getWeaponMasteryCount` reads: the `weapon_mastery`
+column Barbarian and Fighter print, or the number Paladin, Ranger and Rogue write into the feature's
+text. Which weapons a class may choose from is prose and stays unchecked.
 
 ## Range and ammunition
 
-`range` (`80/320`, in feet) sits on base and named items alike, thrown melee weapons
-included. `ammoType` names the ammunition by uid, lowercase: `arrow|phb`, or `energy cell`
-with no source, which matches any source. `reload` is on base firearms. An attack carries
-all three, and counts the ammunition from the carried inventory: a loose unit is one, and
-a pack such as `Arrows (20)` (PHB) stands for its `packContents`, times the entry's
-quantity. A sourced `ammoType` matches that exact uid, so an XPHB bow does not count PHB
-arrows. Magic ammunition and homebrew ammunition count for nothing, as neither names a uid
-an `ammoType` can match.
+`range` (`80/320`, in feet) sits on base and named items alike, thrown melee weapons included.
+`ammoType` names the ammunition by uid, lowercase: `arrow|phb`, or `energy cell` with no source,
+which matches any source. `reload` is on base firearms. An attack carries all three, and counts the
+ammunition from the carried inventory: a loose unit is one, and a pack such as `Arrows (20)` (PHB)
+stands for its `packContents`, times the entry's quantity. A sourced `ammoType` matches that exact
+uid, so an XPHB bow does not count PHB arrows. Magic ammunition and homebrew ammunition count for
+nothing, as neither names a uid an `ammoType` can match.
 
 ## The five arrays in `items-base.json` that are not items
 
@@ -172,14 +173,13 @@ itemEntry                   13   an entriesTemplate an item expands into its own
 itemTypeAdditionalEntries    2   entries appended to every item of a type
 ```
 
-**A property and a type are named in `lookups` by their abbreviation**, because that is
-what a reference spells: `{@itemProperty 2H|XPHB}`, and an item's `type` reads `M|XPHB`.
-Only one of the 26 properties carries a `name` at all, and it writes `special` — the
-lowercase word an item's line renders rather than a title — so reading `name` where it
-exists would key that one differently from the rest. The human label a type also carries
-stays in `json`, where the sheet reads it to name an inventory row's type — `Adventuring
-Gear` for `G`. `load/lookups.ts` states
-the rule once, as `qualifier` already does for a deity's pantheon.
+**A property and a type are named in `lookups` by their abbreviation**, because that is what a
+reference spells: `{@itemProperty 2H|XPHB}`, and an item's `type` reads `M|XPHB`. Only one of the 26
+properties carries a `name` at all, and it writes `special` — the lowercase word an item's line
+renders rather than a title — so reading `name` where it exists would key that one differently from
+the rest. The human label a type also carries stays in `json`, where the sheet reads it to name an
+inventory row's type — `Adventuring Gear` for `G`. `load/lookups.ts` states the rule once, as
+`qualifier` already does for a deity's pantheon.
 
 An `itemType` `_copy` names its parent by abbreviation too, which `copy.ts` needs no
 telling: a block's identity is whatever fields it lists.
@@ -189,12 +189,12 @@ is `{@itemProperty 2h|XPHB|Two-Handed}`, spelling the abbreviation in lowercase.
 keeps the spelling upstream gave it, so a case-folding resolve in the renderer is what
 closes that one — safe here, because no two abbreviations collide once case is folded.
 
-**`itemEntry` and `itemTypeAdditionalEntries` are loaded although no `{@tag}` reaches
-them.** `items.json` and `magicvariants.json` carry 122 `{#itemEntry Name|SOURCE}`
-references, and the `items` loader replaces each at build time with that template's
-`entriesTemplate`, a variant's inside `inherits`. A reference without a source names the
-item's own. `{{item.<field>}}` and `{{getFullImmRes item.<field>}}` read the item's fields,
-a list reading as "acid, cold, and fire". A reference no template answers reads as its name,
-and a field the item lacks as the field's name in words. The two additional-entry rows
-attach to every item whose type their `appliesTo` names; the renderer expands those, and the
-rows are here so that half is a query rather than a second ETL change.
+**`itemEntry` and `itemTypeAdditionalEntries` are loaded although no `{@tag}` reaches them.**
+`items.json` and `magicvariants.json` carry 122 `{#itemEntry Name|SOURCE}` references, and the
+`items` loader replaces each at build time with that template's `entriesTemplate`, a variant's
+inside `inherits`. A reference without a source names the item's own. `{{item.<field>}}` and
+`{{getFullImmRes item.<field>}}` read the item's fields, a list reading as "acid, cold, and fire". A
+reference no template answers reads as its name, and a field the item lacks as the field's name in
+words. The two additional-entry rows attach to every item whose type their `appliesTo` names; the
+renderer expands those, and the rows are here so that half is a query rather than a second ETL
+change.

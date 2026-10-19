@@ -4,6 +4,7 @@ import {
   type ContentRef,
   derivedValue,
   effectsOnRoll,
+  grantedSkillLevels,
   heldSkillLevel,
   overrideKey,
   refKey,
@@ -16,9 +17,9 @@ import { nextLevel } from "./proficiencyMark.ts";
  * The edition's skills, alphabetically, each ring stepping its skill's proficiency and
  * saving it at once as an undo entry. A skill stepped to none leaves
  * `proficiencies.skills`, which lists only the skills a character holds. A ring shows the
- * higher of the stored level and what feats grant, and steps on from what it shows, so a
- * feat's skill never reads lower than the feat makes it. Expertise stepped up from a feat's
- * proficiency is stored `onGrant`, and stops counting if the feat goes.
+ * higher of the stored level and what feats and worn items grant, and steps on from what it
+ * shows, so a granted skill never reads lower than its grant makes it. Expertise stepped up
+ * from a granted proficiency is stored `onGrant`, and stops counting if the grant goes.
  */
 export function CatalogSkills({
   character,
@@ -28,9 +29,7 @@ export function CatalogSkills({
   derived: CharacterDerived;
 }) {
   const write = useHeldSave(character.id, "Skill proficiency");
-  const granted = new Map(
-    derivedValue(derived.featGrants).skills.map((skill) => [refKey(skill.ref), skill.level]),
-  );
+  const granted = grantedSkillLevels(derived);
   const stored = (key: string) =>
     character.definition.proficiencies.skills.find((skill) => refKey(skill.ref) === key);
   const shown = (key: string) => heldSkillLevel(stored(key), granted.get(key));

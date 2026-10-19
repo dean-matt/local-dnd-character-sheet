@@ -639,11 +639,18 @@ function derivedSenses(
   );
 }
 
-/** The equipped items, attuned where they must be, that grant a proficiency or a language. */
-function derivedItemGrants(bonuses: readonly ItemBonusTrait[]): CharacterDerived["itemGrants"] {
+/**
+ * The equipped items, attuned where they must be, that grant a proficiency or a language,
+ * and the skills they raise.
+ */
+function derivedItemGrants(
+  bonuses: readonly ItemBonusTrait[],
+  skills: CharacterDerived["itemGrants"]["computed"]["skills"],
+): CharacterDerived["itemGrants"] {
   const named = (granted: (item: ItemBonusTrait) => boolean) =>
     bonuses.filter(granted).map((item) => item.name);
   return computed({
+    skills,
     proficiencies: named((item) => item.grantsProficiency),
     languages: named((item) => item.grantsLanguage),
   });
@@ -821,7 +828,7 @@ export function deriveCharacter(
   catalog: CharacterCatalog,
 ): CharacterDerived {
   const feats = featGrants(stored, catalog);
-  const definition = withFeatGrants(stored, feats.granted);
+  const definition = withFeatGrants(stored, feats.granted, feats.itemSkills);
   const level = totalLevel(definition);
   const casters = castingClasses(definition, catalog);
   const grants = equippedAbilityGrants(definition, catalog);
@@ -936,7 +943,7 @@ export function deriveCharacter(
     attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog, feats.defenses),
     senses: derivedSenses(definition, catalog, feats.senses),
-    itemGrants: derivedItemGrants(bonuses),
+    itemGrants: derivedItemGrants(bonuses, feats.itemSkills),
     featGrants: computed(feats.granted),
     rollEffects: derivedRollEffects(definition, catalog, burdened),
     unproficientItems: derivedUnproficientItems(definition, catalog),

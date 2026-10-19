@@ -811,6 +811,40 @@ describe("derivedRoutes", () => {
     expect(bare.speed.terms).toEqual([]);
   });
 
+  it("grants a homebrew item's skill proficiency while worn, and expertise where already proficient", async () => {
+    insertHomebrewItem(opened.homebrewDb, "mask", {
+      name: "Mask of Shadows",
+      edition: "classic",
+      skillProficiencies: [{ stealth: true }],
+      expertise: [{ stealth: true }],
+    });
+    const wearing = (worn: boolean, level?: "proficient") =>
+      definitionWith({
+        inventory: [{ ref: { homebrewId: "mask" }, equipped: worn }],
+        proficiencies: {
+          savingThrows: [],
+          skills: level ? [{ ref: { name: "Stealth", source: "PHB" }, level }] : [],
+          armor: [],
+          weapons: [],
+          tools: [],
+          languages: [],
+        },
+      });
+    const stealth = { name: "Stealth", source: "PHB" };
+    store(wearing(false));
+    expect((await derived()).itemGrants.computed.skills).toEqual([]);
+
+    updateCharacterDefinition(opened.charactersDb, "1", wearing(true));
+    expect((await derived()).itemGrants.computed.skills).toEqual([
+      { ref: stealth, level: "proficient", from: ["Mask of Shadows"] },
+    ]);
+
+    updateCharacterDefinition(opened.charactersDb, "1", wearing(true, "proficient"));
+    expect((await derived()).itemGrants.computed.skills).toEqual([
+      { ref: stealth, level: "expertise", from: ["Mask of Shadows"] },
+    ]);
+  });
+
   it("marks the rolls an item grants advantage on, from the mapping or a homebrew item, while worn", async () => {
     insertHomebrewItem(opened.homebrewDb, "cloak", {
       name: "Cloak of Shadows",

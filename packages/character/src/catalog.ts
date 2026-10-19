@@ -112,6 +112,14 @@ export type ItemSenseTrait = {
   senses: readonly SenseGrant[];
 };
 
+/** The skills an item grants, lowercased as upstream writes them, and whether it waits on attunement. */
+export type ItemSkillTrait = {
+  name: string;
+  requiresAttunement: boolean;
+  skills: readonly string[];
+  expertise: readonly string[];
+};
+
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
 
@@ -230,6 +238,7 @@ export type CharacterCatalog = {
   raceSenses: readonly SenseGrant[];
   /** Keyed like `weapons`, and absent for an item that grants no sense. */
   itemSenses: ReadonlyMap<string, ItemSenseTrait>;
+  itemSkills: ReadonlyMap<string, ItemSkillTrait>;
   /** Keyed like `weapons`, and absent for an item that grants nothing. */
   itemDefenses: ReadonlyMap<string, ItemDefenseTrait>;
   /** Keyed like `weapons`, and absent for an item that changes no score. */

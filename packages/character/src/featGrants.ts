@@ -12,10 +12,11 @@ import type {
   FeatPickField,
   SenseGrant,
 } from "./catalog.ts";
-import type { FeatGrants } from "./characterDerived.ts";
+import type { CharacterDerived, FeatGrants } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import { entryKey, refKey } from "./keys.ts";
+import { entryKey, itemKey, refKey } from "./keys.ts";
 import type { Ability, ContentRef } from "./refs.ts";
+import { derivedValue } from "./resolve.ts";
 
 type Picks = CharacterDefinition["feats"][number]["picks"];
 type Picked = Record<FeatPickField, string[]>;
@@ -102,16 +103,27 @@ function raiseSkill(
   granted.set(refKey(ref), entry);
 }
 
+/** What one feat or item names for skills; `picked*` holds the player's picks, which an item has none of. */
+type SkillSource = {
+  name: string;
+  skills: readonly string[];
+  expertise: readonly string[];
+  pickedSkills: readonly string[];
+  pickedExpertise: readonly string[];
+};
+
 /**
- * The skills feats raise, each at the highest level they raise it to. Expertise lands only
- * on a skill the character is proficient in. A feat that names one skill under both its
- * proficiency and its expertise, as `Aberrant Anatomy` (RHW) names Perception, grants
- * expertise only where something else already gave the proficiency.
+ * The skills `own` raise, each at the highest level they raise it to. Expertise lands only
+ * on a skill the character is proficient in, whether the definition, `own` or `other` gave
+ * the proficiency. A source that names one skill under both its proficiency and its
+ * expertise, as `Aberrant Anatomy` (RHW) names Perception, grants expertise only where
+ * something else already gave the proficiency.
  */
 function grantedSkills(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
-  held: readonly Held[],
+  own: readonly SkillSource[],
+  other: readonly SkillSource[],
 ): FeatGrants["skills"] {
   const rows = new Map(catalog.skills.map(({ ref }) => [ref.name.toLowerCase(), ref]));
   const stored = new Set(
@@ -119,29 +131,28 @@ function grantedSkills(
       .filter((skill) => rank(skill.level) >= rank("proficient"))
       .map((skill) => skill.ref.name.toLowerCase()),
   );
-  const proficient = (name: string, besides?: Held) =>
+  const proficient = (name: string, besides?: SkillSource) =>
     stored.has(name) ||
-    held.some(
-      (feat) =>
-        (feat !== besides && feat.trait.skills.includes(name)) || feat.picked.skills.includes(name),
+    [...own, ...other].some(
+      (source) =>
+        (source !== besides && source.skills.includes(name)) || source.pickedSkills.includes(name),
     );
   const granted = new Map<string, SkillGrant>();
-  for (const { trait, picked } of held) {
-    for (const name of [...trait.skills, ...picked.skills]) {
-      raiseSkill(granted, rows.get(name), "proficient", trait.name);
+  for (const source of own) {
+    for (const name of [...source.skills, ...source.pickedSkills]) {
+      raiseSkill(granted, rows.get(name), "proficient", source.name);
     }
   }
-  const expertise = held.flatMap((feat) => [
-    ...feat.picked.expertise.map((name) => ({ name, feat, besides: undefined })),
-    ...feat.trait.expertise.map((name) => ({
+  const expertise = own.flatMap((source) => [
+    ...source.pickedExpertise.map((name) => ({ name, source, besides: undefined })),
+    ...source.expertise.map((name) => ({
       name,
-      feat,
-      besides: feat.trait.skills.includes(name) ? feat : undefined,
+      source,
+      besides: source.skills.includes(name) ? source : undefined,
     })),
   ]);
-  for (const { name, feat, besides } of expertise) {
-    if (proficient(name, besides))
-      raiseSkill(granted, rows.get(name), "expertise", feat.trait.name);
+  for (const { name, source, besides } of expertise) {
+    if (proficient(name, besides)) raiseSkill(granted, rows.get(name), "expertise", source.name);
   }
   return [...granted.values()].map(({ ref, level, from }) => ({
     ref,
@@ -150,9 +161,32 @@ function grantedSkills(
   }));
 }
 
+const featSource = ({ trait, picked }: Held): SkillSource => ({
+  name: trait.name,
+  skills: trait.skills,
+  expertise: trait.expertise,
+  pickedSkills: picked.skills,
+  pickedExpertise: picked.expertise,
+});
+
+/** The items worn, attuned where they must be, that name a skill. */
+function wornSkillSources(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): SkillSource[] {
+  return definition.inventory.flatMap((entry) => {
+    const item = catalog.itemSkills.get(itemKey(entry));
+    return item && entry.equipped && (entry.attuned || !item.requiresAttunement)
+      ? [{ ...item, pickedSkills: [], pickedExpertise: [] }]
+      : [];
+  });
+}
+
 /**
  * What every feat the definition holds grants, and its resistances and immunities as a
- * defense grant each and its senses, cited by the feat's name. A feat no row answers grants nothing.
+ * defense grant each and its senses, cited by the feat's name. A feat no row answers grants
+ * nothing. `itemSkills` holds the skills the worn items raise, kept apart so the sheet can
+ * say which source granted what.
  */
 export function featGrants(
   definition: CharacterDefinition,
@@ -161,11 +195,14 @@ export function featGrants(
   granted: FeatGrants;
   defenses: (DefenseTrait & { from: string })[];
   senses: (SenseGrant & { from: string })[];
+  itemSkills: FeatGrants["skills"];
 } {
   const held = definition.feats.flatMap(({ ref, picks }): Held[] => {
     const trait = catalog.featGrants.get(entryKey(ref));
     return trait ? [{ trait, picked: acceptedPicks(trait.offers, picks) }] : [];
   });
+  const feats = held.map(featSource);
+  const items = wornSkillSources(definition, catalog);
   const named = (field: "tools" | "languages") =>
     gathered(held, ({ trait, picked }) => [...trait[field], ...picked[field]]);
   return {
@@ -174,7 +211,7 @@ export function featGrants(
         ...trait.savingThrows,
         ...picked.savingThrows,
       ]).flatMap(({ name, from }) => (isAbility(name) ? [{ name, from }] : [])),
-      skills: grantedSkills(definition, catalog, held),
+      skills: grantedSkills(definition, catalog, feats, items),
       tools: named("tools"),
       languages: named("languages"),
       armor: gathered(held, ({ trait }) => trait.armor),
@@ -190,6 +227,7 @@ export function featGrants(
     senses: held.flatMap(({ trait }) =>
       trait.senses.map((sense) => ({ ...sense, from: trait.name })),
     ),
+    itemSkills: grantedSkills(definition, catalog, items, feats),
   };
 }
 
@@ -205,21 +243,36 @@ export function heldSkillLevel(
   return rank(granted) > rank(own) ? granted : own;
 }
 
+/** The level each skill (by `refKey`) is granted at by feats and worn items, the higher where both grant it. */
+export function grantedSkillLevels(derived: CharacterDerived): Map<string, ProficiencyLevel> {
+  const levels = new Map<string, ProficiencyLevel>();
+  const skills = [
+    ...derivedValue(derived.featGrants).skills,
+    ...derivedValue(derived.itemGrants).skills,
+  ];
+  for (const { ref, level } of skills)
+    levels.set(refKey(ref), heldSkillLevel({ level }, levels.get(refKey(ref))));
+  return levels;
+}
+
 /**
- * `definition` with what feats grant added to the proficiencies the sheet computes from:
- * saving throws, skills at the higher of the stored and granted level, armor and weapons.
+ * `definition` with what feats grant, and the skills worn items raise, added to the
+ * proficiencies the sheet computes from: saving throws, skills at the highest of the stored
+ * and granted levels, armor and weapons.
  */
 export function withFeatGrants(
   definition: CharacterDefinition,
   granted: FeatGrants,
+  itemSkills: FeatGrants["skills"],
 ): CharacterDefinition {
   const { proficiencies } = definition;
-  const grants = new Map(granted.skills.map((skill) => [refKey(skill.ref), skill]));
-  const skills = new Map<
-    string,
-    { ref: (typeof granted.skills)[number]["ref"]; level: ProficiencyLevel }
-  >();
-  for (const skill of [...proficiencies.skills, ...granted.skills]) {
+  const grants = new Map<string, FeatGrants["skills"][number]>();
+  for (const skill of [...granted.skills, ...itemSkills]) {
+    const held = grants.get(refKey(skill.ref));
+    if (!held || rank(skill.level) > rank(held.level)) grants.set(refKey(skill.ref), skill);
+  }
+  const skills = new Map<string, { ref: ContentRef; level: ProficiencyLevel }>();
+  for (const skill of [...proficiencies.skills, ...grants.values()]) {
     const key = refKey(skill.ref);
     const stored = proficiencies.skills.find((held) => refKey(held.ref) === key);
     const level = heldSkillLevel(stored, grants.get(key)?.level);

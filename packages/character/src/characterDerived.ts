@@ -31,6 +31,12 @@ const grantorsSchema = z.array(z.string().min(1)).min(1);
 /** One damage type, condition or proficiency, and every race, item or feat label that grants it. */
 const grantSchema = z.strictObject({ name: z.string().min(1), from: grantorsSchema });
 
+const skillGrantSchema = z.strictObject({
+  ref: contentRefSchema,
+  level: z.enum(["proficient", "expertise"]),
+  from: grantorsSchema,
+});
+
 /**
  * What feats grant beyond what the definition stores, each with the feats behind it: a
  * saving throw by ability, a skill at the level the feats raise it to, and the rest by the
@@ -39,13 +45,7 @@ const grantSchema = z.strictObject({ name: z.string().min(1), from: grantorsSche
  */
 const featGrantsSchema = z.strictObject({
   savingThrows: z.array(z.strictObject({ name: abilitySchema, from: grantorsSchema })),
-  skills: z.array(
-    z.strictObject({
-      ref: contentRefSchema,
-      level: z.enum(["proficient", "expertise"]),
-      from: grantorsSchema,
-    }),
-  ),
+  skills: z.array(skillGrantSchema),
   tools: z.array(grantSchema),
   languages: z.array(grantSchema),
   armor: z.array(grantSchema),
@@ -70,8 +70,12 @@ const defensesSchema = z.strictObject({
     .nullable(),
 });
 
-/** The names of the equipped items that grant a proficiency or a language, which upstream flags without naming. */
+/**
+ * The names of the equipped items that grant a proficiency or a language, which upstream
+ * flags without naming, and the skills equipped items name, each with the items behind it.
+ */
 const itemGrantsSchema = z.strictObject({
+  skills: z.array(skillGrantSchema),
   proficiencies: z.array(z.string().min(1)),
   languages: z.array(z.string().min(1)),
 });

@@ -61,6 +61,7 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [], vulnerable: [] },
     raceSenses: [],
     itemSenses: new Map(),
+    itemSkills: new Map(),
     itemDefenses: new Map(),
     itemAbilities: new Map(),
     itemBonuses: new Map(),
@@ -360,7 +361,17 @@ describe("AbilitiesSection", () => {
         terms: [{ label: "Boots of Speed: walk 30 to 60", value: 30 }],
       },
       itemGrants: {
-        computed: { proficiencies: ["Bracers of Archery"], languages: ["Belt of Dwarvenkind"] },
+        computed: {
+          skills: [
+            {
+              ref: { name: "Stealth", source: "PHB" },
+              level: "expertise",
+              from: ["Mask of Shadows"],
+            },
+          ],
+          proficiencies: ["Bracers of Archery"],
+          languages: ["Belt of Dwarvenkind"],
+        },
         manual: null,
         terms: [],
       },
@@ -373,6 +384,7 @@ describe("AbilitiesSection", () => {
     const granted = card("Granted by items");
     expect(granted.getByText("Bracers of Archery")).toBeInTheDocument();
     expect(granted.getByText("Belt of Dwarvenkind")).toBeInTheDocument();
+    expect(granted.getByText("Stealth (Mask of Shadows)")).toBeInTheDocument();
   });
 
   it("lists what feats grant with the feats behind it, and marks a feat's save proficient", () => {

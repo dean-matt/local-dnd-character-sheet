@@ -45,6 +45,7 @@ export type {
   ItemBonusTrait,
   ItemDefenseTrait,
   ItemSenseTrait,
+  ItemSkillTrait,
   Preparation,
   SenseGrant,
   SkillTrait,
@@ -77,7 +78,7 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
-export { allocatePicks, type FeatPick, heldSkillLevel } from "./featGrants.ts";
+export { allocatePicks, type FeatPick, grantedSkillLevels, heldSkillLevel } from "./featGrants.ts";
 export type { HouseRule } from "./houseRules.ts";
 export {
   IMPROVEMENT_FEAT,
