@@ -99,7 +99,7 @@ describe("CreationFlow", () => {
     expect(screen.queryByRole("button", { name: /^Next/ })).not.toBeInTheDocument();
   });
 
-  it("skips Spells for a class that casts nothing at its level, though a feat offers picks", async () => {
+  it("keeps Spells for a class that casts nothing at its level where a feat offers alternative picks", async () => {
     const fighter = { name: "Fighter", source: "PHB" };
     const initiate = { name: "Magic Initiate", source: "PHB" };
     stubApi(undefined, {
@@ -130,9 +130,9 @@ describe("CreationFlow", () => {
     );
     renderFlow("equipment");
 
-    expect(await screen.findByText("New character · Step 4 of 4")).toBeVisible();
-    expect(within(rail()).queryByRole("link", { name: /Spells/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Finish →" })).toBeVisible();
+    expect(await screen.findByText("New character · Step 4 of 5")).toBeVisible();
+    expect(within(rail()).getByRole("link", { name: /Spells/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Next/ })).toBeVisible();
   });
 
   it("refuses an unfinished character at Finish, naming each fault and the step that holds it", async () => {
