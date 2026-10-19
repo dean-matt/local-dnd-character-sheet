@@ -210,7 +210,13 @@ describe("spellsRoutes, choosing spells", () => {
           json: JSON.stringify(MAGIC_INITIATE),
         },
       ],
-      spells: [spell("Fireball", 3), spell("Shield", 1), spell("Light", 0), spell("Bless", 1)],
+      spells: [
+        spell("Fireball", 3),
+        spell("Shield", 1),
+        spell("Light", 0),
+        spell("Bless", 1),
+        spell("Guidance", 0),
+      ],
       spellClasses: [
         { spell_name: "Bless", spell_source: "PHB", class_name: "Cleric", class_source: "PHB" },
       ],
@@ -220,6 +226,7 @@ describe("spellsRoutes, choosing spells", () => {
         grant("Light", 3, 1),
         { ...grant("Light", 0, 0, 0), ...initiate },
         { ...grant("Shield", 0, 0, 1), ...initiate },
+        { ...grant("Guidance", 0, 1, 0), ...initiate },
       ],
     });
   });
@@ -283,6 +290,32 @@ describe("spellsRoutes, choosing spells", () => {
     });
     const cleric = await routes.request(`/spells/granted?${initiate}&block=0`);
     expect((await cleric.json()).spells).toEqual([{ name: "Light", source: "PHB" }]);
+  });
+
+  it("reads a block index past the row's last block as unchosen, as the picks do", async () => {
+    const initiate = "grantor=feat&name=Magic%20Initiate&source=XPHB&level=1";
+    const past = await routes.request(`/spells/granted?${initiate}&block=5`);
+    const unchosen = await routes.request(`/spells/granted?${initiate}`);
+    expect(await past.json()).toEqual(await unchosen.json());
+
+    const lookup = async (block: number) => {
+      const res = await routes.request("/spells/lookup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          spells: [{ name: "Guidance", source: "PHB" }],
+          offer: {
+            grantor: "feat",
+            ref: { name: "Magic Initiate", source: "XPHB" },
+            level: 1,
+            block,
+          },
+        }),
+      });
+      return (await res.json()).spells[0].listed;
+    };
+    expect(await lookup(1)).toBe(false);
+    expect(await lookup(5)).toBe(true);
   });
 
   it("gives nothing for a grantor whose parent the request leaves off", async () => {

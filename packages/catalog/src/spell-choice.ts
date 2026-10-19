@@ -160,6 +160,11 @@ export function blockLabels(json: unknown): string[] {
   );
 }
 
+/** `block` where the row has that alternative block, else undefined: a stored index past the last block is no choice. */
+export function chosenBlock(json: unknown, block: number | undefined): number | undefined {
+  return block !== undefined && block < blocksOf(json).length ? block : undefined;
+}
+
 /**
  * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
  * level key at or below it, a key naming no level arriving with the row. An `expanded`
@@ -171,8 +176,8 @@ export function blockLabels(json: unknown): string[] {
  */
 export function offeredPicks(json: unknown, level: number, block?: number): OfferedPicks {
   const all = blocksOf(json);
-  const chosen = block === undefined ? undefined : all[block];
-  const blocks = chosen === undefined ? all : [chosen];
+  const at = chosenBlock(json, block);
+  const blocks = at === undefined ? all : [all[at]];
   const each = blocks.map((block) => {
     const chooses = Object.entries(isRecord(block) ? block : {})
       .filter(([kind]) => ["innate", "known", "prepared"].includes(kind))

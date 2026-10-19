@@ -168,6 +168,7 @@ export type {
 } from "./spell-choice.ts";
 export {
   blockLabels,
+  chosenBlock,
   grantedSpellsSchema,
   offeredPicks,
   SPELL_GRANTORS,

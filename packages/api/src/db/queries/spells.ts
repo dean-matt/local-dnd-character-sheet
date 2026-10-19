@@ -1,5 +1,6 @@
 import {
   blockLabels,
+  chosenBlock,
   type OfferedPicks,
   offeredPicks,
   type SpellGrantor,
@@ -106,21 +107,29 @@ const GRANTOR_TABLES: Record<SpellGrantor, string> = {
  * the parameters it binds.
  */
 export function offerClause(offer: SpellOffer): { clause: string; params: (string | number)[] } {
+  const table = GRANTOR_TABLES[offer.grantor];
+  const parentColumns = PARENT_COLUMNS[offer.grantor];
+  const parent = [offer.parent?.name ?? "", offer.parent?.source ?? ""];
+  const block = offer.block ?? -1;
   return {
     clause: `EXISTS (SELECT 1 FROM spell_grants g
       WHERE g.spell_name = spells.name AND g.spell_source = spells.source
       AND g.granted_by = ? AND g.name = ? AND g.source = ?
       AND g.parent_name = ? AND g.parent_source = ? AND g.chosen = 1 AND g.level <= ?
-      AND (? = -1 OR g.block = ?))`,
+      AND (? = -1 OR g.block = ? OR ? >= (SELECT json_array_length(json, '$.additionalSpells')
+        FROM ${table} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""})))`,
     params: [
-      GRANTOR_TABLES[offer.grantor],
+      table,
       offer.ref.name,
       offer.ref.source,
-      offer.parent?.name ?? "",
-      offer.parent?.source ?? "",
+      ...parent,
       offer.level,
-      offer.block ?? -1,
-      offer.block ?? -1,
+      block,
+      block,
+      block,
+      offer.ref.name,
+      offer.ref.source,
+      ...(parentColumns ? parent : []),
     ],
   };
 }
@@ -154,6 +163,15 @@ export function getGrantedSpells(
   const db = openContentDb(dataDir);
   try {
     const parent = [grantor.parent?.name ?? "", grantor.parent?.source ?? ""];
+    const parentColumns = PARENT_COLUMNS[grantor.kind];
+    const json = db
+      .prepare(
+        `SELECT json FROM ${GRANTOR_TABLES[grantor.kind]} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""}`,
+      )
+      .pluck()
+      .get(grantor.name, grantor.source, ...(parentColumns ? parent : [])) as string | undefined;
+    const row = json === undefined ? undefined : JSON.parse(json);
+    const block = chosenBlock(row, grantor.block);
     const spells = db
       .prepare(
         `SELECT spell_name AS name, spell_source AS source FROM spell_grants
@@ -166,23 +184,15 @@ export function getGrantedSpells(
         grantor.source,
         ...parent,
         level,
-        grantor.block ?? -1,
+        block ?? -1,
       ) as {
       name: string;
       source: string;
     }[];
-    const parentColumns = PARENT_COLUMNS[grantor.kind];
-    const json = db
-      .prepare(
-        `SELECT json FROM ${GRANTOR_TABLES[grantor.kind]} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""}`,
-      )
-      .pluck()
-      .get(grantor.name, grantor.source, ...(parentColumns ? parent : [])) as string | undefined;
-    const row = json === undefined ? undefined : JSON.parse(json);
     return {
       spells,
       blocks: blockLabels(row),
-      picks: offeredPicks(row, level, grantor.block),
+      picks: offeredPicks(row, level, block),
     };
   } finally {
     db.close();
