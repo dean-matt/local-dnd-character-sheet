@@ -118,7 +118,7 @@ function Values() {
   return null;
 }
 
-function renderStep(className = "Wizard") {
+function renderStep(className = "Wizard", draft: Partial<CharacterDefinition> = {}) {
   localStorage.setItem(
     "draft:creation",
     JSON.stringify({
@@ -126,6 +126,7 @@ function renderStep(className = "Wizard") {
       race: PHB("Tiefling"),
       levels: [{ class: PHB(className) }],
       abilityScores: { str: 10, dex: 10, con: 10, int: 12, wis: 10, cha: 10 },
+      ...draft,
     }),
   );
   return renderWithClient(
@@ -284,5 +285,18 @@ describe("SpellsStep", () => {
     expect(own).toHaveTextContent("Choose 1 — 0 selected");
     expect(done).toBe(false);
     expect(values.departures ?? []).toEqual([]);
+  });
+
+  it("lists a pick made for a row that offers none now, so its departure can be cleared", async () => {
+    const pickedFor = { kind: "feat" as const, ref: PHB("Alert") };
+    renderStep("Wizard", { spells: [{ ref: PHB("Light"), prepared: true, pickedFor }] });
+
+    const stray = await screen.findByRole("region", { name: "Picked for Alert" });
+    const note = "Light picked for Alert, which offers none.";
+    await waitFor(() => expect(values.departures).toEqual([{ field: "spells", note }]));
+
+    fireEvent.click(within(stray).getByRole("button", { name: "Remove Light" }));
+    await waitFor(() => expect(values.departures).toEqual([]));
+    expect(screen.queryByRole("region", { name: "Picked for Alert" })).toBeNull();
   });
 });

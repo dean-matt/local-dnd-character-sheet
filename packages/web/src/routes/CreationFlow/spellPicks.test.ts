@@ -208,6 +208,15 @@ describe("a row's own picks", () => {
     );
   });
 
+  it("reads a feat taken twice as one row offering both takings' picks", () => {
+    const twice = [offerOf("feat", 2, 1), offerOf("feat", 2, 1)];
+    const picked = [madeFor(pick("Light", 0, true))];
+    const rows = rowPicks(twice, picked);
+    expect(rows.map((row) => [row.counts, row.owed, row.picked.length])).toEqual([
+      [{ cantrips: 4, spells: 2 }, { cantrips: 4, spells: 2 }, 1],
+    ]);
+  });
+
   it("leaves the class and subclass out of the rows", () => {
     const offers = [offerOf("class", 1, 1), offerOf("subclass", 1, 0), offerOf("race", 0, 0)];
     expect(rowPicks(offers, [])).toEqual([]);

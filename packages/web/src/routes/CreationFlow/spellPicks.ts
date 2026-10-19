@@ -69,23 +69,39 @@ export type RowPicks = {
   picked: PickedSpell[];
 };
 
-/** Each row other than the class and subclass that offers a pick, in the order `offers` lists them. */
+const add = (a: Counts, b: Counts) => ({
+  cantrips: a.cantrips + b.cantrips,
+  spells: a.spells + b.spells,
+});
+
+/**
+ * Each row other than the class and subclass that offers a pick, in the order `offers` lists
+ * them. A feat taken twice, as Magic Initiate (XPHB) may be, is one row offering both
+ * takings' picks, since a pick names the feat and not which taking it was made for.
+ */
 export function rowPicks(offers: readonly Offer[], picked: readonly PickedSpell[]): RowPicks[] {
-  return offers.flatMap(({ row, picks }) => {
+  const rows = new Map<string, RowPicks>();
+  for (const { row, picks } of offers) {
     const pickedFor = pickedForOf(row);
-    if (!pickedFor || picks.cantrips + picks.spells === 0) return [];
-    const counts = { cantrips: picks.cantrips, spells: picks.spells };
+    if (!pickedFor || picks.cantrips + picks.spells === 0) continue;
     const key = pickKey(pickedFor);
-    return [
-      {
-        row,
-        pickedFor,
-        counts,
-        owed: picks.alternatives ? { cantrips: 0, spells: 0 } : counts,
-        picked: picked.filter((spell) => spell.pickedFor && pickKey(spell.pickedFor) === key),
-      },
-    ];
-  });
+    const counts = { cantrips: picks.cantrips, spells: picks.spells };
+    const owed = picks.alternatives ? { cantrips: 0, spells: 0 } : counts;
+    const held = rows.get(key);
+    rows.set(
+      key,
+      held
+        ? { ...held, counts: add(held.counts, counts), owed: add(held.owed, owed) }
+        : {
+            row,
+            pickedFor,
+            counts,
+            owed,
+            picked: picked.filter((spell) => spell.pickedFor && pickKey(spell.pickedFor) === key),
+          },
+    );
+  }
+  return [...rows.values()];
 }
 
 /** The row `pickedFor` names among `rows`, `undefined` where none offers a pick now. */
@@ -176,16 +192,24 @@ function rowNotes({ row, counts, picked }: RowPicks): string[] {
   ];
 }
 
-/** The note on picks made for a row the draft no longer holds, or that offers none now. */
-function strayNotes(picked: readonly PickedSpell[], rows: readonly RowPicks[]): string[] {
-  const stray = picked.filter((spell) => spell.pickedFor && !rowFor(rows, spell.pickedFor));
+/**
+ * The picks made for a row the draft no longer holds, or that offers none now, grouped by
+ * the name of the row each was made for.
+ */
+export function strayPicks(picked: readonly PickedSpell[], rows: readonly RowPicks[]) {
   const byRow = new Map<string, PickedSpell[]>();
-  for (const spell of stray) {
-    const by = spell.pickedFor?.ref.name ?? "";
+  for (const spell of picked) {
+    if (!spell.pickedFor || rowFor(rows, spell.pickedFor)) continue;
+    const by = spell.pickedFor.ref.name;
     byRow.set(by, [...(byRow.get(by) ?? []), spell]);
   }
-  return [...byRow].map(([by, spells]) => `${names(spells)} picked for ${by}, which offers none`);
+  return [...byRow].map(([by, spells]) => ({ by, spells }));
 }
+
+const strayNotes = (picked: readonly PickedSpell[], rows: readonly RowPicks[]) =>
+  strayPicks(picked, rows).map(
+    ({ by, spells }) => `${names(spells)} picked for ${by}, which offers none`,
+  );
 
 /**
  * The note on picks the rules would refuse, `undefined` where every pick holds. A class

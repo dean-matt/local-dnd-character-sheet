@@ -15,6 +15,7 @@ import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
 import { NoCastingNote } from "./NoCastingNote.tsx";
 import { RowPickList } from "./RowPickList.tsx";
+import { StrayPicks } from "./StrayPicks.tsx";
 import {
   cantripsOf,
   classPicksOf,
@@ -22,6 +23,7 @@ import {
   SPELLS_FIELD,
   type SubclassPicks,
   spellsOf,
+  strayPicks,
 } from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
@@ -64,8 +66,11 @@ function useSpellEdits() {
   };
 }
 
-/** The escape's label: off the class's list where it casts, else outside each row's offer. */
+/** The escape's label, naming every list it lifts: the class's where it casts, and each row's offer. */
 function escapeLabel(casts: boolean, className: string, rows: boolean) {
+  if (casts && rows) {
+    return `Offer spells off the ${className} list and outside what each row offers, and of any level`;
+  }
   if (casts) return `Offer spells off the ${className} list, and of any level`;
   return rows ? "Offer spells outside what each row offers" : undefined;
 }
@@ -152,6 +157,7 @@ export function SpellsStep() {
           />
         )}
       </div>
+      <StrayPicks strays={strayPicks(picked, rows)} onRemove={remove} />
       <RowPickList
         rows={rows}
         field={field}
