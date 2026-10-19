@@ -188,6 +188,7 @@ describe("FeaturesSection", () => {
 
   it("lists class and subclass features by the character level they were gained at", async () => {
     const fighter = { name: "Fighter", source: "PHB" };
+    const wizard = { name: "Wizard", source: "PHB" };
     const record = characterRecord("1", "Vex");
     const multiclass = {
       ...record,
@@ -195,7 +196,7 @@ describe("FeaturesSection", () => {
         ...record.definition,
         levels: [
           { class: fighter },
-          { class: { name: "Wizard", source: "PHB" } },
+          { class: wizard },
           { class: fighter },
           { class: fighter, subclass: { name: "Champion", source: "PHB" } },
         ],
@@ -214,10 +215,21 @@ describe("FeaturesSection", () => {
           {
             origin: "class",
             name: "Fighter",
+            class: fighter,
             features: [feature("Second Wind", 1), feature("Action Surge", 2)],
           },
-          { origin: "subclass", name: "Champion", features: [feature("Improved Critical", 3)] },
-          { origin: "class", name: "Wizard", features: [feature("Arcane Recovery", 1)] },
+          {
+            origin: "subclass",
+            name: "Champion",
+            class: fighter,
+            features: [feature("Improved Critical", 3)],
+          },
+          {
+            origin: "class",
+            name: "Wizard",
+            class: wizard,
+            features: [feature("Arcane Recovery", 1)],
+          },
           { origin: "feat", features: [feature("Lucky", 4), feature("Alert", 2)] },
           { origin: "optionalFeature", features: [feature("Archery")] },
         ],
@@ -249,6 +261,71 @@ describe("FeaturesSection", () => {
     expect(names("Class Features")).toEqual([
       expect.stringContaining("Arcane Recovery"),
       expect.stringContaining("Improved Critical"),
+    ]);
+  });
+
+  it("orders features by the class a group names, not by a repeated subclass or display name", async () => {
+    const fighter = { name: "Fighter", source: "PHB" };
+    const rogue = { name: "Rogue", source: "PHB" };
+    const record = characterRecord("1", "Vex");
+    const sharedName = {
+      ...record,
+      definition: {
+        ...record.definition,
+        levels: [
+          { class: rogue },
+          { class: fighter },
+          { class: rogue },
+          { class: fighter, subclass: { name: "Arcane", source: "XGE" } },
+          { class: rogue, subclass: { name: "Arcane", source: "PHB" } },
+        ],
+      },
+    };
+    const feature = (name: string, level: number) => ({
+      resolved: true as const,
+      name,
+      source: "PHB",
+      entries: [],
+      level,
+    });
+    renderSection(
+      {
+        groups: [
+          {
+            origin: "subclass",
+            name: "Arcane",
+            class: rogue,
+            features: [feature("Rogue Arcane", 2)],
+          },
+          {
+            origin: "subclass",
+            name: "Arcane",
+            class: fighter,
+            features: [feature("Fighter Arcane", 2)],
+          },
+          {
+            origin: "class",
+            name: "Same",
+            class: fighter,
+            features: [feature("Fighter Trait", 2)],
+          },
+          { origin: "class", name: "Same", class: rogue, features: [feature("Rogue Trait", 2)] },
+        ],
+      },
+      undefined,
+      sharedName,
+    );
+
+    await screen.findByText("Rogue Arcane");
+    expect(
+      within(card("Class Features"))
+        .getAllByRole("listitem")
+        .map((row) => row.textContent),
+    ).toEqual([
+      expect.stringContaining("Rogue Arcane"),
+      expect.stringContaining("Rogue Trait"),
+      expect.stringContaining("Fighter Arcane"),
+      expect.stringContaining("Fighter Trait"),
     ]);
   });
 

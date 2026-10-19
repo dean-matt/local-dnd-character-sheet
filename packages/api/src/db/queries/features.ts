@@ -165,17 +165,17 @@ function classGroups(
     if ("homebrewId" in ref) {
       // A homebrew class carries no feature rows, so only a missing one has anything to show.
       if (getHomebrewClass(homebrewDb, ref.homebrewId)) return [];
-      return [{ origin: "class", name, features: [unresolved(ref)] }];
+      return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];
     }
     if (!getClass(dataDir, ref.name, ref.source)) {
-      return [{ origin: "class", name, features: [unresolved(ref)] }];
+      return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];
     }
     const features = withChoices(
       getClassFeatures(dataDir, ref.name, ref.source, level).filter(inPlay(definition)),
       { className: ref.name, classSource: ref.source },
       definition,
     );
-    const groups: FeatureGroup[] = [{ origin: "class", name, features }];
+    const groups: FeatureGroup[] = [{ origin: "class", name, class: ref, features }];
     if (subclass) groups.push(subclassGroup(dataDir, definition, ref, subclass, level));
     return groups;
   });
@@ -207,7 +207,7 @@ function subclassGroup(
         definition,
       )
     : [unresolved(subclass)];
-  return { origin: "subclass", name: subclass.name, features };
+  return { origin: "subclass", name: subclass.name, class: classRef, features };
 }
 
 /** Every named node the race or subrace row carries — `Darkvision`, `Fey Ancestry`. */

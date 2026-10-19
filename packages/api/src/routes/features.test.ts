@@ -487,6 +487,7 @@ describe("featuresRoutes", () => {
       {
         origin: "class",
         name: "Artificer",
+        class: { name: "Artificer", source: "TCE" },
         features: [{ resolved: false, name: "Artificer", source: "TCE" }],
       },
       {
