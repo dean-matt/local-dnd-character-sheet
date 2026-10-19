@@ -5,12 +5,13 @@ import {
   type OptionalFeaturePrerequisite,
   ofWantedKind,
   optionalFeaturePrerequisitesSchema,
+  type SpellOffer,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
 import { variantKinds } from "./item-variant.ts";
 import { escapeLikeTerm, ftsPrefixQuery } from "./search-terms.ts";
-import { type ClassList, classListClause } from "./spells.ts";
+import { type ClassList, classListClause, offerClause } from "./spells.ts";
 
 export type CatalogSearchRow = {
   type: string;
@@ -90,7 +91,8 @@ const SEARCH_LOOKUP_KINDS = [
  * `@dnd/catalog`'s `itemKinds` places in any one of the kinds named — a magic variant by
  * the base items it admits — and an item hit carries its kinds, rarity and weapon category
  * as `item`. `classList` narrows spells to those a class's list holds, and leaves homebrew
- * spells out, since no class list holds one. `featureTypes` narrows optional features to
+ * spells out, since no class list holds one. `offer` narrows spells to those a row leaves to
+ * a pick, and leaves homebrew spells out the same way. `featureTypes` narrows optional features to
  * those carrying any one of the codes named, such as `EI`, and an optional feature hit
  * carries its prerequisites as `optionalFeature`.
  */
@@ -103,6 +105,7 @@ export type SearchFilter = {
   rarities?: readonly string[];
   itemKinds?: readonly string[];
   classList?: ClassList;
+  offer?: SpellOffer;
   featureTypes?: readonly string[];
 };
 
@@ -153,6 +156,10 @@ function narrowKind(conditions: Conditions, type: string, filter: SearchFilter) 
   }
   if (type === "spell" && filter.classList) {
     const { clause, params } = classListClause(filter.classList);
+    conditions.add(clause, ...params);
+  }
+  if (type === "spell" && filter.offer) {
+    const { clause, params } = offerClause(filter.offer);
     conditions.add(clause, ...params);
   }
   if (type === "spell" && schools?.length) {

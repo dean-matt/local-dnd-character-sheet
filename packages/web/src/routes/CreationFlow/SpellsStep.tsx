@@ -13,7 +13,18 @@ import { searchHitKey } from "../../lib/searchHitKey.ts";
 import { spellListFilters } from "../../lib/spellListFilters.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
-import { cantripsOf, SPELLS_FIELD, type SubclassPicks, spellsOf } from "./spellPicks.ts";
+import { NoCastingNote } from "./NoCastingNote.tsx";
+import { RowPickList } from "./RowPickList.tsx";
+import { StrayPicks } from "./StrayPicks.tsx";
+import {
+  cantripsOf,
+  classPicksOf,
+  type PickGrantor,
+  SPELLS_FIELD,
+  type SubclassPicks,
+  spellsOf,
+  strayPicks,
+} from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
 /**
@@ -42,8 +53,10 @@ function useSpellEdits() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const held = () => getValues("spells") ?? [];
   return {
-    add: (ref: EntryRef, prepared: boolean) =>
-      setValue("spells", [...held(), { ref, prepared }], { shouldDirty: true }),
+    add: (ref: EntryRef, prepared: boolean, pickedFor?: PickGrantor) =>
+      setValue("spells", [...held(), { ref, prepared, ...(pickedFor && { pickedFor }) }], {
+        shouldDirty: true,
+      }),
     remove: (ref: EntryRef) =>
       setValue(
         "spells",
@@ -53,11 +66,22 @@ function useSpellEdits() {
   };
 }
 
+/** The escape's label, naming every list it lifts: the class's where it casts, and each row's offer. */
+function escapeLabel(casts: boolean, className: string, rows: boolean) {
+  if (casts && rows) {
+    return `Offer spells off the ${className} list and outside what each row offers, and of any level`;
+  }
+  if (casts) return `Offer spells off the ${className} list, and of any level`;
+  return rows ? "Offer spells outside what each row offers" : undefined;
+}
+
 /**
  * The cantrips and spells a caster starts with, picked from the class's list at the levels
  * its slots cast, beside the spells its rows give outright. Neither the list nor a count is a
  * fence: the escape offers every spell of every level, and a pick past a count is kept, each
- * noted as a departure. A class that casts nothing at its level has nothing to pick.
+ * noted as a departure. A class that casts nothing at its level has nothing to pick of its
+ * own. A race, background, feat or optional feature offering picks gets fields of its own,
+ * held to its count and offer rather than the class's.
  */
 export function SpellsStep() {
   const { add, remove } = useSpellEdits();
@@ -73,6 +97,7 @@ export function SpellsStep() {
     granted,
     picked,
     subclass,
+    rows,
   } = useSpellChoices();
   const [beyond, setBeyond] = useState(false);
   const catalogOutOfDate = useCatalogOutOfDate();
@@ -82,8 +107,9 @@ export function SpellsStep() {
   if (failed) return <ErrorState message="The spells this step reads failed to load." />;
   if (!tablesReady || !granted) return <LoadingState label="Loading spells…" />;
 
-  const cantrips = cantripsOf(picked);
-  const spells = spellsOf(picked);
+  const own = classPicksOf(picked);
+  const cantrips = cantripsOf(own);
+  const spells = spellsOf(own);
   const held = new Set(picked.map((spell) => entryKey(spell.ref)));
   const given = new Set(granted.map((spell) => entryKey(spell.ref)));
   const unavailableReason = (hit: SearchHit) => {
@@ -94,17 +120,12 @@ export function SpellsStep() {
   const filters = spellListFilters(list, offList);
   const field = { edition, unavailableReason, onRemove: remove };
   const shown = sectionsShown(facts, subclass, cantrips.length, spells.length);
+  const offersAny = subclass.cantrips + subclass.spells > 0 || rows.length > 0;
+  const escapeText = escapeLabel(facts !== undefined, className, rows.length > 0);
 
   return (
     <div className="flex flex-col gap-5">
-      {!facts && (
-        <p className="text-muted text-row">
-          {className} doesn't cast spells at level {level}.{" "}
-          {subclass.cantrips + subclass.spells > 0
-            ? "Pick here only the spells the subclass offers."
-            : "Nothing to choose here — select Finish to create the character."}
-        </p>
-      )}
+      {!facts && <NoCastingNote className={className} level={level} offersAny={offersAny} />}
       <div className="grid gap-7 sm:grid-cols-2">
         <div className="flex flex-col gap-5">
           {shown.cantrips && (
@@ -136,10 +157,18 @@ export function SpellsStep() {
           />
         )}
       </div>
-      {facts && (
+      <StrayPicks strays={strayPicks(picked, rows)} onRemove={remove} />
+      <RowPickList
+        rows={rows}
+        field={field}
+        offList={beyond}
+        // A row's spell is always ready, so it lands prepared whatever the class does.
+        onPick={(ref, pickedFor) => add(ref, true, pickedFor)}
+      />
+      {escapeText && (
         <label className="flex items-center gap-2 text-body">
           <input type="checkbox" checked={beyond} onChange={() => setBeyond(!beyond)} />
-          Offer spells off the {className} list, and of any level
+          {escapeText}
         </label>
       )}
       <DepartureMark field={SPELLS_FIELD} />

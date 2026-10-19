@@ -1,13 +1,9 @@
 import type { SearchHit } from "@dnd/catalog";
 import { type CharacterRecord, type EntryRef, entryKey } from "@dnd/character";
-import { Repeat, X } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
-import { PILL } from "../lib/chipStyles.ts";
+import { PICK_HEADING } from "../lib/chipStyles.ts";
 import { CatalogPicker } from "./CatalogPicker/CatalogPicker.tsx";
-
-const HEADING = "font-semibold text-label text-muted uppercase tracking-label";
-const PILL_BUTTON =
-  "flex size-5 items-center justify-center rounded-pill text-muted hover:bg-border";
+import { PickChips } from "./PickChips.tsx";
 
 type Picked = { ref: EntryRef; name: string };
 
@@ -73,7 +69,7 @@ export function PickField({
     replacing && picked.find((each) => entryKey(each.ref) === entryKey(replacing.ref));
   return (
     <section aria-labelledby={id} className="flex flex-col gap-1.5">
-      <Heading id={id} className={HEADING}>
+      <Heading id={id} className={PICK_HEADING}>
         {heading}
       </Heading>
       {count !== undefined && (
@@ -85,33 +81,11 @@ export function PickField({
         </p>
       )}
       {note}
-      {picked.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {picked.map((pick) => (
-            <li key={entryKey(pick.ref)} className={`${PILL} flex items-center gap-1 pr-1`}>
-              {pick.name}
-              {onReplace && (
-                <button
-                  type="button"
-                  onClick={() => setReplacing(pick)}
-                  aria-label={`Replace ${pick.name}`}
-                  className={PILL_BUTTON}
-                >
-                  <Repeat aria-hidden="true" size={12} />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onRemove(pick.ref)}
-                aria-label={`Remove ${pick.name}`}
-                className={PILL_BUTTON}
-              >
-                <X aria-hidden="true" size={12} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <PickChips
+        picked={picked}
+        onRemove={onRemove}
+        {...(onReplace && { onReplace: setReplacing })}
+      />
       {swapped && onReplace ? (
         <div className="flex items-end gap-2">
           <div className="grow">

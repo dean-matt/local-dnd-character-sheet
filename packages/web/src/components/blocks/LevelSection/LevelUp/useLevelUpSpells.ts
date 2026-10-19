@@ -39,7 +39,7 @@ export function useLevelUpSpells(
   const added = spells.filter((spell) => !known.has(entryKey(spell.ref)));
   const { looked, failed } = useSpellLookup(
     added.map((spell) => spell.ref),
-    list ? { list } : {},
+    () => (list ? { list } : {}),
   );
   const picked = added.flatMap(({ ref }, index) => {
     const found = looked[index];

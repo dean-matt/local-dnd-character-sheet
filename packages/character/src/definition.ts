@@ -180,15 +180,6 @@ const inventoryEntrySchema = z
     error: "a variant override needs a variant",
   });
 
-const spellEntrySchema = z.strictObject({
-  ref: entryRefSchema,
-  prepared: z.boolean().default(false),
-  /** Set where a class, subclass, race, background or feat gives it, and absent on a pick. */
-  granted: z.literal(true).optional(),
-  /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
-  origin: contentRefSchema.optional(),
-});
-
 /**
  * What entitled a pick, in the shape the table holding that entitlement is keyed on.
  *
@@ -242,6 +233,31 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
     race: contentRefSchema,
   }),
 ]);
+
+/**
+ * The row a spell pick was made for, where a race, subrace, background, feat or optional
+ * feature offers it rather than the class, so the pick counts against that row's offer
+ * and never the class's. A subrace names its race, as a feat's grantor does. Each branch
+ * takes a catalog reference where `featGrantorSchema`'s takes an entry, since a homebrew
+ * row offers no picks.
+ */
+const spellPickGrantorSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("race"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("subrace"), ref: contentRefSchema, race: contentRefSchema }),
+  z.strictObject({ kind: z.literal("background"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("feat"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("optionalFeature"), ref: contentRefSchema }),
+]);
+
+const spellEntrySchema = z.strictObject({
+  ref: entryRefSchema,
+  prepared: z.boolean().default(false),
+  /** Set where a class, subclass, race, background or feat gives it, and absent on a pick. */
+  granted: z.literal(true).optional(),
+  /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
+  origin: contentRefSchema.optional(),
+  pickedFor: spellPickGrantorSchema.optional(),
+});
 
 const pickedNamesSchema = z
   .array(z.string().trim().toLowerCase().min(1))

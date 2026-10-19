@@ -47,8 +47,42 @@ const SPELLS: Record<string, { level: number; lists: string[] }> = {
   Fireball: { level: 3, lists: ["Wizard"] },
 };
 
+/** The list a race's picks come from, as its `choose` filter names it. */
+const RACE_LIST = "Cleric";
+
 /** The picks the draft's race offers, which a test widens. */
 let raceOffers = { cantrips: 0, spells: 0, learned: 0, alternatives: false };
+
+/** What `POST /spells/lookup` answers, a row's offer holding the race's list. */
+function lookup(request: {
+  spells: { name: string }[];
+  list?: { class: { name: string } };
+  offer?: unknown;
+}) {
+  return {
+    spells: request.spells.map(({ name }) => {
+      const spell = SPELLS[name];
+      if (!spell) return null;
+      const listed = request.offer
+        ? spell.lists.includes(RACE_LIST)
+        : request.list && spell.lists.includes(request.list.class.name);
+      return { name, level: spell.level, ...(listed !== undefined && { listed }) };
+    }),
+  };
+}
+
+/** What `GET /search` answers, narrowed to a row's offer as to the race's list. */
+function search(params: URLSearchParams) {
+  const cls = params.get("offer") ? RACE_LIST : params.get("class")?.split("|")[0];
+  const min = Number(params.get("minLevel"));
+  const max = Number(params.get("maxLevel"));
+  return page(
+    Object.entries(SPELLS)
+      .filter(([, { level }]) => level >= min && level <= max)
+      .filter(([, { lists }]) => cls === undefined || lists.includes(cls))
+      .map(([name]) => ({ type: "spell", ...PHB(name), edition: "classic" })),
+  );
+}
 
 function stubCatalog() {
   vi.stubGlobal(
@@ -64,28 +98,9 @@ function stubCatalog() {
           picks: race ? raceOffers : { cantrips: 0, spells: 0, learned: 0, alternatives: false },
         };
       } else if (url === "/api/spells/lookup") {
-        const request = JSON.parse(String(init?.body)) as {
-          spells: { name: string }[];
-          list?: { class: { name: string } };
-        };
-        body = {
-          spells: request.spells.map(({ name }) => {
-            const spell = SPELLS[name];
-            if (!spell) return null;
-            const listed = request.list && spell.lists.includes(request.list.class.name);
-            return { name, level: spell.level, ...(request.list && { listed }) };
-          }),
-        };
+        body = lookup(JSON.parse(String(init?.body)));
       } else if (url.startsWith("/api/search?")) {
-        const cls = params.get("class")?.split("|")[0];
-        const min = Number(params.get("minLevel"));
-        const max = Number(params.get("maxLevel"));
-        body = page(
-          Object.entries(SPELLS)
-            .filter(([, { level }]) => level >= min && level <= max)
-            .filter(([, { lists }]) => cls === undefined || lists.includes(cls))
-            .map(([name]) => ({ type: "spell", ...PHB(name), edition: "classic" })),
-        );
+        body = search(params);
       }
       return body === undefined
         ? new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 })
@@ -103,7 +118,7 @@ function Values() {
   return null;
 }
 
-function renderStep(className = "Wizard") {
+function renderStep(className = "Wizard", draft: Partial<CharacterDefinition> = {}) {
   localStorage.setItem(
     "draft:creation",
     JSON.stringify({
@@ -111,6 +126,7 @@ function renderStep(className = "Wizard") {
       race: PHB("Tiefling"),
       levels: [{ class: PHB(className) }],
       abilityScores: { str: 10, dex: 10, con: 10, int: 12, wis: 10, cha: 10 },
+      ...draft,
     }),
   );
   return renderWithClient(
@@ -229,14 +245,58 @@ describe("SpellsStep", () => {
     );
   });
 
-  it("gives a class that casts nothing no picks a race offers", async () => {
+  it("asks a class that casts nothing for the picks a race offers, and the step waits on them", async () => {
     raceOffers = { cantrips: 1, spells: 0, learned: 0, alternatives: false };
     renderStep("Fighter");
 
     expect(
-      await screen.findByText(/Fighter doesn't cast spells at level 1\. Nothing to choose here/),
+      await screen.findByText(/Fighter doesn't cast spells at level 1\. Pick here only/),
     ).toBeVisible();
-    expect(screen.queryByRole("combobox")).toBeNull();
+    const field = await screen.findByRole("region", { name: "Cantrips from Tiefling" });
+    expect(field).toHaveTextContent("Choose 1 — 0 selected");
+    expect(done).toBe(false);
+
+    await pick("Add a cantrip", "Sacred Flame");
+    await waitFor(() =>
+      expect(picks()).toEqual([
+        {
+          ref: PHB("Sacred Flame"),
+          prepared: true,
+          pickedFor: { kind: "race", ref: PHB("Tiefling") },
+        },
+      ]),
+    );
     await waitFor(() => expect(done).toBe(true));
+    expect(values.departures ?? []).toEqual([]);
+  });
+
+  it("holds a race's picks apart from the class's counts and list", async () => {
+    raceOffers = { cantrips: 1, spells: 0, learned: 0, alternatives: false };
+    renderStep();
+    const own = await screen.findByRole("region", { name: "Cantrips" });
+    await screen.findByRole("region", { name: "Cantrips from Tiefling" });
+
+    const raceInput = within(section("Cantrips from Tiefling")).getByRole("combobox");
+    fireEvent.focus(raceInput);
+    fireEvent.click(await screen.findByRole("option", { name: /Sacred Flame/ }));
+    await waitFor(() =>
+      expect(section("Cantrips from Tiefling")).toHaveTextContent("Choose 1 — 1 selected"),
+    );
+    expect(own).toHaveTextContent("Choose 1 — 0 selected");
+    expect(done).toBe(false);
+    expect(values.departures ?? []).toEqual([]);
+  });
+
+  it("lists a pick made for a row that offers none now, so its departure can be cleared", async () => {
+    const pickedFor = { kind: "feat" as const, ref: PHB("Alert") };
+    renderStep("Wizard", { spells: [{ ref: PHB("Light"), prepared: true, pickedFor }] });
+
+    const stray = await screen.findByRole("region", { name: "Picked for Alert" });
+    const note = "Light picked for Alert, which offers none.";
+    await waitFor(() => expect(values.departures).toEqual([{ field: "spells", note }]));
+
+    fireEvent.click(within(stray).getByRole("button", { name: "Remove Light" }));
+    await waitFor(() => expect(values.departures).toEqual([]));
+    expect(screen.queryByRole("region", { name: "Picked for Alert" })).toBeNull();
   });
 });

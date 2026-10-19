@@ -306,6 +306,17 @@ describe("searchRoutes, narrowed to a class's spell list", () => {
           chosen: 1,
           level: 3,
         },
+        {
+          spell_name: "Bless",
+          spell_source: "PHB",
+          granted_by: "feats",
+          name: "Magic Initiate",
+          source: "PHB",
+          parent_name: "",
+          parent_source: "",
+          chosen: 1,
+          level: 0,
+        },
       ],
     });
   });
@@ -348,6 +359,26 @@ describe("searchRoutes, narrowed to a class's spell list", () => {
     expect(
       await names("class=Fighter%7CPHB&subclass=Eldritch%20Knight%7CPHB&classLevel=2"),
     ).toEqual([]);
+  });
+
+  it("narrows to the spells a row leaves to a pick by its level, and no homebrew spell", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", {
+      name: "Brewed Bolt",
+      edition: "classic",
+      level: 1,
+      school: "V",
+      duration: [{ type: "instant" }],
+    });
+    expect(
+      await names("offerGrantor=feat&offer=Magic%20Initiate%7CPHB&offerLevel=1&maxLevel=1"),
+    ).toEqual(["Bless"]);
+    const knight =
+      "offerGrantor=subclass&offer=Eldritch%20Knight%7CPHB&offerParent=Fighter%7CPHB&offerLevel=";
+    expect(await names(`${knight}3`)).toEqual(["Shield"]);
+    expect(await names(`${knight}2`)).toEqual([]);
+    const initiate = "offerGrantor=feat&offer=Magic%20Initiate%7CPHB&offerLevel=1";
+    expect(await names(`${initiate}&class=Cleric%7CPHB`)).toEqual(["Bless"]);
+    expect(await names(`${initiate}&class=Wizard%7CPHB`)).toEqual([]);
   });
 
   it("refuses a class not written as Name|Source", async () => {

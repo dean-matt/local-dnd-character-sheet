@@ -1,5 +1,6 @@
 import { type ContentRef, refKey } from "@dnd/character";
 import { useGrantedSpells } from "../../hooks/useGrantedSpells.ts";
+import type { Offer } from "./spellPicks.ts";
 import { useSpellGrantors } from "./useSpellGrantors.ts";
 
 /** A spell given outright, and the name of the row that gives it. */
@@ -12,10 +13,7 @@ export type GrantedSpell = { ref: ContentRef; by: string };
  */
 export function useGrantedBy(): {
   granted?: GrantedSpell[];
-  offers: {
-    grantor: string;
-    picks: { cantrips: number; spells: number; learned: number; alternatives: boolean };
-  }[];
+  offers: Offer[];
   failed: boolean;
 } {
   const grantors = useSpellGrantors();
@@ -28,9 +26,9 @@ export function useGrantedBy(): {
       return [{ ref, by: grantors[index]?.ref.name ?? "" }];
     }),
   );
-  const offers = (lists ?? []).map(({ picks }, index) => ({
-    grantor: grantors[index]?.grantor ?? "",
-    picks,
-  }));
+  const offers = (lists ?? []).flatMap(({ picks }, index) => {
+    const row = grantors[index];
+    return row ? [{ row, picks }] : [];
+  });
   return { ...(granted && { granted }), offers, failed };
 }
