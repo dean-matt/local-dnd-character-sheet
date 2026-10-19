@@ -21,9 +21,11 @@ export function SpellBlockChoices({ offers }: { offers: readonly Offer[] }) {
       ],
       { shouldDirty: true },
     );
+  const seen = new Set<string>();
   return offers.map(({ row, blocks }) => {
     const grantor = blockGrantorOf(row);
-    if (!grantor || blocks.length === 0) return null;
+    if (!grantor || blocks.length === 0 || seen.has(spellBlockKey(grantor))) return null;
+    seen.add(spellBlockKey(grantor));
     return (
       <ChoicePills
         key={spellBlockKey(grantor)}
