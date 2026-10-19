@@ -786,11 +786,18 @@ describe("inventory", () => {
     const variant = { name: "Mind Carapace Armor", source: "VGM" };
     const parse = (item: object) =>
       characterDefinitionSchema.safeParse({ ...structuredClone(definition), inventory: [item] });
+    const code = { code: "requirements" };
     const reason = "Half Plate Armor cannot take Mind Carapace Armor.";
+    expect(parse({ ...entry, variant, variantOverride: code }).data?.inventory[0]).toMatchObject({
+      variantOverride: code,
+    });
     expect(parse({ ...entry, variant, variantOverride: reason }).data?.inventory[0]).toMatchObject({
       variantOverride: reason,
     });
-    expect(parse({ ...entry, variantOverride: reason }).success).toBe(false);
+    expect(parse({ ...entry, variant, variantOverride: { code: "unheard-of" } }).success).toBe(
+      false,
+    );
+    expect(parse({ ...entry, variantOverride: code }).success).toBe(false);
     expect(parse({ ...entry, variant }).data?.inventory[0]).not.toHaveProperty("variantOverride");
   });
 

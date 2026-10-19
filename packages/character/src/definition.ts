@@ -153,17 +153,26 @@ const proficienciesSchema = z.strictObject({
  * `ref`: expansion reads the base item's own fields in the shape `inherits` expects, and
  * a homebrew row does not carry them.
  *
- * `variantOverride` is the reason the check gave when the table held the pair anyway, and
- * absent on a pair the rules allow. It rides on its own entry, so another entry of the same
+ * `variantOverride` is the code of the requirement the pair failed when the table held it
+ * anyway, and absent on a pair the rules allow. A code carries no wording, so the sheet
+ * words it at read time; an entry saved before codes holds the refusal's text as a string,
+ * which the sheet shows as written. It rides on its own entry, so another entry of the same
  * variant is still checked as printed.
  */
+const VARIANT_OVERRIDE_CODES = ["requirements"] as const;
+
+const variantOverrideSchema = z.union([
+  z.strictObject({ code: z.enum(VARIANT_OVERRIDE_CODES) }),
+  z.string().min(1),
+]);
+
 const inventoryEntrySchema = z
   .strictObject({
     ref: entryRefSchema,
     id: z.string().min(1).optional(),
     inside: z.string().min(1).optional(),
     variant: contentRefSchema.optional(),
-    variantOverride: z.string().min(1).optional(),
+    variantOverride: variantOverrideSchema.optional(),
     quantity: z.int().min(1).default(1),
     carried: z.boolean().default(true),
     equipped: z.boolean().default(false),

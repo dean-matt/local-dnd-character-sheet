@@ -14,7 +14,7 @@ interface PendingVariant {
 interface Refusal {
   message: string;
   /** Set where the rules refuse a pair a table may still hold, so Add anyway is offered. */
-  override?: { base: ContentRef; reason: string };
+  override?: { base: ContentRef };
 }
 
 const path = (...parts: string[]) => `/items/${parts.map(encodeURIComponent).join("/")}`;
@@ -31,7 +31,7 @@ function refusalOf(
   base: ContentRef,
   name: string,
   baseKinds: readonly string[],
-  overriding: string | undefined,
+  overriding: boolean,
 ): Refusal {
   const detail = error instanceof Error ? error.message : String(error);
   if (!(error instanceof ApiError && error.status === 409)) {
@@ -43,14 +43,15 @@ function refusalOf(
   const group = armsGroupKinds(variant.kinds);
   const offer =
     !overriding && group && baseKinds.length > 0 && baseKinds.every((kind) => group.includes(kind));
-  return offer ? { message, override: { base, reason: message } } : { message };
+  return offer ? { message, override: { base } } : { message };
 }
 
 /**
  * Adds any catalog or homebrew item. A magic variant asks for its base item next, offering
  * the kinds the variant reaches, and saves the pair once `/items` expands it. A pair the
  * variant refuses says why and offers to add it anyway where both are weapons or both armor,
- * saving the reason beside the entry; a pair the check cannot reach says why and saves nothing.
+ * saving a code for the failed requirement beside the entry.
+ * A pair the check cannot reach says why and saves nothing.
  */
 export function AddItemField({
   edition,
@@ -86,23 +87,27 @@ export function AddItemField({
     base: ContentRef,
     name: string,
     baseKinds: readonly string[],
-    reason?: string,
+    overriding = false,
   ) {
     if (!variant || checking) return;
     setRefusal(undefined);
     setChecking(name);
     try {
       await apiGet(
-        `${path(base.name, base.source, "variants", variant.ref.name, variant.ref.source)}${reason ? "?override=true" : ""}`,
+        `${path(base.name, base.source, "variants", variant.ref.name, variant.ref.source)}${overriding ? "?override=true" : ""}`,
         itemRecordSchema,
       );
     } catch (error) {
-      setRefusal(refusalOf(error, variant, base, name, baseKinds, reason));
+      setRefusal(refusalOf(error, variant, base, name, baseKinds, overriding));
       return;
     } finally {
       setChecking(undefined);
     }
-    onAdd({ ref: base, variant: variant.ref, ...(reason && { variantOverride: reason }) });
+    onAdd({
+      ref: base,
+      variant: variant.ref,
+      ...(overriding && { variantOverride: { code: "requirements" as const } }),
+    });
     setVariant(undefined);
   }
 
@@ -142,12 +147,7 @@ export function AddItemField({
               type="button"
               onClick={() =>
                 refusal.override &&
-                pickBase(
-                  refusal.override.base,
-                  refusal.override.base.name,
-                  [],
-                  refusal.override.reason,
-                )
+                pickBase(refusal.override.base, refusal.override.base.name, [], true)
               }
               className="rounded-control border border-border bg-surface px-2 py-1 text-row"
             >

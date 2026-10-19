@@ -120,6 +120,10 @@ function weaponFacts(row: ItemFacts): Extract<SheetItem, { resolved: true }>["we
   return weapon ? { category: weapon.category, damage: weapon.damage } : null;
 }
 
+const OVERRIDE_REASONS = {
+  requirements: "This base item does not meet the variant's requirements.",
+} satisfies Record<Exclude<NonNullable<InventoryEntry["variantOverride"]>, string>["code"], string>;
+
 function sheetItem(
   entry: InventoryEntry,
   row: ItemFacts | undefined,
@@ -153,7 +157,12 @@ function sheetItem(
     weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
     entries: itemEntries(row.json),
-    ...(variantOverride && { overridden: variantOverride }),
+    ...(variantOverride && {
+      overridden:
+        typeof variantOverride === "string"
+          ? variantOverride
+          : `${displayName(ref)} cannot take ${variant?.name}. ${OVERRIDE_REASONS[variantOverride.code]}`,
+    }),
   };
 }
 
