@@ -541,6 +541,24 @@ describe("HomebrewSettings", () => {
     expect(entry()).not.toHaveProperty("attachedSpells");
   });
 
+  it("leaves spells grouped by frequency to the JSON, and does not flatten them", async () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    mode("JSON");
+    const grouped = {
+      ...JSON.parse(jsonText("Item JSON")),
+      attachedSpells: { will: ["mage hand"] },
+    };
+    typeJson("Item JSON", JSON.stringify(grouped));
+    mode("Step by step");
+    stepTo("Effects");
+
+    expect(within(editor()).queryByRole("textbox", { name: "Spell" })).toBeNull();
+    expect(within(editor()).getByText(/groups its spells/)).toBeInTheDocument();
+  });
+
   it("lists the fields the sheet reads, and the rules text, by name ahead of an item's JSON, and none beside a spell's", async () => {
     stubApi({});
     renderPage();

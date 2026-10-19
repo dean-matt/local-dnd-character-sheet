@@ -10,7 +10,7 @@ import {
   type SheetSpell,
   spellCastingFacts,
 } from "@dnd/catalog";
-import { type CharacterDefinition, displayName } from "@dnd/character";
+import { type CharacterDefinition, displayName, entryKey } from "@dnd/character";
 import { type ZodType, z } from "zod";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 import { resolveItemRows } from "./inventory.ts";
@@ -104,8 +104,9 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, fromItem?: str
 
 /**
  * The spells equipped items let the character cast, in inventory order, each marked granted
- * and citing its item. An item that waits on attunement lists none until attuned. A name no
- * row answers is left out: no definition entry holds it, so the sheet has nothing to repair.
+ * and citing its item. A spell the definition already lists stays as that entry, and one
+ * several items attach lists once, citing them all. An item that waits on attunement lists
+ * none until attuned. A name no row answers is left out: no definition entry holds it, so the sheet has nothing to repair.
  */
 function itemSpells(
   dataDir: string,
@@ -124,12 +125,22 @@ function itemSpells(
     definition.edition,
     attached.map(({ name }) => name),
   );
-  return attached.flatMap(({ item }, index) => {
+  const known = new Set(
+    definition.spells.flatMap(({ ref }) => ("homebrewId" in ref ? [] : [entryKey(ref)])),
+  );
+  const byKey = new Map<string, { row: CatalogSpellRow; items: string[] }>();
+  attached.forEach(({ item }, index) => {
     const row = found[index];
-    if (!row) return [];
+    if (!row) return;
+    const key = entryKey(row);
+    if (known.has(key)) return;
+    const listed = byKey.get(key);
+    if (!listed) byKey.set(key, { row, items: [item] });
+    else if (!listed.items.includes(item)) listed.items.push(item);
+  });
+  return [...byKey.values()].map(({ row, items }) => {
     const ref = { name: row.name, source: row.source };
-    const entry: SpellEntry = { ref, prepared: true, granted: true };
-    return [sheetSpell(entry, catalogFacts(row), item)];
+    return sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), items.join(", "));
   });
 }
 

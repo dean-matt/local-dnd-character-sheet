@@ -40,13 +40,19 @@ export function ItemEffects({ entry, onChange, errorFor }: HomebrewFormProps) {
         />
       </div>
       <div className={WHOLE}>
-        <ItemSpellFields
-          spells={listAt(entry, "attachedSpells").filter(
-            (spell): spell is string => typeof spell === "string",
-          )}
-          onChange={(next) => set("attachedSpells", next.length > 0 ? next : undefined)}
-          error={errorFor("attachedSpells")}
-        />
+        {entry.attachedSpells === undefined || Array.isArray(entry.attachedSpells) ? (
+          <ItemSpellFields
+            spells={listAt(entry, "attachedSpells").filter(
+              (spell): spell is string => typeof spell === "string",
+            )}
+            onChange={(next) => set("attachedSpells", next.length > 0 ? next : undefined)}
+            error={errorFor("attachedSpells")}
+          />
+        ) : (
+          <p className="text-muted text-row">
+            This item groups its spells by how often they are cast. Edit them in JSON.
+          </p>
+        )}
       </div>
     </div>
   );

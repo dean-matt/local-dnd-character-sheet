@@ -63,6 +63,7 @@ const item = (name: string, attachedSpells: unknown, requiresAttunement: 0 | 1 =
 
 const ITEMS: ItemFixtureRow[] = [
   item("Ring of Shielding", { will: ["shield"] }),
+  item("Ring of Warding", ["shield|PHB"]),
   item("Staff of Seeing", ["Detect Magic|PHB", "no such spell"], 1),
 ];
 
@@ -279,6 +280,34 @@ describe("characterSpellsRoutes", () => {
       store(withSpells([], [held("Staff of Seeing", { equipped: true, attuned: true })]));
       expect((await spells()).map(({ name, fromItem }) => ({ name, fromItem }))).toEqual([
         { name: "Detect Magic", fromItem: "Staff of Seeing" },
+      ]);
+    });
+
+    it("leaves a spell the definition already lists as that entry", async () => {
+      store(
+        withSpells(
+          [{ ref: SHIELD_REF, origin: WIZARD }],
+          [held("Ring of Shielding", { equipped: true })],
+        ),
+      );
+      const listed = await spells();
+      const [shield] = listed;
+      expect(listed).toHaveLength(1);
+      expect(shield).not.toHaveProperty("fromItem");
+    });
+
+    it("lists a spell once for the items that attach it, citing each", async () => {
+      store(
+        withSpells(
+          [],
+          [
+            held("Ring of Shielding", { equipped: true }),
+            held("Ring of Warding", { equipped: true }),
+          ],
+        ),
+      );
+      expect(await spells()).toEqual([
+        expect.objectContaining({ name: "Shield", fromItem: "Ring of Shielding, Ring of Warding" }),
       ]);
     });
 
