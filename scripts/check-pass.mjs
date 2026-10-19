@@ -3,6 +3,8 @@
  * `converge-review` posts it. A body the gate reads as `unreadable` blocks the merge, and
  * a posted review cannot be edited into shape, so the check runs on the JSON about to be sent.
  *
+ * Only line comments are checked: the gate classifies those and never reads the body's prose.
+ *
  * Usage: node scripts/check-pass.mjs <pass.json>; exits 1 and names each fault.
  */
 import { readFileSync, realpathSync } from "node:fs";
@@ -19,7 +21,7 @@ export function passFaults(pass) {
   for (const c of pass.comments ?? []) {
     if (severity(c.body) === "unreadable")
       faults.push(
-        `${c.path}:${c.line} does not open with **critical**, **warning** or **comment**`,
+        `${c.path ?? "a comment"}:${c.line ?? "?"} does not open with **critical**, **warning** or **comment**`,
       );
   }
   return faults;
