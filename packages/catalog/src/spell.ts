@@ -129,18 +129,25 @@ export function spellCastingFacts(json: Record<string, unknown>) {
   };
 }
 
+const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().min(1) });
+
 /**
  * `source` is absent on a homebrew spell, which stores an id and no source — the same
  * shape difference that tells a homebrew row from a catalog one everywhere else.
  * `origin` is the class the character learned it through, and `granted` marks a spell a
- * class, race, background or feat gives rather than one the player picked.
+ * class, race, background or feat gives rather than one the player picked. `pickedFor`
+ * names the race, subrace, background, feat or optional feature a pick was made for; its
+ * `kind` stays a string because `@dnd/character` owns that vocabulary.
  */
 const sheetSpellFields = {
   name: z.string().min(1),
   source: z.string().min(1).optional(),
   prepared: z.boolean(),
   granted: z.literal(true).optional(),
-  origin: z.strictObject({ name: z.string().min(1), source: z.string().min(1) }).optional(),
+  origin: contentRef.optional(),
+  pickedFor: z
+    .strictObject({ kind: z.string().min(1), ref: contentRef, race: contentRef.optional() })
+    .optional(),
 };
 
 const sheetSpellSchema = z.discriminatedUnion("resolved", [

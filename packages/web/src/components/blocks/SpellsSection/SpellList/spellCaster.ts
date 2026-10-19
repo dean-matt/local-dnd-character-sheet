@@ -4,17 +4,18 @@ import { type CharacterDerived, derivedValue, displayName, entryKey } from "@dnd
 type Caster = CharacterDerived["spellcasting"][number];
 
 /**
- * The casting class a spell belongs to: the class its `origin` names, or for a pick with
- * none, the first class that casts, which a spell picked at creation was picked for. A
- * granted spell with no origin, such as a race's, belongs to none.
+ * The casting class a spell belongs to: the class its `origin` names. A class pick with no
+ * origin, such as one made at creation, goes to the first class that casts. A granted spell
+ * with no origin, such as a race's, and a spell picked for a race, subrace, background,
+ * feat or optional feature belong to none.
  */
 export function spellCaster(
-  spell: Pick<SheetSpell, "origin" | "granted">,
+  spell: Pick<SheetSpell, "origin" | "granted" | "pickedFor">,
   casters: readonly Caster[],
 ): Caster | undefined {
   const { origin } = spell;
   if (origin) return casters.find((caster) => entryKey(caster.class) === entryKey(origin));
-  return spell.granted ? undefined : casters[0];
+  return spell.granted || spell.pickedFor ? undefined : casters[0];
 }
 
 export type PreparedTally = { name: string; prepared: number; limit: number };
