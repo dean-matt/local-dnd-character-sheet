@@ -3,6 +3,7 @@ import { useContext, useState } from "react";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { paragraphs } from "../../../lib/rulesProse.ts";
 import { refKey } from "../../../lib/rulesRefs.ts";
+import { shownName } from "../../../lib/shownName.ts";
 import { CatalogDetail } from "../../CatalogDetail.tsx";
 import { CatalogEntry } from "../../CatalogEntry.tsx";
 import { InModal } from "../../inModalContext.ts";
@@ -30,16 +31,21 @@ export function RulesRef({ token }: { token: RefToken }) {
   if (row === undefined || (prose.length === 0 && row.path === undefined)) {
     return (
       <span data-tag={token.tag} data-name={token.name} data-source={token.source}>
-        {token.display}
+        {shownName(token.display)}
       </span>
     );
   }
   const { path } = row;
+  const name = shownName(row.name);
   return (
     <>
-      <Popover trigger={token.display} label={`${row.name} (${row.source})`} triggerRef={reference}>
+      <Popover
+        trigger={shownName(token.display)}
+        label={`${name} (${row.source})`}
+        triggerRef={reference}
+      >
         <span className="block font-semibold">
-          {row.name} <span className="font-normal text-muted">{row.source}</span>
+          {name} <span className="font-normal text-muted">{row.source}</span>
         </span>
         {prose.map((text, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: a catalog row's prose never reorders.
@@ -56,7 +62,7 @@ export function RulesRef({ token }: { token: RefToken }) {
             }
             className="mt-1 block cursor-pointer underline"
           >
-            Open {row.name}
+            Open {name}
           </button>
         )}
       </Popover>

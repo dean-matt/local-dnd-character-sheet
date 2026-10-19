@@ -36,6 +36,7 @@ import { matchPath, type Params } from "react-router";
 import { z } from "zod";
 import { ApiError, apiGet } from "./api.ts";
 import { searchHitTypeLabel } from "./searchHits.ts";
+import { shownName } from "./shownName.ts";
 
 /** `source` is absent on a homebrew row, the shape difference the sheet reads everywhere. */
 interface CatalogRow {
@@ -45,6 +46,8 @@ interface CatalogRow {
   edition?: CharacterRecord["edition"];
   /** A deity's pantheon or a card's deck. */
   qualifier?: string;
+  /** An item row's kind, as `itemRecordSchema` reads it. */
+  kind?: string;
   entries: Entries;
   /** The row as the API returned it, for the detail's JSON view. */
   json: Record<string, unknown>;
@@ -60,6 +63,7 @@ export interface CatalogTarget {
 
 type Row = {
   name: string;
+  kind?: string;
   edition?: CharacterRecord["edition"];
   json: Record<string, unknown>;
 };
@@ -70,6 +74,7 @@ const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntrie
   name: record.name,
   source: record.source,
   edition: record.edition,
+  ...(record.kind && { kind: record.kind }),
   entries: entries(record.json),
   json: record.json,
 });
@@ -77,7 +82,7 @@ const toRow = (record: Row & { source?: string }, entries: ToEntries = rowEntrie
 const segments = (...parts: (string | undefined)[]) =>
   parts.map((part) => encodeURIComponent(part ?? "")).join("/");
 
-const pair = (name?: string, source?: string) => `${name} (${source})`;
+const pair = (name?: string, source?: string) => `${shownName(name ?? "")} (${source})`;
 
 function nameSource(
   collection: string,

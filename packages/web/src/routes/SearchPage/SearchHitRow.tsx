@@ -6,6 +6,7 @@ import type { AddOutcome } from "../../hooks/useAddToCharacter.ts";
 import { addableHit } from "../../lib/addable.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { searchHitAddress, searchHitTypeLabel } from "../../lib/searchHits.ts";
+import { shownName } from "../../lib/shownName.ts";
 
 const row = "flex items-center gap-3 rounded-control border border-border bg-surface px-3.5 py-2.5";
 
@@ -32,7 +33,7 @@ export function SearchHitRow({
       <span className="min-w-0 grow">
         {address === undefined ? (
           <span className="block truncate text-body font-medium text-ink">
-            {hit.name}
+            {shownName(hit.name)}
             <span className="ml-2 text-label font-normal text-muted">No page yet</span>
           </span>
         ) : (
@@ -42,7 +43,7 @@ export function SearchHitRow({
             onClick={() => onOpen(address)}
             className="block max-w-full cursor-pointer truncate text-left text-body font-medium text-ink hover:underline"
           >
-            {hit.name}
+            {shownName(hit.name)}
           </button>
         )}
         {hit.item && (

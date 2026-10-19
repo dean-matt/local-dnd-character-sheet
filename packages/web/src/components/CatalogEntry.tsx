@@ -7,6 +7,7 @@ import { LoadingState } from "../LoadingState.tsx";
 import { addableAt } from "../lib/addable.ts";
 import { ApiError } from "../lib/api.ts";
 import { matchCatalogTarget } from "../lib/catalogRows.ts";
+import { shownName } from "../lib/shownName.ts";
 import { AddedNotice } from "./AddedNotice.tsx";
 import { AddTo } from "./AddTo/AddTo.tsx";
 import { JsonView } from "./JsonView.tsx";
@@ -45,9 +46,14 @@ export function CatalogEntry({ address }: { address: string }) {
   if (row.isError) return entry("Could not load", <ErrorState error={row.error} />);
   if (row.isPending) return entry("Loading…", <LoadingState />);
 
-  const { name, source, edition, qualifier, entries, json } = row.data;
+  const { source, edition, entries, json, kind } = row.data;
+  const name = shownName(row.data.name);
   const label = match.target.label(match.key);
-  const addable = addableAt(address, name, source);
+  // An item group can share its shown name and source with one of the items it groups,
+  // as Potion of Healing (DMG) does, and a character owns the items rather than the group.
+  const group = kind === "itemGroup";
+  const qualifier = group ? "Item group" : row.data.qualifier;
+  const addable = group ? undefined : addableAt(address, row.data.name, source);
   return entry(
     name,
     <>

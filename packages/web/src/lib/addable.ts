@@ -6,6 +6,7 @@
 import type { SearchHit } from "@dnd/catalog";
 import type { ContentRef, EntryRef } from "@dnd/character";
 import { matchCatalogTarget } from "./catalogRows.ts";
+import { shownName } from "./shownName.ts";
 
 export interface Addable {
   kind: "item" | "spell" | "feat";
@@ -19,7 +20,8 @@ export interface Addable {
 const isKind = (type: string): type is Addable["kind"] =>
   type === "item" || type === "spell" || type === "feat";
 
-const labelOf = (name: string, source: string | undefined) => `${name} (${source ?? "Homebrew"})`;
+const labelOf = (name: string, source: string | undefined) =>
+  `${shownName(name)} (${source ?? "Homebrew"})`;
 
 /** What a search hit adds, or `undefined` for a type nothing adds. */
 export function addableHit(hit: SearchHit): Addable | undefined {
