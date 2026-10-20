@@ -1,7 +1,7 @@
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { ITEM_ADVANTAGES } from "@dnd/catalog";
+import { ITEM_ADVANTAGES, itemEntries } from "@dnd/catalog";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent, resolveContentDb } from "../build-db.ts";
@@ -260,6 +260,79 @@ describe("the items loader", () => {
 
   const holdingBase = (...entries: unknown[]) =>
     vendorHolding({ "data/items-base.json": { baseitem: entries } });
+
+  describe("an item group's replication", () => {
+    const REPLICATE = "replicate magic item|artificer|efa|2|efa";
+    const group = {
+      name: "Armor of Resistance",
+      source: "XDMG",
+      classFeatures: [REPLICATE],
+      optionalfeatures: null,
+      items: ["Armor of Acid Resistance|XDMG", "Cloak of Charm|XDMG"],
+    };
+
+    const jsonOf = (files: Record<string, unknown>, name: string) => {
+      build(vendorHolding(files));
+      const db = open();
+      const json = db.prepare("SELECT json FROM items WHERE name = ?").pluck().get(name) as string;
+      db.close();
+      return JSON.parse(json) as Record<string, unknown>;
+    };
+
+    const variant = (inherits: Record<string, unknown> = {}) => ({
+      name: "Armor of Acid Resistance",
+      type: "GV|XDMG",
+      requires: [{ armor: true }],
+      inherits: { source: "XDMG", rarity: "rare", entries: ["Resist."], ...inherits },
+    });
+
+    const note = "{@classFeature replicate magic item|artificer|efa|2|efa|Replicate Magic Item}";
+
+    it("tells a member of the group an Artificer can replicate it, once", () => {
+      const row = jsonOf(
+        {
+          "data/items.json": { item: [], itemGroup: [group] },
+          "data/magicvariants.json": { magicvariant: [variant()] },
+        },
+        "Armor of Acid Resistance",
+      );
+
+      expect(itemEntries(row.inherits as Record<string, unknown>)).toEqual([
+        "Resist.",
+        `An Artificer can replicate this item with ${note}.`,
+      ]);
+    });
+
+    it("reaches a plain item the group lists", () => {
+      const row = jsonOf(
+        {
+          "data/items.json": {
+            item: [{ name: "Cloak of Charm", source: "XDMG", entries: ["Charming."] }],
+            itemGroup: [group],
+          },
+        },
+        "Cloak of Charm",
+      );
+
+      expect(itemEntries(row)).toEqual([
+        "Charming.",
+        `An Artificer can replicate this item with ${note}.`,
+      ]);
+    });
+
+    it("leaves a field the member states itself as the member wrote it", () => {
+      const own = "replicate magic item|artificer|efa|3|efa";
+      const row = jsonOf(
+        {
+          "data/items.json": { item: [], itemGroup: [group] },
+          "data/magicvariants.json": { magicvariant: [variant({ classFeatures: [own] })] },
+        },
+        "Armor of Acid Resistance",
+      );
+
+      expect((row.inherits as { classFeatures: string[] }).classFeatures).toEqual([own]);
+    });
+  });
 
   it("fails the build when two entries share a (name, source)", () => {
     expect(refusal(holdingBase(LONGSWORD, LONGSWORD))).toMatch(

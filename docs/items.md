@@ -16,7 +16,7 @@ A magic variant states the item's own fields under `inherits` — the entry arou
 the template's match rules — so its source, rarity and attunement come from there. Its
 own `type` is a `GV|` generic-variant code that `kind` already says, and is not stored.
 Nine template and `itemGroup` names end in ` (*)`, kept in the key and left off what the web
-shows. An `itemGroup`'s detail reads "Item group" and offers no Add to…, since a character owns its items, not the group.
+shows. An `itemGroup`'s detail reads "Item group" and offers no Add to…, since a character owns its items, not the group. Only the group carries the Armor of Resistance's `classFeatures`, so the loader copies it and `optionalfeatures` onto each member, unless the member states its own.
 
 **The expansions are absent.** `+1 Chain Mail` and `Longsword of Cold Resistance` exist
 in no upstream file: they come of applying a template to every base item its `requires`
