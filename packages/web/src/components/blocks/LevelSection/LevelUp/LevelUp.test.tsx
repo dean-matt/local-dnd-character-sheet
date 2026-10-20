@@ -559,7 +559,7 @@ describe("LevelUp", () => {
     fireEvent.change(face, { target: { value: "7" } });
     fireEvent.click(applyButton());
     await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
-    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, rolled: 7 });
+    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, rolled: 7, typed: true });
   });
 
   it("asks for a subclass a class passed its subclass level without", async () => {

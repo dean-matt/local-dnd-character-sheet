@@ -84,7 +84,7 @@ export function hitPointMaximum(
     const key = entryKey(level.class);
     const die = hitDice.get(key);
     if (die === undefined) throw new RangeError(`No hit die for ${key}`);
-    return { die, rolled: level.rolled };
+    return { die, rolled: level.rolled, typed: level.typed };
   });
   const { terms } = maxHitPoints<TermReference>(
     levels,

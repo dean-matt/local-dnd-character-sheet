@@ -905,6 +905,15 @@ describe("invariants a duplicate row would break", () => {
     expect(characterDefinitionSchema.safeParse(typed(1.5)).success).toBe(false);
   });
 
+  it("keeps a typed mark and rejects any other value", () => {
+    const level = (typed: unknown) => ({
+      ...definition,
+      levels: [{ class: ROGUE, rolled: 6, typed }],
+    });
+    expect(characterDefinitionSchema.safeParse(level(true)).success).toBe(true);
+    expect(characterDefinitionSchema.safeParse(level(false)).success).toBe(false);
+  });
+
   it("bounds a gain at 999 either way, so a summed maximum stays a safe integer", () => {
     const typed = (rolled: number) => ({ ...definition, levels: [{ class: ROGUE, rolled }] });
     expect(characterDefinitionSchema.safeParse(typed(999)).success).toBe(true);

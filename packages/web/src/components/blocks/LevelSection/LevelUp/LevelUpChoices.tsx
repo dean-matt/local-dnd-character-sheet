@@ -124,7 +124,7 @@ export function LevelUpChoices({
           rolled={level.rolled}
           onChange={(next, rolled) => {
             onMethod(next);
-            plan.setRolled(rolled);
+            plan.setRolled(rolled, next === "custom");
           }}
         />
       )}

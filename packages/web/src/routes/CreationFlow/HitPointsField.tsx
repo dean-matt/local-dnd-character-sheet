@@ -105,8 +105,8 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
       "levels",
       levels.map((level, index) => {
         if (index !== at) return level;
-        const { rolled: _, ...rest } = level;
-        return gain === undefined ? rest : { ...rest, rolled: gain };
+        const { rolled: _, typed: __, ...rest } = level;
+        return gain === undefined ? rest : { ...rest, rolled: gain, typed: true };
       }),
       { shouldDirty: true },
     );
@@ -170,7 +170,7 @@ export function HitPointsField({ memory, onMemory }: HitPointsFieldProps) {
                 ) : (
                   <>
                     {face}
-                    {outsideDie(gain, die) && (
+                    {(levels[index]?.typed || outsideDie(gain, die)) && (
                       <span className="block text-muted text-row">typed</span>
                     )}
                   </>

@@ -40,6 +40,11 @@ const levelEntrySchema = z.strictObject({
    * maximum a safe integer the derived schema can parse.
    */
   rolled: z.int().min(-MAX_HIT_POINT_GAIN).max(MAX_HIT_POINT_GAIN).optional(),
+  /**
+   * Set where the player typed `rolled`, which a number within the die's range cannot tell
+   * from a roll. A level saved without it reads by range.
+   */
+  typed: z.literal(true).optional(),
 });
 
 const LEVELING_MODES = ["xp", "milestone"] as const;

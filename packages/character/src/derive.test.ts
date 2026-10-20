@@ -84,6 +84,22 @@ describe("hit point maximum", () => {
     expect(hitPointMaximum(definition, hitDice).total).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
   });
 
+  it("labels an in-range gain the player typed as typed, and one without the mark as rolled", () => {
+    const labels = (typed: true | undefined) =>
+      hitPointMaximum(
+        {
+          ...definition,
+          levels: definition.levels.map((level, index) =>
+            index === 1 && typed ? { ...level, typed } : level,
+          ),
+        },
+        hitDice,
+      ).terms.map((term) => term.label);
+
+    expect(labels(true)[1]).toContain("d8 typed 6");
+    expect(labels(undefined)[1]).toContain("d8 rolled 6");
+  });
+
   it("reads a character back out of the database column it was stored in", () => {
     const stored = characterDefinitionSchema.parse(JSON.parse(JSON.stringify(definition)));
     expect(hitPointMaximum(stored, hitDice).total).toBe(8 + 6 + 5 + 3 + 5 + 2 * 5);
