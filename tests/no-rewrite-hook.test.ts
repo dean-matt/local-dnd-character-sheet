@@ -23,7 +23,10 @@ let work: string;
 let root: string;
 
 function git(...args: string[]): string {
-  return execFileSync("git", args, { cwd: work, encoding: "utf8" });
+  const start = performance.now();
+  const out = execFileSync("git", args, { cwd: work, encoding: "utf8" });
+  process.stderr.write(`TIMING git ${args[0]} ${Math.round(performance.now() - start)}ms\n`);
+  return out;
 }
 
 /**
@@ -31,7 +34,9 @@ function git(...args: string[]): string {
  * without it, a script that dies before reaching `checkRewrite` reads as a rejection.
  */
 function fence(): { status: number | null; stderr: string } {
+  const start = performance.now();
   const result = spawnSync("node", [SCRIPT], { cwd: work, encoding: "utf8" });
+  process.stderr.write(`TIMING fence ${Math.round(performance.now() - start)}ms\n`);
   return { status: result.status, stderr: result.stderr };
 }
 
@@ -51,8 +56,10 @@ function amend(body: string): void {
 beforeAll(() => {
   root = mkdtempSync(join(tmpdir(), "no-rewrite-"));
   work = join(root, "work");
+  const start = performance.now();
   execFileSync("git", ["init", "--bare", "--quiet", join(root, "remote.git")]);
   execFileSync("git", ["init", "--quiet", "-b", "main", work]);
+  process.stderr.write(`TIMING two inits ${Math.round(performance.now() - start)}ms\n`);
   git("config", "user.email", "test@example.invalid");
   git("config", "user.name", "Test");
   git("remote", "add", "origin", join(root, "remote.git"));

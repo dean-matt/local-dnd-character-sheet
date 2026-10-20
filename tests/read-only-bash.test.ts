@@ -60,10 +60,13 @@ describe("rejects", () => {
 
 describe("the hook", () => {
   function hook(command: string) {
-    return spawnSync("node", [SCRIPT], {
+    const start = performance.now();
+    const out = spawnSync("node", [SCRIPT], {
       input: JSON.stringify({ tool_name: "Bash", tool_input: { command } }),
       encoding: "utf8",
     });
+    process.stderr.write(`TIMING hook ${Math.round(performance.now() - start)}ms\n`);
+    return out;
   }
 
   it("exits 2 with the reason on a write, which is what blocks the call", () => {
