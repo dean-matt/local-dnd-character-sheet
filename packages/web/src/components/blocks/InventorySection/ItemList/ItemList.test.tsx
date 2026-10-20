@@ -675,6 +675,18 @@ describe("ItemList", () => {
       expect(screen.getByRole("button", { name: "Equipped, Cloak of Protection" })).toBeEnabled();
       expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
     });
+
+    it("stows an item already equipped under the house rule", async () => {
+      const fetchMock = renderList(
+        unproficient(),
+        [{ ...ITEMS[0], equipped: true } as SheetItem, ...ITEMS.slice(1)],
+        { houseRules: { requireEquipProficiency: true } },
+      );
+
+      fireEvent.click(await screen.findByRole("button", { name: "Equipped, Longsword" }));
+
+      expect((await written(fetchMock)).inventory[0].equipped).toBe(false);
+    });
   });
 
   it("carries an item it equips", async () => {
