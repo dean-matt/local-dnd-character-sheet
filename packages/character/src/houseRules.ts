@@ -59,6 +59,12 @@ export const houseRulesSchema = z
      * the equip goes through and the sheet marks what it costs.
      */
     requireEquipProficiency: z.boolean().optional(),
+    /**
+     * Hit points an equipped item that sets Constitution, such as the Amulet of Health,
+     * adds at each of the character's levels on top of the modifier it earns. Absent, the
+     * item only sets the score.
+     */
+    constitutionItemHitPointsPerLevel: z.int().positive().optional(),
   })
   .prefault({});
 
@@ -78,4 +84,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   duplicateToolReplacement: false,
   feats: false,
   requireEquipProficiency: false,
+  constitutionItemHitPointsPerLevel: 0,
 };

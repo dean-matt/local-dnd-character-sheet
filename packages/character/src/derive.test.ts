@@ -1027,6 +1027,57 @@ describe("deriveCharacter", () => {
       );
     });
 
+    describe("the per-level hit point house rule", () => {
+      const PER_LEVEL = 2;
+      const level = definition.levels.length;
+      const attunedAmulet = [worn(AMULET, { equipped: true, attuned: true })];
+      const houseRuled = (inventory: CharacterDefinition["inventory"], extra = {}) =>
+        deriveCharacter(
+          {
+            ...definition,
+            inventory,
+            houseRules: { constitutionItemHitPointsPerLevel: PER_LEVEL },
+            ...extra,
+          },
+          itemCatalog,
+        );
+
+      it("leaves the maximum as printed when the option is absent", () => {
+        const printed = withItems(attunedAmulet).hitPointMaximum;
+        expect(printed.terms.map((term) => term.label)).not.toContain(AMULET.name);
+      });
+
+      it("adds the amount for every level, as its own term named for the item", () => {
+        const base = withItems(attunedAmulet).hitPointMaximum;
+        const block = houseRuled(attunedAmulet).hitPointMaximum;
+        expect(block.computed).toBe(base.computed + PER_LEVEL * level);
+        expect(block.terms).toContainEqual({
+          label: AMULET.name,
+          value: PER_LEVEL * level,
+          reference: { houseRuleOption: "constitutionItemHitPointsPerLevel" },
+        });
+      });
+
+      it("adds nothing until the item is equipped, and attuned where it requires it", () => {
+        const base = withItems([]).hitPointMaximum.computed;
+        expect(houseRuled([]).hitPointMaximum.computed).toBe(base);
+        expect(houseRuled([worn(AMULET, {})]).hitPointMaximum.computed).toBe(base);
+        expect(houseRuled([worn(AMULET, { equipped: true })]).hitPointMaximum.computed).toBe(base);
+      });
+
+      it("adds nothing for an item that raises a score without setting Constitution", () => {
+        const belt = [worn(BELT, { equipped: true })];
+        expect(houseRuled(belt).hitPointMaximum.computed).toBe(
+          withItems(belt).hitPointMaximum.computed,
+        );
+      });
+
+      it("yields to a manual override", () => {
+        const block = houseRuled(attunedAmulet, { overrides: { hitPointMaximum: 99 } });
+        expect(derivedValue(block.hitPointMaximum)).toBe(99);
+      });
+    });
+
     it("keeps a manual override beside the computed score, which downstream numbers still read", () => {
       const overridden = deriveCharacter(
         {
