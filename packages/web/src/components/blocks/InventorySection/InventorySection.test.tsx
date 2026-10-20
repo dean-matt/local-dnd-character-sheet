@@ -193,7 +193,7 @@ describe("InventorySection", () => {
     expect(pressed("Attuned, Ring of Warmth")).toBe("false");
     expect(row("Ring of Warmth")).toHaveTextContent("Not carried");
     expect(row("Ring of Warmth")).toHaveTextContent("Unknown (magic)");
-    expect(screen.getByRole("textbox", { name: "Arrow quantity" })).toHaveValue("20");
+    expect(screen.getByLabelText("Arrow quantity")).toHaveValue("20");
     expect(row("Arrow")).toHaveTextContent("Weight: 1 lb");
     expect(row("Arrow")).not.toHaveTextContent("none");
   });
@@ -391,7 +391,7 @@ describe("InventorySection", () => {
     await waitFor(() => expect(attunement.getByRole("status")).toHaveTextContent(warning));
     expect(attunement.getByText("Attuned").nextSibling?.firstChild).toHaveClass("text-error");
 
-    fireEvent.click(attunement.getByRole("button", { name: "Over the attunement limit" }));
+    fireEvent.click(attunement.getByLabelText("Over the attunement limit"));
     expect(attunement.getByRole("group", { name: "Over the attunement limit" })).toHaveTextContent(
       warning,
     );
@@ -412,7 +412,7 @@ describe("InventorySection", () => {
     await screen.findByText("Ring of Warmth");
     const attunement = card("Attunement");
     expect(attunement.getByRole("status")).toBeEmptyDOMElement();
-    expect(attunement.queryByRole("button", { name: "Over the attunement limit" })).toBeNull();
+    expect(attunement.queryByLabelText("Over the attunement limit")).toBeNull();
     expect(attunement.getByText("Attuned").nextSibling?.firstChild).not.toHaveClass("text-error");
   });
 
@@ -463,8 +463,7 @@ describe("InventorySection", () => {
 
     const HINT = "Type a total, or a sum for one such as 20+10 or 100-37.";
 
-    const goldField = () =>
-      card("Currency").getByRole("textbox", { name: "Gold (gp)" }) as HTMLInputElement;
+    const goldField = () => card("Currency").getByLabelText("Gold (gp)") as HTMLInputElement;
 
     function enterGold(amount: string) {
       const field = goldField();
@@ -498,7 +497,7 @@ describe("InventorySection", () => {
       const currency = card("Currency");
       expect(currency.getByText(HINT)).not.toBeVisible();
       expect(goldField()).toHaveAccessibleDescription(HINT);
-      fireEvent.click(currency.getByRole("button", { name: "How to enter coins" }));
+      fireEvent.click(currency.getByLabelText("How to enter coins"));
       expect(currency.getByRole("group", { name: "How to enter coins" })).toHaveTextContent(HINT);
     });
 
@@ -695,11 +694,11 @@ describe("InventorySection", () => {
       await screen.findByText("+1 Longsword");
       const sword = within(row("+1 Longsword"));
       expect(sword.queryByText("1d8")).toBeNull();
-      fireEvent.click(sword.getByRole("button", { name: "+1 Longsword attack bonus +4" }));
+      fireEvent.click(sword.getByLabelText("+1 Longsword attack bonus +4"));
       const terms = sword.getByRole("group", { name: "+1 Longsword attack bonus" });
       expect(terms).toHaveTextContent("Strength3");
       expect(terms).toHaveTextContent("Magic1");
-      fireEvent.click(sword.getByRole("button", { name: "+1 Longsword damage 1d8+4" }));
+      fireEvent.click(sword.getByLabelText("+1 Longsword damage 1d8+4"));
       expect(sword.getByRole("group", { name: "+1 Longsword damage" })).toHaveTextContent(
         "One-handed 1d8",
       );
@@ -716,11 +715,8 @@ describe("InventorySection", () => {
       const fetchMock = renderSection(load({ attacks: [attack(held)] }));
 
       const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
-      expect(grip.getByRole("button", { name: "1h, one-handed" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-      fireEvent.click(grip.getByRole("button", { name: "2h, two-handed" }));
+      expect(grip.getByLabelText("1h, one-handed")).toHaveAttribute("aria-pressed", "true");
+      fireEvent.click(grip.getByLabelText("2h, two-handed"));
 
       await waitFor(() =>
         expect(fetchMock).toHaveBeenCalledWith("/api/characters/1", expect.anything()),
@@ -739,7 +735,7 @@ describe("InventorySection", () => {
       );
 
       const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
-      fireEvent.click(grip.getByRole("button", { name: "2h, two-handed, unavailable" }));
+      fireEvent.click(grip.getByLabelText("2h, two-handed, unavailable"));
       expect(grip.getByRole("group", { name: "Two-handed" })).toHaveTextContent(
         "Unavailable while this weapon and a shield are both equipped.",
       );
@@ -750,7 +746,7 @@ describe("InventorySection", () => {
       renderSection(load({ attacks: [attack(held)] }));
 
       const grip = within(await screen.findByRole("group", { name: "+1 Longsword grip" }));
-      fireEvent.click(grip.getByRole("button", { name: "2h, two-handed" }));
+      fireEvent.click(grip.getByLabelText("2h, two-handed"));
       expect(await saveToasts().findByText(/^Inventory: Couldn't save/)).toBeInTheDocument();
     });
   });
