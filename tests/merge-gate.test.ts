@@ -438,9 +438,8 @@ describe("the other three conditions", () => {
   });
 });
 
-// A hosted Windows runner (Defender exclusion in place) runs the whole file in about 3 s,
-// the git block's spawns costing 60-140 ms each. 60 s is twenty times that, and a hung
-// one still fails. Covers the whole file.
+// The file takes about 3 s on a hosted Windows runner. 60 s is twenty times that, and a hung
+// spawn still fails. Covers the whole file.
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
 /**

@@ -13,11 +13,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
  * passes in the suite and asserts the opposite of its name when run alone.
  */
 
-// On a hosted Windows runner (Defender exclusion in place) the whole file takes about 4.8 s:
-// `beforeAll` about 1 s, each describe block's setup about 0.6 s, and a push (about 330 ms) or
-// a fence run (about 220-370 ms) costs the most of any spawn. A run that timed out at the
-// 10 s default was a loaded runner, not the setup, so no part of it is worth cutting; 60 s
-// is over ten times the measured cost, and a hung spawn still fails.
+// The file takes about 5 s on a hosted Windows runner. 60 s is over ten times that, and a
+// hung spawn still fails.
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
 const SCRIPT = resolve(import.meta.dirname, "../scripts/no-rewrite.mjs");
