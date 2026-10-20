@@ -276,7 +276,9 @@ describe("CustomSkills", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove Juggling" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(screen.getByRole("textbox", { name: "Custom skill" })).toHaveFocus();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Custom skill" })).toHaveFocus(),
+    );
     expect(screen.queryByRole("button", { name: "Juggling" })).toBeNull();
     const writes = fetchMock.mock.calls.filter(([url]) => url === "/api/characters/1");
     expect(writes).toHaveLength(1);
