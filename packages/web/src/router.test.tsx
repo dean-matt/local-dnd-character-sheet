@@ -13,6 +13,10 @@ function lazyRoutes(routes: RouteObject[]): (() => Promise<unknown>)[] {
   ]);
 }
 
+/** A page's section by its label: `findByRole("region")` walks the whole accessibility tree on every DOM change. */
+const pageElement = (title: string) => document.querySelector(`section[aria-label="${title}"]`);
+const pageShown = (title: string) => waitFor(() => expect(pageElement(title)).not.toBeNull());
+
 function renderAt(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(routeConfig, { initialEntries: [path] });
@@ -66,16 +70,14 @@ describe("routing", () => {
   it("redirects a character to its first visible page", async () => {
     const router = renderAt("/characters/abc");
     await waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/stats"));
-    await waitFor(() =>
-      expect(document.querySelector('section[aria-label="Stats"]')).not.toBeNull(),
-    );
+    await pageShown("Stats");
     expect(screen.getByRole("region", { name: "Stats" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/characters/abc/p/stats");
   });
 
   it("lists a character's pages in the nav, with the current one marked", async () => {
     renderAt("/characters/abc/p/spells");
-    await screen.findByRole("region", { name: "Spells" });
+    await pageShown("Spells");
 
     const nav = screen.getByRole("navigation", { name: "Character pages" });
     expect(nav.querySelectorAll("a")).toHaveLength(presetPageRecords().length);
@@ -91,7 +93,7 @@ describe("routing", () => {
       ),
     });
     renderAt("/characters/abc/p/stats");
-    await screen.findByRole("region", { name: "Stats" });
+    await pageShown("Stats");
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]");
     expect(sheet).not.toBeNull();
@@ -106,8 +108,8 @@ describe("routing", () => {
 
   it("shows the character's header above every page and prints it once, ahead of them", async () => {
     const router = renderAt("/characters/abc/p/stats");
-    await screen.findByRole("heading", { level: 1, name: "Vex" });
-    await screen.findByRole("region", { name: "Stats" });
+    await screen.findByText("Vex", { selector: "h1" });
+    await pageShown("Stats");
 
     const sheet = document.querySelector<HTMLElement>("[data-print-sheet]") as HTMLElement;
     const titles = within(sheet)
@@ -118,13 +120,13 @@ describe("routing", () => {
     expect(sheet.firstElementChild).toHaveTextContent("Half-Elf Warlock 1 • Charlatan");
 
     await router.navigate("/characters/abc/p/spells");
-    await screen.findByRole("region", { name: "Spells" });
+    await pageShown("Spells");
     expect(screen.getAllByRole("heading", { level: 1, name: "Vex" })).toHaveLength(1);
   });
 
   it("opens Character settings from the header's gear, outside the pages the nav lists", async () => {
     const router = renderAt("/characters/abc/p/stats");
-    await screen.findByRole("region", { name: "Stats" });
+    await pageShown("Stats");
     expect(screen.queryByRole("button", { name: "Character menu" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: "Character settings" }));
@@ -154,7 +156,7 @@ describe("routing", () => {
 
   it("shows the not-found state for a slug that names no page", async () => {
     renderAt("/characters/abc/p/nonsense");
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await screen.findByText("Page not found", { selector: "h1" });
     expect(screen.getByRole("navigation", { name: "Character pages" })).toBeInTheDocument();
   });
 
@@ -182,7 +184,7 @@ describe("routing", () => {
 
   it("renders Homebrew as a Settings section", async () => {
     renderAt("/settings/homebrew");
-    await screen.findByRole("heading", { level: 1, name: "Homebrew" });
+    await screen.findByText("Homebrew", { selector: "h1" });
 
     const nav = screen.getByRole("navigation", { name: "Settings sections" });
     expect(within(nav).getByRole("link", { name: "Homebrew" })).toHaveAttribute(
@@ -194,12 +196,12 @@ describe("routing", () => {
 
   it("shows the not-found state for an address catalog detail used to have", async () => {
     renderAt("/catalog/spells/Fireball/PHB");
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await screen.findByText("Page not found", { selector: "h1" });
   });
 
   it("shows the not-found state for an unmatched route", async () => {
     renderAt("/this/goes/nowhere");
-    await screen.findByRole("heading", { level: 1, name: "Page not found" });
+    await screen.findByText("Page not found", { selector: "h1" });
     expect(screen.getByRole("link", { name: "Back to your characters" })).toHaveAttribute(
       "href",
       "/characters",
@@ -230,7 +232,7 @@ describe("routing", () => {
     sessionStorage.clear();
     const pageShownAtScroll: boolean[] = [];
     const scrollTo = vi.fn((_x: number, y: number) => {
-      pageShownAtScroll.push(screen.queryByRole("region", { name: "Stats" }) !== null);
+      pageShownAtScroll.push(pageElement("Stats") !== null);
       scroll(y);
     });
     vi.stubGlobal("scrollTo", scrollTo);
@@ -245,18 +247,19 @@ describe("routing", () => {
         <RouterProvider router={router} />
       </QueryClientProvider>,
     );
-    await screen.findByRole("region", { name: "Stats" });
+    await pageShown("Stats");
 
     scroll(480);
     await router.navigate("/characters");
-    await screen.findByRole("heading", { level: 1, name: "Characters" });
+    await screen.findByText("Characters", { selector: "h1" });
     expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
     scroll(listY);
 
     queryClient.clear();
     returning = true;
     await router.navigate(-1);
-    await screen.findByRole("region", { name: "Stats" });
+    await pageShown("Stats");
+    // No signal marks the restore that never happens in the scroll-first test, so every test gives the restore this long to land or not.
     await new Promise((resolve) => setTimeout(resolve, 100));
     return { scrollTo, pageShownAtScroll };
   }

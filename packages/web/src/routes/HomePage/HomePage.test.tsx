@@ -51,7 +51,7 @@ describe("HomePage", () => {
       ],
     });
 
-    await screen.findByRole("link", { name: "See all characters →" });
+    await screen.findByText("See all characters →");
     const recent = screen.getByRole("region", { name: "Recent characters" });
     const tiles = within(recent)
       .getAllByRole("link")

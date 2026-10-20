@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubFetchByUrl } from "../test/stubFetch.ts";
@@ -18,7 +18,13 @@ function renderAt(address: string) {
   return onClose;
 }
 
-const dialogNamed = (name: string) => screen.findByRole("dialog", { name });
+/** Waits on the dialog's title element, which names it, where `findByRole("dialog")` re-walks the page on every change. */
+const dialogNamed = (name: string) =>
+  waitFor(() => {
+    const open = document.querySelector("dialog[open]");
+    const title = document.getElementById(open?.getAttribute("aria-labelledby") ?? "");
+    expect(title).toHaveTextContent(name);
+  });
 
 const fireball = {
   name: "Fireball",

@@ -366,7 +366,12 @@ function renderSeeded(character: CharacterRecord) {
 }
 
 const sent = (): CharacterDefinition => JSON.parse(String(writes.mock.calls.at(-1)?.[1]?.body));
-const dialog = () => screen.getByRole("dialog");
+/** The open dialog by tag: `getByRole("dialog")` walks the whole page's accessibility tree on every query scoped to it. */
+const dialog = () => {
+  const open = document.querySelector<HTMLElement>("dialog[open]");
+  if (!open) throw new Error("no dialog is open");
+  return open;
+};
 const applyButton = () => within(dialog()).getByRole("button", { name: "Apply level up" });
 
 async function open() {
