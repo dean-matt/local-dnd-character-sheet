@@ -30,6 +30,7 @@ import {
   type SenseGrant,
   type WeaponTrait,
 } from "./index.ts";
+import type { Ability } from "./refs.ts";
 import { raceSummary } from "./summaries.ts";
 import {
   DECEPTION,
@@ -1037,6 +1038,65 @@ describe("deriveCharacter", () => {
       );
       expect(overridden.abilityScores.str).toMatchObject({ computed: 21, manual: 12 });
       expect(overridden.abilityModifiers.str.computed).toBe(5);
+    });
+  });
+
+  describe("an item whose ability score is a pick", () => {
+    const DECK = { name: "Deck of Many Things", source: "DMG" };
+    const choose = {
+      from: ["str", "dex", "con", "int", "wis", "cha"] as const,
+      count: 1,
+      amount: 2,
+    };
+    const entry = (abilityPicks?: Ability[]) => ({
+      ref: DECK,
+      quantity: 1,
+      carried: true,
+      equipped: true,
+      attuned: false,
+      ...(abilityPicks && { abilityPicks }),
+    });
+    const pickCatalog = {
+      ...catalog,
+      weights: new Map([...catalog.weights, [entryKey(DECK), 0]]),
+      itemAbilities: new Map<string, ItemAbilityTrait>([
+        [
+          entryKey(DECK),
+          { name: DECK.name, requiresAttunement: false, static: {}, bonus: {}, choose },
+        ],
+      ]),
+    };
+    const withPicks = (abilityPicks?: Ability[]) =>
+      deriveCharacter({ ...definition, inventory: [entry(abilityPicks)] }, pickCatalog);
+
+    it("grants nothing until a pick is made, and says the entry waits on one", () => {
+      const block = withPicks();
+      expect(block.abilityScores.wis.computed).toBe(definition.abilityScores.wis);
+      expect(block.pendingAbilityPicks).toEqual([{ entry: 0, from: choose.from, count: 1 }]);
+    });
+
+    it("raises the picked score as any item grant does, and a re-pick replaces it", () => {
+      const first = withPicks(["wis"]);
+      expect(first.abilityScores.wis.computed).toBe(definition.abilityScores.wis + 2);
+      expect(first.abilityScores.wis.terms.at(-1)).toEqual({ label: DECK.name, value: 2 });
+      expect(first.pendingAbilityPicks).toEqual([]);
+      const again = withPicks(["str"]);
+      expect(again.abilityScores.wis.computed).toBe(definition.abilityScores.wis);
+      expect(again.abilityScores.str.computed).toBe(definition.abilityScores.str + 2);
+    });
+
+    it("counts only the picks the item offers, once each and no more than it allows", () => {
+      const block = withPicks(["wis", "wis", "str"]);
+      expect(block.abilityScores.wis.computed).toBe(definition.abilityScores.wis + 2);
+      expect(block.abilityScores.str.computed).toBe(definition.abilityScores.str);
+    });
+
+    it("waits for equipping like any other grant", () => {
+      const stowed = deriveCharacter(
+        { ...definition, inventory: [{ ...entry(["wis"]), equipped: false }] },
+        pickCatalog,
+      );
+      expect(stowed.abilityScores.wis.computed).toBe(definition.abilityScores.wis);
     });
   });
 

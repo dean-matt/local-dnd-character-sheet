@@ -264,6 +264,18 @@ export const characterDerivedSchema = z.strictObject({
   unproficientItems: z.array(
     z.strictObject({ entry: z.int().min(0), requires: z.string().min(1) }),
   ),
+  /**
+   * One per inventory entry whose item lets the wearer pick which scores it raises, such as
+   * the Deck of Many Things, and whose picks are not all made. The item grants nothing until
+   * they are. `entry` indexes the definition's `inventory`; `count` is the total to pick from `from`.
+   */
+  pendingAbilityPicks: z.array(
+    z.strictObject({
+      entry: z.int().min(0),
+      from: z.array(abilitySchema).min(1),
+      count: z.int().min(1),
+    }),
+  ),
   /** The equipped armor, by name, the character lacks proficiency with: each stops them casting spells. A 2014 shield counts; a 2024 one does not. */
   castingBlockedBy: z.array(z.string().min(1)),
 });

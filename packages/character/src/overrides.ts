@@ -32,6 +32,7 @@ const ELEMENT_KEY: {
   spellSlots: (slot) => String(slot.level),
   containers: (container) => container.name,
   unproficientItems: (item) => String(item.entry),
+  pendingAbilityPicks: (pick) => String(pick.entry),
   castingBlockedBy: (name) => name,
   attacks: (attack, { inventory }) => {
     const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);

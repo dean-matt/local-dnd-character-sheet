@@ -767,6 +767,17 @@ describe("inventory", () => {
     expect(characterDefinitionSchema.safeParse(held("both")).success).toBe(false);
   });
 
+  it("stores the scores an item's pick named, and refuses a score that does not exist", () => {
+    const picked = (abilityPicks: string[]) => ({
+      ...structuredClone(definition),
+      inventory: [{ ref: { name: "Deck of Many Things", source: "DMG" }, abilityPicks }],
+    });
+    expect(characterDefinitionSchema.parse(picked(["wis"])).inventory[0]?.abilityPicks).toEqual([
+      "wis",
+    ]);
+    expect(characterDefinitionSchema.safeParse(picked(["luck"])).success).toBe(false);
+  });
+
   it("names a magic variant beside the base item it expands, rather than storing it expanded", () => {
     const enchanted = {
       ...structuredClone(definition),

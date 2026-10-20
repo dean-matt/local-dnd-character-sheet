@@ -1,4 +1,4 @@
-import { GRIPS, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
+import { ABILITIES, GRIPS, PROFICIENCY_LEVELS, SIZES } from "@dnd/rules";
 import { z } from "zod";
 import { houseRulesSchema } from "./houseRules.ts";
 import { entryKey, featureKey, isUnique, refKey, spellBlockKey } from "./keys.ts";
@@ -178,6 +178,7 @@ const inventoryEntrySchema = z
     equipped: z.boolean().default(false),
     attuned: z.boolean().default(false),
     grip: z.enum(GRIPS).optional(),
+    abilityPicks: z.array(abilitySchema).max(ABILITIES.length).optional(),
   })
   .refine((entry) => entry.carried || !entry.equipped, {
     error: "an item is equipped but not carried",

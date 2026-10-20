@@ -19,7 +19,32 @@ export type AbilityGrant = {
   static: Partial<Record<Ability, number>>;
   bonus: Partial<Record<Ability, number>>;
   max?: number;
+  /** Scores the wearer picks among, each earning `amount`; the pick rides on the inventory entry. */
+  choose?: { from: readonly Ability[]; count: number; amount: number };
 };
+
+/** The scores an entry's `picks` name that the grant offers, each once and no more than `count`. */
+export function validPicks(grant: AbilityGrant, picks: readonly Ability[] = []): Ability[] {
+  const { choose } = grant;
+  if (!choose) return [];
+  const offered = picks.filter(
+    (ability, at) => choose.from.includes(ability) && picks.indexOf(ability) === at,
+  );
+  return offered.slice(0, choose.count);
+}
+
+/** The grant with the entry's picks turned into the bonus they earn, added beside any printed bonus. */
+export function pickedGrant(
+  grant: AbilityGrant,
+  picks: readonly Ability[] | undefined,
+): AbilityGrant {
+  const { choose, ...rest } = grant;
+  const bonus = { ...grant.bonus };
+  for (const ability of validPicks(grant, picks)) {
+    bonus[ability] = (bonus[ability] ?? 0) + (choose?.amount ?? 0);
+  }
+  return { ...rest, bonus };
+}
 
 /**
  * One ability's score: the base the definition stores, each increase as its own term, then
