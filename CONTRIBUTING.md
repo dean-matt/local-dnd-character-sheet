@@ -79,7 +79,7 @@ than keeping two habits.
 Commits follow [Conventional Commits](https://www.conventionalcommits.org), enforced by
 `commitlint` on `commit-msg`. Types are `feat`, `fix`, `chore`, `docs`, `refactor`,
 `test`, `perf`, `build`, `ci`, `revert`, and `style`; scopes are `rules`, `character`,
-`dice`, `tags`, `content`, `api`,
+`dice`, `tags`, `catalog`, `content`, `api`,
 `web`, `docs`, `repo`, or `deps`. The branch takes the type of the change it carries, so
 a branch of fixes is `fix/...` even where one commit inside it is a `test`.
 

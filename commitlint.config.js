@@ -4,7 +4,19 @@ export default {
     "scope-enum": [
       2,
       "always",
-      ["rules", "character", "dice", "tags", "content", "api", "web", "docs", "repo", "deps"],
+      [
+        "rules",
+        "character",
+        "dice",
+        "tags",
+        "content",
+        "api",
+        "catalog",
+        "web",
+        "docs",
+        "repo",
+        "deps",
+      ],
     ],
   },
 };
