@@ -13,8 +13,11 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
  * passes in the suite and asserts the opposite of its name when run alone.
  */
 
-// Spawns cost about 160 ms each on a hosted Windows runner. 60 s is far above this file's
-// ~30 spawns, and a hung one still fails.
+// On a hosted Windows runner (Defender exclusion in place) the whole file takes about 4.8 s:
+// `beforeAll` about 1 s, each describe block's setup about 0.6 s, and a push (about 330 ms) or
+// a fence run (about 220-370 ms) costs the most of any spawn. A run that timed out at the
+// 10 s default was a loaded runner, not the setup, so no part of it is worth cutting; 60 s
+// is over ten times the measured cost, and a hung spawn still fails.
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
 const SCRIPT = resolve(import.meta.dirname, "../scripts/no-rewrite.mjs");
@@ -23,10 +26,7 @@ let work: string;
 let root: string;
 
 function git(...args: string[]): string {
-  const start = performance.now();
-  const out = execFileSync("git", args, { cwd: work, encoding: "utf8" });
-  process.stderr.write(`TIMING git ${args[0]} ${Math.round(performance.now() - start)}ms\n`);
-  return out;
+  return execFileSync("git", args, { cwd: work, encoding: "utf8" });
 }
 
 /**
@@ -34,9 +34,7 @@ function git(...args: string[]): string {
  * without it, a script that dies before reaching `checkRewrite` reads as a rejection.
  */
 function fence(): { status: number | null; stderr: string } {
-  const start = performance.now();
   const result = spawnSync("node", [SCRIPT], { cwd: work, encoding: "utf8" });
-  process.stderr.write(`TIMING fence ${Math.round(performance.now() - start)}ms\n`);
   return { status: result.status, stderr: result.stderr };
 }
 
@@ -56,10 +54,8 @@ function amend(body: string): void {
 beforeAll(() => {
   root = mkdtempSync(join(tmpdir(), "no-rewrite-"));
   work = join(root, "work");
-  const start = performance.now();
   execFileSync("git", ["init", "--bare", "--quiet", join(root, "remote.git")]);
   execFileSync("git", ["init", "--quiet", "-b", "main", work]);
-  process.stderr.write(`TIMING two inits ${Math.round(performance.now() - start)}ms\n`);
   git("config", "user.email", "test@example.invalid");
   git("config", "user.name", "Test");
   git("remote", "add", "origin", join(root, "remote.git"));
