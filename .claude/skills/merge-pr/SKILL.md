@@ -94,8 +94,8 @@ Two lines print beside *the review converged* and stop nothing: the distance lin
 behind the tip the last pass sits, and the `git log` range that counted it — run that range
 and weigh what it lists, since a pass short of the tip may be a fix answering it or code
 nobody read) and the cap line (a waiver at the cap, an overage past it). The version
-commit counts as one commit since the pass and needs no weighing. A `warn` line, *the pull
-request is not linked to its issue*, stops nothing either. Name it to the user:
+commit counts as one commit since the pass and needs no weighing. A `warn` line,
+*the pull request is not linked to its issue*, stops nothing either. Name it to the user:
 a dropped link needs a hand link from the pull request's Development box, and a body that
 does not open with `Closes #<issue>` needs that line.
 `scripts/merge-gate.mjs` holds the six conditions; `tests/merge-gate.test.ts` calls them.
