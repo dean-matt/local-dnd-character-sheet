@@ -438,6 +438,11 @@ describe("the other three conditions", () => {
   });
 });
 
+// Estimate, not a measurement of this file: each case in the git block below runs about 20
+// spawns, and the 160 ms per spawn measured on a Windows runner for no-rewrite-hook.test.ts
+// leaves the 5 s default a margin of a few spawns. The setting covers the whole file.
+vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
+
 /**
  * The one piece of this note that runs git, over a repository built to hold the shape
  * `merge-pr`'s behind-branch recovery leaves: a branch that merged `main` in after the pass
@@ -445,9 +450,6 @@ describe("the other three conditions", () => {
  * branch's own.
  */
 describe("the commits since the last pass", () => {
-  // Each case runs about 20 git spawns, which a hosted Windows runner takes ~160 ms
-  // apiece over: the 5 s test default leaves it a margin of a few spawns.
-  vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
   let dir = "";
   const git = (...args: string[]) =>
     execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim();

@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { appendFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -54,11 +54,9 @@ beforeAll(() => {
   work = join(root, "work");
   execFileSync("git", ["init", "--bare", "--quiet", join(root, "remote.git")]);
   execFileSync("git", ["init", "--quiet", "-b", "main", work]);
-  // Three fewer spawns than `git config` twice and `git remote add`.
-  appendFileSync(
-    join(work, ".git", "config"),
-    `[user]\n\temail = test@example.invalid\n\tname = Test\n[remote "origin"]\n\turl = ${join(root, "remote.git")}\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n`,
-  );
+  git("config", "user.email", "test@example.invalid");
+  git("config", "user.name", "Test");
+  git("remote", "add", "origin", join(root, "remote.git"));
   commit("root");
   git("push", "--quiet", "-u", "origin", "main");
 });
