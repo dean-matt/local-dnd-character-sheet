@@ -1077,6 +1077,15 @@ describe("deriveCharacter", () => {
         deriveCharacter({ ...atLevel(levels), inventory }, itemCatalog).hitPointMaximum.computed;
       const amulet = [worn(AMULET, { equipped: true, attuned: true })];
 
+      it("starts from Constitution 14 and an item that sets 19", () => {
+        const { abilityModifiers } = deriveCharacter(
+          { ...definition, inventory: amulet },
+          itemCatalog,
+        );
+        expect(definition.abilityScores.con).toBe(14);
+        expect(abilityModifiers.con.computed).toBe(4);
+      });
+
       it.each([2, 5, 11])("rises by 2 x level at level %i, from Constitution 14 to 19", (n) => {
         expect(maximum(n, amulet) - maximum(n, [])).toBe(2 * n);
       });
