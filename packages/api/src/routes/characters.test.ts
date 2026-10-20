@@ -128,6 +128,16 @@ describe("charactersRoutes", () => {
     expect(body).toMatchObject({ id: created.id, name: "Vex the Bold", level: 2 });
   });
 
+  it("reads a stored total below its level's threshold as the threshold", async () => {
+    const levels = Array.from({ length: 5 }, () => ({ class: WARLOCK }));
+    const created = await (
+      await routes.request("/characters", json(baseDefinition({ levels, experience: 0 })))
+    ).json();
+
+    const body = await (await routes.request(`/characters/${created.id}`)).json();
+    expect(body.definition.experience).toBe(6500);
+  });
+
   it("refuses a replace with 412 where the character was written after If-Unmodified-Since", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
     const put = (since: string) =>

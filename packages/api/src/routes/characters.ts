@@ -19,6 +19,7 @@ import {
   characterStateSchema,
   UNDO_LOG_LIMIT,
   undoLogSchema,
+  withExperienceFloor,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
@@ -51,7 +52,7 @@ function toRecord(row: CharacterRow): CharacterRecord {
     level: row.level,
     raceSummary: row.raceSummary,
     classSummary: row.classSummary,
-    definition: row.definition,
+    definition: withExperienceFloor(characterDefinitionSchema.parse(row.definition)),
     portraitUpdatedAt: row.portraitUpdatedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

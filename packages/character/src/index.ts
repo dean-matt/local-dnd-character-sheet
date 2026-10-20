@@ -153,4 +153,5 @@ export {
   displayName,
   raceSummary,
   totalLevel,
+  withExperienceFloor,
 } from "./summaries.ts";
