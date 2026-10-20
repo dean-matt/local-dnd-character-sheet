@@ -29,7 +29,8 @@ function featureLabel(feature: HistoryFeature, row: readonly HistoryFeature[]): 
  * points it added, the subclass chosen there, the features it granted and the improvement
  * taken. Hit points show the derived maximum's own per-level term, and wait while a write
  * recomputes it rather than show a gain the sheet no longer holds. Each level's gain can be
- * changed in place, one write and so one undo entry per change.
+ * changed in place, each change one write; the API merges writes made within 30 seconds
+ * into one undo entry.
  */
 export function LevelHistory({ character }: { character: CharacterRecord }) {
   const { definition } = character;
