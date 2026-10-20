@@ -46,8 +46,7 @@ widget, panel, or nav element:
   unavailable", whose popover names the missing proficiency. The Weapons and Armor
   artboards have no house-rule switch and draw that grayed backpack as the rule on, under
   the ordinary "Equipped, Spear" name. The
-  icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons and Armor
-  draw it.
+  icons are inline Lucide outlines (ISC), as is every icon on a list row.
 - Spells: Spell Slots, Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
