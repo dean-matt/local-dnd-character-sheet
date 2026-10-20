@@ -43,7 +43,9 @@ widget, panel, or nav element:
   white on the accent — a sword for a weapon, a shirt for armor, a shield for a
   shield, a hand for other gear. Under the house rule that requires proficiency, an item
   the character is not proficient with shows a grayed backpack, named "Equip Spear,
-  unavailable", whose popover names the missing proficiency. The
+  unavailable", whose popover names the missing proficiency. The Weapons and Armor
+  artboards have no house-rule switch and draw that grayed backpack as the rule on, under
+  the ordinary "Equipped, Spear" name. The
   icons are inline Lucide outlines (ISC), as is every icon on a list row. Weapons and Armor
   draw it.
 - Spells: Spell Slots, Known Spells.
