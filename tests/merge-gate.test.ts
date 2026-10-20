@@ -438,9 +438,8 @@ describe("the other three conditions", () => {
   });
 });
 
-// Estimate, not a measurement of this file: each case in the git block below runs about 20
-// spawns, and the 160 ms per spawn measured on a Windows runner for no-rewrite-hook.test.ts
-// leaves the 5 s default a margin of a few spawns. The setting covers the whole file.
+// Spawns cost about 160 ms each on a hosted Windows runner. 60 s is far above the ~20 a
+// case in the git block runs, and a hung one still fails. Covers the whole file.
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
 /**

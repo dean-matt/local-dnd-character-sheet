@@ -13,9 +13,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
  * passes in the suite and asserts the opposite of its name when run alone.
  */
 
-// A hosted Windows runner ran this file's four tests in 4.8 s against 0.5 s here, so
-// its ~30 git and node spawns cost ~160 ms each, and one failed on the 10 s hook default.
-// 60 s is over 12 times the file's measured Windows cost, so a hung spawn still fails.
+// Spawns cost about 160 ms each on a hosted Windows runner. 60 s is far above this file's
+// ~30 spawns, and a hung one still fails.
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
 const SCRIPT = resolve(import.meta.dirname, "../scripts/no-rewrite.mjs");
