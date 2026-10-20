@@ -3,38 +3,44 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { capture } from "../scripts/capture.mjs";
-import { changedFiles, checkVersionBump } from "../scripts/version-bump.mjs";
+import { bumpedVersion, changedFiles } from "../scripts/version-bump.mjs";
 
-describe("checkVersionBump", () => {
+describe("bumpedVersion", () => {
   const code = ["packages/web/src/routes/AppVersion.tsx"];
+  const bump = (title: string, version = "0.5.3", changed = code) =>
+    bumpedVersion({ changed, title, version, base: "0.5.3" });
 
-  it.each([
-    ["0.5.1", "0.5.0", "a patch"],
-    ["0.6.0", "0.5.3", "a minor"],
-    ["1.0.0", "0.9.9", "a major"],
-  ])("accepts %s over %s — %s", (version, base) => {
-    expect(checkVersionBump({ changed: code, version, base })).toBeNull();
+  it("raises the minor for a feat, with or without a scope or a breaking mark", () => {
+    expect(bump("feat: a thing")).toBe("0.6.0");
+    expect(bump("feat(web): a thing")).toBe("0.6.0");
+    expect(bump("feat(web)!: a thing")).toBe("0.6.0");
   });
 
-  it.each([
-    ["0.5.0", "0.5.0", "unchanged"],
-    ["0.4.9", "0.5.0", "lowered"],
-    ["0.5.10", "0.6.0", "behind a minor main raised"],
-  ])("rejects %s over %s — %s", (version, base) => {
-    expect(checkVersionBump({ changed: code, version, base })).toBeTypeOf("string");
+  it("raises the patch for every other type", () => {
+    expect(bump("fix(api): a thing")).toBe("0.5.4");
+    expect(bump("chore(repo): feat of strength")).toBe("0.5.4");
+    expect(bump("feature: a thing")).toBe("0.5.4");
   });
 
-  it("needs no bump where only prose or the mockup changed", () => {
+  it("raises over main's version, not the branch's", () => {
+    expect(bump("fix: a thing", "0.5.0")).toBe("0.5.4");
+  });
+
+  it("leaves a version already above main's, so a rerun changes nothing", () => {
+    expect(bump("fix: a thing", "0.5.4")).toBeNull();
+    expect(bump("feat: a thing", "1.0.0")).toBeNull();
+  });
+
+  it("leaves the version where only prose or the mockup changed", () => {
     const changed = ["docs/mockup/components/TopBar.dc.html", ".claude/skills/open-pr/SKILL.md"];
-    expect(checkVersionBump({ changed, version: "0.5.0", base: "0.5.0" })).toBeNull();
+    expect(bump("fix: a thing", "0.5.3", changed)).toBeNull();
+    expect(bump("fix: a thing", "0.5.3", [])).toBeNull();
   });
 
-  it("needs no bump where nothing changed, as on main", () => {
-    expect(checkVersionBump({ changed: [], version: "0.5.0", base: "0.5.0" })).toBeNull();
-  });
-
-  it("rejects a version that is not MAJOR.MINOR.PATCH", () => {
-    expect(checkVersionBump({ changed: [], version: "0.5", base: "0.5.0" })).toBeTypeOf("string");
+  it("rejects a main version that is not MAJOR.MINOR.PATCH", () => {
+    expect(() =>
+      bumpedVersion({ changed: code, title: "fix: x", version: "0.5.0", base: "0.5" }),
+    ).toThrow();
   });
 });
 

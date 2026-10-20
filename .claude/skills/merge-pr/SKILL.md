@@ -6,7 +6,9 @@ description: Carry one reviewed local-dnd-character-sheet pull request to main �
 # Merging a pull request
 
 [`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops; this lands it. Run
-every command from the main checkout — a worktree holds its branch, and the merge deletes it.
+every command from the main checkout — a worktree holds its branch, and the merge deletes it —
+except *Raise the version*, which works in the issue's worktree; return to the main checkout
+before the merge.
 
 ```bash
 n=<pr>
@@ -17,6 +19,32 @@ issue=$(gh pr view "$n" --json body --jq '.body | capture("Closes #(?<i>[0-9]+)"
 The input is an open, non-draft pull request naming the issue it closes. Anything else
 stops here.
 
+## Raise the version
+
+The merge raises the root `package.json` version, so a merge to `main` leaves no other open
+pull request with a version line to redo. The ruleset takes no direct push and requires every
+check green on a head carrying `main`'s tip, so the bump is one more commit on the branch,
+and it costs one more full CI run before every merge of a pull request that changes code. Skip a pull request `dependabot[bot]` opened.
+
+Work in the issue's worktree; where `.claude/worktrees/<issue>` is gone, open it as
+[`issue-worktree`](../issue-worktree/SKILL.md#opening) says first:
+
+```bash
+git pull --ff-only && git fetch origin main
+git merge --no-edit origin/main
+node scripts/version-bump.mjs "$n"
+```
+
+A conflict in the merge goes to the user: `git merge --abort` and hand it over. The script
+prints `no bump` for a pull request that changes only prose or the mockup, and the new
+version otherwise; for the version, commit and push:
+
+```bash
+git commit package.json -m "chore(repo): raise the version to <version>" && git push
+```
+
+A rerun after the bump is pushed prints `no bump`.
+
 ## Block on the checks
 
 ```bash
@@ -24,10 +52,8 @@ node scripts/wait-checks.mjs "$n"
 ```
 
 Run it with a 600000 ms tool timeout. On its exit 2, name what it printed and hand back.
-On exit 1, read the failed step first with `gh run view <id> --log-failed`. Where `static`
-fails at its Version bump step, do not rerun it — a rerun fails the same way — and go to
-[Raise the version again](behind-branch-recovery.md#raise-the-version-again). Rerun any
-other failed run once, never twice: one rerun covers a flaky runner, a second says the
+On exit 1, read the failed step first with `gh run view <id> --log-failed`. Rerun a failed
+run once, never twice: one rerun covers a flaky runner, a second says the
 failure is the branch's.
 
 ```bash
@@ -67,7 +93,8 @@ a comment.
 Two lines print beside *the review converged* and stop nothing: the distance line (how far
 behind the tip the last pass sits, and the `git log` range that counted it — run that range
 and weigh what it lists, since a pass short of the tip may be a fix answering it or code
-nobody read) and the cap line (a waiver at the cap, an overage past it). A `warn` line,
+nobody read) and the cap line (a waiver at the cap, an overage past it). The version
+commit counts as one commit since the pass and needs no weighing. A `warn` line,
 *the pull request is not linked to its issue*, stops nothing either. Name it to the user:
 a dropped link needs a hand link from the pull request's Development box, and a body that
 does not open with `Closes #<issue>` needs that line.
@@ -79,7 +106,7 @@ Branch protection requires a head carrying the tip of `main`, so `gh pr merge` r
 pull request that sat while another merged, whatever the rest of the gate said.
 [`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
 the server and waits out the window where the checks describe the old commit. On its
-`ready`, run *Block on the checks* and the gate again; a gate still saying GitHub is
+`ready`, run its version step, *Block on the checks* and the gate again; a gate still saying GitHub is
 computing mergeability is the queued merge landing, so ask again. Two round trips is the
 ceiling — a third `BEHIND` means `main` moves faster than the checks run, and sequencing
 that is the user's call.

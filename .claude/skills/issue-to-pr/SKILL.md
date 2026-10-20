@@ -43,8 +43,7 @@ it took none — stop there.
    failure that passes silently.
 9. **`pnpm check`, then commit and push**, once per concern the issue carries. Run it after
    steps 6 and 7 — pre-commit runs neither the tests nor the caps. Never push past a
-   failure with a note about it. Where the diff changes code, the first commit carries the
-   version bump [`open-pr`](../open-pr/SKILL.md#the-version) defines.
+   failure with a note about it. Leave `package.json`'s version alone: the merge raises it.
 10. **Invoke [`open-pr`](../open-pr/SKILL.md)**. It opens the pull request and writes its
     body in the format it defines, as a draft where the diff changes
     `docs/mockup/components/`.
