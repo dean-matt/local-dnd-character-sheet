@@ -1,7 +1,7 @@
 import { MAX_HIT_POINT_GAIN } from "@dnd/character";
 import { useState } from "react";
 import { InputField } from "../../components/InputField.tsx";
-import { parseGain } from "./hitPointGains.ts";
+import { parseGain } from "../../lib/hitPointGains.ts";
 
 /**
  * One level's typed gain, which keeps what the player types, and its error, until it is a

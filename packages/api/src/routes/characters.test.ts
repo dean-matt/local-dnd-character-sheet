@@ -456,6 +456,31 @@ describe("the undo log", () => {
     expect(opened.charactersDb.select().from(undoLog).all()).toHaveLength(50);
   });
 
+  it("undoes each change to a level's hit point gain back to the gain before it", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const minute = (n: number) => vi.setSystemTime(new Date(`2026-01-01T00:0${n}:00Z`));
+    const withGain = (gain: object, departures: { field: string; note: string }[] = []) =>
+      baseDefinition({
+        levels: [{ class: WARLOCK }, { class: WARLOCK, ...gain }],
+        experience: 300,
+        departures,
+      });
+    const second = async () =>
+      (await (await routes.request(`/characters/${id}`)).json()).definition;
+    minute(0);
+    await put(withGain({}));
+    minute(1);
+    await put(withGain({ rolled: 8 }));
+    minute(2);
+    const noted = [{ field: "levels.1.rolled", note: "Level 2 gains 12 hit points" }];
+    await put(withGain({ rolled: 12, typed: true }, noted));
+
+    expect((await undo()).status).toBe(200);
+    expect(await second()).toEqual(withGain({ rolled: 8 }));
+    await undo();
+    expect(await second()).toEqual(withGain({}));
+  });
+
   it("drops a snapshot its schema rejects, so the next undo reaches the entry behind it", async () => {
     await put(withCha(18));
     opened.charactersDb
