@@ -1,4 +1,4 @@
-import type { ClassGrants } from "@dnd/catalog";
+import { type ClassGrants, offeredPicks } from "@dnd/catalog";
 import { casterFacts } from "../../../../lib/casterFacts.ts";
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;
@@ -27,4 +27,36 @@ export function spellsGained(
   const cantrips = gain("cantrips");
   if (spellbook) return { cantrips, spells: maxLevel > 0 ? SPELLBOOK_GAIN : 0, maxLevel };
   return { cantrips, spells: now?.prepares ? 0 : gain("spells"), maxLevel };
+}
+
+/**
+ * The cantrips and spells a subclass's `additionalSpells` leaves to a pick at `next` beyond
+ * those it left at `level`, nothing at `level` where the level picks the subclass. A kind
+ * the subclass's own table counts is `spellsGained`'s, as the Eldritch Knight's are. A
+ * class that prepares its spells or keeps a `spellbook` takes none of the spells a subclass
+ * has it learn, which go into the spellbook, and a subclass offering alternative blocks owes
+ * none until the player chooses one.
+ */
+export function subclassSpellsGained(
+  json: unknown,
+  held: boolean,
+  level: number,
+  next: number,
+  tables: { after: readonly (Table | undefined)[]; subclass: Table | undefined },
+  spellbook = false,
+) {
+  const stated = (...keys: string[]) =>
+    (tables.subclass?.resources ?? []).some((each) => keys.includes(each.resourceKey));
+  const skipsLearned = spellbook || (casterFacts(present(tables.after))?.prepares ?? false);
+  const owed = (at: number) => {
+    const picks = offeredPicks(json, at);
+    if (picks.alternatives) return { cantrips: 0, spells: 0 };
+    return { cantrips: picks.cantrips, spells: picks.spells - (skipsLearned ? picks.learned : 0) };
+  };
+  const now = owed(next);
+  const was = held ? owed(level) : { cantrips: 0, spells: 0 };
+  return {
+    cantrips: stated("cantrips_known") ? 0 : Math.max(0, now.cantrips - was.cantrips),
+    spells: stated("spells_known", "prepared_spells") ? 0 : Math.max(0, now.spells - was.spells),
+  };
 }

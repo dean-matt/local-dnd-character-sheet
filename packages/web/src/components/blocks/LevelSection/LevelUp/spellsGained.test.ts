@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { spellsGained } from "./spellsGained.ts";
+import { spellsGained, subclassSpellsGained } from "./spellsGained.ts";
 
 const table = (resources: Record<string, string>, slots: number[] = []) => ({
   resources: Object.entries(resources).map(([resourceKey, value]) => ({ resourceKey, value })),
@@ -45,5 +45,43 @@ describe("spellsGained", () => {
       2,
     );
     expect(spellsGained([], [table({})], true).spells).toBe(0);
+  });
+});
+
+describe("subclassSpellsGained", () => {
+  const choose = (filter: string, count = 1) =>
+    Array.from({ length: count }, () => ({ choose: filter }));
+  const lore = { additionalSpells: [{ known: { "6": choose("level=0;1;2;3", 2) } }] };
+  const arcana = { additionalSpells: [{ known: { "1": choose("level=0|class=Wizard", 2) } }] };
+  const none = { after: [], subclass: undefined };
+
+  it("counts the picks a level reaches, and none before it", () => {
+    expect(subclassSpellsGained(lore, true, 5, 6, none)).toEqual({ cantrips: 0, spells: 2 });
+    expect(subclassSpellsGained(lore, true, 6, 7, none)).toEqual({ cantrips: 0, spells: 0 });
+    expect(subclassSpellsGained(lore, true, 4, 5, none)).toEqual({ cantrips: 0, spells: 0 });
+  });
+
+  it("counts a cantrip filter as cantrips, and every pick when the level picks the subclass", () => {
+    expect(subclassSpellsGained(arcana, false, 0, 1, none)).toEqual({ cantrips: 2, spells: 0 });
+    expect(subclassSpellsGained(lore, false, 6, 7, none)).toEqual({ cantrips: 0, spells: 2 });
+  });
+
+  it("leaves a kind the subclass's own table counts to the table", () => {
+    const table = { resources: [{ resourceKey: "cantrips_known", value: "2" }], spellSlots: [] };
+    expect(subclassSpellsGained(arcana, false, 0, 1, { after: [], subclass: table })).toEqual({
+      cantrips: 0,
+      spells: 0,
+    });
+  });
+
+  it("leaves out the spells a spellbook class learns, and a subclass's alternative blocks", () => {
+    const savant = { additionalSpells: [{ known: { "3": choose("level=1;2", 2) } }] };
+    expect(subclassSpellsGained(savant, false, 2, 3, none)).toEqual({ cantrips: 0, spells: 2 });
+    expect(subclassSpellsGained(savant, false, 2, 3, none, true)).toEqual({
+      cantrips: 0,
+      spells: 0,
+    });
+    const blocks = { additionalSpells: [lore.additionalSpells[0], lore.additionalSpells[0]] };
+    expect(subclassSpellsGained(blocks, false, 5, 6, none)).toEqual({ cantrips: 0, spells: 0 });
   });
 });
