@@ -1,3 +1,4 @@
+import { withExperienceFloor } from "@dnd/character";
 import { X } from "lucide-react";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -81,7 +82,7 @@ export function CreationFlow() {
     <FormShell
       fresh={fresh}
       onSubmit={async (definition) => {
-        const record = await create.mutateAsync(definition);
+        const record = await create.mutateAsync(withExperienceFloor(definition));
         navigate(`/characters/${record.id}`);
       }}
       onCancel={() => navigate("/characters")}

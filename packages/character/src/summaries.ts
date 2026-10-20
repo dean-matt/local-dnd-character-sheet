@@ -1,9 +1,21 @@
+import { experienceThreshold } from "@dnd/rules";
 import type { CharacterDefinition } from "./definition.ts";
 import { entryKey } from "./keys.ts";
 import type { ContentRef, EntryRef } from "./refs.ts";
 
 export const totalLevel = (definition: Pick<CharacterDefinition, "levels">): number =>
   definition.levels.length;
+
+/**
+ * An experience-mode definition holds at least its level's threshold, so a character
+ * created above level 1, or stored before the floor existed, does not read as short of its
+ * own level. A milestone character keeps its stored total.
+ */
+export function withExperienceFloor(definition: CharacterDefinition): CharacterDefinition {
+  if (definition.leveling !== "xp") return definition;
+  const floor = experienceThreshold(totalLevel(definition));
+  return definition.experience >= floor ? definition : { ...definition, experience: floor };
+}
 
 /**
  * `race` and `levels[].class` carry only a `homebrewId` for a homebrew choice, and no

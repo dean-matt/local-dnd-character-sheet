@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { classLevels, classSummary, raceSummary, totalLevel } from "./index.ts";
+import {
+  classLevels,
+  classSummary,
+  raceSummary,
+  totalLevel,
+  withExperienceFloor,
+} from "./index.ts";
 import { definition, elf, FIEND_PATRON, ROGUE, WARLOCK } from "./test/vex.ts";
 
 describe("race", () => {
@@ -45,5 +51,25 @@ describe("class levels", () => {
   it("shows a homebrew class as Homebrew, with no catalog to resolve its name", () => {
     const homebrew = { ...definition, levels: [{ class: { homebrewId: "hb_08" } }] };
     expect(classSummary(homebrew)).toBe("Homebrew");
+  });
+});
+
+describe("experience floor", () => {
+  it("raises a total below the level's threshold to it", () => {
+    expect(withExperienceFloor({ ...definition, experience: 0 }).experience).toBe(6500);
+  });
+
+  it("leaves a total at or above the threshold alone", () => {
+    expect(withExperienceFloor({ ...definition, experience: 7000 }).experience).toBe(7000);
+  });
+
+  it("leaves a level 1 character at 0", () => {
+    const first = { ...definition, levels: definition.levels.slice(0, 1), experience: 0 };
+    expect(withExperienceFloor(first).experience).toBe(0);
+  });
+
+  it("leaves a milestone character's stored total alone", () => {
+    const milestone = { ...definition, leveling: "milestone" as const, experience: 0 };
+    expect(withExperienceFloor(milestone).experience).toBe(0);
   });
 });

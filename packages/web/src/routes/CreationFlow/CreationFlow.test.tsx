@@ -166,6 +166,20 @@ describe("CreationFlow", () => {
     expect(localStorage.getItem(KEY)).toBeNull();
   });
 
+  it("creates a character above level 1 holding its level's experience", async () => {
+    const [level] = vex.definition.levels;
+    const levels = [level, level, level];
+    localStorage.setItem(KEY, JSON.stringify({ ...vex.definition, levels, experience: 0 }));
+    const fetchMock = stubApi(() => json(vex, 201));
+    renderFlow("spells");
+
+    click("Finish →");
+
+    await waitFor(() => expect(location()).toBe("/characters/7"));
+    const [, init] = writes(fetchMock)[0] ?? [];
+    expect(JSON.parse(String(init?.body)).experience).toBe(900);
+  });
+
   it("keeps the draft and says why when the write fails", async () => {
     localStorage.setItem(KEY, JSON.stringify(vex.definition));
     stubApi(() => json({ error: "the disk is full" }, 500));
