@@ -669,7 +669,7 @@ describe("ItemList", () => {
           "Requires Martial weapons proficiency.",
         ),
       ).toBeInTheDocument();
-      expect(screen.getByLabelText("Equipped, Cloak of Protection")).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Equipped, Cloak of Protection" })).toBeEnabled();
       expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
     });
 
