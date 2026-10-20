@@ -105,7 +105,7 @@ const OPTIONS: Record<
     printed: {
       label: "Equip anything",
       description:
-        "You can equip any weapon or armor. A weapon you lack proficiency with adds no proficiency bonus to its attacks. Armor you lack proficiency with gives disadvantage on Strength and Dexterity checks, saves and attack rolls, and you can't cast spells while wearing it.",
+        "You can equip any weapon or armor. A weapon you lack proficiency with adds no proficiency bonus to its attacks. Armor you lack proficiency with, except a 2024 shield, gives disadvantage on Strength and Dexterity checks, saves and attack rolls, and you can't cast spells while wearing it.",
     },
     house: {
       label: "Proficiency required",
