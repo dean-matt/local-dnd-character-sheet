@@ -1,20 +1,47 @@
 import type { FeatRecord } from "@dnd/catalog";
-import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
+import { type CharacterDefinition, type EntryRef, entryKey, spellBlockKey } from "@dnd/character";
 import { z } from "zod";
 
 type Feats = CharacterDefinition["feats"];
+type Blocks = CharacterDefinition["spellBlocks"];
 type Row = Pick<FeatRecord, "name" | "source">;
+
+/**
+ * A feat a background offers. Where the background names a variant of a feat the catalog
+ * holds once, such as `magic initiate; cleric`, `block` is the position of the spell list in
+ * the feat's `additionalSpells` and `list` that list's name.
+ */
+type OfferedFeat = Row & { block?: number; list?: string };
 
 /** The catalog feats a background grants, and whether the character has no say in which. */
 export interface BackgroundFeatOffers {
-  options: Row[];
+  options: OfferedFeat[];
   fixed: boolean;
 }
 
 const alternativeSchema = z.record(z.string(), z.unknown());
 const categorySchema = z.object({ anyFromCategory: z.object({ category: z.array(z.string()) }) });
 
+const spellListsSchema = z.array(z.object({ name: z.string().optional() }));
+
 const lowerKey = (name: string, source: string) => `${name}|${source}`.toLowerCase();
+
+/** The feats a `name|source` key names; a `base; variant` name with no row of its own names the base's row and the variant's spell list. */
+function featsNamedBy(key: string, catalog: readonly FeatRecord[]): OfferedFeat[] {
+  const lower = key.toLowerCase();
+  const exact = catalog.filter(({ name, source }) => lowerKey(name, source) === lower);
+  if (exact.length > 0) return exact;
+  const [named = "", source = ""] = lower.split("|");
+  const [base = "", variant] = named.split(";").map((part) => part.trim());
+  if (!variant) return [];
+  return catalog
+    .filter(({ name, source: from }) => lowerKey(name, from) === `${base}|${source}`)
+    .map((row) => {
+      const lists = spellListsSchema.safeParse(row.json.additionalSpells).data ?? [];
+      const block = lists.findIndex((list) => list.name?.toLowerCase().startsWith(variant));
+      return block < 0 ? row : { ...row, block, list: lists[block]?.name };
+    });
+}
 
 /**
  * The feats a background row's `feats` offers. Each entry of the list is an alternative; a
@@ -27,13 +54,11 @@ export function backgroundFeatOffers(
   catalog: readonly FeatRecord[],
 ): BackgroundFeatOffers {
   const alternatives = z.array(alternativeSchema).safeParse(json.feats).data ?? [];
-  const options = alternatives.flatMap((alternative) => {
+  const options = alternatives.flatMap((alternative): OfferedFeat[] => {
     const category = categorySchema.safeParse(alternative).data?.anyFromCategory.category;
     if (category)
       return catalog.filter(({ json: feat }) => category.includes(String(feat.category)));
-    return Object.keys(alternative).flatMap((key) =>
-      catalog.filter(({ name, source }) => lowerKey(name, source) === key.toLowerCase()),
-    );
+    return Object.keys(alternative).flatMap((key) => featsNamedBy(key, catalog));
   });
   const unique = options.filter(
     (row, i) => options.findIndex((each) => entryKey(each) === entryKey(row)) === i,
@@ -106,4 +131,15 @@ export function withBackgroundPick(feats: Feats, background: EntryRef, pick: Row
       grantedBy: { kind: "background", ref: background },
     },
   ];
+}
+
+/**
+ * `blocks` with the spell list `block` chosen for `feat`, or `blocks` itself where it
+ * already is.
+ */
+export function withFeatBlock(blocks: Blocks, feat: Row, block: number): Blocks {
+  const grantor = { kind: "feat" as const, ref: { name: feat.name, source: feat.source } };
+  const held = blocks.find((choice) => spellBlockKey(choice.grantor) === spellBlockKey(grantor));
+  if (held?.block === block) return blocks;
+  return [...blocks.filter((choice) => choice !== held), { grantor, block }];
 }

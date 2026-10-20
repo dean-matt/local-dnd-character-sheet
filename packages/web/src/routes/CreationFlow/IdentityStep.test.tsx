@@ -58,6 +58,9 @@ const ROWS: Record<string, unknown> = {
     ]),
     background("Hermit", {}, [{ "grappler|phb": true }]),
   ]),
+  "/api/backgrounds?edition=one&limit=200": page([
+    background("Acolyte", {}, [{ "magic initiate; cleric|xphb": true }]),
+  ]),
   "/api/races/Elf/PHB/subraces?edition=one&limit=200": page([]),
   "/api/feats?edition=classic&limit=200": page([
     ...["Grappler", "Alert", "Skilled", "Tough"].map((name) => ({
@@ -73,8 +76,21 @@ const ROWS: Record<string, unknown> = {
       edition: "one",
       json: { name: "Grappler", source: "XPHB" },
     },
+    {
+      name: "Magic Initiate",
+      source: "XPHB",
+      edition: "one",
+      json: {
+        name: "Magic Initiate",
+        source: "XPHB",
+        additionalSpells: [
+          { name: "Cleric Spells" },
+          { name: "Druid Spells" },
+          { name: "Wizard Spells" },
+        ],
+      },
+    },
   ]),
-  "/api/backgrounds?edition=one&limit=200": page([]),
   "/api/classes/Cleric/PHB": {
     ...PHB("Cleric"),
     edition: "classic",
@@ -269,6 +285,24 @@ describe("IdentityStep", () => {
     click("Clear background, Hermit");
     await pick("Background", "sa", /Sage/);
     await waitFor(() => expect(values.feats).toEqual([]));
+  });
+
+  it("grants Magic Initiate with the list a 2024 background names, and moves it with the background", async () => {
+    localStorage.setItem("draft:creation", JSON.stringify({ edition: "one" }));
+    renderStep();
+    const MAGIC_INITIATE = { name: "Magic Initiate", source: "XPHB" };
+
+    await pick("Background", "aco", /Acolyte/);
+
+    expect(await screen.findByText("Feat: Magic Initiate (Cleric Spells)")).toBeVisible();
+    await waitFor(() => {
+      expect(values.feats).toEqual([
+        { ref: MAGIC_INITIATE, grantedBy: { kind: "background", ref: PHB("Acolyte") } },
+      ]);
+      expect(values.spellBlocks).toEqual([
+        { grantor: { kind: "feat", ref: MAGIC_INITIATE }, block: 0 },
+      ]);
+    });
   });
 
   it("takes a race the catalog lacks, noting the departure, and drops the note with it", async () => {

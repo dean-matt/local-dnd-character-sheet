@@ -2,7 +2,7 @@ import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { setRefValue } from "../../lib/setRefValue.ts";
-import { heldFromBackground, withBackgroundPick } from "./backgroundFeats.ts";
+import { heldFromBackground, withBackgroundPick, withFeatBlock } from "./backgroundFeats.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
 import { useBackgroundFeats } from "./useBackgroundFeats.ts";
 
@@ -12,7 +12,7 @@ import { useBackgroundFeats } from "./useBackgroundFeats.ts";
  * the old one granted.
  */
 export function BackgroundFeatField() {
-  const { setValue } = useFormContext<CharacterDefinition>();
+  const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const { background, offers, feats, next } = useBackgroundFeats();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `next` is `feats` itself until something changes.
@@ -20,11 +20,32 @@ export function BackgroundFeatField() {
     if (next !== feats) setRefValue(setValue, "feats", next, { shouldDirty: true });
   }, [next]);
 
+  const [only] = offers?.options ?? [];
+  const block = offers?.fixed ? only?.block : undefined;
+  const backgroundKey = background && entryKey(background);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the list is set when the background or its list changes, so a later choice on the Spells step stands.
+  useEffect(() => {
+    if (only && block !== undefined)
+      setRefValue(
+        setValue,
+        "spellBlocks",
+        withFeatBlock(getValues("spellBlocks") ?? [], only, block),
+        {
+          shouldDirty: true,
+        },
+      );
+  }, [backgroundKey, block]);
+
   if (offers === undefined || background === undefined || offers.options.length === 0) return null;
   const [held] = heldFromBackground(feats);
   if (offers.fixed) {
-    const [only] = offers.options;
-    return <p className="mt-1.5 text-muted text-row">Feat: {only?.name}</p>;
+    return (
+      <p className="mt-1.5 text-muted text-row">
+        Feat: {only?.name}
+        {only?.list && ` (${only.list})`}
+      </p>
+    );
   }
   return (
     <ChoicePills
