@@ -6,6 +6,7 @@ import {
   canvasLight,
   contrastRatio,
   hex,
+  liftOklch,
   mixOklab,
   subtleDark,
   subtleLight,
@@ -29,7 +30,7 @@ export const ACCENT_PRESETS = [
 ] as const;
 
 /**
- * A chosen accent and the share of white, in percent, that the dark theme mixes into it:
+ * A chosen accent and the OKLCH lightness, in hundredths, that the dark theme adds to it:
  * `ring` for `--color-accent`, `text` for `--color-accent-text`.
  */
 export type Accent = { color: string; ring: number; text: number };
@@ -110,17 +111,18 @@ export function darkTextPairs(text: Vec3): Pair[] {
 
 const passes = (pairs: Pair[]) => pairs.every((p) => contrastRatio(p.fg, p.bg) >= p.minimum);
 
-/** The least white, in whole percent, that makes `pairs` pass, or undefined where none does. */
+/** The least lightness lift, in hundredths, that makes `pairs` pass, or undefined where none does. */
 function leastLift(color: Vec3, pairs: (shade: Vec3) => Pair[]): number | undefined {
   for (let lift = 0; lift <= 100; lift++) {
-    if (passes(pairs(mixOklab(color, white, 1 - lift / 100)))) return lift;
+    if (passes(pairs(liftOklch(color, lift / 100)))) return lift;
   }
   return undefined;
 }
 
 /**
- * Holds a `#rrggbb` color to the accent pairs above. The light theme uses the color as chosen; the dark theme lightens it as little as clears
- * each pair there, which the default's fixed mixes in `index.css` cannot do for every hue.
+ * Holds a `#rrggbb` color to the accent pairs above. The light theme uses the color as
+ * chosen; the dark theme raises its lightness as little as clears each pair there, which
+ * the default's fixed lifts in `index.css` cannot do for every hue.
  */
 export function deriveAccent(color: string): { accent: Accent } | { refusal: string } {
   const base = hex(color);
@@ -150,8 +152,8 @@ function applyToDocument(accent: Accent | undefined): void {
   const style = document.documentElement.style;
   if (accent) {
     style.setProperty("--accent", accent.color);
-    style.setProperty("--accent-ring-lift", `${accent.ring}%`);
-    style.setProperty("--accent-text-lift", `${accent.text}%`);
+    style.setProperty("--accent-ring-lift", `${accent.ring / 100}`);
+    style.setProperty("--accent-text-lift", `${accent.text / 100}`);
   } else {
     for (const name of ["--accent", "--accent-ring-lift", "--accent-text-lift"]) {
       style.removeProperty(name);

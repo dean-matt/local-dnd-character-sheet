@@ -56,6 +56,34 @@ export function mixOklab(a: Vec3, b: Vec3, weightA: number): Vec3 {
   return oklabToLinearSRGB(la + (lb - la) * t, aa + (ab - aa) * t, ba + (bb - ba) * t);
 }
 
+const inGamut = (rgb: Vec3) => rgb.every((c) => c >= -1e-6 && c <= 1 + 1e-6);
+
+/**
+ * Raises OKLCH lightness by `lift` (0 to 1) and keeps the hue and, where sRGB allows, the
+ * chroma. Past the gamut it lowers chroma alone until the color fits, which is how CSS
+ * Color 4 maps an out-of-gamut `oklch()`.
+ */
+export function liftOklch(color: Vec3, lift: number): Vec3 {
+  const [l, a, b] = linearSRGBtoOklab(color);
+  const chroma = Math.hypot(a, b);
+  const hue = Math.atan2(b, a);
+  const at = (c: number) => oklabToLinearSRGB(l + lift, c * Math.cos(hue), c * Math.sin(hue));
+  if (inGamut(at(chroma))) return at(chroma);
+  let [low, high] = [0, chroma];
+  for (let i = 0; i < 30; i++) {
+    const mid = (low + high) / 2;
+    if (inGamut(at(mid))) low = mid;
+    else high = mid;
+  }
+  return at(low);
+}
+
+/** The OKLCH hue of `color`, in degrees from 0 to 360. */
+export function oklchHue(color: Vec3): number {
+  const [, a, b] = linearSRGBtoOklab(color);
+  return ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360;
+}
+
 function relativeLuminance([r, g, b]: Vec3): number {
   const clamp = (c: number) => Math.min(1, Math.max(0, c));
   return 0.2126 * clamp(r) + 0.7152 * clamp(g) + 0.0722 * clamp(b);

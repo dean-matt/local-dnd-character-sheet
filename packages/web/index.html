@@ -21,8 +21,8 @@
           if (/^#[0-9a-f]{6}$/.test(accent?.color) && percent(accent.ring) && percent(accent.text)) {
             const style = document.documentElement.style;
             style.setProperty("--accent", accent.color);
-            style.setProperty("--accent-ring-lift", `${accent.ring}%`);
-            style.setProperty("--accent-text-lift", `${accent.text}%`);
+            style.setProperty("--accent-ring-lift", `${accent.ring / 100}`);
+            style.setProperty("--accent-text-lift", `${accent.text / 100}`);
           }
         } catch {}
       })();

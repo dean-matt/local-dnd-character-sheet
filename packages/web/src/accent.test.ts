@@ -9,7 +9,15 @@ import {
   refreshStoredAccent,
   setStoredAccent,
 } from "./accent.ts";
-import { contrastRatio, hex, mixOklab, subtleDark, surfaceDark, white } from "./lib/contrast.ts";
+import {
+  contrastRatio,
+  hex,
+  liftOklch,
+  oklchHue,
+  subtleDark,
+  surfaceDark,
+  white,
+} from "./lib/contrast.ts";
 
 const rootStyle = () => document.documentElement.style;
 
@@ -46,9 +54,19 @@ describe("deriveAccent", () => {
     });
   });
 
+  it.each([{ name: "default", color: DEFAULT_ACCENT }, ...ACCENT_PRESETS])(
+    "keeps the $name accent's hue in the dark text shade",
+    ({ color }) => {
+      const { text } = derived(color);
+      const drift = Math.abs(oklchHue(liftOklch(hex(color), text / 100)) - oklchHue(hex(color)));
+
+      expect(Math.min(drift, 360 - drift)).toBeLessThan(10);
+    },
+  );
+
   it("lightens a dark color in the dark theme as little as clears its pairs", () => {
     const { ring, text } = derived("#3a4f7a");
-    const shade = (lift: number) => mixOklab(hex("#3a4f7a"), white, 1 - lift / 100);
+    const shade = (lift: number) => liftOklch(hex("#3a4f7a"), lift / 100);
 
     expect(contrastRatio(shade(ring), surfaceDark)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(white, shade(ring))).toBeGreaterThanOrEqual(4.5);
@@ -77,8 +95,8 @@ describe("the stored accent", () => {
 
     expect(getStoredAccent()).toBe("#3a4f7a");
     expect(rootStyle().getPropertyValue("--accent")).toBe("#3a4f7a");
-    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("21%");
-    expect(rootStyle().getPropertyValue("--accent-text-lift")).toBe("46%");
+    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("0.12");
+    expect(rootStyle().getPropertyValue("--accent-text-lift")).toBe("0.27");
   });
 
   it("clears the choice on the default, in storage and on the document", () => {
@@ -95,7 +113,15 @@ describe("the stored accent", () => {
     refreshStoredAccent();
 
     expect(JSON.parse(localStorage.getItem("accent") ?? "null")).toEqual(derived("#3a4f7a"));
-    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("21%");
+    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("0.12");
+  });
+
+  it("matches index.css's default lifts to what it derives for the default accent", () => {
+    const css = readFileSync(resolve(import.meta.dirname, "index.css"), "utf8");
+    const { ring, text } = derived(DEFAULT_ACCENT);
+
+    expect(css).toContain(`--accent-ring-lift: ${ring / 100};`);
+    expect(css).toContain(`--accent-text-lift: ${text / 100};`);
   });
 
   it("ignores a corrupt stored value", () => {
@@ -132,8 +158,8 @@ describe("index.html's pre-paint script", () => {
     run();
 
     expect(rootStyle().getPropertyValue("--accent")).toBe("#3a4f7a");
-    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("21%");
-    expect(rootStyle().getPropertyValue("--accent-text-lift")).toBe("46%");
+    expect(rootStyle().getPropertyValue("--accent-ring-lift")).toBe("0.12");
+    expect(rootStyle().getPropertyValue("--accent-text-lift")).toBe("0.27");
   });
 
   it.each([
