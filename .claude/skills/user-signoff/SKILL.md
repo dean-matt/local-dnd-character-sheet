@@ -39,6 +39,14 @@ gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted
 
 `blockingDeclines` in `scripts/merge-gate.mjs` reads that reply and drops the finding.
 
+A declined finding with no line thread has a pull request comment instead. Accept it with a
+plain pull request comment opening `**Accepted** —`; `blockingBodyDeclines` drops every
+body decline posted before it.
+
+```bash
+gh pr comment "$n" --body '**Accepted** — <what was approved>'
+```
+
 ## A point waiting on the user
 
 A label other than exactly `review:approved` means a pass left something for the user — a
