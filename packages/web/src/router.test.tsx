@@ -1,10 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMemoryRouter, type RouteObject, RouterProvider } from "react-router";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeConfig } from "./router.tsx";
 import { characterRecord, presetPageRecords } from "./test/records.ts";
 import { stubFetchByUrl } from "./test/stubFetch.ts";
+
+function lazyRoutes(routes: RouteObject[]): (() => Promise<unknown>)[] {
+  return routes.flatMap((route) => [
+    ...(typeof route.lazy === "function" ? [route.lazy] : []),
+    ...lazyRoutes(route.children ?? []),
+  ]);
+}
 
 function renderAt(path: string) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -18,6 +25,11 @@ function renderAt(path: string) {
 }
 
 describe("routing", () => {
+  // A lazy route's first import is slow on CI and would spend the 1 s `findBy*` default.
+  beforeAll(async () => {
+    await Promise.all(lazyRoutes(routeConfig).map((lazy) => lazy()));
+  });
+
   beforeEach(() => {
     stubFetchByUrl({
       "/api/characters": [],
