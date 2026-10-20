@@ -562,6 +562,29 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("an untrained shield's armor class", () => {
+    const untrained = { ...equipped, proficiencies: definition.proficiencies };
+    const shieldTerms = (block: CharacterDerived) =>
+      block.armorClass.terms.filter((term) => term.label.startsWith("Shield"));
+
+    it("adds no bonus in a 2024 game and says why", () => {
+      const trained = deriveCharacter(equipped, catalog).armorClass;
+      const block = deriveCharacter(untrained, catalog).armorClass;
+      expect(block.computed).toBe(trained.computed - 2);
+      expect(shieldTerms(deriveCharacter(untrained, catalog))).toEqual([
+        { label: "Shield (not proficient)", value: 0, reference: SHIELD },
+      ]);
+    });
+
+    it("keeps the bonus in a 2014 game and for a proficient 2024 character", () => {
+      const classic = deriveCharacter({ ...untrained, edition: "classic" }, catalog);
+      expect(shieldTerms(classic)).toEqual([{ label: "Shield", value: 2, reference: SHIELD }]);
+      expect(shieldTerms(deriveCharacter(equipped, catalog))).toEqual([
+        { label: "Shield", value: 2, reference: SHIELD },
+      ]);
+    });
+  });
+
   describe("attacks", () => {
     const longsword = (entry: Partial<CharacterDefinition["inventory"][number]> = {}) => ({
       ref: LONGSWORD,

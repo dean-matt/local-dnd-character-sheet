@@ -133,9 +133,9 @@ An attack without proficiency adds none and carries a `Not proficient` term wort
 Armor worn without proficiency adds Strength and Dexterity disadvantage on checks, saves
 and attacks to `rollEffects` and names itself in `castingBlockedBy`, which the sheet shows
 under each spell attack and atop the Spells page. A 2014 shield counts as armor; the 2024
-Armor Training rule costs an untrained shield only its AC bonus, which the sheet does not
-model. Equipping goes through as printed; under the `requireEquipProficiency` house rule the
-sheet refuses it and names the missing proficiency.
+Armor Training rule costs an untrained shield only its AC bonus, shown as a `Shield (not
+proficient)` term worth 0 (a magic shield's own `ac` still counts). Equipping goes through
+as printed; under `requireEquipProficiency` the sheet refuses it and names the proficiency.
 
 ## Weapon mastery
 

@@ -246,7 +246,7 @@ type WornArmor = {
   armorClass: number;
   ref: EntryRef;
 };
-type WornShield = { armorClass: number; ref: EntryRef };
+type WornShield = { armorClass: number; ref: EntryRef; trait: ArmorTrait };
 
 /** The worn armor and the shield a character has equipped, last one of each wins. */
 function equippedArmor(
@@ -260,7 +260,7 @@ function equippedArmor(
     const trait = armor.get(itemKey(entry));
     if (trait === undefined) continue;
     if (trait.category === "shield") {
-      shield = { armorClass: trait.armorClass, ref: entry.ref };
+      shield = { armorClass: trait.armorClass, ref: entry.ref, trait };
     } else {
       worn = { category: trait.category, armorClass: trait.armorClass, ref: entry.ref };
     }
@@ -276,6 +276,9 @@ function equippedArmor(
  *
  * Wearing no armor, the best unarmored formula a class or subclass has reached adds its
  * term to the base of 10; `unarmoredDefenseTerm` holds the formulas.
+ *
+ * A 2024 shield used without training adds no bonus (Armor Training), yet still counts as
+ * held for an unarmored formula, which a shield also ends.
  */
 function derivedArmorClass(
   definition: CharacterDefinition,
@@ -289,17 +292,25 @@ function derivedArmorClass(
         (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
         shield !== undefined,
       );
+  const untrainedShield =
+    shield !== undefined &&
+    definition.edition === "one" &&
+    !armorProficient(definition, shield.trait);
   const bonus = [
     ...(unarmored ? [unarmored] : []),
+    ...(untrainedShield
+      ? [{ label: "Shield (not proficient)", value: 0, reference: catalogReference(shield.ref) }]
+      : []),
     ...itemTerms(equippedBonuses(definition, catalog), (item) => item.ac),
   ];
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
     dexterityModifier: { value: abilityModifier(scoreOf(definition, catalog, "dex")) },
     dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
-    shield: shield
-      ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
-      : undefined,
+    shield:
+      shield && !untrainedShield
+        ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
+        : undefined,
     bonus,
   });
   return { computed: result.total, manual: null, terms: result.terms };
@@ -376,7 +387,7 @@ function derivedUnproficientItems(
 /**
  * The names of the equipped armor the character lacks proficiency with, in inventory
  * order. A 2014 shield counts as armor; a 2024 one costs only its own AC bonus, which
- * the sheet does not model, so it is left out.
+ * `derivedArmorClass` withholds, so it is left out here.
  */
 function unproficientArmorWorn(
   definition: CharacterDefinition,
