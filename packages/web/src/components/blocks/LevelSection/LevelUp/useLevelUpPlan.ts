@@ -199,7 +199,6 @@ export function useLevelUpPlan(
       );
     },
     settle: () => {
-      spellPicks.settle();
       if (!entry.entering) return;
       setRefValue(
         setValue,

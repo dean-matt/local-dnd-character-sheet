@@ -14,8 +14,8 @@ const SPELLBOOK_SOURCES = ["PHB", "XPHB"];
  * features let the character choose, and the picks the draft's `spells` holds past
  * `definition`'s, split by the level each lookup found. A pick still loading is left out and
  * keeps `ready` false. A pick lands unprepared, as a known spell or a cantrip is, with the
- * class as its origin; until `settle`, a subclass pick holds the subclass there, which is
- * what tells the two apart. A Wizard's spells go to its spellbook, which `spellbook`
+ * class as its origin; a subclass pick holds the subclass there until `spellsUnderClass`
+ * moves it at Apply, which is what tells the two apart. A Wizard's spells go to its spellbook, which `spellbook`
  * reports.
  */
 export function useLevelUpSpells(
@@ -24,7 +24,7 @@ export function useLevelUpSpells(
   target: ReturnType<typeof useLevelUpClass>,
   spells: readonly Spell[],
 ) {
-  const { setValue, getValues } = useFormContext<CharacterDefinition>();
+  const { setValue } = useFormContext<CharacterDefinition>();
   const catalog = "name" in cls ? cls : undefined;
   const spellbook = catalog?.name === "Wizard" && SPELLBOOK_SOURCES.includes(catalog.source);
   const gained = spellsGained(
@@ -107,13 +107,6 @@ export function useLevelUpSpells(
       write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }) }]),
     addSubclass: (ref: EntryRef) =>
       write([...spells, { ref, prepared: false, ...(subclass && { origin: subclass }) }]),
-    /** Moves each subclass pick under the class, whose spellcasting the sheet reads an origin for. */
-    settle: () => {
-      if (!catalog) return;
-      const held: Spell[] = getValues("spells");
-      if (held.some(bySubclass))
-        write(held.map((spell) => (bySubclass(spell) ? { ...spell, origin: catalog } : spell)));
-    },
     remove: (ref: EntryRef) =>
       write(spells.filter((spell) => entryKey(spell.ref) !== entryKey(ref))),
   };

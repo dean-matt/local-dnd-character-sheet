@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { spellsGained, subclassSpellsGained } from "./spellsGained.ts";
+import { spellsGained, spellsUnderClass, subclassSpellsGained } from "./spellsGained.ts";
 
 const table = (resources: Record<string, string>, slots: number[] = []) => ({
   resources: Object.entries(resources).map(([resourceKey, value]) => ({ resourceKey, value })),
@@ -83,5 +83,25 @@ describe("subclassSpellsGained", () => {
     });
     const blocks = { additionalSpells: [lore.additionalSpells[0], lore.additionalSpells[0]] };
     expect(subclassSpellsGained(blocks, false, 5, 6, none)).toEqual({ cantrips: 0, spells: 0 });
+  });
+});
+
+describe("spellsUnderClass", () => {
+  const fighter = { name: "Fighter", source: "PHB" };
+  const lore = { name: "Lorekeeper", source: "PHB" };
+  const spell = (name: string, origin?: typeof fighter) => ({
+    ref: { name, source: "PHB" },
+    prepared: false,
+    ...(origin && { origin }),
+  });
+
+  it("moves the picks held under the subclass to the class, and leaves the rest", () => {
+    const spells = [spell("Fire Bolt", lore), spell("Shield", fighter), spell("Light")];
+    expect(spellsUnderClass(spells, { class: fighter, subclass: lore })).toEqual([
+      spell("Fire Bolt", fighter),
+      spell("Shield", fighter),
+      spell("Light"),
+    ]);
+    expect(spellsUnderClass(spells, { class: fighter })).toBe(spells);
   });
 });

@@ -1,4 +1,5 @@
 import { type ClassGrants, offeredPicks } from "@dnd/catalog";
+import type { CharacterDefinition } from "@dnd/character";
 import { casterFacts } from "../../../../lib/casterFacts.ts";
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;
@@ -59,4 +60,22 @@ export function subclassSpellsGained(
     cantrips: stated("cantrips_known") ? 0 : Math.max(0, now.cantrips - was.cantrips),
     spells: stated("spells_known", "prepared_spells") ? 0 : Math.max(0, now.spells - was.spells),
   };
+}
+
+/**
+ * `spells` with each pick the level-up made under the subclass moved under the class, whose
+ * spellcasting the sheet reads `origin` for. Applied to what is sent, not the draft, so a
+ * save that fails leaves the draft telling the two kinds of pick apart.
+ */
+export function spellsUnderClass(
+  spells: CharacterDefinition["spells"],
+  level: CharacterDefinition["levels"][number],
+): CharacterDefinition["spells"] {
+  const { subclass, class: cls } = level;
+  if (!subclass || !("name" in cls)) return spells;
+  return spells.map((spell) =>
+    spell.origin?.name === subclass.name && spell.origin.source === subclass.source
+      ? { ...spell, origin: cls }
+      : spell,
+  );
 }

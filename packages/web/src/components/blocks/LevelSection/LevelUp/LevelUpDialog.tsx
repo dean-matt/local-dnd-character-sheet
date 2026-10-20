@@ -11,6 +11,7 @@ import { LevelUpForm } from "./LevelUpForm.tsx";
 import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import { derivedChanges, type LevelChange } from "./levelUpChanges.ts";
 import { levelUpForm } from "./levelUpForm.ts";
+import { spellsUnderClass } from "./spellsGained.ts";
 
 type Level = CharacterDefinition["levels"][number];
 
@@ -90,7 +91,7 @@ export function LevelUpDialog({
             abilityIncreases: values.abilityIncreases,
             featureChoices: values.featureChoices,
             proficiencies: values.proficiencies,
-            spells: values.spells,
+            spells: spellsUnderClass(values.spells, values.levels.at(-1) as Level),
             optionalFeatures: values.optionalFeatures,
             departures: values.departures,
           }),
