@@ -29,6 +29,11 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
    because GitHub refuses an approval on your own pull request; step 5's label carries that
    verdict.
 
+   Before posting, run the pass's JSON through `node scripts/check-pass.mjs <pass.json>`. It
+   checks the `PASS_MARKER` opener and that every line comment opens with its severity as
+   `audit-pr` writes it. Where it exits 1, stop and say which finding it named instead of
+   posting: the gate blocks a finding it cannot classify and a posted review cannot be edited.
+
    ```bash
    gh api 'repos/{owner}/{repo}/pulls/<n>/reviews' --input <the pass, as json>
    gh api 'repos/{owner}/{repo}/pulls/<n>/reviews/<review>/comments' --jq '.[].id'
